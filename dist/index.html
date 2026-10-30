@@ -49,7 +49,13 @@ const sections=[
 ];
 const nav=document.querySelector('.nav');const oldBranch=nav.querySelector('.branch');const tree=document.createElement('div');tree.className='nav-tree';
 const glyph=['overview','launch','groups','groups','launch','overview','records','team'];
-sections.forEach(([name,sectors],i)=>{const d=document.createElement('details'); const summary=document.createElement('summary');summary.innerHTML='<svg class="lucide tree-icon" viewBox="0 0 24 24" aria-hidden="true">'+icons[glyph[i]]+'</svg><span>'+name+'</span>';d.append(summary);const children=document.createElement('div');children.className='children';
+const moneyIcons=[
+ '<path d="M8 3v18M11 6H6.8a2.8 2.8 0 0 0 0 5.6h2.4a2.8 2.8 0 0 1 0 5.6H5"/><path d="M17.5 8v7M14 11.5h7"/>',
+ '<path d="M7 3v18M10 6H5.8a2.8 2.8 0 0 0 0 5.6h2.4a2.8 2.8 0 0 1 0 5.6H4"/><path d="M13 9h8m-2-2 2 2-2 2M21 15h-8m2-2-2 2 2 2"/>',
+ '<path d="M8 3v18M11 6H6.8a2.8 2.8 0 0 0 0 5.6h2.4a2.8 2.8 0 0 1 0 5.6H5"/><path d="M14 11.5h7"/>'
+];
+const menuColor=['#16a34a','#2563eb','#ef4444','#ef4444','#ef4444'];
+sections.forEach(([name,sectors],i)=>{const d=document.createElement('details'); const summary=document.createElement('summary');summary.innerHTML='<svg class="lucide tree-icon" viewBox="0 0 24 24" aria-hidden="true" style="color:'+(menuColor[i]||'inherit')+'">'+(i<5?moneyIcons[i===0?0:i===1?1:2]:icons[glyph[i]])+'</svg><span>'+name+'</span>'; d.append(summary);const children=document.createElement('div');children.className='children';
 sectors.forEach(sector=>{const b=document.createElement('button');b.type='button';b.textContent=sector;b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));const section=document.getElementById('sector-view');section.classList.add('show');document.getElementById('sector-title').textContent=sector;document.getElementById('sector-path').textContent=name+' / '+sector;document.getElementById('crumb').textContent=name+' / '+sector;};children.append(b)});
 if(i===2){const extra=document.createElement('details');extra.open=true;extra.innerHTML='<summary>Gestão de Pessoas</summary>';extra.append(oldBranch);children.append(extra);const links=document.createElement('div');links.innerHTML='<button type="button" data-direct="launch">Lançamentos financeiros</button><button type="button" data-direct="groups">Grupo de despesas</button>';children.append(links)}d.append(children);tree.append(d)});
 nav.replaceChildren(tree);nav.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{route(b.dataset.page);document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active')});nav.querySelectorAll('[data-direct]').forEach(b=>b.onclick=()=>route(b.dataset.direct));
