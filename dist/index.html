@@ -174,4 +174,14 @@ const advanced=document.createElement('details');advanced.className='identity-ad
 function applyOriginIcon(source){const view=document.querySelector('.view.show');if(!view||view.id==='sector-view')return;const head=view.querySelector('.panel>.head');if(!head)return;let badge=head.querySelector('.config-inherit-icon,.origin-icon');if(!badge){badge=document.createElement('span');badge.className='origin-icon';head.prepend(badge)}badge.innerHTML=source.innerHTML;badge.style.background=source.closest('.section-card')?.style.getPropertyValue('--card-color')||'#7c3aed';view.dataset.originIcon=source.innerHTML;view.dataset.originColor=badge.style.background}
 for(const id of ['job-name','job-category','job-cbo-title','job-aliases']){document.getElementById(id).addEventListener('blur',e=>{e.target.value=formatJobText(e.target.value)})}
 const inheritedJobOpen=editJob;editJob=function(j=null){inheritedJobOpen(j);const view=document.getElementById('job-edit'),from=document.querySelector('#jobs-view .config-inherit-icon');const head=view.querySelector('.head'),badge=head.querySelector('.config-inherit-icon');if(from&&badge){badge.innerHTML=from.innerHTML;badge.style.background=from.style.background||'#7c3aed'}};
+
+// Enter avança entre campos preenchíveis sem enviar o formulário acidentalmente.
+document.addEventListener('keydown',event=>{
+ if(event.key!=='Enter'||event.isComposing||event.shiftKey||event.ctrlKey||event.altKey||event.metaKey)return;
+ const field=event.target;
+ if(!(field instanceof HTMLInputElement)||['button','submit','reset','checkbox','radio','file','hidden'].includes(field.type))return;
+ const scope=field.closest('form')||field.closest('#salary-view');if(!scope)return;
+ const fields=[...scope.querySelectorAll('input:not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea')].filter(el=>!el.disabled&&!el.readOnly&&el.getClientRects().length);
+ const index=fields.indexOf(field);if(index<0)return;event.preventDefault();if(fields[index+1])fields[index+1].focus();
+});
 </script></body></html>
