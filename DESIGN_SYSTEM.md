@@ -236,3 +236,5 @@ field-validation.js centraliza CPF (máscara11 dígitos e verificadores), datas 
 - Busca: usa exclusivamente os tokens dos campos em ui-foundation.css, removendo receitas antigas de fonte12 e cor própria. Uma lupa abre/foca o campo; placeholder curto Buscar…, descrição específica preservada no aria-label; limpar nativo e Escape mantêm interação simples. Filtro conserva o mesmo controle e geometria de campos.
 - Rolagem global: trilho transparente, indicador fino6px apenas em hover/foco; toque sem barra permanente, sem mudar overflow nem impedir mouse/teclado/toque. Preservar alto contraste.
 - Proposta pendente (não aplicada): toque simples abre edição com Excluir visível e confirmação local. Não aplicar duplo clique nem lixeira por arraste sem definição.
+
+- Rolagem: remover visualmente trilho e indicador em todos os contêineres, inclusive hover/foco. Substitui barra fina da revisão anterior. Preservar overflow e navegação por mouse/teclado/toque; alto contraste usa barra nativa.
