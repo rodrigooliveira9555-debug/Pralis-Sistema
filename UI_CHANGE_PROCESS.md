@@ -8,7 +8,7 @@ Antes de editar: ler DESIGN_SYSTEM.md e este processo. Reutilizar o componente e
 
 - Cabeçalhos: normalização compartilhada, ícone + título + atalhos, nome com reticências e título completo acessível.
 - Consultas: lupa para busca; chevron para filtros; abrir na mesma grade. Não inventar busca de registros dentro de uma ficha de edição.
-- Formulários: Montserrat, título16/20 e peso600; subtítulo11/14; campo e label12/18; notas11/16; controle42px/raio8. Textarea cresce para texto livre.
+- Formulários: Montserrat, título16/20 e peso600; subtítulo11/14; campo14/20 peso400; label12/18 peso500 neutro; notas11/16; controle42px/raio8. Textarea cresce para texto livre.
 - Ícones: SVG da biblioteca comum; símbolo18px em botão circular32px. Ícones de lista30px. Preservar marca e cores próprias de logomarcas.
 - Cores: acento do menu de origem; cabeçalho14% acento + branco, borda25%, hover8%, foco14%. Tema escuro segue DESIGN_SYSTEM.md. Excluir mantém vermelho semântico.
 

@@ -218,3 +218,9 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 UI_CHANGE_PROCESS.md é obrigatório para alterações futuras. Tokens tipográficos e dimensões por função em dist/ui-foundation.css: Montserrat; título16/20 peso600, subtítulo11/14, texto/label/campo12/18, nota11/16, campo42 raio8. Comparar papéis iguais: título de ficha com título de ficha; nome de item de menu12 com nome de item12. Busca e filtro pertencem às consultas; não acrescentar busca de registros a fichas.
 
 - Hierarquia de cores de texto: título roxo de referência #4B2679, subtítulo #785C9B (75% título+25% branco); ícones/botões #7C3AED. Cadastros e menus usam a mesma cor de título por origem. Outros módulos preservam --panel-text próprio e subtítulo segue a mesma receita75%. Tema escuro tem receita de contraste própria.
+
+## Campos unificados — 31/10/2026
+
+Substitui as medidas anteriores de texto dos campos: Montserrat14/20 peso400; labels Montserrat12/18 peso500 cinza #52525B (escuro #D4D4D8). Campos42px, raio8, padding10x12, borda1px neutra #D4D4D8, fundo branco, texto #27272A. Placeholder #71717A. Foco: borda no acento de origem e halo3px14%; escuro24%. Hover: mistura50% acento/borda. Textarea mínimo84px. Erro explícito vermelho; desabilitado opacidade60%. Checkboxes, rádio, paletas e sliders mantêm geometria própria. Fonte única: ui-foundation.css; inclui buscas/filtros, tabelas editáveis, views legadas, fichas e diálogos dinâmicos.
+
+Matriz de impacto: todas as .view e diálogos, incluindo Cargos/Salários, Contas, grupos financeiros, tipos de vendas/bandeiras/operadoras e taxas, localização/organograma, cadastro simples/completo/dependentes, patrimônio, configuração e modais. Inventário estrutural não equivale a conferência visual de todas as rotas.
