@@ -113,3 +113,9 @@ body :is(.view,dialog) .identity-advanced[data-library-manager] button:disabled{
 .icon-empty-confirm h3{margin:0 0 12px}.icon-empty-confirm p{margin:0 0 18px}.icon-empty-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}.icon-empty-confirm::backdrop{background:#0006}
 
 body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) [hidden]{display:none!important}
+
+/* One layout for identification: name, then full-width icon choices. */
+body :is(.view,dialog) :is(.identity-pick,.location-sigla-field){min-width:0;width:100%;box-sizing:border-box;align-items:stretch}
+body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.identity-advanced,.most-used-icons,.account-field-group){box-sizing:border-box;flex:0 0 100%;width:100%;min-width:0;max-width:none;margin-left:0;margin-right:0}
+body :is(.view,dialog) .identity-advanced>summary{width:100%;box-sizing:border-box}
+body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-library,.account-icon-options,.extra-library){justify-content:flex-start;align-content:flex-start;margin:8px 0 0!important}
