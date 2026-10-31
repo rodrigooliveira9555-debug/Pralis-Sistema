@@ -138,3 +138,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Árvore de locais reutiliza createFinancialActions: setinha lateral revela lixeira vermelha e lápis na cor do item, em todos os níveis.
 
 - Alças dos quatro níveis reutilizam menu-item-move: pontinhos cinza, 20px, área 18×24px, mesmo espaçamento dos demais menus.
+
+- Cor dos quatro níveis: paleta visual de 48 bolinhas, tons claros/escuros e neutros, check na seleção e cor personalizada, conforme referência enviada.
