@@ -212,3 +212,7 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Faixa única: todos os 17 cabeçalhos, inclusive Cargos/Salários, usam fundo14% de acento+branco, borda25%; tema escuro24%. Ferramentas transparentes sem moldura própria. Mesma classe de busca em Salários, filtrando apenas a visualização dos cargos, sem alterar valores. Não manter receitas antigas24% no tema claro.
 
 - Área/Setor/Local/Sublocal oferece busca pela mesma lupa compartilhada. Busca sem distinguir acentos, mantém ancestrais dos resultados e abre o caminho durante consulta; limpar mantém expansão manual anterior.
+
+## Processo e tipografia de formulários
+
+UI_CHANGE_PROCESS.md é obrigatório para alterações futuras. Tokens tipográficos e dimensões por função em dist/ui-foundation.css: Montserrat; título16/20 peso600, subtítulo11/14, texto/label/campo12/18, nota11/16, campo42 raio8. Comparar papéis iguais: título de ficha com título de ficha; nome de item de menu12 com nome de item12. Busca e filtro pertencem às consultas; não acrescentar busca de registros a fichas.
