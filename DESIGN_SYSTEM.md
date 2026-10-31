@@ -208,3 +208,7 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Expandir/recolher: duas setas em chevron, cima e baixo, mesma geometria do menu (sem hastes). Preservar ciclo de níveis. Substitui setas verticais com haste.
 
 - Busca e filtro abertos: grade compartilhada, busca à esquerda e seletor180px à direita, gap8/altura42. Tela estreita: busca acima, seletor abaixo. CSS não depende da ordem de criação dos controles. Hover suave8% no tema claro/18% escuro; retirar override legado18% claro.
+
+- Faixa única: todos os 17 cabeçalhos, inclusive Cargos/Salários, usam fundo14% de acento+branco, borda25%; tema escuro24%. Ferramentas transparentes sem moldura própria. Mesma classe de busca em Salários, filtrando apenas a visualização dos cargos, sem alterar valores. Não manter receitas antigas24% no tema claro.
+
+- Área/Setor/Local/Sublocal oferece busca pela mesma lupa compartilhada. Busca sem distinguir acentos, mantém ancestrais dos resultados e abre o caminho durante consulta; limpar mantém expansão manual anterior.
