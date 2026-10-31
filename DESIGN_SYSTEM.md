@@ -200,3 +200,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Cabeçalho compacto definitivo: ícone, nome e atalhos na mesma linha alinhados ao centro. Título/subtítulo com reticências e nome completo no title; não aumentar altura por texto longo. Seletores recolhidos sob chevron próprio, busca recolhida em lupa; abrir controles em segunda linha só sob demanda. Substitui faixa de atalhos acima do título.
 
 - Normalizar também cabeçalhos legados: extrair ícone de dentro do título, criar faixa de atalhos quando ausente e mover ações diretas para essa faixa. Três colunas explícitas: ícone 38px, título flexível, atalhos. Não presumir estrutura igual antes da normalização.
+
+- Revisão dimensional: controles de formulário 42px/raio8/fonte12; linhas de cadastro no mesmo nível 62px e ícone30; subgrupos40. Montserrat compartilhada. Hover dos grupos ocupa a moldura inteira sem padding externo. Expandir/recolher global usa duas setas opostas; filtro usa chevron simples, imediatamente ao lado da lupa. Preservar cores por módulo.

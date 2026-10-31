@@ -195,8 +195,8 @@ body .fee-header-actions .shortcut-circle,
 body .view .shortcut-actions .sort-az{border-color:currentColor!important;opacity:1}
 
 /* Financial trees share the compact location hierarchy. */
-#sector-view.financial-groups.financial-hierarchy .financial-group{border:1px solid color-mix(in srgb,var(--menu-accent) 25%,white);border-radius:12px;background:#fff;overflow:hidden;padding:0 8px}
-#sector-view.financial-groups.financial-hierarchy .account-list-row{display:flex;align-items:center;gap:8px;min-height:62px;box-sizing:border-box;padding:8px 4px!important;border:0;border-radius:7px;margin:0;background:transparent}
+#sector-view.financial-groups.financial-hierarchy .financial-group{border:1px solid color-mix(in srgb,var(--menu-accent) 25%,white);border-radius:10px;background:#fff;overflow:hidden;padding:0}
+#sector-view.financial-groups.financial-hierarchy .account-list-row{display:flex;align-items:center;gap:8px;min-height:62px;box-sizing:border-box;padding:8px 12px!important;border:0;border-radius:0;margin:0;background:transparent}
 #sector-view.financial-groups.financial-hierarchy .account-list-row>b{flex:1;min-width:0;overflow-wrap:anywhere}
 #sector-view.financial-groups.financial-hierarchy .account-list-row .card-inherited-icon{flex:0 0 30px;width:30px;height:30px}
 #sector-view.financial-groups.financial-hierarchy .financial-text-badge{font:600 10px Montserrat,system-ui,sans-serif;display:inline-flex;align-items:center;justify-content:center;color:#fff}
@@ -306,3 +306,17 @@ body:has(.view.show>.panel) .main{padding-bottom:0}
 .view.show>.panel>.head .shortcut-actions>button{flex-shrink:0;width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important;padding:0!important;border-radius:50%!important}
 .header-origin-icon{background:var(--menu-accent,var(--panel-color,#7c3aed));color:#fff}.header-origin-icon svg,.head .shortcut-actions>button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 @media(max-width:560px){.view.show>.panel>.head[data-header-standard=yes]{grid-template-columns:28px minmax(0,1fr) auto!important}.view.show>.panel>.head[data-header-standard=yes]>.sector-icon{width:28px;height:28px}.view.show>.panel>.head .shortcut-actions>button{width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important}}
+
+/* Shared measurements by element role; preserve each menu's accent. */
+.view,.location-dialog,.transfer-dialog{font-family:var(--cicluz-font)}
+.view .content :is(input,select):not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]):not([type=range]),.fixed-header-tools :is(input,select){box-sizing:border-box;min-height:42px;height:42px;border-radius:8px;font-family:var(--cicluz-font);font-size:12px}
+.view .content label,.view .content textarea{font-family:var(--cicluz-font);font-size:12px}.view .content textarea{border-radius:8px;min-height:84px}
+#sector-view .account-list-row{box-sizing:border-box;min-height:62px;font-family:var(--cicluz-font);font-size:12px;border-radius:10px}
+#sector-view .account-list-row>b{font-size:12px;font-weight:500;line-height:1.5}
+#sector-view .account-list-row>.card-inherited-icon{width:30px;height:30px;flex:0 0 30px}
+#sector-view .account-list-row>.card-inherited-icon svg{stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#sector-view.financial-groups.financial-hierarchy .financial-group{padding:0;border-radius:10px}
+#sector-view.financial-groups.financial-hierarchy .financial-group>.account-list-row{border-radius:0;width:100%;margin:0}
+#sector-view.financial-groups.financial-hierarchy .financial-group:has(>.account-list-row:hover),#sector-view.financial-groups.financial-hierarchy .financial-group:has(>.account-list-row:focus-within){background:color-mix(in srgb,var(--menu-accent) 10%,white);border-color:var(--menu-accent)}
+#sector-view.financial-groups.financial-hierarchy .financial-subgroups>.account-list-row{min-height:40px}
+body.dark-theme #sector-view.financial-groups.financial-hierarchy .financial-group:has(>.account-list-row:hover),body.dark-theme #sector-view.financial-groups.financial-hierarchy .financial-group:has(>.account-list-row:focus-within){background:color-mix(in srgb,var(--menu-accent) 20%,#24232b)}
