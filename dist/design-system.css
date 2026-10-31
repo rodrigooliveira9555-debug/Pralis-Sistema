@@ -110,3 +110,13 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 /* Location navigation follows the People module accent. */
 .location-row .location-expand,.location-row .account-action-toggle{color:#7c3aed!important}
 #sector-view:not(.financial-groups)[style*="7c3aed"] .head .shortcut-circle{color:#7c3aed;border-color:#ddd0ff}
+/* Consistent typography by role across configuration lists and editors. */
+#sector-view,.location-dialog{font-family:var(--cicluz-font)}
+#sector-view :is(button,input,select,textarea),.location-dialog :is(button,input,select,textarea){font-family:var(--cicluz-font)}
+#sector-view .head h2,.location-dialog-header h3{font-size:16px;font-weight:600;line-height:1.45;letter-spacing:normal}
+#sector-view .head p{font-size:11px;font-weight:400;line-height:1.5}
+#sector-view .account-list-row b,#sector-view .location-name,#sector-view .record>b,.location-preview-name{font-size:12px;font-weight:500;line-height:1.5;letter-spacing:normal}
+#sector-view .financial-count,#sector-view .location-count,#sector-view .financial-list-summary,#sector-view .account-list-state{font-size:11px;font-weight:400;line-height:1.5}
+#sector-view :is(.account-editor,.ti-group-form,.financial-list-controls) :is(input,select),.location-dialog :is(input,select){font-size:12px;font-weight:400;line-height:1.5}
+#sector-view .account-editor label,.location-dialog label{font-size:12px;font-weight:500;line-height:1.5}
+#sector-view .btn,.location-dialog .btn{font-size:12px;font-weight:600;line-height:1.5}
