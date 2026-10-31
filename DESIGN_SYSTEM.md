@@ -31,3 +31,10 @@ Esta é a fonte de regras para alterações de interface. Os estilos compartilha
 ## Verificação antes de concluir
 
 Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegação de volta, tema claro/escuro e menu aberto/recolhido quando relevante. Não declarar validação visual sem executá-la.
+
+## Grupos financeiros
+
+- Títulos centralizados em `dist/groups.js`: Grupo de contas / CNT (laranja), Grupo de vendas / VND (amarelo), Grupo de retiradas / RET (azul), Mercadoria / MER (verde), Despesa / DES (vermelho).
+- Grupos expansíveis com subgrupos, ações laterais, ícone com prévia e situação ativo/inativo. Itens sem subgrupo permanecem no nível principal. Não combinar registros similares sem decisão do usuário.
+- Documento: DOC/F, DOC/NF ou DOC/F/NF. Apenas Mercadoria / MER inclui o campo Finalidade: VENDA ou TRANSFORMAÇÃO, sem inferência automática.
+- Dados iniciais recebidos em 31/10/2026: mercadorias, despesas e vendas. Retiradas aguarda lista; não criar exemplos.

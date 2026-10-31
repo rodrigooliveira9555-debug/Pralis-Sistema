@@ -1,0 +1,1432 @@
+{
+  "mercadorias": [
+    {
+      "id": "g0",
+      "name": "CIGARROS",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g0s0",
+          "name": "TRADICIONAIS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g0s1",
+          "name": "PALHA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g0s2",
+          "name": "ACESSORIOS: CEDA/ISQUEIRO/ETC",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g1",
+      "name": "BOMBONIERI",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g1s0",
+          "name": "CHICLETES",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g1s1",
+          "name": "BALAS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g1s2",
+          "name": "CHOCOLATES",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g2",
+      "name": "SORVETES",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g2s0",
+          "name": "POTES",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g2s1",
+          "name": "PICOLÉS",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g3",
+      "name": "BEBIDAS",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g3s0",
+          "name": "REFRIGERANTES",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g3s1",
+          "name": "CERVEJAS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g3s2",
+          "name": "SUCOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g3s3",
+          "name": "ISOTÔNICOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g3s4",
+          "name": "ÁGUAS",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g4",
+      "name": "FRIOS",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g4s0",
+          "name": "MUSSARELAS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g4s1",
+          "name": "QUEIJO PRATO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g4s2",
+          "name": "QUEIJO PARMESÃO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g4s3",
+          "name": "PRESUNTOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g4s4",
+          "name": "APRESUNTADOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g4s5",
+          "name": "PEITO PERUS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g4s6",
+          "name": "MORTADELAS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g4s7",
+          "name": "SALAMINHOS",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g5",
+      "name": "LATICÍNIOS",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g5s0",
+          "name": "MANTEIGAS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g5s1",
+          "name": "REQUEIJÃO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g5s2",
+          "name": "PATÊS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g5s3",
+          "name": "QUEIJOS/EMBUTIDOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g5s4",
+          "name": "LEITES SAQUINHO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g5s5",
+          "name": "LEITES UHT LONGA VIDA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g5s6",
+          "name": "IOGURTES",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g6",
+      "name": "BISCOITOS",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g6s0",
+          "name": "DOCES",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g6s1",
+          "name": "SALGADOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g6s2",
+          "name": "REVENDA MARCA PRALIS",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g7",
+      "name": "MERCEARIA",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g7s0",
+          "name": "ALIMENTOS BÁSICOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g7s1",
+          "name": "ALIMENTOS DIVERSOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g7s2",
+          "name": "NÃO ALIMENTOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g7s3",
+          "name": "HIGIENE PESSOAL",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g7s4",
+          "name": "PRODUTOS DE LIMPEZA",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g8",
+      "name": "CONGELADOS",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g8s0",
+          "name": "PÃO DE QUEIJO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g8s1",
+          "name": "MINI SALGADO",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g9",
+      "name": "POLPA DE FRUTA",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g9s0",
+          "name": "REFRESQUEIRA",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g10",
+      "name": "FAB. PRÓPRIA",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g10s0",
+          "name": "PANIFICAÇÃO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g10s1",
+          "name": "CONFEITARIA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g10s2",
+          "name": "SALGADOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g10s3",
+          "name": "SANDUÍCHE",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g10s4",
+          "name": "ALMOÇO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g10s5",
+          "name": "SALADAS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g10s6",
+          "name": "MASSAS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g10s7",
+          "name": "BEBIDAS/COPA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g10s8",
+          "name": "LANCHES/CHAPA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g10s9",
+          "name": "ACRECIMOS",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g11",
+      "name": "FAB. PRÓPRIA BASE",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g11s0",
+          "name": "RECHEIOS PRALIS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g11s1",
+          "name": "MASSAS PRALIS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g11s2",
+          "name": "CORBERTURAS PRALIS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g11s3",
+          "name": "INGREDIENTES PRALIS",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g12",
+      "name": "EMBALAGENS",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g12s0",
+          "name": "ISOPOR",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g12s1",
+          "name": "PAPEL",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g12s2",
+          "name": "PLASTICO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g12s3",
+          "name": "LAMINADOS",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g13",
+      "name": "MAT. PRIMA",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g13s0",
+          "name": "CONDIMENTOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s1",
+          "name": "FARINHAS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s2",
+          "name": "FERMENTOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s3",
+          "name": "REFORCADORES",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s4",
+          "name": "AÇÚCARES",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s5",
+          "name": "SAL",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s6",
+          "name": "MASSAS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s7",
+          "name": "GRÃOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s8",
+          "name": "CHOCOLATES EM PÓ",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s9",
+          "name": "COCOLATES EM BARRA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s10",
+          "name": "FRIOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s11",
+          "name": "LATICÍNIOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s12",
+          "name": "LEITES",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s13",
+          "name": "LEITE CONDENSADO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s14",
+          "name": "FRUTAS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s15",
+          "name": "LEGUMES",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s16",
+          "name": "VERDURAS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s17",
+          "name": "PROTEINAS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g13s18",
+          "name": "REFRIGERANTES",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g14",
+      "name": "PATRIMONIO NÃO VENDAS",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "g15",
+      "name": "INATIVOS",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "g16",
+      "name": "MATERIAL LIMPEZA",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g16s0",
+          "name": "EMPRESA",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    }
+  ],
+  "despesas": [
+    {
+      "id": "g0",
+      "name": "IMPOSTOS",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g0s0",
+          "name": "FEDERAL",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g0s1",
+          "name": "ESTADUAL",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g0s2",
+          "name": "MUNICIPAL",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g1",
+      "name": "TAXA CARTÕES",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g1s0",
+          "name": "CREDITO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g1s1",
+          "name": "DEBITO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g1s2",
+          "name": "VOUCHER",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g1s3",
+          "name": "PIX",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g2",
+      "name": "ALUGUEL",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "g3",
+      "name": "IPTU",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "g4",
+      "name": "ÁGUA",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "g5",
+      "name": "ENERGIA",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g5s0",
+          "name": "ELÉTRICA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g5s1",
+          "name": "SOLAR",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g5s2",
+          "name": "GÁS",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g6",
+      "name": "OUTRAS DESP. FIXAS",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g6s0",
+          "name": "SINDICATO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g6s1",
+          "name": "HOSPEDAGEM EMAIL",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g6s2",
+          "name": "CONTABILIDADE",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g6s3",
+          "name": "SIST. OPERACIONAIS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g6s4",
+          "name": "DETETIZADORA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g6s5",
+          "name": "MEDICINA TRABALHO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g6s6",
+          "name": "SEGURO LOJA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g6s7",
+          "name": "ADVOGADOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g6s8",
+          "name": "SEGURANÇA",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g7",
+      "name": "TELEFONIA",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g7s0",
+          "name": "INTERNET",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g7s1",
+          "name": "TELEFONE",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g8",
+      "name": "FOLHA PAG",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g8s0",
+          "name": "PAGAMENTO 5º",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g8s1",
+          "name": "ADIANTAMENTO 20°",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g8s2",
+          "name": "CONTRATO TRABALHO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g8s3",
+          "name": "OUTROS ADIANTAMENTOS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g8s4",
+          "name": "PAGAMENTOS EXTRAS",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g9",
+      "name": "PREMIAÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g9s0",
+          "name": "SALÃO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g9s1",
+          "name": "PRODUÇÃO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g9s2",
+          "name": "ADM",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g9s3",
+          "name": "MISTO",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g10",
+      "name": "BENEFÍCIOS",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g10s0",
+          "name": "PLANO DE SAÚDE",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g10s1",
+          "name": "PLANO ODONTOLÓGICO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g10s2",
+          "name": "SEGURO DE VIDA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g10s3",
+          "name": "CESTA BÁSICA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g10s4",
+          "name": "SEGUROS VIDA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g10s5",
+          "name": "ALIMENTAÇÃO",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g11",
+      "name": "DIARIAS E H. EXTRAS",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g11s0",
+          "name": "DIÁRIA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g11s1",
+          "name": "HORA EXTRA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g11s2",
+          "name": "VALE TRANS.",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g12",
+      "name": "ENCARGOS SOCIAIS",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g12s0",
+          "name": "PREVIDÊNCIA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g12s1",
+          "name": "FUNDO GARANTIA",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g13",
+      "name": "VALE TRANS.",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "g14",
+      "name": "13º",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "g15",
+      "name": "FÉRIAS E RESCISÕES",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g15s0",
+          "name": "FÉRIAS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g15s1",
+          "name": "RECISOES",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g15s2",
+          "name": "MULTAS",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g16",
+      "name": "UNIFORMES",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g16s0",
+          "name": "GERAL",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g16s1",
+          "name": "PRODUÇÃO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g16s2",
+          "name": "SALÃO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g16s3",
+          "name": "ADM",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g16s4",
+          "name": "MISTO",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g17",
+      "name": "DIRETORIA",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g17s0",
+          "name": "CEO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g17s1",
+          "name": "COO",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g18",
+      "name": "MANUT. EMPRESA",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g18s0",
+          "name": "SERVIÇO ELÉTRICA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g18s1",
+          "name": "SERVIÇO HIDRÁULICA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g18s2",
+          "name": "SERVIÇO MÁQ./EQUIP.",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g18s3",
+          "name": "SERVIÇO MOB./BALCÕES",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g18s4",
+          "name": "SERVIÇO UTENC./FERRA.",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g18s5",
+          "name": "MAT. E PECAS ELÉTRICO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g18s6",
+          "name": "MAT. E PECAS HIDRÁULICO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g18s7",
+          "name": "MAT. E PECAS EST. FISICA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g18s8",
+          "name": "MAT. E PECAS MÁQ./EQUIP.",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g18s9",
+          "name": "MAT. E PECAS MOB./BALCÕES",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g18s10",
+          "name": "MAT. E PECAS UTENC./FERRA.",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g19",
+      "name": "DOAÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "g20",
+      "name": "GELO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "g21",
+      "name": "MAT. ESCRITÓRIO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "g22",
+      "name": "DATAS COMEMORATIVAS",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "g23",
+      "name": "DESP. BANCÁRIAS",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g23s0",
+          "name": "JUROS",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g23s1",
+          "name": "IOF",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g23s2",
+          "name": "SERVIÇOS",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g24",
+      "name": "MAT. LIMPEZA",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g24s0",
+          "name": "PAPEL TOALHA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g24s1",
+          "name": "PRODUTO QUÍMICO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g24s2",
+          "name": "UTENC. DESCARTÁVEIS",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g25",
+      "name": "TRANSPORTE",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g25s0",
+          "name": "COMBUSTÍVEL",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g25s1",
+          "name": "LIMPEZA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g25s2",
+          "name": "ESTACIONAMENTO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g25s3",
+          "name": "MANUTENÇÃO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g25s4",
+          "name": "MOTORISTA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g25s5",
+          "name": "SEGURO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g25s6",
+          "name": "TAXAS E DOCUMENTAÇÃO",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g26",
+      "name": "TREINAMENTO",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g26s0",
+          "name": "GERAL",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g26s1",
+          "name": "PRODUÇÃO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g26s2",
+          "name": "SALÃO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g26s3",
+          "name": "ADM",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g26s4",
+          "name": "MISTO",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g27",
+      "name": "MARKETING",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g27s0",
+          "name": "SOCIAL MÍDIA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g27s1",
+          "name": "GRAFICA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g27s2",
+          "name": "TRÁFEGO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g27s3",
+          "name": "INFLUENCER",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g27s4",
+          "name": "DSIGNER",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g27s5",
+          "name": "COPI",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g27s6",
+          "name": "OUTROS MAT. CAMPANHA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g27s7",
+          "name": "ÁUDIO, IMAGEM E VÍDEO",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    }
+  ],
+  "vendas": [
+    {
+      "id": "g0",
+      "name": "CAIXA PDV",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g0s0",
+          "name": "1M",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g0s1",
+          "name": "1T",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g0s2",
+          "name": "2M",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g0s3",
+          "name": "2T",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g0s4",
+          "name": "3M",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g0s5",
+          "name": "3T",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g0s6",
+          "name": "4M",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "g0s7",
+          "name": "4T",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g1",
+      "name": "NFE",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g1s0",
+          "name": "EMPRESAS",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "g2",
+      "name": "DELIVERY",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "g2s0",
+          "name": "IFOOD",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    }
+  ],
+  "retiradas": []
+}
