@@ -104,3 +104,5 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 #sector-view .tree-add-solid,.location-tree .tree-add-solid{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;width:auto;min-width:0;flex-basis:auto;padding:10px 14px!important;border:1px solid var(--node-color,var(--menu-accent,#7c3aed))!important;border-radius:9px!important;background:var(--node-color,var(--menu-accent,#7c3aed))!important;color:#fff!important;font:600 12px Montserrat,system-ui,sans-serif;cursor:pointer}
 #sector-view .tree-add-solid:hover{filter:brightness(.94)}
 #sector-view .tree-add-solid:focus-visible{outline:2px solid var(--node-color,var(--menu-accent,#7c3aed));outline-offset:3px}
+
+.location-copy{flex:1;min-width:0;display:flex;flex-direction:column;align-items:stretch}.location-copy .location-name{width:100%;padding:0}.location-count{margin-top:5px;text-align:left}
