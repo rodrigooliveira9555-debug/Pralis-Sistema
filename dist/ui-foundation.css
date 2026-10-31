@@ -10,3 +10,10 @@ body .view .form-note{font:400 var(--ui-note)/16px var(--ui-font)!important}
 body .view .form-tabs button,body .view .step-label{font-family:var(--ui-font)!important;font-size:var(--ui-text)!important;line-height:var(--ui-text-line)!important}
 body .view .form-fields h3,body .view .form-demo .content h3{font:600 14px/20px var(--ui-font)!important}
 body #sector-view .record>b,body .view .record.section-card>b{font-family:var(--ui-font)!important;font-size:var(--ui-text)!important;line-height:var(--ui-text-line)!important}
+/* Match purple menu headings; subtitles stay lighter within the same hue. */
+:root{--ui-purple-title:#4b2679;--ui-purple-subtitle:#785c9b}
+.view{--panel-text:var(--ui-purple-title)}
+body .view>.panel>.head h2,body #sector-view .panel>.head h2,body #jobs-view .panel>.head h2,body #salary-view .panel>.head h2,body #job-edit .panel>.head h2{color:var(--panel-text,var(--ui-purple-title))!important}
+body .view>.panel>.head p{color:color-mix(in srgb,var(--panel-text,var(--ui-purple-title)) 75%,white)!important}
+body.dark-theme .view>.panel>.head h2,body.dark-theme #sector-view .panel>.head h2,body.dark-theme #jobs-view .panel>.head h2,body.dark-theme #salary-view .panel>.head h2,body.dark-theme #job-edit .panel>.head h2{color:color-mix(in srgb,var(--panel-color,#7c3aed) 35%,white)!important}
+body.dark-theme .view>.panel>.head p{color:color-mix(in srgb,var(--panel-color,#7c3aed) 22%,white)!important}

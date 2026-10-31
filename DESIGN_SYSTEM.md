@@ -216,3 +216,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 ## Processo e tipografia de formulários
 
 UI_CHANGE_PROCESS.md é obrigatório para alterações futuras. Tokens tipográficos e dimensões por função em dist/ui-foundation.css: Montserrat; título16/20 peso600, subtítulo11/14, texto/label/campo12/18, nota11/16, campo42 raio8. Comparar papéis iguais: título de ficha com título de ficha; nome de item de menu12 com nome de item12. Busca e filtro pertencem às consultas; não acrescentar busca de registros a fichas.
+
+- Hierarquia de cores de texto: título roxo de referência #4B2679, subtítulo #785C9B (75% título+25% branco); ícones/botões #7C3AED. Cadastros e menus usam a mesma cor de título por origem. Outros módulos preservam --panel-text próprio e subtítulo segue a mesma receita75%. Tema escuro tem receita de contraste própria.
