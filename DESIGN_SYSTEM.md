@@ -128,3 +128,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Ordem dos cartões usa identificador estável do destino, independente de mudanças nos rótulos. Reconhecer rótulos anteriores e manter novos itens após os já ordenados.
 
 - Área / Setor / Local unifica os três cartões e abre árvore de quatro níveis, sem nomes predefinidos. CRUD, ícone/cor com prévia, ordem entre irmãos, A/Z recursivo e expandir/recolher. Dados locais persistidos.
+
+- Níveis definitivos: Área → Setor → Local → Sublocal. Menu mantém Área / Setor / Local.
