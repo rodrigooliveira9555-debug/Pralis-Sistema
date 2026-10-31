@@ -232,3 +232,14 @@ body .account-action-toggle[aria-expanded=true] svg,body .location-row .location
 
 /* Edit/delete action drawer uses lateral arrows; hierarchy toggles stay vertical. */
 body .account-action-toggle[aria-expanded=true] svg{transform:rotate(180deg)}
+
+/* Top-down mind map: each box connects to the positions created below it. */
+.organogram-mindmap{overflow:auto;min-height:360px;padding:24px 18px;background:#fcfaff;background-image:radial-gradient(#ddd5eb .65px,transparent .65px);background-size:18px 18px}
+.organogram-mindmap ul,.organogram-mindmap ul.organogram-branches{display:flex;flex-wrap:nowrap;justify-content:center;align-items:flex-start;gap:0;list-style:none;padding:0;margin:0;border:0;width:max-content;min-width:100%}
+.organogram-mindmap li{position:relative;display:flex;flex-direction:column;align-items:center;flex:0 0 auto!important;padding:22px 10px 0;margin:0;min-width:250px}
+.organogram-mindmap li::before,.organogram-mindmap li::after{content:"";position:absolute;top:0;width:50%;height:22px;border-top:1px solid #bfa9e1;box-sizing:border-box}
+.organogram-mindmap li::before{right:50%;border-right:1px solid #bfa9e1}.organogram-mindmap li::after{left:50%;border-left:1px solid #bfa9e1}
+.organogram-mindmap li:first-child::before,.organogram-mindmap li:last-child::after{border:0}.organogram-mindmap li:only-child::before,.organogram-mindmap li:only-child::after{display:none}.organogram-mindmap li:only-child{padding-top:0}
+.organogram-mindmap .organogram-card{position:relative;z-index:1;min-width:240px;max-width:290px;min-height:66px;background:#fff;box-shadow:0 3px 12px #5520ad08;border:1px solid #cdb9e9}
+.organogram-mindmap details{display:flex;flex-direction:column;align-items:center;width:100%}.organogram-mindmap details>summary{position:relative;margin:0;padding:12px 0;justify-content:center;width:100%;font-size:10px}.organogram-mindmap details[open]>summary::after{content:"";position:absolute;left:50%;bottom:0;height:8px;border-left:1px solid #bfa9e1}
+.organogram-mindmap details>ul{position:relative;padding-top:0}.organogram-mindmap .organogram-position-copy small{font-size:10px;color:#888}.organogram-mindmap .organogram-empty{background:#fff;max-width:420px;margin:24px auto}.organogram-mindmap .organogram-branches>li{min-width:250px}
