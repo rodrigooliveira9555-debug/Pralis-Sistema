@@ -1578,9 +1578,9 @@ const groupIcons=[null,icons.groups,icons.launch,icons.records,icons.overview,ic
 const groupIconLabels=['Padrão do menu','Grupos','Carteira','Relógio','Painel','Pessoas','Configurações'];
 function persistGroups(){try{localStorage.setItem(groupStorage,JSON.stringify(financialGroups));return true}catch{alert('Não foi possível salvar neste navegador.');return false}}
 const oldShowTiGroup=showTiGroup;
-showTiGroup=function(key,title,icon){const view=document.getElementById('sector-view');view.querySelectorAll('.financial-expand-all').forEach(b=>b.remove());view.classList.remove('financial-groups');view.style.removeProperty('--menu-accent');if(key==='contas')return oldShowTiGroup(key,groupConfig.contas.title,icon);if(!groupConfig[key])return oldShowTiGroup(key,title,icon);showFinancialGroup(key,icon)};
+showTiGroup=function(key,title,icon){const view=document.getElementById('sector-view');view.querySelectorAll('.financial-expand-all,.view-alphabetize').forEach(b=>b.remove());view.classList.remove('financial-groups');view.style.removeProperty('--menu-accent');if(key==='contas')return oldShowTiGroup(key,groupConfig.contas.title,icon);if(!groupConfig[key])return oldShowTiGroup(key,title,icon);showFinancialGroup(key,icon)};
 function showFinancialGroup(key,originIcon){
- const cfg=groupConfig[key],view=document.getElementById('sector-view');view.querySelectorAll('.financial-expand-all').forEach(b=>b.remove());const box=document.getElementById('sector-content');
+ const cfg=groupConfig[key],view=document.getElementById('sector-view');view.querySelectorAll('.financial-expand-all,.view-alphabetize').forEach(b=>b.remove());const box=document.getElementById('sector-content');
  document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));view.classList.add('show','financial-groups');view.classList.remove('account-orange');view.style.setProperty('--menu-accent',cfg.color);view.style.setProperty('--panel-color',cfg.color);
  const panel=view.querySelector('.panel');panel.style.setProperty('--panel-color',cfg.color);panel.style.setProperty('--panel-text',key==='vendas'?'#785600':key==='mercadorias'?'#12672e':key==='retiradas'?'#174ca1':'#9c1c1c');
  document.getElementById('sector-path').textContent='Configurações / TI / '+cfg.title;document.getElementById('crumb').textContent='Configurações / TI / '+cfg.title;
@@ -1592,7 +1592,7 @@ function showFinancialGroup(key,originIcon){
  function button(text,fn,cls='btn secondary'){const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=text;b.onclick=fn;return b}
  function ordered(pool){return [...pool].sort((a,b)=>Number(b.active!==false)-Number(a.active!==false)||(manual?0:a.name.localeCompare(b.name,'pt-BR',{numeric:true,sensitivity:'base'})))}
  function list(){setSectorBack(ti);box.replaceChildren();document.getElementById('sector-title').textContent=cfg.title;
- view.querySelectorAll('.financial-expand-all').forEach(b=>b.remove());
+ view.querySelectorAll('.financial-expand-all,.view-alphabetize').forEach(b=>b.remove());
  const shortcuts=view.querySelector('.shortcut-actions');
  for(const [label,path,open] of [['Expandir todos os grupos','m5 9 7 7 7-7',true],['Recolher todos os grupos','m5 15 7-7 7 7',false]]){const b=button('',()=>{mode='grouped';display.value=mode;if(open)financialGroups[key].forEach(g=>expanded.add(g.id));else expanded.clear();render()},'shortcut-circle financial-expand-all');b.title=label;b.setAttribute('aria-label',label);b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>';shortcuts.prepend(b)}
  const form=document.createElement('form');form.className='ti-group-form';const input=document.createElement('input');input.placeholder='Nome do grupo';input.setAttribute('aria-label','Nome do grupo');input.maxLength=120;input.required=true;
@@ -1600,7 +1600,7 @@ function showFinancialGroup(key,originIcon){
  const toolbar=document.createElement('div');toolbar.className='financial-list-controls';
  const sort=createAlphabetizeButton(()=>{manual=false;localStorage.setItem('cicluz-'+key+'-sort','name');render()});
  const display=document.createElement('select');display.className='account-sort';display.setAttribute('aria-label','Exibição');display.add(new Option('Lista completa','complete'));display.add(new Option('Grupos e subgrupos','grouped'));display.value=mode;display.onchange=()=>{mode=display.value;localStorage.setItem('cicluz-'+key+'-display',mode);render()};
- const search=document.createElement('input');search.type='search';search.className='account-sort';search.placeholder='Buscar grupo ou subgrupo';search.setAttribute('aria-label',search.placeholder);search.value=query;search.oninput=()=>{query=search.value;render()};toolbar.append(sort,display,search);box.append(toolbar);
+ const search=document.createElement('input');search.type='search';search.className='account-sort';search.placeholder='Buscar grupo ou subgrupo';search.setAttribute('aria-label',search.placeholder);search.value=query;search.oninput=()=>{query=search.value;render()};mountAlphabetizeButton(view,sort);toolbar.append(display,search);box.append(toolbar);
  const summary=document.createElement('p');summary.className='financial-list-summary';box.append(summary);const grid=document.createElement('div');grid.className='record-grid financial-list';box.append(grid);
  function render(){grid.replaceChildren();let shown=0;const q=normalized(query);let total=0;const groups=financialGroups[key]||[];for(const g of groups)total+=g.children.length+((g.directEntry||!g.children.length)?1:0);
  if(mode==='complete'){
@@ -1626,7 +1626,7 @@ function showFinancialGroup(key,originIcon){
  row.append(handle,badge,name,state,arrow,actions);row.onclick=e=>{if(e.target.closest('button,.account-move'))return;if(!actions.hidden){actions.hidden=true;arrow.setAttribute('aria-expanded','false');return}edit(item,parent)};row.onkeydown=e=>{if(e.target===row&&e.key==='Enter'){e.preventDefault();edit(item,parent)}};return row}
  render();}
  function edit(item,parent,initial=''){
- box.replaceChildren();view.querySelectorAll('.financial-expand-all').forEach(b=>b.remove());setSectorBack(list);document.getElementById('sector-title').textContent=parent?'Cadastro do subgrupo':'Cadastro do grupo';
+ box.replaceChildren();view.querySelectorAll('.financial-expand-all,.view-alphabetize').forEach(b=>b.remove());setSectorBack(list);document.getElementById('sector-title').textContent=parent?'Cadastro do subgrupo':'Cadastro do grupo';
  const form=document.createElement('form');form.className='form-fields account-editor';
  const field=(text,control)=>{const label=document.createElement('label');label.textContent=text;control.style.width='100%';label.append(control);form.append(label);return control};
  const name=field(parent?'Nome do subgrupo':'Nome do grupo',document.createElement('input'));name.required=true;name.maxLength=120;name.value=formatFinancialName(item?.name||initial);
@@ -1644,4 +1644,4 @@ function showFinancialGroup(key,originIcon){
  }
  list();
 }
-const baseOpenSection=openSection;openSection=function(...args){const v=document.getElementById('sector-view');v.querySelectorAll('.financial-expand-all').forEach(b=>b.remove());v.classList.remove('financial-groups');v.style.removeProperty('--menu-accent');v.style.removeProperty('--panel-color');return baseOpenSection(...args)};
+const baseOpenSection=openSection;openSection=function(...args){const v=document.getElementById('sector-view');v.querySelectorAll('.financial-expand-all,.view-alphabetize').forEach(b=>b.remove());v.classList.remove('financial-groups');v.style.removeProperty('--menu-accent');v.style.removeProperty('--panel-color');return baseOpenSection(...args)};

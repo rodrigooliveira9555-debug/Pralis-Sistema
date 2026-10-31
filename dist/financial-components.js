@@ -8,4 +8,8 @@ function createFinancialActions({label,container,onEdit,onDelete}){
  arrow.onclick=e=>{e.preventDefault();e.stopPropagation();const opening=actions.hidden;container.querySelectorAll('.account-row-actions').forEach(x=>x.hidden=true);container.querySelectorAll('.account-action-toggle').forEach(x=>x.setAttribute('aria-expanded','false'));actions.hidden=!opening;arrow.setAttribute('aria-expanded',String(opening))};return {arrow,actions};
 }
 
-function createAlphabetizeButton(onSort){const b=document.createElement('button');b.type='button';b.className='shortcut-circle sort-az';b.textContent='A–Z';b.title='Organizar de A a Z';b.setAttribute('aria-label','Organizar de A a Z');b.onclick=e=>{e.preventDefault();e.stopPropagation();onSort()};return b}
+function createAlphabetizeButton(onSort){const b=document.createElement('button');b.type='button';b.className='shortcut-circle sort-az';b.textContent='A/Z';b.title='Organizar de A a Z';b.setAttribute('aria-label','Organizar de A a Z');b.onclick=e=>{e.preventDefault();e.stopPropagation();onSort()};return b}
+
+function mountAlphabetizeButton(view,button){view.querySelectorAll('.view-alphabetize').forEach(b=>b.remove());const head=view.querySelector('.head');if(!head)return;let tools=head.querySelector('.shortcut-actions');if(!tools){tools=document.createElement('div');tools.className='shortcut-actions';head.append(tools)}button.classList.add('view-alphabetize');tools.append(button);normalizeHeaderActions(view)}
+
+function normalizeHeaderActions(view){for(const tools of view.querySelectorAll('.head .shortcut-actions')){const original=[...tools.children];const rank=el=>{const label=el.getAttribute('aria-label')||el.title||'';return label==='Voltar'?0:label==='Fechar'?1:el.classList.contains('sort-az')?2:label.startsWith('Expandir')?3:label.startsWith('Recolher')?4:5};const next=[...original].sort((a,b)=>rank(a)-rank(b));if(next.some((el,i)=>el!==original[i]))next.forEach(el=>tools.append(el))}}
