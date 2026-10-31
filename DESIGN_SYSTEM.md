@@ -108,3 +108,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Cada condição de taxa inclui Grupo de Contas ao lado de Grupo de Despesa, com seleção dos cadastros existentes e persistência por condição.
 
 - Ajuste de rótulos: Tipos de Bandeiras Cartões e Tipos de Operadoras Cartões, sem de antes de Cartões. Campo das taxas: Transferências Automáticas — Grupo de Contas.
+
+- Classificação das taxas: célula Grupo de Despesa em vermelho; Transferências Automáticas — Grupo de Contas em laranja, incluindo fundo claro e borda do seletor.
