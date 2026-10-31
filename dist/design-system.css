@@ -213,3 +213,6 @@ body .view .shortcut-actions .sort-az{border-color:currentColor!important;opacit
 #sector-view.financial-groups.financial-hierarchy .account-row-actions{flex-wrap:wrap}
 @media(max-width:560px){#sector-view.financial-groups.financial-hierarchy .account-list-row{gap:5px}#sector-view.financial-groups.financial-hierarchy .account-list-state{display:none}#sector-view.financial-groups.financial-hierarchy .account-list-row:has(.account-row-actions:not([hidden])){flex-wrap:wrap}#sector-view.financial-groups.financial-hierarchy .account-row-actions{flex-basis:100%;justify-content:flex-end}}
 #sector-view.financial-groups.financial-hierarchy .account-editor [hidden]{display:none!important}
+
+/* Shared dimensions for Save and Cancel across all forms. */
+body button.standard-form-action{box-sizing:border-box;width:112px!important;min-width:112px!important;max-width:112px!important;height:40px!important;min-height:40px!important;flex:0 0 112px!important;padding:8px 10px!important;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.25}
