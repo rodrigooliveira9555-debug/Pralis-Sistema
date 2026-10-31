@@ -99,3 +99,8 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 .location-row .location-name{min-width:0;font-weight:500;overflow-wrap:anywhere}
 .location-row .location-icon{width:30px;height:30px}
 .location-dialog .location-preview-card{min-height:64px;border-color:color-mix(in srgb,var(--node-color) 18%,white)}
+
+/* One solid add-button treatment for group and location trees. */
+#sector-view .tree-add-solid,.location-tree .tree-add-solid{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;width:auto;min-width:0;flex-basis:auto;padding:10px 14px!important;border:1px solid var(--node-color,var(--menu-accent,#7c3aed))!important;border-radius:9px!important;background:var(--node-color,var(--menu-accent,#7c3aed))!important;color:#fff!important;font:600 12px Montserrat,system-ui,sans-serif;cursor:pointer}
+#sector-view .tree-add-solid:hover{filter:brightness(.94)}
+#sector-view .tree-add-solid:focus-visible{outline:2px solid var(--node-color,var(--menu-accent,#7c3aed));outline-offset:3px}
