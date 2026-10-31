@@ -124,3 +124,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Taxas mantém destaque vermelho no hover, ativação e foco dos campos; campo Contas conserva sua identificação laranja.
 
 - Quadro de taxas: alças à esquerda nas bandeiras, ordem salva por operadora; cabeçalho com A/Z, expandir todas e recolher todas. Arraste contínuo e setas do teclado.
+
+- Ordem dos cartões usa identificador estável do destino, independente de mudanças nos rótulos. Reconhecer rótulos anteriores e manter novos itens após os já ordenados.
