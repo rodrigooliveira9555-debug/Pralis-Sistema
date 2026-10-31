@@ -164,3 +164,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 
 - Regra central formatSystemName: iniciais maiúsculas em nomes; artigos, preposições e conjunções internos em minúsculas (de, da, do, dos, e etc.). Preservar siglas e códigos. Usar a mesma função em novos campos e cadastros; não aplicar a descrições livres, senhas, URLs, e-mails ou identificadores.
 - Cargos têm Nome e Nome reduzido opcional, sem limite arbitrário ainda não definido. A lista prioriza o reduzido e pesquisa ambos; mantém o nome completo e identificadores.
+
+- Nome reduzido do cargo é preenchido automaticamente com o nome já cadastrado quando não houver personalização. Em novos cargos acompanha o Nome enquanto o usuário não editar o reduzido; edição manual prevalece e é preservada ao reabrir.
