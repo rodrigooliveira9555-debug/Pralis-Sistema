@@ -144,3 +144,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Botão + fica no fim da lista de áreas e de cada lista de filhos, acompanhando os novos itens para baixo.
 
 - Blocos da árvore padronizados com menus anteriores: borda 1px, raio 10px, preenchimento 12×14px, texto 12px, ícone 30px e mesma densidade em todos os níveis. Cadastro com largura máxima 760px.
+
+- Galeria dos quatro níveis reutiliza ícones de Cargos e do sistema, opções extras em Mais ícones e prévia imediata.
