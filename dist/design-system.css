@@ -270,3 +270,9 @@ body .account-action-toggle[aria-expanded=true] svg{transform:rotate(180deg)}
 /* Sticky headers must not sit inside an overflow:hidden scroll ancestor. */
 .view>.panel{overflow:clip}.view>.panel>.head{position:sticky;top:var(--app-header-height,74px);z-index:4;border-radius:10px 10px 0 0;background-color:var(--panel-color,#f3edff)}
 .side>.brand{position:sticky;top:0;z-index:12;background:#fff}.side>.menu-toggle{z-index:14}.dark-theme .side>.brand{background:#222128}
+/* Scroll content, never move the header before it sticks. */
+body:has(.view.show>.panel) .main{padding-bottom:0}
+.view.show>.panel{display:flex;flex-direction:column;max-height:calc(100dvh - var(--app-header-height,76px) - 40px);overflow:hidden}
+.view.show>.panel>.head{position:relative;top:auto;flex:none;z-index:4}
+.view.show>.panel>.content{min-height:0;overflow:auto;overscroll-behavior:contain;flex:1}
+.view>.panel>.head{flex-wrap:wrap}.fixed-header-tools{flex:0 0 100%;min-width:0;display:flex;flex-wrap:wrap;gap:8px}.fixed-header-tools[hidden]{display:none!important}.fixed-header-tools .jobs-toolbar,.fixed-header-tools .financial-list-controls,.fixed-header-tools .location-toolbar{width:100%;margin:0;display:flex;flex-wrap:wrap;gap:8px}.fixed-header-tools input{min-width:100px;flex:1}.shortcut-actions>#jobs-add,.shortcut-actions>.tree-add-solid,.shortcut-actions>.btn{width:auto;min-height:32px;margin:0;padding:6px 10px;border-radius:16px;font-size:11px;white-space:nowrap}
