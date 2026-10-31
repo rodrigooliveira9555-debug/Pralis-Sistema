@@ -267,3 +267,6 @@ body .account-action-toggle[aria-expanded=true] svg{transform:rotate(180deg)}
 
 /* Keep navigation and screen headers visible while content scrolls. */
 /* Preserve the approved sidebar layout and its scroll container. The existing .top header already stays fixed during page scrolling. */.most-used-icons{margin:10px 0}.most-used-icons>small{display:block;font-size:11px;margin-bottom:6px}.most-used-icons[hidden]{display:none!important}
+/* Sticky headers must not sit inside an overflow:hidden scroll ancestor. */
+.view>.panel{overflow:clip}.view>.panel>.head{position:sticky;top:var(--app-header-height,74px);z-index:4;border-radius:10px 10px 0 0;background-color:var(--panel-color,#f3edff)}
+.side>.brand{position:sticky;top:0;z-index:12;background:#fff}.side>.menu-toggle{z-index:14}.dark-theme .side>.brand{background:#222128}

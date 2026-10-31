@@ -176,3 +176,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Mais usados: até seis ícones por frequência de seleção, compartilhados entre seletores neste navegador; não preencher com sugestões antes do uso. Ícones excluídos saem dessa faixa. Cabeçalho lateral/marca e cabeçalhos de tela permanecem visíveis durante rolagem; somente opções laterais rolam.
 
 - Correção de navegação: manter layout original da barra lateral e seu contêiner de rolagem; não aplicar flex à .side (o botão sticky de recolhimento é um filho independente). Cabeçalho principal .top já é sticky. Não deslocar cabeçalhos internos com top fixo de 78px.
+
+- Cabeçalhos internos sticky abaixo da altura real do cabeçalho principal, medida por ResizeObserver. Usar overflow:clip no painel para não criar ancestral de rolagem que impeça sticky. Marca lateral sticky sem mudar display da lateral.
