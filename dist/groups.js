@@ -1652,7 +1652,7 @@ function showFinancialGroup(key,originIcon,editId){
  let readOperatorFees=()=>null;
  if(key==='operadoras'){
  const feePanel=document.createElement('section');feePanel.className='operator-fees';
- const title=document.createElement('h3');title.textContent='Taxas por bandeira';feePanel.append(title);
+ const title=document.createElement('h3');const feeIcon=document.createElement('span');feeIcon.className='fee-heading-icon';feeIcon.setAttribute('aria-hidden','true');feeIcon.innerHTML='<svg viewBox="0 0 24 24">'+dollar+'</svg><svg viewBox="0 0 24 24">'+moneyIcons[2]+'</svg>';const feeTitle=document.createElement('span');feeTitle.textContent='Taxas por bandeira';title.append(feeIcon,feeTitle);feePanel.append(title);
  const help=document.createElement('p');help.textContent='Configure as condições do seu contrato. Campos vazios significam não informado; zero significa isento. Adicione outra vigência para preservar o histórico. As alterações são salvas junto com a operadora, neste navegador.';feePanel.append(help);
  const search=document.createElement('input');search.type='search';search.placeholder='Buscar bandeira nas taxas';search.setAttribute('aria-label',search.placeholder);feePanel.append(search);
  const groups=[];const readers=[];

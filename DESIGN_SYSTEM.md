@@ -94,3 +94,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Cada condição de taxa deve selecionar um Grupo de Despesa (ou subgrupo) existente. Vínculo salvo por ID; opções inativas existentes são preservadas. O quadro configura a classificação, sem gerar lançamentos automaticamente.
 
 - Taxas: cabeçalho vermelho forte, interior vermelho claro; ações + Adicionar vigência/condição e − Remover vigência/condição lado a lado, vermelhas e alinhadas por condição.
+
+- Cabeçalho Taxas por bandeira reutiliza os SVG de cifrão e menos dos menus, círculo 38px e título Montserrat 16px.
