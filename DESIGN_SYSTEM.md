@@ -84,3 +84,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - BK Bank: substituir a fotografia JPG com fundo cinza por SVG sem fundo, contendo somente a marca. Manter respiro dentro do círculo amarelo. Arquivo: assets/payment-marks/bkbank-transparent.svg.
 
 - Dinheiro usa apenas cifrão amarelo em fundo branco, tanto na lista quanto na prévia do cadastro.
+
+- Cadastro de Operadoras oferece todas as logomarcas disponíveis como seleção explícita, independente do nome, com prévia e escolha persistida.
