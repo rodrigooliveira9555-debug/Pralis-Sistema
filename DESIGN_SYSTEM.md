@@ -163,6 +163,8 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Controle global do menu percorre níveis em cliques sucessivos: abrir seções, abrir todos os menus, fechar todos os menus, fechar seções. A seta só inverte ao terminar a expansão/retração completa.
 
 - Regra central formatSystemName: iniciais maiúsculas em nomes; artigos, preposições e conjunções internos em minúsculas (de, da, do, dos, e etc.). Preservar siglas e códigos. Usar a mesma função em novos campos e cadastros; não aplicar a descrições livres, senhas, URLs, e-mails ou identificadores.
-- Cargos têm Nome e Nome reduzido opcional, sem limite arbitrário ainda não definido. A lista prioriza o reduzido e pesquisa ambos; mantém o nome completo e identificadores.
+- Cargos têm Nome e Nome reduzido opcional, com máximo de 15 caracteres, incluindo espaços. A lista prioriza o reduzido e pesquisa ambos; mantém o nome completo e identificadores.
 
 - Nome reduzido do cargo é preenchido automaticamente com o nome já cadastrado quando não houver personalização. Em novos cargos acompanha o Nome enquanto o usuário não editar o reduzido; edição manual prevalece e é preservada ao reabrir.
+
+- Biblioteca compartilhada CicluzBakeryIcons: 48 símbolos SVG de panificação, confeitaria, salgados, mercearia, equipamentos, utensílios e gestão. Disponível em Cargos, Contas, grupos financeiros; os níveis de localização atualmente usam identificador de três caracteres. Acrescentar sem mudar IDs ou índices anteriores; preservar marcas bancárias.

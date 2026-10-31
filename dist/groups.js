@@ -1582,6 +1582,7 @@ if(!localStorage.getItem('cicluz-bandeiras-import-v1')){for(const seed of groupS
 if(!localStorage.getItem('cicluz-operadoras-import-v1')){for(const seed of groupSeed.operadoras){if(!financialGroups.operadoras.some(g=>g.id===seed.id||normalized(g.name)===normalized(seed.name)))financialGroups.operadoras.push(structuredClone(seed))}try{localStorage.setItem(groupStorage,JSON.stringify(financialGroups));localStorage.setItem('cicluz-operadoras-import-v1','1')}catch{}}
 const groupIcons=[null,icons.groups,icons.launch,icons.records,icons.overview,icons.team,icons.settings];
 const groupIconLabels=['Padrão do menu','Grupos','Carteira','Relógio','Painel','Pessoas','Configurações'];
+window.CicluzBakeryIcons.forEach(item=>{groupIcons.push(item.path);groupIconLabels.push(item.label)});
 function persistGroups(){try{localStorage.setItem(groupStorage,JSON.stringify(financialGroups));return true}catch{alert('Não foi possível salvar neste navegador.');return false}}
 const oldShowTiGroup=showTiGroup;
 showTiGroup=function(key,title,icon){const view=document.getElementById('sector-view');view.querySelectorAll('.financial-expand-all,.view-alphabetize,.location-tool').forEach(b=>b.remove());view.classList.remove('financial-groups');view.style.removeProperty('--menu-accent');if(key==='contas')return oldShowTiGroup(key,groupConfig.contas.title,icon);if(!groupConfig[key])return oldShowTiGroup(key,title,icon);showFinancialGroup(key,icon)};
