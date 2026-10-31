@@ -245,3 +245,16 @@ body .account-action-toggle[aria-expanded=true] svg{transform:rotate(180deg)}
 .organogram-mindmap details>ul{position:relative;padding-top:0}.organogram-mindmap .organogram-position-copy small{font-size:10px;color:#888}.organogram-mindmap .organogram-empty{background:#fff;max-width:420px;margin:24px auto}.organogram-mindmap .organogram-branches>li{min-width:250px}
 
 .nav-tree>.agenda-section-heading{box-sizing:border-box;margin:20px 0 0;padding:12px 10px 4px;border-top:1px solid #eeedf1;color:#a2a0aa;font:650 12px Montserrat,system-ui,sans-serif;letter-spacing:.4px}.dark-theme .nav-tree>.agenda-section-heading{color:#9896a1;border-color:#3b3942}.side.collapsed .nav-tree>.agenda-section-heading{display:none}
+.nav-tree.sidebar-sectioned>.overview-item::before,.nav-tree.sidebar-sectioned>details[data-menu-name^="Configuração"]::before{display:none}
+.nav-tree.sidebar-sectioned>.overview-item{margin-top:0!important}
+.nav-tree.sidebar-sectioned>details[data-menu-name^="Configuração"]{margin-top:0!important;padding-top:0;border-top:0}
+.nav-tree>.sidebar-section-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;border:0;border-top:1px solid #eeedf1;background:transparent;padding:12px 10px 5px;margin:14px 0 3px;color:#a2a0aa;font:650 12px Montserrat,system-ui,sans-serif;letter-spacing:.4px;cursor:pointer}
+.nav-tree>.sidebar-section-toggle:first-child{margin-top:0;border-top:0}
+.sidebar-section-toggle svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;transition:transform .15s}
+.sidebar-section-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
+.nav-tree>.sidebar-section-hidden{display:none!important}
+.side.collapsed .sidebar-section-toggle{display:none}
+.agenda-menu-item{--item-color:#7c3aed;--item-text:#5520ad}
+.agenda-menu-item .menu-icon-circle svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7}
+.agenda-empty{font-size:12px;color:#8c8499;padding:8px 12px}
+.dark-theme .sidebar-section-toggle{border-color:#3b3942;color:#9896a1}
