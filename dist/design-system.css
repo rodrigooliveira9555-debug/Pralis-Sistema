@@ -120,3 +120,5 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 #sector-view :is(.account-editor,.ti-group-form,.financial-list-controls) :is(input,select),.location-dialog :is(input,select){font-size:12px;font-weight:400;line-height:1.5}
 #sector-view .account-editor label,.location-dialog label{font-size:12px;font-weight:500;line-height:1.5}
 #sector-view .btn,.location-dialog .btn{font-size:12px;font-weight:600;line-height:1.5}
+
+#sector-view .location-toolbar{margin:0 0 16px;display:flex;align-items:center;gap:10px}
