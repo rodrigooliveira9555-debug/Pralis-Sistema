@@ -1534,5 +1534,98 @@
         }
       ]
     }
+  ],
+  "tipos-venda": [
+    {
+      "id": "sale-type-0",
+      "name": "I - DINHEIRO (VND)",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "sale-type-1",
+      "name": "D - DEBITO (VND/TRAN)",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "sale-type-2",
+      "name": "C - CREDITO (VND/TRANS)",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "sale-type-3",
+      "name": "V - VOUCHER (VND/TRANS)",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "sale-type-4",
+      "name": "P - PIX (VND/TRANS)",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "sale-type-5",
+      "name": "R - CLIENTES (VND/TRANS)",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "sale-type-6",
+      "name": "E - COLABORADORES (VND/DES)",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "sale-type-7",
+      "name": "L - ALIMENTAÇÃO -66,6% (VND/DES)",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "sale-type-8",
+      "name": "F - ROUBO/FURTO (VND/DES)",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "sale-type-9",
+      "name": "O - SOCIOS/PROPRIETARIOS (VND/RET)",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "sale-type-10",
+      "name": "S - SOBRA/PERDA -66,6% (MER)",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "sale-type-11",
+      "name": "CREDIARIO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "sale-type-12",
+      "name": "P - PIX BANCO (VND/TRANS)",
+      "active": true,
+      "icon": 0,
+      "children": []
+    }
   ]
 }

@@ -65,3 +65,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Exceção confirmada: o menu lateral principal e seus cabeçalhos não exibem A/Z. Preservar as alças de arraste; A/Z permanece nos cabeçalhos das telas internas e cadastros.
 
 - Arraste contínuo: permitir mover do topo ao fim em um único gesto, com rolagem automática nas bordas. Usar o controlador compartilhado `enableContinuousReorder`, mantendo rastreamento mesmo ao mudar o elemento de posição. Salvar ao soltar; cancelar restaura a ordem. Preservar hierarquia e ativos antes de inativos.
+
+- Novo grupo “Tipos de Venda”, amarelo, acessível no TI junto dos grupos financeiros. 13 itens recebidos em 31/10/2026, incluindo Pix e Pix Banco separados. Preservar códigos, referências entre parênteses e percentuais; não ativar regras de lançamento a partir desses textos. Usa componentes de Contas, inclusive chave ativo/inativo, inativos apagados, arraste contínuo e A/Z no cabeçalho depois de Voltar/Fechar.
