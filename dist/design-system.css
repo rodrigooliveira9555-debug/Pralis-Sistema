@@ -258,3 +258,7 @@ body .account-action-toggle[aria-expanded=true] svg{transform:rotate(180deg)}
 .agenda-menu-item .menu-icon-circle svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7}
 .agenda-empty{font-size:12px;color:#8c8499;padding:8px 12px}
 .dark-theme .sidebar-section-toggle{border-color:#3b3942;color:#9896a1}
+
+/* Shared gallery expansion: same down/up chevron as navigation. */
+.identity-advanced>summary{list-style:none;display:flex;align-items:center;gap:8px;cursor:pointer}.identity-advanced>summary::-webkit-details-marker{display:none}.identity-advanced>summary::after{content:"";width:18px;height:18px;margin-left:auto;background:currentColor;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m5 9 7 7 7-7' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;transform:none}.identity-advanced[open]>summary::after{transform:rotate(180deg)}.identity-mode-fields{display:grid;gap:10px}.financial-text-badge{font-size:12px;font-weight:650;display:inline-flex;align-items:center;justify-content:center}.location-icon svg,.account-icon-dot svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.identity-mode-fields [hidden],.identity-pick>[hidden],.location-sigla-field>[hidden],.account-field-group[hidden],.icon-choice[hidden],.account-icon-dot[hidden]{display:none!important}
