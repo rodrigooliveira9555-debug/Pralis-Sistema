@@ -251,3 +251,5 @@ Substitui a janela Gerenciar ícones: usar Mais ícones no próprio cadastro, co
 - Editar/Excluir nas ações laterais das listas e árvores: dois círculos38px, SVG18px branco. Editar herda acento do item/menu; Excluir fundo vermelho semântico e lixeira branca. Lixeira revelada na biblioteca também vermelha sólida/branca. Não alterar os fluxos ou confirmações.
 
 - Correção de escopo e formato: testar ações laterais somente em Cargos. Substituir círculos por dois blocos justapostos52px, preenchendo a altura interna da linha, sem padding/gap/raio próprio. Editar à esquerda na cor do módulo; Excluir à direita vermelho com lixeira branca. Borda externa da linha recorta os blocos. Outros cadastros mantêm as ações anteriores até avaliação do teste.
+
+- Busca online de ícones em Cargos: vocabulário pt-BR normalizado (acentos e funções de padaria/gestão) traduzido para termos da coleção externa Lucide. Resultados continuam vindo da API, sem simular busca local. Mensagens distinguem coleção sem correspondência de falha de conexão/download. Informar Lucide como origem para explicitar o alcance da busca.
