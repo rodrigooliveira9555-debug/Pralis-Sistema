@@ -1,0 +1,110 @@
+{
+  "elo": {
+    "src": "assets/payment-marks/elo.svg",
+    "source": "https://www.safrapay.com.br/data/files/D5/32/7F/A1/1DB3681021409F48D62EF9C2/ic-bandeira-elo.svg"
+  },
+  "amex": {
+    "src": "assets/payment-marks/amex.svg",
+    "source": "https://www.safrapay.com.br/data/files/BC/12/53/91/1DB3681021409F48D62EF9C2/ic-bandeira-amex.svg"
+  },
+  "hipercard": {
+    "src": "assets/payment-marks/hipercard.svg",
+    "source": "https://www.safrapay.com.br/data/files/ED/32/AF/B1/1DB3681021409F48D62EF9C2/ic-bandeira-hipercard.svg"
+  },
+  "pix": {
+    "src": "assets/payment-marks/pix.svg",
+    "source": "https://www.safrapay.com.br/data/files/AC/80/1F/23/AFCC681029D23C684F99F9C2/ic-bandeira-pix.svg"
+  },
+  "pluxee": {
+    "src": "assets/payment-marks/pluxee.svg",
+    "source": "https://www.safrapay.com.br/data/files/03/F2/6C/0A/3218E810A0953DD8D3F8F9C2/ic-bandeira-pluxee.svg"
+  },
+  "ben": {
+    "src": "assets/payment-marks/ben.svg",
+    "source": "https://www.safrapay.com.br/data/files/C2/22/CA/91/1DB3681021409F48D62EF9C2/ic-bandeira-ben.svg"
+  },
+  "cabal": {
+    "src": "assets/payment-marks/cabal.svg",
+    "source": "https://www.safrapay.com.br/data/files/CA/22/93/A1/1DB3681021409F48D62EF9C2/ic-bandeira-cabal.svg"
+  },
+  "up": {
+    "src": "assets/payment-marks/up.svg",
+    "source": "https://www.upbrasil.com/wp-content/uploads/2026/06/up-logo-novo.svg"
+  },
+  "alelo": {
+    "src": "assets/payment-marks/alelo.svg",
+    "source": "https://www.safrapay.com.br/data/files/AA/12/81/91/1DB3681021409F48D62EF9C2/ic-bandeira-alelo.svg"
+  },
+  "vr": {
+    "src": "assets/payment-marks/vr.svg",
+    "source": "https://www.safrapay.com.br/data/files/2E/62/7A/F1/1DB3681021409F48D62EF9C2/ic-bandeira-vr.svg"
+  },
+  "ticket": {
+    "src": "assets/payment-marks/ticket.svg",
+    "source": "https://www.safrapay.com.br/data/files/09/52/8D/D1/1DB3681021409F48D62EF9C2/ic-bandeira-ticket.svg"
+  },
+  "sodexo": {
+    "src": "assets/payment-marks/sodexo.webp",
+    "source": "https://www.sicredi.com.br/media/produtos/filer_public_thumbnails/filer_public/2023/09/12/sodexo-principais-bandeiras-maquina-de-cartoes-sicredi.jpg__400x250_subsampling-2.webp"
+  },
+  "greencard": {
+    "src": "assets/payment-marks/greencard.webp",
+    "source": "https://www.sicredi.com.br/media/produtos/filer_public_thumbnails/filer_public/2023/09/12/greencard-principais-bandeiras-maquina-de-cartoes-sicredi.jpg__400x250_subsampling-2.webp"
+  },
+  "safrapay": {
+    "src": "assets/payment-marks/safrapay.svg",
+    "source": "https://www.safrapay.com.br/lumis-theme/br/com/safrapay/theme/safrapay/images/logo_safrapay_darkblue.svg"
+  },
+  "rede": {
+    "src": "assets/payment-marks/rede.png",
+    "source": "https://www.itau.com.br/media/dam/m/7e4cb707f49ed886/original/rede-nl-logo-rede-amarelo-1221-95x29.png"
+  },
+  "sumup": {
+    "src": "assets/payment-marks/sumup.png",
+    "source": "https://static.sumup.com/favicons/favicon-96x96.png"
+  },
+  "ton": {
+    "src": "assets/payment-marks/ton.svg",
+    "source": "https://martech-web-cdn.stone.com.br/incoming/ton/a275c9e3-2f24-4ea3-8477-69d5d6daebfe/logo-ton-rebranding-verde-escuro.svg?w=67&h=67"
+  },
+  "infinitepay": {
+    "src": "assets/payment-marks/infinitepay.ico",
+    "source": "https://cdn.prod.website-files.com/65c1399ac999a342139b5069/68ffec01a2a93f34ebbbf66f_faviconV2.ico"
+  },
+  "visa": {
+    "src": "assets/banks/visa.png",
+    "source": "Previously verified project asset"
+  },
+  "mastercard": {
+    "src": "assets/banks/mastercard.png",
+    "source": "Previously verified project asset"
+  },
+  "stone": {
+    "src": "assets/banks/stone.png",
+    "source": "Previously verified project asset"
+  },
+  "getnet": {
+    "src": "assets/banks/getnet.png",
+    "source": "Previously verified project asset"
+  },
+  "cielo": {
+    "src": "assets/banks/cielo.png",
+    "source": "Previously verified project asset"
+  },
+  "pagbank": {
+    "src": "assets/banks/pagbank.ico",
+    "source": "Previously verified project asset"
+  },
+  "mercadopago": {
+    "src": "assets/banks/mercadopago.png",
+    "source": "Previously verified project asset"
+  },
+  "bkbank": {
+    "src": "assets/payment-marks/bkbank.jpg",
+    "source": "https://attachments.gupy.io/production/companies/63397/career/146596/images/2023-03-31_12-33_companyLogoUrl.jpg"
+  },
+  "maestro": {
+    "src": "assets/payment-marks/maestro.svg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Maestro_logo.svg"
+  }
+}

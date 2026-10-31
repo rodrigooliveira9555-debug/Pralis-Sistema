@@ -71,3 +71,8 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Famílias de venda: “VND - Tipos de Venda”, “VND - Tipos de Bandeiras” e “VND - Tipos de Operadoras”, em amarelo e com os mesmos componentes. Os dois últimos começam sem registros, aguardando nomes informados pelo usuário.
 
 - Tipos de Bandeiras: 41 itens importados da lista do usuário, como registros individuais (marca e modalidade). Manter grafia e combinações recebidas, sem consolidar modalidades ou substituir marcas.
+
+- Bandeiras vinculam-se a um Tipo de Venda pelo ID persistido, selecionado no cadastro; seleção obrigatória ao salvar, sem inferir vínculos. Atalho abre o tipo vinculado. Não confundir o vínculo com texto digitado.
+- Operadoras: Stone, Getnet, Cielo, PagBank e SafraPay solicitadas; Rede, Mercado Pago, SumUp, Ton e InfinitePay verificadas em fontes oficiais.
+- Logomarcas reais mantêm cores originais, fundo branco e contorno amarelo; utilizar assets locais contidos. Origem dos arquivos em payment-mark-sources.json. Não substituir logomarca desconhecida por marca parecida.
+- Nomes de menus no plural com “de”: CNT - Grupos de Contas e equivalentes, preservando códigos.

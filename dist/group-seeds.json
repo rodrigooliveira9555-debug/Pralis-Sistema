@@ -1917,5 +1917,76 @@
       "children": []
     }
   ],
-  "operadoras": []
+  "operadoras": [
+    {
+      "id": "operator-0",
+      "name": "Stone",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "operator-1",
+      "name": "Getnet",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "operator-2",
+      "name": "Cielo",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "operator-3",
+      "name": "PagBank",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "operator-4",
+      "name": "SafraPay",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "operator-5",
+      "name": "Rede",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "operator-6",
+      "name": "Mercado Pago",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "operator-7",
+      "name": "SumUp",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "operator-8",
+      "name": "Ton",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "operator-9",
+      "name": "InfinitePay",
+      "active": true,
+      "icon": 0,
+      "children": []
+    }
+  ]
 }
