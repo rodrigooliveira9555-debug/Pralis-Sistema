@@ -1660,7 +1660,8 @@ function showFinancialGroup(key,originIcon,editId){
  const section=document.createElement('details');section.className='operator-fee-brand';const summary=document.createElement('summary');summary.textContent=formatName(brand.name)+(brand.active===false?' · Inativa':'');section.append(summary);groups.push({section,name:normalized(brand.name)});
  const linked=financialGroups['tipos-venda'].find(t=>t.id===brand.saleTypeId);const context=document.createElement('p');context.textContent='Tipo de Venda: '+(linked?formatName(linked.name):'Não vinculado');section.append(context);
  const rules=document.createElement('div');section.append(rules);const rows=[];
- function addRule(data={}){
+ const emptyAdd=button('+ Adicionar vigência/condição',()=>{addRule();section.open=true},'btn fee-action');section.append(emptyAdd);emptyAdd.hidden=!!item?.fees?.brands?.[brand.id]?.length;
+ function addRule(data={}){emptyAdd.hidden=true;
  const row=document.createElement('div');row.className='operator-fee-rule';const controls={};
  const input=(label,key,type='text',options)=>{const wrap=document.createElement('label');wrap.textContent=label;const c=document.createElement(options?'select':'input');if(options)for(const v of options)c.add(new Option(v,v));else c.type=type;c.value=data[key]??'';if(type==='number'){c.min='0';c.step=['from','to','days'].includes(key)?'1':'0.0001';if(['mdr','advance'].includes(key))c.max='100'}wrap.append(c);row.append(wrap);controls[key]=c;return c};
  input('Início da vigência','start','date');input('Fim da vigência (opcional)','end','date');
@@ -1671,11 +1672,11 @@ function showFinancialGroup(key,originIcon,editId){
  for(const group of financialGroups.despesas){for(const entry of [group,...group.children]){const selected=entry.id===data.expenseId;if((group.active===false||entry.active===false)&&!selected)continue;const label='DES - '+formatName(group.name)+(entry===group?'':' / '+formatName(entry.name));expense.add(new Option(label+((group.active===false||entry.active===false)?' (Inativo)':''),entry.id));if(selected)expenseFound=true}}
  if(data.expenseId&&!expenseFound)expense.add(new Option('Grupo indisponível — selecione outro',data.expenseId));expense.value=data.expenseId||'';controls.expenseId=expense;expenseWrap.append(expense);row.append(expenseWrap);
  
- const remove=button('Remover condição',()=>{if(!confirm('Remover esta condição? A alteração será aplicada ao salvar a operadora.'))return;row.remove();rows.splice(rows.indexOf(entry),1)},'btn secondary');row.append(remove);
+ const remove=button('− Remover vigência/condição',()=>{if(!confirm('Remover esta condição? A alteração será aplicada ao salvar a operadora.'))return;row.remove();rows.splice(rows.indexOf(entry),1);emptyAdd.hidden=rows.length>0},'btn fee-action');const ruleActions=document.createElement('div');ruleActions.className='fee-rule-actions';ruleActions.append(button('+ Adicionar vigência/condição',()=>{addRule();section.open=true},'btn fee-action'),remove);row.append(ruleActions);
  const entry={row,read:()=>Object.fromEntries(Object.entries(controls).map(([k,c])=>[k,c.value])),controls};rows.push(entry);rules.append(row);
  }
  for(const rule of item?.fees?.brands?.[brand.id]||[])addRule(rule);
- section.append(button('+ Adicionar vigência / condição',()=>{addRule();section.open=true},'btn secondary'));feePanel.append(section);readers.push({brand,rows});
+ feePanel.append(section);readers.push({brand,rows});
  }
  search.oninput=()=>groups.forEach(g=>g.section.hidden=!g.name.includes(normalized(search.value)));
  const overhead=document.createElement('label');overhead.textContent='Custos fixos da operadora (aluguel, mensalidade e condições)';const notes=document.createElement('textarea');notes.value=item?.fees?.overhead||'';overhead.append(notes);feePanel.append(overhead);form.append(feePanel);
