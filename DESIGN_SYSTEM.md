@@ -114,3 +114,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Campos de classificação têm ícones originais dos menus: cifrão/menos vermelho para Despesa e cifrão/mais-menos laranja para Contas.
 
 - Classificação das taxas: interior das células e seletores branco; diferenciação apenas pelas bordas e ícones vermelhos/laranjas.
+
+- Correção definitiva da classificação: quadro externo com fundo claro vermelho/laranja, seletor interno branco; círculo do ícone maciço na cor forte do menu e símbolo branco. Substitui a orientação anterior de exterior branco.
