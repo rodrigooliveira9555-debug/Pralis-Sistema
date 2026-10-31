@@ -91,3 +91,11 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 .location-dialog-tools{display:flex;align-items:center;gap:8px}.location-dialog-tools .shortcut-circle{width:32px;height:32px;padding:7px;border:1px solid #d8c7f7;border-radius:50%;display:flex;align-items:center;justify-content:center;background:transparent}.location-dialog-tools svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 
 .location-color-picker{border:1px solid #e5ddf0;border-radius:8px;background:#fff;padding:10px 12px}.location-color-picker summary{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px}.location-color-chip{width:22px;height:22px;border:1px solid #0002;border-radius:50%}.location-color-picker[open] .location-palette{margin-top:14px}.location-preview-card{min-height:62px;padding:12px 14px;border:1px solid color-mix(in srgb,var(--node-color) 25%,white);border-radius:10px;background:#fff;box-sizing:border-box;gap:10px;color:#111}.location-preview-handle{color:#9b9490;font-size:20px;line-height:1;width:18px}.location-preview-name{font-size:12px;flex:1}.location-preview-arrow{font-size:22px;color:var(--node-color)}
+
+/* Shared compact tree rhythm, matching the sales group reference. */
+.location-row{min-height:64px;margin:0 0 10px;padding:12px 14px;flex-wrap:nowrap;gap:10px}
+.location-children{margin-left:28px;padding-left:0;border-left:0}
+.location-row .location-expand{flex:none;width:16px;padding:0;font-size:20px}
+.location-row .location-name{min-width:0;font-weight:500;overflow-wrap:anywhere}
+.location-row .location-icon{width:30px;height:30px}
+.location-dialog .location-preview-card{min-height:64px;border-color:color-mix(in srgb,var(--node-color) 18%,white)}

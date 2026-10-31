@@ -1583,10 +1583,10 @@ const groupIcons=[null,icons.groups,icons.launch,icons.records,icons.overview,ic
 const groupIconLabels=['Padrão do menu','Grupos','Carteira','Relógio','Painel','Pessoas','Configurações'];
 function persistGroups(){try{localStorage.setItem(groupStorage,JSON.stringify(financialGroups));return true}catch{alert('Não foi possível salvar neste navegador.');return false}}
 const oldShowTiGroup=showTiGroup;
-showTiGroup=function(key,title,icon){const view=document.getElementById('sector-view');view.querySelectorAll('.financial-expand-all,.view-alphabetize').forEach(b=>b.remove());view.classList.remove('financial-groups');view.style.removeProperty('--menu-accent');if(key==='contas')return oldShowTiGroup(key,groupConfig.contas.title,icon);if(!groupConfig[key])return oldShowTiGroup(key,title,icon);showFinancialGroup(key,icon)};
+showTiGroup=function(key,title,icon){const view=document.getElementById('sector-view');view.querySelectorAll('.financial-expand-all,.view-alphabetize,.location-tool').forEach(b=>b.remove());view.classList.remove('financial-groups');view.style.removeProperty('--menu-accent');if(key==='contas')return oldShowTiGroup(key,groupConfig.contas.title,icon);if(!groupConfig[key])return oldShowTiGroup(key,title,icon);showFinancialGroup(key,icon)};
 function showFinancialGroup(key,originIcon,editId){
  const formatName=value=>key==='tipos-venda'?formatFinancialName(value).replace(/^([a-z])(?= -)/i,m=>m.toUpperCase()).replace(/\([^)]*\)/g,m=>m.toUpperCase()):formatFinancialName(value);
- const cfg=groupConfig[key],view=document.getElementById('sector-view');view.querySelectorAll('.financial-expand-all,.view-alphabetize').forEach(b=>b.remove());const box=document.getElementById('sector-content');
+ const cfg=groupConfig[key],view=document.getElementById('sector-view');view.querySelectorAll('.financial-expand-all,.view-alphabetize,.location-tool').forEach(b=>b.remove());const box=document.getElementById('sector-content');
  document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));view.classList.add('show','financial-groups');view.classList.remove('account-orange');view.style.setProperty('--menu-accent',cfg.color);view.style.setProperty('--panel-color',cfg.color);
  const panel=view.querySelector('.panel');panel.style.setProperty('--panel-color',cfg.color);panel.style.setProperty('--panel-text',(key==='vendas'||cfg.flat)?'#785600':key==='mercadorias'?'#12672e':key==='retiradas'?'#174ca1':'#9c1c1c');
  document.getElementById('sector-path').textContent='Configurações / Diretor de Operação / '+cfg.title;document.getElementById('crumb').textContent='Configurações / Diretor de Operação / '+cfg.title;
@@ -1599,7 +1599,7 @@ function showFinancialGroup(key,originIcon,editId){
  function button(text,fn,cls='btn secondary'){const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=text;b.onclick=fn;return b}
  function ordered(pool){return [...pool].sort((a,b)=>Number(b.active!==false)-Number(a.active!==false)||(manual?0:a.name.localeCompare(b.name,'pt-BR',{numeric:true,sensitivity:'base'})))}
  function list(){setSectorBack(ti);box.replaceChildren();document.getElementById('sector-title').textContent=cfg.title;
- view.querySelectorAll('.financial-expand-all,.view-alphabetize').forEach(b=>b.remove());
+ view.querySelectorAll('.financial-expand-all,.view-alphabetize,.location-tool').forEach(b=>b.remove());
  const shortcuts=view.querySelector('.shortcut-actions');
  for(const [label,path,open] of (cfg.flat?[]:[['Expandir todos os grupos','m5 9 7 7 7-7',true],['Recolher todos os grupos','m5 15 7-7 7 7',false]])){const b=button('',()=>{mode='grouped';display.value=mode;if(open)financialGroups[key].forEach(g=>expanded.add(g.id));else expanded.clear();render()},'shortcut-circle financial-expand-all');b.title=label;b.setAttribute('aria-label',label);b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>';shortcuts.prepend(b)}
  const form=document.createElement('form');form.className='ti-group-form';const input=document.createElement('input');input.placeholder=cfg.flat?(key==='tipos-venda'?'Nome do Tipo de Venda':key==='bandeiras'?'Nome da Bandeira':'Nome da Operadora'):'Nome do grupo';input.setAttribute('aria-label',cfg.flat?(key==='tipos-venda'?'Nome do Tipo de Venda':key==='bandeiras'?'Nome da Bandeira':'Nome da Operadora'):'Nome do grupo');input.maxLength=120;input.required=true;
@@ -1634,7 +1634,7 @@ function showFinancialGroup(key,originIcon,editId){
  row.append(handle,badge,name,state,arrow,actions);row.onclick=e=>{if(e.target.closest('button,.account-move'))return;if(!actions.hidden){actions.hidden=true;arrow.setAttribute('aria-expanded','false');return}edit(item,parent)};row.onkeydown=e=>{if(e.target===row&&e.key==='Enter'){e.preventDefault();edit(item,parent)}};return row}
  render();}
  function edit(item,parent,initial=''){
- box.replaceChildren();view.querySelectorAll('.financial-expand-all,.view-alphabetize').forEach(b=>b.remove());setSectorBack(list);document.getElementById('sector-title').textContent=cfg.flat?'Cadastro de '+cfg.singular:parent?'Cadastro do subgrupo':'Cadastro do grupo';
+ box.replaceChildren();view.querySelectorAll('.financial-expand-all,.view-alphabetize,.location-tool').forEach(b=>b.remove());setSectorBack(list);document.getElementById('sector-title').textContent=cfg.flat?'Cadastro de '+cfg.singular:parent?'Cadastro do subgrupo':'Cadastro do grupo';
  const form=document.createElement('form');form.className='form-fields account-editor';
  const field=(text,control)=>{const label=document.createElement('label');label.textContent=text;control.style.width='100%';label.append(control);form.append(label);return control};
  const name=field(cfg.flat?(key==='tipos-venda'?'Nome do Tipo de Venda':key==='bandeiras'?'Nome da Bandeira':'Nome da Operadora'):parent?'Nome do subgrupo':'Nome do grupo',document.createElement('input'));name.required=true;name.maxLength=120;name.value=formatName(item?.name||initial);
@@ -1690,4 +1690,4 @@ function showFinancialGroup(key,originIcon,editId){
  }
  const selected=editId&&(financialGroups[key]||[]).find(t=>t.id===editId);if(selected)edit(selected,null);else list();
 }
-const baseOpenSection=openSection;openSection=function(...args){const v=document.getElementById('sector-view');v.querySelectorAll('.financial-expand-all,.view-alphabetize').forEach(b=>b.remove());v.classList.remove('financial-groups');v.style.removeProperty('--menu-accent');v.style.removeProperty('--panel-color');return baseOpenSection(...args)};
+const baseOpenSection=openSection;openSection=function(...args){const v=document.getElementById('sector-view');v.querySelectorAll('.financial-expand-all,.view-alphabetize,.location-tool').forEach(b=>b.remove());v.classList.remove('financial-groups');v.style.removeProperty('--menu-accent');v.style.removeProperty('--panel-color');return baseOpenSection(...args)};
