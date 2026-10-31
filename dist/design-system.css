@@ -186,3 +186,10 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 .shared-color-history{display:block;margin:10px 0;font:12px Montserrat,system-ui,sans-serif}.shared-color-history>span{display:block;margin-bottom:8px}.shared-color-history>div{display:flex;flex-wrap:wrap;gap:7px}.shared-color-history button{width:24px;height:24px;min-width:24px;padding:0;border:1px solid #0003;border-radius:50%;cursor:pointer}.shared-color-history small{color:#777;font-size:11px}
 
 .location-dialog .location-sigla-field input{text-transform:none}
+
+/* Header control rings exactly match the central symbol in every module. */
+body .shortcut-actions .shortcut-circle,
+body .head .shortcut-circle,
+body .location-dialog-tools .shortcut-circle,
+body .fee-header-actions .shortcut-circle,
+body .view .shortcut-actions .sort-az{border-color:currentColor!important;opacity:1}
