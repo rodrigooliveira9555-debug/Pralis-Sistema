@@ -3,7 +3,7 @@ window.CicluzBakeryIcons.push(...[{"id": "pessoas-pessoa", "label": "Pessoa indi
 
 window.addEventListener('DOMContentLoaded',()=>{
 const fold=s=>s.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-function enhance(){document.querySelectorAll('.account-icon-options').forEach(gallery=>{if(gallery.dataset.searchReady||gallery.querySelectorAll(':scope > button').length<10)return;gallery.dataset.searchReady='yes';const input=document.createElement('input');input.type='search';input.placeholder='Buscar ícone: pão, forno, colher…';input.setAttribute('aria-label','Buscar na biblioteca de ícones');input.style.cssText='width:100%;flex-basis:100%';input.oninput=()=>gallery.querySelectorAll(':scope > button').forEach(b=>{b.hidden=b.dataset.libraryHidden==='true'||!fold(b.title).includes(fold(input.value))});gallery.prepend(input)})}
+function enhance(){document.querySelectorAll('.account-icon-options').forEach(gallery=>{if(gallery.closest('.identity-advanced')?.dataset.libraryManager||gallery.dataset.searchReady||gallery.querySelectorAll(':scope > button').length<10)return;gallery.dataset.searchReady='yes';const input=document.createElement('input');input.type='search';input.placeholder='Buscar ícone: pão, forno, colher…';input.setAttribute('aria-label','Buscar na biblioteca de ícones');input.style.cssText='width:100%;flex-basis:100%';input.oninput=()=>gallery.querySelectorAll(':scope > button').forEach(b=>{b.hidden=b.dataset.libraryHidden==='true'||!fold(b.title).includes(fold(input.value))});gallery.prepend(input)})}
 new MutationObserver(enhance).observe(document.body,{childList:true,subtree:true});enhance();
 });
 

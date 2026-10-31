@@ -47,16 +47,16 @@ body.dark-theme{--ui-select-down:url("data:image/svg+xml,%3Csvg xmlns='http://ww
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) select:where(:not([multiple])){appearance:none!important;background-image:var(--ui-select-down)!important;background-repeat:no-repeat!important;background-size:18px 18px!important;background-position:right 12px center!important;padding-right:40px!important}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) select:open{background-image:var(--ui-select-up)!important}
 /* Cargos-only inline icon pilot, sharing the existing circular grid. */
-#job-edit .identity-advanced{display:block!important}
-#job-edit .job-inline-tools[hidden],#job-edit .job-inline-tools [hidden]{display:none!important}
-#job-edit .job-more-options{margin-top:12px}
-#job-edit .job-inline-tools{margin-top:10px}
-#job-edit .job-inline-search{display:flex;align-items:center;gap:8px}
-#job-edit .job-inline-search input[type=search]{flex:1;width:100%;min-width:0;margin:0}
-#job-edit .job-inline-search .shortcut-circle{flex:0 0 32px;width:32px;height:32px;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:var(--menu-accent,var(--panel-color,#7c3aed));display:grid;place-items:center}
-#job-edit .job-inline-search svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#job-edit .job-inline-status{font:400 11px/16px var(--ui-font);color:var(--ui-label-color);margin:8px 0}
-#job-edit .job-online-icons,#job-edit .job-removed-icons{margin:10px 0;flex-wrap:wrap}
+:is(.view,.location-dialog) .identity-advanced{display:block!important}
+:is(.view,.location-dialog) .job-inline-tools[hidden],:is(.view,.location-dialog) .job-inline-tools [hidden]{display:none!important}
+:is(.view,.location-dialog) .job-more-options{margin-top:12px}
+:is(.view,.location-dialog) .job-inline-tools{margin-top:10px}
+:is(.view,.location-dialog) .job-inline-search{display:flex;align-items:center;gap:8px}
+:is(.view,.location-dialog) .job-inline-search input[type=search]{flex:1;width:100%;min-width:0;margin:0}
+:is(.view,.location-dialog) .job-inline-search .shortcut-circle{flex:0 0 32px;width:32px;height:32px;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:var(--menu-accent,var(--panel-color,#7c3aed));display:grid;place-items:center}
+:is(.view,.location-dialog) .job-inline-search svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+:is(.view,.location-dialog) .job-inline-status{font:400 11px/16px var(--ui-font);color:var(--ui-label-color);margin:8px 0}
+:is(.view,.location-dialog) .job-online-icons,:is(.view,.location-dialog) .job-removed-icons{margin:10px 0;flex-wrap:wrap}
 .job-icon-quick-delete{position:fixed;z-index:100;display:flex;align-items:center;gap:8px;flex-wrap:wrap;max-width:260px;padding:8px;background:var(--ui-control-bg);color:var(--ui-input-color);border:1px solid var(--ui-border-base);border-radius:8px;box-shadow:0 4px 14px #0002;font:400 12px/18px var(--ui-font)}
 .job-icon-quick-delete .job-icon-trash{width:32px;height:32px;padding:6px;border:1px solid #ef4444;border-radius:50%;color:#fff;background:var(--cicluz-danger,#e34343);cursor:pointer}
 .job-icon-trash svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -64,12 +64,30 @@ body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) sel
 .job-icon-quick-delete .danger{background:#ef4444;border-color:#ef4444;color:#fff}
 
 /* Icon-library headings share the same role as field labels. */
-body .view .identity-advanced>summary{font:var(--ui-label-weight) var(--ui-label)/18px var(--ui-font)!important;color:var(--ui-label-color)!important;letter-spacing:normal!important}
+body :is(.view,dialog) .identity-advanced>summary{font:var(--ui-label-weight) var(--ui-label)/18px var(--ui-font)!important;color:var(--ui-label-color)!important;letter-spacing:normal!important}
 /* Cargos pilot: full-height joined row actions, clipped by the row border. */
 #jobs-view .job-actions{align-self:stretch;align-items:stretch;gap:0;padding:0!important;transition:width .2s;width:0}
-#jobs-view .job-item.actions-open .job-actions{width:104px;padding:0!important}
-#jobs-view .job-actions>button{box-sizing:border-box;display:flex;align-items:center;justify-content:center;width:52px!important;min-width:52px!important;height:auto!important;min-height:100%;flex:0 0 52px;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;color:white!important}
+#jobs-view .job-item.actions-open .job-actions{width:76px;padding:0!important}
+#jobs-view .job-actions>button{box-sizing:border-box;display:flex;align-items:center;justify-content:center;width:38px!important;min-width:38px!important;height:auto!important;min-height:100%;flex:0 0 38px;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;color:white!important}
 #jobs-view .job-actions>.job-edit-action{order:0;background:var(--menu-accent,var(--panel-color,#7c3aed))!important}
 #jobs-view .job-actions>.job-delete-action{order:1;background:var(--cicluz-danger,#e34343)!important}
 #jobs-view .job-actions svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 body .job-icon-trash{background:var(--cicluz-danger,#e34343)!important;color:#fff!important;border-color:var(--cicluz-danger,#e34343)!important}
+
+#jobs-view .job-item{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+#jobs-view .job-main{flex:1 1 0;min-width:0}
+:is(.view,.location-dialog) .job-more-options,:is(.view,.location-dialog) .job-inline-tools>.btn{display:block;width:100%;max-width:none;box-sizing:border-box}
+:is(.view,.location-dialog) .job-inline-tools .job-icon-style{width:100%;margin-top:8px}
+
+/* Approved full-height row actions, shared by financial lists and location trees. */
+body #sector-view .account-list-row,body .location-row{position:relative;box-sizing:border-box;width:100%;max-width:100%;min-width:0}
+body #sector-view .account-row-actions{position:absolute;top:0;bottom:0;right:0;align-self:stretch;align-items:stretch!important;gap:0!important;padding:0!important;margin:0!important;width:76px!important;flex-basis:auto!important;flex-wrap:nowrap!important;overflow:hidden;border-radius:0 9px 9px 0}
+body #sector-view .account-row-actions[hidden]{display:none!important;width:0!important}
+body #sector-view :is(.account-list-row,.location-row):has(>.account-row-actions:not([hidden])){padding-right:110px!important;flex-wrap:nowrap!important}
+body #sector-view .account-row-actions>button{display:flex;align-items:center;justify-content:center;width:38px!important;min-width:38px!important;height:auto!important;min-height:100%;flex:0 0 38px!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;color:#fff!important}
+body #sector-view .account-row-actions>button:first-child{order:1;background:var(--cicluz-danger,#e34343)!important}
+body #sector-view .account-row-actions>button:last-child{order:0;background:var(--item-color,var(--node-color,var(--menu-accent,var(--panel-color,#7c3aed))))!important}
+body #sector-view .account-row-actions svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8}
+
+.job-icon-quick-delete .job-icon-restore{width:32px;height:32px;padding:6px;border:0;border-radius:50%;background:var(--menu-accent,#7c3aed);color:#fff;cursor:pointer}
+.job-icon-restore svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}

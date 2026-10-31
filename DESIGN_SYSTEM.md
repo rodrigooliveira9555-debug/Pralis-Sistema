@@ -253,3 +253,16 @@ Substitui a janela Gerenciar ícones: usar Mais ícones no próprio cadastro, co
 - Correção de escopo e formato: testar ações laterais somente em Cargos. Substituir círculos por dois blocos justapostos52px, preenchendo a altura interna da linha, sem padding/gap/raio próprio. Editar à esquerda na cor do módulo; Excluir à direita vermelho com lixeira branca. Borda externa da linha recorta os blocos. Outros cadastros mantêm as ações anteriores até avaliação do teste.
 
 - Busca online de ícones em Cargos: vocabulário pt-BR normalizado (acentos e funções de padaria/gestão) traduzido para termos da coleção externa Lucide. Resultados continuam vindo da API, sem simular busca local. Mensagens distinguem coleção sem correspondência de falha de conexão/download. Informar Lucide como origem para explicitar o alcance da busca.
+
+- Busca online piloto Cargos: Traço simples reúne Lucide, Tabler e Iconoir; Mais estilos acrescenta Phosphor e Material Symbols. Resultados intercalados por coleção, com identificação da origem; importação monocromática preserva fill/stroke seguros. Buscar mais opções/Ver removidos ocupam a mesma largura da grade.
+- Linha de Cargos mantém largura100% do quadro; ações ocupam76px internos, dois blocos38px, altura completa. Não ampliar o quadro ao revelar ações.
+
+## Aplicação geral autorizada
+
+Aplicar biblioteca inline com clique/duplo clique/pressionar, pesquisa externa multicoleções, importação e removidos em Cargos, Contas, grupos/subgrupos financeiros, tipos de venda/bandeiras/operadoras e localização. Controladores existentes mantêm seus IDs/vínculos. Piloto de Cargos migrado uma vez para biblioteca compartilhada, preservando IDs.
+
+Ações laterais em blocos de altura completa, dois38px lado a lado, largura da linha preservada, também nas listas financeiras e árvore de localização. Ícones brancos; Excluir vermelho e Editar no acento do item.
+
+- Biblioteca global: importações/ocultações/restaurações compartilham a mesma fonte de dados. Identidade de ícones existentes baseada na geometria (sem depender do rótulo de cada formulário), com migração dos registros legados. Abas do mesmo navegador recebem mudanças via storage; dispositivos/navegadores distintos ainda não sincronizados.
+
+- Itens removidos: clique simples apenas seleciona; duplo clique/pressionar550ms revela ação circular Restaurar, com símbolo de importação. Tocar no símbolo restaura a biblioteca global sem alterar a seleção do cadastro. Enter/ShiftF10 também revela a ação.
