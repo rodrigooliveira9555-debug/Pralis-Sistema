@@ -7,3 +7,5 @@ function createFinancialActions({label,container,onEdit,onDelete}){
  const remove=document.createElement('button');remove.type='button';remove.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 10v7M14 10v7"/></svg>';remove.title='Excluir';remove.setAttribute('aria-label','Excluir '+label);remove.onclick=e=>{e.preventDefault();e.stopPropagation();onDelete()};actions.append(remove,edit);
  arrow.onclick=e=>{e.preventDefault();e.stopPropagation();const opening=actions.hidden;container.querySelectorAll('.account-row-actions').forEach(x=>x.hidden=true);container.querySelectorAll('.account-action-toggle').forEach(x=>x.setAttribute('aria-expanded','false'));actions.hidden=!opening;arrow.setAttribute('aria-expanded',String(opening))};return {arrow,actions};
 }
+
+function createAlphabetizeButton(onSort){const b=document.createElement('button');b.type='button';b.className='shortcut-circle sort-az';b.textContent='A–Z';b.title='Organizar de A a Z';b.setAttribute('aria-label','Organizar de A a Z');b.onclick=e=>{e.preventDefault();e.stopPropagation();onSort()};return b}
