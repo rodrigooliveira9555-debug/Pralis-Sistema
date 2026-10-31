@@ -161,3 +161,6 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Agenda / Atividades contém os submenus Gestão de Pessoas e Diretor de Operações, com alça e ordenação compartilhadas.
 
 - Controle global do menu percorre níveis em cliques sucessivos: abrir seções, abrir todos os menus, fechar todos os menus, fechar seções. A seta só inverte ao terminar a expansão/retração completa.
+
+- Regra central formatSystemName: iniciais maiúsculas em nomes; artigos, preposições e conjunções internos em minúsculas (de, da, do, dos, e etc.). Preservar siglas e códigos. Usar a mesma função em novos campos e cadastros; não aplicar a descrições livres, senhas, URLs, e-mails ou identificadores.
+- Cargos têm Nome e Nome reduzido opcional, sem limite arbitrário ainda não definido. A lista prioriza o reduzido e pesquisa ambos; mantém o nome completo e identificadores.
