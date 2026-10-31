@@ -1627,5 +1627,295 @@
       "icon": 0,
       "children": []
     }
-  ]
+  ],
+  "bandeiras": [
+    {
+      "id": "brand-0",
+      "name": "DINHEIRO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-1",
+      "name": "ELO CREDITO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-2",
+      "name": "ELO DEBITO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-3",
+      "name": "VISA DEBITO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-4",
+      "name": "VISA CREDITO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-5",
+      "name": "MASTERCARD CREDITO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-6",
+      "name": "MASTERCARD DEBITO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-7",
+      "name": "HIPERCARD CREDITO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-8",
+      "name": "AMEX CREDITO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-9",
+      "name": "CABAL DEBITO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-10",
+      "name": "SODEXO ALIMENTAÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-11",
+      "name": "SODEXO REFEIÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-12",
+      "name": "SODEXO BENEFÍCIOS",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-13",
+      "name": "UP ALIMENTAÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-14",
+      "name": "UP REFEIÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-15",
+      "name": "UP DEBITO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-16",
+      "name": "UP CREDITO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-17",
+      "name": "CABAL ALIMENTAÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-18",
+      "name": "CABAL REFEIÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-19",
+      "name": "REDECOMPRAS CREDITO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-20",
+      "name": "REDECOMPRAS ALIMENTAÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-21",
+      "name": "REDECOMPRAS REFEIÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-22",
+      "name": "ALELO REFEIÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-23",
+      "name": "ALELO ALIMENTAÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-24",
+      "name": "ALELO BENEFÍCIOS",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-25",
+      "name": "VR ALIMENTAÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-26",
+      "name": "VR REFEIÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-27",
+      "name": "TICKET. RES REFEIÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-28",
+      "name": "TICKET. RES ALIMENTAÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-29",
+      "name": "TICKET. RES BENEFÍCIOS",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-30",
+      "name": "GREEN CARD ALIMENTAÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-31",
+      "name": "GREEN CARD REFEIÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-32",
+      "name": "BEN VISA VALE ALIMENTAÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-33",
+      "name": "BEN VISA VALE REFEIÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-34",
+      "name": "BK BANK BENEFÍCIOS",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-35",
+      "name": "PIX DEBITO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-36",
+      "name": "MAESTRO DEBITO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-37",
+      "name": "MAESTRO CREDITO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-38",
+      "name": "PLUXEE REFEIÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-39",
+      "name": "PLUXEE GIFT",
+      "active": true,
+      "icon": 0,
+      "children": []
+    },
+    {
+      "id": "brand-40",
+      "name": "PLUXEE ALIMENTÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": []
+    }
+  ],
+  "operadoras": []
 }
