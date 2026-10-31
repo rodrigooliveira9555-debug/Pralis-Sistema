@@ -232,3 +232,7 @@ Títulos16/20 peso600, subtítulos11/14 peso400. Rótulos12/18 peso400 (substitu
 field-validation.js centraliza CPF (máscara11 dígitos e verificadores), datas nativas com ano0001–9999 e calendário válido, moeda por centavos com separadores pt-BR. Dinheiro não afeta percentuais, quantidades ou identificadores; tarifa fixa é normalizada para decimal ao salvar. Enter percorre campos visíveis/editáveis em formulários, fichas e modais; textarea mantém quebra de linha; busca mantém comportamento próprio. Componentes dinâmicos são preparados por observador. Regras de moeda duplicadas removidas.
 
 - Setinha dos seletores usa a mesma cor do texto do campo (--ui-input-color), com atualização no tema claro/escuro. Substitui acento do módulo para a setinha; geometria compartilhada preservada.
+
+- Busca: usa exclusivamente os tokens dos campos em ui-foundation.css, removendo receitas antigas de fonte12 e cor própria. Uma lupa abre/foca o campo; placeholder curto Buscar…, descrição específica preservada no aria-label; limpar nativo e Escape mantêm interação simples. Filtro conserva o mesmo controle e geometria de campos.
+- Rolagem global: trilho transparente, indicador fino6px apenas em hover/foco; toque sem barra permanente, sem mudar overflow nem impedir mouse/teclado/toque. Preservar alto contraste.
+- Proposta pendente (não aplicada): toque simples abre edição com Excluir visível e confirmação local. Não aplicar duplo clique nem lixeira por arraste sem definição.
