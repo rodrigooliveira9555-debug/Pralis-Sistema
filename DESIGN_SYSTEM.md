@@ -206,3 +206,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Modelo único de busca: referência Tipos de Venda/Operadoras. Campo aberto ocupa largura total disponível; altura42, raio8, padding10, Montserrat12/18, fundo branco no tema claro. Borda e foco herdam cor do módulo. Classe shared-header-search em Contas, Despesas e demais cabeçalhos.
 
 - Expandir/recolher: duas setas em chevron, cima e baixo, mesma geometria do menu (sem hastes). Preservar ciclo de níveis. Substitui setas verticais com haste.
+
+- Busca e filtro abertos: grade compartilhada, busca à esquerda e seletor180px à direita, gap8/altura42. Tela estreita: busca acima, seletor abaixo. CSS não depende da ordem de criação dos controles. Hover suave8% no tema claro/18% escuro; retirar override legado18% claro.
