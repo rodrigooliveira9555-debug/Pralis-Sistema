@@ -148,3 +148,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Galeria dos quatro níveis reutiliza ícones de Cargos e do sistema, opções extras em Mais ícones e prévia imediata.
 
 - Cabeçalho de cadastro dos quatro níveis: Voltar e Fechar primeiro, com SVG e botões circulares iguais aos demais cadastros.
+
+- Cadastro dos níveis: paleta recolhível em campo Escolher cor; prévia reproduz cartão da lista com alça, círculo colorido, nome e seta, sem nome solto.
