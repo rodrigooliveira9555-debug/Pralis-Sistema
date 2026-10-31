@@ -132,3 +132,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Níveis definitivos: Área → Setor → Local → Sublocal. Menu mantém Área / Setor / Local.
 
 - Área/Setor/Local/Sublocal: adicionar com + SVG circular; cadastro com cabeçalho claro, ícone e fechar, identidade nome/ícones, Montserrat e campos de 42px no padrão Cargos.
+
+- Área / Setor / Local pertence a Configurações → Gestão de Pessoas, junto de Cargos; retorno abre Gestão de Pessoas.
