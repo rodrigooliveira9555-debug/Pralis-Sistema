@@ -198,3 +198,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Regra global dos cabeçalhos: atalhos circulares em uma única faixa no canto superior direito; título/descrição abaixo sem deslocar controles. Aplicar a todas as telas .view, não só três cadastros. Preservar ordem e cores de origem.
 
 - Cabeçalho compacto definitivo: ícone, nome e atalhos na mesma linha alinhados ao centro. Título/subtítulo com reticências e nome completo no title; não aumentar altura por texto longo. Seletores recolhidos sob chevron próprio, busca recolhida em lupa; abrir controles em segunda linha só sob demanda. Substitui faixa de atalhos acima do título.
+
+- Normalizar também cabeçalhos legados: extrair ícone de dentro do título, criar faixa de atalhos quando ausente e mover ações diretas para essa faixa. Três colunas explícitas: ícone 38px, título flexível, atalhos. Não presumir estrutura igual antes da normalização.
