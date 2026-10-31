@@ -182,3 +182,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Cabeçalhos sem deslocamento inicial: painel em coluna limitado à altura útil; apenas .content rola, .head permanece fora do contêiner de rolagem. Substitui sticky nos cabeçalhos internos.
 
 - Adicionar junto dos controles do cabeçalho; busca e filtros em linha fixa abaixo do título. Reutilizar elementos e eventos, com limpeza ao navegar entre cadastros. Registros rolam separadamente.
+
+- Adicionar no cabeçalho é sempre botão circular 32px com o mesmo SVG de mais (18px), cor herdada, nome em aria-label/title. Mover para o cabeçalho não altera formato nem acrescenta botão em pílula.
