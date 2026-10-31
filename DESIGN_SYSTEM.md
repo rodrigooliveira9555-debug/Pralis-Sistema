@@ -274,3 +274,5 @@ Ações laterais em blocos de altura completa, dois38px lado a lado, largura da 
 - Busca externa reconhece ações de interface em português e sinônimos (atualizar/atualização/recarregar, voltar/retornar, seguir/avançar, expandir/maximizar, entre outras), consultando termos equivalentes nas coleções. Não tratar ausência de tradução como prova de ausência do ícone.
 
 - Resultados externos carregam dados JSON em lote por coleção, com cache em memória de respostas e desenhos, em vez de uma requisição SVG por resultado. Mantém sanitização e transformações de aliases.
+
+- Busca compartilhada de ícones: impressora, impressoras, impressão e impressões usam a consulta online printer, assim como imprimir.
