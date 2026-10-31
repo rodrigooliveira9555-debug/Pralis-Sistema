@@ -193,3 +193,23 @@ body .head .shortcut-circle,
 body .location-dialog-tools .shortcut-circle,
 body .fee-header-actions .shortcut-circle,
 body .view .shortcut-actions .sort-az{border-color:currentColor!important;opacity:1}
+
+/* Financial trees share the compact location hierarchy. */
+#sector-view.financial-groups.financial-hierarchy .financial-group{border:1px solid color-mix(in srgb,var(--menu-accent) 25%,white);border-radius:12px;background:#fff;overflow:hidden;padding:0 8px}
+#sector-view.financial-groups.financial-hierarchy .account-list-row{display:flex;align-items:center;gap:8px;min-height:62px;box-sizing:border-box;padding:8px 4px!important;border:0;border-radius:7px;margin:0;background:transparent}
+#sector-view.financial-groups.financial-hierarchy .account-list-row>b{flex:1;min-width:0;overflow-wrap:anywhere}
+#sector-view.financial-groups.financial-hierarchy .account-list-row .card-inherited-icon{flex:0 0 30px;width:30px;height:30px}
+#sector-view.financial-groups.financial-hierarchy .financial-text-badge{font:600 10px Montserrat,system-ui,sans-serif;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+#sector-view.financial-groups.financial-hierarchy .financial-expand,#sector-view.financial-groups.financial-hierarchy .financial-expand-spacer{flex:0 0 22px;width:22px;height:30px;margin:0;color:var(--item-color)}
+#sector-view.financial-groups.financial-hierarchy .financial-subgroups{display:block;margin:0 0 0 20px;padding:0 0 0 12px;border-left:1px solid color-mix(in srgb,var(--menu-accent) 28%,white)}
+#sector-view.financial-groups.financial-hierarchy .financial-subgroups>.account-list-row{min-height:40px;padding:2px 4px!important;position:relative}
+#sector-view.financial-groups.financial-hierarchy .financial-subgroups>.account-list-row::before{content:"";position:absolute;left:-13px;top:20px;width:11px;height:1px;background:color-mix(in srgb,var(--menu-accent) 28%,white)}
+#sector-view.financial-groups.financial-hierarchy .financial-subgroups .card-inherited-icon{flex-basis:26px;width:26px;height:26px}
+#sector-view.financial-groups.financial-hierarchy .financial-count{margin-top:1px}
+#sector-view.financial-groups.financial-hierarchy .financial-add-child{flex:0 0 30px;width:30px;height:30px;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:var(--item-color);font-size:21px;line-height:1;cursor:pointer}
+#sector-view.financial-groups.financial-hierarchy .account-row-actions[hidden]{display:none!important}
+#sector-view.financial-groups.financial-hierarchy .account-action-toggle{color:var(--item-color)}
+#sector-view.financial-groups.financial-hierarchy .account-row-actions button:not(:first-child){background:var(--item-color);color:#fff}
+#sector-view.financial-groups.financial-hierarchy .account-row-actions{flex-wrap:wrap}
+@media(max-width:560px){#sector-view.financial-groups.financial-hierarchy .account-list-row{gap:5px}#sector-view.financial-groups.financial-hierarchy .account-list-state{display:none}#sector-view.financial-groups.financial-hierarchy .account-list-row:has(.account-row-actions:not([hidden])){flex-wrap:wrap}#sector-view.financial-groups.financial-hierarchy .account-row-actions{flex-basis:100%;justify-content:flex-end}}
+#sector-view.financial-groups.financial-hierarchy .account-editor [hidden]{display:none!important}
