@@ -100,8 +100,9 @@
     "source": "Previously verified project asset"
   },
   "bkbank": {
-    "src": "assets/payment-marks/bkbank.jpg",
-    "source": "https://attachments.gupy.io/production/companies/63397/career/146596/images/2023-03-31_12-33_companyLogoUrl.jpg"
+    "src": "assets/payment-marks/bkbank-transparent.svg",
+    "source": "https://github.com/Tgentil/Bancos-em-SVG/blob/main/BK%20Bank/bkBank-nome.svg",
+    "note": "Vector mark without background; viewBox fitted to artwork with margin."
   },
   "maestro": {
     "src": "assets/payment-marks/maestro.svg",
