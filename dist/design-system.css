@@ -37,3 +37,7 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 /* Dinheiro: cifrão amarelo sobre branco, na lista e na prévia. */
 #sector-view.financial-groups .card-inherited-icon:has(.money-symbol),#sector-view.financial-groups .icon-live-badge:has(.money-symbol){background:#fff!important;color:var(--menu-accent)!important;border:1.5px solid var(--menu-accent);box-sizing:border-box}
 #sector-view.financial-groups .money-symbol{color:var(--menu-accent)!important;stroke:currentColor;filter:none!important}
+
+.operator-fees{grid-column:1/-1;min-width:0}.operator-fees h3{font-size:14px}.operator-fees p{font-size:11px;line-height:1.6}.operator-fee-brand{border:1px solid color-mix(in srgb,var(--menu-accent) 30%,transparent);border-radius:10px;padding:12px;margin:10px 0}.operator-fee-brand summary{cursor:pointer;font-size:12px;font-weight:600}.operator-fee-rule{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding:14px 0;border-top:1px solid #ddd;margin-top:10px}.operator-fee-rule label{font-size:11px;display:flex;flex-direction:column;gap:6px}.operator-fee-rule input,.operator-fee-rule select{width:100%;min-width:0}.operator-fees textarea{display:block;width:100%;min-height:72px}
+
+#sector-view.financial-groups .operator-fees{--menu-accent:#ef4444;--panel-color:#ef4444;border:1px solid #ef4444;border-radius:10px;padding:16px}#sector-view.financial-groups .operator-fees h3{color:#dc2626}.operator-fees .btn.secondary{border-color:#ef4444;color:#dc2626;background:transparent}
