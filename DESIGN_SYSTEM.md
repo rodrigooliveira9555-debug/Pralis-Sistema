@@ -118,3 +118,7 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Correção definitiva da classificação: quadro externo com fundo claro vermelho/laranja, seletor interno branco; círculo do ícone maciço na cor forte do menu e símbolo branco. Substitui a orientação anterior de exterior branco.
 
 - Campo Contas: título Grupo de Contas na primeira linha e subtítulo Transferências Automáticas abaixo, sem traço, ícone ao lado.
+
+- Finalização Taxas por bandeira: cabeçalho vermelho claro, conteúdo branco e ícone circular vermelho forte com símbolo branco, no padrão do menu Despesas.
+
+- Taxas mantém destaque vermelho no hover, ativação e foco dos campos; campo Contas conserva sua identificação laranja.
