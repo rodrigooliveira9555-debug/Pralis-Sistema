@@ -288,3 +288,14 @@ body:has(.view.show>.panel) .main{padding-bottom:0}
 .view.show>.panel>.head>.shortcut-actions{position:absolute;top:10px;right:14px;left:auto;display:flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:6px;margin:0!important;max-width:calc(100% - 28px);overflow-x:auto;scrollbar-width:thin}
 .view.show>.panel>.head>div:not(.shortcut-actions):not(.fixed-header-tools){min-width:0;flex:1}
 .view.show>.panel>.head h2{overflow-wrap:anywhere;margin:0}
+/* Compact shared identity row: icon, truncated title, shortcuts. */
+.view.show>.panel>.head:has(>.shortcut-actions){display:grid!important;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:8px!important;padding:10px 14px!important}
+.view.show>.panel>.head>.sector-icon,.view.show>.panel>.head>.config-inherit-icon{grid-column:1;grid-row:1}
+.view.show>.panel>.head>div:not(.shortcut-actions):not(.fixed-header-tools){grid-column:2;grid-row:1;min-width:0;overflow:hidden}
+.view.show>.panel>.head h2,.view.show>.panel>.head p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal}
+.view.show>.panel>.head>.shortcut-actions{position:static;grid-column:3;grid-row:1;max-width:none;overflow:visible;gap:5px}
+.view.show>.panel>.head>.fixed-header-tools{grid-column:1/-1;grid-row:2;min-width:0}
+.fixed-header-tools select[hidden],.fixed-header-tools label[hidden]{display:none!important}
+.header-filter-circle svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.header-filter-circle.filters-open svg{transform:rotate(180deg)}
+@media(max-width:560px){.view.show>.panel>.head:has(>.shortcut-actions){grid-template-columns:28px minmax(0,1fr) auto;gap:5px!important;padding:8px!important}.view.show>.panel>.head>.shortcut-actions{gap:3px}.view.show>.panel>.head .shortcut-actions>button{width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important}.view.show>.panel>.head>.sector-icon,.view.show>.panel>.head>.config-inherit-icon{width:28px;height:28px}}
+.view.show>.panel>.head:has(>.shortcut-actions){min-height:72px;box-sizing:border-box}

@@ -196,3 +196,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Contas usa o mesmo cabeçalho financeiro, busca recolhida em lupa e mais circular que abre ficha vazia; remover criação direta por campo na lista. Preservar cadastro e armazenamento existentes. Ordem comum: Voltar, Fechar, A/Z, expansão quando houver, Adicionar, Buscar, Histórico quando houver.
 
 - Regra global dos cabeçalhos: atalhos circulares em uma única faixa no canto superior direito; título/descrição abaixo sem deslocar controles. Aplicar a todas as telas .view, não só três cadastros. Preservar ordem e cores de origem.
+
+- Cabeçalho compacto definitivo: ícone, nome e atalhos na mesma linha alinhados ao centro. Título/subtítulo com reticências e nome completo no title; não aumentar altura por texto longo. Seletores recolhidos sob chevron próprio, busca recolhida em lupa; abrir controles em segunda linha só sob demanda. Substitui faixa de atalhos acima do título.
