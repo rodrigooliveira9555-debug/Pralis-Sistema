@@ -98,3 +98,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Cabeçalho Taxas por bandeira reutiliza os SVG de cifrão e menos dos menus, círculo 38px e título Montserrat 16px.
 
 - Cada bandeira no quadro de taxas mostra sua logomarca em círculo e seta SVG à direita que gira ao expandir.
+
+- Faixa do nome de cada bandeira: branca em repouso, vermelho claro ao passar o mouse ou focar pelo teclado.
