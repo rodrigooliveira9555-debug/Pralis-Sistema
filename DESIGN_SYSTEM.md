@@ -102,3 +102,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Faixa do nome de cada bandeira: branca em repouso, vermelho claro ao passar o mouse ou focar pelo teclado.
 
 - Remover vigência/condição usa confirmação no próprio quadro, com Confirmar remoção e Cancelar remoção, sem depender de janela nativa do navegador.
+
+- Rótulos dos menus: VND - Tipos de Bandeiras de Cartões e VND - Tipos de Operadoras de Cartões.
