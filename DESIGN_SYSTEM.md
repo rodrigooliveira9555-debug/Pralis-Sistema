@@ -34,10 +34,10 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 
 ## Grupos financeiros
 
-- Títulos centralizados em `dist/groups.js`: CNT - grupo contas (laranja), VND - grupo vendas (amarelo), RET - grupo retiradas (azul), MER - grupo mercadorias (verde), DES - grupo despesas (vermelho).
+- Títulos centralizados em `dist/groups.js`: CNT - Grupo Contas (laranja), VND - Grupo Vendas (amarelo), RET - Grupo Retiradas (azul), MER - Grupo Mercadorias (verde), DES - Grupo Despesas (vermelho).
 - Grupos expansíveis com subgrupos, ações laterais, ícone com prévia e situação ativo/inativo. Itens sem subgrupo permanecem no nível principal. Não combinar registros similares sem decisão do usuário.
-- Documento: DOC/F, DOC/NF ou DOC/F/NF. Apenas MER - grupo mercadorias inclui o campo Finalidade: VENDA ou TRANSFORMAÇÃO, sem inferência automática.
-- Dados iniciais recebidos em 31/10/2026: mercadorias, despesas e vendas. Retiradas aguarda lista; não criar exemplos.
+- Documento: DOC/F, DOC/NF ou DOC/F/NF. Apenas MER - Grupo Mercadorias inclui o campo Finalidade: VENDA ou TRANSFORMAÇÃO, sem inferência automática.
+- Dados iniciais recebidos em 31/10/2026: mercadorias, despesas e vendas. Retiradas recebidas: 4 grupos e 12 subgrupos; preservar cada item informado.
 
 ## Revisão de 31/10/2026
 
@@ -46,3 +46,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Expandir/recolher: ícones circulares no cabeçalho. Grupos com filhos têm seta própria separada da seta de ações.
 - Lista completa opcional mantém cada linha recebida: 79 MER, 98 DES e 10 VND. DES despesas bancárias também existe como item próprio, além dos subgrupos.
 - Listas e formulários usam as classes de Contas; ações usam uma função compartilhada, inclusive SVG, dimensões e animação.
+
+- Atualização: iniciais das palavras maiúsculas (Grupo Contas, Investimento - Hidráulico), com CNT, VND, RET, MER e DES sempre em maiúsculas no início. Essa decisão substitui o padrão anterior de nomes inteiramente minúsculos.

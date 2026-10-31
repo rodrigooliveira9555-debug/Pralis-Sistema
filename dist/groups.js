@@ -1,5 +1,5 @@
 // Configuração única de títulos, cores e hierarquia dos cadastros financeiros.
-const groupConfig={contas:{title:'CNT - grupo contas',color:'#f97316',code:'CNT'},vendas:{title:'VND - grupo vendas',color:'#eab308',code:'VND'},retiradas:{title:'RET - grupo retiradas',color:'#2563eb',code:'RET'},mercadorias:{title:'MER - grupo mercadorias',color:'#22c55e',code:'MER'},despesas:{title:'DES - grupo despesas',color:'#ef4444',code:'DES'}};
+const groupConfig={contas:{title:'CNT - Grupo Contas',color:'#f97316',code:'CNT'},vendas:{title:'VND - Grupo Vendas',color:'#eab308',code:'VND'},retiradas:{title:'RET - Grupo Retiradas',color:'#2563eb',code:'RET'},mercadorias:{title:'MER - Grupo Mercadorias',color:'#22c55e',code:'MER'},despesas:{title:'DES - Grupo Despesas',color:'#ef4444',code:'DES'}};
 const groupSeed={
   "mercadorias": [
     {
@@ -1171,7 +1171,8 @@ const groupSeed={
           "active": true,
           "icon": 0
         }
-      ]
+      ],
+      "directEntry": true
     },
     {
       "id": "g24",
@@ -1430,7 +1431,112 @@ const groupSeed={
       ]
     }
   ],
-  "retiradas": []
+  "retiradas": [
+    {
+      "id": "ret-g0",
+      "name": "INVESTIMENTO",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "ret-g0s0",
+          "name": "ELETRICO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g0s1",
+          "name": "HIDRÁULICO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g0s2",
+          "name": "EST. FISICA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g0s3",
+          "name": "MÁQ./EQUIP.",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g0s4",
+          "name": "MOB./BALCÕES",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g0s5",
+          "name": "UTEN./FERRA.",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "ret-g1",
+      "name": "SÓCIOS",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "ret-g1s0",
+          "name": "RODRIGO",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "ret-g2",
+      "name": "PRO LABORE",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "ret-g2s0",
+          "name": "RODRIGO",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "ret-g3",
+      "name": "PARTICIPAÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "ret-g3s0",
+          "name": "PRODUÇÃO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g3s1",
+          "name": "SALÃO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g3s2",
+          "name": "ADM",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g3s3",
+          "name": "MISTO",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    }
+  ]
 };
 groupSeed.despesas.find(g=>g.name==='DESP. BANCÁRIAS').directEntry=true;
 const groupStorage='cicluz-financial-hierarchy-v1';
@@ -1438,7 +1544,7 @@ let financialGroups;try{financialGroups=JSON.parse(localStorage.getItem(groupSto
 if(!financialGroups||typeof financialGroups!=='object')financialGroups=structuredClone(groupSeed);
 const normalized=s=>s.normalize('NFD').replace(/[\u0300-\u036f\u2060]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
 // Reconcile the complete imported lists once, retaining edits, states and added records.
-const importRevision='cicluz-financial-import-complete-v2';
+const importRevision='cicluz-financial-import-complete-v3-ret';
 if(!localStorage.getItem(importRevision)){
  for(const [key,seeds] of Object.entries(groupSeed)){
   if(!Array.isArray(financialGroups[key]))financialGroups[key]=[];

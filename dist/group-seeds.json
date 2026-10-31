@@ -1429,5 +1429,110 @@
       ]
     }
   ],
-  "retiradas": []
+  "retiradas": [
+    {
+      "id": "ret-g0",
+      "name": "INVESTIMENTO",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "ret-g0s0",
+          "name": "ELETRICO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g0s1",
+          "name": "HIDRÁULICO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g0s2",
+          "name": "EST. FISICA",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g0s3",
+          "name": "MÁQ./EQUIP.",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g0s4",
+          "name": "MOB./BALCÕES",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g0s5",
+          "name": "UTEN./FERRA.",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "ret-g1",
+      "name": "SÓCIOS",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "ret-g1s0",
+          "name": "RODRIGO",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "ret-g2",
+      "name": "PRO LABORE",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "ret-g2s0",
+          "name": "RODRIGO",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    },
+    {
+      "id": "ret-g3",
+      "name": "PARTICIPAÇÃO",
+      "active": true,
+      "icon": 0,
+      "children": [
+        {
+          "id": "ret-g3s0",
+          "name": "PRODUÇÃO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g3s1",
+          "name": "SALÃO",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g3s2",
+          "name": "ADM",
+          "active": true,
+          "icon": 0
+        },
+        {
+          "id": "ret-g3s3",
+          "name": "MISTO",
+          "active": true,
+          "icon": 0
+        }
+      ]
+    }
+  ]
 }

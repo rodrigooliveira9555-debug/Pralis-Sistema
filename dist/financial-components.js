@@ -1,4 +1,4 @@
-function formatFinancialName(value){return String(value||'').toLocaleLowerCase('pt-BR').replace(/^(cnt|vnd|ret|mer|des)(?=\s|$)/i,m=>m.toUpperCase())}
+function formatFinancialName(value){return String(value||'').toLocaleLowerCase('pt-BR').replace(/(^|[\s/·-])([a-zà-ÿ])/g,(_,sep,letter)=>sep+letter.toLocaleUpperCase('pt-BR')).replace(/^(Cnt|Vnd|Ret|Mer|Des)(?=\s|$)/,m=>m.toUpperCase())}
 // Ações compartilhadas por Contas e todos os grupos financeiros.
 function createFinancialActions({label,container,onEdit,onDelete}){
  const arrow=document.createElement('button');arrow.type='button';arrow.className='account-action-toggle';arrow.textContent='›';arrow.setAttribute('aria-label','Ações de '+label);arrow.setAttribute('aria-expanded','false');
