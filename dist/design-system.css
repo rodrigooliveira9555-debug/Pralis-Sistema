@@ -58,3 +58,5 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 .operator-fee-brand>summary{display:flex;align-items:center;gap:10px;list-style:none;font-size:12px}.operator-fee-brand>summary::-webkit-details-marker{display:none}.fee-brand-icon{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex:0 0 30px;box-sizing:border-box;padding:4px;border:1.5px solid #ef4444;border-radius:50%;background:#fff;color:#eab308;overflow:hidden}.fee-brand-icon svg,.fee-brand-chevron svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.fee-brand-chevron{margin-left:auto;display:flex;color:#dc2626;transition:transform .15s}.operator-fee-brand[open]>summary .fee-brand-chevron{transform:rotate(90deg)}
 
 .operator-fee-brand>summary{transition:background-color .15s}.operator-fee-brand>summary:hover,.operator-fee-brand>summary:focus-visible{background:#fee2e2}
+
+.fee-classification{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}@media(max-width:560px){.fee-classification{grid-template-columns:1fr}}
