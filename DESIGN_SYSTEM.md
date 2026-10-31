@@ -90,3 +90,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Operadoras: quadro com todas as bandeiras e condições por vigência, modalidade e parcelas; MDR, tarifa fixa e antecipação separados. Valores contratuais sem preenchimento automático. Histórico preservado e vigências conflitantes bloqueadas.
 
 - Quadro de taxas por bandeira usa vermelho, conforme pedido; cadastro de operadoras/bandeiras permanece amarelo.
+
+- Cada condição de taxa deve selecionar um Grupo de Despesa (ou subgrupo) existente. Vínculo salvo por ID; opções inativas existentes são preservadas. O quadro configura a classificação, sem gerar lançamentos automaticamente.
