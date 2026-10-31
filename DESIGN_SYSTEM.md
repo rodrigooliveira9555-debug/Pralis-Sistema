@@ -82,3 +82,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Dinheiro usa somente cifrão no ícone padrão, sem sinal de soma/subtração. Redecompras usa a marca do perfil empresarial de serviços financeiros, vinculada a redecompras.net.br; imagem conferida antes da aplicação.
 
 - BK Bank: substituir a fotografia JPG com fundo cinza por SVG sem fundo, contendo somente a marca. Manter respiro dentro do círculo amarelo. Arquivo: assets/payment-marks/bkbank-transparent.svg.
+
+- Dinheiro usa apenas cifrão amarelo em fundo branco, tanto na lista quanto na prévia do cadastro.
