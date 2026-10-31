@@ -173,3 +173,11 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 .location-dialog .location-saved-colors{margin:8px 0 0;grid-template-columns:repeat(auto-fill,24px)}
 .location-dialog .location-saved-colors small{grid-column:1/-1;font-size:11px;color:#777}
 .location-dialog .location-color-picker>.location-saved-colors+span,.location-dialog .location-color-picker>span{display:block;margin-top:14px;font-size:12px}
+
+/* Location frames use the module header; actions use each item's own color. */
+#sector-view .location-tree>.location-area-frame{border-color:color-mix(in srgb,var(--menu-accent,#7c3aed) 25%,white)}
+#sector-view .location-tree .location-children{border-left-color:color-mix(in srgb,var(--menu-accent,#7c3aed) 28%,white)}
+#sector-view .location-tree .location-children>.location-node>.location-row::before{background:color-mix(in srgb,var(--menu-accent,#7c3aed) 28%,white)}
+#sector-view .location-tree .location-row .location-expand,#sector-view .location-tree .location-row .account-action-toggle{color:var(--node-color)!important}
+#sector-view .location-tree .location-row .location-inline-add{color:var(--node-color);border-color:color-mix(in srgb,var(--node-color) 45%,white)}
+#sector-view .location-tree .location-row .location-inline-add:hover{background:color-mix(in srgb,var(--node-color) 8%,white)}
