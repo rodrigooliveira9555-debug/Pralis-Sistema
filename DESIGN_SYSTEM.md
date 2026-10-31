@@ -246,3 +246,8 @@ Cargos mantém escolhas rápidas/mais usados e substitui Mais ícones por Gerenc
 ## Revisão do piloto de Cargos — grade integrada
 
 Substitui a janela Gerenciar ícones: usar Mais ícones no próprio cadastro, com grade circular existente. Clique simples seleciona; duplo clique ou pressionar550ms revela lixeira junto ao ícone; tocar na lixeira revela confirmação local. Movimento8px cancela pressionar. Delete/ShiftF10 também revela a ação. Buscar mais opções abre pesquisa online e importação SVG dentro da grade; resultado importado/aplicado com clique simples. Remoção recuperável via Ver removidos; registros e IDs preservados. Piloto permanece somente em Cargos.
+
+- Títulos Mais ícones: mesmo papel dos rótulos de campo, Montserrat12/18 peso400 cinza neutro e equivalente no tema escuro. Atalhos Buscar na web/Importar SVG em Cargos usam acento do módulo.
+- Editar/Excluir nas ações laterais das listas e árvores: dois círculos38px, SVG18px branco. Editar herda acento do item/menu; Excluir fundo vermelho semântico e lixeira branca. Lixeira revelada na biblioteca também vermelha sólida/branca. Não alterar os fluxos ou confirmações.
+
+- Correção de escopo e formato: testar ações laterais somente em Cargos. Substituir círculos por dois blocos justapostos52px, preenchendo a altura interna da linha, sem padding/gap/raio próprio. Editar à esquerda na cor do módulo; Excluir à direita vermelho com lixeira branca. Borda externa da linha recorta os blocos. Outros cadastros mantêm as ações anteriores até avaliação do teste.
