@@ -266,3 +266,7 @@ Ações laterais em blocos de altura completa, dois38px lado a lado, largura da 
 - Biblioteca global: importações/ocultações/restaurações compartilham a mesma fonte de dados. Identidade de ícones existentes baseada na geometria (sem depender do rótulo de cada formulário), com migração dos registros legados. Abas do mesmo navegador recebem mudanças via storage; dispositivos/navegadores distintos ainda não sincronizados.
 
 - Itens removidos: clique simples apenas seleciona; duplo clique/pressionar550ms revela ação circular Restaurar, com símbolo de importação. Tocar no símbolo restaura a biblioteca global sem alterar a seleção do cadastro. Enter/ShiftF10 também revela a ação.
+
+- Seleção visual de ícone é exclusiva por cadastro: novo clique desmarca todas as opções anteriores, inclusive cópias em Mais usados. Renderização da faixa Mais usados preserva uma única indicação de seleção. Importação aplica a mesma regra.
+
+- X de limpar campos de busca: mesmo traço1.8 e cor do módulo dos demais atalhos; substituir desenho nativo azul sem alterar a ação de limpar.

@@ -91,3 +91,6 @@ body #sector-view .account-row-actions svg{width:18px;height:18px;fill:none;stro
 
 .job-icon-quick-delete .job-icon-restore{width:32px;height:32px;padding:6px;border:0;border-radius:50%;background:var(--menu-accent,#7c3aed);color:#fff;cursor:pointer}
 .job-icon-restore svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* Search clear X uses the module accent instead of the browser's blue glyph. */
+body :is(.view,dialog,.modal) input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:block;width:14px;height:14px;flex:none;margin-left:8px;cursor:pointer;background-color:var(--menu-accent,var(--panel-color,#7c3aed));-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='m6 6 12 12M18 6 6 18'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='m6 6 12 12M18 6 6 18'/%3E%3C/svg%3E") center/contain no-repeat}
