@@ -188,3 +188,7 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Busca do cabeçalho recolhida em botão circular de lupa 32px. Clicar abre campo e foca; clicar novamente ou Escape recolhe preservando consulta/filtro. Consulta existente abre o campo ao entrar.
 
 - Mover somente a ação explícita Adicionar grupo/tipo ou Novo grupo para o cabeçalho. Nunca selecionar pela posição primeiro filho: ao mover o primeiro botão, Histórico virava o próximo e gerava um segundo mais. Preservar vínculo form dos botões submit movidos.
+
+- Histórico de transferências no cabeçalho como relógio SVG circular, mantendo ação original. Atualizar organograma usa duas setas circulares, mesmo traço de 1,8 e cantos arredondados.
+
+- Cabeçalho compacto: padding 10px/14px, gap 8px, manter tipografia existente. Não reservar segunda linha vazia; mostrar apenas quando houver filtros ou busca aberta.
