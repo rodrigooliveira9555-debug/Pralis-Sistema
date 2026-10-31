@@ -150,3 +150,12 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Cabeçalho de cadastro dos quatro níveis: Voltar e Fechar primeiro, com SVG e botões circulares iguais aos demais cadastros.
 
 - Cadastro dos níveis: paleta recolhível em campo Escolher cor; prévia reproduz cartão da lista com alça, círculo colorido, nome e seta, sem nome solto.
+
+## Padrão obrigatório para novos menus laterais
+
+- Reutilizar a estrutura dos menus existentes: alça `.drag-handle` à esquerda, ícone circular, `.menu-name` com título em `span` e subtítulo em `small`, seta de expansão do próprio `summary`. Mesmos alinhamentos, tipografia, espaçamento e controlador compartilhado de arraste contínuo com ordem salva.
+- Agenda usa ícone de calendário roxo, título Agenda e subtítulo Atividades em linhas separadas. Preservar o identificador Agenda/Atividades para a ordem salva.
+- Gestão, Agenda e Outros têm controles independentes para expandir/recolher.
+- Formulários mantém somente Diretor de Operações e Gestão de Pessoas.
+
+- Agenda / Atividades contém os submenus Gestão de Pessoas e Diretor de Operações, com alça e ordenação compartilhadas.
