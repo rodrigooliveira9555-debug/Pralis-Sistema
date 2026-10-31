@@ -224,3 +224,9 @@ UI_CHANGE_PROCESS.md é obrigatório para alterações futuras. Tokens tipográf
 Substitui as medidas anteriores de texto dos campos: Montserrat14/20 peso400; labels Montserrat12/18 peso500 cinza #52525B (escuro #D4D4D8). Campos42px, raio8, padding10x12, borda1px neutra #D4D4D8, fundo branco, texto #27272A. Placeholder #71717A. Foco: borda no acento de origem e halo3px14%; escuro24%. Hover: mistura50% acento/borda. Textarea mínimo84px. Erro explícito vermelho; desabilitado opacidade60%. Checkboxes, rádio, paletas e sliders mantêm geometria própria. Fonte única: ui-foundation.css; inclui buscas/filtros, tabelas editáveis, views legadas, fichas e diálogos dinâmicos.
 
 Matriz de impacto: todas as .view e diálogos, incluindo Cargos/Salários, Contas, grupos financeiros, tipos de vendas/bandeiras/operadoras e taxas, localização/organograma, cadastro simples/completo/dependentes, patrimônio, configuração e modais. Inventário estrutural não equivale a conferência visual de todas as rotas.
+
+## Revisão complementar global de 31/10/2026
+
+Títulos16/20 peso600, subtítulos11/14 peso400. Rótulos12/18 peso400 (substitui peso500); valores14/20 peso400; botões principais12 peso600. Acento por origem, rótulos neutros; borda neutra1px, raio8, foco3px14% (24% escuro). Campo resolve o acento no próprio elemento para respeitar painéis financeiros internos. Seletores usam chevron SVG18 traço1.8, abaixo em repouso e acima quando :open.
+
+field-validation.js centraliza CPF (máscara11 dígitos e verificadores), datas nativas com ano0001–9999 e calendário válido, moeda por centavos com separadores pt-BR. Dinheiro não afeta percentuais, quantidades ou identificadores; tarifa fixa é normalizada para decimal ao salvar. Enter percorre campos visíveis/editáveis em formulários, fichas e modais; textarea mantém quebra de linha; busca mantém comportamento próprio. Componentes dinâmicos são preparados por observador. Regras de moeda duplicadas removidas.

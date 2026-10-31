@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');
+const r=require('../dist/field-validation.js');
+for(const [a,b] of [['1','R$ 0,01'],['1234','R$ 12,34'],['123456','R$ 1.234,56'],['',''],['0','R$ 0,00'],['R$ 12,34','R$ 12,34']])assert.equal(r.moneyMask(a),b);
+assert.equal(r.moneyNumber('R$ 1.234,56'),1234.56);
+assert.equal(r.cpfMask('123456789012345'),'123.456.789-01');
+assert.equal(r.cpfValid('111.111.111-11'),false);
+assert.equal(r.cpfValid('529.982.247-25'),true);
+assert.equal(r.cpfValid('529.982.247-24'),false);
+for(const v of ['2024-02-29','2000-02-29','0001-01-01','9999-12-31'])assert.equal(r.dateValid(v),true,v);
+for(const v of ['2023-02-29','1900-02-29','2026-04-31','0000-01-01','12345-01-01','2026-13-01'])assert.equal(r.dateValid(v),false,v);
+console.log('21 assertions passed');
