@@ -18,6 +18,15 @@ if(!localStorage.getItem('cicluz-icon-pilot-migrated-v1')){for(const item of job
 jobState={custom:saved.custom,hidden:saved.hidden};
 const saveJobs=()=>{saved.custom=jobState.custom;saved.hidden=jobState.hidden;window.CicluzIconLibrary.custom=saved.custom;persist();applyHidden()};
 function mountJobIcon(item){const select=document.getElementById('job-icon');if(!select||[...select.options].some(o=>o.value===item.id))return;jobIcons[item.id]=svg(item.path);select.add(new Option(item.label,item.id));const b=document.createElement('button');b.type='button';b.className='icon-choice';b.dataset.icon=item.id;b.title=item.label;b.setAttribute('aria-label',item.label);b.innerHTML=svg(item.path);b.onclick=()=>{select.value=item.id;select.dispatchEvent(new Event('change',{bubbles:true}))};document.querySelector('#job-edit .extra-library').append(b)}
+const onlineResponses=new Map(),onlineIconPaths=new Map();
+async function onlineJSON(url){if(onlineResponses.has(url))return onlineResponses.get(url);const promise=fetch(url,{signal:AbortSignal.timeout(12000)}).then(async r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).catch(e=>{onlineResponses.delete(url);throw e});onlineResponses.set(url,promise);return promise}
+async function loadIconBatch(ids){
+ const groups=new Map();for(const id of ids)if(!onlineIconPaths.has(id)){const [prefix,name]=id.split(':');if(!groups.has(prefix))groups.set(prefix,[]);groups.get(prefix).push(name)}
+ await Promise.allSettled([...groups].map(async([prefix,names])=>{const data=await onlineJSON('https://api.iconify.design/'+prefix+'.json?icons='+names.sort().join(','));
+  function resolve(name,seen=new Set()){if(seen.has(name))return null;seen.add(name);if(data.icons?.[name])return data.icons[name];const alias=data.aliases?.[name];if(!alias)return null;const parent=resolve(alias.parent,seen);if(!parent)return null;return {...parent,...alias,body:parent.body,rotate:((parent.rotate||0)+(alias.rotate||0))%4,hFlip:!!parent.hFlip!==!!alias.hFlip,vFlip:!!parent.vFlip!==!!alias.vFlip}}
+  for(const name of names){const icon=resolve(name);if(!icon?.body)continue;let w=icon.width||data.width||16,h=icon.height||data.height||16;let body=icon.body;if(icon.hFlip)body='<g transform="translate('+w+' 0) scale(-1 1)">'+body+'</g>';if(icon.vFlip)body='<g transform="translate(0 '+h+') scale(1 -1)">'+body+'</g>';const rotation=((icon.rotate||0)%4+4)%4;if(rotation===1){body='<g transform="translate('+h+' 0) rotate(90)">'+body+'</g>';[w,h]=[h,w]}else if(rotation===2)body='<g transform="translate('+w+' '+h+') rotate(180)">'+body+'</g>';else if(rotation===3){body='<g transform="translate(0 '+w+') rotate(-90)">'+body+'</g>';[w,h]=[h,w]}try{const path=sanitize('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+w+' '+h+'" fill="currentColor" stroke="none">'+body+'</svg>');onlineIconPaths.set(prefix+':'+name,path)}catch{}}
+ }));return ids.filter(id=>onlineIconPaths.has(id)).map(id=>({label:id.split(':')[1].replace(/-/g,' ')+' · '+id.split(':')[0],path:onlineIconPaths.get(id)}))
+}
 function jobInline(details){
  const scope=details.closest('.identity-pick,.location-sigla-field')||details.parentElement,gallery=details.querySelector('.extra-library,.account-icon-options,.icon-library'),isJob=!!details.closest('#job-edit');
  details.querySelectorAll('input[type=search]').forEach(e=>e.remove());details.hidden=false;
@@ -56,14 +65,12 @@ function jobInline(details){
   const seq=++sequence;search.disabled=true;status.textContent='Buscando ícones na internet…';results.replaceChildren();
   try{
    const queries=window.CicluzIconSearch?.queries(q)||[q];const prefixes=styles.value==='all'?'lucide,tabler,iconoir,ph,material-symbols':'lucide,tabler,iconoir';
-   const responses=await Promise.allSettled(queries.map(async term=>{const r=await fetch('https://api.iconify.design/search?prefixes='+prefixes+'&limit=64&query='+encodeURIComponent(term),{signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('Conexão');const data=await r.json();if(!Array.isArray(data.icons))throw Error('Resposta inválida');return data.icons}));
+   const responses=await Promise.allSettled(queries.map(async term=>{const data=await onlineJSON('https://api.iconify.design/search?prefixes='+prefixes+'&limit=64&query='+encodeURIComponent(term));if(!Array.isArray(data.icons))throw Error('Resposta inválida');return data.icons}));
    if(seq!==sequence)return;
    const successful=responses.filter(r=>r.status==='fulfilled');if(!successful.length)throw Error('Conexão');
    const allowed=prefixes.split(',');const byCollection=allowed.map(prefix=>[...new Set(successful.flatMap(r=>r.value))].filter(id=>id.startsWith(prefix+':')&&/^[a-z0-9-]+:[a-z0-9-]+$/.test(id)&&!(styles.value==='line'&&/-(?:filled|solid|fill|duotone|bold)$/.test(id))));const ids=[];for(let i=0;ids.length<32&&byCollection.some(a=>i<a.length);i++)for(const list of byCollection)if(list[i]&&ids.length<32)ids.push(list[i]);
    if(!ids.length){status.textContent='Nenhum ícone encontrado nas coleções online para “'+q+'”. Tente outro termo ou importe um SVG.';return}
-   const all=await Promise.allSettled(ids.map(async id=>{const [prefix,slug]=id.split(':'),r=await fetch('https://api.iconify.design/'+prefix+'/'+slug+'.svg',{signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('Conexão');return {label:slug.replace(/-/g,' ')+' · '+prefix,path:sanitize(await r.text())}}));
-   if(seq!==sequence)return;
-   const icons=all.filter(r=>r.status==='fulfilled').map(r=>r.value);if(!icons.length)throw Error('Imagens');
+   const icons=await loadIconBatch(ids);if(seq!==sequence)return;if(!icons.length)throw Error('Imagens');
    for(const icon of icons){const b=btn('',()=>addAndUse(icon.path,icon.label),'icon-choice');b.innerHTML=svg(icon.path);b.title='Importar e usar: '+icon.label;b.setAttribute('aria-label',b.title);results.append(b)}
    status.textContent=icons.length+' ícones encontrados nas coleções online. Toque em um para importar e usar.';
   }catch{if(seq===sequence)status.textContent='Não foi possível conectar à biblioteca de ícones na internet. Tente novamente ou importe um arquivo SVG.'}

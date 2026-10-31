@@ -270,3 +270,7 @@ Ações laterais em blocos de altura completa, dois38px lado a lado, largura da 
 - Seleção visual de ícone é exclusiva por cadastro: novo clique desmarca todas as opções anteriores, inclusive cópias em Mais usados. Renderização da faixa Mais usados preserva uma única indicação de seleção. Importação aplica a mesma regra.
 
 - X de limpar campos de busca: mesmo traço1.8 e cor do módulo dos demais atalhos; substituir desenho nativo azul sem alterar a ação de limpar.
+
+- Busca externa reconhece ações de interface em português e sinônimos (atualizar/atualização/recarregar, voltar/retornar, seguir/avançar, expandir/maximizar, entre outras), consultando termos equivalentes nas coleções. Não tratar ausência de tradução como prova de ausência do ícone.
+
+- Resultados externos carregam dados JSON em lote por coleção, com cache em memória de respostas e desenhos, em vez de uma requisição SVG por resultado. Mantém sanitização e transformações de aliases.
