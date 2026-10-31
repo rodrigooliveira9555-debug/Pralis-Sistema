@@ -122,3 +122,6 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 #sector-view .btn,.location-dialog .btn{font-size:12px;font-weight:600;line-height:1.5}
 
 #sector-view .location-toolbar{margin:0 0 16px;display:flex;align-items:center;gap:10px}
+
+#sector-view.financial-groups .account-list-row.has-subgroup-toggle{grid-template-columns:18px 20px 30px minmax(0,1fr) auto 24px auto}
+#sector-view.financial-groups .has-subgroup-toggle>.financial-expand{grid-column:auto;margin:0}
