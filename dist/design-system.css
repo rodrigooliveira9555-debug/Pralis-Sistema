@@ -106,3 +106,7 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 #sector-view .tree-add-solid:focus-visible{outline:2px solid var(--node-color,var(--menu-accent,#7c3aed));outline-offset:3px}
 
 .location-copy{flex:1;min-width:0;display:flex;flex-direction:column;align-items:stretch}.location-copy .location-name{width:100%;padding:0}.location-count{margin-top:5px;text-align:left}
+
+/* Location navigation follows the People module accent. */
+.location-row .location-expand,.location-row .account-action-toggle{color:#7c3aed!important}
+#sector-view:not(.financial-groups)[style*="7c3aed"] .head .shortcut-circle{color:#7c3aed;border-color:#ddd0ff}
