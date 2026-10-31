@@ -115,6 +115,10 @@ body :is(.view,dialog) .identity-advanced[data-library-manager] button:disabled{
 body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) [hidden]{display:none!important}
 
 /* One layout for identification: name, then full-width icon choices. */
+body :is(.view,dialog) :is(.job-identity,.account-identity,.location-identity){grid-template-columns:minmax(0,1fr)!important;gap:14px!important;align-items:start!important}
+body :is(.view,dialog) :is(.job-identity,.account-identity,.location-identity)>*{grid-column:1!important;min-width:0;max-width:100%;box-sizing:border-box}
+body :is(.view,dialog) .identity-pick{display:flex!important;flex-direction:column!important;gap:8px!important;margin:0!important;padding:0!important}
+
 body :is(.view,dialog) :is(.identity-pick,.location-sigla-field){min-width:0;width:100%;box-sizing:border-box;align-items:stretch}
 body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.identity-advanced,.most-used-icons,.account-field-group){box-sizing:border-box;flex:0 0 100%;width:100%;min-width:0;max-width:none;margin-left:0;margin-right:0}
 body :is(.view,dialog) .identity-advanced>summary{width:100%;box-sizing:border-box}
