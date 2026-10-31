@@ -1591,7 +1591,7 @@ function showFinancialGroup(key,originIcon,editId){
  const panel=view.querySelector('.panel');panel.style.setProperty('--panel-color',cfg.color);panel.style.setProperty('--panel-text',(key==='vendas'||cfg.flat)?'#785600':key==='mercadorias'?'#12672e':key==='retiradas'?'#174ca1':'#9c1c1c');
  document.getElementById('sector-path').textContent='Configurações / Diretor de Operação / '+cfg.title;document.getElementById('crumb').textContent='Configurações / Diretor de Operação / '+cfg.title;
  const defaultIcon=originIcon||'<svg viewBox="0 0 24 24">'+dollar+'</svg><svg viewBox="0 0 24 24">'+moneyIcons[key==='vendas'||cfg.flat?0:2]+'</svg>';view.querySelector('.sector-icon').innerHTML=defaultIcon;
- const iconMarkup=item=>{const logo=!item.icon&&getPaymentMark(key,item.name);if(logo)return '<img src="'+logo+'" alt="" class="payment-logo">';return item.icon?'<svg viewBox="0 0 24 24">'+(groupIcons[item.icon]||icons.groups)+'</svg>':defaultIcon};
+ const iconMarkup=item=>{if(!item.icon&&/^(?:I\s*-\s*)?DINHEIRO(?:\s|$)/i.test(String(item.name||'')))return '<svg viewBox="0 0 24 24">'+dollar+'</svg>';const logo=!item.icon&&getPaymentMark(key,item.name);if(logo)return '<img src="'+logo+'" alt="" class="payment-logo">';return item.icon?'<svg viewBox="0 0 24 24">'+(groupIcons[item.icon]||icons.groups)+'</svg>':defaultIcon};
  const ti=()=>openSection(sections[6][0],'Diretor de Operação','settings','#7c3aed');
  let query='',mode=cfg.flat?'complete':'grouped',manual=localStorage.getItem('cicluz-'+key+'-sort')==='manual';
  const expanded=new Set();
