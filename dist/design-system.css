@@ -131,3 +131,23 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 :is(.drag-handle,.menu-item-move,.account-move,.fee-brand-move,.location-move)::before{content:"";display:block;flex:none;width:7px;height:11px;background:radial-gradient(circle at 1.5px 1.5px,currentColor 1px,transparent 1.2px),radial-gradient(circle at 5.5px 1.5px,currentColor 1px,transparent 1.2px),radial-gradient(circle at 1.5px 5.5px,currentColor 1px,transparent 1.2px),radial-gradient(circle at 5.5px 5.5px,currentColor 1px,transparent 1.2px),radial-gradient(circle at 1.5px 9.5px,currentColor 1px,transparent 1.2px),radial-gradient(circle at 5.5px 9.5px,currentColor 1px,transparent 1.2px);pointer-events:none}
 :is(.drag-handle,.menu-item-move,.account-move,.fee-brand-move,.location-move):hover{color:#71717a!important}
 :is(.drag-handle,.menu-item-move,.account-move,.fee-brand-move,.location-move):active{cursor:grabbing}
+
+/* Compact location hierarchy: one expanding frame for each Area. */
+.location-tree>.location-area-frame{border:1px solid color-mix(in srgb,var(--branch-color) 25%,white);border-radius:12px;background:#fff;margin:0 0 10px;padding:4px 8px;overflow:hidden}
+.location-tree .location-row{border:0;border-radius:7px;margin:0;padding:7px 4px;min-height:48px;gap:8px;overflow:visible;position:relative}
+.location-tree .location-area-frame>.location-row{min-height:56px}
+.location-tree .location-area-frame>.location-row>.location-icon{width:32px;height:32px;flex:0 0 32px}
+.location-tree .location-row .location-dot{width:10px;height:10px;flex:0 0 10px;background:var(--branch-color);margin:0 4px}
+.location-tree .location-dot svg{display:none}
+.location-tree .location-children{margin:0 0 0 20px;padding:0 0 0 12px;border-left:1px solid color-mix(in srgb,var(--branch-color) 28%,white)}
+.location-tree .location-children>.location-node>.location-row::before{content:"";position:absolute;left:-13px;top:24px;width:11px;height:1px;background:color-mix(in srgb,var(--branch-color) 28%,white)}
+.location-tree .location-count{margin-top:1px}
+.location-tree .location-row .location-move.menu-item-move{margin-right:0;width:18px;min-height:32px}
+.location-tree .location-row .location-expand{width:22px;min-height:32px;display:inline-flex;align-items:center;justify-content:center}
+.location-tree .location-row .account-action-toggle{min-width:32px;min-height:32px}
+.location-tree .location-add-row{padding:4px 0 8px}
+#sector-view .location-tree .tree-add-solid{min-height:32px;padding:6px 10px!important;font-size:11px}
+.location-tree .location-row .account-row-actions{flex-wrap:wrap}
+@media(max-width:480px){.location-tree>.location-area-frame{padding:3px 5px}.location-tree .location-children{margin-left:12px;padding-left:9px}.location-tree .location-children>.location-node>.location-row::before{left:-10px;width:8px}.location-tree .location-row{gap:5px}.location-tree .location-row:has(.account-row-actions:not([hidden])){flex-wrap:wrap}.location-tree .location-row .account-row-actions{flex-basis:100%;justify-content:flex-end}}
+
+.location-tree .location-row .location-inline-add{display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;width:32px;height:32px;border:1px solid color-mix(in srgb,var(--branch-color) 45%,white);border-radius:50%;color:var(--branch-color);font-size:22px;line-height:1;background:white;padding:0}.location-tree .location-inline-add:hover{background:color-mix(in srgb,var(--branch-color) 8%,white)}
