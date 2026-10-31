@@ -151,3 +151,13 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 @media(max-width:480px){.location-tree>.location-area-frame{padding:3px 5px}.location-tree .location-children{margin-left:12px;padding-left:9px}.location-tree .location-children>.location-node>.location-row::before{left:-10px;width:8px}.location-tree .location-row{gap:5px}.location-tree .location-row:has(.account-row-actions:not([hidden])){flex-wrap:wrap}.location-tree .location-row .account-row-actions{flex-basis:100%;justify-content:flex-end}}
 
 .location-tree .location-row .location-inline-add{display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;width:32px;height:32px;border:1px solid color-mix(in srgb,var(--branch-color) 45%,white);border-radius:50%;color:var(--branch-color);font-size:22px;line-height:1;background:white;padding:0}.location-tree .location-inline-add:hover{background:color-mix(in srgb,var(--branch-color) 8%,white)}
+
+/* Keep closed action panels out of row sizing; compact location heights. */
+#sector-view .location-tree .account-row-actions[hidden]{display:none!important}
+#sector-view .location-tree>.location-area-frame{padding:0 8px}
+#sector-view .location-tree .location-area-frame>.location-row{min-height:62px;padding:8px 4px}
+#sector-view .location-tree .location-children .location-row{min-height:40px;padding:2px 4px}
+#sector-view .location-tree .location-children>.location-node>.location-row::before{top:20px}
+#sector-view .location-tree .location-children .location-count{font-size:10px;line-height:1.2;margin-top:0}
+#sector-view .location-tree .location-children .location-inline-add{width:26px;height:26px;flex-basis:26px;font-size:19px}
+#sector-view .location-tree .location-children .account-action-toggle{width:28px;height:28px;min-width:28px;min-height:28px}
