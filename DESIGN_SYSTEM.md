@@ -184,3 +184,7 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Adicionar junto dos controles do cabeçalho; busca e filtros em linha fixa abaixo do título. Reutilizar elementos e eventos, com limpeza ao navegar entre cadastros. Registros rolam separadamente.
 
 - Adicionar no cabeçalho é sempre botão circular 32px com o mesmo SVG de mais (18px), cor herdada, nome em aria-label/title. Mover para o cabeçalho não altera formato nem acrescenta botão em pílula.
+
+- Busca do cabeçalho recolhida em botão circular de lupa 32px. Clicar abre campo e foca; clicar novamente ou Escape recolhe preservando consulta/filtro. Consulta existente abre o campo ao entrar.
+
+- Mover somente a ação explícita Adicionar grupo/tipo ou Novo grupo para o cabeçalho. Nunca selecionar pela posição primeiro filho: ao mover o primeiro botão, Histórico virava o próximo e gerava um segundo mais. Preservar vínculo form dos botões submit movidos.
