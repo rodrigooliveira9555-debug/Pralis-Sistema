@@ -1,0 +1,8 @@
+/* Fonte central dos padrões compartilhados CICLUZ. Cor herdada do menu. */
+:root{--cicluz-danger:#e34343;--cicluz-font:Montserrat,system-ui,sans-serif;--cicluz-icon:38px;--cicluz-field-radius:8px;--cicluz-card-radius:10px}
+.view{--menu-accent:var(--panel-color,#7c3aed)}
+#sector-view.account-orange{--menu-accent:#f97316}
+#sector-view .account-row-actions button,body.dark-theme #sector-view .account-row-actions button,.job-actions .job-edit-action,body.dark-theme .job-actions .job-edit-action{background:var(--menu-accent,var(--panel-color,#7c3aed));color:#fff}
+#sector-view .account-row-actions button:first-child,body.dark-theme #sector-view .account-row-actions button:first-child,.job-actions .job-delete-action{background:var(--cicluz-danger);color:#fff}
+.view .shortcut-circle{color:var(--menu-accent);border-color:color-mix(in srgb,var(--menu-accent) 25%,transparent)}
+.view .shortcut-circle:hover{background:color-mix(in srgb,var(--menu-accent) 12%,transparent)}
