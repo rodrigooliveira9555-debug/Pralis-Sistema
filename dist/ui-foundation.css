@@ -46,36 +46,19 @@ body :is(.view,dialog,.modal) :is(input[type=checkbox],input[type=radio]){accent
 body.dark-theme{--ui-select-down:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d4d4d8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");--ui-select-up:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d4d4d8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 15 6-6 6 6'/%3E%3C/svg%3E")}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) select:where(:not([multiple])){appearance:none!important;background-image:var(--ui-select-down)!important;background-repeat:no-repeat!important;background-size:18px 18px!important;background-position:right 12px center!important;padding-right:40px!important}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) select:open{background-image:var(--ui-select-up)!important}
-/* Cargos-only icon manager pilot, using the shared form tokens. */
-#job-edit .identity-advanced{display:none!important}
-.job-manage-launch{margin-top:10px}
-.job-icon-manager{--menu-accent:#7c3aed;--panel-color:#7c3aed;--panel-text:#4b2679;width:min(760px,94vw);max-width:760px;padding:0;border:1px solid color-mix(in srgb,var(--menu-accent) 25%,white);border-radius:10px;background:var(--ui-control-bg);color:var(--ui-input-color);overflow:hidden}
-.job-icon-manager[open]{display:flex;flex-direction:column;max-height:85dvh}
-.job-icon-manager::backdrop{background:#17131f55;backdrop-filter:blur(5px)}
-.job-icon-manager>.head{display:grid;grid-template-columns:38px minmax(0,1fr) 32px;gap:8px;padding:10px 14px;min-height:72px;flex:none;background:color-mix(in srgb,var(--menu-accent) 14%,white);border-bottom:1px solid color-mix(in srgb,var(--menu-accent) 25%,white)}
-.job-icon-manager>.head h2{margin:0}.job-icon-manager>.head p{margin:2px 0 0}
-.job-icon-manager .shortcut-circle{width:32px;height:32px;padding:0;color:var(--menu-accent);border:1px solid currentColor;border-radius:50%;background:transparent;display:grid;place-items:center}
-.job-icon-manager .config-inherit-icon{width:38px;height:38px}.job-icon-manager .head svg{width:18px;height:18px}
-.job-icon-manager>.content{overflow:auto;min-height:0;padding:18px;overscroll-behavior:contain}
-.job-icon-toolbar{display:flex;gap:8px;align-items:center}.job-icon-toolbar input[type=search]{width:100%;flex:1}.job-icon-toolbar .btn{flex:none}
-.job-icon-toolbar input[hidden]{display:none!important}
-.job-icon-manager .btn{border:1px solid var(--menu-accent);border-radius:8px;padding:10px 12px;background:var(--menu-accent);color:#fff;cursor:pointer}
-.job-icon-manager .btn.secondary{background:transparent;color:var(--menu-accent)}
-.job-icon-manager .btn.danger{background:#ef4444;border-color:#ef4444;color:white}
-.job-icon-manager .job-icon-status{font:400 11px/16px var(--ui-font);color:var(--ui-label-color);min-height:16px;margin:10px 0}
-.job-icon-section{font:600 12px/18px var(--ui-font);margin:14px 0 8px}
-.job-icon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
-.job-icon-tile{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;min-height:84px;padding:8px;border:1px solid var(--ui-border-base);border-radius:8px;background:var(--ui-control-bg);color:var(--ui-input-color);font:400 11px/16px var(--ui-font);cursor:pointer}
-.job-icon-tile>span:last-child{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.job-icon-tile:hover,.job-icon-tile[aria-pressed=true]{border-color:var(--menu-accent);background:color-mix(in srgb,var(--menu-accent) 8%,var(--ui-control-bg))}
-.job-icon-manager .icon-live-badge{display:grid;place-items:center;width:36px;height:36px;flex:none;border:1px solid currentColor;border-radius:50%;color:var(--menu-accent);background:transparent}
-.job-icon-manager .icon-live-badge svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.job-icon-browse-actions,.job-icon-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.job-icon-preview{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;padding:14px;margin-top:16px;border:1px solid var(--ui-border-base);border-radius:8px;background:var(--ui-control-bg)}
-.job-icon-preview label{display:grid;gap:4px}.job-icon-actions,.job-icon-confirm{grid-column:1/-1}.job-icon-preview[hidden],.job-icon-manager [hidden]{display:none!important}
-body.dark-theme .job-icon-manager>.head{background:color-mix(in srgb,var(--menu-accent) 24%,#24232b);border-color:#514657}
-body.dark-theme .job-icon-manager{border-color:#514657}
-@media(max-width:560px){.job-icon-manager>.content{padding:12px}.job-icon-toolbar{flex-wrap:wrap}.job-icon-toolbar input[type=search]{flex-basis:100%}.job-icon-grid{grid-template-columns:repeat(auto-fill,minmax(72px,1fr))}}
-
-body.dark-theme .job-icon-manager .btn.secondary,body.dark-theme .job-icon-manager .icon-live-badge,body.dark-theme .job-icon-manager .shortcut-circle{color:#c4b5fd;border-color:currentColor}
-.job-icon-grid>p{grid-column:1/-1}
+/* Cargos-only inline icon pilot, sharing the existing circular grid. */
+#job-edit .identity-advanced{display:block!important}
+#job-edit .job-inline-tools[hidden],#job-edit .job-inline-tools [hidden]{display:none!important}
+#job-edit .job-more-options{margin-top:12px}
+#job-edit .job-inline-tools{margin-top:10px}
+#job-edit .job-inline-search{display:flex;align-items:center;gap:8px}
+#job-edit .job-inline-search input[type=search]{flex:1;width:100%;min-width:0;margin:0}
+#job-edit .job-inline-search .shortcut-circle{flex:0 0 32px;width:32px;height:32px;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:var(--ui-input-color);display:grid;place-items:center}
+#job-edit .job-inline-search svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#job-edit .job-inline-status{font:400 11px/16px var(--ui-font);color:var(--ui-label-color);margin:8px 0}
+#job-edit .job-online-icons,#job-edit .job-removed-icons{margin:10px 0;flex-wrap:wrap}
+.job-icon-quick-delete{position:fixed;z-index:100;display:flex;align-items:center;gap:8px;flex-wrap:wrap;max-width:260px;padding:8px;background:var(--ui-control-bg);color:var(--ui-input-color);border:1px solid var(--ui-border-base);border-radius:8px;box-shadow:0 4px 14px #0002;font:400 12px/18px var(--ui-font)}
+.job-icon-quick-delete .job-icon-trash{width:32px;height:32px;padding:6px;border:1px solid #ef4444;border-radius:50%;color:#ef4444;background:transparent;cursor:pointer}
+.job-icon-trash svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.job-icon-quick-delete .btn{font:600 12px/18px var(--ui-font)}
+.job-icon-quick-delete .danger{background:#ef4444;border-color:#ef4444;color:#fff}

@@ -242,3 +242,7 @@ field-validation.js centraliza CPF (máscara11 dígitos e verificadores), datas 
 ## Piloto Gerenciar ícones — somente Cargos
 
 Cargos mantém escolhas rápidas/mais usados e substitui Mais ícones por Gerenciar ícones. Uma única janela no padrão de cabeçalho72px/ícone38/fechar32, fontes e campos compartilhados. Busca local; Buscar novos consulta Lucide via API Iconify dentro da mesma janela (sem navegação externa). Prévia e Importar e usar; Importar arquivo SVG usa sanitização existente. Remover só aparece após seleção, confirmação local, com Ver removidos/Restaurar e usar. IDs e aplicações anteriores preservados. Importações e ocultações do piloto ficam em cicluz-job-icon-pilot-v1, separadas das opções dos outros cadastros. Demais gerenciadores mantidos.
+
+## Revisão do piloto de Cargos — grade integrada
+
+Substitui a janela Gerenciar ícones: usar Mais ícones no próprio cadastro, com grade circular existente. Clique simples seleciona; duplo clique ou pressionar550ms revela lixeira junto ao ícone; tocar na lixeira revela confirmação local. Movimento8px cancela pressionar. Delete/ShiftF10 também revela a ação. Buscar mais opções abre pesquisa online e importação SVG dentro da grade; resultado importado/aplicado com clique simples. Remoção recuperável via Ver removidos; registros e IDs preservados. Piloto permanece somente em Cargos.
