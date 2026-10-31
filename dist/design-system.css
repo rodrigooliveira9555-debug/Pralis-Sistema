@@ -320,3 +320,9 @@ body:has(.view.show>.panel) .main{padding-bottom:0}
 #sector-view.financial-groups.financial-hierarchy .financial-group:has(>.account-list-row:hover),#sector-view.financial-groups.financial-hierarchy .financial-group:has(>.account-list-row:focus-within){background:color-mix(in srgb,var(--menu-accent) 10%,white);border-color:var(--menu-accent)}
 #sector-view.financial-groups.financial-hierarchy .financial-subgroups>.account-list-row{min-height:40px}
 body.dark-theme #sector-view.financial-groups.financial-hierarchy .financial-group:has(>.account-list-row:hover),body.dark-theme #sector-view.financial-groups.financial-hierarchy .financial-group:has(>.account-list-row:focus-within){background:color-mix(in srgb,var(--menu-accent) 20%,#24232b)}
+
+/* Search model from Tipos de Venda, shared by every header. */
+.view .head .fixed-header-tools:has(input.header-search-open){flex-basis:100%;width:100%}
+.view .head .fixed-header-tools input[type=search].shared-header-search{box-sizing:border-box!important;width:100%!important;min-width:0!important;flex:1 0 100%!important;height:42px!important;min-height:42px!important;padding:10px!important;border:1px solid color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 25%,white)!important;border-radius:8px!important;background:#fff!important;color:#27272a!important;font:400 12px/18px Montserrat,system-ui,sans-serif!important;box-shadow:none;appearance:none}
+.view .head .fixed-header-tools input[type=search].shared-header-search:focus{outline:none!important;border-color:var(--menu-accent,var(--panel-color,#7c3aed))!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 14%,transparent)!important}
+body.dark-theme .view .head .fixed-header-tools input[type=search].shared-header-search{background:#24232b!important;color:#f4f4f5!important;border-color:color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 45%,#555)!important}

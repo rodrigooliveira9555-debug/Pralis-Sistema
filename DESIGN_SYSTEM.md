@@ -202,3 +202,7 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Normalizar também cabeçalhos legados: extrair ícone de dentro do título, criar faixa de atalhos quando ausente e mover ações diretas para essa faixa. Três colunas explícitas: ícone 38px, título flexível, atalhos. Não presumir estrutura igual antes da normalização.
 
 - Revisão dimensional: controles de formulário 42px/raio8/fonte12; linhas de cadastro no mesmo nível 62px e ícone30; subgrupos40. Montserrat compartilhada. Hover dos grupos ocupa a moldura inteira sem padding externo. Expandir/recolher global usa duas setas opostas; filtro usa chevron simples, imediatamente ao lado da lupa. Preservar cores por módulo.
+
+- Modelo único de busca: referência Tipos de Venda/Operadoras. Campo aberto ocupa largura total disponível; altura42, raio8, padding10, Montserrat12/18, fundo branco no tema claro. Borda e foco herdam cor do módulo. Classe shared-header-search em Contas, Despesas e demais cabeçalhos.
+
+- Expandir/recolher: duas setas em chevron, cima e baixo, mesma geometria do menu (sem hastes). Preservar ciclo de níveis. Substitui setas verticais com haste.
