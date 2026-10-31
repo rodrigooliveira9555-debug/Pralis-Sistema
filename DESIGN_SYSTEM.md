@@ -76,3 +76,5 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Operadoras: Stone, Getnet, Cielo, PagBank e SafraPay solicitadas; Rede, Mercado Pago, SumUp, Ton e InfinitePay verificadas em fontes oficiais.
 - Logomarcas reais mantêm cores originais, fundo branco e contorno amarelo; utilizar assets locais contidos. Origem dos arquivos em payment-mark-sources.json. Não substituir logomarca desconhecida por marca parecida.
 - Nomes de menus no plural com “de”: CNT - Grupos de Contas e equivalentes, preservando códigos.
+
+- Configuração / Cadastros Gerais contém somente Gestão de Pessoas e Diretor de Operação. TI foi renomeado para Diretor de Operação, preservando todos os cadastros, grupos e navegação de retorno. Remover desse menu os atalhos Financeiro e Diretor Geral; não alterar os papéis de mesmo nome em outros módulos.

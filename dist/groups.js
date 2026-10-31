@@ -1589,10 +1589,10 @@ function showFinancialGroup(key,originIcon,editId){
  const cfg=groupConfig[key],view=document.getElementById('sector-view');view.querySelectorAll('.financial-expand-all,.view-alphabetize').forEach(b=>b.remove());const box=document.getElementById('sector-content');
  document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));view.classList.add('show','financial-groups');view.classList.remove('account-orange');view.style.setProperty('--menu-accent',cfg.color);view.style.setProperty('--panel-color',cfg.color);
  const panel=view.querySelector('.panel');panel.style.setProperty('--panel-color',cfg.color);panel.style.setProperty('--panel-text',(key==='vendas'||cfg.flat)?'#785600':key==='mercadorias'?'#12672e':key==='retiradas'?'#174ca1':'#9c1c1c');
- document.getElementById('sector-path').textContent='Configurações / TI / '+cfg.title;document.getElementById('crumb').textContent='Configurações / TI / '+cfg.title;
+ document.getElementById('sector-path').textContent='Configurações / Diretor de Operação / '+cfg.title;document.getElementById('crumb').textContent='Configurações / Diretor de Operação / '+cfg.title;
  const defaultIcon=originIcon||'<svg viewBox="0 0 24 24">'+dollar+'</svg><svg viewBox="0 0 24 24">'+moneyIcons[key==='vendas'||cfg.flat?0:2]+'</svg>';view.querySelector('.sector-icon').innerHTML=defaultIcon;
  const iconMarkup=item=>{const logo=!item.icon&&getPaymentMark(key,item.name);if(logo)return '<img src="'+logo+'" alt="" class="payment-logo">';return item.icon?'<svg viewBox="0 0 24 24">'+(groupIcons[item.icon]||icons.groups)+'</svg>':defaultIcon};
- const ti=()=>openSection(sections[6][0],'TI','settings','#7c3aed');
+ const ti=()=>openSection(sections[6][0],'Diretor de Operação','settings','#7c3aed');
  let query='',mode=cfg.flat?'complete':'grouped',manual=localStorage.getItem('cicluz-'+key+'-sort')==='manual';
  const expanded=new Set();
  function button(text,fn,cls='btn secondary'){const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=text;b.onclick=fn;return b}
