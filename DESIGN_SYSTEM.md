@@ -170,3 +170,7 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Biblioteca compartilhada CicluzBakeryIcons: 48 símbolos SVG de panificação, confeitaria, salgados, mercearia, equipamentos, utensílios e gestão. Disponível em Cargos, Contas, grupos financeiros; os níveis de localização atualmente usam identificador de três caracteres. Acrescentar sem mudar IDs ou índices anteriores; preservar marcas bancárias.
 
 - Todos os cadastros com identificador (Cargos, Contas, grupos/subgrupos, tipos de venda, bandeiras, operadoras e quatro níveis de localização) oferecem Ícone ou 3 caracteres, com prévia, escolha persistida e preservação dos registros anteriores. Biblioteca inclui pessoa, dupla e grupo com cabeça circular e ombros em arco, traço uniforme. Mais ícones usa chevron para baixo/acima.
+
+- Biblioteca central local: Buscar, importar ou excluir ícones em Mais ícones. Busca externa Lucide; importar SVG simples sanitizado com nome e prévia. Reabrir cadastro mostra novos ícones em todos os seletores. Exclusão confirmada oculta opção em todas as galerias, preserva aplicações existentes e permite Restaurar. Dados locais neste navegador, sem sincronização entre dispositivos. IDs de importados estáveis; nunca deslocar índices legados.
+
+- Mais usados: até seis ícones por frequência de seleção, compartilhados entre seletores neste navegador; não preencher com sugestões antes do uso. Ícones excluídos saem dessa faixa. Cabeçalho lateral/marca e cabeçalhos de tela permanecem visíveis durante rolagem; somente opções laterais rolam.
