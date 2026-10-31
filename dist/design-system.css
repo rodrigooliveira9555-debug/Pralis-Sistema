@@ -164,3 +164,12 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 
 /* Leaf rows retain the expansion column to preserve depth alignment. */
 .location-tree .location-expand-spacer{display:inline-block;flex:0 0 22px;width:22px;height:32px;pointer-events:none}
+
+/* Initials and saved custom palette belong exclusively to Locations. */
+.location-tree .location-row .location-initials{width:28px;height:28px;flex:0 0 28px;font-size:9px;font-weight:600;letter-spacing:0;line-height:1;background:var(--node-color)}
+.location-tree .location-area-frame>.location-row>.location-initials{width:32px;height:32px;flex-basis:32px;font-size:10px}
+.location-dialog .location-initials{font-size:10px;font-weight:600;line-height:1;background:var(--node-color)}
+.location-dialog .location-sigla-field input{text-transform:uppercase;max-width:150px;letter-spacing:2px}
+.location-dialog .location-saved-colors{margin:8px 0 0;grid-template-columns:repeat(auto-fill,24px)}
+.location-dialog .location-saved-colors small{grid-column:1/-1;font-size:11px;color:#777}
+.location-dialog .location-color-picker>.location-saved-colors+span,.location-dialog .location-color-picker>span{display:block;margin-top:14px;font-size:12px}
