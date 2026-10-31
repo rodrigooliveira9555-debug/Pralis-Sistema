@@ -161,3 +161,6 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 #sector-view .location-tree .location-children .location-count{font-size:10px;line-height:1.2;margin-top:0}
 #sector-view .location-tree .location-children .location-inline-add{width:26px;height:26px;flex-basis:26px;font-size:19px}
 #sector-view .location-tree .location-children .account-action-toggle{width:28px;height:28px;min-width:28px;min-height:28px}
+
+/* Leaf rows retain the expansion column to preserve depth alignment. */
+.location-tree .location-expand-spacer{display:inline-block;flex:0 0 22px;width:22px;height:32px;pointer-events:none}
