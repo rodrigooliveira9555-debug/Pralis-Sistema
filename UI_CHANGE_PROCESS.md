@@ -27,3 +27,5 @@ Antes de editar: ler DESIGN_SYSTEM.md e este processo. Reutilizar o componente e
 Cadastro do cargo, Cadastro de patrimônio, Cadastro simples, Cadastro completo com dependentes, Configurar, Atualização salarial, fichas financeiras e formulário dos níveis de localização.
 
 Cada alteração futura acrescenta telas relacionadas à matriz conforme o componente afetado.
+
+- Matriz biblioteca de ícones: Cargos, Contas, DES/MER/RET/VND (grupo e subgrupo), tipos de venda/bandeiras/operadoras, Área/Setor/Local e Organograma; fonte compartilhada icon-library-manager.js/ui-foundation.css.
