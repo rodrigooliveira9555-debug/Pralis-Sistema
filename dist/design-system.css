@@ -283,3 +283,8 @@ body:has(.view.show>.panel) .main{padding-bottom:0}
 /* Compact header without changing typography or control shapes. */
 .view.show>.panel>.head{padding:10px 14px!important;gap:8px!important}.view.show>.panel>.head p{margin-top:2px;margin-bottom:0;line-height:1.2}.fixed-header-tools{gap:6px}.fixed-header-tools>:empty{display:none}.fixed-header-tools .jobs-toolbar,.fixed-header-tools .financial-list-controls,.fixed-header-tools .location-toolbar{padding:0;gap:6px}
 .fixed-header-tools{flex:1 1 160px;min-width:140px}.fixed-header-tools .jobs-toolbar,.fixed-header-tools .financial-list-controls,.fixed-header-tools .location-toolbar{width:auto!important;flex:1;min-width:0}.fixed-header-tools select{max-width:180px}.view.show>.panel>.head>.shortcut-actions{flex:0 0 auto}
+/* One header layout for every screen: shortcuts anchored at upper right. */
+.view.show>.panel>.head:has(>.shortcut-actions){position:relative;padding-top:50px!important;align-items:center}
+.view.show>.panel>.head>.shortcut-actions{position:absolute;top:10px;right:14px;left:auto;display:flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:6px;margin:0!important;max-width:calc(100% - 28px);overflow-x:auto;scrollbar-width:thin}
+.view.show>.panel>.head>div:not(.shortcut-actions):not(.fixed-header-tools){min-width:0;flex:1}
+.view.show>.panel>.head h2{overflow-wrap:anywhere;margin:0}

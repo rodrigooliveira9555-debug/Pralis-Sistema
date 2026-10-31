@@ -192,3 +192,7 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 - Histórico de transferências no cabeçalho como relógio SVG circular, mantendo ação original. Atualizar organograma usa duas setas circulares, mesmo traço de 1,8 e cantos arredondados.
 
 - Cabeçalho compacto: padding 10px/14px, gap 8px, manter tipografia existente. Não reservar segunda linha vazia; mostrar apenas quando houver filtros ou busca aberta.
+
+- Contas usa o mesmo cabeçalho financeiro, busca recolhida em lupa e mais circular que abre ficha vazia; remover criação direta por campo na lista. Preservar cadastro e armazenamento existentes. Ordem comum: Voltar, Fechar, A/Z, expansão quando houver, Adicionar, Buscar, Histórico quando houver.
+
+- Regra global dos cabeçalhos: atalhos circulares em uma única faixa no canto superior direito; título/descrição abaixo sem deslocar controles. Aplicar a todas as telas .view, não só três cadastros. Preservar ordem e cores de origem.
