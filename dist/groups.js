@@ -1,5 +1,5 @@
 // Configuração única de títulos, cores e hierarquia dos cadastros financeiros.
-const groupConfig={contas:{title:'Grupo de contas / CNT',color:'#f97316',code:'CNT'},vendas:{title:'Grupo de vendas / VND',color:'#eab308',code:'VND'},retiradas:{title:'Grupo de retiradas / RET',color:'#2563eb',code:'RET'},mercadorias:{title:'Mercadoria / MER',color:'#22c55e',code:'MER'},despesas:{title:'Despesa / DES',color:'#ef4444',code:'DES'}};
+const groupConfig={contas:{title:'CNT - grupo contas',color:'#f97316',code:'CNT'},vendas:{title:'VND - grupo vendas',color:'#eab308',code:'VND'},retiradas:{title:'RET - grupo retiradas',color:'#2563eb',code:'RET'},mercadorias:{title:'MER - grupo mercadorias',color:'#22c55e',code:'MER'},despesas:{title:'DES - grupo despesas',color:'#ef4444',code:'DES'}};
 const groupSeed={
   "mercadorias": [
     {
@@ -1432,53 +1432,110 @@ const groupSeed={
   ],
   "retiradas": []
 };
+groupSeed.despesas.find(g=>g.name==='DESP. BANCÁRIAS').directEntry=true;
 const groupStorage='cicluz-financial-hierarchy-v1';
-let financialGroups;try{financialGroups=JSON.parse(localStorage.getItem(groupStorage)||'null')}catch{};
+let financialGroups;try{financialGroups=JSON.parse(localStorage.getItem(groupStorage)||'null')}catch{}
 if(!financialGroups||typeof financialGroups!=='object')financialGroups=structuredClone(groupSeed);
-for(const k of Object.keys(groupSeed))if(!Array.isArray(financialGroups[k]))financialGroups[k]=structuredClone(groupSeed[k]);
-const groupIcons=[icons.groups,icons.launch,icons.records,icons.overview,icons.team,icons.settings];
-const groupSvg=i=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+groupIcons[i||0]+'</svg>';
+const normalized=s=>s.normalize('NFD').replace(/[\u0300-\u036f\u2060]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
+// Reconcile the complete imported lists once, retaining edits, states and added records.
+const importRevision='cicluz-financial-import-complete-v2';
+if(!localStorage.getItem(importRevision)){
+ for(const [key,seeds] of Object.entries(groupSeed)){
+  if(!Array.isArray(financialGroups[key]))financialGroups[key]=[];
+  for(const seed of seeds){let group=financialGroups[key].find(g=>g.id===seed.id||normalized(g.name)===normalized(seed.name));
+   if(!group){financialGroups[key].push(structuredClone(seed));continue}
+   if(!Array.isArray(group.children))group.children=[];
+   if(seed.directEntry)group.directEntry=true;
+   for(const child of seed.children)if(!group.children.some(c=>c.id===child.id||normalized(c.name)===normalized(child.name)))group.children.push(structuredClone(child));
+  }
+ }
+ try{localStorage.setItem(groupStorage,JSON.stringify(financialGroups));localStorage.setItem(importRevision,'1')}catch{}
+}
+
+// Preserve financial groups created in the earlier flat editor.
+if(!localStorage.getItem('cicluz-financial-legacy-import-v1')){
+ for(const key of ['retiradas','vendas','mercadorias','despesas']){
+  const code=groupConfig[key].code;
+  for(const raw of (Array.isArray(tiGroups[key])?tiGroups[key]:[])){
+   if(typeof raw!=='string')continue;
+   const clean=raw.replace(new RegExp('^'+code+'\\s+','i'),'').trim();if(!clean)continue;
+   const split=clean.indexOf(' - '),groupName=split<0?clean:clean.slice(0,split),childName=split<0?'':clean.slice(split+3);
+   let group=financialGroups[key].find(g=>normalized(g.name)===normalized(groupName));
+   if(!group){group={id:crypto.randomUUID(),name:groupName,active:true,icon:0,children:[]};financialGroups[key].push(group)}
+   if(childName&&!group.children.some(c=>normalized(c.name)===normalized(childName)))group.children.push({id:crypto.randomUUID(),name:childName,active:true,icon:0});
+  }
+ }
+ try{localStorage.setItem(groupStorage,JSON.stringify(financialGroups));localStorage.setItem('cicluz-financial-legacy-import-v1','1')}catch{}
+}
+
+const groupIcons=[null,icons.groups,icons.launch,icons.records,icons.overview,icons.team,icons.settings];
+const groupIconLabels=['Padrão do menu','Grupos','Carteira','Relógio','Painel','Pessoas','Configurações'];
 function persistGroups(){try{localStorage.setItem(groupStorage,JSON.stringify(financialGroups));return true}catch{alert('Não foi possível salvar neste navegador.');return false}}
 const oldShowTiGroup=showTiGroup;
-showTiGroup=function(key,title,icon){if(key==='contas'){const v=document.getElementById('sector-view');v.classList.remove('financial-groups');v.style.removeProperty('--menu-accent');return oldShowTiGroup(key,groupConfig.contas.title,icon)}if(!groupConfig[key])return oldShowTiGroup(key,title,icon);showFinancialGroup(key,icon)};
+showTiGroup=function(key,title,icon){const view=document.getElementById('sector-view');view.querySelectorAll('.financial-expand-all').forEach(b=>b.remove());view.classList.remove('financial-groups');view.style.removeProperty('--menu-accent');if(key==='contas')return oldShowTiGroup(key,groupConfig.contas.title,icon);if(!groupConfig[key])return oldShowTiGroup(key,title,icon);showFinancialGroup(key,icon)};
 function showFinancialGroup(key,originIcon){
- const cfg=groupConfig[key],view=document.getElementById('sector-view');
- document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));view.classList.add('show');view.classList.remove('account-orange');view.classList.add('financial-groups');
- view.style.setProperty('--menu-accent',cfg.color);view.querySelector('.panel').style.setProperty('--panel-color',cfg.color);view.querySelector('.panel').style.setProperty('--panel-text',key==='vendas'?'#785600':key==='mercadorias'?'#12672e':key==='retiradas'?'#174ca1':'#9c1c1c');
- document.getElementById('sector-title').textContent=cfg.title;document.getElementById('sector-path').textContent='Configurações · TI · '+cfg.title;document.getElementById('crumb').textContent='Configurações / TI / '+cfg.title;
- const mark=view.querySelector('.sector-icon');mark.innerHTML=originIcon||groupSvg(0);
- const box=document.getElementById('sector-content');
- const back=()=>showFinancialGroup(key,originIcon);
- const ti=()=>{view.classList.remove('financial-groups');view.style.removeProperty('--menu-accent');openSection(sections[6][0],'TI','settings','#7c3aed')};
- setSectorBack(ti);
- let query='',manual=false;
- function button(label,fn,cls='btn secondary'){const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;b.onclick=fn;return b}
- function ordered(rows){return [...rows].sort((a,b)=>Number(b.active)-Number(a.active)||(manual?0:a.name.localeCompare(b.name,'pt-BR',{numeric:true,sensitivity:'base'})))}
- function list(){box.replaceChildren();setSectorBack(ti);document.getElementById('sector-title').textContent=cfg.title;
- const bar=document.createElement('div');bar.className='fg-toolbar';const search=document.createElement('input');search.type='search';search.placeholder='Buscar grupo ou subgrupo';search.setAttribute('aria-label',search.placeholder);search.value=query;bar.append(search,button('+ Novo grupo',()=>edit(null), 'btn'),button('Expandir tudo',()=>box.querySelectorAll('.fg-group').forEach(d=>d.open=true)),button('Recolher tudo',()=>box.querySelectorAll('.fg-group').forEach(d=>d.open=false)));
- const sort=document.createElement('select');sort.setAttribute('aria-label','Ordenação');sort.add(new Option('Ativos primeiro · Nome A–Z','name'));sort.add(new Option('Ativos primeiro · Ordem manual','manual'));sort.value=manual?'manual':'name';sort.onchange=()=>{manual=sort.value==='manual';render()};bar.append(sort);box.append(bar);
- const note=document.createElement('small');note.textContent='Grupos e subgrupos · alterações salvas neste navegador';box.append(note);const grid=document.createElement('div');grid.className='fg-list';box.append(grid);
- function render(){grid.replaceChildren();const q=query.toLocaleLowerCase('pt-BR');const records=ordered(financialGroups[key]).filter(g=>g.name.toLocaleLowerCase('pt-BR').includes(q)||g.children.some(s=>s.name.toLocaleLowerCase('pt-BR').includes(q)));
- if(!records.length){const empty=document.createElement('p');empty.textContent=query?'Nenhum resultado encontrado.':'Nenhum grupo cadastrado. Adicione um grupo para começar.';grid.append(empty)}
- for(const g of records){const d=document.createElement('details');d.className='fg-group';d.open=!!query;const summary=document.createElement('summary');summary.append(row(g,null));d.append(summary);const children=document.createElement('div');children.className='fg-children';for(const sub of ordered(g.children).filter(s=>!q||g.name.toLocaleLowerCase('pt-BR').includes(q)||s.name.toLocaleLowerCase('pt-BR').includes(q)))children.append(row(sub,g));children.append(button('+ Novo subgrupo',()=>edit(null,g)));d.append(children);grid.append(d)}}
- function row(item,parent){const r=document.createElement('div');r.className='fg-row'+(!item.active?' fg-inactive':'');r.dataset.id=item.id;const handle=button('⠿',()=>{} ,'fg-handle');handle.title='Arrastar para organizar';handle.setAttribute('aria-label','Mover '+item.name);handle.style.touchAction='none';handle.onpointerdown=e=>{e.preventDefault();e.stopPropagation();handle.setPointerCapture(e.pointerId)};handle.onpointerup=e=>{e.stopPropagation();handle.releasePointerCapture(e.pointerId);const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('.fg-row');const pool=parent?parent.children:financialGroups[key];const from=pool.indexOf(item),to=pool.findIndex(x=>x.id===target?.dataset.id);if(to<0||from===to||pool[to].active!==item.active)return;const next=[...pool];next.splice(from,1);next.splice(to,0,item);if(parent)parent.children=next;else financialGroups[key]=next;manual=true;sort.value='manual';persistGroups();render()};
- const badge=document.createElement('span');badge.className='fg-badge';badge.innerHTML=groupSvg(item.icon);const name=document.createElement('span');name.className='fg-name';name.textContent=item.name;const state=document.createElement('small');state.textContent=[item.document,item.purpose,item.active?'Ativo':'Inativo'].filter(Boolean).join(' · ');
- const actions=document.createElement('div');actions.className='account-row-actions';actions.hidden=true;
- const pencil=button('',e=>edit(item,parent));pencil.innerHTML='<svg viewBox="0 0 24 24"><path d="m4 20 4-.8L19 8l-3-3L5 16zM14.5 6.5l3 3"/></svg>';pencil.title='Editar';pencil.setAttribute('aria-label','Editar '+item.name);
- const del=button('',()=>{if(!confirm('Excluir '+item.name+(parent?'?':' e seus '+item.children.length+' subgrupos?')))return;const old=parent?parent.children:financialGroups[key];const next=old.filter(x=>x.id!==item.id);if(parent)parent.children=next;else financialGroups[key]=next;if(!persistGroups()){if(parent)parent.children=old;else financialGroups[key]=old}render()});del.innerHTML='<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 10v7M14 10v7"/></svg>';del.title='Excluir';del.setAttribute('aria-label','Excluir '+item.name);actions.append(del,pencil);
- const arrow=button('›',()=>{const opening=actions.hidden;grid.querySelectorAll('.account-row-actions').forEach(a=>a.hidden=true);actions.hidden=!opening;arrow.setAttribute('aria-expanded',String(opening))},'account-action-toggle');arrow.setAttribute('aria-label','Ações de '+item.name);arrow.setAttribute('aria-expanded','false');actions.onclick=e=>e.stopPropagation();[handle,arrow].forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()}));r.append(handle,badge,name,state,arrow,actions);return r}
- search.oninput=()=>{query=search.value;render()};render();}
- function edit(item,parent){box.replaceChildren();setSectorBack(list);document.getElementById('sector-title').textContent=(item?'Editar ':'Cadastrar ')+(parent?'subgrupo':'grupo')+' / '+cfg.code;
- const form=document.createElement('form');form.className='form-fields account-editor';const identity=document.createElement('div');identity.className='job-identity fg-identity';const label=document.createElement('label');label.textContent='Nome do '+(parent?'subgrupo':'grupo')+' *';const input=document.createElement('input');input.required=true;input.maxLength=120;input.value=item?.name||'';label.append(input);identity.append(label);
- let chosen=item?.icon||0,active=item?.active!==false;const picker=document.createElement('div');const title=document.createElement('label');title.textContent='Ícone';picker.append(title);const choices=document.createElement('div');choices.className='account-icon-options';picker.append(choices);identity.append(picker);form.append(identity);
- const preview=document.createElement('div');preview.className='icon-live-preview';const badge=document.createElement('span');badge.className='fg-badge';const text=document.createElement('b');preview.append(badge,text);form.append(preview);function refresh(){badge.innerHTML=groupSvg(chosen);text.textContent=input.value||'Nome do '+(parent?'subgrupo':'grupo');[...choices.children].forEach((b,i)=>b.setAttribute('aria-pressed',String(i===chosen)))};
- groupIcons.forEach((_,i)=>{const b=button('',()=>{chosen=i;refresh()},'fg-icon-choice');b.innerHTML=groupSvg(i);b.setAttribute('aria-label','Ícone '+(i+1));choices.append(b)});input.oninput=()=>{input.setCustomValidity('');refresh()};refresh();
- const documentLabel=document.createElement('label');documentLabel.textContent='Documento';const documentSelect=document.createElement('select');documentSelect.setAttribute('aria-label','Documento');for(const value of ['','DOC/F','DOC/NF','DOC/F/NF'])documentSelect.add(new Option(value||'Selecione',value));documentSelect.value=item?.document||'';documentLabel.append(documentSelect);form.append(documentLabel);
- let purposeSelect;if(key==='mercadorias'){const purposeLabel=document.createElement('label');purposeLabel.textContent='Finalidade da mercadoria';purposeSelect=document.createElement('select');purposeSelect.setAttribute('aria-label','Finalidade da mercadoria');for(const value of ['','VENDA','TRANSFORMAÇÃO'])purposeSelect.add(new Option(value||'Selecione',value));purposeSelect.value=item?.purpose||'';purposeLabel.append(purposeSelect);form.append(purposeLabel)}
- if(parent){const info=document.createElement('p');info.textContent='Grupo: '+parent.name;form.append(info)}
- const status=document.createElement('div');status.className='account-status-row';const toggle=button('',()=>{active=!active;sync()},'account-status-switch');toggle.setAttribute('role','switch');toggle.setAttribute('aria-label','Ativar ou inativar');toggle.append(document.createElement('span'));const state=document.createElement('span');function sync(){toggle.setAttribute('aria-checked',String(active));state.textContent=active?'Ativo':'Inativo'}sync();status.append(toggle,state);form.append(status);
- const actions=document.createElement('div');actions.className='actions';const save=button('Salvar',()=>{},'btn');save.type='submit';actions.append(button('Cancelar',list),save);form.append(actions);form.onsubmit=e=>{e.preventDefault();const name=input.value.trim();if(!name)return;const pool=parent?parent.children:financialGroups[key];if(pool.some(x=>x!==item&&x.name.toLocaleLowerCase('pt-BR')===name.toLocaleLowerCase('pt-BR'))){input.setCustomValidity('Este nome já existe neste grupo.');input.reportValidity();return}const snapshot=structuredClone(financialGroups);if(item)Object.assign(item,{name,active,icon:chosen,document:documentSelect.value,...(purposeSelect?{purpose:purposeSelect.value}:{})});else pool.push({id:crypto.randomUUID(),name,active,icon:chosen,document:documentSelect.value,...(purposeSelect?{purpose:purposeSelect.value}:{}),...(!parent?{children:[]}:{})});if(!persistGroups()){financialGroups=snapshot;return}document.getElementById('sector-title').textContent=cfg.title;list()};box.append(form);input.focus();}
+ const cfg=groupConfig[key],view=document.getElementById('sector-view');view.querySelectorAll('.financial-expand-all').forEach(b=>b.remove());const box=document.getElementById('sector-content');
+ document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));view.classList.add('show','financial-groups');view.classList.remove('account-orange');view.style.setProperty('--menu-accent',cfg.color);view.style.setProperty('--panel-color',cfg.color);
+ const panel=view.querySelector('.panel');panel.style.setProperty('--panel-color',cfg.color);panel.style.setProperty('--panel-text',key==='vendas'?'#785600':key==='mercadorias'?'#12672e':key==='retiradas'?'#174ca1':'#9c1c1c');
+ document.getElementById('sector-path').textContent='Configurações / TI / '+cfg.title;document.getElementById('crumb').textContent='Configurações / TI / '+cfg.title;
+ const defaultIcon=originIcon||'<svg viewBox="0 0 24 24">'+dollar+'</svg><svg viewBox="0 0 24 24">'+moneyIcons[key==='vendas'?0:2]+'</svg>';view.querySelector('.sector-icon').innerHTML=defaultIcon;
+ const iconMarkup=item=>item.icon?'<svg viewBox="0 0 24 24">'+(groupIcons[item.icon]||icons.groups)+'</svg>':defaultIcon;
+ const ti=()=>openSection(sections[6][0],'TI','settings','#7c3aed');
+ let query='',mode='grouped',manual=localStorage.getItem('cicluz-'+key+'-sort')==='manual';
+ const expanded=new Set();
+ function button(text,fn,cls='btn secondary'){const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=text;b.onclick=fn;return b}
+ function ordered(pool){return [...pool].sort((a,b)=>Number(b.active!==false)-Number(a.active!==false)||(manual?0:a.name.localeCompare(b.name,'pt-BR',{numeric:true,sensitivity:'base'})))}
+ function list(){setSectorBack(ti);box.replaceChildren();document.getElementById('sector-title').textContent=cfg.title;
+ view.querySelectorAll('.financial-expand-all').forEach(b=>b.remove());
+ const shortcuts=view.querySelector('.shortcut-actions');
+ for(const [label,path,open] of [['Expandir todos os grupos','m5 9 7 7 7-7',true],['Recolher todos os grupos','m5 15 7-7 7 7',false]]){const b=button('',()=>{mode='grouped';display.value=mode;if(open)financialGroups[key].forEach(g=>expanded.add(g.id));else expanded.clear();render()},'shortcut-circle financial-expand-all');b.title=label;b.setAttribute('aria-label',label);b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>';shortcuts.prepend(b)}
+ const form=document.createElement('form');form.className='ti-group-form';const input=document.createElement('input');input.placeholder='Nome do grupo';input.setAttribute('aria-label','Nome do grupo');input.maxLength=120;input.required=true;
+ const add=document.createElement('button');add.className='btn';add.textContent='Adicionar grupo';add.type='submit';form.append(input,add);form.onsubmit=e=>{e.preventDefault();edit(null,null,input.value.trim())};box.append(form);
+ const toolbar=document.createElement('div');toolbar.className='financial-list-controls';
+ const sort=document.createElement('select');sort.className='account-sort';sort.setAttribute('aria-label','Ordenação');sort.add(new Option('Ativos primeiro · Nome A–Z','name'));sort.add(new Option('Ativos primeiro · Ordem manual','manual'));sort.value=manual?'manual':'name';sort.onchange=()=>{manual=sort.value==='manual';localStorage.setItem('cicluz-'+key+'-sort',sort.value);render()};
+ const display=document.createElement('select');display.className='account-sort';display.setAttribute('aria-label','Exibição');display.add(new Option('Lista completa','complete'));display.add(new Option('Grupos e subgrupos','grouped'));display.value=mode;display.onchange=()=>{mode=display.value;localStorage.setItem('cicluz-'+key+'-display',mode);render()};
+ const search=document.createElement('input');search.type='search';search.className='account-sort';search.placeholder='Buscar grupo ou subgrupo';search.setAttribute('aria-label',search.placeholder);search.value=query;search.oninput=()=>{query=search.value;render()};toolbar.append(sort,display,search);box.append(toolbar);
+ const summary=document.createElement('p');summary.className='financial-list-summary';box.append(summary);const grid=document.createElement('div');grid.className='record-grid financial-list';box.append(grid);
+ function render(){grid.replaceChildren();let shown=0;const q=normalized(query);let total=0;const groups=financialGroups[key]||[];for(const g of groups)total+=g.children.length+((g.directEntry||!g.children.length)?1:0);
+ if(mode==='complete'){
+  for(const group of ordered(groups)){
+   if(!group.children.length||group.directEntry){const label=cfg.code+' '+group.name;if(normalized(label).includes(q)){grid.append(row(group,null,label));shown++}}
+   for(const item of ordered(group.children)){const label=cfg.code+' '+group.name+' - '+item.name;if(normalized(label).includes(q)){grid.append(row(item,group,label));shown++}}
+  }
+ }else{
+
+  for(const group of ordered(groups)){
+   if(!normalized(group.name).includes(q)&&!group.children.some(c=>normalized(c.name).includes(q)))continue;
+   const wrap=document.createElement('div');wrap.className='financial-group';const header=row(group,null,cfg.code+' '+group.name);if(group.children.length){const expand=button('',()=>{expanded.has(group.id)?expanded.delete(group.id):expanded.add(group.id);render()},'financial-expand');expand.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(expanded.has(group.id)||q?'m5 9 7 7 7-7':'m9 5 7 7-7 7')+'"/></svg>';expand.onclick=e=>{e.stopPropagation();expanded.has(group.id)?expanded.delete(group.id):expanded.add(group.id);render()};expand.setAttribute('aria-label','Subgrupos de '+group.name);expand.setAttribute('aria-expanded',String(expanded.has(group.id)||!!q));const amount=document.createElement('small');amount.className='financial-count';amount.textContent=group.children.length+(group.children.length===1?' subgrupo':' subgrupos');header.querySelector('b').append(amount);header.querySelector('b').prepend(expand)}wrap.append(header);
+   if(expanded.has(group.id)||q){const children=document.createElement('div');children.className='financial-subgroups';for(const child of ordered(group.children)){if(!q||normalized(group.name).includes(q)||normalized(child.name).includes(q)){children.append(row(child,group,cfg.code+' '+group.name+' - '+child.name));shown++}}children.append(button('+ Novo subgrupo',()=>edit(null,group)));wrap.append(children)}grid.append(wrap);
+  }
+ }
+ summary.textContent=mode==='complete'?shown+' de '+total+' itens · '+groups.length+' grupos':groups.length+' grupos · '+total+' itens na lista completa';
+ if(!groups.length){summary.textContent='Nenhum grupo cadastrado.'}else if(!grid.children.length){const p=document.createElement('p');p.textContent='Nenhum resultado encontrado.';grid.append(p)}
+ }
+ function row(item,parent,label){const row=document.createElement('div');row.className='record section-card account-list-row';row.tabIndex=0;row.setAttribute('role','group');row.dataset.id=item.id;row.dataset.parentId=parent?.id||'';row.classList.toggle('account-inactive',item.active===false||parent?.active===false);row.style.setProperty('--card-color',cfg.color);
+ const handle=document.createElement('span');handle.className='account-move';handle.textContent='⠿';handle.title='Arrastar para organizar';handle.setAttribute('aria-label','Mover '+label);handle.style.touchAction='none';
+ handle.onpointerdown=e=>{e.preventDefault();e.stopPropagation();handle.setPointerCapture(e.pointerId);row.classList.add('moving')};handle.onpointerup=e=>{row.classList.remove('moving');handle.releasePointerCapture(e.pointerId);const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-id]');const pool=parent?parent.children:financialGroups[key];const from=pool.indexOf(item),to=pool.findIndex(x=>x.id===target?.dataset.id);if(!target||target.dataset.parentId!==(parent?.id||'')||to<0||from===to||pool[to].active!==item.active)return;const prior=[...pool];pool.splice(from,1);pool.splice(to,0,item);if(!persistGroups()){pool.splice(0,pool.length,...prior);return}manual=true;localStorage.setItem('cicluz-'+key+'-sort','manual');sort.value='manual';render()};handle.onclick=e=>{e.preventDefault();e.stopPropagation()};
+ const badge=document.createElement('span');badge.className='card-inherited-icon';badge.innerHTML=iconMarkup(item);const name=document.createElement('b');name.textContent=formatFinancialName(label);const state=document.createElement('span');state.className='account-list-state';state.textContent=item.active===false?'Inativo':'Ativo';const {arrow,actions}=createFinancialActions({label,container:grid,onEdit:()=>edit(item,parent),onDelete:()=>{if(!confirm('Tem certeza que deseja excluir '+label+(!parent&&item.children.length?' e seus '+item.children.length+' subgrupos':'')+'?'))return;const pool=parent?parent.children:financialGroups[key];const index=pool.indexOf(item);pool.splice(index,1);if(!persistGroups())pool.splice(index,0,item);render()}});
+ row.append(handle,badge,name,state,arrow,actions);row.onclick=e=>{if(e.target.closest('button,.account-move'))return;if(!actions.hidden){actions.hidden=true;arrow.setAttribute('aria-expanded','false');return}edit(item,parent)};row.onkeydown=e=>{if(e.target===row&&e.key==='Enter'){e.preventDefault();edit(item,parent)}};return row}
+ render();}
+ function edit(item,parent,initial=''){
+ box.replaceChildren();view.querySelectorAll('.financial-expand-all').forEach(b=>b.remove());setSectorBack(list);document.getElementById('sector-title').textContent=parent?'Cadastro do subgrupo':'Cadastro do grupo';
+ const form=document.createElement('form');form.className='form-fields account-editor';
+ const field=(text,control)=>{const label=document.createElement('label');label.textContent=text;control.style.width='100%';label.append(control);form.append(label);return control};
+ const name=field(parent?'Nome do subgrupo':'Nome do grupo',document.createElement('input'));name.required=true;name.maxLength=120;name.value=formatFinancialName(item?.name||initial);
+ const doc=field('Referência documental',document.createElement('select'));for(const value of ['','DOC/F','DOC/NF','DOC/F/NF'])doc.add(new Option(value||'Selecione',value));doc.value=item?.document||'';
+ let purpose;if(key==='mercadorias'){purpose=field('Finalidade da mercadoria',document.createElement('select'));for(const value of ['','VENDA','TRANSFORMAÇÃO'])purpose.add(new Option(value||'Selecione',value));purpose.value=item?.purpose||''}
+ const statusWrap=document.createElement('div');statusWrap.className='account-status';const statusTitle=document.createElement('span');statusTitle.textContent=parent?'Situação do subgrupo':'Situação do grupo';const switchRow=document.createElement('div');switchRow.className='account-status-row';let active=item?.active!==false;const toggle=button('',()=>{active=!active;refreshStatus()},'account-status-switch');toggle.setAttribute('role','switch');toggle.setAttribute('aria-label','Ativar ou inativar');toggle.append(document.createElement('span'));const state=document.createElement('span');state.className='account-status-text';function refreshStatus(){toggle.setAttribute('aria-checked',String(active));state.textContent=active?'Ativo':'Inativo'}refreshStatus();switchRow.append(toggle,state);statusWrap.append(statusTitle,switchRow);form.append(statusWrap);
+ let chosen=item?.icon||0;const iconLabel=document.createElement('div');iconLabel.className='account-field-group';iconLabel.textContent=parent?'Ícone do subgrupo':'Ícone do grupo';const choices=document.createElement('div');choices.className='account-icon-options';iconLabel.append(choices);
+ const preview=document.createElement('div');preview.className='icon-live-preview';const badge=document.createElement('span');badge.className='icon-live-badge';badge.style.background=cfg.color;badge.style.color='#fff';const previewName=document.createElement('b');preview.append(badge,previewName);
+ const buttons=[];function refresh(){badge.innerHTML=iconMarkup({icon:chosen});previewName.textContent=formatFinancialName(name.value)||'Nome do grupo';buttons.forEach((b,i)=>{const selected=chosen===i;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))})}
+ groupIcons.forEach((_,i)=>{const b=button('',()=>{chosen=i;refresh()},'account-icon-dot');b.title=groupIconLabels[i];b.setAttribute('aria-label',b.title);b.innerHTML='<span style="display:inline-flex;width:18px;height:18px">'+iconMarkup({icon:i})+'</span>';buttons.push(b);choices.append(b)});
+ const identity=document.createElement('div');identity.className='job-identity account-identity';const pick=document.createElement('div');pick.className='identity-pick';pick.append(iconLabel);identity.append(name.closest('label'),pick);form.prepend(identity);
+ const more=document.createElement('details');more.className='identity-advanced';const moreTitle=document.createElement('summary');moreTitle.textContent='Mais ícones';const extra=document.createElement('div');extra.className='account-icon-options';buttons.slice(6).forEach(b=>extra.append(b));more.append(moreTitle,extra);choices.append(more);form.append(preview);if(parent){const context=document.createElement('p');context.className='financial-parent-context';context.textContent='Grupo: '+formatFinancialName(parent.name);form.append(context)}
+ const actions=document.createElement('div');actions.className='actions';const save=button('Salvar',()=>{},'btn');save.type='submit';actions.append(save,button('Cancelar',list));form.append(actions);
+ name.oninput=()=>{name.setCustomValidity('');refresh()};refresh();form.onsubmit=e=>{e.preventDefault();const next=formatFinancialName(name.value.trim());if(!next)return;const pool=parent?parent.children:financialGroups[key];if(pool.some(g=>g!==item&&normalized(g.name)===normalized(next))){name.setCustomValidity('Este nome já existe.');name.reportValidity();return}const snapshot=structuredClone(financialGroups);const value={name:next,active,icon:chosen,document:doc.value,...(purpose?{purpose:purpose.value}:{})};if(item)Object.assign(item,value);else pool.push({id:crypto.randomUUID(),...value,...(!parent?{children:[]}:{})});if(!persistGroups()){financialGroups=snapshot;return}list()};box.append(form);name.focus();
+ }
  list();
 }
-// Remover variáveis da tela anterior ao navegar para outro módulo.
-const baseOpenSection=openSection;openSection=function(...args){const v=document.getElementById('sector-view');v.classList.remove('financial-groups');v.style.removeProperty('--menu-accent');return baseOpenSection(...args)};
+const baseOpenSection=openSection;openSection=function(...args){const v=document.getElementById('sector-view');v.querySelectorAll('.financial-expand-all').forEach(b=>b.remove());v.classList.remove('financial-groups');v.style.removeProperty('--menu-accent');v.style.removeProperty('--panel-color');return baseOpenSection(...args)};

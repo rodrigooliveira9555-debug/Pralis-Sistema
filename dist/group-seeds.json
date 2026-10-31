@@ -1169,7 +1169,8 @@
           "active": true,
           "icon": 0
         }
-      ]
+      ],
+      "directEntry": true
     },
     {
       "id": "g24",

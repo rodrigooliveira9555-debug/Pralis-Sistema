@@ -34,7 +34,15 @@ Conferir origem da cor e do ícone, estados ativo/inativo/selecionado, navegaç�
 
 ## Grupos financeiros
 
-- Títulos centralizados em `dist/groups.js`: Grupo de contas / CNT (laranja), Grupo de vendas / VND (amarelo), Grupo de retiradas / RET (azul), Mercadoria / MER (verde), Despesa / DES (vermelho).
+- Títulos centralizados em `dist/groups.js`: CNT - grupo contas (laranja), VND - grupo vendas (amarelo), RET - grupo retiradas (azul), MER - grupo mercadorias (verde), DES - grupo despesas (vermelho).
 - Grupos expansíveis com subgrupos, ações laterais, ícone com prévia e situação ativo/inativo. Itens sem subgrupo permanecem no nível principal. Não combinar registros similares sem decisão do usuário.
-- Documento: DOC/F, DOC/NF ou DOC/F/NF. Apenas Mercadoria / MER inclui o campo Finalidade: VENDA ou TRANSFORMAÇÃO, sem inferência automática.
+- Documento: DOC/F, DOC/NF ou DOC/F/NF. Apenas MER - grupo mercadorias inclui o campo Finalidade: VENDA ou TRANSFORMAÇÃO, sem inferência automática.
 - Dados iniciais recebidos em 31/10/2026: mercadorias, despesas e vendas. Retiradas aguarda lista; não criar exemplos.
+
+## Revisão de 31/10/2026
+
+- Somente CNT, VND, RET, MER e DES permanecem maiúsculos no início dos nomes financeiros; restante em minúsculas, sem abreviar nem cortar nomes recebidos.
+- Títulos: sigla, espaço, traço, espaço, grupo e nome (sem “de”).
+- Expandir/recolher: ícones circulares no cabeçalho. Grupos com filhos têm seta própria separada da seta de ações.
+- Lista completa opcional mantém cada linha recebida: 79 MER, 98 DES e 10 VND. DES despesas bancárias também existe como item próprio, além dos subgrupos.
+- Listas e formulários usam as classes de Contas; ações usam uma função compartilhada, inclusive SVG, dimensões e animação.
