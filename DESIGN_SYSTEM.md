@@ -238,3 +238,7 @@ field-validation.js centraliza CPF (máscara11 dígitos e verificadores), datas 
 - Proposta pendente (não aplicada): toque simples abre edição com Excluir visível e confirmação local. Não aplicar duplo clique nem lixeira por arraste sem definição.
 
 - Rolagem: remover visualmente trilho e indicador em todos os contêineres, inclusive hover/foco. Substitui barra fina da revisão anterior. Preservar overflow e navegação por mouse/teclado/toque; alto contraste usa barra nativa.
+
+## Piloto Gerenciar ícones — somente Cargos
+
+Cargos mantém escolhas rápidas/mais usados e substitui Mais ícones por Gerenciar ícones. Uma única janela no padrão de cabeçalho72px/ícone38/fechar32, fontes e campos compartilhados. Busca local; Buscar novos consulta Lucide via API Iconify dentro da mesma janela (sem navegação externa). Prévia e Importar e usar; Importar arquivo SVG usa sanitização existente. Remover só aparece após seleção, confirmação local, com Ver removidos/Restaurar e usar. IDs e aplicações anteriores preservados. Importações e ocultações do piloto ficam em cicluz-job-icon-pilot-v1, separadas das opções dos outros cadastros. Demais gerenciadores mantidos.
