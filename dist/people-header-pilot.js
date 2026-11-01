@@ -15,7 +15,7 @@
   const filter=()=>{const q=search.value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');records().forEach(row=>{const text=row.textContent.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');row.hidden=!!q&&!text.includes(q)})};
   const searchToggle=control('Abrir busca','<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',()=>{searchBox.hidden=!searchBox.hidden;searchToggle.setAttribute('aria-pressed',String(!searchBox.hidden));searchToggle.setAttribute('aria-expanded',String(!searchBox.hidden));if(!searchBox.hidden)search.focus();else{search.value='';filter()}});
   search.oninput=filter;search.onkeydown=e=>{if(e.key==='Escape'){searchBox.hidden=true;search.value='';filter();searchToggle.setAttribute('aria-pressed','false');searchToggle.setAttribute('aria-expanded','false');searchToggle.focus()}};
-  window.CicluzBeam?.attachOutline(searchToggle);window.CicluzBeam?.attachOutline(searchBox);
+  window.CicluzBeam?.attachOutline(searchBox);
   let savedOrder=null;
   const sort=control('Ordenar de A a Z','<path d="M3 17 6 5l3 12M4 13h4M14 5h7l-7 12h7M11 19l2 2 2-2"/>',()=>{
    const grid=view.querySelector('#sector-content .record-grid');if(!grid)return;
@@ -25,13 +25,28 @@
   const sharedSort=createAlphabetizeButton(sort.onclick);sort.replaceChildren(...sharedSort.childNodes);sort.classList.add('sort-az');
   let allExpanded=false;
   const expand=control('Expandir tudo','<path d="m5 9 7-6 7 6M5 15l7 6 7-6"/>',()=>{allExpanded=!allExpanded;view.querySelectorAll('#sector-content details').forEach(el=>el.open=allExpanded);expand.setAttribute('aria-expanded',String(allExpanded));expand.title=allExpanded?'Recolher tudo':'Expandir tudo';expand.setAttribute('aria-label',expand.title)});
+  const displayKey='cicluz-people-display-v1';let displayState={zoomed:false,compact:false,order:[]};
+  try{const value=JSON.parse(localStorage.getItem(displayKey)||'null');if(value&&typeof value==='object')displayState={...displayState,...value}}catch{}
+  function applyDisplay(){
+   view.classList.toggle('people-content-zoomed',!!displayState.zoomed);view.classList.toggle('people-content-narrow',!!displayState.compact);
+   zoom.textContent=displayState.zoomed?'−80%':'+80%';zoom.setAttribute('aria-pressed',String(!!displayState.zoomed));zoom.title=displayState.zoomed?'Restaurar tamanho normal (−80%)':'Aumentar conteúdo em 80%';zoom.setAttribute('aria-label',zoom.title);
+   width.setAttribute('aria-pressed',String(!!displayState.compact));width.title=displayState.compact?'Expandir na horizontal — maior':'Recolher na horizontal — menor';width.setAttribute('aria-label',width.title);
+  }
+  const zoom=control('Aumentar conteúdo em 80%','',()=>{displayState.zoomed=!displayState.zoomed;applyDisplay()});zoom.classList.add('people-zoom-control');
+  const width=control('Recolher na horizontal — menor','<path d="m8 5-6 7 6 7M16 5l6 7-6 7M3 12h18"/>',()=>{displayState.compact=!displayState.compact;applyDisplay()});
+  const status=document.createElement('span');status.className='people-save-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+  const save=control('Salvar configuração da tela','<path d="M5 3h12l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8"/>',()=>{
+   const native=head.querySelector('.header-save-circle');if(native){native.click();return}
+   try{displayState.order=records().map(row=>row.dataset.target||row.querySelector('b')?.textContent||'');localStorage.setItem(displayKey,JSON.stringify(displayState));localStorage.setItem(preferencesKey,JSON.stringify(preferences));status.textContent='Configuração salva';setTimeout(()=>status.textContent='',2400)}catch{status.textContent='Não foi possível salvar a configuração'}
+  });
+  applyDisplay();
   const toggle=document.createElement('button');toggle.type='button';toggle.className='people-header-toggle';toggle.innerHTML='<svg viewBox="0 0 24 24"><path d="m5 15 7-7 7 7"/></svg>';
   let collapsed=false;
   function toggleState(){view.classList.toggle('people-top-hidden',collapsed);toggle.setAttribute('aria-expanded',String(!collapsed));toggle.setAttribute('aria-label',collapsed?'Mostrar cabeçalho superior':'Ocultar cabeçalho superior');toggle.title=toggle.getAttribute('aria-label')}
   toggle.onclick=()=>{collapsed=!collapsed;toggleState()};
   const preferencesKey='cicluz-people-footer-buttons-v1';let preferences={};
   try{const value=JSON.parse(localStorage.getItem(preferencesKey)||'{}');if(value&&typeof value==='object'&&!Array.isArray(value))preferences=value}catch{}
-  const controls=new Map([['search',{button:searchToggle,label:'Buscar'}],['sort',{button:sort,label:'A/Z'}],['expand',{button:expand,label:'Expandir / recolher tudo'}]]);
+  const controls=new Map([['search',{button:searchToggle,label:'Buscar'}],['sort',{button:sort,label:'A/Z'}],['expand',{button:expand,label:'Expandir / recolher tudo'}],['zoom',{button:zoom,label:'Zoom +80% / −80%'}],['width',{button:width,label:'Maior / menor na horizontal'}],['save',{button:save,label:'Salvar'}]]);
   const chooser=document.createElement('div');chooser.className='people-toolbar-options';chooser.id='people-toolbar-options';chooser.hidden=true;chooser.setAttribute('role','group');chooser.setAttribute('aria-label','Botões do cabeçalho inferior');
   const more=document.createElement('button');more.type='button';more.className='people-toolbar-more';more.title='Personalizar botões';more.setAttribute('aria-label',more.title);more.setAttribute('aria-expanded','false');more.setAttribute('aria-controls',chooser.id);more.innerHTML='<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>';
   function closeChooser(){chooser.hidden=true;more.setAttribute('aria-expanded','false')}
@@ -40,14 +55,15 @@
   more.onclick=()=>{chooser.hidden=!chooser.hidden;more.setAttribute('aria-expanded',String(!chooser.hidden));if(!chooser.hidden)renderChoices()};
   document.addEventListener('pointerdown',e=>{if(!chooser.hidden&&!chooser.contains(e.target)&&!more.contains(e.target))closeChooser()});
   footer.addEventListener('keydown',e=>{if(e.key==='Escape'&&!chooser.hidden){closeChooser();more.focus()}});
-  footer.append(home,searchBox,tools,extras,more,toggle,chooser);panel.append(footer);
+  footer.append(home,searchBox,tools,extras,more,toggle,chooser,status);panel.append(footer);
+  footer.addEventListener('click',event=>{const button=event.target.closest('button');if(!button||button.classList.contains('people-toolbar-choice'))return;button.classList.add('people-click-feedback');setTimeout(()=>button.classList.remove('people-click-feedback'),220)});
   const edge=document.createElementNS('http://www.w3.org/2000/svg','svg');edge.setAttribute('class','people-footer-edge');edge.setAttribute('aria-hidden','true');const edgePath=document.createElementNS(edge.namespaceURI,'path');edge.append(edgePath);footer.prepend(edge);
   new ResizeObserver(()=>{const w=footer.clientWidth;edge.setAttribute('viewBox','0 0 '+w+' 21');edgePath.setAttribute('d','M .5 .5 A 19.5 19.5 0 0 0 20 20 H '+(w-20)+' A 19.5 19.5 0 0 0 '+(w-.5)+' .5')}).observe(footer);
   applyPreferences();
   let previousActive=false,signature='';
   function sync(){
    const active=view.classList.contains('show')&&document.getElementById('sector-title')?.textContent.trim()==='Gestão de Pessoas';
-   if(active!==previousActive){view.classList.toggle('people-header-pilot',active);collapsed=false;toggleState();previousActive=active;closeChooser();searchBox.hidden=true;search.value='';searchToggle.setAttribute('aria-pressed','false');searchToggle.setAttribute('aria-expanded','false');savedOrder=null;sort.setAttribute('aria-pressed','false');sort.title='Ordenar de A a Z';sort.setAttribute('aria-label',sort.title)}
+   if(active!==previousActive){view.classList.toggle('people-header-pilot',active);collapsed=false;toggleState();previousActive=active;closeChooser();searchBox.hidden=true;search.value='';searchToggle.setAttribute('aria-pressed','false');searchToggle.setAttribute('aria-expanded','false');savedOrder=null;sort.setAttribute('aria-pressed','false');sort.title='Ordenar de A a Z';sort.setAttribute('aria-label',sort.title);if(active){applyDisplay();const rows=records(),grid=rows[0]?.parentElement;for(const key of displayState.order||[]){const row=rows.find(r=>(r.dataset.target||r.querySelector('b')?.textContent||'')===key);if(row&&grid)grid.append(row)}}}
    if(!active)return;
    expand.disabled=!view.querySelector('#sector-content details');
    const sources=[...head.querySelectorAll('.shortcut-actions button')].filter(b=>!b.matches('.mobile-menu-open')&&!b.hidden);
