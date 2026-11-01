@@ -431,3 +431,6 @@ Somente na relação de taxas: círculos maciços vermelhos com símbolos branco
 Títulos das classificações de condições seguem tokens de título: Montserrat16px, peso600 (seminegrito), entrelinha20px; Transferências Automáticas segue subtítulo11px/14px peso400.
 
 - Revisão móvel260: fonte dos campos e buscas16px até1024px via --ui-input-size, preservando zoom manual; até600px formulários em coluna única na ordem DOM, buscas limitadas ao quadro e filtros abaixo da busca. Cabeçalhos e identidade desktop aprovados preservados.
+
+## Ficha de Cargos261
+Quadro por área com primeira coluna e cabeçalho fixos, cargos nas colunas e exigências agrupadas. Ficha individual deriva dos mesmos vínculos; formulários e cabeçalhos reutilizam os componentes existentes. Busca do quadro controlada pela lupa do cabeçalho, sem segundo controle local. Função principal com contador provisório de240 caracteres.

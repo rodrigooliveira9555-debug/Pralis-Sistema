@@ -130,3 +130,31 @@ body #sector-view .operator-fees .fee-account-title small{font:400 var(--ui-subt
 
 /* Mobile input scale: prevent focus magnification without disabling pinch zoom. */
 @media(max-width:1024px){:root{--ui-input-size:16px}}
+
+/* Area requirements matrix: shared type, fields, actions and surfaces. */
+.profiles-content{min-width:0;display:flex;flex-direction:column;gap:12px}
+.profiles-controls{display:flex;align-items:end;flex-wrap:wrap;gap:8px}
+.profiles-controls>label{display:grid;gap:6px;flex:1;min-width:180px}
+.profiles-content label,.profiles-dialog label{font:400 var(--ui-text)/var(--ui-text-line) var(--ui-font)}
+.profiles-content :is(input:not([type=checkbox]),select,textarea),.profiles-dialog :is(input:not([type=checkbox]),select,textarea){font:400 var(--ui-input-size)/20px var(--ui-font);width:100%;box-sizing:border-box;min-height:var(--ui-field-height);border:1px solid var(--layout-line,#d4d4d8);border-radius:var(--ui-field-radius);padding:10px 12px;background:#fff;color:#626268}
+.profiles-content textarea,.profiles-dialog textarea{resize:vertical}
+.profiles-dialog .account-editor{display:grid;gap:12px}.profiles-dialog label{display:grid;gap:6px;min-width:0}.profiles-dialog{width:min(640px,calc(100vw - 32px));max-height:90dvh;box-sizing:border-box}.profiles-dialog .profiles-choice{display:flex;align-items:center;gap:12px}
+.profiles-search[hidden]{display:none}.profiles-note{font:400 var(--ui-note)/16px var(--ui-font);color:var(--muted,#73737a);margin:4px 0}
+.profiles-error{color:#b91c1c}.profiles-matrix{position:relative;isolation:isolate;overflow:auto;max-height:65dvh;max-width:100%;border:1px solid var(--layout-line,#d4d4d8);border-radius:12px;background:#fff;overscroll-behavior:contain}
+body .profiles-table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;margin:0;table-layout:fixed;font:400 var(--ui-text)/var(--ui-text-line) var(--ui-font);color:#626268}
+body .profiles-table :is(th,td){padding:12px;border:0;border-bottom:1px solid var(--layout-line,#d4d4d8);border-right:1px solid var(--layout-line,#d4d4d8);background:#fff;box-sizing:border-box;min-width:160px;width:160px;text-align:center;vertical-align:middle}
+body .profiles-table tr>:first-child{position:sticky;left:0;z-index:2;width:clamp(170px,30vw,340px);min-width:clamp(170px,30vw,340px);max-width:340px;text-align:left;white-space:normal;overflow-wrap:anywhere}
+body .profiles-table thead th{position:sticky;top:0;z-index:3;background:#f0e8ff;font-weight:600}
+body .profiles-table thead th:first-child{z-index:4}
+body .profiles-table .profiles-group>:is(th,td){background:#f5f5f7;font-weight:600}
+.profiles-job-link,.profiles-requirement{font:inherit;color:inherit;background:transparent;border:0;cursor:pointer;padding:0;text-align:inherit;white-space:normal;overflow-wrap:anywhere}
+.profiles-job-link{font-weight:600}.profiles-job-link:hover,.profiles-requirement:hover{color:var(--menu-accent);text-decoration:underline}.profiles-table small{display:block;font:400 var(--ui-note)/16px var(--ui-font);margin-top:4px}
+.profiles-content input[type=checkbox],.profiles-dialog input[type=checkbox]{width:22px!important;height:22px!important;min-height:22px!important;accent-color:var(--menu-accent,#7c3aed);cursor:pointer;flex:0 0 22px}
+.profiles-content :is(button,input,select,textarea):focus-visible,.profiles-dialog :is(button,input,select,textarea):focus-visible{outline:2px solid var(--navigation-ink,#a2a0aa);outline-offset:3px}
+.profiles-empty{padding:20px;max-width:640px}.profiles-sr{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%)}
+.profiles-detail{display:grid;gap:12px}.profiles-info{margin:0;padding:16px;display:grid;grid-template-columns:minmax(130px,1fr) 3fr;gap:12px;background:#fff;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px}.profiles-info dt{font-weight:600}.profiles-info dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.profiles-section{background:#fff;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;padding:12px}.profiles-section h3{font:var(--ui-title-weight) var(--ui-title)/var(--ui-title-line) var(--ui-font);margin:0 0 12px}.profiles-delivery{padding:10px 0;border-bottom:1px solid var(--layout-line,#d4d4d8);margin:0;white-space:pre-wrap}.profiles-section .btn{margin-top:12px}
+body.dark-theme .profiles-content :is(input:not([type=checkbox]),select,textarea),body.dark-theme .profiles-dialog :is(input:not([type=checkbox]),select,textarea),body.dark-theme .profiles-table :is(th,td),body.dark-theme :is(.profiles-info,.profiles-section,.profiles-matrix){background:#25252b;color:#ededf0;border-color:#4a4a54}
+body.dark-theme .profiles-table thead th{background:#38284f}body.dark-theme .profiles-table .profiles-group>:is(th,td){background:#303038}
+@media(max-width:600px){.profiles-controls{align-items:stretch}.profiles-controls>label{flex-basis:100%;min-width:0}.profiles-controls>.btn{flex:1 1 140px}.profiles-info{grid-template-columns:1fr;gap:6px}.profiles-info dd{margin-bottom:10px}body .profiles-table :is(th,td){width:140px;min-width:140px;padding:10px}body .profiles-table tr>:first-child{width:170px;min-width:170px;max-width:170px}}
+
+#job-profiles-view .shortcut-circle[hidden]{display:none!important}

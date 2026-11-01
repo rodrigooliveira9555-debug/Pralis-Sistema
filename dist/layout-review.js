@@ -32,7 +32,7 @@
    });
   });
   document.querySelectorAll('.view input[type=search],dialog input[type=search],.modal input[type=search]').forEach(input=>{
-   if(input.closest('.fixed-header-tools,.jobs-toolbar,.financial-list-controls,.location-toolbar')||searches.has(input))return;
+   if(input.closest('.fixed-header-tools,.jobs-toolbar,.financial-list-controls,.location-toolbar,.profiles-search')||searches.has(input))return;
    searches.add(input);const wrap=document.createElement('div');wrap.className='local-search-control';input.before(wrap);wrap.append(input);
    const button=document.createElement('button');button.type='button';button.className='shortcut-circle local-search-toggle';const feeHeader=input.closest('.operator-fees')?.querySelector('.fee-header-actions');if(feeHeader){button.classList.add('header-search-circle');feeHeader.append(button)}const hint=input.getAttribute('aria-label')||input.placeholder||'Buscar';
    button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>';if(!feeHeader)wrap.prepend(button);
