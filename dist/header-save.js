@@ -5,8 +5,9 @@
   const surfaces=[...document.querySelectorAll('.view.show,dialog[open],.modal.show>.dialog')];
   for(const [surface,entry] of entries){if(!surface.isConnected||!surfaces.includes(surface)||!entry.source.isConnected||entry.source.hidden){entry.button.remove();entries.delete(surface)}}
   for(const surface of surfaces){
-   const source=[...surface.querySelectorAll('button:not(.header-save-circle),input[type=submit]')].find(el=>!el.closest('.head,.location-dialog-header,.organogram-dialog-header')&&!el.hidden&&!el.closest('[hidden]')&&el.getClientRects().length>0&&/^Salvar(?: atualização)?$/i.test(el.textContent?.trim()||el.value||''));
-   const head=surface.querySelector('.head,.location-dialog-header,.organogram-dialog-header');
+   const source=[...surface.querySelectorAll('button:not(.header-save-circle),input[type=submit]')].find(el=>!el.closest('.head,.location-dialog-header,.organogram-dialog-header,.organogram-editor-header')&&!el.hidden&&!el.closest('[hidden]')&&el.getClientRects().length>0&&/^Salvar(?:\s|$)/i.test(el.textContent?.trim()||el.value||''));
+   let head=surface.querySelector('.head,.location-dialog-header,.organogram-dialog-header,.organogram-editor-header');
+   if(!head&&source&&surface.matches('dialog,.dialog')){const title=surface.querySelector(':scope>h2,:scope>h3');if(title){head=document.createElement('div');head.className='location-dialog-header';title.before(head);head.append(title);const tools=document.createElement('div');tools.className='location-dialog-tools';head.append(tools)}}
    if(!source||!head)continue;
    let tools=head.querySelector('.shortcut-actions,.location-dialog-tools,.organogram-dialog-tools');if(!tools)tools=head;
    let entry=entries.get(surface);

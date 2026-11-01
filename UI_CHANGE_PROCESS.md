@@ -120,3 +120,6 @@ Check circular branco no cabeçalho das telas de cadastro/edição com ação Sa
 
 ## Sem Editar no cabeçalho —245
 Remover o alternador Editar organograma do cabeçalho; ações de editar permanecem por posição e o organograma inicia com essas ações disponíveis. Check Salvar no cabeçalho preservado. Verificar cabeçalho sem Editar e formulário de posição.
+
+## Revisão transversal —246
+Busca somente pela lupa que abre/recolhe campo. Listas sem vãos entre linhas, molduras cinza, nomes cinza e escala tipográfica compartilhada. Movimento cinza; cabeçalho branco; biblioteca de seleção de ícones na cor do cabeçalho (substitui242). Campo com uma informação: remover moldura externa, preservar contorno do input/select/textarea; blocos compostos mantêm agrupamento. Sem Editar no cabeçalho; Salvar onde houver ação existente, inclusive diálogo de posição. Ordem visual de controles: navegação, Fechar, expandir/recolher, Atualizar, Salvar, A/Z, busca e específicos; casa isolada à esquerda. Matriz: Cargos e editor, Atualização salarial, Área/Setor/Local e diálogo, grupos/subgrupos financeiros e editor de operadora/taxas, formulários simples/completo. Não alterar dados, regras de cálculo ou confirmações.
