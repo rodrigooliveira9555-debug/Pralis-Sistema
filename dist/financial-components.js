@@ -35,7 +35,10 @@ function enableContinuousReorder(handle,{item,items,onCommit}){
    if(speed){scroller.scrollTop+=speed;reorder()}frame=requestAnimationFrame(tick);
   }
   function move(e){if(e.pointerId!==pointer)return;e.preventDefault();e.stopImmediatePropagation();point={x:e.clientX,y:e.clientY};reorder()}
-  function finish(e){if(e.pointerId!==pointer)return;e.preventDefault();e.stopImmediatePropagation();active=false;cancelAnimationFrame(frame);document.removeEventListener('pointermove',move,true);document.removeEventListener('pointerup',finish,true);document.removeEventListener('pointercancel',finish,true);moving.classList.remove('continuous-moving');document.body.classList.remove('continuous-dragging');if(e.type==='pointercancel'){const anchor=original[original.length-1]?.nextSibling;original.forEach(n=>parent.insertBefore(n,anchor&&anchor.parentElement===parent?anchor:null))}else if(changed)onCommit();}
+  function finish(e){if(e.pointerId!==undefined&&e.pointerId!==pointer)return;e.preventDefault();e.stopImmediatePropagation();active=false;cancelAnimationFrame(frame);document.removeEventListener('pointermove',move,true);document.removeEventListener('pointerup',finish,true);document.removeEventListener('pointercancel',finish,true);window.removeEventListener('blur',cancel);document.removeEventListener('visibilitychange',onVisibility);moving.classList.remove('continuous-moving');document.body.classList.remove('continuous-dragging');if(e.type==='pointercancel'){const anchor=original[original.length-1]?.nextSibling;original.forEach(n=>parent.insertBefore(n,anchor&&anchor.parentElement===parent?anchor:null))}else if(changed)onCommit();}
+  function cancel(){finish({pointerId:pointer,type:'pointercancel',preventDefault(){},stopImmediatePropagation(){}})}
+  function onVisibility(){if(document.hidden)cancel()}
+  window.addEventListener('blur',cancel);document.addEventListener('visibilitychange',onVisibility);
   document.addEventListener('pointermove',move,{capture:true,passive:false});document.addEventListener('pointerup',finish,true);document.addEventListener('pointercancel',finish,true);frame=requestAnimationFrame(tick);
  }
 }

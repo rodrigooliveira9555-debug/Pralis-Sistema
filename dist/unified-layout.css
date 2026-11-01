@@ -1,0 +1,38 @@
+/* Approved landing-screen layout, shared across tabs without rebuilding their contents. */
+:root{--layout-gap:#f5f5f7;--layout-line:#dedee3;--layout-ink:#606066}
+body .main{background:var(--layout-gap)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view{--ui-control-bg:#fff;--ui-input-color:var(--layout-ink);--ui-label-color:var(--layout-ink);--ui-border-base:var(--layout-line);color:var(--layout-ink)}
+body:not(.mobile-menu-visible):has(.view.show) .side{display:none!important}
+body:not(.mobile-menu-visible):has(.view.show) .main{margin-left:0!important;width:100%!important;max-width:none!important;padding-left:12px!important;padding-right:12px!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view.show{width:100%!important;max-width:none!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel{width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important;background:#fff!important;color:var(--layout-ink)!important;border:1px solid var(--layout-line)!important;border-radius:20px!important;overflow:hidden}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head[data-header-standard]{background:var(--menu-accent,var(--panel-color,#7c3aed))!important;border-color:var(--layout-line)!important;padding:12px 14px 24px!important;border-radius:20px 20px 0 0!important;grid-template-columns:38px minmax(0,1fr)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .header-identity{background:transparent!important;border-radius:8px;padding:6px 10px;width:fit-content;max-width:100%}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head :is(h2,p,.shortcut-circle,.sector-icon,.config-inherit-icon,.mobile-menu-open){color:color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 14%,white)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head :is(.shortcut-circle,.sector-icon,.config-inherit-icon,.mobile-menu-open){background:transparent!important;border-color:currentColor!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head :is(.sector-icon,.config-inherit-icon){display:inline-flex!important;align-items:center;justify-content:center;width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;max-height:38px!important;flex:0 0 38px!important;border:1px solid #fff!important;border-radius:50%!important;box-sizing:border-box!important;padding:4px!important;aspect-ratio:1}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head>.shortcut-actions{grid-column:1/-1!important;grid-row:2!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head>.fixed-header-tools{grid-row:3!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head+.content{position:relative;z-index:5;background:var(--layout-gap)!important;color:var(--layout-ink)!important;margin-top:-12px;border-radius:20px 20px 0 0;padding:14px!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.card,.process,.record,.dep-card,.job-item,.salary-row,.account-editor,.location-row){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(input,select,textarea){background-color:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .record-grid[data-navigation-menu=true]{display:flex!important;flex-direction:column;gap:0!important;border:1px solid var(--layout-line);border-radius:14px;overflow:hidden;background:#fff}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .record-grid[data-navigation-menu=true]>.record{margin:0!important;padding:10px 12px!important;min-height:48px!important;border:0!important;border-bottom:1px solid var(--layout-line)!important;border-radius:0!important;box-shadow:none!important;transform:none!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .record-grid[data-navigation-menu=true]>.record:last-child{border-bottom:0!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .record-grid[data-navigation-menu=true]>.record :is(b,small,.card-arrow){color:var(--layout-ink)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .record-grid[data-navigation-menu=true]>.record b{margin:0!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .record-grid[data-navigation-menu=true]>.record .card-inherited-icon{background:var(--card-color,var(--menu-accent,#7c3aed))!important;color:#fff!important;border:0!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .record-grid[data-navigation-menu=true]>.record:is(:hover,:active,:focus-within){background:color-mix(in srgb,var(--card-color,var(--menu-accent,#7c3aed)) 9%,white)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .record-grid[data-navigation-menu=true]>.record:is(:hover,:active,:focus-within) :is(b,small,.card-arrow){color:var(--card-color,var(--menu-accent,#7c3aed))!important}
+/* Fixed square boxes prevent flex/grid compression from producing ovals. */
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .card-inherited-icon{width:30px!important;min-width:30px!important;max-width:30px!important;height:30px!important;min-height:30px!important;max-height:30px!important;flex:0 0 30px!important;aspect-ratio:1;border-radius:50%!important;box-sizing:border-box!important;align-self:center}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .shortcut-circle,body .side :is(.money-icon,.menu-icon-circle){aspect-ratio:1;flex-shrink:0!important;border-radius:50%!important;box-sizing:border-box!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head .shortcut-circle:is(:hover,:active,:focus-visible){color:var(--menu-accent,#7c3aed)!important;background:#fff!important;border-color:#fff!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .content p{color:var(--layout-ink)}
+body :is(#people,#process) :is(.panel,.card,.process){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important;border-radius:14px}
+body #people .dashboard-intro{background:var(--menu-accent,var(--panel-color,#7c3aed));border-radius:20px;padding:20px;color:#fff}
+
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-list-state,.financial-count,.job-item small,.salary-row small){color:var(--layout-ink)!important}
+/* Information blocks remain white in either theme; gray is only the shared spacing surface. */
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.job-identity,.account-identity,.icon-live-preview,.doc-first,.form-note,.identity-advanced,.dep-card,.location-tree,.operator-fees){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.job-identity,.account-identity,.icon-live-preview,.doc-first,.dep-card) :is(label,p,small,strong,b,summary){color:var(--layout-ink)!important}

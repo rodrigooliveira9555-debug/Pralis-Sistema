@@ -15,7 +15,7 @@
 
  function setOpen(value,restoreFocus=true){
   if(!media.matches)return;
-  if(value===opened)return;
+  // Reconcile DOM state even after viewport or focus interruptions.
   opened=value;
   if(value){scrollY=window.scrollY;document.body.style.setProperty('--menu-scroll-top',-scrollY+'px');}
   document.body.classList.toggle('mobile-menu-visible',value);backdrop.hidden=!value;main.inert=value;side.inert=false;side.classList.toggle('collapsed',!value);
