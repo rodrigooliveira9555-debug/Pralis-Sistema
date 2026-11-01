@@ -103,12 +103,19 @@
    searchState();
   }
   let dragging=null;
+  let chooserCompact=false;
+  try{chooserCompact=localStorage.getItem('cicluz-people-chooser-compact-v1')==='true'}catch{}
   function moveControl(key,target,before=true){
    const keys=orderedControls().map(([id])=>id);if(key===target)return;
    const from=keys.indexOf(key);if(from<0)return;keys.splice(from,1);const at=keys.indexOf(target);if(at<0)return;keys.splice(at+(before?0:1),0,key);buttonOrder=keys;persistButtonOrder();applyPreferences();renderChoices();
   }
   function renderChoices(){
-   chooser.replaceChildren();const title=document.createElement('b');title.textContent='Botões do cabeçalho';chooser.append(title);
+   chooser.replaceChildren();chooser.classList.toggle('people-options-compact',chooserCompact);
+   const heading=document.createElement('div');heading.className='people-options-heading';
+   const title=document.createElement('b');title.textContent='Botões do cabeçalho';
+   const resize=document.createElement('button');resize.type='button';resize.className='people-options-resize';resize.setAttribute('aria-expanded',String(!chooserCompact));resize.setAttribute('aria-label',chooserCompact?'Expandir menu lateralmente':'Contrair menu para somente ícones');resize.title=resize.getAttribute('aria-label');resize.innerHTML='<svg viewBox="0 0 24 24"><path d="m9 5-6 7 6 7M15 5l6 7-6 7"/></svg>';
+   resize.onclick=()=>{chooserCompact=!chooserCompact;try{localStorage.setItem('cicluz-people-chooser-compact-v1',String(chooserCompact))}catch{}renderChoices();chooser.querySelector('.people-options-resize').focus()};
+   heading.append(title,resize);const inner=document.createElement('div');inner.className='people-options-inner';chooser.append(heading,inner);
    for(const [key,{button,label}] of orderedControls()){
     const row=document.createElement('div');row.className='people-toolbar-row';row.dataset.choiceKey=key;
     const handle=document.createElement('button');handle.type='button';handle.className='people-order-handle';handle.draggable=true;handle.title='Arraste para mover ou use as setas para cima e para baixo';handle.setAttribute('aria-label','Mover '+label);handle.innerHTML='<svg viewBox="0 0 12 20"><circle cx="3" cy="4" r="1"/><circle cx="9" cy="4" r="1"/><circle cx="3" cy="10" r="1"/><circle cx="9" cy="10" r="1"/><circle cx="3" cy="16" r="1"/><circle cx="9" cy="16" r="1"/></svg>';
@@ -121,8 +128,8 @@
     const action=document.createElement('button');action.type='button';action.className='people-toolbar-run';action.setAttribute('aria-label','Executar '+label);action.disabled=button.disabled;
     const symbol=document.createElement('span');symbol.className='people-option-symbol';symbol.innerHTML=button.innerHTML;symbol.style.setProperty('--metric-color',button.style.getPropertyValue('--metric-color'));if(button.classList.contains('people-metric-control'))symbol.classList.add('people-metric-control');
     const name=document.createElement('span');name.textContent=label;name.className='people-option-name';action.append(symbol,name);action.onclick=()=>{closeChooser();button.click()};
-    const visibility=document.createElement('button');visibility.type='button';visibility.className='people-toolbar-visibility';visibility.setAttribute('aria-label','Exibir '+label);visibility.setAttribute('aria-pressed',String(preferences[key]!==false));visibility.textContent='✓';visibility.onclick=()=>{preferences[key]=preferences[key]===false;try{localStorage.setItem(preferencesKey,JSON.stringify(preferences))}catch{}applyPreferences();visibility.setAttribute('aria-pressed',String(preferences[key]!==false));row.classList.toggle('people-option-hidden',preferences[key]===false)};
-    row.classList.toggle('people-option-hidden',preferences[key]===false);row.append(handle,action,visibility);chooser.append(row);
+    const visibility=document.createElement('button');visibility.type='button';visibility.className='people-toolbar-visibility';visibility.setAttribute('aria-label','Exibir '+label);visibility.setAttribute('aria-pressed',String(preferences[key]!==false));visibility.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';visibility.onclick=()=>{preferences[key]=preferences[key]===false;try{localStorage.setItem(preferencesKey,JSON.stringify(preferences))}catch{}applyPreferences();visibility.setAttribute('aria-pressed',String(preferences[key]!==false));row.classList.toggle('people-option-hidden',preferences[key]===false);row.classList.toggle('people-option-pinned',preferences[key]!==false)};
+    row.classList.toggle('people-option-hidden',preferences[key]===false);row.classList.toggle('people-option-pinned',preferences[key]!==false);action.title=label;row.append(handle,action,visibility);inner.append(row);
    }
   }
   more.onclick=()=>{chooser.hidden=!chooser.hidden;more.setAttribute('aria-expanded',String(!chooser.hidden));if(!chooser.hidden)renderChoices()};
