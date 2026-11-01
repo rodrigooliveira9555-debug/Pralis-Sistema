@@ -43,3 +43,5 @@ Marca compartilhada no menu aberto e recolhido; temas claro e escuro. Subtítulo
 
 ## Matriz — paleta neutra da navegação
 Gestão/Agenda/Outros, suas setas, setas de cada opção, recolher/abrir no canto e atalho de abrir menu nas telas, expansão global e sol/lua. Fonte única --navigation-ink nos temas claro/escuro. Preservar cores semânticas dos módulos e ações internas.
+
+- Matriz cor das letras: marca expandida nos temas claro e escuro; verificar alternância do tema e restauração. Cor branca do filtro aplicada apenas às letras, preservando símbolo colorido.
