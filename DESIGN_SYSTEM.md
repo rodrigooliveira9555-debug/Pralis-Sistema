@@ -311,4 +311,4 @@ Menu principal ocupa a tela inteira em celular, tablet e computador, ocultando o
 
 - Marca: aumentar contraste das letras CICLUZ e subtítulo Gestão de Padaria, mantendo desenho original. Recorte das letras exclui o subtítulo Gestão de Obra que vinha na imagem de referência, evitando texto antigo sobreposto. Tema escuro usa letras claras; tema claro, escuras.
 
-- Subtítulo da marca em linha própria com altura15px e margem positiva2px; Gestão e de Padaria mantêm os alinhamentos com grade57%/43%, sem sobreposição absoluta. Contraste reforçado nas letras originais, nos dois temas.
+- Subtítulo da marca em linha própria com altura15px e margem superior-5px (aproximação de7px solicitada); Gestão e de Padaria mantêm os alinhamentos com grade57%/43%, sem sobreposição absoluta. Contraste reforçado nas letras originais, nos dois temas.
