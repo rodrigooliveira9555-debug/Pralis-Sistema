@@ -343,3 +343,5 @@ O usuário excluiu explicitamente o menu principal do novo modelo. Restaurar som
 Botão Abrir menu com três pontos em SVG, círculo32px, sozinho no extremo esquerdo da fileira. Demais atalhos em sequência à direita, preservando a ordem existente Voltar/Fechar e controles da tela, sem alterar o menu principal. Cabeçalho e destaques herdam a cor do módulo. Matriz: todas as .view>.panel>.head>.shortcut-actions; verificar landing Diretor e grupo Mercadorias com muitos controles, abertura do menu.
 
 - Correção antes de publicar235: substituir os três pontos pela casinha simples em SVG de contorno, rótulo Menu inicial, mantendo a mesma ação de abrir a navegação e posição isolada à esquerda. Esta decisão substitui a proposta de três pontos.
+
+- Espaçamento compacto acrescentado à235: intervalo4px entre itens nas listas internas e linhas financeiras52px (subgrupos40px). Grades de navegação já agrupadas mantêm divisórias sem lacunas. Não alterar o menu principal excluído pelo usuário. Verificar Mercadorias com casinha e lista compacta.

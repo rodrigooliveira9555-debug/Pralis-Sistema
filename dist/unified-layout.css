@@ -56,3 +56,10 @@ body:is(.dark-theme,:not(.dark-theme)) dialog .location-icon{width:30px;height:3
 body .view>.panel>.head>.shortcut-actions>.mobile-menu-open{order:-100!important;margin:0 auto 0 0!important;width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;flex:0 0 32px!important;border-radius:50%!important;box-sizing:border-box}
 body .view>.panel>.head>.shortcut-actions>:not(.mobile-menu-open){margin-left:0!important;margin-right:0!important}
 body .mobile-menu-open svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+/* Compact spacing for internal menus and information lists. */
+:root{--layout-item-gap:4px}
+body .view .record-grid:not([data-navigation-menu=true]),body .view #jobs-list,body .view #salary-list{gap:var(--layout-item-gap)!important}
+body #sector-view.financial-groups .financial-group{margin-top:0!important;margin-bottom:var(--layout-item-gap)!important}
+body #sector-view .account-list-row{min-height:52px!important;padding-top:8px!important;padding-bottom:8px!important}
+body #sector-view .financial-subgroups>.account-list-row{min-height:40px!important;padding-top:5px!important;padding-bottom:5px!important}
+body .view .location-row{margin-top:var(--layout-item-gap)!important;margin-bottom:var(--layout-item-gap)!important}
