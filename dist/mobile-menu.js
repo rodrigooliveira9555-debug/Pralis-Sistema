@@ -27,5 +27,6 @@
  openButton.onclick=()=>setOpen(!opened);backdrop.onclick=()=>setOpen(false);
  side.addEventListener('click',e=>{const target=e.target.closest('.nav button,.nav a');if(!opened||!target||target.matches('.sidebar-section-toggle')||target.closest('summary'))return;setOpen(false);});
  document.addEventListener('keydown',e=>{if(!opened)return;if(e.key==='Escape'){e.preventDefault();setOpen(false);}if(e.key==='Tab'){const focusable=[...side.querySelectorAll('button,a[href],summary,input,select,[tabindex="0"]')].filter(x=>!x.disabled&&x.getClientRects().length);const first=focusable[0],last=focusable.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}}});
+ document.addEventListener('cicluz-open-menu',()=>{if(media.matches)setOpen(true);else{side.classList.remove('collapsed');document.querySelector('.app').classList.remove('collapsed');closeButton.textContent='‹';closeButton.setAttribute('aria-label','Recolher menu');side.querySelector('.overview-link')?.focus()}});
  media.addEventListener('change',sync);sync();
 })();
