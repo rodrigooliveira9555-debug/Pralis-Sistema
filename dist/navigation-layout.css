@@ -24,7 +24,7 @@ body .view.show>.panel>.content{padding-bottom:calc(24px + env(safe-area-inset-b
  body .view.show>.panel>.head[data-header-standard=yes]{grid-template-columns:28px minmax(0,1fr)!important}
  body .view.show>.panel>.head[data-header-standard=yes]>.shortcut-actions{grid-column:1/-1;grid-row:2;justify-self:stretch;justify-content:flex-end;flex-wrap:wrap;min-width:0}
  body .view.show>.panel>.head[data-header-standard=yes]>.fixed-header-tools{grid-row:3}
- body .view .head .mobile-menu-open{display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;width:32px;min-width:32px;height:32px;border-radius:50%;padding:0;margin-right:auto;background:transparent;color:var(--menu-accent,#7c3aed);border:1px solid currentColor;font-size:18px}
+ body .view .head .mobile-menu-open{display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;width:32px;min-width:32px;height:32px;border-radius:50%;padding:0;margin-right:auto;background:transparent;color:var(--navigation-ink);border:1px solid currentColor;font-size:18px}
  body .sidebar-footer .avatar{display:grid}
 }
 /* Keep the screen header outside the single scrollable content region. */
@@ -33,9 +33,9 @@ body .view.show:has(>.panel){height:100%;min-height:0}
 body .view.show>.panel{height:100%;max-height:100%!important;min-height:0}
 
 /* Shared full-screen navigation: preferences above Gestão, stationary account below. */
-body .side>.side-controls{flex:none;position:static;justify-content:flex-start;gap:8px;padding:0 10px 8px;margin:0;background:transparent;color:#a2a0aa}
+body .side>.side-controls{flex:none;position:static;justify-content:flex-start;gap:8px;padding:0 10px 8px;margin:0;background:transparent;color:var(--navigation-ink)}
 body .side>.side-controls .tree-control,body .side>.side-controls .theme-switch,body .side>.side-controls .theme-icon{color:inherit;border-color:currentColor}
-body.dark-theme .side>.side-controls{color:#9896a1}
+body.dark-theme .side>.side-controls{color:var(--navigation-ink)}
 body .side>.side-controls button:hover{background:color-mix(in srgb,currentColor 10%,transparent)}
 body .side>.nav{width:100%;min-height:0}
 body .side>.brand{padding:0 10px 12px!important;margin:0!important;min-height:0;align-items:flex-start}
@@ -55,11 +55,11 @@ body .side.collapsed .overview-link{font-size:0;padding:8px!important;justify-co
 body .side.collapsed .sidebar-section-hidden{display:block!important}
 body .side.collapsed .sidebar-footer{align-items:center}
 
-body .side .sidebar-section-toggle{color:#a2a0aa!important}
-body.dark-theme .side .sidebar-section-toggle{color:#9896a1!important}
+body .side .sidebar-section-toggle{color:var(--navigation-ink)!important}
+body.dark-theme .side .sidebar-section-toggle{color:var(--navigation-ink)!important}
 
 /* Three shared circular controls, fixed above the scrollable menu. */
-body .side>.side-controls,body.dark-theme .side>.side-controls{color:var(--menu-control-ink,var(--muted));align-items:center}
+body .side>.side-controls,body.dark-theme .side>.side-controls{color:var(--navigation-ink);align-items:center}
 body .side>.side-controls>.menu-layout-toggle,body .side>.side-controls>.tree-control,body .side>.side-controls>.theme-switch{position:static!important;display:grid!important;place-items:center;flex:0 0 32px;width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;padding:0!important;margin:0!important;border:1px solid currentColor!important;border-radius:50%!important;color:inherit!important;background:transparent;opacity:1!important}
 body .side>.side-controls svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 body .side>.side-controls .theme-icon{display:grid;place-items:center;color:inherit!important}
@@ -84,7 +84,7 @@ body .side.collapsed>.brand>.mini-brand>.vector-logo{display:block!important;wid
 body .side.collapsed>.brand:focus-visible{outline:2px solid var(--muted);outline-offset:2px;border-radius:8px}
 
 /* Standalone corner arrow replaces the third circular menu control. */
-body .side>.menu-layout-toggle,body .side.collapsed>.menu-layout-toggle{position:absolute!important;top:16px!important;right:14px!important;left:auto!important;display:grid!important;place-items:center;width:24px!important;min-width:24px!important;height:24px!important;min-height:24px!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;color:var(--menu-control-ink,var(--muted))!important;z-index:20}
+body .side>.menu-layout-toggle,body .side.collapsed>.menu-layout-toggle{position:absolute!important;top:16px!important;right:14px!important;left:auto!important;display:grid!important;place-items:center;width:24px!important;min-width:24px!important;height:24px!important;min-height:24px!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;color:var(--navigation-ink)!important;z-index:20}
 body .side>.menu-layout-toggle svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 body .side.collapsed>.brand{padding-top:28px!important}
 
@@ -95,3 +95,7 @@ body .side .brand-subtitle{color:#343438!important;opacity:1!important}
 body .side .brand-subtitle strong{color:inherit!important;font-weight:600}
 body .side .brand-subtitle span{color:inherit!important;font-weight:400}
 body.dark-theme .side .brand-subtitle{color:#f5f5f7!important}
+
+/* All principal-navigation chevrons share the section-title palette. */
+body .side .nav-tree summary::after{color:var(--navigation-ink)}
+body .mobile-menu-open{color:var(--navigation-ink)!important;border-color:currentColor}

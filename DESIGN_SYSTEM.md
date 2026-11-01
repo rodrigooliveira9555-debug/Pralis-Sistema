@@ -312,3 +312,5 @@ Menu principal ocupa a tela inteira em celular, tablet e computador, ocultando o
 - Marca: aumentar contraste das letras CICLUZ e subtítulo Gestão de Padaria, mantendo desenho original. Recorte das letras exclui o subtítulo Gestão de Obra que vinha na imagem de referência, evitando texto antigo sobreposto. Tema escuro usa letras claras; tema claro, escuras.
 
 - Subtítulo da marca em linha própria com altura15px e margem superior-5px (aproximação de7px solicitada); Gestão e de Padaria mantêm os alinhamentos com grade57%/43%, sem sobreposição absoluta. Contraste reforçado nas letras originais, nos dois temas.
+
+- Paleta única da navegação principal: --navigation-ink, claro#a2a0aa e escuro#9896a1. Títulos Gestão/Agenda/Outros, setas de seções/opções, seta do canto, atalho abrir menu, expansão global, sol/lua e seus contornos derivam desse token. Substitui a leitura de cor de .menu-name por JavaScript. Ícones de módulos e ações internas preservam cores de origem.

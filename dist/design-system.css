@@ -1,5 +1,5 @@
 /* Fonte central dos padrões compartilhados CICLUZ. Cor herdada do menu. */
-:root{--cicluz-danger:#e34343;--cicluz-font:Montserrat,system-ui,sans-serif;--cicluz-icon:38px;--cicluz-field-radius:8px;--cicluz-card-radius:10px}
+:root{--navigation-ink:#a2a0aa;--cicluz-danger:#e34343;--cicluz-font:Montserrat,system-ui,sans-serif;--cicluz-icon:38px;--cicluz-field-radius:8px;--cicluz-card-radius:10px}
 .view{--menu-accent:var(--panel-color,#7c3aed)}
 #sector-view.account-orange{--menu-accent:#f97316}
 #sector-view .account-row-actions button,body.dark-theme #sector-view .account-row-actions button,.job-actions .job-edit-action,body.dark-theme .job-actions .job-edit-action{background:var(--menu-accent,var(--panel-color,#7c3aed));color:#fff}
@@ -244,11 +244,11 @@ body .account-action-toggle[aria-expanded=true] svg{transform:rotate(180deg)}
 .organogram-mindmap details{display:flex;flex-direction:column;align-items:center;width:100%}.organogram-mindmap details>summary{position:relative;margin:0;padding:12px 0;justify-content:center;width:100%;font-size:10px}.organogram-mindmap details[open]>summary::after{content:"";position:absolute;left:50%;bottom:0;height:8px;border-left:1px solid #bfa9e1}
 .organogram-mindmap details>ul{position:relative;padding-top:0}.organogram-mindmap .organogram-position-copy small{font-size:10px;color:#888}.organogram-mindmap .organogram-empty{background:#fff;max-width:420px;margin:24px auto}.organogram-mindmap .organogram-branches>li{min-width:250px}
 
-.nav-tree>.agenda-section-heading{box-sizing:border-box;margin:20px 0 0;padding:12px 10px 4px;border-top:1px solid #eeedf1;color:#a2a0aa;font:650 12px Montserrat,system-ui,sans-serif;letter-spacing:.4px}.dark-theme .nav-tree>.agenda-section-heading{color:#9896a1;border-color:#3b3942}.side.collapsed .nav-tree>.agenda-section-heading{display:none}
+.nav-tree>.agenda-section-heading{box-sizing:border-box;margin:20px 0 0;padding:12px 10px 4px;border-top:1px solid #eeedf1;color:var(--navigation-ink);font:650 12px Montserrat,system-ui,sans-serif;letter-spacing:.4px}.dark-theme .nav-tree>.agenda-section-heading{color:#9896a1;border-color:#3b3942}.side.collapsed .nav-tree>.agenda-section-heading{display:none}
 .nav-tree.sidebar-sectioned>.overview-item::before,.nav-tree.sidebar-sectioned>details[data-menu-name^="Configuração"]::before{display:none}
 .nav-tree.sidebar-sectioned>.overview-item{margin-top:0!important}
 .nav-tree.sidebar-sectioned>details[data-menu-name^="Configuração"]{margin-top:0!important;padding-top:0;border-top:0}
-.nav-tree>.sidebar-section-toggle{position:relative;display:flex;align-items:center;justify-content:space-between;width:100%;border:0;border-top:0;background:transparent;padding:12px 10px 5px;margin:14px 0 3px;color:#a2a0aa;font:650 12px Montserrat,system-ui,sans-serif;letter-spacing:.4px;cursor:pointer}
+.nav-tree>.sidebar-section-toggle{position:relative;display:flex;align-items:center;justify-content:space-between;width:100%;border:0;border-top:0;background:transparent;padding:12px 10px 5px;margin:14px 0 3px;color:var(--navigation-ink);font:650 12px Montserrat,system-ui,sans-serif;letter-spacing:.4px;cursor:pointer}
 .nav-tree>.sidebar-section-toggle:first-child{margin-top:0;border-top:0}
 .sidebar-section-toggle svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;transition:transform .15s}
 .sidebar-section-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
@@ -257,7 +257,8 @@ body .account-action-toggle[aria-expanded=true] svg{transform:rotate(180deg)}
 .agenda-menu-item{--item-color:#7c3aed;--item-text:#5520ad}
 .agenda-menu-item .menu-icon-circle svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7}
 .agenda-empty{font-size:12px;color:#8c8499;padding:8px 12px}
-.dark-theme .sidebar-section-toggle{border-color:#3b3942;color:#9896a1}
+.dark-theme{--navigation-ink:#9896a1}
+.dark-theme .sidebar-section-toggle{border-color:#3b3942;color:var(--navigation-ink)}
 
 /* Shared gallery expansion: same down/up chevron as navigation. */
 .identity-advanced>summary{list-style:none;display:flex;align-items:center;gap:8px;cursor:pointer}.identity-advanced>summary::-webkit-details-marker{display:none}.identity-advanced>summary::after{content:"";width:18px;height:18px;margin-left:auto;background:currentColor;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m5 9 7 7 7-7' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;transform:none}.identity-advanced[open]>summary::after{transform:rotate(180deg)}.identity-mode-fields{display:grid;gap:10px}.financial-text-badge{font-size:12px;font-weight:650;display:inline-flex;align-items:center;justify-content:center}.location-icon svg,.account-icon-dot svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
