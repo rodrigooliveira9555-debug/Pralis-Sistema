@@ -86,9 +86,10 @@
   const preferencesKey='cicluz-people-footer-buttons-v1';let preferences={};
   try{const value=JSON.parse(localStorage.getItem(preferencesKey)||'{}');if(value&&typeof value==='object'&&!Array.isArray(value))preferences=value}catch{}
   const controls=new Map([['search',{button:searchToggle,label:'Buscar'}],['sort',{button:sort,label:'A/Z'}],['expand',{button:expand,label:'Expandir / recolher tudo'}],['sold',{button:sold,label:'Organizar por mais vendido / menos vendido'}],['bought',{button:bought,label:'Organizar por mais comprado / menos comprado'}],['profit',{button:profit,label:'Organizar por mais lucro / menos lucro'}],['print',{button:print,label:'Imprimir'}],['import',{button:importConfig,label:'Importar configuração'}],['export',{button:exportConfig,label:'Exportar configuração'}],['width',{button:width,label:'Maior / menor na horizontal'}],['save',{button:save,label:'Salvar'}]]);
-  const chooser=document.createElement('div');chooser.className='people-toolbar-options';chooser.id='people-toolbar-options';chooser.hidden=true;chooser.setAttribute('role','group');chooser.setAttribute('aria-label','Botões do cabeçalho inferior');
-  const more=document.createElement('button');more.type='button';more.className='people-toolbar-more';more.title='Personalizar botões';more.setAttribute('aria-label',more.title);more.setAttribute('aria-expanded','false');more.setAttribute('aria-controls',chooser.id);more.innerHTML='<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>';
-  function closeChooser(){chooser.hidden=true;more.setAttribute('aria-expanded','false')}
+  const chooser=document.createElement('div');chooser.className='people-toolbar-options';chooser.id='people-toolbar-options';chooser.hidden=true;chooser.inert=true;chooser.setAttribute('role','group');chooser.setAttribute('aria-label','Botões do cabeçalho inferior');
+  const more=document.createElement('button');more.type='button';more.className='people-toolbar-more';more.title='Personalizar botões';more.setAttribute('aria-label',more.title);more.setAttribute('aria-expanded','false');more.setAttribute('aria-pressed','false');more.setAttribute('aria-controls',chooser.id);more.innerHTML='<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>';
+  function setChooserOpen(open){chooser.hidden=!open;chooser.inert=!open;more.setAttribute('aria-expanded',String(open));more.setAttribute('aria-pressed',String(open));if(open)renderChoices()}
+  function closeChooser(){setChooserOpen(false)}
 
   const orderKey='cicluz-people-footer-order-v1';let buttonOrder=[];
   try{const value=JSON.parse(localStorage.getItem(orderKey)||'[]');if(Array.isArray(value))buttonOrder=value.filter(key=>typeof key==='string')}catch{}
@@ -113,7 +114,7 @@
    chooser.replaceChildren();chooser.classList.toggle('people-options-compact',chooserCompact);
    const heading=document.createElement('div');heading.className='people-options-heading';
    const title=document.createElement('b');title.textContent='Botões do cabeçalho';
-   const resize=document.createElement('button');resize.type='button';resize.className='people-options-resize';resize.setAttribute('aria-expanded',String(!chooserCompact));resize.setAttribute('aria-label',chooserCompact?'Expandir menu lateralmente':'Contrair menu para somente ícones');resize.title=resize.getAttribute('aria-label');resize.innerHTML='<svg viewBox="0 0 24 24"><path d="m9 5-6 7 6 7M15 5l6 7-6 7"/></svg>';
+   const resize=document.createElement('button');resize.type='button';resize.className='people-options-resize';resize.setAttribute('aria-expanded',String(!chooserCompact));resize.setAttribute('aria-label',chooserCompact?'Expandir menu lateralmente':'Contrair menu para somente ícones');resize.title=resize.getAttribute('aria-label');resize.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(chooserCompact?'m15 5-7 7 7 7':'m9 5 7 7-7 7')+'"/></svg>';
    resize.onclick=()=>{chooserCompact=!chooserCompact;try{localStorage.setItem('cicluz-people-chooser-compact-v1',String(chooserCompact))}catch{}renderChoices();chooser.querySelector('.people-options-resize').focus()};
    heading.append(title,resize);const inner=document.createElement('div');inner.className='people-options-inner';chooser.append(heading,inner);
    for(const [key,{button,label}] of orderedControls()){
@@ -132,11 +133,11 @@
     row.classList.toggle('people-option-hidden',preferences[key]===false);row.classList.toggle('people-option-pinned',preferences[key]!==false);action.title=label;row.append(handle,action,visibility);inner.append(row);
    }
   }
-  more.onclick=()=>{chooser.hidden=!chooser.hidden;more.setAttribute('aria-expanded',String(!chooser.hidden));if(!chooser.hidden)renderChoices()};
+  more.onclick=()=>setChooserOpen(chooser.hidden);
   document.addEventListener('pointerdown',e=>{if(!chooser.hidden&&!chooser.contains(e.target)&&!more.contains(e.target))closeChooser()});
   footer.addEventListener('keydown',e=>{if(e.key==='Escape'&&!chooser.hidden){closeChooser();more.focus()}});
   footer.append(home,searchBox,tools,more,toggle,chooser,status,importFile);panel.append(footer);
-  footer.addEventListener('click',event=>{const button=event.target.closest('button');if(!button||button.classList.contains('people-toolbar-choice'))return;button.classList.add('people-click-feedback');setTimeout(()=>button.classList.remove('people-click-feedback'),220)});
+  footer.addEventListener('click',event=>{const button=event.target.closest('button');if(!button||button.matches('.people-toolbar-choice,.people-toolbar-more'))return;button.classList.add('people-click-feedback');setTimeout(()=>button.classList.remove('people-click-feedback'),220)});
   const edge=document.createElementNS('http://www.w3.org/2000/svg','svg');edge.setAttribute('class','people-footer-edge');edge.setAttribute('aria-hidden','true');const edgePath=document.createElementNS(edge.namespaceURI,'path');edge.append(edgePath);footer.prepend(edge);
   new ResizeObserver(()=>{const w=footer.clientWidth;edge.setAttribute('viewBox','0 0 '+w+' 21');edgePath.setAttribute('d','M .5 .5 A 19.5 19.5 0 0 0 20 20 H '+(w-20)+' A 19.5 19.5 0 0 0 '+(w-.5)+' .5')}).observe(footer);
   applyPreferences();

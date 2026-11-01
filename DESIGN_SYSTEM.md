@@ -451,3 +451,7 @@ Somente nesta aba: inferior com círculos cinza --navigation-ink e símbolos bra
 
 ## Gestão de Pessoas — cabeçalho inferior personalizável
 Contorno superior cinza de1px segue a reta central e as duas curvas ascendentes; usa o mesmo token da borda inferior. Marca animada32×32px, sem círculo, alinhada com botões32px. A/Z reutiliza createAlphabetizeButton e alterna ordem alfabética/restauração. Três pontos são o penúltimo controle, antes da seta de ocultar/restaurar cabeçalho; painel mostra todos os controles opcionais, clique alterna visibilidade e check, escolha salva neste navegador. Marca, três pontos e seta final permanecem disponíveis. Busca com contorno no espectro exato do menu e luz via CicluzBeam compartilhado, no botão e campo aberto. Cabeçalhos fixos e conteúdo rolável mantidos.
+
+
+## Menu de botões —294
+Gestão de Pessoas: seta lateral única (direita para contrair, esquerda para expandir). Checks sempre desenhados à direita em quadrado30×30px, mesmo diâmetro dos símbolos à esquerda; inativos com opacidade35%, ativos100%. Moldura branca sem sombra, borda1px --layout-line e recuo14px para o quadro interno cinza, igual ao conteúdo externo. Três pontos ficam brancos somente com menu aberto; segundo clique oculta integralmente o quadro e sua interação, preservando modo expandido/compacto. Substitui checks invisíveis e respiro8px anteriores.
