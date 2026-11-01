@@ -1,0 +1,19 @@
+.people-bottom-header{display:none}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.people-header-pilot>.panel{display:flex!important;flex-direction:column;min-height:0;overflow:hidden!important}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.people-header-pilot.view>.panel>.head[data-header-standard]{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-start!important;gap:10px!important;flex:0 0 58px!important;height:58px!important;min-height:58px!important;padding:6px 14px 14px!important;border-radius:20px 20px 0 0!important;overflow:hidden}
+body #sector-view.people-header-pilot>.panel>.head>.header-identity{flex:1;min-width:0}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.people-header-pilot.view>.panel>.head[data-header-standard]:not(.header-identity-collapsed)>:is(.shortcut-actions,.header-identity-toggle){display:none!important}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.people-header-pilot>.panel>.head :is(.sector-icon,.config-inherit-icon){width:30px!important;height:30px!important;min-width:30px!important;min-height:30px!important;flex-basis:30px!important}
+body #sector-view.people-header-pilot .head h2{font-size:14px!important;line-height:18px!important}
+body #sector-view.people-header-pilot .head p{font-size:9px!important;line-height:12px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;margin:0!important}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.people-header-pilot>.panel>.head+.content{flex:1 1 0!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;touch-action:pan-y;max-width:100%;margin-bottom:-12px!important;border-radius:20px!important;padding-bottom:24px!important}
+body #sector-view.people-header-pilot .people-bottom-header{display:flex;align-items:center;flex:0 0 auto;min-height:58px;gap:6px;padding:14px 14px max(6px,env(safe-area-inset-bottom));border:0;border-radius:0 0 20px 20px;background:#fff!important;color:var(--navigation-ink,#a1a0a8)!important;position:relative;z-index:6}
+body #sector-view.people-header-pilot .people-bottom-tools{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0;margin-left:auto}
+body #sector-view.people-header-pilot .people-bottom-header button{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;padding:5px;border:0;background:transparent;color:var(--navigation-ink,#a1a0a8);border-radius:50%;cursor:pointer}
+body #sector-view.people-header-pilot .people-bottom-header button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+body #sector-view.people-header-pilot .people-bottom-header svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body #sector-view.people-header-pilot .people-bottom-header .people-home-logo{padding:0;width:32px;height:32px}
+body #sector-view.people-header-pilot .people-bottom-header .people-footer-symbol{width:30px;height:32px;stroke:none;overflow:hidden}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.people-header-pilot.people-top-hidden>.panel>.head[data-header-standard]{display:none!important}
+body #sector-view.people-header-pilot.people-top-hidden .people-header-toggle svg{transform:rotate(180deg)}
+body #sector-view.people-header-pilot.people-top-hidden>.panel>.content{margin-top:0!important}

@@ -51,6 +51,15 @@
   requestAnimationFrame(animateBeam);
  }
  requestAnimationFrame(animateBeam);
+ window.CicluzBeam={attachSymbol(host){
+  const original=fullLogo?.querySelector('.logo-color-light');if(!original)return;
+  const svg=original.cloneNode(true),id='footer-logo-alpha';
+  svg.setAttribute('viewBox','10 6 42 44');svg.setAttribute('class','people-footer-symbol');
+  svg.querySelector('mask').id=id;
+  svg.querySelectorAll(':scope>g').forEach(el=>el.remove());
+  const art=document.createElementNS(svgNS,'image');art.setAttribute('href','cicluz-gestao-padaria-logo.png');art.setAttribute('width','177.6');art.setAttribute('height','64');art.setAttribute('preserveAspectRatio','none');svg.append(art);
+  host.append(svg);addBeam(svg,original.querySelector('g>path').getAttribute('d'),'url(#'+id+')');
+ }};
  if(brand){function brandState(){const compact=side.classList.contains('collapsed');if(compact){brand.setAttribute('role','button');brand.setAttribute('tabindex','0');brand.setAttribute('aria-label','Expandir menu principal')}else{brand.removeAttribute('role');brand.removeAttribute('tabindex');brand.removeAttribute('aria-label')}}brand.addEventListener('click',()=>{if(side.classList.contains('collapsed'))document.dispatchEvent(new Event('cicluz-open-menu'))});brand.addEventListener('keydown',e=>{if(side.classList.contains('collapsed')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();document.dispatchEvent(new Event('cicluz-open-menu'))}});new MutationObserver(brandState).observe(side,{attributes:true,attributeFilter:['class']});brandState()}
  const opener=document.querySelector('.mobile-menu-open');
  const dock=document.createElement('div');dock.className='mobile-menu-dock';main.prepend(dock);
