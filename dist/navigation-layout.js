@@ -2,7 +2,7 @@
  const side=document.querySelector('.side'),main=document.querySelector('.main'),top=document.querySelector('.top');
  if(!side||!main||!top)return;
  const footer=document.createElement('footer');footer.className='sidebar-footer';
- const controls=top.querySelector('.side-controls');if(controls){side.insertBefore(controls,side.querySelector('.nav'));const toggle=document.getElementById('toggleMenu');if(toggle){toggle.classList.add('menu-layout-toggle');controls.prepend(toggle)}}
+ const controls=top.querySelector('.side-controls');if(controls){side.insertBefore(controls,side.querySelector('.nav'));const toggle=document.getElementById('toggleMenu');if(toggle){toggle.classList.add('menu-layout-toggle');side.prepend(toggle)}}
  const divider=document.createElement('div');divider.className='menu-top-divider';divider.setAttribute('aria-hidden','true');side.insertBefore(divider,side.querySelector('.nav'));
  function matchMenuInk(){const label=side.querySelector('.menu-name');if(label)side.style.setProperty('--menu-control-ink',getComputedStyle(label).color)}
  new MutationObserver(matchMenuInk).observe(document.body,{attributes:true,attributeFilter:['class']});matchMenuInk();

@@ -9,7 +9,8 @@
  const backdrop=document.createElement('div');backdrop.className='mobile-menu-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-hidden','true');document.body.append(backdrop);
  let opened=false,scrollY=0,desktopCollapsed=side.classList.contains('collapsed');
  const desktopToggle=closeButton.onclick;
- function renderMenuToggle(expanded){closeButton.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5v14'+(expanded?'M15 6l-6 6 6 6M9 12h11':'M13 6l6 6-6 6M5 12h14')+'"/></svg>';closeButton.title=expanded?'Recolher menu principal':'Expandir menu principal';closeButton.dataset.navigationControl='menu';}
+ function renderMenuToggle(expanded){closeButton.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(expanded?'m14 6-6 6 6 6':'m10 6 6 6-6 6')+'"/></svg>';closeButton.title=expanded?'Recolher menu principal':'Expandir menu principal';closeButton.dataset.navigationControl='menu';}
+
 
 
  function setOpen(value,restoreFocus=true){

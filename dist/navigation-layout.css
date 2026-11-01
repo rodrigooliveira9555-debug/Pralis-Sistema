@@ -82,3 +82,8 @@ body .side.collapsed>.side-controls{display:none!important}
 body .side.collapsed>.brand>.mini-brand{display:block!important;width:40px;height:44px}
 body .side.collapsed>.brand>.mini-brand>.vector-logo{display:block!important;width:40px;height:44px}
 body .side.collapsed>.brand:focus-visible{outline:2px solid var(--muted);outline-offset:2px;border-radius:8px}
+
+/* Standalone corner arrow replaces the third circular menu control. */
+body .side>.menu-layout-toggle,body .side.collapsed>.menu-layout-toggle{position:absolute!important;top:16px!important;right:14px!important;left:auto!important;display:grid!important;place-items:center;width:24px!important;min-width:24px!important;height:24px!important;min-height:24px!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;color:var(--menu-control-ink,var(--muted))!important;z-index:3}
+body .side>.menu-layout-toggle svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+body .side.collapsed>.brand{padding-top:28px!important}

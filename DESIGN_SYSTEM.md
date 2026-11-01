@@ -306,3 +306,5 @@ Menu principal ocupa a tela inteira em celular, tablet e computador, ocultando o
 - Menu recolhido: esconder os controles do topo; mostrar somente a logomarca compacta acima dos ícones do menu. Clicar/tocar na logomarca (ou Enter/Espaço) reabre o menu e restaura os três controles.
 
 - Tema: substituir polaridade por lua no tema claro (ativar escuro) e sol no tema escuro (ativar claro). SVG neutro no mesmo círculo32px e cor dos demais controles; manter rótulo acessível e preferência persistida.
+
+- Revisão: retornar abrir/recolher menu à setinha isolada no canto superior direito, sem círculo. Remover o terceiro botão circular da fileira. Permanecem dois círculos acima de Gestão: expansão das opções e sol/lua; ambos ocultos quando recolhido. Seta preserva a cor dos outros controles.
