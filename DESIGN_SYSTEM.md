@@ -372,3 +372,6 @@ Usuário restaura Excluir sempre vermelho; Editar continua na cor da aba. Substi
 Continuar e Cancelar da janela de exclusão/transferência: duas colunas iguais,44px de altura, mesmo padding e alinhamento. Rótulo final Confirmar transferência conserva a geometria. Preservar cores, cancelamento e duas etapas; verificar dimensões sem confirmar exclusão.
 
 - Ajuste240: editores usam uma única moldura cinza externa por bloco de campos. Remover bordas internas duplicadas de input/select/textarea dentro desses blocos; foco indicado na moldura externa sem mudar medidas.
+
+## Taxas de bandeira —241
+Cabeçalho Taxas vermelho intenso#ef4444 e ícones brancos. Moldura única cinza, bandeiras consecutivas sem margens verticais, divisórias1px; summary52px preservado ao expandir. Regras de vigência com fundo de respiro cinza e campos brancos com moldura externa única, sem contorno interno duplicado. Preservar cálculo, vínculos e histórico.

@@ -111,3 +111,15 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-editor,#job-form)>:is(.job-identity,.account-identity){padding:12px!important;border-radius:10px!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-editor,.form-fields,#job-form) :is(label,.job-identity,.account-identity) :is(input:not([type=checkbox]):not([type=radio]):not([type=color]),select,textarea){border:0!important;box-shadow:none!important;outline:0!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-editor,.form-fields,#job-form)>:is(label,.job-identity,.account-identity):focus-within{border-color:var(--navigation-ink,#a2a0aa)!important;outline:2px solid color-mix(in srgb,var(--navigation-ink,#a2a0aa) 22%,transparent);outline-offset:1px}
+
+/* Card-brand fees follow the same continuous framed layout. */
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees{background:var(--layout-gap)!important;border:1px solid var(--layout-line)!important;border-radius:14px!important;padding:0 12px 12px!important;overflow:hidden}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees h3{background:#ef4444!important;color:#fff!important;margin:0 -12px 12px!important;padding:12px!important;border:0!important}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees h3 :is(.fee-heading-icon,.shortcut-circle){color:#fff!important;background:transparent!important;border-color:#fff!important}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fee-brand{background:#fff!important;border:0!important;border-bottom:1px solid var(--layout-line)!important;border-radius:0!important;margin:0!important;padding:0!important}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fee-brand>summary{background:#fff!important;color:var(--layout-ink)!important;margin:0!important;min-height:52px;box-sizing:border-box;padding:10px 12px!important;border-radius:0!important}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fee-brand[open]>summary{margin-bottom:0!important}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fee-brand :is(.fee-brand-chevron,.fee-brand-move){color:var(--navigation-ink,#a2a0aa)!important}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fee-rule{background:var(--layout-gap)!important;border-color:var(--layout-line)!important;gap:8px!important;margin:0!important;padding:8px!important}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees .operator-fee-rule label,body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees>label{background:#fff!important;border:1px solid var(--layout-line)!important;border-radius:10px!important;padding:12px!important;box-sizing:border-box}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees label :is(input,select,textarea){border:0!important;box-shadow:none!important;outline:0!important}
