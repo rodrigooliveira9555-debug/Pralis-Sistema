@@ -7,13 +7,26 @@ body:is(.dark-theme,:not(.dark-theme)) #sector-view.people-header-pilot>.panel>.
 body #sector-view.people-header-pilot .head h2{font-size:14px!important;line-height:18px!important}
 body #sector-view.people-header-pilot .head p{font-size:9px!important;line-height:12px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;margin:0!important}
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.people-header-pilot>.panel>.head+.content{flex:1 1 0!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;touch-action:pan-y;max-width:100%;margin-bottom:-12px!important;border-radius:20px!important;padding-bottom:24px!important}
-body #sector-view.people-header-pilot .people-bottom-header{display:flex;align-items:center;flex:0 0 auto;min-height:58px;gap:6px;padding:14px 14px max(6px,env(safe-area-inset-bottom));border:0;border-radius:0 0 20px 20px;background:#fff!important;color:var(--navigation-ink,#a1a0a8)!important;position:relative;z-index:6}
-body #sector-view.people-header-pilot .people-bottom-tools{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0;margin-left:auto}
+body #sector-view.people-header-pilot .people-bottom-header{display:flex;align-items:center;flex:0 0 auto;min-height:58px;gap:6px;padding:8px 14px max(8px,env(safe-area-inset-bottom));border:0;border-top:1px solid var(--layout-line,#dedee3);border-radius:0 0 20px 20px;background:#fff!important;color:var(--navigation-ink,#a1a0a8)!important;position:relative;z-index:6;flex-wrap:wrap}
+body #sector-view.people-header-pilot .people-bottom-header::before,
+body #sector-view.people-header-pilot .people-bottom-header::after{content:"";position:absolute;top:-20px;width:20px;height:20px;pointer-events:none}
+body #sector-view.people-header-pilot .people-bottom-header::before{left:0;background:radial-gradient(circle at 100% 0,transparent 19.5px,#fff 20px)}
+body #sector-view.people-header-pilot .people-bottom-header::after{right:0;background:radial-gradient(circle at 0 0,transparent 19.5px,#fff 20px)}
+body #sector-view.people-header-pilot .people-bottom-tools{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0}
+body #sector-view.people-header-pilot .people-bottom-extras{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin-left:auto}
+body #sector-view.people-header-pilot .people-bottom-search{flex:1 1 160px;min-width:0;max-width:340px;margin-left:auto}
+body #sector-view.people-header-pilot .people-bottom-search[hidden]{display:none}
+body #sector-view.people-header-pilot .people-bottom-search input{width:100%;min-width:0;height:32px;padding:5px 10px;border:1px solid var(--navigation-ink,#a1a0a8);border-radius:8px;background:#fff;color:var(--layout-ink,#606066);font:inherit;font-size:12px}
+body #sector-view.people-header-pilot .people-bottom-header button[aria-pressed=true]{background:#f0eff3}
+body #sector-view.people-header-pilot .people-bottom-header button:disabled{opacity:.4;cursor:default}
+body #sector-view.people-header-pilot #sector-content .record[hidden]{display:none!important}
+@media(max-width:480px){body #sector-view.people-header-pilot .people-bottom-search:not([hidden]){order:-1;flex-basis:100%;max-width:none}}
 body #sector-view.people-header-pilot .people-bottom-header button{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;padding:5px;border:0;background:transparent;color:var(--navigation-ink,#a1a0a8);border-radius:50%;cursor:pointer}
+body #sector-view.people-header-pilot .people-bottom-header button:not(.people-header-toggle){border:1px solid currentColor}
 body #sector-view.people-header-pilot .people-bottom-header button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 body #sector-view.people-header-pilot .people-bottom-header svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-body #sector-view.people-header-pilot .people-bottom-header .people-home-logo{padding:0;width:32px;height:32px}
-body #sector-view.people-header-pilot .people-bottom-header .people-footer-symbol{width:30px;height:32px;stroke:none;overflow:hidden}
+body #sector-view.people-header-pilot .people-bottom-header .people-home-logo{padding:4px;width:32px;height:32px}
+body #sector-view.people-header-pilot .people-bottom-header .people-footer-symbol{width:22px;height:23px;stroke:none;overflow:hidden}
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.people-header-pilot.people-top-hidden>.panel>.head[data-header-standard]{display:none!important}
 body #sector-view.people-header-pilot.people-top-hidden .people-header-toggle svg{transform:rotate(180deg)}
 body #sector-view.people-header-pilot.people-top-hidden>.panel>.content{margin-top:0!important}
