@@ -15,30 +15,46 @@
   const filter=()=>{const q=search.value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');records().forEach(row=>{const text=row.textContent.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');row.hidden=!!q&&!text.includes(q)})};
   const searchToggle=control('Abrir busca','<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',()=>{searchBox.hidden=!searchBox.hidden;searchToggle.setAttribute('aria-pressed',String(!searchBox.hidden));searchToggle.setAttribute('aria-expanded',String(!searchBox.hidden));if(!searchBox.hidden)search.focus();else{search.value='';filter()}});
   search.oninput=filter;search.onkeydown=e=>{if(e.key==='Escape'){searchBox.hidden=true;search.value='';filter();searchToggle.setAttribute('aria-pressed','false');searchToggle.setAttribute('aria-expanded','false');searchToggle.focus()}};
+  window.CicluzBeam?.attachOutline(searchToggle);window.CicluzBeam?.attachOutline(searchBox);
   let savedOrder=null;
   const sort=control('Ordenar de A a Z','<path d="M3 17 6 5l3 12M4 13h4M14 5h7l-7 12h7M11 19l2 2 2-2"/>',()=>{
    const grid=view.querySelector('#sector-content .record-grid');if(!grid)return;
    if(savedOrder){savedOrder.filter(row=>row.parentElement===grid).forEach(row=>grid.append(row));savedOrder=null;sort.setAttribute('aria-pressed','false');sort.title='Ordenar de A a Z';sort.setAttribute('aria-label',sort.title)}
    else{savedOrder=[...grid.children];[...savedOrder].sort((a,b)=>(a.querySelector('b')?.textContent||a.textContent).localeCompare(b.querySelector('b')?.textContent||b.textContent,'pt-BR',{sensitivity:'base',numeric:true})).forEach(row=>grid.append(row));sort.setAttribute('aria-pressed','true');sort.title='Restaurar ordem anterior';sort.setAttribute('aria-label',sort.title)}
   });
+  const sharedSort=createAlphabetizeButton(sort.onclick);sort.replaceChildren(...sharedSort.childNodes);sort.classList.add('sort-az');
   let allExpanded=false;
   const expand=control('Expandir tudo','<path d="m5 9 7-6 7 6M5 15l7 6 7-6"/>',()=>{allExpanded=!allExpanded;view.querySelectorAll('#sector-content details').forEach(el=>el.open=allExpanded);expand.setAttribute('aria-expanded',String(allExpanded));expand.title=allExpanded?'Recolher tudo':'Expandir tudo';expand.setAttribute('aria-label',expand.title)});
   const toggle=document.createElement('button');toggle.type='button';toggle.className='people-header-toggle';toggle.innerHTML='<svg viewBox="0 0 24 24"><path d="m5 15 7-7 7 7"/></svg>';
   let collapsed=false;
   function toggleState(){view.classList.toggle('people-top-hidden',collapsed);toggle.setAttribute('aria-expanded',String(!collapsed));toggle.setAttribute('aria-label',collapsed?'Mostrar cabeçalho superior':'Ocultar cabeçalho superior');toggle.title=toggle.getAttribute('aria-label')}
   toggle.onclick=()=>{collapsed=!collapsed;toggleState()};
-  footer.append(home,searchBox,extras,tools,toggle);panel.append(footer);
+  const preferencesKey='cicluz-people-footer-buttons-v1';let preferences={};
+  try{const value=JSON.parse(localStorage.getItem(preferencesKey)||'{}');if(value&&typeof value==='object'&&!Array.isArray(value))preferences=value}catch{}
+  const controls=new Map([['search',{button:searchToggle,label:'Buscar'}],['sort',{button:sort,label:'A/Z'}],['expand',{button:expand,label:'Expandir / recolher tudo'}]]);
+  const chooser=document.createElement('div');chooser.className='people-toolbar-options';chooser.id='people-toolbar-options';chooser.hidden=true;chooser.setAttribute('role','group');chooser.setAttribute('aria-label','Botões do cabeçalho inferior');
+  const more=document.createElement('button');more.type='button';more.className='people-toolbar-more';more.title='Personalizar botões';more.setAttribute('aria-label',more.title);more.setAttribute('aria-expanded','false');more.setAttribute('aria-controls',chooser.id);more.innerHTML='<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>';
+  function closeChooser(){chooser.hidden=true;more.setAttribute('aria-expanded','false')}
+  function applyPreferences(){controls.forEach(({button},key)=>button.hidden=preferences[key]===false);if(searchToggle.hidden&&!searchBox.hidden){searchBox.hidden=true;search.value='';filter();searchToggle.setAttribute('aria-expanded','false');searchToggle.setAttribute('aria-pressed','false')}}
+  function renderChoices(){chooser.replaceChildren();const title=document.createElement('b');title.textContent='Botões do cabeçalho';chooser.append(title);controls.forEach(({button,label},key)=>{const option=document.createElement('button');option.type='button';option.className='people-toolbar-choice';option.setAttribute('aria-label','Exibir '+label);option.setAttribute('aria-pressed',String(preferences[key]!==false));const symbol=document.createElement('span');symbol.className='people-option-symbol';symbol.innerHTML=button.innerHTML;symbol.querySelectorAll('.people-search-outline').forEach(el=>el.remove());const name=document.createElement('span');name.textContent=label;const check=document.createElement('span');check.className='people-option-check';check.textContent='✓';option.append(symbol,name,check);option.onclick=()=>{preferences[key]=preferences[key]===false;try{localStorage.setItem(preferencesKey,JSON.stringify(preferences))}catch{}applyPreferences();option.setAttribute('aria-pressed',String(preferences[key]!==false))};chooser.append(option)})}
+  more.onclick=()=>{chooser.hidden=!chooser.hidden;more.setAttribute('aria-expanded',String(!chooser.hidden));if(!chooser.hidden)renderChoices()};
+  document.addEventListener('pointerdown',e=>{if(!chooser.hidden&&!chooser.contains(e.target)&&!more.contains(e.target))closeChooser()});
+  footer.addEventListener('keydown',e=>{if(e.key==='Escape'&&!chooser.hidden){closeChooser();more.focus()}});
+  footer.append(home,searchBox,tools,extras,more,toggle,chooser);panel.append(footer);
+  const edge=document.createElementNS('http://www.w3.org/2000/svg','svg');edge.setAttribute('class','people-footer-edge');edge.setAttribute('aria-hidden','true');const edgePath=document.createElementNS(edge.namespaceURI,'path');edge.append(edgePath);footer.prepend(edge);
+  new ResizeObserver(()=>{const w=footer.clientWidth;edge.setAttribute('viewBox','0 0 '+w+' 21');edgePath.setAttribute('d','M .5 .5 A 19.5 19.5 0 0 0 20 20 H '+(w-20)+' A 19.5 19.5 0 0 0 '+(w-.5)+' .5')}).observe(footer);
+  applyPreferences();
   let previousActive=false,signature='';
   function sync(){
    const active=view.classList.contains('show')&&document.getElementById('sector-title')?.textContent.trim()==='Gestão de Pessoas';
-   if(active!==previousActive){view.classList.toggle('people-header-pilot',active);collapsed=false;toggleState();previousActive=active;searchBox.hidden=true;search.value='';searchToggle.setAttribute('aria-pressed','false');searchToggle.setAttribute('aria-expanded','false');savedOrder=null;sort.setAttribute('aria-pressed','false');sort.title='Ordenar de A a Z';sort.setAttribute('aria-label',sort.title)}
+   if(active!==previousActive){view.classList.toggle('people-header-pilot',active);collapsed=false;toggleState();previousActive=active;closeChooser();searchBox.hidden=true;search.value='';searchToggle.setAttribute('aria-pressed','false');searchToggle.setAttribute('aria-expanded','false');savedOrder=null;sort.setAttribute('aria-pressed','false');sort.title='Ordenar de A a Z';sort.setAttribute('aria-label',sort.title)}
    if(!active)return;
    expand.disabled=!view.querySelector('#sector-content details');
    const sources=[...head.querySelectorAll('.shortcut-actions button')].filter(b=>!b.matches('.mobile-menu-open')&&!b.hidden);
    const next=sources.map(b=>(b.getAttribute('aria-label')||b.title||b.textContent)+'|'+b.innerHTML).join(';;');
    if(next===signature)return;signature=next;
-   tools.replaceChildren();
-   sources.forEach(source=>{const button=document.createElement('button');button.type='button';button.className='people-footer-action';button.innerHTML=source.innerHTML;const label=source.getAttribute('aria-label')||source.title||source.textContent.trim();button.title=label;button.setAttribute('aria-label',label);button.onclick=()=>source.click();tools.append(button)});
+   for(const key of [...controls.keys()])if(key.startsWith('action:'))controls.delete(key);tools.replaceChildren();
+   sources.forEach(source=>{const button=document.createElement('button');button.type='button';button.className='people-footer-action';button.innerHTML=source.innerHTML;const label=source.getAttribute('aria-label')||source.title||source.textContent.trim();button.title=label;button.setAttribute('aria-label',label);button.onclick=()=>source.click();tools.append(button);controls.set('action:'+(source.id||label),{button,label})});applyPreferences();if(!chooser.hidden)renderChoices();
   }
   let queued=false;
   new MutationObserver(records=>{

@@ -51,7 +51,16 @@
   requestAnimationFrame(animateBeam);
  }
  requestAnimationFrame(animateBeam);
- window.CicluzBeam={attachSymbol(host){
+ let outlineId=0;
+ window.CicluzBeam={attachOutline(host){
+  const svg=document.createElementNS(svgNS,'svg'),id='cicluz-search-outline-'+(++outlineId);
+  svg.setAttribute('class','people-search-outline');svg.setAttribute('aria-hidden','true');
+  svg.innerHTML='<defs><linearGradient id="'+id+'"><stop offset="0%" stop-color="#ff0000"/><stop offset="13.043%" stop-color="#ff0000"/><stop offset="17.391%" stop-color="#ff8000"/><stop offset="30.435%" stop-color="#ff8000"/><stop offset="34.783%" stop-color="#f2d000"/><stop offset="47.826%" stop-color="#f2d000"/><stop offset="52.174%" stop-color="#00e833"/><stop offset="65.217%" stop-color="#00e833"/><stop offset="69.565%" stop-color="#0055ff"/><stop offset="82.609%" stop-color="#0055ff"/><stop offset="86.957%" stop-color="#8000ff"/><stop offset="100%" stop-color="#8000ff"/></linearGradient><mask id="'+id+'-mask" style="mask-type:alpha"><path fill="none" stroke="white" stroke-width="2"/></mask></defs><path class="outline-color" fill="none" stroke="url(#'+id+')" stroke-width="2"/>';
+  host.append(svg);const track=addBeam(svg,'M 0 0 H 1','url(#'+id+'-mask)');
+  const resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;const r=Math.min(h/2-1,w/2-1),x=w-1,y=h-1;
+   const d='M '+(1+r)+' 1 H '+(x-r)+' A '+r+' '+r+' 0 0 1 '+x+' '+(1+r)+' V '+(y-r)+' A '+r+' '+r+' 0 0 1 '+(x-r)+' '+y+' H '+(1+r)+' A '+r+' '+r+' 0 0 1 1 '+(y-r)+' V '+(1+r)+' A '+r+' '+r+' 0 0 1 '+(1+r)+' 1 Z';
+   svg.setAttribute('viewBox','0 0 '+w+' '+h);svg.querySelectorAll('path').forEach(p=>p.setAttribute('d',d));track.length=track.layers[0].path.getTotalLength();};new ResizeObserver(resize).observe(host);resize();
+ },attachSymbol(host){
   const original=fullLogo?.querySelector('.logo-color-light');if(!original)return;
   const svg=original.cloneNode(true),id='footer-logo-alpha';
   svg.setAttribute('viewBox','10 6 42 44');svg.setAttribute('class','people-footer-symbol');

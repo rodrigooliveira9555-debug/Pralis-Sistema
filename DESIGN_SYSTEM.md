@@ -448,3 +448,6 @@ Regra265: ao entrar, retornar ou selecionar novamente uma aba pelo menu, título
 
 ## Piloto Gestão de Pessoas — círculos maciços e área móvel
 Somente nesta aba: inferior com círculos cinza --navigation-ink e símbolos brancos; superior com círculos brancos e símbolos na cor do menu. Marca colorida animada preservada; recolher continua sem círculo. Até600px usar toda a área disponível do navegador, sem margens externas/reserva inferior da main; respeitar safe-area, faixas fixas e centro com rolagem vertical. Busca16px no celular.
+
+## Gestão de Pessoas — cabeçalho inferior personalizável
+Contorno superior cinza de1px segue a reta central e as duas curvas ascendentes; usa o mesmo token da borda inferior. Marca animada32×32px, sem círculo, alinhada com botões32px. A/Z reutiliza createAlphabetizeButton e alterna ordem alfabética/restauração. Três pontos são o penúltimo controle, antes da seta de ocultar/restaurar cabeçalho; painel mostra todos os controles opcionais, clique alterna visibilidade e check, escolha salva neste navegador. Marca, três pontos e seta final permanecem disponíveis. Busca com contorno no espectro exato do menu e luz via CicluzBeam compartilhado, no botão e campo aberto. Cabeçalhos fixos e conteúdo rolável mantidos.
