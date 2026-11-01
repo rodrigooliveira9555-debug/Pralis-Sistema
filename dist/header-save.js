@@ -3,7 +3,7 @@
  const entries=new Map();let queued=false;
  function sync(){
   const surfaces=[...document.querySelectorAll('.view.show,dialog[open],.modal.show>.dialog')];
-  for(const [surface,entry] of entries){if(!surface.isConnected||!surfaces.includes(surface)||!entry.source.isConnected||entry.source.hidden){entry.button.remove();entries.delete(surface)}}
+  for(const [surface,entry] of entries){if(!surface.isConnected||!surfaces.includes(surface)||!entry.source.isConnected||entry.source.hidden||!/^Salvar(?:\s|$)/i.test(entry.source.textContent?.trim()||entry.source.value||'')){entry.button.remove();entries.delete(surface)}}
   for(const surface of surfaces){
    const source=[...surface.querySelectorAll('button:not(.header-save-circle),input[type=submit]')].find(el=>!el.closest('.head,.location-dialog-header,.organogram-dialog-header,.organogram-editor-header')&&!el.hidden&&!el.closest('[hidden]')&&el.getClientRects().length>0&&/^Salvar(?:\s|$)/i.test(el.textContent?.trim()||el.value||''));
    let head=surface.querySelector('.head,.location-dialog-header,.organogram-dialog-header,.organogram-editor-header');

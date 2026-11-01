@@ -155,7 +155,7 @@ body .view :is(.job-item,.salary-row,.account-list-row,.location-row){margin-top
 body #sector-view .location-tree>.location-area-frame{margin:0!important;padding:0!important}
 body #sector-view .location-tree .location-area-frame>.location-row{min-height:52px!important;padding:4px 12px!important}
 body #sector-view .location-tree .location-children .location-row{min-height:40px!important;padding:2px 4px!important}
-body .view :is(.location-move,.menu-item-move,.drag-handle,.job-drag-handle,.account-action-toggle,.location-expand){color:var(--navigation-ink,#a2a0aa)!important}
+body .view :is(.location-move,.menu-item-move,.drag-handle,.job-drag-handle,.account-action-toggle,.location-expand,.job-toggle,.location-preview-arrow){color:var(--navigation-ink,#a2a0aa)!important}
 body :is(.view,dialog,.modal) .local-search-control{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
 body :is(.view,dialog,.modal) .local-search-control>input{flex:1;min-width:120px}
 body :is(.view,dialog,.modal) input[hidden]{display:none!important}
@@ -288,3 +288,12 @@ body #sector-view .location-tree .location-row>.account-row-actions:not([hidden]
 body #sector-view .location-tree .location-row .account-row-actions>button[title="Editar"]{background:#7c3aed!important}
 @keyframes location-actions-in{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
 @media(prefers-reduced-motion:reduce){body #sector-view .location-tree .location-row{transition:none!important}body #sector-view .location-tree .account-row-actions{animation:none!important}}
+
+/* Header identity rings and transient registration navigation. */
+body:is(.dark-theme,:not(.dark-theme)) dialog.location-dialog .location-dialog-header>.location-icon{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;min-width:30px;flex:0 0 30px;box-sizing:border-box;border:1px solid #fff!important;border-radius:50%;background:transparent!important;color:#fff!important}
+body #job-edit>.panel>.head>.config-inherit-icon{border:1px solid #fff!important;border-radius:50%!important}
+body #job-edit .icon-live-preview::after{color:var(--navigation-ink,#a2a0aa)!important}
+body #cadastro-completo .form-actions>[hidden]{display:none!important}
+body #cadastro-completo .form-actions>div{margin-left:auto}
+body #cadastro-completo #next-step.registration-save{width:auto;min-width:112px;gap:10px;border-radius:var(--ui-field-radius,8px);padding:10px 16px;font:500 var(--ui-text)/var(--ui-text-line) var(--ui-font)}
+body #cadastro-completo .registration-next[hidden]{display:none!important}

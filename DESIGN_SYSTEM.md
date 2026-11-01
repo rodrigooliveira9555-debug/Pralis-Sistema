@@ -408,3 +408,6 @@ Lupa circular ao lado do controle de tema, com a mesma cor e dimensão dos contr
 - Controle de tema: lua crescente com contorno fechado, sem preenchimento e traço 2px para definição; manter a mesma cor e dimensão do controle.
 
 - Lua revisada pela referência do usuário: crescente alongado, traço fino 1,3px, arco externo circular de raio 9 centrado em (12,12), concêntrico ao círculo do botão. Substitui a versão252.
+
+## Cadastros — revisão254
+Identificador do cabeçalho com contorno circular branco em Cargos e Área/Setor/Local. Setas laterais de Cargos/lista e prévias usam --navigation-ink, sem herdar a cor do item. Rodapé de Cargos: Salvar. Cadastro completo: primeira etapa só Avançar à direita; intermediárias Voltar/Avançar; última Voltar à esquerda e Salvar+check à direita, com check circular no cabeçalho. Campos do cadastro completo são guardados neste navegador com validação; arquivos não são persistidos e esse limite é informado no formulário.
