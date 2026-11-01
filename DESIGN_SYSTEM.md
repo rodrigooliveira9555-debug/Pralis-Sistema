@@ -367,3 +367,8 @@ Usuário restaura Excluir sempre vermelho; Editar continua na cor da aba. Substi
 
 ## Revisão final dos editores —239
 Ícones das bibliotecas de edição voltam à cor da aba de origem por orientação atual; cabeçalho branco, Excluir vermelho e outros controles cinza preservados. Linhas financeiras fixas52px/subgrupos40px com ações internas absolutas, texto truncado sem quebrar ao abrir ações. Revisão de alcance encontrou .form-fields em div e #job-form fora do seletor anterior limitado a form.form-fields; incluir esses formatos e formulários de diálogos no mesmo respiro cinza e contornos neutros. Verificar Mercadorias antes/depois de abrir ações, biblioteca de edição e formulário Cargos.
+
+## Botões de confirmação —240
+Continuar e Cancelar da janela de exclusão/transferência: duas colunas iguais,44px de altura, mesmo padding e alinhamento. Rótulo final Confirmar transferência conserva a geometria. Preservar cores, cancelamento e duas etapas; verificar dimensões sem confirmar exclusão.
+
+- Ajuste240: editores usam uma única moldura cinza externa por bloco de campos. Remover bordas internas duplicadas de input/select/textarea dentro desses blocos; foco indicado na moldura externa sem mudar medidas.

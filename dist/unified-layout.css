@@ -101,3 +101,12 @@ body #sector-view.financial-groups .financial-subgroups>.account-list-row{height
 body #sector-view.financial-groups .account-list-row>b{min-width:0;overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis}
 body #sector-view.financial-groups .account-list-row>b .financial-count{white-space:nowrap}
 body #sector-view.financial-groups .account-list-row .card-inherited-icon{flex-shrink:0!important}
+
+/* Balanced dimensions in the exclusion/transfer confirmation. */
+body dialog.transfer-dialog form>.actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:stretch!important;gap:10px!important}
+body:is(.dark-theme,:not(.dark-theme)) dialog.transfer-dialog form>.actions>button{max-width:none!important;box-sizing:border-box!important;width:100%!important;min-width:0!important;height:44px!important;min-height:44px!important;padding:8px 12px!important;margin:0!important;line-height:18px!important;white-space:normal;display:flex!important;align-items:center;justify-content:center}
+
+/* A single outer field frame; no nested input frames inside white editor blocks. */
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-editor,.form-fields,#job-form) :is(label,.job-identity,.account-identity,.account-status){border-color:var(--layout-line)!important;box-shadow:none!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-editor,.form-fields,#job-form) :is(label,.job-identity,.account-identity) :is(input:not([type=checkbox]):not([type=radio]):not([type=color]),select,textarea){border:0!important;box-shadow:none!important;outline:0!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-editor,.form-fields,#job-form)>:is(label,.job-identity,.account-identity):focus-within{border-color:var(--navigation-ink,#a2a0aa)!important;outline:2px solid color-mix(in srgb,var(--navigation-ink,#a2a0aa) 22%,transparent);outline-offset:1px}
