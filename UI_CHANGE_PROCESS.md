@@ -74,3 +74,7 @@ Botão Abrir menu com três pontos em SVG, círculo32px, sozinho no extremo esqu
 - Correção antes de publicar235: substituir os três pontos pela casinha simples em SVG de contorno, rótulo Menu inicial, mantendo a mesma ação de abrir a navegação e posição isolada à esquerda. Esta decisão substitui a proposta de três pontos.
 
 - Espaçamento compacto acrescentado à235: intervalo4px entre itens nas listas internas e linhas financeiras52px (subgrupos40px). Grades de navegação já agrupadas mantêm divisórias sem lacunas. Não alterar o menu principal excluído pelo usuário. Verificar Mercadorias com casinha e lista compacta.
+
+- Última orientação235: casinha, voltar, fechar e demais controles/setas no mesmo --navigation-ink cinza da navegação. Cabeçalho/destaques continuam na cor do módulo; ícones identificadores de grupos preservam as cores originais anteriormente solicitadas.
+
+- Exceção explícita235: Editar e Excluir acompanham a cor da aba atual, inclusive os painéis de ações financeiros e de Cargos. Substitui, para esses controles, a regra anterior de lixeira sempre vermelha. Confirmações e preservação de histórico continuam obrigatórias.
