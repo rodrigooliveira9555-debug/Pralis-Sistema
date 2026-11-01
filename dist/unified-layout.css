@@ -161,3 +161,44 @@ body :is(.view,dialog,.modal) .local-search-control>input{flex:1;min-width:120px
 body :is(.view,dialog,.modal) input[hidden]{display:none!important}
 body :is(.view,dialog,.modal) .local-search-toggle{color:var(--navigation-ink,#a2a0aa)!important;border:1px solid var(--layout-line)!important;background:#fff!important}
 body :is(.location-dialog-header,.organogram-editor-header) .header-save-circle{color:#fff!important;border-color:#fff!important;background:transparent!important}
+
+/* Área / Setor / Local: preserve the chosen badge color and the menu edit accent. */
+body #sector-view .location-tree .location-row > .location-icon {
+ background:var(--node-color,#7c3aed)!important;
+ color:var(--node-ink,#fff)!important;
+}
+body dialog.location-dialog .location-preview-card .location-icon {
+ background:var(--node-color,#7c3aed)!important;
+ color:var(--node-ink,#fff)!important;
+}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view .location-tree .location-row .account-row-actions > button[title="Editar"] {
+ background:var(--menu-accent,#7c3aed)!important;
+ border-color:var(--menu-accent,#7c3aed)!important;
+ color:#fff!important;
+}
+
+/* Frame every brand in the fees editor, retaining its compact rows. */
+body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees .operator-fee-brand {
+ border:1px solid var(--layout-line,#dedee3)!important;
+ border-radius:10px!important;margin:8px 0!important;overflow:hidden;
+}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees h3 .fee-header-actions .local-search-toggle {
+ color:#fff!important;border:1px solid #fff!important;background:transparent!important;
+}
+body #sector-view .operator-fees .local-search-control:has(>input[hidden]) {display:none!important}
+
+body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees .fee-brand-icon {
+ border:1px solid var(--layout-line,#dedee3)!important;border-radius:8px!important;
+ background:#fff!important;box-sizing:border-box;padding:4px;
+}
+body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button.footer-save-accent:not(:disabled) {
+ background:var(--menu-accent,var(--panel-color,#7c3aed))!important;color:#fff!important;
+ border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;
+}
+body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button.footer-cancel-accent:not(:disabled) {
+ background:#fff!important;color:var(--menu-accent,var(--panel-color,#7c3aed))!important;
+ border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;
+}
+
+body :is(.view,dialog,.modal) :is(.footer-save-accent,.footer-cancel-accent){display:inline-flex!important;align-items:center;justify-content:center;gap:8px}
+body .footer-action-icon{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
