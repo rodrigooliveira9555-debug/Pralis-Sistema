@@ -66,7 +66,7 @@ body .view .location-row{margin-top:var(--layout-item-gap)!important;margin-bott
 /* Header controls remain white; body navigation glyphs use neutral gray. */
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head :is(.shortcut-circle,.mobile-menu-open),body:is(.dark-theme,:not(.dark-theme)) dialog :is(.location-dialog-header,.organogram-editor-header) .shortcut-circle{color:#fff!important;border-color:currentColor!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-action-toggle,.financial-expand,.financial-add-child,.card-arrow,.menu-item-move,.location-expand,.location-move){color:var(--navigation-ink,#a2a0aa)!important}
-/* Edit and delete follow the current tab accent, as requested. */
+/* Edit follows the tab accent; destructive actions stay red. */
 body:is(.dark-theme,:not(.dark-theme)) #sector-view .account-row-actions>button,body:is(.dark-theme,:not(.dark-theme)) #jobs-view .job-actions>button{background:var(--menu-accent,var(--panel-color,#7c3aed))!important;color:#fff!important;border-color:var(--menu-accent,var(--panel-color,#7c3aed))!important}
 body:is(.dark-theme,:not(.dark-theme)) .view :is(.location-edit,.location-delete){color:var(--menu-accent,var(--panel-color,#7c3aed))!important}
 
@@ -83,3 +83,10 @@ body .view :is(.record-grid,#jobs-list,#salary-list)>:is(.record,.financial-grou
 body .view :is(.record-grid,#jobs-list,#salary-list)>:is(.record,.financial-group,.job-item,.salary-row):not(:last-child){border-bottom:1px solid var(--layout-line)!important}
 body #sector-view.financial-groups .financial-group>.account-list-row,body #sector-view.financial-groups .financial-subgroups>.account-list-row{margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
 body #sector-view.financial-groups .financial-subgroups>.account-list-row{border-top:1px solid var(--layout-line)!important}
+
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,#jobs-view) :is(.account-row-actions,.job-actions)>button:is([aria-label^="Excluir"],[title^="Excluir"],:first-child){background:#ef4444!important;border-color:#ef4444!important;color:#fff!important}
+body:is(.dark-theme,:not(.dark-theme)) .view .location-delete{color:#ef4444!important}
+/* Editor spacing has one neutral surface between white information blocks. */
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(form.account-editor,form.form-fields,.form-demo){background:var(--layout-gap)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(form.account-editor,form.form-fields,.form-demo)>:is(label,.account-status,.account-field-group){background:#fff!important;border:1px solid var(--layout-line)!important;border-radius:10px!important;padding:12px!important;box-sizing:border-box;min-width:0}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(form.account-editor,form.form-fields,.form-demo)>:is(.actions,.financial-parent-context){background:var(--layout-gap)!important}
