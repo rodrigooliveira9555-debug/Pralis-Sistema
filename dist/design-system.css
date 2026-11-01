@@ -248,7 +248,7 @@ body .account-action-toggle[aria-expanded=true] svg{transform:rotate(180deg)}
 .nav-tree.sidebar-sectioned>.overview-item::before,.nav-tree.sidebar-sectioned>details[data-menu-name^="Configuração"]::before{display:none}
 .nav-tree.sidebar-sectioned>.overview-item{margin-top:0!important}
 .nav-tree.sidebar-sectioned>details[data-menu-name^="Configuração"]{margin-top:0!important;padding-top:0;border-top:0}
-.nav-tree>.sidebar-section-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;border:0;border-top:1px solid #eeedf1;background:transparent;padding:12px 10px 5px;margin:14px 0 3px;color:#a2a0aa;font:650 12px Montserrat,system-ui,sans-serif;letter-spacing:.4px;cursor:pointer}
+.nav-tree>.sidebar-section-toggle{position:relative;display:flex;align-items:center;justify-content:space-between;width:100%;border:0;border-top:0;background:transparent;padding:12px 10px 5px;margin:14px 0 3px;color:#a2a0aa;font:650 12px Montserrat,system-ui,sans-serif;letter-spacing:.4px;cursor:pointer}
 .nav-tree>.sidebar-section-toggle:first-child{margin-top:0;border-top:0}
 .sidebar-section-toggle svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;transition:transform .15s}
 .sidebar-section-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
@@ -344,3 +344,7 @@ body.dark-theme .view.show>.panel>.head[data-header-standard=yes],body.dark-them
 *{scrollbar-width:none!important}
 *::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
 @media(forced-colors:active){*{scrollbar-width:auto!important}*::-webkit-scrollbar{display:initial!important;width:initial!important;height:initial!important}}
+
+/* Section dividers share the same rounded grey stroke, including Gestão. */
+.nav-tree>.sidebar-section-toggle::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;border-radius:999px;background:#eeedf1}
+.dark-theme .nav-tree>.sidebar-section-toggle::before{background:#3b3942}

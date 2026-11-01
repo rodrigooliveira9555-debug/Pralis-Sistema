@@ -38,8 +38,8 @@ body .side>.side-controls .tree-control,body .side>.side-controls .theme-switch,
 body.dark-theme .side>.side-controls{color:#9896a1}
 body .side>.side-controls button:hover{background:color-mix(in srgb,currentColor 10%,transparent)}
 body .side>.nav{width:100%;min-height:0}
-body .side>.brand{padding:10px 10px 20px!important}
-body .side .menu-toggle{color:#a2a0aa!important}
+body .side>.brand{padding:0 10px 12px!important;margin:0!important;min-height:0;align-items:flex-start}
+
 body .side .sidebar-footer{background:transparent;box-shadow:none}
 
 /* The compact rail retains only icons; reopening restores labels and move handles. */
@@ -57,3 +57,18 @@ body .side.collapsed .sidebar-footer{align-items:center}
 
 body .side .sidebar-section-toggle{color:#a2a0aa!important}
 body.dark-theme .side .sidebar-section-toggle{color:#9896a1!important}
+
+/* Three shared circular controls, fixed above the scrollable menu. */
+body .side>.side-controls,body.dark-theme .side>.side-controls{color:var(--menu-control-ink,var(--muted));align-items:center}
+body .side>.side-controls>.menu-layout-toggle,body .side>.side-controls>.tree-control,body .side>.side-controls>.theme-switch{position:static!important;display:grid!important;place-items:center;flex:0 0 32px;width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;padding:0!important;margin:0!important;border:1px solid currentColor!important;border-radius:50%!important;color:inherit!important;background:transparent;opacity:1!important}
+body .side>.side-controls svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+body .side>.side-controls .theme-icon{display:grid;place-items:center;color:inherit!important}
+body .side.collapsed>.side-controls>.menu-layout-toggle{margin:0!important}
+
+body .side:not(.collapsed) .brand-logo-wrap{width:180px!important;height:48px!important;overflow:hidden}
+body .side:not(.collapsed) .brand-logo-wrap>.vector-logo{display:block;width:180px!important;height:auto!important;max-width:100%}
+body .side:not(.collapsed) .brand-subtitle{width:180px!important}
+.menu-top-divider{flex:none;height:1px;border-radius:999px;background:#eeedf1;margin:0}
+.dark-theme .menu-top-divider{background:#3b3942}
+.side.collapsed>.menu-top-divider{display:none}
+body .side .nav-tree>.sidebar-section-toggle:first-child::before{display:none}

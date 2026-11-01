@@ -35,3 +35,5 @@ Cargos, Contas, grupos e subgrupos DES/MER/RET/VND, tipos de venda/bandeiras/ope
 
 ## Matriz — menu inicial em tela inteira (31/10/2026)
 Componente compartilhado: mobile-menu e navigation-layout. Impacto: menu principal (Gestão, Agenda, Outros), abertura/fechamento em todas as larguras; acesso às telas Mercadorias, Configurações e Formulários; retorno ao menu. Controles de expansão global e tema acima de Gestão, cinza das setas. Usuário fixo no rodapé sem barra divisória.
+
+- Revisão dos controles: incluir toggleMenu na mesma fileira acima de Gestão; três círculos32px/ícone16px, cor computada dos títulos. Conferir expansão/recolhimento, tema e rolagem independente.

@@ -2,7 +2,10 @@
  const side=document.querySelector('.side'),main=document.querySelector('.main'),top=document.querySelector('.top');
  if(!side||!main||!top)return;
  const footer=document.createElement('footer');footer.className='sidebar-footer';
- const controls=top.querySelector('.side-controls');if(controls)side.insertBefore(controls,side.querySelector('.nav'));
+ const controls=top.querySelector('.side-controls');if(controls){side.insertBefore(controls,side.querySelector('.nav'));const toggle=document.getElementById('toggleMenu');if(toggle){toggle.classList.add('menu-layout-toggle');controls.prepend(toggle)}}
+ const divider=document.createElement('div');divider.className='menu-top-divider';divider.setAttribute('aria-hidden','true');side.insertBefore(divider,side.querySelector('.nav'));
+ function matchMenuInk(){const label=side.querySelector('.menu-name');if(label)side.style.setProperty('--menu-control-ink',getComputedStyle(label).color)}
+ new MutationObserver(matchMenuInk).observe(document.body,{attributes:true,attributeFilter:['class']});matchMenuInk();
  const user=document.createElement('div');user.className='sidebar-user';user.setAttribute('aria-label','Usuário: Rodrigo Oliveira');
  const avatar=top.querySelector('.avatar');if(avatar)user.append(avatar);
  const name=document.createElement('span');name.className='sidebar-user-name';name.textContent='Rodrigo Oliveira';user.append(name);footer.append(user);side.append(footer);

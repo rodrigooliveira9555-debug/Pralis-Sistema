@@ -292,3 +292,9 @@ Matriz: Cargos; Contas; grupos/subgrupos DES, MER, RET e VND; tipos de venda, ba
 Menu principal ocupa a tela inteira em celular, tablet e computador, ocultando o conteúdo ao abrir. Remover as faixas superior e inferior. Expandir/recolher todos e claro/escuro ficam juntos à esquerda acima de Gestão, no mesmo cinza das setas das seções (claro #a2a0aa; escuro #9896a1). Usuário permanece fixo no rodapé; opções rolam independentemente.
 
 - Recolhido: mostrar somente ícones, ocultando nomes e alças de arrastar. Expandido: restaurar nomes e alças. Usuário continua no rodapé.
+
+- Revisão: TRÊS controles circulares32px lado a lado acima de Gestão: expandir/recolher menu (painel com seta SVG), expansão global e tema. Cor do símbolo e contorno acompanha a cor efetiva dos títulos dos itens (.menu-name), inclusive no tema escuro. Substitui a referência anterior às setas de seção. Topo/controles não rolam; somente opções da navegação.
+
+- Gestão, Agenda e Outros usam o mesmo separador cinza de pontas arredondadas acima do título. Os três controles ficam acima do separador de Gestão, com espaçamento.
+
+- Logomarca compacta180px no topo, com margem superior removida e respiro12px antes dos controles. Marca, três controles e separador superior permanecem fora da região rolável, assim como o usuário no rodapé. Preservar arte e animação originais.

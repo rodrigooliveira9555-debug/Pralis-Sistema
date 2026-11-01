@@ -9,25 +9,27 @@
  const backdrop=document.createElement('div');backdrop.className='mobile-menu-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-hidden','true');document.body.append(backdrop);
  let opened=false,scrollY=0,desktopCollapsed=side.classList.contains('collapsed');
  const desktopToggle=closeButton.onclick;
+ function renderMenuToggle(expanded){closeButton.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16'+(expanded?'M16 9l-3 3 3 3':'M14 9l3 3-3 3')+'"/></svg>'}
+
  function setOpen(value,restoreFocus=true){
   if(!media.matches)return;
   if(value===opened)return;
   opened=value;
   if(value){scrollY=window.scrollY;document.body.style.setProperty('--menu-scroll-top',-scrollY+'px');}
   document.body.classList.toggle('mobile-menu-visible',value);backdrop.hidden=!value;main.inert=value;side.inert=false;side.classList.toggle('collapsed',!value);
-  openButton.setAttribute('aria-expanded',String(value));side.removeAttribute('aria-hidden');closeButton.textContent=value?'‹':'›';closeButton.setAttribute('aria-label',value?'Recolher menu':'Expandir menu');
+  openButton.setAttribute('aria-expanded',String(value));side.removeAttribute('aria-hidden');renderMenuToggle(value);closeButton.setAttribute('aria-label',value?'Recolher menu':'Expandir menu');
   if(value){side.setAttribute('role','dialog');side.setAttribute('aria-modal','true');side.setAttribute('aria-label','Menu principal');closeButton.focus();}
   else{side.removeAttribute('role');side.removeAttribute('aria-modal');document.body.style.removeProperty('--menu-scroll-top');window.scrollTo(0,scrollY);if(restoreFocus)openButton.focus();}
  }
  function sync(){
-  if(media.matches){desktopCollapsed=side.classList.contains('collapsed');side.classList.remove('collapsed');document.querySelector('.app').classList.remove('collapsed');closeButton.textContent='×';closeButton.setAttribute('aria-label','Fechar menu');side.inert=true;side.setAttribute('aria-hidden','true');}
-  else{if(opened){opened=false;document.body.classList.remove('mobile-menu-visible');backdrop.hidden=true;main.inert=false;document.body.style.removeProperty('--menu-scroll-top');window.scrollTo(0,scrollY);}side.inert=false;side.removeAttribute('aria-hidden');side.removeAttribute('role');side.removeAttribute('aria-modal');side.classList.toggle('collapsed',desktopCollapsed);document.querySelector('.app').classList.toggle('collapsed',desktopCollapsed);closeButton.textContent=desktopCollapsed?'›':'‹';closeButton.setAttribute('aria-label',desktopCollapsed?'Expandir menu':'Recolher menu');openButton.setAttribute('aria-expanded','false');}
+  if(media.matches){desktopCollapsed=side.classList.contains('collapsed');side.classList.remove('collapsed');document.querySelector('.app').classList.remove('collapsed');renderMenuToggle(true);closeButton.setAttribute('aria-label','Fechar menu');side.inert=true;side.setAttribute('aria-hidden','true');}
+  else{if(opened){opened=false;document.body.classList.remove('mobile-menu-visible');backdrop.hidden=true;main.inert=false;document.body.style.removeProperty('--menu-scroll-top');window.scrollTo(0,scrollY);}side.inert=false;side.removeAttribute('aria-hidden');side.removeAttribute('role');side.removeAttribute('aria-modal');side.classList.toggle('collapsed',desktopCollapsed);document.querySelector('.app').classList.toggle('collapsed',desktopCollapsed);renderMenuToggle(!desktopCollapsed);closeButton.setAttribute('aria-label',desktopCollapsed?'Expandir menu':'Recolher menu');openButton.setAttribute('aria-expanded','false');}
  }
  closeButton.onclick=e=>media.matches?setOpen(!opened):desktopToggle.call(closeButton,e);
  openButton.onclick=()=>setOpen(!opened);backdrop.onclick=()=>setOpen(false);
  side.addEventListener('click',e=>{if(e.target.closest('.nav summary')&&side.classList.contains('collapsed'))setOpen(true,false)},true);
  side.addEventListener('click',e=>{const target=e.target.closest('.nav button,.nav a');if(!opened||!target||target.matches('.sidebar-section-toggle')||target.closest('summary'))return;setOpen(false);});
  document.addEventListener('keydown',e=>{if(!opened)return;if(e.key==='Escape'){e.preventDefault();setOpen(false);}if(e.key==='Tab'){const focusable=[...side.querySelectorAll('button,a[href],summary,input,select,[tabindex="0"]')].filter(x=>!x.disabled&&x.getClientRects().length);const first=focusable[0],last=focusable.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}}});
- document.addEventListener('cicluz-open-menu',()=>{if(media.matches)setOpen(true);else{side.classList.remove('collapsed');document.querySelector('.app').classList.remove('collapsed');closeButton.textContent='‹';closeButton.setAttribute('aria-label','Recolher menu');side.querySelector('.overview-link')?.focus()}});
+ document.addEventListener('cicluz-open-menu',()=>{if(media.matches)setOpen(true);else{side.classList.remove('collapsed');document.querySelector('.app').classList.remove('collapsed');renderMenuToggle(true);closeButton.setAttribute('aria-label','Recolher menu');side.querySelector('.overview-link')?.focus()}});
  media.addEventListener('change',sync);sync();setOpen(true,false);
 })();
