@@ -317,9 +317,5 @@ Menu principal ocupa a tela inteira em celular, tablet e computador, ocultando o
 
 - Palavra CICLUZ branca pura#ffffff no tema escuro e escura#242426 no claro. Cor definida no feFlood do filtro SVG compartilhado, sem depender de currentColor herdado fora da marca.
 
-## Modelo consolidado — referências enviadas em31/10
-Substitui cabeçalhos claros e quadros separados: cabeçalhos intensos na cor de origem e texto claro; conteúdo branco arredondado, inclusive com tema escuro no menu. Contornos/divisórias #dedee3 e texto do conteúdo #606066 em fonte Montserrat existente. Listas compactas agrupadas, linhas separadas por divisor fino, pouco respiro vertical. Hover/toque/foco laranja #f97316 com fundo #fff2e8 em todos os módulos. Preservar ícones coloridos, marcas, semântica de excluir e vínculos/eventos existentes. Fonte única ui-foundation.css.
-
-- Revisão final: hover/toque/foco herda a cor original do item/módulo (laranja apenas em Contas). Texto e ícones cinza#606066 em repouso, incluindo Voltar; no cabeçalho intenso ficam sobre pequenas superfícies brancas para contraste. Substitui destaque laranja universal e texto claro de cabeçalho da proposta anterior.
-
-- Conferência desta revisão: Gestão de Pessoas, lista/ficha de Cargos, árvore/diálogo de localização, Visão Geral, Tesouraria e grupos de Contas. Inventário de19 views e18 cabeçalhos normalizados; não equivale à inspeção visual de todas as telas. Componentes compartilhados aplicam a regra também às demais estruturas.
+## Piloto restrito — Diretor de Operação
+A revisão global226 foi rejeitada e restaurada para225. Aplicar novo padrão somente à tela inicial Diretor de Operação, identificada pelo título exato. Cabeçalho intenso roxo, conteúdo branco arredondado, linhas próximas com divisória cinza, texto/ícones/voltar cinza em repouso; interação na cor original de cada cartão. Classe operations-layout-pilot removida ao mudar o título; subcadastros financeiros e demais telas preservam225.

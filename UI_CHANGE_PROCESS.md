@@ -46,9 +46,5 @@ Gestão/Agenda/Outros, suas setas, setas de cada opção, recolher/abrir no cant
 
 - Matriz cor das letras: marca expandida nos temas claro e escuro; verificar alternância do tema e restauração. Cor branca do filtro aplicada apenas às letras, preservando símbolo colorido.
 
-## Matriz — modelo consolidado de telas e formulários
-Todas as19 views e diálogos: cabeçalho intenso na cor de origem; corpo branco arredondado; contorno/divisórias cinza único; texto do conteúdo cinza único; linhas compactas e destaque laranja ao toque/hover/foco. Inclui listas de Cargos/Contas/grupos/tipos/localização, fichas, formulários de admissão/patrimônio/configuração e diálogo de localização. Cabeçalho preserva texto claro para contraste. Preferência explícita por conteúdo branco também sob tema escuro. Fonte compartilhada ui-foundation.css.
-
-- Revisão final: hover/toque/foco herda a cor original do item/módulo (laranja apenas em Contas). Texto e ícones cinza#606066 em repouso, incluindo Voltar; no cabeçalho intenso ficam sobre pequenas superfícies brancas para contraste. Substitui destaque laranja universal e texto claro de cabeçalho da proposta anterior.
-
-- Conferência desta revisão: Gestão de Pessoas, lista/ficha de Cargos, árvore/diálogo de localização, Visão Geral, Tesouraria e grupos de Contas. Inventário de19 views e18 cabeçalhos normalizados; não equivale à inspeção visual de todas as telas. Componentes compartilhados aplicam a regra também às demais estruturas.
+## Piloto restrito — Diretor de Operação
+A revisão global226 foi rejeitada e restaurada para225. Aplicar novo padrão somente à tela inicial Diretor de Operação, identificada pelo título exato. Cabeçalho intenso roxo, conteúdo branco arredondado, linhas próximas com divisória cinza, texto/ícones/voltar cinza em repouso; interação na cor original de cada cartão. Classe operations-layout-pilot removida ao mudar o título; subcadastros financeiros e demais telas preservam225.

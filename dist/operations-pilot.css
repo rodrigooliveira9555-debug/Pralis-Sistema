@@ -1,0 +1,17 @@
+/* Pilot applies exclusively to the Diretor de Operação landing screen. */
+#sector-view.operations-layout-pilot{--pilot-ink:#606066;--pilot-line:#dedee3}
+body #sector-view.operations-layout-pilot>.panel{background:#fff!important;border:1px solid var(--pilot-line)!important;border-radius:20px!important;overflow:hidden}
+body #sector-view.operations-layout-pilot>.panel>.head[data-header-standard]{background:#7c3aed!important;border-color:var(--pilot-line)!important;padding:12px 14px 24px!important;border-radius:20px 20px 0 0!important}
+body #sector-view.operations-layout-pilot .header-identity{background:#fff;border-radius:8px;padding:6px 10px;width:fit-content;max-width:100%}
+body #sector-view.operations-layout-pilot>.panel>.head :is(h2,p,.shortcut-circle,.sector-icon,.mobile-menu-open){color:var(--pilot-ink)!important}
+body #sector-view.operations-layout-pilot>.panel>.head :is(.shortcut-circle,.sector-icon,.mobile-menu-open){background:#fff!important;border-color:var(--pilot-line)!important}
+body #sector-view.operations-layout-pilot #sector-content{position:relative;z-index:5;background:#fff!important;color:var(--pilot-ink)!important;margin-top:-12px;border-radius:20px 20px 0 0;padding:14px!important}
+body #sector-view.operations-layout-pilot .record-grid{display:flex!important;flex-direction:column;gap:0!important;border:1px solid var(--pilot-line);border-radius:14px;overflow:hidden;background:#fff}
+body #sector-view.operations-layout-pilot .record{margin:0!important;padding:10px 12px!important;min-height:48px!important;border:0!important;border-bottom:1px solid var(--pilot-line)!important;border-radius:0!important;background:#fff!important;box-shadow:none!important;color:var(--pilot-ink)!important;transform:none!important}
+body #sector-view.operations-layout-pilot .record:last-child{border-bottom:0!important}
+body #sector-view.operations-layout-pilot .record :is(b,small,.card-arrow,.card-inherited-icon){color:var(--pilot-ink)!important}
+body #sector-view.operations-layout-pilot .record .card-inherited-icon{background:#fff!important;border:1px solid var(--pilot-line)!important}
+body #sector-view.operations-layout-pilot .record b{margin:0!important}
+body #sector-view.operations-layout-pilot .record:is(:hover,:active,:focus-within){background:color-mix(in srgb,var(--card-color,#7c3aed) 9%,white)!important}
+body #sector-view.operations-layout-pilot .record:is(:hover,:active,:focus-within) :is(b,small,.card-arrow,.card-inherited-icon){color:var(--card-color,#7c3aed)!important}
+body #sector-view.operations-layout-pilot .shortcut-circle:is(:hover,:active,:focus-visible){color:#7c3aed!important;background:#f4edff!important;border-color:currentColor!important}
