@@ -444,3 +444,7 @@ Página e cadastros não devem deslizar horizontalmente; rolagem vertical preser
 Contêiner do aplicativo fixo no viewport; documento sem rolagem, conteúdo interno preservado. Cabeçalho não aceita gesto de arraste vertical. Recolhido: uma linha de grade (eliminar segunda linha vazia e gap), centro vertical comum aos comandos e controle; padding equilibra12px de sobreposição do conteúdo. Matriz:20 cabeçalhos via regra compartilhada; conferir Cargos com rolagem e ficha em375px.
 
 Regra265: ao entrar, retornar ou selecionar novamente uma aba pelo menu, título e ícone começam abertos; mudança de destino na view compartilhada também reabre. Não preservar recolhimento entre visitas.
+
+
+## Piloto Gestão de Pessoas — círculos maciços e área móvel
+Somente nesta aba: inferior com círculos cinza --navigation-ink e símbolos brancos; superior com círculos brancos e símbolos na cor do menu. Marca colorida animada preservada; recolher continua sem círculo. Até600px usar toda a área disponível do navegador, sem margens externas/reserva inferior da main; respeitar safe-area, faixas fixas e centro com rolagem vertical. Busca16px no celular.

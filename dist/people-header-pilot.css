@@ -17,12 +17,12 @@ body #sector-view.people-header-pilot .people-bottom-extras{display:flex;align-i
 body #sector-view.people-header-pilot .people-bottom-search{flex:1 1 160px;min-width:0;max-width:340px;margin-left:auto}
 body #sector-view.people-header-pilot .people-bottom-search[hidden]{display:none}
 body #sector-view.people-header-pilot .people-bottom-search input{width:100%;min-width:0;height:32px;padding:5px 10px;border:1px solid var(--navigation-ink,#a1a0a8);border-radius:8px;background:#fff;color:var(--layout-ink,#606066);font:inherit;font-size:12px}
-body #sector-view.people-header-pilot .people-bottom-header button[aria-pressed=true]{background:#f0eff3}
+body #sector-view.people-header-pilot .people-bottom-header button[aria-pressed=true]{box-shadow:0 0 0 2px #fff,0 0 0 3px var(--navigation-ink,#a1a0a8)}
 body #sector-view.people-header-pilot .people-bottom-header button:disabled{opacity:.4;cursor:default}
 body #sector-view.people-header-pilot #sector-content .record[hidden]{display:none!important}
 @media(max-width:480px){body #sector-view.people-header-pilot .people-bottom-search:not([hidden]){order:-1;flex-basis:100%;max-width:none}}
 body #sector-view.people-header-pilot .people-bottom-header button{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;padding:5px;border:0;background:transparent;color:var(--navigation-ink,#a1a0a8);border-radius:50%;cursor:pointer}
-body #sector-view.people-header-pilot .people-bottom-header button:not(.people-header-toggle){border:1px solid currentColor}
+body #sector-view.people-header-pilot .people-bottom-header button:not(.people-header-toggle):not(.people-home-logo){border:1px solid var(--navigation-ink,#a1a0a8);background:var(--navigation-ink,#a1a0a8);color:#fff}
 body #sector-view.people-header-pilot .people-bottom-header button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 body #sector-view.people-header-pilot .people-bottom-header svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 body #sector-view.people-header-pilot .people-bottom-header .people-home-logo{padding:4px;width:32px;height:32px}
@@ -30,3 +30,15 @@ body #sector-view.people-header-pilot .people-bottom-header .people-footer-symbo
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.people-header-pilot.people-top-hidden>.panel>.head[data-header-standard]{display:none!important}
 body #sector-view.people-header-pilot.people-top-hidden .people-header-toggle svg{transform:rotate(180deg)}
 body #sector-view.people-header-pilot.people-top-hidden>.panel>.content{margin-top:0!important}
+
+/* Solid circles, with the symbol revealing the header's own colour. */
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.people-header-pilot.view>.panel>.head :is(.sector-icon,.config-inherit-icon,.shortcut-circle,.mobile-menu-open){background:#fff!important;border-color:#fff!important;color:var(--menu-accent,var(--panel-color,#7c3aed))!important}
+body #sector-view.people-header-pilot .people-bottom-header .people-home-logo{border:1px solid var(--navigation-ink,#a1a0a8);background:transparent}
+@media(max-width:600px){
+ body:not(.mobile-menu-visible):has(#sector-view.people-header-pilot.show) .main{padding:0!important;margin:0!important;width:100%!important;height:100%!important;max-width:none!important}
+ body #sector-view.people-header-pilot.show{width:100%!important;height:100%!important;margin:0!important}
+ body:is(.dark-theme,:not(.dark-theme)) #sector-view.people-header-pilot.show>.panel{height:100%!important;border:0!important;border-radius:0!important}
+ body:is(.dark-theme,:not(.dark-theme)) #sector-view.people-header-pilot.view>.panel>.head[data-header-standard]{border-radius:0!important;padding-top:max(6px,env(safe-area-inset-top))!important;flex-basis:auto!important;height:auto!important}
+ body #sector-view.people-header-pilot .people-bottom-header{border-radius:0;padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}
+ body #sector-view.people-header-pilot .people-bottom-search input{font-size:16px}
+}
