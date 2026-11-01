@@ -140,3 +140,6 @@ Verificação: abertura com foco, busca sem acento, navegação por resultado e 
 Impacto: apenas símbolo da lua no controle de tema do menu. Crescente com contorno SVG fechado e traço mais definido; preservar círculo externo, cor, dimensão e alternância claro/escuro.
 
 Verificado no navegador: lua sem preenchimento e contorno cinza de 2px, crescente definido, alternância para sol e retorno à lua funcionando.
+
+## Lua crescente delicada —253
+Escopo: somente lua do alternador de tema. Arco externo concêntrico ao botão e curva interna longa, seguindo a referência enviada; traço fino 1,3px. Sol, tamanho e cor do botão preservados. Verificar desenho e alternância de tema.

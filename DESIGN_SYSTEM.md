@@ -406,3 +406,5 @@ Busca somente pela lupa que abre/recolhe campo. Listas sem vãos entre linhas, m
 Lupa circular ao lado do controle de tema, com a mesma cor e dimensão dos controles do menu. Abre campo de busca com foco; filtro ignora acentos. Busca é transitória: sair e retornar limpa e recolhe o campo, restaurando os grupos anteriores. Escape também recolhe.
 
 - Controle de tema: lua crescente com contorno fechado, sem preenchimento e traço 2px para definição; manter a mesma cor e dimensão do controle.
+
+- Lua revisada pela referência do usuário: crescente alongado, traço fino 1,3px, arco externo circular de raio 9 centrado em (12,12), concêntrico ao círculo do botão. Substitui a versão252.
