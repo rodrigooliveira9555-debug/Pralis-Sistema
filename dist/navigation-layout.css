@@ -83,20 +83,21 @@ body .side:not(.collapsed) .brand-logo-wrap{
 }
 body .side:not(.collapsed) .brand-logo-wrap>.vector-logo{display:block;width:180px!important;height:auto!important;max-width:100%}
 body .side:not(.collapsed) .brand-subtitle{width:220px!important}
-.menu-top-divider{flex:none;position:sticky;top:0;z-index:24;height:1px;min-height:1px;margin:0 10px 12px;border-radius:999px;overflow:hidden;isolation:isolate;background:linear-gradient(90deg,#f23838 0%,#f23838 10%,#ff8417 22%,#ffb900 38%,#30d56a 54%,#1685ff 71%,#7848ee 88%,#9a45ee 100%);box-shadow:0 0 4px color-mix(in srgb,#7848ee 30%,transparent)}
-.menu-top-divider::after{content:"";position:absolute;top:-2px;left:0;width:32px;height:5px;border-radius:999px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.42) 24%,#fff 50%,rgba(255,255,255,.42) 76%,transparent);filter:blur(.35px);transform:translateX(-150%) skewX(-16deg);animation:cicluz-spectrum-light 15s linear infinite}
+.menu-top-divider{flex:0 0 2px;position:sticky;top:0;z-index:24;width:58px;height:2px;min-height:2px;margin:0 10px 12px;border-radius:999px;overflow:hidden;isolation:isolate;background:linear-gradient(90deg,#f23838 0%,#f23838 10%,#ff8417 22%,#ffb900 38%,#30d56a 54%,#1685ff 71%,#7848ee 88%,#9a45ee 100%);box-shadow:0 0 5px color-mix(in srgb,#7848ee 34%,transparent)}
+.menu-top-divider::after{content:"";position:absolute;top:-3px;left:0;width:44px;height:8px;border-radius:999px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.42) 24%,#fff 50%,rgba(255,255,255,.42) 76%,transparent);filter:blur(.45px);transform:translateX(-130%) skewX(-16deg);animation:cicluz-spectrum-light 15s linear infinite}
 .dark-theme .menu-top-divider{box-shadow:0 0 5px color-mix(in srgb,#7848ee 55%,transparent)}
 .side.collapsed>.menu-top-divider{display:none}
 /* A faixa colorida substitui a primeira divisão cinza; não há linha duplicada antes de Gestão. */
 .cicluz-spectrum-divider{display:none!important}
-@keyframes cicluz-spectrum-light{to{transform:translateX(830%) skewX(-16deg)}}
+@keyframes cicluz-spectrum-light{to{transform:translateX(230%) skewX(-16deg)}}
 body .side .nav-tree>.sidebar-section-toggle:first-child::before{display:none}
+body .side .nav-tree>.sidebar-section-toggle::before{left:10px;right:auto;width:58px;height:2px}
 
 .sidebar-footer{position:relative}
-.sidebar-footer::before{content:"";position:absolute;top:0;left:10px;right:10px;height:2px;border-radius:999px;background:#eeedf1}
+.sidebar-footer::before{content:"";position:absolute;top:0;left:10px;right:auto;width:58px;height:4px;border-radius:999px;background:#eeedf1}
 .dark-theme .sidebar-footer::before{background:#3b3942}
 body .side .nav-tree>details[data-menu-name^="Configuração"]{border-top:0!important}
-body .side .nav-tree>details[data-menu-name^="Configuração"]::after{content:"";position:absolute;top:0;left:10px;right:10px;height:2px;border-radius:999px;background:#eeedf1}
+body .side .nav-tree>details[data-menu-name^="Configuração"]::after{content:"";position:absolute;top:0;left:10px;right:auto;width:58px;height:4px;border-radius:999px;background:#eeedf1}
 body.dark-theme .side .nav-tree>details[data-menu-name^="Configuração"]::after{background:#3b3942}
 
 /* Compact header shows the brand only; the brand reopens navigation. */
