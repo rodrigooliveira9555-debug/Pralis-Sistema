@@ -29,6 +29,13 @@
  let pending=false;new MutationObserver(()=>{if(pending)return;pending=true;queueMicrotask(()=>{pending=false;place()})}).observe(main,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});place();
 })();
 
+// Terminologia única da Gestão de Pessoas.
+(()=>{
+ const labels=new Map([['Atualização salarial','Atualização salarial de cargos'],['Ficha de Cargos','Ficha de cargos']]);
+ const refresh=()=>{const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){const next=labels.get(node.nodeValue.trim());if(next)node.nodeValue=node.nodeValue.replace(node.nodeValue.trim(),next)}};
+ refresh();new MutationObserver(refresh).observe(document.body,{childList:true,subtree:true});
+})();
+
 // Main-menu search is transient: it never survives leaving the menu.
 (()=>{
  const side=document.querySelector('.side'),tree=side?.querySelector('.nav-tree'),controls=side?.querySelector('.side-controls');
