@@ -36,15 +36,6 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account
 /* Information blocks remain white in either theme; gray is only the shared spacing surface. */
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.job-identity,.account-identity,.icon-live-preview,.doc-first,.form-note,.identity-advanced,.dep-card,.location-tree,.operator-fees){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.job-identity,.account-identity,.icon-live-preview,.doc-first,.dep-card) :is(label,p,small,strong,b,summary){color:var(--layout-ink)!important}
-/* Principal navigation uses the same white groups and light-gray spacing. */
-body:is(.dark-theme,:not(.dark-theme)).mobile-menu-visible .side{background:var(--layout-gap)!important;color:var(--layout-ink)!important}
-body.mobile-menu-visible .side>.brand{background:#7c3aed;border-radius:16px;padding:12px 14px!important;margin-bottom:10px!important}
-body.mobile-menu-visible #logo-word-contrast feFlood{flood-color:#fff!important}
-body.mobile-menu-visible .side .brand-subtitle{color:#fff!important}
-body.mobile-menu-visible .side .nav-tree>details,body.mobile-menu-visible .side .overview-item{background:#fff;border:1px solid var(--layout-line);border-radius:14px;margin:8px 0;overflow:hidden}
-body.mobile-menu-visible .side .nav-tree summary,body.mobile-menu-visible .side .nav button{color:var(--layout-ink)}
-body.mobile-menu-visible .side .sidebar-footer{color:var(--layout-ink)!important}
-body .side :is(.money-icon,.menu-icon-circle){width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;flex:0 0 38px!important;aspect-ratio:1}
 /* Nested information sections and tables keep the common neutral surface. */
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.location-identity,.location-preview-card,.job-preview,.salary-item,.next-card,.process,.card,.panel){border-color:var(--layout-line)!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.location-identity,.location-preview-card,.job-preview,.salary-item,.next-card){background:#fff!important;color:var(--layout-ink)!important}
@@ -60,5 +51,3 @@ body:is(.dark-theme,:not(.dark-theme)) :is(dialog,.modal>.dialog) :is(p,label,su
 body:is(.dark-theme,:not(.dark-theme)) dialog :is(.location-identity,.location-preview-card,.icon-live-preview){background:#fff!important;border-color:var(--layout-line)!important;color:var(--layout-ink)!important}
 body:is(.dark-theme,:not(.dark-theme)) dialog .shortcut-circle{aspect-ratio:1;border-radius:50%!important;flex-shrink:0}
 body:is(.dark-theme,:not(.dark-theme)) dialog .location-icon{width:30px;height:30px;min-width:30px;flex:0 0 30px;aspect-ratio:1;border-radius:50%}
-
-body:is(.dark-theme,:not(.dark-theme)).mobile-menu-visible .side .nav-tree .overview-item .overview-link{color:var(--layout-ink)!important}

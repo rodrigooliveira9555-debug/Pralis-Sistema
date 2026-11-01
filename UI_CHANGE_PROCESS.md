@@ -64,3 +64,6 @@ Substitui o escopo restrito do piloto: todas as abas usam cabeçalho intenso na 
 
 ## Abrangência completa — revisão233
 Estender o padrão aprovado ao menu principal (grupos brancos, separação cinza #f5f5f7, marca sobre roxo com letras brancas), quadros aninhados, tabelas e diálogos. Diálogos nativos de localização, organograma, biblioteca de ícones, histórico e transferência, além do modal legado, herdam o acento da aba aberta via unified-dialogs.js. Preservar cores dos ícones, dados, controles e hierarquias. Matriz adicional: menu aberto em dois temas, localização/editor, histórico/transferência e modal legado.
+
+## Correção de escopo — revisão234
+O usuário excluiu explicitamente o menu principal do novo modelo. Restaurar somente o visual do menu anterior à233 (marca sem faixa roxa, opções sem novos quadros brancos e temas originais). Manter integralmente o padrão novo em abas, quadros internos, formulários, tabelas e diálogos e as correções funcionais de rolagem/arraste. Remover regras da233 na origem, sem sobrepor outra versão. Matriz: menu nos dois temas e tela interna Diretor de Operação.
