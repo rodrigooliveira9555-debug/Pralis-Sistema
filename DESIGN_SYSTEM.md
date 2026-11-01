@@ -298,3 +298,5 @@ Menu principal ocupa a tela inteira em celular, tablet e computador, ocultando o
 - Gestão, Agenda e Outros usam o mesmo separador cinza de pontas arredondadas acima do título. Os três controles ficam acima do separador de Gestão, com espaçamento.
 
 - Logomarca compacta180px no topo, com margem superior removida e respiro12px antes dos controles. Marca, três controles e separador superior permanecem fora da região rolável, assim como o usuário no rodapé. Preservar arte e animação originais.
+
+- Rodapé fixo do usuário separado da lista rolável pela mesma linha cinza de pontas arredondadas usada no topo. Lista rola entre as duas divisórias; marca/controles e usuário permanecem fixos.

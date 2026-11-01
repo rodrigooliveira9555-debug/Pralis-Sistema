@@ -72,3 +72,7 @@ body .side:not(.collapsed) .brand-subtitle{width:180px!important}
 .dark-theme .menu-top-divider{background:#3b3942}
 .side.collapsed>.menu-top-divider{display:none}
 body .side .nav-tree>.sidebar-section-toggle:first-child::before{display:none}
+
+.sidebar-footer{position:relative}
+.sidebar-footer::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;border-radius:999px;background:#eeedf1}
+.dark-theme .sidebar-footer::before{background:#3b3942}
