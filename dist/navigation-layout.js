@@ -36,6 +36,12 @@
  refresh();new MutationObserver(refresh).observe(document.body,{childList:true,subtree:true});
 })();
 
+// Faixa espectral entre os controles do menu e a seção Gestão.
+(()=>{
+ const place=()=>{const first=document.querySelector('.nav-tree>.sidebar-section-toggle');if(first&&!document.querySelector('.cicluz-spectrum-divider')){const strip=document.createElement('div');strip.className='cicluz-spectrum-divider';strip.setAttribute('aria-hidden','true');first.before(strip)}};
+ place();new MutationObserver(place).observe(document.body,{childList:true,subtree:true});
+})();
+
 // Main-menu search is transient: it never survives leaving the menu.
 (()=>{
  const side=document.querySelector('.side'),tree=side?.querySelector('.nav-tree'),controls=side?.querySelector('.side-controls');

@@ -86,6 +86,22 @@ body .side:not(.collapsed) .brand-subtitle{width:220px!important}
 .menu-top-divider{flex:none;height:1px;border-radius:999px;background:#eeedf1;margin:0}
 .dark-theme .menu-top-divider{background:#3b3942}
 .side.collapsed>.menu-top-divider{display:none}
+/* Faixa espectral antes da primeira seção: seis cores e transições de um terço por cor. */
+.cicluz-spectrum-divider{
+  flex:none;
+  height:8px;
+  margin:2px 10px 12px;
+  border-radius:999px;
+  background:linear-gradient(90deg,
+    #ef4444 0%,#ef4444 11.11%,
+    #f97316 22.22%,#f97316 27.78%,
+    #eab308 38.89%,#eab308 44.44%,
+    #22c55e 55.56%,#22c55e 61.11%,
+    #2563eb 72.22%,#2563eb 77.78%,
+    #7c3aed 88.89%,#7c3aed 100%);
+  box-shadow:0 1px 4px color-mix(in srgb,#7c3aed 18%,transparent);
+}
+.side.collapsed .cicluz-spectrum-divider{display:none}
 body .side .nav-tree>.sidebar-section-toggle:first-child::before{display:none}
 
 .sidebar-footer{position:relative}
