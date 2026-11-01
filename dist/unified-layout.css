@@ -11,7 +11,7 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .header-iden
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head :is(h2,p,.shortcut-circle,.sector-icon,.config-inherit-icon,.mobile-menu-open){color:color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 14%,white)!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head :is(.shortcut-circle,.sector-icon,.config-inherit-icon,.mobile-menu-open){background:transparent!important;border-color:currentColor!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head :is(.sector-icon,.config-inherit-icon){display:inline-flex!important;align-items:center;justify-content:center;width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;max-height:38px!important;flex:0 0 38px!important;border:1px solid #fff!important;border-radius:50%!important;box-sizing:border-box!important;padding:4px!important;aspect-ratio:1}
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head>.shortcut-actions{grid-column:1/-1!important;grid-row:2!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head>.shortcut-actions{grid-column:1/-1!important;grid-row:2!important;display:flex!important;align-items:center;justify-content:flex-end;gap:5px;width:100%;flex-wrap:wrap}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head>.fixed-header-tools{grid-row:3!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head+.content{position:relative;z-index:5;background:var(--layout-gap)!important;color:var(--layout-ink)!important;margin-top:-12px;border-radius:20px 20px 0 0;padding:14px!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.card,.process,.record,.dep-card,.job-item,.salary-row,.account-editor,.location-row){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
@@ -51,3 +51,8 @@ body:is(.dark-theme,:not(.dark-theme)) :is(dialog,.modal>.dialog) :is(p,label,su
 body:is(.dark-theme,:not(.dark-theme)) dialog :is(.location-identity,.location-preview-card,.icon-live-preview){background:#fff!important;border-color:var(--layout-line)!important;color:var(--layout-ink)!important}
 body:is(.dark-theme,:not(.dark-theme)) dialog .shortcut-circle{aspect-ratio:1;border-radius:50%!important;flex-shrink:0}
 body:is(.dark-theme,:not(.dark-theme)) dialog .location-icon{width:30px;height:30px;min-width:30px;flex:0 0 30px;aspect-ratio:1;border-radius:50%}
+
+/* Menu opener stays alone at the far left; the existing action sequence stays right. */
+body .view>.panel>.head>.shortcut-actions>.mobile-menu-open{order:-100!important;margin:0 auto 0 0!important;width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;flex:0 0 32px!important;border-radius:50%!important;box-sizing:border-box}
+body .view>.panel>.head>.shortcut-actions>:not(.mobile-menu-open){margin-left:0!important;margin-right:0!important}
+body .mobile-menu-open svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}

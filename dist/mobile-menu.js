@@ -3,7 +3,7 @@
  if(!side||!main||!closeButton)return;
  const media=matchMedia('(min-width:0px)');
  const openButton=document.createElement('button');
- openButton.type='button';openButton.className='mobile-menu-open';openButton.textContent='☰';openButton.setAttribute('aria-label','Abrir menu');openButton.setAttribute('aria-expanded','false');
+ openButton.type='button';openButton.className='mobile-menu-open';openButton.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8"/></svg>' ;openButton.setAttribute('aria-label','Menu inicial');openButton.title='Menu inicial';openButton.setAttribute('aria-expanded','false');
  side.id=side.id||'app-navigation';openButton.setAttribute('aria-controls',side.id);
  document.querySelector('.top>div').prepend(openButton);
  const backdrop=document.createElement('div');backdrop.className='mobile-menu-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-hidden','true');document.body.append(backdrop);
