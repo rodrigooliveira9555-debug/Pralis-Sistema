@@ -69,19 +69,20 @@ body .side>.side-controls svg{width:16px;height:16px;fill:none;stroke:currentCol
 body .side>.side-controls .theme-icon{display:grid;place-items:center;color:inherit!important}
 body .side.collapsed>.side-controls>.menu-layout-toggle{margin:0!important}
 
-/* Marca aberta: o início da arte acompanha o primeiro ícone do menu. */
+/* Marca aberta: o início da arte acompanha o ícone do usuário no rodapé. */
 body .side:not(.collapsed)>.brand{
-  padding-left:28px!important;
+  padding-left:0!important;
+  margin-left:-10px!important;
 }
 body .side:not(.collapsed) .brand-logo-wrap{
   position:relative;
-  width:196px!important;
-  height:56px!important;
+  width:220px!important;
+  height:64px!important;
   overflow:hidden;
   isolation:isolate;
 }
 body .side:not(.collapsed) .brand-logo-wrap>.vector-logo{display:block;width:180px!important;height:auto!important;max-width:100%}
-body .side:not(.collapsed) .brand-subtitle{width:196px!important}
+body .side:not(.collapsed) .brand-subtitle{width:220px!important}
 .menu-top-divider{flex:none;height:1px;border-radius:999px;background:#eeedf1;margin:0}
 .dark-theme .menu-top-divider{background:#3b3942}
 .side.collapsed>.menu-top-divider{display:none}
@@ -114,26 +115,16 @@ body .side .brand-subtitle span{color:inherit!important;font-weight:400}
 body .side:not(.collapsed) .brand-logo-wrap{
   background:url("cicluz-gestao-padaria-logo.png") left center/contain no-repeat!important;
 }
-/* Faixa de luz: percorre apenas os pixels da marca, iluminando a cor por onde passa. */
-body .side:not(.collapsed) .brand-logo-wrap::after{
-  content:"";
+/* Luz percorre o eixo da fita: contorna os laços e atravessa as diagonais do símbolo. */
+body .side:not(.collapsed) .brand-logo-wrap .logo-path-light{
   position:absolute;
-  inset:0;
+  left:6px;
+  top:7px;
+  width:54px;
+  height:50px;
   pointer-events:none;
   z-index:1;
-  background:linear-gradient(105deg,transparent 0%,rgba(255,255,255,0) 28%,rgba(255,255,255,.28) 40%,rgba(255,255,255,.98) 50%,rgba(255,249,190,.44) 60%,rgba(255,255,255,0) 72%,transparent 100%);
-  background-size:42% 100%;
-  background-repeat:no-repeat;
-  background-position:-48% 0;
-  -webkit-mask:url("cicluz-gestao-padaria-logo.png") left center/contain no-repeat;
-  mask:url("cicluz-gestao-padaria-logo.png") left center/contain no-repeat;
   mix-blend-mode:screen;
-  filter:drop-shadow(0 0 4px rgba(255,255,220,.8));
-  animation:cicluz-logo-light-sweep 7s ease-in-out infinite;
-}
-@keyframes cicluz-logo-light-sweep{
-  0%,12%{background-position:-48% 0}
-  54%,100%{background-position:148% 0}
 }
 body .side:not(.collapsed) .brand-logo-wrap>.vector-logo,
 body .side:not(.collapsed) .brand-subtitle{
@@ -147,7 +138,7 @@ body .side.collapsed>.brand>.mini-brand>.vector-logo{
 }
 body.dark-theme .side .brand-subtitle{color:#f5f5f7!important}
 @media (prefers-reduced-motion:reduce){
-  body .side:not(.collapsed) .brand-logo-wrap::after{animation:none;opacity:.38;background-position:50% 0}
+  body .side:not(.collapsed) .brand-logo-wrap .logo-path-light{display:none}
 }
 
 /* All principal-navigation chevrons share the section-title palette. */
