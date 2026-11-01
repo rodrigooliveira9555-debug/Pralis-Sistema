@@ -55,3 +55,16 @@
  input.addEventListener('input',filter);input.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close();button.focus()}});
  document.addEventListener('cicluz-menu-visibility',close);
 })();
+
+// Expansion and selection are independent: only the last menu destination is marked.
+(()=>{
+ const nav=document.querySelector('.nav-tree');if(!nav)return;
+ nav.addEventListener('click',event=>{
+  if(event.target.closest('.drag-handle,.menu-item-move,.sidebar-section-toggle'))return;
+  const target=event.target.closest('summary,button');if(!target||!nav.contains(target))return;
+  nav.querySelectorAll('.menu-selected,.active,[aria-current]').forEach(item=>{
+   item.classList.remove('menu-selected','active');item.removeAttribute('aria-current');
+  });
+  target.classList.add('menu-selected','active');target.setAttribute('aria-current','true');
+ });
+})();

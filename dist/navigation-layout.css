@@ -124,3 +124,8 @@ body.dark-theme .side .menu-search-box input{background:#302f37;color:#f5f5f7}
 body .side .menu-search-box input:focus{outline:2px solid color-mix(in srgb,var(--navigation-ink) 25%,transparent);outline-offset:1px}
 body .side-controls .menu-search-toggle[aria-pressed=true]{background:color-mix(in srgb,var(--navigation-ink) 18%,transparent)!important}
 .menu-search-status{margin:8px 0 0;font:400 var(--ui-note,11px)/16px var(--ui-font);color:var(--navigation-ink)}
+
+/* Persistent highlight belongs to selection, never to expanded ancestors. */
+body .side .nav-tree :is(summary,button.overview-link):not(.menu-selected):not(.active){background:transparent!important;color:var(--navigation-ink,#626267)!important}
+body .side .nav-tree :is(summary,button).menu-selected{background:color-mix(in srgb,var(--item-color,#7c3aed) 14%,transparent)!important;color:var(--item-color,#7c3aed)!important}
+@media(hover:none){body .side .nav-tree button:not(.menu-selected):not(.active):hover{background:transparent!important;color:var(--navigation-ink,#626267)!important}}

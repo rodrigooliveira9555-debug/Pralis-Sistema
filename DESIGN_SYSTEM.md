@@ -434,3 +434,6 @@ Títulos das classificações de condições seguem tokens de título: Montserra
 
 ## Ficha de Cargos261
 Quadro por área com primeira coluna e cabeçalho fixos, cargos nas colunas e exigências agrupadas. Ficha individual deriva dos mesmos vínculos; formulários e cabeçalhos reutilizam os componentes existentes. Busca do quadro controlada pela lupa do cabeçalho, sem segundo controle local. Função principal com contador provisório de240 caracteres.
+
+## Correção263 — movimento e seleção
+Página e cadastros não devem deslizar horizontalmente; rolagem vertical preservada. Conter conteúdo no painel e limitar larguras dos formulários. Menu: apenas última opção tocada marcada; expansão de ancestrais não equivale a seleção. Matriz: Cadastro simples/completo, editor de cargo, menu principal e submenus. Preservar dados e ordem.

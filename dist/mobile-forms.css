@@ -20,7 +20,7 @@ body :is(.location-icon,.card-inherited-icon){--circle-size:30px}
 /* Shared narrow layout: preserve document order and bound every query to its host. */
 @media(max-width:600px){
  body .main,body .view,body .view>.panel,body .view>.panel>.content{min-width:0;max-width:100%;box-sizing:border-box}
- body .view>.panel>.content{overflow-x:auto}
+ body .view>.panel>.content{overflow-x:hidden}
  body :is(.view,dialog,.modal) :is(.form-fields,.form-demo form,.account-editor,#job-form,.location-dialog form){grid-template-columns:minmax(0,1fr)!important}
  body :is(.view,dialog,.modal) :is(.form-fields,.account-editor,#job-form)>*{min-width:0;max-width:100%;box-sizing:border-box;grid-column:1/-1!important}
  body :is(.view,dialog,.modal) :is(.form-fields,.account-editor,#job-form)>label{grid-column:1/-1!important}
@@ -39,4 +39,14 @@ body :is(.location-icon,.card-inherited-icon){--circle-size:30px}
  body .view .operator-fees :is(.fee-action,.fee-rule-actions button){max-width:100%;white-space:normal;overflow-wrap:anywhere}
  body :is(.view,dialog,.modal) :is(input,select,textarea){max-width:100%;box-sizing:border-box}
  body dialog,body .modal .dialog{width:calc(100vw - 24px);min-width:0}
+}
+
+/* The page and forms scroll vertically; wide data stays inside its own table. */
+html,body{max-width:100%;overflow-x:clip;overscroll-behavior-x:none}
+@media(max-width:1024px){
+ body .main,body .view,body .view>.panel,body .view>.panel>.content{min-width:0;max-width:100%;box-sizing:border-box}
+ body .view>.panel>.content{overflow-x:hidden}
+ body :is(.form-demo,.form-fields,.form-step,.dep-card,.account-editor,#job-form){min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere}
+ body :is(.form-demo,.form-step,.dep-card) :is(input:not([type=checkbox]):not([type=radio]),select,textarea){min-width:0;width:100%;max-width:100%;box-sizing:border-box}
+ body :is(.view,dialog,.modal){overscroll-behavior-x:none}
 }
