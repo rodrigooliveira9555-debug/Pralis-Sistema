@@ -93,3 +93,6 @@ Usuário confirmou ícones de cabeçalho brancos (casinha e ações incluídas).
 
 ## Exclusão vermelha e edição uniforme — revisão238
 Usuário restaura Excluir sempre vermelho; Editar continua na cor da aba. Substitui exceção235/237 para Excluir. Formulários: superfície de respiro cinza clara uniforme entre os blocos de informação brancos; remover fundo branco contínuo do form que causava alternância irregular nos intervalos. Campos/estado agrupados em blocos brancos com contorno cinza. Cabeçalho/ícones brancos preservados. Matriz: edição de subgrupo Despesas e ações em Mercadorias (cor distinta do vermelho).
+
+## Revisão final dos editores —239
+Ícones das bibliotecas de edição voltam à cor da aba de origem por orientação atual; cabeçalho branco, Excluir vermelho e outros controles cinza preservados. Linhas financeiras fixas52px/subgrupos40px com ações internas absolutas, texto truncado sem quebrar ao abrir ações. Revisão de alcance encontrou .form-fields em div e #job-form fora do seletor anterior limitado a form.form-fields; incluir esses formatos e formulários de diálogos no mesmo respiro cinza e contornos neutros. Verificar Mercadorias antes/depois de abrir ações, biblioteca de edição e formulário Cargos.

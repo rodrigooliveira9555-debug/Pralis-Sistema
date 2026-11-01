@@ -84,9 +84,20 @@ body .view :is(.record-grid,#jobs-list,#salary-list)>:is(.record,.financial-grou
 body #sector-view.financial-groups .financial-group>.account-list-row,body #sector-view.financial-groups .financial-subgroups>.account-list-row{margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
 body #sector-view.financial-groups .financial-subgroups>.account-list-row{border-top:1px solid var(--layout-line)!important}
 
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,#jobs-view) :is(.account-row-actions,.job-actions)>button:is([aria-label^="Excluir"],[title^="Excluir"],:first-child){background:#ef4444!important;border-color:#ef4444!important;color:#fff!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,#jobs-view) :is(.account-row-actions,.job-actions)>button:is([aria-label^="Excluir"],[title^="Excluir"],.job-delete-action){background:#ef4444!important;border-color:#ef4444!important;color:#fff!important}
 body:is(.dark-theme,:not(.dark-theme)) .view .location-delete{color:#ef4444!important}
 /* Editor spacing has one neutral surface between white information blocks. */
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(form.account-editor,form.form-fields,.form-demo){background:var(--layout-gap)!important}
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(form.account-editor,form.form-fields,.form-demo)>:is(label,.account-status,.account-field-group){background:#fff!important;border:1px solid var(--layout-line)!important;border-radius:10px!important;padding:12px!important;box-sizing:border-box;min-width:0}
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(form.account-editor,form.form-fields,.form-demo)>:is(.actions,.financial-parent-context){background:var(--layout-gap)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(form.account-editor,.form-fields,.form-demo,#job-form){background:var(--layout-gap)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(form.account-editor,.form-fields,.form-demo,#job-form)>:is(label,.account-status,.account-field-group){background:#fff!important;border:1px solid var(--layout-line)!important;border-radius:10px!important;padding:12px!important;box-sizing:border-box;min-width:0}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(form.account-editor,.form-fields,.form-demo,#job-form)>:is(.actions,.financial-parent-context){background:var(--layout-gap)!important}
+
+/* Every editor, including dynamic dialogs, uses the neutral form surround. */
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.form-step,.form-fields,.job-identity,.account-identity){border-color:var(--layout-line)!important}
+body:is(.dark-theme,:not(.dark-theme)) dialog form{background:var(--layout-gap)!important;gap:8px}
+body:is(.dark-theme,:not(.dark-theme)) dialog form>:is(label,.location-identity,.organogram-fields){background:#fff!important;border:1px solid var(--layout-line)!important;border-radius:10px!important;padding:12px!important;box-sizing:border-box}
+/* Action panels slide inside fixed rows and never change row height. */
+body #sector-view.financial-groups .account-list-row{height:52px!important;min-height:52px!important;max-height:52px!important;flex-wrap:nowrap!important;overflow:hidden!important}
+body #sector-view.financial-groups .financial-subgroups>.account-list-row{height:40px!important;min-height:40px!important;max-height:40px!important}
+body #sector-view.financial-groups .account-list-row>b{min-width:0;overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis}
+body #sector-view.financial-groups .account-list-row>b .financial-count{white-space:nowrap}
+body #sector-view.financial-groups .account-list-row .card-inherited-icon{flex-shrink:0!important}
