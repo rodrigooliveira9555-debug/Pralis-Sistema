@@ -83,26 +83,19 @@ body .side:not(.collapsed) .brand-logo-wrap{
 }
 body .side:not(.collapsed) .brand-logo-wrap>.vector-logo{display:block;width:180px!important;height:auto!important;max-width:100%}
 body .side:not(.collapsed) .brand-subtitle{width:220px!important}
-.menu-top-divider{flex:0 0 2.6px;align-self:stretch;position:sticky;top:0;z-index:24;width:auto;height:2.6px;min-height:2.6px;margin:0 10px;border-radius:999px;overflow:hidden;isolation:isolate;background:linear-gradient(90deg,#ff0000 0% 13.043%,#ff8000 17.391% 30.435%,#ffff00 34.783% 47.826%,#00e833 52.174% 65.217%,#0055ff 69.565% 82.609%,#8000ff 86.957% 100%);box-shadow:0 0 5px color-mix(in srgb,#8000ff 34%,transparent)}
-.menu-top-divider::after{content:"";position:absolute;top:-3px;left:-84px;width:84px;height:8px;border-radius:999px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.42) 24%,#fff 50%,rgba(255,255,255,.42) 76%,transparent);filter:blur(.45px);transform:skewX(-16deg);animation:cicluz-spectrum-light 15s linear infinite}
-.dark-theme .menu-top-divider{box-shadow:0 0 5px color-mix(in srgb,#7848ee 55%,transparent)}
+/* All four separators have the same physical thickness and no outside halo. */
+body .side{--divider-thickness:3px}
+.menu-top-divider{flex:0 0 var(--divider-thickness);align-self:stretch;position:sticky;top:0;z-index:24;width:auto;height:var(--divider-thickness);min-height:var(--divider-thickness);margin:0 10px;border-radius:0;overflow:hidden;isolation:isolate;background:linear-gradient(90deg,#ff0000 0% 13.043%,#ff8000 17.391% 30.435%,#ffff00 34.783% 47.826%,#00e833 52.174% 65.217%,#0055ff 69.565% 82.609%,#8000ff 86.957% 100%);box-shadow:none}
+.menu-top-divider::after{display:none!important}
+.divider-beam{position:absolute;inset:0;display:block;width:100%;height:100%;overflow:hidden;pointer-events:none}
 .side.collapsed>.menu-top-divider{display:none}
-/* A faixa colorida substitui a primeira divisão cinza; não há linha duplicada antes de Gestão. */
 .cicluz-spectrum-divider{display:none!important}
-@keyframes cicluz-spectrum-light{to{left:calc(100% + 84px)}}
-.logo-color-light .ribbon-beam{animation:cicluz-ribbon-light 15s linear infinite}
-@keyframes cicluz-ribbon-light{to{stroke-dashoffset:-1000}}
-@media(prefers-reduced-motion:reduce){.menu-top-divider::after,.logo-color-light .ribbon-beam{animation:none}}
 body .side .nav-tree>.sidebar-section-toggle:first-child::before{display:none}
-body .side .nav-tree>.sidebar-section-toggle::before{left:10px;right:10px;width:auto;height:2.6px}
-
+body .side .nav-tree>.sidebar-section-toggle::before{left:10px;right:10px;width:auto;height:var(--divider-thickness);border:0;border-radius:0;box-shadow:none}
 .sidebar-footer{position:relative}
-.sidebar-footer::before{content:"";position:absolute;top:0;left:10px;right:10px;width:auto;height:2.6px;border-radius:999px;background:#eeedf1}
+.sidebar-footer::before{content:"";position:absolute;top:0;left:10px;right:10px;width:auto;height:var(--divider-thickness);border:0;border-radius:0;box-shadow:none;background:#eeedf1}
 .dark-theme .sidebar-footer::before{background:#3b3942}
 body .side .nav-tree>details[data-menu-name^="Configuração"]{border-top:0!important}
-
-/* Compact header shows the brand only; the brand reopens navigation. */
-body .side.collapsed>.side-controls{display:none!important}
 body .side.collapsed>.brand>.mini-brand{display:block!important;width:40px;height:44px}
 body .side.collapsed>.brand>.mini-brand>.vector-logo{display:block!important;width:40px;height:44px}
 body .side.collapsed>.brand:focus-visible{outline:2px solid var(--muted);outline-offset:2px;border-radius:8px}
