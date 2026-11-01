@@ -385,3 +385,6 @@ Lista contínua sem vãos verticais entre áreas ou seus descendentes; uma moldu
 
 ## Atualização salarial e subgrupos —243
 Busca salarial recolhida, aberta apenas pela lupa do cabeçalho; usar componente compartilhado. A/Z ordena as linhas existentes preservando valores digitados. Atualizar lista relê os cargos e preserva valores por chave, sem registrar vigência. Subgrupos expandidos em cartões: respiro e conectores cinza com linhas brancas. Verificar abrir/recolher busca, filtragem, A/Z e atualizar sem salvar valores.
+
+## Salvar pelo cabeçalho —244
+Check circular branco no cabeçalho das telas de cadastro/edição com ação Salvar e da Atualização salarial. O atalho aciona o botão Salvar existente, conserva validações e estado desabilitado e não muda a ação inferior. Remover ao sair do editor. Verificar cadastro de grupo, diálogo de Área/Local e validação salarial sem gravar dados.
