@@ -411,3 +411,5 @@ Lupa circular ao lado do controle de tema, com a mesma cor e dimensão dos contr
 
 ## Cadastros — revisão254
 Identificador do cabeçalho com contorno circular branco em Cargos e Área/Setor/Local. Setas laterais de Cargos/lista e prévias usam --navigation-ink, sem herdar a cor do item. Rodapé de Cargos: Salvar. Cadastro completo: primeira etapa só Avançar à direita; intermediárias Voltar/Avançar; última Voltar à esquerda e Salvar+check à direita, com check circular no cabeçalho. Campos do cadastro completo são guardados neste navegador com validação; arquivos não são persistidos e esse limite é informado no formulário.
+
+- Rodapé do cadastro completo: botões com texto e símbolo, “← Voltar” e “Avançar →”, mantendo Salvar/check ao final e ocultando Voltar no início.

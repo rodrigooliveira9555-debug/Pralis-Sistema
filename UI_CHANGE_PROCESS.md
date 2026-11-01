@@ -148,3 +148,6 @@ Escopo: somente lua do alternador de tema. Arco externo concêntrico ao botão e
 Matriz: Cargos/lista/editor/prévia e Área/Setor/Local/editor; identificador do cabeçalho com contorno circular branco; setas laterais no cinza de navegação; Salvar cargo → Salvar. Cadastro completo: rodapé sem Voltar na primeira etapa, Voltar/Avançar nas intermediárias e Voltar/Salvar+check na última; check circular no cabeçalho final. O encerramento legado era somente prévia: salvar campos no navegador com validação e restauração, informar limite de anexos. Sem transmissão externa.
 
 Validação254: sintaxe de todos os scripts inline e scripts alterados passou; 7 transições de etapa passaram (incluindo ida/volta da última); salvamento, recuperação, bloqueio por campo obrigatório e falha de quota passaram em teste de lógica com DOM simulado. Revisão visual pelo navegador não repetida após bloqueio da revisão automática no fluxo anterior.
+
+## Botões nomeados do cadastro —255
+Somente rodapé do cadastro completo: Voltar com seta à esquerda do texto e Avançar com seta à direita. Manter primeira etapa sem Voltar e última com Salvar/check. Cabeçalho circular preservado.
