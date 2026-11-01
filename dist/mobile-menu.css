@@ -1,5 +1,5 @@
 .mobile-menu-open,.mobile-menu-backdrop{display:none}
-@media(max-width:760px){
+@media(min-width:0px){
  .main,.app.collapsed .main{margin-left:0!important;min-width:0}
  .side,.side.collapsed{width:100%!important;max-width:100vw!important;height:100vh!important;height:100dvh!important;max-height:100dvh;position:fixed!important;inset:0 auto 0 0;padding:max(16px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))!important;z-index:101!important;overflow-y:auto!important;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;transform:translateX(-105%)!important;visibility:hidden;box-shadow:none!important;transition:transform .2s,visibility .2s}
  body.mobile-menu-visible .side{transform:translateX(0)!important;visibility:visible;background:#fff!important;box-shadow:none!important}
@@ -7,7 +7,7 @@
  .side .brand .mini-brand{display:none!important}
  .side .brand{padding-top:10px!important;margin-top:0!important}
  .side .nav button{font-size:12px;text-align:left}
- .side .nav-tree .drag-handle{display:none!important}
+ .side.collapsed .nav-tree .drag-handle{display:none!important}
  .top{gap:8px;min-width:0}
  .top>div:first-child{min-width:0;flex:1;gap:8px!important}
  .top>div:first-child>div{min-width:0}

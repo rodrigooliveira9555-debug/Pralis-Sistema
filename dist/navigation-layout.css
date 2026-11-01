@@ -6,18 +6,18 @@ body .side,body .side.collapsed{display:flex;flex-direction:column;overflow:hidd
 body .side>.brand{flex:none;position:static}
 body .side>.menu-toggle{flex:none;position:static!important;min-height:32px;margin:0 0 0 auto!important}
 body .side>.nav{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-.sidebar-footer{flex:none;display:flex;flex-direction:column;gap:10px;margin-top:10px;padding-top:12px;border-top:1px solid var(--line);background:inherit}
-body .sidebar-footer .side-controls{position:static;display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:0;margin:0;background:transparent}
+.sidebar-footer{flex:none;display:flex;flex-direction:column;gap:10px;margin-top:10px;padding-top:12px;border-top:0;background:inherit}
+body .side>.side-controls{position:static;display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:0;margin:0;background:transparent}
 .sidebar-user{display:flex;align-items:center;gap:10px;min-width:0;padding:4px 0}
 .sidebar-user .avatar{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;padding:0}
 .sidebar-user-name{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .side.collapsed .sidebar-user-name{display:none}
-.side.collapsed .sidebar-footer .side-controls{flex-direction:column}
+.side.collapsed>.side-controls{flex-direction:column}
 body .view.show>.panel{max-height:calc(100dvh - 32px);}
 body .view.show>.panel>.head{top:0}
 body .view.show>.panel>.content{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 .mobile-menu-dock{display:none}
-@media(max-width:760px){
+@media(min-width:0px){
  body .main{padding-top:max(12px,env(safe-area-inset-top))}
  .mobile-menu-dock:not([hidden]){display:flex;position:sticky;top:0;z-index:5;padding-bottom:10px;background:var(--canvas)}
  body .view.show>.panel{max-height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
@@ -31,3 +31,29 @@ body .view.show>.panel>.content{padding-bottom:calc(24px + env(safe-area-inset-b
 body:has(.view.show>.panel) .main{height:100dvh;overflow:hidden;padding-bottom:max(16px,env(safe-area-inset-bottom,0px))!important;box-sizing:border-box}
 body .view.show:has(>.panel){height:100%;min-height:0}
 body .view.show>.panel{height:100%;max-height:100%!important;min-height:0}
+
+/* Shared full-screen navigation: preferences above Gestão, stationary account below. */
+body .side>.side-controls{flex:none;position:static;justify-content:flex-start;gap:8px;padding:0 10px 8px;margin:0;background:transparent;color:#a2a0aa}
+body .side>.side-controls .tree-control,body .side>.side-controls .theme-switch,body .side>.side-controls .theme-icon{color:inherit;border-color:currentColor}
+body.dark-theme .side>.side-controls{color:#9896a1}
+body .side>.side-controls button:hover{background:color-mix(in srgb,currentColor 10%,transparent)}
+body .side>.nav{width:100%;min-height:0}
+body .side>.brand{padding:10px 10px 20px!important}
+body .side .menu-toggle{color:#a2a0aa!important}
+body .side .sidebar-footer{background:transparent;box-shadow:none}
+
+/* The compact rail retains only icons; reopening restores labels and move handles. */
+body:not(.mobile-menu-visible) .side.collapsed{visibility:visible;transform:none!important;width:72px!important;max-width:72px!important;padding:12px 8px!important;background:var(--canvas);z-index:10!important}
+body:not(.mobile-menu-visible) .main{margin-left:72px!important;width:calc(100% - 72px)}
+body .side.collapsed>.brand{display:none!important}
+body .side.collapsed>.menu-toggle{width:32px!important;height:32px!important;margin:0 auto 8px!important}
+body .side.collapsed>.side-controls{padding:0 0 8px;align-items:center;flex-direction:column}
+body .side.collapsed .nav-tree .drag-handle,body .side.collapsed .menu-name,body .side.collapsed summary::after,body .side.collapsed .children,body .side.collapsed .sidebar-section-toggle{display:none!important}
+body .side.collapsed .nav-tree summary{justify-content:center;padding:8px 0!important;gap:0}
+body .side.collapsed .overview-item{padding:0;justify-content:center}
+body .side.collapsed .overview-link{font-size:0;padding:8px!important;justify-content:center}
+body .side.collapsed .sidebar-section-hidden{display:block!important}
+body .side.collapsed .sidebar-footer{align-items:center}
+
+body .side .sidebar-section-toggle{color:#a2a0aa!important}
+body.dark-theme .side .sidebar-section-toggle{color:#9896a1!important}

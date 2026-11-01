@@ -287,3 +287,8 @@ Matriz: Cargos; Contas; grupos/subgrupos DES, MER, RET e VND; tipos de venda, ba
 - Auditoria complementar: Contas, RET, VND, tipos de venda, bandeiras, operadoras e subgrupo DES abertos e comparados após atualização; grade, busca e removidos com desvio horizontal0px e largura igual ao seletor. Localização ainda possuía regra própria1.5fr/1fr: removida na fonte design-system.css para nome acima/identificação abaixo em Área, Setor, Local e Sublocal. Organograma não possui biblioteca própria: Cadastrar cargo direciona a Cargos; não confundir posição do organograma com seletor de ícone.
 
 - Conferência concluída na prévia também para Área/Setor/Local/Sublocal: nome e biblioteca com mesma margem e largura680px no viewport testado; busca/removidos alinhados0px e sem overflow horizontal. Sublocal aberto usando Local fictício criado somente no navegador de QA. Nenhum cadastro real alterado.
+
+## Menu inicial — revisão 31/10/2026
+Menu principal ocupa a tela inteira em celular, tablet e computador, ocultando o conteúdo ao abrir. Remover as faixas superior e inferior. Expandir/recolher todos e claro/escuro ficam juntos à esquerda acima de Gestão, no mesmo cinza das setas das seções (claro #a2a0aa; escuro #9896a1). Usuário permanece fixo no rodapé; opções rolam independentemente.
+
+- Recolhido: mostrar somente ícones, ocultando nomes e alças de arrastar. Expandido: restaurar nomes e alças. Usuário continua no rodapé.
