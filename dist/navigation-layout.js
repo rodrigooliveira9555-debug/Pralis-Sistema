@@ -12,14 +12,14 @@
  // The line and logo share one beam profile, thickness, clock and pixel speed.
  const svgNS='http://www.w3.org/2000/svg';
  const beamTracks=[];
- const beamProfile=[[42,.08],[34,.16],[26,.28],[18,.48],[15,.88]];
+ const beamProfile=[[42,.08,5.4],[34,.16,5.7],[26,.28,6],[18,.48,6.3],[12,.88,6.6]];
  function addBeam(svg,d,mask){
   const group=document.createElementNS(svgNS,'g');
   if(mask)group.setAttribute('mask',mask);
   svg.append(group);
-  const layers=beamProfile.map(([size,opacity])=>{
+  const layers=beamProfile.map(([size,opacity,width])=>{
    const path=document.createElementNS(svgNS,'path');
-   for(const [key,value] of Object.entries({d,fill:'none',stroke:'#fff','stroke-width':5.4,'stroke-opacity':opacity,'stroke-linecap':'butt'}))path.setAttribute(key,value);
+   for(const [key,value] of Object.entries({d,fill:'none',stroke:'#fff','stroke-width':width,'stroke-opacity':opacity,'stroke-linecap':'butt'}))path.setAttribute(key,value);
    group.append(path);return {path,size};
   });
   const track={svg,layers,length:layers[0].path.getTotalLength()};beamTracks.push(track);return track;
