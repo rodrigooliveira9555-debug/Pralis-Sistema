@@ -394,3 +394,10 @@ Remover o alternador Editar organograma do cabeçalho; ações de editar permane
 
 ## Revisão transversal —246
 Busca somente pela lupa que abre/recolhe campo. Listas sem vãos entre linhas, molduras cinza, nomes cinza e escala tipográfica compartilhada. Movimento cinza; cabeçalho branco; biblioteca de seleção de ícones na cor do cabeçalho (substitui242). Campo com uma informação: remover moldura externa, preservar contorno do input/select/textarea; blocos compostos mantêm agrupamento. Sem Editar no cabeçalho; Salvar onde houver ação existente, inclusive diálogo de posição. Ordem visual de controles: navegação, Fechar, expandir/recolher, Atualizar, Salvar, A/Z, busca e específicos; casa isolada à esquerda. Matriz: Cargos e editor, Atualização salarial, Área/Setor/Local e diálogo, grupos/subgrupos financeiros e editor de operadora/taxas, formulários simples/completo. Não alterar dados, regras de cálculo ou confirmações.
+
+## Decisões vigentes confirmadas — varredura 01/11/2026
+- Botões inferiores: Cancelar branco com X à esquerda; Salvar (incluindo cargo, atualização e rascunho) no acento da tela, com check à direita. Preservar rótulos e funções existentes.
+- Taxas por bandeira: intervalo de 12px entre quadros, marcas em círculos, cabeçalho vermelho intenso, cifrão com contorno cinza, lupa com contorno no cabeçalho. Campos de taxa em grade sem sobreposição. Grupo de Despesa com moldura vermelha #ef4444 e Grupo de Contas com moldura laranja #f97316, alinhados e com mesma altura.
+- Atualização salarial: identidade de cargo e coluna de valores alinhadas, usando o padrão Cargos. Atualizar lista preserva os valores digitados e não grava vigência.
+- Área/Setor/Local: ícones respeitam a cor escolhida; Editar roxo da aba e Excluir vermelho. Abrir ações preserva largura/altura da linha. Tocar no nome ou fora fecha o painel; Escape também fecha. Não altera dados ou hierarquia.
+- O modal legado de lançamento deve vincular Cancelar pelo elemento explícito, sem usar a propriedade global window.close.

@@ -42,3 +42,16 @@ function enableContinuousReorder(handle,{item,items,onCommit}){
   document.addEventListener('pointermove',move,{capture:true,passive:false});document.addEventListener('pointerup',finish,true);document.addEventListener('pointercancel',finish,true);frame=requestAnimationFrame(tick);
  }
 }
+
+// Close shared action drawers on outside click or Escape, without activating a record.
+function closeFinancialActionDrawers(exceptRow=null){
+ document.querySelectorAll('.account-row-actions:not([hidden])').forEach(actions=>{
+  const row=actions.parentElement;if(row===exceptRow)return;
+  actions.hidden=true;row.querySelector('.account-action-toggle')?.setAttribute('aria-expanded','false');
+ });
+}
+document.addEventListener('click',event=>{
+ const row=event.target.closest('.account-list-row,.location-row');
+ closeFinancialActionDrawers(row);
+});
+document.addEventListener('keydown',event=>{if(event.key==='Escape')closeFinancialActionDrawers()});

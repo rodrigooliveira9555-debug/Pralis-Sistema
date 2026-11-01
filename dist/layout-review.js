@@ -3,10 +3,10 @@
  const searches=new WeakSet();let queued=false;
  const headerHosts='.head .shortcut-actions,.location-dialog-tools,.organogram-editor-header .shortcut-actions,.fee-header-actions';
  function sync(){
-  document.querySelectorAll('.view button,dialog button,.modal button').forEach(button=>{
+  document.querySelectorAll('button.standard-form-action,.view button,dialog button,.modal button').forEach(button=>{
    if(button.closest('.head,.location-dialog-header,.organogram-editor-header'))return;
    const text=button.textContent.trim();
-   if(/^Salvar(?: cargo| atualização| e continuar)?$/.test(text)&&!button.classList.contains('footer-save-accent'))button.classList.add('footer-save-accent');
+   if(/^Salvar(?:\s+.*)?$/.test(text)&&!button.classList.contains('footer-save-accent'))button.classList.add('footer-save-accent');
    if(text==='Cancelar'&&!button.classList.contains('footer-cancel-accent'))button.classList.add('footer-cancel-accent');
    if(button.matches('.footer-save-accent,.footer-cancel-accent')&&!button.querySelector('.footer-action-icon')){
     const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.classList.add('footer-action-icon');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('aria-hidden','true');
