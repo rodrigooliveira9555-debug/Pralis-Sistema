@@ -12,7 +12,7 @@
  // The line and logo share one beam profile, thickness, clock and pixel speed.
  const svgNS='http://www.w3.org/2000/svg';
  const beamTracks=[];
- const beamProfile=[[42,.08],[34,.16],[26,.28],[18,.48],[10,.88]];
+ const beamProfile=[[42,.08],[34,.16],[26,.28],[18,.48],[15,.88]];
  function addBeam(svg,d,mask){
   const group=document.createElementNS(svgNS,'g');
   if(mask)group.setAttribute('mask',mask);
