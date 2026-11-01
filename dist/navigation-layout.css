@@ -45,7 +45,7 @@ body .side .sidebar-footer{background:transparent;box-shadow:none}
 /* The compact rail retains only icons; reopening restores labels and move handles. */
 body:not(.mobile-menu-visible) .side.collapsed{visibility:visible;transform:none!important;width:72px!important;max-width:72px!important;padding:12px 8px!important;background:var(--canvas);z-index:10!important}
 body:not(.mobile-menu-visible) .main{margin-left:72px!important;width:calc(100% - 72px)}
-body .side.collapsed>.brand{display:none!important}
+body .side.collapsed>.brand{display:flex!important;justify-content:center;padding:0 0 12px!important;cursor:pointer}
 body .side.collapsed>.menu-toggle{width:32px!important;height:32px!important;margin:0 auto 8px!important}
 body .side.collapsed>.side-controls{padding:0 0 8px;align-items:center;flex-direction:column}
 body .side.collapsed .nav-tree .drag-handle,body .side.collapsed .menu-name,body .side.collapsed summary::after,body .side.collapsed .children,body .side.collapsed .sidebar-section-toggle{display:none!important}
@@ -76,3 +76,9 @@ body .side .nav-tree>.sidebar-section-toggle:first-child::before{display:none}
 .sidebar-footer{position:relative}
 .sidebar-footer::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;border-radius:999px;background:#eeedf1}
 .dark-theme .sidebar-footer::before{background:#3b3942}
+
+/* Compact header shows the brand only; the brand reopens navigation. */
+body .side.collapsed>.side-controls{display:none!important}
+body .side.collapsed>.brand>.mini-brand{display:block!important;width:40px;height:44px}
+body .side.collapsed>.brand>.mini-brand>.vector-logo{display:block!important;width:40px;height:44px}
+body .side.collapsed>.brand:focus-visible{outline:2px solid var(--muted);outline-offset:2px;border-radius:8px}

@@ -300,3 +300,7 @@ Menu principal ocupa a tela inteira em celular, tablet e computador, ocultando o
 - Logomarca compacta180px no topo, com margem superior removida e respiro12px antes dos controles. Marca, três controles e separador superior permanecem fora da região rolável, assim como o usuário no rodapé. Preservar arte e animação originais.
 
 - Rodapé fixo do usuário separado da lista rolável pela mesma linha cinza de pontas arredondadas usada no topo. Lista rola entre as duas divisórias; marca/controles e usuário permanecem fixos.
+
+- Controle de menu principal usa seta horizontal de abrir/recolher junto a uma barra vertical, em círculo, distinta das setas verticais de expansão das opções. Não consolidar esse botão com o controle de submenus.
+
+- Menu recolhido: esconder os controles do topo; mostrar somente a logomarca compacta acima dos ícones do menu. Clicar/tocar na logomarca (ou Enter/Espaço) reabre o menu e restaura os três controles.
