@@ -16,6 +16,7 @@
  if(colorMask)colorMask.innerHTML='<g mask="url(#logo-ribbon-alpha-mask)"><path d="M 26 18 C 26 10 36 9 38 16 L 38 21 C 42 18 48 17 49 23 C 51 27 49 30 45 30 L 20 45 C 16 46 12 43 14 38 C 15 35 17 34 19 32 C 14 30 13 26 14 23 C 16 19 20 18 23 20 L 45 34 C 49 36 51 39 49 43 C 47 47 42 46 38 43 C 39 48 36 52 32 52 C 28 52 26 48 26 44 L 26 18" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="28 190" stroke-dashoffset="0"><animate attributeName="stroke-dashoffset" values="0;-218" dur="15s" repeatCount="indefinite"/></path></g>';
  const colorPath=colorMask?.querySelector('path');if(colorPath)colorPath.setAttribute('stroke-width','5.5');
  const colorImage=fullLogo?.querySelector('.logo-color-light image');if(colorImage)colorImage.style.filter='brightness(1.85) saturate(2.2) drop-shadow(0 0 4px rgba(255,255,255,.95))';
+ if(colorSvg&&!colorSvg.querySelector('.logo-white-core'))colorSvg.insertAdjacentHTML('beforeend','<path class="logo-white-core" mask="url(#logo-ribbon-alpha-mask)" d="M 26 18 C 26 10 36 9 38 16 L 38 21 C 42 18 48 17 49 23 C 51 27 49 30 45 30 L 20 45 C 16 46 12 43 14 38 C 15 35 17 34 19 32 C 14 30 13 26 14 23 C 16 19 20 18 23 20 L 45 34 C 49 36 51 39 49 43 C 47 47 42 46 38 43 C 39 48 36 52 32 52 C 28 52 26 48 26 44 L 26 18" fill="none" stroke="#fff" stroke-opacity=".88" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="28 190" stroke-dashoffset="0"><animate attributeName="stroke-dashoffset" values="0;-218" dur="15s" repeatCount="indefinite"/></path>');
  const pathLight=fullLogo?.querySelector('.logo-path-light animateMotion');if(pathLight){pathLight.setAttribute('dur','15s');const stripe=pathLight.parentElement;if(stripe){stripe.setAttribute('x','-11');stripe.setAttribute('y','-4');stripe.setAttribute('width','22');stripe.setAttribute('height','8');stripe.setAttribute('rx','4')}}
  if(brand){function brandState(){const compact=side.classList.contains('collapsed');if(compact){brand.setAttribute('role','button');brand.setAttribute('tabindex','0');brand.setAttribute('aria-label','Expandir menu principal')}else{brand.removeAttribute('role');brand.removeAttribute('tabindex');brand.removeAttribute('aria-label')}}brand.addEventListener('click',()=>{if(side.classList.contains('collapsed'))document.dispatchEvent(new Event('cicluz-open-menu'))});brand.addEventListener('keydown',e=>{if(side.classList.contains('collapsed')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();document.dispatchEvent(new Event('cicluz-open-menu'))}});new MutationObserver(brandState).observe(side,{attributes:true,attributeFilter:['class']});brandState()}
  const opener=document.querySelector('.mobile-menu-open');
@@ -34,12 +35,6 @@
  const labels=new Map([['Atualização salarial','Atualização salarial de cargos'],['Ficha de Cargos','Ficha de cargos']]);
  const refresh=()=>{const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){const next=labels.get(node.nodeValue.trim());if(next)node.nodeValue=node.nodeValue.replace(node.nodeValue.trim(),next)}};
  refresh();new MutationObserver(refresh).observe(document.body,{childList:true,subtree:true});
-})();
-
-// Faixa espectral entre os controles do menu e a seção Gestão.
-(()=>{
- const place=()=>{const first=document.querySelector('.nav-tree>.sidebar-section-toggle');if(first&&!document.querySelector('.cicluz-spectrum-divider')){const strip=document.createElement('div');strip.className='cicluz-spectrum-divider';strip.setAttribute('aria-hidden','true');first.before(strip)}};
- place();new MutationObserver(place).observe(document.body,{childList:true,subtree:true});
 })();
 
 // Main-menu search is transient: it never survives leaving the menu.
