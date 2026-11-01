@@ -175,3 +175,8 @@ Matriz: somente cabeçalho secundário e círculos identificadores nas linhas de
 Escopo259 ampliado: títulos Grupo de Despesa/Grupo de Contas nas condições usam tokens centrais de título (16px/20px, peso600), subtítulo11px/14px peso400. Encontrado: herdavam fonte de label14px peso400, com subtítulo10px local.
 
 Verificação259: diferença de herança tipográfica identificada no código e ligada aos tokens centrais. Diff revisado; git diff --check passou. Ícones e geometria restritos a Taxas; nenhuma lógica/dados alterados. Conferência visual no navegador pendente pelo limite anterior.
+
+## Matriz — revisão móvel260
+Componentes: tipografia de inputs compartilhada, busca do menu/cabeçalhos/bibliotecas, grades de formulários, diálogos e controles de taxas. Impacto: menu Gestão/Agenda/Outros e submenus, Cargos/Salários, cadastros simples/completos, Contas e grupos financeiros, Operadoras e vigências, localização/biblioteca. Preservar ordem DOM e hierarquia; empilhar somente campos em telas estreitas. Verificação estrutural de seletores e interações da prévia; navegador remoto não fornece controle de viewport nem Safari/iPhone físico, portanto não declarar teste real móvel concluído.
+
+Verificado260 na prévia Chrome1363px: menu/lupa e filtragem, expansão Configuração, navegação pelo ícone Diretor→Operadoras, busca Cielo com1/10 resultados, ações/edição, expansão da bandeira pelo ícone e adicionar condição sem salvar registro. Sem overflow da página nessa largura. Código responsivo revisado, mas testes visuais≤600px e teclado/zoom Safari permanecem pendentes por ausência de controle de viewport no navegador disponível.

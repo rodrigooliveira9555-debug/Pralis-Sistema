@@ -2,7 +2,7 @@
 @media(max-width:1024px){
  html{scroll-padding-bottom:calc(32px + env(safe-area-inset-bottom,0px));-webkit-text-size-adjust:100%;text-size-adjust:100%}
  body .main{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!important}
- body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input:where(:not([type=checkbox])):where(:not([type=radio])):where(:not([type=color])):where(:not([type=range])):where(:not([type=hidden])):where(:not([type=button])):where(:not([type=submit])),select,textarea){font-size:16px!important;scroll-margin-block:24px}
+ body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input:where(:not([type=checkbox])):where(:not([type=radio])):where(:not([type=color])):where(:not([type=range])):where(:not([type=hidden])):where(:not([type=button])):where(:not([type=submit])),select,textarea){scroll-margin-block:24px}
  body :is(.view,dialog,.modal) :is(.form-actions,.foot,.confirm-actions,.icon-empty-actions),body :is(form,.account-editor)>.actions{gap:12px;flex-wrap:wrap;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));min-width:0}
  body :is(.view,dialog,.modal) :is(.form-actions,.foot,.confirm-actions,.icon-empty-actions) button,body :is(form,.account-editor)>.actions button{min-height:44px}
  body dialog{box-sizing:border-box;max-width:calc(100vw - 24px);max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow-y:auto;overscroll-behavior:contain;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
@@ -16,3 +16,27 @@ body :is(.icon-choice,.account-icon-dot,.shortcut-circle,.location-icon,.locatio
 body :is(.menu-icon-circle,.money-icon,.config-inherit-icon){--circle-size:38px}
 body :is(.location-icon,.card-inherited-icon){--circle-size:30px}
 @media(max-width:560px){body .head .shortcut-actions>.shortcut-circle,body .head>.sector-icon{--circle-size:28px}}
+
+/* Shared narrow layout: preserve document order and bound every query to its host. */
+@media(max-width:600px){
+ body .main,body .view,body .view>.panel,body .view>.panel>.content{min-width:0;max-width:100%;box-sizing:border-box}
+ body .view>.panel>.content{overflow-x:auto}
+ body :is(.view,dialog,.modal) :is(.form-fields,.form-demo form,.account-editor,#job-form,.location-dialog form){grid-template-columns:minmax(0,1fr)!important}
+ body :is(.view,dialog,.modal) :is(.form-fields,.account-editor,#job-form)>*{min-width:0;max-width:100%;box-sizing:border-box;grid-column:1/-1!important}
+ body :is(.view,dialog,.modal) :is(.form-fields,.account-editor,#job-form)>label{grid-column:1/-1!important}
+ body .view>.panel>.head>.fixed-header-tools{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+ body .view .head .fixed-header-tools .header-query-controls,
+ body .view .head .fixed-header-tools .header-query-controls:has(input.header-search-open):has(select:not([hidden])),
+ body .view .head .fixed-header-tools .header-query-controls:has(select:not([hidden])):not(:has(input.header-search-open)){grid-template-columns:minmax(0,1fr)!important;max-width:100%;min-width:0}
+ body .view .head .fixed-header-tools .header-query-controls:has(input.header-search-open)>select{grid-column:1!important;grid-row:auto!important}
+ body :is(.view,dialog,.modal) .local-search-control{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+ body :is(.view,dialog,.modal) .local-search-control>input{flex:1 1 0;min-width:0!important;width:0;max-width:100%;box-sizing:border-box}
+ body .side>.menu-search-box{width:100%;max-width:100%;box-sizing:border-box}
+ body .side .nav :is(summary,button){min-width:0;overflow-wrap:anywhere}
+ body .view :is(.fee-header-actions,.fee-rule-actions){flex-wrap:wrap;min-width:0}
+ body .view .operator-fees h3{flex-wrap:wrap;gap:8px}
+ body .view .operator-fees h3 .fee-header-actions{margin-left:auto}
+ body .view .operator-fees :is(.fee-action,.fee-rule-actions button){max-width:100%;white-space:normal;overflow-wrap:anywhere}
+ body :is(.view,dialog,.modal) :is(input,select,textarea){max-width:100%;box-sizing:border-box}
+ body dialog,body .modal .dialog{width:calc(100vw - 24px);min-width:0}
+}

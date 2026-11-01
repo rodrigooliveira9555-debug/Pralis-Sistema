@@ -429,3 +429,5 @@ Relação de bandeiras: contorno e símbolos SVG/texto em vermelho#ef4444, mesmo
 Somente na relação de taxas: círculos maciços vermelhos com símbolos brancos; logomarcas preservadas. Cabeçalho secundário usa recorte côncavo inferior do conteúdo, com pontas coloridas descendo nas laterais, como o principal. Substitui arredondamento convexo inferior257. Nenhuma alteração nos tipos amarelos.
 
 Títulos das classificações de condições seguem tokens de título: Montserrat16px, peso600 (seminegrito), entrelinha20px; Transferências Automáticas segue subtítulo11px/14px peso400.
+
+- Revisão móvel260: fonte dos campos e buscas16px até1024px via --ui-input-size, preservando zoom manual; até600px formulários em coluna única na ordem DOM, buscas limitadas ao quadro e filtros abaixo da busca. Cabeçalhos e identidade desktop aprovados preservados.
