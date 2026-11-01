@@ -349,3 +349,10 @@ Botão Abrir menu com três pontos em SVG, círculo32px, sozinho no extremo esqu
 - Última orientação235: casinha, voltar, fechar e demais controles/setas no mesmo --navigation-ink cinza da navegação. Cabeçalho/destaques continuam na cor do módulo; ícones identificadores de grupos preservam as cores originais anteriormente solicitadas.
 
 - Exceção explícita235: Editar e Excluir acompanham a cor da aba atual, inclusive os painéis de ações financeiros e de Cargos. Substitui, para esses controles, a regra anterior de lixeira sempre vermelha. Confirmações e preservação de histórico continuam obrigatórias.
+
+## Biblioteca no cinza padrão — revisão236
+Correção solicitada a partir da captura IMG_2467.jpeg, Cadastro do grupo no painel direito: ícones de escolha, bordas/seleção e ações da biblioteca não devem herdar amarelo da aba. Fonte única --library-accent em ui-foundation.css passa a --navigation-ink. Inclui favoritos, mais ícones, busca/importação e removidos, em views e diálogos. Cabeçalho e editar/excluir preservam a cor da aba. Não alterar espaçamento entre letras sem especificação. Verificar Cadastro do grupo VND e estilo computado de .icon-choice/.account-icon-dot.
+
+- Confirmação236: contornos dos campos de seleção e foco/hover usam o cinza padrão de navegação, incluindo formulários e diálogos; cabeçalho e ações Editar/Excluir mantêm a cor da aba.
+
+- Espaçamento236: bibliotecas e seletores de ícones4px; blocos de identificação e formulários8px. Bandeiras, tipos de venda e operadoras reutilizam account-list-row52px e record-grid4px; seções de taxas por bandeira com4px entre blocos. Verificado cadastro de bandeira, ícones cinza e selects neutros.

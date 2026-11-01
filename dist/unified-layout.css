@@ -69,3 +69,7 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account
 /* Edit and delete follow the current tab accent, as requested. */
 body:is(.dark-theme,:not(.dark-theme)) #sector-view .account-row-actions>button,body:is(.dark-theme,:not(.dark-theme)) #jobs-view .job-actions>button{background:var(--menu-accent,var(--panel-color,#7c3aed))!important;color:#fff!important;border-color:var(--menu-accent,var(--panel-color,#7c3aed))!important}
 body:is(.dark-theme,:not(.dark-theme)) .view :is(.location-edit,.location-delete){color:var(--menu-accent,var(--panel-color,#7c3aed))!important}
+
+/* Shared compact forms and card-brand fee groups. */
+body .view :is(.account-editor,.form-fields,.form-demo){row-gap:8px!important}
+body .view .operator-fee-brand{margin-block:var(--layout-item-gap)!important}
