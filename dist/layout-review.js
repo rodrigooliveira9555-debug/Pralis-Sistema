@@ -13,6 +13,12 @@
     const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',button.classList.contains('footer-save-accent')?'m5 12 4 4L19 6':'m6 6 12 12M18 6 6 18');icon.append(path);button.append(icon);
    }
   });
+  document.querySelectorAll('.footer-save-accent').forEach(save=>{
+   const parent=save.parentElement,cancel=[...parent.children].find(el=>el.classList.contains('footer-cancel-accent'));
+   if(!cancel)return;
+   if(!parent.classList.contains('footer-action-pair'))parent.classList.add('footer-action-pair');
+   if(save.compareDocumentPosition(cancel)&Node.DOCUMENT_POSITION_FOLLOWING)save.before(cancel);
+  });
   document.querySelectorAll('.view label,dialog label,.modal label,.account-field-group,.job-identity,.account-identity,.location-identity').forEach(block=>{
    const inputs=[...block.querySelectorAll('input,select,textarea')].filter(el=>!['hidden','checkbox','radio'].includes(el.type));
    const simple=inputs.length===1&&!block.querySelector('.identity-pick,.location-sigla-field,.icon-library,.account-icon-options,.extra-library');

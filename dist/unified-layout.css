@@ -202,3 +202,7 @@ body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button.footer-ca
 
 body :is(.view,dialog,.modal) :is(.footer-save-accent,.footer-cancel-accent){display:inline-flex!important;align-items:center;justify-content:center;gap:8px}
 body .footer-action-icon{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+body :is(.view,dialog,.modal) .footer-action-pair{display:flex!important;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px}
+body .footer-action-pair>.footer-cancel-accent{order:0!important}
+body .footer-action-pair>.footer-save-accent{order:1!important}
