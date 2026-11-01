@@ -1,0 +1,18 @@
+/* Keep forms clear of iOS browser chrome and the home indicator. */
+@media(max-width:1024px){
+ html{scroll-padding-bottom:calc(32px + env(safe-area-inset-bottom,0px));-webkit-text-size-adjust:100%;text-size-adjust:100%}
+ body .main{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!important}
+ body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input:where(:not([type=checkbox])):where(:not([type=radio])):where(:not([type=color])):where(:not([type=range])):where(:not([type=hidden])):where(:not([type=button])):where(:not([type=submit])),select,textarea){font-size:16px!important;scroll-margin-block:24px}
+ body :is(.view,dialog,.modal) :is(.form-actions,.foot,.confirm-actions,.icon-empty-actions),body :is(form,.account-editor)>.actions{gap:12px;flex-wrap:wrap;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));min-width:0}
+ body :is(.view,dialog,.modal) :is(.form-actions,.foot,.confirm-actions,.icon-empty-actions) button,body :is(form,.account-editor)>.actions button{min-height:44px}
+ body dialog{box-sizing:border-box;max-width:calc(100vw - 24px);max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow-y:auto;overscroll-behavior:contain;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+ body .modal{padding:24px 12px calc(24px + env(safe-area-inset-bottom,0px));overflow-y:auto}
+ body .modal .dialog{max-height:calc(100dvh - 48px - env(safe-area-inset-bottom,0px));overflow-y:auto}
+ body :is(.identity-pick,.identity-advanced,.job-inline-tools,.job-inline-search,.location-sigla-field){min-width:0;max-width:100%}
+ body .job-inline-search input{width:100%;min-width:0;flex:1 1 120px}
+}
+/* Circular badges must not shrink into ovals in narrow flex rows. */
+body :is(.icon-choice,.account-icon-dot,.shortcut-circle,.location-icon,.location-add,.sector-icon,.card-inherited-icon,.config-inherit-icon,.icon-live-badge,.job-icon,.menu-icon-circle,.money-icon){--circle-size:32px;box-sizing:border-box!important;aspect-ratio:1/1;flex:0 0 var(--circle-size)!important;width:var(--circle-size)!important;min-width:var(--circle-size)!important;max-width:var(--circle-size)!important;height:var(--circle-size)!important;min-height:var(--circle-size)!important;max-height:var(--circle-size)!important;border-radius:50%!important;align-self:center}
+body :is(.menu-icon-circle,.money-icon,.config-inherit-icon){--circle-size:38px}
+body :is(.location-icon,.card-inherited-icon){--circle-size:30px}
+@media(max-width:560px){body .head .shortcut-actions>.shortcut-circle,body .head>.sector-icon{--circle-size:28px}}

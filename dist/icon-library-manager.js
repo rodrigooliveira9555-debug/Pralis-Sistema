@@ -33,7 +33,7 @@ function jobInline(details){
  details.querySelectorAll('input[type=search]').forEach(e=>e.remove());details.hidden=false;
  const make=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e};
  const btn=(text,fn,cls='btn secondary')=>{const b=make('button',cls,text);b.type='button';b.onclick=fn;return b};
- const tools=make('div','job-inline-tools'),toggle=btn('Buscar mais opções',()=>{tools.hidden=!tools.hidden;toggle.setAttribute('aria-expanded',String(!tools.hidden));if(!tools.hidden)query.focus()});toggle.classList.add('job-more-options');toggle.setAttribute('aria-expanded','false');tools.hidden=true;
+ const tools=make('div','job-inline-tools'),toggle=btn('Buscar mais opções',()=>{tools.hidden=!tools.hidden;toggle.setAttribute('aria-expanded',String(!tools.hidden));if(!tools.hidden&&!matchMedia('(max-width:1024px)').matches)query.focus({preventScroll:true})});toggle.classList.add('job-more-options');toggle.setAttribute('aria-expanded','false');tools.hidden=true;
  const row=make('div','job-inline-search'),query=make('input');query.type='search';query.placeholder='Buscar na internet…';query.setAttribute('aria-label','Buscar mais ícones na web');
  const search=btn('',searchWeb,'shortcut-circle');search.innerHTML=svg('<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>');search.title='Buscar na web';search.setAttribute('aria-label',search.title);
  const file=make('input');file.type='file';file.accept='.svg,image/svg+xml';file.hidden=true;const upload=btn('',()=>file.click(),'shortcut-circle');upload.innerHTML=svg('<path d="M12 16V3m-5 5 5-5 5 5M4 16v5h16v-5"/>');upload.title='Importar arquivo SVG';upload.setAttribute('aria-label',upload.title);
