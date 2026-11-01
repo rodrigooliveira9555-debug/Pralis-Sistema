@@ -108,5 +108,6 @@ body:is(.dark-theme,:not(.dark-theme)) dialog.transfer-dialog form>.actions>butt
 
 /* A single outer field frame; no nested input frames inside white editor blocks. */
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-editor,.form-fields,#job-form) :is(label,.job-identity,.account-identity,.account-status){border-color:var(--layout-line)!important;box-shadow:none!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-editor,#job-form)>:is(.job-identity,.account-identity){padding:12px!important;border-radius:10px!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-editor,.form-fields,#job-form) :is(label,.job-identity,.account-identity) :is(input:not([type=checkbox]):not([type=radio]):not([type=color]),select,textarea){border:0!important;box-shadow:none!important;outline:0!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-editor,.form-fields,#job-form)>:is(label,.job-identity,.account-identity):focus-within{border-color:var(--navigation-ink,#a2a0aa)!important;outline:2px solid color-mix(in srgb,var(--navigation-ink,#a2a0aa) 22%,transparent);outline-offset:1px}
