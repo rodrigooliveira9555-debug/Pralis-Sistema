@@ -6,7 +6,7 @@
   document.querySelectorAll('.view button,dialog button,.modal button').forEach(button=>{
    if(button.closest('.head,.location-dialog-header,.organogram-editor-header'))return;
    const text=button.textContent.trim();
-   if(/^Salvar(?: e continuar)?$/.test(text)&&!button.classList.contains('footer-save-accent'))button.classList.add('footer-save-accent');
+   if(/^Salvar(?: cargo| atualização| e continuar)?$/.test(text)&&!button.classList.contains('footer-save-accent'))button.classList.add('footer-save-accent');
    if(text==='Cancelar'&&!button.classList.contains('footer-cancel-accent'))button.classList.add('footer-cancel-accent');
    if(button.matches('.footer-save-accent,.footer-cancel-accent')&&!button.querySelector('.footer-action-icon')){
     const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.classList.add('footer-action-icon');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('aria-hidden','true');
@@ -21,7 +21,7 @@
   });
   document.querySelectorAll('.view label,dialog label,.modal label,.account-field-group,.job-identity,.account-identity,.location-identity').forEach(block=>{
    const inputs=[...block.querySelectorAll('input,select,textarea')].filter(el=>!['hidden','checkbox','radio'].includes(el.type));
-   const simple=inputs.length===1&&!block.querySelector('.identity-pick,.location-sigla-field,.icon-library,.account-icon-options,.extra-library');
+   const simple=!block.classList.contains('salary-row')&&inputs.length===1&&!block.querySelector('.identity-pick,.location-sigla-field,.icon-library,.account-icon-options,.extra-library');
    if(block.classList.contains('single-field-block')!==simple)block.classList.toggle('single-field-block',simple);
   });
   document.querySelectorAll(headerHosts).forEach(host=>{

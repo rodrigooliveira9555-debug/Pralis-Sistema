@@ -252,3 +252,39 @@ body:is(.dark-theme,:not(.dark-theme)) #sector-view#sector-view#sector-view .ope
 }
 body #sector-view .operator-fees .fee-classification{align-items:stretch!important}
 body #sector-view .operator-fees .fee-classification>label{justify-content:space-between}
+
+/* Salary uses the Cargos identity rows, with an independent aligned value column. */
+body:is(.dark-theme,:not(.dark-theme)) #salary-view .salary-row{
+ display:grid!important;grid-template-columns:minmax(0,1fr) 160px!important;align-items:center!important;
+ gap:16px!important;padding:12px!important;min-height:64px;box-sizing:border-box;
+ border:0!important;border-bottom:1px solid var(--layout-line)!important;background:#fff!important;
+}
+body #salary-view .salary-job-identity{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
+body #salary-view .job-copy{display:flex;flex-direction:column;gap:4px;min-width:0;overflow-wrap:anywhere}
+body #salary-view .job-copy small{color:var(--navigation-ink,#a2a0aa);font-size:11px;line-height:1.5}
+body #salary-view .salary-row input{width:100%!important;min-width:0!important;max-width:160px;box-sizing:border-box;height:42px!important;margin:0!important;padding:10px!important;text-align:right}
+body #salary-view .salary-heading{display:grid!important;grid-template-columns:minmax(0,1fr) 160px!important;align-items:end;gap:16px!important;padding:0 12px;box-sizing:border-box}
+body #salary-view .salary-heading label,body #salary-view .salary-heading input{width:100%!important;min-width:0;box-sizing:border-box}
+body #salary-view .form-actions{margin-top:20px}
+@media(max-width:600px){
+ body:is(.dark-theme,:not(.dark-theme)) #salary-view .salary-row{grid-template-columns:minmax(0,1fr) 120px!important;gap:10px!important;padding:10px!important}
+ body #salary-view .salary-heading{grid-template-columns:minmax(0,1fr) 140px!important;gap:10px!important}
+}
+/* Location action drawers stay on one line and open inside their own row. */
+body #sector-view .location-tree .location-node>.location-row{
+ --menu-accent:#7c3aed;display:flex!important;flex-wrap:nowrap!important;align-items:center;
+ overflow:hidden;transition:padding-right .18s ease;
+}
+body #sector-view .location-tree .location-node>.location-row:has(>.account-row-actions:not([hidden])){
+ padding-right:110px!important;flex-wrap:nowrap!important;
+}
+body #sector-view .location-tree .location-row>.location-copy{flex:1 1 auto;min-width:0;overflow:hidden}
+body #sector-view .location-tree .location-row .location-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+body #sector-view .location-tree .location-row>.account-action-toggle{flex:0 0 28px;width:28px;min-width:28px;margin-left:auto}
+body #sector-view .location-tree .location-row>.account-row-actions:not([hidden]){
+ display:flex!important;flex-wrap:nowrap!important;flex-basis:auto!important;position:absolute;
+ right:0;top:0;bottom:0;width:76px!important;animation:location-actions-in .18s ease-out;
+}
+body #sector-view .location-tree .location-row .account-row-actions>button[title="Editar"]{background:#7c3aed!important}
+@keyframes location-actions-in{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+@media(prefers-reduced-motion:reduce){body #sector-view .location-tree .location-row{transition:none!important}body #sector-view .location-tree .account-row-actions{animation:none!important}}
