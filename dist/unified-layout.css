@@ -123,3 +123,21 @@ body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fee-brand :is(.fee
 body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fee-rule{background:var(--layout-gap)!important;border-color:var(--layout-line)!important;gap:8px!important;margin:0!important;padding:8px!important}
 body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees .operator-fee-rule label,body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees>label{background:#fff!important;border:1px solid var(--layout-line)!important;border-radius:10px!important;padding:12px!important;box-sizing:border-box}
 body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees label :is(input,select,textarea){border:0!important;box-shadow:none!important;outline:0!important}
+
+/* Area / Setor / Local: continuous rows inside one neutral frame. */
+body #sector-view .location-tree{display:block;gap:0!important;border:1px solid var(--layout-line)!important;border-radius:14px;overflow:hidden;background:#fff}
+body #sector-view .location-tree>.location-area-frame{border:0!important;border-radius:0!important;margin:0!important;padding:0 8px!important;background:#fff!important}
+body #sector-view .location-tree>.location-area-frame+.location-area-frame{border-top:1px solid var(--layout-line)!important}
+body #sector-view .location-tree .location-node{margin-top:0!important;margin-bottom:0!important}
+body #sector-view .location-tree .location-row{margin:0!important;border-radius:0!important}
+body #sector-view .location-tree .location-children{margin-top:0!important;margin-bottom:0!important;padding-top:0!important;padding-bottom:0!important}
+
+/* Neutral location glyphs and editor surrounds; header glyphs remain white. */
+body #sector-view .location-tree :is(.location-icon,.location-dot){background:transparent!important;color:var(--navigation-ink,#a2a0aa)!important;border-color:var(--layout-line)!important}
+body #sector-view .location-tree :is(.location-expand,.location-inline-add,.account-action-toggle,.location-move){color:var(--navigation-ink,#a2a0aa)!important;border-color:var(--layout-line)!important}
+body dialog.location-dialog :is(.location-preview-card,.location-identity){border-color:var(--layout-line)!important}
+body dialog.location-dialog :is(.location-preview-card,.location-identity) .location-icon{background:transparent!important;color:var(--navigation-ink,#a2a0aa)!important;border-color:var(--layout-line)!important}
+
+body dialog.location-dialog,body dialog.location-dialog form{background:var(--layout-gap,#f5f5f7)!important}
+body #sector-view .location-tree .location-children{border-left-color:var(--layout-line)!important}
+body #sector-view .location-tree .location-children>.location-node>.location-row::before{background:var(--layout-line)!important}

@@ -375,3 +375,10 @@ Continuar e Cancelar da janela de exclusão/transferência: duas colunas iguais,
 
 ## Taxas de bandeira —241
 Cabeçalho Taxas vermelho intenso#ef4444 e ícones brancos. Moldura única cinza, bandeiras consecutivas sem margens verticais, divisórias1px; summary52px preservado ao expandir. Regras de vigência com fundo de respiro cinza e campos brancos com moldura externa única, sem contorno interno duplicado. Preservar cálculo, vínculos e histórico.
+
+## Área / Setor / Local —242
+Lista contínua sem vãos verticais entre áreas ou seus descendentes; uma moldura externa cinza e divisórias entre áreas, fundo branco. Preservar recuo da hierarquia, expandir/recolher, movimentação e ações. Verificar áreas vizinhas e ramo expandido.
+
+- Confirmação242: ícones cinza inclusive nas bibliotecas dentro da edição; cabeçalhos brancos. Área/Setor/Local: ícones e controles cinza, molduras neutras também no editor. Substitui cor de biblioteca239. Excluir vermelho preservado.
+
+- Editor de Área/Local: o espaço de respiro em volta dos blocos também cinza claro; conectores da hierarquia cinza neutro.
