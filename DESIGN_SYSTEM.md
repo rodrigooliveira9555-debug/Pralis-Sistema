@@ -424,3 +424,8 @@ Taxas por bandeira: moldura cinza visível envolvendo todas as linhas contíguas
 
 ## Taxas — cores258
 Relação de bandeiras: contorno e símbolos SVG/texto em vermelho#ef4444, mesmo círculo30px de Tipos de Bandeiras; cores das logomarcas preservadas. Condições: quadros Grupo de Despesa e Grupo de Contas inteiramente preenchidos com vermelho#ef4444 e laranja#f97316, respectivamente. Títulos/subtítulo, símbolos e contorno circular brancos. Seletores continuam brancos para leitura. Substitui fundo branco dos quadros de classificação.
+
+## Taxas —259
+Somente na relação de taxas: círculos maciços vermelhos com símbolos brancos; logomarcas preservadas. Cabeçalho secundário usa recorte côncavo inferior do conteúdo, com pontas coloridas descendo nas laterais, como o principal. Substitui arredondamento convexo inferior257. Nenhuma alteração nos tipos amarelos.
+
+Títulos das classificações de condições seguem tokens de título: Montserrat16px, peso600 (seminegrito), entrelinha20px; Transferências Automáticas segue subtítulo11px/14px peso400.

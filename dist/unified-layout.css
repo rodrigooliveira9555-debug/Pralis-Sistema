@@ -113,7 +113,7 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account
 
 /* Card-brand fees follow the same continuous framed layout. */
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees{background:var(--layout-gap)!important;border:1px solid var(--layout-line)!important;border-radius:14px!important;padding:0 12px 12px!important;overflow:hidden}
-body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees h3{background:#ef4444!important;color:#fff!important;margin:0 -12px 12px!important;padding:12px!important;border:0!important;border-radius:0 0 14px 14px!important}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees h3{background:#ef4444!important;color:#fff!important;margin:0 -12px -2px!important;padding:12px 12px 26px!important;border:0!important;border-radius:0!important;position:relative;isolation:isolate}
 body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees h3 :is(.fee-heading-icon,.shortcut-circle){color:#fff!important;background:transparent!important;border-color:#fff!important}
 body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fee-brand{background:#fff!important;border:0!important;border-bottom:1px solid var(--layout-line)!important;border-radius:0!important;margin:0!important;padding:0!important}
 body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fee-brand>summary{background:#fff!important;color:var(--layout-ink)!important;margin:0!important;min-height:52px;box-sizing:border-box;padding:10px 12px!important;border-radius:0!important}
@@ -215,7 +215,7 @@ body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-f
 }
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .fee-brand-icon {
  width:30px!important;height:30px!important;min-width:30px!important;flex:0 0 30px!important;
- border:1px solid #ef4444!important;border-radius:50%!important;aspect-ratio:1;color:#ef4444!important;background:#fff!important;
+ border:1px solid #ef4444!important;border-radius:50%!important;aspect-ratio:1;color:#fff!important;background:#ef4444!important;
 }
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees h3 .fee-heading-icon {
  border:1px solid #fff!important;border-radius:50%!important;box-sizing:border-box;
@@ -310,3 +310,6 @@ body #cadastro-completo .form-actions>[hidden]{display:none!important}
 body #cadastro-completo .form-actions>div{margin-left:auto}
 body #cadastro-completo :is(#prev-step,#next-step){width:auto;min-width:112px;gap:10px;border-radius:var(--ui-field-radius,8px);padding:10px 16px;font:500 var(--ui-text)/var(--ui-text-line) var(--ui-font)}
 body #cadastro-completo .registration-next[hidden]{display:none!important}
+
+/* The content rounds into the secondary header, matching the main header. */
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees h3::after{content:"";position:absolute;left:0;right:0;bottom:0;height:14px;background:var(--layout-gap,#f5f5f7);border-radius:14px 14px 0 0;pointer-events:none}

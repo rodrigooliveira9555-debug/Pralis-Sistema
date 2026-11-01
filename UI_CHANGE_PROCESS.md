@@ -168,3 +168,10 @@ Verificação257: sintaxe de groups.js e git diff --check passaram. Teste da res
 Matriz: ícones da relação Taxas por bandeira e quadros Grupo de Despesa/Grupo de Contas nas condições novas ou existentes. Anel/símbolos de bandeiras em vermelho#ef4444 no padrão de Tipos de Bandeiras; marcas preservam cores originais. Quadros maciços vermelho#ef4444/laranja#f97316, títulos/subtítulo/símbolos brancos e anel branco. Seletores internos brancos, medidas e vínculos preservados.
 
 Verificação258: diff conferido, alterações restritas às cores do componente de taxas e versões dos estilos; git diff --check passou. Regras de ambos os estados de label (incluindo single-field-block) atualizadas, mantendo seletores legíveis. Conferência visual pendente pelo limite anterior do navegador.
+
+## Taxas —259
+Matriz: somente cabeçalho secundário e círculos identificadores nas linhas de Taxas por bandeira, fechado/expandido. Círculos maciços vermelhos, símbolos brancos. Base do cabeçalho com recorte côncavo voltado para baixo, como a sobreposição arredondada do conteúdo no cabeçalho principal. Preservar os cadastros amarelos cancelados pelo usuário.
+
+Escopo259 ampliado: títulos Grupo de Despesa/Grupo de Contas nas condições usam tokens centrais de título (16px/20px, peso600), subtítulo11px/14px peso400. Encontrado: herdavam fonte de label14px peso400, com subtítulo10px local.
+
+Verificação259: diferença de herança tipográfica identificada no código e ligada aos tokens centrais. Diff revisado; git diff --check passou. Ícones e geometria restritos a Taxas; nenhuma lógica/dados alterados. Conferência visual no navegador pendente pelo limite anterior.
