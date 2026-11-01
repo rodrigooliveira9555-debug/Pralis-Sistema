@@ -206,3 +206,49 @@ body .footer-action-icon{width:17px;height:17px;flex:none;fill:none;stroke:curre
 body :is(.view,dialog,.modal) .footer-action-pair{display:flex!important;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px}
 body .footer-action-pair>.footer-cancel-accent{order:0!important}
 body .footer-action-pair>.footer-save-accent{order:1!important}
+
+/* Fees: isolated spacing and responsive fields for the expanded editor. */
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees > .operator-fee-brand {
+ margin:12px 0!important;border:1px solid #a2a0aa!important;border-radius:12px!important;
+}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .fee-brand-icon {
+ width:32px!important;height:32px!important;min-width:32px!important;flex:0 0 32px!important;
+ border:1px solid #a2a0aa!important;border-radius:50%!important;aspect-ratio:1;
+}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees h3 .fee-heading-icon {
+ border:1px solid #a2a0aa!important;border-radius:50%!important;box-sizing:border-box;
+}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .operator-fee-rule {
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:16px!important;padding:16px!important;margin:12px 0 0!important;align-items:start;
+}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .operator-fee-rule label {
+ display:flex!important;flex-direction:column!important;gap:8px!important;
+ min-width:0!important;width:auto!important;max-width:100%;height:auto!important;
+ padding:10px!important;margin:0!important;box-sizing:border-box;white-space:normal;line-height:1.5;
+}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .operator-fee-rule :is(input,select) {
+ width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box;
+ min-height:42px!important;height:42px!important;margin:0!important;padding:8px!important;
+ border:1px solid var(--layout-line,#dedee3)!important;border-radius:8px!important;
+}
+body #sector-view .operator-fees .fee-classification{grid-column:1/-1;min-width:0;gap:16px!important}
+body #sector-view .operator-fees .fee-rule-actions{grid-column:1/-1;min-width:0;gap:12px!important}
+body #sector-view .operator-fees .fee-classification-heading{flex-wrap:wrap;white-space:normal}
+@media(max-width:760px){
+ body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .operator-fee-rule,
+ body #sector-view .operator-fees .fee-classification{grid-template-columns:minmax(0,1fr)!important}
+}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .operator-fee-rule .fee-classification>label{
+ border:1px solid var(--field-accent)!important;border-radius:10px!important;background:#fff!important;
+}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .fee-classification .fee-expense-field{--field-accent:#ef4444}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .fee-classification .fee-account-field{--field-accent:#f97316}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .fee-classification .fee-classification-heading{color:var(--field-accent)!important}
+/* These are intentional grouped frames, including the shared single-field reset. */
+body:is(.dark-theme,:not(.dark-theme)) #sector-view#sector-view#sector-view .operator-fees .fee-classification>label.single-field-block{
+ border:1px solid var(--field-accent)!important;border-radius:10px!important;
+ background:#fff!important;padding:10px!important;box-sizing:border-box;
+}
+body #sector-view .operator-fees .fee-classification{align-items:stretch!important}
+body #sector-view .operator-fees .fee-classification>label{justify-content:space-between}
