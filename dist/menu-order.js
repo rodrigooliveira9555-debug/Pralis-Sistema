@@ -6,7 +6,7 @@
  function enhance(container){
   if(container.classList.contains('financial-list')||container.querySelector('.account-list-row'))return;
   const nav=container.classList.contains('children'),nodes=[...container.children].filter(n=>nav?n.tagName==='BUTTON':n.classList.contains('record')||n.classList.contains('job-item'));
-  if(!nodes.length)return;if(container.dataset.menuSortable&&nodes.every(n=>n.classList.contains('menu-sort-item')))return;activeTools.get(container)?.remove();
+  if(!nodes.length)return;if(container.classList.contains('record-grid'))container.dataset.navigationMenu='true';if(container.dataset.menuSortable&&nodes.every(n=>n.classList.contains('menu-sort-item')))return;activeTools.get(container)?.remove();
   container.dataset.menuSortable='1';
   const view=container.closest('.view'),key=nav?'nav:'+container.closest('[data-menu-name]').dataset.menuName:'cards:'+(view?.id||'root')+':'+(view?.querySelector('#sector-path')?.textContent||view?.querySelector('h2')?.textContent||'');
   if(!orders[key]&&!nav){const prior=Object.keys(orders).find(k=>k.startsWith(key+':'));if(prior)orders[key]=orders[prior]}
