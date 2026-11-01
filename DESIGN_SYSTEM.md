@@ -304,3 +304,5 @@ Menu principal ocupa a tela inteira em celular, tablet e computador, ocultando o
 - Controle de menu principal usa seta horizontal de abrir/recolher junto a uma barra vertical, em círculo, distinta das setas verticais de expansão das opções. Não consolidar esse botão com o controle de submenus.
 
 - Menu recolhido: esconder os controles do topo; mostrar somente a logomarca compacta acima dos ícones do menu. Clicar/tocar na logomarca (ou Enter/Espaço) reabre o menu e restaura os três controles.
+
+- Tema: substituir polaridade por lua no tema claro (ativar escuro) e sol no tema escuro (ativar claro). SVG neutro no mesmo círculo32px e cor dos demais controles; manter rótulo acessível e preferência persistida.
