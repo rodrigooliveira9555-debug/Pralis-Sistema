@@ -135,3 +135,8 @@ Busca somente pela lupa que abre/recolhe campo. Listas sem vãos entre linhas, m
 Matriz: apenas menu principal, controles ao lado do sol/lua, navegação de ida/retorno, temas claro/escuro. Lupa alterna campo de busca recolhido, foco ao abrir, pesquisa sem acentos nos destinos do menu. Ao sair ou voltar, campo recolhido e consulta limpa, com expansão/estado dos menus restaurados. Não alterar buscas das fichas ou dados.
 
 Verificação: abertura com foco, busca sem acento, navegação por resultado e retorno com campo vazio/fechado, ausência de resultados e Escape passaram no navegador. Corrigido conflito do unificador de expandir/recolher para preservar a lupa. Sintaxe JS e git diff --check passaram.
+
+## Lua contornada —252
+Impacto: apenas símbolo da lua no controle de tema do menu. Crescente com contorno SVG fechado e traço mais definido; preservar círculo externo, cor, dimensão e alternância claro/escuro.
+
+Verificado no navegador: lua sem preenchimento e contorno cinza de 2px, crescente definido, alternância para sol e retorno à lua funcionando.

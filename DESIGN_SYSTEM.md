@@ -404,3 +404,5 @@ Busca somente pela lupa que abre/recolhe campo. Listas sem vãos entre linhas, m
 
 ### Busca no menu principal — 2026-11-01
 Lupa circular ao lado do controle de tema, com a mesma cor e dimensão dos controles do menu. Abre campo de busca com foco; filtro ignora acentos. Busca é transitória: sair e retornar limpa e recolhe o campo, restaurando os grupos anteriores. Escape também recolhe.
+
+- Controle de tema: lua crescente com contorno fechado, sem preenchimento e traço 2px para definição; manter a mesma cor e dimensão do controle.
