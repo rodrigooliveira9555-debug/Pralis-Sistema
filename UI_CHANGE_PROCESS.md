@@ -111,3 +111,6 @@ Lista contínua sem vãos verticais entre áreas ou seus descendentes; uma moldu
 - Confirmação242: ícones cinza inclusive nas bibliotecas dentro da edição; cabeçalhos brancos. Área/Setor/Local: ícones e controles cinza, molduras neutras também no editor. Substitui cor de biblioteca239. Excluir vermelho preservado.
 
 - Editor de Área/Local: o espaço de respiro em volta dos blocos também cinza claro; conectores da hierarquia cinza neutro.
+
+## Atualização salarial e subgrupos —243
+Busca salarial recolhida, aberta apenas pela lupa do cabeçalho; usar componente compartilhado. A/Z ordena as linhas existentes preservando valores digitados. Atualizar lista relê os cargos e preserva valores por chave, sem registrar vigência. Subgrupos expandidos em cartões: respiro e conectores cinza com linhas brancas. Verificar abrir/recolher busca, filtragem, A/Z e atualizar sem salvar valores.

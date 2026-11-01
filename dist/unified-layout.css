@@ -141,3 +141,8 @@ body dialog.location-dialog :is(.location-preview-card,.location-identity) .loca
 body dialog.location-dialog,body dialog.location-dialog form{background:var(--layout-gap,#f5f5f7)!important}
 body #sector-view .location-tree .location-children{border-left-color:var(--layout-line)!important}
 body #sector-view .location-tree .location-children>.location-node>.location-row::before{background:var(--layout-line)!important}
+
+/* Gray hierarchy surrounds also apply to expanding card subgroups. */
+body #sector-view.financial-groups .financial-subgroups{background:var(--layout-gap)!important;border-left-color:var(--layout-line)!important}
+body #sector-view.financial-groups .financial-subgroups>.account-list-row::before{background:var(--layout-line)!important}
+body #salary-view .salary-row[hidden],body #salary-view #salary-search[hidden]{display:none!important}
