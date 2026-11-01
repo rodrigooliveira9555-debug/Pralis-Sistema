@@ -6,7 +6,8 @@
  openButton.type='button';openButton.className='mobile-menu-open';openButton.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8"/></svg>' ;openButton.setAttribute('aria-label','Menu inicial');openButton.title='Menu inicial';openButton.setAttribute('aria-expanded','false');
  side.id=side.id||'app-navigation';openButton.setAttribute('aria-controls',side.id);
  document.querySelector('.top>div').prepend(openButton);
- const backdrop=document.createElement('div');backdrop.className='mobile-menu-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-hidden','true');document.body.append(backdrop);
+ const backdrop=document.createElement('div');backdrop.className='mobile-menu-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-hidden','true');// Keep the overlay in the app stacking context, below the navigation.
+ document.querySelector('.app').append(backdrop);
  let opened=false,scrollY=0,desktopCollapsed=side.classList.contains('collapsed');
  const desktopToggle=closeButton.onclick;
  function renderMenuToggle(expanded){closeButton.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(expanded?'m14 6-6 6 6 6':'m10 6 6 6-6 6')+'"/></svg>';closeButton.title=expanded?'Recolher menu principal':'Expandir menu principal';closeButton.dataset.navigationControl='menu';}

@@ -207,3 +207,9 @@ Contêiner do aplicativo fixo no viewport; documento sem rolagem, conteúdo inte
 Regra265: ao entrar, retornar ou selecionar novamente uma aba pelo menu, título e ícone começam abertos; mudança de destino na view compartilhada também reabre. Não preservar recolhimento entre visitas.
 
 Verificação265:80 casos (20 views ×375/1024px ×claro/escuro) na prévia, expondo cada view e acionando seu botão real. Em todos: identidade/ícone ocultos ao recolher, centros dos comandos e seta coincidentes (delta0px), deslocamento de cabeçalho0px ao rolar conteúdo sintético, conteúdo rolável e página emscrollY0, sem overflow lateral da raiz. Corrigidas team/pre sem content; fixture fora do deploy em tests/header-layout.html. Navegação real Gestão de Pessoas→Ficha→Voltar→Ficha confirmou reabertura automática após recolher. Safari físico segue sem teste.
+
+
+## Correção266 — camada do menu interceptando toques
+Matriz: abrir menu, expandir grupos, selecionar Gestão de Pessoas/Diretor de Operação/Formulários e retornar. Reproduzido: app fixo cria contexto de empilhamento; backdrop filho do body com z-index100 cobre inclusive side z-index101 dentro do app. Clique físico no menu fecha a camada e retorna à view anterior. Mover backdrop para dentro do app, compartilhando o contexto com side, preservando cores e ações. Verificar cliques por coordenadas (acessibilidade pode ignorar a intercepção), expansão e navegação.
+
+Verificação266: antes, captura cinza e clique por coordenadas no item fechava o menu sem navegar. Depois, menu branco sem sobreposição, clique por coordenadas expande Configuração e seleção abre Diretor de Operação; Operadoras abre sua lista de10 registros. Sintaxe e diff passaram. Safari/iPad físico não disponível.
