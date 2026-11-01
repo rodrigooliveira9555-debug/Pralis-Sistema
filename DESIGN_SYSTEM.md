@@ -356,3 +356,8 @@ Correção solicitada a partir da captura IMG_2467.jpeg, Cadastro do grupo no pa
 - Confirmação236: contornos dos campos de seleção e foco/hover usam o cinza padrão de navegação, incluindo formulários e diálogos; cabeçalho e ações Editar/Excluir mantêm a cor da aba.
 
 - Espaçamento236: bibliotecas e seletores de ícones4px; blocos de identificação e formulários8px. Bandeiras, tipos de venda e operadoras reutilizam account-list-row52px e record-grid4px; seções de taxas por bandeira com4px entre blocos. Verificado cadastro de bandeira, ícones cinza e selects neutros.
+
+## Cabeçalhos brancos e espaços de Despesas — revisão237
+Usuário confirmou ícones de cabeçalho brancos (casinha e ações incluídas). Demais ícones cinza, Editar/Excluir na cor da aba. Encontrado em Despesas: gap4px da grade somava margem inferior4px e borda duplicada do wrapper financial-group; subgrupos mantinham gap10px/margens10–14px. Remover margem/borda do wrapper e usar somente gap4px, inclusive nos subgrupos, preservando recuo hierárquico e altura52/40px. Matriz: Despesas fechadas e Benefícios expandido, cabeçalho e biblioteca.
+
+- Orientação final237 substitui gap4px nas listas: moldura única externa para toda a lista, gap0 e margens0; linhas sem molduras individuais, separadas apenas por divisor cinza1px. Aplicar grades de registros, listas financeiras (todos os grupos, bandeiras e operadoras), Cargos e Salários. Subgrupos sem espaçamento vertical, com recuo hierárquico preservado.
