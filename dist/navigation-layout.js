@@ -19,7 +19,7 @@
   svg.append(group);
   const layers=beamProfile.map(([size,opacity])=>{
    const path=document.createElementNS(svgNS,'path');
-   for(const [key,value] of Object.entries({d,fill:'none',stroke:'#fff','stroke-width':4.2,'stroke-opacity':opacity,'stroke-linecap':'butt'}))path.setAttribute(key,value);
+   for(const [key,value] of Object.entries({d,fill:'none',stroke:'#fff','stroke-width':5.4,'stroke-opacity':opacity,'stroke-linecap':'butt'}))path.setAttribute(key,value);
    group.append(path);return {path,size};
   });
   const track={svg,layers,length:layers[0].path.getTotalLength()};beamTracks.push(track);return track;
