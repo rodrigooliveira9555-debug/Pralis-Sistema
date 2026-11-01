@@ -195,3 +195,8 @@ Verificado262: prévia Chrome com iframe375×812, busca do menu16px e limites18�
 Página e cadastros não devem deslizar horizontalmente; rolagem vertical preservada. Conter conteúdo no painel e limitar larguras dos formulários. Menu: apenas última opção tocada marcada; expansão de ancestrais não equivale a seleção. Matriz: Cadastro simples/completo, editor de cargo, menu principal e submenus. Preservar dados e ordem.
 
 Verificação263: prévia375px, Cadastro simples e primeira etapa do completo com página375/375px e conteúdo349/349px, overflow horizontal oculto no painel e vertical preservado. Menu alternado Configuração→Formulários: uma única marcação persistente. Safari físico e todas as etapas/cadastros não validados nesta revisão. Sintaxe e diff verificados.
+
+## Matriz264 — cabeçalho em duas faixas
+Todas as views, incluindo dashboard Pessoas, Processos e Ficha de Cargos dinâmica. Componente header-normalize: identidade (ícone/título/caminho) acima dos comandos. Botão sem círculo à direita da identidade; recolher oculta identidade, preserva comandos e botão de reabrir. Painel mantém cabeçalho fora do conteúdo rolável. Conferir inventário completo, alternância nos cadastros e menus, largura375px e desktop, comandos e rolagem.
+
+Verificado264: inventário no DOM20/20 views com cabeçalho e botão únicos, incluindo ficha dinâmica. Prévia375px: Ficha de Cargos120px expandido/66px recolhido; título e ícone display:none, comandos flex e reabertura funcionais; busca e retorno preservados. Cargos: conteúdo rolou936px com cabeçalho no topo7px. Menus internos e Cargos abertos. Não foi realizada inspeção visual individual das20 views nem Safari físico.
