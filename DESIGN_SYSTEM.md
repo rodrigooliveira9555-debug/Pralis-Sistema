@@ -401,3 +401,6 @@ Busca somente pela lupa que abre/recolhe campo. Listas sem vãos entre linhas, m
 - Atualização salarial: identidade de cargo e coluna de valores alinhadas, usando o padrão Cargos. Atualizar lista preserva os valores digitados e não grava vigência.
 - Área/Setor/Local: ícones respeitam a cor escolhida; Editar roxo da aba e Excluir vermelho. Abrir ações preserva largura/altura da linha. Tocar no nome ou fora fecha o painel; Escape também fecha. Não altera dados ou hierarquia.
 - O modal legado de lançamento deve vincular Cancelar pelo elemento explícito, sem usar a propriedade global window.close.
+
+### Busca no menu principal — 2026-11-01
+Lupa circular ao lado do controle de tema, com a mesma cor e dimensão dos controles do menu. Abre campo de busca com foco; filtro ignora acentos. Busca é transitória: sair e retornar limpa e recolhe o campo, restaurando os grupos anteriores. Escape também recolhe.

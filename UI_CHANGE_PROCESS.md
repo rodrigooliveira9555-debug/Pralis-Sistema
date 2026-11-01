@@ -130,3 +130,8 @@ Busca somente pela lupa que abre/recolhe campo. Listas sem vãos entre linhas, m
 - Atualização salarial: identidade de cargo e coluna de valores alinhadas, usando o padrão Cargos. Atualizar lista preserva os valores digitados e não grava vigência.
 - Área/Setor/Local: ícones respeitam a cor escolhida; Editar roxo da aba e Excluir vermelho. Abrir ações preserva largura/altura da linha. Tocar no nome ou fora fecha o painel; Escape também fecha. Não altera dados ou hierarquia.
 - O modal legado de lançamento deve vincular Cancelar pelo elemento explícito, sem usar a propriedade global window.close.
+
+## Busca no menu principal — 01/11/2026
+Matriz: apenas menu principal, controles ao lado do sol/lua, navegação de ida/retorno, temas claro/escuro. Lupa alterna campo de busca recolhido, foco ao abrir, pesquisa sem acentos nos destinos do menu. Ao sair ou voltar, campo recolhido e consulta limpa, com expansão/estado dos menus restaurados. Não alterar buscas das fichas ou dados.
+
+Verificação: abertura com foco, busca sem acento, navegação por resultado e retorno com campo vazio/fechado, ausência de resultados e Escape passaram no navegador. Corrigido conflito do unificador de expandir/recolher para preservar a lupa. Sintaxe JS e git diff --check passaram.

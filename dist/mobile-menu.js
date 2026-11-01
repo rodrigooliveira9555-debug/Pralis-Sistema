@@ -18,7 +18,7 @@
   // Reconcile DOM state even after viewport or focus interruptions.
   opened=value;
   if(value){scrollY=window.scrollY;document.body.style.setProperty('--menu-scroll-top',-scrollY+'px');}
-  document.body.classList.toggle('mobile-menu-visible',value);backdrop.hidden=!value;main.inert=value;side.inert=false;side.classList.toggle('collapsed',!value);
+  document.body.classList.toggle('mobile-menu-visible',value);document.dispatchEvent(new Event('cicluz-menu-visibility'));backdrop.hidden=!value;main.inert=value;side.inert=false;side.classList.toggle('collapsed',!value);
   openButton.setAttribute('aria-expanded',String(value));side.removeAttribute('aria-hidden');renderMenuToggle(value);closeButton.setAttribute('aria-label',value?'Recolher menu':'Expandir menu');
   if(value){side.setAttribute('role','dialog');side.setAttribute('aria-modal','true');side.setAttribute('aria-label','Menu principal');closeButton.focus();}
   else{side.removeAttribute('role');side.removeAttribute('aria-modal');document.body.style.removeProperty('--menu-scroll-top');window.scrollTo(0,scrollY);if(restoreFocus)openButton.focus();}
