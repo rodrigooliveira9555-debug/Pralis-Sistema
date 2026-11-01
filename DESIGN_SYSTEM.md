@@ -316,3 +316,10 @@ Menu principal ocupa a tela inteira em celular, tablet e computador, ocultando o
 - Paleta única da navegação principal: --navigation-ink, claro#a2a0aa e escuro#9896a1. Títulos Gestão/Agenda/Outros, setas de seções/opções, seta do canto, atalho abrir menu, expansão global, sol/lua e seus contornos derivam desse token. Substitui a leitura de cor de .menu-name por JavaScript. Ícones de módulos e ações internas preservam cores de origem.
 
 - Palavra CICLUZ branca pura#ffffff no tema escuro e escura#242426 no claro. Cor definida no feFlood do filtro SVG compartilhado, sem depender de currentColor herdado fora da marca.
+
+## Modelo consolidado — referências enviadas em31/10
+Substitui cabeçalhos claros e quadros separados: cabeçalhos intensos na cor de origem e texto claro; conteúdo branco arredondado, inclusive com tema escuro no menu. Contornos/divisórias #dedee3 e texto do conteúdo #606066 em fonte Montserrat existente. Listas compactas agrupadas, linhas separadas por divisor fino, pouco respiro vertical. Hover/toque/foco laranja #f97316 com fundo #fff2e8 em todos os módulos. Preservar ícones coloridos, marcas, semântica de excluir e vínculos/eventos existentes. Fonte única ui-foundation.css.
+
+- Revisão final: hover/toque/foco herda a cor original do item/módulo (laranja apenas em Contas). Texto e ícones cinza#606066 em repouso, incluindo Voltar; no cabeçalho intenso ficam sobre pequenas superfícies brancas para contraste. Substitui destaque laranja universal e texto claro de cabeçalho da proposta anterior.
+
+- Conferência desta revisão: Gestão de Pessoas, lista/ficha de Cargos, árvore/diálogo de localização, Visão Geral, Tesouraria e grupos de Contas. Inventário de19 views e18 cabeçalhos normalizados; não equivale à inspeção visual de todas as telas. Componentes compartilhados aplicam a regra também às demais estruturas.
