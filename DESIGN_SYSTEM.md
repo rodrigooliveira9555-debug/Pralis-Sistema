@@ -413,3 +413,6 @@ Lupa circular ao lado do controle de tema, com a mesma cor e dimensão dos contr
 Identificador do cabeçalho com contorno circular branco em Cargos e Área/Setor/Local. Setas laterais de Cargos/lista e prévias usam --navigation-ink, sem herdar a cor do item. Rodapé de Cargos: Salvar. Cadastro completo: primeira etapa só Avançar à direita; intermediárias Voltar/Avançar; última Voltar à esquerda e Salvar+check à direita, com check circular no cabeçalho. Campos do cadastro completo são guardados neste navegador com validação; arquivos não são persistidos e esse limite é informado no formulário.
 
 - Rodapé do cadastro completo: botões com texto e símbolo, “← Voltar” e “Avançar →”, mantendo Salvar/check ao final e ocultando Voltar no início.
+
+## Cadastro de Operadora / Taxas —256
+Decisão atual: contorno branco no ícone do título Taxas por bandeira. Linhas de bandeiras sem espaço vertical nem moldura individual arredondada; divisórias cinza na moldura compartilhada. Botão inicial Adicionar vigência/condição recuado12px nas laterais e embaixo, no alinhamento do conteúdo da linha. Substitui orientação anterior de12px entre quadros e contorno cinza no cabeçalho. Marcas circulares e campos de classificação preservados.

@@ -151,3 +151,8 @@ Validação254: sintaxe de todos os scripts inline e scripts alterados passou; 7
 
 ## Botões nomeados do cadastro —255
 Somente rodapé do cadastro completo: Voltar com seta à esquerda do texto e Avançar com seta à direita. Manter primeira etapa sem Voltar e última com Salvar/check. Cabeçalho circular preservado.
+
+## Cadastro de Operadora / Taxas —256
+Matriz: componente de taxas compartilhado pelos cadastros de operadora, bandeiras fechadas/expandidas e estado sem/com condições. Pedido atual substitui espaçamento12px/contorno cinza: ícone do título com contorno branco, linhas consecutivas sem vãos, botão inicial Adicionar vigência/condição com recuos horizontal e vertical iguais ao padding12px do summary. Preservar campos, marcas, cores de classificação e ações.
+
+Verificação256: removido CSS crítico duplicado após confirmar conteúdo idêntico na folha compartilhada; conferidos seletores dos estados fechado/aberto, botão inicial e margens de12px. Sintaxe de groups.js, script inline e git diff --check passaram. Conferência visual no navegador não realizada nesta revisão; persiste o limite da revisão automática anterior.

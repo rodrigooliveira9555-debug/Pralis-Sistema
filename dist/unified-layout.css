@@ -177,11 +177,6 @@ body:is(.dark-theme,:not(.dark-theme)) #sector-view .location-tree .location-row
  color:#fff!important;
 }
 
-/* Frame every brand in the fees editor, retaining its compact rows. */
-body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees .operator-fee-brand {
- border:1px solid var(--layout-line,#dedee3)!important;
- border-radius:10px!important;margin:8px 0!important;overflow:hidden;
-}
 body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees h3 .fee-header-actions .local-search-toggle {
  color:#fff!important;border:1px solid #fff!important;background:transparent!important;
 }
@@ -207,16 +202,22 @@ body :is(.view,dialog,.modal) .footer-action-pair{display:flex!important;flex-wr
 body .footer-action-pair>.footer-cancel-accent{order:0!important}
 body .footer-action-pair>.footer-save-accent{order:1!important}
 
-/* Fees: isolated spacing and responsive fields for the expanded editor. */
+/* Operator fees: continuous rows and responsive fields for the expanded editor. */
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees > .operator-fee-brand {
- margin:12px 0!important;border:1px solid #a2a0aa!important;border-radius:12px!important;
+ margin:0!important;border:0!important;border-bottom:1px solid var(--layout-line,#dedee3)!important;border-radius:0!important;overflow:hidden;
 }
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .fee-brand-icon {
  width:32px!important;height:32px!important;min-width:32px!important;flex:0 0 32px!important;
  border:1px solid #a2a0aa!important;border-radius:50%!important;aspect-ratio:1;
 }
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees h3 .fee-heading-icon {
- border:1px solid #a2a0aa!important;border-radius:50%!important;box-sizing:border-box;
+ border:1px solid #fff!important;border-radius:50%!important;box-sizing:border-box;
+}
+body #sector-view.financial-groups .operator-fee-brand > p {
+ margin:12px!important;
+}
+body #sector-view.financial-groups .operator-fee-brand > .fee-action {
+ margin:0 12px 12px!important;max-width:calc(100% - 24px);box-sizing:border-box;
 }
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .operator-fee-rule {
  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
