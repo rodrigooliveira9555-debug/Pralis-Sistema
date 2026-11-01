@@ -99,6 +99,21 @@ body.dark-theme #logo-word-contrast feFlood{flood-color:#ffffff}
 body .side .brand-subtitle{color:#343438!important;opacity:1!important}
 body .side .brand-subtitle strong{color:inherit!important;font-weight:600}
 body .side .brand-subtitle span{color:inherit!important;font-weight:400}
+
+/* Marca oficial: arte completa no menu aberto e símbolo no menu recolhido. */
+body .side:not(.collapsed) .brand-logo-wrap{
+  background:url("cicluz-gestao-padaria-logo.png") left center/contain no-repeat!important;
+}
+body .side:not(.collapsed) .brand-logo-wrap>.vector-logo,
+body .side:not(.collapsed) .brand-subtitle{
+  display:none!important;
+}
+body .side.collapsed>.brand>.mini-brand{
+  background:url("cicluz-simbolo.png") center/contain no-repeat!important;
+}
+body .side.collapsed>.brand>.mini-brand>.vector-logo{
+  display:none!important;
+}
 body.dark-theme .side .brand-subtitle{color:#f5f5f7!important}
 
 /* All principal-navigation chevrons share the section-title palette. */
