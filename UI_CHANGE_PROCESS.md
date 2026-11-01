@@ -200,3 +200,10 @@ Verificação263: prévia375px, Cadastro simples e primeira etapa do completo co
 Todas as views, incluindo dashboard Pessoas, Processos e Ficha de Cargos dinâmica. Componente header-normalize: identidade (ícone/título/caminho) acima dos comandos. Botão sem círculo à direita da identidade; recolher oculta identidade, preserva comandos e botão de reabrir. Painel mantém cabeçalho fora do conteúdo rolável. Conferir inventário completo, alternância nos cadastros e menus, largura375px e desktop, comandos e rolagem.
 
 Verificado264: inventário no DOM20/20 views com cabeçalho e botão únicos, incluindo ficha dinâmica. Prévia375px: Ficha de Cargos120px expandido/66px recolhido; título e ícone display:none, comandos flex e reabertura funcionais; busca e retorno preservados. Cargos: conteúdo rolou936px com cabeçalho no topo7px. Menus internos e Cargos abertos. Não foi realizada inspeção visual individual das20 views nem Safari físico.
+
+## Correção265 — título fixo e comandos centralizados
+Contêiner do aplicativo fixo no viewport; documento sem rolagem, conteúdo interno preservado. Cabeçalho não aceita gesto de arraste vertical. Recolhido: uma linha de grade (eliminar segunda linha vazia e gap), centro vertical comum aos comandos e controle; padding equilibra12px de sobreposição do conteúdo. Matriz:20 cabeçalhos via regra compartilhada; conferir Cargos com rolagem e ficha em375px.
+
+Regra265: ao entrar, retornar ou selecionar novamente uma aba pelo menu, título e ícone começam abertos; mudança de destino na view compartilhada também reabre. Não preservar recolhimento entre visitas.
+
+Verificação265:80 casos (20 views ×375/1024px ×claro/escuro) na prévia, expondo cada view e acionando seu botão real. Em todos: identidade/ícone ocultos ao recolher, centros dos comandos e seta coincidentes (delta0px), deslocamento de cabeçalho0px ao rolar conteúdo sintético, conteúdo rolável e página emscrollY0, sem overflow lateral da raiz. Corrigidas team/pre sem content; fixture fora do deploy em tests/header-layout.html. Navegação real Gestão de Pessoas→Ficha→Voltar→Ficha confirmou reabertura automática após recolher. Safari físico segue sem teste.

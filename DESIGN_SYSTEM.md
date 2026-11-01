@@ -439,3 +439,8 @@ Quadro por área com primeira coluna e cabeçalho fixos, cargos nas colunas e ex
 Página e cadastros não devem deslizar horizontalmente; rolagem vertical preservada. Conter conteúdo no painel e limitar larguras dos formulários. Menu: apenas última opção tocada marcada; expansão de ancestrais não equivale a seleção. Matriz: Cadastro simples/completo, editor de cargo, menu principal e submenus. Preservar dados e ordem.
 
 - Cabeçalho264 em todas as abas: duas faixas, identidade completa acima e comandos abaixo. Controle sem círculo à direita recolhe ícone/título/caminho; comandos e controle de reabrir permanecem fixos. Expandir restaura título sem truncamento. Recolhimento é por aba durante a sessão.
+
+## Correção265 — título fixo e comandos centralizados
+Contêiner do aplicativo fixo no viewport; documento sem rolagem, conteúdo interno preservado. Cabeçalho não aceita gesto de arraste vertical. Recolhido: uma linha de grade (eliminar segunda linha vazia e gap), centro vertical comum aos comandos e controle; padding equilibra12px de sobreposição do conteúdo. Matriz:20 cabeçalhos via regra compartilhada; conferir Cargos com rolagem e ficha em375px.
+
+Regra265: ao entrar, retornar ou selecionar novamente uma aba pelo menu, título e ícone começam abertos; mudança de destino na view compartilhada também reabre. Não preservar recolhimento entre visitas.

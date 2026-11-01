@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><title>Verificação de cabeçalhos</title>
+<button id="run">Conferir todos os cabeçalhos</button><pre id="results">Aguardando</pre><iframe title="Prévia móvel" src="../dist/index.html" style="width:375px;height:760px;border:1px solid #ccc"></iframe>
+<script>
+const frame=document.querySelector('iframe'),output=document.querySelector('#results');
+const settle=()=>Promise.resolve();
+document.querySelector('#run').onclick=async()=>{
+ output.textContent='Conferindo';const d=frame.contentDocument,w=frame.contentWindow,results=[];
+ const views=[...d.querySelectorAll('.view')],shown=views.filter(v=>v.classList.contains('show')),theme=d.body.classList.contains('dark-theme');
+ const menu=d.body.classList.contains('mobile-menu-visible');d.body.classList.remove('mobile-menu-visible');d.querySelector('.main').inert=false;
+ for(const width of [375,1024]){frame.style.width=width+'px';await settle();
+ for(const dark of [false,true]){d.body.classList.toggle('dark-theme',dark);
+ for(const view of views){views.forEach(v=>v.classList.toggle('show',v===view));const head=view.querySelector(':scope>.panel>.head'),content=view.querySelector(':scope>.panel>.content'),toggle=head?.querySelector('.header-identity-toggle');
+ if(!toggle||!content){results.push({id:view.id,width,dark,error:'Cabeçalho ou conteúdo ausente'});continue}
+ const collapsed=head.classList.contains('header-identity-collapsed');if(collapsed)toggle.click();await settle();
+ const full=head.getBoundingClientRect().height;toggle.click();await settle();
+ const tools=head.querySelector('.shortcut-actions'),identity=head.querySelector('.header-identity'),icon=head.querySelector('.sector-icon'),t=toggle.getBoundingClientRect(),r=tools.getBoundingClientRect(),hr=head.getBoundingClientRect();
+ const spacer=d.createElement('div');spacer.style.cssText='height:2000px;flex:0 0 2000px';spacer.setAttribute('aria-hidden','true');content.append(spacer);await settle();const before=head.getBoundingClientRect().top;content.scrollTop=400;await settle();
+ results.push({id:view.id,width,dark,identityHidden:w.getComputedStyle(identity).display==='none',iconHidden:w.getComputedStyle(icon).display==='none',centerDelta:Math.round(Math.abs((r.top+r.height/2)-(t.top+t.height/2))*10)/10,headerShift:Math.round(Math.abs(head.getBoundingClientRect().top-before)*10)/10,contentScrolled:content.scrollTop>0,pageScroll:w.scrollY,rootOverflow:d.documentElement.scrollWidth>d.documentElement.clientWidth,full:Math.round(full),compact:Math.round(hr.height)});
+ output.textContent='Conferindo '+results.length+'/80';spacer.remove();content.scrollTop=0;toggle.click();if(collapsed)toggle.click();await settle();
+ }
+ }}
+ views.forEach(v=>v.classList.toggle('show',shown.includes(v)));d.body.classList.toggle('dark-theme',theme);if(menu){d.body.classList.add('mobile-menu-visible');d.querySelector('.main').inert=true}
+ frame.style.width='375px';output.textContent=JSON.stringify(results,null,2);
+};
+</script>

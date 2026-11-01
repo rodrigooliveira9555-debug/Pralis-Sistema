@@ -316,5 +316,9 @@ body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-f
 
 /* Title collapse uses the same specificity as the approved header component. */
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head.header-identity-collapsed :is(.sector-icon,.config-inherit-icon,.header-identity){display:none!important}
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head.header-identity-collapsed>.shortcut-actions{grid-column:1/3!important;grid-row:1!important;display:flex!important;align-items:center;justify-content:flex-end;gap:5px;width:100%;flex-wrap:wrap}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head.header-identity-collapsed>.shortcut-actions{grid-column:1/3!important;grid-row:1!important;display:flex!important;align-items:center;align-self:center;justify-content:flex-end;gap:5px;width:100%;flex-wrap:wrap}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head.header-identity-collapsed>.fixed-header-tools{grid-row:2!important}
+
+/* One row when collapsed; balance padding around the visible command band. */
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head.header-identity-collapsed{grid-template-rows:auto!important;row-gap:0!important;padding:10px 14px 22px!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head.header-identity-collapsed>.header-identity-toggle{align-self:center}
