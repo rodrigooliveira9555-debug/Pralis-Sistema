@@ -72,7 +72,7 @@ body .side.collapsed>.side-controls>.menu-layout-toggle{margin:0!important}
 /* Marca aberta: o início da arte acompanha o ícone do usuário no rodapé. */
 body .side:not(.collapsed)>.brand{
   padding-left:0!important;
-  margin-left:-10px!important;
+  margin-left:-2px!important;
 }
 body .side:not(.collapsed) .brand-logo-wrap{
   position:relative;
@@ -115,6 +115,18 @@ body .side .brand-subtitle span{color:inherit!important;font-weight:400}
 body .side:not(.collapsed) .brand-logo-wrap{
   background:url("cicluz-gestao-padaria-logo.png") left center/contain no-repeat!important;
 }
+/* Nome e subtítulo usam o mesmo cinza de navegação, sem alterar o símbolo colorido. */
+body .side:not(.collapsed) .brand-logo-wrap::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:2;
+  background:var(--navigation-ink,#a2a0aa);
+  -webkit-mask:url("cicluz-gestao-padaria-logo.png") left center/contain no-repeat;
+  mask:url("cicluz-gestao-padaria-logo.png") left center/contain no-repeat;
+  clip-path:inset(0 0 0 29%);
+}
 /* Luz percorre o eixo da fita: contorna os laços e atravessa as diagonais do símbolo. */
 body .side:not(.collapsed) .brand-logo-wrap .logo-path-light{
   position:absolute;
@@ -124,8 +136,9 @@ body .side:not(.collapsed) .brand-logo-wrap .logo-path-light{
   height:50px;
   pointer-events:none;
   z-index:1;
-  mix-blend-mode:screen;
+  mix-blend-mode:color-dodge;
 }
+body .side:not(.collapsed) .brand-logo-wrap .logo-path-light rect{opacity:.94}
 body .side:not(.collapsed) .brand-logo-wrap>.vector-logo,
 body .side:not(.collapsed) .brand-subtitle{
   display:none!important;
@@ -137,6 +150,7 @@ body .side.collapsed>.brand>.mini-brand>.vector-logo{
   display:none!important;
 }
 body.dark-theme .side .brand-subtitle{color:#f5f5f7!important}
+body .side .sidebar-user{margin-left:10px}
 @media (prefers-reduced-motion:reduce){
   body .side:not(.collapsed) .brand-logo-wrap .logo-path-light{display:none}
 }
