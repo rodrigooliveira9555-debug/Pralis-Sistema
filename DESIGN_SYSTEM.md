@@ -416,3 +416,8 @@ Identificador do cabeçalho com contorno circular branco em Cargos e Área/Setor
 
 ## Cadastro de Operadora / Taxas —256
 Decisão atual: contorno branco no ícone do título Taxas por bandeira. Linhas de bandeiras sem espaço vertical nem moldura individual arredondada; divisórias cinza na moldura compartilhada. Botão inicial Adicionar vigência/condição recuado12px nas laterais e embaixo, no alinhamento do conteúdo da linha. Substitui orientação anterior de12px entre quadros e contorno cinza no cabeçalho. Marcas circulares e campos de classificação preservados.
+
+## Moldura das bandeiras —257
+Taxas por bandeira: moldura cinza visível envolvendo todas as linhas contíguas. Cantos superiores da primeira linha e inferiores da última arredondados12px, acompanhando a ordem/filtragem atual. Cabeçalho vermelho com cantos inferiores14px simétricos ao topo do painel. Divisórias internas simples e nenhum vão entre linhas.
+
+Ícones da relação de taxas seguem o identificador de Tipos de Bandeiras Cartões, reutilizando a resolução compartilhada: marca original, SVG personalizado ou3 caracteres. Círculos30px com marca contida e recuo4px.

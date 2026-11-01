@@ -156,3 +156,10 @@ Somente rodapé do cadastro completo: Voltar com seta à esquerda do texto e Ava
 Matriz: componente de taxas compartilhado pelos cadastros de operadora, bandeiras fechadas/expandidas e estado sem/com condições. Pedido atual substitui espaçamento12px/contorno cinza: ícone do título com contorno branco, linhas consecutivas sem vãos, botão inicial Adicionar vigência/condição com recuos horizontal e vertical iguais ao padding12px do summary. Preservar campos, marcas, cores de classificação e ações.
 
 Verificação256: removido CSS crítico duplicado após confirmar conteúdo idêntico na folha compartilhada; conferidos seletores dos estados fechado/aberto, botão inicial e margens de12px. Sintaxe de groups.js, script inline e git diff --check passaram. Conferência visual no navegador não realizada nesta revisão; persiste o limite da revisão automática anterior.
+
+## Moldura das bandeiras —257
+Matriz: Taxas por bandeira no Cadastro de Operadora, linhas fechadas/expandidas, lista ordenada ou filtrada. Restaurar moldura cinza contínua em todas as linhas; primeira visível com borda superior/cantos superiores12px, última visível com cantos inferiores12px. Sem vãos e sem bordas duplas. Título com cantos inferiores14px, simétricos aos superiores do painel. Preservar contorno branco e recuo do botão256.
+
+Escopo257 ampliado pelo usuário: ícones na relação de taxas reutilizam a mesma resolução de identificador de Tipos de Bandeiras Cartões (marca, SVG escolhido ou3 caracteres), dimensão circular30px e padding4px.
+
+Verificação257: sintaxe de groups.js e git diff --check passaram. Teste da resolução compartilhada passou para marca de bandeira, SVG personalizado, fallback, marca escolhida de operadora e3 caracteres. Seletores de primeira/última linha visível conferidos estruturalmente; inspeção visual pendente pelo limite anterior de navegador.
