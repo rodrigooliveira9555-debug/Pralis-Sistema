@@ -421,3 +421,6 @@ Decisão atual: contorno branco no ícone do título Taxas por bandeira. Linhas 
 Taxas por bandeira: moldura cinza visível envolvendo todas as linhas contíguas. Cantos superiores da primeira linha e inferiores da última arredondados12px, acompanhando a ordem/filtragem atual. Cabeçalho vermelho com cantos inferiores14px simétricos ao topo do painel. Divisórias internas simples e nenhum vão entre linhas.
 
 Ícones da relação de taxas seguem o identificador de Tipos de Bandeiras Cartões, reutilizando a resolução compartilhada: marca original, SVG personalizado ou3 caracteres. Círculos30px com marca contida e recuo4px.
+
+## Taxas — cores258
+Relação de bandeiras: contorno e símbolos SVG/texto em vermelho#ef4444, mesmo círculo30px de Tipos de Bandeiras; cores das logomarcas preservadas. Condições: quadros Grupo de Despesa e Grupo de Contas inteiramente preenchidos com vermelho#ef4444 e laranja#f97316, respectivamente. Títulos/subtítulo, símbolos e contorno circular brancos. Seletores continuam brancos para leitura. Substitui fundo branco dos quadros de classificação.

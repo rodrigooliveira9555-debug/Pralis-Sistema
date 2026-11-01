@@ -163,3 +163,8 @@ Matriz: Taxas por bandeira no Cadastro de Operadora, linhas fechadas/expandidas,
 Escopo257 ampliado pelo usuário: ícones na relação de taxas reutilizam a mesma resolução de identificador de Tipos de Bandeiras Cartões (marca, SVG escolhido ou3 caracteres), dimensão circular30px e padding4px.
 
 Verificação257: sintaxe de groups.js e git diff --check passaram. Teste da resolução compartilhada passou para marca de bandeira, SVG personalizado, fallback, marca escolhida de operadora e3 caracteres. Seletores de primeira/última linha visível conferidos estruturalmente; inspeção visual pendente pelo limite anterior de navegador.
+
+## Cores nas taxas —258
+Matriz: ícones da relação Taxas por bandeira e quadros Grupo de Despesa/Grupo de Contas nas condições novas ou existentes. Anel/símbolos de bandeiras em vermelho#ef4444 no padrão de Tipos de Bandeiras; marcas preservam cores originais. Quadros maciços vermelho#ef4444/laranja#f97316, títulos/subtítulo/símbolos brancos e anel branco. Seletores internos brancos, medidas e vínculos preservados.
+
+Verificação258: diff conferido, alterações restritas às cores do componente de taxas e versões dos estilos; git diff --check passou. Regras de ambos os estados de label (incluindo single-field-block) atualizadas, mantendo seletores legíveis. Conferência visual pendente pelo limite anterior do navegador.

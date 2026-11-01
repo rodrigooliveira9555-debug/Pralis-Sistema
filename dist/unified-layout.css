@@ -215,7 +215,7 @@ body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-f
 }
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .fee-brand-icon {
  width:30px!important;height:30px!important;min-width:30px!important;flex:0 0 30px!important;
- border:1px solid #a2a0aa!important;border-radius:50%!important;aspect-ratio:1;
+ border:1px solid #ef4444!important;border-radius:50%!important;aspect-ratio:1;color:#ef4444!important;background:#fff!important;
 }
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees h3 .fee-heading-icon {
  border:1px solid #fff!important;border-radius:50%!important;box-sizing:border-box;
@@ -248,18 +248,23 @@ body #sector-view .operator-fees .fee-classification-heading{flex-wrap:wrap;whit
  body #sector-view .operator-fees .fee-classification{grid-template-columns:minmax(0,1fr)!important}
 }
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .operator-fee-rule .fee-classification>label{
- border:1px solid var(--field-accent)!important;border-radius:10px!important;background:#fff!important;
+ border:1px solid var(--field-accent)!important;border-radius:10px!important;background:var(--field-accent)!important;color:#fff!important;
 }
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .fee-classification .fee-expense-field{--field-accent:#ef4444}
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .fee-classification .fee-account-field{--field-accent:#f97316}
-body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .fee-classification .fee-classification-heading{color:var(--field-accent)!important}
+body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees .fee-classification .fee-classification-heading{color:#fff!important}
 /* These are intentional grouped frames, including the shared single-field reset. */
 body:is(.dark-theme,:not(.dark-theme)) #sector-view#sector-view#sector-view .operator-fees .fee-classification>label.single-field-block{
  border:1px solid var(--field-accent)!important;border-radius:10px!important;
- background:#fff!important;padding:10px!important;box-sizing:border-box;
+ background:var(--field-accent)!important;color:#fff!important;padding:10px!important;box-sizing:border-box;
 }
 body #sector-view .operator-fees .fee-classification{align-items:stretch!important}
 body #sector-view .operator-fees .fee-classification>label{justify-content:space-between}
+body #sector-view.financial-groups .operator-fees .fee-classification .fee-classification-icon{
+ border:1px solid #fff!important;background:transparent!important;color:#fff!important;
+}
+body #sector-view.financial-groups .operator-fees .fee-classification .fee-account-title small{color:#fff!important;opacity:1}
+
 
 /* Salary uses the Cargos identity rows, with an independent aligned value column. */
 body:is(.dark-theme,:not(.dark-theme)) #salary-view .salary-row{
