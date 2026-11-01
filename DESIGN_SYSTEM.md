@@ -388,3 +388,6 @@ Busca salarial recolhida, aberta apenas pela lupa do cabeçalho; usar componente
 
 ## Salvar pelo cabeçalho —244
 Check circular branco no cabeçalho das telas de cadastro/edição com ação Salvar e da Atualização salarial. O atalho aciona o botão Salvar existente, conserva validações e estado desabilitado e não muda a ação inferior. Remover ao sair do editor. Verificar cadastro de grupo, diálogo de Área/Local e validação salarial sem gravar dados.
+
+## Sem Editar no cabeçalho —245
+Remover o alternador Editar organograma do cabeçalho; ações de editar permanecem por posição e o organograma inicia com essas ações disponíveis. Check Salvar no cabeçalho preservado. Verificar cabeçalho sem Editar e formulário de posição.
