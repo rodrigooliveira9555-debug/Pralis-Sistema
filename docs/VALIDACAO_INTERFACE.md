@@ -44,3 +44,7 @@ Essas conferências verificam estruturas e comportamentos compartilhados. Não r
 
 ## Revisão308 — tema e rodapé do usuário
 Prévia390x844: alternância pelo botão real Luz/Sombra e navegação pelas20 estruturas de tela, mais destinos despesas, mercadorias, retiradas, vendas e contas. Superfície e rodapé escuros rgb(34,33,40), texto rgb(242,241,246), campos visíveis dos cadastros rgb(48,47,55). Retorno ao claro confirmado. Cabeçalho principal de Pessoas mantém texto branco. Rodapé do usuário58px, avatar32px, alinhamento vertical ao centro; recuo8px móvel e14px em1024x844. Preservadas as regras307 de cadastros, etapas e calendário; sem nova alteração nesses componentes. Navegador de prévia, sem aparelho físico.
+
+
+## Revisão309 — alinhamento do menu
+Prévia390x844 e1024x844: avatar32px em x28, igual à origem da faixa colorida e do antigo primeiro círculo; grupo superior à direita com borda final em361px/995px, igual ao fim roxo da faixa. Rodapé permanece58px, centro do avatar em815px, espaçamento8px entre círculos. Alteração restrita ao menu principal.

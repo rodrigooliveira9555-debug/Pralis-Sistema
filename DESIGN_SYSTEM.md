@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Revisão309 — alinhamento do menu
+O avatar e nome do usuário começam no mesmo eixo esquerdo dos controles anteriores e da faixa colorida: padding lateral do menu +10px. Os três controles superiores ficam agrupados à direita, com a borda do último círculo alinhada ao fim roxo da faixa. Preservar ordem, funções, tamanho32px, rodapé58px e busca8px/8px.
+
 ## Revisão308 — tema compartilhado e rodapé do usuário
 O botão Luz/Sombra do menu governa as superfícies neutras de todas as telas internas e diálogos, campos, cartões, listas, tabelas, busca e rodapé. Preservar identidade colorida dos cabeçalhos, texto branco, cores semânticas e marcas. Rodapé do usuário: altura mínima58px, avatar32px, centro vertical igual à barra interna, recuos14px desktop/8px até600px, respeitando safe-area. A faixa inferior acompanha o tema; a superior acompanha a identidade visível ou a superfície do menu.
 

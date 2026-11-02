@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Revisão309 — alinhamento pontual
+Matriz restrita ao menu principal em390px e1024px: alinhar avatar à origem esquerda da faixa/antigo primeiro controle; mover três círculos à direita até a extremidade roxa. Verificar medidas, busca e preservação do rodapé58px/ícones32px.
+
 ## Revisão308 — tema e rodapé do menu
 Concluir pedidos posteriores à307: mesmo tema Luz/Sombra em todas as20 estruturas e diálogos, mantendo cabeçalhos por origem, texto branco e cores de identificação; rodapé do usuário com a mesma altura mínima58px e símbolo32px/centro horizontal do rodapé interno, recuos14px desktop e8px móvel. Conferir alternância pelo botão real, navegação com tema ativo, busca e rodapés. Manter as correções de307 para formulários/etapas/calendário.
 
