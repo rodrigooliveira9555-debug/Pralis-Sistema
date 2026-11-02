@@ -1,24 +1,28 @@
 (()=>{
- const root=document.documentElement,mobile=matchMedia('(max-width:760px)');
+ const root=document.documentElement,mobile=matchMedia('(max-width:760px), (hover:none) and (pointer:coarse)');
  const top=document.createElement('div'),bottom=document.createElement('div');
  top.className='mobile-top-edge-fill';bottom.className='mobile-bottom-edge-fill';
  top.setAttribute('aria-hidden','true');bottom.setAttribute('aria-hidden','true');document.body.append(top,bottom);
- const existingTheme=document.querySelector('meta[name="theme-color"]'),theme=existingTheme||document.createElement('meta');
- const previousTheme=existingTheme?.getAttribute('content')||null;
- if(!existingTheme){theme.name='theme-color';document.head.append(theme)}
- const transparent=value=>!value||value==='transparent'||value==='rgba(0, 0, 0, 0)';
- function colour(element){for(let current=element;current;current=current.parentElement){const value=getComputedStyle(current).backgroundColor;if(!transparent(value))return value}return '#ffffff'}
+ let theme=document.querySelector('meta[name="theme-color"]');
+ if(!theme){theme=document.createElement('meta');theme.name='theme-color';document.head.prepend(theme)}
+ function hex(value){const match=value.match(/^rgba?\((\d+)[, ]+(\d+)[, ]+(\d+)/);return match?'#'+match.slice(1,4).map(n=>Number(n).toString(16).padStart(2,'0')).join(''):value}
+ function colour(element){for(let current=element;current;current=current.parentElement){const value=getComputedStyle(current).backgroundColor;if(value&&value!=='transparent'&&value!=='rgba(0, 0, 0, 0)')return hex(value)}return '#ffffff'}
  function update(){
-  if(!mobile.matches){if(previousTheme!==null)theme.setAttribute('content',previousTheme);else theme.removeAttribute('content');return}
   const menu=document.body.classList.contains('mobile-menu-visible');
-  const head=document.querySelector('.view.show>.panel>.head');
-  const active=menu?document.querySelector('.side'):head?.getClientRects().length?head:null;
-  const value=active?colour(active):'#ffffff';
+  const view=document.querySelector('.view.show'),head=view?.querySelector(':scope>.panel>.head');
+  const people=view?.id==='sector-view'&&view.querySelector('#sector-title')?.textContent.trim()==='Gestão de Pessoas';
+  let value='#ffffff';
+  if(!menu&&head?.getClientRects().length){
+   value=people?'#7c3aed':colour(head);
+   if(people&&view.style.getPropertyValue('--menu-accent')!=='#7c3aed')view.style.setProperty('--menu-accent','#7c3aed');
+  }
   if(root.style.getPropertyValue('--mobile-top-fill')!==value)root.style.setProperty('--mobile-top-fill',value);
-  if(theme.getAttribute('content')!==value)theme.setAttribute('content',value);
+  document.querySelectorAll('meta[name="theme-color"]').forEach(meta=>{meta.removeAttribute('media');if(meta.getAttribute('content')!==value)meta.setAttribute('content',value)});
+  if(mobile.matches&&root.style.getPropertyValue('background-color')!==value)root.style.setProperty('background-color',value,'important');
  }
  let scheduled=false;function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;update()})}
- new MutationObserver(records=>{if(records.some(record=>record.target!==root&&record.target!==theme))schedule()}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden']});
- mobile.addEventListener('change',schedule);window.addEventListener('resize',schedule);window.addEventListener('pageshow',schedule);document.addEventListener('cicluz-menu-visibility',schedule);document.addEventListener('transitionend',schedule,true);
+ new MutationObserver(schedule).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden']});
+ new MutationObserver(schedule).observe(document.head,{subtree:true,childList:true,attributes:true,attributeFilter:['content','media']});
+ mobile.addEventListener('change',schedule);window.addEventListener('resize',schedule);window.addEventListener('pageshow',schedule);document.addEventListener('visibilitychange',schedule);document.addEventListener('cicluz-menu-visibility',schedule);document.addEventListener('transitionend',schedule,true);
  update();
 })();

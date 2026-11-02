@@ -148,6 +148,13 @@ body #sector-view.people-header-pilot .people-date-panel label{display:grid;gap:
 body #sector-view.people-header-pilot .people-date-panel input{width:100%;min-width:0;box-sizing:border-box;height:42px;padding:8px;border:1px solid var(--layout-line,#dedee3);border-radius:8px;background:#fff;color:var(--layout-ink,#606066);font:inherit;font-size:16px}
 body #sector-view.people-header-pilot .people-date-message{margin:0;font-size:11px}
 body #sector-view.people-header-pilot .people-date-actions{display:flex;gap:8px;flex-wrap:wrap}
+body #sector-view.people-header-pilot .people-bottom-header .people-date-panel{position:fixed;bottom:var(--date-bottom,72px);right:max(10px,env(safe-area-inset-right,0px));left:auto;top:auto;transform:none;width:268px;max-width:calc(100vw - 20px);padding:10px;border-radius:10px;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;overflow-x:hidden;touch-action:pan-y;background:#fff!important;box-shadow:none}
+body #sector-view.people-header-pilot .people-date-panel label{font-size:11px;line-height:15px;gap:3px;min-width:0;color:var(--layout-ink,#606066)}
+body #sector-view.people-header-pilot .people-bottom-header .people-date-panel input{height:32px!important;min-height:32px!important;width:100%!important;max-width:100%;padding:3px!important;font-size:16px!important;border:1px solid var(--layout-line,#dedee3)!important;border-radius:6px!important;line-height:24px}
+body #sector-view.people-header-pilot .people-date-message{grid-column:1/-1}
+body #sector-view.people-header-pilot .people-date-message:empty{display:none}
+body #sector-view.people-header-pilot .people-date-actions{grid-column:1/-1;justify-content:center;gap:14px}
+body #sector-view.people-header-pilot .people-bottom-header .people-date-panel .people-date-actions button{flex:0 0 30px!important;width:30px!important;height:30px!important;padding:5px!important;border:0!important;border-radius:50%!important;background:#fff!important;color:var(--navigation-ink,#a1a0a8)!important;box-shadow:none!important}
 body #sector-view.people-header-pilot .people-bottom-header .people-date-actions button{width:auto;height:36px;flex:1 1 auto;padding:6px 10px;border-radius:8px;font:inherit}
 @media(max-width:600px){
  body #sector-view.people-header-pilot .people-bottom-header.people-search-open>.people-search-toggle{order:2;margin-left:0}
