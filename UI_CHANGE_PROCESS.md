@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Correção móvel e tema escuro — 02/11/2026
+Reabrir validação anterior: data salarial cortada em120px; títulos dos grupos16px comparados ao cabeçalho interno Taxas14px; Gestão ainda dentro da área rolável; rótulos de formulário repintados no escuro. Matriz:320/390/1024px, claro/escuro, rolagem por toque, busca e expansão do menu, data e valor com estilos/geometria compartilhados, títulos comparados ao cabeçalho interno correto, formulários simples/completo/patrimônio e foco contido, Voltar vazado/Avançar preenchido na cor da origem. Cor segue o ícone clicado, incluindo itens financeiros com cor personalizada. Versionar URLs de assets alterados por conteúdo para evitar reutilização da versão anterior.
+
 ## Matriz — alinhamentos, opções e origem (02/11/2026)
 Atualização salarial: alinhar data e coluna monetária em390/1024px. Operadoras: títulos dos dois grupos de classificação usam os mesmos tokens do cabeçalho, com subtítulo separado. Rodapé compartilhado: conferir todas as20 estruturas, Gestão de Pessoas e Diretor de Operação, opções de personalização completas, marca à esquerda e ações à direita, mesmo recuo do identificador superior. Origem: navegar pelos grupos de Gestão e descendentes, preservando cor do destino quando o próprio item tem identidade específica. Verificar temas, busca, reabertura, ausência de erros e validação nativa sem salvar dados reais.
 

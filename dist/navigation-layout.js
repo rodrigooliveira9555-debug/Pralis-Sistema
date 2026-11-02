@@ -5,6 +5,7 @@
  const controls=top.querySelector('.side-controls');if(controls){side.insertBefore(controls,side.querySelector('.nav'));const toggle=document.getElementById('toggleMenu');if(toggle){toggle.classList.add('menu-layout-toggle');side.prepend(toggle)}}
  const divider=document.createElement('div');divider.className='menu-top-divider';divider.setAttribute('aria-hidden','true');side.insertBefore(divider,controls||side.querySelector('.nav'));
  const menuToggle=document.getElementById('toggleMenu');if(controls&&menuToggle)controls.append(menuToggle);
+ const management=side.querySelector('[data-section="management"]');if(management){management.classList.add('menu-management-heading');side.insertBefore(management,side.querySelector('.nav'))}
  const user=document.createElement('div');user.className='sidebar-user';user.setAttribute('aria-label','Usuário: Rodrigo Oliveira');
  const avatar=top.querySelector('.avatar');if(avatar)user.append(avatar);
  const name=document.createElement('span');name.className='sidebar-user-name';name.textContent='Rodrigo Oliveira';user.append(name);footer.append(user);side.append(footer);
@@ -91,7 +92,7 @@
 
 // Main-menu search is transient: it never survives leaving the menu.
 (()=>{
- const side=document.querySelector('.side'),tree=side?.querySelector('.nav-tree'),controls=side?.querySelector('.side-controls');
+ const side=document.querySelector('.side'),tree=side?.querySelector('.nav-tree'),controls=side?.querySelector('.side-controls'),management=side?.querySelector('.menu-management-heading');
  if(!tree||!controls)return;
  const button=document.createElement('button');button.type='button';button.className='tree-control menu-search-toggle';
  button.title='Buscar no menu';button.setAttribute('aria-label','Abrir busca no menu');button.setAttribute('aria-expanded','false');button.setAttribute('aria-pressed','false');
@@ -105,7 +106,7 @@
  function restore(){if(!original)return;for(const [el,state]of original){el.hidden=state.hidden;if(el.tagName==='DETAILS')el.open=state.open;el.classList.toggle('sidebar-section-hidden',state.sectionHidden)}original=null;status.hidden=true;status.textContent=''}
  function filter(){const query=fold(input.value);if(!query){restore();return}
   const roots=[...tree.children],entries=[...tree.querySelectorAll('.children>button')];
-  if(!original)original=new Map([...new Set([...roots,...entries])].map(el=>[el,{hidden:el.hidden,open:el.open,sectionHidden:el.classList.contains('sidebar-section-hidden')}]));
+  if(!original)original=new Map([...new Set([...roots,...entries,...(management?[management]:[])])].map(el=>[el,{hidden:el.hidden,open:el.open,sectionHidden:el.classList.contains('sidebar-section-hidden')}]));
   let count=0;
   for(const root of roots){if(root.classList.contains('sidebar-section-toggle'))continue;
    root.classList.remove('sidebar-section-hidden');
@@ -117,6 +118,7 @@
    }else{root.hidden=!fold(root.textContent).includes(query);if(!root.hidden)count++}
   }
   for(let i=0;i<roots.length;i++)if(roots[i].classList.contains('sidebar-section-toggle')){let visible=false;for(let j=i+1;j<roots.length&&!roots[j].classList.contains('sidebar-section-toggle');j++)if(!roots[j].hidden)visible=true;roots[i].hidden=!visible}
+  if(management){const end=roots.findIndex(el=>el.classList.contains('sidebar-section-toggle'));management.hidden=!roots.slice(0,end<0?roots.length:end).some(el=>!el.hidden)}
   status.hidden=count>0;status.textContent=count?'':'Nenhuma opção encontrada.';
  }
  function close(){restore();input.value='';box.hidden=true;button.setAttribute('aria-expanded','false');button.setAttribute('aria-pressed','false');button.setAttribute('aria-label','Abrir busca no menu');button.title='Buscar no menu'}

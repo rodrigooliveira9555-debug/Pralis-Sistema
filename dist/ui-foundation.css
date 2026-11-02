@@ -1,5 +1,5 @@
 /* Single role-based type and form scale. Edit these tokens, not individual screens. */
-:root{--ui-font:Montserrat,system-ui,sans-serif;--ui-title:16px;--ui-title-line:20px;--ui-subtitle:11px;--ui-subtitle-line:14px;--ui-text:14px;--ui-input-size:14px;--ui-text-line:18px;--ui-note:11px;--ui-field-height:42px;--ui-field-radius:8px;--ui-title-weight:600;--ui-header-tint:14%;--ui-border-tint:25%;--ui-hover-tint:8%;--ui-focus-tint:14%}
+:root{--ui-font:Montserrat,system-ui,sans-serif;--ui-title:16px;--ui-title-line:20px;--ui-subtitle:11px;--ui-subtitle-line:14px;--ui-text:14px;--ui-input-size:14px;--ui-text-line:18px;--ui-note:11px;--ui-field-height:42px;--ui-field-radius:8px;--ui-title-weight:600;--ui-section-title:14px;--ui-section-title-line:20px;--ui-section-title-weight:600;--ui-header-tint:14%;--ui-border-tint:25%;--ui-hover-tint:8%;--ui-focus-tint:14%}
 body .view>.panel>.head h2,body #sector-view .panel>.head h2,body #jobs-view .panel>.head h2,body #salary-view .panel>.head h2{font-family:var(--ui-font)!important;font-size:var(--ui-title)!important;font-weight:var(--ui-title-weight)!important;line-height:var(--ui-title-line)!important;letter-spacing:normal!important}
 body .view>.panel>.head p{font-family:var(--ui-font)!important;font-size:var(--ui-subtitle)!important;font-weight:400!important;line-height:var(--ui-subtitle-line)!important;letter-spacing:normal!important}
 body .view .form-fields,body .view .form-demo .content,body .view .account-editor,body .location-dialog form{font-family:var(--ui-font);font-size:var(--ui-text);line-height:var(--ui-text-line)}
@@ -29,7 +29,7 @@ body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) textarea{min-height:84px!important;resize:vertical}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input,textarea)::placeholder{font:inherit!important;color:var(--ui-placeholder)!important;opacity:1}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input,select,textarea):where(:not([type=checkbox])):where(:not([type=radio])):where(:not([type=color])):where(:not([type=range])):hover:where(:not(:disabled)){border-color:color-mix(in srgb,var(--ui-control-accent) 50%,var(--ui-border-base))!important}
-body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input,select,textarea):where(:not([type=checkbox])):where(:not([type=radio])):where(:not([type=color])):where(:not([type=range])):focus{border-color:var(--ui-control-accent)!important;outline:none!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--ui-control-accent) var(--ui-focus-ring),transparent)!important}
+body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input,select,textarea):where(:not([type=checkbox])):where(:not([type=radio])):where(:not([type=color])):where(:not([type=range])):focus{border-color:var(--ui-control-accent)!important;outline:none!important;box-shadow:var(--ui-focus-shadow,0 0 0 3px color-mix(in srgb,var(--ui-control-accent) var(--ui-focus-ring),transparent))!important}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input,select,textarea):disabled{opacity:.6;cursor:not-allowed}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input,select,textarea)[aria-invalid=true]{border-color:#ef4444!important}
 
@@ -125,7 +125,7 @@ body :is(.view,dialog) .identity-advanced>summary{width:100%;box-sizing:border-b
 body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-library,.account-icon-options,.extra-library){justify-content:flex-start;align-content:flex-start;margin:4px 0 0!important}
 
 /* Classification cards share the system title and subtitle roles. */
-body #sector-view .operator-fees :is(.fee-classification-heading,.fee-classification-title){font:var(--ui-title-weight) var(--ui-title)/var(--ui-title-line) var(--ui-font)!important;letter-spacing:normal!important}
+body #sector-view .operator-fees :is(h3,.fee-classification-heading,.fee-classification-title){font:var(--ui-section-title-weight) var(--ui-section-title)/var(--ui-section-title-line) var(--ui-font)!important;letter-spacing:normal!important}
 body #sector-view .operator-fees .fee-account-title small{font:400 var(--ui-subtitle)/var(--ui-subtitle-line) var(--ui-font)!important;letter-spacing:normal!important}
 
 /* Mobile input scale: prevent focus magnification without disabling pinch zoom. */

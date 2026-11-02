@@ -1,5 +1,12 @@
 # CICLUZ — referência de interface
 
+## Correção de referência e tema escuro — 02/11/2026
+Substitui os detalhes conflitantes da validação anterior. Data salarial mantém type=date, calendário e máscara própria; compartilha a mesma regra de caixa dos valores: altura42px, raio8px, padding10px, borda1px e alinhamento à direita. Mesma coluna nas duas áreas, com largura móvel entre140 e160px para não cortar a data. Grupo de Despesa/Grupo de Contas usam os tokens de título de seção14/20px, peso600, iguais ao cabeçalho interno Taxas por bandeira; não comparar esses títulos com o cabeçalho principal16px.
+
+Gestão é um controle fixo fora de .nav; somente os itens do menu aceitam rolagem, preservando busca e expandir/recolher. Não depender de sticky dentro da área de toque para esta faixa. Cor de destino vem do ícone/cartão anterior; cores financeiras personalizadas também são respeitadas, e a faixa móvel não força roxo em Gestão de Pessoas.
+
+Tema escuro: o rótulo de um campo simples permanece transparente sobre o fundo geral; somente o input/select/textarea recebe a superfície de preenchimento. Foco e contorno ficam dentro da célula, sem halo externo. Formulário completo: Voltar transparente com borda/símbolo na cor da origem, Avançar preenchido nessa cor com símbolo branco. Não alterar máscaras de dados, validações ou valores armazenados.
+
 ## Alinhamentos, opções e origem — 02/11/2026
 Atualização salarial: data e valores usam a mesma largura de coluna, intervalo e recuos, incluindo a borda da lista;160px desktop e120px até600px. Operadoras: Grupo de Despesa e Grupo de Contas recebem título explícito com os tokens compartilhados de título, preservando o subtítulo Transferências Automáticas. Cabeçalhos superiores também usam esses tokens, sem escala local divergente.
 

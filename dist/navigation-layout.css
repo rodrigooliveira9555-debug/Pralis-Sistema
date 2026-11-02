@@ -166,9 +166,9 @@ body .side .sidebar-user{margin-left:10px}
 
 /* All principal-navigation chevrons share the section-title palette. */
 body .side .nav-tree summary::after{color:var(--navigation-ink)}
-/* Gestão stays visible while the native menu scroller moves its entries. */
-body .side .nav-tree>.sidebar-section-toggle:first-child{position:sticky;top:0;z-index:25;background:#fff!important}
-body.dark-theme .side .nav-tree>.sidebar-section-toggle:first-child{background:#222128!important}
+/* Gestão is outside the touch scroller, so even scroll-edge gestures cannot move it. */
+body .side>.menu-management-heading{flex:none;position:static;display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;border:0;background:transparent;padding:12px 10px 5px;margin:0 0 3px;color:var(--navigation-ink);font:650 12px var(--ui-font);letter-spacing:.4px;cursor:pointer}
+body .side>.menu-management-heading[hidden]{display:none!important}
 body .mobile-menu-open{color:var(--navigation-ink)!important;border-color:currentColor}
 
 /* Navigation landing screens take the available area; the menu button reopens the sidebar. */

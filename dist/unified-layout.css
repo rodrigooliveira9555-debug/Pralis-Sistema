@@ -109,7 +109,7 @@ body:is(.dark-theme,:not(.dark-theme)) dialog.transfer-dialog form>.actions>butt
 /* A single outer field frame; no nested input frames inside white editor blocks. */
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-editor,.form-fields,#job-form) :is(label,.job-identity,.account-identity,.account-status){border-color:var(--layout-line)!important;box-shadow:none!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-editor,#job-form)>:is(.job-identity,.account-identity){padding:12px!important;border-radius:10px!important}
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-editor,.form-fields,#job-form)>:is(label,.job-identity,.account-identity):focus-within{border-color:var(--navigation-ink,#a2a0aa)!important;outline:2px solid color-mix(in srgb,var(--navigation-ink,#a2a0aa) 22%,transparent);outline-offset:1px}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-editor,.form-fields,#job-form)>:is(label,.job-identity,.account-identity):focus-within{border-color:var(--navigation-ink,#a2a0aa)!important;outline:2px solid color-mix(in srgb,var(--navigation-ink,#a2a0aa) 22%,transparent);outline-offset:var(--ui-focus-offset,1px)}
 
 /* Card-brand fees follow the same continuous framed layout. */
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees{background:var(--layout-gap)!important;border:1px solid var(--layout-line)!important;border-radius:14px!important;padding:0 12px 12px!important;overflow:hidden}
@@ -148,7 +148,7 @@ body #salary-view .salary-row[hidden],body #salary-view #salary-search[hidden]{d
 /* Cross-tab review: plain labels around one framed information field. */
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view#sector-view,#job-edit,#job-form,.view,dialog,.modal) .single-field-block.single-field-block.single-field-block{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0!important;padding:0!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view#sector-view,#job-edit,#job-form,.view,dialog,.modal) .single-field-block.single-field-block.single-field-block :is(input,select,textarea){border:1px solid var(--layout-line)!important;border-radius:var(--ui-field-radius)!important;box-shadow:none!important}
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view#sector-view,#job-edit,#job-form,.view,dialog,.modal) .single-field-block.single-field-block.single-field-block :is(input,select,textarea):focus-visible{border-color:var(--navigation-ink,#a2a0aa)!important;outline:2px solid #a2a0aa38!important;outline-offset:1px}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view#sector-view,#job-edit,#job-form,.view,dialog,.modal) .single-field-block.single-field-block.single-field-block :is(input,select,textarea):focus-visible{border-color:var(--navigation-ink,#a2a0aa)!important;outline:2px solid #a2a0aa38!important;outline-offset:var(--ui-focus-offset,1px)}
 body .view :is(.job-main,.job-copy,.job-copy>b,.location-name,.account-list-row>b,.salary-job-identity){font-family:var(--ui-font)!important;font-size:var(--ui-text)!important;line-height:var(--ui-text-line)!important;color:var(--layout-ink)!important;text-align:left!important;letter-spacing:normal!important}
 body .view :is(.job-copy>b,.location-name,.account-list-row>b){font-weight:500!important}
 body .view :is(.job-item,.salary-row,.account-list-row,.location-row){margin-top:0!important;margin-bottom:0!important;border-color:var(--layout-line)!important}
@@ -276,12 +276,12 @@ body:is(.dark-theme,:not(.dark-theme)) #salary-view .salary-row{
 body #salary-view .salary-job-identity{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
 body #salary-view .job-copy{display:flex;flex-direction:column;gap:4px;min-width:0;overflow-wrap:anywhere}
 body #salary-view .job-copy small{color:var(--navigation-ink,#a2a0aa);font-size:11px;line-height:1.5}
-body #salary-view .salary-row input{width:100%!important;min-width:0!important;max-width:var(--salary-value-width);box-sizing:border-box;height:42px!important;margin:0!important;padding:10px!important;text-align:right}
+body #salary-view :is(.salary-row,.salary-heading) input{width:100%!important;min-width:0!important;min-inline-size:0!important;max-width:var(--salary-value-width);box-sizing:border-box;height:var(--ui-field-height)!important;margin:0!important;padding:10px!important;border:1px solid var(--layout-line)!important;border-radius:var(--ui-field-radius)!important;text-align:right}
 body #salary-view .salary-heading{display:grid!important;grid-template-columns:minmax(0,1fr) var(--salary-value-width)!important;align-items:end;gap:var(--salary-column-gap)!important;padding:0 calc(var(--salary-row-inset) + 1px);box-sizing:border-box}
 body #salary-view .salary-heading label,body #salary-view .salary-heading input{width:100%!important;min-width:0;box-sizing:border-box}
 body #salary-view .form-actions{margin-top:20px}
 @media(max-width:600px){
- body #salary-view{--salary-value-width:120px;--salary-row-inset:10px;--salary-column-gap:10px}
+ body #salary-view{--salary-value-width:clamp(140px,40vw,160px);--salary-row-inset:10px;--salary-column-gap:10px}
 }
 /* Location action drawers stay on one line and open inside their own row. */
 body #sector-view .location-tree .location-node>.location-row{
