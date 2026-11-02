@@ -1,0 +1,30 @@
+/* One neutral palette follows the existing Luz/Sombra preference on every screen. */
+:root{--theme-surface:#fff;--theme-card:#fff;--theme-field:#fff;--screen-footer-height:58px;--screen-footer-icon:32px}
+body.dark-theme{--theme-surface:#222128;--theme-card:#2d2b34;--theme-field:#302f37;--layout-gap:#222128;--layout-line:#4a4851;--layout-ink:#f2f1f6;--ui-control-bg:#302f37;--ui-input-color:#f2f1f6;--ui-label-color:#d4d4d8;--ui-placeholder:#aaa7b3;--ui-border-base:#4a4851}
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell{--ui-control-bg:var(--theme-field);--ui-input-color:var(--layout-ink);--ui-label-color:#d4d4d8;--ui-border-base:var(--layout-line);color:var(--layout-ink)}
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel,
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content{background:var(--layout-gap)!important;color:var(--layout-ink)!important}
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content :is(.card,.process,.record,.dep-card,.job-item,.salary-row,.account-editor,.location-row,.job-identity,.account-identity,.icon-live-preview,.doc-first,.form-note,.identity-advanced,.location-tree,.operator-fees,.location-identity,.location-preview-card,.job-preview,.salary-item,.next-card,.record-grid,.profiles-info,.profiles-section,.account-field-group,.account-status,.form-fields>label,form.account-editor>label,#job-form>label){background:var(--theme-card)!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content :is(input:not([type=color]):not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea){background:var(--theme-field)!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important;color-scheme:dark}
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content :is(table,thead,tbody,tr,td,th){background-color:var(--theme-card)!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content :is(.record b,.record small,.card-arrow,.job-copy b,.job-copy small,.account-list-state,.location-name,.profiles-note){color:var(--layout-ink)!important}
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header,
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-toolbar-options,
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-compact :is(.people-options-heading,.people-options-inner,.people-toolbar-row),
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header>.fixed-header-tools{background:var(--theme-surface)!important;border-color:var(--layout-line)!important}
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell :is(.people-options-inner,.people-toolbar-row){background:var(--theme-card)!important}
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-heading::after{background:var(--theme-surface)}
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search>input{background:var(--theme-field)!important;color:var(--layout-ink)!important;color-scheme:dark}
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header::before{background:radial-gradient(circle at 100% 0,transparent 19.5px,var(--theme-surface) 20px)}
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header::after{background:radial-gradient(circle at 0 0,transparent 19.5px,var(--theme-surface) 20px)}
+body.dark-theme :is(dialog,.dialog).shell-dialog.app-screen-shell{background:var(--theme-surface)!important}
+body.dark-theme .mobile-bottom-edge-fill{background:var(--theme-surface)}
+body.dark-theme .app{background:var(--theme-surface)!important}
+body.dark-theme:not(.mobile-menu-visible):has(.view.app-screen-shell.show) .main{background:var(--layout-gap)!important}
+/* Menu account footer shares the screen footer's dimensions and safe-area insets. */
+body .side{--menu-side-left:max(18px,env(safe-area-inset-left,0px));--menu-side-right:max(18px,env(safe-area-inset-right,0px));--account-footer-inset:14px;padding-bottom:0!important}
+body .side .sidebar-footer{box-sizing:border-box;flex:0 0 auto;display:flex;flex-direction:column;justify-content:center;min-height:var(--screen-footer-height);gap:0;margin:0 calc(-1 * var(--menu-side-right)) 0 calc(-1 * var(--menu-side-left));width:calc(100% + var(--menu-side-left) + var(--menu-side-right));padding:8px max(var(--account-footer-inset),env(safe-area-inset-right,0px)) max(8px,env(safe-area-inset-bottom,0px)) max(var(--account-footer-inset),env(safe-area-inset-left,0px));background:var(--theme-surface);border:0}
+body .side .sidebar-user{height:var(--screen-footer-icon);min-height:var(--screen-footer-icon);margin:0;padding:0;gap:10px;align-items:center}
+body .side .sidebar-user .avatar{box-sizing:border-box;flex:0 0 var(--screen-footer-icon);width:var(--screen-footer-icon);height:var(--screen-footer-icon);min-height:var(--screen-footer-icon);padding:0}
+body .side .sidebar-footer::before{left:calc(var(--menu-side-left) + 10px);right:calc(var(--menu-side-right) + 10px)}
+@media(max-width:600px){body .side{--account-footer-inset:8px}}

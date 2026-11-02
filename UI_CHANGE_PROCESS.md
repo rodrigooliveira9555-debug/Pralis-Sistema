@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Revisão308 — tema e rodapé do menu
+Concluir pedidos posteriores à307: mesmo tema Luz/Sombra em todas as20 estruturas e diálogos, mantendo cabeçalhos por origem, texto branco e cores de identificação; rodapé do usuário com a mesma altura mínima58px e símbolo32px/centro horizontal do rodapé interno, recuos14px desktop e8px móvel. Conferir alternância pelo botão real, navegação com tema ativo, busca e rodapés. Manter as correções de307 para formulários/etapas/calendário.
+
 ## Matriz307 — cadastros, etapas e calendário
 Revisar os20 shells, oito editores financeiros e diálogos compartilhados, além das quatro etapas do cadastro completo. Corrigir gap herdado de form-demo no painel, preservar recorte arredondado sem permitir pintura de campos na faixa de identidade. Etapas em quatro colunas iguais com círculos estáveis e nomes contidos. Calendário disponível em todas as abas internas; sem datas explícitas, informar ausência de registros datados. Recuos14px desktop/8px celular a partir da barra inferior e lateral, respeitando safe-area e viewport visual. Testar cabeçalho aberto/oculto, rolagem, calendário abrir/limpar/fechar e claro/escuro.
 

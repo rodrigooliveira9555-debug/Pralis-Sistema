@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Revisão308 — tema compartilhado e rodapé do usuário
+O botão Luz/Sombra do menu governa as superfícies neutras de todas as telas internas e diálogos, campos, cartões, listas, tabelas, busca e rodapé. Preservar identidade colorida dos cabeçalhos, texto branco, cores semânticas e marcas. Rodapé do usuário: altura mínima58px, avatar32px, centro vertical igual à barra interna, recuos14px desktop/8px até600px, respeitando safe-area. A faixa inferior acompanha o tema; a superior acompanha a identidade visível ou a superfície do menu.
+
 ## Revisão307 — encaixe dos cadastros e calendário
 O shell não herda o row-gap dos formulários: gap0 entre cabeçalho, conteúdo e rodapé. Somente a superfície arredondada do conteúdo faz o recorte visual de12px; seus filhos ficam recortados no contêiner rolável e isolados. Preservar padding14px e curvas20px. Etapas do cadastro completo em quatro colunas iguais, círculos32px no celular/42px no computador, rótulos pelo token de subtítulo, quebra contida e indicação aria-current=step. Calendário disponível por padrão em todas as abas internas e diálogos, incluindo editores; escolhas de personalização existentes são preservadas. Não atribuir datas a registros: sem datas explícitas, informar ausência de registros datados. Janela fixa com14px de recuo desktop/8px até600px, medidos da lateral e do topo da barra inferior. Recalcular pelos limites reais do rodapé, safe-area, visualViewport, rotação e redimensionamento; limitar largura e altura ao espaço disponível sem invadir a identidade.
 
