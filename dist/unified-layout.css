@@ -178,7 +178,7 @@ body:is(.dark-theme,:not(.dark-theme)) #sector-view .location-tree .location-row
 }
 
 body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees h3 .fee-header-actions .local-search-toggle {
- color:#fff!important;border:1px solid #fff!important;background:transparent!important;
+ color:var(--navigation-ink)!important;border:1px solid var(--navigation-ink)!important;background:var(--theme-surface,#fff)!important;
 }
 body #sector-view .operator-fees .local-search-control:has(>input[hidden]) {display:none!important}
 
@@ -190,10 +190,12 @@ body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button.footer-sa
  background:var(--menu-accent,var(--panel-color,#7c3aed))!important;color:#fff!important;
  border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;
 }
-body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button.footer-cancel-accent:not(:disabled) {
- background:#fff!important;color:var(--menu-accent,var(--panel-color,#7c3aed))!important;
+body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button:is(.footer-cancel-accent,.form-back-action):not(:disabled) {
+ background:transparent!important;color:var(--menu-accent,var(--panel-color,#7c3aed))!important;
  border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;
 }
+body :is(.view,dialog,.modal) button.form-next-action:not(:disabled){background:var(--menu-accent,var(--panel-color,#7c3aed))!important;border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;color:#fff!important;box-shadow:none!important}
+body :is(.view,dialog,.modal) button:is(.footer-save-accent,.footer-cancel-accent,.form-back-action,.form-next-action):disabled{background:transparent!important;border:1px solid var(--navigation-ink)!important;color:var(--navigation-ink)!important;box-shadow:none!important}
 
 body :is(.view,dialog,.modal) :is(.footer-save-accent,.footer-cancel-accent){display:inline-flex!important;align-items:center;justify-content:center;gap:8px}
 body .footer-action-icon{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}

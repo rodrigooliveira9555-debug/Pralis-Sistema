@@ -34,6 +34,12 @@ body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input,select,textarea)[aria-invalid=true]{border-color:#ef4444!important}
 
 /* Uniform heading roles, including nested overview panels and dynamic dialogs. */
+/* Bound the native date renderer as well as its outer box (notably on Safari). */
+body :is(.view,dialog,.modal) input[type=date]{display:block;appearance:none;-webkit-appearance:none;inline-size:100%;max-inline-size:100%;min-inline-size:0!important;min-width:0!important;max-width:100%;box-sizing:border-box!important;overflow:hidden;text-overflow:clip;color-scheme:var(--ui-color-scheme,light)}
+body :is(.view,dialog,.modal) input[type=date]::-webkit-date-and-time-value{min-width:0;max-width:100%;text-align:inherit;margin:0;padding:0}
+body :is(.view,dialog,.modal) input[type=date]::-webkit-datetime-edit{min-width:0;padding:0;overflow:hidden}
+body :is(.view,dialog,.modal) input[type=date]::-webkit-calendar-picker-indicator{flex:0 0 18px;width:18px;height:18px;margin:0;opacity:.65}
+body :is(.view,dialog,.modal) :is(input[type=checkbox],input[type=radio]){color-scheme:var(--ui-color-scheme,light)}
 body :is(.view,dialog,.modal) .head h2,body :is(dialog,.modal) h2,body :is(dialog,.modal) h3{font:600 var(--ui-title)/var(--ui-title-line) var(--ui-font)!important;color:var(--panel-text,var(--ui-purple-title))!important;letter-spacing:normal!important}
 body :is(.view,dialog,.modal) .head p{font:400 var(--ui-subtitle)/var(--ui-subtitle-line) var(--ui-font)!important;color:color-mix(in srgb,var(--panel-text,var(--ui-purple-title)) 75%,white)!important}
 body.dark-theme :is(.view,dialog,.modal) .head h2,body.dark-theme :is(dialog,.modal) :is(h2,h3){color:color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 35%,white)!important}

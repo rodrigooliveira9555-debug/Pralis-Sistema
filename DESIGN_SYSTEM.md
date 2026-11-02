@@ -1,5 +1,12 @@
 # CICLUZ — referência de interface
 
+## Campos contidos e controles neutros — 02/11/2026
+Substitui círculos inferiores maciços e símbolos brancos: controles do cabeçalho inferior, métricas, personalização, checks e avatar do usuário ficam vazados, com borda/símbolo no cinza --navigation-ink e interior mostrando o fundo atual. Preservar a arte multicolorida da marca. Estados pressionados/expandidos não introduzem placas brancas.
+
+Datas mantêm máscara/calendário nativos e recebem a mesma caixa dos campos: altura42px, raio8px, borda1px; limitar também min-inline-size, conteúdo interno WebKit e largura ao contêiner, incluindo dependentes, admissão e vigências. Calendário compacto do rodapé mantém altura própria32px. No escuro, superfície, cartões e campos usam o mesmo fundo escuro; só a borda delimita o preenchimento, sem halo fora da célula. Select/checkbox/calendário seguem color-scheme do tema; taxas e busca não mantêm campos ou controles brancos.
+
+Cancelar e Voltar são transparentes em ambos os temas; Salvar e Avançar usam o acento quando ativos e ficam transparentes quando desabilitados. Contas aplica a cor laranja do cartão no contêiner e painel, eliminando a cor residual da tela anterior. Busca inicial tem a mesma largura/eixo da faixa colorida e8px entre faixa/campo e campo/texto Gestão, sem somar padding do título.
+
 ## Correção de referência e tema escuro — 02/11/2026
 Substitui os detalhes conflitantes da validação anterior. Data salarial mantém type=date, calendário e máscara própria; compartilha a mesma regra de caixa dos valores: altura42px, raio8px, padding10px, borda1px e alinhamento à direita. Mesma coluna nas duas áreas, com largura móvel entre140 e160px para não cortar a data. Grupo de Despesa/Grupo de Contas usam os tokens de título de seção14/20px, peso600, iguais ao cabeçalho interno Taxas por bandeira; não comparar esses títulos com o cabeçalho principal16px.
 

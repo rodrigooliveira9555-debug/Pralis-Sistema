@@ -167,7 +167,7 @@ body .side .sidebar-user{margin-left:10px}
 /* All principal-navigation chevrons share the section-title palette. */
 body .side .nav-tree summary::after{color:var(--navigation-ink)}
 /* Gestão is outside the touch scroller, so even scroll-edge gestures cannot move it. */
-body .side>.menu-management-heading{flex:none;position:static;display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;border:0;background:transparent;padding:12px 10px 5px;margin:0 0 3px;color:var(--navigation-ink);font:650 12px var(--ui-font);letter-spacing:.4px;cursor:pointer}
+body .side>.menu-management-heading{flex:none;position:static;display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;border:0;background:transparent;padding:12px 10px 5px;margin:0 0 3px;color:var(--navigation-ink);font:650 12px/18px var(--ui-font);letter-spacing:.4px;cursor:pointer}
 body .side>.menu-management-heading[hidden]{display:none!important}
 body .mobile-menu-open{color:var(--navigation-ink)!important;border-color:currentColor}
 
@@ -187,7 +187,7 @@ body.mobile-menu-visible .side{min-height:0!important;overscroll-behavior:contai
 body.mobile-menu-visible .side>.nav{min-height:0!important;flex:1 1 0!important;overflow-y:auto!important;touch-action:pan-y;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;pointer-events:auto}
 body.mobile-menu-visible .side>.nav :is(summary,button,a){touch-action:pan-y}
 body.mobile-menu-visible .side>.nav :is(.drag-handle,.menu-item-move){touch-action:none}
-body .side>.menu-search-box{flex:none;padding:0 0 8px;min-width:0}
+body .side>.menu-search-box{flex:none;padding:8px var(--menu-rail-inset);min-width:0}
 body .side>.menu-search-box[hidden],body .side .nav-tree [hidden]{display:none!important}
 body .side .menu-search-box input{box-sizing:border-box;width:100%;min-width:0;height:var(--ui-field-height,42px);border:1px solid var(--navigation-ink);border-radius:var(--ui-field-radius,8px);padding:10px 12px;font:400 var(--ui-input-size,14px)/20px var(--ui-font);background:#fff;color:#27272a}
 body.dark-theme .side .menu-search-box input{background:#302f37;color:#f5f5f7}
@@ -212,3 +212,6 @@ body .view.show>.panel>.head.header-identity-collapsed[data-header-standard=yes]
 body .view.show>.panel>.head.header-identity-collapsed>.header-identity-toggle{grid-row:1;align-self:center}
 .header-identity-collapsed>.header-identity-toggle svg{transform:rotate(180deg)}
 body .view.show>.panel>.head.header-identity-collapsed>.fixed-header-tools{grid-row:2}
+
+/* Search shares the spectrum bounds and equal space above/below its field. */
+body .side:has(>.menu-search-box:not([hidden]))>.menu-management-heading{padding-top:0}

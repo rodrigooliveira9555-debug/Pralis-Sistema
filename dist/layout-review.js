@@ -6,6 +6,7 @@
   document.querySelectorAll('button.standard-form-action,.view button,dialog button,.modal button').forEach(button=>{
    if(button.closest('.head,.location-dialog-header,.organogram-editor-header,.people-bottom-header'))return;
    const text=button.textContent.trim();
+   if(button.closest('.form-actions')){if((/^Voltar(?:\s|$)/i.test(text)||button.id==='prev-step')&&!button.classList.contains('form-back-action'))button.classList.add('form-back-action');if((/^Avançar(?:\s|$)/i.test(text)||button.id==='next-step')&&!button.classList.contains('form-next-action'))button.classList.add('form-next-action')}
    if(/^Salvar(?:\s+.*)?$/.test(text)&&!button.classList.contains('footer-save-accent'))button.classList.add('footer-save-accent');
    if(text==='Cancelar'&&!button.classList.contains('footer-cancel-accent'))button.classList.add('footer-cancel-accent');
    if(button.matches('.footer-save-accent,.footer-cancel-accent')&&!button.querySelector('.footer-action-icon')){

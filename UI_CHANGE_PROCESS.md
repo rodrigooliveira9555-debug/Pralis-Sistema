@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Matriz — campos nativos e controles vazados (02/11/2026)
+Pedido atual substitui círculos cinza maciços/símbolos brancos dos rodapés. Conferir todas as20 estruturas em claro/escuro: controles inferiores transparentes, borda/símbolo cinza de navegação, avatar igual, marca preservada. Datas: simples, etapas/dependentes, patrimônio, salários, vigências de operadoras e calendário; caixas nativas contidas. Formulários: repouso/foco/rolagem, select/checkbox/status, taxas/busca, Cancelar/Voltar transparentes e Salvar/Avançar preenchidos somente quando ativos. Contas herda o laranja do cartão anterior sem acento residual. Busca inicial: limites horizontais da linha colorida e8px acima/abaixo até Gestão. Testar Chromium e WebKit quando disponível; emulação não substitui aparelho físico.
+
 ## Correção móvel e tema escuro — 02/11/2026
 Reabrir validação anterior: data salarial cortada em120px; títulos dos grupos16px comparados ao cabeçalho interno Taxas14px; Gestão ainda dentro da área rolável; rótulos de formulário repintados no escuro. Matriz:320/390/1024px, claro/escuro, rolagem por toque, busca e expansão do menu, data e valor com estilos/geometria compartilhados, títulos comparados ao cabeçalho interno correto, formulários simples/completo/patrimônio e foco contido, Voltar vazado/Avançar preenchido na cor da origem. Cor segue o ícone clicado, incluindo itens financeiros com cor personalizada. Versionar URLs de assets alterados por conteúdo para evitar reutilização da versão anterior.
 
