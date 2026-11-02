@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Menu principal — marca, controles e rolagem (02/11/2026)
+Faixa colorida imediatamente após a marca: preservar o respiro superior e usar o mesmo respiro visual até a faixa. Três círculos e seta sem círculo de expandir/recolher ficam à direita da palavra CICLUZ, acima da faixa, centralizados verticalmente entre o topo da tela e a faixa. Manter círculos32px, seta24px e intervalo8px entre controles. Esta orientação substitui a fileira abaixo da faixa. Gestão fica fixo no topo da área rolável; os itens continuam com rolagem nativa. Preservar busca, tema, expansão e usuário fixo no rodapé.
+
 ## Revisão309 — alinhamento do menu
 O avatar e nome do usuário começam no mesmo eixo esquerdo dos controles anteriores e da faixa colorida: padding lateral do menu +10px. Os três controles superiores ficam agrupados à direita, com a borda do último círculo alinhada ao fim roxo da faixa. Preservar ordem, funções, tamanho32px, rodapé58px e busca8px/8px.
 

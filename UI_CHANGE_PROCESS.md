@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Matriz — menu principal (02/11/2026)
+Escopo: marca/faixa, fileira dos três círculos e seta, Gestão fixo na rolagem. Conferir menu em390px/1024px, claro/escuro, busca aberta/fechada, expansão/recolhimento e usuário fixo. Fonte compartilhada: navigation-layout.js/css; não altera telas internas. Faixa sobe de132px para92px. Correção solicitada: controles acima da faixa, à direita de CICLUZ, centro46px entre topo0 e faixa92px, intervalos8px. Gestão mantém posição ao rolar.
+
 ## Revisão309 — alinhamento pontual
 Matriz restrita ao menu principal em390px e1024px: alinhar avatar à origem esquerda da faixa/antigo primeiro controle; mover três círculos à direita até a extremidade roxa. Verificar medidas, busca e preservação do rodapé58px/ícones32px.
 
