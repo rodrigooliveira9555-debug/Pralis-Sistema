@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Padrão vigente de todas as telas internas —305
+O usuário autorizou a extensão integral do padrão de Gestão de Pessoas às demais telas, fichas e diálogos, excluindo o menu principal. A especificação vigente está em docs/DOSSIE_INTERFACE.md, com inventário e registro em docs/VALIDACAO_INTERFACE.md. Substitui as limitações anteriores de piloto: identidade intensa recolhível, rodapé branco fixo, marca32px, círculos32px e SVG20px, menu de personalização reordenável/compacto, busca na barra móvel, calendário colorido e afastamentos14/8px. Preservar cores por origem, ações nativas e validações. O componente compartilhado usa app-screen-shell e mantém os nomes de arquivo do piloto para continuidade. Ações opcionais só aparecem quando se aplicam ao conteúdo. Menu principal recebeu somente o ajuste de busca8px/8px solicitado separadamente.
+
 - Busca do menu principal:8px entre o campo e os círculos acima e8px entre o campo e a faixa colorida abaixo, sem somar o padding inferior dos controles ao padding superior da busca.
 
 - Menu de data em Gestão de Pessoas: afastamentos direito e inferior iguais ao --footer-inset do menu de personalização (14px desktop, 8px até600px), medidos a partir da lateral e da linha superior do cabeçalho inferior. Posição fixa preservada.

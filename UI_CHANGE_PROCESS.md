@@ -1,5 +1,10 @@
 # Processo de alterações de interface
 
+## Padrão compartilhado de Gestão de Pessoas —305
+Autorização: estender toda a dinâmica aprovada às telas internas, excluindo o menu principal. Fonte inicial: publicação303, complementada pelo ajuste de busca304. Matriz antes da implementação:20 views (19 estáticas e Ficha de Cargos dinâmica), destinos de sector-view (navegação,8 cadastros financeiros, localização, organograma, editores), diálogos de cadastro/histórico/confirmação. Reutilizar o componente do piloto; preservar ações nativas, validações, dados, hierarquias e cores por origem. Registrar inventário, especificação e limites em docs/DOSSIE_INTERFACE.md. Conferência por estrutura e navegação real; não confundir número de estruturas com número de registros.
+
+Conferência305:31 destinos em390x844 e1024x844, cobrindo20 estruturas; um rodapé por tela,58px, sem overflow lateral do conteúdo. Oito editores financeiros também abertos no móvel. Busca nativa, validação de Salvar, calendário8px/8px, personalização e compacto60px testados. Tabelas largas contidas e margens negativas de cabeçalhos de diálogos corrigidas. Dossiê e validação em docs/. Nenhum dado real gravado ou excluído; sem aparelho físico.
+
 ## Busca do menu —304
 Somente espaçamento vertical da busca no menu principal. Distâncias de referência medidas antes:16px acima/4px abaixo. Corrigir para8px/8px, preservando dimensões, filtro, cores e navegação. Demais mudanças de interface solicitadas em seguida excluem o menu principal.
 
