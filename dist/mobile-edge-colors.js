@@ -12,7 +12,7 @@
   const view=document.querySelector('.view.show'),head=view?.querySelector(':scope>.panel>.head');
   const people=view?.id==='sector-view'&&view.querySelector('#sector-title')?.textContent.trim()==='Gestão de Pessoas';
   let value='#ffffff';
-  if(!menu&&head?.getClientRects().length){
+  if(!menu&&head){
    value=people?'#7c3aed':colour(head);
    if(people&&view.style.getPropertyValue('--menu-accent')!=='#7c3aed')view.style.setProperty('--menu-accent','#7c3aed');
   }

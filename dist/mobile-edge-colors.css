@@ -1,9 +1,10 @@
 .mobile-top-edge-fill,.mobile-bottom-edge-fill{display:none}
 @media(max-width:760px), (hover:none) and (pointer:coarse){
  html{background:var(--mobile-top-fill,#fff)!important}
- body,body .app{background:#fff!important}
+ body{background:var(--mobile-top-fill,#fff)!important}
+ body .app{background:#fff!important}
  body:is(.dark-theme,:not(.dark-theme)) .main{background:linear-gradient(to bottom,var(--mobile-top-fill,#fff) 0 max(6px,env(safe-area-inset-top,0px)),var(--layout-gap,#f5f5f7) max(6px,env(safe-area-inset-top,0px)) calc(100% - max(16px,env(safe-area-inset-bottom,0px))),#fff calc(100% - max(16px,env(safe-area-inset-bottom,0px))) 100%)!important}
  .mobile-top-edge-fill,.mobile-bottom-edge-fill{display:block;position:fixed;left:0;right:0;pointer-events:none;z-index:200}
- .mobile-top-edge-fill{top:0;height:env(safe-area-inset-top,0px);background:var(--mobile-top-fill,#fff)}
- .mobile-bottom-edge-fill{bottom:0;height:env(safe-area-inset-bottom,0px);background:#fff}
+ .mobile-top-edge-fill{top:0;height:max(6px,env(safe-area-inset-top,0px));background:var(--mobile-top-fill,#fff)}
+ .mobile-bottom-edge-fill{bottom:0;height:max(6px,env(safe-area-inset-bottom,0px));background:#fff}
 }
