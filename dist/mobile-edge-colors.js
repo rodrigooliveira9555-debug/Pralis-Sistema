@@ -9,6 +9,7 @@
  function colour(element){for(let current=element;current;current=current.parentElement){const value=getComputedStyle(current).backgroundColor;if(value&&value!=='transparent'&&value!=='rgba(0, 0, 0, 0)')return hex(value)}return '#ffffff'}
  function update(){
   const menu=document.body.classList.contains('mobile-menu-visible');
+  const scheme=document.body.classList.contains('dark-theme')?'dark':'light';if(root.style.colorScheme!==scheme)root.style.colorScheme=scheme;
   const view=document.querySelector('.view.show'),head=view?.querySelector(':scope>.panel>.head');
   let value=document.body.classList.contains('dark-theme')?'#222128':'#ffffff';
   const topHidden=view?.classList.contains('people-top-hidden')||head?.hidden||head&&getComputedStyle(head).display==='none';

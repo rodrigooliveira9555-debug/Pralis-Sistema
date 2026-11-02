@@ -22,7 +22,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-head
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell :is(.content) .record[hidden]{display:none!important}
 @media(max-width:480px){body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search:not([hidden]){order:-1;flex-basis:100%;max-width:none}}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header button{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;padding:5px;border:0;background:transparent;color:var(--navigation-ink,#a1a0a8);border-radius:50%;cursor:pointer}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header button:not(.people-header-toggle):not(.people-home-logo):not(.people-toolbar-choice){border:1px solid var(--navigation-ink,#a1a0a8);background:transparent;color:var(--navigation-ink,#a1a0a8)}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header button:not(.people-header-toggle):not(.people-home-logo):not(.people-toolbar-choice){border:1px solid var(--navigation-ink,#a1a0a8);background:var(--navigation-ink,#a1a0a8);color:var(--theme-surface,#fff)}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-home-logo{padding:0;width:32px;height:32px;border:0;background:transparent}
@@ -32,7 +32,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-top-hidden .
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-top-hidden>.panel>.head+.content{margin-top:0!important}
 
 /* Solid circles, with the symbol revealing the header's own colour. */
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.head :is(.sector-icon,.config-inherit-icon,.shortcut-circle,.mobile-menu-open){background:#fff!important;border-color:#fff!important;color:var(--menu-accent,var(--panel-color,#7c3aed))!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.head :is(.sector-icon,.config-inherit-icon,.shortcut-circle,.mobile-menu-open){background:var(--navigation-ink)!important;border-color:var(--navigation-ink)!important;color:var(--menu-accent,var(--panel-color,#7c3aed))!important}
 @media(max-width:600px){
  body:not(.mobile-menu-visible):has(:is(#sector-view,.view,dialog,.dialog).app-screen-shell:is(.show,[open])) .main{padding:0!important;margin:0!important;width:100%!important;height:100%!important;max-width:none!important}
  body :is(#sector-view,.view,dialog,.dialog).app-screen-shell:is(.show,[open]){width:100%!important;height:100%!important;margin:0!important}
@@ -51,7 +51,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-head
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-bottom-extras>button:first-child{position:relative;padding:5px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-search-outline{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;fill:none;stroke:none;z-index:2;overflow:visible}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search input{border-radius:8px!important;border-color:transparent;position:relative}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header button:not(.people-header-toggle):not(.people-home-logo):not(.people-toolbar-choice):is([aria-pressed=true],[aria-expanded=true],.people-click-feedback){background:transparent;color:var(--navigation-ink,#a1a0a8);border-color:var(--navigation-ink,#a1a0a8);box-shadow:none}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header button:not(.people-header-toggle):not(.people-home-logo):not(.people-toolbar-choice):is([aria-pressed=true],[aria-expanded=true],.people-click-feedback){background:var(--navigation-ink,#a1a0a8);color:var(--theme-surface,#fff);border-color:var(--navigation-ink,#a1a0a8);box-shadow:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-zoom-control{font:600 8px/1 var(--ui-font);white-space:nowrap;padding:0}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-content-zoomed :is(.content)>.record-grid{zoom:1.8}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-content-narrow :is(.content)>.record-grid{width:80%!important;margin-left:auto!important;margin-right:auto!important}
@@ -62,7 +62,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-toolbar-opt
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-toolbar-options>b{font-size:12px;padding:4px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-choice{display:flex;align-items:center;gap:10px;flex:none;width:100%;height:auto;min-height:40px;padding:5px 8px;border:0;border-radius:8px;background:#f5f5f7;color:var(--layout-ink,#606066);box-shadow:none;text-align:left;font:400 12px/18px var(--ui-font);opacity:.5}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-choice[aria-pressed=true]{opacity:1;background:#eeedf1;box-shadow:none}
-.people-option-symbol{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:50%;border:1px solid var(--navigation-ink,#a1a0a8);box-sizing:border-box;background:transparent;color:var(--navigation-ink,#a1a0a8);font-size:10px;font-weight:600}
+.people-option-symbol{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:50%;border:1px solid var(--navigation-ink,#a1a0a8);box-sizing:border-box;background:var(--navigation-ink,#a1a0a8);color:var(--theme-surface,#fff);font-size:10px;font-weight:600}
 .people-option-check{margin-left:auto;visibility:hidden}
 [aria-pressed=true]>.people-option-check{visibility:visible}
 @media(max-width:600px){
@@ -78,18 +78,18 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-search-togg
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tools{margin-left:0;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;flex-wrap:nowrap;padding:2px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tools::-webkit-scrollbar{display:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-metric-control,
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-option-symbol.people-metric-control{background:transparent!important;border-color:var(--navigation-ink)!important;color:var(--navigation-ink)!important;font:600 8px/1 var(--ui-font);white-space:nowrap;padding:0}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-option-symbol.people-metric-control{background:var(--navigation-ink)!important;border-color:var(--navigation-ink)!important;color:var(--theme-surface,#fff)!important;font:600 8px/1 var(--ui-font);white-space:nowrap;padding:0}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-metric-control[aria-pressed=true]{box-shadow:none!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options{right:var(--footer-inset);bottom:calc(100% + var(--footer-inset));width:340px;max-width:calc(100% - 2 * var(--footer-inset));padding:0;gap:0;overflow-x:hidden;border-radius:14px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-toolbar-options>b{padding:12px 14px;font-weight:600;font-size:12px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-toolbar-row{display:flex;align-items:center;min-height:48px;gap:0;border-top:1px solid var(--layout-line,#dedee3);padding:4px 8px;background:#fff}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-row button{border:0!important;box-shadow:none!important;background:transparent!important;color:var(--navigation-ink,#a1a0a8)!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-row button:not(.people-toolbar-visibility){border:0!important;box-shadow:none!important;background:transparent!important;color:var(--navigation-ink,#a1a0a8)!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-order-handle{flex:0 0 20px;width:20px;height:32px;cursor:grab;touch-action:none;padding:3px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-order-handle svg{width:8px;height:16px;fill:currentColor;stroke:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-run{display:flex;align-items:center;justify-content:flex-start;gap:8px;flex:1 1 0;min-width:0;width:0;height:auto;min-height:38px;padding:0 4px;text-align:left;border-radius:6px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-option-name{display:block;flex:1 1 0;align-self:center;text-align:left;font:400 12px/18px var(--ui-font);white-space:normal;overflow-wrap:anywhere;min-width:0}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-visibility{flex:0 0 30px;width:30px;height:30px;margin-left:auto;border:1px solid var(--layout-line,#dedee3)!important;border-radius:7px;font-size:16px;opacity:.35;color:var(--navigation-ink,#a1a0a8)!important;background:transparent!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-visibility[aria-pressed=true]{opacity:1;color:var(--navigation-ink,#a1a0a8)!important;background:transparent!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-visibility{flex:0 0 30px;width:30px;height:30px;margin-left:auto;border:1px solid var(--layout-line,#dedee3)!important;border-radius:7px;font-size:16px;opacity:.35;color:var(--theme-surface,#fff)!important;background:var(--navigation-ink,#a1a0a8)!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-visibility[aria-pressed=true]{opacity:1;color:var(--theme-surface,#fff)!important;background:var(--navigation-ink,#a1a0a8)!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-option-hidden .people-toolbar-run{opacity:.45}
 @media(max-width:600px){
  body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header{--footer-inset:14px}
@@ -114,7 +114,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-option-hidd
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options{padding:0 14px 14px;display:flex;flex-direction:column;overflow:hidden;gap:14px;box-shadow:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:none;min-height:58px;margin:0 -14px;padding:8px 14px 20px;position:relative;background:var(--theme-surface,#fff);color:var(--navigation-ink,#a1a0a8);border-radius:14px 14px 0 0}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-heading b{flex:1;min-width:0;font:600 14px/18px var(--ui-font)}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-heading-icon{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:50%;border:1px solid var(--navigation-ink,#a1a0a8);background:transparent;color:var(--navigation-ink,#a1a0a8)}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-heading-icon{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:50%;border:1px solid var(--navigation-ink,#a1a0a8);background:var(--navigation-ink,#a1a0a8);color:var(--theme-surface,#fff)}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-options-resize{flex:0 0 28px;width:28px;height:28px;border:0!important;color:var(--navigation-ink)!important;background:transparent!important;box-shadow:none!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-inner{min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;border:1px solid var(--layout-line,#dedee3);border-radius:10px;background:#f5f5f7}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-toolbar-row{background:#f5f5f7}
@@ -150,12 +150,12 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-messag
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-actions{display:flex;gap:8px;flex-wrap:wrap}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-date-panel{position:fixed;bottom:var(--date-bottom,calc(58px + var(--footer-inset)));right:var(--date-right,var(--footer-inset));left:auto;top:auto;transform:none;width:232px;max-width:var(--date-max-width,calc(100vw - 2 * var(--footer-inset)));padding:10px;border-radius:10px;grid-template-columns:minmax(0,1fr);gap:8px;overflow-x:hidden;touch-action:pan-y;--date-accent:var(--menu-accent,var(--panel-color,#7c3aed));background:var(--date-accent)!important;border-color:var(--date-accent);color:#fff;box-shadow:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-panel label{display:grid;grid-template-columns:24px minmax(0,1fr);align-items:center;font-size:11px;line-height:15px;gap:6px;min-width:0;color:#fff!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-date-panel input{display:block;appearance:none;-webkit-appearance:none;box-sizing:border-box;min-inline-size:0!important;min-width:0!important;height:32px!important;min-height:32px!important;width:100%!important;max-width:100%;padding:3px!important;font-size:16px!important;border:1px solid var(--layout-line,#dedee3)!important;border-radius:6px!important;line-height:24px;background:var(--theme-field,#fff)!important;color:var(--layout-ink,#606066)!important;color-scheme:var(--ui-color-scheme,light)}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-date-panel input{display:block;appearance:none;-webkit-appearance:none;box-sizing:border-box;min-inline-size:0!important;min-width:0!important;height:32px!important;min-height:32px!important;width:100%!important;max-width:100%;padding:3px var(--ui-field-padding-right,3px) 3px 3px!important;font-size:16px!important;border:1px solid var(--layout-line,#dedee3)!important;border-radius:6px!important;line-height:24px;background:var(--theme-field,#fff)!important;color:var(--layout-ink,#606066)!important;color-scheme:var(--ui-color-scheme,light)}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-panel input::-webkit-date-and-time-value{text-align:left;min-width:0}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-message{grid-column:1/-1}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-message:empty{display:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-actions{grid-column:1/-1;justify-content:center;gap:7px}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-date-panel .people-date-actions button{flex:0 0 32px!important;width:32px!important;height:32px!important;padding:5px!important;border:1px solid var(--navigation-ink)!important;border-radius:50%!important;background:var(--theme-surface,#fff)!important;color:var(--navigation-ink)!important;box-shadow:none!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-date-panel .people-date-actions button{flex:0 0 32px!important;width:32px!important;height:32px!important;padding:5px!important;border:1px solid var(--navigation-ink)!important;border-radius:50%!important;background:var(--navigation-ink)!important;color:var(--date-accent)!important;box-shadow:none!important}
 @media(max-width:600px){body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-actions{gap:5px}}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-date-actions button{width:auto;height:36px;flex:1 1 auto;padding:6px 10px;border-radius:8px;font:inherit}
 @media(max-width:600px){
@@ -168,8 +168,8 @@ body .app-screen-shell .shell-table-scroll{max-width:100%;width:100%;min-width:0
 body .app-screen-shell .shell-table-scroll>table{width:100%;margin:0}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell{--shell-content-inset:14px;--shell-radius:20px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel{isolation:isolate;background:var(--layout-gap,#f5f5f7)!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.head[data-header-standard]{background:var(--menu-accent,var(--dialog-accent,var(--panel-color,#7c3aed)))!important;color:#fff!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.head :is(h2,h3,p){color:#fff!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.head[data-header-standard]{background:var(--menu-accent,var(--dialog-accent,var(--panel-color,#7c3aed)))!important;color:var(--navigation-ink)!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.head :is(h2,h3,p){color:var(--navigation-ink)!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.head+.content{padding:14px 14px 24px!important;box-sizing:border-box}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-top-hidden>.panel>.head+.content{margin-top:0!important;padding-top:14px!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-content-narrow>.panel>.content>:not(.people-save-status){width:80%!important;margin-left:auto!important;margin-right:auto!important}
@@ -205,7 +205,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-header-togg
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search{grid-area:query;position:relative!important;top:auto!important;right:auto!important;transform:none!important;width:100%!important;min-width:0;max-width:340px!important;margin:0!important;justify-self:end;box-sizing:border-box}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header:not(:has(>.people-search-toggle:not([hidden]))){grid-template-columns:32px minmax(16px,1fr) minmax(0,max-content) 32px 32px;grid-template-areas:"brand query actions more collapse"}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open{grid-template-columns:32px minmax(140px,1fr) 32px minmax(0,max-content) 32px 32px;grid-template-areas:"brand query search actions more collapse"}
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.head :is(h2,h3,p,.header-identity,.header-identity *){color:#fff!important;-webkit-text-fill-color:#fff!important;opacity:1!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.head :is(h2,h3,p,.header-identity,.header-identity *){color:var(--navigation-ink)!important;-webkit-text-fill-color:var(--navigation-ink)!important;opacity:1!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell :is(.sector-icon,.card-inherited-icon,.job-icon,.location-icon,.origin-icon,.shortcut-circle,.account-action-toggle,.job-action-toggle,.icon-choice,.account-icon-dot) svg,
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header button:not(.people-home-logo) svg{stroke-width:var(--shell-icon-stroke)!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell :is(.people-metric-control,.sort-az,.financial-text-badge,.location-initials){font-weight:700!important}

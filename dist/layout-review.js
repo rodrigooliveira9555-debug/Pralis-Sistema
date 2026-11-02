@@ -21,7 +21,7 @@
    if(save.compareDocumentPosition(cancel)&Node.DOCUMENT_POSITION_FOLLOWING)save.before(cancel);
   });
   document.querySelectorAll('.view label,dialog label,.modal label,.account-field-group,.job-identity,.account-identity,.location-identity').forEach(block=>{
-   const inputs=[...block.querySelectorAll('input,select,textarea')].filter(el=>!['hidden','checkbox','radio'].includes(el.type));
+   const inputs=[...block.querySelectorAll('input,select,textarea')].filter(el=>!el.dataset.datePicker&&!['hidden','checkbox','radio'].includes(el.type));
    const simple=!block.classList.contains('salary-row')&&inputs.length===1&&!block.querySelector('.identity-pick,.location-sigla-field,.icon-library,.account-icon-options,.extra-library');
    if(block.classList.contains('single-field-block')!==simple)block.classList.toggle('single-field-block',simple);
   });

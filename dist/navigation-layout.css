@@ -37,12 +37,12 @@ body .view.show:has(>.panel){height:100%;min-height:0}
 body .view.show>.panel{height:100%;max-height:100%!important;min-height:0}
 
 /* Shared full-screen navigation: preferences above Gestão, stationary account below. */
-body .side>.side-controls{flex:none;position:absolute;top:0;right:calc(max(18px,env(safe-area-inset-right)) + var(--menu-rail-inset));height:calc(max(16px,env(safe-area-inset-top)) + 76px);justify-content:flex-end;gap:8px;padding:0;margin:0;background:transparent;color:var(--navigation-ink);z-index:26}
+body .side>.side-controls{flex:none;position:absolute;top:env(safe-area-inset-top,0px);right:calc(max(18px,env(safe-area-inset-right)) + var(--menu-rail-inset));height:calc(var(--menu-brand-inset) + 64px);justify-content:flex-end;gap:8px;padding:0;margin:0;background:transparent;color:var(--navigation-ink);z-index:26}
 body .side>.side-controls .tree-control,body .side>.side-controls .theme-switch,body .side>.side-controls .theme-icon{color:inherit;border-color:currentColor}
 body.dark-theme .side>.side-controls{color:var(--navigation-ink)}
 body .side>.side-controls button:hover{background:color-mix(in srgb,currentColor 10%,transparent)}
 body .side>.nav{width:100%;min-height:0}
-body .side>.brand{padding:0 10px 12px!important;margin:0!important;min-height:0;align-items:flex-start}
+body .side>.brand{padding:0 10px!important;margin:0!important;min-height:0;align-items:flex-start}
 
 body .side .sidebar-footer{background:transparent;box-shadow:none}
 
@@ -64,7 +64,7 @@ body.dark-theme .side .sidebar-section-toggle{color:var(--navigation-ink)!import
 
 /* Three shared circular controls, fixed above the scrollable menu. */
 body .side>.side-controls,body.dark-theme .side>.side-controls{color:var(--navigation-ink);align-items:center}
-body .side>.side-controls>.menu-layout-toggle,body .side>.side-controls>.tree-control,body .side>.side-controls>.theme-switch{position:static!important;display:grid!important;place-items:center;flex:0 0 32px;width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;padding:0!important;margin:0!important;border:1px solid currentColor!important;border-radius:50%!important;color:inherit!important;background:transparent;opacity:1!important}
+body .side>.side-controls>.menu-layout-toggle,body .side>.side-controls>.tree-control,body .side>.side-controls>.theme-switch{position:static!important;display:grid!important;place-items:center;flex:0 0 32px;width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;padding:0!important;margin:0!important;border:1px solid var(--navigation-ink)!important;border-radius:50%!important;color:inherit!important;background:var(--navigation-ink)!important;color:var(--theme-surface,#fff)!important;opacity:1!important}
 body .side>.side-controls svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 body .side>.side-controls .theme-icon{display:grid;place-items:center;color:inherit!important}
 body .side.collapsed>.side-controls>.menu-layout-toggle{margin:0!important}
@@ -84,7 +84,8 @@ body .side:not(.collapsed) .brand-logo-wrap{
 body .side:not(.collapsed) .brand-logo-wrap>.vector-logo{display:block;width:180px!important;height:auto!important;max-width:100%}
 body .side:not(.collapsed) .brand-subtitle{width:220px!important}
 /* All four separators have the same physical thickness and no outside halo. */
-body .side{--divider-thickness:3px;--menu-rail-inset:10px}
+body .side{--divider-thickness:3px;--menu-rail-inset:10px;--menu-brand-inset:4px;--menu-brand-gap:12px}
+body.mobile-menu-visible .side{padding-top:calc(env(safe-area-inset-top,0px) + var(--menu-brand-inset))!important}
 .menu-top-divider{flex:0 0 var(--divider-thickness);align-self:stretch;position:sticky;top:0;z-index:24;width:auto;height:var(--divider-thickness);min-height:var(--divider-thickness);margin:0 10px;border-radius:0;overflow:hidden;isolation:isolate;background:linear-gradient(90deg,#ff0000 0% 13.043%,#ff8000 17.391% 30.435%,#f2d000 34.783% 47.826%,#00e833 52.174% 65.217%,#0055ff 69.565% 82.609%,#8000ff 86.957% 100%);box-shadow:none}
 .menu-top-divider::after{display:none!important}
 .divider-beam{position:absolute;inset:0;display:block;width:100%;height:100%;overflow:hidden;pointer-events:none}
@@ -167,7 +168,7 @@ body .side .sidebar-user{margin-left:10px}
 /* All principal-navigation chevrons share the section-title palette. */
 body .side .nav-tree summary::after{color:var(--navigation-ink)}
 /* Gestão is outside the touch scroller, so even scroll-edge gestures cannot move it. */
-body .side>.menu-management-heading{flex:none;position:static;display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;border:0;background:transparent;padding:12px 10px 5px;margin:0 0 3px;color:var(--navigation-ink);font:650 12px/18px var(--ui-font);letter-spacing:.4px;cursor:pointer}
+body .side>.menu-management-heading{flex:none;position:static;display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;border:0;background:transparent;padding:var(--menu-brand-gap) 10px 5px;margin:0 0 3px;color:var(--navigation-ink);font:650 12px/18px var(--ui-font);letter-spacing:.4px;cursor:pointer}
 body .side>.menu-management-heading[hidden]{display:none!important}
 body .mobile-menu-open{color:var(--navigation-ink)!important;border-color:currentColor}
 
@@ -192,7 +193,7 @@ body .side>.menu-search-box[hidden],body .side .nav-tree [hidden]{display:none!i
 body .side .menu-search-box input{box-sizing:border-box;width:100%;min-width:0;height:var(--ui-field-height,42px);border:1px solid var(--navigation-ink);border-radius:var(--ui-field-radius,8px);padding:10px 12px;font:400 var(--ui-input-size,14px)/20px var(--ui-font);background:#fff;color:#27272a}
 body.dark-theme .side .menu-search-box input{background:#302f37;color:#f5f5f7}
 body .side .menu-search-box input:focus{outline:2px solid color-mix(in srgb,var(--navigation-ink) 25%,transparent);outline-offset:1px}
-body .side-controls .menu-search-toggle[aria-pressed=true]{background:color-mix(in srgb,var(--navigation-ink) 18%,transparent)!important}
+body .side-controls .menu-search-toggle[aria-pressed=true]{background:var(--navigation-ink)!important}
 .menu-search-status{margin:8px 0 0;font:400 var(--ui-note,11px)/16px var(--ui-font);color:var(--navigation-ink)}
 
 /* Persistent highlight belongs to selection, never to expanded ancestors. */

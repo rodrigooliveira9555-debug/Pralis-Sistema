@@ -29,8 +29,8 @@ body .side .sidebar-user .avatar{box-sizing:border-box;flex:0 0 var(--screen-foo
 body .side .sidebar-footer::before{left:calc(var(--menu-side-left) + 10px);right:calc(var(--menu-side-right) + 10px)}
 @media(max-width:600px){body .side{--account-footer-inset:8px}}
 
-/* The account badge uses the same hollow neutral style as the navigation controls. */
-body .side .sidebar-user .avatar{background:transparent!important;color:var(--navigation-ink)!important;border:1px solid var(--navigation-ink)!important;box-shadow:none!important}
+/* The account badge shares the solid neutral controls and surface-colored cutout. */
+body .side .sidebar-user .avatar{background:var(--navigation-ink)!important;color:var(--theme-surface)!important;border:1px solid var(--navigation-ink)!important;box-shadow:none!important}
 body.dark-theme .account-status-switch{background:var(--theme-surface)!important;border-color:var(--navigation-ink)!important}
 body.dark-theme .account-status-switch[aria-checked=true]{background:var(--menu-accent,var(--panel-color))!important;border-color:var(--menu-accent,var(--panel-color))!important}
 body.dark-theme .account-status-switch>span{background:var(--navigation-ink)!important}

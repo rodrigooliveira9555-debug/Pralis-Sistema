@@ -10,13 +10,13 @@ body .view .form-note{font:400 var(--ui-note)/16px var(--ui-font)!important}
 body .view .form-tabs button,body .view .step-label{font-family:var(--ui-font)!important;font-size:var(--ui-text)!important;line-height:var(--ui-text-line)!important}
 body .view .form-fields h3,body .view .form-demo .content h3{font:600 14px/20px var(--ui-font)!important}
 body #sector-view .record>b,body .view .record.section-card>b{font-family:var(--ui-font)!important;font-size:var(--ui-text)!important;line-height:var(--ui-text-line)!important}
-/* Match purple menu headings; subtitles stay lighter within the same hue. */
+/* Headings share the neutral ink of the principal menu. */
 :root{--ui-purple-title:#4b2679;--ui-purple-subtitle:#785c9b}
 .view{--panel-text:var(--ui-purple-title)}
-body .view>.panel>.head h2,body #sector-view .panel>.head h2,body #jobs-view .panel>.head h2,body #salary-view .panel>.head h2,body #job-edit .panel>.head h2{color:var(--panel-text,var(--ui-purple-title))!important}
-body .view>.panel>.head p{color:color-mix(in srgb,var(--panel-text,var(--ui-purple-title)) 75%,white)!important}
-body.dark-theme .view>.panel>.head h2,body.dark-theme #sector-view .panel>.head h2,body.dark-theme #jobs-view .panel>.head h2,body.dark-theme #salary-view .panel>.head h2,body.dark-theme #job-edit .panel>.head h2{color:color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 35%,white)!important}
-body.dark-theme .view>.panel>.head p{color:color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 22%,white)!important}
+body .view>.panel>.head h2,body #sector-view .panel>.head h2,body #jobs-view .panel>.head h2,body #salary-view .panel>.head h2,body #job-edit .panel>.head h2{color:var(--navigation-ink)!important}
+body .view>.panel>.head p{color:var(--navigation-ink)!important}
+body.dark-theme .view>.panel>.head h2,body.dark-theme #sector-view .panel>.head h2,body.dark-theme #jobs-view .panel>.head h2,body.dark-theme #salary-view .panel>.head h2,body.dark-theme #job-edit .panel>.head h2{color:var(--navigation-ink)!important}
+body.dark-theme .view>.panel>.head p{color:var(--navigation-ink)!important}
 
 /* Canonical controls: includes legacy views, dynamic editors, dialogs and queries. */
 :root{--ui-label:12px;--ui-label-weight:400;--ui-label-color:#52525b;--ui-input-color:#27272a;--ui-placeholder:#71717a;--ui-control-bg:#fff;--ui-border-base:#d4d4d8;--ui-focus-ring:14%}
@@ -24,7 +24,7 @@ body.dark-theme{--ui-label-color:#d4d4d8;--ui-input-color:#f4f4f5;--ui-placehold
 body :is(.view,dialog,.modal){--ui-control-accent:var(--navigation-ink,#a2a0aa)}
 body :is(.fee-expense-field,.fee-account-field){--ui-control-accent:var(--navigation-ink,#a2a0aa)}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) label{font:var(--ui-label-weight) var(--ui-label)/18px var(--ui-font)!important;color:var(--ui-label-color)!important;letter-spacing:normal!important}
-body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input:where(:not([type=checkbox])):where(:not([type=radio])):where(:not([type=color])):where(:not([type=range])):where(:not([type=hidden])):where(:not([type=button])):where(:not([type=submit])),select,textarea){--ui-control-accent:var(--navigation-ink,#a2a0aa);box-sizing:border-box!important;min-width:0;font:400 var(--ui-input-size)/20px var(--ui-font)!important;letter-spacing:normal!important;color:var(--ui-input-color)!important;background:var(--ui-control-bg)!important;border:1px solid var(--ui-border-base)!important;border-radius:var(--ui-field-radius)!important;padding:10px 12px!important;box-shadow:none!important;outline:none!important;transition:border-color .15s,box-shadow .15s}
+body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input:where(:not([type=checkbox])):where(:not([type=radio])):where(:not([type=color])):where(:not([type=range])):where(:not([type=hidden])):where(:not([type=button])):where(:not([type=submit])),select,textarea){--ui-control-accent:var(--navigation-ink,#a2a0aa);box-sizing:border-box!important;min-width:0;font:400 var(--ui-input-size)/20px var(--ui-font)!important;letter-spacing:normal!important;color:var(--ui-input-color)!important;background:var(--ui-control-bg)!important;border:1px solid var(--ui-border-base)!important;border-radius:var(--ui-field-radius)!important;padding:10px var(--ui-field-padding-right,12px) 10px 12px!important;box-shadow:none!important;outline:none!important;transition:border-color .15s,box-shadow .15s}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input:where(:not([type=checkbox])):where(:not([type=radio])):where(:not([type=color])):where(:not([type=range])):where(:not([type=hidden])):where(:not([type=button])):where(:not([type=submit])),select){height:var(--ui-field-height)!important;min-height:var(--ui-field-height)!important}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) textarea{min-height:84px!important;resize:vertical}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input,textarea)::placeholder{font:inherit!important;color:var(--ui-placeholder)!important;opacity:1}
@@ -40,10 +40,11 @@ body :is(.view,dialog,.modal) input[type=date]::-webkit-date-and-time-value{min-
 body :is(.view,dialog,.modal) input[type=date]::-webkit-datetime-edit{min-width:0;padding:0;overflow:hidden}
 body :is(.view,dialog,.modal) input[type=date]::-webkit-calendar-picker-indicator{flex:0 0 18px;width:18px;height:18px;margin:0;opacity:.65}
 body :is(.view,dialog,.modal) :is(input[type=checkbox],input[type=radio]){color-scheme:var(--ui-color-scheme,light)}
-body :is(.view,dialog,.modal) .head h2,body :is(dialog,.modal) h2,body :is(dialog,.modal) h3{font:600 var(--ui-title)/var(--ui-title-line) var(--ui-font)!important;color:var(--panel-text,var(--ui-purple-title))!important;letter-spacing:normal!important}
-body :is(.view,dialog,.modal) .head p{font:400 var(--ui-subtitle)/var(--ui-subtitle-line) var(--ui-font)!important;color:color-mix(in srgb,var(--panel-text,var(--ui-purple-title)) 75%,white)!important}
-body.dark-theme :is(.view,dialog,.modal) .head h2,body.dark-theme :is(dialog,.modal) :is(h2,h3){color:color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 35%,white)!important}
-body.dark-theme :is(.view,dialog,.modal) .head p{color:color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 22%,white)!important}
+body :is(.view,dialog,.modal) select :is(option,optgroup){background:var(--theme-field,#fff);color:var(--ui-input-color,var(--layout-ink));color-scheme:var(--ui-color-scheme,light)}
+body :is(.view,dialog,.modal) .head h2,body :is(dialog,.modal) h2,body :is(dialog,.modal) h3{font:600 var(--ui-title)/var(--ui-title-line) var(--ui-font)!important;color:var(--navigation-ink)!important;letter-spacing:normal!important}
+body :is(.view,dialog,.modal) .head p{font:400 var(--ui-subtitle)/var(--ui-subtitle-line) var(--ui-font)!important;color:var(--navigation-ink)!important}
+body.dark-theme :is(.view,dialog,.modal) .head h2,body.dark-theme :is(dialog,.modal) :is(h2,h3){color:var(--navigation-ink)!important}
+body.dark-theme :is(.view,dialog,.modal) .head p{color:var(--navigation-ink)!important}
 body :is(.view,dialog,.modal) .btn{font-family:var(--ui-font)!important;font-size:12px!important;font-weight:600!important}
 body :is(.view,dialog,.modal) :is(input[type=checkbox],input[type=radio]){accent-color:var(--field-accent,var(--menu-accent,var(--panel-color,#7c3aed)))}
 
@@ -102,33 +103,34 @@ body #sector-view .account-row-actions svg{width:18px;height:18px;fill:none;stro
 body :is(.view,dialog,.modal) input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:block;width:14px;height:14px;flex:none;margin-left:8px;cursor:pointer;background-color:var(--menu-accent,var(--panel-color,#7c3aed));-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='m6 6 12 12M18 6 6 18'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='m6 6 12 12M18 6 6 18'/%3E%3C/svg%3E") center/contain no-repeat}
 
 /* Canonical library roles: all source, online and removed grids share these rules. */
-body :is(.view,dialog) :is(.identity-pick,.location-sigla-field){--library-accent:var(--menu-accent,var(--dialog-accent,var(--panel-color,#7c3aed)));font:var(--ui-label-weight) var(--ui-label)/18px var(--ui-font);color:var(--ui-label-color)}
-body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot){box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 32px!important;width:32px!important;height:32px!important;min-height:32px!important;padding:6px!important;border:1px solid color-mix(in srgb,var(--library-accent) 30%,var(--ui-control-bg))!important;border-radius:50%!important;background:var(--ui-control-bg)!important;color:var(--library-accent)!important;box-shadow:none!important;cursor:pointer}
-body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot)[hidden]{display:none!important}
-body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot):is([aria-pressed=true],.selected){border-color:var(--library-accent)!important;background:color-mix(in srgb,var(--library-accent) 14%,var(--ui-control-bg))!important;box-shadow:0 0 0 1px var(--library-accent)!important}
-body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot):hover{border-color:var(--library-accent)!important;background:color-mix(in srgb,var(--library-accent) 8%,var(--ui-control-bg))!important}
-body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot):focus-visible{outline:2px solid var(--library-accent)!important;outline-offset:3px}
-body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot) svg{width:18px!important;height:18px!important;flex-shrink:0}
-body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-library,.account-icon-options,.extra-library){display:flex;flex-wrap:wrap;gap:var(--layout-item-gap,4px)}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field){--library-accent:var(--navigation-ink);font:var(--ui-label-weight) var(--ui-label)/18px var(--ui-font);color:var(--ui-label-color)}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot){box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 32px!important;width:32px!important;height:32px!important;min-height:32px!important;padding:6px!important;border:1px solid var(--navigation-ink)!important;border-radius:50%!important;background:var(--navigation-ink)!important;color:var(--theme-field,#fff)!important;box-shadow:none!important;cursor:pointer}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot)[hidden]{display:none!important}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot):is([aria-pressed=true],.selected){border-color:var(--navigation-ink)!important;background:var(--navigation-ink)!important;box-shadow:inset 0 0 0 2px var(--theme-field,#fff)!important}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot):hover{border-color:var(--navigation-ink)!important;background:var(--navigation-ink)!important}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot):focus-visible{outline:2px solid var(--library-accent)!important;outline-offset:3px}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot) svg{width:18px!important;height:18px!important;flex-shrink:0}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot) :is(svg,span){color:var(--theme-field,#fff)!important}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-library,.account-icon-options,.extra-library){display:flex;flex-wrap:wrap;gap:var(--layout-item-gap,4px)}
 body :is(.view,dialog) :is(.identity-advanced>summary,.most-used-icons>small,.identity-pick>small,.location-sigla-field>small){font:var(--ui-label-weight) var(--ui-label)/18px var(--ui-font)!important;color:var(--ui-label-color)!important;letter-spacing:normal!important}
-body :is(.view,dialog) .identity-advanced[data-library-manager] :is(.job-more-options,.library-action,.job-inline-search .shortcut-circle){background:var(--library-accent)!important;border:1px solid var(--library-accent)!important;color:#fff!important;box-shadow:none!important}
-body :is(.view,dialog) .identity-advanced[data-library-manager] :is(.job-more-options,.library-action,.library-empty){box-sizing:border-box;width:100%;min-height:42px;margin-top:10px;padding:10px 12px;border-radius:var(--ui-field-radius);font:600 12px/18px var(--ui-font)!important}
-body :is(.view,dialog) .identity-advanced[data-library-manager] .library-empty,body .icon-empty-confirm .danger{background:var(--cicluz-danger,#e34343)!important;border:1px solid var(--cicluz-danger,#e34343)!important;color:#fff!important}
-body :is(.view,dialog) .identity-advanced[data-library-manager] button:disabled{opacity:.5;cursor:default}
+body :is(#sector-view,.view,dialog) .identity-advanced[data-library-manager] :is(.job-more-options,.library-action,.job-inline-search .shortcut-circle){background:var(--library-accent)!important;border:1px solid var(--library-accent)!important;color:var(--theme-field,#fff)!important;box-shadow:none!important}
+body :is(#sector-view,.view,dialog) .identity-advanced[data-library-manager] :is(.job-more-options,.library-action,.library-empty){box-sizing:border-box;width:100%;min-height:42px;margin-top:10px;padding:10px 12px;border-radius:var(--ui-field-radius);font:600 12px/18px var(--ui-font)!important}
+body :is(#sector-view,.view,dialog) .identity-advanced[data-library-manager] .library-empty,body .icon-empty-confirm .danger{background:var(--cicluz-danger,#e34343)!important;border:1px solid var(--cicluz-danger,#e34343)!important;color:#fff!important}
+body :is(#sector-view,.view,dialog) .identity-advanced[data-library-manager] button:disabled{opacity:.5;cursor:default}
 .icon-empty-confirm{max-width:min(440px,90vw);background:var(--ui-control-bg);color:var(--ui-input-color);border:1px solid var(--ui-border-base);border-radius:10px;padding:20px;font:400 14px/20px var(--ui-font)}
 .icon-empty-confirm h3{margin:0 0 12px}.icon-empty-confirm p{margin:0 0 18px}.icon-empty-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}.icon-empty-confirm::backdrop{background:#0006}
 
-body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) [hidden]{display:none!important}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) [hidden]{display:none!important}
 
 /* One layout for identification: name, then full-width icon choices. */
 body :is(.view,dialog) :is(.job-identity,.account-identity,.location-identity){grid-template-columns:minmax(0,1fr)!important;gap:8px!important;align-items:start!important}
 body :is(.view,dialog) :is(.job-identity,.account-identity,.location-identity)>*{grid-column:1!important;min-width:0;max-width:100%;box-sizing:border-box}
 body :is(.view,dialog) .identity-pick{display:flex!important;flex-direction:column!important;gap:var(--layout-item-gap,4px)!important;margin:0!important;padding:0!important}
 
-body :is(.view,dialog) :is(.identity-pick,.location-sigla-field){min-width:0;width:100%;box-sizing:border-box;align-items:stretch}
-body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.identity-advanced,.most-used-icons,.account-field-group){box-sizing:border-box;flex:0 0 100%;width:100%;min-width:0;max-width:none;margin-left:0;margin-right:0}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field){min-width:0;width:100%;box-sizing:border-box;align-items:stretch}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.identity-advanced,.most-used-icons,.account-field-group){box-sizing:border-box;flex:0 0 100%;width:100%;min-width:0;max-width:none;margin-left:0;margin-right:0}
 body :is(.view,dialog) .identity-advanced>summary{width:100%;box-sizing:border-box}
-body :is(.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-library,.account-icon-options,.extra-library){justify-content:flex-start;align-content:flex-start;margin:4px 0 0!important}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-library,.account-icon-options,.extra-library){justify-content:flex-start;align-content:flex-start;margin:4px 0 0!important}
 
 /* Classification cards share the system title and subtitle roles. */
 body #sector-view .operator-fees :is(h3,.fee-classification-heading,.fee-classification-title){font:var(--ui-section-title-weight) var(--ui-section-title)/var(--ui-section-title-line) var(--ui-font)!important;letter-spacing:normal!important}
@@ -175,3 +177,12 @@ body .view .form-tabs button.active{color:var(--menu-accent,var(--panel-color,#7
 body .view .form-tabs button.active .step-circle{background:var(--menu-accent,var(--panel-color,#7c3aed));color:#fff;border-color:currentColor;box-shadow:0 0 0 3px color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 12%,white)}
 body .view .form-tabs button:focus-visible{outline:2px solid var(--menu-accent,var(--panel-color,#7c3aed));outline-offset:-2px;border-radius:8px}
 @media(max-width:600px){body .view .form-tabs{--step-size:32px}}
+
+/* Shared visible date control; the named backing field keeps the full year. */
+body :is(.view,dialog,.modal) .date-native-value{display:none!important}
+.date-field-control{display:block;position:relative;inline-size:100%;min-inline-size:0;max-inline-size:100%;box-sizing:border-box}
+.date-mask-input{--ui-field-padding-right:36px;min-inline-size:0;max-inline-size:100%}
+.date-picker-hit-target{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:24px;height:24px;overflow:hidden;border-radius:50%}
+body :is(.view,dialog,.modal) .date-picker-toggle{display:grid;place-items:center;width:24px;height:24px;min-height:0;margin:0;padding:4px;border:0;border-radius:50%;background:var(--navigation-ink);color:var(--theme-field,#fff);box-sizing:border-box}
+.date-picker-toggle svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+body :is(.view,dialog,.modal) .date-picker-native{position:absolute;inset:0;opacity:0;z-index:1;cursor:pointer;min-inline-size:0!important;min-width:0!important;padding:0!important;margin:0!important}

@@ -1,5 +1,14 @@
 # Processo de alterações de interface
 
+## Complemento final — ícones maciços e datas DD/MM/AA (02/11/2026)
+Última orientação substitui o vazado do círculo: controles de contorno cinza passam a preenchimento cinza, com símbolo recortado na cor da superfície por trás; títulos continuam cinza e a arte da marca preservada. Datas exibem8 caracteres DD/MM/AA com barras automáticas e calendário, mantendo valor ISO completo para filtros, históricos e persistência. Conferir datas inválidas, digitação parcial, alteração programática, calendário, min/max, formulário completo salvo/restaurado e datas históricas. Novas datas usam00–49=2000–2049 e50–99=1950–1999; datas existentes mantêm seu século. Confirmar o exemplo02/11/26 como2026-11-02.
+
+## Complemento — cinza dos cabeçalhos e seletores abertos (02/11/2026)
+Última orientação inclui cabeçalhos: títulos/caminhos/símbolos antes brancos passam a --navigation-ink; placas brancas dos identificadores passam a cinza, com símbolo vazado na cor de origem. Também conferir cabeçalho interno de taxas, títulos de classificação e ícones dos cartões. Seletores: conferir caixa fechada e opções em todos os oito cadastros de Diretor de Operação, com color-scheme sincronizado no html e fundo das opções explícito por tema; não verificar somente o campo fechado.
+
+## Matriz — respiro vertical da marca (02/11/2026)
+Somente menu principal: reduzir topo e faixa mantendo a arte no mesmo tamanho. Usar12px de referência visual entre topo útil/marca, face inferior da marca/faixa e faixa/Gestão. A imagem contém respiros próprios:4px externos acima e nenhum padding adicional abaixo do bloco64px produzem aproximadamente12px visuais em ambas as pontas. Controles acompanham a faixa, mantendo centro e intervalos8px. Conferir320/390/1024px, claro/escuro, busca fechada/aberta e safe-area, preservando8px da busca e Gestão fixo.
+
 ## Matriz — campos nativos e controles vazados (02/11/2026)
 Pedido atual substitui círculos cinza maciços/símbolos brancos dos rodapés. Conferir todas as20 estruturas em claro/escuro: controles inferiores transparentes, borda/símbolo cinza de navegação, avatar igual, marca preservada. Datas: simples, etapas/dependentes, patrimônio, salários, vigências de operadoras e calendário; caixas nativas contidas. Formulários: repouso/foco/rolagem, select/checkbox/status, taxas/busca, Cancelar/Voltar transparentes e Salvar/Avançar preenchidos somente quando ativos. Contas herda o laranja do cartão anterior sem acento residual. Busca inicial: limites horizontais da linha colorida e8px acima/abaixo até Gestão. Testar Chromium e WebKit quando disponível; emulação não substitui aparelho físico.
 

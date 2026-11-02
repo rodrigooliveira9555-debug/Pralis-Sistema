@@ -1,5 +1,14 @@
 # CICLUZ — referência de interface
 
+## Regra vigente — menu, cinza e datas (02/11/2026)
+Substitui os pedidos anteriores de círculos vazados/símbolos cinza. Controles circulares de contorno cinza, avatar, checks e biblioteca ficam maciços em --navigation-ink; o desenho/texto interno usa a superfície por trás (branco no claro, escuro no escuro, acento em faixas coloridas). Estados ativos/hover mantêm essa inversão. Marcas reais e identificadores de origem preservam suas cores. Cabeçalhos principais e internos, títulos e caminhos usam o cinza dos textos do menu; identificadores antes brancos ficam cinza com desenho na cor do cabeçalho.
+
+Menu inicial: três respiros visuais de aproximadamente12px entre topo útil/marca, marca/faixa e faixa/Gestão. A faixa sobe de92px para68px, sem redimensionar a arte; controles acompanham seu centro. Busca aberta preserva8px acima/abaixo. Safe-area fica fora do topo útil.
+
+Datas: exibir DD/MM/AA, oito caracteres, com barras automáticas e calendário. Valores usados em filtros, FormData, salários e cadastros continuam ISO com ano completo. Datas já existentes preservam o século; entradas novas usam00–49 para2000–2049 e50–99 para1950–1999, e o calendário permite selecionar o ano completo. Não aceitar datas impossíveis nem intervalos invertidos. Backup do cadastro completo mantém o formato anterior e não duplica os campos visuais.
+
+Seletores fechados e suas opções seguem o tema, inclusive nos oito cadastros do Diretor de Operação. Sincronizar color-scheme no html; opções não dependem de transparência ou do tema externo do navegador.
+
 ## Campos contidos e controles neutros — 02/11/2026
 Substitui círculos inferiores maciços e símbolos brancos: controles do cabeçalho inferior, métricas, personalização, checks e avatar do usuário ficam vazados, com borda/símbolo no cinza --navigation-ink e interior mostrando o fundo atual. Preservar a arte multicolorida da marca. Estados pressionados/expandidos não introduzem placas brancas.
 
