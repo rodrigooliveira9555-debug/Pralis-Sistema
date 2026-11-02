@@ -1,6 +1,7 @@
 # Validação do padrão compartilhado
 
 ## Cinza maciço, seletores e máscara curta — 02/11/2026
+Conferência complementar: cabeçalhos aninhados de Fila de prioridades e símbolos da biblioteca de Contas também seguem o padrão nos dois temas; removida a regra legada branca do cabeçalho interno.
 Chromium com toque emulado,320/390/1024px, claro/escuro:120 conferências de cabeçalhos cinza e120 de controles inferiores maciços, com desenhos na superfície de fundo.108 seletores de edição dos oito cadastros conferidos, incluindo fundo explícito das opções.39 campos de data (incluindo seis salários) exibem DD/MM/AA sem exceder a caixa; seis seleções pelo calendário mantêm valor ISO completo. Três contratos FormData/reset preservaram1930-02-03; mudança de1930 via máscara não alterou seu século. Fluxo real com dados fictícios: salário salvo com início2026-11-02; cadastro completo com dependente salvo/restaurado com campos date em ISO, sem duplicação dos auxiliares. Calendário ativado por teclado sem erro, intervalo invertido rejeitado e intervalo válido aceito. Menu com respiros12,23/12,22/12px e faixa a68px nas seis combinações; busca mantém8px/8px.19 testes de máscara/anos históricos e21 de validação existentes passaram. Biblioteca selecionada conferida nos dois temas. Nenhum dado de produção foi usado; Safari físico e implantação Vercel não verificados.
 
 ## Campos nativos e controles vazados — 02/11/2026
