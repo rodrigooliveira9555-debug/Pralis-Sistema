@@ -1,5 +1,7 @@
 # CICLUZ — referência de interface
 
+- Busca do menu principal:8px entre o campo e os círculos acima e8px entre o campo e a faixa colorida abaixo, sem somar o padding inferior dos controles ao padding superior da busca.
+
 - Menu de data em Gestão de Pessoas: afastamentos direito e inferior iguais ao --footer-inset do menu de personalização (14px desktop, 8px até600px), medidos a partir da lateral e da linha superior do cabeçalho inferior. Posição fixa preservada.
 
 Esta é a fonte de regras para alterações de interface. Os estilos compartilhados ficam em `dist/design-system.css`, carregados depois dos estilos legados. Reutilizar componentes e variáveis existentes antes de criar novos estilos.

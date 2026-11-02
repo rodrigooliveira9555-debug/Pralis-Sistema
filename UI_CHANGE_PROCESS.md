@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Busca do menu —304
+Somente espaçamento vertical da busca no menu principal. Distâncias de referência medidas antes:16px acima/4px abaixo. Corrigir para8px/8px, preservando dimensões, filtro, cores e navegação. Demais mudanças de interface solicitadas em seguida excluem o menu principal.
+
 ## Recuo do menu de data —300
 Matriz restrita a Gestão de Pessoas: menu de data aberto/fechado, celular e desktop. Usar o mesmo --footer-inset do menu de personalização para afastamento da lateral direita e da linha superior do cabeçalho inferior. Preservar campos, dimensões, ícones e funções. Conferir medidas e estabilidade ao rolar.
 
