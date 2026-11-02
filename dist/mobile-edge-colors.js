@@ -12,9 +12,11 @@
   const view=document.querySelector('.view.show'),head=view?.querySelector(':scope>.panel>.head');
   const people=view?.id==='sector-view'&&view.querySelector('#sector-title')?.textContent.trim()==='Gestão de Pessoas';
   let value='#ffffff';
-  if(!menu&&head){
+  const topHidden=view?.classList.contains('people-top-hidden')||head?.hidden||head&&getComputedStyle(head).display==='none';
+  if(!menu&&head&&!topHidden){
    value=people?'#7c3aed':colour(head);
    if(people&&view.style.getPropertyValue('--menu-accent')!=='#7c3aed')view.style.setProperty('--menu-accent','#7c3aed');
+
   }
   if(root.style.getPropertyValue('--mobile-top-fill')!==value)root.style.setProperty('--mobile-top-fill',value);
   document.querySelectorAll('meta[name="theme-color"]').forEach(meta=>{meta.removeAttribute('media');if(meta.getAttribute('content')!==value)meta.setAttribute('content',value)});

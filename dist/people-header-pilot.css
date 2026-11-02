@@ -156,7 +156,7 @@ body #sector-view.people-header-pilot .people-date-panel input::-webkit-date-and
 body #sector-view.people-header-pilot .people-date-message{grid-column:1/-1}
 body #sector-view.people-header-pilot .people-date-message:empty{display:none}
 body #sector-view.people-header-pilot .people-date-actions{grid-column:1/-1;justify-content:center;gap:7px}
-body #sector-view.people-header-pilot .people-bottom-header .people-date-panel .people-date-actions button{flex:0 0 32px!important;width:32px!important;height:32px!important;padding:5px!important;border:1px solid #fff!important;border-radius:50%!important;background:transparent!important;color:#fff!important;box-shadow:none!important}
+body #sector-view.people-header-pilot .people-bottom-header .people-date-panel .people-date-actions button{flex:0 0 32px!important;width:32px!important;height:32px!important;padding:5px!important;border:1px solid #fff!important;border-radius:50%!important;background:#fff!important;color:var(--date-accent)!important;box-shadow:none!important}
 @media(max-width:600px){body #sector-view.people-header-pilot .people-date-actions{gap:5px}}
 body #sector-view.people-header-pilot .people-bottom-header .people-date-actions button{width:auto;height:36px;flex:1 1 auto;padding:6px 10px;border-radius:8px;font:inherit}
 @media(max-width:600px){
