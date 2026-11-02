@@ -1,5 +1,12 @@
 # CICLUZ — referência de interface
 
+## Alinhamentos, opções e origem — 02/11/2026
+Atualização salarial: data e valores usam a mesma largura de coluna, intervalo e recuos, incluindo a borda da lista;160px desktop e120px até600px. Operadoras: Grupo de Despesa e Grupo de Contas recebem título explícito com os tokens compartilhados de título, preservando o subtítulo Transferências Automáticas. Cabeçalhos superiores também usam esses tokens, sem escala local divergente.
+
+Rodapé de todas as abas: marca isolada à esquerda, grupo de ações à direita com rolagem interna quando necessário, recuos laterais14px iguais aos do identificador superior, respeitando safe-area. O catálogo de personalização mantém as13 opções compartilhadas em todas as telas, além das ações nativas específicas; opções sem operação aplicável permanecem visíveis no catálogo com execução desabilitada e indicação no título, preservando preferências salvas. Esta regra substitui a omissão dessas opções e o recuo inferior móvel8px anterior.
+
+Cor de origem: aplicar --menu-accent e --panel-color no contêiner da tela e no painel a cada entrada, inclusive ao reutilizar sector-view. Descendentes recebem a cor do cartão que os abriu; cartões financeiros com identidade própria mantêm sua cor específica. Ícones e dados cadastrados não são recoloridos por esta herança.
+
 ## Menu principal — marca, controles e rolagem (02/11/2026)
 Faixa colorida imediatamente após a marca: preservar o respiro superior e usar o mesmo respiro visual até a faixa. Três círculos e seta sem círculo de expandir/recolher ficam à direita da palavra CICLUZ, acima da faixa, centralizados verticalmente entre o topo da tela e a faixa. Manter círculos32px, seta24px e intervalo8px entre controles. Esta orientação substitui a fileira abaixo da faixa. Gestão fica fixo no topo da área rolável; os itens continuam com rolagem nativa. Preservar busca, tema, expansão e usuário fixo no rodapé.
 

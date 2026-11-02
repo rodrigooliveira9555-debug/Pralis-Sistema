@@ -1,5 +1,8 @@
 # Validação do padrão compartilhado
 
+## Alinhamentos, opções e origem — 02/11/2026
+Chromium local, armazenamento isolado:80 combinações das20 estruturas em390/1024px e claro/escuro. Um rodapé58px por tela, marca e controle final a14px das laterais, alinhados ao identificador superior; sem transbordamento horizontal. Catálogo com as13 opções compartilhadas em todas as estruturas; ações específicas adicionais preservadas.76 verificações de origem:30 entradas do menu e oito destinos de Gestão de Pessoas em cada largura, com cores esperadas após a transição. Data salarial e primeiro campo monetário com x/largura/altura iguais nas quatro combinações de tema/largura. Dois títulos de classificação em Operadoras iguais ao cabeçalho em família, tamanho16px, peso600 e entrelinha20px, nas quatro combinações.21 verificações existentes de validação de campos passaram; sintaxe dos scripts alterados e script inline conferida. Nenhum cadastro gravado; sem teste em aparelho físico. Não confirma a conclusão da implantação externa da Vercel.
+
 ## Revisão 306
 
 -31 destinos móveis: personalização compacta, recuos direito/inferior8px, títulos/caminhos#ffffff e opacidade1. Operadoras e Contas confirmadas também em abertura isolada.

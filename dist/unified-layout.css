@@ -267,21 +267,21 @@ body #sector-view.financial-groups .operator-fees .fee-classification .fee-accou
 
 
 /* Salary uses the Cargos identity rows, with an independent aligned value column. */
+body #salary-view{--salary-value-width:160px;--salary-row-inset:12px;--salary-column-gap:16px}
 body:is(.dark-theme,:not(.dark-theme)) #salary-view .salary-row{
- display:grid!important;grid-template-columns:minmax(0,1fr) 160px!important;align-items:center!important;
- gap:16px!important;padding:12px!important;min-height:64px;box-sizing:border-box;
+ display:grid!important;grid-template-columns:minmax(0,1fr) var(--salary-value-width)!important;align-items:center!important;
+ gap:var(--salary-column-gap)!important;padding:var(--salary-row-inset)!important;min-height:64px;box-sizing:border-box;
  border:0!important;border-bottom:1px solid var(--layout-line)!important;background:#fff!important;
 }
 body #salary-view .salary-job-identity{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
 body #salary-view .job-copy{display:flex;flex-direction:column;gap:4px;min-width:0;overflow-wrap:anywhere}
 body #salary-view .job-copy small{color:var(--navigation-ink,#a2a0aa);font-size:11px;line-height:1.5}
-body #salary-view .salary-row input{width:100%!important;min-width:0!important;max-width:160px;box-sizing:border-box;height:42px!important;margin:0!important;padding:10px!important;text-align:right}
-body #salary-view .salary-heading{display:grid!important;grid-template-columns:minmax(0,1fr) 160px!important;align-items:end;gap:16px!important;padding:0 12px;box-sizing:border-box}
+body #salary-view .salary-row input{width:100%!important;min-width:0!important;max-width:var(--salary-value-width);box-sizing:border-box;height:42px!important;margin:0!important;padding:10px!important;text-align:right}
+body #salary-view .salary-heading{display:grid!important;grid-template-columns:minmax(0,1fr) var(--salary-value-width)!important;align-items:end;gap:var(--salary-column-gap)!important;padding:0 calc(var(--salary-row-inset) + 1px);box-sizing:border-box}
 body #salary-view .salary-heading label,body #salary-view .salary-heading input{width:100%!important;min-width:0;box-sizing:border-box}
 body #salary-view .form-actions{margin-top:20px}
 @media(max-width:600px){
- body:is(.dark-theme,:not(.dark-theme)) #salary-view .salary-row{grid-template-columns:minmax(0,1fr) 120px!important;gap:10px!important;padding:10px!important}
- body #salary-view .salary-heading{grid-template-columns:minmax(0,1fr) 140px!important;gap:10px!important}
+ body #salary-view{--salary-value-width:120px;--salary-row-inset:10px;--salary-column-gap:10px}
 }
 /* Location action drawers stay on one line and open inside their own row. */
 body #sector-view .location-tree .location-node>.location-row{

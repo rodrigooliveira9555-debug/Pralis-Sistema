@@ -144,7 +144,7 @@
   let orderKey='cicluz-people-footer-order-v1';let buttonOrder=[];
   try{const value=JSON.parse(localStorage.getItem(orderKey)||'[]');if(Array.isArray(value))buttonOrder=value.filter(key=>typeof key==='string')}catch{}
   function persistButtonOrder(){try{localStorage.setItem(orderKey,JSON.stringify(buttonOrder))}catch{}}
-  function orderedControls(){const keys=[...new Set([...buttonOrder,...controls.keys()])];return keys.filter(key=>controls.has(key)&&controls.get(key).button.dataset.available!=='false').map(key=>[key,controls.get(key)])}
+  function orderedControls(){const keys=[...new Set([...buttonOrder,...controls.keys()])];return keys.filter(key=>controls.has(key)).map(key=>[key,controls.get(key)])}
   function applyPreferences(){
    for(const {button} of controls.values())if(button.dataset.available==='false')button.hidden=true;
    for(const [key,{button}] of orderedControls()){
@@ -178,11 +178,11 @@
     let touchStart=null;
     handle.onpointerdown=e=>{if(e.pointerType!=='touch')return;touchStart={y:e.clientY,id:e.pointerId};handle.setPointerCapture(e.pointerId)};
     handle.onpointerup=e=>{if(!touchStart)return;const delta=e.clientY-touchStart.y;touchStart=null;const target=[...chooser.querySelectorAll('.people-toolbar-row')].find(el=>{const rect=el.getBoundingClientRect();return e.clientY>=rect.top&&e.clientY<=rect.bottom});if(Math.abs(delta)>8&&target)moveControl(key,target.dataset.choiceKey,delta<0)};
-    const action=document.createElement('button');action.type='button';action.className='people-toolbar-run';action.setAttribute('aria-label','Executar '+label);action.disabled=button.disabled;
+    const action=document.createElement('button');action.type='button';action.className='people-toolbar-run';action.setAttribute('aria-label','Executar '+label);action.disabled=button.disabled||button.dataset.available==='false';
     const symbol=document.createElement('span');symbol.className='people-option-symbol';symbol.innerHTML=button.innerHTML;symbol.style.setProperty('--metric-color',button.style.getPropertyValue('--metric-color'));if(button.classList.contains('people-metric-control'))symbol.classList.add('people-metric-control');
     const name=document.createElement('span');name.textContent=label;name.className='people-option-name';action.append(symbol,name);action.onclick=()=>{closeChooser();button.click()};
     const visibility=document.createElement('button');visibility.type='button';visibility.className='people-toolbar-visibility';visibility.setAttribute('aria-label','Exibir '+label);visibility.setAttribute('aria-pressed',String(preferences[key]!==false));visibility.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';visibility.onclick=()=>{preferences[key]=preferences[key]===false;try{localStorage.setItem(preferencesKey,JSON.stringify(preferences))}catch{}applyPreferences();visibility.setAttribute('aria-pressed',String(preferences[key]!==false));row.classList.toggle('people-option-hidden',preferences[key]===false);row.classList.toggle('people-option-pinned',preferences[key]!==false)};
-    row.classList.toggle('people-option-hidden',preferences[key]===false);row.classList.toggle('people-option-pinned',preferences[key]!==false);action.title=label;row.append(handle,action,visibility);inner.append(row);
+    row.classList.toggle('people-option-hidden',preferences[key]===false);row.classList.toggle('people-option-pinned',preferences[key]!==false);action.title=button.dataset.available==='false'?label+' — não se aplica ao conteúdo desta tela':label;row.append(handle,action,visibility);inner.append(row);
    }
   }
   more.onclick=()=>setChooserOpen(chooser.hidden);

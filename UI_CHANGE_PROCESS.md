@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Matriz — alinhamentos, opções e origem (02/11/2026)
+Atualização salarial: alinhar data e coluna monetária em390/1024px. Operadoras: títulos dos dois grupos de classificação usam os mesmos tokens do cabeçalho, com subtítulo separado. Rodapé compartilhado: conferir todas as20 estruturas, Gestão de Pessoas e Diretor de Operação, opções de personalização completas, marca à esquerda e ações à direita, mesmo recuo do identificador superior. Origem: navegar pelos grupos de Gestão e descendentes, preservando cor do destino quando o próprio item tem identidade específica. Verificar temas, busca, reabertura, ausência de erros e validação nativa sem salvar dados reais.
+
 ## Matriz — menu principal (02/11/2026)
 Escopo: marca/faixa, fileira dos três círculos e seta, Gestão fixo na rolagem. Conferir menu em390px/1024px, claro/escuro, busca aberta/fechada, expansão/recolhimento e usuário fixo. Fonte compartilhada: navigation-layout.js/css; não altera telas internas. Faixa sobe de132px para92px. Correção solicitada: controles acima da faixa, à direita de CICLUZ, centro46px entre topo0 e faixa92px, intervalos8px. Gestão mantém posição ao rolar.
 
