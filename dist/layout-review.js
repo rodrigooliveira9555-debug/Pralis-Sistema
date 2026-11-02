@@ -4,7 +4,7 @@
  const headerHosts='.head .shortcut-actions,.location-dialog-tools,.organogram-editor-header .shortcut-actions,.fee-header-actions';
  function sync(){
   document.querySelectorAll('button.standard-form-action,.view button,dialog button,.modal button').forEach(button=>{
-   if(button.closest('.head,.location-dialog-header,.organogram-editor-header'))return;
+   if(button.closest('.head,.location-dialog-header,.organogram-editor-header,.people-bottom-header'))return;
    const text=button.textContent.trim();
    if(/^Salvar(?:\s+.*)?$/.test(text)&&!button.classList.contains('footer-save-accent'))button.classList.add('footer-save-accent');
    if(text==='Cancelar'&&!button.classList.contains('footer-cancel-accent'))button.classList.add('footer-cancel-accent');

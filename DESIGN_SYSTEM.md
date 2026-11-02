@@ -455,3 +455,7 @@ Contorno superior cinza de1px segue a reta central e as duas curvas ascendentes;
 
 ## Menu de botões —294
 Gestão de Pessoas: seta lateral única (direita para contrair, esquerda para expandir). Checks sempre desenhados à direita em quadrado30×30px, mesmo diâmetro dos símbolos à esquerda; inativos com opacidade35%, ativos100%. Moldura branca sem sombra, borda1px --layout-line e recuo14px para o quadro interno cinza, igual ao conteúdo externo. Três pontos ficam brancos somente com menu aberto; segundo clique oculta integralmente o quadro e sua interação, preservando modo expandido/compacto. Substitui checks invisíveis e respiro8px anteriores.
+
+
+## Refinamento295 — menu dos botões inferiores
+Gestão de Pessoas: faixa superior cinza --navigation-ink com ícone de três pontos branco e título “Botões do cabeçalho inferior”, seta lateral única preservada. Rótulos “Organizar por + vendido / − vendido”, “Organizar por + comprado / − comprado”, “Organizar por + lucro / − lucro” e novo roxo#7c3aed “+RES / −RES” para resultado. Não assumir zero onde indicador não existe. Salvar tem apenas a palavra na descrição, símbolo check separado à esquerda e check de seleção à direita. Normalizador de botões de formulário não deve reescrever controles do cabeçalho inferior. Busca inicia o grupo de ações à direita; marca permanece isolada à esquerda. Compacto mantém coluna limpa, ocultar remove completamente.

@@ -35,7 +35,7 @@
   }
   const width=control('Recolher na horizontal — menor','<path d="m9 5-6 7 6 7M15 5l6 7-6 7"/>',()=>{displayState.compact=!displayState.compact;applyDisplay()});
   const status=document.createElement('span');status.className='people-save-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
-  const save=control('Salvar configuração da tela','<path d="m5 12 4 4L19 6"/>',()=>{
+  const save=control('Salvar','<path d="m5 12 4 4L19 6"/>',()=>{
    const native=head.querySelector('.header-save-circle');if(native){native.click();return}
    try{displayState.order=records().map(row=>row.dataset.target||row.querySelector('b')?.textContent||'');localStorage.setItem(displayKey,JSON.stringify(displayState));localStorage.setItem(preferencesKey,JSON.stringify(preferences));status.textContent='Configuração salva';setTimeout(()=>status.textContent='',2400)}catch{status.textContent='Não foi possível salvar a configuração'}
   });
@@ -43,10 +43,10 @@
   const announce=text=>{status.textContent=text;setTimeout(()=>{if(status.textContent===text)status.textContent=''},4000)};
   function metricControl(code,label,color,fields){
    let descending=true;
-   const button=control('Organizar por mais '+label+' / menos '+label,'',()=>{
+   const button=control('Organizar por + '+label+' / − '+label,'',()=>{
     const rows=records(),grid=rows[0]?.parentElement;
     const value=row=>{for(const field of fields){const raw=row.dataset[field];if(raw!==undefined&&raw!==''&&Number.isFinite(Number(raw)))return Number(raw)}return null};
-    if(!rows.some(row=>value(row)!==null)){announce('Esta lista não possui valores de '+(code==='LUC'?'lucro':code==='VND'?'vendas':'compras')+' para ordenar.');return}
+    if(!rows.some(row=>value(row)!==null)){announce('Esta lista não possui valores de '+(code==='RES'?'resultado':code==='LUC'?'lucro':code==='VND'?'vendas':'compras')+' para ordenar.');return}
     rows.sort((a,b)=>{const av=value(a),bv=value(b);if(av===null)return bv===null?0:1;if(bv===null)return -1;return descending?bv-av:av-bv}).forEach(row=>grid.append(row));
     button.setAttribute('aria-pressed',String(descending));button.textContent=(descending?'−':'+')+code;descending=!descending;
    });
@@ -56,7 +56,7 @@
   const sold=metricControl('VND','vendido','#eab308',['vnd','sales','sold','vendido']);
   const bought=metricControl('COM','comprado','#22c55e',['com','purchases','bought','comprado']);
   const profit=metricControl('LUC','lucro','#2563eb',['luc','profit','lucro']);
-  profit.title='Organizar por mais lucro / menos lucro';profit.setAttribute('aria-label',profit.title);
+  const result=metricControl('RES','resultado','#7c3aed',['res','result','resultado']);
   const print=control('Imprimir','<path d="M7 8V3h10v5M7 17H3V9h18v8h-4M7 13h10v8H7z"/><path d="M17 11h1"/>',()=>window.print());
   const exportConfig=control('Exportar configuração','<path d="M12 16V3m-4 4 4-4 4 4M4 14v7h16v-7"/>',()=>{
    const payload={format:'cicluz-people-toolbar',version:1,preferences,display:{compact:!!displayState.compact,order:records().map(row=>row.dataset.target||row.querySelector('b')?.textContent||'')},buttonOrder};
@@ -85,7 +85,7 @@
   toggle.onclick=()=>{collapsed=!collapsed;toggleState()};
   const preferencesKey='cicluz-people-footer-buttons-v1';let preferences={};
   try{const value=JSON.parse(localStorage.getItem(preferencesKey)||'{}');if(value&&typeof value==='object'&&!Array.isArray(value))preferences=value}catch{}
-  const controls=new Map([['search',{button:searchToggle,label:'Buscar'}],['sort',{button:sort,label:'A/Z'}],['expand',{button:expand,label:'Expandir / recolher tudo'}],['sold',{button:sold,label:'Organizar por mais vendido / menos vendido'}],['bought',{button:bought,label:'Organizar por mais comprado / menos comprado'}],['profit',{button:profit,label:'Organizar por mais lucro / menos lucro'}],['print',{button:print,label:'Imprimir'}],['import',{button:importConfig,label:'Importar configuração'}],['export',{button:exportConfig,label:'Exportar configuração'}],['width',{button:width,label:'Maior / menor na horizontal'}],['save',{button:save,label:'Salvar'}]]);
+  const controls=new Map([['search',{button:searchToggle,label:'Buscar'}],['sort',{button:sort,label:'A/Z'}],['expand',{button:expand,label:'Expandir / recolher tudo'}],['sold',{button:sold,label:'Organizar por + vendido / − vendido'}],['bought',{button:bought,label:'Organizar por + comprado / − comprado'}],['profit',{button:profit,label:'Organizar por + lucro / − lucro'}],['result',{button:result,label:'Organizar por + resultado / − resultado'}],['print',{button:print,label:'Imprimir'}],['import',{button:importConfig,label:'Importar configuração'}],['export',{button:exportConfig,label:'Exportar configuração'}],['width',{button:width,label:'Maior / menor na horizontal'}],['save',{button:save,label:'Salvar'}]]);
   const chooser=document.createElement('div');chooser.className='people-toolbar-options';chooser.id='people-toolbar-options';chooser.hidden=true;chooser.inert=true;chooser.setAttribute('role','group');chooser.setAttribute('aria-label','Botões do cabeçalho inferior');
   const more=document.createElement('button');more.type='button';more.className='people-toolbar-more';more.title='Personalizar botões';more.setAttribute('aria-label',more.title);more.setAttribute('aria-expanded','false');more.setAttribute('aria-pressed','false');more.setAttribute('aria-controls',chooser.id);more.innerHTML='<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>';
   function setChooserOpen(open){chooser.hidden=!open;chooser.inert=!open;more.setAttribute('aria-expanded',String(open));more.setAttribute('aria-pressed',String(open));if(open)renderChoices()}
@@ -98,10 +98,10 @@
   function applyPreferences(){
    for(const [key,{button}] of orderedControls()){
     button.hidden=preferences[key]===false;button.dataset.controlKey=key;
-    if(key==='search'){home.after(button);button.after(searchBox)}else tools.append(button);
+    if(key==='search')continue;else tools.append(button);
    }
    if(searchToggle.hidden&&!searchBox.hidden){searchBox.hidden=true;search.value='';filter();searchToggle.setAttribute('aria-expanded','false');searchToggle.setAttribute('aria-pressed','false')}
-   searchState();
+   tools.before(searchToggle,searchBox);searchState();
   }
   let dragging=null;
   let chooserCompact=false;
@@ -113,10 +113,11 @@
   function renderChoices(){
    chooser.replaceChildren();chooser.classList.toggle('people-options-compact',chooserCompact);
    const heading=document.createElement('div');heading.className='people-options-heading';
-   const title=document.createElement('b');title.textContent='Botões do cabeçalho';
+   const title=document.createElement('b');title.textContent='Botões do cabeçalho inferior';
+   const headingIcon=document.createElement('span');headingIcon.className='people-options-heading-icon';headingIcon.setAttribute('aria-hidden','true');headingIcon.innerHTML=more.innerHTML;
    const resize=document.createElement('button');resize.type='button';resize.className='people-options-resize';resize.setAttribute('aria-expanded',String(!chooserCompact));resize.setAttribute('aria-label',chooserCompact?'Expandir menu lateralmente':'Contrair menu para somente ícones');resize.title=resize.getAttribute('aria-label');resize.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(chooserCompact?'m15 5-7 7 7 7':'m9 5 7 7-7 7')+'"/></svg>';
    resize.onclick=()=>{chooserCompact=!chooserCompact;try{localStorage.setItem('cicluz-people-chooser-compact-v1',String(chooserCompact))}catch{}renderChoices();chooser.querySelector('.people-options-resize').focus()};
-   heading.append(title,resize);const inner=document.createElement('div');inner.className='people-options-inner';chooser.append(heading,inner);
+   heading.append(headingIcon,title,resize);const inner=document.createElement('div');inner.className='people-options-inner';chooser.append(heading,inner);
    for(const [key,{button,label}] of orderedControls()){
     const row=document.createElement('div');row.className='people-toolbar-row';row.dataset.choiceKey=key;
     const handle=document.createElement('button');handle.type='button';handle.className='people-order-handle';handle.draggable=true;handle.title='Arraste para mover ou use as setas para cima e para baixo';handle.setAttribute('aria-label','Mover '+label);handle.innerHTML='<svg viewBox="0 0 12 20"><circle cx="3" cy="4" r="1"/><circle cx="9" cy="4" r="1"/><circle cx="3" cy="10" r="1"/><circle cx="9" cy="10" r="1"/><circle cx="3" cy="16" r="1"/><circle cx="9" cy="16" r="1"/></svg>';
@@ -151,7 +152,7 @@
    const next=sources.map(b=>(b.getAttribute('aria-label')||b.title||b.textContent)+'|'+b.innerHTML).join(';;');
    if(next===signature)return;signature=next;
    for(const key of [...controls.keys()])if(key.startsWith('action:'))controls.delete(key);tools.replaceChildren();
-   sources.forEach(source=>{const button=document.createElement('button');button.type='button';button.className='people-footer-action';button.innerHTML=source.classList.contains('header-save-circle')?'<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>':source.innerHTML;const label=source.getAttribute('aria-label')||source.title||source.textContent.trim();button.title=label;button.setAttribute('aria-label',label);button.onclick=()=>source.click();tools.append(button);controls.set('action:'+(source.id||label),{button,label})});applyPreferences();if(!chooser.hidden)renderChoices();
+   sources.forEach(source=>{const button=document.createElement('button');button.type='button';button.className='people-footer-action';button.innerHTML=source.classList.contains('header-save-circle')?'<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>':source.innerHTML;const label=source.classList.contains('header-save-circle')?'Salvar':source.getAttribute('aria-label')||source.title||source.textContent.trim();button.title=label;button.setAttribute('aria-label',label);button.onclick=()=>source.click();tools.append(button);controls.set('action:'+(source.id||label),{button,label})});applyPreferences();if(!chooser.hidden)renderChoices();
   }
   let queued=false;
   new MutationObserver(records=>{

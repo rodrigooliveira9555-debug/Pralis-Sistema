@@ -74,8 +74,8 @@ body #sector-view.people-header-pilot .people-bottom-header .people-toolbar-choi
 /* Footer controls and their chooser use the same row spacing as the central list. */
 body #sector-view.people-header-pilot .people-bottom-header{flex-wrap:nowrap;--footer-inset:14px}
 body #sector-view.people-header-pilot .people-bottom-search{margin-left:0;flex:1 1 180px;max-width:340px}
-body #sector-view.people-header-pilot .people-search-toggle{margin-left:8px}
-body #sector-view.people-header-pilot .people-bottom-tools{margin-left:auto;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;flex-wrap:nowrap;padding:2px}
+body #sector-view.people-header-pilot .people-search-toggle{margin-left:auto}
+body #sector-view.people-header-pilot .people-bottom-tools{margin-left:0;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;flex-wrap:nowrap;padding:2px}
 body #sector-view.people-header-pilot .people-bottom-tools::-webkit-scrollbar{display:none}
 body #sector-view.people-header-pilot .people-bottom-header .people-metric-control,
 body #sector-view.people-header-pilot .people-option-symbol.people-metric-control{background:var(--metric-color)!important;border-color:var(--metric-color)!important;color:#fff!important;font:600 8px/1 var(--ui-font);white-space:nowrap;padding:0}
@@ -86,14 +86,14 @@ body #sector-view.people-header-pilot .people-toolbar-row{display:flex;align-ite
 body #sector-view.people-header-pilot .people-bottom-header .people-toolbar-row button{border:0!important;box-shadow:none!important;background:transparent!important;color:var(--layout-ink,#606066)!important}
 body #sector-view.people-header-pilot .people-bottom-header .people-order-handle{flex:0 0 20px;width:20px;height:32px;cursor:grab;touch-action:none;padding:3px}
 body #sector-view.people-header-pilot .people-order-handle svg{width:8px;height:16px;fill:currentColor;stroke:none}
-body #sector-view.people-header-pilot .people-bottom-header .people-toolbar-run{display:flex;align-items:center;justify-content:flex-start;gap:8px;flex:1;min-width:0;width:auto;height:auto;min-height:38px;padding:0 4px;text-align:left;border-radius:6px}
-body #sector-view.people-header-pilot .people-option-name{font:400 12px/18px var(--ui-font);white-space:normal;overflow-wrap:anywhere;min-width:0}
+body #sector-view.people-header-pilot .people-bottom-header .people-toolbar-run{display:flex;align-items:center;justify-content:flex-start;gap:8px;flex:1 1 0;min-width:0;width:0;height:auto;min-height:38px;padding:0 4px;text-align:left;border-radius:6px}
+body #sector-view.people-header-pilot .people-option-name{display:block;flex:1 1 0;align-self:center;text-align:left;font:400 12px/18px var(--ui-font);white-space:normal;overflow-wrap:anywhere;min-width:0}
 body #sector-view.people-header-pilot .people-bottom-header .people-toolbar-visibility{flex:0 0 30px;width:30px;height:30px;margin-left:auto;border:1px solid var(--layout-line,#dedee3)!important;border-radius:7px;font-size:16px;opacity:.35;color:#fff!important;background:var(--navigation-ink,#a1a0a8)!important}
 body #sector-view.people-header-pilot .people-bottom-header .people-toolbar-visibility[aria-pressed=true]{opacity:1;color:#fff!important;background:var(--navigation-ink,#a1a0a8)!important}
 body #sector-view.people-header-pilot .people-option-hidden .people-toolbar-run{opacity:.45}
 @media(max-width:600px){
  body #sector-view.people-header-pilot .people-bottom-header{--footer-inset:8px}
- body #sector-view.people-header-pilot .people-search-toggle{margin-left:3px}
+ body #sector-view.people-header-pilot .people-search-toggle{margin-left:auto}
  body #sector-view.people-header-pilot .people-bottom-header.people-search-open{flex-wrap:nowrap}
  body #sector-view.people-header-pilot .people-bottom-header.people-search-open>.people-home-logo,
  body #sector-view.people-header-pilot .people-bottom-header.people-search-open>.people-bottom-tools,
@@ -111,17 +111,20 @@ body #sector-view.people-header-pilot .people-option-hidden .people-toolbar-run{
 }
 
 /* Outer white frame and inner grey-lined quadrant, with a lateral compact mode. */
-body #sector-view.people-header-pilot .people-bottom-header .people-toolbar-options{padding:14px;display:flex;flex-direction:column;overflow:hidden;gap:14px;box-shadow:none}
-body #sector-view.people-header-pilot .people-options-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;min-height:32px;padding:0 2px}
-body #sector-view.people-header-pilot .people-options-heading b{font:600 12px/18px var(--ui-font)}
-body #sector-view.people-header-pilot .people-bottom-header .people-options-resize{flex:0 0 28px;width:28px;height:28px;border:0!important;color:var(--navigation-ink,#a1a0a8)!important;background:transparent!important;box-shadow:none!important}
+body #sector-view.people-header-pilot .people-bottom-header .people-toolbar-options{padding:0 14px 14px;display:flex;flex-direction:column;overflow:hidden;gap:14px;box-shadow:none}
+body #sector-view.people-header-pilot .people-options-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:none;min-height:58px;margin:0 -14px;padding:8px 14px;background:var(--navigation-ink,#a1a0a8);color:#fff;border-radius:14px 14px 0 0}
+body #sector-view.people-header-pilot .people-options-heading b{flex:1;min-width:0;font:600 14px/18px var(--ui-font)}
+body #sector-view.people-header-pilot .people-options-heading-icon{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:50%;background:#fff;color:var(--navigation-ink,#a1a0a8)}
+body #sector-view.people-header-pilot .people-bottom-header .people-options-resize{flex:0 0 28px;width:28px;height:28px;border:0!important;color:#fff!important;background:transparent!important;box-shadow:none!important}
 body #sector-view.people-header-pilot .people-options-inner{min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;border:1px solid var(--layout-line,#dedee3);border-radius:10px;background:#f5f5f7}
 body #sector-view.people-header-pilot .people-toolbar-row{background:#f5f5f7}
 body #sector-view.people-header-pilot .people-toolbar-row:first-child{border-top:0}
 body #sector-view.people-header-pilot .people-toolbar-visibility svg{width:20px;height:20px;visibility:visible}
 body #sector-view.people-header-pilot .people-toolbar-visibility[aria-pressed=true] svg{visibility:visible}
 body #sector-view.people-header-pilot .people-bottom-header .people-options-compact{width:60px;padding:14px;gap:14px;border-radius:12px;background:#fff}
-body #sector-view.people-header-pilot .people-options-compact .people-options-heading{justify-content:center;padding:0}
+body #sector-view.people-header-pilot .people-options-compact .people-options-heading{justify-content:center;padding:0;margin:0;min-height:32px;background:#fff;border-radius:0}
+body #sector-view.people-header-pilot .people-bottom-header .people-options-compact .people-options-resize{color:var(--navigation-ink,#a1a0a8)!important}
+body #sector-view.people-header-pilot .people-options-compact .people-options-heading-icon,
 body #sector-view.people-header-pilot .people-options-compact .people-options-heading b,
 body #sector-view.people-header-pilot .people-options-compact .people-order-handle,
 body #sector-view.people-header-pilot .people-options-compact .people-toolbar-visibility,
