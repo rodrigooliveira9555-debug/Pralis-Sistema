@@ -12,17 +12,22 @@
   const extras=document.createElement('div');extras.className='people-bottom-extras';
   const control=(label,svg,handler)=>{const button=document.createElement('button');button.type='button';button.title=label;button.setAttribute('aria-label',label);button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+svg+'</svg>';button.onclick=handler;extras.append(button);return button};
   const records=()=>[...view.querySelectorAll('#sector-content .record-grid>.record')];
-  const filter=()=>{const q=search.value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');records().forEach(row=>{const text=row.textContent.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');row.hidden=!!q&&!text.includes(q)})};
-  function searchState(){footer.classList.toggle('people-search-open',!searchBox.hidden)}
+  let dateRange=null;
+  const rowDate=row=>{const raw=row.dataset.date||row.querySelector('time[datetime]')?.getAttribute('datetime')||'';const day=raw.slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return null;const parsed=new Date(day+'T12:00:00Z');return Number.isFinite(parsed.getTime())&&parsed.toISOString().slice(0,10)===day?day:null};
+  const filter=()=>{const q=search.value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR'),rows=records(),hasDates=rows.some(row=>rowDate(row));rows.forEach(row=>{const text=row.textContent.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR'),day=rowDate(row);row.hidden=(!!q&&!text.includes(q))||!!(dateRange&&hasDates&&(!day||day<dateRange.start||day>dateRange.end))})};
+  function searchState(){footer.classList.toggle('people-search-open',!searchBox.hidden);positionSearch()}
+  function positionSearch(){if(searchBox.hidden||matchMedia('(max-width:600px)').matches){searchBox.style.removeProperty('right');searchBox.style.removeProperty('width');return}const right=footer.clientWidth-searchToggle.offsetLeft+6,available=searchToggle.offsetLeft-home.offsetLeft-home.offsetWidth-12;searchBox.style.right=right+'px';searchBox.style.width=Math.max(0,Math.min(340,available))+'px'}
+  new ResizeObserver(positionSearch).observe(footer);
   const searchToggle=control('Abrir busca','<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',()=>{searchBox.hidden=!searchBox.hidden;searchState();searchToggle.setAttribute('aria-pressed',String(!searchBox.hidden));searchToggle.setAttribute('aria-expanded',String(!searchBox.hidden));if(!searchBox.hidden)search.focus();else{search.value='';filter()}});
   search.oninput=filter;search.onkeydown=e=>{if(e.key==='Escape'){searchBox.hidden=true;searchState();search.value='';filter();searchToggle.setAttribute('aria-pressed','false');searchToggle.setAttribute('aria-expanded','false');searchToggle.focus()}};
   window.CicluzBeam?.attachOutline(searchBox);
   searchToggle.classList.add('people-search-toggle');
-  let savedOrder=null;
-  const sort=control('Ordenar de A a Z','<path d="M3 17 6 5l3 12M4 13h4M14 5h7l-7 12h7M11 19l2 2 2-2"/>',()=>{
+  let sortDescending=false;
+  const sortLabel='Organizar de A a Z / de Z a A';
+  const sort=control(sortLabel,'',()=>{
    const grid=view.querySelector('#sector-content .record-grid');if(!grid)return;
-   if(savedOrder){savedOrder.filter(row=>row.parentElement===grid).forEach(row=>grid.append(row));savedOrder=null;sort.setAttribute('aria-pressed','false');sort.title='Ordenar de A a Z';sort.setAttribute('aria-label',sort.title)}
-   else{savedOrder=[...grid.children];[...savedOrder].sort((a,b)=>(a.querySelector('b')?.textContent||a.textContent).localeCompare(b.querySelector('b')?.textContent||b.textContent,'pt-BR',{sensitivity:'base',numeric:true})).forEach(row=>grid.append(row));sort.setAttribute('aria-pressed','true');sort.title='Restaurar ordem anterior';sort.setAttribute('aria-label',sort.title)}
+   [...grid.children].sort((a,b)=>{const compared=(a.querySelector('b')?.textContent||a.textContent).localeCompare(b.querySelector('b')?.textContent||b.textContent,'pt-BR',{sensitivity:'base',numeric:true});return sortDescending?-compared:compared}).forEach(row=>grid.append(row));
+   sort.setAttribute('aria-pressed',String(sortDescending));announce(sortDescending?'Organizado de Z a A':'Organizado de A a Z');sortDescending=!sortDescending;
   });
   const sharedSort=createAlphabetizeButton(sort.onclick);sort.replaceChildren(...sharedSort.childNodes);sort.classList.add('sort-az');
   let allExpanded=false;
@@ -53,6 +58,19 @@
    button.textContent='+'+code;button.classList.add('people-metric-control');button.style.setProperty('--metric-color',color);
    return button;
   }
+  const datePanel=document.createElement('form');datePanel.className='people-date-panel';datePanel.hidden=true;datePanel.inert=true;datePanel.setAttribute('aria-label','Buscar por período');
+  datePanel.innerHTML='<b>Data de … a …</b><label>De<input type="date" name="start" aria-label="Data inicial" required></label><label>Até<input type="date" name="end" aria-label="Data final" required></label><p class="people-date-message" role="status"></p><div class="people-date-actions"><button type="submit" class="people-date-search">Buscar</button><button type="button" class="people-date-clear">Limpar</button><button type="button" class="people-date-close">Fechar</button></div>';
+  const dateStart=datePanel.elements.start,dateEnd=datePanel.elements.end,dateMessage=datePanel.querySelector('.people-date-message');
+  const dateButton=control('Data de … a …','<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M7 14h2M13 14h2M7 18h2"/>',()=>{setDateOpen(datePanel.hidden);if(!datePanel.hidden)dateStart.focus()});
+  dateButton.setAttribute('aria-expanded','false');datePanel.id='people-date-panel';dateButton.setAttribute('aria-controls',datePanel.id);
+  function setDateOpen(open){datePanel.hidden=!open;datePanel.inert=!open;dateButton.setAttribute('aria-expanded',String(open));if(open){closeChooser();dateMessage.textContent=records().some(row=>rowDate(row))?'Selecione as datas e clique em Buscar.':'Esta tela contém atalhos sem data; o período só filtra registros com data.'}}
+  function updateDateLabel(){const format=value=>value.split('-').reverse().join('/');const label=dateRange?'Data de '+format(dateRange.start)+' a '+format(dateRange.end):'Data de … a …';dateButton.title=label;dateButton.setAttribute('aria-label',label);dateButton.setAttribute('aria-pressed',String(!!dateRange));datePanel.querySelector('b').textContent=label;if(typeof controls!=='undefined'&&controls.has('date'))controls.get('date').label=label}
+  dateStart.oninput=()=>{dateStart.setCustomValidity('');dateEnd.setCustomValidity('')};dateEnd.oninput=()=>dateEnd.setCustomValidity('');
+  datePanel.onsubmit=event=>{event.preventDefault();dateEnd.setCustomValidity('');if(dateStart.value>dateEnd.value){dateEnd.setCustomValidity('A data final deve ser igual ou posterior à data inicial.');dateMessage.textContent='A data final deve ser igual ou posterior à data inicial.';dateEnd.reportValidity();return}dateRange={start:dateStart.value,end:dateEnd.value};updateDateLabel();filter();if(!records().some(row=>rowDate(row))){dateMessage.textContent='Período selecionado. Estes atalhos não têm data para filtrar.';return}setDateOpen(false);announce('Período aplicado: '+records().filter(row=>!row.hidden).length+' registros');dateButton.focus()};
+  datePanel.querySelector('.people-date-clear').onclick=()=>{dateRange=null;dateStart.value='';dateEnd.value='';dateEnd.setCustomValidity('');updateDateLabel();filter();dateMessage.textContent='Filtro de data removido.'};
+  datePanel.querySelector('.people-date-close').onclick=()=>{setDateOpen(false);dateButton.focus()};
+  datePanel.addEventListener('keydown',e=>{if(e.key==='Escape'){setDateOpen(false);dateButton.focus()}});
+  document.addEventListener('pointerdown',e=>{if(!datePanel.hidden&&!datePanel.contains(e.target)&&!dateButton.contains(e.target))setDateOpen(false)});
   const sold=metricControl('VND','vendido','#eab308',['vnd','sales','sold','vendido']);
   const bought=metricControl('COM','comprado','#22c55e',['com','purchases','bought','comprado']);
   const profit=metricControl('LUC','lucro','#2563eb',['luc','profit','lucro']);
@@ -85,10 +103,10 @@
   toggle.onclick=()=>{collapsed=!collapsed;toggleState()};
   const preferencesKey='cicluz-people-footer-buttons-v1';let preferences={};
   try{const value=JSON.parse(localStorage.getItem(preferencesKey)||'{}');if(value&&typeof value==='object'&&!Array.isArray(value))preferences=value}catch{}
-  const controls=new Map([['search',{button:searchToggle,label:'Buscar'}],['sort',{button:sort,label:'A/Z'}],['expand',{button:expand,label:'Expandir / recolher tudo'}],['sold',{button:sold,label:'Organizar por + vendido / − vendido'}],['bought',{button:bought,label:'Organizar por + comprado / − comprado'}],['profit',{button:profit,label:'Organizar por + lucro / − lucro'}],['result',{button:result,label:'Organizar por + resultado / − resultado'}],['print',{button:print,label:'Imprimir'}],['import',{button:importConfig,label:'Importar configuração'}],['export',{button:exportConfig,label:'Exportar configuração'}],['width',{button:width,label:'Maior / menor na horizontal'}],['save',{button:save,label:'Salvar'}]]);
+  const controls=new Map([['search',{button:searchToggle,label:'Buscar'}],['sort',{button:sort,label:sortLabel}],['date',{button:dateButton,label:'Data de … a …'}],['expand',{button:expand,label:'Expandir / recolher tudo'}],['sold',{button:sold,label:'Organizar por + vendido / − vendido'}],['bought',{button:bought,label:'Organizar por + comprado / − comprado'}],['profit',{button:profit,label:'Organizar por + lucro / − lucro'}],['result',{button:result,label:'Organizar por + resultado / − resultado'}],['print',{button:print,label:'Imprimir'}],['import',{button:importConfig,label:'Importar configuração'}],['export',{button:exportConfig,label:'Exportar configuração'}],['width',{button:width,label:'Maior / menor na horizontal'}],['save',{button:save,label:'Salvar'}]]);
   const chooser=document.createElement('div');chooser.className='people-toolbar-options';chooser.id='people-toolbar-options';chooser.hidden=true;chooser.inert=true;chooser.setAttribute('role','group');chooser.setAttribute('aria-label','Botões do cabeçalho inferior');
   const more=document.createElement('button');more.type='button';more.className='people-toolbar-more';more.title='Personalizar botões';more.setAttribute('aria-label',more.title);more.setAttribute('aria-expanded','false');more.setAttribute('aria-pressed','false');more.setAttribute('aria-controls',chooser.id);more.innerHTML='<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>';
-  function setChooserOpen(open){chooser.hidden=!open;chooser.inert=!open;more.setAttribute('aria-expanded',String(open));more.setAttribute('aria-pressed',String(open));if(open)renderChoices()}
+  function setChooserOpen(open){chooser.hidden=!open;chooser.inert=!open;more.setAttribute('aria-expanded',String(open));more.setAttribute('aria-pressed',String(open));if(open){setDateOpen(false);renderChoices()}}
   function closeChooser(){setChooserOpen(false)}
 
   const orderKey='cicluz-people-footer-order-v1';let buttonOrder=[];
@@ -137,7 +155,7 @@
   more.onclick=()=>setChooserOpen(chooser.hidden);
   document.addEventListener('pointerdown',e=>{if(!chooser.hidden&&!chooser.contains(e.target)&&!more.contains(e.target))closeChooser()});
   footer.addEventListener('keydown',e=>{if(e.key==='Escape'&&!chooser.hidden){closeChooser();more.focus()}});
-  footer.append(home,searchBox,tools,more,toggle,chooser,status,importFile);panel.append(footer);
+  footer.append(home,searchBox,tools,more,toggle,chooser,datePanel,status,importFile);panel.append(footer);
   footer.addEventListener('click',event=>{const button=event.target.closest('button');if(!button||button.matches('.people-toolbar-choice,.people-toolbar-more'))return;button.classList.add('people-click-feedback');setTimeout(()=>button.classList.remove('people-click-feedback'),220)});
   const edge=document.createElementNS('http://www.w3.org/2000/svg','svg');edge.setAttribute('class','people-footer-edge');edge.setAttribute('aria-hidden','true');const edgePath=document.createElementNS(edge.namespaceURI,'path');edge.append(edgePath);footer.prepend(edge);
   new ResizeObserver(()=>{const w=footer.clientWidth;edge.setAttribute('viewBox','0 0 '+w+' 21');edgePath.setAttribute('d','M .5 .5 A 19.5 19.5 0 0 0 20 20 H '+(w-20)+' A 19.5 19.5 0 0 0 '+(w-.5)+' .5')}).observe(footer);
@@ -145,7 +163,7 @@
   let previousActive=false,signature='';
   function sync(){
    const active=view.classList.contains('show')&&document.getElementById('sector-title')?.textContent.trim()==='Gestão de Pessoas';
-   if(active!==previousActive){view.classList.toggle('people-header-pilot',active);collapsed=false;toggleState();previousActive=active;closeChooser();searchBox.hidden=true;searchState();search.value='';searchToggle.setAttribute('aria-pressed','false');searchToggle.setAttribute('aria-expanded','false');savedOrder=null;sort.setAttribute('aria-pressed','false');sort.title='Ordenar de A a Z';sort.setAttribute('aria-label',sort.title);if(active){applyDisplay();const rows=records(),grid=rows[0]?.parentElement;for(const key of displayState.order||[]){const row=rows.find(r=>(r.dataset.target||r.querySelector('b')?.textContent||'')===key);if(row&&grid)grid.append(row)}}}
+   if(active!==previousActive){view.classList.toggle('people-header-pilot',active);collapsed=false;toggleState();previousActive=active;closeChooser();searchBox.hidden=true;searchState();search.value='';searchToggle.setAttribute('aria-pressed','false');searchToggle.setAttribute('aria-expanded','false');sortDescending=false;sort.setAttribute('aria-pressed','false');sort.title=sortLabel;sort.setAttribute('aria-label',sortLabel);dateRange=null;dateStart.value='';dateEnd.value='';dateEnd.setCustomValidity('');setDateOpen(false);updateDateLabel();if(active){applyDisplay();const rows=records(),grid=rows[0]?.parentElement;for(const key of displayState.order||[]){const row=rows.find(r=>(r.dataset.target||r.querySelector('b')?.textContent||'')===key);if(row&&grid)grid.append(row)}}}
    if(!active)return;
    expand.disabled=!view.querySelector('#sector-content details');
    const sources=[...head.querySelectorAll('.shortcut-actions button')].filter(b=>!b.matches('.mobile-menu-open')&&!b.hidden);

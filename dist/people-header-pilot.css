@@ -112,7 +112,7 @@ body #sector-view.people-header-pilot .people-option-hidden .people-toolbar-run{
 
 /* Outer white frame and inner grey-lined quadrant, with a lateral compact mode. */
 body #sector-view.people-header-pilot .people-bottom-header .people-toolbar-options{padding:0 14px 14px;display:flex;flex-direction:column;overflow:hidden;gap:14px;box-shadow:none}
-body #sector-view.people-header-pilot .people-options-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:none;min-height:58px;margin:0 -14px;padding:8px 14px;background:var(--navigation-ink,#a1a0a8);color:#fff;border-radius:14px 14px 0 0}
+body #sector-view.people-header-pilot .people-options-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:none;min-height:58px;margin:0 -14px;padding:8px 14px 20px;position:relative;background:var(--navigation-ink,#a1a0a8);color:#fff;border-radius:14px 14px 0 0}
 body #sector-view.people-header-pilot .people-options-heading b{flex:1;min-width:0;font:600 14px/18px var(--ui-font)}
 body #sector-view.people-header-pilot .people-options-heading-icon{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:50%;background:#fff;color:var(--navigation-ink,#a1a0a8)}
 body #sector-view.people-header-pilot .people-bottom-header .people-options-resize{flex:0 0 28px;width:28px;height:28px;border:0!important;color:#fff!important;background:transparent!important;box-shadow:none!important}
@@ -137,3 +137,19 @@ body #sector-view.people-header-pilot .people-options-compact .people-option-sym
 
 /* Closed means absent, including when the retained compact layout uses flex. */
 body #sector-view.people-header-pilot .people-bottom-header .people-toolbar-options[hidden]{display:none!important}
+
+/* Same white content overlap as the external purple header. */
+body #sector-view.people-header-pilot .people-options-heading::after{content:"";position:absolute;left:0;right:0;bottom:0;height:12px;background:#fff;border-radius:20px 20px 0 0;pointer-events:none}
+body #sector-view.people-header-pilot .people-options-compact .people-options-heading::after{display:none}
+body #sector-view.people-header-pilot .people-bottom-search{position:absolute;flex:none;top:50%;transform:translateY(-50%);z-index:3}
+body #sector-view.people-header-pilot .people-bottom-header .people-date-panel{position:absolute;bottom:calc(100% + var(--footer-inset));right:var(--footer-inset);width:320px;max-width:calc(100% - 2 * var(--footer-inset));max-height:65dvh;overflow:auto;box-sizing:border-box;padding:14px;border:1px solid var(--layout-line,#dedee3);border-radius:14px;background:#fff;color:var(--layout-ink,#606066);display:grid;gap:10px;z-index:11;font:400 12px/18px var(--ui-font)}
+body #sector-view.people-header-pilot .people-bottom-header .people-date-panel[hidden]{display:none!important}
+body #sector-view.people-header-pilot .people-date-panel label{display:grid;gap:4px;margin:0}
+body #sector-view.people-header-pilot .people-date-panel input{width:100%;min-width:0;box-sizing:border-box;height:42px;padding:8px;border:1px solid var(--layout-line,#dedee3);border-radius:8px;background:#fff;color:var(--layout-ink,#606066);font:inherit;font-size:16px}
+body #sector-view.people-header-pilot .people-date-message{margin:0;font-size:11px}
+body #sector-view.people-header-pilot .people-date-actions{display:flex;gap:8px;flex-wrap:wrap}
+body #sector-view.people-header-pilot .people-bottom-header .people-date-actions button{width:auto;height:36px;flex:1 1 auto;padding:6px 10px;border-radius:8px;font:inherit}
+@media(max-width:600px){
+ body #sector-view.people-header-pilot .people-bottom-header.people-search-open>.people-search-toggle{order:2;margin-left:0}
+ body #sector-view.people-header-pilot .people-bottom-header.people-search-open>.people-bottom-search:not([hidden]){position:relative;top:auto;right:auto;transform:none;order:1;width:auto;flex:1 1 0}
+}
