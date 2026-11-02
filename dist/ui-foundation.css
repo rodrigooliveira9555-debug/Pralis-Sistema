@@ -158,3 +158,14 @@ body.dark-theme .profiles-table thead th{background:#38284f}body.dark-theme .pro
 @media(max-width:600px){.profiles-controls{align-items:stretch}.profiles-controls>label{flex-basis:100%;min-width:0}.profiles-controls>.btn{flex:1 1 140px}.profiles-info{grid-template-columns:1fr;gap:6px}.profiles-info dd{margin-bottom:10px}body .profiles-table :is(th,td){width:140px;min-width:140px;padding:10px}body .profiles-table tr>:first-child{width:170px;min-width:170px;max-width:170px}}
 
 #job-profiles-view .shortcut-circle[hidden]{display:none!important}
+
+/* Admission stepper: equal tracks, stable circles, contained labels. */
+body .view .form-tabs{--step-size:42px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:20px 0;align-items:start}
+body .view .form-tabs button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;min-width:0;width:100%;margin:0;padding:4px;border:0;border-radius:0;background:transparent!important;color:var(--navigation-ink,#a1a0a8);box-sizing:border-box}
+body .view .form-tabs button:not(:last-child)::after{content:"";position:absolute;left:calc(50% + var(--step-size)/2 + 4px);right:calc(-50% + var(--step-size)/2 + 4px);top:calc(4px + var(--step-size)/2);height:1px;background:var(--layout-line,#dedee3);pointer-events:none}
+body .view .form-tabs .step-circle{display:grid;place-items:center;flex:none;width:var(--step-size);height:var(--step-size);box-sizing:border-box;border-radius:50%;border:1px solid var(--layout-line,#dedee3);background:#fff;font:600 15px/1 var(--ui-font);position:relative;z-index:1}
+body .view .form-tabs .step-label{display:block;max-width:100%;min-width:0;text-align:center;white-space:normal;overflow-wrap:anywhere;font:400 var(--ui-subtitle)/var(--ui-subtitle-line) var(--ui-font)!important}
+body .view .form-tabs button.active{color:var(--menu-accent,var(--panel-color,#7c3aed))}
+body .view .form-tabs button.active .step-circle{background:var(--menu-accent,var(--panel-color,#7c3aed));color:#fff;border-color:currentColor;box-shadow:0 0 0 3px color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 12%,white)}
+body .view .form-tabs button:focus-visible{outline:2px solid var(--menu-accent,var(--panel-color,#7c3aed));outline-offset:-2px;border-radius:8px}
+@media(max-width:600px){body .view .form-tabs{--step-size:32px}}

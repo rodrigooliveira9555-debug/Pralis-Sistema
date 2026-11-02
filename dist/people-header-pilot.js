@@ -78,12 +78,27 @@
   const dateStart=datePanel.elements.start,dateEnd=datePanel.elements.end,dateMessage=datePanel.querySelector('.people-date-message');
   const dateButton=control('Data de … a …','<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M7 14h2M13 14h2M7 18h2"/>',()=>{setDateOpen(datePanel.hidden)});
   dateButton.setAttribute('aria-expanded','false');datePanel.id='date-panel-'+(view.id||'dialog');dateButton.setAttribute('aria-controls',datePanel.id);
-  function positionDatePanel(){const rect=footer.getBoundingClientRect(),inset=parseFloat(getComputedStyle(footer).getPropertyValue('--footer-inset'))||0;datePanel.style.setProperty('--date-bottom',window.innerHeight-rect.top+inset+'px');datePanel.style.setProperty('--date-right',window.innerWidth-rect.right+inset+'px');datePanel.style.setProperty('--date-max-width',Math.max(0,rect.width-2*inset)+'px')}
+  function positionDatePanel(){
+   if(datePanel.hidden)return;
+   const rect=footer.getBoundingClientRect(),style=getComputedStyle(footer),inset=parseFloat(style.getPropertyValue('--footer-inset'))||8;
+   const viewport=window.visualViewport,left=viewport?.offsetLeft||0,top=viewport?.offsetTop||0;
+   const right=Math.min(rect.right, left+(viewport?.width||window.innerWidth))-Math.max(inset,parseFloat(style.paddingRight)||0);
+   const start=Math.max(rect.left,left)+Math.max(inset,parseFloat(style.paddingLeft)||0);
+   const bottom=Math.min(rect.top,top+(viewport?.height||window.innerHeight))-inset;
+   const ceiling=Math.max(top,collapsed?rect.top-panel.clientHeight:head.getBoundingClientRect().bottom);
+   datePanel.style.setProperty('--date-bottom',Math.max(0,window.innerHeight-bottom)+'px');
+   datePanel.style.setProperty('--date-right',Math.max(0,window.innerWidth-right)+'px');
+   datePanel.style.setProperty('--date-max-width',Math.max(0,right-start)+'px');
+   datePanel.style.setProperty('--date-max-height',Math.max(0,bottom-ceiling-inset)+'px');
+  }
   function setDateOpen(open){datePanel.hidden=!open;datePanel.inert=!open;dateButton.setAttribute('aria-expanded',String(open));if(open){closeChooser();dateMessage.textContent='';positionDatePanel()}}
-  window.addEventListener('resize',()=>{if(!datePanel.hidden)positionDatePanel()});
+  window.addEventListener('resize',positionDatePanel);
+  window.visualViewport?.addEventListener('resize',positionDatePanel);
+  window.visualViewport?.addEventListener('scroll',positionDatePanel);
+  new ResizeObserver(positionDatePanel).observe(footer);
   function updateDateLabel(){const format=value=>value.split('-').reverse().join('/');const label=dateRange?'Data de '+format(dateRange.start)+' a '+format(dateRange.end):'Data de … a …';dateButton.title=label;dateButton.setAttribute('aria-label',label);dateButton.setAttribute('aria-pressed',String(!!dateRange));if(typeof controls!=='undefined'&&controls.has('date'))controls.get('date').label=label}
   dateStart.oninput=()=>{dateStart.setCustomValidity('');dateEnd.setCustomValidity('')};dateEnd.oninput=()=>dateEnd.setCustomValidity('');
-  datePanel.onsubmit=event=>{event.preventDefault();dateEnd.setCustomValidity('');if(dateStart.value>dateEnd.value){dateEnd.setCustomValidity('A data final deve ser igual ou posterior à data inicial.');dateMessage.textContent='A data final deve ser igual ou posterior à data inicial.';dateEnd.reportValidity();return}dateRange={start:dateStart.value,end:dateEnd.value};updateDateLabel();filter();if(!records().some(row=>rowDate(row))){dateMessage.textContent='Período selecionado. Estes atalhos não têm data para filtrar.';return}setDateOpen(false);announce('Período aplicado: '+records().filter(row=>!row.hidden).length+' registros');dateButton.focus()};
+  datePanel.onsubmit=event=>{event.preventDefault();dateEnd.setCustomValidity('');if(dateStart.value>dateEnd.value){dateEnd.setCustomValidity('A data final deve ser igual ou posterior à data inicial.');dateMessage.textContent='A data final deve ser igual ou posterior à data inicial.';dateEnd.reportValidity();return}dateRange={start:dateStart.value,end:dateEnd.value};updateDateLabel();filter();if(!records().some(row=>rowDate(row))){dateMessage.textContent='Esta tela não possui registros com datas para filtrar.';return}setDateOpen(false);announce('Período aplicado: '+records().filter(row=>!row.hidden).length+' registros');dateButton.focus()};
   datePanel.querySelector('.people-date-clear').onclick=()=>{dateRange=null;dateStart.value='';dateEnd.value='';dateEnd.setCustomValidity('');updateDateLabel();filter();dateMessage.textContent=''};
   datePanel.querySelector('.people-date-close').onclick=()=>{setDateOpen(false);dateButton.focus()};
   datePanel.addEventListener('keydown',e=>{if(e.key==='Escape'){setDateOpen(false);dateButton.focus()}});
@@ -116,7 +131,7 @@
   applyDisplay();
   const toggle=document.createElement('button');toggle.type='button';toggle.className='people-header-toggle';toggle.innerHTML='<svg viewBox="0 0 24 24"><path d="m5 15 7-7 7 7"/></svg>';
   let collapsed=false;
-  function toggleState(){view.classList.toggle('people-top-hidden',collapsed);toggle.setAttribute('aria-expanded',String(!collapsed));toggle.setAttribute('aria-label',collapsed?'Mostrar cabeçalho superior':'Ocultar cabeçalho superior');toggle.title=toggle.getAttribute('aria-label')}
+  function toggleState(){view.classList.toggle('people-top-hidden',collapsed);toggle.setAttribute('aria-expanded',String(!collapsed));toggle.setAttribute('aria-label',collapsed?'Mostrar cabeçalho superior':'Ocultar cabeçalho superior');toggle.title=toggle.getAttribute('aria-label');if(!datePanel.hidden)requestAnimationFrame(positionDatePanel)}
   toggle.onclick=()=>{collapsed=!collapsed;toggleState()};
   let preferencesKey='cicluz-people-footer-buttons-v1';let preferences={};
   try{const value=JSON.parse(localStorage.getItem(preferencesKey)||'{}');if(value&&typeof value==='object'&&!Array.isArray(value))preferences=value}catch{}
@@ -215,7 +230,7 @@
    nativeExpand=sources.find(b=>b.matches('.unified-expand-toggle')||/^(?:Expandir|Recolher) (?:tudo|todos|todas)/.test(b.getAttribute('aria-label')||b.title||''))||null;
    const nativeSave=sources.find(b=>b.matches('.header-save-circle'));
    const list=!!content.querySelector('.record-grid,.job-item,.salary-row,.location-tree,tbody,.record');
-   searchToggle.dataset.available=String(!!nativeSearchButton||list);sort.dataset.available=String(!!nativeSort||list);dateButton.dataset.available=String(list);expand.dataset.available=String(!!nativeExpand||!!content.querySelector('details'));
+   searchToggle.dataset.available=String(!!nativeSearchButton||list);sort.dataset.available=String(!!nativeSort||list);dateButton.dataset.available='true';expand.dataset.available=String(!!nativeExpand||!!content.querySelector('details'));
    for(const b of [sold,bought,profit,result])b.dataset.available=String(list);
    expand.disabled=nativeExpand?.disabled||false;
    if(nativeExpand){if(expand.innerHTML!==nativeExpand.innerHTML)expand.innerHTML=nativeExpand.innerHTML;for(const attr of ['aria-expanded','aria-label','title']){const value=nativeExpand.getAttribute(attr);if(value!==null&&expand.getAttribute(attr)!==value)expand.setAttribute(attr,value)}}

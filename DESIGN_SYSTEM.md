@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Revisão307 — encaixe dos cadastros e calendário
+O shell não herda o row-gap dos formulários: gap0 entre cabeçalho, conteúdo e rodapé. Somente a superfície arredondada do conteúdo faz o recorte visual de12px; seus filhos ficam recortados no contêiner rolável e isolados. Preservar padding14px e curvas20px. Etapas do cadastro completo em quatro colunas iguais, círculos32px no celular/42px no computador, rótulos pelo token de subtítulo, quebra contida e indicação aria-current=step. Calendário disponível por padrão em todas as abas internas e diálogos, incluindo editores; escolhas de personalização existentes são preservadas. Não atribuir datas a registros: sem datas explícitas, informar ausência de registros datados. Janela fixa com14px de recuo desktop/8px até600px, medidos da lateral e do topo da barra inferior. Recalcular pelos limites reais do rodapé, safe-area, visualViewport, rotação e redimensionamento; limitar largura e altura ao espaço disponível sem invadir a identidade.
+
 ## Revisão306 — regras de abertura e contraste
 Personalização do rodapé SEMPRE abre contraída em60px, inclusive depois de fechar no modo expandido; não restaurar esse modo por preferência. Ações ocupam posições explícitas à direita, mesmo quando não existe lupa. Busca abre dentro da barra com altura32px, fonte16px, margem0, contorno limitado ao campo e lupa alinhada. Título e caminho em#ffffff/opacidade1 nos dois temas. Ícones internos usam traço2,2px e identificadores textuais peso700, sem alterar logomarcas, desenhos de animação ou conteúdo do menu principal.
 

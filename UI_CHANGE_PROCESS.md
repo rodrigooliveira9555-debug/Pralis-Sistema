@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Matriz307 — cadastros, etapas e calendário
+Revisar os20 shells, oito editores financeiros e diálogos compartilhados, além das quatro etapas do cadastro completo. Corrigir gap herdado de form-demo no painel, preservar recorte arredondado sem permitir pintura de campos na faixa de identidade. Etapas em quatro colunas iguais com círculos estáveis e nomes contidos. Calendário disponível em todas as abas internas; sem datas explícitas, informar ausência de registros datados. Recuos14px desktop/8px celular a partir da barra inferior e lateral, respeitando safe-area e viewport visual. Testar cabeçalho aberto/oculto, rolagem, calendário abrir/limpar/fechar e claro/escuro.
+
 ## Revisão306 — abertura, alinhamento e contraste
 Matriz:20 estruturas de tela,31 destinos, oito editores financeiros e diálogos; celular/desktop e tema claro/escuro. Nova regra: personalização abre sempre compacta, independente de preferência anterior; expandir vale apenas enquanto aberta. Grupo de ações ancorado à direita mesmo sem busca. Busca nativa ou de navegação dentro da barra, com foco e contenção. Título e caminho do cabeçalho em branco puro e opacidade1; ícones internos com traço compartilhado2,2px, preservando marcas e animações. Menu principal excluído.
 

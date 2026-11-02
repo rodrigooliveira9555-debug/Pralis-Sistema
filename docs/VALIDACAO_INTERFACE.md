@@ -31,3 +31,12 @@ Verificação final de regressão: cabeçalho oculto com margem superior0px e pa
 Conferências complementares: oito editores financeiros abertos no celular, todos com campos nativos, check Salvar delegado e conteúdo 390px; comando do Organograma não permanece ao voltar para Gestão de Pessoas. Personalização ocultou/restaurou Imprimir; compacto 60px ocultou todos os nomes; calendário abriu e fechou. Busca móvel ocupou 337px, com somente a lupa restante na barra 390px. Tema alternado; cabeçalho oculto indicou branco em theme-color e rodapé branco. Salvar sem nome foi bloqueado pela validação nativa.
 
 Essas conferências verificam estruturas e comportamentos compartilhados. Não representam revisão de cada cadastro preenchido, cálculo comercial, integração futura ou aparelho físico. Safari/iPhone real e o vinho da interface externa do navegador não foram reproduzidos neste ambiente. O preenchimento da página e theme-color continuam acompanhando a faixa visível e pedindo branco quando oculta.
+
+
+## Revisão307
+- Reproduzido gap8px em panel.form-demo, que reduzia o encaixe de12px das curvas para4px. Removido no shell compartilhado; conteúdo mantém recorte arredondado e isolamento.
+- Inventário20/20 estruturas: um rodapé, gap0, calendário disponível e sem transbordamento lateral. Varredura geométrica320/390/1024px confirmou cabeçalho estável e identidade protegida ao rolar. A primeira rotina rápida de calendário apresentou medições antes da conclusão dos observers; repetição aguardando o layout confirmou20/20 abas em390px com abertura/fechamento, limpar e recuos8/8px, cabeçalho aberto e oculto.
+- Oito editores financeiros abertos em390px: DES/MER/RET/VND/Contas/Tipos de Venda/Bandeiras/Operadoras. Todos com formulário nativo, gap0, recorte12px, rodapé58px na base844px, calendário disponível e sem overflow horizontal.
+- Diálogo Cadastrar Área: cabeça e conteúdo limitados à moldura, janela de datas232x134px, recuos8/8px. Nenhum registro salvo.
+- Cadastro completo320px: alternância1→2→3→4→1, aria-current e painel correspondente corretos, quatro círculos32x32 com mesmo eixo horizontal e rótulos contidos em cada coluna. Desktop1024px/tema escuro: quatro círculos42px, cabeçalho#fff e calendário roxo com recuos14/14px.
+- JavaScript alterado conferido com node --check;21 asserts existentes de validação passaram; git diff --check sem erros. Sem Safari/iPhone físico ou teclado virtual real. Fixture em tests/registration-review.html, fora da publicação.

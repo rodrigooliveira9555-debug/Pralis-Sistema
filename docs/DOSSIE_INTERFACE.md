@@ -221,3 +221,7 @@ As tabelas largas de Colaboradores e Pré-fechamento foram identificadas no test
 Não executar exclusões, transferências ou gravações em dados reais durante os testes. Dados fictícios usados na prévia não fazem parte da publicação.
 
 Resultado de conferência:31 destinos em 390 x 844 e os mesmos 31 em 1024 x 844, cobrindo 20 estruturas. Todos apresentaram um único rodapé e conteúdo contido na largura disponível. Os oito editores financeiros também foram abertos no celular. Busca nativa, validação de Salvar, calendário, menu expandido/compacto, visibilidade de Imprimir e ocultação/restauração do cabeçalho foram conferidos separadamente. Teste em navegador remoto; nenhum aparelho físico foi verificado.
+
+
+## Complemento307 — revisão dos cadastros
+Removido o gap8px herdado por panel.form-demo: o encaixe estrutural agora usa gap0 em todas as telas internas, mantendo o recorte arredondado12px e os campos contidos no scroll. As quatro etapas usam trilhas iguais, círculos32px móveis/42px desktop, rótulos11px/14px contidos e aria-current no passo ativo. O calendário deixa de depender da presença de uma lista para aparecer: integra o rodapé das abas e dos diálogos, respeitando personalizações existentes. Filtrar exige datas explícitas em registros; formulário sem registros informa esse limite. Recuos14/8px medidos do rodapé real e corrigidos por safe-area/viewport visual; altura limitada abaixo da identidade.

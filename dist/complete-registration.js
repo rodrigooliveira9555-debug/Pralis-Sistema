@@ -6,7 +6,7 @@
  const fields=()=>[...steps.querySelectorAll('input,select,textarea')].filter(el=>el.type!=='file');
  const status=document.createElement('p');status.className='registration-status';status.setAttribute('role','status');view.querySelector('.form-actions').after(status);
  const next=document.createElement('button');next.type='button';next.className='shortcut-circle registration-next';next.setAttribute('aria-label','Avançar etapa');next.title='Avançar etapa';next.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>';next.onclick=()=>document.getElementById('next-step').click();view.querySelector('.head .shortcut-actions').append(next);
- function sync(){next.hidden=!!steps.querySelector('.form-step:last-child.active')}
+ function sync(){next.hidden=!!steps.querySelector('.form-step:last-child.active');view.querySelectorAll('[data-step]').forEach(button=>{if(button.classList.contains('active'))button.setAttribute('aria-current','step');else button.removeAttribute('aria-current')})}
  document.addEventListener('cicluz-registration-step',sync);sync();
  document.addEventListener('cicluz-registration-save',()=>{
   const invalid=fields().find(el=>!el.disabled&&!el.checkValidity());
