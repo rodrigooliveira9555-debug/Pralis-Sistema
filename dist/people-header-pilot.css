@@ -7,7 +7,7 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view,dialog,.dialog).ap
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .head h2{font-size:14px!important;line-height:18px!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .head p{font-size:9px!important;line-height:12px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;margin:0!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.head+.content{flex:1 1 0!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;touch-action:pan-y;max-width:100%;margin-top:-12px!important;margin-bottom:-12px!important;border-radius:20px!important;padding-bottom:24px!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header{display:flex;align-items:center;flex:0 0 auto;min-height:58px;gap:6px;padding:8px 14px max(8px,env(safe-area-inset-bottom));border:0;border-bottom:1px solid var(--layout-line,#dedee3);border-radius:0 0 20px 20px;background:#fff!important;color:var(--navigation-ink,#a1a0a8)!important;position:relative;z-index:6;flex-wrap:wrap}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header{display:grid;grid-template-columns:32px minmax(0,1fr) 32px minmax(0,max-content) 32px 32px;grid-template-areas:"brand query search actions more collapse";align-items:center;flex:0 0 auto;min-height:58px;gap:6px;padding:8px 14px max(8px,env(safe-area-inset-bottom));border:0;border-bottom:1px solid var(--layout-line,#dedee3);border-radius:0 0 20px 20px;background:#fff!important;color:var(--navigation-ink,#a1a0a8)!important;position:relative;z-index:6;box-sizing:border-box;width:100%}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header::before,
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header::after{content:"";position:absolute;top:-20px;width:20px;height:20px;pointer-events:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header::before{left:0;background:radial-gradient(circle at 100% 0,transparent 19.5px,#fff 20px)}
@@ -141,7 +141,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-head
 /* Same white content overlap as the external purple header. */
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-heading::after{content:"";position:absolute;left:0;right:0;bottom:0;height:12px;background:#fff;border-radius:20px 20px 0 0;pointer-events:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-compact .people-options-heading::after{display:none}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search{position:absolute;flex:none;top:50%;transform:translateY(-50%);z-index:3}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search{position:relative;flex:none;transform:none;z-index:3}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-date-panel{position:absolute;bottom:calc(100% + var(--footer-inset));right:var(--footer-inset);width:320px;max-width:calc(100% - 2 * var(--footer-inset));max-height:65dvh;overflow:auto;box-sizing:border-box;padding:14px;border:1px solid var(--layout-line,#dedee3);border-radius:14px;background:#fff;color:var(--layout-ink,#606066);display:grid;gap:10px;z-index:11;font:400 12px/18px var(--ui-font)}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-date-panel[hidden]{display:none!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-panel label{display:grid;gap:4px;margin:0}
@@ -179,7 +179,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-head
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-bottom-tools>button{order:initial!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header>.fixed-header-tools{position:absolute;bottom:calc(100% + var(--footer-inset));right:var(--footer-inset);width:340px;max-width:calc(100% - 2 * var(--footer-inset));padding:10px;border:1px solid var(--layout-line,#dedee3);border-radius:10px;background:#fff;color:var(--layout-ink,#606066);z-index:9;display:block;box-sizing:border-box}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header>.fixed-header-tools[hidden]{display:none!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search>input{height:32px!important;min-height:32px!important;width:100%!important;padding:5px 10px!important;font-size:16px!important;box-sizing:border-box;display:block}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search>input{height:32px!important;min-height:32px!important;width:100%!important;margin:0!important;padding:5px 10px!important;font-size:16px!important;box-sizing:border-box;box-shadow:none!important;display:block}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search>input[hidden]{display:none!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header>.fixed-header-tools :is(.jobs-toolbar,.financial-list-controls,.location-toolbar){margin:0!important;padding:0!important;background:transparent!important;border:0!important;display:grid!important;gap:8px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header>.fixed-header-tools :is(input,select){width:100%!important;max-width:100%!important;min-width:0!important}
@@ -195,12 +195,28 @@ body:is(.dark-theme,:not(.dark-theme)) dialog.shell-dialog.app-screen-shell{heig
 body:is(.dark-theme,:not(.dark-theme)) dialog.shell-dialog.app-screen-shell>.panel{height:auto!important;min-height:0!important;max-height:88dvh!important}
 body dialog.app-screen-shell>.panel>.head{z-index:0!important}
 body dialog.app-screen-shell>.panel>.content{position:relative;z-index:1}
+/* Explicit slots keep the right edge stable with or without search and few actions. */
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell{--shell-icon-stroke:2.2}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-home-logo{grid-area:brand;margin:0!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-search-toggle{grid-area:search;margin:0!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tools{grid-area:actions;width:max-content;max-width:100%;min-width:0;justify-self:end;margin:0!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-toolbar-more{grid-area:more;margin:0!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-header-toggle{grid-area:collapse;margin:0!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search{grid-area:query;position:relative!important;top:auto!important;right:auto!important;transform:none!important;width:100%!important;min-width:0;max-width:340px!important;margin:0!important;justify-self:end;box-sizing:border-box}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header:not(:has(>.people-search-toggle:not([hidden]))){grid-template-columns:32px minmax(0,1fr) minmax(0,max-content) 32px 32px;grid-template-areas:"brand query actions more collapse"}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open{grid-template-columns:32px minmax(140px,1fr) 32px minmax(0,max-content) 32px 32px;grid-template-areas:"brand query search actions more collapse"}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.head :is(h2,h3,p,.header-identity,.header-identity *){color:#fff!important;-webkit-text-fill-color:#fff!important;opacity:1!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell :is(.sector-icon,.card-inherited-icon,.job-icon,.location-icon,.origin-icon,.shortcut-circle,.account-action-toggle,.job-action-toggle,.icon-choice,.account-icon-dot) svg,
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header button:not(.people-home-logo) svg{stroke-width:var(--shell-icon-stroke)!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell :is(.people-metric-control,.sort-az,.financial-text-badge,.location-initials){font-weight:700!important}
 @media(max-width:600px){
  body:is(.dark-theme,:not(.dark-theme)):not(.mobile-menu-visible):has(.view.app-screen-shell.show) .main{padding:0!important;background:#fff!important}
  body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-top-hidden>.panel{background:#fff!important}
  body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-top-hidden>.panel>.head+.content{margin-top:0!important;padding-top:max(14px,env(safe-area-inset-top,0px))!important}
  body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open>.people-search-toggle{order:2!important}
  body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open>.people-bottom-search{order:1!important}
+ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open{grid-template-columns:minmax(0,1fr) 32px;grid-template-areas:"query search"}
+ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open>.people-bottom-search{max-width:none!important}
  body dialog.shell-dialog,body .dialog.shell-dialog{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important}
 }
 @media print{

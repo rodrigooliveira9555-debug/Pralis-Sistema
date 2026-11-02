@@ -1,5 +1,10 @@
 # Processo de alterações de interface
 
+## Revisão306 — abertura, alinhamento e contraste
+Matriz:20 estruturas de tela,31 destinos, oito editores financeiros e diálogos; celular/desktop e tema claro/escuro. Nova regra: personalização abre sempre compacta, independente de preferência anterior; expandir vale apenas enquanto aberta. Grupo de ações ancorado à direita mesmo sem busca. Busca nativa ou de navegação dentro da barra, com foco e contenção. Título e caminho do cabeçalho em branco puro e opacidade1; ícones internos com traço compartilhado2,2px, preservando marcas e animações. Menu principal excluído.
+
+Verificação:31 destinos móveis/desktop, oito editores financeiros, diálogo Área e seis modelos de busca. Compacto60px ao reabrir; recuos8/14px; barra58px; campo móvel337x32px; lupa desktop sem deslocamento; contorno na largura do campo; branco255/255/255 e opacidade1. Registros detalhados em docs/VALIDACAO_INTERFACE.md.
+
 ## Padrão compartilhado de Gestão de Pessoas —305
 Autorização: estender toda a dinâmica aprovada às telas internas, excluindo o menu principal. Fonte inicial: publicação303, complementada pelo ajuste de busca304. Matriz antes da implementação:20 views (19 estáticas e Ficha de Cargos dinâmica), destinos de sector-view (navegação,8 cadastros financeiros, localização, organograma, editores), diálogos de cadastro/histórico/confirmação. Reutilizar o componente do piloto; preservar ações nativas, validações, dados, hierarquias e cores por origem. Registrar inventário, especificação e limites em docs/DOSSIE_INTERFACE.md. Conferência por estrutura e navegação real; não confundir número de estruturas com número de registros.
 

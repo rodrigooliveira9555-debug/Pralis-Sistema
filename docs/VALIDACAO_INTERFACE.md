@@ -1,5 +1,14 @@
 # Validação do padrão compartilhado
 
+## Revisão 306
+
+-31 destinos móveis: personalização compacta, recuos direito/inferior8px, títulos/caminhos#ffffff e opacidade1. Operadoras e Contas confirmadas também em abertura isolada.
+-31 destinos desktop: controle final a14px da borda direita, barra58px e textos#ffffff/opacidade1. Menu compacto a14px da lateral e da barra.
+-Reabrir depois de expandir e fechar retornou ao compacto60px.
+-Seis buscas (Gestão de Pessoas, Cargos, Atualização salarial, Ficha de Cargos, Despesas e Contas) abertas e fechadas em390px/1024px, com foco no campo. Desktop: lupa sem deslocamento; campo/contorno na mesma largura. Celular: campo337x32px, apenas lupa restante, barra58px. Margem financeira legada12px removida.
+-Oito editores financeiros: barra58px, controle final a8px da lateral e título branco. Diálogo Área: menu compacto, recuos8px e título branco. Tema escuro de Contas manteve branco puro/opacidade1.
+-SVG dos controles com2,2px computados. Marcas e animação preservadas. Nenhum dado real alterado. Conferência em navegador remoto, sem aparelho físico.
+
 Referência: dossiê DOSSIE_INTERFACE.md. Matriz:20 estruturas de tela e 31 destinos de conferência, usando as funções nativas de navegação na prévia, sem alterar cadastros reais.
 
 ## Medições concluídas

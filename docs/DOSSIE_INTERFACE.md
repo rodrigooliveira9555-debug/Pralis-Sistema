@@ -1,5 +1,7 @@
 # CICLUZ - Dossiê do padrão de interface
 
+Atualização306: o menu de personalização abre sempre contraído, independentemente do último modo; expansão vale somente para a abertura atual. Os comandos usam posições explícitas à direita. Busca com margem0 e contorno dentro do próprio campo; cabeçalhos com texto#ffffff/opacidade1, ícones internos com traço2,2px. Essas regras substituem os estados e medidas anteriores correspondentes.
+
 Referência: Gestão de Pessoas. Consolidação em 1 de novembro de 2026, horário de Brasília. Base de origem: publicação 303; ajuste da busca do menu publicado na 304. Abrangência autorizada: todas as telas internas e seus cadastros, preservando o menu principal. Este documento registra o padrão atual, as decisões substituídas e o mapa de aplicação.
 
 ## 1. Objetivo e limites

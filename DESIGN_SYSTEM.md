@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Revisão306 — regras de abertura e contraste
+Personalização do rodapé SEMPRE abre contraída em60px, inclusive depois de fechar no modo expandido; não restaurar esse modo por preferência. Ações ocupam posições explícitas à direita, mesmo quando não existe lupa. Busca abre dentro da barra com altura32px, fonte16px, margem0, contorno limitado ao campo e lupa alinhada. Título e caminho em#ffffff/opacidade1 nos dois temas. Ícones internos usam traço2,2px e identificadores textuais peso700, sem alterar logomarcas, desenhos de animação ou conteúdo do menu principal.
+
 ## Padrão vigente de todas as telas internas —305
 O usuário autorizou a extensão integral do padrão de Gestão de Pessoas às demais telas, fichas e diálogos, excluindo o menu principal. A especificação vigente está em docs/DOSSIE_INTERFACE.md, com inventário e registro em docs/VALIDACAO_INTERFACE.md. Substitui as limitações anteriores de piloto: identidade intensa recolhível, rodapé branco fixo, marca32px, círculos32px e SVG20px, menu de personalização reordenável/compacto, busca na barra móvel, calendário colorido e afastamentos14/8px. Preservar cores por origem, ações nativas e validações. O componente compartilhado usa app-screen-shell e mantém os nomes de arquivo do piloto para continuidade. Ações opcionais só aparecem quando se aplicam ao conteúdo. Menu principal recebeu somente o ajuste de busca8px/8px solicitado separadamente.
 
