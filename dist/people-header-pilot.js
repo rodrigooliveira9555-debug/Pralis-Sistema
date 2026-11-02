@@ -63,7 +63,7 @@
   const dateStart=datePanel.elements.start,dateEnd=datePanel.elements.end,dateMessage=datePanel.querySelector('.people-date-message');
   const dateButton=control('Data de … a …','<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M7 14h2M13 14h2M7 18h2"/>',()=>{setDateOpen(datePanel.hidden)});
   dateButton.setAttribute('aria-expanded','false');datePanel.id='people-date-panel';dateButton.setAttribute('aria-controls',datePanel.id);
-  function positionDatePanel(){datePanel.style.setProperty('--date-bottom',Math.max(8,window.innerHeight-footer.getBoundingClientRect().top+10)+'px')}
+  function positionDatePanel(){const rect=footer.getBoundingClientRect(),inset=parseFloat(getComputedStyle(footer).getPropertyValue('--footer-inset'))||0;datePanel.style.setProperty('--date-bottom',window.innerHeight-rect.top+inset+'px');datePanel.style.setProperty('--date-right',window.innerWidth-rect.right+inset+'px');datePanel.style.setProperty('--date-max-width',Math.max(0,rect.width-2*inset)+'px')}
   function setDateOpen(open){datePanel.hidden=!open;datePanel.inert=!open;dateButton.setAttribute('aria-expanded',String(open));if(open){closeChooser();dateMessage.textContent='';positionDatePanel()}}
   window.addEventListener('resize',()=>{if(!datePanel.hidden)positionDatePanel()});
   function updateDateLabel(){const format=value=>value.split('-').reverse().join('/');const label=dateRange?'Data de '+format(dateRange.start)+' a '+format(dateRange.end):'Data de … a …';dateButton.title=label;dateButton.setAttribute('aria-label',label);dateButton.setAttribute('aria-pressed',String(!!dateRange));if(typeof controls!=='undefined'&&controls.has('date'))controls.get('date').label=label}

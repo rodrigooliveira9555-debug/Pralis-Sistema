@@ -1,5 +1,10 @@
 # Processo de alterações de interface
 
+## Recuo do menu de data —300
+Matriz restrita a Gestão de Pessoas: menu de data aberto/fechado, celular e desktop. Usar o mesmo --footer-inset do menu de personalização para afastamento da lateral direita e da linha superior do cabeçalho inferior. Preservar campos, dimensões, ícones e funções. Conferir medidas e estabilidade ao rolar.
+
+Verificação300: prévia390×844 com afastamentos direito/inferior8px; prévia1024×844 com14px em ambos. Posição computada fixed preservada, campos sem sobreposição na captura móvel e fechamento confirmado. Sintaxe JS e diff sem erros; sem aparelho físico.
+
 ## Fonte única
 
 Antes de editar: ler DESIGN_SYSTEM.md e este processo. Reutilizar o componente existente; não copiar seu HTML/CSS e criar uma variante. Novas decisões substituem a regra anterior no componente compartilhado. Não alterar uma dimensão fora do pedido para resolver outra.
