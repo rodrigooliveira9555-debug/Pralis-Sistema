@@ -8,10 +8,8 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view,dialog,.dialog).ap
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .head h2{font:var(--ui-title-weight) var(--ui-title)/var(--ui-title-line) var(--ui-font)!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .head p{font-size:var(--ui-subtitle)!important;line-height:var(--ui-subtitle-line)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;margin:0!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.head+.content{flex:1 1 0!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;touch-action:pan-y;isolation:isolate;max-width:100%;margin-top:0!important;margin-bottom:0!important;border-radius:var(--shell-radius,12px)!important;padding-bottom:24px!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header{display:grid;grid-template-columns:32px minmax(16px,1fr) 32px minmax(0,max-content) 32px 32px;grid-template-areas:"brand query search actions more collapse";align-items:center;flex:0 0 auto;min-height:58px;gap:6px;padding:8px max(var(--footer-inset,14px),env(safe-area-inset-right,0px)) max(8px,env(safe-area-inset-bottom,0px)) max(var(--footer-inset,14px),env(safe-area-inset-left,0px));border:0;border-bottom:1px solid var(--layout-line,#dedee3);border-radius:var(--shell-radius,12px) var(--shell-radius,12px) 0 0;background:#fff!important;color:var(--navigation-ink,#a1a0a8)!important;position:relative;z-index:6;box-sizing:border-box;width:100%}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tools{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0;margin-left:auto}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header{display:grid;grid-template-columns:minmax(0,1fr) 32px minmax(0,1fr);grid-template-areas:"quick quick quick" "query query query" "left brand right";align-items:center;flex:0 0 auto;min-height:58px;gap:0 6px;padding:0 max(var(--footer-inset,14px),env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(var(--footer-inset,14px),env(safe-area-inset-left,0px));border:0;border-bottom:1px solid var(--layout-line,#dedee3);border-radius:var(--shell-radius,12px) var(--shell-radius,12px) 0 0;background:#fff!important;color:var(--navigation-ink,#a1a0a8)!important;position:relative;z-index:6;box-sizing:border-box;width:100%}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-extras{display:flex;align-items:center;justify-content:flex-end;gap:7px}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search{position:relative;flex:1 1 160px;min-width:0;max-width:340px;margin-left:auto}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search[hidden]{display:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search input{width:100%;min-width:0;height:32px;padding:5px 10px;border:1px solid var(--navigation-ink,#a1a0a8);border-radius:8px;background:#fff;color:var(--layout-ink,#606066);font:inherit;font-size:12px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header button[aria-pressed=true]{box-shadow:none}
@@ -62,24 +60,18 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-head
 .people-option-check{margin-left:auto;visibility:hidden}
 [aria-pressed=true]>.people-option-check{visibility:visible}
 @media(max-width:600px){
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tools,body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-extras{gap:5px}
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header{gap:5px}
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header:has(.people-bottom-search:not([hidden])) .people-bottom-tools{margin-left:0}
+ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header{gap:0 5px}
 }
 
 /* Footer controls and their chooser use the same row spacing as the central list. */
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header{flex-wrap:nowrap;--footer-inset:14px}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search{margin-left:0;flex:1 1 180px;max-width:340px}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-search-toggle{margin-left:auto}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tools{margin-left:0;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;flex-wrap:nowrap;padding:2px}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tools::-webkit-scrollbar{display:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-metric-control,
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-option-symbol.people-metric-control{background:var(--menu-accent,var(--panel-color,#7c3aed))!important;border-color:var(--menu-accent,var(--panel-color,#7c3aed))!important;color:var(--theme-surface,#fff)!important;font:600 8px/1 var(--ui-font);white-space:nowrap;padding:0}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-metric-control[aria-pressed=true]{box-shadow:none!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options{right:var(--footer-inset);bottom:calc(100% + var(--footer-inset));width:340px;max-width:calc(100% - 2 * var(--footer-inset));padding:0;gap:0;overflow-x:hidden;border-radius:14px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-toolbar-options>b{padding:12px 14px;font-weight:600;font-size:12px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-toolbar-row{display:flex;align-items:center;min-height:48px;gap:0;border-top:1px solid var(--layout-line,#dedee3);padding:4px 8px;background:#fff}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-row button:not(.people-toolbar-visibility){border:0!important;box-shadow:none!important;background:transparent!important;color:var(--navigation-ink,#a1a0a8)!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-row button:not(.people-toolbar-visibility):not(.people-toolbar-hidden-toggle){border:0!important;box-shadow:none!important;background:transparent!important;color:var(--navigation-ink,#a1a0a8)!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-order-handle{flex:0 0 20px;width:20px;height:32px;cursor:grab;touch-action:none;padding:3px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-order-handle svg{width:8px;height:16px;fill:currentColor;stroke:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-run{display:flex;align-items:center;justify-content:flex-start;gap:8px;flex:1 1 0;min-width:0;width:0;height:auto;min-height:38px;padding:0 4px;text-align:left;border-radius:6px}
@@ -89,15 +81,32 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-head
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-option-hidden .people-toolbar-run{opacity:.45}
 @media(max-width:600px){
  body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header{--footer-inset:14px}
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-search-toggle{margin-left:auto}
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open{flex-wrap:nowrap}
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open>.people-home-logo,
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open>.people-bottom-tools,
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open>.people-toolbar-more,
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open>.people-header-toggle{display:none!important}
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open>.people-search-toggle{order:0;margin-left:0;flex:0 0 32px}
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open>.people-bottom-search:not([hidden]){order:1;flex:1 1 0;max-width:none;min-width:0;margin:0}
 }
+/* Fixed symmetric navigation, centered brand and optional quick-action layer. */
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-footer-left,body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-footer-right{display:flex;align-items:center;gap:6px;min-width:0;min-height:58px;padding:8px 0;box-sizing:border-box}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-footer-left{grid-area:left;justify-content:flex-start}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-footer-right{grid-area:right;justify-content:flex-end}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-home-logo{grid-area:brand;justify-self:center;margin:0!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tools{grid-area:quick;display:flex;align-items:center;justify-content:safe center;gap:8px;width:100%;max-width:100%;min-width:0;min-height:50px;box-sizing:border-box;padding:8px 0;overflow-x:auto;overflow-y:hidden;border-bottom:1px solid var(--layout-line);scrollbar-width:thin}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tools[hidden]{display:none!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-quick-empty{font:400 11px/16px var(--ui-font);color:var(--navigation-ink);text-align:center}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-quick-empty[hidden]{display:none}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search{grid-area:query;width:100%;max-width:none;min-width:0;position:relative!important;transform:none!important;top:auto!important;right:auto!important;padding:6px 0;box-sizing:border-box}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-hidden-toggle{width:28px;height:28px;flex:0 0 28px;padding:4px;margin-left:5px}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-choices-empty{font:400 11px/16px var(--ui-font);color:var(--navigation-ink);padding:8px;margin:0;overflow-wrap:anywhere}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-compact .people-choices-empty{font-size:10px;line-height:13px;padding:0;text-align:center}
+@media(max-width:600px){
+ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-footer-left,body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-footer-right{gap:3px}
+ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell :is(.people-footer-left,.people-footer-right)>button{width:28px;height:28px;flex-basis:28px;padding:4px}
+ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell :is(.people-footer-left,.people-footer-right)>button svg{width:18px;height:18px}
+}
+@media(max-width:380px){
+ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header{--footer-inset:6px;column-gap:4px;padding-left:max(6px,env(safe-area-inset-left));padding-right:max(6px,env(safe-area-inset-right))}
+ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-footer-left,body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-footer-right{gap:2px}
+ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell :is(.people-footer-left,.people-footer-right)>button{width:24px;height:24px;flex-basis:24px;padding:3px}
+ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell :is(.people-footer-left,.people-footer-right)>button svg{width:16px;height:16px}
+}
+
 @media print{
  body:has(:is(#sector-view,.view,dialog,.dialog).app-screen-shell:is(.show,[open])),body:has(:is(#sector-view,.view,dialog,.dialog).app-screen-shell:is(.show,[open])) .app,
  body:has(:is(#sector-view,.view,dialog,.dialog).app-screen-shell:is(.show,[open])) .main,
@@ -124,6 +133,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-com
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-compact .people-options-heading b,
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-compact .people-order-handle,
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-compact .people-toolbar-visibility,
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-compact .people-toolbar-hidden-toggle,
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-compact .people-option-name{display:none!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-compact .people-options-inner{border:0;background:#fff;border-radius:0;scrollbar-width:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-compact .people-toolbar-row{padding:3px 0;border:0;background:#fff;min-height:38px;justify-content:center}
@@ -137,7 +147,6 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-head
 /* Same white content overlap as the external purple header. */
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-heading::after{content:"";position:absolute;left:0;right:0;bottom:0;height:12px;background:#fff;border-radius:20px 20px 0 0;pointer-events:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-compact .people-options-heading::after{display:none}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search{position:relative;flex:none;transform:none;z-index:3}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-date-panel{position:absolute;bottom:calc(100% + var(--footer-inset));right:var(--footer-inset);width:320px;max-width:calc(100% - 2 * var(--footer-inset));max-height:var(--date-max-height,65dvh);overflow:auto;box-sizing:border-box;padding:14px;border:1px solid var(--layout-line,#dedee3);border-radius:14px;background:#fff;color:var(--layout-ink,#606066);display:grid;gap:10px;z-index:11;font:400 12px/18px var(--ui-font)}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-date-panel[hidden]{display:none!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-panel label{display:grid;gap:4px;margin:0}
@@ -154,10 +163,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-action
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-date-panel .people-date-actions button{flex:0 0 32px!important;width:32px!important;height:32px!important;padding:5px!important;border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;border-radius:50%!important;background:var(--menu-accent,var(--panel-color,#7c3aed))!important;color:var(--theme-surface,#fff)!important;box-shadow:none!important}
 @media(max-width:600px){body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-actions{gap:5px}}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-date-actions button{width:auto;height:36px;flex:1 1 auto;padding:6px 10px;border-radius:8px;font:inherit}
-@media(max-width:600px){
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open>.people-search-toggle{order:2;margin-left:0}
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open>.people-bottom-search:not([hidden]){position:relative;top:auto;right:auto;transform:none;order:1;width:auto;flex:1 1 0}
-}
+
 
 /* One screen shell: native listeners and form validation remain authoritative. */
 body .app-screen-shell .shell-table-scroll{max-width:100%;width:100%;min-width:0;overflow-x:auto;overscroll-behavior-x:contain;box-sizing:border-box}
@@ -171,11 +177,8 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-top-hidden>.
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-content-narrow>.panel>.content>:not(.people-save-status){width:80%!important;margin-left:auto!important;margin-right:auto!important}
 body:not(.mobile-menu-visible):has(.view.app-screen-shell.show) .side{display:none!important}
 body:not(.mobile-menu-visible):has(.view.app-screen-shell.show) .main{margin-left:0!important;width:100%!important;max-width:none!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header>:is(.people-bottom-tools,.people-search-toggle,.people-toolbar-more,.people-header-toggle){order:initial!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-bottom-tools>button{order:initial!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header>.fixed-header-tools{position:absolute;bottom:calc(100% + var(--footer-inset));right:var(--footer-inset);width:340px;max-width:calc(100% - 2 * var(--footer-inset));padding:10px;border:1px solid var(--layout-line,#dedee3);border-radius:10px;background:#fff;color:var(--layout-ink,#606066);z-index:9;display:block;box-sizing:border-box}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header>.fixed-header-tools[hidden]{display:none!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search>input{height:32px!important;min-height:32px!important;width:100%!important;margin:0!important;padding:5px 10px!important;font-size:16px!important;box-sizing:border-box;box-shadow:none!important;display:block}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search>input[hidden]{display:none!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header>.fixed-header-tools :is(.jobs-toolbar,.financial-list-controls,.location-toolbar){margin:0!important;padding:0!important;background:transparent!important;border:0!important;display:grid!important;gap:8px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header>.fixed-header-tools :is(input,select){width:100%!important;max-width:100%!important;min-width:0!important}
@@ -186,21 +189,11 @@ body :is(dialog,.dialog).app-screen-shell>.panel>.content{min-height:0;overflow-
 body :is(dialog,.dialog).app-screen-shell>.panel>.head{margin:0!important;width:100%!important;max-width:100%!important;box-sizing:border-box;position:relative!important;top:auto!important;left:auto!important;right:auto!important;transform:none!important}
 body dialog.shell-dialog{position:fixed!important;inset:8px!important;margin:auto!important;width:min(760px,calc(100vw - 16px))!important;height:fit-content!important;max-height:calc(100dvh - 16px)!important;box-sizing:border-box}
 body :is(dialog,.dialog).app-screen-shell .people-bottom-header{width:100%;box-sizing:border-box}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tools{justify-content:flex-start;flex:0 1 auto}
 body:is(.dark-theme,:not(.dark-theme)) dialog.shell-dialog.app-screen-shell{height:auto!important;min-height:0!important;max-height:90dvh!important}
 body:is(.dark-theme,:not(.dark-theme)) dialog.shell-dialog.app-screen-shell>.panel{height:auto!important;min-height:0!important;max-height:88dvh!important}
 body dialog.app-screen-shell>.panel>.head{z-index:0!important}
 body dialog.app-screen-shell>.panel>.content{position:relative;z-index:1}
-/* Explicit slots keep the right edge stable with or without search and few actions. */
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell{--shell-icon-stroke:2.2}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-home-logo{grid-area:brand;margin:0!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-search-toggle{grid-area:search;margin:0!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tools{grid-area:actions;width:max-content;max-width:100%;min-width:0;justify-self:end;margin:0!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-toolbar-more{grid-area:more;margin:0!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-header-toggle{grid-area:collapse;margin:0!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search{grid-area:query;position:relative!important;top:auto!important;right:auto!important;transform:none!important;width:100%!important;min-width:0;max-width:340px!important;margin:0!important;justify-self:end;box-sizing:border-box}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header:not(:has(>.people-search-toggle:not([hidden]))){grid-template-columns:32px minmax(16px,1fr) minmax(0,max-content) 32px 32px;grid-template-areas:"brand query actions more collapse"}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open{grid-template-columns:32px minmax(140px,1fr) 32px minmax(0,max-content) 32px 32px;grid-template-areas:"brand query search actions more collapse"}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.head :is(h2,h3,p,.header-identity,.header-identity *){color:var(--theme-surface,#fff)!important;-webkit-text-fill-color:var(--theme-surface,#fff)!important;opacity:1!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell :is(.sector-icon,.card-inherited-icon,.job-icon,.location-icon,.origin-icon,.shortcut-circle,.account-action-toggle,.job-action-toggle,.icon-choice,.account-icon-dot) svg,
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header button:not(.people-home-logo) svg{stroke-width:var(--shell-icon-stroke)!important}
@@ -209,10 +202,6 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell :is(.people-metric-
  body:is(.dark-theme,:not(.dark-theme)):not(.mobile-menu-visible):has(.view.app-screen-shell.show) .main{padding:0!important;background:var(--layout-gap,#f5f5f7)!important}
  body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-top-hidden>.panel{background:var(--layout-gap,#f5f5f7)!important}
  body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-top-hidden>.panel>.head+.content{margin-top:0!important;padding-top:max(14px,env(safe-area-inset-top,0px))!important}
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open>.people-search-toggle{order:2!important}
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open>.people-bottom-search{order:1!important}
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open{grid-template-columns:minmax(0,1fr) 32px;grid-template-areas:"query search"}
- body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header.people-search-open>.people-bottom-search{max-width:none!important}
  body dialog.shell-dialog,body .dialog.shell-dialog{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important}
 }
 @media print{
