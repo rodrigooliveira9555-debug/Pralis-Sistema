@@ -5,6 +5,9 @@
 :root {
   --ui-font: Montserrat, system-ui, sans-serif;
   --menu-accent: #7c3aed;
+  /* Acento usado como TEXTO, borda ou foco sobre a superfície: no escuro ele clareia para passar
+     de 4,5:1 (o #7c3aed sobre #222128 dá 2,8:1). */
+  --acento-texto: #7c3aed;
   --layout-gap: #f5f5f7;
   --theme-surface: #fff;
   --theme-field: #fff;
@@ -41,6 +44,7 @@
   --navigation-ink: #9896a1;
   --texto-suave: #b5b3be;
   --erro: #f87171;
+  --acento-texto: #b197fc;
   color-scheme: dark;
 }
 
@@ -85,7 +89,9 @@ body {
   min-height: var(--rodape);
   padding: 8px var(--recuo);
   background: var(--menu-accent);
-  color: var(--theme-surface);
+  /* Branco nos dois temas: a superfície escura sobre o roxo dá 2,8:1 (ver DESIGN_SYSTEM, tela de
+     entrada 03/11/2026). */
+  color: #fff;
 }
 
 .entrada-identificador {
@@ -101,6 +107,7 @@ body {
 
 .entrada-identidade h1 {
   margin: 0;
+  outline: none;
   font-size: var(--ui-title);
   line-height: 20px;
   font-weight: 600;
@@ -153,6 +160,8 @@ body {
   line-height: 18px;
 }
 
+.entrada-campo label { color: var(--ui-label-color); }
+
 .entrada-campo input {
   width: 100%;
   min-width: 0;
@@ -163,14 +172,25 @@ body {
   background: var(--theme-field);
   color: var(--ui-input-color);
   font: 400 var(--ui-text)/20px var(--ui-font);
-  outline: none;
+  /* Transparente e não "none": no alto contraste do Windows o contorno aparece. */
+  outline: 2px solid transparent;
+  outline-offset: -2px;
   transition: border-color .15s, box-shadow .15s;
 }
 
 .entrada-campo input:focus-visible {
-  border-color: var(--menu-accent);
-  box-shadow: inset 0 0 0 1px var(--menu-accent);
+  border-color: var(--acento-texto);
+  box-shadow: inset 0 0 0 1px var(--acento-texto);
 }
+
+.entrada-erro-campo {
+  margin: 0;
+  color: var(--erro);
+  font-size: var(--ui-label);
+  line-height: 18px;
+}
+
+.entrada-erro-campo:empty { display: none; }
 
 .entrada-campo input[aria-invalid="true"] { border-color: var(--erro); }
 
@@ -191,9 +211,14 @@ body {
   border: 0;
   border-radius: 0 var(--ui-field-radius) var(--ui-field-radius) 0;
   background: transparent;
-  color: var(--navigation-ink);
+  color: var(--ui-label-color);
   cursor: pointer;
 }
+
+.entrada-olho .olho-fechado,
+.entrada-olho[aria-pressed="true"] .olho-aberto { display: none; }
+
+.entrada-olho[aria-pressed="true"] .olho-fechado { display: block; }
 
 .entrada-olho svg {
   width: 20px;
@@ -205,19 +230,25 @@ body {
   stroke-linejoin: round;
 }
 
-.entrada-olho[aria-pressed="true"] { color: var(--menu-accent); }
-
 .entrada-olho:focus-visible {
-  outline: 2px solid var(--menu-accent);
+  outline: 2px solid var(--acento-texto);
   outline-offset: -4px;
 }
 
-.entrada-nota,
-.entrada-detalhe {
+.entrada-nota {
   margin: 0;
   color: var(--texto-suave);
   font-size: var(--ui-subtitle);
   line-height: 16px;
+}
+
+/* Instrução que importa (ex.: "faça a importação só no iPad certo"): legível, não nota de rodapé. */
+.entrada-detalhe {
+  margin: 0;
+  color: var(--ui-label-color);
+  font-size: var(--ui-label);
+  font-weight: 500;
+  line-height: 18px;
 }
 
 .entrada-detalhe:empty { display: none; }
@@ -248,7 +279,16 @@ body {
   line-height: 18px;
 }
 
-.entrada-mensagem:empty { display: none; }
+.visualmente-oculto,
+.entrada-mensagem:empty {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 
 .entrada-mensagem:not(:empty) { animation: entrada-aviso .2s var(--ease-saida) both; }
 
@@ -292,14 +332,14 @@ body {
 .entrada-botao:active { transform: scale(.98); }
 
 .entrada-botao:focus-visible {
-  outline: 2px solid var(--menu-accent);
+  outline: 2px solid var(--acento-texto);
   outline-offset: 2px;
 }
 
 /* Desabilitado: transparente, como Salvar e Avançar quando inativos. */
-.entrada-botao:disabled {
+.entrada-botao[aria-disabled="true"] {
   background: transparent;
-  color: var(--menu-accent);
+  color: var(--acento-texto);
   cursor: progress;
   opacity: .7;
   transform: none;
@@ -307,8 +347,9 @@ body {
 
 /* Cancelar e Voltar: transparentes em ambos os temas. */
 .entrada-botao-secundario {
+  border-color: var(--acento-texto);
   background: transparent;
-  color: var(--menu-accent);
+  color: var(--acento-texto);
 }
 
 .entrada-botao-secundario:hover { background: color-mix(in srgb, var(--menu-accent) 12%, transparent); }

@@ -1,51 +1,80 @@
 /* Aviso de sincronização e botão Sair do rodapé do usuário. Usa os tokens de tema do site
-   (theme-surfaces.css) para seguir Luz/Sombra. */
+   (theme-surfaces.css) para seguir Luz/Sombra. O aviso fica acima dos rodapés de 58px, sem cobrir
+   o cabeçalho superior; cantos de 12px e controles de 42px como o resto do sistema. */
 .cicluz-aviso {
+  --aviso-cor: #7c3aed;
   position: fixed;
   z-index: 1000;
-  top: max(12px, env(safe-area-inset-top));
+  bottom: calc(var(--screen-footer-height, 58px) + 12px + env(safe-area-inset-bottom));
   left: 50%;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 8px 12px;
   width: min(560px, calc(100vw - 16px));
   padding: 10px 14px;
-  border: 1px solid var(--ui-border-base, #d4d4d8);
-  border-left: 4px solid var(--aviso-cor, #7c3aed);
+  border: 1px solid var(--aviso-cor);
   border-radius: 12px;
   background: var(--theme-surface, #fff);
   color: var(--ui-input-color, #27272a);
-  font: 400 13px/18px Montserrat, system-ui, sans-serif;
+  font: 400 14px/20px Montserrat, system-ui, sans-serif;
   box-shadow: 0 8px 24px #1d17361f;
   transform: translateX(-50%);
   animation: cicluz-aviso-surge .24s cubic-bezier(.2, .8, .2, 1) both;
 }
 
 .cicluz-aviso[hidden] { display: none; }
+
+/* Fundos escolhidos para o texto branco do botão passar de 4,5:1. */
 .cicluz-aviso[data-tipo="conflito"],
-.cicluz-aviso[data-tipo="erro"] { --aviso-cor: #ef4444; }
+.cicluz-aviso[data-tipo="erro"] { --aviso-cor: #dc2626; }
 .cicluz-aviso[data-tipo="sessao"],
-.cicluz-aviso[data-tipo="rede"] { --aviso-cor: #f97316; }
+.cicluz-aviso[data-tipo="rede"] { --aviso-cor: #c2410c; }
 
 .cicluz-aviso p {
-  flex: 1;
+  flex: 1 1 240px;
   margin: 0;
 }
 
+.cicluz-aviso-acoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
 .cicluz-aviso button {
-  flex: none;
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid var(--aviso-cor, #7c3aed);
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid var(--aviso-cor);
   border-radius: 8px;
-  background: var(--aviso-cor, #7c3aed);
+  background: var(--aviso-cor);
   color: #fff;
-  font: 600 13px/1 Montserrat, system-ui, sans-serif;
+  font: 600 14px/1 Montserrat, system-ui, sans-serif;
   cursor: pointer;
 }
 
+.cicluz-aviso .cicluz-aviso-fechar {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  padding: 0;
+  border-color: var(--ui-border-base, #d4d4d8);
+  background: transparent;
+  color: var(--ui-label-color, #52525b);
+}
+
+.cicluz-aviso-fechar svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
 .cicluz-aviso button:focus-visible {
-  outline: 2px solid var(--aviso-cor, #7c3aed);
+  outline: 2px solid var(--aviso-cor);
   outline-offset: 2px;
 }
 
@@ -76,15 +105,18 @@
   stroke-linejoin: round;
 }
 
-.sidebar-user .sidebar-user-sair:hover,
+.sidebar-user .sidebar-user-sair:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
 .sidebar-user .sidebar-user-sair:focus-visible {
-  border-color: #ef4444;
-  color: #ef4444;
-  outline: none;
+  outline: 2px solid var(--menu-accent, #7c3aed);
+  outline-offset: 2px;
 }
 
 @keyframes cicluz-aviso-surge {
-  from { opacity: 0; transform: translate(-50%, -6px); }
+  from { opacity: 0; transform: translate(-50%, 6px); }
 }
 
 @media (prefers-reduced-motion: reduce) {

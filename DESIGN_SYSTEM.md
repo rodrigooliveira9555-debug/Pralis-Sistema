@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Regra vigente — tela de entrada e avisos de sincronização (03/11/2026)
+A tela de entrada (`entrar.html`) segue o padrão das abas internas, com duas exceções registradas. 1) O quadro fica centralizado com no máximo 420px, e não na largura total: é uma tela de uma ação só. 2) O texto e o símbolo do cabeçalho superior são brancos nos dois temas: a superfície escura sobre o roxo dá 2,8:1 e reprova no WCAG AA. Esta exceção vale só para a entrada. **Pendente para o Rodrigo:** a mesma conta reprova a regra geral "texto na superfície do tema" no escuro (doc 10 do PROJECT_BRAIN). No escuro, o acento usado como texto, borda ou foco clareia para #b197fc. O aviso de sincronização fica acima dos rodapés, com cantos de 12px, controles de 42px e botão Fechar. Botão Sair do rodapé do usuário: círculo de 32px com contorno cinza, como os controles superiores do menu.
+
 ## Regras vigentes — contornos, diâmetro e etapas (03/11/2026)
 Abrir Tipo de Venda usa o papel editor-field-action: contorno neutro de1px, raio --ui-field-radius8px, altura42px e fundo do tema, seguindo os campos; foco e hover indicam interação sem alterar o enquadramento. Ações Salvar/Cancelar e quadros coloridos preservam seus papéis.
 

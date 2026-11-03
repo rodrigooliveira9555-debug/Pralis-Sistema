@@ -142,41 +142,68 @@
     }
   }
 
-  // Aviso único no topo, no padrão das superfícies do tema. Prioridade: conflito > sessão > erro >
-  // rede > novos.
+  // Avisos: duas regiões fixas, criadas no carregamento (o leitor de tela só anuncia mudança em
+  // região que já existia): "status" para rede e dados novos, "alert" para conflito, sessão e erro.
+  // Prioridade: conflito > sessão > erro > rede > novos. Todo aviso pode ser fechado.
   var prioridade = { conflito: 5, sessao: 4, erro: 3, rede: 2, novos: 1 };
+  var urgente = { conflito: true, sessao: true, erro: true };
   var avisoAtual = null;
-  var caixa = null;
+  var regioes = null;
+
+  function criarRegioes() {
+    if (regioes) return regioes;
+    regioes = {};
+    ['status', 'alert'].forEach(function (papel) {
+      var caixa = document.createElement('div');
+      caixa.className = 'cicluz-aviso';
+      caixa.setAttribute('role', papel);
+      caixa.hidden = true;
+      document.body.append(caixa);
+      regioes[papel] = caixa;
+    });
+    return regioes;
+  }
 
   function mostrarAviso(tipo, texto, rotulo, acao) {
     if (avisoAtual && prioridade[avisoAtual] > prioridade[tipo]) return;
-    if (!caixa) {
-      caixa = document.createElement('div');
-      caixa.className = 'cicluz-aviso';
-      document.body.append(caixa);
-    }
+    var caixas = criarRegioes();
+    var caixa = caixas[urgente[tipo] ? 'alert' : 'status'];
+    var outra = caixas[urgente[tipo] ? 'status' : 'alert'];
+    outra.hidden = true;
+    outra.replaceChildren();
     avisoAtual = tipo;
-    caixa.setAttribute('role', tipo === 'novos' || tipo === 'rede' ? 'status' : 'alert');
     caixa.dataset.tipo = tipo;
     var p = document.createElement('p');
     p.textContent = texto;
-    caixa.replaceChildren(p);
+    var acoes = document.createElement('div');
+    acoes.className = 'cicluz-aviso-acoes';
     if (rotulo) {
       var botao = document.createElement('button');
       botao.type = 'button';
       botao.textContent = rotulo;
       botao.addEventListener('click', acao);
-      caixa.append(botao);
+      acoes.append(botao);
     }
+    var fechar = document.createElement('button');
+    fechar.type = 'button';
+    fechar.className = 'cicluz-aviso-fechar';
+    fechar.setAttribute('aria-label', 'Fechar aviso');
+    fechar.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+    fechar.addEventListener('click', function () { esconderAviso(tipo); });
+    acoes.append(fechar);
     caixa.hidden = false;
+    caixa.replaceChildren(p, acoes);
   }
 
   function esconderAviso(tipo) {
-    if (caixa && avisoAtual === tipo) {
-      caixa.hidden = true;
-      avisoAtual = null;
-    }
+    if (!regioes || avisoAtual !== tipo) return;
+    regioes.status.hidden = true;
+    regioes.alert.hidden = true;
+    avisoAtual = null;
   }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', criarRegioes);
+  else criarRegioes();
 
   // Sair: só com tudo enviado. Depois apaga deste aparelho os dados de negócio da empresa.
   async function sair() {

@@ -30,3 +30,6 @@ Regra: **vale a mais recente do DS**. Os trechos antigos devem ser marcados como
 | Barra de rolagem | fina 6 px → removida | removida | — |
 
 **Duas decisões em aberto** (espaço entre quadros de Taxas e ações não aplicáveis) estão no doc 11.
+
+### Texto do cabeçalho superior no tema escuro — 03/11/2026
+A regra de 03/11 manda texto e símbolo do cabeçalho na superfície do tema (escuro #222128 no Sombra). Sobre o roxo #7c3aed isso dá 2,8:1, abaixo do mínimo de 4,5:1 do WCAG AA (medido pelo accessibility-director). A tela de entrada usa branco nos dois temas (DESIGN_SYSTEM, regra de 03/11 da tela de entrada). Falta o Rodrigo decidir se as abas internas seguem o mesmo caminho.

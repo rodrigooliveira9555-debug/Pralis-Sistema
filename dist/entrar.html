@@ -16,7 +16,7 @@
   <header class="entrada-topo">
     <svg class="entrada-identificador" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
     <div class="entrada-identidade">
-      <h1 id="entrada-titulo">Entrar</h1>
+      <h1 id="entrada-titulo" tabindex="-1">Entrar</h1>
       <p id="entrada-caminho">CICLUZ · Gestão de Padaria</p>
     </div>
   </header>
@@ -28,26 +28,32 @@
     </div>
 
     <form id="form-entrar" class="entrada-painel" novalidate>
-      <label class="entrada-campo">E-mail
-        <input id="email" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required>
-      </label>
-      <label class="entrada-campo">Senha
+      <div class="entrada-campo">
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" required aria-describedby="erro-email">
+        <p id="erro-email" class="entrada-erro-campo"></p>
+      </div>
+      <div class="entrada-campo">
+        <label for="senha">Senha</label>
         <span class="entrada-senha">
-          <input id="senha" name="senha" type="password" autocomplete="current-password" required>
+          <input id="senha" name="senha" type="password" autocomplete="current-password" required aria-describedby="erro-senha">
           <button type="button" id="mostrar-senha" class="entrada-olho" aria-label="Mostrar senha" aria-pressed="false">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="olho-aberto" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="olho-fechado" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.7 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-2.2 3.2"/><path d="M6.6 6.6A16 16 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m2 2 20 20"/></svg>
           </button>
         </span>
-      </label>
+        <p id="erro-senha" class="entrada-erro-campo"></p>
+      </div>
       <p class="entrada-nota">Esqueceu a senha? Fale com o administrador do sistema.</p>
     </form>
 
     <div id="painel-estado" class="entrada-painel" hidden>
       <p id="estado-texto" class="entrada-estado"></p>
-      <div id="estado-detalhe" class="entrada-detalhe"></div>
+      <p id="estado-detalhe" class="entrada-detalhe"></p>
     </div>
 
-    <p id="mensagem" class="entrada-mensagem" role="alert" aria-live="assertive"></p>
+    <p id="mensagem" class="entrada-mensagem" role="alert"></p>
+    <p id="anuncio" class="visualmente-oculto" role="status"></p>
   </section>
 
   <footer class="entrada-rodape">

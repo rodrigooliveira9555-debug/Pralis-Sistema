@@ -21,24 +21,40 @@
   var estadoTexto = document.getElementById('estado-texto');
   var estadoDetalhe = document.getElementById('estado-detalhe');
   var mensagem = document.getElementById('mensagem');
+  var anuncio = document.getElementById('anuncio');
+  var erroEmail = document.getElementById('erro-email');
+  var erroSenha = document.getElementById('erro-senha');
   var principal = document.getElementById('acao-principal');
   var secundaria = document.getElementById('acao-secundaria');
 
   var acaoPrincipal = null;
   var acaoSecundaria = null;
+  var enviando = false;
+  var tituloPagina = document.title;
 
   function avisar(texto) {
     mensagem.textContent = texto || '';
   }
 
+  function marcarCampo(campo, erro, texto) {
+    campo.setAttribute('aria-invalid', String(Boolean(texto)));
+    erro.textContent = texto || '';
+  }
+
+  function liberarPrincipal(rotulo) {
+    enviando = false;
+    principal.removeAttribute('aria-disabled');
+    if (rotulo) principal.textContent = rotulo;
+  }
+
   function mostrarFormulario() {
+    document.title = tituloPagina;
     titulo.textContent = 'Entrar';
     caminho.textContent = 'CICLUZ · Gestão de Padaria';
     form.hidden = false;
     painel.hidden = true;
     principal.hidden = false;
-    principal.disabled = false;
-    principal.textContent = 'Entrar';
+    liberarPrincipal('Entrar');
     principal.setAttribute('form', 'form-entrar');
     secundaria.hidden = true;
     acaoPrincipal = null;
@@ -57,7 +73,7 @@
     botoes = botoes || {};
     principal.removeAttribute('form');
     principal.hidden = !botoes.principal;
-    principal.disabled = false;
+    liberarPrincipal();
     if (botoes.principal) {
       principal.textContent = botoes.principal[0];
       acaoPrincipal = botoes.principal[1];
@@ -67,6 +83,11 @@
       secundaria.textContent = botoes.secundaria[0];
       acaoSecundaria = botoes.secundaria[1];
     }
+    // O painel troca o formulário: anuncia o estado novo e leva o foco ao título.
+    avisar('');
+    document.title = tituloTexto + ' · CICLUZ';
+    anuncio.textContent = tituloTexto + '. ' + texto + (detalhe ? ' ' + detalhe : '');
+    titulo.focus();
   }
 
   function carregando(texto) {
@@ -87,22 +108,23 @@
     var mostrar = senha.type === 'password';
     senha.type = mostrar ? 'text' : 'password';
     olho.setAttribute('aria-pressed', String(mostrar));
-    olho.setAttribute('aria-label', mostrar ? 'Ocultar senha' : 'Mostrar senha');
   });
 
   form.addEventListener('submit', async function (evento) {
     evento.preventDefault();
+    if (enviando) return;
     avisar('');
+    marcarCampo(email, erroEmail, email.value.trim() ? '' : 'Informe o e-mail.');
+    marcarCampo(senha, erroSenha, senha.value ? '' : 'Informe a senha.');
     var faltando = !email.value.trim() ? email : !senha.value ? senha : null;
-    email.setAttribute('aria-invalid', String(!email.value.trim()));
-    senha.setAttribute('aria-invalid', String(!senha.value));
     if (faltando) {
-      avisar('Preencha e-mail e senha.');
       faltando.focus();
       return;
     }
-    principal.disabled = true;
+    enviando = true;
+    principal.setAttribute('aria-disabled', 'true');
     principal.textContent = 'Entrando…';
+    anuncio.textContent = 'Entrando…';
     try {
       await S.api('/auth/sign-in/email', {
         metodo: 'POST',
@@ -111,9 +133,12 @@
       senha.value = '';
       await prosseguir();
     } catch (erro) {
-      principal.disabled = false;
-      principal.textContent = 'Entrar';
-      if (erro.status === 401) avisar('E-mail ou senha incorretos.');
+      liberarPrincipal('Entrar');
+      if (erro.status === 401) {
+        email.setAttribute('aria-invalid', 'true');
+        senha.setAttribute('aria-invalid', 'true');
+        avisar('E-mail ou senha incorretos.');
+      }
       else if (erro.status === 429) avisar('Muitas tentativas. Aguarde um minuto e tente de novo.');
       else avisar(erro.message);
       senha.focus();
