@@ -1,5 +1,12 @@
 # CICLUZ — referência de interface
 
+## Regra vigente — rodapé fixo e menu rápido (03/11/2026)
+Marca central, sem ampliar, alterna a segunda faixa superior de atalhos. Clique externo ou Escape fecha a faixa. Controles fixos à esquerda: menu inicial, busca, ordem e data. À direita: voltar, fechar, salvar, três pontos e ocultar/restaurar cabeçalho superior. Ações de formulário delegam às funções existentes e preservam validação.
+
+Ordem percorre A–Z, Z–A e original; o botão informa a próxima ação e mostra seis pontos/barra/seis pontos antes de restaurar. A ordem original é capturada antes da ordenação, sem alterar dados persistidos. Data sem registros datados continua na cor da aba e fica sem ação.
+
+Três pontos: lista compacta contém somente atalhos disponíveis, não fixados e não ocultos. Configuração expandida inclui os fixados e permite marcar/desmarcar, ocultar/restaurar e reordenar. Não escolhidos ficam no topo; fixados aparecem na segunda faixa. Preferências e ordem são preservadas por tela, com importação/exportação. A marca permanece centralizada também no celular; os nove controles ficam visíveis.
+
 ## Regras vigentes — contornos, diâmetro e etapas (03/11/2026)
 Abrir Tipo de Venda usa o papel editor-field-action: contorno neutro de1px, raio --ui-field-radius8px, altura42px e fundo do tema, seguindo os campos; foco e hover indicam interação sem alterar o enquadramento. Ações Salvar/Cancelar e quadros coloridos preservam seus papéis.
 

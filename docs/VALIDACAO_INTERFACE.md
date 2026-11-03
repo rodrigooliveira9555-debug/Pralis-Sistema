@@ -1,5 +1,8 @@
 # Validação do padrão compartilhado
 
+## Rodapé fixo e menu rápido — 03/11/2026
+Verificação reproduzível em tests/footer-toolbar.py, com Chromium/Playwright e armazenamento isolado. Fluxos passaram: A–Z/Z–A/original com indicação da próxima ação; busca local e nativa; data indisponível sem abrir painel; aplicação/limpeza de período em registros de teste; fixar/ocultar/reordenar atalhos; exclusão dos fixos na personalização; clique externo/Escape; persistência após recarregar; voltar nativo; salário inválido impedido e salário válido salvo em ISO; ocultar/restaurar cabeçalho; menu inicial e fechar diálogo. Verificações visuais em320/390/1024px, claro/escuro, incluindo marca central, nove controles sem sobreposição, expansão sem aumentar a marca, lista/configuração e ausência de overflow. Testes existentes:21 asserções de campos e19 de datas. Sem gravação de dados reais. Não comprova Safari físico ou publicação Vercel.
+
 ## Contornos de Operações, limite dos cabeçalhos e etapas — 03/11/2026
 Chromium em320/390/1024px, claro/escuro:48 editores dos oito cadastros de Operações,186 controles medidos, bordas1px/raio8px e sem invasão lateral. Abrir Tipo de Venda conferido com o mesmo contorno do seletor adjacente; seis navegações ao cadastro correspondente passaram.24 formulários de subgrupos dos quatro módulos hierárquicos também conferidos. Operadora: seis combinações com vigência adicionada em memória, campos de taxas/datas/classificação dentro do padrão, expansão/busca/recolhimento preservados.
 
