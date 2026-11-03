@@ -1,8 +1,6 @@
 # 12 — Plano de backend (copiando a estrutura do Sistema Pralis)
 
-> **Status (03/11/2026): fase 0 implementada** na branch `feat/backend-login-20261103`: login, empresas, perfis e a ponte de documentos (todas as telas salvam no banco sem reescrever as telas). As fases 1 a 5 (tabelas próprias por assunto) continuam como plano. Como rodar e publicar: `docs/BACKEND.md`.
->
-> **Decisão de 03/11/2026 (Marco):** P-01 respondida: backend próprio, banco separado. Substitui a recomendação 1 abaixo.
+> **Status (03/11/2026): implementado** na branch `feat/backend-login-20261103`. Fase 0 (login, empresas, perfis, usuários) e fases 1 a 3 como **tabelas derivadas**: as telas continuam gravando o documento e o servidor reconstrói as tabelas relacionais de cada assunto na mesma transação (decisão do Marco: telas intactas). Fase 4 (colaboradores) depende da P-11. Fase 5 (importação) = importação inicial pela tela de entrada. Deploy: Coolify (decidido), ainda não feito. Detalhes em `docs/BACKEND.md`.
 
 ## Recomendação (SUPERADA em 03/11/2026, ver status acima)
 1. **Preferida:** não criar backend novo. As telas boas do protótipo são reconstruídas no `web-vue`
