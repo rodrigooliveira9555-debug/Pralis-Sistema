@@ -1,0 +1,92 @@
+/* Aviso de sincronização e botão Sair do rodapé do usuário. Usa os tokens de tema do site
+   (theme-surfaces.css) para seguir Luz/Sombra. */
+.cicluz-aviso {
+  position: fixed;
+  z-index: 1000;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(560px, calc(100vw - 16px));
+  padding: 10px 14px;
+  border: 1px solid var(--ui-border-base, #d4d4d8);
+  border-left: 4px solid var(--aviso-cor, #7c3aed);
+  border-radius: 12px;
+  background: var(--theme-surface, #fff);
+  color: var(--ui-input-color, #27272a);
+  font: 400 13px/18px Montserrat, system-ui, sans-serif;
+  box-shadow: 0 8px 24px #1d17361f;
+  transform: translateX(-50%);
+  animation: cicluz-aviso-surge .24s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.cicluz-aviso[hidden] { display: none; }
+.cicluz-aviso[data-tipo="conflito"],
+.cicluz-aviso[data-tipo="erro"] { --aviso-cor: #ef4444; }
+.cicluz-aviso[data-tipo="sessao"],
+.cicluz-aviso[data-tipo="rede"] { --aviso-cor: #f97316; }
+
+.cicluz-aviso p {
+  flex: 1;
+  margin: 0;
+}
+
+.cicluz-aviso button {
+  flex: none;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--aviso-cor, #7c3aed);
+  border-radius: 8px;
+  background: var(--aviso-cor, #7c3aed);
+  color: #fff;
+  font: 600 13px/1 Montserrat, system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.cicluz-aviso button:focus-visible {
+  outline: 2px solid var(--aviso-cor, #7c3aed);
+  outline-offset: 2px;
+}
+
+/* Sair: controle circular de 32px, contorno e símbolo no cinza --navigation-ink, centro
+   transparente, como os controles superiores do menu inicial. */
+.sidebar-user .sidebar-user-sair {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  padding: 0;
+  border: 1px solid var(--navigation-ink, #a2a0aa);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--navigation-ink, #a2a0aa);
+  cursor: pointer;
+}
+
+.sidebar-user .sidebar-user-sair svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sidebar-user .sidebar-user-sair:hover,
+.sidebar-user .sidebar-user-sair:focus-visible {
+  border-color: #ef4444;
+  color: #ef4444;
+  outline: none;
+}
+
+@keyframes cicluz-aviso-surge {
+  from { opacity: 0; transform: translate(-50%, -6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cicluz-aviso { animation: none; }
+}

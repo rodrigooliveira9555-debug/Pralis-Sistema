@@ -1,0 +1,340 @@
+/* Tela de entrada no padrão das abas internas do CICLUZ (DESIGN_SYSTEM.md, regras de 02 e
+   03/11/2026): cabeçalho superior colorido, conteúdo e rodapé como retângulos independentes de
+   cantos 12px separados por 6px; campos de 42px, raio 8px e borda 1px; título 16px, subtítulo
+   11px; ação principal preenchida com o acento; roxo de formulários (#7c3aed) como cor de origem. */
+:root {
+  --ui-font: Montserrat, system-ui, sans-serif;
+  --menu-accent: #7c3aed;
+  --layout-gap: #f5f5f7;
+  --theme-surface: #fff;
+  --theme-field: #fff;
+  --ui-label-color: #52525b;
+  --ui-input-color: #27272a;
+  --ui-placeholder: #71717a;
+  --ui-border-base: #d4d4d8;
+  --navigation-ink: #a2a0aa;
+  --texto-suave: #6e6e73;
+  --erro: #c24141;
+  --ui-field-height: 42px;
+  --ui-field-radius: 8px;
+  --ui-title: 16px;
+  --ui-subtitle: 11px;
+  --ui-text: 14px;
+  --ui-label: 12px;
+  --canto: 12px;
+  --respiro: 6px;
+  --recuo: 14px;
+  --rodape: 58px;
+  --entrada-largura: 420px;
+  --ease-saida: cubic-bezier(.2, .8, .2, 1);
+  color-scheme: light;
+}
+
+.tema-sombra {
+  --layout-gap: #151419;
+  --theme-surface: #222128;
+  --theme-field: #222128;
+  --ui-label-color: #d4d4d8;
+  --ui-input-color: #f2f1f6;
+  --ui-placeholder: #aaa7b3;
+  --ui-border-base: #4a4851;
+  --navigation-ink: #9896a1;
+  --texto-suave: #b5b3be;
+  --erro: #f87171;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body { min-height: 100%; }
+
+body {
+  margin: 0;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: var(--layout-gap);
+  color: var(--ui-input-color);
+  font: 400 var(--ui-text)/1.5 var(--ui-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+.entrada {
+  display: flex;
+  flex-direction: column;
+  gap: var(--respiro);
+  width: 100%;
+  max-width: var(--entrada-largura);
+  animation: entrada-surge .32s var(--ease-saida) both;
+}
+
+.entrada-topo,
+.entrada-conteudo,
+.entrada-rodape {
+  border-radius: var(--canto);
+}
+
+/* Cabeçalho superior: fundo na cor de origem, texto e símbolo na superfície do tema, identificador
+   sem placa ocupando o diâmetro de 30px. */
+.entrada-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--rodape);
+  padding: 8px var(--recuo);
+  background: var(--menu-accent);
+  color: var(--theme-surface);
+}
+
+.entrada-identificador {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.entrada-identidade h1 {
+  margin: 0;
+  font-size: var(--ui-title);
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.entrada-identidade p {
+  margin: 0;
+  font-size: var(--ui-subtitle);
+  line-height: 14px;
+}
+
+.entrada-conteudo {
+  display: grid;
+  gap: 18px;
+  padding: 22px var(--recuo) 18px;
+  background: var(--theme-surface);
+}
+
+.entrada-marca {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+
+.entrada-marca img {
+  width: 178px;
+  height: auto;
+}
+
+/* A mesma faixa colorida de 3px que separa a marca do menu inicial. */
+.entrada-faixa {
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #ff0000 0% 13.043%, #ff8000 17.391% 30.435%, #f2d000 34.783% 47.826%, #00e833 52.174% 65.217%, #0055ff 69.565% 82.609%, #8000ff 86.957% 100%);
+}
+
+.entrada-painel {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+
+.entrada-painel[hidden] { display: none; }
+
+.entrada-campo {
+  display: grid;
+  gap: 6px;
+  color: var(--ui-label-color);
+  font-size: var(--ui-label);
+  line-height: 18px;
+}
+
+.entrada-campo input {
+  width: 100%;
+  min-width: 0;
+  height: var(--ui-field-height);
+  padding: 10px 12px;
+  border: 1px solid var(--ui-border-base);
+  border-radius: var(--ui-field-radius);
+  background: var(--theme-field);
+  color: var(--ui-input-color);
+  font: 400 var(--ui-text)/20px var(--ui-font);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.entrada-campo input:focus-visible {
+  border-color: var(--menu-accent);
+  box-shadow: inset 0 0 0 1px var(--menu-accent);
+}
+
+.entrada-campo input[aria-invalid="true"] { border-color: var(--erro); }
+
+.entrada-senha {
+  position: relative;
+  display: block;
+}
+
+.entrada-senha input { padding-right: 46px; }
+
+.entrada-olho {
+  position: absolute;
+  inset: 1px 1px 1px auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0 var(--ui-field-radius) var(--ui-field-radius) 0;
+  background: transparent;
+  color: var(--navigation-ink);
+  cursor: pointer;
+}
+
+.entrada-olho svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.entrada-olho[aria-pressed="true"] { color: var(--menu-accent); }
+
+.entrada-olho:focus-visible {
+  outline: 2px solid var(--menu-accent);
+  outline-offset: -4px;
+}
+
+.entrada-nota,
+.entrada-detalhe {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: var(--ui-subtitle);
+  line-height: 16px;
+}
+
+.entrada-detalhe:empty { display: none; }
+
+.entrada-estado {
+  margin: 0;
+  font-size: var(--ui-text);
+  line-height: 20px;
+}
+
+.entrada-estado[data-carregando]::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  vertical-align: -2px;
+  border: 2px solid color-mix(in srgb, var(--menu-accent) 25%, transparent);
+  border-top-color: var(--menu-accent);
+  border-radius: 50%;
+  animation: entrada-gira .8s linear infinite;
+}
+
+.entrada-mensagem {
+  margin: 0;
+  color: var(--erro);
+  font-size: var(--ui-label);
+  line-height: 18px;
+}
+
+.entrada-mensagem:empty { display: none; }
+
+.entrada-mensagem:not(:empty) { animation: entrada-aviso .2s var(--ease-saida) both; }
+
+/* Rodapé: marca isolada à esquerda, ações à direita, recuos de 14px. */
+.entrada-rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: var(--rodape);
+  padding: 8px var(--recuo);
+  background: var(--theme-surface);
+}
+
+.entrada-simbolo {
+  width: 32px;
+  height: auto;
+}
+
+.entrada-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.entrada-botao {
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid var(--menu-accent);
+  border-radius: var(--ui-field-radius);
+  background: var(--menu-accent);
+  color: #fff;
+  font: 600 var(--ui-text)/1 var(--ui-font);
+  cursor: pointer;
+  transition: transform .12s var(--ease-saida), background-color .15s, opacity .15s;
+}
+
+.entrada-botao:hover { background: color-mix(in srgb, var(--menu-accent) 88%, #000); }
+
+.entrada-botao:active { transform: scale(.98); }
+
+.entrada-botao:focus-visible {
+  outline: 2px solid var(--menu-accent);
+  outline-offset: 2px;
+}
+
+/* Desabilitado: transparente, como Salvar e Avançar quando inativos. */
+.entrada-botao:disabled {
+  background: transparent;
+  color: var(--menu-accent);
+  cursor: progress;
+  opacity: .7;
+  transform: none;
+}
+
+/* Cancelar e Voltar: transparentes em ambos os temas. */
+.entrada-botao-secundario {
+  background: transparent;
+  color: var(--menu-accent);
+}
+
+.entrada-botao-secundario:hover { background: color-mix(in srgb, var(--menu-accent) 12%, transparent); }
+
+.entrada-botao[hidden] { display: none; }
+
+@keyframes entrada-surge {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
+@keyframes entrada-aviso {
+  from { opacity: 0; transform: translateY(-2px); }
+}
+
+@keyframes entrada-gira {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+  :root { --recuo: 8px; }
+  .entrada-campo input { font-size: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entrada,
+  .entrada-mensagem:not(:empty) { animation: none; }
+  .entrada-estado[data-carregando]::before { animation-duration: 2.4s; }
+  .entrada-botao { transition: none; }
+}
