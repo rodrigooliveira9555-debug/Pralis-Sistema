@@ -3,12 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": { "./app": "./src/app.ts" },
+  "exports": {
+    "./app": "./src/app.ts"
+  },
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=../.env src/server.ts",
     "start": "tsx src/server.ts",
     "check": "tsc -p tsconfig.json --noEmit",
-    "usuario:criar": "tsx --env-file-if-exists=../.env src/scripts/criar-usuario.ts"
+    "usuario:criar": "tsx --env-file-if-exists=../.env src/scripts/criar-usuario.ts",
+    "projecoes:reprocessar": "tsx --env-file-if-exists=../.env src/scripts/reprocessar-projecoes.ts"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.6.20",
