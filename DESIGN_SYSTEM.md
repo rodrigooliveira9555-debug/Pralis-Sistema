@@ -1,5 +1,11 @@
 # CICLUZ — referência de interface
 
+## Regra vigente — datas sem ícone (03/11/2026)
+Campos de data usam somente digitação DD/MM/AA, sem ícone/acionador de calendário interno nem reserva lateral para ele. Preservar valores ISO completos, validação, datas existentes e dimensões dos demais campos. Substitui as instruções anteriores de calendário nos campos.
+
+## Regra vigente — cabeçalho superior sem placa no ícone (03/11/2026)
+Texto, título e caminho do cabeçalho superior usam a superfície do tema: branco no claro e escuro no escuro, sobre o fundo colorido preservado. Identificador superior perde fundo, borda e sombra; o símbolo ocupa30px, o diâmetro total da placa anterior. Esta regra substitui o cinza dos textos e o círculo dos identificadores superiores. Menu inicial, conteúdo e rodapés mantêm o padrão já confirmado.
+
 ## Regra vigente — ícones maciços e contorno da aba (03/11/2026)
 Substitui a inversão anterior: ícones de menus e conteúdo têm corpo maciço na própria cor e símbolo na superfície do tema. Os controles circulares do rodapé usam a cor do cabeçalho com símbolo na superfície; esta confirmação substitui o pedido intermediário de cinza no rodapé. Os três controles superiores do menu inicial continuam com contorno e símbolo cinza e centro transparente. Identificadores dos cabeçalhos mantêm seu tratamento anterior. Marcas reais permanecem preservadas.
 

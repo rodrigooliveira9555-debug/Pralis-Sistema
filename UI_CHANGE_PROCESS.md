@@ -1,5 +1,11 @@
 # Processo de alterações de interface
 
+## Complemento — datas sem ícone (03/11/2026)
+Remover o acionador de calendário de dentro dos campos; manter entrada DD/MM/AA, valores ISO, validação, dimensões, preenchimento e restauração. Conferir salário, admissão/dependentes e vigências nos dois temas.
+
+## Matriz — texto e símbolo superiores (03/11/2026)
+Cabeçalhos superiores: texto na superfície do tema, mantendo fundo colorido. Remover placa/borda do identificador e ampliar o símbolo para30px, diâmetro anterior. Conferir20 estruturas em320/390/1024px, claro/escuro, texto principal/caminhos, geometria e ícones SVG; manter menu inicial, rodapés e conteúdo.
+
 ## Matriz — contorno da aba e inversão dos ícones (03/11/2026)
 Correção do usuário: arredondamento externo pertence ao contorno da aba, sem cantos pretos acima/abaixo dos cabeçalhos; menu inicial excluído. Ícones de menus/conteúdo voltam a preenchimento na própria cor e símbolo na superfície clara/escura; controles dos rodapés ficam maciços na cor do cabeçalho com símbolo na superfície (confirmação posterior do usuário). Preservar os três controles superiores cinza vazados e os identificadores dos cabeçalhos como estão. Conferir20 estruturas em320/390/1024px nos dois temas, pixels externos, cabeçalho recolhido/restaurado, cores personalizadas, biblioteca e realce de menus. Não alterar máscaras, dados nem validação.
 

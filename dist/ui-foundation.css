@@ -181,8 +181,4 @@ body .view .form-tabs button:focus-visible{outline:2px solid var(--menu-accent,v
 /* Shared visible date control; the named backing field keeps the full year. */
 body :is(.view,dialog,.modal) .date-native-value{display:none!important}
 .date-field-control{display:block;position:relative;inline-size:100%;min-inline-size:0;max-inline-size:100%;box-sizing:border-box}
-.date-mask-input{--ui-field-padding-right:36px;min-inline-size:0;max-inline-size:100%}
-.date-picker-hit-target{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:24px;height:24px;overflow:hidden;border-radius:50%}
-body :is(.view,dialog,.modal) .date-picker-toggle{display:grid;place-items:center;width:24px;height:24px;min-height:0;margin:0;padding:4px;border:1px solid var(--menu-accent,var(--panel-color,#7c3aed));border-radius:50%;background:var(--menu-accent,var(--panel-color,#7c3aed));color:var(--theme-field,#fff);box-sizing:border-box}
-.date-picker-toggle svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-body :is(.view,dialog,.modal) .date-picker-native{position:absolute;inset:0;opacity:0;z-index:1;cursor:pointer;min-inline-size:0!important;min-width:0!important;padding:0!important;margin:0!important}
+.date-mask-input{min-inline-size:0;max-inline-size:100%}
