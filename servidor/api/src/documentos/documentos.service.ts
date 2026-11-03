@@ -10,6 +10,7 @@ import type {
 } from "@cicluz/shared";
 import { chaveSincronizada } from "@cicluz/shared";
 import { conflito, ErroDominio, proibido } from "../erros.ts";
+import { atualizarProjecoes } from "../projecoes/projecoes.service.ts";
 import {
   atualizarDocumento,
   bancoDocumentos,
@@ -120,6 +121,7 @@ export async function gravarLote(perfil: PerfilSessao, lote: GravarLote): Promis
       }
 
       await registrarHistorico(tx, historico);
+      await atualizarProjecoes(tx, empresaId, lote.itens.map((item) => item.chave));
       return resultado;
     });
   } catch (error) {
@@ -159,6 +161,7 @@ export async function importar(perfil: PerfilSessao, importacao: Importacao) {
     }
     await registrarHistorico(tx, historico);
     await marcarDadosImportados(tx, empresaId);
+    await atualizarProjecoes(tx, empresaId, importacao.itens.map((item) => item.chave));
     return { importados: importacao.itens.length };
   });
 }

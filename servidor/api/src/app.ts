@@ -8,10 +8,12 @@ import { ZodError } from "zod";
 import { problema } from "@cicluz/shared";
 import { exigirAutenticacao } from "./auth/guards.ts";
 import { registrarRotasAuth } from "./auth/auth.controller.ts";
+import { registrarRotasConsultas } from "./consultas/consultas.controller.ts";
 import { registrarRotasDocumentos } from "./documentos/documentos.controller.ts";
 import { env, origensWebPermitidas } from "./env.ts";
 import { ErroDominio, proibido } from "./erros.ts";
 import { registrarRotasSaude } from "./saude/saude.controller.ts";
+import { registrarRotasUsuarios } from "./usuarios/usuarios.controller.ts";
 
 // Rotas que cuidam da própria autenticação. Todo o resto de /api exige sessão ANTES do handler
 // (default-deny, como no Sistema Pralis): rota nova sem cuidado nasce protegida, nunca pública.
@@ -68,7 +70,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(cors, {
     origin: (origin, callback) => callback(null, !origin || origensWebPermitidas.includes(origin)),
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
   });
   // O site do Rodrigo usa <style> e <script> embutidos, Google Fonts e a busca de ícones do
   // Iconify: a CSP padrão do helmet quebraria a tela. Quando a API entrega o site, a CSP fica
@@ -98,6 +100,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registrarRotasSaude(app);
   await registrarRotasAuth(app);
   await registrarRotasDocumentos(app);
+  await registrarRotasUsuarios(app);
+  await registrarRotasConsultas(app);
 
   if (env.SERVIR_SITE === "1") {
     await app.register(fastifyStatic, { root: pastaSite, index: ["index.html"] });

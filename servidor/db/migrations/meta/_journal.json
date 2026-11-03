@@ -8,6 +8,20 @@
       "when": 1793743088084,
       "tag": "0000_inicial",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793746698121,
+      "tag": "0001_financeiro",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793746910056,
+      "tag": "0002_estrutura",
+      "breakpoints": true
     }
   ]
 }
