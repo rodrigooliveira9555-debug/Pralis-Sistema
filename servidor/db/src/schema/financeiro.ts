@@ -5,7 +5,6 @@ import {
   check,
   date,
   foreignKey,
-  index,
   integer,
   jsonb,
   numeric,
@@ -123,13 +122,15 @@ export const finOperadoras = pgTable(
 );
 
 // Condições de taxa por operadora × bandeira × modalidade × faixa de parcelas × vigência.
-// Percentuais em pontos percentuais com até 4 casas (a tela aceita 0,0001); tarifa em centavos.
+// Valores guardados EXATAMENTE como a tela grava (ela aceita 4 casas, step 0,0001): percentuais em
+// pontos percentuais e tarifa em reais, ambos numeric com 4 casas. Nada é arredondado aqui; qualquer
+// conversão para centavos é regra de dinheiro e fica para quando houver cálculo (decisão do Marco).
+// Chave estável: operadora + bandeira + posição da condição na tela.
 // A regra da tela "sem vigências e parcelas sobrepostas na mesma modalidade" é garantida pelo banco
 // (EXCLUDE na migration 0001; o Drizzle não declara EXCLUDE).
 export const finTaxas = pgTable(
   "fin_taxas",
   {
-    id: bigserial("id", { mode: "number" }).primaryKey(),
     empresaId: uuid("empresa_id")
       .notNull()
       .references(() => empresas.id),
@@ -142,7 +143,7 @@ export const finTaxas = pgTable(
     parcelaDe: integer("parcela_de"),
     parcelaAte: integer("parcela_ate"),
     mdrPercentual: numeric("mdr_percentual", { precision: 7, scale: 4 }),
-    tarifaCentavos: integer("tarifa_centavos"),
+    tarifaReais: numeric("tarifa_reais", { precision: 12, scale: 4 }),
     antecipacaoModo: text("antecipacao_modo"),
     antecipacaoPercentual: numeric("antecipacao_percentual", { precision: 7, scale: 4 }),
     antecipacaoPeriodo: text("antecipacao_periodo"),
@@ -156,6 +157,7 @@ export const finTaxas = pgTable(
     contaNome: text("conta_nome")
   },
   (tabela) => [
+    primaryKey({ columns: [tabela.empresaId, tabela.operadoraId, tabela.bandeiraId, tabela.ordem] }),
     foreignKey({
       columns: [tabela.empresaId, tabela.operadoraId],
       foreignColumns: [finOperadoras.empresaId, finOperadoras.itemId],
@@ -176,9 +178,8 @@ export const finTaxas = pgTable(
       "fin_taxas_antecipacao_check",
       sql`${tabela.antecipacaoPercentual} is null or ${tabela.antecipacaoPercentual} between 0 and 100`
     ),
-    check("fin_taxas_tarifa_check", sql`${tabela.tarifaCentavos} is null or ${tabela.tarifaCentavos} >= 0`),
+    check("fin_taxas_tarifa_check", sql`${tabela.tarifaReais} is null or ${tabela.tarifaReais} >= 0`),
     check("fin_taxas_prazo_check", sql`${tabela.prazoDias} is null or ${tabela.prazoDias} >= 0`),
-    index("fin_taxas_operadora_idx").on(tabela.empresaId, tabela.operadoraId, tabela.bandeiraId)
   ]
 );
 

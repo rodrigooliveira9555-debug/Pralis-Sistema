@@ -18,6 +18,8 @@ import { ErroProjecao } from "./leitura.ts";
 // Um projetor por assunto: de quais documentos ele depende e como reconstrói as tabelas.
 export type Projetor = {
   assunto: string;
+  // Suba quando a regra de leitura mudar: o próximo boot reconstrói o assunto em todas as empresas.
+  versaoRegra: number;
   chaves: ChaveSincronizada[];
   projetar(tx: TransacaoBanco, empresaId: string, valores: Map<string, string>): Promise<void>;
 };
@@ -33,6 +35,7 @@ export function lerJson(valor: string | undefined, assunto: string): unknown {
 
 const financeiro: Projetor = {
   assunto: "financeiro",
+  versaoRegra: 1,
   chaves: ["cicluz-financial-hierarchy-v1"],
   async projetar(tx, empresaId, valores) {
     const documento = lerJson(valores.get("cicluz-financial-hierarchy-v1"), "Financeiro");
@@ -42,6 +45,7 @@ const financeiro: Projetor = {
 
 const contas: Projetor = {
   assunto: "contas",
+  versaoRegra: 1,
   chaves: ["cicluz-ti-groups-v1", "cicluz-ti-account-details-v1"],
   async projetar(tx, empresaId, valores) {
     const grupos = lerJson(valores.get("cicluz-ti-groups-v1"), "Contas");
@@ -54,6 +58,7 @@ const contas: Projetor = {
 // db/dados/cargos-referencia.json, conferida contra o index.html por teste.
 const cargos: Projetor = {
   assunto: "cargos",
+  versaoRegra: 1,
   chaves: ["cicluz-cargos-v1", "cicluz-cargos-referencia-v1"],
   async projetar(tx, empresaId, valores) {
     const locais = lerJson(valores.get("cicluz-cargos-v1"), "Cargos");
@@ -64,6 +69,7 @@ const cargos: Projetor = {
 
 const salarios: Projetor = {
   assunto: "salarios",
+  versaoRegra: 1,
   chaves: ["cicluz-salarios-vigencias-v1"],
   async projetar(tx, empresaId, valores) {
     await substituirSalarios(tx, empresaId, lerSalarios(lerJson(valores.get("cicluz-salarios-vigencias-v1"), "Salários")));
@@ -72,6 +78,7 @@ const salarios: Projetor = {
 
 const perfis: Projetor = {
   assunto: "ficha-de-cargos",
+  versaoRegra: 1,
   chaves: ["cicluz-job-profiles-v1"],
   async projetar(tx, empresaId, valores) {
     await substituirPerfis(tx, empresaId, lerPerfis(lerJson(valores.get("cicluz-job-profiles-v1"), "Ficha de cargos")));
@@ -80,6 +87,7 @@ const perfis: Projetor = {
 
 const locais: Projetor = {
   assunto: "locais",
+  versaoRegra: 1,
   chaves: ["cicluz-location-tree-v1"],
   async projetar(tx, empresaId, valores) {
     await substituirLocais(tx, empresaId, lerLocais(lerJson(valores.get("cicluz-location-tree-v1"), "Locais")));
@@ -88,6 +96,7 @@ const locais: Projetor = {
 
 const organograma: Projetor = {
   assunto: "organograma",
+  versaoRegra: 1,
   chaves: ["cicluz-organogram-positions-v1"],
   async projetar(tx, empresaId, valores) {
     await substituirOrganograma(tx, empresaId, lerOrganograma(lerJson(valores.get("cicluz-organogram-positions-v1"), "Organograma")));
@@ -96,6 +105,7 @@ const organograma: Projetor = {
 
 const identidade: Projetor = {
   assunto: "identidade",
+  versaoRegra: 1,
   chaves: ["cicluz-icon-library-v1", "cicluz-custom-colors-v1"],
   async projetar(tx, empresaId, valores) {
     const biblioteca = lerJson(valores.get("cicluz-icon-library-v1"), "Biblioteca de ícones");

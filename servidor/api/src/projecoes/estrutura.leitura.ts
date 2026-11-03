@@ -1,4 +1,4 @@
-import { centavosBr, dataObrigatoria, ErroProjecao, inteiro, lista, objeto, texto, textoObrigatorio } from "./leitura.ts";
+import { dataObrigatoria, decimalExato, ErroProjecao, inteiro, lista, objeto, texto, textoObrigatorio } from "./leitura.ts";
 
 // Leitura pura (sem banco) dos documentos de contas, cargos, salários, perfis de cargo, locais,
 // organograma e identidade. Formatos levantados de index.html, job-profiles.js, location-tree.js,
@@ -32,7 +32,7 @@ function linhaCargo(cargo: CargoTela, chave: string, origem: "referencia" | "loc
     categoria: texto(cargo["categoria"]),
     cbo: texto(cargo["cbo"]),
     titulo: texto(cargo["titulo"]),
-    valorFichaCentavos: centavosBr(cargo["valor"], `${onde}, valor`),
+    valorFicha: texto(cargo["valor"]),
     ano: texto(cargo["ano"]),
     sinonimos: texto(cargo["sinonimos"]),
     descricao: texto(cargo["descricao"]),
@@ -61,7 +61,7 @@ export function lerCargos(catalogo: CargoTela[], locaisDoc: unknown, alteracoesD
 export function lerSalarios(documento: unknown) {
   const lancamentos = documento === null ? [] : lista(documento, "Salários");
   const vigencias: Array<{ ordem: number; inicio: string; observacao: string | null }> = [];
-  const valores: Array<{ vigenciaOrdem: number; posicao: number; cargoChave: string; cargoNome: string; valorCentavos: number }> = [];
+  const valores: Array<{ vigenciaOrdem: number; posicao: number; cargoChave: string; cargoNome: string; valorReais: string }> = [];
   lancamentos.forEach((bruto, ordem) => {
     const onde = `Atualização salarial ${ordem + 1}`;
     const item = objeto(bruto, onde);
@@ -69,14 +69,15 @@ export function lerSalarios(documento: unknown) {
     lista(item["values"], `${onde}, valores`).forEach((brutoValor, posicao) => {
       const ondeValor = `${onde}, valor ${posicao + 1}`;
       const valor = objeto(brutoValor, ondeValor);
-      const reais = Number(valor["valor"]);
-      if (!Number.isFinite(reais) || reais <= 0) throw new ErroProjecao(`${ondeValor}: valor precisa ser maior que zero`);
+      // A tela grava número em reais (ex.: 3250.5). Fica exato, sem arredondar.
+      const reais = decimalExato(valor["valor"], `${ondeValor}, valor`, 4);
+      if (reais === null || Number(reais) <= 0) throw new ErroProjecao(`${ondeValor}: valor precisa ser maior que zero`);
       valores.push({
         vigenciaOrdem: ordem,
         posicao,
         cargoChave: textoObrigatorio(valor["key"], `${ondeValor}, cargo`),
         cargoNome: textoObrigatorio(valor["nome"], `${ondeValor}, nome do cargo`),
-        valorCentavos: Math.round(reais * 100)
+        valorReais: reais
       });
     });
   });

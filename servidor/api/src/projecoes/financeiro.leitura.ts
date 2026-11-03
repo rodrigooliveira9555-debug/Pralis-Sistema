@@ -1,8 +1,8 @@
 import {
   booleano,
-  centavos,
   dataIso,
   dataObrigatoria,
+  decimalExato,
   ErroProjecao,
   inteiro,
   lista,
@@ -55,7 +55,7 @@ export type LinhaTaxa = {
   parcelaDe: number | null;
   parcelaAte: number | null;
   mdrPercentual: string | null;
-  tarifaCentavos: number | null;
+  tarifaReais: string | null;
   antecipacaoModo: string | null;
   antecipacaoPercentual: string | null;
   antecipacaoPeriodo: string | null;
@@ -93,6 +93,9 @@ export function lerFinanceiro(documento: unknown) {
       lista(item["children"], `${onde}, subgrupos`).forEach((brutoFilho, ordemFilho) => {
         const ondeFilho = `${colecao}, "${base.nome}", subgrupo ${ordemFilho + 1}`;
         const filho = objeto(brutoFilho, ondeFilho);
+        if (lista(filho["children"], ondeFilho).length) {
+          throw new ErroProjecao(`${ondeFilho}: há um terceiro nível, que a tela não tem`);
+        }
         grupos.push({
           ...identidade(filho, ordemFilho, ondeFilho),
           colecao,
@@ -159,7 +162,8 @@ export function lerFinanceiro(documento: unknown) {
           parcelaDe: inteiro(regra["from"], `${ondeRegra}, parcela de`),
           parcelaAte: inteiro(regra["to"], `${ondeRegra}, parcela até`),
           mdrPercentual: percentual(regra["mdr"], `${ondeRegra}, MDR`),
-          tarifaCentavos: centavos(regra["fixed"], `${ondeRegra}, tarifa`),
+          // Reais exatamente como a tela gravou (até 4 casas): sem conversão para centavos.
+          tarifaReais: decimalExato(regra["fixed"], `${ondeRegra}, tarifa`, 4, { min: 0 }),
           antecipacaoModo: opcao(regra["advanceMode"]),
           antecipacaoPercentual: percentual(regra["advance"], `${ondeRegra}, antecipação`),
           antecipacaoPeriodo: opcao(regra["period"]),

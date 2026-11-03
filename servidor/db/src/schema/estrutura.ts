@@ -1,12 +1,12 @@
 import { sql } from "drizzle-orm";
 import {
-  bigint,
   boolean,
   check,
   date,
   foreignKey,
   integer,
   jsonb,
+  numeric,
   pgTable,
   primaryKey,
   text,
@@ -60,8 +60,9 @@ export const cargos = pgTable(
     categoria: text("categoria"),
     cbo: text("cbo"),
     titulo: text("titulo"),
-    // "valor" e "ano" da ficha (o salário vigente fica em salarios_*).
-    valorFichaCentavos: bigint("valor_ficha_centavos", { mode: "number" }),
+    // "valor" e "ano" da ficha como a tela guarda ("1.668,00"): texto de exibição; o salário de
+    // verdade, com data, fica em salarios_*.
+    valorFicha: text("valor_ficha"),
     ano: text("ano"),
     sinonimos: text("sinonimos"),
     descricao: text("descricao"),
@@ -72,8 +73,7 @@ export const cargos = pgTable(
   },
   (t) => [
     primaryKey({ columns: [t.empresaId, t.chave] }),
-    check("cargos_origem_check", sql`${t.origem} in ('referencia', 'local')`),
-    check("cargos_valor_check", sql`${t.valorFichaCentavos} is null or ${t.valorFichaCentavos} >= 0`)
+    check("cargos_origem_check", sql`${t.origem} in ('referencia', 'local')`)
   ]
 );
 
@@ -99,7 +99,8 @@ export const salariosValores = pgTable(
     posicao: integer("posicao").notNull(),
     cargoChave: text("cargo_chave").notNull(),
     cargoNome: text("cargo_nome").notNull(),
-    valorCentavos: bigint("valor_centavos", { mode: "number" }).notNull()
+    // Reais exatamente como a tela grava (número), com até 4 casas, sem arredondar.
+    valorReais: numeric("valor_reais", { precision: 14, scale: 4 }).notNull()
   },
   (t) => [
     primaryKey({ columns: [t.empresaId, t.vigenciaOrdem, t.posicao] }),
@@ -108,7 +109,7 @@ export const salariosValores = pgTable(
       foreignColumns: [salariosVigencias.empresaId, salariosVigencias.ordem],
       name: "salarios_valores_vigencia_fk"
     }),
-    check("salarios_valores_positivo_check", sql`${t.valorCentavos} > 0`)
+    check("salarios_valores_positivo_check", sql`${t.valorReais} > 0`)
   ]
 );
 

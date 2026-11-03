@@ -83,9 +83,9 @@ async function situacao(cookie: string, assunto: string) {
 }
 
 describe("financeiro em tabelas", () => {
-  it("monta grupos, bandeira ligada ao tipo de venda e taxa em centavos e percentual exato", async () => {
+  it("monta grupos, bandeira ligada ao tipo de venda e taxa com os valores exatos da tela", async () => {
     const admin = await empresaComDados([{ chave: HIERARQUIA, valor: financeiro([regra()]) }]);
-    expect(await situacao(admin.cookie, "financeiro")).toMatchObject({ situacao: "ok", versaoDocumento: 1 });
+    expect(await situacao(admin.cookie, "financeiro")).toMatchObject({ situacao: "ok" });
 
     const grupos = (await get(admin.cookie, "/api/financeiro/grupos?colecao=despesas")).grupos;
     expect(grupos.map((g: { itemId: string }) => g.itemId)).toEqual(["g23", "g23s0"]);
@@ -99,7 +99,7 @@ describe("financeiro em tabelas", () => {
       operadoraId: "operator-0",
       bandeiraId: "brand-7",
       mdrPercentual: "1.9900",
-      tarifaCentavos: 50,
+      tarifaReais: "0.5000",
       antecipacaoPeriodo: null,
       prazoDias: 30,
       contaNome: "CNT Conta - Stone"
@@ -119,7 +119,6 @@ describe("financeiro em tabelas", () => {
     expect(gravou.statusCode).toBe(200);
     expect(await situacao(admin.cookie, "financeiro")).toMatchObject({
       situacao: "falha",
-      versaoDocumento: 2,
       mensagem: expect.stringContaining("sobrepostas")
     });
     expect((await get(admin.cookie, "/api/financeiro/taxas")).taxas).toHaveLength(1);
@@ -176,11 +175,11 @@ describe("contas, cargos, salários, locais e organograma em tabelas", () => {
 
     const cargos = (await get(admin.cookie, "/api/cargos")).cargos;
     expect(cargos).toHaveLength(1 + catalogo.length - 1);
-    expect(cargos[0]).toMatchObject({ chave: "local:0", valorFichaCentavos: 320000 });
+    expect(cargos[0]).toMatchObject({ chave: "local:0", valorFicha: "R$ 3.200,00" });
     expect(cargos.some((c: { chave: string }) => c.chave === "ref:0")).toBe(false);
 
     const salarios = await get(admin.cookie, "/api/salarios/vigentes?data=2026-11-03");
-    expect(salarios.salarios).toEqual([expect.objectContaining({ cargoChave: "local:0", valorCentavos: 325050, inicio: "2026-07-01" })]);
+    expect(salarios.salarios).toEqual([expect.objectContaining({ cargoChave: "local:0", valorReais: "3250.5000", inicio: "2026-07-01" })]);
 
     const locais = (await get(admin.cookie, "/api/locais")).locais;
     expect(locais.map((l: { id: string; nivel: number }) => [l.id, l.nivel])).toEqual([["a1", 1], ["s1", 2]]);
@@ -203,6 +202,60 @@ describe("contas, cargos, salários, locais e organograma em tabelas", () => {
     const resposta = await app.inject({ method: "POST", url: "/api/projecoes/reprocessar", headers: comSessao(admin.cookie) });
     expect(resposta.statusCode).toBe(200);
     expect(resposta.json().data.assuntos.length).toBe(8);
+  });
+});
+
+describe("casos do pré-mortem", () => {
+  it("tarifa com 4 casas fica exata; com 5 casas ou em formato estranho vira falha, sem arredondar", async () => {
+    const admin = await empresaComDados([{ chave: HIERARQUIA, valor: financeiro([regra({ fixed: "0.0125" })]) }]);
+    const [taxa] = (await get(admin.cookie, "/api/financeiro/taxas")).taxas;
+    expect(taxa.tarifaReais).toBe("0.0125");
+
+    for (const ruim of [{ fixed: "0.00001" }, { mdr: "1e1" }, { fixed: "1,50" }]) {
+      const outra = await empresaComDados([{ chave: HIERARQUIA, valor: financeiro([regra(ruim)]) }]);
+      expect(await situacao(outra.cookie, "financeiro")).toMatchObject({ situacao: "falha" });
+    }
+  });
+
+  it("dois aparelhos gravando contas e detalhes ao mesmo tempo: a tabela final bate com os dois documentos", async () => {
+    const admin = await empresaComDados([
+      { chave: "cicluz-ti-groups-v1", valor: JSON.stringify({ contas: ["CNT A"] }) },
+      { chave: "cicluz-ti-account-details-v1", valor: JSON.stringify({}) }
+    ]);
+    const gravar = (chave: string, valor: unknown) =>
+      app.inject({ method: "PUT", url: "/api/documentos", headers: comSessao(admin.cookie), payload: { itens: [{ chave, valor: JSON.stringify(valor), versaoBase: 1 }] } });
+    const [a, b] = await Promise.all([
+      gravar("cicluz-ti-groups-v1", { contas: ["CNT A", "CNT B"] }),
+      gravar("cicluz-ti-account-details-v1", { "CNT A": { status: "INATIVA", icon: "bank" } })
+    ]);
+    expect([a.statusCode, b.statusCode]).toEqual([200, 200]);
+    expect(await situacao(admin.cookie, "contas")).toMatchObject({ situacao: "ok" });
+    const contas = (await get(admin.cookie, "/api/contas")).contas;
+    expect(contas.map((c: { nome: string; situacao: string }) => `${c.nome}:${c.situacao}`)).toEqual(["CNT A:INATIVA", "CNT B:ATIVA"]);
+  });
+
+  it("gravação que ficou sem projeção (janela do deploy) é reconstruída na conferência", async () => {
+    const admin = await empresaComDados([{ chave: "cicluz-ti-groups-v1", valor: JSON.stringify({ contas: ["CNT A"] }) }]);
+    const { banco } = await import("../../api/src/banco/conexao.ts");
+    const { documentos } = await import("@cicluz/db/schema");
+    const { and, eq } = await import("drizzle-orm");
+    // Simula a versão antiga da API gravando o documento sem reconstruir as tabelas.
+    await banco
+      .update(documentos)
+      .set({ valor: JSON.stringify({ contas: ["CNT A", "CNT Nova"] }), versao: 2 })
+      .where(and(eq(documentos.empresaId, admin.empresaId), eq(documentos.chave, "cicluz-ti-groups-v1")));
+
+    const { assuntosDefasados, reprocessarDefasadas } = await import("../../api/src/projecoes/projecoes.service.ts");
+    expect((await assuntosDefasados(admin.empresaId)).map((p) => p.assunto)).toEqual(["contas"]);
+    await reprocessarDefasadas(() => undefined);
+    expect((await get(admin.cookie, "/api/contas")).contas).toHaveLength(2);
+    expect(await assuntosDefasados(admin.empresaId)).toEqual([]);
+  });
+
+  it("toda consulta informa a situação do assunto", async () => {
+    const admin = await empresaComDados([{ chave: HIERARQUIA, valor: financeiro([regra({ expenseId: "apagado" })]) }]);
+    const dados = await get(admin.cookie, "/api/financeiro/taxas");
+    expect(dados.situacao).toEqual([expect.objectContaining({ assunto: "financeiro", situacao: "falha" })]);
   });
 });
 

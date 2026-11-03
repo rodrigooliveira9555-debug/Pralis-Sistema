@@ -10,14 +10,16 @@ import { auth, senhaMinimaAutenticacao } from "../auth/config.ts";
 import { conflito, ErroDominio, proibido } from "../erros.ts";
 import {
   atualizarPerfil,
-  contarAdministradoresAtivos,
   criarEmpresa,
   emailJaCadastrado,
   inserirPerfil,
   listarUsuariosDaEmpresa,
   obterEmpresaPorNome,
-  obterUsuarioDaEmpresa
+  obterUsuarioDaEmpresa,
+  registrarAuditoria,
+  travarAdministradoresAtivos
 } from "./usuarios.repository.ts";
+import { banco } from "../banco/conexao.ts";
 
 function erroSenhaCurta() {
   return new ErroDominio(`A senha precisa ter pelo menos ${senhaMinimaAutenticacao} caracteres`, 400, "PASSWORD_TOO_SHORT");
@@ -89,6 +91,13 @@ export async function listarUsuarios(perfil: PerfilSessao): Promise<UsuarioRespo
 export async function adicionarUsuario(perfil: PerfilSessao, dados: NovoUsuario) {
   exigirAdministrador(perfil);
   const criado = await criarConta({ ...dados, empresaId: perfil.empresa.id });
+  await registrarAuditoria(banco, {
+    empresaId: perfil.empresa.id,
+    atorId: perfil.usuarioId,
+    alvoId: criado.usuarioId,
+    acao: "criou",
+    detalhe: { papel: dados.papel }
+  });
   return paraResposta(await usuarioDaEmpresa(perfil, criado.usuarioId));
 }
 
@@ -103,20 +112,40 @@ export async function editarUsuario(perfil: PerfilSessao, usuarioId: string, dad
   }
   const perdeAdministrador =
     alvo.papel === "administrador" && alvo.ativo && (dados.ativo === false || dados.papel === "usuario");
-  if (perdeAdministrador && (await contarAdministradoresAtivos(perfil.empresa.id)) <= 1) {
-    throw conflito("A empresa precisa de pelo menos um administrador ativo.", "LAST_ADMIN");
-  }
-  await atualizarPerfil(perfil.empresa.id, usuarioId, dados);
+  await banco.transaction(async (tx) => {
+    if (perdeAdministrador && (await travarAdministradoresAtivos(tx, perfil.empresa.id)) <= 1) {
+      throw conflito("A empresa precisa de pelo menos um administrador ativo.", "LAST_ADMIN");
+    }
+    await atualizarPerfil(tx, perfil.empresa.id, usuarioId, dados);
+    await registrarAuditoria(tx, {
+      empresaId: perfil.empresa.id,
+      atorId: perfil.usuarioId,
+      alvoId: usuarioId,
+      acao: "alterou",
+      detalhe: dados
+    });
+  });
   if (dados.ativo === false) await (await auth.$context).internalAdapter.deleteUserSessions(usuarioId);
   return paraResposta(await usuarioDaEmpresa(perfil, usuarioId));
 }
 
 // O administrador define uma senha nova (ex.: a pessoa esqueceu). As sessões dela são encerradas.
+// A própria senha só pela tela "Minha senha", que exige a senha atual: uma sessão esquecida aberta
+// não pode tomar a conta do administrador.
 export async function definirSenha(perfil: PerfilSessao, usuarioId: string, senha: string) {
   exigirAdministrador(perfil);
+  if (usuarioId === perfil.usuarioId) {
+    throw conflito("Para a sua própria senha, use Minha senha (pede a senha atual).", "USE_OWN_PASSWORD_FORM");
+  }
   await usuarioDaEmpresa(perfil, usuarioId);
   if (senha.length < senhaMinimaAutenticacao) throw erroSenhaCurta();
   const contexto = await auth.$context;
   await contexto.internalAdapter.updatePassword(usuarioId, await contexto.password.hash(senha));
   await contexto.internalAdapter.deleteUserSessions(usuarioId);
+  await registrarAuditoria(banco, {
+    empresaId: perfil.empresa.id,
+    atorId: perfil.usuarioId,
+    alvoId: usuarioId,
+    acao: "definiu_senha"
+  });
 }

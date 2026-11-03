@@ -72,7 +72,7 @@ export function listarSalariosVigentes(empresaId: string, data: string) {
     .selectDistinctOn([cargos.chave], {
       cargoChave: cargos.chave,
       cargoNome: cargos.nome,
-      valorCentavos: salariosValores.valorCentavos,
+      valorReais: salariosValores.valorReais,
       inicio: salariosVigencias.inicio
     })
     .from(cargos)
@@ -89,7 +89,7 @@ export function listarSalariosVigentes(empresaId: string, data: string) {
       and(eq(salariosVigencias.empresaId, salariosValores.empresaId), eq(salariosVigencias.ordem, salariosValores.vigenciaOrdem))
     )
     .where(and(eq(cargos.empresaId, empresaId), lte(salariosVigencias.inicio, data)))
-    .orderBy(asc(cargos.chave), desc(salariosVigencias.inicio), desc(salariosVigencias.ordem));
+    .orderBy(asc(cargos.chave), desc(salariosVigencias.inicio), desc(salariosVigencias.ordem), asc(salariosValores.posicao));
 }
 
 export function listarLocais(empresaId: string) {

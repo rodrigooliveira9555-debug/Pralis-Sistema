@@ -124,6 +124,11 @@
       mostrarAviso('erro', 'O servidor recusou esta alteração (' + erro.message + '). Ela continua neste aparelho; avise o administrador.');
       return;
     }
+    if (erro.status === 429) {
+      mostrarAviso('rede', 'Muitas gravações seguidas. Suas alterações estão salvas neste aparelho e serão enviadas em instantes.');
+      agendarEnvio(60000);
+      return;
+    }
     // Sem rede ou servidor fora do ar: tenta de novo com espera crescente.
     mostrarAviso('rede', 'Sem conexão com o servidor. Suas alterações estão salvas neste aparelho e serão enviadas quando a conexão voltar.');
     agendarEnvio(esperaRede[Math.min(tentativa++, esperaRede.length - 1)]);

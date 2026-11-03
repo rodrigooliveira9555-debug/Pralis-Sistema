@@ -1,7 +1,9 @@
-import { and, asc, count, eq, sql } from "drizzle-orm";
-import { empresas, perfisUsuarios, usuarioAutenticacao } from "@cicluz/db/schema";
+import { and, asc, eq, sql } from "drizzle-orm";
+import { empresas, perfisUsuarios, usuarioAutenticacao, usuariosAuditoria } from "@cicluz/db/schema";
 import type { Papel } from "@cicluz/shared";
-import { banco } from "../banco/conexao.ts";
+import { banco, type TransacaoBanco } from "../banco/conexao.ts";
+
+type Executor = TransacaoBanco | typeof banco;
 
 export async function emailJaCadastrado(email: string) {
   const [linha] = await banco
@@ -56,27 +58,43 @@ export async function obterUsuarioDaEmpresa(empresaId: string, usuarioId: string
   return linha ?? null;
 }
 
-export async function contarAdministradoresAtivos(empresaId: string) {
-  const [linha] = await banco
-    .select({ total: count() })
+// FOR UPDATE nos administradores ativos: duas alterações simultâneas não deixam a empresa sem nenhum.
+export async function travarAdministradoresAtivos(tx: TransacaoBanco, empresaId: string) {
+  const linhas = await tx
+    .select({ usuarioId: perfisUsuarios.usuarioId })
     .from(perfisUsuarios)
     .where(
       and(eq(perfisUsuarios.empresaId, empresaId), eq(perfisUsuarios.papel, "administrador"), eq(perfisUsuarios.ativo, true))
-    );
-  return linha?.total ?? 0;
+    )
+    .for("update");
+  return linhas.length;
+}
+
+export async function registrarAuditoria(
+  executor: Executor,
+  dados: {
+    empresaId: string;
+    atorId: string;
+    alvoId: string;
+    acao: "criou" | "alterou" | "definiu_senha";
+    detalhe?: Record<string, unknown>;
+  }
+) {
+  await executor.insert(usuariosAuditoria).values({ ...dados, detalhe: dados.detalhe ?? null });
 }
 
 export async function atualizarPerfil(
+  executor: Executor,
   empresaId: string,
   usuarioId: string,
   dados: { nome?: string | undefined; papel?: Papel | undefined; ativo?: boolean | undefined }
 ) {
   const mudancas = Object.fromEntries(Object.entries(dados).filter(([, valor]) => valor !== undefined));
-  await banco
+  await executor
     .update(perfisUsuarios)
     .set({ ...mudancas, atualizadoEm: sql`now()` })
     .where(and(eq(perfisUsuarios.empresaId, empresaId), eq(perfisUsuarios.usuarioId, usuarioId)));
   if (dados.nome) {
-    await banco.update(usuarioAutenticacao).set({ name: dados.nome }).where(eq(usuarioAutenticacao.id, usuarioId));
+    await executor.update(usuarioAutenticacao).set({ name: dados.nome }).where(eq(usuarioAutenticacao.id, usuarioId));
   }
 }

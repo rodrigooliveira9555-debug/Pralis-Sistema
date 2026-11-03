@@ -8,6 +8,7 @@ import {
   finTransferencias
 } from "@cicluz/db/schema";
 import type { TransacaoBanco } from "../banco/conexao.ts";
+import { emBlocos } from "./blocos.ts";
 import type { Financeiro } from "./financeiro.leitura.ts";
 
 // Troca as tabelas do financeiro da empresa pelas linhas lidas do documento. Ordem de apagar e de
@@ -26,11 +27,11 @@ export async function substituirFinanceiro(tx: TransacaoBanco, empresaId: string
   const comEmpresa = <T extends object>(linhas: T[]) => linhas.map((linha) => ({ ...linha, empresaId }));
   const pais = dados.grupos.filter((grupo) => grupo.paiId === null);
   const filhos = dados.grupos.filter((grupo) => grupo.paiId !== null);
-  if (pais.length) await tx.insert(finGrupos).values(comEmpresa(pais));
-  if (filhos.length) await tx.insert(finGrupos).values(comEmpresa(filhos));
-  if (dados.tiposVenda.length) await tx.insert(finTiposVenda).values(comEmpresa(dados.tiposVenda));
-  if (dados.bandeiras.length) await tx.insert(finBandeiras).values(comEmpresa(dados.bandeiras));
-  if (dados.operadoras.length) await tx.insert(finOperadoras).values(comEmpresa(dados.operadoras));
-  if (dados.taxas.length) await tx.insert(finTaxas).values(comEmpresa(dados.taxas));
-  if (dados.transferencias.length) await tx.insert(finTransferencias).values(comEmpresa(dados.transferencias));
+  await emBlocos(comEmpresa(pais), (bloco) => tx.insert(finGrupos).values(bloco));
+  await emBlocos(comEmpresa(filhos), (bloco) => tx.insert(finGrupos).values(bloco));
+  await emBlocos(comEmpresa(dados.tiposVenda), (bloco) => tx.insert(finTiposVenda).values(bloco));
+  await emBlocos(comEmpresa(dados.bandeiras), (bloco) => tx.insert(finBandeiras).values(bloco));
+  await emBlocos(comEmpresa(dados.operadoras), (bloco) => tx.insert(finOperadoras).values(bloco));
+  await emBlocos(comEmpresa(dados.taxas), (bloco) => tx.insert(finTaxas).values(bloco));
+  await emBlocos(comEmpresa(dados.transferencias), (bloco) => tx.insert(finTransferencias).values(bloco));
 }

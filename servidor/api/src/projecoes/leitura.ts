@@ -35,47 +35,57 @@ export function opcao(valor: Externo): string | null {
   return limpo && limpo !== "Selecione" ? limpo : null;
 }
 
-export function numero(valor: Externo, onde: string): number | null {
+// Só aceita o formato que a tela grava: dígitos com ponto decimal ("1.99", "30"). Recusa vírgula,
+// exponencial ("1e3"), hexadecimal ("0x10") e espaços no meio: nada de adivinhar o que a pessoa quis.
+const DECIMAL = /^-?\d+(\.\d+)?$/;
+
+function decimalTexto(valor: Externo, onde: string): string | null {
+  if (typeof valor === "number") {
+    if (!Number.isFinite(valor)) throw new ErroProjecao(`${onde}: número inválido`);
+    return String(valor);
+  }
   const limpo = texto(valor);
   if (limpo === null) return null;
-  const n = Number(limpo.replace(",", "."));
-  if (!Number.isFinite(n)) throw new ErroProjecao(`${onde}: "${limpo}" não é um número`);
-  return n;
+  if (!DECIMAL.test(limpo)) throw new ErroProjecao(`${onde}: "${limpo}" não é um número no formato da tela`);
+  return limpo;
+}
+
+export function numero(valor: Externo, onde: string): number | null {
+  const textoDecimal = decimalTexto(valor, onde);
+  return textoDecimal === null ? null : Number(textoDecimal);
 }
 
 export function inteiro(valor: Externo, onde: string): number | null {
   const n = numero(valor, onde);
   if (n === null) return null;
-  if (!Number.isInteger(n)) throw new ErroProjecao(`${onde}: "${n}" não é um número inteiro`);
+  if (!Number.isSafeInteger(n) || Math.abs(n) > 2_147_483_647) {
+    throw new ErroProjecao(`${onde}: "${n}" não é um número inteiro aceito`);
+  }
   return n;
 }
 
-// Pontos percentuais com até 4 casas, como a tela aceita (step 0,0001). Volta como texto exato para
-// a coluna numeric, sem passar por float no banco.
+// Decimal exato com no máximo `casas` casas, devolvido como TEXTO para a coluna numeric: nunca passa
+// por float nem é arredondado. Mais casas do que o banco guarda = recusa com a localização.
+export function decimalExato(valor: Externo, onde: string, casas: number, limites: { min?: number; max?: number } = {}): string | null {
+  const textoDecimal = decimalTexto(valor, onde);
+  if (textoDecimal === null) return null;
+  const [inteiros = "0", fracao = ""] = textoDecimal.replace("-", "").split(".");
+  // Número vindo como number pode chegar em notação exponencial (ex.: 1e-7).
+  if (!/^\d+$/.test(inteiros) || (fracao && !/^\d+$/.test(fracao))) {
+    throw new ErroProjecao(`${onde}: "${textoDecimal}" não é um número no formato da tela`);
+  }
+  if (fracao.replace(/0+$/, "").length > casas) {
+    throw new ErroProjecao(`${onde}: "${textoDecimal}" tem mais de ${casas} casas decimais`);
+  }
+  const n = Number(textoDecimal);
+  if (limites.min !== undefined && n < limites.min) throw new ErroProjecao(`${onde}: ${textoDecimal} abaixo de ${limites.min}`);
+  if (limites.max !== undefined && n > limites.max) throw new ErroProjecao(`${onde}: ${textoDecimal} acima de ${limites.max}`);
+  return textoDecimal;
+}
+
+// Pontos percentuais com até 4 casas, como a tela aceita (step 0,0001), de 0 a 100.
 export function percentual(valor: Externo, onde: string): string | null {
-  const n = numero(valor, onde);
-  if (n === null) return null;
-  if (n < 0 || n > 100) throw new ErroProjecao(`${onde}: ${n}% fora de 0 a 100`);
-  return n.toFixed(4);
-}
-
-// A tela grava reais em texto ("1.5" = R$ 1,50). O banco guarda centavos inteiros.
-export function centavos(valor: Externo, onde: string): number | null {
-  const n = numero(valor, onde);
-  if (n === null) return null;
-  if (n < 0) throw new ErroProjecao(`${onde}: valor negativo`);
-  return Math.round(n * 100);
-}
-
-// Valor em formato brasileiro, com ou sem "R$" ("1.668,00", "R$ 1.234,56") → centavos.
-export function centavosBr(valor: Externo, onde: string): number | null {
-  const limpo = texto(valor);
-  if (limpo === null) return null;
-  const numeroBr = limpo.replace(/^R\$\s*/, "").replace(/\./g, "").replace(",", ".");
-  const n = Number(numeroBr);
-  if (!Number.isFinite(n)) throw new ErroProjecao(`${onde}: valor "${limpo}" inválido`);
-  if (n < 0) throw new ErroProjecao(`${onde}: valor negativo`);
-  return Math.round(n * 100);
+  return decimalExato(valor, onde, 4, { min: 0, max: 100 });
 }
 
 export function dataIso(valor: Externo, onde: string): string | null {

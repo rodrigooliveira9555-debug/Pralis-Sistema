@@ -6,23 +6,34 @@ import { auth, CABECALHO_IP_CLIENTE } from "./config.ts";
 import { exigirAutenticacao } from "./guards.ts";
 
 const JANELA_TENTATIVAS_MS = 15 * 60 * 1000;
-const MAXIMO_TENTATIVAS_POR_EMAIL = 10;
-const tentativasPorEmail = new Map<string, { quantidade: number; inicio: number }>();
+const MAXIMO_TENTATIVAS = 10;
+const tentativas = new Map<string, { quantidade: number; inicio: number }>();
 
-// Conta tentativas de entrada por e-mail, na memória do processo (um servidor só nesta fase).
-function tentativasEsgotadas(corpo: unknown): boolean {
-  const email = (corpo as { email?: unknown } | null)?.email;
-  if (typeof email !== "string") return false;
-  const chave = email.trim().toLowerCase();
+// Conta tentativas de senha por conta, na memória do processo (um servidor só nesta fase): por
+// e-mail na entrada e por sessão na troca de senha (uma sessão roubada não testa a senha atual sem fim).
+function tentativasEsgotadas(chave: string | null): boolean {
+  if (!chave) return false;
   const agora = Date.now();
-  const registro = tentativasPorEmail.get(chave);
+  const registro = tentativas.get(chave);
   if (!registro || agora - registro.inicio > JANELA_TENTATIVAS_MS) {
-    tentativasPorEmail.set(chave, { quantidade: 1, inicio: agora });
-    if (tentativasPorEmail.size > 10_000) tentativasPorEmail.clear();
+    tentativas.set(chave, { quantidade: 1, inicio: agora });
+    if (tentativas.size > 10_000) tentativas.clear();
     return false;
   }
   registro.quantidade += 1;
-  return registro.quantidade > MAXIMO_TENTATIVAS_POR_EMAIL;
+  return registro.quantidade > MAXIMO_TENTATIVAS;
+}
+
+function chaveDeTentativa(url: string, corpo: unknown, cookie: string | undefined): string | null {
+  if (url.startsWith("/api/auth/sign-in/")) {
+    const email = (corpo as { email?: unknown } | null)?.email;
+    return typeof email === "string" ? `email:${email.trim().toLowerCase()}` : null;
+  }
+  if (url.startsWith("/api/auth/change-password")) {
+    const sessao = /session_token=([^;]+)/.exec(cookie ?? "")?.[1];
+    return sessao ? `sessao:${sessao}` : null;
+  }
+  return null;
 }
 
 export async function registrarRotasAuth(app: FastifyInstance) {
@@ -40,7 +51,7 @@ export async function registrarRotasAuth(app: FastifyInstance) {
     url: "/api/auth/*",
     config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
     async handler(request, reply) {
-      if (request.url.startsWith("/api/auth/sign-in/") && tentativasEsgotadas(request.body)) {
+      if (tentativasEsgotadas(chaveDeTentativa(request.url, request.body, request.headers.cookie))) {
         return reply.status(429).send(problema(429, "Muitas tentativas nesta conta; aguarde 15 minutos", "RATE_LIMITED"));
       }
       try {

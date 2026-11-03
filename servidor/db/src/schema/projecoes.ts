@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { check, integer, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { check, integer, jsonb, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { empresas } from "./cadastro.ts";
 
 // Situação das tabelas relacionais de cada assunto. As telas continuam gravando o documento (fonte
@@ -14,8 +14,11 @@ export const projecoes = pgTable(
       .references(() => empresas.id),
     assunto: text("assunto").notNull(),
     situacao: text("situacao").notNull(),
-    // Versão do documento que gerou as tabelas atuais (na falha: a versão que falhou).
-    versaoDocumento: integer("versao_documento").notNull(),
+    // Versão de CADA documento do assunto usada na última projeção ({ chave: versão }; 0 = ausente).
+    // Comparada com "documentos" na subida da API: diferença = gravação que ficou sem projeção.
+    versoes: jsonb("versoes").$type<Record<string, number>>().notNull(),
+    // Versão da regra de projeção no código: subir o número força reconstruir tudo no próximo boot.
+    versaoRegra: integer("versao_regra").notNull(),
     mensagem: text("mensagem"),
     atualizadoEm: timestamp("atualizado_em", { withTimezone: true }).notNull().defaultNow()
   },

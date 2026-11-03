@@ -16,6 +16,7 @@ import {
   salariosVigencias
 } from "@cicluz/db/schema";
 import type { TransacaoBanco } from "../banco/conexao.ts";
+import { emBlocos } from "./blocos.ts";
 import type { lerCargos, lerContas, lerIdentidade, lerLocais, lerOrganograma, lerPerfis, lerSalarios } from "./estrutura.leitura.ts";
 
 // Cada função troca as tabelas de um assunto da empresa pelas linhas lidas do documento. Apaga
@@ -47,47 +48,45 @@ async function apagar(tx: TransacaoBanco, empresaId: string, ...tabelas: TabelaD
 
 export async function substituirContas(tx: TransacaoBanco, empresaId: string, linhas: ReturnType<typeof lerContas>) {
   await apagar(tx, empresaId, contas);
-  if (linhas.length) await tx.insert(contas).values(comEmpresa(empresaId, linhas));
+  await emBlocos(comEmpresa(empresaId, linhas), (bloco) => tx.insert(contas).values(bloco));
 }
 
 export async function substituirCargos(tx: TransacaoBanco, empresaId: string, linhas: ReturnType<typeof lerCargos>) {
   await apagar(tx, empresaId, cargos);
-  if (linhas.length) await tx.insert(cargos).values(comEmpresa(empresaId, linhas));
+  await emBlocos(comEmpresa(empresaId, linhas), (bloco) => tx.insert(cargos).values(bloco));
 }
 
 export async function substituirSalarios(tx: TransacaoBanco, empresaId: string, dados: ReturnType<typeof lerSalarios>) {
   await apagar(tx, empresaId, salariosValores, salariosVigencias);
-  if (dados.vigencias.length) await tx.insert(salariosVigencias).values(comEmpresa(empresaId, dados.vigencias));
-  if (dados.valores.length) await tx.insert(salariosValores).values(comEmpresa(empresaId, dados.valores));
+  await emBlocos(comEmpresa(empresaId, dados.vigencias), (bloco) => tx.insert(salariosVigencias).values(bloco));
+  await emBlocos(comEmpresa(empresaId, dados.valores), (bloco) => tx.insert(salariosValores).values(bloco));
 }
 
 export async function substituirPerfis(tx: TransacaoBanco, empresaId: string, dados: ReturnType<typeof lerPerfis>) {
   await apagar(tx, empresaId, perfisCargosRequisitos, perfisCargos, perfisRequisitos, perfisAreas);
-  if (dados.areas.length) await tx.insert(perfisAreas).values(comEmpresa(empresaId, dados.areas));
-  if (dados.requisitos.length) await tx.insert(perfisRequisitos).values(comEmpresa(empresaId, dados.requisitos));
-  if (dados.cargos.length) await tx.insert(perfisCargos).values(comEmpresa(empresaId, dados.cargos));
-  if (dados.vinculos.length) await tx.insert(perfisCargosRequisitos).values(comEmpresa(empresaId, dados.vinculos));
+  await emBlocos(comEmpresa(empresaId, dados.areas), (bloco) => tx.insert(perfisAreas).values(bloco));
+  await emBlocos(comEmpresa(empresaId, dados.requisitos), (bloco) => tx.insert(perfisRequisitos).values(bloco));
+  await emBlocos(comEmpresa(empresaId, dados.cargos), (bloco) => tx.insert(perfisCargos).values(bloco));
+  await emBlocos(comEmpresa(empresaId, dados.vinculos), (bloco) => tx.insert(perfisCargosRequisitos).values(bloco));
 }
 
 export async function substituirLocais(tx: TransacaoBanco, empresaId: string, dados: ReturnType<typeof lerLocais>) {
   await apagar(tx, empresaId, locaisTransferencias, locais);
-  // Nível por nível: a FK do pai é conferida a cada INSERT.
-  for (let nivel = 1; nivel <= 4; nivel += 1) {
-    const doNivel = dados.locais.filter((local) => local.nivel === nivel);
-    if (doNivel.length) await tx.insert(locais).values(comEmpresa(empresaId, doNivel));
-  }
-  if (dados.transferencias.length) await tx.insert(locaisTransferencias).values(comEmpresa(empresaId, dados.transferencias));
+  // A leitura entrega em largura (pai antes dos filhos); a FK do pai é conferida no fim de cada
+  // INSERT, então pai e filho no mesmo bloco também valem.
+  await emBlocos(comEmpresa(empresaId, dados.locais), (bloco) => tx.insert(locais).values(bloco));
+  await emBlocos(comEmpresa(empresaId, dados.transferencias), (bloco) => tx.insert(locaisTransferencias).values(bloco));
 }
 
 export async function substituirOrganograma(tx: TransacaoBanco, empresaId: string, dados: ReturnType<typeof lerOrganograma>) {
   await apagar(tx, empresaId, organogramaVersoes, organogramaPosicoes);
-  // A leitura entrega em largura (pai antes dos filhos); um INSERT por posição mantém a FK válida.
-  for (const posicao of dados.posicoes) await tx.insert(organogramaPosicoes).values({ ...posicao, empresaId });
-  if (dados.versoes.length) await tx.insert(organogramaVersoes).values(comEmpresa(empresaId, dados.versoes));
+  // Em largura (pai antes dos filhos), em blocos: a FK do pai é conferida no fim de cada INSERT.
+  await emBlocos(comEmpresa(empresaId, dados.posicoes), (bloco) => tx.insert(organogramaPosicoes).values(bloco));
+  await emBlocos(comEmpresa(empresaId, dados.versoes), (bloco) => tx.insert(organogramaVersoes).values(bloco));
 }
 
 export async function substituirIdentidade(tx: TransacaoBanco, empresaId: string, dados: ReturnType<typeof lerIdentidade>) {
   await apagar(tx, empresaId, iconesPersonalizados, coresPersonalizadas);
-  if (dados.icones.length) await tx.insert(iconesPersonalizados).values(comEmpresa(empresaId, dados.icones));
-  if (dados.cores.length) await tx.insert(coresPersonalizadas).values(comEmpresa(empresaId, dados.cores));
+  await emBlocos(comEmpresa(empresaId, dados.icones), (bloco) => tx.insert(iconesPersonalizados).values(bloco));
+  await emBlocos(comEmpresa(empresaId, dados.cores), (bloco) => tx.insert(coresPersonalizadas).values(bloco));
 }

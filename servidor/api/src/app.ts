@@ -63,6 +63,10 @@ export async function buildApp(): Promise<FastifyInstance> {
     if (statusFastify && statusFastify >= 400 && statusFastify < 500) {
       return reply.status(statusFastify).send(problema(statusFastify, "Requisição inválida", "BAD_REQUEST"));
     }
+    const codigoBanco = ((error as { cause?: { code?: string } }).cause ?? (error as { code?: string })).code;
+    if (codigoBanco === "40P01" || codigoBanco === "40001") {
+      return reply.status(503).send(problema(503, "Servidor ocupado; tente de novo", "TRY_AGAIN"));
+    }
     request.log.error(error);
     return reply.status(500).send(problema(500, "Erro interno", "INTERNAL_ERROR"));
   });

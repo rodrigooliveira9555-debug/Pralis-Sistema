@@ -92,6 +92,7 @@ export async function gravarLote(perfil: PerfilSessao, lote: GravarLote): Promis
 
       const resultado: VersaoDocumento[] = [];
       const historico = [];
+      const alteradas: string[] = [];
       for (const item of lote.itens) {
         const atual = atuais.get(item.chave);
         const dados = { empresaId, chave: item.chave, usuarioId: perfil.usuarioId };
@@ -102,6 +103,7 @@ export async function gravarLote(perfil: PerfilSessao, lote: GravarLote): Promis
               throw new LoteRecusado([{ chave: item.chave, versaoAtual: atual.versao }]);
             }
             historico.push(linhaHistorico(perfil, item.chave, atual.valor, atual.versao, "removida"));
+            alteradas.push(item.chave);
           }
           resultado.push({ chave: item.chave, versao: 0 });
           continue;
@@ -117,11 +119,12 @@ export async function gravarLote(perfil: PerfilSessao, lote: GravarLote): Promis
           : await inserirDocumento(tx, { ...dados, valor: item.valor });
         if (!gravada) throw new LoteRecusado([{ chave: item.chave, versaoAtual: atual?.versao ?? 1 }]);
         historico.push(linhaHistorico(perfil, item.chave, item.valor, gravada.versao, "gravada"));
+        alteradas.push(item.chave);
         resultado.push({ chave: item.chave, versao: gravada.versao });
       }
 
       await registrarHistorico(tx, historico);
-      await atualizarProjecoes(tx, empresaId, lote.itens.map((item) => item.chave));
+      await atualizarProjecoes(tx, empresaId, alteradas);
       return resultado;
     });
   } catch (error) {

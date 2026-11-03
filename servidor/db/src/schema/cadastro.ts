@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, check, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { bigserial, boolean, check, index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { usuarioAutenticacao } from "./autenticacao.ts";
 
 export const empresas = pgTable("empresas", {
@@ -33,5 +33,29 @@ export const perfisUsuarios = pgTable(
   (tabela) => [
     check("perfis_usuarios_papel_check", sql`${tabela.papel} in ('administrador', 'usuario')`),
     index("perfis_usuarios_empresa_idx").on(tabela.empresaId)
+  ]
+);
+
+// Quem fez o quê nas contas de acesso (tela Usuários). Só recebe INSERT.
+export const usuariosAuditoria = pgTable(
+  "usuarios_auditoria",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    empresaId: uuid("empresa_id")
+      .notNull()
+      .references(() => empresas.id),
+    atorId: text("ator_id")
+      .notNull()
+      .references(() => usuarioAutenticacao.id),
+    alvoId: text("alvo_id")
+      .notNull()
+      .references(() => usuarioAutenticacao.id),
+    acao: text("acao").notNull(),
+    detalhe: jsonb("detalhe"),
+    em: timestamp("em", { withTimezone: true }).notNull().defaultNow()
+  },
+  (tabela) => [
+    check("usuarios_auditoria_acao_check", sql`${tabela.acao} in ('criou', 'alterou', 'definiu_senha')`),
+    index("usuarios_auditoria_empresa_idx").on(tabela.empresaId, tabela.em)
   ]
 );

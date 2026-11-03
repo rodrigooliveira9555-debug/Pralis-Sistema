@@ -12,15 +12,8 @@
     {
       "idx": 1,
       "version": "7",
-      "when": 1793746698121,
-      "tag": "0001_financeiro",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1793746910056,
-      "tag": "0002_estrutura",
+      "when": 1793748007587,
+      "tag": "0001_tabelas_por_assunto",
       "breakpoints": true
     }
   ]

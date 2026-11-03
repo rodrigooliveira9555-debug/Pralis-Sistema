@@ -1,17 +1,12 @@
-import { empresas } from "@cicluz/db/schema";
-import { banco, pool } from "../banco/conexao.ts";
-import { listarSituacoes } from "../projecoes/projecoes.repository.ts";
-import { reprocessarTodas } from "../projecoes/projecoes.service.ts";
+import { pool } from "../banco/conexao.ts";
+import { reprocessarDefasadas } from "../projecoes/projecoes.service.ts";
 
-// Reconstrói as tabelas relacionais de todas as empresas a partir dos documentos. Roda no deploy,
-// depois das migrations: uma tabela nova nasce vazia e só se enche aqui (ou na próxima gravação).
+// Reconstrói as tabelas relacionais que estão defasadas em relação aos documentos (tabela nova,
+// regra nova ou gravação que ficou sem projeção). Roda no deploy, depois das migrations; a API faz a
+// mesma conferência ao subir.
 try {
-  for (const empresa of await banco.select({ id: empresas.id, nome: empresas.nome }).from(empresas)) {
-    await banco.transaction((tx) => reprocessarTodas(tx, empresa.id));
-    const falhas = (await listarSituacoes(empresa.id)).filter((assunto) => assunto.situacao === "falha");
-    console.info(`[projecoes] ${empresa.nome}: ${falhas.length ? `${falhas.length} assunto(s) com falha` : "tudo em dia"}`);
-    for (const falha of falhas) console.info(`[projecoes]   ${falha.assunto}: ${falha.mensagem}`);
-  }
+  await reprocessarDefasadas((mensagem) => console.info(mensagem));
+  console.info("[projecoes] conferência concluída");
 } catch (error) {
   console.error("[projecoes] reprocessamento falhou:", error instanceof Error ? error.message : error);
   process.exitCode = 1;

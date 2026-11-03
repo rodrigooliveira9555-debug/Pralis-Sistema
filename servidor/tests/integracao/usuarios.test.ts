@@ -84,6 +84,25 @@ describe("usuários da empresa", () => {
     expect(depois.statusCode).toBe(401);
   });
 
+  it("o administrador não troca a própria senha por esta rota (só em Minha senha) e tudo fica auditado", async () => {
+    const admin = await contaLogada("administrador");
+    const propria = await app.inject({
+      method: "POST",
+      url: `/api/usuarios/${admin.usuarioId}/senha`,
+      headers: comSessao(admin.cookie),
+      payload: { senha: "outra-senha-123" }
+    });
+    expect(propria.json().code).toBe("USE_OWN_PASSWORD_FORM");
+
+    const colega = await criarConta("usuario", admin.empresaNome);
+    await app.inject({ method: "PATCH", url: `/api/usuarios/${colega.usuarioId}`, headers: comSessao(admin.cookie), payload: { papel: "administrador" } });
+    const { banco } = await import("../../api/src/banco/conexao.ts");
+    const { usuariosAuditoria } = await import("@cicluz/db/schema");
+    const { eq } = await import("drizzle-orm");
+    const trilha = await banco.select().from(usuariosAuditoria).where(eq(usuariosAuditoria.alvoId, colega.usuarioId));
+    expect(trilha).toEqual([expect.objectContaining({ atorId: admin.usuarioId, acao: "alterou" })]);
+  });
+
   it("senha nova definida pelo administrador vale e a antiga deixa de valer", async () => {
     const admin = await contaLogada("administrador");
     const colega = await criarConta("usuario", admin.empresaNome);
