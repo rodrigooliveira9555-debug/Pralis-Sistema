@@ -1,5 +1,12 @@
 # CICLUZ — referência de interface
 
+## Regra vigente — realce e quadros independentes (03/11/2026)
+Substitui o preenchimento cinza dos ícones nas abas internas. Menus principais, submenus, grades e listas realçam fundo e texto na cor do próprio item ao passar o mouse/focar, em ambos os temas; mistura12% no claro e20% no escuro. Ícones de identificação e controles internos têm contorno/símbolo coloridos e centro na superfície branca/escura. Cores personalizadas e arte das marcas são preservadas. Exceção expressa: os três controles circulares superiores do menu inicial usam contorno/símbolo cinza e centro transparente, inclusive com a busca aberta.
+
+Cabeçalho superior mantém a cor da aba, conforme confirmação do usuário. Superior, conteúdo e inferior formam retângulos independentes com quatro cantos de12px, sem curvas côncavas/sobreposição, separados por6px. Cabeçalhos ocupam a largura integral do viewport, inclusive no desktop; recuos internos14px preservados. Faixas móveis antigas não podem cobrir os cantos. Safe-area é atendida pelo próprio cabeçalho/rodapé.
+
+Situação do Grupo/Conta/Operadora e outros blocos agrupados usam --theme-card também na regra de formulários de maior prioridade, eliminando o branco residual no tema escuro. Datas DD/MM/AA, valores ISO completos, validação e persistência permanecem como antes.
+
 ## Regra vigente — menu, cinza e datas (02/11/2026)
 Substitui os pedidos anteriores de círculos vazados/símbolos cinza. Controles circulares de contorno cinza, avatar, checks e biblioteca ficam maciços em --navigation-ink; o desenho/texto interno usa a superfície por trás (branco no claro, escuro no escuro, acento em faixas coloridas). Estados ativos/hover mantêm essa inversão. Marcas reais e identificadores de origem preservam suas cores. Cabeçalhos principais e internos, títulos e caminhos usam o cinza dos textos do menu; identificadores antes brancos ficam cinza com desenho na cor do cabeçalho.
 

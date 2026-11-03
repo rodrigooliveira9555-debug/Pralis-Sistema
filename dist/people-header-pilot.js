@@ -190,8 +190,6 @@
   footer.addEventListener('keydown',e=>{if(e.key==='Escape'&&!chooser.hidden){closeChooser();more.focus()}});
   footer.append(home,searchBox,tools,more,toggle,chooser,datePanel,status,importFile);panel.append(footer);
   footer.addEventListener('click',event=>{const button=event.target.closest('button');if(!button||button.matches('.people-toolbar-choice,.people-toolbar-more'))return;button.classList.add('people-click-feedback');setTimeout(()=>button.classList.remove('people-click-feedback'),220)});
-  const edge=document.createElementNS('http://www.w3.org/2000/svg','svg');edge.setAttribute('class','people-footer-edge');edge.setAttribute('aria-hidden','true');const edgePath=document.createElementNS(edge.namespaceURI,'path');edge.append(edgePath);footer.prepend(edge);
-  new ResizeObserver(()=>{const w=footer.clientWidth;edge.setAttribute('viewBox','0 0 '+w+' 21');edgePath.setAttribute('d','M .5 .5 A 19.5 19.5 0 0 0 20 20 H '+(w-20)+' A 19.5 19.5 0 0 0 '+(w-.5)+' .5')}).observe(footer);
   applyPreferences();
   function readState(key,fallback){try{const value=JSON.parse(localStorage.getItem(key)||'null');return value&&typeof value==='object'?value:fallback}catch{return fallback}}
   function loadContext(){

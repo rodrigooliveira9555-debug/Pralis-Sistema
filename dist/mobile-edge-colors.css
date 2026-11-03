@@ -8,3 +8,6 @@
  .mobile-top-edge-fill{top:0;height:max(6px,env(safe-area-inset-top,0px));background:var(--mobile-top-fill,#fff)}
  .mobile-bottom-edge-fill{bottom:0;height:max(6px,env(safe-area-inset-bottom,0px));background:#fff}
 }
+
+/* Full-viewport rounded headers paint their own safe-area; overlays must not square their corners. */
+body:not(.mobile-menu-visible):has(.view.app-screen-shell.show) :is(.mobile-top-edge-fill,.mobile-bottom-edge-fill){display:none}

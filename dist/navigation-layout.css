@@ -64,7 +64,7 @@ body.dark-theme .side .sidebar-section-toggle{color:var(--navigation-ink)!import
 
 /* Three shared circular controls, fixed above the scrollable menu. */
 body .side>.side-controls,body.dark-theme .side>.side-controls{color:var(--navigation-ink);align-items:center}
-body .side>.side-controls>.menu-layout-toggle,body .side>.side-controls>.tree-control,body .side>.side-controls>.theme-switch{position:static!important;display:grid!important;place-items:center;flex:0 0 32px;width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;padding:0!important;margin:0!important;border:1px solid var(--navigation-ink)!important;border-radius:50%!important;color:inherit!important;background:var(--navigation-ink)!important;color:var(--theme-surface,#fff)!important;opacity:1!important}
+body .side>.side-controls>.menu-layout-toggle,body .side>.side-controls>.tree-control,body .side>.side-controls>.theme-switch{position:static!important;display:grid!important;place-items:center;flex:0 0 32px;width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;padding:0!important;margin:0!important;border:1px solid var(--navigation-ink)!important;border-radius:50%!important;color:inherit!important;background:transparent!important;color:var(--navigation-ink)!important;opacity:1!important}
 body .side>.side-controls svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 body .side>.side-controls .theme-icon{display:grid;place-items:center;color:inherit!important}
 body .side.collapsed>.side-controls>.menu-layout-toggle{margin:0!important}
@@ -193,13 +193,12 @@ body .side>.menu-search-box[hidden],body .side .nav-tree [hidden]{display:none!i
 body .side .menu-search-box input{box-sizing:border-box;width:100%;min-width:0;height:var(--ui-field-height,42px);border:1px solid var(--navigation-ink);border-radius:var(--ui-field-radius,8px);padding:10px 12px;font:400 var(--ui-input-size,14px)/20px var(--ui-font);background:#fff;color:#27272a}
 body.dark-theme .side .menu-search-box input{background:#302f37;color:#f5f5f7}
 body .side .menu-search-box input:focus{outline:2px solid color-mix(in srgb,var(--navigation-ink) 25%,transparent);outline-offset:1px}
-body .side-controls .menu-search-toggle[aria-pressed=true]{background:var(--navigation-ink)!important}
+body .side-controls .menu-search-toggle[aria-pressed=true]{background:transparent!important}
 .menu-search-status{margin:8px 0 0;font:400 var(--ui-note,11px)/16px var(--ui-font);color:var(--navigation-ink)}
 
 /* Persistent highlight belongs to selection, never to expanded ancestors. */
-body .side .nav-tree :is(summary,button.overview-link):not(.menu-selected):not(.active){background:transparent!important;color:var(--navigation-ink,#626267)!important}
+body .side .nav-tree :is(summary,button.overview-link):not(.menu-selected):not(.active):not(:hover):not(:focus-visible){background:transparent!important;color:var(--navigation-ink,#626267)!important}
 body .side .nav-tree :is(summary,button).menu-selected{background:color-mix(in srgb,var(--item-color,#7c3aed) 14%,transparent)!important;color:var(--item-color,#7c3aed)!important}
-@media(hover:none){body .side .nav-tree button:not(.menu-selected):not(.active):hover{background:transparent!important;color:var(--navigation-ink,#626267)!important}}
 
 /* Two independent header bands shared by every tab. */
 body .view.show>.panel>.head[data-header-standard=yes]{grid-template-columns:38px minmax(0,1fr) 32px!important;grid-template-rows:auto auto;min-height:0!important;flex:none;padding:8px 14px!important}
@@ -216,3 +215,7 @@ body .view.show>.panel>.head.header-identity-collapsed>.fixed-header-tools{grid-
 
 /* Search shares the spectrum bounds and equal space above/below its field. */
 body .side:has(>.menu-search-box:not([hidden]))>.menu-management-heading{padding-top:0}
+
+/* Every principal-menu entry shares its own accent on hover and keyboard focus. */
+body .side .nav-tree :is(summary,button.overview-link,.children>button):is(:hover,:focus-visible){--menu-entry-accent:var(--item-color,#7c3aed);background:color-mix(in srgb,var(--menu-entry-accent) var(--menu-hover-tint,12%),var(--theme-surface,#fff))!important;color:var(--menu-entry-accent)!important}
+body .side .nav-tree summary:is(:hover,:focus-visible) :is(.menu-name,.menu-name span,.menu-name small){color:var(--menu-entry-accent)!important}

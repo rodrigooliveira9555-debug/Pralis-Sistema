@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Matriz — realce, ícones vazados e cabeçalhos retangulares (03/11/2026)
+Cinco demandas: realce de menu e texto pela cor do item em ambos os temas; identificadores e controles com contorno/símbolo coloridos e centro na superfície do tema; Situação do Grupo acompanhando o tema nos oito editores; somente os três controles circulares do menu inicial com contorno/símbolo cinza e centro transparente; cabeçalhos superior/inferior como retângulos com quatro cantos arredondados e largura integral. Usuário confirmou manter o cabeçalho superior colorido. Matriz:20 estruturas em320/390/1024px, claro/escuro, seis origens de menu, oito editores, hover/foco e busca, rolagem e retorno. Remover sobreposições/cantos côncavos na fonte compartilhada. Preservar marca, cores de origem, datas e dados.
+
 ## Complemento final — ícones maciços e datas DD/MM/AA (02/11/2026)
 Última orientação substitui o vazado do círculo: controles de contorno cinza passam a preenchimento cinza, com símbolo recortado na cor da superfície por trás; títulos continuam cinza e a arte da marca preservada. Datas exibem8 caracteres DD/MM/AA com barras automáticas e calendário, mantendo valor ISO completo para filtros, históricos e persistência. Conferir datas inválidas, digitação parcial, alteração programática, calendário, min/max, formulário completo salvo/restaurado e datas históricas. Novas datas usam00–49=2000–2049 e50–99=1950–1999; datas existentes mantêm seu século. Confirmar o exemplo02/11/26 como2026-11-02.
 

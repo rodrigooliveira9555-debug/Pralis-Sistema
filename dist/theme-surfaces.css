@@ -15,8 +15,6 @@ body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-
 body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell :is(.people-options-inner,.people-toolbar-row){background:var(--theme-card)!important}
 body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-heading::after{background:var(--theme-surface)}
 body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search>input{background:var(--theme-field)!important;color:var(--layout-ink)!important;color-scheme:dark}
-body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header::before{background:radial-gradient(circle at 100% 0,transparent 19.5px,var(--theme-surface) 20px)}
-body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header::after{background:radial-gradient(circle at 0 0,transparent 19.5px,var(--theme-surface) 20px)}
 body.dark-theme :is(dialog,.dialog).shell-dialog.app-screen-shell{background:var(--theme-surface)!important}
 body.dark-theme .mobile-bottom-edge-fill{background:var(--theme-surface)}
 body.dark-theme .app{background:var(--theme-surface)!important}
