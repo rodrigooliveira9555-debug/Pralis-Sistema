@@ -19,7 +19,7 @@ try {
     email: process.env["CICLUZ_EMAIL"] ?? "",
     senha: process.env["CICLUZ_SENHA"] ?? "",
     papel
-  });
+  }, { empresaNova: process.env["CICLUZ_EMPRESA_NOVA"] === "1" });
   console.info(`[usuario] conta criada (usuário ${criado.usuarioId}, empresa ${criado.empresaId})`);
 } catch (error) {
   console.error("[usuario] não foi possível criar:", error instanceof Error ? error.message : error);

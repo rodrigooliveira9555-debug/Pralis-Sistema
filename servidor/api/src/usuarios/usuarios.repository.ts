@@ -12,10 +12,14 @@ export async function emailJaCadastrado(email: string) {
   return Boolean(linha);
 }
 
-export async function obterOuCriarEmpresa(nome: string) {
-  await banco.insert(empresas).values({ nome }).onConflictDoNothing();
+export async function obterEmpresaPorNome(nome: string) {
   const [empresa] = await banco.select({ id: empresas.id }).from(empresas).where(eq(empresas.nome, nome)).limit(1);
-  if (!empresa) throw new Error("empresa não encontrada depois de criada");
+  return empresa ?? null;
+}
+
+export async function criarEmpresa(nome: string) {
+  const [empresa] = await banco.insert(empresas).values({ nome }).returning({ id: empresas.id });
+  if (!empresa) throw new Error("empresa não criada");
   return empresa;
 }
 

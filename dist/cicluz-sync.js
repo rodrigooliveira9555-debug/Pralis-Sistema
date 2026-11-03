@@ -86,11 +86,17 @@
     return versoes;
   }
 
-  // Caminho de volta depois de entrar: só da mesma origem (sem redirecionamento para fora).
+  // Caminho de volta depois de entrar: só da mesma origem. Resolve a URL de verdade (o navegador
+  // trata "\\" como "/", então conferir só o texto deixava passar "/\outro-site").
   function caminhoSeguro(valor) {
     if (typeof valor !== 'string' || !valor) return 'index.html';
-    if (!/^\/(?!\/)/.test(valor) && !/^[\w-]+\.html/.test(valor)) return 'index.html';
-    return valor;
+    try {
+      var url = new URL(valor, location.origin);
+      if (url.origin !== location.origin) return 'index.html';
+      return url.pathname + url.search + url.hash;
+    } catch (e) {
+      return 'index.html';
+    }
   }
 
   function irParaEntrada() {

@@ -103,4 +103,61 @@ describe("login", () => {
     expect(resposta.statusCode).toBe(403);
     expect(resposta.json().code).toBe("ORIGIN_NOT_ALLOWED");
   });
+
+  it("gravação sem Origin e sem Sec-Fetch-Site same-origin é recusada", async () => {
+    const conta = await criarConta("administrador");
+    const login = await entrar(app, conta.email, conta.senha);
+    const sem = await app.inject({
+      method: "POST",
+      url: "/api/documentos/importacao",
+      headers: { cookie: login.cookie },
+      payload: { itens: [] }
+    });
+    expect(sem.statusCode).toBe(403);
+    const mesmaOrigem = await app.inject({
+      method: "POST",
+      url: "/api/documentos/importacao",
+      headers: { cookie: login.cookie, "sec-fetch-site": "same-origin" },
+      payload: { itens: [] }
+    });
+    expect(mesmaOrigem.statusCode).toBe(201);
+  });
+
+  it("usuário desativado não abre sessão nova", async () => {
+    const conta = await criarConta("usuario");
+    const { banco } = await import("../../api/src/banco/conexao.ts");
+    const { perfisUsuarios } = await import("@cicluz/db/schema");
+    await banco.update(perfisUsuarios).set({ ativo: false }).where(eq(perfisUsuarios.usuarioId, conta.usuarioId));
+    const login = await entrar(app, conta.email, conta.senha);
+    expect(login.status).toBeGreaterThanOrEqual(400);
+    expect(login.cookie).not.toContain("session_token");
+  });
+
+  it("depois de 10 tentativas no mesmo e-mail, a 11ª é barrada mesmo com a senha certa", async () => {
+    const conta = await criarConta("usuario");
+    for (let i = 0; i < 10; i += 1) await entrar(app, conta.email, "senha-errada-123");
+    const login = await entrar(app, conta.email, conta.senha);
+    expect(login.status).toBe(429);
+  });
+
+  it("o cookie de sessão é httpOnly e SameSite=Lax", async () => {
+    const conta = await criarConta("usuario");
+    const resposta = await app.inject({
+      method: "POST",
+      url: "/api/auth/sign-in/email",
+      headers: { origin: ORIGEM, "content-type": "application/json" },
+      payload: { email: conta.email, password: conta.senha }
+    });
+    const cookies = ([] as string[]).concat(resposta.headers["set-cookie"] ?? []);
+    const sessao = cookies.find((linha) => linha.includes("session_token"));
+    expect(sessao).toMatch(/HttpOnly/i);
+    expect(sessao).toMatch(/SameSite=Lax/i);
+  });
+
+  it("criar usuário em empresa que não existe exige pedido explícito", async () => {
+    const { criarUsuario } = await import("../../api/src/usuarios/usuarios.service.ts");
+    await expect(
+      criarUsuario({ empresaNome: "Empresa Com Erro De Digitacao", nome: "Fulano", email: "fulano@teste.local", senha: "senha-forte-123", papel: "usuario" })
+    ).rejects.toThrow(/não encontrada/);
+  });
 });

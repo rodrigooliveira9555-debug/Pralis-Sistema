@@ -165,9 +165,14 @@ export async function importar(perfil: PerfilSessao, importacao: Importacao) {
 
 // O aparelho entrega o que tinha antes de receber a versão do servidor. Só vai para o histórico:
 // nada do que estava no iPad se perde.
+// Só guarda o que difere da versão atual: igual ao servidor não é cópia, é repetição.
 export async function guardarCopias(perfil: PerfilSessao, copias: Copias) {
+  if (!perfil.empresa.dadosImportados) throw importacaoPendente();
+  const atuais = new Map((await listarDocumentos(perfil.empresa.id)).map((linha) => [linha.chave, linha.valor]));
+  const diferentes = copias.itens.filter((item) => atuais.get(item.chave) !== item.valor);
   await registrarHistorico(
     bancoDocumentos,
-    copias.itens.map((item) => linhaHistorico(perfil, item.chave as ChaveSincronizada, item.valor, null, "substituida_pelo_servidor"))
+    diferentes.map((item) => linhaHistorico(perfil, item.chave as ChaveSincronizada, item.valor, null, "substituida_pelo_servidor"))
   );
+  return diferentes.length;
 }

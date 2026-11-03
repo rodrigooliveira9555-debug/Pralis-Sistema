@@ -39,12 +39,16 @@ cp .env.example .env            # ajuste o BETTER_AUTH_SECRET
 npm install
 npm run db:subir                # Postgres em 127.0.0.1:5545 (Docker)
 npm run db:migrar
-CICLUZ_EMPRESA="Cicluz" CICLUZ_NOME="Seu nome" CICLUZ_EMAIL="voce@exemplo.com" \
-  CICLUZ_SENHA="uma-senha-forte" CICLUZ_PAPEL=administrador npm run usuario:criar
+read -rs CICLUZ_SENHA && export CICLUZ_SENHA   # digita a senha sem eco
+CICLUZ_EMPRESA="Cicluz" CICLUZ_EMPRESA_NOVA=1 CICLUZ_NOME="Seu nome" \
+  CICLUZ_EMAIL="voce@exemplo.com" CICLUZ_PAPEL=administrador npm run usuario:criar
 npm run dev                     # API + site em http://localhost:4200/entrar.html
 ```
 
-Qualidade: `npm run lint`, `npm run check`, `npm test` (os testes antigos de `tests/*.cjs` + 20 de integração).
+`CICLUZ_EMPRESA_NOVA=1` só na primeira conta da empresa; nas próximas, sem ele (nome errado não cria
+empresa vazia).
+
+Qualidade: `npm run lint`, `npm run check`, `npm test` (os testes antigos de `tests/*.cjs` + os de integração).
 
 ## Publicar (ainda NÃO feito — decisão P-13)
 
@@ -53,9 +57,13 @@ ninguém entra.
 
 1. Banco Postgres de produção + `npm run db:migrar` com o `DATABASE_URL` dele.
 2. API (`npm start` em `servidor/`) com `NODE_ENV=production`, `BETTER_AUTH_SECRET` próprio,
-   `AUTH_BASE_URL` = domínio do site, `WEB_ORIGINS` = domínio do site, `SERVIR_SITE=0`.
+   `AUTH_BASE_URL` e `WEB_ORIGINS` = domínio https do site (http é recusado no boot), `SERVIR_SITE=0`
+   e `PROXIES_CONFIAVEIS` = número exato de proxies na frente (ex.: Vercel → Traefik = 2). A API
+   **não** deve ter domínio público direto: só o proxy chega nela.
 3. No Vercel, repassar `/api/*` para a API (rewrite), para o cookie ser do próprio site (o Safari do
    iPad bloqueia cookie de outro domínio). Os previews do Vercel não podem apontar para a API de produção.
+   Acrescentar os cabeçalhos do site: `X-Frame-Options: DENY`, `Content-Security-Policy:
+   frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`.
 4. Criar a conta do administrador com `npm run usuario:criar` e fazer a importação no iPad.
 
 O `.vercelignore` tira `servidor/` do deploy estático.

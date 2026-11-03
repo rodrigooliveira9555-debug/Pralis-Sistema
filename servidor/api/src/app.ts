@@ -3,7 +3,7 @@ import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import fastifyStatic from "@fastify/static";
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import { ZodError } from "zod";
 import { problema } from "@cicluz/shared";
 import { exigirAutenticacao } from "./auth/guards.ts";
@@ -20,7 +20,7 @@ const rotasComAutenticacaoPropria = new Set(["/health", "/api/auth/*"]);
 const pastaSite = fileURLToPath(new URL("../../../dist", import.meta.url));
 
 export async function buildApp(): Promise<FastifyInstance> {
-  const app = Fastify({
+  const opcoes: FastifyServerOptions = {
     logger:
       env.NODE_ENV === "test"
         ? false
@@ -31,9 +31,11 @@ export async function buildApp(): Promise<FastifyInstance> {
               censor: "[redigido]"
             }
           },
-    // Atrás do proxy do Vercel/Coolify: IP real do cliente para o limite de tentativas.
-    trustProxy: env.NODE_ENV === "production"
-  });
+    // IP real do cliente para o limite de tentativas: confia só no número de proxies declarado (0 =
+    // nenhum, o IP é o da conexão).
+    trustProxy: (_endereco: string, salto: number) => salto < env.PROXIES_CONFIAVEIS
+  };
+  const app = Fastify(opcoes);
 
   app.setErrorHandler((error, request, reply) => {
     if (error instanceof ZodError) {
@@ -74,13 +76,19 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(helmet, { contentSecurityPolicy: false });
   await app.register(rateLimit, { global: true, max: 300, timeWindow: "1 minute" });
 
+  // Só JSON: um formulário de outro site não consegue mandar corpo que a API aceite.
+  app.removeContentTypeParser("text/plain");
+
   app.addHook("onRequest", async (request) => {
     if (request.method === "OPTIONS") return;
-    // Escrita só a partir do próprio site: outra origem não grava, mesmo que o navegador mande o
-    // cookie (o better-auth faz a mesma conferência nas rotas dele).
-    const origem = request.headers.origin;
-    if (request.method !== "GET" && origem && !origensWebPermitidas.includes(origem)) {
-      throw proibido("Origem não permitida", "ORIGIN_NOT_ALLOWED");
+    // Escrita só a partir do próprio site. O navegador sempre manda Origin em POST/PUT/DELETE; sem
+    // ele, só passa se o próprio navegador disser que é a mesma origem (Sec-Fetch-Site).
+    if (!["GET", "HEAD"].includes(request.method) && request.url.startsWith("/api/")) {
+      const origem = request.headers.origin;
+      const mesmaOrigem = request.headers["sec-fetch-site"] === "same-origin";
+      if (origem ? !origensWebPermitidas.includes(origem) : !mesmaOrigem) {
+        throw proibido("Origem não permitida", "ORIGIN_NOT_ALLOWED");
+      }
     }
     const rota = request.routeOptions.url;
     if (!rota || !rota.startsWith("/api/") || rotasComAutenticacaoPropria.has(rota)) return;

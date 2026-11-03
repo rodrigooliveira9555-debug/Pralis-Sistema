@@ -10,11 +10,15 @@ export async function criarApp() {
   return app;
 }
 
-export async function criarConta(papel: "administrador" | "usuario", empresaNome = `Empresa ${randomUUID()}`) {
+export async function criarConta(papel: "administrador" | "usuario", empresaExistente?: string) {
+  const empresaNome = empresaExistente ?? `Empresa ${randomUUID()}`;
   const { criarUsuario } = await import("../../api/src/usuarios/usuarios.service.ts");
   const email = `${randomUUID()}@teste.local`;
   const senha = `senha-${randomUUID()}`;
-  const criado = await criarUsuario({ empresaNome, nome: "Pessoa de Teste", email, senha, papel });
+  const criado = await criarUsuario(
+    { empresaNome, nome: "Pessoa de Teste", email, senha, papel },
+    { empresaNova: !empresaExistente }
+  );
   return { ...criado, email, senha, empresaNome };
 }
 
@@ -24,6 +28,8 @@ export async function entrar(app: FastifyInstance, email: string, senha: string)
     method: "POST",
     url: "/api/auth/sign-in/email",
     headers: { origin: ORIGEM, "content-type": "application/json" },
+    // Um IP por chamada: o teto de 20 entradas por minuto por IP não deve misturar os testes.
+    remoteAddress: `10.0.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`,
     payload: { email, password: senha }
   });
   const cookies = resposta.headers["set-cookie"];

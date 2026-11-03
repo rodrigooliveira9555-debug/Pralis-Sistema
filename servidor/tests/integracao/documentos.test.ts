@@ -204,5 +204,14 @@ describe("gravação em lote", () => {
     expect(docs.find((d) => d.chave === HIERARQUIA)).toMatchObject({ valor: '{"v":1}' });
     const tipos = (await historico(admin.empresaId, HIERARQUIA)).map((linha) => linha.tipo);
     expect(tipos).toContain("substituida_pelo_servidor");
+
+    // Igual à versão atual não é cópia: não entra no histórico.
+    const igual = await app.inject({
+      method: "POST",
+      url: "/api/documentos/copias",
+      headers: comSessao(admin.cookie),
+      payload: { itens: [{ chave: HIERARQUIA, valor: '{"v":1}' }] }
+    });
+    expect(igual.json().data.guardadas).toBe(0);
   });
 });
