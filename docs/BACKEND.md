@@ -34,7 +34,10 @@ dist/
    relacionais do assunto (financeiro, contas, cargos, salários, ficha de cargos, locais, organograma,
    identidade). As regras do banco (FK, CHECK, vigências sem sobreposição) valem nessas tabelas. Se o
    dado da tela ferir uma regra, a tela salva assim mesmo e o assunto aparece como "Precisa de
-   correção" na tela Usuários, com a mensagem de onde corrigir; as tabelas ficam na última versão boa.
+   correção" na tela Usuários (e em toda consulta, no campo `situacao`), com a mensagem de onde corrigir; as tabelas
+   ficam na última versão boa. Gravações simultâneas do mesmo assunto projetam uma de cada vez. Na
+   subida da API (e no deploy) o servidor reconstrói o que ficou defasado em relação aos documentos.
+   Valores de dinheiro não são convertidos nem arredondados: ficam como a tela gravou.
 8. **Consultas** (só leitura, sempre da empresa da sessão): `/api/financeiro/grupos`, `/tipos-venda`,
    `/bandeiras`, `/operadoras`, `/taxas?operadora=&bandeira=&data=`; `/api/contas`, `/api/cargos`,
    `/api/salarios/vigentes?data=AAAA-MM-DD` (mesma regra da tela), `/api/locais`, `/api/organograma`,
@@ -87,19 +90,20 @@ ninguém entra.
 
 O `.vercelignore` tira `servidor/` do deploy estático.
 
-## Banco (migrations `0000_inicial`, `0001_financeiro`, `0002_estrutura`)
+## Banco (migrations `0000_inicial`, `0001_tabelas_por_assunto`)
 
 | Tabela | Para quê |
 | ------ | -------- |
 | `user`, `session`, `account`, `verification` | better-auth (iguais ao Sistema Pralis) |
 | `empresas` | empresa; `dados_importados_em` marca a importação inicial |
 | `perfis_usuarios` | usuário → empresa, nome, papel (`administrador` / `usuario`), ativo |
+| `usuarios_auditoria` | só INSERT: quem criou, alterou ou definiu senha de quem, e quando |
 | `documentos` | versão atual de cada chave por empresa (`valor` texto, `versao` ≥ 1) |
 | `documentos_historico` | só INSERT: gravada, conflito, substituida_pelo_servidor, removida |
-| `projecoes` | situação de cada assunto (ok / falha + mensagem + versão do documento) |
-| `fin_grupos`, `fin_tipos_venda`, `fin_bandeiras`, `fin_operadoras`, `fin_taxas`, `fin_transferencias` | financeiro; taxa em % com 4 casas, tarifa em centavos, EXCLUDE de vigência/parcela sobreposta |
+| `projecoes` | situação de cada assunto (ok / falha + mensagem), versão de cada documento usado e versão da regra |
+| `fin_grupos`, `fin_tipos_venda`, `fin_bandeiras`, `fin_operadoras`, `fin_taxas`, `fin_transferencias` | financeiro; % e tarifa (R$) exatamente como a tela grava, com até 4 casas; chave da taxa = operadora + bandeira + posição; EXCLUDE de vigência/parcela sobreposta |
 | `contas` | contas por nome (como a tela), situação ATIVA/INATIVA |
-| `cargos`, `salarios_vigencias`, `salarios_valores` | catálogo de cargos (referência + locais) e salários em centavos |
+| `cargos`, `salarios_vigencias`, `salarios_valores` | catálogo de cargos (referência + locais) e salários em reais, exatos como a tela grava |
 | `perfis_areas`, `perfis_requisitos`, `perfis_cargos`, `perfis_cargos_requisitos` | ficha de cargos |
 | `locais`, `locais_transferencias` | Área › Setor › Local › Sublocal |
 | `organograma_posicoes`, `organograma_versoes` | organograma |
