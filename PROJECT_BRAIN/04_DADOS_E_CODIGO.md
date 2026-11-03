@@ -1,0 +1,63 @@
+# 04 — Dados e código
+
+## Persistência
+
+**Desde 03/11/2026 (branch `feat/backend-login-20261103`):** as chaves de negócio abaixo são guardadas no banco, por empresa, com versão e histórico (lista fechada em `servidor/shared/src/documentos.ts`). O `localStorage` continua sendo onde as telas leem e gravam; `dist/cicluz-sessao.js` envia cada gravação ao servidor. Preferências de tela e o cadastro completo ficam só no aparelho (P-11).
+
+### Chaves `localStorage` (prefixo `cicluz-`)
+
+**Dados de negócio**
+- `financial-hierarchy-v1` — todos os grupos financeiros (VND/DES/MER/RET, tipos, bandeiras,
+  operadoras+taxas)
+- `ti-groups-v1`, `ti-account-details-v1` — contas (CNT)
+- `cargos-v1`, `cargos-referencia-v1` (overrides dos 32 de referência), `salarios-vigencias-v1`,
+  `job-profiles-v1`
+- `location-tree-v1` (`{tree, history}`), `organogram-positions-v1`, `cadastro-completo-v1`
+- `icon-library-v1`, `custom-colors-v1`
+
+**Preferência de interface:** `tema`, `menu-ordem`, `menu-item-order-v1`, `sidebar-sections-v1`,
+`menu-visibility`, `people-display-v1`, `people-footer-*`, `{key}-sort`, `{key}-display`,
+`fee-brand-order-{id}`, `account-sort`.
+
+**Flags de migração de seed:** `financial-import-complete-v3-ret`, `financial-legacy-import-v1`,
+`bandeiras-import-v1`, `operadoras-import-v1`, `ti-contas-seed-v1`, `icon-pilot-migrated-v1`.
+
+**Seeds:** embutidos em `groups.js:4` (`groupSeed`, até ~linha 1544). `group-seeds.json` é cópia de
+referência — **não** é carregado.
+
+**Chamadas externas:** só `api.iconify.design/search` (`icon-library-manager.js:23`) e Google
+Fonts (Montserrat). Nenhuma API própria.
+
+**Entidades que ainda não existem:** colaborador/pessoa real (só maquete), loja como entidade,
+agenda, lançamento, caixa operacional, usuário/login.
+
+## Módulos JS (`dist/`)
+
+| Arquivo                     | Responsabilidade                                                       |
+| --------------------------- | ---------------------------------------------------------------------- |
+| `index.html` (210 KB)       | shell, views, 71 blocos `<style>`, editores de Cargos e Contas          |
+| `groups.js` (1697 linhas)   | DES/MER/RET/VND, tipos de venda, bandeiras, operadoras e taxas          |
+| `location-tree.js`          | Área/Setor/Local/Sublocal                                              |
+| `organogram.js`             | organograma (substitui `showConfig`)                                    |
+| `job-profiles.js`           | Ficha de Cargos (`window.showJobProfiles`)                              |
+| `complete-registration.js`  | salvar/avançar do cadastro completo                                     |
+| `financial-components.js`   | `formatSystemName`/`formatFinancialName`, `CicluzIdentity.controls`     |
+| `payment-marks.js` + JSON   | logos de bandeiras e operadoras (`assets/payment-marks`, `assets/banks`)|
+| `bakery-icons.js`, `icon-library-manager.js`, `icon-search-terms.js` | biblioteca de ícones (48 + Iconify) |
+| `preserve-history.js`       | exige transferência antes de excluir                                   |
+| `field-validation.js`       | CPF, moeda (centavos), data                                            |
+| `date-fields.js`            | DD/MM/AA na tela, ISO guardado                                         |
+| `menu-order.js`, `agenda-menu.js` | ordenar menus; seções da lateral                                 |
+| `navigation-layout.js`, `mobile-menu.js`, `menu-reveal.js`, `sticky-headers.js`, `mobile-edge-colors.js` | layout e celular |
+| `header-normalize.js`, `header-save.js`, `layout-review.js`, `ui-standards.js`, `unified-dialogs.js` | padronização via MutationObserver |
+| `people-header-pilot.js`    | barra de busca/período e botões configuráveis (vale para todas as telas)|
+| `operations-pilot.*`        | **código morto** — não é carregado                                     |
+
+## Testes (`tests/`)
+- `date-fields.cjs` — 19 asserções (máscara DD/MM/AA, bissexto, pivô 49→2049 / 50→1950,
+  preserva século gravado).
+- `field-validation.cjs` — 21 asserções (moeda, `moneyNumber`, CPF, `dateValid`).
+- `header-layout.html`, `registration-review.html`, `people-toolbar-preview.html` — bancadas
+  **manuais** com iframe (320/375/390/1024, claro/escuro).
+
+Rodar: `node tests/date-fields.cjs && node tests/field-validation.cjs`.
