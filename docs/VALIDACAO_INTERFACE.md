@@ -1,5 +1,10 @@
 # Validação do padrão compartilhado
 
+## Contornos de Operações, limite dos cabeçalhos e etapas — 03/11/2026
+Chromium em320/390/1024px, claro/escuro:48 editores dos oito cadastros de Operações,186 controles medidos, bordas1px/raio8px e sem invasão lateral. Abrir Tipo de Venda conferido com o mesmo contorno do seletor adjacente; seis navegações ao cadastro correspondente passaram.24 formulários de subgrupos dos quatro módulos hierárquicos também conferidos. Operadora: seis combinações com vigência adicionada em memória, campos de taxas/datas/classificação dentro do padrão, expansão/busca/recolhimento preservados.
+
+120 estruturas superiores com tipografia16px/11px, identificador30px e cantos das caixas SVG simples/compostas dentro do círculo de raio15px. Seis combinações dos cabeçalhos internos da operadora com títulos14px e identificadores30px, incluindo classificação realmente criada no editor. Cadastro completo: quatro etapas em seis combinações, ativa na cor viva e demais na mistura38%, números na superfície do tema. Câmeras maciças/símbolo na superfície, ainda desabilitadas; dependentes incluídos. Capturas móveis das etapas inspecionadas.21 verificações de campos e sintaxe de groups.js passaram. Sem dados reais gravados; conclusão Vercel não verificada.
+
 ## Cabeçalhos internos da operadora — 03/11/2026
 Chromium em320/390/1024px, claro/escuro: seis combinações verificadas para Taxas por bandeira e classificações Grupo de Despesas/Grupo de Contas, incluindo subtítulo Transferências Automáticas. Textos e símbolos na superfície do tema, identificadores sem fundo/borda; símbolos compostos ocupam38px/30px. Faixa vermelha preservada, sem overflow horizontal. Controles de busca, ordem e expansão sem placa/borda, símbolo na superfície do tema. Expansão/recolhimento e busca filtrando/restaurando bandeiras passaram. Capturas móveis dos dois temas inspecionadas. Sem alterações de dados ou validação. Conclusão da publicação Vercel não verificada.
 

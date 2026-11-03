@@ -220,9 +220,9 @@ body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-f
  border:1px solid #ef4444!important;border-radius:50%!important;aspect-ratio:1;color:var(--theme-surface,#fff)!important;background:#ef4444!important;
 }
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees h3 .fee-heading-icon {
- border:0!important;border-radius:0!important;padding:0!important;box-sizing:border-box;
+ border:0!important;border-radius:0!important;padding:var(--ui-header-icon-inset)!important;box-sizing:border-box;
 }
-body #sector-view.financial-groups .operator-fees h3 .fee-heading-icon svg{width:19px!important;height:38px!important;flex:0 0 19px}
+body #sector-view.financial-groups .operator-fees h3 .fee-heading-icon svg{width:100%!important;height:100%!important;flex:1 1 0!important;min-width:0!important}
 body #sector-view.financial-groups .operator-fee-brand > p {
  margin:12px!important;
 }
@@ -264,9 +264,9 @@ body:is(.dark-theme,:not(.dark-theme)) #sector-view#sector-view#sector-view .ope
 body #sector-view .operator-fees .fee-classification{align-items:stretch!important}
 body #sector-view .operator-fees .fee-classification>label{justify-content:space-between}
 body #sector-view.financial-groups .operator-fees .fee-classification .fee-classification-icon{
- border:0!important;border-radius:0!important;padding:0!important;background:transparent!important;color:var(--theme-surface,#fff)!important;
+ border:0!important;border-radius:0!important;padding:var(--ui-header-icon-inset)!important;background:transparent!important;color:var(--theme-surface,#fff)!important;
 }
-body #sector-view.financial-groups .operator-fees .fee-classification .fee-classification-icon svg{width:15px!important;height:30px!important;flex:0 0 15px}
+body #sector-view.financial-groups .operator-fees .fee-classification .fee-classification-icon svg{width:100%!important;height:100%!important;flex:1 1 0!important;min-width:0!important}
 body #sector-view.financial-groups .operator-fees .fee-classification .fee-account-title small{color:var(--theme-surface,#fff)!important;opacity:1}
 
 

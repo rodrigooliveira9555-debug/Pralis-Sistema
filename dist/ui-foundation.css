@@ -1,5 +1,5 @@
 /* Single role-based type and form scale. Edit these tokens, not individual screens. */
-:root{--ui-font:Montserrat,system-ui,sans-serif;--ui-title:16px;--ui-title-line:20px;--ui-subtitle:11px;--ui-subtitle-line:14px;--ui-text:14px;--ui-input-size:14px;--ui-text-line:18px;--ui-note:11px;--ui-field-height:42px;--ui-field-radius:8px;--ui-title-weight:600;--ui-section-title:14px;--ui-section-title-line:20px;--ui-section-title-weight:600;--ui-header-tint:14%;--ui-border-tint:25%;--ui-hover-tint:8%;--ui-focus-tint:14%}
+:root{--ui-font:Montserrat,system-ui,sans-serif;--ui-header-icon-diameter:30px;--ui-header-icon-inset:4.5px;--ui-title:16px;--ui-title-line:20px;--ui-subtitle:11px;--ui-subtitle-line:14px;--ui-text:14px;--ui-input-size:14px;--ui-text-line:18px;--ui-note:11px;--ui-field-height:42px;--ui-field-radius:8px;--ui-title-weight:600;--ui-section-title:14px;--ui-section-title-line:20px;--ui-section-title-weight:600;--ui-header-tint:14%;--ui-border-tint:25%;--ui-hover-tint:8%;--ui-focus-tint:14%}
 body .view>.panel>.head h2,body #sector-view .panel>.head h2,body #jobs-view .panel>.head h2,body #salary-view .panel>.head h2{font-family:var(--ui-font)!important;font-size:var(--ui-title)!important;font-weight:var(--ui-title-weight)!important;line-height:var(--ui-title-line)!important;letter-spacing:normal!important}
 body .view>.panel>.head p{font-family:var(--ui-font)!important;font-size:var(--ui-subtitle)!important;font-weight:400!important;line-height:var(--ui-subtitle-line)!important;letter-spacing:normal!important}
 body .view .form-fields,body .view .form-demo .content,body .view .account-editor,body .location-dialog form{font-family:var(--ui-font);font-size:var(--ui-text);line-height:var(--ui-text-line)}
@@ -171,12 +171,23 @@ body.dark-theme .profiles-table thead th{background:#38284f}body.dark-theme .pro
 body .view .form-tabs{--step-size:42px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:20px 0;align-items:start}
 body .view .form-tabs button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;min-width:0;width:100%;margin:0;padding:4px;border:0;border-radius:0;background:transparent!important;color:var(--navigation-ink,#a1a0a8);box-sizing:border-box}
 body .view .form-tabs button:not(:last-child)::after{content:"";position:absolute;left:calc(50% + var(--step-size)/2 + 4px);right:calc(-50% + var(--step-size)/2 + 4px);top:calc(4px + var(--step-size)/2);height:1px;background:var(--layout-line,#dedee3);pointer-events:none}
-body .view .form-tabs .step-circle{display:grid;place-items:center;flex:none;width:var(--step-size);height:var(--step-size);box-sizing:border-box;border-radius:50%;border:1px solid var(--layout-line,#dedee3);background:#fff;font:600 15px/1 var(--ui-font);position:relative;z-index:1}
+body .view .form-tabs .step-circle{display:grid;place-items:center;flex:none;width:var(--step-size);height:var(--step-size);box-sizing:border-box;border-radius:50%;border:1px solid transparent;background:color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 38%,var(--theme-surface,#fff));color:var(--theme-surface,#fff);font:600 15px/1 var(--ui-font);position:relative;z-index:1}
 body .view .form-tabs .step-label{display:block;max-width:100%;min-width:0;text-align:center;white-space:normal;overflow-wrap:anywhere;font:400 var(--ui-subtitle)/var(--ui-subtitle-line) var(--ui-font)!important}
 body .view .form-tabs button.active{color:var(--menu-accent,var(--panel-color,#7c3aed))}
-body .view .form-tabs button.active .step-circle{background:var(--menu-accent,var(--panel-color,#7c3aed));color:#fff;border-color:currentColor;box-shadow:0 0 0 3px color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 12%,white)}
+body .view .form-tabs button.active .step-circle{background:var(--menu-accent,var(--panel-color,#7c3aed));color:var(--theme-surface,#fff);border-color:transparent;box-shadow:none}
 body .view .form-tabs button:focus-visible{outline:2px solid var(--menu-accent,var(--panel-color,#7c3aed));outline-offset:-2px;border-radius:8px}
 @media(max-width:600px){body .view .form-tabs{--step-size:32px}}
+
+body .view .photo-action .photo-icon{border:0!important;background:var(--menu-accent,var(--panel-color,#7c3aed))!important;color:var(--theme-surface,#fff)!important}
+
+/* Keep every upper identifier inside the standard circular footprint. */
+body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.dialog).app-screen-shell :is(.head .sector-icon,.head .config-inherit-icon,.operator-fees h3 .fee-heading-icon,.operator-fees .fee-classification-icon){display:inline-flex!important;align-items:center;justify-content:center;gap:0!important;box-sizing:border-box!important;width:var(--ui-header-icon-diameter)!important;min-width:var(--ui-header-icon-diameter)!important;max-width:var(--ui-header-icon-diameter)!important;height:var(--ui-header-icon-diameter)!important;min-height:var(--ui-header-icon-diameter)!important;max-height:var(--ui-header-icon-diameter)!important;flex:0 0 var(--ui-header-icon-diameter)!important;padding:var(--ui-header-icon-inset)!important;font-size:21px!important;line-height:1!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.dialog).app-screen-shell :is(.head .sector-icon,.head .config-inherit-icon,.operator-fees h3 .fee-heading-icon,.operator-fees .fee-classification-icon) svg{flex:1 1 0!important;min-width:0!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important}
+
+/* Form links use the same neutral outline as editable field cells. */
+body .view form.account-editor>.editor-field-action{box-sizing:border-box;width:100%;height:var(--ui-field-height);min-height:var(--ui-field-height);border:1px solid var(--ui-border-base)!important;border-radius:var(--ui-field-radius)!important;background:var(--ui-control-bg)!important;box-shadow:none!important}
+body .view form.account-editor>.editor-field-action:hover{border-color:color-mix(in srgb,var(--ui-control-accent) 50%,var(--ui-border-base))!important}
+body .view form.account-editor>.editor-field-action:focus-visible{border-color:var(--ui-control-accent)!important;outline:2px solid color-mix(in srgb,var(--ui-control-accent) 22%,transparent)!important;outline-offset:var(--ui-focus-offset,1px)}
 
 /* Shared visible date control; the named backing field keeps the full year. */
 body :is(.view,dialog,.modal) .date-native-value{display:none!important}

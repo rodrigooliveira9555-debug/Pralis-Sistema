@@ -1,5 +1,14 @@
 # Processo de alterações de interface
 
+## Complemento — fotografia e etapas do cadastro completo (03/11/2026)
+Fotografia e indicadores numéricos maciços na cor da origem, símbolo/número na superfície do tema. Etapa selecionada com acento100%; demais com mistura38% na superfície, sem reduzir opacidade dos números. Conferir todas as etapas, dependentes e dois temas; preservar indisponibilidade da fotografia e validação de avanço.
+
+## Complemento — diâmetro dos identificadores superiores (03/11/2026)
+Revisar todos os cabeçalhos: título principal16px, seção14px e subtítulo11px pelos tokens compartilhados. Identificadores esquerdos, inclusive Taxas e classificações da operadora, limitados à circunferência padrão30px; caixa interna inscrita evita que os cantos do desenho excedam o círculo sem recortar a arte. Conferir20 estruturas em320/390/1024px e dois temas, SVG simples/compostos e textos.
+
+## Matriz — contornos dos editores de Operações (03/11/2026)
+Revisar os oito cadastros, incluindo subgrupos e campos de taxas abertos: Abrir Tipo de Venda deve seguir contorno neutro e raio compartilhado dos campos. Conferir claro/escuro em320/390/1024px, repouso/foco, campos simples, seletores, datas, texto longo e ações secundárias. Preservar cores dos cabeçalhos, ícones e quadros de classificação, estados ativos/inválidos e navegação.
+
 ## Complemento — cabeçalhos internos de operadora (03/11/2026)
 Estender o padrão superior a Taxas por bandeira e títulos de classificação no cadastro de operadora: texto/símbolo na superfície do tema, sem placa/borda, símbolos ampliados ao diâmetro anterior38/30px. Preservar cores das faixas, marcas, campos e ações. Conferir320/390/1024px em claro/escuro, expansão, busca e classificação.
 

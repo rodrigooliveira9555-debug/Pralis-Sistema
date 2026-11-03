@@ -1,5 +1,12 @@
 # CICLUZ — referência de interface
 
+## Regras vigentes — contornos, diâmetro e etapas (03/11/2026)
+Abrir Tipo de Venda usa o papel editor-field-action: contorno neutro de1px, raio --ui-field-radius8px, altura42px e fundo do tema, seguindo os campos; foco e hover indicam interação sem alterar o enquadramento. Ações Salvar/Cancelar e quadros coloridos preservam seus papéis.
+
+Identificadores à esquerda de todos os cabeçalhos, inclusive Taxas e classificações da operadora, ficam limitados à circunferência padrão30px. Área interna inscrita de21px protege os cantos do desenho, sem recortá-lo. Substitui o tamanho38px de Taxas. Títulos principais16px, títulos internos14px e subtítulos11px seguem tokens compartilhados; eliminar o subtítulo excepcional9px.
+
+Cadastro completo/dependentes: câmeras maciças na cor de origem com símbolo na superfície do tema. Indicadores de todas as etapas seguem o mesmo padrão: acento100% na etapa ativa e mistura38% com a superfície nas demais. Números mantêm a cor do fundo e opacidade total. A fotografia continua indisponível enquanto não houver conexão.
+
 ## Complemento vigente — cabeçalhos internos da operadora (03/11/2026)
 Taxas por bandeira e títulos de classificação seguem o cabeçalho superior: texto e símbolo na superfície do tema, identificadores sem placa/borda e símbolos ocupando o diâmetro anterior (38px em Taxas,30px na classificação). Faixas coloridas e marcas das bandeiras permanecem preservadas.
 
