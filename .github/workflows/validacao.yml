@@ -1,0 +1,36 @@
+name: Validacao
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validacao-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validacao:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obter codigo
+        uses: actions/checkout@v4
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validar campos
+        run: node tests/field-validation.cjs
+      - name: Validar datas
+        run: node tests/date-fields.cjs
+      - name: Conferir sintaxe dos scripts
+        shell: bash
+        run: |
+          for arquivo in dist/*.js; do
+            node --check "$arquivo" || exit 1
+          done
