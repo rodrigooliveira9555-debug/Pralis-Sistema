@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, isNull, lte, or } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
 import {
   cargos,
   contas,
@@ -25,7 +25,8 @@ export function listarGrupos(empresaId: string, colecao?: string) {
     .select()
     .from(finGrupos)
     .where(and(eq(finGrupos.empresaId, empresaId), colecao ? eq(finGrupos.colecao, colecao) : undefined))
-    .orderBy(asc(finGrupos.colecao), asc(finGrupos.paiId), asc(finGrupos.ordem));
+    // Grupos antes dos subgrupos (pai nulo primeiro), cada nível na ordem da tela.
+    .orderBy(asc(finGrupos.colecao), sql`${finGrupos.paiId} asc nulls first`, asc(finGrupos.ordem));
 }
 
 export function listarTiposVenda(empresaId: string) {
@@ -100,7 +101,7 @@ export function listarOrganograma(empresaId: string) {
     .select()
     .from(organogramaPosicoes)
     .where(eq(organogramaPosicoes.empresaId, empresaId))
-    .orderBy(asc(organogramaPosicoes.paiId), asc(organogramaPosicoes.ordem));
+    .orderBy(sql`${organogramaPosicoes.paiId} asc nulls first`, asc(organogramaPosicoes.ordem));
 }
 
 export async function listarFichaDeCargos(empresaId: string) {
