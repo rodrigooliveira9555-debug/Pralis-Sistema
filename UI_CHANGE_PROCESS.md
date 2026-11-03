@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Complemento — cabeçalhos internos de operadora (03/11/2026)
+Estender o padrão superior a Taxas por bandeira e títulos de classificação no cadastro de operadora: texto/símbolo na superfície do tema, sem placa/borda, símbolos ampliados ao diâmetro anterior38/30px. Preservar cores das faixas, marcas, campos e ações. Conferir320/390/1024px em claro/escuro, expansão, busca e classificação.
+
 ## Complemento — datas sem ícone (03/11/2026)
 Remover o acionador de calendário de dentro dos campos; manter entrada DD/MM/AA, valores ISO, validação, dimensões, preenchimento e restauração. Conferir salário, admissão/dependentes e vigências nos dois temas.
 

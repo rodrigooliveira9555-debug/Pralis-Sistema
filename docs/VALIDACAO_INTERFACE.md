@@ -1,5 +1,8 @@
 # Validação do padrão compartilhado
 
+## Cabeçalhos internos da operadora — 03/11/2026
+Chromium em320/390/1024px, claro/escuro: seis combinações verificadas para Taxas por bandeira e classificações Grupo de Despesas/Grupo de Contas, incluindo subtítulo Transferências Automáticas. Textos e símbolos na superfície do tema, identificadores sem fundo/borda; símbolos compostos ocupam38px/30px. Faixa vermelha preservada, sem overflow horizontal. Expansão/recolhimento e busca filtrando/restaurando bandeiras passaram. Capturas móveis dos dois temas inspecionadas. Sem alterações de dados ou validação. Conclusão da publicação Vercel não verificada.
+
 ## Símbolos superiores e datas sem calendário — 03/11/2026
 Chromium,320/390/1024px, claro/escuro:120 estruturas com títulos e caminhos na superfície do tema, identificadores sem fundo/borda e símbolo simples ou composto ocupando o diâmetro30px. Largura dos cabeçalhos, contorno, ausência de overflow e cor dos controles inferiores preservados.18 controles iniciais superiores mantidos cinza/transparentes. Inspeção visual móvel do cabeçalho Diretor de Operação. Calendários internos removidos; campos de salário, operadoras e cadastro completo/dependentes conferidos em320px nos dois temas, sem acionadores nem invasão lateral. Salário salvou2026-11-02 a partir de02/11/26; cadastro completo/dependentes salvou e restaurou valores ISO e exibição curta.21 verificações de campos e19 de datas passaram; JavaScript sem erros de sintaxe. Dados de teste somente em navegador isolado. Implantação Vercel e Safari físico não verificados.
 

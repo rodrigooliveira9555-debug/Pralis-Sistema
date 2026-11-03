@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Complemento vigente — cabeçalhos internos da operadora (03/11/2026)
+Taxas por bandeira e títulos de classificação seguem o cabeçalho superior: texto e símbolo na superfície do tema, identificadores sem placa/borda e símbolos ocupando o diâmetro anterior (38px em Taxas,30px na classificação). Faixas coloridas e marcas das bandeiras permanecem preservadas.
+
 ## Regra vigente — datas sem ícone (03/11/2026)
 Campos de data usam somente digitação DD/MM/AA, sem ícone/acionador de calendário interno nem reserva lateral para ele. Preservar valores ISO completos, validação, datas existentes e dimensões dos demais campos. Substitui as instruções anteriores de calendário nos campos.
 
