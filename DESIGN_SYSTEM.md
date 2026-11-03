@@ -1,5 +1,10 @@
 # CICLUZ — referência de interface
 
+## Regra vigente — ícones maciços e contorno da aba (03/11/2026)
+Substitui a inversão anterior: ícones de menus e conteúdo têm corpo maciço na própria cor e símbolo na superfície do tema. Os controles circulares do rodapé usam a cor do cabeçalho com símbolo na superfície; esta confirmação substitui o pedido intermediário de cinza no rodapé. Os três controles superiores do menu inicial continuam com contorno e símbolo cinza e centro transparente. Identificadores dos cabeçalhos mantêm seu tratamento anterior. Marcas reais permanecem preservadas.
+
+Nas abas internas, o contorno externo arredondado de12px pertence à tela. O cabeçalho tem cantos internos inferiores arredondados; o rodapé tem cantos internos superiores arredondados. A superfície externa acompanha a cor do cabeçalho no topo e do rodapé na base, sem recortes pretos. Menu inicial excluído.
+
 ## Regra vigente — realce e quadros independentes (03/11/2026)
 Substitui o preenchimento cinza dos ícones nas abas internas. Menus principais, submenus, grades e listas realçam fundo e texto na cor do próprio item ao passar o mouse/focar, em ambos os temas; mistura12% no claro e20% no escuro. Ícones de identificação e controles internos têm contorno/símbolo coloridos e centro na superfície branca/escura. Cores personalizadas e arte das marcas são preservadas. Exceção expressa: os três controles circulares superiores do menu inicial usam contorno/símbolo cinza e centro transparente, inclusive com a busca aberta.
 

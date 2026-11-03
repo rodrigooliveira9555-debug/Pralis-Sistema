@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Matriz — contorno da aba e inversão dos ícones (03/11/2026)
+Correção do usuário: arredondamento externo pertence ao contorno da aba, sem cantos pretos acima/abaixo dos cabeçalhos; menu inicial excluído. Ícones de menus/conteúdo voltam a preenchimento na própria cor e símbolo na superfície clara/escura; controles dos rodapés ficam maciços na cor do cabeçalho com símbolo na superfície (confirmação posterior do usuário). Preservar os três controles superiores cinza vazados e os identificadores dos cabeçalhos como estão. Conferir20 estruturas em320/390/1024px nos dois temas, pixels externos, cabeçalho recolhido/restaurado, cores personalizadas, biblioteca e realce de menus. Não alterar máscaras, dados nem validação.
+
 ## Matriz — realce, ícones vazados e cabeçalhos retangulares (03/11/2026)
 Cinco demandas: realce de menu e texto pela cor do item em ambos os temas; identificadores e controles com contorno/símbolo coloridos e centro na superfície do tema; Situação do Grupo acompanhando o tema nos oito editores; somente os três controles circulares do menu inicial com contorno/símbolo cinza e centro transparente; cabeçalhos superior/inferior como retângulos com quatro cantos arredondados e largura integral. Usuário confirmou manter o cabeçalho superior colorido. Matriz:20 estruturas em320/390/1024px, claro/escuro, seis origens de menu, oito editores, hover/foco e busca, rolagem e retorno. Remover sobreposições/cantos côncavos na fonte compartilhada. Preservar marca, cores de origem, datas e dados.
 
