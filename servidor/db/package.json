@@ -1,0 +1,25 @@
+{
+  "name": "@cicluz/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./schema": "./src/schema/index.ts",
+    "./migrar": "./src/migrar.ts"
+  },
+  "scripts": {
+    "check": "tsc -p tsconfig.json --noEmit",
+    "gerar": "drizzle-kit generate",
+    "migrar": "tsx --env-file-if-exists=../.env src/migrar.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "@types/pg": "^8.15.6",
+    "drizzle-kit": "^0.31.8",
+    "tsx": "^4.20.6"
+  }
+}

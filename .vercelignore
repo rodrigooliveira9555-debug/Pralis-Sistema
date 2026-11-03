@@ -1,0 +1,2 @@
+# O Vercel publica só o site estático de dist/. O backend roda em outro serviço (servidor/, ver docs/BACKEND.md).
+servidor/
