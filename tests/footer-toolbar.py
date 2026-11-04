@@ -46,7 +46,7 @@ def check_layout(browser, url):
                 assert abs(rect['y'] + rect['height'] - 844) < .1
                 logo = bar.locator('.people-home-logo').bounding_box()
                 assert abs(logo['x'] + logo['width'] / 2 - width / 2) < .1
-                for side, count in [('.people-footer-left', 4), ('.people-footer-right', 5)]:
+                for side, count in [('.people-footer-left', 5), ('.people-footer-right', 4)]:
                     buttons = bar.locator(side + '>button')
                     assert buttons.count() == count
                     boxes = []
@@ -56,6 +56,7 @@ def check_layout(browser, url):
                         assert box['x'] >= 0 and box['x'] + box['width'] <= width + .1
                         boxes.append(box)
                     assert all(a['x'] + a['width'] <= b['x'] + .1 for a, b in zip(boxes, boxes[1:]))
+                assert bar.locator('.people-footer-left>button').evaluate_all('es=>es.map(e=>e.className.split(" ")[0])') == ['people-start-control','people-position-control','people-toolbar-more','people-date-control','people-search-toggle']
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
                 bar.locator('.people-home-logo').click()
                 assert bar.locator('.people-bottom-tools').is_visible()
@@ -66,28 +67,25 @@ def check_layout(browser, url):
                 bar.locator('.people-toolbar-more').click()
                 choices = bar.locator('.people-toolbar-options')
                 assert choices.is_visible()
-                assert choices.locator('[data-choice-key="search"], [data-choice-key="sort"], [data-choice-key="date"], [data-choice-key="save"]').count() == 0
+                assert choices.locator('[data-choice-key="search"], [data-choice-key="position"], [data-choice-key="date"], [data-choice-key="save"]').count() == 0
                 choices.locator('.people-options-resize').click()
                 assert choices.locator('.people-options-resize').get_attribute('aria-expanded') == 'true'
-                for eye in choices.locator('.people-toolbar-hidden-toggle').all():
-                    box = eye.bounding_box()
-                    icon = eye.locator('svg')
+                for pin in choices.locator('.people-toolbar-pin').all():
+                    box = pin.bounding_box()
+                    icon = pin.locator('svg')
                     glyph = icon.bounding_box()
                     assert box['width'] == box['height'] == 30
                     assert glyph['width'] == glyph['height'] == 18
                     assert abs(glyph['x'] + 9 - box['x'] - 15) < .1
                     assert abs(glyph['y'] + 9 - box['y'] - 15) < .1
-                    assert icon.evaluate('e => getComputedStyle(e).strokeWidth') == '1.5px'
-                    marker = eye.locator('xpath=preceding-sibling::button[contains(@class,"people-toolbar-visibility")]').bounding_box()
+                    assert icon.locator('image').get_attribute('href') == 'cicluz-gestao-padaria-logo.png'
+                    power = pin.locator('xpath=preceding-sibling::button[contains(@class,"people-toolbar-enable")]')
+                    marker = power.bounding_box()
+                    assert power.get_attribute('role') == 'switch'
                     assert abs(box['y'] + 15 - marker['y'] - marker['height'] / 2) < .1
                 page.mouse.click(width / 2, 20)
                 assert choices.is_hidden()
-                dots = bar.locator('.people-order-dots').bounding_box()
-                button = bar.locator('.sort-az').bounding_box()
-                assert abs(dots['x'] + dots['width']/2 - button['x'] - button['width']/2) < .1
-                assert abs(dots['y'] + dots['height']/2 - button['y'] - button['height']/2) < .1
-                bar.locator('.people-toolbar-more').click()
-                bar.locator('[data-choice-key="position"] .people-toolbar-run').click()
+                bar.locator('.people-position-control').click()
                 assert bar.get_attribute('data-bar-position') == 'top'
                 head = page.locator('#'+view_id+'>.panel>.head').bounding_box()
                 assert abs(bar.bounding_box()['y'] - head['y'] - head['height'] - 6) < .1
@@ -102,7 +100,7 @@ def check_layout(browser, url):
                 rect = bar.bounding_box()
                 assert popup['y'] >= rect['y'] + rect['height']
                 assert popup['y'] + popup['height'] <= 844.1
-                bar.locator('[data-choice-key="position"] .people-toolbar-run').click()
+                bar.locator('.people-position-control').click()
                 assert bar.get_attribute('data-bar-position') == 'bottom'
                 rect = bar.bounding_box()
                 assert abs(rect['y'] + rect['height'] - 844) < .1
@@ -125,6 +123,7 @@ def check_actions(browser, url):
     bar = footer(page)
     row_order = lambda: page.locator('#sector-content .record-grid>.record').evaluate_all('es => es.map(e => e.dataset.target)')
     original = row_order()
+    bar.locator('.people-home-logo').click()
     sort = bar.locator('.sort-az')
     assert sort.inner_text() == '⠿' and sort.get_attribute('aria-label') == 'Ordem original'
     sort.click()
@@ -161,15 +160,17 @@ def check_actions(browser, url):
     choices = bar.locator('.people-toolbar-options')
     assert choices.locator('[data-choice-key="sold"]').count() == 0
     choices.locator('.people-options-resize').click()
-    choices.locator('[data-choice-key="print"] .people-toolbar-visibility').click()
-    choices.locator('[data-choice-key="export"] .people-toolbar-hidden-toggle').click()
+    choices.locator('[data-choice-key="print"] .people-toolbar-pin').click()
+    choices.locator('[data-choice-key="export"] .people-toolbar-enable').click()
     choices.locator('[data-choice-key="sold"] .people-order-handle').press('ArrowDown')
     choices.locator('.people-options-resize').click()
-    assert choices.locator('[data-choice-key="print"], [data-choice-key="export"]').count() == 0
+    assert choices.locator('[data-choice-key="print"]').count() == 0
+    assert choices.locator('[data-choice-key="export"] .people-toolbar-run').is_disabled()
     bar.locator('.people-toolbar-more').click()
     bar.locator('.people-home-logo').click()
     assert bar.locator('.people-bottom-tools [data-control-key="print"]').is_visible()
     assert bar.locator('.people-bottom-tools [data-control-key="export"]').is_hidden()
+    assert bar.locator('.people-bottom-tools [data-control-key="export"]').is_disabled()
     keys = bar.locator('.people-bottom-tools>button:not([hidden])').evaluate_all('es => es.map(e => e.dataset.controlKey)')
     assert keys.index('bought') < keys.index('sold')
     bar.locator('.people-home-logo').press('Escape')
@@ -179,6 +180,7 @@ def check_actions(browser, url):
     bar.locator('.people-home-logo').click()
     assert bar.locator('.people-bottom-tools [data-control-key="print"]').is_visible()
     assert bar.locator('.people-bottom-tools [data-control-key="export"]').is_hidden()
+    assert bar.locator('.people-bottom-tools [data-control-key="export"]').is_disabled()
     page.evaluate("document.querySelectorAll('#sector-content .record').forEach((row,i)=>{row.dataset.date=i%2?'2026-11-03':'2026-11-01';row.classList.add('dated-row')})")
     page.wait_for_timeout(200)
     bar.locator('.people-date-control').click()
@@ -240,8 +242,7 @@ def check_position(browser, url):
     open_operations(page)
     bar = footer(page)
     def toggle_position():
-        bar.locator('.people-toolbar-more').click()
-        bar.locator('[data-choice-key="position"] .people-toolbar-run').click()
+        bar.locator('.people-position-control').click()
     toggle_position()
     assert bar.get_attribute('data-bar-position') == 'top'
     page.reload(wait_until='domcontentloaded')
@@ -286,8 +287,7 @@ def check_position(browser, url):
     page.wait_for_timeout(150)
     dialog = page.locator('#position-dialog')
     controls = dialog.locator('.people-bottom-header')
-    controls.locator('.people-toolbar-more').click()
-    controls.locator('[data-choice-key="position"] .people-toolbar-run').click()
+    controls.locator('.people-position-control').click()
     assert controls.get_attribute('data-bar-position') == 'top'
     controls.locator('.people-home-logo').click()
     assert controls.locator('.people-bottom-tools').bounding_box()['y'] >= controls.locator('.people-home-logo').bounding_box()['y'] + 32
@@ -298,6 +298,74 @@ def check_position(browser, url):
     print('PASS position persistence, per-screen state, import/export, hidden header, downward dates and search', flush=True)
 
 
+def check_enable_and_pin(browser, url):
+    page = browser.new_page(viewport={'width':390,'height':844})
+    page.set_default_timeout(8000)
+    page.route('https://fonts.googleapis.com/**', lambda route:route.abort())
+    page.goto(url,wait_until='domcontentloaded')
+    open_operations(page)
+    bar=footer(page)
+    page.evaluate('()=>{window.__prints=0;window.print=()=>{window.__prints++}}')
+    def config():
+        bar.locator('.people-toolbar-more').click()
+        bar.locator('.people-options-resize').click()
+        return bar.locator('[data-choice-key="print"]')
+    row=config()
+    row.locator('.people-toolbar-pin').click()
+    knob_on=row.locator('.people-enable-thumb').bounding_box()['x']
+    row.locator('.people-toolbar-enable').click()
+    page.wait_for_timeout(180)
+    knob_off=row.locator('.people-enable-thumb').bounding_box()['x']
+    assert abs(knob_on-knob_off-16)<.1
+    assert row.locator('.people-toolbar-enable').get_attribute('aria-checked')=='false'
+    assert row.locator('.people-toolbar-pin').get_attribute('aria-pressed')=='true'
+    bar.locator('.people-toolbar-more').click()
+    bar.locator('.people-home-logo').click()
+    action=bar.locator('.people-bottom-tools [data-control-key="print"]')
+    assert action.is_visible() and action.is_disabled()
+    action.evaluate('e=>e.click()')
+    assert page.evaluate('window.__prints')==0
+    row=config()
+    row.locator('.people-toolbar-enable').click()
+    row.locator('.people-toolbar-pin').click()
+    assert row.locator('.people-toolbar-enable').get_attribute('aria-checked')=='true'
+    assert row.locator('.people-toolbar-pin').get_attribute('aria-pressed')=='false'
+    row.locator('.people-toolbar-run').click()
+    assert page.evaluate('window.__prints')==1
+    page.evaluate("window.dispatchEvent(new Event('afterprint'))")
+    assert action.is_hidden() and not action.is_disabled()
+    row=config()
+    row.locator('.people-toolbar-enable').press('Space')
+    page.reload(wait_until='domcontentloaded')
+    open_operations(page)
+    row=config()
+    assert row.locator('.people-toolbar-enable').get_attribute('aria-checked')=='false'
+    assert row.locator('.people-toolbar-pin').get_attribute('aria-pressed')=='false'
+    import json
+    with page.expect_download() as download:
+        bar.locator('[data-choice-key="export"] .people-toolbar-run').click()
+    with open(download.value.path()) as saved:
+        prefs=json.load(saved)
+    assert prefs['preferences']['_disabled']['print'] is True
+    row=config()
+    row.locator('.people-toolbar-enable').click()
+    row.locator('.people-toolbar-pin').click()
+    bar.locator('.people-toolbar-more').click()
+    bar.locator('input[type=file]').set_input_files({'name':'controls.json','mimeType':'application/json','buffer':json.dumps(prefs).encode()})
+    page.wait_for_timeout(150)
+    row=config()
+    assert row.locator('.people-toolbar-enable').get_attribute('aria-checked')=='false'
+    assert row.locator('.people-toolbar-pin').get_attribute('aria-pressed')=='false'
+    page.evaluate("Object.keys(localStorage).filter(k=>k.endsWith('-footer-buttons-v1')).forEach(k=>localStorage.setItem(k,JSON.stringify({print:true,_hidden:{print:true}})))")
+    page.reload(wait_until='domcontentloaded')
+    open_operations(page)
+    row=config()
+    assert row.locator('.people-toolbar-enable').get_attribute('aria-checked')=='true'
+    assert row.locator('.people-toolbar-pin').get_attribute('aria-pressed')=='false'
+    page.close()
+    print('PASS independent enable/pin, disabled execution, keyboard, reload, import/export and legacy migration',flush=True)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--url', default='http://127.0.0.1:8000/dist/index.html')
@@ -306,5 +374,6 @@ if __name__ == '__main__':
         browser = playwright.chromium.launch(executable_path=shutil.which('chromium'), args=['--no-sandbox'])
         check_actions(browser, args.url)
         check_position(browser, args.url)
+        check_enable_and_pin(browser, args.url)
         print('PASS layout combinations:', check_layout(browser, args.url), flush=True)
         browser.close()

@@ -1,5 +1,10 @@
 # CICLUZ — referência de interface
 
+## Regra vigente — cinco fixos e estados independentes (04/11/2026)
+À esquerda da marca central: início, posição da barra, três pontos de configuração, calendário e busca. À direita: voltar, fechar, salvar e ocultar/restaurar cabeçalho. Ordenação deixa de ser fixa e fica disponível no menu rápido/personalização; posição passa a ser fixa. Ícone de posição com dois painéis arredondados e setas opostas, traço1,5px.
+
+Na configuração, interruptor liga/desliga a execução da função. Marca CICLUZ em círculo roxo seleciona inclusão no menu rápido: cheio/aceso quando fixado, contorno quando fora. Os estados são independentes: desligar não remove o atalho, desafixar não desativa a função. Função fixada e desligada aparece sem executar; função ligada e não fixada continua disponível no menu lateral. Substitui o marcador de confirmação e o olho. Estado e ordem persistem por tela e em importação/exportação; antigas marcações de oculto viram não fixado, sem desativar funções.
+
 ## Regra vigente — posição da barra (04/11/2026)
 Posição da barra é um controle da configuração do menu rápido. Alterna a mesma barra entre rodapé e logo abaixo do cabeçalho superior; todas as ações permanecem compartilhadas. No alto, atalhos da marca e painéis abrem para baixo; no rodapé, abrem para cima. Marca não aumenta. A escolha é salva por tela e acompanha importação/exportação; configurações anteriores continuam embaixo. Cabeçalho superior pode ser ocultado/restaurado em ambas as posições.
 

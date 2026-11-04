@@ -1,5 +1,10 @@
 # Validação do padrão compartilhado
 
+## Cinco fixos, interruptor e marca — 04/11/2026
+Chromium/Playwright:120 combinações das20 telas em320/390/1024px, claro/escuro, com alternância entre as duas posições da barra. Conferidos cinco fixos na ordem solicitada à esquerda, quatro à direita, marca central, ausência de sobreposição/overflow, menus voltados para dentro da tela e controle de posição acessível diretamente. Marcas circulares30px com arte real18px e alinhamento ao interruptor. Capturas móveis clara/escura inspecionadas.
+
+Estados independentes comprovados: fixado/desligado visível e sem execução; ligado/não fixado fora dos atalhos e executável no menu lateral. Interruptor desliza16px, funciona por teclado e mantém estado na recarga. Seleção, ativação e migração de preferências antigas passaram; importação/exportação preserva os dois estados. Regressões de ordem, busca, período, navegação, salvar válido/inválido e diálogo passaram.21 verificações de campos e19 de datas passaram. Dados apenas em navegador isolado; implantação Vercel ainda não comprovada.
+
 ## Barra superior/inferior e seis pontos — 04/11/2026
 Chromium/Playwright:120 combinações (20 telas,320/390/1024px, claro/escuro), com ida ao alto e retorno ao rodapé em cada uma. Marca centralizada, seis pontos com caixa central ao botão, barra no alto6px abaixo do cabeçalho e atalhos abaixo da marca; popover de configuração voltado para dentro do viewport. Retorno à base mantém alinhamento e funções. Preferência por tela, recarga, importação/exportação, cabeçalho oculto/restaurado, busca e período para baixo passaram; posição também conferida em diálogo com fechamento nativo. Regressões de ordenação, busca, atalhos, navegação e salvar válido/inválido passaram;21 asserções de campos e19 de datas. Captura móvel escura do novo posicionamento inspecionada. Dados somente em navegador isolado. Sem comprovação de Safari físico ou deploy em produção.
 

@@ -71,7 +71,7 @@
    width.setAttribute('aria-pressed',String(!!displayState.compact));width.title=displayState.compact?'Expandir na horizontal — maior':'Recolher na horizontal — menor';width.setAttribute('aria-label',width.title);
   }
   const width=control('Recolher na horizontal — menor','<path d="m9 5-6 7 6 7M15 5l6 7-6 7"/>',()=>{displayState.compact=!displayState.compact;applyDisplay()});
-  const position=control('Posição da barra','<rect x="4" y="3" width="16" height="4" rx="1"/><rect x="4" y="17" width="16" height="4" rx="1"/><path d="M12 8v8m-3-5 3-3 3 3m-6 2 3 3 3-3"/>',()=>{
+  const position=control('Posição da barra','<rect x="3.5" y="3.5" width="17" height="4" rx="1.5"/><rect x="3.5" y="16.5" width="17" height="4" rx="1.5"/><path d="M9 14V10m-2 2 2-2 2 2M15 10v4m-2-2 2 2 2-2"/>',()=>{
    displayState.dock=displayState.dock==='top'?'bottom':'top';setQuickOpen(false);closeChooser();setDateOpen(false);applyDisplay();
    try{localStorage.setItem(displayKey,JSON.stringify(displayState))}catch{announce('A posição foi alterada, mas não foi possível salvá-la')}
    home.focus();
@@ -146,7 +146,7 @@
    try{
     if(file.size>100000)throw Error('Arquivo de configuração muito grande');
     const data=JSON.parse(await file.text());if(!['cicluz-people-toolbar','cicluz-screen-toolbar'].includes(data.format)||data.version!==1)throw Error('Arquivo de configuração incompatível');
-    preferences={};for(const key of controls.keys())if(typeof data.preferences?.[key]==='boolean')preferences[key]=data.preferences[key];if(data.preferences?._hidden&&typeof data.preferences._hidden==='object')preferences._hidden=Object.fromEntries(Object.entries(data.preferences._hidden).filter(([key,value])=>controls.has(key)&&value===true));
+    preferences={};for(const key of controls.keys())if(typeof data.preferences?.[key]==='boolean')preferences[key]=data.preferences[key];if(data.preferences?._disabled&&typeof data.preferences._disabled==='object')preferences._disabled=Object.fromEntries(Object.entries(data.preferences._disabled).filter(([key,value])=>controls.has(key)&&value===true));if(data.preferences?._hidden&&typeof data.preferences._hidden==='object')for(const [key,value] of Object.entries(data.preferences._hidden))if(controls.has(key)&&value===true)preferences[key]=false;
     buttonOrder=Array.isArray(data.buttonOrder)?[...new Set(data.buttonOrder.filter(key=>typeof key==='string'&&controls.has(key)))]:[];
     displayState={zoomed:false,compact:data.display?.compact===true,dock:data.display?.dock==='top'?'top':'bottom',order:Array.isArray(data.display?.order)?data.display.order.filter(key=>typeof key==='string').slice(0,1000):[]};
     localStorage.setItem(preferencesKey,JSON.stringify(preferences));localStorage.setItem(displayKey,JSON.stringify(displayState));persistButtonOrder();applyDisplay();applyPreferences();
@@ -161,7 +161,7 @@
   function toggleState(){view.classList.toggle('people-top-hidden',collapsed);toggle.setAttribute('aria-expanded',String(!collapsed));toggle.setAttribute('aria-label',collapsed?'Mostrar cabeçalho superior':'Ocultar cabeçalho superior');toggle.title=toggle.getAttribute('aria-label');if(!datePanel.hidden)requestAnimationFrame(positionDatePanel)}
   toggle.onclick=()=>{collapsed=!collapsed;toggleState()};
   let preferencesKey='cicluz-people-footer-buttons-v1';let preferences={};
-  try{const value=JSON.parse(localStorage.getItem(preferencesKey)||'{}');if(value&&typeof value==='object'&&!Array.isArray(value))preferences=value}catch{}
+  try{const value=JSON.parse(localStorage.getItem(preferencesKey)||'{}');if(value&&typeof value==='object'&&!Array.isArray(value))preferences=normalizePreferences(value)}catch{}
   const controls=new Map([['search',{button:searchToggle,label:'Buscar'}],['sort',{button:sort,label:sortLabel}],['date',{button:dateButton,label:'Data de … a …'}],['expand',{button:expand,label:'Expandir / recolher tudo'}],['sold',{button:sold,label:'Organizar por + vendido / − vendido'}],['bought',{button:bought,label:'Organizar por + comprado / − comprado'}],['profit',{button:profit,label:'Organizar por + lucro / − lucro'}],['result',{button:result,label:'Organizar por + resultado / − resultado'}],['print',{button:print,label:'Imprimir'}],['import',{button:importConfig,label:'Importar configuração'}],['export',{button:exportConfig,label:'Exportar configuração'}],['width',{button:width,label:'Maior / menor na horizontal'}],['position',{button:position,label:'Posição da barra'}],['save',{button:save,label:'Salvar'}]]);
   const chooser=document.createElement('div');chooser.className='people-toolbar-options';chooser.id='toolbar-options-'+(view.id||'dialog');chooser.hidden=true;chooser.inert=true;chooser.setAttribute('role','group');chooser.setAttribute('aria-label','Atalhos disponíveis e menu rápido');
   const more=document.createElement('button');more.type='button';more.className='people-toolbar-more';more.title='Mais atalhos';more.setAttribute('aria-label',more.title);more.setAttribute('aria-expanded','false');more.setAttribute('aria-pressed','false');more.setAttribute('aria-controls',chooser.id);more.innerHTML='<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>';
@@ -171,10 +171,17 @@
   let orderKey='cicluz-people-footer-order-v1';let buttonOrder=[];
   try{const value=JSON.parse(localStorage.getItem(orderKey)||'[]');if(Array.isArray(value))buttonOrder=value.filter(key=>typeof key==='string')}catch{}
   function persistButtonOrder(){try{localStorage.setItem(orderKey,JSON.stringify(buttonOrder))}catch{}}
-  const fixedKeys=new Set(['search','sort','date','save']);
-  const defaultQuick=new Set(['expand','sold','bought','profit','result']);
+  const fixedKeys=new Set(['search','position','date','save']);
+  const defaultQuick=new Set(['sort','expand','sold','bought','profit','result']);
   const pinned=key=>preferences[key]===true||(preferences[key]===undefined&&defaultQuick.has(key));
-  const concealed=key=>preferences._hidden?.[key]===true;
+  const enabled=key=>preferences._disabled?.[key]!==true;
+  function normalizePreferences(value){
+   const next=value&&typeof value==='object'&&!Array.isArray(value)?{...value}:{};
+   if(next._hidden&&typeof next._hidden==='object')for(const [key,hidden] of Object.entries(next._hidden))if(hidden===true)next[key]=false;
+   delete next._hidden;
+   if(!next._disabled||typeof next._disabled!=='object'||Array.isArray(next._disabled))delete next._disabled;
+   return next;
+  }
   function orderedControls(){const keys=[...new Set([...buttonOrder,...controls.keys()])];return keys.filter(key=>controls.has(key)&&!fixedKeys.has(key)).map(key=>[key,controls.get(key)])}
   function setQuickOpen(open){tools.hidden=!open;footer.classList.toggle('people-quick-open',open);home.setAttribute('aria-expanded',String(open));home.title=open?'Ocultar menu rápido':'Mostrar menu rápido';home.setAttribute('aria-label',home.title);if(open){closeChooser();setDateOpen(false)}}
   home.onclick=()=>setQuickOpen(tools.hidden);
@@ -184,16 +191,16 @@
    const ordered=orderedControls(),buttons=ordered.map(([,entry])=>entry.button),wanted=new Set(buttons);
    for(const child of [...tools.children])if(!wanted.has(child)&&!child.matches('.people-quick-empty'))child.remove();
    let empty=tools.querySelector('.people-quick-empty');if(!empty){empty=document.createElement('span');empty.className='people-quick-empty';empty.textContent='Escolha seus atalhos nos três pontos';tools.append(empty)}
-   for(const [key,{button}] of ordered){button.hidden=!pinned(key)||concealed(key)||button.dataset.available==='false';button.dataset.controlKey=key}
+   for(const [key,{button}] of ordered){button.hidden=!pinned(key)||button.dataset.available==='false';button.disabled=!enabled(key)||button.dataset.nativeDisabled==='true';button.dataset.controlKey=key}
    const current=[...tools.children].filter(child=>wanted.has(child));if(buttons.some((button,i)=>current[i]!==button))buttons.forEach(button=>tools.append(button));
    empty.hidden=buttons.some(button=>!button.hidden);
-   for(const button of [searchToggle,sort,dateButton,save])button.hidden=false;
-   searchToggle.setAttribute('aria-disabled',String(searchToggle.dataset.available==='false'));sort.setAttribute('aria-disabled',String(sort.dataset.available==='false'));dateButton.setAttribute('aria-disabled',String(dateButton.dataset.available==='false'));
+   for(const button of [searchToggle,position,dateButton,save])button.hidden=false;
+   searchToggle.setAttribute('aria-disabled',String(searchToggle.dataset.available==='false'));sort.setAttribute('aria-disabled',String(sort.disabled||sort.dataset.available==='false'));dateButton.setAttribute('aria-disabled',String(dateButton.dataset.available==='false'));
    searchState();
   }
   let dragging=null;
   let chooserCompact=true,chooserSignature='';
-  const choicesFingerprint=()=>JSON.stringify([chooserCompact,...orderedControls().map(([key,{button,label}])=>[key,label,button.dataset.available,button.disabled,button.innerHTML,pinned(key),concealed(key)])]);
+  const choicesFingerprint=()=>JSON.stringify([chooserCompact,...orderedControls().map(([key,{button,label}])=>[key,label,button.dataset.available,button.disabled,button.innerHTML,pinned(key),enabled(key)])]);
   function moveControl(key,target,before=true){
    const keys=orderedControls().map(([id])=>id);if(key===target)return;
    const from=keys.indexOf(key);if(from<0)return;keys.splice(from,1);const at=keys.indexOf(target);if(at<0)return;keys.splice(at+(before?0:1),0,key);buttonOrder=keys;persistButtonOrder();applyPreferences();renderChoices();
@@ -206,7 +213,7 @@
    const resize=document.createElement('button');resize.type='button';resize.className='people-options-resize';resize.setAttribute('aria-expanded',String(!chooserCompact));resize.setAttribute('aria-label',chooserCompact?'Configurar menu rápido':'Voltar aos atalhos disponíveis');resize.title=resize.getAttribute('aria-label');resize.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(chooserCompact?'m15 5-7 7 7 7':'m9 5 7 7-7 7')+'"/></svg>';
    resize.onclick=()=>{chooserCompact=!chooserCompact;renderChoices();chooser.querySelector('.people-options-resize').focus()};
    heading.append(headingIcon,title,resize);const inner=document.createElement('div');inner.className='people-options-inner';chooser.append(heading,inner);
-   const candidates=orderedControls().filter(([key,{button}])=>button.dataset.available!=='false'&&(!chooserCompact||(!pinned(key)&&!concealed(key))));if(!chooserCompact)candidates.sort(([a],[b])=>(concealed(a)?2:pinned(a)?1:0)-(concealed(b)?2:pinned(b)?1:0));
+   const candidates=orderedControls().filter(([key,{button}])=>button.dataset.available!=='false'&&(!chooserCompact||!pinned(key)));if(!chooserCompact)candidates.sort(([a],[b])=>(!enabled(a)?2:pinned(a)?1:0)-(!enabled(b)?2:pinned(b)?1:0));
    if(!candidates.length){const empty=document.createElement('p');empty.className='people-choices-empty';empty.textContent='Todos os atalhos disponíveis estão no menu rápido.';inner.append(empty)}
    for(const [key,{button,label}] of candidates){
     const row=document.createElement('div');row.className='people-toolbar-row';row.dataset.choiceKey=key;
@@ -220,16 +227,18 @@
     const action=document.createElement('button');action.type='button';action.className='people-toolbar-run';action.setAttribute('aria-label','Executar '+label);action.disabled=button.disabled||button.dataset.available==='false';
     const symbol=document.createElement('span');symbol.className='people-option-symbol';symbol.innerHTML=button.innerHTML;symbol.style.setProperty('--metric-color',button.style.getPropertyValue('--metric-color'));if(button.classList.contains('people-metric-control'))symbol.classList.add('people-metric-control');
     const name=document.createElement('span');name.textContent=label;name.className='people-option-name';action.append(symbol,name);action.onclick=()=>{closeChooser();button.click()};
-    const visibility=document.createElement('button');visibility.type='button';visibility.className='people-toolbar-visibility';visibility.setAttribute('aria-label','Fixar no menu rápido: '+label);visibility.setAttribute('aria-pressed',String(pinned(key)));visibility.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';visibility.onclick=()=>{preferences[key]=!pinned(key);persistPreferences();applyPreferences();renderChoices();chooser.querySelector('[data-choice-key="'+key+'"] .people-toolbar-visibility')?.focus()};
-    const hide=document.createElement('button');hide.type='button';hide.className='people-toolbar-hidden-toggle';hide.title=concealed(key)?'Mostrar '+label:'Ocultar '+label;hide.setAttribute('aria-label',hide.title);hide.setAttribute('aria-pressed',String(concealed(key)));hide.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12C4.5 7.5 8 5.5 12 5.5s7.5 2 9.5 6.5c-2 4.5-5.5 6.5-9.5 6.5S4.5 16.5 2.5 12Z"/><circle cx="12" cy="12" r="2.75"/>'+(concealed(key)?'<path d="m4.5 4.5 15 15"/>':'')+'</svg>';hide.onclick=()=>{if(!preferences._hidden)preferences._hidden={};preferences._hidden[key]=!concealed(key);persistPreferences();applyPreferences();renderChoices();chooser.querySelector('[data-choice-key="'+key+'"] .people-toolbar-hidden-toggle')?.focus()};
-    row.classList.toggle('people-option-hidden',concealed(key));row.classList.toggle('people-option-pinned',pinned(key));action.title=label;row.append(handle,action,visibility,hide);inner.append(row);
+    const power=document.createElement('button');power.type='button';power.className='people-toolbar-enable';power.setAttribute('role','switch');power.setAttribute('aria-label','Ativar função: '+label);power.setAttribute('aria-checked',String(enabled(key)));power.title=enabled(key)?'Desligar '+label:'Ligar '+label;power.innerHTML='<span class="people-enable-track" aria-hidden="true"><span class="people-enable-thumb"></span></span>';
+    power.onclick=()=>{if(!preferences._disabled)preferences._disabled={};preferences._disabled[key]=enabled(key);persistPreferences();applyPreferences();power.setAttribute('aria-checked',String(enabled(key)));power.title=enabled(key)?'Desligar '+label:'Ligar '+label;action.disabled=button.disabled||button.dataset.available==='false';row.classList.toggle('people-option-disabled',!enabled(key));if(key==='sort'&&enabled(key)&&sortMode!==0)sortRows(sortDirection);chooserSignature=choicesFingerprint()};
+    const pin=document.createElement('button');pin.type='button';pin.className='people-toolbar-pin';pin.title=pinned(key)?'Remover do menu rápido: '+label:'Incluir no menu rápido: '+label;pin.setAttribute('aria-label',pin.title);pin.setAttribute('aria-pressed',String(pinned(key)));pin.innerHTML='<svg viewBox="10 6 42 44" aria-hidden="true"><image href="cicluz-gestao-padaria-logo.png" width="177.6" height="64" preserveAspectRatio="none"/></svg>';
+    pin.onclick=()=>{preferences[key]=!pinned(key);persistPreferences();applyPreferences();renderChoices();chooser.querySelector('[data-choice-key="'+key+'"] .people-toolbar-pin')?.focus()};
+    row.classList.toggle('people-option-disabled',!enabled(key));row.classList.toggle('people-option-pinned',pinned(key));action.title=label;row.append(handle,action,power,pin);inner.append(row);
    }
   }
   function persistPreferences(){try{localStorage.setItem(preferencesKey,JSON.stringify(preferences))}catch{announce('Não foi possível salvar os atalhos')}}
   more.onclick=()=>setChooserOpen(chooser.hidden);
   document.addEventListener('pointerdown',e=>{if(!chooser.hidden&&!chooser.contains(e.target)&&!more.contains(e.target))closeChooser()});
   footer.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!chooser.hidden){closeChooser();more.focus()}else if(!tools.hidden){setQuickOpen(false);home.focus()}});
-  left.append(start,searchToggle,sort,dateButton);right.append(back,close,save,more,toggle);save.classList.add('people-save-control');dateButton.classList.add('people-date-control');footer.append(tools,searchBox,left,home,right,chooser,datePanel,status,importFile);panel.append(footer);
+  left.append(start,position,more,dateButton,searchToggle);right.append(back,close,save,toggle);save.classList.add('people-save-control');dateButton.classList.add('people-date-control');footer.append(tools,searchBox,left,home,right,chooser,datePanel,status,importFile);panel.append(footer);
   footer.addEventListener('click',event=>{const button=event.target.closest('button');if(!button||button.matches('.people-toolbar-choice,.people-toolbar-more'))return;button.classList.add('people-click-feedback');setTimeout(()=>button.classList.remove('people-click-feedback'),220)});
   applyPreferences();
   function readState(key,fallback){try{const value=JSON.parse(localStorage.getItem(key)||'null');return value&&typeof value==='object'?value:fallback}catch{return fallback}}
@@ -237,7 +246,7 @@
    context=screenKey();const legacy=view.id==='sector-view'&&title()==='Gestão de Pessoas';
    const prefix=legacy?'cicluz-people':'cicluz-screen-'+encodeURIComponent(context);
    displayKey=prefix+'-display-v1';preferencesKey=prefix+'-footer-buttons-v1';orderKey=prefix+'-footer-order-v1';
-   preferences=readState(preferencesKey,{});buttonOrder=readState(orderKey,[]);if(!Array.isArray(buttonOrder))buttonOrder=[];
+   preferences=normalizePreferences(readState(preferencesKey,{}));buttonOrder=readState(orderKey,[]);if(!Array.isArray(buttonOrder))buttonOrder=[];
    displayState={zoomed:false,compact:false,dock:'bottom',order:[],...readState(displayKey,{})};
    applyDisplay();applyPreferences();
    if(Array.isArray(displayState.order)){const positions=new Map(displayState.order.map((id,i)=>[id,i]));for(const container of rowContainers()){const rows=rowsFor(container);const ordered=[...rows].sort((a,b)=>(positions.get(rowId(a))??9999)-(positions.get(rowId(b))??9999));if(rows.some((r,i)=>r!==ordered[i]))ordered.forEach(row=>container.append(row))}}
@@ -272,7 +281,7 @@
    const list=!!content.querySelector('.record-grid,.job-item,.salary-row,.location-tree,tbody,.record');
    searchToggle.dataset.available=String(!!nativeSearchButton||list);sort.dataset.available=String(!!nativeSort||list);dateButton.dataset.available=String(records().some(row=>rowDate(row)));expand.dataset.available=String(!!nativeExpand||!!content.querySelector('details'));
    for(const b of [sold,bought,profit,result])b.dataset.available=String(list);
-   expand.disabled=nativeExpand?.disabled||false;
+   expand.dataset.nativeDisabled=String(nativeExpand?.disabled||false);
    if(nativeExpand){if(expand.innerHTML!==nativeExpand.innerHTML)expand.innerHTML=nativeExpand.innerHTML;for(const attr of ['aria-expanded','aria-label','title']){const value=nativeExpand.getAttribute(attr);if(value!==null&&expand.getAttribute(attr)!==value)expand.setAttribute(attr,value)}}
    save.disabled=!!nativeSave?.disabled;
    const delegated=sources.filter(b=>![nativeSearchButton,nativeSort,nativeExpand,nativeSave,nativeBack,nativeClose].includes(b));
@@ -283,10 +292,10 @@
     const {button,key}=entry;
     if(button.innerHTML!==source.innerHTML)button.innerHTML=source.innerHTML;
     if(button.getAttribute('aria-label')!==label){button.setAttribute('aria-label',label);button.title=label}
-    button.disabled=source.disabled;for(const attr of ['aria-expanded','aria-pressed']){const value=source.getAttribute(attr);if(value!==null)button.setAttribute(attr,value);else button.removeAttribute(attr)}
+    button.dataset.nativeDisabled=String(source.disabled);button.disabled=source.disabled;for(const attr of ['aria-expanded','aria-pressed']){const value=source.getAttribute(attr);if(value!==null)button.setAttribute(attr,value);else button.removeAttribute(attr)}
     controls.set(key,{button,label});
    }
-   syncQueries();if(sortMode===0)originalOrders=new WeakMap();rememberOriginalRows();applyPreferences();if(sortMode!==0)sortRows(sortDirection);if(!chooser.hidden&&chooserSignature!==choicesFingerprint())renderChoices();
+   syncQueries();if(sortMode===0)originalOrders=new WeakMap();rememberOriginalRows();applyPreferences();if(sortMode!==0&&enabled('sort'))sortRows(sortDirection);if(!chooser.hidden&&chooserSignature!==choicesFingerprint())renderChoices();
   }
   content.addEventListener('pointerdown',e=>{if(e.target.closest('.menu-item-move,.account-move,.drag-handle,.location-move')){sortDirection=null;sortMode=0;originalOrders=new WeakMap();updateSortLabel()}},true);
   mounted.set(view,{sync,footer,head,reset:()=>{if(nativeSearchButton?.getAttribute('aria-expanded')==='true')nativeSearchButton.click();for(const [input] of adoptedInputs){input.hidden=true;const host=profileSearchHosts.get(input);if(host)host.hidden=true}previousActive=false;sync()}});
