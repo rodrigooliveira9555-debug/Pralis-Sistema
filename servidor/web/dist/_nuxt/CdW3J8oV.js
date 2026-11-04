@@ -1,0 +1,1 @@
+import{l as e}from"./BwINW8N9.js";import{O as t,P as n,Q as r,ft as i}from"./CEitRd8W.js";var a=n({__name:`index`,async setup(n){let a,o;return[a,o]=i(()=>e(`/lancamentos/despesas`,{replace:!0})),await a,o(),(e,n)=>(r(),t(`div`))}});export{a as default};

@@ -33,6 +33,12 @@ body,
   font-family: var(--ui-font) !important;
 }
 
+/* Botões como no site: texto normal, sem caixa alta. */
+.v-btn {
+  letter-spacing: normal;
+  text-transform: none;
+}
+
 /* Tela padrão: cabeçalho na cor de origem, conteúdo e rodapé como retângulos independentes. */
 .tela {
   display: flex;
@@ -87,6 +93,11 @@ body,
   min-height: var(--rodape);
   padding: 8px var(--recuo) max(8px, env(safe-area-inset-bottom));
   background: rgb(var(--v-theme-surface));
+}
+
+/* Regra do site: marca à esquerda, ações à direita com rolagem interna quando faltar espaço. */
+.tela-rodape > * {
+  min-width: 0;
 }
 
 .texto-suave {

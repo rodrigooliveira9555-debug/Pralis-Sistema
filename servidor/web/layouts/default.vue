@@ -19,7 +19,7 @@ const iniciais = computed(() =>
 </script>
 
 <template>
-  <v-navigation-drawer v-model="aberto" width="260" class="menu" :aria-label="'Menu principal'">
+  <v-navigation-drawer v-model="aberto" width="260" mobile-breakpoint="md" class="menu" aria-label="Menu principal">
     <div class="menu-marca">
       <img src="/marca/logo.png" alt="CICLUZ Gestão de Padaria" width="178" height="64" />
       <span class="menu-faixa" aria-hidden="true" />
