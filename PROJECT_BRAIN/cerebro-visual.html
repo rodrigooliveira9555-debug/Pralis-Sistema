@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cérebro do Pralis-Sistema</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: um "mapa de menus" no topo (o protótipo visto como a árvore que o operador navega),
+   depois camadas do cérebro em blocos de leitura. As cores de origem são as do próprio protótipo. */
+:root {
+  --bg: #f5f4f8;
+  --surface: #ffffff;
+  --sunken: #efedf4;
+  --ink: #1f2733;
+  --ink-soft: #5b6675;
+  --line: #e2dfea;
+  --brand: #6515dd;
+  --brand-wash: #f0e8fd;
+  --vnd: #b98a05;
+  --cnt: #e2620b;
+  --des: #dc2626;
+  --mer: #15a34a;
+  --ret: #2563eb;
+  --cfg: #7c3aed;
+  --ok: #15803d;
+  --ok-wash: #e3f5e9;
+  --mock: #a16207;
+  --mock-wash: #fbf1d6;
+  --empty: #6b7280;
+  --empty-wash: #eceef1;
+  --font-ui: "Montserrat", "Segoe UI", system-ui, sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17161c; --surface: #222128; --sunken: #2b2a32; --ink: #e7e9ec; --ink-soft: #a6afba;
+    --line: #34323d; --brand: #a57bff; --brand-wash: #2c2342;
+    --vnd: #eab308; --cnt: #fb923c; --des: #f87171; --mer: #4ade80; --ret: #60a5fa; --cfg: #a78bfa;
+    --ok: #4ade80; --ok-wash: #183224; --mock: #facc15; --mock-wash: #352d12; --empty: #9ca3af; --empty-wash: #2b2a32;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17161c; --surface: #222128; --sunken: #2b2a32; --ink: #e7e9ec; --ink-soft: #a6afba;
+  --line: #34323d; --brand: #a57bff; --brand-wash: #2c2342;
+  --vnd: #eab308; --cnt: #fb923c; --des: #f87171; --mer: #4ade80; --ret: #60a5fa; --cfg: #a78bfa;
+  --ok: #4ade80; --ok-wash: #183224; --mock: #facc15; --mock-wash: #352d12; --empty: #9ca3af; --empty-wash: #2b2a32;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+p { margin: 0; }
+code, .mono { font-family: var(--font-data); font-size: 0.86em; }
+code { background: var(--sunken); padding: 1px 5px; border-radius: 5px; }
+
+/* topo */
+.topo { display: grid; gap: 18px; }
+.marca { display: flex; align-items: center; gap: 10px; color: var(--ink-soft); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.marca i { width: 10px; height: 10px; border-radius: 50%; background: var(--brand); display: inline-block; }
+.topo h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 800; line-height: 1.08; letter-spacing: -.02em; max-width: 20ch; }
+.topo h1 em { font-style: normal; color: var(--brand); }
+.lead { font-size: 17px; color: var(--ink-soft); max-width: 68ch; }
+.fatos { display: flex; flex-wrap: wrap; gap: 8px; }
+.fato { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 13px; }
+.fato b { font-weight: 700; }
+
+section { display: grid; gap: 16px; }
+.cab { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; }
+.cab h2 { font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
+.cab p { color: var(--ink-soft); font-size: 14px; max-width: 62ch; }
+
+/* filtro de status */
+.filtro { display: flex; flex-wrap: wrap; gap: 6px; }
+.filtro button {
+  font: inherit; font-size: 13px; font-weight: 600; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  border-radius: 999px; padding: 6px 12px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; min-height: 34px;
+}
+.filtro button[aria-pressed="true"] { border-color: var(--brand); background: var(--brand-wash); }
+.filtro button:focus-visible, .aba:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* mapa de menus */
+.mapa { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; align-items: start; }
+.menu { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.menu-topo { display: flex; gap: 10px; align-items: center; }
+.sig {
+  width: 30px; height: 30px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  font-family: var(--font-data); font-size: 9.5px; font-weight: 600; color: #fff; background: var(--c, var(--empty));
+}
+.menu h3 { font-size: 14px; font-weight: 700; line-height: 1.25; }
+.menu small { display: block; color: var(--ink-soft); font-size: 12px; font-weight: 500; }
+.telas { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.telas li { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; font-size: 13px; padding: 4px 0; border-top: 1px solid var(--line); }
+.telas li:first-child { border-top: 0; }
+.telas li[hidden] { display: none !important; }
+.st { flex: none; font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 1px 8px; letter-spacing: .02em; }
+.st.ok { color: var(--ok); background: var(--ok-wash); }
+.st.mock { color: var(--mock); background: var(--mock-wash); }
+.st.empty { color: var(--empty); background: var(--empty-wash); }
+.legenda { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--ink-soft); }
+.legenda span { display: inline-flex; gap: 6px; align-items: center; }
+
+/* contadores de status */
+.placar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.placa { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.placa b { display: block; font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.placa.ok b { color: var(--ok); } .placa.mock b { color: var(--mock); } .placa.empty b { color: var(--empty); }
+.placa span { font-size: 13px; color: var(--ink-soft); }
+
+/* abas das camadas */
+.abas { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--line); }
+.aba {
+  font: inherit; font-size: 14px; font-weight: 600; background: none; border: 0; color: var(--ink-soft);
+  padding: 10px 12px; border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer; min-height: 44px;
+}
+.aba[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--brand); }
+.painel { display: grid; gap: 14px; }
+.grade2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.bloco { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.bloco h3 { font-size: 15px; font-weight: 700; }
+.bloco ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 14px; }
+.bloco li::marker { color: var(--ink-soft); }
+.bloco .nota { font-size: 12.5px; color: var(--ink-soft); }
+.tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag { font-family: var(--font-data); font-size: 11.5px; padding: 2px 7px; border-radius: 6px; background: var(--sunken); }
+
+/* tabela de ponte */
+.tabela-box { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 13.5px; }
+th, td { text-align: left; padding: 10px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+thead th { border-top: 0; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); background: var(--sunken); }
+td:first-child { font-weight: 600; }
+
+/* linha do tempo */
+.tempo { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; align-items: end; }
+.dia { display: grid; gap: 6px; justify-items: stretch; min-width: 0; }
+.barra-area { height: 150px; display: flex; align-items: flex-end; }
+.barra { width: 100%; background: var(--brand); border-radius: 6px 6px 2px 2px; min-height: 3px; opacity: .85; }
+.dia b { font-size: 14px; font-variant-numeric: tabular-nums; }
+.dia span { font-size: 12px; color: var(--ink-soft); }
+.dia p { font-size: 12px; line-height: 1.4; color: var(--ink-soft); }
+
+.alerta { border-color: color-mix(in srgb, var(--des) 45%, var(--line)); }
+.alerta h3 { color: var(--des); }
+.pergunta { counter-increment: q; display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; }
+.pergunta::before { content: counter(q); width: 26px; height: 26px; border-radius: 50%; background: var(--brand-wash); color: var(--brand); font-weight: 800; font-size: 13px; display: grid; place-items: center; }
+.perguntas { counter-reset: q; display: grid; gap: 12px; }
+.rodape { color: var(--ink-soft); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 16px; }
+
+@media (max-width: 600px) {
+  .placar { grid-template-columns: 1fr; }
+  .tempo { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 20px; }
+  .barra-area { height: 90px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .barra { transition: height .5s cubic-bezier(.2,.7,.2,1); }
+}
+</style>
+
+</head><body><div class="wrap">
+
+  <header class="topo">
+    <div class="marca"><i></i> Cérebro do projeto · lido em 03/11/2026</div>
+    <h1>Pralis-Sistema: a <em>cópia de tela</em> que o Rodrigo está construindo</h1>
+    <p class="lead">É um protótipo de navegador, sem backend, chamado “CICLUZ · Gestão de Padaria”. Hoje ele cobre o <b>cadastro mestre</b> (contas, grupos financeiros, vendas, cartões, cargos, locais) e quase nada da <b>operação</b>. Tudo o que é digitado fica salvo só no aparelho de quem digitou.</p>
+    <div class="fatos">
+      <span class="fato"><b>343</b> commits em 6 dias</span>
+      <span class="fato"><b>330</b> pelo Codex (ChatGPT Sites)</span>
+      <span class="fato"><b>12</b> com a identidade do Rodrigo</span>
+      <span class="fato">HTML + JS puro, sem build</span>
+      <span class="fato">dados em <code>localStorage</code></span>
+      <span class="fato">repositório privado · <code>D:\Pralis-Sistema-Rodrigo</code></span>
+    </div>
+  </header>
+
+  <section aria-labelledby="t-mapa">
+    <div class="cab">
+      <h2 id="t-mapa">Mapa de telas</h2>
+      <p>Os menus aparecem na ordem padrão do protótipo e com a cor de origem que ele usa. Toque num status para filtrar.</p>
+    </div>
+    <div class="placar">
+      <div class="placa ok"><b>14</b><span>telas funcionais (salvam no navegador)</span></div>
+      <div class="placa mock"><b>13</b><span>maquetes com dados fixos</span></div>
+      <div class="placa empty"><b>24</b><span>vazias (“área prevista”)</span></div>
+    </div>
+    <div class="filtro" role="group" aria-label="Filtrar telas por status">
+      <button type="button" data-f="todas" aria-pressed="true">Todas</button>
+      <button type="button" data-f="ok" aria-pressed="false"><span class="st ok">funciona</span></button>
+      <button type="button" data-f="mock" aria-pressed="false"><span class="st mock">maquete</span></button>
+      <button type="button" data-f="empty" aria-pressed="false"><span class="st empty">vazia</span></button>
+    </div>
+
+    <div class="mapa" id="mapa">
+      <article class="menu"><div class="menu-topo"><span class="sig" style="--c:var(--empty)">VG</span><div><h3>Visão geral</h3><small>painel inicial</small></div></div>
+        <ul class="telas"><li data-s="mock">Texto “reunirá os principais números” <span class="st mock">maquete</span></li></ul></article>
+
+      <article class="menu"><div class="menu-topo"><span class="sig" style="--c:var(--vnd)">VND</span><div><h3>Entradas</h3><small>vendas e faturamento</small></div></div>
+        <ul class="telas"><li data-s="empty">Caixas <span class="st empty">vazia</span></li><li data-s="empty">Gerência <span class="st empty">vazia</span></li><li data-s="empty">Financeiro <span class="st empty">vazia</span></li></ul></article>
+
+      <article class="menu"><div class="menu-topo"><span class="sig" style="--c:var(--cnt)">CNT</span><div><h3>Transferências</h3><small>contas e locais</small></div></div>
+        <ul class="telas"><li data-s="empty">Tesouraria <span class="st empty">vazia</span></li><li data-s="empty">Financeiro <span class="st empty">vazia</span></li><li data-s="empty">Diretor Geral <span class="st empty">vazia</span></li></ul></article>
+
+      <article class="menu"><div class="menu-topo"><span class="sig" style="--c:var(--des)">DES</span><div><h3>Saídas · Despesas</h3><small>despesas e custos</small></div></div>
+        <ul class="telas">
+          <li data-s="mock">Gestão de Pessoas: painel, colaboradores, processos, registros, RH, DP, pré-fechamento, relatórios (8) <span class="st mock">maquete</span></li>
+          <li data-s="mock">Lançamentos financeiros <span class="st mock">maquete</span></li>
+          <li data-s="mock">Grupo de despesas <span class="st mock">maquete</span></li>
+          <li data-s="empty">Gerência, DP, Fiscal, Financeiro, Diretor Geral (5) <span class="st empty">vazia</span></li>
+        </ul></article>
+
+      <article class="menu"><div class="menu-topo"><span class="sig" style="--c:var(--mer)">MER</span><div><h3>Saídas · Mercadorias</h3><small>CMV</small></div></div>
+        <ul class="telas"><li data-s="empty">Gerência, Compras, Dir. Operações, Financeiro, Dir. Geral (5) <span class="st empty">vazia</span></li></ul></article>
+
+      <article class="menu"><div class="menu-topo"><span class="sig" style="--c:var(--ret)">RET</span><div><h3>Saídas · Retiradas</h3><small>investimentos</small></div></div>
+        <ul class="telas"><li data-s="empty">Financeiro, Diretor Geral (2) <span class="st empty">vazia</span></li></ul></article>
+
+      <article class="menu"><div class="menu-topo"><span class="sig" style="--c:var(--cfg)">RES</span><div><h3>Resultados</h3><small>relatórios</small></div></div>
+        <ul class="telas"><li data-s="empty">4 setores <span class="st empty">vazia</span></li></ul></article>
+
+      <article class="menu"><div class="menu-topo"><span class="sig" style="--c:var(--cfg)">AGD</span><div><h3>Agenda</h3><small>atividades</small></div></div>
+        <ul class="telas"><li data-s="empty">Gestão de Pessoas, Diretor de Operações (2) <span class="st empty">vazia</span></li></ul></article>
+
+      <article class="menu"><div class="menu-topo"><span class="sig" style="--c:var(--cfg)">CFG</span><div><h3>Configuração · Gestão de Pessoas</h3><small>cadastros gerais</small></div></div>
+        <ul class="telas">
+          <li data-s="ok">Organograma <span class="st ok">funciona</span></li>
+          <li data-s="ok">Área → Setor → Local → Sublocal <span class="st ok">funciona</span></li>
+          <li data-s="ok">Cargos (32 de referência, com CBO) <span class="st ok">funciona</span></li>
+          <li data-s="ok">Atualização salarial por vigência <span class="st ok">funciona</span></li>
+          <li data-s="ok">Ficha de Cargos (área × cargo) <span class="st ok">funciona</span></li>
+        </ul></article>
+
+      <article class="menu"><div class="menu-topo"><span class="sig" style="--c:var(--cfg)">CFG</span><div><h3>Configuração · Diretor de Operação</h3><small>cadastro financeiro mestre</small></div></div>
+        <ul class="telas">
+          <li data-s="ok">Contas (CNT) <span class="st ok">funciona</span></li>
+          <li data-s="ok">Grupos de Vendas (VND) <span class="st ok">funciona</span></li>
+          <li data-s="ok">Tipos de Venda (13) <span class="st ok">funciona</span></li>
+          <li data-s="ok">Bandeiras (41) <span class="st ok">funciona</span></li>
+          <li data-s="ok">Operadoras (10) com taxas <span class="st ok">funciona</span></li>
+          <li data-s="ok">Despesas (DES) <span class="st ok">funciona</span></li>
+          <li data-s="ok">Mercadorias (MER) <span class="st ok">funciona</span></li>
+          <li data-s="ok">Retiradas (RET) <span class="st ok">funciona</span></li>
+        </ul></article>
+
+      <article class="menu"><div class="menu-topo"><span class="sig" style="--c:var(--cfg)">FRM</span><div><h3>Formulários</h3><small>cadastros e avaliações</small></div></div>
+        <ul class="telas">
+          <li data-s="ok">Cadastro completo (4 etapas + dependentes) <span class="st ok">funciona</span></li>
+          <li data-s="mock">Cadastro simples (não salva) <span class="st mock">maquete</span></li>
+          <li data-s="mock">Cadastro de patrimônio (não salva) <span class="st mock">maquete</span></li>
+        </ul></article>
+    </div>
+    <div class="legenda"><span><span class="st ok">funciona</span> grava no <code>localStorage</code> do aparelho</span><span><span class="st mock">maquete</span> mostra dados fixos ou não salva</span><span><span class="st empty">vazia</span> só o texto “área prevista”</span></div>
+  </section>
+
+  <section aria-labelledby="t-camadas">
+    <div class="cab"><h2 id="t-camadas">As camadas do projeto</h2></div>
+    <div class="abas" role="tablist" aria-label="Camadas">
+      <button class="aba" role="tab" id="a-dominio" aria-controls="p-dominio" aria-selected="true">Domínio financeiro</button>
+      <button class="aba" role="tab" id="a-dados" aria-controls="p-dados" aria-selected="false" tabindex="-1">Dados e código</button>
+      <button class="aba" role="tab" id="a-design" aria-controls="p-design" aria-selected="false" tabindex="-1">Regras de design</button>
+      <button class="aba" role="tab" id="a-processo" aria-controls="p-processo" aria-selected="false" tabindex="-1">Processo</button>
+    </div>
+
+    <div class="painel" role="tabpanel" id="p-dominio" aria-labelledby="a-dominio">
+      <div class="grade2">
+        <div class="bloco"><h3>VND · Vendas</h3>
+          <ul>
+            <li>Grupo <b>CAIXA PDV</b> com subgrupos <span class="mono">1M 1T 2M 2T 3M 3T 4M 4T</span> (posto e turno), além de NFE (empresas) e DELIVERY (iFood).</li>
+            <li><b>13 tipos de venda</b>, cada um com destino contábil: Dinheiro, Débito, Crédito, Voucher, Pix, Pix Banco, Clientes, Crediário, Colaboradores (VND/DES), Alimentação −66,6%, Roubo/Furto, Sócios (VND/RET), Sobra/Perda (MER).</li>
+            <li><b>41 bandeiras</b>, cada uma ligada obrigatoriamente a um tipo de venda.</li>
+          </ul></div>
+        <div class="bloco"><h3>Operadoras e taxas</h3>
+          <ul>
+            <li>10 operadoras: Stone, Getnet, Cielo, PagBank, SafraPay, Rede, Mercado Pago, SumUp, Ton, InfinitePay.</li>
+            <li>Taxa por bandeira <b>com vigência</b>: modalidade, faixa de parcelas, MDR %, tarifa em R$, antecipação, prazo (dias úteis ou corridos).</li>
+            <li>Cada regra aponta um grupo de Despesa (a taxa) e um grupo de Contas (“transferência automática”). Nenhuma delas gera lançamento.</li>
+            <li>Vigências conflitantes são bloqueadas e nada é preenchido sozinho.</li>
+          </ul></div>
+        <div class="bloco"><h3>CNT · Contas</h3>
+          <ul>
+            <li>Bancos: Caixa, Santander, Safra, Itaú, Bradesco, Nubank, PagBank, Stone, Getnet, SafraPay.</li>
+            <li>Contas de fluxo: Crédito, Débito, Voucher, Pix, Crediário, Cartões, Caixa.</li>
+            <li><b>Cofre Principal</b>, <b>Cofre Troco</b> e <b>Caixa 1M a 4T</b>.</li>
+            <li>Contas por responsável: Diretor, Dir. Operação, Dir. Financeiro, Gerência, Compras, Manutenção.</li>
+          </ul></div>
+        <div class="bloco"><h3>DES · MER · RET</h3>
+          <ul>
+            <li>DES com 28 grupos, entre eles Taxa Cartões e Despesas Bancárias. Os docs falam em 98 itens recebidos.</li>
+            <li>MER com 17 grupos (79 itens). É o único com <b>Finalidade</b>: VENDA ou TRANSFORMAÇÃO, sem dedução automática.</li>
+            <li>RET: Investimento, Sócios, Pró-labore, Participação (4 grupos, 12 subgrupos).</li>
+            <li>Documento exigido por item: DOC/F, DOC/NF ou DOC/F/NF.</li>
+          </ul></div>
+      </div>
+      <div class="bloco alerta"><h3>O que ainda não existe</h3>
+        <p>Não há lançamento, movimento de caixa, abertura ou fechamento, conciliação de maquininha nem relatório. O menu <b>Entradas → Caixas</b> existe, mas está vazio. O protótipo descreve <i>onde</i> o dinheiro pode ir, e não registra nenhum dinheiro andando.</p>
+      </div>
+    </div>
+
+    <div class="painel" role="tabpanel" id="p-dados" aria-labelledby="a-dados" hidden>
+      <div class="grade2">
+        <div class="bloco"><h3>Onde os dados moram</h3>
+          <ul>
+            <li>Só no <code>localStorage</code> do navegador, com prefixo <code>cicluz-</code>. Não sincroniza entre iPad, celular e computador.</li>
+            <li>Únicas chamadas externas: busca de ícones (Iconify) e a fonte Montserrat.</li>
+            <li>Os seeds ficam embutidos em <code>groups.js</code>. O <code>group-seeds.json</code> é uma cópia.</li>
+          </ul>
+          <div class="tags"><span class="tag">financial-hierarchy-v1</span><span class="tag">ti-groups-v1</span><span class="tag">cargos-v1</span><span class="tag">salarios-vigencias-v1</span><span class="tag">job-profiles-v1</span><span class="tag">location-tree-v1</span><span class="tag">organogram-positions-v1</span><span class="tag">cadastro-completo-v1</span><span class="tag">icon-library-v1</span></div></div>
+        <div class="bloco"><h3>Arquivos que importam</h3>
+          <ul>
+            <li><code>dist/index.html</code>: 210 KB e 307 linhas (uma única linha passa de 30 KB). Alterado em 287 dos 343 commits.</li>
+            <li><code>groups.js</code>: 1.697 linhas. Todo o cadastro financeiro.</li>
+            <li><code>location-tree.js</code>, <code>organogram.js</code>, <code>job-profiles.js</code>, <code>complete-registration.js</code>.</li>
+            <li><code>field-validation.js</code> (CPF, moeda) e <code>date-fields.js</code> (DD/MM/AA).</li>
+            <li>Cerca de 28 JS e 10 CSS carregados juntos.</li>
+          </ul></div>
+        <div class="bloco alerta"><h3>Dívida técnica</h3>
+          <ul>
+            <li><b>1.438</b> <code>!important</code> e <b>71</b> blocos <code>&lt;style&gt;</code> dentro do HTML.</li>
+            <li><code>editJob</code> é sobrescrita 4 vezes, e outras funções também são trocadas em cadeia.</li>
+            <li>Cerca de 25 observadores reestilizam a tela depois que ela é desenhada.</li>
+            <li>Nenhum arquivo foi apagado no histórico. <code>operations-pilot.*</code> é código morto.</li>
+            <li>O editor de Contas e o de Grupos repetem quase o mesmo formulário.</li>
+          </ul></div>
+        <div class="bloco"><h3>Testes</h3>
+          <ul>
+            <li><code>tests/date-fields.cjs</code>: 19 verificações de data.</li>
+            <li><code>tests/field-validation.cjs</code>: 21 verificações de moeda e CPF.</li>
+            <li>3 páginas HTML de conferência manual (cabeçalho, cadastro, barra de Pessoas).</li>
+            <li>Nada foi testado num Safari ou iPhone/iPad de verdade, que é o aparelho do dono.</li>
+          </ul></div>
+      </div>
+    </div>
+
+    <div class="painel" role="tabpanel" id="p-design" aria-labelledby="a-design" hidden>
+      <div class="grade2">
+        <div class="bloco"><h3>Cor por origem</h3>
+          <ul>
+            <li><span class="sig" style="--c:var(--vnd);display:inline-grid;width:18px;height:18px;vertical-align:-4px"></span> Vendas, tipos, bandeiras, operadoras = amarelo</li>
+            <li><span class="sig" style="--c:var(--cnt);display:inline-grid;width:18px;height:18px;vertical-align:-4px"></span> Contas e Transferências = laranja</li>
+            <li><span class="sig" style="--c:var(--des);display:inline-grid;width:18px;height:18px;vertical-align:-4px"></span> Despesas = vermelho; Excluir é sempre vermelho</li>
+            <li><span class="sig" style="--c:var(--mer);display:inline-grid;width:18px;height:18px;vertical-align:-4px"></span> Mercadorias = verde</li>
+            <li><span class="sig" style="--c:var(--ret);display:inline-grid;width:18px;height:18px;vertical-align:-4px"></span> Retiradas = azul</li>
+            <li><span class="sig" style="--c:var(--cfg);display:inline-grid;width:18px;height:18px;vertical-align:-4px"></span> Resultados, Configuração, Formulários, Pessoas = roxo</li>
+          </ul>
+          <p class="nota">A cor do menu atual vence a do menu acima dele. O roxo não é cor universal.</p></div>
+        <div class="bloco"><h3>Tipografia e campos</h3>
+          <ul>
+            <li>Uma fonte só, Montserrat, com tokens em <code>ui-foundation.css</code>.</li>
+            <li>Título 16/20 peso 600 · subtítulo 11 · rótulo 12 · valor 14.</li>
+            <li>Campo com 42 px de altura e raio 8. Fonte de 16 px até 1024 px, para o iPhone não dar zoom.</li>
+            <li>Enter avança para o próximo campo e nunca salva.</li>
+            <li>Data mostrada como DD/MM/AA, sem calendário, e guardada em ISO.</li>
+          </ul></div>
+        <div class="bloco"><h3>Layout (regra de 03/11)</h3>
+          <ul>
+            <li>Três quadros separados: cabeçalho, conteúdo e rodapé, com raio de 12 px e 6 px de distância. Só o meio rola.</li>
+            <li>O cabeçalho usa a cor forte do módulo. O rodapé tem 58 px, com a marca à esquerda e as ações em círculos de 32 px.</li>
+            <li>Ícones maciços na cor do item. Identificador num círculo de 30 px.</li>
+            <li>No celular (até 600 px), tela cheia e nenhuma rolagem lateral.</li>
+          </ul></div>
+        <div class="bloco alerta"><h3>Vai e volta de design</h3>
+          <ul>
+            <li>Ícones vazados e maciços: 4 trocas em 2 dias.</li>
+            <li>Excluir: vermelho, depois a cor da aba, depois vermelho de novo.</li>
+            <li>Texto do cabeçalho: branco, depois cinza, depois a cor da superfície.</li>
+            <li>Datas: calendário nativo, depois máscara com calendário, depois sem calendário.</li>
+            <li>“Substitui” aparece 48 vezes no <code>DESIGN_SYSTEM.md</code>, e há trechos antigos que contradizem as regras novas.</li>
+          </ul></div>
+      </div>
+    </div>
+
+    <div class="painel" role="tabpanel" id="p-processo" aria-labelledby="a-processo" hidden>
+      <div class="grade2">
+        <div class="bloco"><h3>Como o Rodrigo trabalha</h3>
+          <ul>
+            <li>Conversa com o Codex no ChatGPT, e cada publicação vira um commit “Update Site source”.</li>
+            <li>A numeração “Revisão 226… 309” do <code>DESIGN_SYSTEM.md</code> acompanha o número do commit.</li>
+            <li>Desde 02/11, um agente local faz commits com a identidade do Rodrigo e mensagens descritivas.</li>
+          </ul></div>
+        <div class="bloco"><h3>Regras do <code>AGENTS.md</code> de lá</h3>
+          <ul>
+            <li>Ler <code>DESIGN_SYSTEM.md</code> e <code>UI_CHANGE_PROCESS.md</code> antes de qualquer mudança visual.</li>
+            <li>Montar uma matriz de impacto e abrir todas as telas afetadas, nos temas claro e escuro, em 320, 390 e 1024 px.</li>
+            <li>Usar só dados fictícios na prévia e nunca apagar dados reais.</li>
+            <li>Registrar toda decisão nova, que substitui a anterior.</li>
+          </ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="t-tempo">
+    <div class="cab"><h2 id="t-tempo">Linha do tempo</h2><p>Commits por dia. Nenhuma tela nova surgiu depois de 30/10 às 16h37; daí em diante foi só acabamento visual.</p></div>
+    <div class="tempo" id="tempo">
+      <div class="dia"><div class="barra-area"><div class="barra" data-n="1"></div></div><b>1</b><span>29/10</span><p>Portal DP com 3 telas</p></div>
+      <div class="dia"><div class="barra-area"><div class="barra" data-n="124"></div></div><b>124</b><span>30/10</span><p>Marca Cicluz, cadastros, cargos, grupos financeiros, bandeiras</p></div>
+      <div class="dia"><div class="barra-area"><div class="barra" data-n="140"></div></div><b>140</b><span>31/10</span><p>Organograma, ícones, celular, layout unificado</p></div>
+      <div class="dia"><div class="barra-area"><div class="barra" data-n="64"></div></div><b>64</b><span>01/11</span><p>Cadastro completo, Ficha de Cargos, cabeçalhos</p></div>
+      <div class="dia"><div class="barra-area"><div class="barra" data-n="8"></div></div><b>8</b><span>02/11</span><p>Tema escuro, datas, menu</p></div>
+      <div class="dia"><div class="barra-area"><div class="barra" data-n="6"></div></div><b>6</b><span>03/11</span><p>Cabeçalhos, ícones, contornos</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="t-ponte">
+    <div class="cab"><h2 id="t-ponte">Ponte com o sistema real</h2><p>Equivalência pelo assunto da tela. Os campos ainda não foram conferidos um a um.</p></div>
+    <div class="tabela-box">
+      <table>
+        <thead><tr><th>No protótipo</th><th>No sistema em produção</th><th>Leitura</th></tr></thead>
+        <tbody>
+          <tr><td>Caixa 1M a 4T (VND e CNT)</td><td>8 contas de posto PDV1–4 × Manhã/Tarde</td><td>Mesmo conceito, com outro nome</td></tr>
+          <tr><td>Contas CNT, Cofre Principal e Cofre Troco</td><td><code>contas</code>, Cofre e Tesouraria</td><td>No real existem com movimento; no protótipo, só o cadastro</td></tr>
+          <tr><td>Tipos de Venda e Bandeiras</td><td><code>formas_pagamento</code></td><td>Comparar a lista de 13 tipos</td></tr>
+          <tr><td>Operadoras com taxa por vigência</td><td><code>maquininhas</code></td><td>Conferir se o real guarda MDR e antecipação por vigência</td></tr>
+          <tr><td>Grupos DES, MER e RET</td><td><code>grupos</code>, <code>despesas</code>, <code>mercadorias</code>, <code>retiradas</code></td><td>Conferir as siglas e a Finalidade de MER</td></tr>
+          <tr><td>Área → Setor → Local → Sublocal</td><td><code>areas_setores</code></td><td>O protótipo tem 4 níveis</td></tr>
+          <tr><td>Cargos, salários e Ficha de Cargos</td><td><code>funcoes_operacionais</code></td><td>Salário por vigência e ficha só existem no protótipo</td></tr>
+          <tr><td>Cadastro completo com dependentes</td><td><code>admissao</code>, <code>admissoes_processos</code></td><td>O real tem a ficha pública e a revisão do DP</td></tr>
+          <tr><td>Patrimônio</td><td><code>patrimonio</code></td><td>No protótipo não salva</td></tr>
+          <tr><td>Entradas → Caixas (vazia)</td><td><code>caixa</code>, fechamento em 4 etapas, transferências, lacres</td><td>O coração do real não existe no protótipo</td></tr>
+          <tr><td>—</td><td>Compras, Produtos, Estoque, CREARE, Conplus, permissões, login</td><td>Só no real</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="t-decidir">
+    <div class="cab"><h2 id="t-decidir">O que precisa de decisão</h2></div>
+    <div class="bloco perguntas">
+      <div class="pergunta"><p><b>Qual é o papel deste repositório?</b> Ele é a referência de tela para o sistema real ou vai substituir o sistema? O código não serve de base para produção, porque não tem backend, login nem banco.</p></div>
+      <div class="pergunta"><p><b>As regras financeiras de lá entram no brain do real?</b> Roubo/Furto, Sobra/Perda, Colaboradores (VND/DES) e Sócios (VND/RET) são destinos contábeis. Precisam ser cruzados com o <code>19_REGISTRO_DE_REGRAS</code> antes de virar regra.</p></div>
+      <div class="pergunta"><p><b>As cores por origem conflitam com o modelo de cores do real?</b> Comparar com o <code>03_MODELO_DE_CORES</code> e com os tokens <code>--cx-*</code>.</p></div>
+      <div class="pergunta"><p><b>O que o Rodrigo cadastra fica preso no iPad.</b> Sem exportar, cargos, taxas e contas digitados lá não chegam a ninguém.</p></div>
+      <div class="pergunta"><p><b>Taxas por vigência e salário por vigência</b> são ideias boas que o real pode não ter. Vale decidir se entram na fila.</p></div>
+    </div>
+  </section>
+
+  <p class="rodape">Fonte: leitura só de leitura de <code>rodrigooliveira9555-debug/Pralis-Sistema</code> (último commit <span class="mono">ccb1bf9</span>, 03/11 11h12), dos 6 documentos de decisão e do histórico git. Números de telas contados no código do <code>dist/</code>.</p>
+</div>
+
+<script>
+(function () {
+  var max = 140;
+  document.querySelectorAll('#tempo .barra').forEach(function (b) {
+    b.style.height = Math.max(2, (Number(b.dataset.n) / max) * 100) + '%';
+  });
+
+  var botoes = document.querySelectorAll('.filtro button');
+  botoes.forEach(function (bt) {
+    bt.addEventListener('click', function () {
+      var f = bt.dataset.f;
+      botoes.forEach(function (o) { o.setAttribute('aria-pressed', String(o === bt)); });
+      document.querySelectorAll('#mapa .telas li').forEach(function (li) {
+        li.hidden = f !== 'todas' && li.dataset.s !== f;
+      });
+      document.querySelectorAll('#mapa .menu').forEach(function (m) {
+        m.hidden = !m.querySelector('.telas li:not([hidden])');
+      });
+    });
+  });
+
+  var abas = Array.prototype.slice.call(document.querySelectorAll('.aba'));
+  function abrir(aba) {
+    abas.forEach(function (a) {
+      var sel = a === aba;
+      a.setAttribute('aria-selected', String(sel));
+      a.tabIndex = sel ? 0 : -1;
+      document.getElementById(a.getAttribute('aria-controls')).hidden = !sel;
+    });
+  }
+  abas.forEach(function (a, i) {
+    a.addEventListener('click', function () { abrir(a); });
+    a.addEventListener('keydown', function (e) {
+      var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (!d) return;
+      var prox = abas[(i + d + abas.length) % abas.length];
+      abrir(prox); prox.focus();
+    });
+  });
+})();
+</script>
+
+</body></html>

@@ -1,0 +1,78 @@
+// Copiado do Sistema Pralis (shared/src/datas/index.ts): só as funções que Lançamentos usa.
+// Fuso do negocio. A padaria opera em Sao Paulo; a data CONTABIL (data_referencia, data_movimento)
+// e o dia como o operador o vive, nao o dia em UTC.
+export const FUSO_NEGOCIO = "America/Sao_Paulo";
+
+// en-CA formata como "yyyy-MM-dd", que e exatamente o formato das colunas `date` do Postgres.
+const formatadorDiaNegocio = new Intl.DateTimeFormat("en-CA", {
+  timeZone: FUSO_NEGOCIO,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit"
+});
+
+/**
+ * Dia CONTABIL ("yyyy-MM-dd") de um instante, no fuso do negocio.
+ *
+ * Nao use `data.toISOString().slice(0, 10)` para isso: ela devolve o dia em UTC e, em fuso
+ * negativo, uma venda das 22:00 de 16/07 (01:00Z de 17/07) cairia no dia 17 — no caixa errado,
+ * no fechamento errado e divergindo do CREARE. Era o BUG B.
+ */
+export function diaNegocio(instante: Date | string): string {
+  return formatadorDiaNegocio.format(new Date(instante));
+}
+
+export function somarDias(dia: string, dias: number): string {
+  const data = new Date(`${dia}T00:00:00Z`);
+  data.setUTCDate(data.getUTCDate() + dias);
+  return data.toISOString().slice(0, 10);
+}
+
+/**
+ * Soma meses a um dia contabil, GRAMPEANDO no ultimo dia do mes de destino.
+ *
+ * 31/01 + 1 mes = 28/02 (nao 03/03, que e o que `setUTCMonth` faz sozinho: ele transborda). Uma
+ * conta que vence dia 31 tem de cair no ultimo dia dos meses curtos, nao pular para o mes seguinte.
+ *
+ * Some sempre a partir da data ORIGINAL (nunca da anterior) para nao acumular o grampo: 31/01
+ * gera 28/02 e 31/03 — encadeando a partir do resultado daria 28/03, e a serie perderia o dia 31.
+ */
+export function somarMeses(dia: string, meses: number): string {
+  const [ano = 0, mes = 1, diaDoMes = 1] = dia.split("-").map(Number);
+  const totalMeses = mes - 1 + meses;
+  const anoDestino = ano + Math.floor(totalMeses / 12);
+  const mesDestino = ((totalMeses % 12) + 12) % 12;
+  // Dia 0 do mes SEGUINTE = ultimo dia do mes de destino.
+  const ultimoDiaDoMes = new Date(Date.UTC(anoDestino, mesDestino + 1, 0)).getUTCDate();
+  const destino = new Date(Date.UTC(anoDestino, mesDestino, Math.min(diaDoMes, ultimoDiaDoMes)));
+  return destino.toISOString().slice(0, 10);
+}
+
+/** Quantos dias de `de` ate `ate` (negativo quando `ate` e anterior). */
+export function diferencaEmDias(de: string, ate: string): number {
+  const MS_POR_DIA = 86_400_000;
+  return Math.round((Date.parse(`${ate}T00:00:00Z`) - Date.parse(`${de}T00:00:00Z`)) / MS_POR_DIA);
+}
+
+/** Dia da semana ISO-8601: 1 = segunda ... 7 = domingo. */
+export function diaDaSemanaIso(dia: string): number {
+  const diaJs = new Date(`${dia}T00:00:00Z`).getUTCDay(); // 0 = domingo
+  return diaJs === 0 ? 7 : diaJs;
+}
+
+/**
+ * R-129: a data de pagamento nao pode ser anterior a HOJE na criacao do lancamento.
+ *
+ * "Hoje" e o dia CONTABIL no fuso do negocio, nao `new Date()` em UTC. Se fosse UTC, quem lanca as
+ * 21h em Sao Paulo ja estaria no dia seguinte para o servidor e levaria erro num pagamento marcado
+ * para hoje — o mesmo BUG B que a `diaNegocio` resolveu.
+ *
+ * Compara texto "yyyy-MM-dd" de proposito: esse e o formato da coluna `date` e da string que a tela
+ * envia, e a ordem lexicografica dele coincide com a cronologica. Converter para Date so
+ * reintroduziria fuso onde nao ha hora nenhuma.
+ */
+export function dataPagamentoNoPassado(dataPagamento: string | null | undefined, agora: Date = new Date()): boolean {
+  const dia = dataPagamento?.trim().slice(0, 10);
+  if (!dia) return false;
+  return dia < diaNegocio(agora);
+}

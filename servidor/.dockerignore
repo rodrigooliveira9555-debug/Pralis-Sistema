@@ -1,0 +1,11 @@
+node_modules
+**/node_modules
+**/.env
+**/.env.*
+!.env.example
+tests/*
+!tests/package.json
+*.log
+web/.nuxt
+web/.output
+web/.data

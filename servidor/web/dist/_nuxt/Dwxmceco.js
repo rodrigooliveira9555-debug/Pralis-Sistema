@@ -1,0 +1,1 @@
+import{kt as e,w as t}from"./DILVO6qw.js";import{a as n,lt as r}from"./CShTJXnJ.js";import{n as i}from"./DAtkY1oj.js";function a(r){let a=n();return t(()=>i(e(r),a.global.current.value.dark))}var o=r(`/marca/simbolo.png`);export{a as n,o as t};

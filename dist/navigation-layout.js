@@ -6,9 +6,9 @@
  const divider=document.createElement('div');divider.className='menu-top-divider';divider.setAttribute('aria-hidden','true');side.insertBefore(divider,controls||side.querySelector('.nav'));
  const menuToggle=document.getElementById('toggleMenu');if(controls&&menuToggle)controls.append(menuToggle);
  const management=side.querySelector('[data-section="management"]');if(management){management.classList.add('menu-management-heading');side.insertBefore(management,side.querySelector('.nav'))}
- const user=document.createElement('div');user.className='sidebar-user';user.setAttribute('aria-label','Usuário: Rodrigo Oliveira');
+ const session=window.CicluzSessao,userName=session?.perfil?.nome||'';const user=document.createElement('div');user.className='sidebar-user';user.setAttribute('role','group');user.setAttribute('aria-label','Usuário: '+userName);
  const avatar=top.querySelector('.avatar');if(avatar)user.append(avatar);
- const name=document.createElement('span');name.className='sidebar-user-name';name.textContent='Rodrigo Oliveira';user.append(name);footer.append(user);side.append(footer);
+ const name=document.createElement(session?'a':'span');name.className='sidebar-user-name';name.textContent=userName;if(session){name.href='usuarios.html';name.title='Minha senha e usuários'}user.append(name);if(avatar)avatar.textContent=userName.split(/\s+/).filter(Boolean).slice(0,2).map(p=>p[0].toUpperCase()).join('');if(session){const logout=document.createElement('button');logout.type='button';logout.className='sidebar-user-sair';logout.title='Sair';logout.setAttribute('aria-label','Sair do sistema');logout.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>';logout.onclick=async()=>{logout.disabled=true;if(!await session.sair())logout.disabled=false};user.append(logout)}footer.append(user);side.append(footer);
  const brand=side.querySelector('.brand');
  const fullLogo=brand?.querySelector('.brand-logo-wrap');
  // The line and logo share one beam profile, thickness, clock and pixel speed.
