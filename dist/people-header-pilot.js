@@ -172,8 +172,7 @@
   try{const value=JSON.parse(localStorage.getItem(orderKey)||'[]');if(Array.isArray(value))buttonOrder=value.filter(key=>typeof key==='string')}catch{}
   function persistButtonOrder(){try{localStorage.setItem(orderKey,JSON.stringify(buttonOrder))}catch{}}
   const fixedKeys=new Set(['search','position','sort','date','save']);
-  const defaultQuick=new Set(['expand','sold','bought','profit','result']);
-  const pinned=key=>preferences[key]===true||(preferences[key]===undefined&&defaultQuick.has(key));
+  const pinned=key=>preferences[key]===true;
   const enabled=key=>fixedKeys.has(key)||preferences._disabled?.[key]!==true;
   function normalizePreferences(value){
    const next=value&&typeof value==='object'&&!Array.isArray(value)?{...value}:{};
@@ -191,7 +190,7 @@
    const ordered=orderedControls(),buttons=ordered.map(([,entry])=>entry.button),wanted=new Set(buttons);
    for(const child of [...tools.children])if(!wanted.has(child)&&!child.matches('.people-quick-empty'))child.remove();
    let empty=tools.querySelector('.people-quick-empty');if(!empty){empty=document.createElement('span');empty.className='people-quick-empty';empty.textContent='Escolha seus atalhos nos três pontos';tools.append(empty)}
-   for(const [key,{button}] of ordered){button.hidden=!pinned(key)||button.dataset.available==='false';button.disabled=!enabled(key)||button.dataset.nativeDisabled==='true';button.dataset.controlKey=key}
+   for(const [key,{button}] of ordered){button.hidden=!pinned(key)||!enabled(key)||button.dataset.available==='false';button.disabled=!enabled(key)||button.dataset.nativeDisabled==='true';button.dataset.controlKey=key}
    const current=[...tools.children].filter(child=>wanted.has(child));if(buttons.some((button,i)=>current[i]!==button))buttons.forEach(button=>tools.append(button));
    empty.hidden=buttons.some(button=>!button.hidden);
    for(const button of [searchToggle,position,sort,dateButton,save])button.hidden=false;
@@ -213,8 +212,8 @@
    const resize=document.createElement('button');resize.type='button';resize.className='people-options-resize';resize.setAttribute('aria-expanded',String(!chooserCompact));resize.setAttribute('aria-label',chooserCompact?'Configurar menu rápido':'Voltar aos atalhos disponíveis');resize.title=resize.getAttribute('aria-label');resize.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(chooserCompact?'m15 5-7 7 7 7':'m9 5 7 7-7 7')+'"/></svg>';
    resize.onclick=()=>{chooserCompact=!chooserCompact;renderChoices();chooser.querySelector('.people-options-resize').focus()};
    heading.append(headingIcon,title,resize);const inner=document.createElement('div');inner.className='people-options-inner';chooser.append(heading,inner);
-   const candidates=orderedControls().filter(([key,{button}])=>button.dataset.available!=='false'&&(!chooserCompact||!pinned(key)));if(!chooserCompact)candidates.sort(([a],[b])=>(!enabled(a)?2:pinned(a)?1:0)-(!enabled(b)?2:pinned(b)?1:0));
-   if(!candidates.length){const empty=document.createElement('p');empty.className='people-choices-empty';empty.textContent='Todos os atalhos disponíveis estão no menu rápido.';inner.append(empty)}
+   const candidates=orderedControls().filter(([key,{button}])=>button.dataset.available!=='false'&&(!chooserCompact||(!pinned(key)&&enabled(key))));if(!chooserCompact)candidates.sort(([a],[b])=>(!enabled(a)?2:pinned(a)?1:0)-(!enabled(b)?2:pinned(b)?1:0));
+   if(!candidates.length){const empty=document.createElement('p');empty.className='people-choices-empty';empty.textContent=chooserCompact?'Expanda para configurar os atalhos.':'Não há funções disponíveis nesta tela.';inner.append(empty)}
    for(const [key,{button,label}] of candidates){
     const row=document.createElement('div');row.className='people-toolbar-row';row.dataset.choiceKey=key;
     const handle=document.createElement('button');handle.type='button';handle.className='people-order-handle';handle.draggable=true;handle.title='Arraste para mover ou use as setas para cima e para baixo';handle.setAttribute('aria-label','Mover '+label);handle.innerHTML='<svg viewBox="0 0 12 20"><circle cx="3" cy="4" r="1"/><circle cx="9" cy="4" r="1"/><circle cx="3" cy="10" r="1"/><circle cx="9" cy="10" r="1"/><circle cx="3" cy="16" r="1"/><circle cx="9" cy="16" r="1"/></svg>';
@@ -227,10 +226,19 @@
     const action=document.createElement('button');action.type='button';action.className='people-toolbar-run';action.setAttribute('aria-label','Executar '+label);action.disabled=button.disabled||button.dataset.available==='false';
     const symbol=document.createElement('span');symbol.className='people-option-symbol';symbol.innerHTML=button.innerHTML;symbol.style.setProperty('--metric-color',button.style.getPropertyValue('--metric-color'));if(button.classList.contains('people-metric-control'))symbol.classList.add('people-metric-control');
     const name=document.createElement('span');name.textContent=label;name.className='people-option-name';action.append(symbol,name);action.onclick=()=>{closeChooser();button.click()};
+    const pinLabel=()=>!enabled(key)?'Incluir no menu rápido e ligar: '+label:pinned(key)?'Remover do menu rápido: '+label:'Incluir no menu rápido: '+label;
     const power=document.createElement('button');power.type='button';power.className='people-toolbar-enable';power.setAttribute('role','switch');power.setAttribute('aria-label','Ativar função: '+label);power.setAttribute('aria-checked',String(enabled(key)));power.title=enabled(key)?'Desligar '+label:'Ligar '+label;power.innerHTML='<span class="people-enable-track" aria-hidden="true"><span class="people-enable-thumb"></span></span>';
-    power.onclick=()=>{if(!preferences._disabled)preferences._disabled={};preferences._disabled[key]=enabled(key);persistPreferences();applyPreferences();power.setAttribute('aria-checked',String(enabled(key)));power.title=enabled(key)?'Desligar '+label:'Ligar '+label;action.disabled=button.disabled||button.dataset.available==='false';row.classList.toggle('people-option-disabled',!enabled(key));if(key==='sort'&&enabled(key)&&sortMode!==0)sortRows(sortDirection);chooserSignature=choicesFingerprint()};
-    const pin=document.createElement('button');pin.type='button';pin.className='people-toolbar-pin';pin.title=pinned(key)?'Remover do menu rápido: '+label:'Incluir no menu rápido: '+label;pin.setAttribute('aria-label',pin.title);pin.setAttribute('aria-pressed',String(pinned(key)));const maskId='quick-pin-logo-'+(++pinLogoId);pin.innerHTML='<svg viewBox="10 6 42 44" aria-hidden="true"><defs><mask id="'+maskId+'" maskUnits="userSpaceOnUse" x="10" y="6" width="42" height="44" style="mask-type:alpha"><image href="cicluz-gestao-padaria-logo.png" width="177.6" height="64" preserveAspectRatio="none"/></mask></defs><rect x="10" y="6" width="42" height="44" fill="currentColor" mask="url(#'+maskId+')"/></svg>';
-    pin.onclick=()=>{preferences[key]=!pinned(key);persistPreferences();applyPreferences();renderChoices();chooser.querySelector('[data-choice-key="'+key+'"] .people-toolbar-pin')?.focus()};
+    power.onclick=()=>{if(!preferences._disabled)preferences._disabled={};preferences._disabled[key]=enabled(key);persistPreferences();applyPreferences();power.setAttribute('aria-checked',String(enabled(key)));power.title=enabled(key)?'Desligar '+label:'Ligar '+label;action.disabled=button.disabled||button.dataset.available==='false';row.classList.toggle('people-option-disabled',!enabled(key));pin.title=pinLabel();pin.setAttribute('aria-label',pin.title);if(key==='sort'&&enabled(key)&&sortMode!==0)sortRows(sortDirection);chooserSignature=choicesFingerprint()};
+    const pin=document.createElement('button');pin.type='button';pin.className='people-toolbar-pin';pin.title=pinLabel();pin.setAttribute('aria-label',pin.title);pin.setAttribute('aria-pressed',String(pinned(key)));const maskId='quick-pin-logo-'+(++pinLogoId);pin.innerHTML='<svg viewBox="10 6 42 44" aria-hidden="true"><defs><mask id="'+maskId+'" maskUnits="userSpaceOnUse" x="10" y="6" width="42" height="44" style="mask-type:alpha"><image href="cicluz-gestao-padaria-logo.png" width="177.6" height="64" preserveAspectRatio="none"/></mask></defs><rect x="10" y="6" width="42" height="44" fill="currentColor" mask="url(#'+maskId+')"/></svg>';
+    pin.onclick=()=>{
+     const selected=!pinned(key)||!enabled(key);preferences[key]=selected;
+     if(selected&&preferences._disabled)preferences._disabled[key]=false;
+     persistPreferences();applyPreferences();
+     pin.setAttribute('aria-pressed',String(selected));pin.title=pinLabel();pin.setAttribute('aria-label',pin.title);
+     power.setAttribute('aria-checked',String(enabled(key)));power.title=enabled(key)?'Desligar '+label:'Ligar '+label;
+     action.disabled=button.disabled||button.dataset.available==='false';row.classList.toggle('people-option-disabled',!enabled(key));row.classList.toggle('people-option-pinned',selected);
+     chooserSignature=choicesFingerprint();
+    };
     row.classList.toggle('people-option-disabled',!enabled(key));row.classList.toggle('people-option-pinned',pinned(key));action.title=label;row.append(handle,action,power,pin);inner.append(row);
    }
   }
@@ -238,7 +246,7 @@
   more.onclick=()=>setChooserOpen(chooser.hidden);
   document.addEventListener('pointerdown',e=>{if(!chooser.hidden&&!chooser.contains(e.target)&&!more.contains(e.target))closeChooser()});
   footer.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!chooser.hidden){closeChooser();more.focus()}else if(!tools.hidden){setQuickOpen(false);home.focus()}});
-  left.append(start,position,sort,dateButton,searchToggle);right.append(more,back,close,save,toggle);save.classList.add('people-save-control');dateButton.classList.add('people-date-control');footer.append(tools,searchBox,left,home,right,chooser,datePanel,status,importFile);panel.append(footer);
+  left.append(start,position,sort,dateButton,searchToggle);right.append(back,close,save,toggle,more);save.classList.add('people-save-control');dateButton.classList.add('people-date-control');footer.append(tools,searchBox,left,home,right,chooser,datePanel,status,importFile);panel.append(footer);
   footer.addEventListener('click',event=>{const button=event.target.closest('button');if(!button||button.matches('.people-toolbar-choice,.people-toolbar-more'))return;button.classList.add('people-click-feedback');setTimeout(()=>button.classList.remove('people-click-feedback'),220)});
   applyPreferences();
   function readState(key,fallback){try{const value=JSON.parse(localStorage.getItem(key)||'null');return value&&typeof value==='object'?value:fallback}catch{return fallback}}

@@ -57,7 +57,7 @@ def check_layout(browser, url):
                         boxes.append(box)
                     assert all(a['x'] + a['width'] <= b['x'] + .1 for a, b in zip(boxes, boxes[1:]))
                 assert bar.locator('.people-footer-left>button').evaluate_all('es=>es.map(e=>e.className.split(" ")[0])') == ['people-start-control','people-position-control','sort-az','people-date-control','people-search-toggle']
-                assert bar.locator('.people-footer-right>button').first.get_attribute('class').split()[0] == 'people-toolbar-more'
+                assert bar.locator('.people-footer-right>button').last.get_attribute('class').split()[0] == 'people-toolbar-more'
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
                 bar.locator('.people-home-logo').click()
                 assert bar.locator('.people-bottom-tools').is_visible()
@@ -161,14 +161,16 @@ def check_actions(browser, url):
     assert page.locator('#sector-content .record:not([hidden])').count() == len(original)
     bar.locator('.people-toolbar-more').click()
     choices = bar.locator('.people-toolbar-options')
-    assert choices.locator('[data-choice-key="sold"]').count() == 0
+    assert choices.locator('[data-choice-key="sold"]').count() == 1
     choices.locator('.people-options-resize').click()
+    choices.locator('[data-choice-key="sold"] .people-toolbar-pin').click()
+    choices.locator('[data-choice-key="bought"] .people-toolbar-pin').click()
     choices.locator('[data-choice-key="print"] .people-toolbar-pin').click()
     choices.locator('[data-choice-key="export"] .people-toolbar-enable').click()
     choices.locator('[data-choice-key="sold"] .people-order-handle').press('ArrowDown')
     choices.locator('.people-options-resize').click()
     assert choices.locator('[data-choice-key="print"]').count() == 0
-    assert choices.locator('[data-choice-key="export"] .people-toolbar-run').is_disabled()
+    assert choices.locator('[data-choice-key="export"]').count() == 0
     bar.locator('.people-toolbar-more').click()
     bar.locator('.people-home-logo').click()
     assert bar.locator('.people-bottom-tools [data-control-key="print"]').is_visible()
@@ -308,42 +310,62 @@ def check_enable_and_pin(browser, url):
     page.goto(url,wait_until='domcontentloaded')
     open_operations(page)
     bar=footer(page)
+    bar.locator('.people-home-logo').click()
+    assert bar.locator('.people-bottom-tools>button:not([hidden])').count()==0
+    bar.locator('.people-home-logo').click()
     page.evaluate('()=>{window.__prints=0;window.print=()=>{window.__prints++}}')
     def config():
         bar.locator('.people-toolbar-more').click()
         bar.locator('.people-options-resize').click()
         return bar.locator('[data-choice-key="print"]')
+    def others():
+        return bar.locator('.people-toolbar-row:not([data-choice-key="print"])').evaluate_all('es=>es.map(e=>[e.dataset.choiceKey,e.querySelector(".people-toolbar-enable").getAttribute("aria-checked"),e.querySelector(".people-toolbar-pin").getAttribute("aria-pressed")])')
     row=config()
-    original_color=row.locator('.people-toolbar-pin').evaluate('e=>getComputedStyle(e).backgroundColor')
-    row.locator('.people-toolbar-pin').click()
-    assert row.locator('.people-toolbar-pin').evaluate('e=>getComputedStyle(e).backgroundColor') != original_color
+    before=others()
     knob_on=row.locator('.people-enable-thumb').bounding_box()['x']
     row.locator('.people-toolbar-enable').click()
     page.wait_for_timeout(180)
     knob_off=row.locator('.people-enable-thumb').bounding_box()['x']
     assert abs(knob_on-knob_off-16)<.1
     assert row.locator('.people-toolbar-enable').get_attribute('aria-checked')=='false'
+    assert others()==before
+    original_node=row.locator('.people-toolbar-pin').evaluate('e=>{window.__pinNode=e;return true}')
+    row.locator('.people-toolbar-pin').click()
+    assert row.locator('.people-toolbar-pin').evaluate('e=>e===window.__pinNode')
+    assert row.locator('.people-toolbar-enable').get_attribute('aria-checked')=='true'
     assert row.locator('.people-toolbar-pin').get_attribute('aria-pressed')=='true'
+    assert others()==before
+    row.locator('.people-toolbar-enable').click()
+    assert row.locator('.people-toolbar-pin').get_attribute('aria-pressed')=='true'
+    assert 'ligar' in row.locator('.people-toolbar-pin').get_attribute('aria-label')
     bar.locator('.people-toolbar-more').click()
     bar.locator('.people-home-logo').click()
     action=bar.locator('.people-bottom-tools [data-control-key="print"]')
-    assert action.is_visible() and action.is_disabled()
+    assert action.is_hidden() and action.is_disabled()
     action.evaluate('e=>e.click()')
     assert page.evaluate('window.__prints')==0
-    row=config()
-    row.locator('.people-toolbar-enable').click()
+    bar.locator('.people-toolbar-more').click()
+    assert bar.locator('.people-toolbar-options [data-choice-key="print"]').count()==0
+    bar.locator('.people-options-resize').click()
+    row.locator('.people-toolbar-pin').click()
+    assert row.locator('.people-toolbar-enable').get_attribute('aria-checked')=='true'
+    assert row.locator('.people-toolbar-pin').get_attribute('aria-pressed')=='true'
+    assert others()==before
     row.locator('.people-toolbar-pin').click()
     assert row.locator('.people-toolbar-enable').get_attribute('aria-checked')=='true'
     assert row.locator('.people-toolbar-pin').get_attribute('aria-pressed')=='false'
+    bar.locator('.people-options-resize').click()
+    assert row.locator('.people-toolbar-run').is_enabled()
     row.locator('.people-toolbar-run').click()
     assert page.evaluate('window.__prints')==1
     page.evaluate("window.dispatchEvent(new Event('afterprint'))")
-    assert action.is_hidden() and not action.is_disabled()
     row=config()
     row.locator('.people-toolbar-enable').press('Space')
     page.reload(wait_until='domcontentloaded')
     open_operations(page)
-    row=config()
+    bar.locator('.people-toolbar-more').click()
+    assert bar.locator('.people-toolbar-options [data-choice-key="print"]').count()==0
+    bar.locator('.people-options-resize').click()
     assert row.locator('.people-toolbar-enable').get_attribute('aria-checked')=='false'
     assert row.locator('.people-toolbar-pin').get_attribute('aria-pressed')=='false'
     import json
@@ -353,8 +375,8 @@ def check_enable_and_pin(browser, url):
         prefs=json.load(saved)
     assert prefs['preferences']['_disabled']['print'] is True
     row=config()
-    row.locator('.people-toolbar-enable').click()
     row.locator('.people-toolbar-pin').click()
+    assert row.locator('.people-toolbar-enable').get_attribute('aria-checked')=='true'
     bar.locator('.people-toolbar-more').click()
     bar.locator('input[type=file]').set_input_files({'name':'controls.json','mimeType':'application/json','buffer':json.dumps(prefs).encode()})
     page.wait_for_timeout(150)
@@ -368,7 +390,7 @@ def check_enable_and_pin(browser, url):
     assert row.locator('.people-toolbar-enable').get_attribute('aria-checked')=='true'
     assert row.locator('.people-toolbar-pin').get_attribute('aria-pressed')=='false'
     page.close()
-    print('PASS independent enable/pin, disabled execution, keyboard, reload, import/export and legacy migration',flush=True)
+    print('PASS pin enables only selected item; stable nodes; compact filtering; keyboard; persistence and migration',flush=True)
 
 
 if __name__ == '__main__':
