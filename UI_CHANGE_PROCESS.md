@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Matriz — Lançamentos de Uniformes (04/11/2026)
+Nova view isolada; impacto restrito ao cartão novo em Formulários → Gestão de Pessoas, três scripts novos e um bloco CSS novo ao fim de ui-foundation.css (sem alterar regras existentes). Conferir: entrada pelo menu real e retorno; três abas; formulário, histórico, estoque e referência; diálogos de configurar/detalhes/confirmar; 375/390/1024px, claro/escuro, sem overflow horizontal fora das tabelas; Cadastro simples, Cadastro completo, Cargos e Ficha de Cargos continuam abrindo. Regras de saldo testadas em tests/uniforms-stock.cjs. Somente dados fictícios no navegador de teste.
+
 ## Complemento — fotografia e etapas do cadastro completo (03/11/2026)
 Fotografia e indicadores numéricos maciços na cor da origem, símbolo/número na superfície do tema. Etapa selecionada com acento100%; demais com mistura38% na superfície, sem reduzir opacidade dos números. Conferir todas as etapas, dependentes e dois temas; preservar indisponibilidade da fotografia e validação de avanço.
 
