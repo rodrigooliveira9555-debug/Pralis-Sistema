@@ -1,0 +1,295 @@
+/* Caixa (casca) — conceito "Caixa lacrado": o que o operador declara fica selado na hora e o
+   dinheiro só "fala" no fechamento. Tudo herda a cor de origem Vendas (estiloDaOrigem("vendas")).
+   Semântica de diferença sempre com sinal + palavra + ícone (a sobra fica perto do amarelo). */
+:root {
+  --falta: #b91c1c;
+  --sobra: #92400e;
+  --bateu: #166534;
+  --mistura-estado: 12%;
+}
+
+.v-theme--cicluzSombra {
+  --falta: #f87171;
+  --sobra: #fbbf24;
+  --bateu: #4ade80;
+  --mistura-estado: 20%;
+}
+
+/* Selo de estado dentro do cabeçalho: o cabeçalho nunca muda de cor por estado. */
+.caixa-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 4px 10px;
+  border: 1px solid #fff;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Trilha do turno: a faixa da marca inteira (nunca preenchida aos poucos) + 4 marcos. */
+.caixa-trilha {
+  margin: -18px calc(var(--recuo) * -1) 18px;
+  padding: 0 var(--recuo) 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--borda) 35%, transparent);
+}
+
+.caixa-trilha-faixa {
+  display: block;
+  height: 3px;
+  margin: 0 calc(var(--recuo) * -1) 10px;
+  border-radius: var(--canto) var(--canto) 0 0;
+  background: var(--faixa);
+}
+
+.caixa-trilha ol {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.caixa-trilha li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--texto-suave);
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.caixa-trilha li span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caixa-trilha .feito { color: inherit; }
+.caixa-trilha .atual { color: var(--cor-origem-texto); font-weight: 600; }
+
+.caixa-trilha-marca {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+.caixa-trilha-ponto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cor-origem-texto);
+  view-transition-name: caixa-trilha-ponto;
+}
+
+.caixa-trilha .futuro .caixa-trilha-marca::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--texto-suave);
+  border-radius: 50%;
+}
+
+/* Aviso da casca: deixa claro que nada é gravado e permite trocar o perfil da demonstração. */
+.casca-aviso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  border: 1px dashed var(--borda);
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.casca-aviso p { flex: 1 1 220px; margin: 0; }
+
+.casca-perfil {
+  flex: 0 1 220px;
+  min-width: 180px;
+}
+
+/* Dinheiro: dígitos de largura fixa, alinhados à direita, R$ menor. */
+.dinheiro {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dinheiro small {
+  margin-right: 2px;
+  color: var(--texto-suave);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.dinheiro--total { font-size: 18px; font-weight: 700; }
+.dinheiro--destaque { font-size: 28px; line-height: 34px; font-weight: 700; }
+
+/* Blocos numerados (abertura, etapas): acento 100% no ativo, 38% nos demais (regra das etapas). */
+.bloco {
+  margin: 0 0 12px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--borda) 55%, transparent);
+  border-radius: 10px;
+}
+
+.bloco-topo {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.bloco-topo h2,
+.bloco-topo h3 {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.bloco-topo p {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.bloco-num {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--cor-origem) 38%, rgb(var(--v-theme-surface)));
+  color: rgb(var(--v-theme-surface));
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.bloco-num.ativo { background: var(--cor-origem); color: #fff; }
+.bloco-num.feito { background: var(--cor-origem); color: #fff; }
+
+.grade-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 12px;
+}
+
+/* Contagem cega: o valor esperado não existe na tela do operador antes do fechamento. */
+.valor-lacrado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px dashed var(--borda);
+  border-radius: 10px;
+  color: var(--texto-suave);
+  font-size: 12px;
+}
+
+.valor-lacrado strong { display: block; color: rgb(var(--v-theme-on-surface)); font-size: 13px; }
+
+.campo-travado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px dashed var(--borda);
+  border-radius: 8px;
+  animation: caixa-travar 0.18s var(--ease-saida);
+}
+
+.campo-travado .rotulo { display: block; color: var(--texto-suave); font-size: 11px; }
+
+@keyframes caixa-travar {
+  from { border-style: solid; transform: scale(0.98); }
+  to { transform: none; }
+}
+
+/* Diferença: fundo misturado + sinal + palavra + ícone. */
+.diferenca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 10px;
+}
+
+.diferenca--falta { background: color-mix(in srgb, var(--falta) var(--mistura-estado), transparent); color: var(--falta); }
+.diferenca--sobra { background: color-mix(in srgb, var(--sobra) var(--mistura-estado), transparent); color: var(--sobra); }
+.diferenca--bateu { background: color-mix(in srgb, var(--bateu) var(--mistura-estado), transparent); color: var(--bateu); }
+.diferenca p { margin: 0; color: rgb(var(--v-theme-on-surface)); font-size: 12px; }
+
+.texto-falta { color: var(--falta); }
+.texto-sobra { color: var(--sobra); }
+.texto-bateu { color: var(--bateu); }
+
+/* Linhas de lista (movimentações, vendas, histórico) no padrão de Lançamentos. */
+.lista-caixa {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.linha-caixa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--borda) 55%, transparent);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+}
+
+button.linha-caixa { cursor: pointer; transition: background-color 0.15s var(--ease-saida); }
+button.linha-caixa:hover,
+button.linha-caixa:focus-visible { background: color-mix(in srgb, var(--cor-origem) 10%, transparent); }
+
+.linha-caixa .texto { display: grid; flex: 1; min-width: 0; line-height: 1.3; }
+.linha-caixa .texto strong { overflow: hidden; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.linha-caixa .texto small { color: var(--texto-suave); font-size: 11px; }
+
+.titulo-secao {
+  margin: 20px 0 8px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+/* Entrada linha a linha do quadro esperado × contado (60ms entre linhas). */
+.entra-linha > * {
+  animation: caixa-entra 0.22s var(--ease-saida) both;
+}
+
+.entra-linha > :nth-child(2) { animation-delay: 60ms; }
+.entra-linha > :nth-child(3) { animation-delay: 120ms; }
+.entra-linha > :nth-child(4) { animation-delay: 180ms; }
+
+@keyframes caixa-entra {
+  from { opacity: 0; transform: translateY(4px); }
+}
+
+@media (max-width: 600px) {
+  .grade-2 { grid-template-columns: minmax(0, 1fr); }
+  .caixa-trilha li { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .caixa-trilha li span:last-child { white-space: normal; }
+}

@@ -28,7 +28,7 @@ export default defineNuxtConfig({
   // Componentes pelo nome do arquivo (CampoData, FormularioLancamento), sem prefixo da pasta.
   components: [{ path: "~/components", pathPrefix: false }],
   modules: ["vuetify-nuxt-module"],
-  css: ["~/assets/cicluz.css"],
+  css: ["~/assets/cicluz.css", "~/assets/caixa.css"],
   // Desenvolvimento: o app roda em :3100 e fala com a API em :4200 pelo mesmo caminho /api.
   nitro: {
     devProxy: {

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { LogOut, Moon, Settings, Sun, Users } from "lucide-vue-next";
+import { LogOut, Moon, MonitorCheck, Settings, Store, Sun, Users } from "lucide-vue-next";
 import { useTheme } from "vuetify";
 import { CORES } from "~/utils/cores";
-import { MENU_LANCAMENTOS } from "~/utils/menu";
+import { MENU_CAIXA, MENU_LANCAMENTOS } from "~/utils/menu";
 import { aplicarTema, CHAVE_TEMA } from "~/utils/tema";
 
 // Menu lateral no padrão do menu inicial do site: marca, faixa colorida, seções, itens com círculo
@@ -22,6 +22,12 @@ const iniciais = computed(() =>
     .map((parte) => parte.charAt(0).toUpperCase())
     .join("")
 );
+
+// "Meu caixa" (/caixa) não fica ativo quando a tela é o acompanhamento (/caixa/acompanhamento).
+function caixaAtivo(rota: string) {
+  if (rota !== "/caixa") return route.path.startsWith(rota);
+  return route.path.startsWith("/caixa") && !MENU_CAIXA.some((item) => item.rota !== "/caixa" && route.path.startsWith(item.rota));
+}
 
 // Mesma chave do botão Luz/Sombra do site: trocar aqui troca lá também.
 function alternarTema() {
@@ -56,6 +62,28 @@ function alternarTema() {
           :aria-current="route.path.startsWith(item.rota) ? 'page' : undefined"
         >
           <span class="menu-icone" aria-hidden="true">$ {{ item.sinal }}</span>
+          <span class="menu-texto">
+            <strong>{{ item.titulo }}</strong>
+            <small>{{ item.subtitulo }}</small>
+          </span>
+        </NuxtLink>
+      </li>
+    </ul>
+
+    <h2 id="secao-caixa" class="menu-secao">Caixa</h2>
+    <ul class="menu-lista" aria-labelledby="secao-caixa">
+      <li v-for="item in MENU_CAIXA" :key="item.rota">
+        <NuxtLink
+          :to="item.rota"
+          class="menu-item"
+          :class="{ ativo: caixaAtivo(item.rota) }"
+          :style="{ '--cor-item': CORES.vendas.forte }"
+          :aria-current="caixaAtivo(item.rota) ? 'page' : undefined"
+        >
+          <span class="menu-icone" aria-hidden="true">
+            <Store v-if="item.icone === 'caixa'" :size="18" />
+            <MonitorCheck v-else :size="18" />
+          </span>
           <span class="menu-texto">
             <strong>{{ item.titulo }}</strong>
             <small>{{ item.subtitulo }}</small>
