@@ -56,8 +56,8 @@ def check_layout(browser, url):
                         assert box['x'] >= 0 and box['x'] + box['width'] <= width + .1
                         boxes.append(box)
                     assert all(a['x'] + a['width'] <= b['x'] + .1 for a, b in zip(boxes, boxes[1:]))
-                assert bar.locator('.people-footer-left>button').evaluate_all('es=>es.map(e=>e.className.split(" ")[0])') == ['people-start-control','people-position-control','sort-az','people-date-control','people-search-toggle']
-                assert bar.locator('.people-footer-right>button').last.get_attribute('class').split()[0] == 'people-toolbar-more'
+                assert bar.locator('.people-footer-left>button').evaluate_all('es=>es.map(e=>e.className.split(" ")[0])') == ['people-start-control','people-search-toggle','sort-az','people-date-control','people-add-control']
+                assert bar.locator('.people-footer-right>button').nth(3).get_attribute('class').split()[0] == 'people-toolbar-more'
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
                 bar.locator('.people-home-logo').click()
                 assert bar.locator('.people-bottom-tools').is_visible()
@@ -68,7 +68,7 @@ def check_layout(browser, url):
                 bar.locator('.people-toolbar-more').click()
                 choices = bar.locator('.people-toolbar-options')
                 assert choices.is_visible()
-                assert choices.locator('[data-choice-key="search"], [data-choice-key="position"], [data-choice-key="sort"], [data-choice-key="date"], [data-choice-key="save"]').count() == 0
+                assert choices.locator('[data-choice-key="search"], [data-choice-key="sort"], [data-choice-key="date"], [data-choice-key="save"]').count() == 0
                 choices.locator('.people-options-resize').click()
                 assert choices.locator('.people-options-resize').get_attribute('aria-expanded') == 'true'
                 for pin in choices.locator('.people-toolbar-pin').all():
@@ -88,7 +88,8 @@ def check_layout(browser, url):
                     assert abs(box['y'] + 15 - marker['y'] - marker['height'] / 2) < .1
                 page.mouse.click(width / 2, 20)
                 assert choices.is_hidden()
-                bar.locator('.people-position-control').click()
+                bar.locator('.people-toolbar-more').click()
+                bar.locator('[data-choice-key="position"] .people-toolbar-run').click()
                 assert bar.get_attribute('data-bar-position') == 'top'
                 head = page.locator('#'+view_id+'>.panel>.head').bounding_box()
                 assert abs(bar.bounding_box()['y'] - head['y'] - head['height'] - 6) < .1
@@ -103,7 +104,7 @@ def check_layout(browser, url):
                 rect = bar.bounding_box()
                 assert popup['y'] >= rect['y'] + rect['height']
                 assert popup['y'] + popup['height'] <= 844.1
-                bar.locator('.people-position-control').click()
+                bar.locator('[data-choice-key="position"] .people-toolbar-run').click()
                 assert bar.get_attribute('data-bar-position') == 'bottom'
                 rect = bar.bounding_box()
                 assert abs(rect['y'] + rect['height'] - 844) < .1
@@ -247,7 +248,8 @@ def check_position(browser, url):
     open_operations(page)
     bar = footer(page)
     def toggle_position():
-        bar.locator('.people-position-control').click()
+        bar.locator('.people-toolbar-more').click()
+        bar.locator('[data-choice-key="position"] .people-toolbar-run').click()
     toggle_position()
     assert bar.get_attribute('data-bar-position') == 'top'
     page.reload(wait_until='domcontentloaded')
@@ -292,7 +294,8 @@ def check_position(browser, url):
     page.wait_for_timeout(150)
     dialog = page.locator('#position-dialog')
     controls = dialog.locator('.people-bottom-header')
-    controls.locator('.people-position-control').click()
+    controls.locator('.people-toolbar-more').click()
+    controls.locator('[data-choice-key="position"] .people-toolbar-run').click()
     assert controls.get_attribute('data-bar-position') == 'top'
     controls.locator('.people-home-logo').click()
     assert controls.locator('.people-bottom-tools').bounding_box()['y'] >= controls.locator('.people-home-logo').bounding_box()['y'] + 32
@@ -393,6 +396,44 @@ def check_enable_and_pin(browser, url):
     print('PASS pin enables only selected item; stable nodes; compact filtering; keyboard; persistence and migration',flush=True)
 
 
+def check_add_control(browser, url):
+    page=browser.new_page(viewport={'width':390,'height':844})
+    page.set_default_timeout(8000)
+    errors=[]
+    page.on('pageerror',lambda error:errors.append(str(error)))
+    page.route('https://fonts.googleapis.com/**',lambda route:route.abort())
+    page.goto(url,wait_until='domcontentloaded')
+    open_operations(page)
+    bar=footer(page)
+    assert bar.locator('.people-add-control').get_attribute('aria-disabled')=='true'
+    before=page.locator('#sector-title').inner_text()
+    bar.locator('.people-add-control').click(force=True)
+    assert page.locator('#sector-title').inner_text()==before
+    for dark in [False,True]:
+        page.evaluate('(d)=>document.body.classList.toggle("dark-theme",d)',dark)
+        for key,title in [('mercadorias','Cadastro do grupo'),('bandeiras','Cadastro de bandeira'),('operadoras','Cadastro de operadora')]:
+            page.evaluate('(k)=>showFinancialGroup(k)',key)
+            page.wait_for_timeout(200)
+            assert bar.locator('.people-add-control').get_attribute('aria-disabled')=='false'
+            if key=='bandeiras' and bar.get_attribute('data-bar-position')=='bottom':
+                bar.locator('.people-toolbar-more').click()
+                bar.locator('[data-choice-key="position"] .people-toolbar-run').click()
+            bar.locator('.people-toolbar-more').click()
+            bar.locator('.people-options-resize').click()
+            native_label=page.locator('.view.show>.panel>.head .header-add-circle').first.get_attribute('aria-label')
+            assert bar.locator('.people-toolbar-options').get_by_role('button',name='Executar '+native_label,exact=True).count()==0
+            bar.locator('.people-toolbar-more').click()
+            bar.locator('.people-add-control').click()
+            assert page.locator('#sector-title').inner_text()==title
+            assert page.locator('form.account-editor').is_visible()
+    page.evaluate('showJobProfiles();showSalaryUpdate()')
+    page.wait_for_timeout(150)
+    assert bar.locator('.people-add-control').count()==1
+    page.close()
+    assert not errors,errors
+    print('PASS contextual add: unavailable state, new groups, card brands and operators in both themes',flush=True)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--url', default='http://127.0.0.1:8000/dist/index.html')
@@ -402,5 +443,6 @@ if __name__ == '__main__':
         check_actions(browser, args.url)
         check_position(browser, args.url)
         check_enable_and_pin(browser, args.url)
+        check_add_control(browser, args.url)
         print('PASS layout combinations:', check_layout(browser, args.url), flush=True)
         browser.close()

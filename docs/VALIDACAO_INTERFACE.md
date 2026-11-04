@@ -1,5 +1,8 @@
 # Validação do padrão compartilhado
 
+## Busca/adicionar fixos e posição nos atalhos — 04/11/2026
+Chromium/Playwright:120 combinações das20 telas em320/390/1024px e claro/escuro, com alternância das duas posições. Esquerda conferida como início, busca, ordenação, data e adicionar; Mais atalhos segundo da direita, antes de ocultar. Posição acessível pela lista de atalhos, sem perder persistência, importação/exportação e direção de abertura. Adicionar nativo testado em grupos de mercadorias, bandeiras e operadoras, nos dois temas, inclusive barra no alto; cadastro correto aberto e comando sem duplicação no menu. Estado indisponível sem execução conferido. Seleção individual e demais regressões passaram;21 asserções de campos e19 de datas. Captura móvel escura da barra inspecionada. Sem dados reais gravados e sem confirmação do deploy.
+
 ## Inclusão individual e filtro de Mais atalhos — 04/11/2026
 Chromium/Playwright:120 combinações das20 telas em320/390/1024px, claro/escuro e duas posições. Mais atalhos conferido como último botão à direita. Casos funcionais: início sem inclusões implícitas; incluir desligado liga/fixa somente o alvo; religar já fixado não remove; desafixar mantém ligado; desligados somem das duas listas e continuam acessíveis na configuração. Comparados os estados de todos os outros itens antes/depois; mesmo nó do botão preservado durante a seleção, sem deslocamento de linhas. Várias escolhas explícitas preservadas. Teclado, recarga, importação/exportação, migração e regressões de ordenação, busca, datas, navegação e salvar válido/inválido passaram.21 asserções de campos e19 de datas passaram. Dados apenas em navegador isolado; deploy não confirmado.
 

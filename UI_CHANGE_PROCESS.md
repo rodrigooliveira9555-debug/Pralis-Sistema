@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Matriz — busca e adicionar fixos, posição nos atalhos (04/11/2026)
+Esquerda: início, busca, ordenação, data, adicionar (+). Posição da barra volta à personalização/atalhos, preservando seleção e ativação. Direita: voltar, fechar, salvar, Mais atalhos, ocultar (segundo a partir da direita é Mais atalhos). Adicionar delega à ação nativa da tela, sem duplicá-la na lista, e fica sem ação quando indisponível. Conferir20 telas, dois temas/três larguras, ambas as posições, novos cadastros, busca, seleção individual e persistência.
+
 ## Correção — inclusão liga a função e cliques isolados (04/11/2026)
 Marca inclui e liga somente o item escolhido; se já fixado porém desligado, a marca religa sem remover. Remover do rápido mantém ligado. Funções desligadas não aparecem no rápido nem na lista compacta. Mais atalhos mostra apenas disponíveis, ligados e não fixados. Configuração expandida mantém todos. Atualizar linha no lugar, sem reposicioná-la durante o clique; conferir que outros itens não mudam e que várias escolhas continuam permitidas. Mais atalhos na extremidade direita, depois de ocultar cabeçalho. Conferir persistência e20 estruturas/dois temas/três larguras.
 
