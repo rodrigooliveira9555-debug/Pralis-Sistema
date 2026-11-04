@@ -42,6 +42,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel{border-botto
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header button[hidden]{display:none!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-home-logo{border:0!important;box-shadow:none;background:transparent!important;padding:0}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .sort-az{font:600 11px/1 var(--ui-font);letter-spacing:0}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .sort-az[data-sort-mode="original"]{font-size:18px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-bottom-extras>button:first-child{position:relative;padding:5px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-search-outline{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;fill:none;stroke:none;z-index:2;overflow:visible}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search input{border-radius:8px!important;border-color:transparent;position:relative}
@@ -92,7 +93,8 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tool
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-quick-empty{font:400 11px/16px var(--ui-font);color:var(--navigation-ink);text-align:center}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-quick-empty[hidden]{display:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search{grid-area:query;width:100%;max-width:none;min-width:0;position:relative!important;transform:none!important;top:auto!important;right:auto!important;padding:6px 0;box-sizing:border-box}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-hidden-toggle{width:28px;height:28px;flex:0 0 28px;padding:4px;margin-left:5px}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-hidden-toggle{--shell-icon-stroke:1.5;display:grid;place-items:center;box-sizing:border-box;width:30px;height:30px;flex:0 0 30px;padding:5px;margin:0 0 0 4px;border-radius:7px}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-hidden-toggle svg{width:18px;height:18px;flex:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-choices-empty{font:400 11px/16px var(--ui-font);color:var(--navigation-ink);padding:8px;margin:0;overflow-wrap:anywhere}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-compact .people-choices-empty{font-size:10px;line-height:13px;padding:0;text-align:center}
 @media(max-width:600px){

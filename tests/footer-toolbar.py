@@ -69,6 +69,17 @@ def check_layout(browser, url):
                 assert choices.locator('[data-choice-key="search"], [data-choice-key="sort"], [data-choice-key="date"], [data-choice-key="save"]').count() == 0
                 choices.locator('.people-options-resize').click()
                 assert choices.locator('.people-options-resize').get_attribute('aria-expanded') == 'true'
+                for eye in choices.locator('.people-toolbar-hidden-toggle').all():
+                    box = eye.bounding_box()
+                    icon = eye.locator('svg')
+                    glyph = icon.bounding_box()
+                    assert box['width'] == box['height'] == 30
+                    assert glyph['width'] == glyph['height'] == 18
+                    assert abs(glyph['x'] + 9 - box['x'] - 15) < .1
+                    assert abs(glyph['y'] + 9 - box['y'] - 15) < .1
+                    assert icon.evaluate('e => getComputedStyle(e).strokeWidth') == '1.5px'
+                    marker = eye.locator('xpath=preceding-sibling::button[contains(@class,"people-toolbar-visibility")]').bounding_box()
+                    assert abs(box['y'] + 15 - marker['y'] - marker['height'] / 2) < .1
                 page.mouse.click(width / 2, 20)
                 assert choices.is_hidden()
                 checked += 1
@@ -91,14 +102,27 @@ def check_actions(browser, url):
     row_order = lambda: page.locator('#sector-content .record-grid>.record').evaluate_all('es => es.map(e => e.dataset.target)')
     original = row_order()
     sort = bar.locator('.sort-az')
+    assert sort.inner_text() == '⠿' and sort.get_attribute('aria-label') == 'Ordem original'
     sort.click()
     ascending = row_order()
-    assert ascending != original and sort.get_attribute('aria-label') == 'Organizar de Z a A'
+    assert ascending != original and sort.get_attribute('aria-label') == 'Ordem de A a Z'
+    assert sort.inner_text() == 'A/Z'
     sort.click()
     assert row_order() == list(reversed(ascending))
-    assert sort.get_attribute('aria-label') == 'Restaurar ordem original'
+    assert sort.get_attribute('aria-label') == 'Ordem de Z a A'
+    assert sort.inner_text() == 'Z/A'
     sort.click()
-    assert row_order() == original and sort.get_attribute('aria-label') == 'Organizar de A a Z'
+    assert row_order() == original and sort.get_attribute('aria-label') == 'Ordem original'
+    assert sort.inner_text() == '⠿'
+    page.locator('#sector-content .record-grid').evaluate('e => e.append(e.firstElementChild)')
+    page.wait_for_timeout(150)
+    manual = row_order()
+    assert manual != original
+    for _ in range(3):
+        sort.click()
+        page.wait_for_timeout(60)
+    assert row_order() == manual and sort.inner_text() == '⠿'
+    original = manual
     date = bar.locator('.people-date-control')
     assert date.get_attribute('aria-disabled') == 'true'
     date.click(force=True)

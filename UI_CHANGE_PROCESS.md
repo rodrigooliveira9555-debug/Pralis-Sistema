@@ -1,5 +1,11 @@
 # Processo de alterações de interface
 
+## Complemento — visibilidade refinada em todos os menus (04/11/2026)
+Olho compartilhado com curvas suaves, pupila central e traço1,5px, sem alterar função de ocultar/restaurar. Controle30px alinhado ao marcador de seleção; SVG18px centralizado. Conferir todas as20 estruturas, dois temas e320/390/1024px, incluindo estado oculto e menu compacto/configuração.
+
+## Correção — indicador da ordem atual (04/11/2026)
+O botão representa a ordem aplicada: seis pontos iguais ao marcador das linhas na ordem original, A/Z na crescente e Z/A na decrescente. Eliminar barra e pontos duplicados. Texto acessível e tooltip refletem o estado atual; descrever próxima ação separadamente. Conferir três estados, restauração do layout manual e os dois temas.
+
 ## Matriz — rodapé fixo e menu rápido (03/11/2026)
 Marca central abre/fecha segunda faixa de atalhos sem aumentar a marca; clique externo/Escape oculta. Esquerda: início, busca, ordenação A–Z/Z–A/original e data. Direita: voltar, fechar, salvar, três pontos e ocultar/restaurar cabeçalho. Fixos ausentes da lista de personalização. Lista compacta mostra apenas disponíveis não escolhidos; configuração expandida inclui escolhidos e ocultos, com seleção para menu rápido, visibilidade e ordem persistentes por tela. Data sem registros datados permanece colorida e sem ação. Conferir20 estruturas/320/390/1024px/dois temas, foco/teclado, salvar com validação, retorno, busca nativa, ordenação/restauração, estado por tela/reload, lista/configuração/atalhos, diálogos e navegação.
 
