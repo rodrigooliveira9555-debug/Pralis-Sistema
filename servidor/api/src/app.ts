@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
@@ -20,6 +22,7 @@ import { registrarRotasUsuarios } from "./usuarios/usuarios.controller.ts";
 const rotasComAutenticacaoPropria = new Set(["/health", "/api/auth/*"]);
 
 const pastaSite = fileURLToPath(new URL("../../../dist", import.meta.url));
+const pastaApp = fileURLToPath(new URL("../../web/.output/public", import.meta.url));
 
 export async function buildApp(): Promise<FastifyInstance> {
   const opcoes: FastifyServerOptions = {
@@ -106,6 +109,19 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registrarRotasDocumentos(app);
   await registrarRotasUsuarios(app);
   await registrarRotasConsultas(app);
+
+  // App das telas novas (Nuxt gerado em web/.output/public), em /app/ no mesmo domínio do site.
+  // Em produção o Vercel repassa /app/* e /api/* para cá; rota interna do app sem arquivo cai no
+  // index.html dele (SPA).
+  if (existsSync(pastaApp)) {
+    await app.register(fastifyStatic, { root: pastaApp, prefix: "/app/", decorateReply: false });
+    app.setNotFoundHandler((request, reply) => {
+      if (request.method === "GET" && request.url.startsWith("/app/")) {
+        return reply.type("text/html").send(readFileSync(join(pastaApp, "index.html")));
+      }
+      return reply.status(404).send(problema(404, "Não encontrado", "NOT_FOUND"));
+    });
+  }
 
   if (env.SERVIR_SITE === "1") {
     await app.register(fastifyStatic, { root: pastaSite, index: ["index.html"] });

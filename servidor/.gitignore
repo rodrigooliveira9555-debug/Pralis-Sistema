@@ -2,3 +2,6 @@ node_modules/
 .env
 .env.local
 *.log
+web/.nuxt/
+web/.output/
+web/.data/

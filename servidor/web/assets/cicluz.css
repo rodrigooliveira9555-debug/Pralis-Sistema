@@ -1,0 +1,111 @@
+/* Tokens do site do Rodrigo (dist/ui-foundation.css, dist/theme-surfaces.css, DESIGN_SYSTEM.md),
+   repetidos aqui só no que o app usa. Cores por origem, tela em três retângulos de cantos 12px
+   separados por 6px, campos de 42px, título 16px, subtítulo 11px, Montserrat. */
+:root {
+  --ui-font: Montserrat, system-ui, sans-serif;
+  --cor-vendas: #eab308;
+  --cor-contas: #f97316;
+  --cor-despesas: #ef4444;
+  --cor-mercadorias: #22c55e;
+  --cor-retiradas: #2563eb;
+  --cor-formularios: #7c3aed;
+  --canto: 12px;
+  --respiro: 6px;
+  --recuo: 14px;
+  --rodape: 58px;
+  --navigation-ink: #a2a0aa;
+  --texto-suave: #6e6e73;
+  --borda: #d4d4d8;
+  --faixa: linear-gradient(90deg, #ff0000 0% 13.043%, #ff8000 17.391% 30.435%, #f2d000 34.783% 47.826%,
+    #00e833 52.174% 65.217%, #0055ff 69.565% 82.609%, #8000ff 86.957% 100%);
+  --ease-saida: cubic-bezier(.2, .8, .2, 1);
+}
+
+.v-theme--cicluzSombra {
+  --navigation-ink: #9896a1;
+  --texto-suave: #b5b3be;
+  --borda: #4a4851;
+}
+
+html,
+body,
+.v-application {
+  font-family: var(--ui-font) !important;
+}
+
+/* Tela padrão: cabeçalho na cor de origem, conteúdo e rodapé como retângulos independentes. */
+.tela {
+  display: flex;
+  flex-direction: column;
+  gap: var(--respiro);
+  min-height: 100%;
+}
+
+.tela-topo,
+.tela-conteudo,
+.tela-rodape {
+  border-radius: var(--canto);
+}
+
+.tela-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--rodape);
+  padding: 8px var(--recuo);
+  background: var(--cor-origem, var(--cor-formularios));
+  color: #fff;
+}
+
+.tela-topo h1 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.tela-topo p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.tela-conteudo {
+  flex: 1;
+  padding: 18px var(--recuo);
+  background: rgb(var(--v-theme-surface));
+}
+
+.tela-rodape {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: var(--rodape);
+  padding: 8px var(--recuo) max(8px, env(safe-area-inset-bottom));
+  background: rgb(var(--v-theme-surface));
+}
+
+.texto-suave {
+  color: var(--texto-suave);
+}
+
+.icone-tela {
+  width: 30px;
+  height: 30px;
+  flex: none;
+}
+
+@media (max-width: 600px) {
+  :root { --recuo: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

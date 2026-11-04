@@ -1,0 +1,1 @@
+import{l as e}from"./6idFWpLr.js";import{A as t,ot as n,q as r,w as i}from"./aph-pnb6.js";var a=t({__name:`index`,async setup(t){let a,o;return[a,o]=n(()=>e(`/lancamentos/despesas`,{replace:!0})),await a,o(),(e,t)=>(r(),i(`div`))}});export{a as default};

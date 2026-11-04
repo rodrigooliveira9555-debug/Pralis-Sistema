@@ -145,10 +145,9 @@
     }
   });
 
-  async function sair() {
-    try { await S.api('/auth/sign-out', { metodo: 'POST', corpo: {} }); } catch (e) { /* já sem sessão */ }
-    avisar('');
-    mostrarFormulario();
+  // Os botões "Sair" desta tela usam a mesma saída única do sistema.
+  function sair() {
+    sairCompleto();
   }
 
   function tamanhoLegivel(bytes) {
@@ -315,5 +314,58 @@
     location.replace(voltar);
   }
 
-  prosseguir();
+  // Saída única do sistema (botão Sair do site e do app). Ordem: envia a fila do aparelho; só
+  // com ela vazia encerra a sessão e apaga deste aparelho os dados de negócio da empresa.
+  async function sairCompleto() {
+    carregando('Saindo…');
+    var chaves = null;
+    var perfil = null;
+    try {
+      var sessao = await S.api('/sessao');
+      chaves = sessao.chavesSincronizadas;
+      perfil = sessao.perfil;
+    } catch (erro) {
+      if (erro.status !== 401) {
+        return mostrarEstado('Não foi possível sair', erro.message,
+          'Seus dados continuam neste aparelho.', { principal: ['Tentar de novo', sairCompleto] });
+      }
+    }
+    var pend = S.pendentes();
+    // Fila de OUTRA conta neste aparelho: não manda com o cookie desta e não apaga nada dela.
+    if (pend && perfil && pend.usuarioId !== perfil.usuarioId) {
+      try { await S.api('/auth/sign-out', { metodo: 'POST', corpo: {} }); } catch (e) { /* já sem sessão */ }
+      history.replaceState(null, '', 'entrar.html');
+      mostrarFormulario();
+      return avisar('Este aparelho tem alterações de outra conta. Entre com aquela conta para enviá-las.');
+    }
+    if (chaves && pend) {
+      var bases = {};
+      Object.keys(pend.itens).forEach(function (chave) { if (chaves.indexOf(chave) >= 0) bases[chave] = pend.itens[chave].versaoBase; });
+      try {
+        if (Object.keys(bases).length) await S.enviarLote(bases);
+      } catch (erro) {
+        if (erro.codigo !== 'DOCUMENT_VERSION_CONFLICT') {
+          return mostrarEstado('Alterações ainda não enviadas',
+            'Não foi possível enviar ao servidor as alterações deste aparelho (' + erro.message + ').',
+            'Confira a conexão e tente sair de novo. Nada foi apagado.', { principal: ['Tentar de novo', sairCompleto] });
+        }
+      }
+      S.salvarPendentes(null);
+    } else if (pend) {
+      // Sem sessão não há como enviar: não apaga nada e pede para entrar de novo.
+      avisar('');
+      mostrarFormulario();
+      return avisar('Há alterações deste aparelho ainda não enviadas. Entre para enviá-las.');
+    }
+    try { await S.api('/auth/sign-out', { metodo: 'POST', corpo: {} }); } catch (e) { /* já sem sessão */ }
+    (chaves || []).forEach(function (chave) { S.removeOriginal.call(localStorage, chave); });
+    S.remover(localStorage, S.META.dono);
+    S.remover(sessionStorage, S.META.aba);
+    history.replaceState(null, '', 'entrar.html');
+    mostrarFormulario();
+    anuncio.textContent = 'Você saiu do sistema.';
+  }
+
+  if (params.get('sair') === '1') sairCompleto();
+  else prosseguir();
 })();

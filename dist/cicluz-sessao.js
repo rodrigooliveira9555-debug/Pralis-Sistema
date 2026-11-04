@@ -210,26 +210,11 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', criarRegioes);
   else criarRegioes();
 
-  // Sair: só com tudo enviado. Depois apaga deste aparelho os dados de negócio da empresa.
+  // Sair: envia o que esta aba ainda tem na fila e passa para a saída única do sistema
+  // (entrar.html?sair=1, a mesma do app), que confere a fila do aparelho antes de encerrar.
   async function sair() {
     await enviar();
-    var pend = S.pendentes();
-    if (pend && Object.keys(pend.itens).length) {
-      mostrarAviso('erro', 'Ainda há alterações não enviadas ao servidor. Confira a conexão e tente sair de novo.');
-      return false;
-    }
-    try {
-      await S.api('/auth/sign-out', { metodo: 'POST', corpo: {} });
-    } catch (erro) {
-      if (erro.status !== 401) {
-        mostrarAviso('erro', 'Não foi possível sair agora: ' + erro.message);
-        return false;
-      }
-    }
-    chaves.forEach(function (chave) { S.removeOriginal.call(localStorage, chave); });
-    S.remover(localStorage, S.META.dono);
-    S.remover(sessionStorage, S.META.aba);
-    location.replace('entrar.html');
+    location.replace('entrar.html?sair=1');
     return true;
   }
 
