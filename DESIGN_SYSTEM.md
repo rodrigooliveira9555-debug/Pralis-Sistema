@@ -1,5 +1,37 @@
 # CICLUZ — referência de interface
 
+## Regras vigentes — seleção individual e visibilidade (04/11/2026)
+Incluir pela marca fixa e liga somente o item escolhido. Se já estiver fixado porém desligado, a marca religa sem remover. Remover do rápido mantém a função ligada. Não há inclusões implícitas iniciais: somente escolhas explícitas entram no rápido; escolhas explícitas anteriores são preservadas. Várias escolhas são permitidas, uma por ação, sem modificar outras funções.
+
+Ligado e fixado aparece no rápido; ligado e não fixado aparece em Mais atalhos; desligado fica somente na configuração expandida. Desligar preserva a preferência de fixação, mas oculta o item das duas listas. Os controles da linha são atualizados no lugar, sem mover outros botões durante o clique. Descrições acessíveis indicam quando incluir também vai ligar.
+
+Mais atalhos fica na extremidade direita, depois do controle de ocultar cabeçalho. A ordem da esquerda permanece início, posição, ordenação, data e busca.
+
+## Correção vigente — marca vazada e posição dos atalhos (04/11/2026)
+O seletor de inclusão no menu rápido usa a silhueta monocromática da marca CICLUZ na superfície do tema, como recorte. Corpo na mesma cor dos outros controles; selecionado recebe mistura40% da origem e60% do cinza de navegação para parecer apagado. Preservar os interruptores de execução independentes. A marca central mantém sua arte original.
+
+Fixos à esquerda: início, posição da barra, ordenação, calendário e busca. À direita: Mais atalhos primeiro, depois voltar, fechar, salvar e ocultar/restaurar cabeçalho. Ordenação volta a ser fixa e não aparece duplicada na personalização. Aplicar às duas posições da barra e aos dois temas.
+
+## Regra vigente — cinco fixos e estados independentes (04/11/2026)
+À esquerda da marca central: início, posição da barra, três pontos de configuração, calendário e busca. À direita: voltar, fechar, salvar e ocultar/restaurar cabeçalho. Ordenação deixa de ser fixa e fica disponível no menu rápido/personalização; posição passa a ser fixa. Ícone de posição com dois painéis arredondados e setas opostas, traço1,5px.
+
+Na configuração, interruptor liga/desliga a execução da função. Marca CICLUZ em círculo roxo seleciona inclusão no menu rápido: cheio/aceso quando fixado, contorno quando fora. Os estados são independentes: desligar não remove o atalho, desafixar não desativa a função. Função fixada e desligada aparece sem executar; função ligada e não fixada continua disponível no menu lateral. Substitui o marcador de confirmação e o olho. Estado e ordem persistem por tela e em importação/exportação; antigas marcações de oculto viram não fixado, sem desativar funções.
+
+## Regra vigente — posição da barra (04/11/2026)
+Posição da barra é um controle da configuração do menu rápido. Alterna a mesma barra entre rodapé e logo abaixo do cabeçalho superior; todas as ações permanecem compartilhadas. No alto, atalhos da marca e painéis abrem para baixo; no rodapé, abrem para cima. Marca não aumenta. A escolha é salva por tela e acompanha importação/exportação; configurações anteriores continuam embaixo. Cabeçalho superior pode ser ocultado/restaurado em ambas as posições.
+
+O marcador de ordem original usa ⠿ com a mesma tipografia20px/peso400 dos marcadores das linhas, em uma caixa centralizada dentro do botão.
+
+## Complemento vigente — controle de visibilidade (04/11/2026)
+Todos os menus rápidos usam o mesmo olho refinado: curvas suaves, pupila central e traço1,5px. Caixa30px alinhada à seleção, símbolo18px centralizado e raio7px; cores e operação de ocultar/restaurar preservadas nos dois temas.
+
+## Regra vigente — rodapé fixo e menu rápido (03/11/2026)
+Marca central, sem ampliar, alterna a segunda faixa superior de atalhos. Clique externo ou Escape fecha a faixa. Controles fixos à esquerda: menu inicial, busca, ordem e data. À direita: voltar, fechar, salvar, três pontos e ocultar/restaurar cabeçalho superior. Ações de formulário delegam às funções existentes e preservam validação.
+
+Ordem percorre original, A–Z e Z–A; conforme correção de04/11/2026, o botão representa o estado atual: ⠿ (mesmo marcador de seis pontos das linhas), A/Z ou Z/A. Não usar barra nem pontos duplicados. Tooltip e nome acessível informam a ordem atual; a próxima ação fica na descrição acessível. Alterações manuais na ordem original passam a ser a referência do ciclo. A ordem original é capturada antes da ordenação, sem alterar dados persistidos. Data sem registros datados continua na cor da aba e fica sem ação.
+
+Três pontos: lista compacta contém somente atalhos disponíveis, não fixados e não ocultos. Configuração expandida inclui os fixados e permite marcar/desmarcar, ocultar/restaurar e reordenar. Não escolhidos ficam no topo; fixados aparecem na segunda faixa. Preferências e ordem são preservadas por tela, com importação/exportação. A marca permanece centralizada também no celular; os nove controles ficam visíveis.
+
 ## Regra vigente — app novo (/app/): tons de contraste das cores de origem (03/11/2026)
 No app das telas novas, cabeçalho, círculo do menu e botão preenchido usam o tom FORTE da cor de origem com texto branco, porque branco sobre o amarelo #eab308 dá 1,9:1 e sobre o verde #22c55e dá 2,3:1 (WCAG AA pede 4,5:1). Tons fortes: vendas #a16207, despesas #dc2626, mercadorias #15803d, retiradas #2563eb (igual), formulários #7c3aed (igual). No tema Sombra, texto, contorno e foco usam o tom claro (vendas #eab308, despesas #f87171, mercadorias #4ade80, retiradas #60a5fa, formulários #b197fc). A cor original continua sendo a identidade de cada área. Botões e seleção herdam a cor da tela (nada de roxo fixo). Fonte única: servidor/web/utils/cores.ts. **Pendente para o Rodrigo:** aplicar os mesmos tons nas telas HTML do site.
 
