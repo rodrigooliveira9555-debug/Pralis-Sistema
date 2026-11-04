@@ -1,5 +1,10 @@
 # CICLUZ — referência de interface
 
+## Regras vigentes — métricas e atalhos de lançamento (04/11/2026)
+As métricas +VND/−VND são amarelas, +COM/−COM verdes, +LUC/−LUC azuis e +RES/−RES preservam roxo. O primeiro clique mostra + (maiores valores primeiro), o segundo − (menores primeiro), em ciclos independentes. Sem valores, alternar o modo e informar a ausência de dados. Ordenar preservando cada grupo, substituindo a ordenação alfabética anterior.
+
+Preparar na configuração: VND — Lançar vendas — amarelo; DES — Lançar despesas — vermelho; RET — Lançar retiradas — azul; MER — Lançar mercadorias — verde; CAR — Lançar cartões — roxo; PDV — Lançar PDV — roxo. Usuário confirmou criar os botões primeiro e conectar as telas posteriormente. Cada atalho segue ativação/fixação individual, sem inclusão automática, e informa que a tela ainda não está disponível ao executar. Não abrir cadastros de grupos como se fossem lançamentos nem gravar dados fictícios. As cores próprias aparecem na lista e no rápido, em ambos os temas.
+
 ## Lançamentos de Uniformes (04/11/2026)
 Formulários → Gestão de Pessoas ganha o cartão Lançamentos de Uniformes, ao lado de Cadastro simples e Cadastro completo c/ dependente, roxo da origem. Uma única view (#uniforms-view) com três seções em abas internas: Lançamentos (formulário + histórico), Controle de Estoque e Referência por Cargo; sem novas opções no menu principal. Somente front-end: dados neste navegador (cicluz-uniformes-v1) até a integração com o banco. Catálogo dos56 uniformes e colaboradores demonstrativos isolados em uniforms-data.js; regras de saldo em uniforms-stock.js; tela em uniforms.js; estilos no bloco Lançamentos de Uniformes de ui-foundation.css usando tokens de tema.
 
@@ -26,6 +31,7 @@ Aba Entrevista removida (04/11/2026): o fluxo começa no Cadastro Simples, que c
 Ordem da admissão (04/11/2026, substitui a ordem anterior; sem a Entrevista): Cadastro Simples → Exame Admissional → Período de Teste → Cadastro Completo com Dependente → Colaboradores Cadastrados. Cadastro Simples OK libera o Exame; só APTO libera o Período de Teste (botão Dar Continuidade no histórico do exame; ENUM do período lista apenas APTO sem decisão); só a aprovação do DP no Período de Teste libera o link do Cadastro Completo e, depois dele, a ativação. NÃO APTO, exame aguardando resultado e período não aprovado não avançam. Candidatos antigos (sem flow 2) mantêm o fluxo anterior.
 
 Links externos (04/11/2026): o script inline legado declara a função global open(t) do modal antigo, que substitui window.open. Telas novas abrem WhatsApp e mapas por U.openExternal (link com target _blank), nunca window.open; botões legados data-open continuam usando o modal. Exame Admissional: Empresa é ENUM com Comercial tudinupao LTDA (CNPJ 08.351.168/0001-53) e Comercial Lisboa Alimentos LTDA (CNPJ 34.055.795/0001-57); o CNPJ é preenchido pela empresa e fica somente leitura.
+
 ## Regra vigente — busca e adicionar fixos (04/11/2026)
 Esquerda: início, busca, ordenação, calendário e adicionar (+). Mover barra passa a ser função de Mais atalhos/configuração, com a mesma seleção, ativação e persistência das outras funções. Direita, do centro para a borda: voltar, fechar, salvar, Mais atalhos e ocultar cabeçalho; Mais atalhos é o segundo contando da direita.
 
