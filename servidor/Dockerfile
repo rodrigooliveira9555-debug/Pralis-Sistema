@@ -6,7 +6,7 @@
 FROM node:24-alpine AS app
 WORKDIR /app
 ENV NUXT_TELEMETRY_DISABLED=1
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json tsconfig.base.json ./
 COPY shared/package.json shared/
 COPY db/package.json db/
 COPY api/package.json api/
@@ -22,7 +22,7 @@ FROM node:24-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json tsconfig.base.json ./
 COPY shared/package.json shared/
 COPY db/package.json db/
 COPY api/package.json api/
