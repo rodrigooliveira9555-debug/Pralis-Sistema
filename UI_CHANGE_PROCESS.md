@@ -6,6 +6,9 @@ Usuário confirmou criar botões primeiro e conectar telas depois: VND/Lançar v
 ## Matriz — quatro métricas com cores próprias (04/11/2026)
 VND amarelo, COM verde, LUC azul e RES preserva roxo. Primeiro clique mostra + e ordena maiores primeiro; segundo mostra − e ordena menores primeiro, por controle. Sem dados numéricos, alternar o modo e informar que não há valores para ordenar. Preservar grupos ao ordenar. Conferir todos os quatro na lista de atalhos e no rápido, claro/escuro, três larguras, estado por botão, ausência de dados e regressões de ativação/fixação. Novos botões aguardam o áudio separado.
 
+## Matriz — Lançamentos de Uniformes (04/11/2026)
+Nova view isolada; impacto restrito ao cartão novo em Formulários → Gestão de Pessoas, três scripts novos e um bloco CSS novo ao fim de ui-foundation.css (sem alterar regras existentes). Conferir: entrada pelo menu real e retorno; três abas; formulário, histórico, estoque e referência; diálogos de configurar/detalhes/confirmar; 375/390/1024px, claro/escuro, sem overflow horizontal fora das tabelas; Cadastro simples, Cadastro completo, Cargos e Ficha de Cargos continuam abrindo. Regras de saldo testadas em tests/uniforms-stock.cjs. Somente dados fictícios no navegador de teste.
+
 ## Matriz — busca e adicionar fixos, posição nos atalhos (04/11/2026)
 Esquerda: início, busca, ordenação, data, adicionar (+). Posição da barra volta à personalização/atalhos, preservando seleção e ativação. Direita: voltar, fechar, salvar, Mais atalhos, ocultar (segundo a partir da direita é Mais atalhos). Adicionar delega à ação nativa da tela, sem duplicá-la na lista, e fica sem ação quando indisponível. Conferir20 telas, dois temas/três larguras, ambas as posições, novos cadastros, busca, seleção individual e persistência.
 
