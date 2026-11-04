@@ -1,5 +1,10 @@
 # CICLUZ — referência de interface
 
+## Regras vigentes — ícones das linhas e ações laterais (04/11/2026)
+Ícone à esquerda das linhas da área de conteúdo (entre o cabeçalho superior e o inferior) deixa de ser redondo e passa a ser quadrado de cantos arredondados, no padrão Apple: raio `--row-icon-radius` (26% do lado, token em `ui-foundation.css`), mesmo tamanho, cor, glifo e alinhamento de antes. Vale para `.card-inherited-icon`, `.location-icon` e `.job-icon` dentro de `.record`, `.account-list-row`, `.location-row` e `.job-item` (Gestão de Pessoas, grupos financeiros/contas, localização e Cargos). Círculos de cabeçalho, rodapé, atalhos, seletores de ícone, avatar e menu lateral continuam redondos.
+
+Ao expandir a linha (seta à direita), Editar e Excluir deixam de ser dois blocos de altura completa e viram botões redondos de `--row-action-size` (32px) com `--row-action-gap` (6px), centralizados na área de 76px, no mesmo padrão dos redondos do rodapé: círculo maciço (Editar na cor do item, Excluir em vermelho) e o desenho como recorte na superfície (`--theme-surface`: branco no tema claro, escuro no escuro). Vale em Cargos, listas financeiras, contas e árvore de localização. **SUPERA** "Ações laterais em blocos de altura completa, dois 38px lado a lado" e a regra "Substituir círculos por dois blocos justapostos 52px" (Correção de escopo e formato), abaixo.
+
 ## Regras vigentes — métricas e atalhos de lançamento (04/11/2026)
 As métricas +VND/−VND são amarelas, +COM/−COM verdes, +LUC/−LUC azuis e +RES/−RES preservam roxo. O primeiro clique mostra + (maiores valores primeiro), o segundo − (menores primeiro), em ciclos independentes. Sem valores, alternar o modo e informar a ausência de dados. Ordenar preservando cada grupo, substituindo a ordenação alfabética anterior.
 
