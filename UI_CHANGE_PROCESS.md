@@ -1,5 +1,7 @@
 # Processo de alterações de interface
 
+## Matriz — Lançamentos de Uniformes (04/11/2026)
+Nova view isolada; impacto restrito ao cartão novo em Formulários → Gestão de Pessoas, três scripts novos e um bloco CSS novo ao fim de ui-foundation.css (sem alterar regras existentes). Conferir: entrada pelo menu real e retorno; três abas; formulário, histórico, estoque e referência; diálogos de configurar/detalhes/confirmar; 375/390/1024px, claro/escuro, sem overflow horizontal fora das tabelas; Cadastro simples, Cadastro completo, Cargos e Ficha de Cargos continuam abrindo. Regras de saldo testadas em tests/uniforms-stock.cjs. Somente dados fictícios no navegador de teste.
 ## Matriz — busca e adicionar fixos, posição nos atalhos (04/11/2026)
 Esquerda: início, busca, ordenação, data, adicionar (+). Posição da barra volta à personalização/atalhos, preservando seleção e ativação. Direita: voltar, fechar, salvar, Mais atalhos, ocultar (segundo a partir da direita é Mais atalhos). Adicionar delega à ação nativa da tela, sem duplicá-la na lista, e fica sem ação quando indisponível. Conferir20 telas, dois temas/três larguras, ambas as posições, novos cadastros, busca, seleção individual e persistência.
 
