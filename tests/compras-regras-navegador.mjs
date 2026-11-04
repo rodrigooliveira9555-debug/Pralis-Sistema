@@ -248,6 +248,25 @@ async function fecharDialogos() {
   await fecharDialogos();
 }
 
+/* ---------- 5) Só grava quando muda (cada gravação vira versão nova no banco) ---------- */
+{
+  const r = await p.evaluate(() => {
+    const original = Storage.prototype.setItem;
+    let gravacoes = 0;
+    Storage.prototype.setItem = function (k, v) { if (k === 'cicluz-compras-v1') gravacoes++; return original.call(this, k, v); };
+    try {
+      const SV = CicluzComprasServico;
+      SV.processarAgendas(); SV.processarConferencias(); SV.fecharVencidas();
+      ['agendamento', 'cotacao', 'conferencias', 'pedidos', 'estoque'].forEach((t) => CicluzCompras.abrir(t));
+      const semMudanca = gravacoes;
+      CicluzComprasDados.transacao((d) => { d.fornecedores[0].categoria = 'Teste de gravação'; });
+      return { semMudanca, comMudanca: gravacoes - semMudanca };
+    } finally { Storage.prototype.setItem = original; }
+  });
+  ok(r.semMudanca === 0, 'Abrir as telas e rodar os agendadores sem criar nada não grava (' + r.semMudanca + ')');
+  ok(r.comMudanca === 1, 'Uma mudança de verdade grava uma vez');
+}
+
 await navegador.close();
 servidor.close();
 assert.deepEqual(erros, [], 'Erros de página: ' + erros.join(' | '));
