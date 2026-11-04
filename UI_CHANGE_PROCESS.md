@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Matriz — módulo Compras (04/11/2026)
+Novas estruturas: compras-agendamento, compras-solicitacao, compras-cotacao, compras-pedidos, compras-conferencias, compras-estoque, compras-cadastro, compras-fornecedores e compras-produtos, mais rodada.html (fora do shell). Conferir as 9 telas em 320/390/1024px e dois temas (npm run test:telas) e as estruturas antigas (tests/footer-toolbar.py). Alteração compartilhada nesta etapa: altura e conteúdo dos diálogos adaptados pelo shell (people-header-pilot.css); conferir diálogos de Ficha de Cargos, Produtos e Cotação no desktop e no celular.
+
 ## Matriz — busca e adicionar fixos, posição nos atalhos (04/11/2026)
 Esquerda: início, busca, ordenação, data, adicionar (+). Posição da barra volta à personalização/atalhos, preservando seleção e ativação. Direita: voltar, fechar, salvar, Mais atalhos, ocultar (segundo a partir da direita é Mais atalhos). Adicionar delega à ação nativa da tela, sem duplicá-la na lista, e fica sem ação quando indisponível. Conferir20 telas, dois temas/três larguras, ambas as posições, novos cadastros, busca, seleção individual e persistência.
 
