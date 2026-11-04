@@ -1,0 +1,14 @@
+{
+  "name": "pralis-s2-prototipo",
+  "private": true,
+  "description": "Protótipo visual (S2). O site é estático em dist/; este arquivo só existe para os testes.",
+  "scripts": {
+    "serve": "node tests/servidor.mjs",
+    "test": "node tests/date-fields.cjs && node tests/field-validation.cjs && node tests/compras-dominio.cjs && node tests/compras-produto.cjs",
+    "test:telas": "node tests/compras-telas.mjs && node tests/compras-regras-navegador.mjs && node tests/compras-produto-navegador.mjs",
+    "versoes": "node scripts/atualizar-versoes.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}
