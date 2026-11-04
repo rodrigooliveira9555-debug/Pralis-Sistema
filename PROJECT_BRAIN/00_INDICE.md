@@ -33,3 +33,4 @@ backend: **08 + 12**.
 2. Regra nova que substitui outra: marque a antiga como **SUPERADA (data, por quê)**, não apague o
    histórico, e atualize o doc 10.
 3. Número, contagem ou nome de arquivo citado aqui precisa ser conferível no código.
+- `13_LANCAMENTOS.md` — app novo (Nuxt) e Lançamentos com as regras do principal (03/11/2026).

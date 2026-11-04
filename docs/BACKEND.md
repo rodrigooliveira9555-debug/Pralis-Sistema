@@ -1,4 +1,4 @@
-# Backend do CICLUZ — login, banco, tabelas por assunto e usuários
+# Backend e app do CICLUZ — login, banco, tabelas por assunto, usuários e Lançamentos
 
 Estrutura copiada do Sistema Pralis (Fastify + better-auth + Drizzle + Postgres + Zod + Vitest com
 Testcontainers), dentro de `servidor/`. O site continua em `dist/`, sem build.
@@ -9,8 +9,9 @@ servidor/
              (controller → service → repository)
   db/        Drizzle — schema + migrations SQL (db/migrations) + dados/cargos-referencia.json
   shared/    Zod — contratos e a lista de chaves sincronizadas (fonte única)
+  web/       app das telas novas (Nuxt 4 + Vuetify + TS, igual ao web-vue do principal), em /app/
   tests/     Vitest + Testcontainers (Postgres real em container)
-  Dockerfile, docker-compose.coolify.yml   deploy no Coolify
+  Dockerfile, docker-compose.coolify.yml   deploy no Coolify (a imagem gera o app e a API o entrega)
 dist/
   entrar.html, entrar.css, entrar.js, entrar-tema.js   tela de entrada
   usuarios.html, usuarios.css, usuarios.js              minha senha, acessos e situação dos dados
@@ -45,6 +46,12 @@ dist/
 9. **Usuários** (nome do usuário no rodapé do menu): todos trocam a própria senha; o administrador
    cria contas, muda papel, tira/devolve acesso (encerra as sessões na hora) e define senha nova.
 
+10. **App novo (`/app/`)**: telas novas nascem aqui, gravando direto na API (banco como fonte da
+   verdade). Usa o mesmo login (`entrar.html`) e a mesma saída (`entrar.html?sair=1`) do site. A
+   primeira tela é **Lançamentos** (Despesas, Mercadorias, Retiradas; Entradas só consulta), com as
+   regras do Sistema Pralis: ver `PROJECT_BRAIN/13_LANCAMENTOS.md`. O menu "Lançamentos" do site
+   abre o app; a maquete antiga foi removida.
+
 Dados que vão para o banco: a lista fechada em `servidor/shared/src/documentos.ts`. Preferências de
 tela (tema, ordem de menus) e o Cadastro completo (CPF) ficam só no aparelho (PROJECT_BRAIN/11, P-11).
 
@@ -60,6 +67,8 @@ read -rs CICLUZ_SENHA && export CICLUZ_SENHA   # digita a senha sem eco
 CICLUZ_EMPRESA="Cicluz" CICLUZ_EMPRESA_NOVA=1 CICLUZ_NOME="Seu nome" \
   CICLUZ_EMAIL="voce@exemplo.com" CICLUZ_PAPEL=administrador npm run usuario:criar
 npm run dev                     # API + site em http://localhost:4200/entrar.html
+npm run build:web               # gera o app; a API o entrega em http://localhost:4200/app/
+npm run dev:web                 # (opcional) app com recarga ao vivo em http://localhost:3100/app/
 ```
 
 `CICLUZ_EMPRESA_NOVA=1` só na primeira conta da empresa; as outras o administrador cria na tela Usuários.
@@ -90,7 +99,7 @@ ninguém entra.
 
 O `.vercelignore` tira `servidor/` do deploy estático.
 
-## Banco (migrations `0000_inicial`, `0001_tabelas_por_assunto`)
+## Banco (migrations `0000_inicial`, `0001_tabelas_por_assunto`, `0002_lancamentos`)
 
 | Tabela | Para quê |
 | ------ | -------- |
@@ -108,6 +117,7 @@ O `.vercelignore` tira `servidor/` do deploy estático.
 | `locais`, `locais_transferencias` | Área › Setor › Local › Sublocal |
 | `organograma_posicoes`, `organograma_versoes` | organograma |
 | `icones_personalizados`, `cores_personalizadas` | identidade visual cadastrada |
+| `lancamentos`, `lancamentos_itens`, `lancamentos_recorrencias` | Lançamentos (fonte da verdade): reais numeric(14,2), conta em centavos, itens com rateio, séries |
 
 ## O que este backend NÃO faz (de propósito)
 
