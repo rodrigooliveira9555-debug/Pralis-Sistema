@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Matriz — controles fixos, interruptor e marca (04/11/2026)
+Fixos à esquerda: início, posição, três pontos de configuração, data, busca. Direita: voltar, fechar, salvar, ocultar cabeçalho. Ordenação permanece disponível na personalização. Refinar símbolo de posição. Separar dois estados por função: interruptor liga/desliga execução; marca CICLUZ em círculo roxo inclui/remove do menu rápido. Manter funções desativadas visíveis e inoperantes quando fixadas, sem confundir seleção com ativação. Migrar preferências antigas, persistir por tela e em importação/exportação. Conferir20 telas,320/390/1024px, dois temas, duas posições, teclado, recarga e ações nativas.
+
 ## Matriz — posição superior/inferior da barra (04/11/2026)
 Controle Posição da barra na configuração do menu rápido alterna rodapé/abaixo do cabeçalho sem duplicar os controles. Atalhos, busca, personalização, filtros e período abrem para dentro da tela, conforme posição. Preservar funções, foco, preferência por tela, recarga e importação/exportação. Conferir20 estruturas,320/390/1024px e dois temas, com cabeçalho visível/oculto, clique externo e diálogo. Seis pontos usam o mesmo marcador20px das linhas, centralizado no botão.
 
