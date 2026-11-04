@@ -56,18 +56,26 @@
    sort.setAttribute('aria-description','Próximo clique: '+next[sortMode]);
    sort.dataset.sortMode=['original','asc','desc'][sortMode];
    sort.setAttribute('aria-pressed',String(sortMode!==0));
-   sort.textContent=['⠿','A/Z','Z/A'][sortMode];
+   sort.textContent=['','A/Z','Z/A'][sortMode];if(sortMode===0)sort.innerHTML='<span class="people-order-dots" aria-hidden="true">⠿</span>';
   }
   updateSortLabel();
   let allExpanded=false;
   const expand=control('Expandir tudo','<path d="m5 9 7-6 7 6M5 15l7 6 7-6"/>',()=>{if(nativeExpand){nativeExpand.click();return}allExpanded=!allExpanded;content.querySelectorAll('details').forEach(el=>el.open=allExpanded);expand.setAttribute('aria-expanded',String(allExpanded));expand.title=allExpanded?'Recolher tudo':'Expandir tudo';expand.setAttribute('aria-label',expand.title)});
-  let displayKey='cicluz-people-display-v1';let displayState={zoomed:false,compact:false,order:[]};
+  let displayKey='cicluz-people-display-v1';let displayState={zoomed:false,compact:false,dock:'bottom',order:[]};
   try{const value=JSON.parse(localStorage.getItem(displayKey)||'null');if(value&&typeof value==='object')displayState={...displayState,...value}}catch{}
   function applyDisplay(){
    displayState.zoomed=false;view.classList.remove('people-content-zoomed');view.classList.toggle('people-content-narrow',!!displayState.compact);
+   displayState.dock=displayState.dock==='top'?'top':'bottom';view.classList.toggle('people-bar-top',displayState.dock==='top');footer.dataset.barPosition=displayState.dock;
+   position.setAttribute('aria-pressed',String(displayState.dock==='top'));position.title=displayState.dock==='top'?'Barra superior — mover para baixo':'Barra inferior — mover para cima';position.setAttribute('aria-label',position.title);
+   requestAnimationFrame(positionDatePanel);
    width.setAttribute('aria-pressed',String(!!displayState.compact));width.title=displayState.compact?'Expandir na horizontal — maior':'Recolher na horizontal — menor';width.setAttribute('aria-label',width.title);
   }
   const width=control('Recolher na horizontal — menor','<path d="m9 5-6 7 6 7M15 5l6 7-6 7"/>',()=>{displayState.compact=!displayState.compact;applyDisplay()});
+  const position=control('Posição da barra','<rect x="4" y="3" width="16" height="4" rx="1"/><rect x="4" y="17" width="16" height="4" rx="1"/><path d="M12 8v8m-3-5 3-3 3 3m-6 2 3 3 3-3"/>',()=>{
+   displayState.dock=displayState.dock==='top'?'bottom':'top';setQuickOpen(false);closeChooser();setDateOpen(false);applyDisplay();
+   try{localStorage.setItem(displayKey,JSON.stringify(displayState))}catch{announce('A posição foi alterada, mas não foi possível salvá-la')}
+   home.focus();
+  });position.className='people-position-control';
   const status=document.createElement('span');status.className='people-save-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const save=control('Salvar','<path d="m5 12 4 4L19 6"/>',()=>{
    const native=head.querySelector('.header-save-circle');if(native){native.click();return}
@@ -95,17 +103,20 @@
   const dateButton=control('Data de … a …','<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M7 14h2M13 14h2M7 18h2"/>',()=>{if(dateButton.dataset.available!=='false')setDateOpen(datePanel.hidden)});
   dateButton.setAttribute('aria-expanded','false');datePanel.id='date-panel-'+(view.id||'dialog');dateButton.setAttribute('aria-controls',datePanel.id);
   function positionDatePanel(){
-   if(datePanel.hidden)return;
    const rect=footer.getBoundingClientRect(),style=getComputedStyle(footer),inset=parseFloat(style.getPropertyValue('--footer-inset'))||8;
    const viewport=window.visualViewport,left=viewport?.offsetLeft||0,top=viewport?.offsetTop||0;
+   const dockTop=displayState.dock==='top',available=dockTop?top+(viewport?.height||window.innerHeight)-rect.bottom-inset:rect.top-top-inset;
+   footer.style.setProperty('--toolbar-available-height',Math.max(0,available)+'px');
+   if(datePanel.hidden)return;
    const right=Math.min(rect.right, left+(viewport?.width||window.innerWidth))-Math.max(inset,parseFloat(style.paddingRight)||0);
    const start=Math.max(rect.left,left)+Math.max(inset,parseFloat(style.paddingLeft)||0);
    const bottom=Math.min(rect.top,top+(viewport?.height||window.innerHeight))-inset;
    const ceiling=Math.max(top,collapsed?rect.top-panel.clientHeight:head.getBoundingClientRect().bottom);
-   datePanel.style.setProperty('--date-bottom',Math.max(0,window.innerHeight-bottom)+'px');
+   datePanel.style.setProperty('--date-top',dockTop?Math.max(top,rect.bottom+inset)+'px':'auto');
+   datePanel.style.setProperty('--date-bottom',dockTop?'auto':Math.max(0,window.innerHeight-bottom)+'px');
    datePanel.style.setProperty('--date-right',Math.max(0,window.innerWidth-right)+'px');
    datePanel.style.setProperty('--date-max-width',Math.max(0,right-start)+'px');
-   datePanel.style.setProperty('--date-max-height',Math.max(0,bottom-ceiling-inset)+'px');
+   datePanel.style.setProperty('--date-max-height',Math.max(0,dockTop?available-inset:bottom-ceiling-inset)+'px');
   }
   function setDateOpen(open){datePanel.hidden=!open;datePanel.inert=!open;dateButton.setAttribute('aria-expanded',String(open));if(open){closeChooser();dateMessage.textContent='';positionDatePanel()}}
   window.addEventListener('resize',positionDatePanel);
@@ -125,7 +136,7 @@
   const result=metricControl('RES','resultado','#7c3aed',['res','result','resultado']);
   const print=control('Imprimir','<path d="M7 8V3h10v5M7 17H3V9h18v8h-4M7 13h10v8H7z"/><path d="M17 11h1"/>',()=>{view.classList.add('shell-print-target');document.body.classList.add('shell-printing');window.addEventListener('afterprint',()=>{view.classList.remove('shell-print-target');document.body.classList.remove('shell-printing')},{once:true});window.print()});
   const exportConfig=control('Exportar configuração','<path d="M12 16V3m-4 4 4-4 4 4M4 14v7h16v-7"/>',()=>{
-   const payload={format:'cicluz-screen-toolbar',version:1,screen:context,preferences,display:{compact:!!displayState.compact,order:records().map(row=>rowId(row))},buttonOrder};
+   const payload={format:'cicluz-screen-toolbar',version:1,screen:context,preferences,display:{compact:!!displayState.compact,dock:displayState.dock,order:records().map(row=>rowId(row))},buttonOrder};
    const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='cicluz-configuracao-cabecalho.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);announce('Configuração exportada');
   });
   const importFile=document.createElement('input');importFile.type='file';importFile.accept='application/json,.json';importFile.hidden=true;importFile.setAttribute('aria-label','Arquivo de configuração do cabeçalho');
@@ -137,7 +148,7 @@
     const data=JSON.parse(await file.text());if(!['cicluz-people-toolbar','cicluz-screen-toolbar'].includes(data.format)||data.version!==1)throw Error('Arquivo de configuração incompatível');
     preferences={};for(const key of controls.keys())if(typeof data.preferences?.[key]==='boolean')preferences[key]=data.preferences[key];if(data.preferences?._hidden&&typeof data.preferences._hidden==='object')preferences._hidden=Object.fromEntries(Object.entries(data.preferences._hidden).filter(([key,value])=>controls.has(key)&&value===true));
     buttonOrder=Array.isArray(data.buttonOrder)?[...new Set(data.buttonOrder.filter(key=>typeof key==='string'&&controls.has(key)))]:[];
-    displayState={zoomed:false,compact:data.display?.compact===true,order:Array.isArray(data.display?.order)?data.display.order.filter(key=>typeof key==='string').slice(0,1000):[]};
+    displayState={zoomed:false,compact:data.display?.compact===true,dock:data.display?.dock==='top'?'top':'bottom',order:Array.isArray(data.display?.order)?data.display.order.filter(key=>typeof key==='string').slice(0,1000):[]};
     localStorage.setItem(preferencesKey,JSON.stringify(preferences));localStorage.setItem(displayKey,JSON.stringify(displayState));persistButtonOrder();applyDisplay();applyPreferences();
     const positions=new Map(displayState.order.map((id,i)=>[id,i]));for(const container of rowContainers()){const rows=rowsFor(container),ordered=[...rows].sort((a,b)=>(positions.get(rowId(a))??9999)-(positions.get(rowId(b))??9999));if(rows.some((r,i)=>r!==ordered[i]))ordered.forEach(row=>container.append(row))}
     if(!chooser.hidden)renderChoices();announce('Configuração importada');
@@ -151,7 +162,7 @@
   toggle.onclick=()=>{collapsed=!collapsed;toggleState()};
   let preferencesKey='cicluz-people-footer-buttons-v1';let preferences={};
   try{const value=JSON.parse(localStorage.getItem(preferencesKey)||'{}');if(value&&typeof value==='object'&&!Array.isArray(value))preferences=value}catch{}
-  const controls=new Map([['search',{button:searchToggle,label:'Buscar'}],['sort',{button:sort,label:sortLabel}],['date',{button:dateButton,label:'Data de … a …'}],['expand',{button:expand,label:'Expandir / recolher tudo'}],['sold',{button:sold,label:'Organizar por + vendido / − vendido'}],['bought',{button:bought,label:'Organizar por + comprado / − comprado'}],['profit',{button:profit,label:'Organizar por + lucro / − lucro'}],['result',{button:result,label:'Organizar por + resultado / − resultado'}],['print',{button:print,label:'Imprimir'}],['import',{button:importConfig,label:'Importar configuração'}],['export',{button:exportConfig,label:'Exportar configuração'}],['width',{button:width,label:'Maior / menor na horizontal'}],['save',{button:save,label:'Salvar'}]]);
+  const controls=new Map([['search',{button:searchToggle,label:'Buscar'}],['sort',{button:sort,label:sortLabel}],['date',{button:dateButton,label:'Data de … a …'}],['expand',{button:expand,label:'Expandir / recolher tudo'}],['sold',{button:sold,label:'Organizar por + vendido / − vendido'}],['bought',{button:bought,label:'Organizar por + comprado / − comprado'}],['profit',{button:profit,label:'Organizar por + lucro / − lucro'}],['result',{button:result,label:'Organizar por + resultado / − resultado'}],['print',{button:print,label:'Imprimir'}],['import',{button:importConfig,label:'Importar configuração'}],['export',{button:exportConfig,label:'Exportar configuração'}],['width',{button:width,label:'Maior / menor na horizontal'}],['position',{button:position,label:'Posição da barra'}],['save',{button:save,label:'Salvar'}]]);
   const chooser=document.createElement('div');chooser.className='people-toolbar-options';chooser.id='toolbar-options-'+(view.id||'dialog');chooser.hidden=true;chooser.inert=true;chooser.setAttribute('role','group');chooser.setAttribute('aria-label','Atalhos disponíveis e menu rápido');
   const more=document.createElement('button');more.type='button';more.className='people-toolbar-more';more.title='Mais atalhos';more.setAttribute('aria-label',more.title);more.setAttribute('aria-expanded','false');more.setAttribute('aria-pressed','false');more.setAttribute('aria-controls',chooser.id);more.innerHTML='<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>';
   function setChooserOpen(open){chooser.hidden=!open;chooser.inert=!open;more.setAttribute('aria-expanded',String(open));more.setAttribute('aria-pressed',String(open));if(open){chooserCompact=true;setDateOpen(false);setQuickOpen(false);renderChoices()}}
@@ -227,7 +238,7 @@
    const prefix=legacy?'cicluz-people':'cicluz-screen-'+encodeURIComponent(context);
    displayKey=prefix+'-display-v1';preferencesKey=prefix+'-footer-buttons-v1';orderKey=prefix+'-footer-order-v1';
    preferences=readState(preferencesKey,{});buttonOrder=readState(orderKey,[]);if(!Array.isArray(buttonOrder))buttonOrder=[];
-   displayState={zoomed:false,compact:false,order:[],...readState(displayKey,{})};
+   displayState={zoomed:false,compact:false,dock:'bottom',order:[],...readState(displayKey,{})};
    applyDisplay();applyPreferences();
    if(Array.isArray(displayState.order)){const positions=new Map(displayState.order.map((id,i)=>[id,i]));for(const container of rowContainers()){const rows=rowsFor(container);const ordered=[...rows].sort((a,b)=>(positions.get(rowId(a))??9999)-(positions.get(rowId(b))??9999));if(rows.some((r,i)=>r!==ordered[i]))ordered.forEach(row=>container.append(row))}}
    footer.setAttribute('aria-label','Controles de '+title());tools.setAttribute('aria-label','Menu rápido de '+title());search.placeholder='Buscar em '+title();search.setAttribute('aria-label',search.placeholder);

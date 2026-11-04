@@ -42,7 +42,8 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel{border-botto
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header button[hidden]{display:none!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-home-logo{border:0!important;box-shadow:none;background:transparent!important;padding:0}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .sort-az{font:600 11px/1 var(--ui-font);letter-spacing:0}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .sort-az[data-sort-mode="original"]{font-size:18px}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .sort-az[data-sort-mode="original"]{font-size:20px;padding:0}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-order-dots{display:flex;align-items:center;justify-content:center;width:100%;max-width:18px;height:100%;max-height:24px;margin:0;font:400 20px/1 var(--ui-font);letter-spacing:0}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-bottom-extras>button:first-child{position:relative;padding:5px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-search-outline{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;fill:none;stroke:none;z-index:2;overflow:visible}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search input{border-radius:8px!important;border-color:transparent;position:relative}
@@ -52,7 +53,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-content-zoom
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-content-narrow :is(.content)>.record-grid{width:80%!important;margin-left:auto!important;margin-right:auto!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-save-status{position:absolute;bottom:calc(100% + 26px);right:14px;background:var(--theme-surface,#fff);border:1px solid var(--layout-line,#dedee3);border-radius:8px;padding:8px 12px;color:var(--layout-ink,#606066);font-size:12px;box-shadow:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-save-status:empty{display:none}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options{position:absolute;bottom:calc(100% + 8px);right:14px;width:280px;max-width:calc(100% - 28px);max-height:min(65dvh,420px);overflow-y:auto;padding:12px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:#fff;color:var(--layout-ink,#606066);box-shadow:none;display:grid;gap:6px;z-index:10}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options{position:absolute;bottom:calc(100% + 8px);right:14px;width:280px;max-width:calc(100% - 28px);max-height:min(65dvh,420px,var(--toolbar-available-height,420px));overflow-y:auto;padding:12px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:#fff;color:var(--layout-ink,#606066);box-shadow:none;display:grid;gap:6px;z-index:10}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-toolbar-options[hidden]{display:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-toolbar-options>b{font-size:12px;padding:4px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-choice{display:flex;align-items:center;gap:10px;flex:none;width:100%;height:auto;min-height:40px;padding:5px 8px;border:0;border-radius:8px;background:#f5f5f7;color:var(--layout-ink,#606066);box-shadow:none;text-align:left;font:400 12px/18px var(--ui-font);opacity:.5}
@@ -83,6 +84,15 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-option-hidd
 @media(max-width:600px){
  body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header{--footer-inset:14px}
 }
+/* The same toolbar docks below the upper header, with inward-opening layers. */
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-bar-top>.panel>.head{order:0}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-bar-top>.panel>.people-bottom-header{order:1;border-radius:var(--shell-radius,12px);grid-template-areas:"left brand right" "query query query" "quick quick quick";padding-bottom:0}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-bar-top>.panel>.content{order:2}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-bar-top .people-bottom-header .people-toolbar-options,body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-bar-top .people-bottom-header>.fixed-header-tools{bottom:auto;top:calc(100% + var(--footer-inset));max-height:var(--toolbar-available-height,65dvh);overflow-y:auto}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-bar-top .people-bottom-tools{border-bottom:0;border-top:1px solid var(--layout-line)}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-bar-top .people-save-status{bottom:auto;top:calc(100% + 14px)}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-bar-top.people-top-hidden .people-bottom-header{padding-top:env(safe-area-inset-top,0px)}
+
 /* Fixed symmetric navigation, centered brand and optional quick-action layer. */
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-footer-left,body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-footer-right{display:flex;align-items:center;gap:6px;min-width:0;min-height:58px;padding:8px 0;box-sizing:border-box}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-footer-left{grid-area:left;justify-content:flex-start}
@@ -155,7 +165,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-panel 
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-panel input{width:100%;min-width:0;box-sizing:border-box;height:42px;padding:8px;border:1px solid var(--layout-line,#dedee3);border-radius:8px;background:#fff;color:var(--layout-ink,#606066);font:inherit;font-size:16px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-message{margin:0;font-size:11px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-actions{display:flex;gap:8px;flex-wrap:wrap}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-date-panel{position:fixed;bottom:var(--date-bottom,calc(58px + var(--footer-inset)));right:var(--date-right,var(--footer-inset));left:auto;top:auto;transform:none;width:232px;max-width:var(--date-max-width,calc(100vw - 2 * var(--footer-inset)));padding:10px;border-radius:10px;grid-template-columns:minmax(0,1fr);gap:8px;overflow-x:hidden;touch-action:pan-y;--date-accent:var(--menu-accent,var(--panel-color,#7c3aed));background:var(--date-accent)!important;border-color:var(--date-accent);color:#fff;box-shadow:none}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-date-panel{position:fixed;bottom:var(--date-bottom,calc(58px + var(--footer-inset)));right:var(--date-right,var(--footer-inset));left:auto;top:var(--date-top,auto);transform:none;width:232px;max-width:var(--date-max-width,calc(100vw - 2 * var(--footer-inset)));padding:10px;border-radius:10px;grid-template-columns:minmax(0,1fr);gap:8px;overflow-x:hidden;touch-action:pan-y;--date-accent:var(--menu-accent,var(--panel-color,#7c3aed));background:var(--date-accent)!important;border-color:var(--date-accent);color:#fff;box-shadow:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-panel label{display:grid;grid-template-columns:24px minmax(0,1fr);align-items:center;font-size:11px;line-height:15px;gap:6px;min-width:0;color:#fff!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-date-panel input{display:block;appearance:none;-webkit-appearance:none;box-sizing:border-box;min-inline-size:0!important;min-width:0!important;height:32px!important;min-height:32px!important;width:100%!important;max-width:100%;padding:3px var(--ui-field-padding-right,3px) 3px 3px!important;font-size:16px!important;border:1px solid var(--layout-line,#dedee3)!important;border-radius:6px!important;line-height:24px;background:var(--theme-field,#fff)!important;color:var(--layout-ink,#606066)!important;color-scheme:var(--ui-color-scheme,light)}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-date-panel input::-webkit-date-and-time-value{text-align:left;min-width:0}

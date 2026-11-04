@@ -82,6 +82,30 @@ def check_layout(browser, url):
                     assert abs(box['y'] + 15 - marker['y'] - marker['height'] / 2) < .1
                 page.mouse.click(width / 2, 20)
                 assert choices.is_hidden()
+                dots = bar.locator('.people-order-dots').bounding_box()
+                button = bar.locator('.sort-az').bounding_box()
+                assert abs(dots['x'] + dots['width']/2 - button['x'] - button['width']/2) < .1
+                assert abs(dots['y'] + dots['height']/2 - button['y'] - button['height']/2) < .1
+                bar.locator('.people-toolbar-more').click()
+                bar.locator('[data-choice-key="position"] .people-toolbar-run').click()
+                assert bar.get_attribute('data-bar-position') == 'top'
+                head = page.locator('#'+view_id+'>.panel>.head').bounding_box()
+                assert abs(bar.bounding_box()['y'] - head['y'] - head['height'] - 6) < .1
+                logo = bar.locator('.people-home-logo').bounding_box()
+                assert abs(logo['x'] + logo['width']/2 - width/2) < .1
+                bar.locator('.people-home-logo').click()
+                assert bar.locator('.people-bottom-tools').bounding_box()['y'] >= logo['y'] + logo['height']
+                page.mouse.click(width / 2, 20)
+                assert bar.locator('.people-bottom-tools').is_hidden()
+                bar.locator('.people-toolbar-more').click()
+                popup = bar.locator('.people-toolbar-options').bounding_box()
+                rect = bar.bounding_box()
+                assert popup['y'] >= rect['y'] + rect['height']
+                assert popup['y'] + popup['height'] <= 844.1
+                bar.locator('[data-choice-key="position"] .people-toolbar-run').click()
+                assert bar.get_attribute('data-bar-position') == 'bottom'
+                rect = bar.bounding_box()
+                assert abs(rect['y'] + rect['height'] - 844) < .1
                 checked += 1
             print('PASS layout', width, 'dark=', dark, flush=True)
         assert not errors, errors
@@ -207,6 +231,73 @@ def check_actions(browser, url):
     print('PASS sorting, search, preferences, reorder, reload, dates, back, save, validation, dialog and home', flush=True)
 
 
+def check_position(browser, url):
+    import json
+    page = browser.new_page(viewport={'width': 390, 'height': 844})
+    page.set_default_timeout(8000)
+    page.route('https://fonts.googleapis.com/**', lambda route: route.abort())
+    page.goto(url, wait_until='domcontentloaded')
+    open_operations(page)
+    bar = footer(page)
+    def toggle_position():
+        bar.locator('.people-toolbar-more').click()
+        bar.locator('[data-choice-key="position"] .people-toolbar-run').click()
+    toggle_position()
+    assert bar.get_attribute('data-bar-position') == 'top'
+    page.reload(wait_until='domcontentloaded')
+    open_operations(page)
+    assert bar.get_attribute('data-bar-position') == 'top'
+    page.evaluate("openSection(sections[6][0],'Gestão de Pessoas','people-settings','#7c3aed')")
+    page.wait_for_timeout(150)
+    assert bar.get_attribute('data-bar-position') == 'bottom'
+    open_operations(page)
+    assert bar.get_attribute('data-bar-position') == 'top'
+    bar.locator('.people-header-toggle').click()
+    assert abs(bar.bounding_box()['y']) < .1
+    bar.locator('.people-header-toggle').click()
+    bar.locator('.people-toolbar-more').click()
+    with page.expect_download() as download:
+        bar.locator('[data-choice-key="export"] .people-toolbar-run').click()
+    with open(download.value.path()) as config:
+        data = json.load(config)
+    assert data['display']['dock'] == 'top'
+    toggle_position()
+    assert bar.get_attribute('data-bar-position') == 'bottom'
+    bar.locator('input[type=file]').set_input_files({'name':'toolbar.json','mimeType':'application/json','buffer':json.dumps(data).encode()})
+    page.wait_for_timeout(150)
+    assert bar.get_attribute('data-bar-position') == 'top'
+    page.evaluate("document.querySelectorAll('#sector-content .record').forEach(row=>{row.dataset.date='2026-11-01';row.classList.add('dated-row')})")
+    page.wait_for_timeout(150)
+    bar.locator('.people-date-control').click()
+    period = bar.locator('.people-date-panel')
+    rect = period.bounding_box()
+    base = bar.bounding_box()
+    assert rect['y'] >= base['y'] + base['height'] and rect['height'] > 100
+    assert rect['y'] + rect['height'] <= 844.1
+    period.locator('[data-date-display]').nth(0).fill('011126')
+    period.locator('[data-date-display]').nth(1).fill('021126')
+    period.locator('.people-date-search').click()
+    assert period.is_hidden()
+    bar.locator('.people-search-toggle').click()
+    bar.locator('.people-bottom-search input:visible').fill('mercadorias')
+    assert page.locator('#sector-content .record:not([hidden])').count() == 1
+    bar.locator('.people-bottom-search input:visible').press('Escape')
+    page.evaluate("""const d=document.createElement('dialog');d.id='position-dialog';d.innerHTML='<h2>Posição em diálogo</h2><form>'+Array.from({length:18},(_,i)=>'<label style="display:block;margin:8px">Campo '+i+'<input style="width:100%"></label>').join('')+'</form>';document.body.append(d);d.showModal()""")
+    page.wait_for_timeout(150)
+    dialog = page.locator('#position-dialog')
+    controls = dialog.locator('.people-bottom-header')
+    controls.locator('.people-toolbar-more').click()
+    controls.locator('[data-choice-key="position"] .people-toolbar-run').click()
+    assert controls.get_attribute('data-bar-position') == 'top'
+    controls.locator('.people-home-logo').click()
+    assert controls.locator('.people-bottom-tools').bounding_box()['y'] >= controls.locator('.people-home-logo').bounding_box()['y'] + 32
+    dialog.locator('.head').click()
+    controls.locator('.people-close-control').click()
+    assert not dialog.evaluate('e=>e.open')
+    page.close()
+    print('PASS position persistence, per-screen state, import/export, hidden header, downward dates and search', flush=True)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--url', default='http://127.0.0.1:8000/dist/index.html')
@@ -214,5 +305,6 @@ if __name__ == '__main__':
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(executable_path=shutil.which('chromium'), args=['--no-sandbox'])
         check_actions(browser, args.url)
+        check_position(browser, args.url)
         print('PASS layout combinations:', check_layout(browser, args.url), flush=True)
         browser.close()

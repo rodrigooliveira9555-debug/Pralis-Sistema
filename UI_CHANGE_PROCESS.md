@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Matriz — posição superior/inferior da barra (04/11/2026)
+Controle Posição da barra na configuração do menu rápido alterna rodapé/abaixo do cabeçalho sem duplicar os controles. Atalhos, busca, personalização, filtros e período abrem para dentro da tela, conforme posição. Preservar funções, foco, preferência por tela, recarga e importação/exportação. Conferir20 estruturas,320/390/1024px e dois temas, com cabeçalho visível/oculto, clique externo e diálogo. Seis pontos usam o mesmo marcador20px das linhas, centralizado no botão.
+
 ## Complemento — visibilidade refinada em todos os menus (04/11/2026)
 Olho compartilhado com curvas suaves, pupila central e traço1,5px, sem alterar função de ocultar/restaurar. Controle30px alinhado ao marcador de seleção; SVG18px centralizado. Conferir todas as20 estruturas, dois temas e320/390/1024px, incluindo estado oculto e menu compacto/configuração.
 
