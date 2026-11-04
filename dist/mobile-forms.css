@@ -16,6 +16,7 @@ body :is(.icon-choice,.account-icon-dot,.shortcut-circle,.location-icon,.locatio
 /* Row icons (list rows and main menu items) are rounded squares; every other circle keeps 50%. */
 body :is(.record,.account-list-row,.location-row,.job-item,.salary-row) :is(.card-inherited-icon,.location-icon,.job-icon){--icon-radius:var(--row-icon-radius,26%)}
 body .side :is(.money-icon,.menu-icon-circle){--icon-radius:var(--row-icon-radius,26%)}
+body :is(.identity-pick,.location-sigla-field,.icon-live-preview,.operator-fees) :is(.icon-choice,.account-icon-dot,.icon-live-badge,.fee-brand-icon){--icon-radius:var(--row-icon-radius,26%)}
 body :is(.menu-icon-circle,.money-icon,.config-inherit-icon){--circle-size:38px}
 body :is(.location-icon,.card-inherited-icon){--circle-size:30px}
 @media(max-width:560px){body .head .shortcut-actions>.shortcut-circle,body .head>.sector-icon{--circle-size:28px}}
