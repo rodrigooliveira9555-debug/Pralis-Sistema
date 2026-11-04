@@ -6,3 +6,6 @@ node_modules
 tests/*
 !tests/package.json
 *.log
+web/.nuxt
+web/.output
+web/.data
