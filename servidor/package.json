@@ -1,0 +1,31 @@
+{
+  "name": "cicluz-gestao-padaria",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "db",
+    "api",
+    "web",
+    "tests"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @cicluz/api",
+    "start": "npm run start --workspace @cicluz/api",
+    "db:subir": "docker compose -f docker-compose.db.yml up -d",
+    "db:gerar": "npm run gerar --workspace @cicluz/db",
+    "db:migrar": "npm run migrar --workspace @cicluz/db",
+    "usuario:criar": "npm run usuario:criar --workspace @cicluz/api",
+    "check": "npm run check --workspace @cicluz/shared && npm run check --workspace @cicluz/db && npm run check --workspace @cicluz/api && npm run check --workspace @cicluz/tests && npm run check --workspace @cicluz/web",
+    "lint": "eslint shared db api tests",
+    "test": "node ../tests/date-fields.cjs && node ../tests/field-validation.cjs && npm run test --workspace @cicluz/tests",
+    "dev:web": "npm run dev --workspace @cicluz/web",
+    "build:web": "npm run build --workspace @cicluz/web"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.62.0"
+  }
+}

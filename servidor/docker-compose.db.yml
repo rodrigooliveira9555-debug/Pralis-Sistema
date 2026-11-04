@@ -1,0 +1,14 @@
+# Postgres local do CICLUZ (porta 5545 para não colidir com os outros bancos da máquina).
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: cicluz
+      POSTGRES_PASSWORD: cicluz
+      POSTGRES_DB: cicluz
+    ports:
+      - "127.0.0.1:5545:5432"
+    volumes:
+      - cicluz-db:/var/lib/postgresql/data
+volumes:
+  cicluz-db:

@@ -1,0 +1,172 @@
+/* Tokens do site do Rodrigo (dist/ui-foundation.css, dist/theme-surfaces.css, DESIGN_SYSTEM.md),
+   repetidos aqui só no que o app usa. Tela em três retângulos de cantos 12px separados por 6px,
+   campos de ~42px, título 16px, subtítulo 11px, Montserrat. Cores de origem e seus tons de contraste
+   em utils/cores.ts (aplicados por tela via --cor-origem). */
+:root {
+  --ui-font: Montserrat, system-ui, sans-serif;
+  --canto: 12px;
+  --respiro: 6px;
+  --recuo: 14px;
+  --rodape: 58px;
+  /* Cinza do menu escurecido para passar de 4,5:1 no branco (o #a2a0aa do site dá 2,58:1). */
+  --navigation-ink: #75747c;
+  --texto-suave: #6e6e73;
+  --borda: #8a8a93;
+  --cor-origem: #7c3aed;
+  --cor-origem-texto: #7c3aed;
+  --faixa: linear-gradient(90deg, #ff0000 0% 13.043%, #ff8000 17.391% 30.435%, #f2d000 34.783% 47.826%,
+    #00e833 52.174% 65.217%, #0055ff 69.565% 82.609%, #8000ff 86.957% 100%);
+  --ease-saida: cubic-bezier(.2, .8, .2, 1);
+}
+
+.v-theme--cicluzSombra {
+  --navigation-ink: #b5b3be;
+  --texto-suave: #b5b3be;
+  --borda: #75737e;
+}
+
+html {
+  /* O rodapé fixo não pode cobrir o campo que recebeu o foco pelo Tab. */
+  scroll-padding-bottom: calc(var(--rodape) + 12px);
+}
+
+html,
+body,
+.v-application {
+  font-family: var(--ui-font) !important;
+}
+
+/* Botões como no site: texto normal, sem caixa alta. */
+.v-btn {
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* Foco sempre visível, com contraste nos dois temas (o overlay do Vuetify sozinho não basta). */
+.v-btn:focus-visible,
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid rgb(var(--v-theme-on-surface));
+  outline-offset: 2px;
+}
+
+/* Contorno dos campos com ≥ 3:1 sobre a superfície. */
+.v-field--variant-outlined .v-field__outline {
+  --v-field-border-opacity: 0.62;
+}
+
+/* Selos de situação: texto escuro no claro para passar de 4,5:1. */
+.v-theme--cicluzLuz .v-chip.text-success { color: #166534 !important; }
+.v-theme--cicluzLuz .v-chip.text-warning { color: #92400e !important; }
+
+/* Cor "primary" dos componentes Vuetify dentro de uma tela = cor da origem dela. */
+.tela,
+.tela [class*="v-theme--"],
+.janela,
+.janela [class*="v-theme--"] {
+  --v-theme-primary: var(--origem-primary, 124, 58, 237);
+  --v-theme-on-primary: var(--origem-on-primary, 255, 255, 255);
+}
+
+/* Tela padrão: cabeçalho no tom forte da origem, conteúdo e rodapé como retângulos independentes. */
+.tela {
+  display: flex;
+  flex-direction: column;
+  gap: var(--respiro);
+  min-height: 100%;
+}
+
+.tela-topo,
+.tela-conteudo,
+.tela-rodape {
+  border-radius: var(--canto);
+}
+
+.tela-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--rodape);
+  padding: 8px var(--recuo);
+  background: var(--cor-origem);
+  color: #fff;
+}
+
+.tela-topo h1,
+.tela-topo h2 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.tela-topo p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.tela-topo :focus-visible {
+  outline-color: #fff;
+}
+
+.tela-conteudo {
+  flex: 1;
+  padding: 18px var(--recuo);
+  background: rgb(var(--v-theme-surface));
+}
+
+.tela-rodape {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--rodape);
+  padding: 8px var(--recuo) max(8px, env(safe-area-inset-bottom));
+  background: rgb(var(--v-theme-surface));
+}
+
+/* Regra do site: marca à esquerda, ações à direita com rolagem interna quando faltar espaço. */
+.tela-rodape > * {
+  min-width: 0;
+}
+
+.tela-rodape .acoes {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  overflow-x: auto;
+}
+
+.texto-suave {
+  color: var(--texto-suave);
+}
+
+.icone-tela {
+  width: 30px;
+  height: 30px;
+  flex: none;
+}
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  :root { --recuo: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
