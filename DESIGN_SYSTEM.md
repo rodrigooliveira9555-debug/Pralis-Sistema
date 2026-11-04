@@ -1,5 +1,10 @@
 # CICLUZ — referência de interface
 
+## Regra vigente — posição da barra (04/11/2026)
+Posição da barra é um controle da configuração do menu rápido. Alterna a mesma barra entre rodapé e logo abaixo do cabeçalho superior; todas as ações permanecem compartilhadas. No alto, atalhos da marca e painéis abrem para baixo; no rodapé, abrem para cima. Marca não aumenta. A escolha é salva por tela e acompanha importação/exportação; configurações anteriores continuam embaixo. Cabeçalho superior pode ser ocultado/restaurado em ambas as posições.
+
+O marcador de ordem original usa ⠿ com a mesma tipografia20px/peso400 dos marcadores das linhas, em uma caixa centralizada dentro do botão.
+
 ## Complemento vigente — controle de visibilidade (04/11/2026)
 Todos os menus rápidos usam o mesmo olho refinado: curvas suaves, pupila central e traço1,5px. Caixa30px alinhada à seleção, símbolo18px centralizado e raio7px; cores e operação de ocultar/restaurar preservadas nos dois temas.
 
