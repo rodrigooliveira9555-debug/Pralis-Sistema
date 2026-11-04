@@ -1,5 +1,10 @@
 # Validação do padrão compartilhado
 
+## Quatro métricas e seis atalhos preparados — 04/11/2026
+Chromium/Playwright:120 combinações das20 telas em320/390/1024px e claro/escuro; lista e rápido com rótulos/cores dos seis novos atalhos. Métricas conferidas em seis combinações de largura/tema, quatro ciclos por controle, valores positivos/negativos, maiores/menores primeiro, após A–Z e sem reordenação alfabética concorrente. Grupos preservados; sem valores, modo alterna com mensagem informativa.
+
+VND/DES/RET/MER/CAR/PDV preparados conforme confirmação do usuário: códigos, mensagens, cores, fixação, recarga e importação/exportação passaram. Ao executar, mensagem de tela ainda não disponível; nenhuma navegação a cadastros nem formulário ou lançamento fictício. Regressões de ativação, seleção individual, posição, busca, datas, navegação e salvamento passaram.21 verificações de campos e19 de datas passaram. Captura dos dez botões no rápido inspecionada. Dados numéricos apenas em navegador isolado. Telas de lançamento e deploy ainda não concluídos.
+
 ## Busca/adicionar fixos e posição nos atalhos — 04/11/2026
 Chromium/Playwright:120 combinações das20 telas em320/390/1024px e claro/escuro, com alternância das duas posições. Esquerda conferida como início, busca, ordenação, data e adicionar; Mais atalhos segundo da direita, antes de ocultar. Posição acessível pela lista de atalhos, sem perder persistência, importação/exportação e direção de abertura. Adicionar nativo testado em grupos de mercadorias, bandeiras e operadoras, nos dois temas, inclusive barra no alto; cadastro correto aberto e comando sem duplicação no menu. Estado indisponível sem execução conferido. Seleção individual e demais regressões passaram;21 asserções de campos e19 de datas. Captura móvel escura da barra inspecionada. Sem dados reais gravados e sem confirmação do deploy.
 

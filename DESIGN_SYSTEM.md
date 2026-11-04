@@ -1,5 +1,10 @@
 # CICLUZ — referência de interface
 
+## Regras vigentes — métricas e atalhos de lançamento (04/11/2026)
+As métricas +VND/−VND são amarelas, +COM/−COM verdes, +LUC/−LUC azuis e +RES/−RES preservam roxo. O primeiro clique mostra + (maiores valores primeiro), o segundo − (menores primeiro), em ciclos independentes. Sem valores, alternar o modo e informar a ausência de dados. Ordenar preservando cada grupo, substituindo a ordenação alfabética anterior.
+
+Preparar na configuração: VND — Lançar vendas — amarelo; DES — Lançar despesas — vermelho; RET — Lançar retiradas — azul; MER — Lançar mercadorias — verde; CAR — Lançar cartões — roxo; PDV — Lançar PDV — roxo. Usuário confirmou criar os botões primeiro e conectar as telas posteriormente. Cada atalho segue ativação/fixação individual, sem inclusão automática, e informa que a tela ainda não está disponível ao executar. Não abrir cadastros de grupos como se fossem lançamentos nem gravar dados fictícios. As cores próprias aparecem na lista e no rápido, em ambos os temas.
+
 ## Regra vigente — busca e adicionar fixos (04/11/2026)
 Esquerda: início, busca, ordenação, calendário e adicionar (+). Mover barra passa a ser função de Mais atalhos/configuração, com a mesma seleção, ativação e persistência das outras funções. Direita, do centro para a borda: voltar, fechar, salvar, Mais atalhos e ocultar cabeçalho; Mais atalhos é o segundo contando da direita.
 
