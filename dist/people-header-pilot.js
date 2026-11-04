@@ -8,7 +8,7 @@
   view.classList.add('app-screen-shell');
   const title=()=>head.querySelector('h2,h3')?.textContent.trim()||'Tela';
   const screenKey=()=>(view.matches('dialog,.dialog')?'dialog':view.id)+'|'+title()+'|'+(head.querySelector('.header-identity p')?.textContent.trim()||'');
-  let context='',nativeSearch=null,nativeSearchButton=null,nativeSort=null,nativeExpand=null,nativeBack=null,nativeClose=null;
+  let context='',nativeSearch=null,nativeSearchButton=null,nativeSort=null,nativeExpand=null,nativeBack=null,nativeClose=null,nativeAdd=null;
   const adoptedInputs=new Map(),profileSearchHosts=new WeakMap(),proxies=new Map();
   let sortDirection=null,sortMode=0,originalOrders=new WeakMap();
   const rowsFor=container=>[...container.children].filter(n=>n.matches('.record,.financial-group,.job-item,.salary-row,.location-node,.account-list-row,tr,.list-row'));
@@ -76,6 +76,7 @@
    try{localStorage.setItem(displayKey,JSON.stringify(displayState))}catch{announce('A posição foi alterada, mas não foi possível salvá-la')}
    home.focus();
   });position.className='people-position-control';
+  const add=control('Adicionar','<path d="M12 5v14M5 12h14"/>',()=>{if(nativeAdd?.isConnected&&!nativeAdd.disabled){nativeAdd.click();syncQueries()}});add.className='people-add-control';
   const status=document.createElement('span');status.className='people-save-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const save=control('Salvar','<path d="m5 12 4 4L19 6"/>',()=>{
    const native=head.querySelector('.header-save-circle');if(native){native.click();return}
@@ -171,7 +172,7 @@
   let orderKey='cicluz-people-footer-order-v1';let buttonOrder=[];
   try{const value=JSON.parse(localStorage.getItem(orderKey)||'[]');if(Array.isArray(value))buttonOrder=value.filter(key=>typeof key==='string')}catch{}
   function persistButtonOrder(){try{localStorage.setItem(orderKey,JSON.stringify(buttonOrder))}catch{}}
-  const fixedKeys=new Set(['search','position','sort','date','save']);
+  const fixedKeys=new Set(['search','sort','date','save']);
   const pinned=key=>preferences[key]===true;
   const enabled=key=>fixedKeys.has(key)||preferences._disabled?.[key]!==true;
   function normalizePreferences(value){
@@ -193,7 +194,7 @@
    for(const [key,{button}] of ordered){button.hidden=!pinned(key)||!enabled(key)||button.dataset.available==='false';button.disabled=!enabled(key)||button.dataset.nativeDisabled==='true';button.dataset.controlKey=key}
    const current=[...tools.children].filter(child=>wanted.has(child));if(buttons.some((button,i)=>current[i]!==button))buttons.forEach(button=>tools.append(button));
    empty.hidden=buttons.some(button=>!button.hidden);
-   for(const button of [searchToggle,position,sort,dateButton,save])button.hidden=false;
+   for(const button of [searchToggle,sort,dateButton,save])button.hidden=false;
    searchToggle.setAttribute('aria-disabled',String(searchToggle.dataset.available==='false'));sort.setAttribute('aria-disabled',String(sort.disabled||sort.dataset.available==='false'));dateButton.setAttribute('aria-disabled',String(dateButton.dataset.available==='false'));
    searchState();
   }
@@ -224,7 +225,7 @@
     handle.onpointerdown=e=>{if(e.pointerType!=='touch')return;touchStart={y:e.clientY,id:e.pointerId};handle.setPointerCapture(e.pointerId)};
     handle.onpointerup=e=>{if(!touchStart)return;const delta=e.clientY-touchStart.y;touchStart=null;const target=[...chooser.querySelectorAll('.people-toolbar-row')].find(el=>{const rect=el.getBoundingClientRect();return e.clientY>=rect.top&&e.clientY<=rect.bottom});if(Math.abs(delta)>8&&target)moveControl(key,target.dataset.choiceKey,delta<0)};
     const action=document.createElement('button');action.type='button';action.className='people-toolbar-run';action.setAttribute('aria-label','Executar '+label);action.disabled=button.disabled||button.dataset.available==='false';
-    const symbol=document.createElement('span');symbol.className='people-option-symbol';symbol.innerHTML=button.innerHTML;symbol.style.setProperty('--metric-color',button.style.getPropertyValue('--metric-color'));if(button.classList.contains('people-metric-control'))symbol.classList.add('people-metric-control');
+    const symbol=document.createElement('span');symbol.className='people-option-symbol';symbol.innerHTML=button.innerHTML;symbol.style.setProperty('--metric-color',button.style.getPropertyValue('--metric-color'));if(button.classList.contains('people-metric-control'))symbol.classList.add('people-metric-control');if(button.classList.contains('people-position-control'))symbol.classList.add('people-position-control');
     const name=document.createElement('span');name.textContent=label;name.className='people-option-name';action.append(symbol,name);action.onclick=()=>{closeChooser();button.click()};
     const pinLabel=()=>!enabled(key)?'Incluir no menu rápido e ligar: '+label:pinned(key)?'Remover do menu rápido: '+label:'Incluir no menu rápido: '+label;
     const power=document.createElement('button');power.type='button';power.className='people-toolbar-enable';power.setAttribute('role','switch');power.setAttribute('aria-label','Ativar função: '+label);power.setAttribute('aria-checked',String(enabled(key)));power.title=enabled(key)?'Desligar '+label:'Ligar '+label;power.innerHTML='<span class="people-enable-track" aria-hidden="true"><span class="people-enable-thumb"></span></span>';
@@ -246,7 +247,7 @@
   more.onclick=()=>setChooserOpen(chooser.hidden);
   document.addEventListener('pointerdown',e=>{if(!chooser.hidden&&!chooser.contains(e.target)&&!more.contains(e.target))closeChooser()});
   footer.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!chooser.hidden){closeChooser();more.focus()}else if(!tools.hidden){setQuickOpen(false);home.focus()}});
-  left.append(start,position,sort,dateButton,searchToggle);right.append(back,close,save,toggle,more);save.classList.add('people-save-control');dateButton.classList.add('people-date-control');footer.append(tools,searchBox,left,home,right,chooser,datePanel,status,importFile);panel.append(footer);
+  left.append(start,searchToggle,sort,dateButton,add);right.append(back,close,save,more,toggle);save.classList.add('people-save-control');dateButton.classList.add('people-date-control');footer.append(tools,searchBox,left,home,right,chooser,datePanel,status,importFile);panel.append(footer);
   footer.addEventListener('click',event=>{const button=event.target.closest('button');if(!button||button.matches('.people-toolbar-choice,.people-toolbar-more'))return;button.classList.add('people-click-feedback');setTimeout(()=>button.classList.remove('people-click-feedback'),220)});
   applyPreferences();
   function readState(key,fallback){try{const value=JSON.parse(localStorage.getItem(key)||'null');return value&&typeof value==='object'?value:fallback}catch{return fallback}}
@@ -285,6 +286,7 @@
    nativeSort=sources.find(b=>b.matches('.sort-az'))||null;
    nativeExpand=sources.find(b=>b.matches('.unified-expand-toggle')||/^(?:Expandir|Recolher) (?:tudo|todos|todas)/.test(b.getAttribute('aria-label')||b.title||''))||null;
    const nativeSave=sources.find(b=>b.matches('.header-save-circle'));
+   nativeAdd=sources.find(b=>b.matches('.header-add-circle'))||null;add.setAttribute('aria-disabled',String(!nativeAdd||nativeAdd.disabled));add.title=nativeAdd?(nativeAdd.getAttribute('aria-label')||nativeAdd.title||'Adicionar'):'Adicionar — indisponível nesta tela';add.setAttribute('aria-label',add.title);
    nativeBack=sources.find(b=>/^Voltar(?:\s|$)/i.test(b.getAttribute('aria-label')||b.title||''))||null;nativeClose=sources.find(b=>/^Fechar(?:\s|$)/i.test(b.getAttribute('aria-label')||b.title||''))||null;back.disabled=!nativeBack||nativeBack.disabled;
    const list=!!content.querySelector('.record-grid,.job-item,.salary-row,.location-tree,tbody,.record');
    searchToggle.dataset.available=String(!!nativeSearchButton||list);sort.dataset.available=String(!!nativeSort||list);dateButton.dataset.available=String(records().some(row=>rowDate(row)));expand.dataset.available=String(!!nativeExpand||!!content.querySelector('details'));
@@ -292,7 +294,7 @@
    expand.dataset.nativeDisabled=String(nativeExpand?.disabled||false);
    if(nativeExpand){if(expand.innerHTML!==nativeExpand.innerHTML)expand.innerHTML=nativeExpand.innerHTML;for(const attr of ['aria-expanded','aria-label','title']){const value=nativeExpand.getAttribute(attr);if(value!==null&&expand.getAttribute(attr)!==value)expand.setAttribute(attr,value)}}
    save.disabled=!!nativeSave?.disabled;
-   const delegated=sources.filter(b=>![nativeSearchButton,nativeSort,nativeExpand,nativeSave,nativeBack,nativeClose].includes(b));
+   const delegated=sources.filter(b=>![nativeSearchButton,nativeSort,nativeExpand,nativeSave,nativeBack,nativeClose,nativeAdd].includes(b));
    for(const [source,entry] of proxies)if(!delegated.includes(source)){entry.button.remove();controls.delete(entry.key);proxies.delete(source)}
    for(const source of delegated){
     let entry=proxies.get(source);const label=source.getAttribute('aria-label')||source.title||source.textContent.trim();

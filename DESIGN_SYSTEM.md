@@ -1,5 +1,10 @@
 # CICLUZ — referência de interface
 
+## Regra vigente — busca e adicionar fixos (04/11/2026)
+Esquerda: início, busca, ordenação, calendário e adicionar (+). Mover barra passa a ser função de Mais atalhos/configuração, com a mesma seleção, ativação e persistência das outras funções. Direita, do centro para a borda: voltar, fechar, salvar, Mais atalhos e ocultar cabeçalho; Mais atalhos é o segundo contando da direita.
+
+Adicionar usa a ação nativa de criação da tela e não a duplica nos atalhos. Sem ação disponível, permanece visível e sem execução, com estado acessível indisponível. Manter o traço refinado do símbolo de posição também dentro da lista de atalhos.
+
 ## Regras vigentes — seleção individual e visibilidade (04/11/2026)
 Incluir pela marca fixa e liga somente o item escolhido. Se já estiver fixado porém desligado, a marca religa sem remover. Remover do rápido mantém a função ligada. Não há inclusões implícitas iniciais: somente escolhas explícitas entram no rápido; escolhas explícitas anteriores são preservadas. Várias escolhas são permitidas, uma por ação, sem modificar outras funções.
 
