@@ -1,5 +1,12 @@
 # CICLUZ — referência de interface
 
+## Regras vigentes — seleção individual e visibilidade (04/11/2026)
+Incluir pela marca fixa e liga somente o item escolhido. Se já estiver fixado porém desligado, a marca religa sem remover. Remover do rápido mantém a função ligada. Não há inclusões implícitas iniciais: somente escolhas explícitas entram no rápido; escolhas explícitas anteriores são preservadas. Várias escolhas são permitidas, uma por ação, sem modificar outras funções.
+
+Ligado e fixado aparece no rápido; ligado e não fixado aparece em Mais atalhos; desligado fica somente na configuração expandida. Desligar preserva a preferência de fixação, mas oculta o item das duas listas. Os controles da linha são atualizados no lugar, sem mover outros botões durante o clique. Descrições acessíveis indicam quando incluir também vai ligar.
+
+Mais atalhos fica na extremidade direita, depois do controle de ocultar cabeçalho. A ordem da esquerda permanece início, posição, ordenação, data e busca.
+
 ## Correção vigente — marca vazada e posição dos atalhos (04/11/2026)
 O seletor de inclusão no menu rápido usa a silhueta monocromática da marca CICLUZ na superfície do tema, como recorte. Corpo na mesma cor dos outros controles; selecionado recebe mistura40% da origem e60% do cinza de navegação para parecer apagado. Preservar os interruptores de execução independentes. A marca central mantém sua arte original.
 

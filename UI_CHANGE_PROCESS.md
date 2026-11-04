@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Correção — inclusão liga a função e cliques isolados (04/11/2026)
+Marca inclui e liga somente o item escolhido; se já fixado porém desligado, a marca religa sem remover. Remover do rápido mantém ligado. Funções desligadas não aparecem no rápido nem na lista compacta. Mais atalhos mostra apenas disponíveis, ligados e não fixados. Configuração expandida mantém todos. Atualizar linha no lugar, sem reposicioná-la durante o clique; conferir que outros itens não mudam e que várias escolhas continuam permitidas. Mais atalhos na extremidade direita, depois de ocultar cabeçalho. Conferir persistência e20 estruturas/dois temas/três larguras.
+
 ## Correção — marca recortada e ordem dos fixos (04/11/2026)
 Marca do seletor de atalhos vira recorte monocromático na superfície do tema, com corpo na cor dos demais controles. Selecionado fica acinzentado/apagado, preservando a leitura do recorte. Esquerda: início, posição, ordenação, data, busca. Direita começa com Mais atalhos, seguido de voltar, fechar, salvar e ocultar. Preservar ativação/fixação independentes, duas posições e persistência. Conferir20 telas nos dois temas e três larguras.
 
