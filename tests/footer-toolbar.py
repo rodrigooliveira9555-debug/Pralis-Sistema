@@ -9,6 +9,41 @@ import shutil
 from playwright.sync_api import sync_playwright
 
 
+def prepare_toolbar_fixture(page):
+    """Prepared client state for isolated UI checks, not an authentication/backend test.
+
+    No business keys are registered, and all API requests are intercepted locally.
+    Production session/authentication scripts remain unchanged.
+    """
+    page.add_init_script("""(() => {
+        if (!sessionStorage.getItem('cicluz-sync-aba')) {
+            sessionStorage.setItem('cicluz-sync-aba', JSON.stringify({
+                id:'toolbar-test-tab',chaves:[],versoes:{},
+                perfil:{usuarioId:'toolbar-test-user',nome:'Teste de interface',papel:'administrador',
+                    empresa:{id:'toolbar-test-company',nome:'Empresa de teste',dadosImportados:true}}
+            }));
+        }
+    })()""")
+    def offline_api(route):
+        if route.request.method == 'GET' and route.request.url.split('?')[0].endswith('/api/documentos/versoes'):
+            route.fulfill(status=200,json={'versoes':[]})
+        else:
+            route.fulfill(status=503,json={'codigo':'FIXTURE_OFFLINE','mensagem':'API externa bloqueada neste teste de interface.'})
+    page.route('**/api/**',offline_api)
+
+
+def check_login_guard(browser, url):
+    page=browser.new_page()
+    page.route('https://fonts.googleapis.com/**',lambda route:route.abort())
+    page.route('**/api/**',lambda route:route.fulfill(status=401,json={'codigo':'NAO_AUTENTICADO','mensagem':'Entre para continuar.'}))
+    page.goto(url,wait_until='commit')
+    page.wait_for_url('**/entrar.html*',wait_until='domcontentloaded')
+    assert page.locator('input[type=password]').count()>=1
+    assert page.evaluate('typeof window.CicluzSessao')=='undefined'
+    page.close()
+    print('PASS login redirect without a prepared session',flush=True)
+
+
 def open_operations(page):
     page.evaluate("""() => {
         if (document.body.classList.contains('mobile-menu-visible'))
@@ -26,6 +61,7 @@ def check_layout(browser, url):
     checked = 0
     for width in [320, 390, 1024]:
         page = browser.new_page(viewport={'width': width, 'height': 844})
+        prepare_toolbar_fixture(page)
         page.set_default_timeout(8000)
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
@@ -71,6 +107,8 @@ def check_layout(browser, url):
                 assert choices.locator('[data-choice-key="search"], [data-choice-key="sort"], [data-choice-key="date"], [data-choice-key="save"]').count() == 0
                 choices.locator('.people-options-resize').click()
                 assert choices.locator('.people-options-resize').get_attribute('aria-expanded') == 'true'
+                launches=choices.locator('[data-choice-key^="launch-"]').evaluate_all('es=>es.map(e=>({key:e.dataset.choiceKey,code:e.querySelector(".people-option-symbol").textContent,label:e.querySelector(".people-option-name").textContent,color:getComputedStyle(e.querySelector(".people-option-symbol")).backgroundColor}))')
+                assert {e['code']:(e['label'],e['color']) for e in launches} == {'VND':('Lançar vendas','rgb(234, 179, 8)'),'CNT':('Lançar transferências','rgb(249, 115, 22)'),'DES':('Lançar despesas','rgb(239, 68, 68)'),'RET':('Lançar retiradas','rgb(37, 99, 235)'),'MER':('Lançar mercadorias','rgb(34, 197, 94)'),'CAR':('Lançar cartões','rgb(124, 58, 237)'),'PDV':('Lançar PDV','rgb(124, 58, 237)')}
                 for pin in choices.locator('.people-toolbar-pin').all():
                     box = pin.bounding_box()
                     icon = pin.locator('svg')
@@ -117,6 +155,7 @@ def check_layout(browser, url):
 
 def check_actions(browser, url):
     page = browser.new_page(viewport={'width': 390, 'height': 844})
+    prepare_toolbar_fixture(page)
     page.set_default_timeout(8000)
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
@@ -242,6 +281,7 @@ def check_actions(browser, url):
 def check_position(browser, url):
     import json
     page = browser.new_page(viewport={'width': 390, 'height': 844})
+    prepare_toolbar_fixture(page)
     page.set_default_timeout(8000)
     page.route('https://fonts.googleapis.com/**', lambda route: route.abort())
     page.goto(url, wait_until='domcontentloaded')
@@ -308,6 +348,7 @@ def check_position(browser, url):
 
 def check_enable_and_pin(browser, url):
     page = browser.new_page(viewport={'width':390,'height':844})
+    prepare_toolbar_fixture(page)
     page.set_default_timeout(8000)
     page.route('https://fonts.googleapis.com/**', lambda route:route.abort())
     page.goto(url,wait_until='domcontentloaded')
@@ -398,6 +439,7 @@ def check_enable_and_pin(browser, url):
 
 def check_add_control(browser, url):
     page=browser.new_page(viewport={'width':390,'height':844})
+    prepare_toolbar_fixture(page)
     page.set_default_timeout(8000)
     errors=[]
     page.on('pageerror',lambda error:errors.append(str(error)))
@@ -434,15 +476,126 @@ def check_add_control(browser, url):
     print('PASS contextual add: unavailable state, new groups, card brands and operators in both themes',flush=True)
 
 
+def check_metrics(browser, url):
+    cases=[('sold','VND','vnd','rgb(234, 179, 8)'),('bought','COM','com','rgb(34, 197, 94)'),('profit','LUC','luc','rgb(37, 99, 235)'),('result','RES','res','rgb(124, 58, 237)')]
+    values={'vnd':[8,3,6,1,7,4,2,5],'com':[2,8,1,5,3,7,6,4],'luc':[5,-3,8,0,2,-1,9,1],'res':[7,2,9,1,5,8,3,4]}
+    for width in [320,390,1024]:
+        page=browser.new_page(viewport={'width':width,'height':844})
+        prepare_toolbar_fixture(page)
+        page.set_default_timeout(8000)
+        page.route('https://fonts.googleapis.com/**',lambda r:r.abort())
+        page.goto(url,wait_until='domcontentloaded')
+        open_operations(page)
+        bar=footer(page)
+        page.evaluate('(values)=>document.querySelectorAll("#sector-content .record").forEach((row,i)=>{for(const [field,data] of Object.entries(values))row.dataset[field]=data[i]})',values)
+        bar.locator('.people-toolbar-more').click()
+        bar.locator('.people-options-resize').click()
+        for key,code,field,color in cases:
+            bar.locator('[data-choice-key="'+key+'"] .people-toolbar-pin').click()
+        bar.locator('.people-toolbar-more').click()
+        for dark in [False,True]:
+            page.evaluate('(d)=>document.body.classList.toggle("dark-theme",d)',dark)
+            bar.locator('.people-home-logo').click()
+            for key,code,field,color in cases:
+                button=bar.locator('.people-bottom-tools [data-control-key="'+key+'"]')
+                assert button.evaluate('e=>getComputedStyle(e).backgroundColor')==color
+                bar.locator('.sort-az').click()
+                bar.locator('.people-home-logo').click()
+                for sign,reverse in [('+',True),('−',False),('+',True),('−',False)]:
+                    button.click()
+                    page.wait_for_timeout(120)
+                    assert button.inner_text()==sign+code
+                    actual=page.locator('#sector-content .record-grid>.record').evaluate_all('(rows,field)=>rows.map(row=>Number(row.dataset[field]))',field)
+                    assert actual==sorted(actual,reverse=reverse),(key,sign,actual)
+            bar.locator('.people-toolbar-more').click()
+            bar.locator('.people-options-resize').click()
+            for key,code,field,color in cases:
+                icon=bar.locator('[data-choice-key="'+key+'"] .people-option-symbol')
+                assert icon.evaluate('e=>getComputedStyle(e).backgroundColor')==color
+                assert icon.inner_text()=='−'+code
+            bar.locator('.people-toolbar-more').click()
+            print('PASS metric colors and current +/-',width,dark,flush=True)
+        page.evaluate("const host=document.getElementById('sector-content');for(let i=0;i<2;i++){const group=document.createElement('div');group.className='record-grid metric-test-group';group.dataset.group=i;for(const n of [1,3,2]){const row=document.createElement('div');row.className='record';row.dataset.vnd=n;row.dataset.owner=i;row.textContent=n;group.append(row)}host.append(group)}")
+        bar.locator('.people-home-logo').click()
+        bar.locator('.people-bottom-tools [data-control-key="sold"]').click()
+        for group in page.locator('.metric-test-group').all():
+            assert group.locator('.record').count()==3
+            assert group.evaluate('e=>[...e.children].every(row=>row.dataset.owner===e.dataset.group)')
+            assert group.evaluate('e=>[...e.children].map(row=>Number(row.dataset.vnd))')==[3,2,1]
+        page.evaluate("document.querySelectorAll('.record').forEach(row=>{for(const field of ['vnd','com','luc','res'])delete row.dataset[field]})")
+        button=bar.locator('.people-bottom-tools [data-control-key="sold"]')
+        button.click();first=button.inner_text();button.click();second=button.inner_text()
+        assert {first,second}=={'+VND','−VND'}
+        assert 'não possui valores' in bar.locator('.people-save-status').inner_text()
+        page.close()
+    print('PASS metric group preservation and mode alternation without numeric data',flush=True)
+
+
+def check_launch_controls(browser, url):
+    cases=[('vnd','VND','Lançar vendas','rgb(234, 179, 8)'),('cnt','CNT','Lançar transferências','rgb(249, 115, 22)'),('des','DES','Lançar despesas','rgb(239, 68, 68)'),('ret','RET','Lançar retiradas','rgb(37, 99, 235)'),('mer','MER','Lançar mercadorias','rgb(34, 197, 94)'),('car','CAR','Lançar cartões','rgb(124, 58, 237)'),('pdv','PDV','Lançar PDV','rgb(124, 58, 237)')]
+    for width in [320,390,1024]:
+        page=browser.new_page(viewport={'width':width,'height':844})
+        prepare_toolbar_fixture(page)
+        page.set_default_timeout(8000)
+        page.route('https://fonts.googleapis.com/**',lambda r:r.abort())
+        page.goto(url,wait_until='domcontentloaded')
+        open_operations(page)
+        bar=footer(page)
+        bar.locator('.people-toolbar-more').click()
+        bar.locator('.people-options-resize').click()
+        for key,code,label,color in cases:
+            row=bar.locator('[data-choice-key="launch-'+key+'"]')
+            assert row.locator('.people-option-name').inner_text()==label
+            row.locator('.people-toolbar-pin').click()
+        bar.locator('.people-toolbar-more').click()
+        for dark in [False,True]:
+            page.evaluate('(d)=>document.body.classList.toggle("dark-theme",d)',dark)
+            bar.locator('.people-home-logo').click()
+            for key,code,label,color in cases:
+                button=bar.locator('.people-bottom-tools [data-control-key="launch-'+key+'"]')
+                assert button.inner_text()==code
+                assert button.evaluate('e=>getComputedStyle(e).backgroundColor')==color
+                before=page.locator('#sector-title').inner_text()
+                button.click()
+                assert page.locator('#sector-title').inner_text()==before
+                assert bar.locator('.people-save-status').inner_text()==label+' — tela de lançamento ainda não disponível.'
+                assert page.locator('#sector-content form').count()==0
+            bar.locator('.people-home-logo').click()
+        import json
+        bar.locator('.people-toolbar-more').click()
+        with page.expect_download() as download:
+            bar.locator('[data-choice-key="export"] .people-toolbar-run').click()
+        with open(download.value.path()) as saved:
+            config=json.load(saved)
+        assert all(config['preferences']['launch-'+key] is True for key,_,_,_ in cases)
+        bar.locator('.people-toolbar-more').click()
+        bar.locator('.people-options-resize').click()
+        bar.locator('[data-choice-key="launch-vnd"] .people-toolbar-pin').click()
+        bar.locator('.people-toolbar-more').click()
+        bar.locator('input[type=file]').set_input_files({'name':'launches.json','mimeType':'application/json','buffer':json.dumps(config).encode()})
+        page.wait_for_timeout(150)
+        page.reload(wait_until='domcontentloaded');open_operations(page)
+        bar.locator('.people-home-logo').click()
+        assert bar.locator('.people-bottom-tools>button:not([hidden])').count()==6
+        page.close()
+    print('PASS seven prepared launch buttons: labels, colors, pinning, persistence and honest pending-screen feedback',flush=True)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--url', default='http://127.0.0.1:8000/dist/index.html')
     args = parser.parse_args()
+    from urllib.parse import urlparse
+    if urlparse(args.url).hostname not in {'localhost','127.0.0.1'}:
+        parser.error('Este teste usa dados de sessão fictícios e deve rodar somente em servidor local.')
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(executable_path=shutil.which('chromium'), args=['--no-sandbox'])
+        check_login_guard(browser, args.url)
         check_actions(browser, args.url)
         check_position(browser, args.url)
         check_enable_and_pin(browser, args.url)
         check_add_control(browser, args.url)
+        check_metrics(browser, args.url)
+        check_launch_controls(browser, args.url)
         print('PASS layout combinations:', check_layout(browser, args.url), flush=True)
         browser.close()

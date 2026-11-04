@@ -2,6 +2,14 @@
 
 ## Matriz — módulo Compras (04/11/2026)
 Novas estruturas: compras-agendamento, compras-solicitacao, compras-cotacao, compras-pedidos, compras-conferencias, compras-estoque, compras-cadastro, compras-fornecedores e compras-produtos, mais rodada.html (fora do shell). Conferir as 9 telas em 320/390/1024px e dois temas (npm run test:telas) e as estruturas antigas (tests/footer-toolbar.py). Alteração compartilhada nesta etapa: altura e conteúdo dos diálogos adaptados pelo shell (people-header-pilot.css); conferir diálogos de Ficha de Cargos, Produtos e Cotação no desktop e no celular.
+## Complemento — sete botões preparados (04/11/2026; CNT acrescentado depois dos seis)
+Usuário confirmou criar botões primeiro e conectar telas depois: VND/Lançar vendas/amarelo; CNT/Lançar transferências/laranja; DES/Lançar despesas/vermelho; RET/Lançar retiradas/azul; MER/Lançar mercadorias/verde; CAR/Lançar cartões/roxo; PDV/Lançar PDV/roxo. Disponíveis na configuração, sem inclusão automática. Respeitar liga/desliga, inclusão individual, cores no compacto/rápido e persistência. Ao executar, informar que a tela ainda não está disponível; não redirecionar a cadastros de grupos nem gravar lançamentos fictícios.
+
+## Matriz — quatro métricas com cores próprias (04/11/2026)
+VND amarelo, COM verde, LUC azul e RES preserva roxo. Primeiro clique mostra + e ordena maiores primeiro; segundo mostra − e ordena menores primeiro, por controle. Sem dados numéricos, alternar o modo e informar que não há valores para ordenar. Preservar grupos ao ordenar. Conferir todos os quatro na lista de atalhos e no rápido, claro/escuro, três larguras, estado por botão, ausência de dados e regressões de ativação/fixação. Novos botões aguardam o áudio separado.
+
+## Matriz — Lançamentos de Uniformes (04/11/2026)
+Nova view isolada; impacto restrito ao cartão novo em Formulários → Gestão de Pessoas, três scripts novos e um bloco CSS novo ao fim de ui-foundation.css (sem alterar regras existentes). Conferir: entrada pelo menu real e retorno; três abas; formulário, histórico, estoque e referência; diálogos de configurar/detalhes/confirmar; 375/390/1024px, claro/escuro, sem overflow horizontal fora das tabelas; Cadastro simples, Cadastro completo, Cargos e Ficha de Cargos continuam abrindo. Regras de saldo testadas em tests/uniforms-stock.cjs. Somente dados fictícios no navegador de teste.
 
 ## Matriz — busca e adicionar fixos, posição nos atalhos (04/11/2026)
 Esquerda: início, busca, ordenação, data, adicionar (+). Posição da barra volta à personalização/atalhos, preservando seleção e ativação. Direita: voltar, fechar, salvar, Mais atalhos, ocultar (segundo a partir da direita é Mais atalhos). Adicionar delega à ação nativa da tela, sem duplicá-la na lista, e fica sem ação quando indisponível. Conferir20 telas, dois temas/três larguras, ambas as posições, novos cadastros, busca, seleção individual e persistência.
