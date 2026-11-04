@@ -1,7 +1,7 @@
 # Processo de alterações de interface
 
-## Complemento — seis botões preparados (04/11/2026)
-Usuário confirmou criar botões primeiro e conectar telas depois: VND/Lançar vendas/amarelo; DES/Lançar despesas/vermelho; RET/Lançar retiradas/azul; MER/Lançar mercadorias/verde; CAR/Lançar cartões/roxo; PDV/Lançar PDV/roxo. Disponíveis na configuração, sem inclusão automática. Respeitar liga/desliga, inclusão individual, cores no compacto/rápido e persistência. Ao executar, informar que a tela ainda não está disponível; não redirecionar a cadastros de grupos nem gravar lançamentos fictícios.
+## Complemento — sete botões preparados (04/11/2026; CNT acrescentado depois dos seis)
+Usuário confirmou criar botões primeiro e conectar telas depois: VND/Lançar vendas/amarelo; CNT/Lançar transferências/laranja; DES/Lançar despesas/vermelho; RET/Lançar retiradas/azul; MER/Lançar mercadorias/verde; CAR/Lançar cartões/roxo; PDV/Lançar PDV/roxo. Disponíveis na configuração, sem inclusão automática. Respeitar liga/desliga, inclusão individual, cores no compacto/rápido e persistência. Ao executar, informar que a tela ainda não está disponível; não redirecionar a cadastros de grupos nem gravar lançamentos fictícios.
 
 ## Matriz — quatro métricas com cores próprias (04/11/2026)
 VND amarelo, COM verde, LUC azul e RES preserva roxo. Primeiro clique mostra + e ordena maiores primeiro; segundo mostra − e ordena menores primeiro, por controle. Sem dados numéricos, alternar o modo e informar que não há valores para ordenar. Preservar grupos ao ordenar. Conferir todos os quatro na lista de atalhos e no rápido, claro/escuro, três larguras, estado por botão, ausência de dados e regressões de ativação/fixação. Novos botões aguardam o áudio separado.

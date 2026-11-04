@@ -108,7 +108,7 @@ def check_layout(browser, url):
                 choices.locator('.people-options-resize').click()
                 assert choices.locator('.people-options-resize').get_attribute('aria-expanded') == 'true'
                 launches=choices.locator('[data-choice-key^="launch-"]').evaluate_all('es=>es.map(e=>({key:e.dataset.choiceKey,code:e.querySelector(".people-option-symbol").textContent,label:e.querySelector(".people-option-name").textContent,color:getComputedStyle(e.querySelector(".people-option-symbol")).backgroundColor}))')
-                assert {e['code']:(e['label'],e['color']) for e in launches} == {'VND':('Lançar vendas','rgb(234, 179, 8)'),'DES':('Lançar despesas','rgb(239, 68, 68)'),'RET':('Lançar retiradas','rgb(37, 99, 235)'),'MER':('Lançar mercadorias','rgb(34, 197, 94)'),'CAR':('Lançar cartões','rgb(124, 58, 237)'),'PDV':('Lançar PDV','rgb(124, 58, 237)')}
+                assert {e['code']:(e['label'],e['color']) for e in launches} == {'VND':('Lançar vendas','rgb(234, 179, 8)'),'CNT':('Lançar transferências','rgb(249, 115, 22)'),'DES':('Lançar despesas','rgb(239, 68, 68)'),'RET':('Lançar retiradas','rgb(37, 99, 235)'),'MER':('Lançar mercadorias','rgb(34, 197, 94)'),'CAR':('Lançar cartões','rgb(124, 58, 237)'),'PDV':('Lançar PDV','rgb(124, 58, 237)')}
                 for pin in choices.locator('.people-toolbar-pin').all():
                     box = pin.bounding_box()
                     icon = pin.locator('svg')
@@ -532,7 +532,7 @@ def check_metrics(browser, url):
 
 
 def check_launch_controls(browser, url):
-    cases=[('vnd','VND','Lançar vendas','rgb(234, 179, 8)'),('des','DES','Lançar despesas','rgb(239, 68, 68)'),('ret','RET','Lançar retiradas','rgb(37, 99, 235)'),('mer','MER','Lançar mercadorias','rgb(34, 197, 94)'),('car','CAR','Lançar cartões','rgb(124, 58, 237)'),('pdv','PDV','Lançar PDV','rgb(124, 58, 237)')]
+    cases=[('vnd','VND','Lançar vendas','rgb(234, 179, 8)'),('cnt','CNT','Lançar transferências','rgb(249, 115, 22)'),('des','DES','Lançar despesas','rgb(239, 68, 68)'),('ret','RET','Lançar retiradas','rgb(37, 99, 235)'),('mer','MER','Lançar mercadorias','rgb(34, 197, 94)'),('car','CAR','Lançar cartões','rgb(124, 58, 237)'),('pdv','PDV','Lançar PDV','rgb(124, 58, 237)')]
     for width in [320,390,1024]:
         page=browser.new_page(viewport={'width':width,'height':844})
         prepare_toolbar_fixture(page)
@@ -578,7 +578,7 @@ def check_launch_controls(browser, url):
         bar.locator('.people-home-logo').click()
         assert bar.locator('.people-bottom-tools>button:not([hidden])').count()==6
         page.close()
-    print('PASS six prepared launch buttons: labels, colors, pinning, persistence and honest pending-screen feedback',flush=True)
+    print('PASS seven prepared launch buttons: labels, colors, pinning, persistence and honest pending-screen feedback',flush=True)
 
 
 if __name__ == '__main__':

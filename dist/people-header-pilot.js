@@ -141,7 +141,7 @@
   const bought=metricControl('COM','comprado','#22c55e',['com','purchases','bought','comprado']);
   const profit=metricControl('LUC','lucro','#2563eb',['luc','profit','lucro']);
   const result=metricControl('RES','resultado','#7c3aed',['res','result','resultado']);
-  const launchControls=[['vnd','VND','Lançar vendas','#eab308'],['des','DES','Lançar despesas','#ef4444'],['ret','RET','Lançar retiradas','#2563eb'],['mer','MER','Lançar mercadorias','#22c55e'],['car','CAR','Lançar cartões','#7c3aed'],['pdv','PDV','Lançar PDV','#7c3aed']].map(([key,code,label,color])=>{
+  const launchControls=[['vnd','VND','Lançar vendas','#eab308'],['cnt','CNT','Lançar transferências','#f97316'],['des','DES','Lançar despesas','#ef4444'],['ret','RET','Lançar retiradas','#2563eb'],['mer','MER','Lançar mercadorias','#22c55e'],['car','CAR','Lançar cartões','#7c3aed'],['pdv','PDV','Lançar PDV','#7c3aed']].map(([key,code,label,color])=>{
    const button=control(label,'',()=>announce(label+' — tela de lançamento ainda não disponível.'));
    button.textContent=code;button.classList.add('people-launch-control');button.style.setProperty('--launch-color',color);button.setAttribute('aria-description','Atalho preparado; tela de lançamento ainda não disponível.');
    return ['launch-'+key,{button,label}];
