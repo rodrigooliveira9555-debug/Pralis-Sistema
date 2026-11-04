@@ -205,10 +205,12 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-head
 body dialog.shell-dialog,body .dialog.shell-dialog{padding:0!important;overflow:hidden!important;max-height:90dvh!important;background:#fff!important;border:1px solid var(--layout-line,#dedee3)!important;border-radius:20px!important;min-width:0}
 body :is(dialog,.dialog).app-screen-shell>.panel{display:flex!important;flex-direction:column;max-height:88dvh!important;height:auto!important;margin:0!important;border:0!important;border-radius:20px!important}
 body :is(dialog,.dialog).app-screen-shell>.panel>.content{min-height:0;overflow-y:auto!important;flex:1 1 auto!important}
+/* Diálogos têm altura automática: a regra das telas (flex 1 1 0, especificidade de id) zerava o conteúdo. */
+body:is(.dark-theme,:not(.dark-theme)) :is(dialog,.dialog):not(#dialog-content-auto).app-screen-shell>.panel>.head+.content{flex:1 1 auto!important}
 body :is(dialog,.dialog).app-screen-shell>.panel>.head{margin:0!important;width:100%!important;max-width:100%!important;box-sizing:border-box;position:relative!important;top:auto!important;left:auto!important;right:auto!important;transform:none!important}
 body dialog.shell-dialog{position:fixed!important;inset:8px!important;margin:auto!important;width:min(760px,calc(100vw - 16px))!important;height:fit-content!important;max-height:calc(100dvh - 16px)!important;box-sizing:border-box}
 body :is(dialog,.dialog).app-screen-shell .people-bottom-header{width:100%;box-sizing:border-box}
-body:is(.dark-theme,:not(.dark-theme)) dialog.shell-dialog.app-screen-shell{height:auto!important;min-height:0!important;max-height:90dvh!important}
+body:is(.dark-theme,:not(.dark-theme)) dialog.shell-dialog.app-screen-shell{height:max-content!important;min-height:0!important;max-height:90dvh!important}
 body:is(.dark-theme,:not(.dark-theme)) dialog.shell-dialog.app-screen-shell>.panel{height:auto!important;min-height:0!important;max-height:88dvh!important}
 body dialog.app-screen-shell>.panel>.head{z-index:0!important}
 body dialog.app-screen-shell>.panel>.content{position:relative;z-index:1}
