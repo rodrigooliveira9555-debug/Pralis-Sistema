@@ -13,8 +13,9 @@
 }
 /* Circular badges must not shrink into ovals in narrow flex rows. */
 body :is(.icon-choice,.account-icon-dot,.shortcut-circle,.location-icon,.location-add,.sector-icon,.card-inherited-icon,.config-inherit-icon,.icon-live-badge,.job-icon,.menu-icon-circle,.money-icon){--circle-size:32px;box-sizing:border-box!important;aspect-ratio:1/1;flex:0 0 var(--circle-size)!important;width:var(--circle-size)!important;min-width:var(--circle-size)!important;max-width:var(--circle-size)!important;height:var(--circle-size)!important;min-height:var(--circle-size)!important;max-height:var(--circle-size)!important;border-radius:var(--icon-radius,50%)!important;align-self:center}
-/* Row icons (left side of list rows) are rounded squares; every other circle keeps 50%. */
+/* Row icons (list rows and main menu items) are rounded squares; every other circle keeps 50%. */
 body :is(.record,.account-list-row,.location-row,.job-item) :is(.card-inherited-icon,.location-icon,.job-icon){--icon-radius:var(--row-icon-radius,26%)}
+body .side :is(.money-icon,.menu-icon-circle){--icon-radius:var(--row-icon-radius,26%)}
 body :is(.menu-icon-circle,.money-icon,.config-inherit-icon){--circle-size:38px}
 body :is(.location-icon,.card-inherited-icon){--circle-size:30px}
 @media(max-width:560px){body .head .shortcut-actions>.shortcut-circle,body .head>.sector-icon{--circle-size:28px}}
