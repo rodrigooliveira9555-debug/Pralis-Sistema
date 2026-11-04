@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Matriz — rodapé fixo e menu rápido (03/11/2026)
+Marca central abre/fecha segunda faixa de atalhos sem aumentar a marca; clique externo/Escape oculta. Esquerda: início, busca, ordenação A–Z/Z–A/original e data. Direita: voltar, fechar, salvar, três pontos e ocultar/restaurar cabeçalho. Fixos ausentes da lista de personalização. Lista compacta mostra apenas disponíveis não escolhidos; configuração expandida inclui escolhidos e ocultos, com seleção para menu rápido, visibilidade e ordem persistentes por tela. Data sem registros datados permanece colorida e sem ação. Conferir20 estruturas/320/390/1024px/dois temas, foco/teclado, salvar com validação, retorno, busca nativa, ordenação/restauração, estado por tela/reload, lista/configuração/atalhos, diálogos e navegação.
+
 ## Complemento — fotografia e etapas do cadastro completo (03/11/2026)
 Fotografia e indicadores numéricos maciços na cor da origem, símbolo/número na superfície do tema. Etapa selecionada com acento100%; demais com mistura38% na superfície, sem reduzir opacidade dos números. Conferir todas as etapas, dependentes e dois temas; preservar indisponibilidade da fotografia e validação de avanço.
 
