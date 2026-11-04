@@ -30,6 +30,18 @@ import {
 } from "./lancamentos.repository.ts";
 import { calcularAcrescimo, calcularItens, conferirDataPagamento, exigir, valorEmBanco } from "./lancamentos.regras.ts";
 
+// Edição concorrente: a tela manda o "atualizadoEm" que tinha; se outra pessoa salvou depois, 409 em
+// vez de sobrescrever calado (ex.: uma discriminação feita por outro usuário sumiria).
+function exigirMesmaVersao(atual: LinhaLancamento, base: string | undefined) {
+  if (base && new Date(base).getTime() !== atual.atualizadoEm.getTime()) {
+    throw new ErroDominio(
+      "Outra pessoa alterou este lançamento enquanto você editava. Feche e abra de novo para ver a versão atual.",
+      409,
+      "LANCAMENTO_ALTERADO"
+    );
+  }
+}
+
 function naoEncontrado() {
   return new ErroDominio("Lançamento não encontrado", 404, "NOT_FOUND");
 }
@@ -105,7 +117,8 @@ export async function criarLancamento(perfil: PerfilSessao, categoria: Categoria
       categoria,
       frequencia: recorrencia.frequencia,
       repeticoes: recorrencia.repeticoes,
-      diasSemana: recorrencia.diasSemana ?? null,
+      // Dias da semana só existem na frequência semanal (como no principal).
+      diasSemana: recorrencia.frequencia === "semana" ? (recorrencia.diasSemana ?? null) : null,
       criadoPor: perfil.usuarioId
     });
     let primeiro = "";
@@ -145,6 +158,7 @@ export async function editarLancamento(perfil: PerfilSessao, id: string, entrada
     const atual = await travarLancamento(tx, perfil.empresa.id, id);
     if (!atual) throw naoEncontrado();
     exigirEditavel(perfil, atual);
+    exigirMesmaVersao(atual, entrada.atualizadoEmBase);
     if ((entrada.dataPagamento ?? null) !== atual.dataPagamento && atual.dataPagamento) {
       exigir(perfil, "pagar", "Só o administrador altera o pagamento.");
     }
@@ -166,6 +180,7 @@ export async function discriminarLancamento(perfil: PerfilSessao, id: string, en
     const atual = await travarLancamento(tx, perfil.empresa.id, id);
     if (!atual) throw naoEncontrado();
     exigirEditavel(perfil, atual);
+    exigirMesmaVersao(atual, entrada.atualizadoEmBase);
     const { itens, valorDescontoCentavos } = calcularItens(categoria, atual.valorOriginal, entrada, nomes);
     await atualizarLancamento(
       tx,
@@ -217,7 +232,8 @@ function paraResposta(linha: LinhaLancamento, temItens: boolean): LancamentoResp
     dataDocumentoFiscal: linha.dataDocumentoFiscal,
     recorrenciaId: linha.recorrenciaId,
     recorrenciaOrdem: linha.recorrenciaOrdem,
-    pendenteDiscriminacao: categoria !== "retiradas" && !temItens
+    pendenteDiscriminacao: categoria !== "retiradas" && !temItens,
+    atualizadoEm: linha.atualizadoEm.toISOString()
   };
 }
 

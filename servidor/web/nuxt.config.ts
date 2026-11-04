@@ -39,10 +39,10 @@ export default defineNuxtConfig({
     vuetifyOptions: {
       defaults: {
         VBtn: { rounded: "lg", variant: "flat" },
-        VTextField: { variant: "outlined", density: "comfortable", rounded: "lg" },
-        VSelect: { variant: "outlined", density: "comfortable", rounded: "lg" },
-        VAutocomplete: { variant: "outlined", density: "comfortable", rounded: "lg" },
-        VTextarea: { variant: "outlined", density: "comfortable", rounded: "lg" }
+        VTextField: { variant: "outlined", density: "compact", rounded: "lg" },
+        VSelect: { variant: "outlined", density: "compact", rounded: "lg" },
+        VAutocomplete: { variant: "outlined", density: "compact", rounded: "lg" },
+        VTextarea: { variant: "outlined", density: "compact", rounded: "lg" }
       },
       // Mesma linguagem do site: Luz/Sombra (chave "cicluz-tema" do localStorage, a mesma do menu
       // do site) e o roxo dos formulários como cor principal.

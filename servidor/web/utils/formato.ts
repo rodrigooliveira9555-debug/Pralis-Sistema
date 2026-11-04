@@ -18,12 +18,10 @@ export function formatarData(data: string | null | undefined) {
   return `${dia}/${mes}/${ano?.slice(2)}`;
 }
 
-export type InfoCategoria = { titulo: string; subtitulo: string; cor: string; colecao: CategoriaLancamento };
+export type InfoCategoria = { titulo: string; subtitulo: string; origem: CategoriaLancamento };
 
-
-// Cor de origem de cada categoria (DESIGN_SYSTEM do site).
 export const CATEGORIAS: Record<CategoriaLancamento, InfoCategoria> = {
-  despesas: { titulo: "Despesas", subtitulo: "Saídas / Despesas e custos", cor: "var(--cor-despesas)", colecao: "despesas" },
-  mercadorias: { titulo: "Mercadorias", subtitulo: "Saídas / Mercadorias e CMV", cor: "var(--cor-mercadorias)", colecao: "mercadorias" },
-  retiradas: { titulo: "Retiradas", subtitulo: "Saídas / Retiradas e investimentos", cor: "var(--cor-retiradas)", colecao: "retiradas" }
+  despesas: { titulo: "Despesas", subtitulo: "Saídas / Despesas e custos", origem: "despesas" },
+  mercadorias: { titulo: "Mercadorias", subtitulo: "Saídas / Mercadorias e CMV", origem: "mercadorias" },
+  retiradas: { titulo: "Retiradas", subtitulo: "Saídas / Retiradas e investimentos", origem: "retiradas" }
 };

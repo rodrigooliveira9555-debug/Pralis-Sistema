@@ -9,6 +9,7 @@ if (!(CATEGORIAS_LANCAMENTO as readonly string[]).includes(categoria.value)) {
   throw createError({ statusCode: 404, statusMessage: "Tela não encontrada" });
 }
 const info = computed(() => CATEGORIAS[categoria.value]);
+const estilo = useEstiloOrigem(() => info.value.origem);
 const icone = computed(() => ({ despesas: Receipt, mercadorias: Package, retiradas: PiggyBank })[categoria.value]);
 const sessao = useSessao();
 const administrador = computed(() => sessao.value?.papel === "administrador");
@@ -68,12 +69,23 @@ function carregarMais() {
 const formularioAberto = ref(false);
 const emEdicao = ref<LancamentoResposta | null>(null);
 
+// O foco volta para quem abriu a janela (o Vuetify só devolve quando há activator).
+let quemAbriu: HTMLElement | null = null;
+function lembrarFoco() {
+  quemAbriu = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+}
+function devolverFoco() {
+  quemAbriu?.focus();
+}
+
 function novo() {
+  lembrarFoco();
   emEdicao.value = null;
   formularioAberto.value = true;
 }
 
 async function abrir(item: LancamentoResposta) {
+  lembrarFoco();
   try {
     emEdicao.value = await chamarApi<LancamentoResposta>(`/lancamentos/item/${item.id}`);
     formularioAberto.value = true;
@@ -103,7 +115,7 @@ async function cancelarSerie(item: LancamentoResposta) {
 </script>
 
 <template>
-  <div class="tela" :style="{ '--cor-origem': info.cor }">
+  <div class="tela" :style="estilo">
     <header class="tela-topo">
       <component :is="icone" class="icone-tela" aria-hidden="true" />
       <div>
@@ -147,6 +159,7 @@ async function cancelarSerie(item: LancamentoResposta) {
             variant="text"
             color="error"
             class="linha-serie"
+            :aria-label="`Cancelar a série de ${item.observacao}`"
             @click="cancelarSerie(item)"
           >
             Cancelar série
@@ -159,14 +172,23 @@ async function cancelarSerie(item: LancamentoResposta) {
     </section>
 
     <footer class="tela-rodape">
-      <p class="rodape-total">
+      <img src="/marca/simbolo.png" alt="" width="32" height="29" />
+      <p class="rodape-total" aria-live="polite">
         <span class="texto-suave">{{ total }} lançamento(s)</span>
         <strong>{{ formatarMoeda(valorTotal) }}</strong>
       </p>
-      <v-btn color="primary" @click="novo"><Plus :size="18" class="mr-1" /> Novo lançamento</v-btn>
+      <div class="acoes">
+        <v-btn color="primary" @click="novo"><Plus :size="18" class="mr-1" /> Novo lançamento</v-btn>
+      </div>
     </footer>
 
-    <FormularioLancamento v-model="formularioAberto" :categoria="categoria" :lancamento="emEdicao" @salvo="aoSalvar" />
+    <FormularioLancamento
+      v-model="formularioAberto"
+      :categoria="categoria"
+      :lancamento="emEdicao"
+      @salvo="aoSalvar"
+      @fechado="devolverFoco"
+    />
   </div>
 </template>
 
@@ -216,7 +238,7 @@ async function cancelarSerie(item: LancamentoResposta) {
 }
 
 .linha-abrir:focus-visible {
-  outline: 2px solid var(--cor-origem);
+  outline: 2px solid rgb(var(--v-theme-on-surface));
   outline-offset: -2px;
 }
 

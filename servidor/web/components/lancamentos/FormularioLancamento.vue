@@ -1,27 +1,40 @@
 <script setup lang="ts">
 import { X } from "lucide-vue-next";
 import type { CategoriaLancamento, LancamentoResposta } from "@cicluz/shared";
-import { corpoParaApi, formDeLancamento, formVazio, usePreviaLancamento } from "~/composables/useFormularioLancamento";
+import { corpoParaApi, errosDosNumeros, formDeLancamento, formVazio, usePreviaLancamento } from "~/composables/useFormularioLancamento";
 import { CATEGORIAS, formatarCentavos } from "~/utils/formato";
 
 const props = defineProps<{ categoria: CategoriaLancamento; lancamento: LancamentoResposta | null }>();
 const aberto = defineModel<boolean>({ required: true });
-const emit = defineEmits<{ salvo: [mensagem: string] }>();
+const emit = defineEmits<{ salvo: [mensagem: string]; fechado: [] }>();
 
 const sessao = useSessao();
 const administrador = computed(() => sessao.value?.papel === "administrador");
 const categoria = computed(() => props.categoria);
 const info = computed(() => CATEGORIAS[props.categoria]);
+const estilo = useEstiloOrigem(() => info.value.origem);
 const { grupos, contas, erro: erroCadastros } = useCadastrosFinanceiros(categoria);
 
 const form = ref(formVazio());
 const previa = usePreviaLancamento(form, categoria);
+const errosNumeros = computed(() => errosDosNumeros(form.value));
 const salvando = ref(false);
 const erro = ref("");
 const linhaComErro = ref<number | null>(null);
 const pago = computed(() => Boolean(props.lancamento?.dataPagamento));
 // Lançamento pago: só o administrador altera (permissão editar_pago no servidor).
 const somenteLeitura = computed(() => pago.value && !administrador.value);
+const discriminando = computed(() => props.categoria !== "retiradas" && form.value.discriminar && form.value.itens.length > 0);
+// D5: o Salvar fica bloqueado enquanto a soma dos itens não bate (o servidor também recusa).
+const somaDivergente = computed(() => discriminando.value && previa.value.diferencaItensCentavos !== 0);
+const avisoSoma = computed(() =>
+  somaDivergente.value
+    ? `A soma dos itens ${previa.value.diferencaItensCentavos > 0 ? "excede" : "não alcança"} o valor em ${formatarCentavos(
+        Math.abs(previa.value.diferencaItensCentavos)
+      )}. O Salvar fica bloqueado até bater.`
+    : ""
+);
+const podeSalvar = computed(() => !salvando.value && !somaDivergente.value && Object.keys(errosNumeros.value).length === 0);
 
 watch(aberto, (agora) => {
   if (!agora) return;
@@ -36,6 +49,7 @@ const TIPOS = [
 ];
 
 async function salvar() {
+  if (!podeSalvar.value) return;
   salvando.value = true;
   erro.value = "";
   linhaComErro.value = null;
@@ -44,12 +58,7 @@ async function salvar() {
     const corpo = corpoParaApi(form.value, props.categoria, criando);
     if (criando) {
       const r = await chamarApi<{ serie?: number; serieLimitada?: boolean }>(`/lancamentos/${props.categoria}`, { metodo: "POST", corpo });
-      emit(
-        "salvo",
-        r.serie
-          ? `Série criada com ${r.serie} lançamentos${r.serieLimitada ? " (limitada a 12 meses)" : ""}.`
-          : "Lançamento salvo."
-      );
+      emit("salvo", r.serie ? `Série criada com ${r.serie} lançamentos${r.serieLimitada ? " (limitada a 12 meses)" : ""}.` : "Lançamento salvo.");
     } else {
       await chamarApi(`/lancamentos/item/${props.lancamento?.id}`, { metodo: "PUT", corpo });
       emit("salvo", "Lançamento atualizado.");
@@ -59,11 +68,12 @@ async function salvar() {
     if (e instanceof ErroApi && e.codigo === "DISCRIMINACAO_DIVERGENTE") {
       linhaComErro.value = (e.detalhes as { linhaProvavel?: number } | undefined)?.linhaProvavel ?? null;
     }
-    if (e instanceof ErroApi && Array.isArray(e.detalhes) && e.codigo === "VALIDATION_ERROR") {
-      erro.value = (e.detalhes as Array<{ caminho: string; mensagem: string }>).map((d) => d.mensagem).join(" · ");
-    } else {
-      erro.value = e instanceof Error ? e.message : "Não foi possível salvar.";
-    }
+    erro.value =
+      e instanceof ErroApi && e.codigo === "VALIDATION_ERROR" && Array.isArray(e.detalhes)
+        ? (e.detalhes as Array<{ mensagem: string }>).map((d) => d.mensagem).join(" · ")
+        : e instanceof Error
+          ? e.message
+          : "Não foi possível salvar.";
   } finally {
     salvando.value = false;
   }
@@ -71,9 +81,15 @@ async function salvar() {
 </script>
 
 <template>
-  <v-dialog v-model="aberto" max-width="860" scrollable :aria-label="`${lancamento ? 'Editar' : 'Novo'} lançamento de ${info.titulo}`">
-    <v-card class="janela" :style="{ '--cor-origem': info.cor }">
-      <header class="tela-topo janela-topo">
+  <v-dialog
+    v-model="aberto"
+    max-width="860"
+    scrollable
+    :aria-label="`${lancamento ? 'Editar' : 'Novo'} lançamento de ${info.titulo}`"
+    @after-leave="emit('fechado')"
+  >
+    <div class="janela" :style="estilo">
+      <header class="tela-topo">
         <div class="janela-titulo">
           <h2>{{ lancamento ? "Editar lançamento" : "Novo lançamento" }}</h2>
           <p>{{ info.titulo }}{{ lancamento?.recorrenciaOrdem ? ` · ocorrência ${lancamento.recorrenciaOrdem} da série` : "" }}</p>
@@ -81,7 +97,7 @@ async function salvar() {
         <button type="button" class="janela-fechar" aria-label="Fechar" @click="aberto = false"><X :size="20" /></button>
       </header>
 
-      <v-card-text>
+      <section class="tela-conteudo janela-corpo">
         <v-alert v-if="somenteLeitura" type="info" variant="tonal" class="mb-4">Lançamento pago: só o administrador altera.</v-alert>
         <v-alert v-if="erroCadastros" type="warning" variant="tonal" class="mb-4">{{ erroCadastros }}</v-alert>
 
@@ -89,13 +105,25 @@ async function salvar() {
           <CampoData v-model="form.dataReferencia" rotulo="Data do lançamento" obrigatorio />
           <CampoData v-model="form.dataVencimento" rotulo="Vencimento" obrigatorio />
           <CampoData v-model="form.dataPagamento" rotulo="Pago em (vazio = não pago)" :desabilitado="!administrador" />
-          <v-text-field v-model="form.valorOriginal" label="Valor (R$)" inputmode="decimal" placeholder="0,00" />
+          <v-text-field
+            v-model="form.valorOriginal"
+            label="Valor (R$)"
+            inputmode="decimal"
+            placeholder="0,00"
+            :error-messages="form.valorOriginal ? errosNumeros['valorOriginal'] : ''"
+          />
           <v-textarea v-model="form.observacao" label="Observação" rows="2" auto-grow counter="500" class="largo" />
           <v-autocomplete v-model="form.grupoId" :items="grupos" label="Grupo" clearable />
           <v-autocomplete v-model="form.contaNome" :items="contas" label="Conta" clearable />
           <div class="par">
-            <v-select v-model="form.jurosTipo" :items="TIPOS" label="Juros" clearable />
-            <v-text-field v-model="form.jurosValorInformado" label="Juros" inputmode="decimal" :disabled="!form.jurosTipo" />
+            <v-select v-model="form.jurosTipo" :items="TIPOS" label="Tipo de juros" clearable />
+            <v-text-field
+              v-model="form.jurosValorInformado"
+              label="Juros (valor)"
+              inputmode="decimal"
+              :disabled="!form.jurosTipo"
+              :error-messages="errosNumeros['juros']"
+            />
           </div>
           <v-text-field v-model="form.numeroDocumentoFiscal" label="Nº do documento fiscal" />
           <CampoData v-model="form.dataDocumentoFiscal" rotulo="Data do documento fiscal" />
@@ -104,17 +132,27 @@ async function salvar() {
         <template v-if="categoria !== 'retiradas'">
           <v-switch v-model="form.discriminar" :disabled="somenteLeitura" color="primary" label="Discriminar itens" hide-details class="mb-2" />
           <template v-if="form.discriminar">
-            <ItensDiscriminacao v-model="form.itens" :grupos="grupos" :totais-centavos="previa.totaisItens" :linha-com-erro="linhaComErro" />
+            <ItensDiscriminacao
+              v-model="form.itens"
+              :grupos="grupos"
+              :totais-centavos="previa.totaisItens"
+              :linha-com-erro="linhaComErro"
+              :erros="errosNumeros"
+            />
             <div class="par mt-4">
-              <v-select v-model="form.descontoGeralTipo" :items="TIPOS" label="Desconto geral" clearable />
-              <v-text-field v-model="form.descontoGeralValor" label="Desconto geral" inputmode="decimal" :disabled="!form.descontoGeralTipo" />
+              <v-select v-model="form.descontoGeralTipo" :items="TIPOS" label="Tipo de desconto geral" clearable />
+              <v-text-field
+                v-model="form.descontoGeralValor"
+                label="Desconto geral (valor)"
+                inputmode="decimal"
+                :disabled="!form.descontoGeralTipo"
+                :error-messages="errosNumeros['descontoGeral']"
+              />
             </div>
-            <p v-if="form.itens.length && previa.diferencaItensCentavos !== 0" class="aviso-soma" role="status">
-              A soma dos itens {{ previa.diferencaItensCentavos > 0 ? "excede" : "não alcança" }} o valor em
-              {{ formatarCentavos(Math.abs(previa.diferencaItensCentavos)) }}. O salvar fica bloqueado até bater.
-            </p>
           </template>
         </template>
+        <!-- Sempre montado: o leitor de tela anuncia quando o texto muda. -->
+        <p class="aviso-soma" role="status">{{ avisoSoma }}</p>
 
         <template v-if="!lancamento && administrador">
           <v-switch v-model="form.recorrente" color="primary" label="Repetir este lançamento" hide-details class="my-2" />
@@ -126,26 +164,35 @@ async function salvar() {
           <div v-if="previa.descontoCentavos"><dt>Desconto</dt><dd>− {{ formatarCentavos(previa.descontoCentavos) }}</dd></div>
           <div class="resumo-total"><dt>Valor total</dt><dd>{{ formatarCentavos(previa.totalCentavos) }}</dd></div>
         </dl>
-        <p v-if="erro" class="erro" role="alert">{{ erro }}</p>
-      </v-card-text>
+        <p class="erro" role="alert">{{ erro }}</p>
+      </section>
 
       <footer class="tela-rodape janela-rodape">
         <img src="/marca/simbolo.png" alt="" width="32" height="29" />
         <div class="acoes">
           <v-btn variant="outlined" color="primary" @click="aberto = false">Cancelar</v-btn>
-          <v-btn v-if="!somenteLeitura" color="primary" :loading="salvando" @click="salvar">Salvar</v-btn>
+          <v-btn v-if="!somenteLeitura" color="primary" :loading="salvando" :disabled="!podeSalvar" @click="salvar">Salvar</v-btn>
         </div>
       </footer>
-    </v-card>
+    </div>
   </v-dialog>
 </template>
 
 <style scoped>
-.janela { border-radius: var(--canto) !important; }
-.janela-topo { border-radius: 0; }
+/* Três retângulos independentes (cabeçalho, conteúdo, rodapé), cantos 12px e 6px entre eles. */
+.janela {
+  display: flex;
+  flex-direction: column;
+  gap: var(--respiro);
+  max-height: calc(100dvh - 48px);
+}
+
+.janela-corpo {
+  overflow-y: auto;
+}
+
 .janela-titulo { flex: 1; }
-.janela-titulo h2 { margin: 0; font-size: 16px; font-weight: 600; }
-.janela-titulo p { margin: 0; font-size: 11px; }
+.janela-titulo p { margin: 0; }
 
 .janela-fechar {
   display: grid;
@@ -159,8 +206,6 @@ async function salvar() {
   cursor: pointer;
 }
 
-.janela-fechar:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-
 .grade {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -171,7 +216,7 @@ async function salvar() {
 }
 
 .largo { grid-column: 1 / -1; }
-.par { display: grid; grid-template-columns: 96px 1fr; gap: 8px; }
+.par { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px; }
 
 .aviso-soma,
 .erro {
@@ -179,6 +224,9 @@ async function salvar() {
   color: rgb(var(--v-theme-error));
   font-size: 13px;
 }
+
+.aviso-soma:empty,
+.erro:empty { margin: 0; }
 
 .resumo {
   display: flex;
@@ -193,10 +241,10 @@ async function salvar() {
 .resumo dd { margin: 0; font-weight: 600; }
 .resumo-total dd { font-size: 18px; }
 
-.janela-rodape { position: static; border-radius: 0; border-top: 1px solid var(--borda); }
-.acoes { display: flex; gap: 8px; min-width: 0; overflow-x: auto; }
+.janela-rodape { position: static; }
 
 @media (max-width: 600px) {
   .grade { grid-template-columns: minmax(0, 1fr); }
+  .par { grid-template-columns: 96px minmax(0, 1fr); }
 }
 </style>

@@ -1,1 +1,0 @@
-import{m as e}from"#entry";var t=e(`/marca/simbolo.png`);export{t};

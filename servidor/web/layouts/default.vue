@@ -1,12 +1,18 @@
 <script setup lang="ts">
-import { LogOut, Settings, Users } from "lucide-vue-next";
+import { LogOut, Moon, Settings, Sun, Users } from "lucide-vue-next";
+import { useTheme } from "vuetify";
+import { CORES } from "~/utils/cores";
 import { MENU_LANCAMENTOS } from "~/utils/menu";
+import { aplicarTema, CHAVE_TEMA } from "~/utils/tema";
 
-// Menu lateral no padrão do menu inicial do site: marca, faixa colorida, seção, itens com círculo
-// maciço na cor de origem e o usuário fixo no rodapé.
+// Menu lateral no padrão do menu inicial do site: marca, faixa colorida, seções, itens com círculo
+// maciço na cor de origem (tom forte, para o branco passar no contraste), Luz/Sombra e o usuário
+// fixo no rodapé.
 const sessao = useSessao();
 const route = useRoute();
+const tema = useTheme();
 const aberto = ref(true);
+const escuro = computed(() => tema.global.current.value.dark);
 
 const iniciais = computed(() =>
   (sessao.value?.nome ?? "")
@@ -16,49 +22,79 @@ const iniciais = computed(() =>
     .map((parte) => parte.charAt(0).toUpperCase())
     .join("")
 );
+
+// Mesma chave do botão Luz/Sombra do site: trocar aqui troca lá também.
+function alternarTema() {
+  const nome = escuro.value ? "cicluzLuz" : "cicluzSombra";
+  tema.global.name.value = nome;
+  aplicarTema(nome);
+  try {
+    localStorage.setItem(CHAVE_TEMA, nome === "cicluzSombra" ? "sombra" : "luz");
+  } catch {
+    // Sem armazenamento: vale só nesta visita.
+  }
+}
 </script>
 
 <template>
+  <a href="#conteudo" class="pular">Pular para o conteúdo</a>
+
   <v-navigation-drawer v-model="aberto" width="260" mobile-breakpoint="md" class="menu" aria-label="Menu principal">
     <div class="menu-marca">
       <img src="/marca/logo.png" alt="CICLUZ Gestão de Padaria" width="178" height="64" />
       <span class="menu-faixa" aria-hidden="true" />
     </div>
 
-    <nav aria-label="Lançamentos">
-      <p class="menu-secao">Lançamentos</p>
-      <NuxtLink
-        v-for="item in MENU_LANCAMENTOS"
-        :key="item.rota"
-        :to="item.rota"
-        class="menu-item"
-        :class="{ ativo: route.path.startsWith(item.rota) }"
-        :style="{ '--cor-item': item.cor }"
-        :aria-current="route.path.startsWith(item.rota) ? 'page' : undefined"
-      >
-        <span class="menu-icone" aria-hidden="true">$ {{ item.sinal }}</span>
-        <span class="menu-texto">
-          <strong>{{ item.titulo }}</strong>
-          <small>{{ item.subtitulo }}</small>
-        </span>
-      </NuxtLink>
+    <h2 id="secao-lancamentos" class="menu-secao">Lançamentos</h2>
+    <ul class="menu-lista" aria-labelledby="secao-lancamentos">
+      <li v-for="item in MENU_LANCAMENTOS" :key="item.rota">
+        <NuxtLink
+          :to="item.rota"
+          class="menu-item"
+          :class="{ ativo: route.path.startsWith(item.rota) }"
+          :style="{ '--cor-item': CORES[item.origem].forte }"
+          :aria-current="route.path.startsWith(item.rota) ? 'page' : undefined"
+        >
+          <span class="menu-icone" aria-hidden="true">$ {{ item.sinal }}</span>
+          <span class="menu-texto">
+            <strong>{{ item.titulo }}</strong>
+            <small>{{ item.subtitulo }}</small>
+          </span>
+        </NuxtLink>
+      </li>
+    </ul>
 
-      <p class="menu-secao">Outros</p>
-      <a href="/index.html" class="menu-item" style="--cor-item: var(--cor-formularios)">
-        <span class="menu-icone" aria-hidden="true"><Settings :size="18" /></span>
-        <span class="menu-texto"><strong>Configuração</strong><small>Cadastros / Gerais</small></span>
-      </a>
-      <a href="/usuarios.html" class="menu-item" style="--cor-item: var(--cor-formularios)">
-        <span class="menu-icone" aria-hidden="true"><Users :size="18" /></span>
-        <span class="menu-texto"><strong>Usuários</strong><small>Senha e acessos</small></span>
-      </a>
-    </nav>
+    <h2 id="secao-outros" class="menu-secao">Outros</h2>
+    <ul class="menu-lista" aria-labelledby="secao-outros">
+      <li>
+        <a href="/index.html" class="menu-item" :style="{ '--cor-item': CORES.formularios.forte }">
+          <span class="menu-icone" aria-hidden="true"><Settings :size="18" /></span>
+          <span class="menu-texto"><strong>Configuração</strong><small>Cadastros / Gerais</small></span>
+        </a>
+      </li>
+      <li>
+        <a href="/usuarios.html" class="menu-item" :style="{ '--cor-item': CORES.formularios.forte }">
+          <span class="menu-icone" aria-hidden="true"><Users :size="18" /></span>
+          <span class="menu-texto"><strong>Usuários</strong><small>Senha e acessos</small></span>
+        </a>
+      </li>
+    </ul>
 
     <template #append>
       <div class="menu-usuario">
         <span class="menu-avatar" aria-hidden="true">{{ iniciais }}</span>
         <span class="menu-nome">{{ sessao?.nome }}</span>
-        <button type="button" class="menu-sair" aria-label="Sair do sistema" title="Sair" @click="sairDoSistema">
+        <button
+          type="button"
+          class="menu-controle"
+          :aria-label="escuro ? 'Ativar tema claro (Luz)' : 'Ativar tema escuro (Sombra)'"
+          :title="escuro ? 'Luz' : 'Sombra'"
+          @click="alternarTema"
+        >
+          <Sun v-if="escuro" :size="18" />
+          <Moon v-else :size="18" />
+        </button>
+        <button type="button" class="menu-controle menu-sair" aria-label="Sair do sistema" title="Sair" @click="sairDoSistema">
           <LogOut :size="18" />
         </button>
       </div>
@@ -66,7 +102,7 @@ const iniciais = computed(() =>
   </v-navigation-drawer>
 
   <v-main>
-    <div class="area">
+    <div id="conteudo" class="area" tabindex="-1">
       <button type="button" class="menu-alternar" :aria-expanded="aberto" aria-label="Mostrar ou esconder o menu" @click="aberto = !aberto">
         <span aria-hidden="true">☰</span>
       </button>
@@ -76,6 +112,22 @@ const iniciais = computed(() =>
 </template>
 
 <style scoped>
+.pular {
+  position: fixed;
+  z-index: 3000;
+  top: 8px;
+  left: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgb(var(--v-theme-surface));
+  color: rgb(var(--v-theme-on-surface));
+  transform: translateY(-200%);
+}
+
+.pular:focus {
+  transform: none;
+}
+
 .menu {
   border-right: 1px solid var(--borda) !important;
 }
@@ -107,6 +159,12 @@ const iniciais = computed(() =>
   text-transform: uppercase;
 }
 
+.menu-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 .menu-item {
   display: flex;
   align-items: center;
@@ -121,19 +179,17 @@ const iniciais = computed(() =>
 
 /* Realce na cor do próprio item, mistura 12% no claro e 20% no escuro (regra de 03/11). */
 .menu-item:hover,
-.menu-item:focus-visible,
 .menu-item.ativo {
   background: color-mix(in srgb, var(--cor-item) 12%, transparent);
 }
 
 .v-theme--cicluzSombra .menu-item:hover,
-.v-theme--cicluzSombra .menu-item:focus-visible,
 .v-theme--cicluzSombra .menu-item.ativo {
   background: color-mix(in srgb, var(--cor-item) 20%, transparent);
 }
 
 .menu-item:focus-visible {
-  outline: 2px solid var(--cor-item);
+  outline: 2px solid rgb(var(--v-theme-on-surface));
   outline-offset: 2px;
 }
 
@@ -169,7 +225,7 @@ const iniciais = computed(() =>
 .menu-usuario {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-height: var(--rodape);
   padding: 8px 14px;
   border-top: 1px solid var(--borda);
@@ -196,9 +252,10 @@ const iniciais = computed(() =>
   white-space: nowrap;
 }
 
-.menu-sair {
+.menu-controle {
   display: grid;
   place-items: center;
+  flex: none;
   width: 32px;
   height: 32px;
   border: 1px solid var(--navigation-ink);
@@ -209,13 +266,8 @@ const iniciais = computed(() =>
 }
 
 .menu-sair:hover {
-  border-color: #dc2626;
-  color: #dc2626;
-}
-
-.menu-sair:focus-visible {
-  outline: 2px solid var(--cor-formularios);
-  outline-offset: 2px;
+  border-color: rgb(var(--v-theme-error));
+  color: rgb(var(--v-theme-error));
 }
 
 .area {
@@ -224,6 +276,7 @@ const iniciais = computed(() =>
   gap: var(--respiro);
   min-height: 100dvh;
   padding: var(--respiro);
+  outline: none;
 }
 
 .menu-alternar {
@@ -235,10 +288,5 @@ const iniciais = computed(() =>
   background: rgb(var(--v-theme-surface));
   color: inherit;
   cursor: pointer;
-}
-
-.menu-alternar:focus-visible {
-  outline: 2px solid var(--cor-formularios);
-  outline-offset: 2px;
 }
 </style>

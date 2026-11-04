@@ -5,10 +5,11 @@ import { Plug, TrendingUp } from "lucide-vue-next";
 // do PDV. Enquanto nenhuma fonte de vendas estiver ligada (robô do CREARE ou a API em avaliação),
 // esta tela só informa; não existe outro caminho para lançar venda.
 useHead({ title: "Entradas · CICLUZ" });
+const estilo = useEstiloOrigem("vendas");
 </script>
 
 <template>
-  <div class="tela" style="--cor-origem: var(--cor-vendas)">
+  <div class="tela" :style="estilo">
     <header class="tela-topo">
       <TrendingUp class="icone-tela" aria-hidden="true" />
       <div>

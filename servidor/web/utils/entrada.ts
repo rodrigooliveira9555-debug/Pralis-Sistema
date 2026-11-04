@@ -27,12 +27,37 @@ export function isoParaTela(iso: string | null | undefined) {
   return `${dia}/${mes}/${ano.slice(2)}`;
 }
 
-// "1.234,56" → "1234.56"; "" → null. Recusa o que não é número.
-export function dinheiroParaApi(texto: string | null | undefined): string | null {
-  const limpo = (texto ?? "").replace(/^R\$\s*/, "").trim();
+// Número digitado → texto com ponto para a API, sem adivinhar:
+// - com vírgula, ela é a casa decimal e os pontos são milhar: "1.234,56" → "1234.56";
+// - sem vírgula, pontos em grupos de 3 dígitos são milhar: "1.234" → "1234", "1.234.567" → "1234567";
+// - sem vírgula, um ponto seguido de 1 ou 2 dígitos só pode ser decimal (milhar tem 3): "12.50" →
+//   "12.50" (teclados que mostram ponto como separador decimal);
+// - mais casas do que o campo aceita, ou qualquer outra coisa → null (o campo mostra o erro).
+export function numeroParaApi(texto: string | null | undefined, casas: number): string | null {
+  const limpo = (texto ?? "").replace(/^R\$\s*/, "").replace(/\s/g, "");
   if (!limpo) return null;
-  const normalizado = limpo.replace(/\./g, "").replace(",", ".");
-  return /^\d+(\.\d{1,4})?$/.test(normalizado) ? normalizado : null;
+  let normalizado: string;
+  if (limpo.includes(",")) {
+    if (!/^\d{1,3}(\.\d{3})*,\d+$|^\d+,\d+$/.test(limpo)) return null;
+    normalizado = limpo.replace(/\./g, "").replace(",", ".");
+  } else if (/^\d{1,3}(\.\d{3})+$/.test(limpo)) {
+    normalizado = limpo.replace(/\./g, "");
+  } else {
+    normalizado = limpo;
+  }
+  const [, decimais = ""] = normalizado.split(".");
+  if (!/^\d+(\.\d+)?$/.test(normalizado) || decimais.length > casas) return null;
+  return normalizado;
+}
+
+// Dinheiro em R$: no máximo 2 casas (centavos).
+export function dinheiroParaApi(texto: string | null | undefined): string | null {
+  return numeroParaApi(texto, 2);
+}
+
+// Campo preenchido mas inválido (para mostrar o erro no campo, em vez de mandar valor errado).
+export function campoInvalido(texto: string | null | undefined, casas: number) {
+  return Boolean((texto ?? "").trim()) && numeroParaApi(texto, casas) === null;
 }
 
 // "1234.5" → "1.234,50" (para preencher o campo ao editar).

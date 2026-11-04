@@ -15,38 +15,60 @@ export function categoriaTemDiscriminacao(categoria: CategoriaLancamento) {
 
 const data = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use AAAA-MM-DD");
 const dataOpcional = data.nullable().optional();
-// Dinheiro chega como número ou texto decimal com ponto (reais). A conta é feita em centavos.
-const valor = z.union([z.number(), z.string().regex(/^\d+(\.\d+)?$/, "Valor inválido")]);
+// Decimal não negativo, como número ou texto com ponto, com no máximo `casas` casas e um teto que cabe
+// nas colunas numeric(14, x). Sai sempre como TEXTO: nunca "1e-7" nem casa cortada calada.
+const TETO = 99_999_999_999;
+function decimal(casas: number, rotulo: string, opcoes: { positivo?: boolean } = {}) {
+  const formato = new RegExp(`^\\d+(\\.\\d{1,${casas}})?$`);
+  return z
+    .union([z.number(), z.string().trim()])
+    .transform((v) => (typeof v === "number" ? (Number.isFinite(v) ? String(v) : "x") : v))
+    .refine((v) => formato.test(v), `${rotulo}: use no máximo ${casas} casas decimais`)
+    .refine((v) => Number(v) <= TETO, `${rotulo}: valor grande demais`)
+    .refine((v) => !opcoes.positivo || Number(v) > 0, `${rotulo}: precisa ser maior que zero`);
+}
+const dinheiro = (rotulo: string) => decimal(2, rotulo);
+// Juros e descontos podem ser % (até 4 casas) ou R$ (até 2): a regra fina fica no refine do objeto.
+const informado = (rotulo: string) => decimal(4, rotulo);
+
+// Em tipo "valor" (R$) o informado é dinheiro: no máximo 2 casas.
+function centavosExatos(tipo: string | null | undefined, valor: string | null | undefined) {
+  return tipo !== "valor" || !valor || /^\d+(\.\d{1,2})?$/.test(valor);
+}
 const tipoDesconto = z.enum(["percentual", "valor"]);
 const textoOpcional = (max: number) => z.string().trim().max(max).nullable().optional();
 
-export const itemLancamentoSchema = z.object({
-  descricao: z.string().trim().min(1, "Descreva o item").max(200),
-  // Sem quantidade, vale 1 × valor unitário (como no principal).
-  quantidade: valor.nullable().optional(),
-  valorUnitario: valor,
-  descontoTipo: tipoDesconto.nullable().optional(),
-  descontoValor: valor.nullable().optional(),
-  descontoTotalTipo: tipoDesconto.nullable().optional(),
-  descontoTotalValor: valor.nullable().optional(),
-  // Grupo (ou subgrupo) do cadastro financeiro da mesma categoria; opcional, como no principal.
-  grupoId: textoOpcional(80)
-});
+export const itemLancamentoSchema = z
+  .object({
+    descricao: z.string().trim().min(1, "Descreva o item").max(200),
+    // Sem quantidade, vale 1 × valor unitário (como no principal). 3 casas, como a coluna.
+    quantidade: decimal(3, "Quantidade", { positivo: true }).nullable().optional(),
+    valorUnitario: decimal(4, "Valor unitário"),
+    descontoTipo: tipoDesconto.nullable().optional(),
+    descontoValor: informado("Desconto do item").nullable().optional(),
+    descontoTotalTipo: tipoDesconto.nullable().optional(),
+    descontoTotalValor: informado("Desconto do total do item").nullable().optional(),
+    // Grupo (ou subgrupo) do cadastro financeiro da mesma categoria; opcional, como no principal.
+    grupoId: textoOpcional(80)
+  })
+  .refine((i) => centavosExatos(i.descontoTipo, i.descontoValor) && centavosExatos(i.descontoTotalTipo, i.descontoTotalValor), {
+    message: "Desconto em R$: no máximo 2 casas decimais"
+  });
 
 const discriminacao = {
   itens: z.array(itemLancamentoSchema).max(300).default([]),
   descontoGeralTipo: tipoDesconto.nullable().optional(),
-  descontoGeralValor: valor.nullable().optional()
+  descontoGeralValor: informado("Desconto geral").nullable().optional()
 };
 
-export const lancamentoSchema = z.object({
+const lancamentoBase = z.object({
   dataReferencia: data,
   dataVencimento: data,
   dataPagamento: dataOpcional,
   observacao: z.string().trim().min(1, "Observação obrigatória").max(500),
-  valorOriginal: valor,
+  valorOriginal: dinheiro("Valor"),
   jurosTipo: tipoDesconto.nullable().optional(),
-  jurosValorInformado: valor.nullable().optional(),
+  jurosValorInformado: informado("Juros").nullable().optional(),
   // Conta (CNT) pelo NOME, como as telas de contas guardam.
   contaNome: textoOpcional(120),
   grupoId: textoOpcional(80),
@@ -54,14 +76,34 @@ export const lancamentoSchema = z.object({
   dataDocumentoFiscal: dataOpcional,
   ...discriminacao,
   // Só na criação; editar uma ocorrência não muda a série.
-  recorrencia: recorrenciaSchema.optional()
+  recorrencia: recorrenciaSchema.optional(),
+  // Na edição: o "atualizadoEm" que a tela tinha. Outra pessoa salvou antes = 409 (nada se perde
+  // calado). Ignorado na criação.
+  atualizadoEmBase: z.string().optional()
 });
 
-export const discriminarSchema = z.object({
-  itens: z.array(itemLancamentoSchema).min(1, "Informe ao menos um item").max(300),
-  descontoGeralTipo: discriminacao.descontoGeralTipo,
-  descontoGeralValor: discriminacao.descontoGeralValor
-});
+const regraDeCasas = {
+  check: (l: { jurosTipo?: string | null | undefined; jurosValorInformado?: string | null | undefined; descontoGeralTipo?: string | null | undefined; descontoGeralValor?: string | null | undefined }) =>
+    centavosExatos(l.jurosTipo, l.jurosValorInformado) && centavosExatos(l.descontoGeralTipo, l.descontoGeralValor),
+  message: "Juros e desconto em R$: no máximo 2 casas decimais"
+};
+
+export const lancamentoSchema = lancamentoBase.refine(regraDeCasas.check, { message: regraDeCasas.message });
+// Edição de uma ocorrência: sem recorrência (a série não muda).
+export const lancamentoEdicaoSchema = lancamentoBase
+  .omit({ recorrencia: true })
+  .refine(regraDeCasas.check, { message: regraDeCasas.message });
+
+export const discriminarSchema = z
+  .object({
+    itens: z.array(itemLancamentoSchema).min(1, "Informe ao menos um item").max(300),
+    descontoGeralTipo: discriminacao.descontoGeralTipo,
+    descontoGeralValor: discriminacao.descontoGeralValor,
+    atualizadoEmBase: z.string().optional()
+  })
+  .refine((d) => centavosExatos(d.descontoGeralTipo, d.descontoGeralValor), {
+    message: "Desconto em R$: no máximo 2 casas decimais"
+  });
 
 export const listarLancamentosSchema = z.object({
   dataInicio: data.optional(),
@@ -139,5 +181,6 @@ export type LancamentoResposta = {
   recorrenciaId: string | null;
   recorrenciaOrdem: number | null;
   pendenteDiscriminacao: boolean;
+  atualizadoEm: string;
   itens?: ItemLancamentoResposta[];
 };

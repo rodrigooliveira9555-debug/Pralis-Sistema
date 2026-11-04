@@ -160,6 +160,47 @@ describe("lançamentos", () => {
     expect(visto.statusCode).toBe(404);
   });
 
+  it("valores fora do contrato voltam 400 (nada de 500 nem de casa cortada calada)", async () => {
+    const admin = await empresaPronta();
+    for (const ruim of [{ valorOriginal: -5 }, { valorOriginal: "10.999" }, { valorOriginal: 1e-7 }, { valorOriginal: 1e15 }]) {
+      const resposta = await lancar(admin.cookie, "despesas", { ...base(), ...ruim });
+      expect(resposta.statusCode, JSON.stringify(ruim)).toBe(400);
+    }
+    const itemRuim = await lancar(admin.cookie, "despesas", {
+      ...base(),
+      valorOriginal: "10",
+      itens: [{ descricao: "x", quantidade: "0", valorUnitario: "10" }]
+    });
+    expect(itemRuim.statusCode).toBe(400);
+    const jurosEmReaisComTresCasas = await lancar(admin.cookie, "despesas", { ...base(), jurosTipo: "valor", jurosValorInformado: "1.234" });
+    expect(jurosEmReaisComTresCasas.statusCode).toBe(400);
+  });
+
+  it("edição concorrente: quem salva com a versão velha recebe 409 e nada se perde", async () => {
+    const admin = await empresaPronta();
+    const { id } = (await lancar(admin.cookie, "despesas", base())).json().data;
+    const aberto = (await app.inject({ method: "GET", url: `/api/lancamentos/item/${id}`, headers: comSessao(admin.cookie) })).json().data;
+    // Outra pessoa discrimina primeiro.
+    const discriminou = await app.inject({
+      method: "PATCH",
+      url: `/api/lancamentos/item/${id}/discriminar`,
+      headers: comSessao(admin.cookie),
+      payload: { itens: [{ descricao: "Luz", valorUnitario: "300" }], atualizadoEmBase: aberto.atualizadoEm }
+    });
+    expect(discriminou.statusCode).toBe(200);
+    // A primeira tela, ainda com a versão antiga, tenta salvar sem itens.
+    const atrasada = await app.inject({
+      method: "PUT",
+      url: `/api/lancamentos/item/${id}`,
+      headers: comSessao(admin.cookie),
+      payload: { ...base(), observacao: "Luz", atualizadoEmBase: aberto.atualizadoEm }
+    });
+    expect(atrasada.statusCode).toBe(409);
+    expect(atrasada.json().code).toBe("LANCAMENTO_ALTERADO");
+    const depois = (await app.inject({ method: "GET", url: `/api/lancamentos/item/${id}`, headers: comSessao(admin.cookie) })).json().data;
+    expect(depois.itens).toHaveLength(1);
+  });
+
   it("lista por período e situação com total", async () => {
     const admin = await empresaPronta();
     await lancar(admin.cookie, "despesas", { ...base(), valorOriginal: "10" });

@@ -1,6 +1,13 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { CATEGORIAS_LANCAMENTO, discriminarSchema, lancamentoSchema, listarLancamentosSchema, ok } from "@cicluz/shared";
+import {
+  CATEGORIAS_LANCAMENTO,
+  discriminarSchema,
+  lancamentoEdicaoSchema,
+  lancamentoSchema,
+  listarLancamentosSchema,
+  ok
+} from "@cicluz/shared";
 import { perfilDaRequisicao } from "../auth/guards.ts";
 import { cancelarSerie, criarLancamento, discriminarLancamento, editarLancamento, listar, obter } from "./lancamentos.service.ts";
 
@@ -28,7 +35,7 @@ export async function registrarRotasLancamentos(app: FastifyInstance) {
   app.put("/api/lancamentos/item/:id", async (request) => {
     const { id } = idParams.parse(request.params);
     // Recorrência só vale na criação: na edição é ignorada (cada ocorrência se edita sozinha).
-    const entrada = lancamentoSchema.omit({ recorrencia: true }).parse(request.body);
+    const entrada = lancamentoEdicaoSchema.parse(request.body);
     return ok(await editarLancamento(perfilDaRequisicao(request), id, entrada));
   });
 
