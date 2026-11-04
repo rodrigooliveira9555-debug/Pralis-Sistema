@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f7">
+<meta name="robots" content="noindex">
+<title>Entrar · CICLUZ Gestão de Padaria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="entrar.css">
+<script src="entrar-tema.js"></script>
+</head>
+<body>
+<main class="entrada" aria-labelledby="entrada-titulo">
+  <header class="entrada-topo">
+    <svg class="entrada-identificador" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+    <div class="entrada-identidade">
+      <h1 id="entrada-titulo" tabindex="-1">Entrar</h1>
+      <p id="entrada-caminho">CICLUZ · Gestão de Padaria</p>
+    </div>
+  </header>
+
+  <section class="entrada-conteudo">
+    <div class="entrada-marca">
+      <img src="cicluz-gestao-padaria-logo.png" alt="CICLUZ Gestão de Padaria" width="178" height="64">
+      <span class="entrada-faixa" aria-hidden="true"></span>
+    </div>
+
+    <form id="form-entrar" class="entrada-painel" novalidate>
+      <div class="entrada-campo">
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" required aria-describedby="erro-email">
+        <p id="erro-email" class="entrada-erro-campo"></p>
+      </div>
+      <div class="entrada-campo">
+        <label for="senha">Senha</label>
+        <span class="entrada-senha">
+          <input id="senha" name="senha" type="password" autocomplete="current-password" required aria-describedby="erro-senha">
+          <button type="button" id="mostrar-senha" class="entrada-olho" aria-label="Mostrar senha" aria-pressed="false">
+            <svg class="olho-aberto" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="olho-fechado" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.7 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-2.2 3.2"/><path d="M6.6 6.6A16 16 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m2 2 20 20"/></svg>
+          </button>
+        </span>
+        <p id="erro-senha" class="entrada-erro-campo"></p>
+      </div>
+      <p class="entrada-nota">Esqueceu a senha? Fale com o administrador do sistema.</p>
+    </form>
+
+    <div id="painel-estado" class="entrada-painel" hidden>
+      <p id="estado-texto" class="entrada-estado"></p>
+      <p id="estado-detalhe" class="entrada-detalhe"></p>
+    </div>
+
+    <p id="mensagem" class="entrada-mensagem" role="alert"></p>
+    <p id="anuncio" class="visualmente-oculto" role="status"></p>
+  </section>
+
+  <footer class="entrada-rodape">
+    <img class="entrada-simbolo" src="cicluz-simbolo.png" alt="" width="32" height="32">
+    <div class="entrada-acoes">
+      <button type="button" id="acao-secundaria" class="entrada-botao entrada-botao-secundario" hidden></button>
+      <button type="submit" form="form-entrar" id="acao-principal" class="entrada-botao">Entrar</button>
+    </div>
+  </footer>
+</main>
+<script src="cicluz-sync.js"></script>
+<script src="entrar.js"></script>
+</body>
+</html>

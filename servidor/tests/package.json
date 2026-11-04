@@ -1,0 +1,19 @@
+{
+  "name": "@cicluz/tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@cicluz/api": "0.1.0",
+    "@cicluz/db": "0.1.0",
+    "@cicluz/shared": "0.1.0",
+    "@testcontainers/postgresql": "^12.0.4",
+    "@types/node": "^22.18.0",
+    "testcontainers": "^12.0.4",
+    "vitest": "^4.0.16"
+  }
+}

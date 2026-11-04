@@ -42,6 +42,12 @@ Ordem percorre original, A–Z e Z–A; conforme correção de04/11/2026, o bot�
 
 Três pontos: lista compacta contém somente atalhos disponíveis, não fixados e não ocultos. Configuração expandida inclui os fixados e permite marcar/desmarcar, ocultar/restaurar e reordenar. Não escolhidos ficam no topo; fixados aparecem na segunda faixa. Preferências e ordem são preservadas por tela, com importação/exportação. A marca permanece centralizada também no celular; os nove controles ficam visíveis.
 
+## Regra vigente — app novo (/app/): tons de contraste das cores de origem (03/11/2026)
+No app das telas novas, cabeçalho, círculo do menu e botão preenchido usam o tom FORTE da cor de origem com texto branco, porque branco sobre o amarelo #eab308 dá 1,9:1 e sobre o verde #22c55e dá 2,3:1 (WCAG AA pede 4,5:1). Tons fortes: vendas #a16207, despesas #dc2626, mercadorias #15803d, retiradas #2563eb (igual), formulários #7c3aed (igual). No tema Sombra, texto, contorno e foco usam o tom claro (vendas #eab308, despesas #f87171, mercadorias #4ade80, retiradas #60a5fa, formulários #b197fc). A cor original continua sendo a identidade de cada área. Botões e seleção herdam a cor da tela (nada de roxo fixo). Fonte única: servidor/web/utils/cores.ts. **Pendente para o Rodrigo:** aplicar os mesmos tons nas telas HTML do site.
+
+## Regra vigente — tela de entrada e avisos de sincronização (03/11/2026)
+A tela de entrada (`entrar.html`) segue o padrão das abas internas, com duas exceções registradas. 1) O quadro fica centralizado com no máximo 420px, e não na largura total: é uma tela de uma ação só. 2) O texto e o símbolo do cabeçalho superior são brancos nos dois temas: a superfície escura sobre o roxo dá 2,8:1 e reprova no WCAG AA. Esta exceção vale só para a entrada. **Pendente para o Rodrigo:** a mesma conta reprova a regra geral "texto na superfície do tema" no escuro (doc 10 do PROJECT_BRAIN). No escuro, o acento usado como texto, borda ou foco clareia para #b197fc. O aviso de sincronização fica acima dos rodapés, com cantos de 12px, controles de 42px e botão Fechar. Botão Sair do rodapé do usuário: círculo de 32px com contorno cinza, como os controles superiores do menu.
+
 ## Regras vigentes — contornos, diâmetro e etapas (03/11/2026)
 Abrir Tipo de Venda usa o papel editor-field-action: contorno neutro de1px, raio --ui-field-radius8px, altura42px e fundo do tema, seguindo os campos; foco e hover indicam interação sem alterar o enquadramento. Ações Salvar/Cancelar e quadros coloridos preservam seus papéis.
 

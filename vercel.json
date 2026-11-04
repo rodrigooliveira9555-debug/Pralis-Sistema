@@ -1,0 +1,45 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://fxudskvwoszq3bqvxo1qeqaz.187.77.54.180.sslip.io/api/:path*"
+    },
+    {
+      "source": "/app",
+      "destination": "https://fxudskvwoszq3bqvxo1qeqaz.187.77.54.180.sslip.io/app/"
+    },
+    {
+      "source": "/app/",
+      "destination": "https://fxudskvwoszq3bqvxo1qeqaz.187.77.54.180.sslip.io/app/"
+    },
+    {
+      "source": "/app/:path+",
+      "destination": "https://fxudskvwoszq3bqvxo1qeqaz.187.77.54.180.sslip.io/app/:path+"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors 'none'"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "same-origin"
+        }
+      ]
+    }
+  ]
+}

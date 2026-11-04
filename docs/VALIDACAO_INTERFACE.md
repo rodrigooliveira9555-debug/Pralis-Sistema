@@ -1,5 +1,10 @@
 # Validação do padrão compartilhado
 
+## Compatibilidade com login e resolução do PR10 — 04/11/2026
+Conflito em dist/index.html conciliado com a main ecbb139. HTML completo da main preservado, incluindo carregamento de cicluz-sync.js/cicluz-sessao.js e acesso ao app; somente URLs de assets locais regeneradas por conteúdo. Comparação do HTML desconsiderando hashes confirmou igualdade à main. Backend, navegação de sessão e vercel.json mantidos sem alterações em relação à main. Nenhum marcador de conflito remanescente; scripts externos/inline válidos e JSON de deploy válido.
+
+Teste de navegador sem sessão confirmou redirecionamento ao login. Regressões da interface usam somente sessão fictícia local, sem chaves de negócio e com API interceptada; teste restrito a localhost/127.0.0.1. Isso não substitui testes de autenticação ou banco reais.114 combinações das19 telas atuais (320/390/1024px, claro/escuro) passaram; a antiga tela de lançamento saiu da main e o app novo permanece preservado fora desta matriz.40 asserções de campos/datas passaram. A resolução é enviada à mesma branch do PR10, sem reescrever histórico de colaboradores.
+
 ## Quatro métricas e seis atalhos preparados — 04/11/2026
 Chromium/Playwright:120 combinações das20 telas em320/390/1024px e claro/escuro; lista e rápido com rótulos/cores dos seis novos atalhos. Métricas conferidas em seis combinações de largura/tema, quatro ciclos por controle, valores positivos/negativos, maiores/menores primeiro, após A–Z e sem reordenação alfabética concorrente. Grupos preservados; sem valores, modo alterna com mensagem informativa.
 

@@ -1,0 +1,37 @@
+# Deploy no Coolify. No painel: Base Directory = /servidor e Docker Compose Location =
+# /docker-compose.coolify.yml. O Postgres é um recurso próprio do Coolify (DATABASE_URL aponta para
+# ele). Segredos só no painel, nunca neste arquivo.
+services:
+  migrate:
+    build:
+      context: .
+    # Migrations e, em seguida, a reconstrução das tabelas por assunto a partir dos documentos.
+    # A API só sobe depois que este passo termina sem erro.
+    command: ["sh", "-c", "npm run migrar --workspace @cicluz/db && npm run projecoes:reprocessar --workspace @cicluz/api"]
+    restart: "no"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL obrigatorio}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET obrigatorio}
+      AUTH_BASE_URL: ${AUTH_BASE_URL:?AUTH_BASE_URL obrigatorio}
+      WEB_ORIGINS: ${WEB_ORIGINS:?WEB_ORIGINS obrigatorio}
+
+  api:
+    build:
+      context: .
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL obrigatorio}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET obrigatorio}
+      # Domínio https do SITE (o Vercel repassa /api/* para esta API).
+      AUTH_BASE_URL: ${AUTH_BASE_URL:?AUTH_BASE_URL obrigatorio}
+      WEB_ORIGINS: ${WEB_ORIGINS:?WEB_ORIGINS obrigatorio}
+      # Proxies na frente da API (Vercel → Traefik do Coolify = 2). Ver docs/BACKEND.md.
+      PROXIES_CONFIAVEIS: ${PROXIES_CONFIAVEIS:-2}
+      SERVIR_SITE: "0"
+      PORT: 4200
+      HOST: 0.0.0.0
