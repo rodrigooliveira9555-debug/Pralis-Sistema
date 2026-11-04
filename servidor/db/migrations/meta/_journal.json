@@ -15,6 +15,13 @@
       "when": 1793748007587,
       "tag": "0001_tabelas_por_assunto",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793753105771,
+      "tag": "0002_lancamentos",
+      "breakpoints": true
     }
   ]
 }

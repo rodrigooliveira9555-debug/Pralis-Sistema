@@ -12,6 +12,7 @@ import { exigirAutenticacao } from "./auth/guards.ts";
 import { registrarRotasAuth } from "./auth/auth.controller.ts";
 import { registrarRotasConsultas } from "./consultas/consultas.controller.ts";
 import { registrarRotasDocumentos } from "./documentos/documentos.controller.ts";
+import { registrarRotasLancamentos } from "./lancamentos/lancamentos.controller.ts";
 import { env, origensWebPermitidas } from "./env.ts";
 import { ErroDominio, proibido } from "./erros.ts";
 import { registrarRotasSaude } from "./saude/saude.controller.ts";
@@ -109,6 +110,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registrarRotasDocumentos(app);
   await registrarRotasUsuarios(app);
   await registrarRotasConsultas(app);
+  await registrarRotasLancamentos(app);
 
   // App das telas novas (Nuxt gerado em web/.output/public), em /app/ no mesmo domínio do site.
   // Em produção o Vercel repassa /app/* e /api/* para cá; rota interna do app sem arquivo cai no
