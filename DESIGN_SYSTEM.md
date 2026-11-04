@@ -1,5 +1,10 @@
 # CICLUZ — referência de interface
 
+## Correção vigente — marca vazada e posição dos atalhos (04/11/2026)
+O seletor de inclusão no menu rápido usa a silhueta monocromática da marca CICLUZ na superfície do tema, como recorte. Corpo na mesma cor dos outros controles; selecionado recebe mistura40% da origem e60% do cinza de navegação para parecer apagado. Preservar os interruptores de execução independentes. A marca central mantém sua arte original.
+
+Fixos à esquerda: início, posição da barra, ordenação, calendário e busca. À direita: Mais atalhos primeiro, depois voltar, fechar, salvar e ocultar/restaurar cabeçalho. Ordenação volta a ser fixa e não aparece duplicada na personalização. Aplicar às duas posições da barra e aos dois temas.
+
 ## Regra vigente — cinco fixos e estados independentes (04/11/2026)
 À esquerda da marca central: início, posição da barra, três pontos de configuração, calendário e busca. À direita: voltar, fechar, salvar e ocultar/restaurar cabeçalho. Ordenação deixa de ser fixa e fica disponível no menu rápido/personalização; posição passa a ser fixa. Ícone de posição com dois painéis arredondados e setas opostas, traço1,5px.
 

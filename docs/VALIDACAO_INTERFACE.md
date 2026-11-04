@@ -1,5 +1,8 @@
 # Validação do padrão compartilhado
 
+## Marca recortada e troca de lugares — 04/11/2026
+Chromium/Playwright:120 combinações das20 telas em320/390/1024px, claro/escuro, alternando as duas posições. Conferidos cinco fixos à esquerda (início, posição, ordenação, data, busca), Mais atalhos como primeiro dos cinco à direita, alinhamento e ausência de overflow. Marca monocromática via máscara de alfa do arquivo original, símbolos18px centralizados em controles30px e preenchimento na superfície do tema; selecionado acinzentado. Capturas móveis clara/escura inspecionadas. Seleção e ativação independentes, recarga, importação/exportação, migração e regressões de ordenação/busca/período/navegação/salvamento passaram.21 verificações de campos e19 de datas passaram. Sem dados reais gravados; deploy não confirmado.
+
 ## Cinco fixos, interruptor e marca — 04/11/2026
 Chromium/Playwright:120 combinações das20 telas em320/390/1024px, claro/escuro, com alternância entre as duas posições da barra. Conferidos cinco fixos na ordem solicitada à esquerda, quatro à direita, marca central, ausência de sobreposição/overflow, menus voltados para dentro da tela e controle de posição acessível diretamente. Marcas circulares30px com arte real18px e alinhamento ao interruptor. Capturas móveis clara/escura inspecionadas.
 

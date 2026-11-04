@@ -104,9 +104,9 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tool
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-quick-empty{font:400 11px/16px var(--ui-font);color:var(--navigation-ink);text-align:center}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-quick-empty[hidden]{display:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-search{grid-area:query;width:100%;max-width:none;min-width:0;position:relative!important;transform:none!important;top:auto!important;right:auto!important;padding:6px 0;box-sizing:border-box}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-pin{display:grid;place-items:center;box-sizing:border-box;width:30px;height:30px;flex:0 0 30px;padding:5px;margin:0 0 0 4px;border-radius:50%;border:1px solid #7c3aed!important;background:transparent!important;opacity:1}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-pin[aria-pressed=true]{background:#7c3aed!important;border-color:#7c3aed!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-pin svg{width:18px;height:18px;stroke:none!important;opacity:.5;flex:none}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-pin{display:grid;place-items:center;box-sizing:border-box;width:30px;height:30px;flex:0 0 30px;padding:5px;margin:0 0 0 4px;border-radius:50%;border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;background:var(--menu-accent,var(--panel-color,#7c3aed))!important;color:var(--theme-surface,#fff)!important;opacity:1}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-pin[aria-pressed=true]{background:color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 40%,var(--navigation-ink))!important;border-color:color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 40%,var(--navigation-ink))!important}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-pin svg{width:18px;height:18px;stroke:none!important;opacity:1;flex:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-pin[aria-pressed=true] svg{opacity:1}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-position-control{--shell-icon-stroke:1.5}
 

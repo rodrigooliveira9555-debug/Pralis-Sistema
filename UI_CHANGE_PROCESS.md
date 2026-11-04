@@ -1,5 +1,8 @@
 # Processo de alterações de interface
 
+## Correção — marca recortada e ordem dos fixos (04/11/2026)
+Marca do seletor de atalhos vira recorte monocromático na superfície do tema, com corpo na cor dos demais controles. Selecionado fica acinzentado/apagado, preservando a leitura do recorte. Esquerda: início, posição, ordenação, data, busca. Direita começa com Mais atalhos, seguido de voltar, fechar, salvar e ocultar. Preservar ativação/fixação independentes, duas posições e persistência. Conferir20 telas nos dois temas e três larguras.
+
 ## Matriz — controles fixos, interruptor e marca (04/11/2026)
 Fixos à esquerda: início, posição, três pontos de configuração, data, busca. Direita: voltar, fechar, salvar, ocultar cabeçalho. Ordenação permanece disponível na personalização. Refinar símbolo de posição. Separar dois estados por função: interruptor liga/desliga execução; marca CICLUZ em círculo roxo inclui/remove do menu rápido. Manter funções desativadas visíveis e inoperantes quando fixadas, sem confundir seleção com ativação. Migrar preferências antigas, persistir por tela e em importação/exportação. Conferir20 telas,320/390/1024px, dois temas, duas posições, teclado, recarga e ações nativas.
 

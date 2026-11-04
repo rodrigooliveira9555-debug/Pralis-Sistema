@@ -46,7 +46,7 @@ def check_layout(browser, url):
                 assert abs(rect['y'] + rect['height'] - 844) < .1
                 logo = bar.locator('.people-home-logo').bounding_box()
                 assert abs(logo['x'] + logo['width'] / 2 - width / 2) < .1
-                for side, count in [('.people-footer-left', 5), ('.people-footer-right', 4)]:
+                for side, count in [('.people-footer-left', 5), ('.people-footer-right', 5)]:
                     buttons = bar.locator(side + '>button')
                     assert buttons.count() == count
                     boxes = []
@@ -56,7 +56,8 @@ def check_layout(browser, url):
                         assert box['x'] >= 0 and box['x'] + box['width'] <= width + .1
                         boxes.append(box)
                     assert all(a['x'] + a['width'] <= b['x'] + .1 for a, b in zip(boxes, boxes[1:]))
-                assert bar.locator('.people-footer-left>button').evaluate_all('es=>es.map(e=>e.className.split(" ")[0])') == ['people-start-control','people-position-control','people-toolbar-more','people-date-control','people-search-toggle']
+                assert bar.locator('.people-footer-left>button').evaluate_all('es=>es.map(e=>e.className.split(" ")[0])') == ['people-start-control','people-position-control','sort-az','people-date-control','people-search-toggle']
+                assert bar.locator('.people-footer-right>button').first.get_attribute('class').split()[0] == 'people-toolbar-more'
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
                 bar.locator('.people-home-logo').click()
                 assert bar.locator('.people-bottom-tools').is_visible()
@@ -67,7 +68,7 @@ def check_layout(browser, url):
                 bar.locator('.people-toolbar-more').click()
                 choices = bar.locator('.people-toolbar-options')
                 assert choices.is_visible()
-                assert choices.locator('[data-choice-key="search"], [data-choice-key="position"], [data-choice-key="date"], [data-choice-key="save"]').count() == 0
+                assert choices.locator('[data-choice-key="search"], [data-choice-key="position"], [data-choice-key="sort"], [data-choice-key="date"], [data-choice-key="save"]').count() == 0
                 choices.locator('.people-options-resize').click()
                 assert choices.locator('.people-options-resize').get_attribute('aria-expanded') == 'true'
                 for pin in choices.locator('.people-toolbar-pin').all():
@@ -78,7 +79,9 @@ def check_layout(browser, url):
                     assert glyph['width'] == glyph['height'] == 18
                     assert abs(glyph['x'] + 9 - box['x'] - 15) < .1
                     assert abs(glyph['y'] + 9 - box['y'] - 15) < .1
-                    assert icon.locator('image').get_attribute('href') == 'cicluz-gestao-padaria-logo.png'
+                    assert icon.locator('mask image').get_attribute('href') == 'cicluz-gestao-padaria-logo.png'
+                    assert icon.locator(':scope>rect').get_attribute('fill') == 'currentColor'
+                    assert icon.locator(':scope>rect').evaluate('e=>getComputedStyle(e).fill') == pin.evaluate('e=>getComputedStyle(e).color')
                     power = pin.locator('xpath=preceding-sibling::button[contains(@class,"people-toolbar-enable")]')
                     marker = power.bounding_box()
                     assert power.get_attribute('role') == 'switch'
@@ -311,7 +314,9 @@ def check_enable_and_pin(browser, url):
         bar.locator('.people-options-resize').click()
         return bar.locator('[data-choice-key="print"]')
     row=config()
+    original_color=row.locator('.people-toolbar-pin').evaluate('e=>getComputedStyle(e).backgroundColor')
     row.locator('.people-toolbar-pin').click()
+    assert row.locator('.people-toolbar-pin').evaluate('e=>getComputedStyle(e).backgroundColor') != original_color
     knob_on=row.locator('.people-enable-thumb').bounding_box()['x']
     row.locator('.people-toolbar-enable').click()
     page.wait_for_timeout(180)
