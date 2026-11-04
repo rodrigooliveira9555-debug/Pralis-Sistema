@@ -59,7 +59,7 @@
   /* ---------- Foto ---------- */
   const TIPOS_FOTO = ['image/jpeg', 'image/png', 'image/webp'];
   const LIMITE_FOTO = 8 * 1024 * 1024;
-  /** Reduz a imagem (lado maior 800 px, JPEG) para caber no armazenamento do navegador. */
+  /** Reduz a imagem (lado maior 320 px, JPEG): a foto vai no documento do Compras, que o banco limita a 4 MB. */
   function reduzirImagem(arquivo) {
     return new Promise((ok, falha) => {
       const leitor = new FileReader();
@@ -68,7 +68,7 @@
         const img = new Image();
         img.onerror = () => falha(new Error('imagem'));
         img.onload = () => {
-          const escala = Math.min(1, 800 / Math.max(img.width, img.height));
+          const escala = Math.min(1, 320 / Math.max(img.width, img.height));
           const c = document.createElement('canvas');
           c.width = Math.round(img.width * escala); c.height = Math.round(img.height * escala);
           c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);

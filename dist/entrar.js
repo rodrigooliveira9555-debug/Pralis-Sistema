@@ -10,6 +10,8 @@
   var S = window.CicluzSync;
   var params = new URLSearchParams(location.search);
   var voltar = S.caminhoSeguro(params.get('voltar'));
+  // Chaves que o aparelho envia quando o servidor ainda não as tem (lista vem de GET /api/sessao).
+  var adotadas = [];
 
   var form = document.getElementById('form-entrar');
   var email = document.getElementById('email');
@@ -169,6 +171,7 @@
 
     var perfil = sessao.perfil;
     var chaves = sessao.chavesSincronizadas;
+    adotadas = sessao.chavesAdotadas || [];
     caminho.textContent = perfil.nome + ' · ' + perfil.empresa.nome;
 
     // Alterações não enviadas de OUTRA conta: não manda com o cookie desta (pré-mortem R8).
@@ -285,8 +288,15 @@
     //    aparelho ficar sem espaço no meio, volta tudo como estava.
     var antes = {};
     chaves.forEach(function (chave) { antes[chave] = localStorage.getItem(chave); });
+    // Chave nova na lista (ex.: Compras) que o servidor ainda não tem: o aparelho desta mesma empresa
+    // fica com o dele e envia logo depois de abrir, em vez de apagar o que foi cadastrado só aqui.
+    var mesmaEmpresa = Boolean(dono && dono.empresaId === perfil.empresa.id);
+    var adotar = chaves.filter(function (chave) {
+      return mesmaEmpresa && adotadas.indexOf(chave) >= 0 && !doServidor[chave] && antes[chave] !== null;
+    });
     try {
       chaves.forEach(function (chave) {
+        if (adotar.indexOf(chave) >= 0) return;
         if (doServidor[chave]) S.setOriginal.call(localStorage, chave, doServidor[chave].valor);
         else S.removeOriginal.call(localStorage, chave);
       });
@@ -305,12 +315,20 @@
     var versoes = {};
     documentos.forEach(function (doc) { versoes[doc.chave] = doc.versao; });
     S.gravar(localStorage, S.META.dono, { usuarioId: perfil.usuarioId, empresaId: perfil.empresa.id, nome: perfil.nome });
+    var abaId = Date.now().toString(36) + Math.random().toString(36).slice(2);
     S.gravar(sessionStorage, S.META.aba, {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+      id: abaId,
       perfil: perfil,
       chaves: chaves,
       versoes: versoes
     });
+    // As chaves adotadas entram na fila desta aba com versão base 0 ("o servidor não tem"): o porteiro
+    // das telas envia ao abrir. Se outro aparelho enviar antes, o servidor guarda esta no histórico.
+    if (adotar.length) {
+      var fila = S.pendentes() || { usuarioId: perfil.usuarioId, empresaId: perfil.empresa.id, itens: {} };
+      adotar.forEach(function (chave) { fila.itens[chave] = { versaoBase: 0, aba: abaId }; });
+      S.salvarPendentes(fila);
+    }
     location.replace(voltar);
   }
 

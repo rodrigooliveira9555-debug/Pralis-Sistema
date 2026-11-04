@@ -1,5 +1,6 @@
 /*
- * Compras — armazenamento do protótipo (localStorage deste navegador) e dados de exemplo.
+ * Compras — armazenamento (localStorage, chave única) e dados de exemplo. Com login, a chave vai
+ * para o banco pela sincronização do S2 (servidor/shared/src/documentos.ts).
  * Um único registro versionado, gravado de forma transacional (desfaz a mudança se falhar).
  * Produtos usam os grupos de MER (cadastro financeiro do S2), como no S1 (grupo_mercadoria_id).
  */
@@ -189,11 +190,17 @@
       if (atual && COLECOES.every((c) => Array.isArray(atual[c]))) dados = completar(atual);
     } catch (e) { /* mantém a cópia em memória */ }
     const antes = structuredClone(dados);
+    const textoAntes = JSON.stringify(dados);
     try {
       if (erroLeitura) throw new Error('leitura');
       const r = mudanca(dados);
-      localStorage.setItem(KEY, JSON.stringify(dados));
-      document.dispatchEvent(new CustomEvent('cicluz-compras-mudou'));
+      const texto = JSON.stringify(dados);
+      // Só grava quando algo mudou: cada gravação vira uma versão nova no banco (as telas rodam o
+      // agendador ao abrir, e abrir sem criar nada não pode gerar versão nem conflito com outro aparelho).
+      if (texto !== textoAntes) {
+        localStorage.setItem(KEY, texto);
+        document.dispatchEvent(new CustomEvent('cicluz-compras-mudou'));
+      }
       return r === undefined ? true : r;
     } catch (e) {
       dados = antes;
@@ -213,12 +220,6 @@
       }
     } catch (err) { /* ignora valor inválido */ }
   });
-
-  function restaurarExemplo() {
-    if (erroLeitura) { localStorage.removeItem(KEY); erroLeitura = false; }
-    dados = semente();
-    return transacao(() => {});
-  }
 
   /* ---------- Integrações com o resto do S2 ---------- */
 
@@ -289,7 +290,7 @@
     KEY, RESPONSAVEIS,
     get dados() { return dados; },
     get erroLeitura() { return erroLeitura; },
-    transacao, restaurarExemplo, novoId, agoraIso, hojeIso,
+    transacao, novoId, agoraIso, hojeIso,
     gruposMercadoria, nomeGrupo, locais,
     fornecedor, produto, responsavel, referencia, definirReferencia, fornecedoresDoProduto, bolinhas,
   };
