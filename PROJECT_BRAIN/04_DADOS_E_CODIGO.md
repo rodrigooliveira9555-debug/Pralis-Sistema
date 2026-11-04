@@ -14,6 +14,12 @@
   `job-profiles-v1`
 - `location-tree-v1` (`{tree, history}`), `organogram-positions-v1`, `cadastro-completo-v1`
 - `icon-library-v1`, `custom-colors-v1`
+- `compras-v1` — módulo Compras inteiro num documento (fornecedores, produtos com foto, agendas,
+  cotações, pedidos, estoque, conferências). No banco desde 04/11/2026 (Zé). Regras: o Compras só grava
+  quando algo muda (cada gravação vira versão); foto reduzida a 320 px (teto de 4 MB por documento); sem
+  documento no banco, o primeiro aparelho manda os dados de exemplo (decisão do Zé). Chave **adotada do
+  aparelho**: na entrada, se o banco não tem e o aparelho da mesma empresa tem, ele envia o dele em vez de
+  apagar (`CHAVES_ADOTADAS_DO_APARELHO`, só para chave que a tela nunca apaga).
 
 **Preferência de interface:** `tema`, `menu-ordem`, `menu-item-order-v1`, `sidebar-sections-v1`,
 `menu-visibility`, `people-display-v1`, `people-footer-*`, `{key}-sort`, `{key}-display`,
