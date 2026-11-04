@@ -1,9 +1,12 @@
 # CICLUZ — referência de interface
 
+## Complemento vigente — controle de visibilidade (04/11/2026)
+Todos os menus rápidos usam o mesmo olho refinado: curvas suaves, pupila central e traço1,5px. Caixa30px alinhada à seleção, símbolo18px centralizado e raio7px; cores e operação de ocultar/restaurar preservadas nos dois temas.
+
 ## Regra vigente — rodapé fixo e menu rápido (03/11/2026)
 Marca central, sem ampliar, alterna a segunda faixa superior de atalhos. Clique externo ou Escape fecha a faixa. Controles fixos à esquerda: menu inicial, busca, ordem e data. À direita: voltar, fechar, salvar, três pontos e ocultar/restaurar cabeçalho superior. Ações de formulário delegam às funções existentes e preservam validação.
 
-Ordem percorre A–Z, Z–A e original; o botão informa a próxima ação e mostra seis pontos/barra/seis pontos antes de restaurar. A ordem original é capturada antes da ordenação, sem alterar dados persistidos. Data sem registros datados continua na cor da aba e fica sem ação.
+Ordem percorre original, A–Z e Z–A; conforme correção de04/11/2026, o botão representa o estado atual: ⠿ (mesmo marcador de seis pontos das linhas), A/Z ou Z/A. Não usar barra nem pontos duplicados. Tooltip e nome acessível informam a ordem atual; a próxima ação fica na descrição acessível. Alterações manuais na ordem original passam a ser a referência do ciclo. A ordem original é capturada antes da ordenação, sem alterar dados persistidos. Data sem registros datados continua na cor da aba e fica sem ação.
 
 Três pontos: lista compacta contém somente atalhos disponíveis, não fixados e não ocultos. Configuração expandida inclui os fixados e permite marcar/desmarcar, ocultar/restaurar e reordenar. Não escolhidos ficam no topo; fixados aparecem na segunda faixa. Preferências e ordem são preservadas por tela, com importação/exportação. A marca permanece centralizada também no celular; os nove controles ficam visíveis.
 

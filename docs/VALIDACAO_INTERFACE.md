@@ -1,5 +1,8 @@
 # Validação do padrão compartilhado
 
+## Ordem atual e visibilidade refinada — 04/11/2026
+Chromium:120 combinações das20 estruturas em320/390/1024px e claro/escuro. Controles de olho conferidos com caixa30px, símbolo18px, traço1,5px, centro geométrico e alinhamento vertical ao seletor; mesma implementação compartilhada em todos os menus. Captura móvel escura da configuração inspecionada. Ciclo de ordem confere símbolo/legenda atuais e ordenação correspondente: ⠿ original, A/Z crescente, Z/A decrescente. Layout rearranjado manualmente também restaurado após o ciclo. Fluxos de busca, preferência, recarga, período, voltar, salvar válido/inválido, diálogo e início passaram.21 asserções de campos e19 de datas passaram; JavaScript válido. Publicação somente na branch de revisão; merge/produção fora do escopo.
+
 ## Rodapé fixo e menu rápido — 03/11/2026
 Verificação reproduzível em tests/footer-toolbar.py, com Chromium/Playwright e armazenamento isolado. Fluxos passaram: A–Z/Z–A/original com indicação da próxima ação; busca local e nativa; data indisponível sem abrir painel; aplicação/limpeza de período em registros de teste; fixar/ocultar/reordenar atalhos; exclusão dos fixos na personalização; clique externo/Escape; persistência após recarregar; voltar nativo; salário inválido impedido e salário válido salvo em ISO; ocultar/restaurar cabeçalho; menu inicial e fechar diálogo. Verificações visuais em320/390/1024px, claro/escuro, incluindo marca central, nove controles sem sobreposição, expansão sem aumentar a marca, lista/configuração e ausência de overflow. Testes existentes:21 asserções de campos e19 de datas. Sem gravação de dados reais. Não comprova Safari físico ou publicação Vercel.
 
