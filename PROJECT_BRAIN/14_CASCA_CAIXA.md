@@ -31,7 +31,7 @@ porque branco sobre #eab308 não passa no contraste.
 
 ## Feito
 
-- Abertura do caixa: 3 blocos (onde operar · conferir malote pelo lacre — na casca só o `001` —
+- Abertura do caixa: 3 blocos (onde operar · conferir malote pelo lacre — o `001` e os criados em "Malote da Tesouraria" —
   com "Sim, confere"/"Não confere", contagem e motivo da divergência · responsáveis e maquininha),
   lista de pendências depois da primeira tentativa, "Confirmar abertura do caixa" e estado
   "Caixa aberto". Conferida no navegador.
