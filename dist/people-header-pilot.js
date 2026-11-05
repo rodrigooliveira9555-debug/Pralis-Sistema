@@ -105,7 +105,9 @@
   const datePanel=document.createElement('form');datePanel.className='people-date-panel';datePanel.hidden=true;datePanel.inert=true;datePanel.setAttribute('aria-label','Buscar por período');
   datePanel.innerHTML='<label>De<input type="date" name="start" aria-label="Data inicial" required></label><label>Até<input type="date" name="end" aria-label="Data final" required></label><p class="people-date-message" role="status"></p><div class="people-date-actions"><button type="submit" class="people-date-search" aria-label="Buscar período" title="Buscar"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button><button type="button" class="people-date-clear" aria-label="Limpar período" title="Limpar"><svg viewBox="0 0 24 24"><path d="M12 2v10M8 12h8l3 9H5zM9 16l-1 5m4-5v5m3-5 1 5"/></svg></button><button type="button" class="people-date-close" aria-label="Fechar calendário" title="Fechar"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>';
   const dateStart=datePanel.elements.start,dateEnd=datePanel.elements.end,dateMessage=datePanel.querySelector('.people-date-message');
-  const back=control('Voltar','<path d="m15 5-7 7 7 7"/>',()=>{if(nativeBack&&!nativeBack.disabled)nativeBack.click()});back.className='people-back-control';
+  /* Inside a dialog without its own Voltar, going back means returning to the screen behind it: same as closing. */
+  const inDialog=()=>view.matches('dialog,.dialog');
+  const back=control('Voltar','<path d="m15 5-7 7 7 7"/>',()=>{if(nativeBack&&!nativeBack.disabled)nativeBack.click();else if(inDialog())close.click()});back.className='people-back-control';
   const close=control('Fechar','<path d="m6 6 12 12M18 6 6 18"/>',()=>{if(nativeClose)nativeClose.click();else if(view.matches('dialog'))view.close();else if(view.matches('.dialog'))view.parentElement.classList.remove('show');else goHome()});close.className='people-close-control';
   const dateButton=control('Data de … a …','<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M7 14h2M13 14h2M7 18h2"/>',()=>{if(dateButton.dataset.available!=='false')setDateOpen(datePanel.hidden)});
   dateButton.setAttribute('aria-expanded','false');datePanel.id='date-panel-'+(view.id||'dialog');dateButton.setAttribute('aria-controls',datePanel.id);
@@ -298,7 +300,7 @@
    nativeExpand=sources.find(b=>b.matches('.unified-expand-toggle')||/^(?:Expandir|Recolher) (?:tudo|todos|todas)/.test(b.getAttribute('aria-label')||b.title||''))||null;
    const nativeSave=sources.find(b=>b.matches('.header-save-circle'));
    nativeAdd=sources.find(b=>b.matches('.header-add-circle'))||null;add.setAttribute('aria-disabled',String(!nativeAdd||nativeAdd.disabled));add.title=nativeAdd?(nativeAdd.getAttribute('aria-label')||nativeAdd.title||'Adicionar'):'Adicionar — indisponível nesta tela';add.setAttribute('aria-label',add.title);
-   nativeBack=sources.find(b=>/^Voltar(?:\s|$)/i.test(b.getAttribute('aria-label')||b.title||''))||null;nativeClose=sources.find(b=>/^Fechar(?:\s|$)/i.test(b.getAttribute('aria-label')||b.title||''))||null;back.disabled=!nativeBack||nativeBack.disabled;
+   nativeBack=sources.find(b=>/^Voltar(?:\s|$)/i.test(b.getAttribute('aria-label')||b.title||''))||null;nativeClose=sources.find(b=>/^Fechar(?:\s|$)/i.test(b.getAttribute('aria-label')||b.title||''))||null;back.disabled=(!nativeBack||nativeBack.disabled)&&!inDialog();
    const list=!!content.querySelector('.record-grid,.job-item,.salary-row,.location-tree,tbody,.record');
    searchToggle.dataset.available=String(!!nativeSearchButton||list);sort.dataset.available=String(!!nativeSort||list);dateButton.dataset.available=String(records().some(row=>rowDate(row)));expand.dataset.available=String(!!nativeExpand||!!content.querySelector('details'));
    for(const b of [sold,bought,profit,result])b.dataset.available=String(list);

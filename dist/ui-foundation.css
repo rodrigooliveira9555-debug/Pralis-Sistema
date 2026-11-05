@@ -358,4 +358,35 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(form.acc
 body:is(.dark-theme,:not(.dark-theme)) dialog.shell-dialog.app-screen-shell.uniforms-dialog{height:fit-content!important;max-height:calc(100dvh - 16px)!important}
 body:is(.dark-theme,:not(.dark-theme)) dialog.shell-dialog.app-screen-shell.uniforms-dialog>.panel{display:flex!important;flex-direction:column!important;max-height:calc(100dvh - 18px)!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,dialog).shell-dialog.app-screen-shell.uniforms-dialog>.panel>.head+.content{flex:1 1 auto!important;min-height:0!important;overflow:auto!important}
+
+/* Documentações (05/11/2026, reorganizada): menu expands into the 11 documents; each document lists the active collaborators. Status colors reuse the p-red/p-yellow/p-green pills. */
+.docs-subcards{display:grid;gap:0;margin:0 0 4px 18px;padding-left:10px;border-left:2px solid color-mix(in srgb,var(--card-color,#7c3aed) 35%,transparent)}
+.docs-sub-card{position:relative;display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;align-items:center;width:100%;min-height:42px;text-align:left;padding:9px 30px 9px 8px;border:0;border-bottom:1px solid var(--layout-line,#ececf0);background:transparent;color:var(--layout-ink,inherit);font:500 12px/16px var(--ui-font);cursor:pointer}
+.docs-sub-card:last-child{border-bottom:0}.docs-sub-card:hover{background:color-mix(in srgb,var(--card-color,#7c3aed) 10%,transparent);border-radius:8px}.docs-sub-card:focus-visible{outline:2px solid var(--card-color,#7c3aed);outline-offset:-2px}
+.docs-sub-name{overflow-wrap:anywhere}.docs-sub-card .card-arrow{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--card-color,#7c3aed)}
+.docs-nav{display:grid;gap:6px;min-width:0}
+.docs-nav-item{display:grid;grid-template-columns:28px 22px minmax(0,1fr);grid-template-areas:"icon idx name" "icon idx state";column-gap:8px;row-gap:2px;align-items:center;text-align:left;padding:10px 12px;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;background:var(--theme-card,#fff);color:var(--layout-ink,inherit);font:500 var(--ui-label,13px)/18px var(--ui-font);cursor:pointer;min-width:0}
+.docs-nav-item .docs-icon{grid-area:icon}.docs-nav-index{grid-area:idx;color:var(--muted,#73737a);font-weight:600}.docs-nav-name{grid-area:name;overflow-wrap:anywhere}.docs-nav-item small{grid-area:state;font:400 var(--ui-note)/16px var(--ui-font);color:var(--muted,#73737a)}
+.docs-nav-item:hover{border-color:var(--menu-accent,#7c3aed)}.docs-nav-item:focus-visible{outline:2px solid var(--menu-accent,#7c3aed);outline-offset:2px}
+.docs-icon{width:24px;height:24px;border-radius:50%;display:inline-grid;place-items:center;flex:none;vertical-align:middle}
+.docs-icon svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.docs-icon.is-pending{background:#fff0f0;color:#bd4545}.docs-icon.is-review{background:#fff6df;color:#946200}.docs-icon.is-review svg{fill:currentColor;stroke:none}.docs-icon.is-done{background:#eaf8ef;color:#16743e}.docs-icon.is-na{background:var(--layout-line,#e5e5ea);color:var(--muted,#73737a)}
+.docs-switch{display:grid;gap:6px;max-width:640px}.docs-switch select{width:100%}
+.docs-model{display:grid;gap:10px}.docs-model h3{overflow-wrap:anywhere}.docs-model a.btn{text-decoration:none;display:inline-flex;align-items:center}
+.docs-status-cell{white-space:nowrap}.docs-status-cell>span:last-child{margin-left:6px;vertical-align:middle}
+.docs-table tr.is-selected td{background:color-mix(in srgb,var(--menu-accent,#7c3aed) 7%,transparent)}
+.docs-person-panel{display:grid;gap:12px;padding-top:4px}
+.docs-detail{display:grid;gap:12px;min-width:0}.docs-detail>.pill{justify-self:start}.docs-pill-na{background:var(--layout-line,#e5e5ea);color:var(--muted,#73737a)}
+.docs-record{display:grid;gap:10px;padding:12px;border:1px solid var(--layout-line,#d4d4d8);border-radius:12px;background:var(--theme-card,#fff);min-width:0}
+.docs-record-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.docs-record-head b{overflow-wrap:anywhere}
+.docs-actions{flex-wrap:wrap}.docs-actions .btn:disabled{opacity:.45;cursor:not-allowed}
+.docs-file-section .uniforms-table td:first-child{min-width:220px}
+body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog{width:min(980px,calc(100vw - 16px))!important;max-width:calc(100vw - 16px)!important}
+.docs-pdf-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.docs-pdf-info{font:600 var(--ui-label,12px)/18px var(--ui-font);color:var(--muted,#73737a);min-width:44px;text-align:center}
+.docs-pdf-box{height:min(70dvh,900px);overflow:auto;display:grid;justify-items:center;align-content:start;gap:12px;padding:8px;border:1px solid var(--layout-line,#e5e5ea);border-radius:10px;background:color-mix(in srgb,var(--layout-line,#e5e5ea) 45%,transparent)}
+.docs-pdf-inline{height:auto;max-height:75dvh}.docs-pdf-page{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.18);max-width:none}
+.docs-pdf-downloads{display:flex;gap:8px;flex-wrap:wrap}.docs-pdf-downloads a.btn{text-decoration:none}
+.docs-sub-card>*{grid-area:auto}
+body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog form{display:grid;grid-template-columns:minmax(0,1fr)}body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog form>*{grid-column:1/-1;min-width:0}
+@media(max-width:600px){.docs-table th:nth-child(2),.docs-table td:nth-child(2){display:none}.docs-status-cell>span:last-child{display:none}.docs-table td.uniforms-row-actions{white-space:nowrap}}
 .card-inherited-icon .sigla-text{font:700 11px/1 var(--ui-font,inherit);letter-spacing:0}
