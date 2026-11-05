@@ -15,8 +15,10 @@
     ['cotacao', 'Cotação por fornecedor', 'Produtos em cotação e decisões', 'compras'],
     ['pedidos', 'Pedidos a receber', 'O que foi comprado e o recebimento', 'caminhao'],
     ['conferencias', 'Conferências de estoque', 'Contagens agendadas', 'conferencia'],
-    ['estoque', 'Estoques de produtos', 'Saldo por produto e extrato', 'estoque'],
     ['cadastro', 'Cadastro de compras', 'Catálogo, histórico e preço-base', 'cadastro'],
+  ];
+  const ESTOQUES = [
+    ['estoque', 'MER - Grupo Mercadorias', '', 'estoque'],
   ];
   const CADASTROS = [
     ['fornecedores', 'MER - Fornecedores', 'Quem vende para a loja', 'fornecedor'],
@@ -25,7 +27,7 @@
   ];
   const icone = (target) => {
     const nome = target.replace(/^compras:/, '');
-    const item = [...CARDS, ...CADASTROS].find((c) => c[0] === nome);
+    const item = [...CARDS, ...CADASTROS, ...ESTOQUES].find((c) => c[0] === nome);
     return U.svg(U.ICONES[item ? item[3] : 'compras']);
   };
 
@@ -42,6 +44,7 @@
 
   window.CicluzCompras = {
     cards: () => CARDS.map(([id, t, d]) => [t, d, 'compras:' + id]),
+    estoqueCards: () => ESTOQUES.map(([id, t, d]) => [t, d, 'compras:' + id]),
     cadastroCards: () => CADASTROS.map(([id, t, d]) => [t, d, 'compras:' + id]),
     icone, abrir, registrar, voltarCompras,
   };

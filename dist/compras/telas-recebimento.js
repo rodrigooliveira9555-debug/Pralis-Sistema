@@ -143,7 +143,7 @@
   const fe = { busca: '', grupo: '', area: '', local: '', setor: '', indicador: '' };
   function abrirEstoque() {
     if (!telaE) {
-      telaE = U.criarTela({ id: 'compras-estoque', titulo: 'Estoques de produtos', caminho: CAMINHO + 'Estoques de produtos', icone: 'estoque', voltar: M.voltarCompras });
+      telaE = U.criarTela({ id: 'compras-estoque', titulo: 'MER - Grupo Mercadorias', caminho: 'Saídas · Mercadorias / Estoques / MER - Grupo Mercadorias', icone: 'estoque', voltar: () => menuBack(3, 'Estoques')() });
     }
     telaE.ativar();
     renderEstoque();
