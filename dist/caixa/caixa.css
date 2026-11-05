@@ -34,11 +34,43 @@
 .caixa-pendencias ul { margin: 6px 0 0; padding-left: 18px; }
 .caixa-acoes { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: flex-end; }
 .caixa-acoes small { margin-right: auto; font-size: 12px; color: var(--muted, #71717a); }
+/* Turno: faixa da casca com "Ver como", cartões do resumo, PDV, vendas em lista e valores alinhados. */
+.caixa-corpo { display: flex; flex-direction: column; gap: 14px; }
+.caixa-corpo > * { flex: none; }
+.caixa-faixa { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.caixa-faixa > p { flex: 1 1 240px; margin: 0; }
+.caixa-perfil { display: flex; align-items: center; gap: 8px; }
+.caixa-subtitulo { margin: 14px 0 6px; font-size: 13px; font-weight: 600; }
+.caixa-cartoes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.caixa-cartao { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--line, #e4e4e7); border-radius: 12px; background: transparent; color: inherit; font: inherit; text-align: left; }
+button.caixa-cartao { cursor: pointer; }
+button.caixa-cartao:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+.caixa-cartao.ancora { border-color: var(--menu-accent); }
+.caixa-cartao small { font-size: 12px; color: var(--muted, #71717a); }
+.caixa-cartao strong { font-size: 22px; font-variant-numeric: tabular-nums; }
+.caixa-lacrado { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.caixa-lacrado svg { flex: none; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.caixa-dinheiro, .caixa-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.caixa-num { text-align: right; }
+.caixa-pdv { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.caixa-pdv-texto { flex: 1 1 140px; font-size: 13px; color: var(--muted, #71717a); }
+.caixa-obs { font-style: italic; }
+.caixa-content .btn.secondary.caixa-perigo { color: #a11c1c; border-color: #a11c1c; }
+.caixa-dialog [hidden] { display: none; }
+.caixa-vendas { display: flex; flex-direction: column; gap: 8px; }
+.caixa-venda { border: 1px solid var(--line, #e4e4e7); border-radius: 10px; padding: 0 12px; }
+.caixa-venda[open] { padding-bottom: 12px; }
+.caixa-venda > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; cursor: pointer; }
+.caixa-venda-texto { display: grid; gap: 2px; min-width: 0; }
+.caixa-venda-texto b { font-weight: 600; overflow-wrap: anywhere; }
+.caixa-venda-texto small { font-size: 12px; color: var(--muted, #71717a); }
+.caixa-venda > :not(summary) { margin-top: 10px; }
+body.dark-theme .caixa-content .btn.secondary.caixa-perigo { color: #f8b4b4; border-color: #f8b4b4; }
 body.dark-theme .caixa-diferenca.falta, body.dark-theme .caixa-pendencias { background: #45201f; color: #f8b4b4; }
 body.dark-theme .caixa-diferenca.sobra, body.dark-theme .caixa-alerta { background: #3d2e10; color: #f6d38f; }
 body.dark-theme .caixa-diferenca.bateu { background: #183a25; color: #a7e8bd; }
 
 @media (max-width: 600px) {
-  .caixa-grade { grid-template-columns: minmax(0, 1fr); }
+  .caixa-grade, .caixa-cartoes { grid-template-columns: minmax(0, 1fr); }
   .caixa-acoes .btn { flex: 1 1 100%; }
 }
