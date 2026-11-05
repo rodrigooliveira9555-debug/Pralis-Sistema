@@ -91,7 +91,7 @@ if(simpleView&&simpleFields){
  simpleFields.append(lbl('Nome completo *',nameIn),lbl('CPF *',cpfIn),lbl('WhatsApp *',phone),lbl('E-mail',email),birth.label,job.label,lbl('Turno *',shift));
  const err=el('p','profiles-error');err.setAttribute('role','alert');const msg=el('p','profiles-note');msg.setAttribute('role','status');
  const title=el('h3','uniforms-heading','Novo cadastro simples');simpleFields.before(title);
- const actions=el('div','actions people-simple-actions');const saveBtn=button('Salvar Cadastro',()=>saveSimple(false),'btn');const okBtn=button('Marcar Cadastro como OK',()=>saveSimple(true));actions.append(button('Cancelar',cancelSimple),okBtn,saveBtn);
+ const actions=el('div','actions people-simple-actions');const saveBtn=button('Salvar Cadastro',()=>saveSimple(false),'btn');const okBtn=button('Marcar Cadastro como OK',()=>saveSimple(true),'btn secondary footer-save-accent');actions.append(button('Cancelar',cancelSimple),okBtn,saveBtn);
  simpleFields.after(dup,err,msg,actions);
  const list=el('div','uniforms-history people-simple-list');const listStatus=el('p','profiles-note');const listTable=el('div','uniforms-table-wrap');list.append(el('h3','uniforms-heading','Acompanhamento dos candidatos'),listStatus,listTable);simpleView.querySelector('.content').append(list);
  let editing=null,dirty=false,busy=false;

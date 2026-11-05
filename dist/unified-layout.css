@@ -312,7 +312,8 @@ body #job-edit>.panel>.head>.config-inherit-icon{border:1px solid #fff!important
 body #job-edit .icon-live-preview::after{color:var(--navigation-ink,#a2a0aa)!important}
 body #cadastro-completo .form-actions>[hidden]{display:none!important}
 body #cadastro-completo .form-actions>div{margin-left:auto}
-body #cadastro-completo :is(#prev-step,#next-step){width:auto;min-width:112px;gap:10px;border-radius:var(--ui-field-radius,8px);padding:10px 16px;font:500 var(--ui-text)/var(--ui-text-line) var(--ui-font)}
+body #cadastro-completo :is(#prev-step,#next-step){width:auto;min-width:112px;height:40px;min-height:40px;gap:8px;border-radius:10px;padding:8px 12px;font:600 12px/1.25 var(--ui-font)}
+body #cadastro-completo :is(#prev-step,#next-step) svg{width:17px;height:17px;stroke-width:1.8}
 body #cadastro-completo .registration-next[hidden]{display:none!important}
 
 /* The content rounds into the secondary header, matching the main header. */

@@ -1,7 +1,7 @@
-/* Tela de entrada no padrão das abas internas do CICLUZ (DESIGN_SYSTEM.md, regras de 02 e
-   03/11/2026): cabeçalho superior colorido, conteúdo e rodapé como retângulos independentes de
-   cantos 12px separados por 6px; campos de 42px, raio 8px e borda 1px; título 16px, subtítulo
-   11px; ação principal preenchida com o acento; roxo de formulários (#7c3aed) como cor de origem. */
+/* Tela de entrada no padrão das abas internas do CICLUZ (DESIGN_SYSTEM.md): um quadro só, de cantos
+   12px, com o cabeçalho colorido no topo, o conteúdo em cinza com os campos brancos no meio e o
+   rodapé branco embaixo; campos de 42px, raio 8px e borda 1px; título 16px, subtítulo 11px; ação
+   principal preenchida com o acento; roxo de formulários (#7c3aed) como cor de origem. */
 :root {
   --ui-font: Montserrat, system-ui, sans-serif;
   --menu-accent: #7c3aed;
@@ -9,6 +9,8 @@
      de 4,5:1 (o #7c3aed sobre #222128 dá 2,8:1). */
   --acento-texto: #7c3aed;
   --layout-gap: #f5f5f7;
+  --entrada-area: #f5f5f7;
+  --borda-quadro: rgba(162, 160, 170, .38);
   --theme-surface: #fff;
   --theme-field: #fff;
   --ui-label-color: #52525b;
@@ -25,7 +27,6 @@
   --ui-text: 14px;
   --ui-label: 12px;
   --canto: 12px;
-  --respiro: 6px;
   --recuo: 14px;
   --rodape: 58px;
   --entrada-largura: 420px;
@@ -35,6 +36,7 @@
 
 .tema-sombra {
   --layout-gap: #151419;
+  --entrada-area: #222128;
   --theme-surface: #222128;
   --theme-field: #222128;
   --ui-label-color: #d4d4d8;
@@ -68,16 +70,13 @@ body {
 .entrada {
   display: flex;
   flex-direction: column;
-  gap: var(--respiro);
   width: 100%;
   max-width: var(--entrada-largura);
-  animation: entrada-surge .32s var(--ease-saida) both;
-}
-
-.entrada-topo,
-.entrada-conteudo,
-.entrada-rodape {
+  overflow: hidden;
+  border: 1px solid var(--borda-quadro);
   border-radius: var(--canto);
+  background: var(--theme-surface);
+  animation: entrada-surge .32s var(--ease-saida) both;
 }
 
 /* Cabeçalho superior: fundo na cor de origem, texto e símbolo na superfície do tema, identificador
@@ -123,7 +122,7 @@ body {
   display: grid;
   gap: 18px;
   padding: 22px var(--recuo) 18px;
-  background: var(--theme-surface);
+  background: var(--entrada-area);
 }
 
 .entrada-marca {
@@ -132,13 +131,36 @@ body {
   gap: 12px;
 }
 
-.entrada-marca img {
+.entrada-logo {
+  position: relative;
+  display: block;
   width: 178px;
-  height: auto;
+  height: 64px;
 }
 
+.entrada-logo img {
+  display: block;
+  width: 178px;
+  height: 64px;
+}
+
+/* Camada da luz, igual à do menu principal: acompanha a imagem por cima. */
+.entrada-luz {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.entrada-logo .entrada-luz { overflow: visible; }
+
 /* A mesma faixa colorida de 3px que separa a marca do menu inicial. */
+/* A luz percorre a faixa, como no menu principal. */
 .entrada-faixa {
+  position: relative;
+  overflow: hidden;
   width: 100%;
   height: 3px;
   background: linear-gradient(90deg, #ff0000 0% 13.043%, #ff8000 17.391% 30.435%, #f2d000 34.783% 47.826%, #00e833 52.174% 65.217%, #0055ff 69.565% 82.609%, #8000ff 86.957% 100%);
@@ -178,9 +200,11 @@ body {
   transition: border-color .15s, box-shadow .15s;
 }
 
+/* Foco no mesmo cinza dos campos das telas internas: contorno de 1px e halo suave de 2px. */
 .entrada-campo input:focus-visible {
-  border-color: var(--acento-texto);
-  box-shadow: inset 0 0 0 1px var(--acento-texto);
+  border-color: var(--navigation-ink);
+  outline: 2px solid rgba(162, 160, 170, .22);
+  outline-offset: 0;
 }
 
 .entrada-erro-campo {
@@ -231,7 +255,7 @@ body {
 }
 
 .entrada-olho:focus-visible {
-  outline: 2px solid var(--acento-texto);
+  outline: 2px solid var(--navigation-ink);
   outline-offset: -4px;
 }
 
@@ -300,12 +324,23 @@ body {
   gap: 12px;
   min-height: var(--rodape);
   padding: 8px var(--recuo);
+  border-top: 1px solid var(--borda-quadro);
   background: var(--theme-surface);
 }
 
 .entrada-simbolo {
+  position: relative;
+  display: block;
+  flex: none;
   width: 32px;
-  height: auto;
+  height: 32px;
+}
+
+.entrada-simbolo img,
+.entrada-simbolo svg {
+  display: block;
+  width: 32px;
+  height: 32px;
 }
 
 .entrada-acoes {
