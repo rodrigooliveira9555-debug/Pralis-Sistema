@@ -7,7 +7,7 @@ const P=window.CicluzPeople,U=window.CicluzUniformUI,F=window.CicluzFieldRules,D
 const {el,button,iconButton,svg,ICON,fold,newId,dateBR,today,dialog,confirmDialog}=U;
 const KEY='cicluz-documentos-v1',ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','Documentações'),MAX=10*1024*1024;
 const ACCEPT=['image/jpeg','image/png','image/webp','application/pdf'];
-const DOC_ICON='M14 3H6v18h12V7zM14 3v4h4M9 13h6M9 17h6',CAMERA='M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',X_ICON='M6 6l12 12M18 6 6 18',DOT='M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',DASH='M6 12h12';
+const DOC_ICON=telaIcone.ocorrencias,CAMERA='M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',X_ICON='M6 6l12 12M18 6 6 18',DOT='M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',DASH='M6 12h12';
 /* Titles as given by the DP. multi = new signed records may be added over the employment; sensitive = health data. */
 const CATS=[
  {id:'armario',name:'Termo de Responsabilidade pelo Uso do Armário e Guarda de Pertences Pessoais'},

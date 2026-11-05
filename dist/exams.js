@@ -3,7 +3,7 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,DB=window.CicluzDateBR,PH=window.CicluzPhoneBR,F=window.CicluzFieldRules;if(!P||!U||!DB||!PH||!F)return;
 const {el,button,iconButton,svg,ICON,fold,newId,dateBR,today,enumField,dialog,confirmDialog}=U;
-const ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Exame Admissional'),STETHO='M6 3v6a4 4 0 0 0 8 0V3M10 13v3a5 5 0 0 0 10 0v-2M20 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z';
+const ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Exame Admissional'),STETHO=telaIcone.exame;
 const TYPES=['ADMISSIONAL','PERIÓDICO','DEMISSIONAL','MUDANÇA DE FUNÇÃO','RETORNO AO TRABALHO','PORTADOR DE DEFICIÊNCIA'];
 const UNITS={CENTRO:{label:'Centro',address:'Av. Getúlio Vargas, 209 e 245',city:'Juiz de Fora — MG'},BENFICA:{label:'Benfica',address:'R. Martins Barbosa, 175',city:'Juiz de Fora — MG'}};
 const CLINIC={name:'AcessaMed+ Trabalho',phone:'(32) 3031-6269',mobile:'(32) 99813-4294',site:'www.acessamedmais.com.br',hours:'Horário de atendimento: de segunda a sexta-feira, das 7h às 19h.',payment:'boleto bancário com vencimento dez dias fora o mês em que o exame foi realizado. É reservado o direito de não atender cliente com débito vencido.'};

@@ -3,7 +3,7 @@
 'use strict';
 const D=window.CicluzUniformData,S=window.CicluzUniformStock,store=window.CicluzUniformStore,U=window.CicluzUniformUI;if(!D||!S||!store||!U)return;
 const {el,button,iconButton,svg,ICON,fold,newId,money,moneyInput,cents,dateBR,today,enumField,dialog,confirmDialog,uniformName,STATUS}=U;
-const ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Uniformes Compras'),CART='M3 4h2l2 11h11l3-8H6M9 20h.01M17 20h.01';
+const ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Uniformes Compras'),CART=telaIcone.compra;
 const data=()=>store.get(),uniformIds=D.uniforms.map(u=>u.id),uniformById=new Map(D.uniforms.map(u=>[u.id,u]));
 
 /* Supplier source: empty until the registry exists; the database will replace this function. */

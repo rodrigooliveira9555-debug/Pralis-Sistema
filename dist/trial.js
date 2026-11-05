@@ -3,7 +3,7 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,DB=window.CicluzDateBR;if(!P||!U||!DB)return;
 const {el,button,iconButton,svg,ICON,fold,dateBR,today,enumField,dialog,confirmDialog}=U;
-const ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Período de Teste'),HOURGLASS='M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9';
+const ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Período de Teste'),HOURGLASS=telaIcone.periodo;
 const STATUSES=['Aguardando início','Em andamento','Prazo encerrado','Aprovado para continuidade','Não aprovado','Cancelado'];
 const DECISION_STATUS=new Set(['Aprovado para continuidade','Não aprovado']),DATE_STATUS=new Set(['Aguardando início','Em andamento','Prazo encerrado']);
 const PILL={'Aguardando início':'p-yellow','Em andamento':'p-yellow','Prazo encerrado':'p-red','Aprovado para continuidade':'p-green','Não aprovado':'p-red',Cancelado:'p-red'};
