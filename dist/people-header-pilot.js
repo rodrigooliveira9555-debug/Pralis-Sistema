@@ -87,11 +87,17 @@
   function metricControl(code,label,color,fields){
    let descending=true;
    const button=control('Organizar por + '+label+' / − '+label,'',()=>{
-    const rows=records(),grid=rows[0]?.parentElement;
+    const currentDescending=descending;descending=!descending;sortMode=0;sortDirection=null;updateSortLabel();
+    const sign=currentDescending?'+':'−';button.textContent=sign+code;
+    button.setAttribute('aria-pressed',String(currentDescending));button.dataset.metricDirection=currentDescending?'desc':'asc';
+    button.title='Organizar por '+sign+' '+label;button.setAttribute('aria-label',button.title);button.setAttribute('aria-description',currentDescending?'Maiores valores primeiro':'Menores valores primeiro');
+    const rows=records();
     const value=row=>{for(const field of fields){const raw=row.dataset[field];if(raw!==undefined&&raw!==''&&Number.isFinite(Number(raw)))return Number(raw)}return null};
     if(!rows.some(row=>value(row)!==null)){announce('Esta lista não possui valores de '+(code==='RES'?'resultado':code==='LUC'?'lucro':code==='VND'?'vendas':'compras')+' para ordenar.');return}
-    rows.sort((a,b)=>{const av=value(a),bv=value(b);if(av===null)return bv===null?0:1;if(bv===null)return -1;return descending?bv-av:av-bv}).forEach(row=>grid.append(row));
-    button.setAttribute('aria-pressed',String(descending));button.textContent=(descending?'−':'+')+code;descending=!descending;
+    for(const container of rowContainers()){
+     const siblings=rowsFor(container),ordered=[...siblings].sort((a,b)=>{const av=value(a),bv=value(b);if(av===null)return bv===null?0:1;if(bv===null)return -1;return currentDescending?bv-av:av-bv});
+     if(siblings.some((row,index)=>row!==ordered[index]))ordered.forEach(row=>container.append(row));
+    }
    });
    button.textContent='+'+code;button.classList.add('people-metric-control');button.style.setProperty('--metric-color',color);
    return button;
@@ -135,6 +141,11 @@
   const bought=metricControl('COM','comprado','#22c55e',['com','purchases','bought','comprado']);
   const profit=metricControl('LUC','lucro','#2563eb',['luc','profit','lucro']);
   const result=metricControl('RES','resultado','#7c3aed',['res','result','resultado']);
+  const launchControls=[['vnd','VND','Lançar vendas','#eab308'],['cnt','CNT','Lançar transferências','#f97316'],['des','DES','Lançar despesas','#ef4444'],['ret','RET','Lançar retiradas','#2563eb'],['mer','MER','Lançar mercadorias','#22c55e'],['car','CAR','Lançar cartões','#7c3aed'],['pdv','PDV','Lançar PDV','#7c3aed']].map(([key,code,label,color])=>{
+   const button=control(label,'',()=>announce(label+' — tela de lançamento ainda não disponível.'));
+   button.textContent=code;button.classList.add('people-launch-control');button.style.setProperty('--launch-color',color);button.setAttribute('aria-description','Atalho preparado; tela de lançamento ainda não disponível.');
+   return ['launch-'+key,{button,label}];
+  });
   const print=control('Imprimir','<path d="M7 8V3h10v5M7 17H3V9h18v8h-4M7 13h10v8H7z"/><path d="M17 11h1"/>',()=>{view.classList.add('shell-print-target');document.body.classList.add('shell-printing');window.addEventListener('afterprint',()=>{view.classList.remove('shell-print-target');document.body.classList.remove('shell-printing')},{once:true});window.print()});
   const exportConfig=control('Exportar configuração','<path d="M12 16V3m-4 4 4-4 4 4M4 14v7h16v-7"/>',()=>{
    const payload={format:'cicluz-screen-toolbar',version:1,screen:context,preferences,display:{compact:!!displayState.compact,dock:displayState.dock,order:records().map(row=>rowId(row))},buttonOrder};
@@ -163,7 +174,7 @@
   toggle.onclick=()=>{collapsed=!collapsed;toggleState()};
   let preferencesKey='cicluz-people-footer-buttons-v1';let preferences={};
   try{const value=JSON.parse(localStorage.getItem(preferencesKey)||'{}');if(value&&typeof value==='object'&&!Array.isArray(value))preferences=normalizePreferences(value)}catch{}
-  const controls=new Map([['search',{button:searchToggle,label:'Buscar'}],['sort',{button:sort,label:sortLabel}],['date',{button:dateButton,label:'Data de … a …'}],['expand',{button:expand,label:'Expandir / recolher tudo'}],['sold',{button:sold,label:'Organizar por + vendido / − vendido'}],['bought',{button:bought,label:'Organizar por + comprado / − comprado'}],['profit',{button:profit,label:'Organizar por + lucro / − lucro'}],['result',{button:result,label:'Organizar por + resultado / − resultado'}],['print',{button:print,label:'Imprimir'}],['import',{button:importConfig,label:'Importar configuração'}],['export',{button:exportConfig,label:'Exportar configuração'}],['width',{button:width,label:'Maior / menor na horizontal'}],['position',{button:position,label:'Posição da barra'}],['save',{button:save,label:'Salvar'}]]);
+  const controls=new Map([['search',{button:searchToggle,label:'Buscar'}],['sort',{button:sort,label:sortLabel}],['date',{button:dateButton,label:'Data de … a …'}],['expand',{button:expand,label:'Expandir / recolher tudo'}],['sold',{button:sold,label:'Organizar por + vendido / − vendido'}],['bought',{button:bought,label:'Organizar por + comprado / − comprado'}],['profit',{button:profit,label:'Organizar por + lucro / − lucro'}],['result',{button:result,label:'Organizar por + resultado / − resultado'}],...launchControls,['print',{button:print,label:'Imprimir'}],['import',{button:importConfig,label:'Importar configuração'}],['export',{button:exportConfig,label:'Exportar configuração'}],['width',{button:width,label:'Maior / menor na horizontal'}],['position',{button:position,label:'Posição da barra'}],['save',{button:save,label:'Salvar'}]]);
   const chooser=document.createElement('div');chooser.className='people-toolbar-options';chooser.id='toolbar-options-'+(view.id||'dialog');chooser.hidden=true;chooser.inert=true;chooser.setAttribute('role','group');chooser.setAttribute('aria-label','Atalhos disponíveis e menu rápido');
   const more=document.createElement('button');more.type='button';more.className='people-toolbar-more';more.title='Mais atalhos';more.setAttribute('aria-label',more.title);more.setAttribute('aria-expanded','false');more.setAttribute('aria-pressed','false');more.setAttribute('aria-controls',chooser.id);more.innerHTML='<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>';
   function setChooserOpen(open){chooser.hidden=!open;chooser.inert=!open;more.setAttribute('aria-expanded',String(open));more.setAttribute('aria-pressed',String(open));if(open){chooserCompact=true;setDateOpen(false);setQuickOpen(false);renderChoices()}}
@@ -224,8 +235,8 @@
     let touchStart=null;
     handle.onpointerdown=e=>{if(e.pointerType!=='touch')return;touchStart={y:e.clientY,id:e.pointerId};handle.setPointerCapture(e.pointerId)};
     handle.onpointerup=e=>{if(!touchStart)return;const delta=e.clientY-touchStart.y;touchStart=null;const target=[...chooser.querySelectorAll('.people-toolbar-row')].find(el=>{const rect=el.getBoundingClientRect();return e.clientY>=rect.top&&e.clientY<=rect.bottom});if(Math.abs(delta)>8&&target)moveControl(key,target.dataset.choiceKey,delta<0)};
-    const action=document.createElement('button');action.type='button';action.className='people-toolbar-run';action.setAttribute('aria-label','Executar '+label);action.disabled=button.disabled||button.dataset.available==='false';
-    const symbol=document.createElement('span');symbol.className='people-option-symbol';symbol.innerHTML=button.innerHTML;symbol.style.setProperty('--metric-color',button.style.getPropertyValue('--metric-color'));if(button.classList.contains('people-metric-control'))symbol.classList.add('people-metric-control');if(button.classList.contains('people-position-control'))symbol.classList.add('people-position-control');
+    const action=document.createElement('button');action.type='button';action.className='people-toolbar-run';action.setAttribute('aria-label','Executar '+label);action.disabled=button.disabled||button.dataset.available==='false';if(button.getAttribute('aria-description'))action.setAttribute('aria-description',button.getAttribute('aria-description'));
+    const symbol=document.createElement('span');symbol.className='people-option-symbol';symbol.innerHTML=button.innerHTML;symbol.style.setProperty('--metric-color',button.style.getPropertyValue('--metric-color'));if(button.classList.contains('people-metric-control'))symbol.classList.add('people-metric-control');if(button.classList.contains('people-position-control'))symbol.classList.add('people-position-control');if(button.classList.contains('people-launch-control')){symbol.classList.add('people-launch-control');symbol.style.setProperty('--launch-color',button.style.getPropertyValue('--launch-color'))}
     const name=document.createElement('span');name.textContent=label;name.className='people-option-name';action.append(symbol,name);action.onclick=()=>{closeChooser();button.click()};
     const pinLabel=()=>!enabled(key)?'Incluir no menu rápido e ligar: '+label:pinned(key)?'Remover do menu rápido: '+label:'Incluir no menu rápido: '+label;
     const power=document.createElement('button');power.type='button';power.className='people-toolbar-enable';power.setAttribute('role','switch');power.setAttribute('aria-label','Ativar função: '+label);power.setAttribute('aria-checked',String(enabled(key)));power.title=enabled(key)?'Desligar '+label:'Ligar '+label;power.innerHTML='<span class="people-enable-track" aria-hidden="true"><span class="people-enable-thumb"></span></span>';
@@ -327,7 +338,7 @@
   let identity=head.querySelector('.header-identity');if(!identity){identity=document.createElement('div');identity.className='header-identity';heading.before(identity);identity.append(heading)}
   let tools=head.querySelector('.location-dialog-tools,.organogram-dialog-tools,.shortcut-actions');if(!tools){tools=document.createElement('div');tools.className='shortcut-actions';head.append(tools)}tools.classList.add('shortcut-actions');
   if(!tools.querySelector('button[aria-label="Fechar"]')){const close=document.createElement('button');close.type='button';close.className='shortcut-circle';close.setAttribute('aria-label','Fechar');close.title='Fechar';close.innerHTML='<svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>';close.onclick=()=>dialog.matches('dialog')?dialog.close():dialog.parentElement.classList.remove('show');tools.append(close)}
-  let icon=head.querySelector('.sector-icon,.location-icon,.origin-icon');if(!icon){icon=document.createElement('span');icon.className='sector-icon';icon.innerHTML=document.querySelector('.view.show>.panel>.head .sector-icon')?.innerHTML||'<svg viewBox="0 0 24 24"><path d="M4 3h16v18H4zM8 8h8M8 13h8"/></svg>';head.prepend(icon)}icon.classList.add('sector-icon');
+  let icon=head.querySelector('.sector-icon,.location-icon,.origin-icon');if(!icon){icon=document.createElement('span');icon.className='sector-icon header-origin-icon';icon.innerHTML=document.querySelector('.view.show>.panel>.head .sector-icon')?.innerHTML||'<svg viewBox="0 0 24 24"><path d="M4 3h16v18H4zM8 8h8M8 13h8"/></svg>';head.prepend(icon)}icon.classList.add('sector-icon');
   const content=document.createElement('div');content.className='content';const panel=document.createElement('div');panel.className='panel';
   head.remove();while(dialog.firstChild)content.append(dialog.firstChild);panel.append(head,content);dialog.append(panel);dialog.classList.add('shell-dialog');
  }

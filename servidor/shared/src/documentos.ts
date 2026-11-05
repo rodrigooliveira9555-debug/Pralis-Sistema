@@ -27,6 +27,10 @@ export const CHAVES_SINCRONIZADAS = [
   // Identidade cadastrada: biblioteca de ícones e cores próprias.
   "cicluz-icon-library-v1",
   "cicluz-custom-colors-v1",
+  // Compras (fornecedores, produtos, agendas, cotações, pedidos, estoque, conferências), num documento
+  // só. Tem CPF/CNPJ e WhatsApp de fornecedor: contato comercial, necessário para cotar. Entrou por
+  // decisão do Zé (04/11/2026), registrada em PROJECT_BRAIN/11 como exceção ao P-11.
+  "cicluz-compras-v1",
   // Marcas de importação dos seeds. Precisam acompanhar os dados (e ir no mesmo lote): sem elas,
   // um aparelho novo reimportaria o seed por cima do que veio do servidor.
   "cicluz-financial-import-complete-v3-ret",
@@ -39,6 +43,12 @@ export const CHAVES_SINCRONIZADAS = [
 ] as const;
 
 export type ChaveSincronizada = (typeof CHAVES_SINCRONIZADAS)[number];
+
+// Chaves que entraram na lista depois da importação inicial. Na entrada, se o servidor ainda não tem o
+// documento e o aparelho (da mesma empresa) tem, o aparelho envia o dele em vez de apagá-lo. Só vale
+// para chave que a tela nunca apaga: para as outras, "sem documento" pode ser uma remoção feita em
+// outro aparelho, e reenviar ressuscitaria o dado apagado.
+export const CHAVES_ADOTADAS_DO_APARELHO = ["cicluz-compras-v1"] as const satisfies readonly ChaveSincronizada[];
 
 export function chaveSincronizada(chave: string): chave is ChaveSincronizada {
   return (CHAVES_SINCRONIZADAS as readonly string[]).includes(chave);

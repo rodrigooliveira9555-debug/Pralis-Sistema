@@ -217,5 +217,7 @@ body .view.show>.panel>.head.header-identity-collapsed>.fixed-header-tools{grid-
 body .side:has(>.menu-search-box:not([hidden]))>.menu-management-heading{padding-top:0}
 
 /* Every principal-menu entry shares its own accent on hover and keyboard focus. */
-body .side .nav-tree :is(summary,button.overview-link,.children>button):is(:hover,:focus-visible){--menu-entry-accent:var(--item-color,#7c3aed);background:color-mix(in srgb,var(--menu-entry-accent) var(--menu-hover-tint,12%),var(--theme-surface,#fff))!important;color:var(--menu-entry-accent)!important}
+body .side .nav-tree :is(summary,.children>button):is(:hover,:focus-visible){--menu-entry-accent:var(--item-color,#7c3aed);background:color-mix(in srgb,var(--menu-entry-accent) var(--menu-hover-tint,12%),var(--theme-surface,#fff))!important;color:var(--menu-entry-accent)!important}
+/* Visão geral: the row (.overview-item) carries the hover band, so the button only changes colour. */
+body .side .nav-tree button.overview-link:is(:hover,:focus-visible){color:var(--item-color,#7c3aed)!important}
 body .side .nav-tree summary:is(:hover,:focus-visible) :is(.menu-name,.menu-name span,.menu-name small){color:var(--menu-entry-accent)!important}
