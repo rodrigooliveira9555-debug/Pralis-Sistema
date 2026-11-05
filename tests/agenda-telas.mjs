@@ -426,6 +426,85 @@ const definirData = (p, rotulo, iso) => p.evaluate(([r, v]) => { const i = docum
   await p.close();
 }
 
+/* ---------- Chat e arquivos (API simulada em memória; a real é testada no servidor) ---------- */
+{
+  const p = await abrirPagina(1280, 900, { ...SESSAO_LOCAL, perfil: { ...SESSAO_LOCAL.perfil, usuarioId: 'u-jose', nome: 'José · Compras' } });
+  const mensagens = [];
+  const arquivos = [];
+  let naoLidas = {};
+  await p.route('**/api/agenda/**', async (r) => {
+    const req = r.request();
+    const u = new URL(req.url());
+    const caminho = u.pathname.replace(/^\/api/, '');
+    const m = /^\/agenda\/compromissos\/([^/]+)\/(mensagens|arquivos|leitura)$/.exec(caminho);
+    if (caminho === '/agenda/chat/nao-lidas') return r.fulfill({ json: { ok: true, data: { naoLidas } } });
+    if (m && m[2] === 'mensagens' && req.method() === 'GET') {
+      const depois = u.searchParams.get('depois');
+      return r.fulfill({ json: { ok: true, data: { mensagens: mensagens.filter((x) => !depois || x.criadoEm > depois) } } });
+    }
+    if (m && m[2] === 'mensagens') { const x = { id: 'm' + mensagens.length, autorId: 'u-jose', autorNome: 'José', texto: JSON.parse(req.postData()).texto.trim(), criadoEm: new Date(Date.now() + mensagens.length).toISOString() }; mensagens.push(x); return r.fulfill({ status: 201, json: { ok: true, data: x } }); }
+    if (m && m[2] === 'leitura') { naoLidas = {}; return r.fulfill({ json: { ok: true, data: {} } }); }
+    if (m && m[2] === 'arquivos' && req.method() === 'GET') return r.fulfill({ json: { ok: true, data: { arquivos } } });
+    if (m && m[2] === 'arquivos') {
+      const corpo = JSON.parse(req.postData());
+      const a = { id: '00000000-0000-4000-8000-00000000000' + arquivos.length, nome: corpo.nome, tipo: corpo.nome.endsWith('.png') ? 'image/png' : 'application/pdf', tamanho: Buffer.from(corpo.conteudoBase64, 'base64').length, papel: 'material', enviadoPor: 'u-jose', enviadoPorNome: 'José', criadoEm: new Date().toISOString(), podeExcluir: true };
+      arquivos.push(a);
+      return r.fulfill({ status: 201, json: { ok: true, data: a } });
+    }
+    const arq = /^\/agenda\/arquivos\/(.+)$/.exec(caminho);
+    if (arq && req.method() === 'DELETE') { arquivos.splice(arquivos.findIndex((x) => x.id === arq[1]), 1); return r.fulfill({ json: { ok: true, data: {} } }); }
+    if (arq) return r.fulfill({ status: 200, contentType: 'image/png', body: PNG });
+    return r.fulfill({ status: 404, json: { title: 'não simulado' } });
+  });
+  const id = await p.evaluate(() => {
+    const r = CicluzAgendaDados.salvarItem('', { titulo: 'Fechar o caixa', listaId: 'lista-gestao-pessoas' });
+    document.dispatchEvent(new Event('cicluz-close-menu'));
+    CicluzAgenda.abrir('');
+    return r.id;
+  });
+  // Não lidas aparecem na linha do compromisso
+  naoLidas = { [id]: 2 };
+  await p.evaluate(() => CicluzAgendaConversa.atualizarNaoLidas(true));
+  await p.waitForFunction(() => document.querySelector('.agenda-chat-novas'));
+  ok((await p.locator('.agenda-item', { hasText: 'Fechar o caixa' }).locator('.agenda-chat-novas').textContent()).includes('2 mensagens novas'), 'A linha mostra as mensagens novas');
+  // Chat: enviar com Enter; mensagem de outra pessoa chega sozinha (a cada 5 s)
+  await p.locator('.agenda-linha-texto', { hasText: 'Fechar o caixa' }).click();
+  await dialogo(p).getByRole('button', { name: 'Abrir chat (2 novas)' }).click();
+  const chat = p.locator('dialog.agenda-chat-dialog[open]');
+  await chat.locator('.compras-vazio').waitFor();
+  await chat.getByLabel('Mensagem', { exact: true }).fill('pode fechar às 18h?');
+  await chat.getByLabel('Mensagem', { exact: true }).press('Enter');
+  await chat.locator('.agenda-chat-msg.minha', { hasText: 'pode fechar às 18h?' }).waitFor();
+  ok(mensagens.length === 1 && mensagens[0].texto === 'pode fechar às 18h?', 'Enter envia a mensagem');
+  mensagens.push({ id: 'm-ana', autorId: 'u-ana', autorNome: 'Ana · Estoque', texto: 'Combinado!', criadoEm: new Date(Date.now() + 1000).toISOString() });
+  await chat.locator('.agenda-chat-msg:not(.minha)', { hasText: 'Combinado!' }).waitFor({ timeout: 8000 });
+  ok((await chat.locator('.agenda-chat-msg:not(.minha) .agenda-chat-autor').textContent()) === 'Ana · Estoque', 'Mensagem de outra pessoa chega sozinha, com o nome');
+  ok(Object.keys(naoLidas).length === 0, 'Abrir o chat marca como lido');
+  await chat.locator('.people-close-control, .people-cancel-control').first().click().catch(() => p.keyboard.press('Escape'));
+  if (await chat.count()) await p.keyboard.press('Escape');
+  // Arquivos: enviar, ver, excluir
+  await dialogo(p).locator('.agenda-conversa input[type=file]').setInputFiles([{ name: 'foto.png', mimeType: 'image/png', buffer: PNG }, { name: 'nota.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') }]);
+  await dialogo(p).locator('.agenda-arquivo', { hasText: 'nota.pdf' }).waitFor();
+  ok(arquivos.length === 2 && await dialogo(p).locator('.agenda-arquivo-miniatura').count() === 1, 'Envia vários arquivos; imagem com miniatura');
+  ok((await dialogo(p).locator('.agenda-arquivo', { hasText: 'foto.png' }).getByRole('link', { name: 'foto.png' }).getAttribute('href')).startsWith('/api/agenda/arquivos/'), 'Nome abre o arquivo');
+  await dialogo(p).locator('.agenda-arquivo', { hasText: 'foto.png' }).getByRole('button', { name: 'Excluir' }).click();
+  await confirmar(p);
+  await p.waitForFunction(() => !document.querySelector('dialog.agenda-dialog[open] .agenda-arquivo-miniatura'));
+  ok(arquivos.length === 1, 'Excluir arquivo');
+  const grande = Buffer.alloc(10 * 1024 * 1024 + 1);
+  await dialogo(p).locator('.agenda-conversa input[type=file]').setInputFiles([{ name: 'enorme.png', mimeType: 'image/png', buffer: grande }]);
+  ok((await dialogo(p).locator('.agenda-conversa [role=status]').textContent()).includes('passa de 10 MB') && arquivos.length === 1, 'Arquivo acima de 10 MB nem é enviado');
+  await p.keyboard.press('Escape');
+  await p.close();
+}
+{
+  // Sem login (revisão local): explica que precisa do servidor
+  const p = await abrirPagina(1024);
+  await p.evaluate(() => { const r = CicluzAgendaDados.salvarItem('', { titulo: 'Sem servidor', listaId: 'lista-gestao-pessoas' }); document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.abrir(''); CicluzAgenda.editar(r.id); });
+  ok((await dialogo(p).locator('.agenda-conversa').textContent()).includes('entre com seu usuário'), 'Sem login: chat e arquivos explicam que precisam do servidor');
+  await p.close();
+}
+
 /* ---------- Pessoas, permissões e avaliação (usuários da lista provisória) ---------- */
 {
   const sessao = (id, nome) => ({ ...SESSAO_LOCAL, perfil: { ...SESSAO_LOCAL.perfil, usuarioId: id, nome } });

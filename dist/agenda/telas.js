@@ -72,6 +72,8 @@
     tela = U.criarTela({ id: 'agenda-view', titulo: 'Agenda', caminho: caminho(), icone: 'agenda', voltar, cor: COR, corTexto: COR_TEXTO, classe: 'agenda-view' });
     U.atalho(tela, 'Novo compromisso', PATH_MAIS, () => editar(null, padraoNovo()), { criar: true });
     document.addEventListener('cicluz-agenda-mudou', () => { if (tela.view.classList.contains('show')) render(); });
+    // Mensagens novas no chat: a linha do compromisso mostra (sem redesenhar com diálogo aberto).
+    document.addEventListener('cicluz-agenda-conversa', () => { if (tela.view.classList.contains('show') && !document.querySelector('dialog[open]')) render(); });
     // Virada do dia ou da hora com a tela aberta: "Para hoje" e "Atrasados" mudam sozinhos.
     setInterval(() => { if (tela.view.classList.contains('show') && !document.querySelector('dialog[open]')) render(); }, 60000);
     return tela;
@@ -86,6 +88,7 @@
     }
     render();
     tela.ativar('Agenda', caminho());
+    if (window.CicluzAgendaConversa) window.CicluzAgendaConversa.atualizarNaoLidas(true);
   }
 
   function escolher({ automatica = '', listaId = '' }) {
@@ -310,6 +313,8 @@
     (item.etiquetas || []).forEach((t) => partes.push(el('span', 'agenda-etiqueta', '#' + t)));
     const pr = D.progresso(item);
     if (pr.total) partes.push(el('span', null, pr.feitas + '/' + pr.total + ' subtarefas'));
+    const novas = window.CicluzAgendaConversa ? window.CicluzAgendaConversa.naoLidas()[item.id] : 0;
+    if (novas) { const s = el('span', 'agenda-com-icone agenda-chat-novas'); s.innerHTML = svg(window.CicluzAgendaConversa.ICONE_CHAT); s.append(document.createTextNode(novas + (novas > 1 ? ' mensagens novas' : ' mensagem nova'))); partes.push(s); }
     if (item.notas && !compacta) partes.push(el('span', 'agenda-nota', item.notas.split('\n')[0]));
     partes.forEach((p, n) => { if (n) det.append(document.createTextNode(' · ')); det.append(p); });
     if (partes.length) texto.append(det);
@@ -513,6 +518,7 @@
           subtarefas.no,
           avaliacaoSecao,
         );
+        if (atual) form.append(window.CicluzAgendaConversa.secao(atual));
         if (atual) {
           const rodape = el('div', 'agenda-form-rodape');
           const criado = 'Criado em ' + D.dataCurta(atual.criadoEm.slice(0, 10)) + (atual.criadoPor ? ' por ' + A.nomePessoa(atual.criadoPor) : '') + (atual.concluida ? ' · concluído em ' + D.dataCurta(atual.concluidaEm.slice(0, 10)) : '');
@@ -521,7 +527,7 @@
           form.append(rodape);
         }
         // Só leitura: tudo travado, menos a avaliação (o responsável se autoavalia).
-        if (soLeitura) form.querySelectorAll('input, select, textarea, button').forEach((x) => { if (!x.closest('.agenda-avaliacao-painel, .agenda-form-rodape, .compras-dialog-acoes')) x.disabled = true; });
+        if (soLeitura) form.querySelectorAll('input, select, textarea, button').forEach((x) => { if (!x.closest('.agenda-avaliacao-painel, .agenda-conversa, .agenda-form-rodape, .compras-dialog-acoes')) x.disabled = true; });
         return { titulo, notas, url, local, lugar, data, hora, horaFim, alerta, repeticao, listaSel, colunaSel, pessoas, tipoAvaliacao, sinalBox, etiquetas, subtarefas, prio: () => prioridade };
       },
       salvar: soLeitura ? undefined : (c) => {

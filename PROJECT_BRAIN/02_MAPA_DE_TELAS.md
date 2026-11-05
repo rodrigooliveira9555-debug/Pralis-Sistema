@@ -44,8 +44,8 @@ Texto fixo "reunirá os principais números".
   (grade de horas)/Mês/Ano. Kanban com colunas editáveis. Local no mapa (Atual, Ao entrar, Ao sair, Personalizada).
   Responsáveis e permissões do gestor, avaliação da execução. Mapa mental (estruturas Mapa, Lógico, Organograma,
   Árvore, Linha do tempo; agrupar por lista, data, responsável, prioridade, coluna, etiqueta; relações; exporta).
-- ⬜ Chat e arquivos: precisam de backend (tabelas novas = migration; aguardando aprovação). Perfil comportamental:
-  em espera (P-19).
+- ✅ Chat e arquivos do compromisso (servidor: tabelas `agenda_mensagens`, `agenda_chat_leituras`,
+  `agenda_arquivos`, migration 0003 aprovada pelo Zé em 05/11/2026). ⬜ Perfil comportamental: em espera (P-19).
 
 ## Configuração · Cadastros Gerais (roxo)
 
