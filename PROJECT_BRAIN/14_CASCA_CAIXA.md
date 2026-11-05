@@ -69,17 +69,47 @@ porque branco sobre #eab308 não passa no contraste.
 - Texto da tela segue "malote" (como o principal: "Resumo do malote de abertura"); "transferência" é
   o nome do dado, não o texto para o operador.
 
-## Falta (na ordem)
+### Fluxo completo da casca (05/11/2026, segunda leva)
 
-1. Fechamento: gerente responsável + 4 etapas (Vendas com contagem cega e folha CREARE,
-   Maquininha, Relatório final com Folha × PDV × Maquininha, Fechamento com esperado × contado,
-   lacre e observação) + "Revisar fechamento do caixa". O "Ver como" entra aqui também.
-2. Gerência (setor Gerência de Entradas): monitor de caixas abertos e mensagens.
-3. Tesouraria/Financeiro (setor Financeiro de Entradas): histórico com filtros, detalhe,
-   "Fechou certo" / "Teve quebra".
-4. Fora do Turno nesta entrega: "Últimos lançamentos" (despesas, mercadorias, retiradas), filtros de
-   horário em "Vendas do caixa", transferência de retorno planejada (que também trava o fechamento
-   no principal) e resumo de campanhas (somente leitura no principal).
+Documentado a fundo no cofre do Obsidian `C:\CICLUZ\Caixa-Brain` (leitura do principal, todos os
+campos e regras). Cards de Entradas → Caixas, na ordem do fluxo:
+
+- **Malote da Tesouraria** (`malote.js`): cria o malote (origem Cofre, destino conta do PDV, dinheiro
+  + moedas, lacre de abertura, lacre de fechamento reservado, bolsas de sangria). Lacres **distintos
+  entre si e únicos** ("Lacre já utilizado em outro movimento"). Gerência também envia **sem lacre**
+  (só com caixa aberto no PDV de destino; quem enviou não confirma). Lista de malotes e lacres.
+- **Abertura**: o lacre agora vem dos malotes criados (o `001` do PDV 1 já existe); inexistente, já
+  rompido ou de outro PDV são recusados; abrir **rompe** o lacre.
+- **Fechamento** (`fechamento.js`): gerente responsável (nome livre, o responsável pelo caixa é quem
+  abriu) → 1 Vendas (contagem **cega** por cédulas e moedas; folha CREARE com leitura **simulada**,
+  valores travados e "Corrigir manualmente" com justificativa; gerar o relatório congela o esperado)
+  → 2 Maquininha (comprovante simulado, 4 formas, sem correção manual) → 3 Relatório final
+  (Folha × PDV × Maquininha, **só informa**) → 4 Fechamento (esperado × contado só aqui, lacre =
+  o reservado, folha de fechamento, observação obrigatória com falta **ou sobra**, "Encerrar com
+  divergência" / "Encerrar e enviar à Tesouraria", revisão). Falta = quebra + aviso; sobra = só aviso;
+  o contado volta ao Cofre (retorno pendente).
+- **Conferência da Tesouraria** (`conferencia.js`): só a Tesouraria; fila "Para conferir / Já
+  conferidos", dossiê, **"Fechou certo"** (recebe o retorno como declarado) e **"Teve quebra"**
+  (motivo obrigatório), revisão com motivo. **Append-only**; não muda valores nem o status do caixa.
+- **Gerência** (`gerencia.js`): monitor de caixas abertos, mensagens (validade no futuro, alvos,
+  encerrar; o operador vê no Turno e confirma "Entendi") e histórico com filtros e detalhe.
+- "Ver como" agora tem **Operador · Gerência · Tesouraria**; `CicluzCaixa.pode(...)` bloqueia o que
+  cada perfil não pode.
+- **Testes:** 77 verificações ponta a ponta (Docker, porta 8090) e 72 combinações de largura × tema,
+  todas verdes; `date-fields`, `field-validation` e `compras-dominio` verdes.
+
+## Falta
+
+1. **Maquininha manhã/tarde** (acumulado − manhã) e posto escolhível (hoje fixo PDV 1 · Manhã).
+2. **Ajuste do início das vendas** (R-224), planejamentos de retorno (legado), "Últimos lançamentos",
+   campanhas, filtros de horário em "Vendas do caixa", paginação do histórico.
+3. **Conferência estrita no cofre** (`confirmar`/`recusar-conferencia` por lacre), conferência física
+   da abertura gravada, prazo de confirmação (423) e `liberar-trava`.
+4. Perfil **Diretor Geral**, página de **Pendências** e notificações em sino.
+5. **Dúvidas para o Rodrigo/Marco** em `Caixa-Brain/13 - Dúvidas abertas.md` (malote da Tarde com a
+   Manhã aberta; quem edita malote; bandeira/operadora na maquininha; Gerência vê o relatório de
+   fechamento?; quem envia mensagens; sobra só avisa?).
+6. Confirmar no **iPad/Safari** (só foi testado em Edge).
 
 ## Desenvolvimento
 
