@@ -143,7 +143,7 @@
   const bought=metricControl('COM','comprado','#22c55e',['com','purchases','bought','comprado']);
   const profit=metricControl('LUC','lucro','#2563eb',['luc','profit','lucro']);
   const result=metricControl('RES','resultado','#7c3aed',['res','result','resultado']);
-  const launchControls=[['vnd','VND','Lançar vendas','#eab308'],['cnt','CNT','Lançar transferências','#f97316'],['des','DES','Lançar despesas','#ef4444'],['ret','RET','Lançar retiradas','#2563eb'],['mer','MER','Lançar mercadorias','#22c55e'],['car','CAR','Lançar cartões','#7c3aed'],['pdv','PDV','Lançar PDV','#7c3aed']].map(([key,code,label,color])=>{
+  const launchControls=[['vnd','VND','Lançar vendas','#eab308'],['cnt','CNT','Lançar transferências','#f97316'],['des','DES','Lançar despesas','#ef4444'],['ret','RET','Lançar retiradas','#2563eb'],['mer','MER','Lançar mercadorias','#22c55e'],['car','CAR','Lançar cartões','#7c3aed'],['pdv','PDV','Lançar PDV','#7c3aed'],['res','RES','Lançar resultado','#7c3aed']].map(([key,code,label,color])=>{
    const button=control(label,'',()=>announce(label+' — tela de lançamento ainda não disponível.'));
    button.textContent=code;button.classList.add('people-launch-control');button.style.setProperty('--launch-color',color);button.setAttribute('aria-description','Atalho preparado; tela de lançamento ainda não disponível.');
    return ['launch-'+key,{button,label}];
@@ -243,7 +243,8 @@
    const resize=document.createElement('button');resize.type='button';resize.className='people-options-resize';resize.setAttribute('aria-expanded',String(!chooserCompact));resize.setAttribute('aria-label',chooserCompact?'Configurar menu rápido':'Voltar aos atalhos disponíveis');resize.title=resize.getAttribute('aria-label');resize.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(chooserCompact?'m15 5-7 7 7 7':'m9 5 7 7-7 7')+'"/></svg>';
    resize.onclick=()=>{chooserCompact=!chooserCompact;renderChoices();chooser.querySelector('.people-options-resize').focus()};
    heading.append(headingIcon,title,resize);const inner=document.createElement('div');inner.className='people-options-inner';chooser.append(heading,inner);
-   const candidates=orderedControls().filter(([key,{button}])=>button.dataset.available!=='false'&&(!chooserCompact||(!pinned(key)&&enabled(key))));if(!chooserCompact)candidates.sort(([a],[b])=>(!enabled(a)?2:pinned(a)?1:0)-(!enabled(b)?2:pinned(b)?1:0));
+   const candidates=orderedControls().filter(([key,{button}])=>button.dataset.available!=='false'&&(!chooserCompact||(!pinned(key)&&enabled(key))));/* Painel: no alto os ligados que ficam em Mais atalhos; no meio os ainda não selecionados; por último os fixados no menu rápido. */
+ if(!chooserCompact){const grupo=key=>!enabled(key)?1:pinned(key)?2:0;candidates.sort(([a],[b])=>grupo(a)-grupo(b))}
    if(!candidates.length&&!chooserCompact){const empty=document.createElement('p');empty.className='people-choices-empty';empty.textContent='Não há funções disponíveis nesta tela.';inner.append(empty)}
    for(const [key,{button,label}] of candidates){
     const row=document.createElement('div');row.className='people-toolbar-row';row.dataset.choiceKey=key;
@@ -263,7 +264,7 @@
     const pin=document.createElement('button');pin.type='button';pin.className='people-toolbar-pin';pin.title=pinLabel();pin.setAttribute('aria-label',pin.title);pin.setAttribute('aria-pressed',String(pinned(key)));const maskId='quick-pin-logo-'+(++pinLogoId);pin.innerHTML='<svg viewBox="10 6 42 44" aria-hidden="true"><defs><mask id="'+maskId+'" maskUnits="userSpaceOnUse" x="10" y="6" width="42" height="44" style="mask-type:alpha"><image href="cicluz-gestao-padaria-logo.png" width="177.6" height="64" preserveAspectRatio="none"/></mask></defs><rect x="10" y="6" width="42" height="44" fill="currentColor" mask="url(#'+maskId+')"/></svg>';
     pin.onclick=()=>{
      const selected=!pinned(key)||!enabled(key);preferences[key]=selected;
-     if(selected&&preferences._disabled)preferences._disabled[key]=false;
+     if(selected){if(!preferences._disabled)preferences._disabled={};preferences._disabled[key]=false}
      persistPreferences();applyPreferences();
      pin.setAttribute('aria-pressed',String(selected));pin.title=pinLabel();pin.setAttribute('aria-label',pin.title);
      power.setAttribute('aria-checked',String(enabled(key)));power.title=enabled(key)?'Desligar '+label:'Ligar '+label;
