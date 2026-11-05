@@ -395,3 +395,4 @@ body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog form{display:grid;
 .card-inherited-icon.revisar svg{color:#ffd60a}
 .icone-revisar{display:inline-flex;width:18px;height:18px;margin-right:8px;vertical-align:-4px;color:#f5c400}
 .icone-revisar svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.view .panel .head .sector-icon.revisar svg{color:#ffd60a;stroke:#ffd60a}

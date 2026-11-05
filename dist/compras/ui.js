@@ -9,6 +9,7 @@
   const COR_TEXTO = '#12672e';
   const ICONES = {
     compras: '<path d="M2 3h3l3 13h12l2-10H6M10 21h1m6 0h1"/>',
+    revisar: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.6h.01"/>',
     estoque: '<path d="M3 6l9-4 9 4v14l-9 3-9-3Z M3 6l9 4 9-4M12 10v13"/>',
     fornecedor: '<path d="M3 21V8l6-4v4l6-4v4l6-4v17ZM7 17h2m4 0h2"/>',
     produto: '<path d="M4 7h16l-1.5 13h-13ZM9 7a3 3 0 0 1 6 0"/>',

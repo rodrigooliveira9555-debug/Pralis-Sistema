@@ -19,7 +19,8 @@
   let telaA = null;
   function abrirAgendamento() {
     if (!telaA) {
-      telaA = U.criarTela({ id: 'compras-agendamento', titulo: 'MER - Agenda de Pedidos', caminho: 'Agenda · Atividades / MER - Agenda de Pedidos', icone: 'agenda', voltar: () => returnToNavigation() });
+      telaA = U.criarTela({ id: 'compras-agendamento', titulo: 'MER - Agenda de Pedidos (revisar)', caminho: 'Agenda · Atividades / MER - Agenda de Pedidos (revisar)', icone: 'revisar', voltar: () => returnToNavigation() });
+      telaA.head.querySelector('.sector-icon').classList.add('revisar');
       U.atalho(telaA, 'Novo agendamento', 'M12 5v14M5 12h14', () => formularioAgenda(), { criar: true });
     }
     telaA.ativar();
