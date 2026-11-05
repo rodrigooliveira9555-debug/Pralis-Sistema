@@ -9,8 +9,8 @@
   const S = window.CicluzComprasDados;
   const U = window.CicluzComprasUI;
   const { el, botao, campo, entrada, seletor } = U;
-  const voltarCadastros = () => openSection(sections[7][0], 'Diretor de Operações', 'assets', '#7c3aed');
-  const CAMINHO = 'Cadastros / Diretor de Operações / ';
+  const voltarCadastros = () => openSection(sections[7][0], 'Compras', 'cad-compras', '#7c3aed');
+  const CAMINHO = 'Cadastros / Compras / ';
 
   /* ---------- Máscaras ---------- */
   function mascaraDocumento(v) {
@@ -43,7 +43,7 @@
   let buscaF = '';
   function abrirFornecedores() {
     if (!telaF) {
-      telaF = U.criarTela({ id: 'compras-fornecedores', titulo: 'Fornecedores', caminho: CAMINHO + 'Fornecedores', icone: 'fornecedor', voltar: voltarCadastros });
+      telaF = U.criarTela({ id: 'compras-fornecedores', titulo: 'MER - Fornecedores', caminho: CAMINHO + 'MER - Fornecedores', icone: 'fornecedor', voltar: voltarCadastros });
       U.atalho(telaF, 'Novo fornecedor', 'M12 5v14M5 12h14', () => editarFornecedor(), { criar: true });
     }
     telaF.ativar();

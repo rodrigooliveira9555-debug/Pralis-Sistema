@@ -1,7 +1,7 @@
 /*
  * Compras — entrada do módulo no menu do S2.
  * Saídas · Mercadorias / CMV → Compras abre os cards abaixo (ordem do menu Compras do S1).
- * Cadastros → Diretor de Operações recebe Fornecedores e Produtos.
+ * Cadastros → Compras recebe MER - Fornecedores e MER - Produtos.
  * Cada tela se registra com CicluzCompras.registrar(nome, abrir).
  */
 (function () {
@@ -20,8 +20,8 @@
     ['unidades', 'Unidades de medida', 'Siglas de embalagem, medida de compra e conversões', 'lista'],
   ];
   const CADASTROS = [
-    ['fornecedores', 'Fornecedores', 'Quem vende para a loja', 'fornecedor'],
-    ['produtos', 'Produtos', 'Cadastro, como se compra e estoque mínimo', 'produto'],
+    ['fornecedores', 'MER - Fornecedores', 'Quem vende para a loja', 'fornecedor'],
+    ['produtos', 'MER - Produtos', 'Cadastro, como se compra e estoque mínimo', 'produto'],
   ];
   const icone = (target) => {
     const nome = target.replace(/^compras:/, '');
