@@ -505,6 +505,24 @@ const definirData = (p, rotulo, iso) => p.evaluate(([r, v]) => { const i = docum
   await p.close();
 }
 
+{
+  // API publicada antes do chat (rota inexistente: 404 genérico): aviso claro e para de perguntar
+  const p = await abrirPagina(1024, 844, { ...SESSAO_LOCAL, perfil: { ...SESSAO_LOCAL.perfil, usuarioId: 'u-jose', nome: 'José · Compras' } });
+  let pedidos = 0;
+  await p.route('**/api/agenda/**', (r) => { pedidos++; return r.fulfill({ status: 404, json: { type: 'about:blank', title: 'Não encontrado', status: 404, code: 'NOT_FOUND' } }); });
+  await p.evaluate(() => { const r = CicluzAgendaDados.salvarItem('', { titulo: 'API antiga', listaId: 'lista-gestao-pessoas' }); document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.abrir(''); CicluzAgenda.editar(r.id); });
+  await p.waitForFunction(() => (document.querySelector('dialog.agenda-dialog[open] .agenda-conversa [role=status]') || {}).textContent);
+  ok((await dialogo(p).locator('.agenda-conversa [role=status]').textContent()).includes('a API precisa ser atualizada'), 'API antiga: arquivos explicam que o servidor precisa ser atualizado');
+  ok(!(await dialogo(p).getByRole('button', { name: 'Adicionar arquivos' }).isVisible()), 'API antiga: não oferece enviar arquivo');
+  await dialogo(p).getByRole('button', { name: 'Abrir chat' }).click();
+  const chat = p.locator('dialog.agenda-chat-dialog[open]');
+  await chat.locator('.agenda-chat-estado', { hasText: 'a API precisa ser atualizada' }).waitFor();
+  const antes = pedidos;
+  await p.waitForTimeout(6000);
+  ok(pedidos === antes && await chat.getByLabel('Mensagem', { exact: true }).isDisabled(), 'API antiga: o chat avisa e para de perguntar a cada 5 s');
+  await p.close();
+}
+
 /* ---------- Pessoas, permissões e avaliação (usuários da lista provisória) ---------- */
 {
   const sessao = (id, nome) => ({ ...SESSAO_LOCAL, perfil: { ...SESSAO_LOCAL.perfil, usuarioId: id, nome } });

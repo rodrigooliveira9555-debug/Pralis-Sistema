@@ -23,7 +23,14 @@
   const api = (caminho, opcoes) => window.CicluzSync.api(caminho, opcoes);
   const online = () => Boolean(A.usuarioAtual() && window.CicluzSync && window.CicluzSync.api);
   const cor = () => ({ cor: window.CicluzAgenda.COR, corTexto: window.CicluzAgenda.COR_TEXTO });
-  const mensagemErro = (e) => (e && e.codigo === 'AGENDA_COMPROMISSO_NAO_ENCONTRADO' ? 'Este compromisso ainda está indo para o servidor. Tente de novo em alguns segundos.' : (e && e.message) || 'Não foi possível falar com o servidor.');
+  // A rota inteira não existe (404 genérico, não o do compromisso): a API publicada é anterior ao chat.
+  const apiSemAgenda = (e) => Boolean(e && e.status === 404 && e.codigo !== 'AGENDA_COMPROMISSO_NAO_ENCONTRADO' && e.codigo !== 'ARQUIVO_NAO_ENCONTRADO');
+  function mensagemErro(e) {
+    if (e && e.codigo === 'AGENDA_COMPROMISSO_NAO_ENCONTRADO') return 'Este compromisso ainda está indo para o servidor. Tente de novo em alguns segundos.';
+    if (apiSemAgenda(e)) return 'O servidor ainda não tem chat e arquivos: a API precisa ser atualizada (avise o responsável pelo sistema).';
+    if (e && e.codigo === 'NETWORK') return 'Sem conexão com o servidor agora. Tente de novo daqui a pouco.';
+    return (e && e.message) || 'Não foi possível falar com o servidor.';
+  }
   const hora = (iso) => { const d = new Date(iso); return D.rotuloData(D.isoData(d), new Date()) + ' ' + D.horaAgora(d); };
   const tamanho = (n) => (n < 1024 ? n + ' B' : n < 1048576 ? Math.round(n / 1024) + ' KB' : (n / 1048576).toFixed(1).replace('.', ',') + ' MB');
 
@@ -91,7 +98,10 @@
             if (primeira && !r.mensagens.length) lista.replaceChildren(U.vazio('Nenhuma mensagem ainda.', 'Comece a conversa abaixo.'));
             if (r.mensagens.length || primeira) { desenhar(r.mensagens); api('/agenda/compromissos/' + encodeURIComponent(item.id) + '/leitura', { metodo: 'POST', corpo: {} }).catch(() => {}); }
             estado.textContent = '';
-          } catch (e) { estado.textContent = mensagemErro(e); }
+          } catch (e) {
+            estado.textContent = mensagemErro(e);
+            if (apiSemAgenda(e)) { clearInterval(timer); lista.replaceChildren(); enviar.disabled = true; texto.disabled = true; }
+          }
         }
         async function mandar() {
           const t = texto.value.trim();
@@ -142,7 +152,7 @@
       try {
         const r = await api('/agenda/compromissos/' + encodeURIComponent(item.id) + '/arquivos');
         desenhar(r.arquivos);
-      } catch (e) { lista.replaceChildren(); estado.textContent = mensagemErro(e); }
+      } catch (e) { lista.replaceChildren(); estado.textContent = mensagemErro(e); if (apiSemAgenda(e)) anexar.hidden = true; }
     }
     function desenhar(arquivos) {
       lista.replaceChildren(...(arquivos.length ? arquivos.map((a) => {
