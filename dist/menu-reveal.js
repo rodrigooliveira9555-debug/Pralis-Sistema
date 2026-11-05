@@ -13,7 +13,7 @@
   if(Math.abs(shift)>1)nav.scrollTo({top:Math.max(0,nav.scrollTop+shift),behavior:reduced.matches?'instant':'smooth'});
  }
  side.addEventListener('click',event=>{
-  const target=event.target.closest('summary,.sidebar-section-toggle,.unified-expand-toggle,.tree-control');if(!target||event.target.closest('.drag-handle,.menu-item-move'))return;
+  const target=event.target.closest('summary,.sidebar-section-toggle,.unified-expand-toggle,.tree-control');if(!target||event.target.closest('.menu-item-move'))return;
   const details=target.tagName==='SUMMARY'?target.parentElement:null;
   const wasOpen=details?.open,wasExpanded=target.getAttribute('aria-expanded');
   const previous=new Set(nav.querySelectorAll('details[open]'));

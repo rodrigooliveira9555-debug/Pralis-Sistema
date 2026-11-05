@@ -320,7 +320,7 @@
    }
    syncQueries();if(sortMode===0)originalOrders=new WeakMap();rememberOriginalRows();applyPreferences();if(sortMode!==0&&enabled('sort'))sortRows(sortDirection);if(!chooser.hidden&&chooserSignature!==choicesFingerprint())renderChoices();
   }
-  content.addEventListener('pointerdown',e=>{if(e.target.closest('.menu-item-move,.account-move,.drag-handle,.location-move')){sortDirection=null;sortMode=0;originalOrders=new WeakMap();updateSortLabel()}},true);
+  content.addEventListener('pointerdown',e=>{if(e.target.closest('.menu-item-move,.account-move,.location-move')){sortDirection=null;sortMode=0;originalOrders=new WeakMap();updateSortLabel()}},true);
   mounted.set(view,{sync,footer,head,reset:()=>{if(nativeSearchButton?.getAttribute('aria-expanded')==='true')nativeSearchButton.click();for(const [input] of adoptedInputs){input.hidden=true;const host=profileSearchHosts.get(input);if(host)host.hidden=true}previousActive=false;sync()}});
   let queued=false;
   new MutationObserver(records=>{

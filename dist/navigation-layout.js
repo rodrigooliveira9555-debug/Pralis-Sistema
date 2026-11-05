@@ -131,7 +131,7 @@
 (()=>{
  const nav=document.querySelector('.nav-tree');if(!nav)return;
  nav.addEventListener('click',event=>{
-  if(event.target.closest('.drag-handle,.menu-item-move,.sidebar-section-toggle'))return;
+  if(event.target.closest('.sidebar-section-toggle'))return;
   const target=event.target.closest('summary,button');if(!target||!nav.contains(target))return;
   nav.querySelectorAll('.menu-selected,.active,[aria-current]').forEach(item=>{
    item.classList.remove('menu-selected','active');item.removeAttribute('aria-current');
