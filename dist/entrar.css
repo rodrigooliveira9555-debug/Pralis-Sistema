@@ -88,7 +88,7 @@ body {
 .entrada-topo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
   min-height: var(--rodape);
   padding: max(8px, env(safe-area-inset-top)) max(var(--recuo), env(safe-area-inset-right)) 8px max(var(--recuo), env(safe-area-inset-left));
   border-radius: 0 0 var(--canto) var(--canto);
@@ -98,10 +98,12 @@ body {
   color: #fff;
 }
 
+/* Mesmo identificador das telas internas: caixa de 30px com o símbolo de 21px no centro. */
 .entrada-identificador {
   flex: none;
   width: 30px;
   height: 30px;
+  padding: 4.5px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2.2;
