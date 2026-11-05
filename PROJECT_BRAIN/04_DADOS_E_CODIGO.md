@@ -28,6 +28,7 @@
   para a próxima data), término, alerta e soneca (`adiadoPara`), URL, local, ordem manual. Campos novos são
   opcionais (dado antigo continua válido). Preferências do aparelho, fora da sincronização:
   `cicluz-agenda-calendario-ocultas` e `cicluz-agenda-alertas-mostrados`.
+  Local: `local` (endereço) + `localizacao` { lat, lng, aviso entrar/sair, raio }.
   Código: `dist/agenda/` (dominio, dados, calendario, kanban, telas, alertas, agenda.css).
 
 **Preferência de interface:** `tema`, `menu-ordem`, `menu-item-order-v1`, `sidebar-sections-v1`,
@@ -40,8 +41,11 @@
 **Seeds:** embutidos em `groups.js:4` (`groupSeed`, até ~linha 1544). `group-seeds.json` é cópia de
 referência — **não** é carregado.
 
-**Chamadas externas:** só `api.iconify.design/search` (`icon-library-manager.js:23`) e Google
-Fonts (Montserrat). Nenhuma API própria.
+**Chamadas externas:** `api.iconify.design/search` (`icon-library-manager.js:23`), Google Fonts
+(Montserrat) e, só quando o mapa da Agenda é aberto, `tile.openstreetmap.org` (mapa) e
+`nominatim.openstreetmap.org` (busca de endereço: vai o texto procurado ou o ponto tocado, nada de pessoa;
+no máximo 1 busca/s, só ao pedir). Leaflet 1.9.4 fica no site (`dist/vendor/leaflet`, SHA-256 oficial).
+Uso justo do OpenStreetMap: se o uso crescer muito, trocar por serviço pago com chave.
 
 **Entidades que ainda não existem:** colaborador/pessoa real (só maquete), loja como entidade,
 agenda, lançamento, caixa operacional, usuário/login.

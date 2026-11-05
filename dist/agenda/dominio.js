@@ -8,6 +8,7 @@
  *   repeticao: null | { tipo, intervalo, unidade, diasSemana[], fim: { tipo, data, vezes }, feitas, ancora },
  *   alerta: null | minutos antes, adiadoPara: '' | ISO (soneca do alerta),
  *   prioridade, sinalizado, etiquetas[], responsavelId, subtarefas[{ id, titulo, concluida, concluidaEm }],
+ *   localizacao: null | { lat, lng, aviso: '' | 'entrar' | 'sair', raio (metros) } — o endereço fica em `local`,
  *   colunaId (Kanban), ordem (ordem manual), concluida, concluidaEm, origemId (cópia concluída de uma
  *   repetição), criadoEm, criadoPor, atualizadoEm }
  */
@@ -66,6 +67,9 @@
   ];
   /* Sem hora (dia todo), o alerta é dado às 9h, como no Lembretes. */
   const HORA_ALERTA_DIA_TODO = '09:00';
+
+  /* Raio do aviso por lugar (o iPhone começa em ~100 m). */
+  const RAIOS = [['100', '100 m'], ['200', '200 m'], ['500', '500 m'], ['1000', '1 km'], ['2000', '2 km'], ['5000', '5 km']];
 
   const ORDENACOES = [
     ['manual', 'Manual'],
@@ -321,6 +325,31 @@
     return new Date(a, m - 1, d, +h.slice(0, 2), +h.slice(3, 5) - Number(item.alerta));
   }
 
+  /* ---------- Localização ---------- */
+
+  /** Distância em metros entre dois pontos { lat, lng } (fórmula de haversine). */
+  function distancia(a, b) {
+    const r = 6371000;
+    const rad = (g) => g * Math.PI / 180;
+    const dLat = rad(b.lat - a.lat);
+    const dLng = rad(b.lng - a.lng);
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+    return 2 * r * Math.asin(Math.sqrt(h));
+  }
+  const temPonto = (loc) => Boolean(loc && Number.isFinite(loc.lat) && Number.isFinite(loc.lng));
+  /**
+   * Aviso por lugar, como o "Personalizado" do iPhone: dispara ao cruzar o raio no sentido escolhido.
+   * antes: estava dentro? (undefined = primeira leitura: não dispara, como no iPhone).
+   * Devolve { dentro, disparar }.
+   */
+  function cruzouLugar(item, posicao, antes) {
+    const loc = item.localizacao;
+    if (item.concluida || !temPonto(loc) || !loc.aviso) return { dentro: antes, disparar: false };
+    const dentro = distancia(loc, posicao) <= (Number(loc.raio) || 200);
+    const disparar = antes !== undefined && antes !== dentro && (loc.aviso === 'entrar' ? dentro : !dentro);
+    return { dentro, disparar };
+  }
+
   /* ---------- Escrever do jeito que se fala ---------- */
 
   const DIAS_FALADOS = [['domingo', 0], ['segunda', 1], ['terca', 2], ['quarta', 3], ['quinta', 4], ['sexta', 5], ['sabado', 6]];
@@ -414,6 +443,11 @@
       if (r.fim && r.fim.tipo === 'vezes' && !(+r.fim.vezes >= 1 && +r.fim.vezes <= 999)) return 'Informe quantas vezes repete (1 a 999).';
     }
     if (item.alerta !== null && item.alerta !== undefined && item.alerta !== '' && !item.data) return 'Para o alerta, informe a data.';
+    const loc = item.localizacao;
+    if (loc && (loc.lat !== undefined || loc.lng !== undefined) && !(temPonto(loc) && Math.abs(loc.lat) <= 90 && Math.abs(loc.lng) <= 180)) return 'O ponto marcado no mapa é inválido.';
+    if (loc && loc.aviso && !temPonto(loc)) return 'Para avisar ao entrar ou sair, marque o lugar no mapa.';
+    if (loc && loc.aviso && !['entrar', 'sair'].includes(loc.aviso)) return 'Aviso por lugar inválido.';
+    if (loc && loc.aviso && !(+loc.raio >= 50 && +loc.raio <= 50000)) return 'Informe o raio do aviso.';
     return '';
   }
 
@@ -497,7 +531,7 @@
   }
 
   const api = {
-    PRIORIDADES, LISTAS_AUTOMATICAS, REPETICOES, ALERTAS, ORDENACOES, HORA_ALERTA_DIA_TODO, DIAS_CURTOS, DIAS_LONGOS, MESES,
+    PRIORIDADES, LISTAS_AUTOMATICAS, REPETICOES, ALERTAS, RAIOS, ORDENACOES, distancia, temPonto, cruzouLugar, HORA_ALERTA_DIA_TODO, DIAS_CURTOS, DIAS_LONGOS, MESES,
     isoData, horaAgora, somarDias, somarMeses, diaDaSemana, dataValida, horaValida, minutos, paraHora, diasEntre,
     atrasado, naLista, combinaBusca, comparar, comparador, filtrar, contagens, progresso, agrupar,
     temRepeticao, proxima, ocorrencias, resumoRepeticao, momentoAlerta, interpretar,

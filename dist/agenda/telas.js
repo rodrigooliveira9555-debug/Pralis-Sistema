@@ -295,7 +295,8 @@
     if (D.momentoAlerta(item) && !item.concluida) { const s = el('span', 'agenda-com-icone'); s.innerHTML = svg(ICONES.sino); s.title = 'Com alerta'; s.setAttribute('aria-label', 'Com alerta'); partes.push(s); }
     if (!compacta && !estado.listaId && lst) { const s = el('span', 'agenda-de-lista'); const p = el('span', 'agenda-ponto'); p.style.setProperty('--lista-cor', lst.cor); s.append(p, document.createTextNode(lst.nome)); partes.push(s); }
     if (item.responsavelId) partes.push(el('span', null, A.nomePessoa(item.responsavelId)));
-    if (item.local) { const s = el('span', 'agenda-com-icone'); s.innerHTML = svg(ICONES.local); s.append(document.createTextNode(item.local)); partes.push(s); }
+    const avisoLugar = item.localizacao && item.localizacao.aviso ? (item.localizacao.aviso === 'entrar' ? 'ao entrar' : 'ao sair') : '';
+    if (item.local || avisoLugar) { const s = el('span', 'agenda-com-icone'); s.innerHTML = svg(ICONES.local); s.append(document.createTextNode([item.local || 'Lugar marcado', avisoLugar].filter(Boolean).join(' · '))); partes.push(s); }
     (item.etiquetas || []).forEach((t) => partes.push(el('span', 'agenda-etiqueta', '#' + t)));
     const pr = D.progresso(item);
     if (pr.total) partes.push(el('span', null, pr.feitas + '/' + pr.total + ' subtarefas'));
@@ -448,27 +449,22 @@
         sinalBox.checked = Boolean(v.sinalizado);
         sinal.append(sinalBox, document.createTextNode('Sinalizar'));
         const etiquetas = U.entrada('text', (v.etiquetas || []).join(', '), { placeholder: 'Ex.: Loja, Estoque' });
-        const local = U.entrada('text', v.local || '', { maxLength: 200, placeholder: 'Endereço ou nome do lugar' });
-        const mapa = el('a', 'agenda-link', 'Ver no mapa');
-        mapa.target = '_blank';
-        mapa.rel = 'noopener noreferrer';
-        const atualizarMapa = () => { mapa.hidden = !local.value.trim(); mapa.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(local.value.trim()); };
-        local.oninput = atualizarMapa;
-        atualizarMapa();
+        const local = U.entrada('text', v.local || '', { maxLength: 200, placeholder: 'Endereço ou nome do lugar (opcional)' });
+        // Lugar no mapa: Atual, Ao entrar, Ao sair, Personalizada (agenda/mapa.js).
+        const lugar = window.CicluzAgendaMapa.seletor({ localizacao: v.localizacao, local: v.local }, local);
         const subtarefas = editorSubtarefas(v.subtarefas || []);
 
         const secao = (nome, ...filhos) => { const s = el('fieldset', 'agenda-form-secao'); s.append(el('legend', null, nome), ...filhos); return s; };
         const grade = (...filhos) => { const g = el('div', 'agenda-form-grade'); g.append(...filhos); return g; };
         const prioCampo = el('div', 'compras-campo agenda-largo');
         prioCampo.append(el('span', 'compras-rotulo', 'Prioridade'), prio);
-        const localCampo = U.campo('Local', local);
-        localCampo.append(mapa);
 
         form.append(
           U.campo('Título', titulo),
           secao('Quando', grade(U.campo('Data', data), U.campo('Início', hora, 'Sem hora = dia todo.'), U.campo('Término', horaFim), U.campo('Alerta', alerta)), repeticao.no),
           secao('Organização', grade(U.campo('Lista', listaSel), U.campo('Coluna do Kanban', colunaSel), U.campo('Responsável', resp), U.campo('Etiquetas', etiquetas, 'Separe por vírgula.'), prioCampo), sinal),
-          secao('Detalhes', grade(localCampo, U.campo('Endereço na internet (URL)', url)), U.campo('Notas', notas)),
+          secao('Local', lugar.no, U.campo('Endereço', local, 'Preenchido ao marcar no mapa; pode escrever ou corrigir.')),
+          secao('Detalhes', U.campo('Endereço na internet (URL)', url), U.campo('Notas', notas)),
           subtarefas.no,
         );
         if (atual) {
@@ -477,11 +473,11 @@
           rodape.append(U.nota(criado), botao('Excluir compromisso', () => excluir(atual), 'btn secondary perigo-texto'));
           form.append(rodape);
         }
-        return { titulo, notas, url, local, data, hora, horaFim, alerta, repeticao, listaSel, colunaSel, resp, sinalBox, etiquetas, subtarefas, prio: () => prioridade };
+        return { titulo, notas, url, local, lugar, data, hora, horaFim, alerta, repeticao, listaSel, colunaSel, resp, sinalBox, etiquetas, subtarefas, prio: () => prioridade };
       },
       salvar: (c) => {
         const r = A.salvarItem(atual ? atual.id : '', {
-          titulo: c.titulo.value, notas: c.notas.value, url: c.url.value, local: c.local.value,
+          titulo: c.titulo.value, notas: c.notas.value, url: c.url.value, local: c.local.value, localizacao: c.lugar.valor(),
           data: c.data.value, hora: c.hora.value, horaFim: c.horaFim.value, alerta: c.alerta.value,
           repeticao: c.repeticao.valor(atual && atual.repeticao), listaId: c.listaSel.value, colunaId: c.colunaSel.value,
           responsavelId: c.resp.value, prioridade: c.prio(), sinalizado: c.sinalBox.checked,

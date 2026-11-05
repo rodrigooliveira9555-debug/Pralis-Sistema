@@ -89,6 +89,19 @@ ok(() => assert.equal(d.momentoAlerta(item({ data: '2026-11-05', hora: '10:00', 
 ok(() => assert.equal(d.momentoAlerta(item({ data: '2026-11-05', hora: '10:00', alerta: null })), null));
 ok(() => assert.equal(d.momentoAlerta(item({ data: '2026-11-05', alerta: 0, adiadoPara: '2026-11-05T15:00:00' })).getTime(), new Date('2026-11-05T15:00:00').getTime(), 'soneca'));
 
+// Localização: distância e aviso ao entrar/sair (sem disparar na primeira leitura, como no iPhone)
+const praca = { lat: -21.7616, lng: -43.3496 };
+ok(() => assert.ok(Math.abs(d.distancia(praca, { lat: -21.7616, lng: -43.3486 }) - 103) < 3, '0,001° de longitude ≈ 103 m nessa latitude'));
+const comLugar = (aviso) => item({ localizacao: { ...praca, aviso, raio: 200 } });
+ok(() => assert.deepEqual(d.cruzouLugar(comLugar('entrar'), praca, undefined), { dentro: true, disparar: false }, 'primeira leitura não dispara'));
+ok(() => assert.deepEqual(d.cruzouLugar(comLugar('entrar'), praca, false), { dentro: true, disparar: true }, 'entrou'));
+ok(() => assert.deepEqual(d.cruzouLugar(comLugar('entrar'), { lat: -21.77, lng: -43.3496 }, true), { dentro: false, disparar: false }, 'saiu, mas o aviso é ao entrar'));
+ok(() => assert.deepEqual(d.cruzouLugar(comLugar('sair'), { lat: -21.77, lng: -43.3496 }, true), { dentro: false, disparar: true }, 'saiu'));
+ok(() => assert.equal(d.cruzouLugar({ ...comLugar('entrar'), concluida: true }, praca, false).disparar, false, 'concluído não avisa'));
+ok(() => assert.match(d.validar(item({ localizacao: { aviso: 'entrar', raio: 200 } })), /marque o lugar/));
+ok(() => assert.match(d.validar(item({ localizacao: { lat: 120, lng: 0, aviso: '', raio: 200 } })), /inválido/));
+ok(() => assert.equal(d.validar(item({ localizacao: { ...praca, aviso: 'sair', raio: 500 } })), ''));
+
 // Escrever do jeito que se fala
 const fala = (t) => { const r = d.interpretar(t, agora); return [r.titulo, r.data, r.hora, r.etiquetas.join(','), r.prioridade].join('|'); };
 ok(() => assert.equal(fala('Ligar para o contador amanhã às 10 #financeiro !'), 'Ligar para o contador|2026-11-06|10:00|financeiro|alta'));

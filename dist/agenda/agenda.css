@@ -328,3 +328,27 @@ body.dark-theme .agenda-alerta { color: #ececf1; background: #2a2930; }
 .agenda-alerta > small { font-size: 11px; color: var(--muted, #73737a); }
 .agenda-alerta > b { font-size: 15px; line-height: 20px; overflow-wrap: anywhere; }
 .agenda-alerta-acoes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; --menu-accent: #7c3aed; --panel-text: #5520ad; }
+
+/* ---------- Local no mapa (Atual, Ao entrar, Ao sair, Personalizada) ---------- */
+.agenda-mapa-seletor { display: grid; gap: 10px; min-width: 0; }
+.agenda-mapa-seletor > [hidden], .agenda-mapa-rodape[hidden] { display: none; }
+.agenda-mapa-botoes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.agenda-mapa-botao { display: grid; justify-items: center; gap: 4px; padding: 8px 4px; min-height: 64px; border-radius: 12px; border: 1px solid var(--layout-line, #dedee3); background: var(--theme-card, #fff); color: var(--layout-ink, #3f3f46); cursor: pointer; font: inherit; }
+.agenda-mapa-botao small { font: 500 11px/14px var(--ui-font); text-align: center; }
+.agenda-mapa-botao-icone { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--menu-accent); color: var(--menu-accent); }
+.agenda-mapa-botao-icone svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.agenda-mapa-botao[data-modo="personalizada"] svg { fill: currentColor; stroke: none; }
+.agenda-mapa-botao[aria-pressed="true"] { border-color: var(--menu-accent); background: color-mix(in srgb, var(--menu-accent) 12%, var(--theme-card, #fff)); color: var(--panel-text, #5520ad); }
+.agenda-mapa-botao[aria-pressed="true"] .agenda-mapa-botao-icone { background: var(--menu-accent); color: #fff; }
+body.dark-theme .agenda-mapa-botao { color: #ececf1; }
+body.dark-theme .agenda-mapa-botao[aria-pressed="true"] { color: #f2f1f6; }
+.agenda-mapa-busca { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.agenda-mapa-resultados { display: grid; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; overflow: hidden; }
+.agenda-mapa-resultados:empty { display: none; }
+.agenda-mapa-resultado { min-height: 44px; font-size: 13px; }
+.agenda-mapa { height: 240px; border-radius: 12px; overflow: hidden; border: 1px solid var(--layout-line, #dedee3); background: color-mix(in srgb, var(--layout-line, #dedee3) 40%, transparent); position: relative; z-index: 0; cursor: crosshair; }
+.agenda-mapa-erro { margin: 0; padding: 20px; text-align: center; font-size: 12px; color: var(--muted, #73737a); }
+.agenda-mapa-aviso:empty { display: none; }
+.agenda-mapa-rodape { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.agenda-mapa-pino span { display: block; width: 22px; height: 22px; margin: 2px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #dc2626; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .35); }
+@media (max-width: 380px) { .agenda-mapa-botao small { font-size: 10px; } }

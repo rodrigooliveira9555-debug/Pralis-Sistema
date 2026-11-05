@@ -124,6 +124,12 @@
       notas: String(campos.notas || '').trim(),
       url: String(campos.url || '').trim(),
       local: String(campos.local || '').trim(),
+      localizacao: campos.localizacao && (Number.isFinite(campos.localizacao.lat) || campos.localizacao.aviso) ? {
+        lat: Number.isFinite(campos.localizacao.lat) ? +campos.localizacao.lat.toFixed(6) : undefined,
+        lng: Number.isFinite(campos.localizacao.lng) ? +campos.localizacao.lng.toFixed(6) : undefined,
+        aviso: campos.localizacao.aviso || '',
+        raio: Number(campos.localizacao.raio) || 200,
+      } : null,
       data: campos.data || '',
       // Hora sem data não é apagada em silêncio: a validação avisa.
       hora: campos.hora || '',

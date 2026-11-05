@@ -16,8 +16,18 @@ let verificacoes = 0;
 const ok = (cond, msg) => { assert.ok(cond, msg); verificacoes++; };
 const KEY = 'cicluz-agenda-v1';
 
+// Mapa e busca de endereço simulados: o teste não acessa a internet.
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+const ENDERECO = { name: '', address: { road: 'Rua de Teste', house_number: '100', suburb: 'Centro', city: 'Juiz de Fora', state: 'Minas Gerais' } };
+const PRACA = { latitude: -21.7616, longitude: -43.3496 };
 async function abrirPagina(largura, altura = 844) {
-  const contexto = await navegador.newContext({ viewport: { width: largura, height: altura } });
+  const contexto = await navegador.newContext({ viewport: { width: largura, height: altura }, geolocation: PRACA, permissions: ['geolocation'] });
+  await contexto.route('https://tile.openstreetmap.org/**', (r) => r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
+  await contexto.route('https://nominatim.openstreetmap.org/**', (r) => {
+    const u = new URL(r.request().url());
+    if (u.pathname.startsWith('/reverse')) return r.fulfill({ status: 200, json: { ...ENDERECO, lat: u.searchParams.get('lat'), lon: u.searchParams.get('lon') } });
+    return r.fulfill({ status: 200, json: [{ lat: '-21.7700', lon: '-43.3500', name: 'Padaria de Teste', address: { road: 'Avenida de Teste', house_number: '50', city: 'Juiz de Fora', state: 'Minas Gerais' } }] });
+  });
   await contexto.addInitScript((s) => sessionStorage.setItem('cicluz-sync-aba', s), JSON.stringify(SESSAO_LOCAL));
   const pagina = await contexto.newPage();
   pagina.on('pageerror', (e) => erros.push(largura + 'px: ' + e.message));
@@ -89,8 +99,8 @@ const definirData = (p, rotulo, iso) => p.evaluate(([r, v]) => { const i = docum
   ok((await dialogo(p).locator('.agenda-repeticao .profiles-note').textContent()).includes('A cada 2 semanas: seg, qui, 3 vez(es)'), 'Resumo da repetição');
   await dialogo(p).getByLabel('Alerta').selectOption('15');
   await dialogo(p).getByLabel('Endereço na internet (URL)').fill('cicluz');
-  await dialogo(p).getByLabel('Local').fill('Loja Centro');
-  ok(await dialogo(p).getByRole('link', { name: 'Ver no mapa' }).isVisible(), 'Local com "Ver no mapa"');
+  await dialogo(p).getByLabel('Endereço', { exact: true }).fill('Loja Centro');
+  ok(await dialogo(p).getByLabel('Endereço', { exact: true }).inputValue() === 'Loja Centro', 'Endereço pode ser escrito sem marcar no mapa');
   await confirmar(p);
   ok((await dialogo(p).locator('.profiles-error').textContent()).includes('http'), 'URL sem http é recusada');
   await dialogo(p).getByLabel('Endereço na internet (URL)').fill('https://cicluz.com.br');
@@ -175,6 +185,47 @@ const definirData = (p, rotulo, iso) => p.evaluate(([r, v]) => { const i = docum
 
   for (const b of await p.locator('.agenda-alerta').getByRole('button', { name: 'Fechar' }).all()) await b.click();
   ok(await p.locator('.agenda-alerta').count() === 0, '"Fechar" tira o alerta da tela');
+  await p.evaluate(() => document.body.classList.add('sem-alertas'));
+
+  // Local no mapa: tocar marca e preenche o endereço; Ao entrar com raio; procurar; Atual; aviso ao cruzar o raio
+  await p.getByRole('button', { name: 'Listas', exact: true }).click();
+  await p.locator('.view.show .people-add-control').click();
+  await dialogo(p).getByLabel('Título').fill('Buscar encomenda');
+  await p.waitForFunction(() => document.querySelector('dialog.agenda-dialog[open] .agenda-mapa .leaflet-tile-pane'));
+  ok((await dialogo(p).locator('.agenda-mapa-botao small').allTextContents()).join('|') === 'Atual|Ao entrar|Ao sair|Personalizada', 'Botões do protótipo: Atual, Ao entrar, Ao sair, Personalizada');
+  const mapaCaixa = dialogo(p).locator('.agenda-mapa');
+  await mapaCaixa.scrollIntoViewIfNeeded();
+  const bm = await mapaCaixa.boundingBox();
+  await p.mouse.click(bm.x + bm.width / 2, bm.y + bm.height / 2);
+  await p.waitForFunction(() => document.querySelector('dialog.agenda-dialog[open] input[aria-label="Endereço"]').value.includes('Rua de Teste'));
+  ok(await dialogo(p).getByLabel('Endereço', { exact: true }).inputValue() === 'Rua de Teste, 100 - Centro - Juiz de Fora - Minas Gerais', 'Tocar no mapa preenche o endereço');
+  ok(await dialogo(p).locator('.agenda-mapa-pino').count() === 1, 'Pino no ponto tocado');
+  await dialogo(p).locator('.agenda-mapa-botao[data-modo="entrar"]').click();
+  ok(await dialogo(p).locator('path.leaflet-interactive').count() === 1 && await dialogo(p).getByLabel('Raio do aviso').isVisible(), 'Ao entrar desenha o raio e mostra o tamanho');
+  await dialogo(p).getByLabel('Raio do aviso').selectOption('500');
+  await confirmar(p);
+  i = await item(p, 'Buscar encomenda');
+  ok(Number.isFinite(i.localizacao.lat) && i.localizacao.aviso === 'entrar' && i.localizacao.raio === 500 && i.local.startsWith('Rua de Teste'), 'Ponto, aviso, raio e endereço salvos');
+  ok((await p.locator('.agenda-item', { hasText: 'Buscar encomenda' }).locator('.agenda-detalhes').textContent()).includes('ao entrar'), 'A linha mostra o aviso por lugar');
+  // Procurar e Atual
+  await p.locator('.agenda-linha-texto', { hasText: 'Buscar encomenda' }).click();
+  await p.waitForFunction(() => document.querySelector('dialog.agenda-dialog[open] .agenda-mapa .leaflet-tile-pane'));
+  await dialogo(p).locator('.agenda-mapa-botao[data-modo="personalizada"]').click();
+  await dialogo(p).getByLabel('Procurar endereço ou lugar').fill('padaria teste');
+  await dialogo(p).getByRole('button', { name: 'Procurar' }).click();
+  await dialogo(p).locator('.agenda-mapa-resultado', { hasText: 'Padaria de Teste' }).click();
+  ok((await dialogo(p).getByLabel('Endereço', { exact: true }).inputValue()).startsWith('Padaria de Teste - Avenida de Teste, 50'), 'Escolher um resultado preenche o endereço');
+  await dialogo(p).locator('.agenda-mapa-botao[data-modo="atual"]').click();
+  await p.waitForFunction(() => document.querySelector('dialog.agenda-dialog[open] input[aria-label="Endereço"]').value.includes('Rua de Teste'));
+  await confirmar(p);
+  i = await item(p, 'Buscar encomenda');
+  ok(Math.abs(i.localizacao.lat - PRACA.latitude) < 1e-6 && Math.abs(i.localizacao.lng - PRACA.longitude) < 1e-6, '"Atual" marca a posição do aparelho');
+  // Aviso ao cruzar o raio (posição simulada; a primeira leitura não dispara)
+  await p.evaluate(() => { document.querySelectorAll('.agenda-alerta').forEach((a) => a.remove()); document.body.classList.remove('sem-alertas'); });
+  ok(await p.evaluate(() => CicluzAgendaAlertas.posicao({ lat: -21.80, lng: -43.3496 })) === 0, 'Primeira leitura fora: não avisa');
+  ok(await p.evaluate((x) => CicluzAgendaAlertas.posicao(x), { lat: PRACA.latitude, lng: PRACA.longitude }) === 1, 'Entrou no raio: avisa');
+  ok(await p.locator('.agenda-alerta', { hasText: 'Você chegou' }).count() === 1, 'Alerta "Você chegou"');
+  for (const b of await p.locator('.agenda-alerta').getByRole('button', { name: 'Fechar' }).all()) await b.click();
   await p.evaluate(() => document.body.classList.add('sem-alertas'));
 
   // Calendário: dia em grade, criar no horário, arrastar para outra hora
