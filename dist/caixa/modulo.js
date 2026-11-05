@@ -13,7 +13,7 @@
   const telas = {};
 
   const CARDS = [
-    ['abertura', 'VND - Caixa', 'Conferir o malote e abrir o turno'],
+    ['abertura', 'VND - Abertura de Caixa', 'Conferir o malote e abrir o turno'],
   ];
 
   const voltar = () => menuBack(0, 'Lançamentos')();
