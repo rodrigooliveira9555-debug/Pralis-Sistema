@@ -396,3 +396,6 @@ body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog form{display:grid;
 .icone-revisar{display:inline-flex;width:18px;height:18px;margin-right:8px;vertical-align:-4px;color:#f5c400}
 .icone-revisar svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .view .panel .head .sector-icon.revisar svg{color:#ffd60a;stroke:#ffd60a}
+.nav-tree .money-icon svg.money-glyph{width:23px;height:23px;stroke-width:1.9}
+#sector-view .sector-icon svg.money-glyph{width:22px;height:22px;stroke-width:1.7}
+#sector-view .card-inherited-icon svg.money-glyph{width:20px;height:20px;stroke-width:1.9}
