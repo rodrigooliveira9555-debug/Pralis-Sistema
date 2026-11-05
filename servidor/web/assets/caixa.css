@@ -183,7 +183,7 @@
 .grade-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 12px;
+  gap: 10px 12px;
 }
 
 /* Contagem cega: o valor esperado não existe na tela do operador antes do fechamento. */
