@@ -1,6 +1,6 @@
 /*
  * Cadastro de Fornecedores, que alimenta Compras (Produtos fica em telas-produto-*.js).
- * Ficam em Configuração · Cadastros / Gerais → Diretor de Operação (área de cadastros do S2).
+ * Ficam em Cadastros → Diretor de Operações (área de cadastros do S2).
  * Espelham /fornecedores e /produtos do S1 (main).
  */
 (function () {
@@ -9,8 +9,8 @@
   const S = window.CicluzComprasDados;
   const U = window.CicluzComprasUI;
   const { el, botao, campo, entrada, seletor } = U;
-  const voltarCadastros = () => openSection(sections[6][0], 'Diretor de Operação', 'settings', '#7c3aed');
-  const CAMINHO = 'Configurações / Diretor de Operação / ';
+  const voltarCadastros = () => openSection(sections[7][0], 'Diretor de Operações', 'assets', '#7c3aed');
+  const CAMINHO = 'Cadastros / Diretor de Operações / ';
 
   /* ---------- Máscaras ---------- */
   function mascaraDocumento(v) {

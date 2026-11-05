@@ -1,7 +1,7 @@
 /*
  * Compras — entrada do módulo no menu do S2.
  * Saídas · Mercadorias / CMV → Compras abre os cards abaixo (ordem do menu Compras do S1).
- * Configuração · Cadastros / Gerais → Diretor de Operação recebe Fornecedores e Produtos.
+ * Cadastros → Diretor de Operações recebe Fornecedores e Produtos.
  * Cada tela se registra com CicluzCompras.registrar(nome, abrir).
  */
 (function () {
