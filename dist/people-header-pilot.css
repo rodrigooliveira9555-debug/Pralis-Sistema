@@ -87,7 +87,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-option-disa
 
 /* Prepared launch shortcuts keep their category colours in both representations. */
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-launch-control,
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-option-symbol.people-launch-control{background:var(--launch-color,var(--menu-accent))!important;border-color:var(--launch-color,var(--menu-accent))!important;color:var(--theme-surface,#fff)!important;font:700 9px/1 var(--ui-font);padding:0;white-space:nowrap}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-option-symbol.people-launch-control{border-radius:var(--row-icon-radius,26%);background:var(--launch-color,var(--menu-accent))!important;border-color:var(--launch-color,var(--menu-accent))!important;color:var(--theme-surface,#fff)!important;font:700 9px/1 var(--ui-font);padding:0;white-space:nowrap}
 
 /* The same toolbar docks below the upper header, with inward-opening layers. */
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-bar-top>.panel>.head{order:0}
