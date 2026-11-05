@@ -24,7 +24,11 @@
   data/hora, prioridade em 5 níveis, sinalizado, etiquetas, responsável **por id**, subtarefas, concluído).
   No banco e adotada do aparelho desde 05/11/2026. Abrir a Agenda não grava; as duas listas iniciais têm ids
   fixos (`lista-gestao-pessoas`, `lista-diretor-operacoes`) para dois aparelhos não criarem listas repetidas.
-  Código: `dist/agenda/` (dominio, dados, calendario, telas, agenda.css).
+  Também: colunas do Kanban, repetição (concluir guarda uma cópia concluída com `origemId` e passa o original
+  para a próxima data), término, alerta e soneca (`adiadoPara`), URL, local, ordem manual. Campos novos são
+  opcionais (dado antigo continua válido). Preferências do aparelho, fora da sincronização:
+  `cicluz-agenda-calendario-ocultas` e `cicluz-agenda-alertas-mostrados`.
+  Código: `dist/agenda/` (dominio, dados, calendario, kanban, telas, alertas, agenda.css).
 
 **Preferência de interface:** `tema`, `menu-ordem`, `menu-item-order-v1`, `sidebar-sections-v1`,
 `menu-visibility`, `people-display-v1`, `people-footer-*`, `{key}-sort`, `{key}-display`,

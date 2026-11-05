@@ -37,11 +37,13 @@ Texto fixo "reunirá os principais números".
 - ⬜ 4 setores
 
 ## Agenda · Atividades (roxo)
-- ✅ **Agenda** (`dist/agenda/`, entrega 1 em 05/11/2026) — os dois submenus abrem a mesma tela já
-  filtrada pela lista de mesmo nome. Lista: Para hoje, Programados, Todos, Sinalizados, Atrasados, Concluídos;
-  criar rápido (Enter), compromisso completo, subtarefas, busca, listas com cor. Calendário Dia/Semana/Mês.
-- ⬜ Entrega 2 e seguintes: repetição, lembrete, Kanban (referência MindMeister), visão Ano, avaliação,
-  perfil comportamental, permissões, localização, arquivos, chat (protótipo: `Pralis-Especificacao-Prototipo/Agenda`).
+- ✅ **Agenda** (`dist/agenda/`, 05/11/2026) — funcionamento do Lembretes e do Calendário do iPhone + Kanban.
+  Os dois submenus abrem a lista de mesmo nome. Listas automáticas (Para hoje, Programados, Todos, Sinalizados,
+  Atrasados, Atribuídos a mim, Concluídos), listas com cor e ícone, escrever "amanhã às 10", repetição, término,
+  alerta com soneca, URL, local, subtarefas, ordem manual, mostrar/limpar concluídos. Calendário Dia/Semana
+  (grade de horas)/Mês/Ano. Kanban com colunas editáveis.
+- ⬜ Próxima: avaliação, perfil comportamental, permissões (gestor/colaborador), arquivos, chat — do protótipo
+  (`Pralis-Especificacao-Prototipo/Agenda`); precisam de regra do Rodrigo (doc 11, P-19).
 
 ## Configuração · Cadastros Gerais (roxo)
 
