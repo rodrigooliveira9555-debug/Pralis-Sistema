@@ -1,7 +1,8 @@
-/* Tela de entrada no padrão das abas internas do CICLUZ (DESIGN_SYSTEM.md): um quadro só, de cantos
-   12px, com o cabeçalho colorido no topo, o conteúdo em cinza com os campos brancos no meio e o
-   rodapé branco embaixo; campos de 42px, raio 8px e borda 1px; título 16px, subtítulo 11px; ação
-   principal preenchida com o acento; roxo de formulários (#7c3aed) como cor de origem. */
+/* Tela de entrada no mesmo padrão das telas internas da loja (DESIGN_SYSTEM.md): a tela toda é cinza;
+   o cabeçalho colorido ocupa a largura inteira no topo, colado nas bordas, e o rodapé branco ocupa a
+   largura inteira embaixo, ambos com os cantos de dentro arredondados em 12px; os campos brancos ficam
+   no meio, em uma coluna centralizada; campos de 42px, raio 8px e borda 1px; título 16px, subtítulo
+   11px; ação principal preenchida com o acento; roxo de formulários (#7c3aed) como cor de origem. */
 :root {
   --ui-font: Montserrat, system-ui, sans-serif;
   --menu-accent: #7c3aed;
@@ -28,8 +29,6 @@
   --ui-text: 14px;
   --ui-label: 12px;
   --canto: 12px;
-  --bloco: 8px;
-  --moldura: 6px;
   --recuo: 14px;
   --rodape: 58px;
   --entrada-largura: 420px;
@@ -60,27 +59,20 @@ html, body { min-height: 100%; }
 
 body {
   margin: 0;
-  display: grid;
-  place-items: center;
   min-height: 100vh;
   min-height: 100dvh;
-  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-  background: var(--layout-gap);
+  background: var(--entrada-area);
   color: var(--ui-input-color);
   font: 400 var(--ui-text)/1.5 var(--ui-font);
   -webkit-font-smoothing: antialiased;
 }
 
 .entrada {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
   width: 100%;
-  gap: var(--moldura);
-  max-width: var(--entrada-largura);
-  padding: var(--moldura);
-  overflow: hidden;
-  border: 1px solid var(--borda-quadro);
-  border-radius: var(--canto);
+  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--entrada-area);
   animation: entrada-surge .32s var(--ease-saida) both;
 }
@@ -92,8 +84,8 @@ body {
   align-items: center;
   gap: 10px;
   min-height: var(--rodape);
-  padding: 8px var(--recuo);
-  border-radius: var(--bloco);
+  padding: max(8px, env(safe-area-inset-top)) max(var(--recuo), env(safe-area-inset-right)) 8px max(var(--recuo), env(safe-area-inset-left));
+  border-radius: 0 0 var(--canto) var(--canto);
   background: var(--menu-accent);
   /* Branco nos dois temas: a superfície escura sobre o roxo dá 2,8:1 (ver DESIGN_SYSTEM, tela de
      entrada 03/11/2026). */
@@ -128,6 +120,9 @@ body {
 .entrada-conteudo {
   display: grid;
   gap: 18px;
+  align-self: center;
+  justify-self: center;
+  width: min(100%, var(--entrada-largura));
   padding: 22px var(--recuo) 18px;
 }
 
@@ -329,8 +324,8 @@ body {
   justify-content: space-between;
   gap: 12px;
   min-height: var(--rodape);
-  padding: 8px var(--recuo);
-  border-radius: var(--bloco);
+  padding: 8px max(var(--recuo), env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(var(--recuo), env(safe-area-inset-left));
+  border-radius: var(--canto) var(--canto) 0 0;
   background: var(--entrada-bloco);
 }
 
