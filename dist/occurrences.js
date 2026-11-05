@@ -4,7 +4,7 @@
 const D=window.CicluzUniformData,U=window.CicluzUniformUI,DB=window.CicluzDateBR,R=window.CicluzOccurrenceReader;if(!D||!U||!DB||!R)return;
 const {el,button,iconButton,svg,ICON,fold,newId,dateBR,today,enumField,dialog,confirmDialog}=U;
 const KEY='cicluz-ocorrencias-v1',ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Ocorrências'),MAX=10*1024*1024;
-const ACCEPT=['image/jpeg','image/png','application/pdf'],DOC_ICON='M14 3H6v18h12V7zM14 3v4h4M9 13h6M9 17h6',CAMERA='M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',SCAN='M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M7 12h10';
+const ACCEPT=['image/jpeg','image/png','application/pdf'],DOC_ICON=telaIcone.ocorrencias,CAMERA='M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',SCAN='M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M7 12h10';
 const TYPES=[
  ['DECLARAÇÃO',{medical:true,hint:'Priorize data, documento, clínica e identificação do profissional, quando aplicável.'}],
  ['FALTA INJUSTIFICADA',{days:true,hint:'Registre dias, motivo declarado, comunicação e status. Documento médico não é exigido.'}],
