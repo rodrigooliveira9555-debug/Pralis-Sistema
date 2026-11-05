@@ -295,7 +295,7 @@ def check_position(browser, url):
     page.reload(wait_until='domcontentloaded')
     open_operations(page)
     assert bar.get_attribute('data-bar-position') == 'top'
-    page.evaluate("openSection(sections[6][0],'Gestão de Pessoas','people-settings','#7c3aed')")
+    page.evaluate("menuBack(2,'Cadastros Geral Colaboradores')()")
     page.wait_for_timeout(150)
     assert bar.get_attribute('data-bar-position') == 'bottom'
     open_operations(page)

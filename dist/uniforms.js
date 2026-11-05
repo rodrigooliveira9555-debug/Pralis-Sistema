@@ -2,7 +2,7 @@
 (()=>{
 'use strict';
 const D=window.CicluzUniformData,S=window.CicluzUniformStock;if(!D||!S)return;
-const KEY='cicluz-uniformes-v1',ACCENT='#7c3aed',PATH='Lançamentos / Gestão de Pessoas / Uniformes';
+const KEY='cicluz-uniformes-v1',ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Uniformes Entrega/Recebimento');
 const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
 const button=(text,fn,cls='btn secondary')=>{const b=el('button',cls,text);b.type='button';b.onclick=fn;return b};
 const svg=path=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>';
@@ -39,9 +39,9 @@ function referenceFor(collab){const job=jobFor(collab);return job?{job,items:dat
 /* View shell, same structure as the other internal views. */
 const view=el('section','view');view.id='uniforms-view';view.style.setProperty('--menu-accent',ACCENT);
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
-const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(ICON.shirt);const heading=el('div'),title=el('h2',null,'Uniformes'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
+const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(ICON.shirt);const heading=el('div'),title=el('h2',null,'DES - Uniformes Entrega/Recebimento'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
-addShortcuts(view.id,()=>openSection(sections[8][0],'Gestão de Pessoas','forms',ACCENT));
+addShortcuts(view.id,()=>menuBack(2,'Lançamentos Colaboradores')());
 const addButton=button('',()=>{selectTab('launch');resetForm();dateInput.focus()},'shortcut-circle');addButton.title='Novo lançamento';addButton.setAttribute('aria-label','Novo lançamento');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
 
 const note=el('div','form-note','Simulação local: lançamentos, estoque e referências ficam somente neste navegador até a integração com o banco de dados. Colaboradores demonstrativos.');

@@ -13,7 +13,7 @@
   const X = window.CicluzProdutoExtras;
   const PF = window.CicluzProdutoForm;
   const { el, botao, campo, entrada, seletor } = U;
-  const voltarCadastros = () => openSection(sections[7][0], 'Compras', 'cad-compras', '#7c3aed');
+  const voltarCadastros = () => menuBack(3, 'Cadastros Geral')();
   const TAMANHO_PAGINA = 12;
 
   let tela = null;
@@ -32,7 +32,7 @@
 
   function abrir() {
     if (!tela) {
-      tela = U.criarTela({ id: 'compras-produtos', titulo: 'MER - Produtos', caminho: 'Cadastros / Compras / MER - Produtos', icone: 'produto', voltar: voltarCadastros });
+      tela = U.criarTela({ id: 'compras-produtos', titulo: 'MER - Produtos', caminho: 'Saídas · Mercadorias / Cadastros Geral / MER - Produtos', icone: 'produto', voltar: voltarCadastros });
       U.atalho(tela, 'Novo produto', 'M12 5v14M5 12h14', () => PF.editarProduto(null, render), { criar: true });
     }
     tela.ativar();
