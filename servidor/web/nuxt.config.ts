@@ -28,7 +28,7 @@ export default defineNuxtConfig({
   // Componentes pelo nome do arquivo (CampoData, FormularioLancamento), sem prefixo da pasta.
   components: [{ path: "~/components", pathPrefix: false }],
   modules: ["vuetify-nuxt-module"],
-  css: ["~/assets/cicluz.css", "~/assets/caixa.css"],
+  css: ["~/assets/cicluz.css"],
   // Desenvolvimento: o app roda em :3100 e fala com a API em :4200 pelo mesmo caminho /api. A tela
   // de entrada do site também vem da :4200; sem isso, /entrar.html caía no próprio app e o login
   // entrava em loop. A origem vai como :4200, a única que a API local aceita (WEB_ORIGINS).

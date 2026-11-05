@@ -1,60 +1,52 @@
-# 14 — Casca do Caixa no app novo (passada para o Washington em 05/11/2026)
+# 14 — Casca do Caixa no site (Entradas → Caixas)
 
 > Pedido do Marco (04/11/2026): desenhar o Caixa do Sistema Pralis principal (abertura, turno,
-> fechamento, Tesouraria) no layout do CICLUZ. **Só casca**: sem backend, dados fictícios, nada
-> gravado. **Só localhost**: branch local `feat/casca-caixa-20261104`, sem push, sem PR, sem merge.
+> fechamento, Tesouraria) no CICLUZ. **Só casca**: sem backend, dados fictícios, nada gravado.
+> Decisão de 05/11/2026: o Caixa segue o **menu principal do site** (sem menu lateral), no mesmo
+> padrão do módulo Compras (`dist/compras/`). Quem continua: **Washington**; Marco revisa e decide o merge.
 
 ## Onde está
 
-- App novo (Nuxt): `servidor/web`, rota `/app/caixa` (dev: `npm run dev:web` → http://localhost:3100/app/caixa).
-- Dados fictícios: `servidor/web/utils/caixa-casca.ts`. Estado em memória: `servidor/web/composables/useCaixaCasca.ts`.
-- Estilos do Caixa: `servidor/web/assets/caixa.css`. Componentes: `servidor/web/components/caixa/`. Páginas: `servidor/web/pages/caixa/`.
-- Menu lateral: seção "Caixa" (Meu caixa · Caixas), cor de origem Vendas (#a16207), porque no site o
-  Caixa fica em Entradas · Vendas / Faturamento.
+- Menu do site: **Entradas · Vendas / Faturamento → Caixas** abre os cards do Caixa
+  (`dist/index.html`: setor `Caixas` → `kind 'caixa'` → `CicluzCaixa.cards()`; card `caixa:<tela>`
+  → `CicluzCaixa.abrir`).
+- Módulo: `dist/caixa/modulo.js` (cards, `criarTela` e `dialogo` na cor de Vendas, `registrar`,
+  `voltar`). Telas: `dist/caixa/abertura.js`. Estilos: `dist/caixa/caixa.css`. Reaproveita
+  `CicluzComprasUI` (campos, chips, seção, diálogo, aviso) e os estilos de `compras.css`.
+- Cada arquivo novo entra no `dist/index.html` com `?v=` = 12 primeiros caracteres do SHA-256 do
+  arquivo no git.
+- A primeira versão (Nuxt, em `/app/caixa` com menu lateral) foi **removida** — não há segundo caminho.
 
-## Direção de arte (Design Gate do brief: verde)
+## Referência
 
-Conceito "Caixa lacrado": o que o operador declara fica selado na hora e o dinheiro só "fala" no
-fechamento. Assinatura: trilha do turno (faixa da marca inteira + marcos Abertura · Turno ·
-Fechamento · Tesouraria). Cabeçalho nunca muda de cor por estado; o estado vai num selo branco.
-Diferença sempre com sinal + palavra + ícone (falta vermelho, sobra âmbar, bateu verde). Contagem
-cega: o esperado não aparece para o operador antes da etapa 4 do fechamento.
+Fluxo e regras: Caixa do sistema principal (https://github.com/ErasoumZe/SISTEMA_INTELIGENTE_PRALIS,
+só leitura): `web-vue/pages/caixa.vue`, `web-vue/pages/historico_caixas.vue` e
+`web-vue/components/caixa/`. Visual: telas internas do site (`DESIGN_SYSTEM.md`,
+`docs/DOSSIE_INTERFACE.md`).
+
+Regras de desenho mantidas: contagem cega (o operador não vê o esperado antes da etapa 4 do
+fechamento); diferença sempre com sinal + palavra + cor (falta vermelho, sobra âmbar, bateu verde);
+dinheiro em centavos com algarismos tabulares; botão principal no tom forte de Vendas (#a16207),
+porque branco sobre #eab308 não passa no contraste.
 
 ## Feito
 
-- Base: dados, estado, estilos, `CaixaTela` (moldura + selo + trilha + aviso de casca com "Ver como"
-  Operador/Gerência/Tesouraria e "Reiniciar"), `CaixaJanela`, `CampoDinheiro`, `Dinheiro`.
-- Abertura completa (3 blocos + "Confirmar abertura do caixa"), conferida no navegador.
-- Turno: `RecebimentosPendentes` e `FaixaPdv` escritos (não testados).
-- Botões sem caixa alta no app inteiro (`cicluz.css`: `.v-application .v-btn`).
+- Abertura do caixa: 3 blocos (onde operar · conferir malote pelo lacre — na casca só o `001` —
+  com "Sim, confere"/"Não confere", contagem e motivo da divergência · responsáveis e maquininha),
+  lista de pendências depois da primeira tentativa, "Confirmar abertura do caixa" e estado
+  "Caixa aberto". Conferida no navegador.
 
 ## Falta (na ordem)
 
-1. `pages/caixa/turno.vue` + resumo (saldo lacrado para operador, visível para Gerência), sangria
-   com lacre, vendas do turno, canceladas, encerrar vendas.
-2. `pages/caixa/fechamento.vue`: gerente responsável + 4 etapas (Vendas com contagem cega e folha
-   CREARE, Maquininha, Relatório final, Fechamento) + "Revisar fechamento do caixa".
-3. `pages/caixa/encerrado.vue` e `pages/caixa/acompanhamento.vue` (monitor de abertos, mensagens,
-   histórico com filtros, detalhe, "Fechou certo" / "Teve quebra").
-4. Revisores (design, a11y, frontend), conferência 1440/1024/768/390 Luz/Sombra, `check`.
+1. Turno: resumo (saldo lacrado para o operador), recebimentos pendentes, PDV ligado/desligado com
+   motivo da parada, sangria com lacre, vendas do turno, canceladas, "Encerrar vendas".
+2. Fechamento: gerente responsável + 4 etapas (Vendas com contagem cega e folha CREARE,
+   Maquininha, Relatório final, Fechamento com esperado × contado, lacre e observação) + revisar.
+3. Gerência/Tesouraria (setores Gerência e Financeiro de Entradas): monitor de caixas abertos,
+   mensagens, histórico com filtros, detalhe, "Fechou certo" / "Teve quebra".
+4. Conferência 1440/1024/768/390 nos temas Luz e Sombra.
 
-## Para usar no localhost
+## Desenvolvimento
 
-Conta de teste só do banco local (porta 5545); a senha está fora do repositório, em
-`D:\DevCaches\tmp\cicluz-conta-teste-local.txt`. Não vale em produção.
-
-## Decisões de 05/11/2026 (Marco)
-
-- **Quem continua:** Washington. Marco revisa e decide o merge. A casca continua sem ir para a `main`
-  sem ordem do Marco.
-- **Layout:** o Caixa segue o visual do SITE (`dist/`), que não tem menu lateral: o menu é a página
-  inicial e cada tela abre sozinha (padrão de telas internas do `DESIGN_SYSTEM.md` e
-  `docs/DOSSIE_INTERFACE.md`). A casca foi feita no layout do `/app/` com menu lateral, o que está
-  errado para o Caixa. Primeiro passo do Washington: layout próprio sem menu lateral, entrada pelo menu
-  do site (Entradas · Vendas / Faturamento) e remoção dos itens "Meu caixa"/"Caixas" de
-  `utils/menu.ts` e `layouts/default.vue`. O plano passa pelo Marco antes do código.
-- **Referência:** o Caixa do sistema principal
-  (https://github.com/ErasoumZe/SISTEMA_INTELIGENTE_PRALIS, `web-vue/pages/caixa.vue` e
-  `web-vue/components/caixa/`) é a referência de fluxo e regra, só leitura. O visual é o do CICLUZ.
-- **Dev:** em `nuxt.config.ts`, a :3100 repassa `/entrar.html` e `/api` para a :4200 (antes o login
-  entrava em loop até 431).
+`npm run dev` em `servidor` serve o site em http://localhost:4200. Em `npm run dev:web` (:3100), o
+`nuxt.config.ts` repassa `/entrar.html` e `/api` para a :4200 (antes o login entrava em loop até 431).

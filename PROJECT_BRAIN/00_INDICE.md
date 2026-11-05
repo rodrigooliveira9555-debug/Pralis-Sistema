@@ -34,4 +34,4 @@ backend: **08 + 12**.
    histórico, e atualize o doc 10.
 3. Número, contagem ou nome de arquivo citado aqui precisa ser conferível no código.
 - `13_LANCAMENTOS.md` — app novo (Nuxt) e Lançamentos com as regras do principal (03/11/2026).
-- `14_CASCA_CAIXA.md` — casca do Caixa no app novo, em andamento (branch local, 04/11/2026).
+- `14_CASCA_CAIXA.md` — casca do Caixa no site (Entradas → Caixas, padrão Compras), sem backend; Abertura pronta, continua com o Washington.
