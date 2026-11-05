@@ -1,4 +1,4 @@
-# 14 — Casca do Caixa no app novo (EM ANDAMENTO, pausada em 04/11/2026)
+# 14 — Casca do Caixa no app novo (passada para o Washington em 05/11/2026)
 
 > Pedido do Marco (04/11/2026): desenhar o Caixa do Sistema Pralis principal (abertura, turno,
 > fechamento, Tesouraria) no layout do CICLUZ. **Só casca**: sem backend, dados fictícios, nada
@@ -42,3 +42,19 @@ cega: o esperado não aparece para o operador antes da etapa 4 do fechamento.
 
 Conta de teste só do banco local (porta 5545); a senha está fora do repositório, em
 `D:\DevCaches\tmp\cicluz-conta-teste-local.txt`. Não vale em produção.
+
+## Decisões de 05/11/2026 (Marco)
+
+- **Quem continua:** Washington. Marco revisa e decide o merge. A casca continua sem ir para a `main`
+  sem ordem do Marco.
+- **Layout:** o Caixa segue o visual do SITE (`dist/`), que não tem menu lateral: o menu é a página
+  inicial e cada tela abre sozinha (padrão de telas internas do `DESIGN_SYSTEM.md` e
+  `docs/DOSSIE_INTERFACE.md`). A casca foi feita no layout do `/app/` com menu lateral, o que está
+  errado para o Caixa. Primeiro passo do Washington: layout próprio sem menu lateral, entrada pelo menu
+  do site (Entradas · Vendas / Faturamento) e remoção dos itens "Meu caixa"/"Caixas" de
+  `utils/menu.ts` e `layouts/default.vue`. O plano passa pelo Marco antes do código.
+- **Referência:** o Caixa do sistema principal
+  (https://github.com/ErasoumZe/SISTEMA_INTELIGENTE_PRALIS, `web-vue/pages/caixa.vue` e
+  `web-vue/components/caixa/`) é a referência de fluxo e regra, só leitura. O visual é o do CICLUZ.
+- **Dev:** em `nuxt.config.ts`, a :3100 repassa `/entrar.html` e `/api` para a :4200 (antes o login
+  entrava em loop até 431).
