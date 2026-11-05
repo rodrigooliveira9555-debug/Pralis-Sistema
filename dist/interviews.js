@@ -3,7 +3,7 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,DB=window.CicluzDateBR,T=window.CicluzTimeBR,F=window.CicluzFieldRules;if(!P||!U||!DB||!T||!F)return;
 const {el,button,iconButton,svg,ICON,fold,newId,dateBR,today,dialog,confirmDialog}=U;
-const ACCENT='#7c3aed',PATH='Formulários / Gestão de Pessoas / Entrevista',CHAT='M4 5h16v11H9l-5 4zM8 9h8M8 12h5';
+const ACCENT='#7c3aed',PATH='Lançamentos / Gestão de Pessoas / Entrevista',CHAT='M4 5h16v11H9l-5 4zM8 9h8M8 12h5';
 const STATUSES=[['Agendada','p-yellow'],['Realizada','p-yellow'],['Aprovado para continuidade','p-green'],['Não aprovado','p-red'],['Cancelada','p-red']];
 const pillOf=s=>(STATUSES.find(x=>x[0]===s)||[,''])[1];
 const data=()=>P.get();
@@ -13,7 +13,7 @@ const view=el('section','view');view.id='interviews-view';view.style.setProperty
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
 const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(CHAT);const heading=el('div');heading.append(el('h2',null,'Entrevista'),el('p',null,PATH));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
-addShortcuts(view.id,()=>openSection(sections[7][0],'Gestão de Pessoas','forms',ACCENT));
+addShortcuts(view.id,()=>openSection(sections[8][0],'Gestão de Pessoas','forms',ACCENT));
 const addButton=button('',()=>{resetForm();formStatus.textContent='';nameIn.focus()},'shortcut-circle');addButton.title='Nova Entrevista';addButton.setAttribute('aria-label','Nova Entrevista');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
 body.append(el('div','form-note','Primeira etapa da admissão. O candidato aprovado segue para o Cadastro Simples pelo botão Dar Continuidade, com o mesmo registro. Dados guardados neste navegador.'));
 
