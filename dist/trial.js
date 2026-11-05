@@ -3,7 +3,7 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,DB=window.CicluzDateBR;if(!P||!U||!DB)return;
 const {el,button,iconButton,svg,ICON,fold,dateBR,today,enumField,dialog,confirmDialog}=U;
-const ACCENT='#7c3aed',PATH='Formulários / Gestão de Pessoas / Período de Teste',HOURGLASS='M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9';
+const ACCENT='#7c3aed',PATH='Lançamentos / Gestão de Pessoas / Período de Teste',HOURGLASS='M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9';
 const STATUSES=['Aguardando início','Em andamento','Prazo encerrado','Aprovado para continuidade','Não aprovado','Cancelado'];
 const DECISION_STATUS=new Set(['Aprovado para continuidade','Não aprovado']),DATE_STATUS=new Set(['Aguardando início','Em andamento','Prazo encerrado']);
 const PILL={'Aguardando início':'p-yellow','Em andamento':'p-yellow','Prazo encerrado':'p-red','Aprovado para continuidade':'p-green','Não aprovado':'p-red',Cancelado:'p-red'};
@@ -18,7 +18,7 @@ const view=el('section','view');view.id='trial-view';view.style.setProperty('--m
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
 const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(HOURGLASS);const heading=el('div');heading.append(el('h2',null,'Período de Teste'),el('p',null,PATH));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
-addShortcuts(view.id,()=>openSection(sections[7][0],'Gestão de Pessoas','forms',ACCENT));
+addShortcuts(view.id,()=>openSection(sections[8][0],'Gestão de Pessoas','forms',ACCENT));
 const alerts=el('div','people-alerts');alerts.setAttribute('role','status');
 body.append(el('div','form-note','Etapa de acompanhamento definida pelo DP, entre o Exame Admissional (APTO) e o Cadastro Completo com Dependente. Não gera contrato de experiência, folha, vínculo ou descontos. O prazo encerrado não aprova o candidato: a decisão é sempre do DP.'),alerts);
 

@@ -39,6 +39,8 @@ Texto fixo "reunirá os principais números".
 ## Agenda · Atividades (roxo)
 - ⬜ Gestão de Pessoas, Diretor de Operações (2)
 
+> **05/11/2026:** os grupos "Configuração · Cadastros Gerais" e "Formulários · Cadastros/Avaliações" viraram cinco tópicos em OUTROS: Configurações (Diretor de Operações → `settings`), Cadastros (Diretor de Operações → patrimônio; Gestão de Pessoas → `people-settings`), Lançamentos (Financeiro, vazio; Gestão de Pessoas → `forms`), Estoques (Compras, vazio) e Avaliações (Diretor de Operações, Gerentes, Colaboradores, Clientes, vazios). As seções abaixo mantêm o conteúdo; só mudou onde ficam no menu. Detalhe em DESIGN_SYSTEM.md.
+
 ## Configuração · Cadastros Gerais (roxo)
 
 ### Gestão de Pessoas (`people-settings`)
