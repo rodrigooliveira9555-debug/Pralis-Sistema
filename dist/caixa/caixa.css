@@ -94,6 +94,11 @@ button.caixa-cartao:hover { background: color-mix(in srgb, var(--menu-accent) 6%
 .caixa-alvos { display: grid; gap: 6px; }
 .caixa-filtros { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .caixa-acoes-esq small { margin-right: 0; }
+/* Conteúdo largo (tabela com campos) encolhe e rola dentro do próprio quadro, sem estourar a seção no celular. */
+.compras-secao, .compras-corpo, .caixa-corpo, .caixa-bloco, .caixa-bloco-cab > div { min-width: 0; max-width: 100%; }
+.compras-corpo > *, .caixa-corpo > * { min-width: 0; max-width: 100%; }
+.caixa-content .compras-tabela input { width: 100%; min-width: 96px; }
+.caixa-content .compras-situacao { white-space: normal; }
 body.dark-theme .caixa-content .btn.secondary { color: #f6d38f; }
 body.dark-theme .caixa-diferenca-linha.falta { color: #f8b4b4; }
 body.dark-theme .caixa-diferenca-linha.sobra { color: #f6d38f; }
