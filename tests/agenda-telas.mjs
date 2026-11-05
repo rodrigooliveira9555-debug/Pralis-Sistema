@@ -53,11 +53,11 @@ const definirData = (p, rotulo, iso) => p.evaluate(([r, v]) => { const i = docum
 {
   const p = await abrirPagina(1280, 900);
   const hoje = await hojeDe(p);
-  // Entrada pelo menu lateral: Agenda · Atividades → Gestão de Pessoas
+  // Entrada pelo menu lateral: Agenda · Atividades → Lançamentos (lista Diretor de Operações)
   await p.locator('summary', { hasText: 'Agenda' }).first().click();
-  await p.getByRole('button', { name: 'Gestão de Pessoas', exact: true }).click();
+  await p.getByRole('button', { name: 'Lançamentos', exact: true }).first().click();
   ok(await p.locator('#agenda-view.show').count() === 1, 'O submenu abre a Agenda');
-  ok((await p.locator('.agenda-detalhe-titulo').textContent()).startsWith('Gestão de Pessoas'), 'Abre já na lista do submenu');
+  ok((await p.locator('.agenda-detalhe-titulo').textContent()).startsWith('Diretor de Operações'), 'Abre já na lista do submenu');
   ok(await dados(p) === null, 'Abrir a Agenda não grava nada');
   ok((await p.locator('.agenda-automatica small').allTextContents()).join('|') === 'Para hoje|Programados|Todos|Sinalizados|Atrasados|Atribuídos a mim|Concluídos', 'Listas automáticas do Lembretes + Atrasados');
   ok(await p.locator('.agenda-lateral').isVisible() && await p.locator('.agenda-conteudo').isVisible(), 'Computador: listas e conteúdo lado a lado');
