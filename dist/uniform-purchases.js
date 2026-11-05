@@ -1,9 +1,9 @@
-/* Lançamentos de Compras de Uniformes: purchases enter the same simulated stock as Lançamentos de Uniformes. */
+/* Compras de Uniformes: purchases enter the same simulated stock as Uniformes. */
 (()=>{
 'use strict';
 const D=window.CicluzUniformData,S=window.CicluzUniformStock,store=window.CicluzUniformStore,U=window.CicluzUniformUI;if(!D||!S||!store||!U)return;
 const {el,button,iconButton,svg,ICON,fold,newId,money,moneyInput,cents,dateBR,today,enumField,dialog,confirmDialog,uniformName,STATUS}=U;
-const ACCENT='#7c3aed',PATH='Lançamentos / Gestão de Pessoas / Lançamentos de Compras de Uniformes',CART='M3 4h2l2 11h11l3-8H6M9 20h.01M17 20h.01';
+const ACCENT='#7c3aed',PATH='Lançamentos / Gestão de Pessoas / Compras de Uniformes',CART='M3 4h2l2 11h11l3-8H6M9 20h.01M17 20h.01';
 const data=()=>store.get(),uniformIds=D.uniforms.map(u=>u.id),uniformById=new Map(D.uniforms.map(u=>[u.id,u]));
 
 /* Supplier source: empty until the registry exists; the database will replace this function. */
@@ -22,12 +22,12 @@ function phoneValid(v){const d=phoneDigits(v);if(!/^[1-9][1-9]/.test(d))return f
 
 const view=el('section','view');view.id='uniform-purchases-view';view.style.setProperty('--menu-accent',ACCENT);
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
-const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(CART);const heading=el('div');heading.append(el('h2',null,'Lançamentos de Compras de Uniformes'),el('p',null,PATH));head.append(heading);
+const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(CART);const heading=el('div');heading.append(el('h2',null,'Compras de Uniformes'),el('p',null,PATH));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
 addShortcuts(view.id,()=>openSection(sections[8][0],'Gestão de Pessoas','forms',ACCENT));
 const addButton=button('',()=>{resetForm();formStatus.textContent='';dateIn.node.focus()},'shortcut-circle');addButton.title='Nova compra';addButton.setAttribute('aria-label','Nova compra');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
 const loadNote=el('p','profiles-error');loadNote.setAttribute('role','alert');
-body.append(el('div','form-note','Simulação local: compras ficam somente neste navegador e entram no mesmo estoque de Lançamentos de Uniformes. Sem fornecedores cadastrados por enquanto.'),loadNote);
+body.append(el('div','form-note','Simulação local: compras ficam somente neste navegador e entram no mesmo estoque de Uniformes. Sem fornecedores cadastrados por enquanto.'),loadNote);
 
 /* ---------- Formulário ---------- */
 const form=el('form','form-fields uniforms-form');form.noValidate=true;
@@ -110,7 +110,7 @@ function showDetails(p){dialog('Detalhes da compra',(f,form)=>{const dl=el('dl',
  if(p.revisions?.length){form.append(el('h3','uniforms-heading','Histórico de alterações'));const ul=el('ul','uniforms-reference-list');for(const r of p.revisions){const li=el('li'),prev=r.previous||{};li.append(el('span',null,new Date(r.at).toLocaleString('pt-BR')+' — '+(r.action||'Corrigida')),el('small',null,r.action?'Situação anterior: '+((STATUS[prev.status]||[prev.status])[0]):'Versão anterior: '+dateBR(prev.date)+' · '+(prev.supplierName||'sem fornecedor')+' · '+(prev.items||[]).map(i=>uniformName(i.uniformId)+' ×'+i.quantity+' a '+money(i.unitPrice)).join(', ')));ul.append(li)}form.append(ul)}
  form.append(button('Ver controle de estoque',()=>{form.closest('dialog').close();showUniforms('stock')}))})}
 
-function showUniformPurchases(){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Lançamentos de Compras de Uniformes';store.load();loadNote.textContent=store.failed()?'Não foi possível ler os dados salvos. Eles foram preservados; recarregue a página antes de alterar.':'';resetForm();formStatus.textContent='';renderHistory();normalizeHeaderActions(view)}
+function showUniformPurchases(){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Compras de Uniformes';store.load();loadNote.textContent=store.failed()?'Não foi possível ler os dados salvos. Eles foram preservados; recarregue a página antes de alterar.':'';resetForm();formStatus.textContent='';renderHistory();normalizeHeaderActions(view)}
 window.showUniformPurchases=showUniformPurchases;
 window.CicluzDateBR={field:dateField,mask:maskDate,parse:parseDate};
 window.CicluzPhoneBR={digits:phoneDigits,mask:maskPhone,valid:phoneValid};

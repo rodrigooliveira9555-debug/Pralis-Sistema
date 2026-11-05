@@ -1,9 +1,9 @@
-/* Lançamentos de Ocorrências. Records persist in this browser without medical data; attachments and medical fields live only in memory. */
+/* Ocorrências. Records persist in this browser without medical data; attachments and medical fields live only in memory. */
 (()=>{
 'use strict';
 const D=window.CicluzUniformData,U=window.CicluzUniformUI,DB=window.CicluzDateBR,R=window.CicluzOccurrenceReader;if(!D||!U||!DB||!R)return;
 const {el,button,iconButton,svg,ICON,fold,newId,dateBR,today,enumField,dialog,confirmDialog}=U;
-const KEY='cicluz-ocorrencias-v1',ACCENT='#7c3aed',PATH='Lançamentos / Gestão de Pessoas / Lançamentos de Ocorrências',MAX=10*1024*1024;
+const KEY='cicluz-ocorrencias-v1',ACCENT='#7c3aed',PATH='Lançamentos / Gestão de Pessoas / Ocorrências',MAX=10*1024*1024;
 const ACCEPT=['image/jpeg','image/png','application/pdf'],DOC_ICON='M14 3H6v18h12V7zM14 3v4h4M9 13h6M9 17h6',CAMERA='M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',SCAN='M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M7 12h10';
 const TYPES=[
  ['DECLARAÇÃO',{medical:true,hint:'Priorize data, documento, clínica e identificação do profissional, quando aplicável.'}],
@@ -34,7 +34,7 @@ const sizeText=n=>n<1024*1024?Math.max(1,Math.round(n/1024))+' KB':(n/1024/1024)
 
 const view=el('section','view');view.id='occurrences-view';view.style.setProperty('--menu-accent',ACCENT);
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
-const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(DOC_ICON);const heading=el('div');heading.append(el('h2',null,'Lançamentos de Ocorrências'),el('p',null,PATH));head.append(heading);
+const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(DOC_ICON);const heading=el('div');heading.append(el('h2',null,'Ocorrências'),el('p',null,PATH));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
 addShortcuts(view.id,()=>openSection(sections[8][0],'Gestão de Pessoas','forms',ACCENT));
 const addButton=button('',()=>{resetForm();formStatus.textContent='';collab.search.closest('label').querySelector('select').focus()},'shortcut-circle');addButton.title='Nova ocorrência';addButton.setAttribute('aria-label','Nova ocorrência');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
@@ -153,7 +153,7 @@ function showDetails(r){const mem=sensitive.get(r.id);dialog('Detalhes da ocorr�
  for(const [k,v] of rows)dl.append(el('dt',null,k),el('dd',null,v));form.append(dl);if(mem?.attachments.length)form.append(button('Visualizar documento',()=>{form.closest('dialog').close();viewFiles(mem.attachments)},'btn'));
  if(r.revisions?.length){form.append(el('h3','uniforms-heading','Histórico de alterações'));const ul=el('ul','uniforms-reference-list');for(const v of r.revisions){const li=el('li'),p=v.previous||{};li.append(el('span',null,new Date(v.at).toLocaleString('pt-BR')+' — '+(v.action||'Editada')),el('small',null,v.action?'Status anterior: '+p.status:'Antes: '+dateBR(p.date)+' · '+p.type+' · '+(p.days?p.days+' dia(s)':'sem dias')+' · '+p.status+' · comunicado '+p.communicated));ul.append(li)}form.append(ul)}})}
 
-function showOccurrences(opts={}){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Lançamentos de Ocorrências';load();loadNote.textContent=loadError?'Não foi possível ler as ocorrências salvas. Os dados foram preservados; recarregue a página antes de alterar.':'';resetForm();formStatus.textContent='';if(opts.collaboratorId){renderCollaborators(collab.select,collab.search,opts.collaboratorId)}renderHistory();normalizeHeaderActions(view)}
+function showOccurrences(opts={}){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Ocorrências';load();loadNote.textContent=loadError?'Não foi possível ler as ocorrências salvas. Os dados foram preservados; recarregue a página antes de alterar.':'';resetForm();formStatus.textContent='';if(opts.collaboratorId){renderCollaborators(collab.select,collab.search,opts.collaboratorId)}renderHistory();normalizeHeaderActions(view)}
 window.showOccurrences=showOccurrences;
 /* Read-only access for the collaborator file; medical data and attachments stay in this module's memory. */
 window.CicluzOccurrences={list:()=>{if(!view.classList.contains('show'))load();return data.records},attachments:id=>sensitive.get(id)?.attachments||[],show:showOccurrences};
