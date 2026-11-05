@@ -173,7 +173,7 @@
    try{
     if(file.size>100000)throw Error('Arquivo de configuração muito grande');
     const data=JSON.parse(await file.text());if(!['cicluz-people-toolbar','cicluz-screen-toolbar'].includes(data.format)||data.version!==1)throw Error('Arquivo de configuração incompatível');
-    preferences={};for(const key of controls.keys())if(typeof data.preferences?.[key]==='boolean')preferences[key]=data.preferences[key];if(data.preferences?._disabled&&typeof data.preferences._disabled==='object')preferences._disabled=Object.fromEntries(Object.entries(data.preferences._disabled).filter(([key,value])=>controls.has(key)&&(value===true||(value===false&&libraryKeys.has(key)))));if(data.preferences?._hidden&&typeof data.preferences._hidden==='object')for(const [key,value] of Object.entries(data.preferences._hidden))if(controls.has(key)&&value===true)preferences[key]=false;
+    preferences={};for(const key of controls.keys())if(typeof data.preferences?.[key]==='boolean')preferences[key]=data.preferences[key];if(data.preferences?._disabled&&typeof data.preferences._disabled==='object')preferences._disabled=Object.fromEntries(Object.entries(data.preferences._disabled).filter(([key,value])=>controls.has(key)&&typeof value==='boolean'));if(data.preferences?._hidden&&typeof data.preferences._hidden==='object')for(const [key,value] of Object.entries(data.preferences._hidden))if(controls.has(key)&&value===true)preferences[key]=false;
     buttonOrder=Array.isArray(data.buttonOrder)?[...new Set(data.buttonOrder.filter(key=>typeof key==='string'&&controls.has(key)))]:[];
     displayState={zoomed:false,compact:data.display?.compact===true,dock:data.display?.dock==='top'?'top':'bottom',order:Array.isArray(data.display?.order)?data.display.order.filter(key=>typeof key==='string').slice(0,1000):[]};
     localStorage.setItem(preferencesKey,JSON.stringify(preferences));localStorage.setItem(displayKey,JSON.stringify(displayState));persistButtonOrder();applyDisplay();applyPreferences();
@@ -199,10 +199,9 @@
   try{const value=JSON.parse(localStorage.getItem(orderKey)||'[]');if(Array.isArray(value))buttonOrder=value.filter(key=>typeof key==='string')}catch{}
   function persistButtonOrder(){try{localStorage.setItem(orderKey,JSON.stringify(buttonOrder))}catch{}}
   const fixedKeys=new Set(['search','sort','date','save']);
-  /* Biblioteca: botões universais disponíveis no painel, desligados até o Rodrigo ligar. */
-  const libraryKeys=new Set(['copy','share','email','refresh','pdf','scan','camera','attach','sheet','favorite','calc','help']);
+  /* Todos os botões do menu rápido começam desligados; o Rodrigo liga, tela por tela, o que precisar (painel Configurar menu rápido). */
   const pinned=key=>preferences[key]===true;
-  const enabled=key=>fixedKeys.has(key)||(libraryKeys.has(key)?preferences._disabled?.[key]===false:preferences._disabled?.[key]!==true);
+  const enabled=key=>fixedKeys.has(key)||preferences._disabled?.[key]===false;
   function normalizePreferences(value){
    const next=value&&typeof value==='object'&&!Array.isArray(value)?{...value}:{};
    if(next._hidden&&typeof next._hidden==='object')for(const [key,hidden] of Object.entries(next._hidden))if(hidden===true)next[key]=false;
@@ -245,7 +244,7 @@
    resize.onclick=()=>{chooserCompact=!chooserCompact;renderChoices();chooser.querySelector('.people-options-resize').focus()};
    heading.append(headingIcon,title,resize);const inner=document.createElement('div');inner.className='people-options-inner';chooser.append(heading,inner);
    const candidates=orderedControls().filter(([key,{button}])=>button.dataset.available!=='false'&&(!chooserCompact||(!pinned(key)&&enabled(key))));if(!chooserCompact)candidates.sort(([a],[b])=>(!enabled(a)?2:pinned(a)?1:0)-(!enabled(b)?2:pinned(b)?1:0));
-   if(!candidates.length){const empty=document.createElement('p');empty.className='people-choices-empty';empty.textContent=chooserCompact?'Expanda para configurar os atalhos.':'Não há funções disponíveis nesta tela.';inner.append(empty)}
+   if(!candidates.length&&!chooserCompact){const empty=document.createElement('p');empty.className='people-choices-empty';empty.textContent='Não há funções disponíveis nesta tela.';inner.append(empty)}
    for(const [key,{button,label}] of candidates){
     const row=document.createElement('div');row.className='people-toolbar-row';row.dataset.choiceKey=key;
     const handle=document.createElement('button');handle.type='button';handle.className='people-order-handle';handle.draggable=true;handle.title='Arraste para mover ou use as setas para cima e para baixo';handle.setAttribute('aria-label','Mover '+label);handle.innerHTML='<svg viewBox="0 0 12 20"><circle cx="3" cy="4" r="1"/><circle cx="9" cy="4" r="1"/><circle cx="3" cy="10" r="1"/><circle cx="9" cy="10" r="1"/><circle cx="3" cy="16" r="1"/><circle cx="9" cy="16" r="1"/></svg>';
