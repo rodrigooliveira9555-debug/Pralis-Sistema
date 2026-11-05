@@ -62,7 +62,7 @@ Texto fixo "reunirá os principais números".
 - ✅ **Cadastro completo c/ dependente** (`complete-registration.js`) — 4 etapas: (1) CPF e dados
   pessoais, (2) endereço e contato, (3) outros documentos, (4) dependentes. Anexos **não** são salvos.
 - 🟨 Cadastro simples — nome, CPF, função, turno, admissão. Não salva.
-- 🟨 Cadastro de patrimônio — bem, categoria, marca, modelo, série, nº, valor, área/setor/local.
+- 🟨 RET - Patrimônios (antes Cadastro de patrimônio) — bem, categoria, marca, modelo, série, nº, valor, área/setor/local.
   Não salva.
 
 ## Legado
