@@ -9,7 +9,7 @@
   const U = window.CicluzComprasUI;
   const COR = '#eab308';
   const COR_TEXTO = '#785600';
-  const ICONE = '<path d="M3 9 4.5 4h15L21 9M3 9v11h18V9M3 9h18M9 20v-6h6v6"/>';
+  const ICONE = '<path d="' + telaIcone.computador + '"/>';
   const telas = {};
 
   const CARDS = [
