@@ -1,8 +1,8 @@
-/* Lançamentos de Uniformes: movements, stock and job references in one view. Data stays in this browser until the database integration. */
+/* Uniformes: movements, stock and job references in one view. Data stays in this browser until the database integration. */
 (()=>{
 'use strict';
 const D=window.CicluzUniformData,S=window.CicluzUniformStock;if(!D||!S)return;
-const KEY='cicluz-uniformes-v1',ACCENT='#7c3aed',PATH='Lançamentos / Gestão de Pessoas / Lançamentos de Uniformes';
+const KEY='cicluz-uniformes-v1',ACCENT='#7c3aed',PATH='Lançamentos / Gestão de Pessoas / Uniformes';
 const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
 const button=(text,fn,cls='btn secondary')=>{const b=el('button',cls,text);b.type='button';b.onclick=fn;return b};
 const svg=path=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>';
@@ -39,7 +39,7 @@ function referenceFor(collab){const job=jobFor(collab);return job?{job,items:dat
 /* View shell, same structure as the other internal views. */
 const view=el('section','view');view.id='uniforms-view';view.style.setProperty('--menu-accent',ACCENT);
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
-const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(ICON.shirt);const heading=el('div'),title=el('h2',null,'Lançamentos de Uniformes'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
+const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(ICON.shirt);const heading=el('div'),title=el('h2',null,'Uniformes'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
 addShortcuts(view.id,()=>openSection(sections[8][0],'Gestão de Pessoas','forms',ACCENT));
 const addButton=button('',()=>{selectTab('launch');resetForm();dateInput.focus()},'shortcut-circle');addButton.title='Novo lançamento';addButton.setAttribute('aria-label','Novo lançamento');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
@@ -205,9 +205,9 @@ function renderOverview(){rOverview.replaceChildren();const entries=Object.entri
  for(const [key,r] of entries){const job=jobs.find(j=>j.key===key);const tr=el('tr');tr.append(el('td',null,job?.name||r.jobName),el('td','uniforms-num',String(r.items.length)),el('td','uniforms-num',String(r.items.reduce((n,i)=>n+i.quantity,0))));const a=el('td','uniforms-row-actions');a.append(iconButton('Abrir referência de '+(job?.name||r.jobName),ICON.eye,()=>{refJob=key;rSearch.node.value='';renderReferences();rJob.node.focus()}));tr.append(a);tbody.append(tr)}table.append(thead,tbody);rOverview.append(table)}
 
 /* ---------- Entrada ---------- */
-function showUniforms(tab='launch',opts={}){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Lançamentos de Uniformes';load();resetForm();selectTab(tabButtons[tab]?tab:'launch');if(opts.collaboratorId){collab.node.value=opts.collaboratorId;collab.node.dispatchEvent(new Event('change'))}normalizeHeaderActions(view)}
+function showUniforms(tab='launch',opts={}){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Uniformes';load();resetForm();selectTab(tabButtons[tab]?tab:'launch');if(opts.collaboratorId){collab.node.value=opts.collaboratorId;collab.node.dispatchEvent(new Event('change'))}normalizeHeaderActions(view)}
 window.showUniforms=showUniforms;
-/* Shared with Lançamentos de Compras de Uniformes: one store, one set of components. */
+/* Shared with Compras de Uniformes: one store, one set of components. */
 window.CicluzUniformStore={load,transact,get:()=>data,failed:()=>loadError};
 window.CicluzUniformUI={openExternal,el,button,iconButton,svg,ICON,fold,newId,money,moneyInput,cents,dateBR,today,enumField,dialog,confirmDialog,uniformName,STATUS};
 window.addEventListener('storage',e=>{if(e.key===KEY){load();if(view.classList.contains('show'))renderTab()}});

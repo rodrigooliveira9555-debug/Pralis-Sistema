@@ -358,3 +358,4 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(form.acc
 body:is(.dark-theme,:not(.dark-theme)) dialog.shell-dialog.app-screen-shell.uniforms-dialog{height:fit-content!important;max-height:calc(100dvh - 16px)!important}
 body:is(.dark-theme,:not(.dark-theme)) dialog.shell-dialog.app-screen-shell.uniforms-dialog>.panel{display:flex!important;flex-direction:column!important;max-height:calc(100dvh - 18px)!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,dialog).shell-dialog.app-screen-shell.uniforms-dialog>.panel>.head+.content{flex:1 1 auto!important;min-height:0!important;overflow:auto!important}
+.card-inherited-icon .sigla-text{font:700 11px/1 var(--ui-font,inherit);letter-spacing:0}
