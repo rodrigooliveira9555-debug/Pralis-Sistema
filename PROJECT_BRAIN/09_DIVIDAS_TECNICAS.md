@@ -15,6 +15,7 @@
 | DT-11 | Testes: 2 arquivos `.cjs` (40 asserções); 0 teste de interface automatizado | `tests/` | regressão visual só aparece no olho |
 | DT-12 | Nunca testado em Safari/iPad/iPhone físico nem com teclado virtual | | o aparelho do dono é o menos testado |
 | DT-13 | Várias versões históricas de CSS coexistem; nenhum arquivo apagado no histórico | | a regra-mãe ("nada pronto com caminho antigo vivo") é violada |
+| DT-14 | A Agenda reaproveita as peças de tela do Compras (`compras/ui.js`, classes `compras-*`). Fonte única, mas o nome ficou do Compras: renomear para uma base comum quando um terceiro módulo usar | `dist/compras/ui.js` | confusão de nome, sem risco de comportamento |
 
 ## Ordem sugerida de pagamento
 1. DT-06 e DT-05 (apagar morto e seed duplicado) — 30 min, risco baixo.

@@ -37,7 +37,11 @@ Texto fixo "reunirá os principais números".
 - ⬜ 4 setores
 
 ## Agenda · Atividades (roxo)
-- ⬜ Gestão de Pessoas, Diretor de Operações (2)
+- ✅ **Agenda** (`dist/agenda/`, entrega 1 em 05/11/2026) — os dois submenus abrem a mesma tela já
+  filtrada pela lista de mesmo nome. Lista: Para hoje, Programados, Todos, Sinalizados, Atrasados, Concluídos;
+  criar rápido (Enter), compromisso completo, subtarefas, busca, listas com cor. Calendário Dia/Semana/Mês.
+- ⬜ Entrega 2 e seguintes: repetição, lembrete, Kanban (referência MindMeister), visão Ano, avaliação,
+  perfil comportamental, permissões, localização, arquivos, chat (protótipo: `Pralis-Especificacao-Prototipo/Agenda`).
 
 ## Configuração · Cadastros Gerais (roxo)
 

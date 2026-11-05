@@ -21,3 +21,5 @@ Quem decide: **M** = Marco · **R** = Rodrigo (dono das regras operacionais e fi
 | P-14 | Por quanto tempo guardar o histórico de documentos (cada gravação guarda uma cópia inteira)? | M | crescimento do banco |
 | P-15 | Cadastros de fornecedores e de sócios/gestores: o principal exige fornecedor na Mercadoria e credor na Retirada. Criar esses cadastros no app? | M + R | Lançamentos ficam sem credor |
 | P-16 | Fundo das contas (D8 do principal) e porta de saldo insuficiente: adicionar o fundo ao cadastro de contas? | M + R | sem fundo não há saldo |
+| P-17 | Agenda: os submenus "Gestão de Pessoas" e "Diretor de Operações" viraram **listas** da Agenda (como no Lembretes). É isso, ou são agendas de papéis diferentes, com acesso separado? | Zé/R | adotado provisoriamente em 05/11/2026 |
+| P-18 | Agenda: quem pode ser responsável? Hoje: quem está logado + a lista provisória do S2 (a mesma do Compras). Falta o cadastro de usuários/colaboradores. | Zé/R | sem cadastro, os nomes são fictícios |
