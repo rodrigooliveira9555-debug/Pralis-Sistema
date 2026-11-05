@@ -233,10 +233,11 @@
    * Diálogo modal no padrão do S2. montar(form) devolve o contexto; salvar(ctx) devolve
    * mensagem de erro (string) ou nada para fechar. Sem `salvar`, mostra só "Fechar".
    */
-  function dialogo({ titulo, subtitulo, montar, salvar, rotuloSalvar = 'Salvar', largo = false, aoFechar, cor = COR, classe = '' }) {
+  function dialogo({ titulo, subtitulo, montar, salvar, rotuloSalvar = 'Salvar', largo = false, aoFechar, cor = COR, corTexto = COR_TEXTO, classe = '' }) {
     const d = el('dialog', 'location-dialog profiles-dialog compras-dialog' + (largo ? ' largo' : '') + (classe ? ' ' + classe : ''));
     d.style.setProperty('--menu-accent', cor);
     d.style.setProperty('--dialog-accent', cor);
+    d.style.setProperty('--panel-text', corTexto);
     const h = el('h2', null, titulo);
     d.append(h);
     if (subtitulo) d.append(el('p', 'compras-dialog-sub', subtitulo));
@@ -275,9 +276,9 @@
   }
 
   /** Confirmação local (sem janela nativa), como pede o padrão do S2. */
-  function confirmar(titulo, texto, rotulo, acao, { cor = COR, classe = '' } = {}) {
+  function confirmar(titulo, texto, rotulo, acao, { cor = COR, corTexto = COR_TEXTO, classe = '' } = {}) {
     dialogo({
-      titulo, cor, classe,
+      titulo, cor, corTexto, classe,
       montar: (form) => { form.append(el('p', null, texto)); },
       salvar: () => { const r = acao(); return typeof r === 'string' ? r : undefined; },
       rotuloSalvar: rotulo,
