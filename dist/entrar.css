@@ -27,6 +27,8 @@
   --ui-text: 14px;
   --ui-label: 12px;
   --canto: 12px;
+  --bloco: 8px;
+  --moldura: 6px;
   --recuo: 14px;
   --rodape: 58px;
   --entrada-largura: 420px;
@@ -36,7 +38,7 @@
 
 .tema-sombra {
   --layout-gap: #151419;
-  --entrada-area: #222128;
+  --entrada-area: #2b2a33;
   --theme-surface: #222128;
   --theme-field: #222128;
   --ui-label-color: #d4d4d8;
@@ -71,7 +73,9 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
+  gap: var(--moldura);
   max-width: var(--entrada-largura);
+  padding: var(--moldura);
   overflow: hidden;
   border: 1px solid var(--borda-quadro);
   border-radius: var(--canto);
@@ -87,6 +91,7 @@ body {
   gap: 10px;
   min-height: var(--rodape);
   padding: 8px var(--recuo);
+  border-radius: var(--bloco);
   background: var(--menu-accent);
   /* Branco nos dois temas: a superfície escura sobre o roxo dá 2,8:1 (ver DESIGN_SYSTEM, tela de
      entrada 03/11/2026). */
@@ -122,6 +127,7 @@ body {
   display: grid;
   gap: 18px;
   padding: 22px var(--recuo) 18px;
+  border-radius: var(--bloco);
   background: var(--entrada-area);
 }
 
@@ -324,8 +330,8 @@ body {
   gap: 12px;
   min-height: var(--rodape);
   padding: 8px var(--recuo);
-  border-top: 1px solid var(--borda-quadro);
-  background: var(--theme-surface);
+  border-radius: var(--bloco);
+  background: var(--entrada-area);
 }
 
 .entrada-simbolo {
