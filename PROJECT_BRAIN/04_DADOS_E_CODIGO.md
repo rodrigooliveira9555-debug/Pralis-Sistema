@@ -32,6 +32,8 @@
   [{ id, responsavel, ver, editar, concluir, excluir }] (o antigo `responsavelId` vira um responsável, na memória,
   e o formato novo é gravado na próxima alteração); gestor = `criadoPor`. Avaliação: `avaliacao` { tipo, notas
   [{ avaliadoId, porId, papel gestor|auto, valor, comentario, em }] }, só depois de concluído e sem mudar.
+  Relações do mapa mental: `relacoes` [{ id, de, para, rotulo }] (somem junto com o compromisso). Preferência do
+  aparelho: `cicluz-agenda-mapa` (estrutura, agrupamento, recolhidos).
   Código: `dist/agenda/` (dominio, dados, calendario, kanban, telas, alertas, agenda.css).
 
 **Preferência de interface:** `tema`, `menu-ordem`, `menu-item-order-v1`, `sidebar-sections-v1`,

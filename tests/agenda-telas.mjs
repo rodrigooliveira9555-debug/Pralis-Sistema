@@ -316,6 +316,116 @@ const definirData = (p, rotulo, iso) => p.evaluate(([r, v]) => { const i = docum
   await p.close();
 }
 
+/* ---------- Mapa mental ---------- */
+{
+  const p = await abrirPagina(1400, 940);
+  const hoje = await hojeDe(p);
+  await p.evaluate((h) => {
+    const A = CicluzAgendaDados;
+    A.salvarItem('', { titulo: 'Entrevista de candidato', listaId: 'lista-gestao-pessoas', data: h, hora: '14:00' });
+    A.salvarItem('', { titulo: 'Conferir câmara fria', listaId: 'lista-diretor-operacoes', data: h, prioridade: 'muito-alta', sinalizado: true });
+    A.salvarItem('', { titulo: 'Pagar fornecedores', listaId: 'lista-diretor-operacoes' });
+    A.salvarItem('', { titulo: 'Pensar na campanha', listaId: 'lista-gestao-pessoas', notas: 'vitrine', subtarefas: [{ titulo: 'Rascunho' }] });
+    document.dispatchEvent(new Event('cicluz-close-menu'));
+    CicluzAgenda.abrir('');
+  }, hoje);
+  await p.getByRole('button', { name: 'Mapa mental', exact: true }).click();
+  const no = (t) => p.locator('.agenda-mm-no', { hasText: t }).first();
+  ok(await p.locator('.agenda-mm-no.tipo-grupo').count() === 2 && await p.locator('.agenda-mm-no.tipo-item').count() === 4 && await p.locator('.agenda-mm-no.tipo-sub').count() === 1, 'Raiz → listas → compromissos → subtarefas');
+  ok(await p.locator('.agenda-mm-tela').getAttribute('role') === 'tree' && await no('Pagar fornecedores').getAttribute('role') === 'treeitem', 'Mapa acessível como árvore');
+  const lados = await p.evaluate(() => [...document.querySelectorAll('.agenda-mm-no.tipo-grupo')].map((g) => g.getBoundingClientRect().x > document.querySelector('.agenda-mm-no.tipo-raiz').getBoundingClientRect().x));
+  ok(lados.includes(true) && lados.includes(false), 'Estrutura Mapa: um grupo de cada lado');
+  // Tab = subtópico, Enter = tópico (entende data), F2 = renomear, Espaço = concluir
+  await no('Entrevista de candidato').click();
+  await p.keyboard.press('Tab');
+  await p.locator('.agenda-mm-edicao').fill('separar currículo');
+  await p.keyboard.press('Enter');
+  ok((await item(p, 'Entrevista de candidato')).subtarefas[0].titulo === 'separar currículo', 'Tab cria subtarefa');
+  ok(await no('separar currículo').getAttribute('aria-selected') === 'true', 'O tópico novo fica escolhido');
+  await no('Entrevista de candidato').click();
+  await p.keyboard.press('Enter');
+  await p.locator('.agenda-mm-edicao').fill('Ligar para referências amanhã às 9');
+  await p.keyboard.press('Enter');
+  let i = await item(p, 'Ligar para referências');
+  ok(i && i.listaId === 'lista-gestao-pessoas' && i.data === await somar(p, hoje, 1) && i.hora === '09:00', 'Enter cria compromisso no mesmo grupo, entendendo "amanhã às 9"');
+  await no('Ligar para referências').click();
+  await p.keyboard.press('F2');
+  await p.locator('.agenda-mm-edicao').fill('Ligar para as referências');
+  await p.keyboard.press('Enter');
+  ok(await item(p, 'Ligar para as referências'), 'F2 renomeia');
+  await no('Ligar para as referências').click();
+  await p.keyboard.press(' ');
+  ok((await item(p, 'Ligar para as referências')).concluida, 'Espaço conclui');
+  ok(await no('Ligar para as referências').count() === 0, 'Concluído some (sem "Concluídos")');
+  await p.locator('.agenda-mm-chips').getByRole('button', { name: 'Concluídos' }).click();
+  ok(await no('Ligar para as referências').count() === 1, '"Concluídos" mostra os concluídos');
+  // Setas andam pela árvore
+  await no('Pagar fornecedores').click();
+  await p.keyboard.press('ArrowUp');
+  ok(await no('Conferir câmara fria').getAttribute('aria-selected') === 'true', 'Seta para cima: irmão anterior');
+  // Arrastar para outro grupo muda a lista
+  const a = await no('Pensar na campanha').boundingBox();
+  const b = await p.locator('.agenda-mm-no.tipo-grupo', { hasText: 'Diretor de Operações' }).boundingBox();
+  await p.mouse.move(a.x + 20, a.y + 10); await p.mouse.down(); await p.mouse.move(a.x + 60, a.y + 40, { steps: 5 }); await p.mouse.move(b.x + 20, b.y + 10, { steps: 10 }); await p.mouse.up();
+  ok((await item(p, 'Pensar na campanha')).listaId === 'lista-diretor-operacoes', 'Arrastar para outro grupo muda a lista');
+  // Arrastar subtarefa para outro compromisso (antes, ajusta o mapa à tela)
+  await p.getByRole('button', { name: 'Ajustar à tela' }).click();
+  const sa = await no('Rascunho').boundingBox();
+  const sb = await no('Pagar fornecedores').boundingBox();
+  await p.mouse.move(sa.x + 15, sa.y + 8); await p.mouse.down(); await p.mouse.move(sa.x + 50, sa.y + 40, { steps: 5 }); await p.mouse.move(sb.x + 30, sb.y + 12, { steps: 10 }); await p.mouse.up();
+  ok((await item(p, 'Pagar fornecedores')).subtarefas.some((x) => x.titulo === 'Rascunho') && !(await item(p, 'Pensar na campanha')).subtarefas.length, 'Arrastar subtarefa leva para outro compromisso');
+  // Relação com nome
+  await no('Conferir câmara fria').click();
+  await p.locator('.agenda-mm-acoes').getByRole('button', { name: 'Relação' }).click();
+  await no('Pagar fornecedores').click();
+  ok((await dados(p)).relacoes.length === 1 && await p.locator('path.agenda-mm-relacao').count() === 1, 'Relação desenhada entre os compromissos');
+  await p.locator('.agenda-mm-acoes').getByRole('button', { name: 'Dar nome' }).click();
+  await dialogo(p).getByLabel('Nome', { exact: true }).fill('antes de');
+  await confirmar(p);
+  ok((await dados(p)).relacoes[0].rotulo === 'antes de' && (await p.locator('.agenda-mm-svg').textContent()).includes('antes de'), 'Relação com nome');
+  // Focar ramo, recolher, busca
+  await p.locator('.agenda-mm-no.tipo-grupo', { hasText: 'Diretor de Operações' }).click();
+  await p.locator('.agenda-mm-acoes').getByRole('button', { name: 'Focar' }).click();
+  ok(await p.locator('.agenda-mm-no.tipo-raiz').count() === 0 && await no('Entrevista').count() === 0, 'Focar mostra só o ramo');
+  await p.locator('.agenda-mm-acoes').getByRole('button', { name: 'Mapa inteiro' }).click();
+  await p.locator('.agenda-mm-no.tipo-grupo', { hasText: 'Gestão de Pessoas' }).click();
+  await p.keyboard.press('Control+/');
+  ok(await no('Entrevista de candidato').count() === 0, 'Ctrl+/ recolhe o ramo');
+  await p.locator('.agenda-mm-barra').getByLabel('Procurar').fill('entrevista');
+  ok(await no('Entrevista de candidato').count() === 1 && (await p.locator('.agenda-mm-status').textContent()).includes('1 encontrado'), 'Busca mostra e destaca, mesmo recolhido');
+  await p.locator('.agenda-mm-barra').getByLabel('Procurar').fill('');
+  await p.locator('.agenda-mm-chips').getByRole('button', { name: 'Expandir tudo' }).click();
+  // Estruturas e agrupamentos
+  for (const e of ['logico', 'organograma', 'arvore', 'linha']) {
+    await p.locator('.agenda-mm-barra').getByLabel('Estrutura').selectOption(e);
+    ok(await p.locator('.agenda-mm-no.tipo-item').count() >= 4, 'Estrutura ' + e + ' desenha os compromissos');
+  }
+  await p.locator('.agenda-mm-barra').getByLabel('Agrupar por').selectOption('data');
+  ok((await p.locator('.agenda-mm-no.tipo-grupo').allTextContents()).join('|').includes('Hoje'), 'Agrupar por data');
+  // Arrastar para "Amanhã" muda a data
+  const c = await no('Pagar fornecedores').boundingBox();
+  const d2 = await p.locator('.agenda-mm-no.tipo-grupo', { hasText: 'Amanhã' }).boundingBox();
+  await p.mouse.move(c.x + 20, c.y + 10); await p.mouse.down(); await p.mouse.move(c.x + 60, c.y + 40, { steps: 5 }); await p.mouse.move(d2.x + 15, d2.y + 10, { steps: 10 }); await p.mouse.up();
+  ok((await item(p, 'Pagar fornecedores')).data === await somar(p, hoje, 1), 'Arrastar para "Amanhã" muda a data');
+  await p.locator('.agenda-mm-barra').getByLabel('Agrupar por').selectOption('prioridade');
+  ok((await p.locator('.agenda-mm-no.tipo-grupo').allTextContents()).some((t) => t.includes('Prioridade muito alta')), 'Agrupar por prioridade');
+  await p.locator('.agenda-mm-barra').getByLabel('Agrupar por').selectOption('lista');
+  await p.locator('.agenda-mm-barra').getByLabel('Estrutura').selectOption('mapa');
+  // Exportar
+  for (const [botaoTxt, ext] of [['PNG', '.png'], ['SVG', '.svg'], ['Tópicos (.md)', '.md']]) {
+    const espera = p.waitForEvent('download');
+    await p.locator('.agenda-mm-chips').getByRole('button', { name: botaoTxt, exact: true }).click();
+    const baixado = await espera;
+    ok(baixado.suggestedFilename().endsWith(ext), 'Exporta ' + ext);
+    if (ext === '.md') { const caminho = await baixado.path(); const texto = (await import('node:fs')).readFileSync(caminho, 'utf8'); ok(texto.includes('## Gestão de Pessoas') && texto.includes('- [ ] Entrevista de candidato'), 'Tópicos em texto'); }
+  }
+  // Duplo toque abre o compromisso
+  await no('Entrevista de candidato').dblclick();
+  ok(await dialogo(p).filter({ hasText: 'Editar compromisso' }).count() === 1, 'Dois toques abrem o compromisso');
+  await p.keyboard.press('Escape');
+  await p.close();
+}
+
 /* ---------- Pessoas, permissões e avaliação (usuários da lista provisória) ---------- */
 {
   const sessao = (id, nome) => ({ ...SESSAO_LOCAL, perfil: { ...SESSAO_LOCAL.perfil, usuarioId: id, nome } });
@@ -422,6 +532,7 @@ const estados = [
   ['mês', (e) => { e.visao = 'calendario'; e.calendario.modo = 'mes'; }],
   ['ano', (e) => { e.visao = 'calendario'; e.calendario.modo = 'ano'; }],
   ['kanban', (e) => { e.visao = 'kanban'; e.listaId = ''; e.automatica = 'todos'; }],
+  ['mapa mental', (e) => { e.visao = 'mapa'; e.listaId = ''; e.automatica = 'todos'; }],
 ];
 let combinacoes = 0;
 for (const largura of [320, 390, 1024, 1900]) {
@@ -443,7 +554,7 @@ for (const largura of [320, 390, 1024, 1900]) {
         // Nada pode passar da largura do conteúdo (exceto o Kanban, que rola por dentro).
         const corpo = document.querySelector('#agenda-view .compras-content');
         const limite = corpo.getBoundingClientRect().right + 1;
-        const vazando = [...corpo.querySelectorAll('*')].filter((x) => !x.closest('.agenda-kanban') && visivel(x) && x.getBoundingClientRect().right > limite).length;
+        const vazando = [...corpo.querySelectorAll('*')].filter((x) => !x.closest('.agenda-kanban') && !x.closest('.agenda-mm-svg') && visivel(x) && x.getBoundingClientRect().right > limite).length;
         return {
           id: document.querySelector('.view.show') && document.querySelector('.view.show').id,
           lateral: Math.max(document.documentElement.scrollWidth - innerWidth, d ? d.scrollWidth - d.clientWidth : 0),

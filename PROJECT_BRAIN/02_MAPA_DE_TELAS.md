@@ -41,9 +41,11 @@ Texto fixo "reunirá os principais números".
   Os dois submenus abrem a lista de mesmo nome. Listas automáticas (Para hoje, Programados, Todos, Sinalizados,
   Atrasados, Atribuídos a mim, Concluídos), listas com cor e ícone, escrever "amanhã às 10", repetição, término,
   alerta com soneca, URL, local, subtarefas, ordem manual, mostrar/limpar concluídos. Calendário Dia/Semana
-  (grade de horas)/Mês/Ano. Kanban com colunas editáveis.
-- ⬜ Próxima: avaliação, perfil comportamental, permissões (gestor/colaborador), arquivos, chat — do protótipo
-  (`Pralis-Especificacao-Prototipo/Agenda`); precisam de regra do Rodrigo (doc 11, P-19).
+  (grade de horas)/Mês/Ano. Kanban com colunas editáveis. Local no mapa (Atual, Ao entrar, Ao sair, Personalizada).
+  Responsáveis e permissões do gestor, avaliação da execução. Mapa mental (estruturas Mapa, Lógico, Organograma,
+  Árvore, Linha do tempo; agrupar por lista, data, responsável, prioridade, coluna, etiqueta; relações; exporta).
+- ⬜ Chat e arquivos: precisam de backend (tabelas novas = migration; aguardando aprovação). Perfil comportamental:
+  em espera (P-19).
 
 ## Configuração · Cadastros Gerais (roxo)
 

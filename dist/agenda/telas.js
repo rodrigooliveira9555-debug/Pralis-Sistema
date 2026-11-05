@@ -120,13 +120,14 @@
     body.replaceChildren();
     if (A.erroLeitura) body.append(U.situacao('O dado salvo da Agenda não pôde ser lido. Nada será gravado até corrigir.', 'negativo'));
 
-    const abas = U.chips([['listas', 'Listas'], ['calendario', 'Calendário'], ['kanban', 'Kanban']], estado.visao, (v) => { estado.visao = v; render(); });
+    const abas = U.chips([['listas', 'Listas'], ['calendario', 'Calendário'], ['kanban', 'Kanban'], ['mapa', 'Mapa mental']], estado.visao, (v) => { estado.visao = v; render(); });
     abas.classList.add('compras-abas');
     body.append(abas);
     const aviso = window.CicluzAgendaAlertas && window.CicluzAgendaAlertas.convite();
     if (aviso) body.append(aviso);
     if (estado.visao === 'calendario') renderCalendario(body);
     else if (estado.visao === 'kanban') renderKanban(body);
+    else if (estado.visao === 'mapa') renderMapa(body);
     else renderListas(body);
     body.scrollTop = rolagem;
   }
@@ -421,6 +422,28 @@
       abrirItem: (id) => editar(id),
       novoNaColuna: (colunaId) => editar(null, padraoNovo({ colunaId: colunaId === A.CONCLUIDO ? '' : colunaId })),
       corDaLista: (id) => (A.lista(id) || {}).cor || COR,
+    });
+  }
+
+  /** Mapa mental (agenda/mapa-mental.js): a mesma escolha de lista ou lista automática. */
+  function renderMapa(body) {
+    const usuario = A.usuarioAtual();
+    const automatica = estado.listaId ? '' : (estado.automatica === 'concluidos' ? 'todos' : estado.automatica || 'todos');
+    const itens = D.filtrar(A.visiveis(), { ...estado, automatica, mostrarConcluidos: true, usuarioId: usuario }, new Date())
+      .concat(estado.listaId ? [] : A.visiveis().filter((i) => i.concluida && automatica === 'todos'))
+      .filter((i, n, todos) => todos.findIndex((x) => x.id === i.id) === n);
+    window.CicluzAgendaMapaMental.render(body, {
+      itens,
+      titulo: tituloVisao(),
+      cor: estado.listaId ? (A.lista(estado.listaId) || {}).cor || COR : COR,
+      corTexto: COR_TEXTO,
+      listaId: estado.listaId,
+      escopos: [['auto:todos', 'Todas as listas'], ...D.LISTAS_AUTOMATICAS.filter(([k]) => !['todos', 'concluidos'].includes(k)).map(([k, t]) => ['auto:' + k, t]), ...A.dados.listas.map((l) => ['lista:' + l.id, 'Lista: ' + l.nome])],
+      escopoAtual: estado.listaId ? 'lista:' + estado.listaId : 'auto:' + automatica,
+      escolher: (v) => { const [t, x] = v.split(':'); estado.listaId = t === 'lista' ? x : ''; estado.automatica = t === 'lista' ? '' : x; render(); },
+      aoMudar: render,
+      abrirItem: (id) => editar(id),
+      padrao: () => padraoNovo(),
     });
   }
 

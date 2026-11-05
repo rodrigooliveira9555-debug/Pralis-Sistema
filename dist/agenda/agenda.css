@@ -380,3 +380,24 @@ body.dark-theme .agenda-nota-valor { color: #d8c8fb; }
 .agenda-avaliar { color: #b45309; font-weight: 600; }
 body.dark-theme .agenda-avaliar { color: #fbbf24; }
 .agenda-circulo:disabled, .agenda-icone-botao:disabled { cursor: not-allowed; opacity: .45; }
+
+/* ---------- Mapa mental ---------- */
+.agenda-mm { display: grid; gap: 10px; min-width: 0; }
+.agenda-mm-barra { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 12px; }
+.agenda-mm-barra > .compras-campo { flex: 1 1 170px; min-width: 0; }
+.agenda-mm-chips { flex: 1 1 100%; }
+.agenda-mm-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 36px; }
+.agenda-mm-acoes-titulo { font: 700 13px/18px var(--ui-font); margin-right: 6px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agenda-mm-tela { position: relative; height: min(68vh, 720px); min-height: 360px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; overflow: hidden; touch-action: none; cursor: grab; outline: none; }
+.agenda-mm-tela:focus-visible { box-shadow: 0 0 0 2px var(--menu-accent); }
+.agenda-mm-svg { display: block; width: 100%; height: 100%; user-select: none; }
+.agenda-mm-no { cursor: pointer; }
+.agenda-mm-no.arrastando { opacity: .75; cursor: grabbing; }
+.agenda-mm-no.alvo > rect:first-child { stroke: #f59e0b; stroke-width: 3; stroke-dasharray: 6 4; }
+.agenda-mm-recolher, .agenda-mm-marca { cursor: pointer; }
+.agenda-mm-relacao-alvo { cursor: pointer; }
+.agenda-mm-zoom { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 4px; }
+.agenda-mm-zoom-botao { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--layout-line, #dedee3); background: var(--theme-card, #fff); color: var(--layout-ink, #3f3f46); font: 700 16px/1 var(--ui-font); cursor: pointer; box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
+body.dark-theme .agenda-mm-zoom-botao { color: #ececf1; }
+.agenda-mm-edicao { position: absolute; z-index: 2; max-width: calc(100% - 8px); box-shadow: 0 6px 20px rgba(0, 0, 0, .2); }
+.agenda-mm-status { margin: 0; font: 400 11px/16px var(--ui-font); color: var(--muted, #73737a); }

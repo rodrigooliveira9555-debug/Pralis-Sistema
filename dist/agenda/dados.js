@@ -27,11 +27,13 @@
 
   const novoId = (prefixo) => prefixo + '-' + (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
   const agoraIso = () => new Date().toISOString();
-  const inicial = () => ({ versao: 1, listas: structuredClone(LISTAS_INICIAIS), colunas: structuredClone(COLUNAS_INICIAIS), itens: [] });
+  const inicial = () => ({ versao: 1, listas: structuredClone(LISTAS_INICIAIS), colunas: structuredClone(COLUNAS_INICIAIS), itens: [], relacoes: [] });
   const valido = (x) => x && Array.isArray(x.listas) && Array.isArray(x.itens);
   /** Completa, na memória, o que dado antigo não tem. Não grava. */
   function completar(x) {
     if (!Array.isArray(x.colunas) || !x.colunas.length) x.colunas = structuredClone(COLUNAS_INICIAIS);
+    // Relações entre compromissos (mapa mental), acrescentadas depois: dado antigo recebe lista vazia.
+    if (!Array.isArray(x.relacoes)) x.relacoes = [];
     // Responsável único (primeira versão de 05/11/2026) vira a lista de pessoas: o mesmo id, como
     // responsável. Feito na memória; o formato novo só é gravado na próxima alteração.
     x.itens.forEach((i) => {
@@ -254,7 +256,7 @@
     if (item(id) && !acesso(item(id)).editar) return false;
     return transacao((d) => { const i = d.itens.find((x) => x.id === id); if (!i) return false; i.sinalizado = !i.sinalizado; i.atualizadoEm = agoraIso(); return true; });
   }
-  const excluirItem = (id) => (item(id) && !acesso(item(id)).excluir ? false : transacao((d) => { const n = d.itens.length; d.itens = d.itens.filter((i) => i.id !== id); return d.itens.length < n; }));
+  const excluirItem = (id) => (item(id) && !acesso(item(id)).excluir ? false : transacao((d) => { const n = d.itens.length; d.itens = d.itens.filter((i) => i.id !== id); d.relacoes = (d.relacoes || []).filter((r) => r.de !== id && r.para !== id); return d.itens.length < n; }));
 
   /** Leva para outro dia (e hora, na grade de horas), mantendo a duração. */
   function moverPara(id, data, hora) {
@@ -336,6 +338,92 @@
     return feito ? { ok: true } : erro('Não foi possível registrar a avaliação.');
   }
 
+  /* ---------- Edição direta (mapa mental) ---------- */
+
+  /** Muda campos de um compromisso com a mesma validação e permissão do formulário. */
+  function alterar(id, mudar, permissao = 'editar') {
+    const i = item(id);
+    if (!i) return erro('Compromisso não encontrado.');
+    if (!acesso(i)[permissao]) return erro(SEM_PERMISSAO[permissao]);
+    const copia = structuredClone(i);
+    const msg = mudar(copia);
+    if (typeof msg === 'string') return erro(msg);
+    const v = D.validar(copia);
+    if (v) return erro(v);
+    if (copia.listaId !== i.listaId && !lista(copia.listaId)) return erro('Lista não encontrada.');
+    const ok = transacao((d) => {
+      const x = d.itens.find((y) => y.id === id);
+      Object.assign(x, copia, { atualizadoEm: agoraIso() });
+    });
+    return ok ? { ok: true } : erro('Não foi possível salvar.');
+  }
+  const renomear = (id, titulo) => alterar(id, (c) => { c.titulo = String(titulo || '').trim(); });
+  /** Leva para outra lista, prioridade ou data (arrastar no mapa). */
+  function definir(id, campos) {
+    if (campos.colunaId !== undefined) return moverColuna(id, campos.colunaId) ? { ok: true } : erro(SEM_PERMISSAO.editar);
+    return alterar(id, (c) => {
+      if (campos.listaId !== undefined) c.listaId = campos.listaId;
+      if (campos.prioridade !== undefined) c.prioridade = campos.prioridade;
+      if (campos.data !== undefined) { c.data = campos.data; if (!c.data) { c.hora = ''; c.horaFim = ''; c.repeticao = null; c.alerta = null; } c.adiadoPara = ''; }
+    });
+  }
+  function adicionarSubtarefa(id, titulo, antesDe) {
+    const t = String(titulo || '').trim();
+    if (!t) return erro('Escreva a subtarefa.');
+    let novo = '';
+    const r = alterar(id, (c) => {
+      novo = novoId('sub');
+      const pos = antesDe ? c.subtarefas.findIndex((x) => x.id === antesDe) : -1;
+      c.subtarefas.splice(pos < 0 ? c.subtarefas.length : pos + 1, 0, { id: novo, titulo: t.slice(0, 200), concluida: false, concluidaEm: '' });
+    });
+    return r.ok ? { ok: true, id: novo } : r;
+  }
+  const renomearSubtarefa = (id, subId, titulo) => alterar(id, (c) => { const x = c.subtarefas.find((y) => y.id === subId); if (!x) return 'Subtarefa não encontrada.'; x.titulo = String(titulo || '').trim(); });
+  const excluirSubtarefa = (id, subId) => alterar(id, (c) => { const n = c.subtarefas.length; c.subtarefas = c.subtarefas.filter((y) => y.id !== subId); if (c.subtarefas.length === n) return 'Subtarefa não encontrada.'; });
+  /** Leva uma subtarefa para outro compromisso (as duas pontas precisam de "Editar"). */
+  function moverSubtarefa(deId, subId, paraId) {
+    if (deId === paraId) return { ok: true };
+    const de = item(deId);
+    const para = item(paraId);
+    if (!de || !para) return erro('Compromisso não encontrado.');
+    if (!acesso(de).editar || !acesso(para).editar) return erro(SEM_PERMISSAO.editar);
+    const sub = de.subtarefas.find((x) => x.id === subId);
+    if (!sub) return erro('Subtarefa não encontrada.');
+    const ok = transacao((d) => {
+      const a = d.itens.find((x) => x.id === deId);
+      const b = d.itens.find((x) => x.id === paraId);
+      a.subtarefas = a.subtarefas.filter((x) => x.id !== subId);
+      b.subtarefas.push(structuredClone(sub));
+      a.atualizadoEm = b.atualizadoEm = agoraIso();
+    });
+    return ok ? { ok: true } : erro('Não foi possível mover.');
+  }
+
+  /* Relações entre compromissos (as linhas do mapa mental, como no XMind): "depende de", "antes de"… */
+  function criarRelacao(de, para, rotulo) {
+    if (!de || !para || de === para) return erro('Escolha dois compromissos diferentes.');
+    if (!item(de) || !item(para)) return erro('Compromisso não encontrado.');
+    if (!acesso(item(de)).editar) return erro(SEM_PERMISSAO.editar);
+    if (dados.relacoes.some((r) => (r.de === de && r.para === para) || (r.de === para && r.para === de))) return erro('Esses compromissos já estão ligados.');
+    let novo = '';
+    const ok = transacao((d) => { novo = novoId('rel'); d.relacoes.push({ id: novo, de, para, rotulo: String(rotulo || '').trim().slice(0, 40) }); });
+    return ok ? { ok: true, id: novo } : erro('Não foi possível ligar.');
+  }
+  function rotularRelacao(id, rotulo) {
+    const r = dados.relacoes.find((x) => x.id === id);
+    if (!r) return erro('Ligação não encontrada.');
+    if (item(r.de) && !acesso(item(r.de)).editar) return erro(SEM_PERMISSAO.editar);
+    return transacao((d) => { d.relacoes.find((x) => x.id === id).rotulo = String(rotulo || '').trim().slice(0, 40); }) ? { ok: true } : erro('Não foi possível salvar.');
+  }
+  function excluirRelacao(id) {
+    const r = dados.relacoes.find((x) => x.id === id);
+    if (!r) return erro('Ligação não encontrada.');
+    if (item(r.de) && !acesso(item(r.de)).editar) return erro(SEM_PERMISSAO.editar);
+    return transacao((d) => { d.relacoes = d.relacoes.filter((x) => x.id !== id); }) ? { ok: true } : erro('Não foi possível excluir.');
+  }
+  /** Ligações que o usuário pode ver (as duas pontas visíveis). */
+  const relacoesVisiveis = () => { const ids = new Set(visiveis().map((i) => i.id)); return dados.relacoes.filter((r) => ids.has(r.de) && ids.has(r.para)); };
+
   /* ---------- Listas ---------- */
   function salvarLista(id, { nome, cor, icone }) {
     const n = String(nome || '').trim();
@@ -381,6 +469,8 @@
     get dados() { return dados; },
     get erroLeitura() { return erroLeitura; },
     transacao, novoId, pessoas, nomePessoa, usuarioAtual, acesso, visiveis, lista, item, coluna, colunaDe, avaliar,
+    alterar, renomear, definir, adicionarSubtarefa, renomearSubtarefa, excluirSubtarefa, moverSubtarefa,
+    criarRelacao, rotularRelacao, excluirRelacao, relacoesVisiveis,
     salvarItem, criarRapido, alternarConcluida, alternarSubtarefa, alternarSinalizado, excluirItem, moverPara, adiar,
     moverColuna, reordenar, limparConcluidos,
     salvarLista, definirOrdenacao, excluirLista, salvarColuna, excluirColuna,
