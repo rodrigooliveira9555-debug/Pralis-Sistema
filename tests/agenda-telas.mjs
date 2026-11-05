@@ -20,7 +20,7 @@ const KEY = 'cicluz-agenda-v1';
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
 const ENDERECO = { name: '', address: { road: 'Rua de Teste', house_number: '100', suburb: 'Centro', city: 'Juiz de Fora', state: 'Minas Gerais' } };
 const PRACA = { latitude: -21.7616, longitude: -43.3496 };
-async function abrirPagina(largura, altura = 844) {
+async function abrirPagina(largura, altura = 844, sessao = SESSAO_LOCAL) {
   const contexto = await navegador.newContext({ viewport: { width: largura, height: altura }, geolocation: PRACA, permissions: ['geolocation'] });
   await contexto.route('https://tile.openstreetmap.org/**', (r) => r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
   await contexto.route('https://nominatim.openstreetmap.org/**', (r) => {
@@ -28,7 +28,7 @@ async function abrirPagina(largura, altura = 844) {
     if (u.pathname.startsWith('/reverse')) return r.fulfill({ status: 200, json: { ...ENDERECO, lat: u.searchParams.get('lat'), lon: u.searchParams.get('lon') } });
     return r.fulfill({ status: 200, json: [{ lat: '-21.7700', lon: '-43.3500', name: 'Padaria de Teste', address: { road: 'Avenida de Teste', house_number: '50', city: 'Juiz de Fora', state: 'Minas Gerais' } }] });
   });
-  await contexto.addInitScript((s) => sessionStorage.setItem('cicluz-sync-aba', s), JSON.stringify(SESSAO_LOCAL));
+  await contexto.addInitScript((s) => sessionStorage.setItem('cicluz-sync-aba', s), JSON.stringify(sessao));
   const pagina = await contexto.newPage();
   pagina.on('pageerror', (e) => erros.push(largura + 'px: ' + e.message));
   await pagina.route('https://fonts.googleapis.com/**', (r) => r.abort());
@@ -106,7 +106,8 @@ const definirData = (p, rotulo, iso) => p.evaluate(([r, v]) => { const i = docum
   await dialogo(p).getByLabel('Endereço na internet (URL)').fill('https://cicluz.com.br');
   ok(await dialogo(p).locator('input[data-date-native][aria-label="Data"]').inputValue() === hoje, 'Em "Para hoje", o + já vem com a data de hoje');
   await dialogo(p).locator('.compras-chip', { hasText: /^Alta$/ }).click();
-  await dialogo(p).getByLabel('Responsável').selectOption({ index: 1 });
+  await dialogo(p).getByLabel('Adicionar pessoa').selectOption('u-rodrigo');
+  await dialogo(p).getByRole('button', { name: 'Adicionar como responsável' }).click();
   await dialogo(p).getByLabel('Notas').fill('levar a planilha de horários');
   await dialogo(p).getByRole('button', { name: 'Adicionar subtarefa' }).click();
   await dialogo(p).getByLabel('Subtarefa 1', { exact: true }).fill('imprimir escala');
@@ -315,6 +316,87 @@ const definirData = (p, rotulo, iso) => p.evaluate(([r, v]) => { const i = docum
   await p.close();
 }
 
+/* ---------- Pessoas, permissões e avaliação (usuários da lista provisória) ---------- */
+{
+  const sessao = (id, nome) => ({ ...SESSAO_LOCAL, perfil: { ...SESSAO_LOCAL.perfil, usuarioId: id, nome } });
+  // Um aparelho por pessoa, com o mesmo dado (o documento sincronizado).
+  let documento = null;
+  async function como(id, nome) {
+    const p = await abrirPagina(1280, 900, sessao(id, nome));
+    if (documento) { await p.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, documento]); await p.reload(); await p.waitForFunction(() => window.CicluzAgenda); }
+    await p.evaluate(() => { document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.abrir(''); });
+    return p;
+  }
+  const guardar = async (p) => { documento = await p.evaluate((k) => localStorage.getItem(k), KEY); await p.close(); };
+
+  // José (gestor) cria: Rodrigo responsável só com ver+concluir; Ana responsável padrão; avaliação em estrelas
+  let p = await como('u-jose', 'José · Compras');
+  await p.locator('.view.show .people-add-control').click();
+  await dialogo(p).getByLabel('Título').fill('Fechar o caixa');
+  ok((await dialogo(p).locator('.agenda-pessoas .profiles-note').first().textContent()).includes('Gestor: José · Compras'), 'Gestor é quem cria');
+  await dialogo(p).getByLabel('Adicionar pessoa').selectOption('u-rodrigo');
+  await dialogo(p).getByRole('button', { name: 'Adicionar como responsável' }).click();
+  await dialogo(p).getByLabel('Adicionar pessoa').selectOption('u-ana');
+  await dialogo(p).getByRole('button', { name: 'Adicionar como responsável' }).click();
+  await dialogo(p).getByRole('group', { name: 'Permissões de Rodrigo · Gerência' }).getByRole('button', { name: 'Editar' }).click();
+  await dialogo(p).getByLabel('Tipo de avaliação').selectOption('estrelas');
+  await confirmar(p);
+  let t = await item(p, 'Fechar o caixa');
+  ok(t.criadoPor === 'u-jose' && t.pessoas.length === 2 && t.pessoas.every((x) => x.responsavel), 'Dois responsáveis');
+  ok(!t.pessoas[0].editar && t.pessoas[0].concluir && t.pessoas[1].editar, 'Permissões por pessoa');
+  ok((await p.locator('.agenda-item', { hasText: 'Fechar o caixa' }).locator('.agenda-detalhes').textContent()).includes('Rodrigo · Gerência, Ana · Estoque'), 'A linha mostra os responsáveis');
+  await guardar(p);
+
+  // Quem não participa não vê
+  p = await como('u-outro', 'Pessoa de fora');
+  ok(!(await p.evaluate(() => CicluzAgendaDados.visiveis().some((i) => i.titulo === 'Fechar o caixa'))) && await p.locator('.agenda-item', { hasText: 'Fechar o caixa' }).count() === 0, 'Quem não participa não vê');
+  ok(await p.evaluate(() => CicluzAgendaDados.alternarConcluida(CicluzAgendaDados.dados.itens.find((i) => i.titulo === 'Fechar o caixa').id)) === '', 'Nem consegue concluir por fora da tela');
+  await p.close();
+
+  // Rodrigo: vê, não edita (só leitura), conclui; aparece em Atribuídos a mim
+  p = await como('u-rodrigo', 'Rodrigo · Gerência');
+  ok((await p.locator('.a-atribuidos b').textContent()) === '1', 'Atribuídos a mim conta o compromisso do responsável');
+  await p.locator('.agenda-linha-texto', { hasText: 'Fechar o caixa' }).click();
+  ok(await dialogo(p).filter({ hasText: 'editar é com o gestor' }).count() === 1 && await dialogo(p).getByLabel('Título').isDisabled(), 'Sem "Editar": abre só para leitura');
+  ok(await dialogo(p).getByRole('button', { name: 'Excluir compromisso' }).count() === 0, 'Sem "Excluir": não aparece o botão');
+  await p.keyboard.press('Escape');
+  ok(await p.evaluate(() => CicluzAgendaDados.salvarItem(CicluzAgendaDados.dados.itens.find((i) => i.titulo === 'Fechar o caixa').id, { titulo: 'mudado', listaId: 'lista-gestao-pessoas' }).erro) === 'Você não tem permissão para editar este compromisso.', 'Editar é barrado também por fora da tela');
+  await p.getByRole('button', { name: 'Concluir Fechar o caixa' }).click();
+  t = await item(p, 'Fechar o caixa');
+  ok(t.concluida, 'Com "Concluir", o responsável conclui');
+  // Autoavaliação do Rodrigo (depois de concluído; não vê a do gestor)
+  await p.locator('.agenda-automatica', { hasText: 'Concluídos' }).click();
+  ok((await p.locator('.agenda-item', { hasText: 'Fechar o caixa' }).locator('.agenda-detalhes').textContent()).includes('Avaliação pendente'), 'Concluído com avaliação pendente');
+  await p.locator('.agenda-linha-texto', { hasText: 'Fechar o caixa' }).click();
+  const painelR = dialogo(p).locator('.agenda-avaliacao-painel');
+  ok(await painelR.locator('.agenda-avaliacao-cartao').count() === 1 && (await painelR.textContent()).includes('Sua autoavaliação') && !(await painelR.textContent()).includes('Avaliação do gestor'), 'O responsável vê só a própria autoavaliação');
+  await painelR.getByRole('button', { name: '★★★★★', exact: true }).click();
+  await painelR.getByLabel('Comentário da avaliação').fill('fiz tudo no horário');
+  await painelR.getByRole('button', { name: 'Registrar avaliação' }).click();
+  ok((await dialogo(p).textContent()).includes('não muda'), 'Confirma avisando que não muda');
+  await confirmar(p);
+  ok((await painelR.textContent()).includes('★★★★★ (5/5)') && (await painelR.textContent()).includes('fiz tudo no horário'), 'Autoavaliação registrada');
+  ok(await painelR.getByRole('button', { name: 'Registrar avaliação' }).count() === 0, 'Depois de registrada, não há como mudar');
+  ok(await p.evaluate(() => CicluzAgendaDados.avaliar(CicluzAgendaDados.dados.itens.find((i) => i.titulo === 'Fechar o caixa').id, 'u-rodrigo', 1).erro) === 'Avaliação já registrada; ela não muda.', 'Nem por fora da tela');
+  ok(await p.evaluate(() => CicluzAgendaDados.avaliar(CicluzAgendaDados.dados.itens.find((i) => i.titulo === 'Fechar o caixa').id, 'u-ana', 3).erro) === 'Só o gestor e o próprio responsável avaliam.', 'Um responsável não avalia o outro');
+  await p.keyboard.press('Escape');
+  await guardar(p);
+
+  // José: avalia a execução do Rodrigo e vê a comparação
+  p = await como('u-jose', 'José · Compras');
+  await p.locator('.agenda-automatica', { hasText: 'Concluídos' }).click();
+  await p.locator('.agenda-linha-texto', { hasText: 'Fechar o caixa' }).click();
+  const cartaoR = dialogo(p).locator('.agenda-avaliacao-cartao', { hasText: 'Execução de Rodrigo' });
+  ok((await cartaoR.textContent()).includes('Autoavaliação★★★★★ (5/5)'), 'O gestor vê a autoavaliação');
+  await cartaoR.getByRole('button', { name: '★★★', exact: true }).click();
+  await cartaoR.getByRole('button', { name: 'Registrar avaliação' }).click();
+  await confirmar(p);
+  ok((await cartaoR.textContent()).includes('Avaliação do gestor★★★☆☆ (3/5)') && (await cartaoR.textContent()).includes('★★★★★ (5/5)'), 'Comparação: gestor 3 × autoavaliação 5');
+  ok(await dialogo(p).getByLabel('Tipo de avaliação').isDisabled(), 'Com nota registrada, o tipo de avaliação não muda');
+  await p.keyboard.press('Escape');
+  await p.close();
+}
+
 /* ---------- Celular: lista abre por cima, com "‹ Listas" ---------- */
 {
   const p = await abrirPagina(390);
@@ -330,7 +412,7 @@ const definirData = (p, rotulo, iso) => p.evaluate(([r, v]) => { const i = docum
 /* ---------- 2) Matriz de layout ---------- */
 const exemplo = (hoje) => JSON.stringify({ versao: 1, listas: [{ id: 'lista-gestao-pessoas', nome: 'Gestão de Pessoas', cor: '#7c3aed', icone: 'pessoas', ordenacao: 'manual' }, { id: 'lista-diretor-operacoes', nome: 'Diretor de Operações com nome comprido', cor: '#2563eb', icone: 'operacao', ordenacao: 'manual' }],
   colunas: [{ id: 'col-a-fazer', nome: 'A fazer' }, { id: 'col-em-progresso', nome: 'Em progresso' }],
-  itens: [1, 2, 3, 4, 5].map((n) => ({ id: 'i' + n, listaId: n % 2 ? 'lista-gestao-pessoas' : 'lista-diretor-operacoes', titulo: 'Compromisso de teste com um título bem comprido número ' + n, notas: 'Nota de teste', url: n === 1 ? 'https://cicluz.com.br' : '', local: 'Loja Centro', data: hoje, hora: n > 2 ? '0' + (n + 6) + ':00' : '', horaFim: n === 3 ? '10:30' : '', repeticao: n === 4 ? { tipo: 'semana', intervalo: 1, unidade: 'semana', diasSemana: [], fim: { tipo: 'nunca', data: '', vezes: 0 }, feitas: 0, ancora: hoje } : null, alerta: null, adiadoPara: '', prioridade: n === 1 ? 'muito-alta' : 'normal', sinalizado: n === 2, etiquetas: ['Etiqueta longa de teste'], responsavelId: 'u-rodrigo', colunaId: n === 5 ? 'col-em-progresso' : '', subtarefas: [{ id: 's' + n, titulo: 'Subtarefa', concluida: n === 1, concluidaEm: '' }], ordem: n, concluida: false, concluidaEm: '', criadoEm: '2026-11-01T10:00:00Z', criadoPor: '', atualizadoEm: '' })) });
+  itens: [1, 2, 3, 4, 5].map((n) => ({ id: 'i' + n, listaId: n % 2 ? 'lista-gestao-pessoas' : 'lista-diretor-operacoes', titulo: 'Compromisso de teste com um título bem comprido número ' + n, notas: 'Nota de teste', url: n === 1 ? 'https://cicluz.com.br' : '', local: 'Loja Centro', data: hoje, hora: n > 2 ? '0' + (n + 6) + ':00' : '', horaFim: n === 3 ? '10:30' : '', repeticao: n === 4 ? { tipo: 'semana', intervalo: 1, unidade: 'semana', diasSemana: [], fim: { tipo: 'nunca', data: '', vezes: 0 }, feitas: 0, ancora: hoje } : null, alerta: null, adiadoPara: '', prioridade: n === 1 ? 'muito-alta' : 'normal', sinalizado: n === 2, etiquetas: ['Etiqueta longa de teste'], pessoas: [{ id: 'u-rodrigo', responsavel: true, ver: true, editar: true, concluir: true, excluir: false }, { id: 'u-ana', responsavel: true, ver: true, editar: false, concluir: true, excluir: false }], avaliacao: { tipo: n === 1 ? 'estrelas' : '', notas: [] }, criadoPor: '', colunaId: n === 5 ? 'col-em-progresso' : '', subtarefas: [{ id: 's' + n, titulo: 'Subtarefa', concluida: n === 1, concluidaEm: '' }], ordem: n, concluida: false, concluidaEm: '', criadoEm: '2026-11-01T10:00:00Z', criadoPor: '', atualizadoEm: '' })) });
 const estados = [
   ['listas', (e) => { e.visao = 'listas'; e.detalhe = false; e.automatica = 'todos'; e.listaId = ''; }],
   ['lista aberta', (e) => { e.visao = 'listas'; e.detalhe = true; e.automatica = ''; e.listaId = 'lista-diretor-operacoes'; e.abertos.add('i2'); }],

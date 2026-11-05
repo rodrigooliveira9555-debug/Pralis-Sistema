@@ -16,6 +16,7 @@
 | DT-12 | Nunca testado em Safari/iPad/iPhone físico nem com teclado virtual | | o aparelho do dono é o menos testado |
 | DT-13 | Várias versões históricas de CSS coexistem; nenhum arquivo apagado no histórico | | a regra-mãe ("nada pronto com caminho antigo vivo") é violada |
 | DT-14 | A Agenda reaproveita as peças de tela do Compras (`compras/ui.js`, classes `compras-*`). Fonte única, mas o nome ficou do Compras: renomear para uma base comum quando um terceiro módulo usar | `dist/compras/ui.js` | confusão de nome, sem risco de comportamento |
+| DT-15 | Agenda: "quem não participa não vê" vale na tela e nas ações, mas a sincronização manda o documento inteiro (`cicluz-agenda-v1`) para todos os aparelhos da empresa; quem abrir o armazenamento do navegador vê tudo. Para esconder de verdade: servidor com compromisso por linha e permissão por pessoa (backend, doc 12) | `dist/agenda/dados.js`, `servidor/shared/src/documentos.ts` | privacidade entre colegas; não expõe fora da empresa |
 
 ## Ordem sugerida de pagamento
 1. DT-06 e DT-05 (apagar morto e seed duplicado) — 30 min, risco baixo.

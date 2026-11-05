@@ -7,7 +7,10 @@
  *   data 'AAAA-MM-DD' | '', hora 'HH:MM' | '' (vazio = dia todo), horaFim 'HH:MM' | '',
  *   repeticao: null | { tipo, intervalo, unidade, diasSemana[], fim: { tipo, data, vezes }, feitas, ancora },
  *   alerta: null | minutos antes, adiadoPara: '' | ISO (soneca do alerta),
- *   prioridade, sinalizado, etiquetas[], responsavelId, subtarefas[{ id, titulo, concluida, concluidaEm }],
+ *   prioridade, sinalizado, etiquetas[], subtarefas[{ id, titulo, concluida, concluidaEm }],
+ *   pessoas: [{ id, responsavel, ver, editar, concluir, excluir }] — o gestor é quem criou (criadoPor) e
+ *     escolhe quem participa e o que cada um pode fazer (decisão do Zé/Rodrigo, 05/11/2026),
+ *   avaliacao: { tipo: '' | 'estrelas' | 'niveis' | 'nps' | 'feito', notas: [{ avaliadoId, porId, papel: 'gestor' | 'auto', valor, comentario, em }] },
  *   localizacao: null | { lat, lng, aviso: '' | 'entrar' | 'sair', raio (metros) } — o endereço fica em `local`,
  *   colunaId (Kanban), ordem (ordem manual), concluida, concluidaEm, origemId (cópia concluída de uma
  *   repetição), criadoEm, criadoPor, atualizadoEm }
@@ -129,7 +132,7 @@
       case 'todos': return !item.concluida;
       case 'sinalizados': return !item.concluida && Boolean(item.sinalizado);
       case 'atrasados': return atrasado(item, agora);
-      case 'atribuidos': return !item.concluida && Boolean(usuarioId) && item.responsavelId === usuarioId;
+      case 'atribuidos': return !item.concluida && Boolean(usuarioId) && responsaveis(item).includes(usuarioId);
       case 'concluidos': return Boolean(item.concluida);
       default: return false;
     }
@@ -350,6 +353,80 @@
     return { dentro, disparar };
   }
 
+  /* ---------- Pessoas e permissões ---------- */
+  // Gestor = quem criou. Ele escolhe quem participa (responsáveis e outros) e o que cada um pode:
+  // ver, editar, concluir, excluir. Quem não participa não vê. Não depende de cargo nem de papel no login.
+  // Sem usuário logado (revisão local) ou compromisso sem criador (feito antes do login): sem controle.
+  const PERMISSOES = [['ver', 'Ver'], ['editar', 'Editar'], ['concluir', 'Concluir'], ['excluir', 'Excluir']];
+  const TUDO = { ver: true, editar: true, concluir: true, excluir: true };
+
+  /** Lista de pessoas limpa: sem repetir, e quem pode fazer algo também pode ver. */
+  function normalizarPessoas(lista) {
+    const vistos = new Set();
+    return (lista || []).filter((p) => p && p.id && !vistos.has(p.id) && vistos.add(p.id)).map((p) => {
+      const x = { id: String(p.id), responsavel: Boolean(p.responsavel), ver: Boolean(p.ver), editar: Boolean(p.editar), concluir: Boolean(p.concluir), excluir: Boolean(p.excluir) };
+      if (x.responsavel || x.editar || x.concluir || x.excluir) x.ver = true;
+      return x;
+    });
+  }
+  /** Permissões iniciais de quem é posto como responsável (o gestor pode mudar). */
+  const pessoaResponsavel = (id) => ({ id, responsavel: true, ver: true, editar: true, concluir: true, excluir: false });
+  const responsaveis = (item) => (item.pessoas || []).filter((p) => p.responsavel).map((p) => p.id);
+
+  /** O que o usuário pode fazer no compromisso. */
+  function acesso(item, usuarioId) {
+    if (!usuarioId || !item.criadoPor) return { ...TUDO, gestor: true, responsavel: responsaveis(item).includes(usuarioId) };
+    if (item.criadoPor === usuarioId) return { ...TUDO, gestor: true, responsavel: responsaveis(item).includes(usuarioId) };
+    const p = (item.pessoas || []).find((x) => x.id === usuarioId);
+    if (!p) return { ver: false, editar: false, concluir: false, excluir: false, gestor: false, responsavel: false };
+    return { ver: p.ver || p.editar || p.concluir || p.excluir || p.responsavel, editar: p.editar, concluir: p.concluir, excluir: p.excluir, gestor: false, responsavel: p.responsavel };
+  }
+
+  /* ---------- Avaliação ---------- */
+  // Depois de concluído, o gestor avalia a execução de cada responsável e cada responsável se autoavalia;
+  // o gestor vê a comparação. Nota registrada não muda. Por enquanto, só registro.
+  const TIPOS_AVALIACAO = [['', 'Sem avaliação'], ['estrelas', 'Estrelas (1 a 5)'], ['niveis', '5 níveis'], ['nps', 'NPS (0 a 10)'], ['feito', 'Feito (sim ou não)']];
+  const NIVEIS = ['Muito abaixo do esperado', 'Abaixo do esperado', 'Como esperado', 'Acima do esperado', 'Muito acima do esperado'];
+  function valorValido(tipo, v) {
+    if (!Number.isInteger(v)) return false;
+    if (tipo === 'estrelas' || tipo === 'niveis') return v >= 1 && v <= 5;
+    if (tipo === 'nps') return v >= 0 && v <= 10;
+    if (tipo === 'feito') return v === 0 || v === 1;
+    return false;
+  }
+  function textoNota(tipo, v) {
+    if (tipo === 'estrelas') return '★'.repeat(v) + '☆'.repeat(5 - v) + ' (' + v + '/5)';
+    if (tipo === 'niveis') return NIVEIS[v - 1] || '';
+    if (tipo === 'nps') return v + '/10';
+    if (tipo === 'feito') return v ? 'Feito' : 'Não feito';
+    return '';
+  }
+  /** Pode avaliar a execução de avaliadoId? Devolve { papel } ou { erro }. */
+  function podeAvaliar(item, usuarioId, avaliadoId) {
+    const tipo = item.avaliacao && item.avaliacao.tipo;
+    if (!tipo) return { erro: 'Este compromisso não tem avaliação.' };
+    if (!item.concluida) return { erro: 'A avaliação é feita depois de concluído.' };
+    if (!usuarioId) return { erro: 'Entre com seu usuário para avaliar.' };
+    if (!responsaveis(item).includes(avaliadoId)) return { erro: 'Só a execução dos responsáveis é avaliada.' };
+    const papel = item.criadoPor === usuarioId ? 'gestor' : usuarioId === avaliadoId ? 'auto' : '';
+    if (!papel) return { erro: 'Só o gestor e o próprio responsável avaliam.' };
+    if ((item.avaliacao.notas || []).some((n) => n.avaliadoId === avaliadoId && n.papel === papel)) return { erro: 'Avaliação já registrada; ela não muda.' };
+    return { papel };
+  }
+  /**
+   * Comparação por responsável { id, gestor, auto } que o usuário pode ver:
+   * o gestor vê as duas; o responsável vê só a própria autoavaliação.
+   */
+  function comparativo(item, usuarioId) {
+    const notas = (item.avaliacao && item.avaliacao.notas) || [];
+    const gestor = !usuarioId || !item.criadoPor || item.criadoPor === usuarioId;
+    return responsaveis(item).filter((id) => gestor || id === usuarioId).map((id) => ({
+      id,
+      gestor: gestor ? notas.find((n) => n.avaliadoId === id && n.papel === 'gestor') || null : null,
+      auto: notas.find((n) => n.avaliadoId === id && n.papel === 'auto') || null,
+    }));
+  }
+
   /* ---------- Escrever do jeito que se fala ---------- */
 
   const DIAS_FALADOS = [['domingo', 0], ['segunda', 1], ['terca', 2], ['quarta', 3], ['quinta', 4], ['sexta', 5], ['sabado', 6]];
@@ -448,6 +525,7 @@
     if (loc && loc.aviso && !temPonto(loc)) return 'Para avisar ao entrar ou sair, marque o lugar no mapa.';
     if (loc && loc.aviso && !['entrar', 'sair'].includes(loc.aviso)) return 'Aviso por lugar inválido.';
     if (loc && loc.aviso && !(+loc.raio >= 50 && +loc.raio <= 50000)) return 'Informe o raio do aviso.';
+    if (item.avaliacao && item.avaliacao.tipo && !TIPOS_AVALIACAO.some(([k]) => k === item.avaliacao.tipo)) return 'Tipo de avaliação inválido.';
     return '';
   }
 
@@ -531,6 +609,7 @@
   }
 
   const api = {
+    PERMISSOES, TIPOS_AVALIACAO, NIVEIS, normalizarPessoas, pessoaResponsavel, responsaveis, acesso, valorValido, textoNota, podeAvaliar, comparativo,
     PRIORIDADES, LISTAS_AUTOMATICAS, REPETICOES, ALERTAS, RAIOS, ORDENACOES, distancia, temPonto, cruzouLugar, HORA_ALERTA_DIA_TODO, DIAS_CURTOS, DIAS_LONGOS, MESES,
     isoData, horaAgora, somarDias, somarMeses, diaDaSemana, dataValida, horaValida, minutos, paraHora, diasEntre,
     atrasado, naLista, combinaBusca, comparar, comparador, filtrar, contagens, progresso, agrupar,

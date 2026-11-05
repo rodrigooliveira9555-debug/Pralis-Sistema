@@ -32,6 +32,13 @@
   /** Completa, na memória, o que dado antigo não tem. Não grava. */
   function completar(x) {
     if (!Array.isArray(x.colunas) || !x.colunas.length) x.colunas = structuredClone(COLUNAS_INICIAIS);
+    // Responsável único (primeira versão de 05/11/2026) vira a lista de pessoas: o mesmo id, como
+    // responsável. Feito na memória; o formato novo só é gravado na próxima alteração.
+    x.itens.forEach((i) => {
+      if (!Array.isArray(i.pessoas)) i.pessoas = i.responsavelId ? [D.pessoaResponsavel(i.responsavelId)] : [];
+      delete i.responsavelId;
+      if (!i.avaliacao) i.avaliacao = { tipo: '', notas: [] };
+    });
     x.listas.forEach((l) => { if (!l.icone) l.icone = 'lista'; if (!l.ordenacao) l.ordenacao = 'manual'; });
     return x;
   }
@@ -96,6 +103,10 @@
   }
   const nomePessoa = (id) => (id ? (pessoas().find((p) => p.id === id) || { nome: 'Pessoa não encontrada' }).nome : '');
   const usuarioAtual = () => { const p = window.CicluzSessao && window.CicluzSessao.perfil; return p && p.usuarioId && p.usuarioId !== 'local' ? p.usuarioId : ''; };
+  const acesso = (i) => D.acesso(i, usuarioAtual());
+  /** Compromissos que o usuário pode ver (quem não participa não vê). */
+  const visiveis = () => dados.itens.filter((i) => acesso(i).ver);
+  const SEM_PERMISSAO = { editar: 'Você não tem permissão para editar este compromisso.', concluir: 'Você não tem permissão para concluir este compromisso.', excluir: 'Você não tem permissão para excluir este compromisso.' };
 
   /* ---------- Consultas ---------- */
   const lista = (id) => dados.listas.find((l) => l.id === id);
@@ -139,7 +150,8 @@
       prioridade: campos.prioridade || 'normal',
       sinalizado: Boolean(campos.sinalizado),
       etiquetas: D.normalizarEtiquetas(campos.etiquetas),
-      responsavelId: campos.responsavelId || '',
+      pessoas: D.normalizarPessoas(campos.pessoas),
+      avaliacao: { tipo: (campos.avaliacao && campos.avaliacao.tipo) || '', notas: [] },
       colunaId: campos.colunaId || '',
       subtarefas: (campos.subtarefas || []).map((s) => ({
         id: s.id || novoId('sub'), titulo: String(s.titulo || '').trim(),
@@ -153,12 +165,19 @@
     const msg = D.validar(limpo);
     if (msg) return erro(msg);
     if (!lista(limpo.listaId)) return erro('Escolha a lista do compromisso.');
+    if (id && item(id) && !acesso(item(id)).editar) return erro(SEM_PERMISSAO.editar);
     let novo = id;
     const feito = transacao((d) => {
       const agora = agoraIso();
       if (id) {
         const atual = d.itens.find((i) => i.id === id);
         if (!atual) throw new Error('não encontrado');
+        const ac = D.acesso(atual, usuarioAtual());
+        if (!ac.editar) throw new Error('permissão');
+        // Só o gestor muda quem participa e o tipo de avaliação; nota já dada não muda nem some.
+        if (!ac.gestor) limpo.pessoas = atual.pessoas;
+        const notas = (atual.avaliacao && atual.avaliacao.notas) || [];
+        limpo.avaliacao = { tipo: !ac.gestor || notas.length ? (atual.avaliacao && atual.avaliacao.tipo) || '' : limpo.avaliacao.tipo, notas };
         // Mudou quando ou o alerta: a soneca antiga deixa de valer.
         if (atual.data !== limpo.data || atual.hora !== limpo.hora || atual.alerta !== limpo.alerta) atual.adiadoPara = '';
         Object.assign(atual, limpo, { atualizadoEm: agora });
@@ -192,6 +211,7 @@
    * Reabrir uma cópia concluída só desmarca a cópia.
    */
   function alternarConcluida(id) {
+    if (item(id) && !acesso(item(id)).concluir) return '';
     let resultado = '';
     const ok = transacao((d) => {
       const i = d.itens.find((x) => x.id === id);
@@ -200,7 +220,7 @@
       if (!i.concluida && D.temRepeticao(i)) {
         const p = D.proxima(i);
         if (p) {
-          d.itens.push({ ...structuredClone(i), id: novoId('ag'), repeticao: null, alerta: null, adiadoPara: '', concluida: true, concluidaEm: agora, origemId: i.id, atualizadoEm: agora });
+          d.itens.push({ ...structuredClone(i), id: novoId('ag'), repeticao: null, alerta: null, adiadoPara: '', concluida: true, concluidaEm: agora, origemId: i.id, atualizadoEm: agora, avaliacao: { tipo: (i.avaliacao && i.avaliacao.tipo) || '', notas: [] } });
           i.repeticao.feitas = (i.repeticao.feitas || 0) + 1;
           i.data = p.data;
           i.hora = p.hora;
@@ -221,6 +241,7 @@
     return ok ? resultado : '';
   }
   function alternarSubtarefa(id, subId) {
+    if (item(id) && !acesso(item(id)).concluir) return false;
     return transacao((d) => {
       const s = (d.itens.find((x) => x.id === id) || { subtarefas: [] }).subtarefas.find((x) => x.id === subId);
       if (!s) return false;
@@ -230,13 +251,15 @@
     });
   }
   function alternarSinalizado(id) {
+    if (item(id) && !acesso(item(id)).editar) return false;
     return transacao((d) => { const i = d.itens.find((x) => x.id === id); if (!i) return false; i.sinalizado = !i.sinalizado; i.atualizadoEm = agoraIso(); return true; });
   }
-  const excluirItem = (id) => transacao((d) => { const n = d.itens.length; d.itens = d.itens.filter((i) => i.id !== id); return d.itens.length < n; });
+  const excluirItem = (id) => (item(id) && !acesso(item(id)).excluir ? false : transacao((d) => { const n = d.itens.length; d.itens = d.itens.filter((i) => i.id !== id); return d.itens.length < n; }));
 
   /** Leva para outro dia (e hora, na grade de horas), mantendo a duração. */
   function moverPara(id, data, hora) {
     if (!D.dataValida(data) || (hora && !D.horaValida(hora))) return false;
+    if (item(id) && !acesso(item(id)).editar) return false;
     return transacao((d) => {
       const i = d.itens.find((x) => x.id === id);
       if (!i || i.concluida) return false;
@@ -262,6 +285,7 @@
     const i = item(id);
     if (!i) return false;
     if (colunaId === CONCLUIDO) return i.concluida ? true : Boolean(alternarConcluida(id));
+    if (!acesso(i).editar || (i.concluida && !acesso(i).concluir)) return false;
     return transacao((d) => {
       const x = d.itens.find((y) => y.id === id);
       if (x.concluida) { x.concluida = false; x.concluidaEm = ''; }
@@ -273,6 +297,7 @@
 
   /** Ordem manual: põe o compromisso antes de outro (ou no fim, sem "antesDe"). */
   function reordenar(id, antesDeId) {
+    if (item(id) && !acesso(item(id)).editar) return false;
     return transacao((d) => {
       const i = d.itens.find((x) => x.id === id);
       if (!i || id === antesDeId) return false;
@@ -287,8 +312,28 @@
   /** "Limpar" do Lembretes: apaga os concluídos de uma lista (ou de todas, sem listaId). */
   function limparConcluidos(listaId) {
     let n = 0;
-    const ok = transacao((d) => { const antes = d.itens.length; d.itens = d.itens.filter((i) => !(i.concluida && (!listaId || i.listaId === listaId))); n = antes - d.itens.length; });
+    const ok = transacao((d) => { const antes = d.itens.length; d.itens = d.itens.filter((i) => !(i.concluida && (!listaId || i.listaId === listaId) && D.acesso(i, usuarioAtual()).excluir)); n = antes - d.itens.length; });
     return ok ? n : 0;
+  }
+
+  /**
+   * Avaliação da execução (depois de concluído): o gestor avalia cada responsável; o responsável se
+   * autoavalia. Uma vez registrada, não muda.
+   */
+  function avaliar(id, avaliadoId, valor, comentario) {
+    const i = item(id);
+    if (!i) return erro('Compromisso não encontrado.');
+    const pode = D.podeAvaliar(i, usuarioAtual(), avaliadoId);
+    if (pode.erro) return erro(pode.erro);
+    const v = Number(valor);
+    if (!D.valorValido(i.avaliacao.tipo, v)) return erro('Escolha a nota.');
+    const feito = transacao((d) => {
+      const x = d.itens.find((y) => y.id === id);
+      const p = D.podeAvaliar(x, usuarioAtual(), avaliadoId);
+      if (p.erro) throw new Error(p.erro);
+      x.avaliacao.notas.push({ avaliadoId, porId: usuarioAtual(), papel: p.papel, valor: v, comentario: String(comentario || '').trim().slice(0, 500), em: agoraIso() });
+    });
+    return feito ? { ok: true } : erro('Não foi possível registrar a avaliação.');
   }
 
   /* ---------- Listas ---------- */
@@ -335,7 +380,7 @@
     KEY, LISTAS_INICIAIS, CORES_LISTA, CONCLUIDO,
     get dados() { return dados; },
     get erroLeitura() { return erroLeitura; },
-    transacao, novoId, pessoas, nomePessoa, usuarioAtual, lista, item, coluna, colunaDe,
+    transacao, novoId, pessoas, nomePessoa, usuarioAtual, acesso, visiveis, lista, item, coluna, colunaDe, avaliar,
     salvarItem, criarRapido, alternarConcluida, alternarSubtarefa, alternarSinalizado, excluirItem, moverPara, adiar,
     moverColuna, reordenar, limparConcluidos,
     salvarLista, definirOrdenacao, excluirLista, salvarColuna, excluirColuna,

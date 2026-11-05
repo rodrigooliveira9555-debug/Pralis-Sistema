@@ -64,7 +64,7 @@
   function cartao(i, ctx, agora) {
     const b = botao('', () => ctx.abrirItem(i.id), 'agenda-cartao' + (i.concluida ? ' concluida' : '') + (D.atrasado(i, agora) ? ' atrasada' : ''));
     b.style.setProperty('--lista-cor', ctx.corDaLista(i.listaId));
-    b.draggable = true;
+    b.draggable = A.acesso(i).editar || A.acesso(i).concluir;
     b.ondragstart = (e) => { e.dataTransfer.setData('text/agenda-cartao', i.id); e.dataTransfer.effectAllowed = 'move'; b.classList.add('arrastando'); };
     b.ondragend = () => b.classList.remove('arrastando');
     const topo = el('span', 'agenda-cartao-topo');
@@ -87,7 +87,8 @@
     b.append(prog, trilho);
     const meta = [];
     if (i.data) meta.push(D.quando(i, agora));
-    if (i.responsavelId) meta.push(A.nomePessoa(i.responsavelId));
+    const resps = D.responsaveis(i);
+    if (resps.length) meta.push(resps.map((p) => A.nomePessoa(p)).join(', '));
     (i.etiquetas || []).slice(0, 3).forEach((t) => meta.push('#' + t));
     if (meta.length) b.append(el('small', 'agenda-cartao-meta', meta.join(' · ')));
     return b;

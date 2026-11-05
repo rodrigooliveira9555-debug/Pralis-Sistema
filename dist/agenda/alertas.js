@@ -28,7 +28,7 @@
   const suportado = () => typeof Notification !== 'undefined';
 
   /* ---------- Aviso por lugar ---------- */
-  const comLugar = () => A.dados.itens.filter((i) => !i.concluida && i.localizacao && i.localizacao.aviso && D.temPonto(i.localizacao));
+  const comLugar = () => A.visiveis().filter((i) => !i.concluida && i.localizacao && i.localizacao.aviso && D.temPonto(i.localizacao));
   const dentro = {}; // id → estava dentro do raio (só na memória)
   let vigia = null;
   let localizacaoLiberada = false;
@@ -60,7 +60,7 @@
       return faixa;
     }
     if (!suportado() || Notification.permission !== 'default') return null;
-    if (!A.dados.itens.some((i) => D.momentoAlerta(i))) return null;
+    if (!A.visiveis().some((i) => D.momentoAlerta(i))) return null;
     const faixa = el('div', 'agenda-convite');
     faixa.append(el('span', null, 'Quer receber os alertas da Agenda como notificação neste aparelho?'), botao('Ativar avisos', () => {
       Notification.requestPermission().then(() => { faixa.remove(); });
@@ -115,7 +115,7 @@
   /** Confere os alertas vencidos. agora: injetável nos testes. */
   function conferir(agora = new Date()) {
     let novos = 0;
-    A.dados.itens.forEach((i) => {
+    A.visiveis().forEach((i) => {
       const m = D.momentoAlerta(i);
       if (!m || m > agora || agora - m > JANELA_MS) return;
       const chave = i.id + '@' + m.toISOString();

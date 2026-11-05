@@ -352,3 +352,31 @@ body.dark-theme .agenda-mapa-botao[aria-pressed="true"] { color: #f2f1f6; }
 .agenda-mapa-rodape { display: flex; flex-wrap: wrap; gap: 4px 16px; }
 .agenda-mapa-pino span { display: block; width: 22px; height: 22px; margin: 2px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #dc2626; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .35); }
 @media (max-width: 380px) { .agenda-mapa-botao small { font-size: 10px; } }
+
+/* ---------- Pessoas e permissões ---------- */
+.agenda-pessoas-lista { display: grid; gap: 8px; }
+.agenda-pessoa { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--layout-line, #dedee3); border-radius: 10px; }
+.agenda-pessoa > .compras-chips { grid-column: 1 / -1; grid-row: 2; }
+.agenda-pessoa-nome { overflow-wrap: anywhere; }
+.agenda-pessoas-adicionar { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 12px; }
+.agenda-pessoas-adicionar > .compras-campo { flex: 1 1 220px; }
+.agenda-pessoas .compras-chip:disabled { cursor: default; opacity: .85; }
+
+/* ---------- Avaliação ---------- */
+.agenda-avaliacao-painel { display: grid; gap: 10px; }
+.agenda-avaliacao-cartao { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--layout-line, #dedee3); border-radius: 10px; }
+.agenda-avaliacao-colunas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; }
+.agenda-avaliacao-slot { display: grid; gap: 4px; align-content: start; padding: 8px 10px; border-radius: 8px; background: color-mix(in srgb, var(--menu-accent) 6%, var(--theme-card, #fff)); min-width: 0; }
+body.dark-theme .agenda-avaliacao-slot { background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #1f1e24)); }
+.agenda-avaliacao-slot > small { font: 600 11px/16px var(--ui-font); color: var(--muted, #73737a); }
+.agenda-nota-valor { font: 700 15px/22px var(--ui-font); color: var(--panel-text, #5520ad); }
+body.dark-theme .agenda-nota-valor { color: #d8c8fb; }
+.agenda-avaliacao-slot em { font-size: 12px; overflow-wrap: anywhere; }
+.agenda-nota-pendente { font-size: 12px; color: var(--muted, #73737a); }
+.agenda-nota-entrada { display: grid; gap: 8px; }
+.agenda-nota-entrada > .btn { justify-self: start; }
+.agenda-nota-opcoes.tipo-estrelas .compras-chip { color: #d97706; letter-spacing: 1px; }
+.agenda-nota-opcoes.tipo-nps .compras-chip { min-width: 40px; justify-content: center; }
+.agenda-avaliar { color: #b45309; font-weight: 600; }
+body.dark-theme .agenda-avaliar { color: #fbbf24; }
+.agenda-circulo:disabled, .agenda-icone-botao:disabled { cursor: not-allowed; opacity: .45; }

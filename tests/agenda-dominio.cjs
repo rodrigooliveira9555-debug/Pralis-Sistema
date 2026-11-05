@@ -21,7 +21,7 @@ ok(() => assert.equal(d.atrasado(item({}), agora), false, 'sem data nunca atrasa
 const itens = [
   item({ id: 'a', data: '2026-11-05', hora: '09:00' }),
   item({ id: 'b', data: '2026-11-05' }),
-  item({ id: 'c', data: '2026-11-10', sinalizado: true, responsavelId: 'u1' }),
+  item({ id: 'c', data: '2026-11-10', sinalizado: true, pessoas: [{ id: 'u1', responsavel: true, ver: true }] }),
   item({ id: 'd' }),
   item({ id: 'e', data: '2026-11-01', concluida: true, concluidaEm: '2026-11-01T12:00:00Z' }),
   item({ id: 'f', data: '2026-11-03', listaId: 'l2' }),
@@ -101,6 +101,39 @@ ok(() => assert.equal(d.cruzouLugar({ ...comLugar('entrar'), concluida: true }, 
 ok(() => assert.match(d.validar(item({ localizacao: { aviso: 'entrar', raio: 200 } })), /marque o lugar/));
 ok(() => assert.match(d.validar(item({ localizacao: { lat: 120, lng: 0, aviso: '', raio: 200 } })), /inválido/));
 ok(() => assert.equal(d.validar(item({ localizacao: { ...praca, aviso: 'sair', raio: 500 } })), ''));
+
+// Pessoas e permissões: gestor = quem criou; os outros só fazem o que o gestor permitir
+const tarefa = item({ criadoPor: 'g', pessoas: d.normalizarPessoas([d.pessoaResponsavel('r1'), { id: 'r2', responsavel: true, concluir: true }, { id: 'v', ver: true }, { id: 'v', editar: true }]) });
+ok(() => assert.deepEqual(tarefa.pessoas.map((p) => p.id), ['r1', 'r2', 'v'], 'sem repetir'));
+ok(() => assert.equal(tarefa.pessoas[1].ver, true, 'quem conclui também vê'));
+ok(() => assert.deepEqual(d.responsaveis(tarefa), ['r1', 'r2'], 'mais de um responsável'));
+ok(() => assert.deepEqual(d.acesso(tarefa, 'g'), { ver: true, editar: true, concluir: true, excluir: true, gestor: true, responsavel: false }));
+ok(() => assert.deepEqual(d.acesso(tarefa, 'r1'), { ver: true, editar: true, concluir: true, excluir: false, gestor: false, responsavel: true }));
+ok(() => assert.deepEqual(d.acesso(tarefa, 'r2'), { ver: true, editar: false, concluir: true, excluir: false, gestor: false, responsavel: true }));
+ok(() => assert.equal(d.acesso(tarefa, 'v').editar, false, 'só ver'));
+ok(() => assert.equal(d.acesso(tarefa, 'fora').ver, false, 'quem não participa não vê'));
+ok(() => assert.equal(d.acesso(tarefa, '').gestor, true, 'sem login: sem controle'));
+ok(() => assert.equal(d.acesso({ ...tarefa, criadoPor: '' }, 'fora').ver, true, 'sem criador (antes do login): sem controle'));
+ok(() => assert.equal(d.naLista({ ...tarefa, data: '' }, 'atribuidos', agora, 'r2'), true, 'Atribuídos a mim: qualquer dos responsáveis'));
+
+// Avaliação: depois de concluído; gestor avalia cada responsável; responsável se autoavalia; não muda
+const avaliar = (extra) => ({ ...tarefa, concluida: true, avaliacao: { tipo: 'estrelas', notas: [] }, ...extra });
+ok(() => assert.match(d.podeAvaliar({ ...avaliar(), concluida: false }, 'g', 'r1').erro, /depois de concluído/));
+ok(() => assert.match(d.podeAvaliar(avaliar({ avaliacao: { tipo: '', notas: [] } }), 'g', 'r1').erro, /não tem avaliação/));
+ok(() => assert.deepEqual(d.podeAvaliar(avaliar(), 'g', 'r1'), { papel: 'gestor' }));
+ok(() => assert.deepEqual(d.podeAvaliar(avaliar(), 'r1', 'r1'), { papel: 'auto' }));
+ok(() => assert.match(d.podeAvaliar(avaliar(), 'r1', 'r2').erro, /gestor e o próprio/, 'responsável não avalia o outro'));
+ok(() => assert.match(d.podeAvaliar(avaliar(), 'v', 'r1').erro, /gestor e o próprio/));
+ok(() => assert.match(d.podeAvaliar(avaliar(), 'g', 'v').erro, /responsáveis/));
+ok(() => assert.match(d.podeAvaliar(avaliar(), '', 'r1').erro, /Entre/));
+const ja = avaliar({ avaliacao: { tipo: 'estrelas', notas: [{ avaliadoId: 'r1', porId: 'g', papel: 'gestor', valor: 4 }, { avaliadoId: 'r1', porId: 'r1', papel: 'auto', valor: 5 }] } });
+ok(() => assert.match(d.podeAvaliar(ja, 'g', 'r1').erro, /não muda/));
+ok(() => assert.deepEqual(d.comparativo(ja, 'g').map((c) => [c.id, c.gestor && c.gestor.valor, c.auto && c.auto.valor]), [['r1', 4, 5], ['r2', null, null]], 'o gestor vê a comparação'));
+ok(() => assert.deepEqual(d.comparativo(ja, 'r1').map((c) => [c.id, c.gestor, c.auto && c.auto.valor]), [['r1', null, 5]], 'o responsável vê só a própria'));
+ok(() => assert.equal(d.valorValido('nps', 0) && d.valorValido('nps', 10) && !d.valorValido('nps', 11) && !d.valorValido('estrelas', 0) && d.valorValido('feito', 1) && !d.valorValido('niveis', 2.5), true));
+ok(() => assert.equal(d.textoNota('estrelas', 4), '★★★★☆ (4/5)'));
+ok(() => assert.equal(d.textoNota('niveis', 3), 'Como esperado'));
+ok(() => assert.equal(d.textoNota('feito', 0), 'Não feito'));
 
 // Escrever do jeito que se fala
 const fala = (t) => { const r = d.interpretar(t, agora); return [r.titulo, r.data, r.hora, r.etiquetas.join(','), r.prioridade].join('|'); };

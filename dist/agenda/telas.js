@@ -104,7 +104,7 @@
     if (estado.visao === 'calendario') base.data = estado.calendario.ref;
     else if (estado.automatica === 'hoje') base.data = hoje;
     if (estado.visao !== 'calendario' && estado.automatica === 'sinalizados') base.sinalizado = true;
-    if (estado.visao !== 'calendario' && estado.automatica === 'atribuidos') base.responsavelId = A.usuarioAtual();
+    if (estado.visao !== 'calendario' && estado.automatica === 'atribuidos') { const u = A.usuarioAtual(); if (u) base.pessoas = [D.pessoaResponsavel(u)]; }
     if (base.data) base.alerta = 0;
     return { ...base, ...extra };
   }
@@ -141,7 +141,7 @@
     const conteudo = el('div', 'agenda-conteudo');
 
     // Listas automáticas
-    const conta = D.contagens(A.dados.itens, agora, usuario);
+    const conta = D.contagens(A.visiveis(), agora, usuario);
     const grade = el('div', 'agenda-automaticas');
     D.LISTAS_AUTOMATICAS.forEach(([chave, nome]) => {
       const ativo = !estado.listaId && estado.automatica === chave;
@@ -160,7 +160,7 @@
     minhas.append(cab);
     const linhas = el('div', 'compras-lista');
     A.dados.listas.forEach((l) => {
-      const qtd = A.dados.itens.filter((i) => i.listaId === l.id && !i.concluida).length;
+      const qtd = A.visiveis().filter((i) => i.listaId === l.id && !i.concluida).length;
       const r = botao('', () => escolher({ listaId: l.id }), 'compras-linha agenda-lista-linha' + (estado.listaId === l.id ? ' ativa' : ''));
       r.setAttribute('aria-pressed', String(estado.listaId === l.id));
       const ic = el('span', 'agenda-lista-icone');
@@ -192,7 +192,7 @@
     volta.innerHTML = svg(ICONES.voltar);
     volta.append(document.createTextNode('Listas'));
     const titulo = el('h3', 'agenda-detalhe-titulo' + (l ? ' de-lista' : ' a-' + estado.automatica), tituloVisao());
-    const itens = D.filtrar(A.dados.itens, { ...estado, usuarioId: usuario, ordenacao: l ? l.ordenacao : 'data' }, agora);
+    const itens = D.filtrar(A.visiveis(), { ...estado, usuarioId: usuario, ordenacao: l ? l.ordenacao : 'data' }, agora);
     const pendentes = itens.filter((i) => !i.concluida).length;
     titulo.append(el('span', 'compras-conta' + (pendentes ? ' ativa' : ''), String(estado.automatica === 'concluidos' ? itens.length : pendentes)));
     cab.append(volta, titulo);
@@ -212,7 +212,7 @@
 
     // "N concluídos · Limpar · Mostrar" (como no Lembretes)
     if (estado.automatica !== 'concluidos' && (l || estado.automatica === 'todos')) {
-      const feitos = A.dados.itens.filter((i) => i.concluida && (!l || i.listaId === l.id)).length;
+      const feitos = A.visiveis().filter((i) => i.concluida && (!l || i.listaId === l.id)).length;
       const barra = el('div', 'agenda-concluidos-barra');
       barra.append(el('span', null, feitos + (feitos === 1 ? ' concluído' : ' concluídos')));
       if (feitos) {
@@ -227,7 +227,7 @@
     preencher(lista, itens, agora, l);
 
     function atualizar() {
-      const novos = D.filtrar(A.dados.itens, { ...estado, usuarioId: usuario, ordenacao: l ? l.ordenacao : 'data' }, new Date());
+      const novos = D.filtrar(A.visiveis(), { ...estado, usuarioId: usuario, ordenacao: l ? l.ordenacao : 'data' }, new Date());
       preencher(lista, novos, new Date(), l);
     }
     return box;
@@ -263,7 +263,8 @@
     caixa.dataset.id = item.id;
     const r = el('div', 'compras-linha agenda-linha');
     const lst = A.lista(item.listaId);
-    if (arrastavel) {
+    const ac = A.acesso(item);
+    if (arrastavel && ac.editar) {
       // Ordem manual (computador): arrastar pela alça.
       const alca = el('span', 'agenda-alca');
       alca.innerHTML = svg(ICONES.arrastar);
@@ -283,6 +284,7 @@
     }, 'agenda-circulo');
     circulo.setAttribute('aria-label', (item.concluida ? 'Reabrir ' : 'Concluir ') + item.titulo);
     circulo.setAttribute('aria-pressed', String(Boolean(item.concluida)));
+    circulo.disabled = !ac.concluir;
     if (lst) circulo.style.setProperty('--lista-cor', lst.cor);
 
     const texto = botao('', () => editar(item.id), 'agenda-linha-texto');
@@ -294,7 +296,14 @@
     if (D.temRepeticao(item)) { const s = el('span', 'agenda-com-icone'); s.innerHTML = svg(ICONES.repetir); s.append(document.createTextNode(D.resumoRepeticao(item.repeticao))); partes.push(s); }
     if (D.momentoAlerta(item) && !item.concluida) { const s = el('span', 'agenda-com-icone'); s.innerHTML = svg(ICONES.sino); s.title = 'Com alerta'; s.setAttribute('aria-label', 'Com alerta'); partes.push(s); }
     if (!compacta && !estado.listaId && lst) { const s = el('span', 'agenda-de-lista'); const p = el('span', 'agenda-ponto'); p.style.setProperty('--lista-cor', lst.cor); s.append(p, document.createTextNode(lst.nome)); partes.push(s); }
-    if (item.responsavelId) partes.push(el('span', null, A.nomePessoa(item.responsavelId)));
+    const resps = D.responsaveis(item);
+    if (resps.length) partes.push(el('span', null, resps.map((p) => A.nomePessoa(p)).join(', ')));
+    if (item.concluida && item.avaliacao && item.avaliacao.tipo) {
+      const u = A.usuarioAtual();
+      const pendente = resps.some((p) => !D.podeAvaliar(item, u, p).erro);
+      if (pendente) partes.push(el('span', 'agenda-avaliar', 'Avaliação pendente'));
+      else { const notas = D.comparativo(item, u).flatMap((c) => [c.gestor, c.auto]).filter(Boolean); if (notas.length) partes.push(el('span', null, notas.length + ' avaliação(ões)')); }
+    }
     const avisoLugar = item.localizacao && item.localizacao.aviso ? (item.localizacao.aviso === 'entrar' ? 'ao entrar' : 'ao sair') : '';
     if (item.local || avisoLugar) { const s = el('span', 'agenda-com-icone'); s.innerHTML = svg(ICONES.local); s.append(document.createTextNode([item.local || 'Lugar marcado', avisoLugar].filter(Boolean).join(' · '))); partes.push(s); }
     (item.etiquetas || []).forEach((t) => partes.push(el('span', 'agenda-etiqueta', '#' + t)));
@@ -321,6 +330,7 @@
     flag.title = item.sinalizado ? 'Tirar sinalização' : 'Sinalizar';
     flag.setAttribute('aria-label', flag.title + ': ' + item.titulo);
     flag.setAttribute('aria-pressed', String(Boolean(item.sinalizado)));
+    flag.disabled = !ac.editar;
     direita.append(flag);
     if (pr.total) {
       const aberto = estado.abertos.has(item.id);
@@ -339,6 +349,7 @@
       item.subtarefas.forEach((s) => {
         const sl = el('div', 'agenda-subtarefa' + (s.concluida ? ' concluida' : ''));
         const c = botao('', () => A.alternarSubtarefa(item.id, s.id), 'agenda-circulo pequeno');
+        c.disabled = !ac.concluir;
         if (lst) c.style.setProperty('--lista-cor', lst.cor);
         c.setAttribute('aria-label', (s.concluida ? 'Reabrir ' : 'Concluir ') + s.titulo);
         c.setAttribute('aria-pressed', String(s.concluida));
@@ -385,7 +396,7 @@
   }
 
   function renderCalendario(body) {
-    const itens = A.dados.itens.filter((i) => D.combinaBusca(i, estado.busca));
+    const itens = A.visiveis().filter((i) => D.combinaBusca(i, estado.busca));
     window.CicluzAgendaCalendario.render(body, {
       itens,
       estado: estado.calendario,
@@ -400,7 +411,7 @@
   }
 
   function renderKanban(body) {
-    const itens = D.filtrar(A.dados.itens, { ...estado, mostrarConcluidos: true, usuarioId: A.usuarioAtual(), automatica: estado.listaId ? '' : (estado.automatica === 'concluidos' ? 'todos' : estado.automatica || 'todos') }, new Date());
+    const itens = D.filtrar(A.visiveis(), { ...estado, mostrarConcluidos: true, usuarioId: A.usuarioAtual(), automatica: estado.listaId ? '' : (estado.automatica === 'concluidos' ? 'todos' : estado.automatica || 'todos') }, new Date());
     window.CicluzAgendaKanban.render(body, {
       itens,
       titulo: tituloVisao(),
@@ -418,9 +429,13 @@
   function editar(id, base) {
     const atual = id ? A.item(id) : null;
     if (id && !atual) return U.avisar('Compromisso não encontrado.');
-    const v = structuredClone(atual || { titulo: '', notas: '', url: '', local: '', etiquetas: [], subtarefas: [], responsavelId: '', hora: '', horaFim: '', repeticao: null, alerta: null, colunaId: '', ...base });
+    const ac = atual ? A.acesso(atual) : { ver: true, editar: true, concluir: true, excluir: true, gestor: true };
+    if (atual && !ac.ver) return U.avisar('Você não participa deste compromisso.');
+    const v = structuredClone(atual || { titulo: '', notas: '', url: '', local: '', etiquetas: [], subtarefas: [], pessoas: [], avaliacao: { tipo: '', notas: [] }, hora: '', horaFim: '', repeticao: null, alerta: null, colunaId: '', ...base });
+    const soLeitura = !ac.editar;
     U.dialogo({
-      titulo: atual ? 'Editar compromisso' : 'Novo compromisso',
+      titulo: !atual ? 'Novo compromisso' : soLeitura ? 'Compromisso' : 'Editar compromisso',
+      subtitulo: soLeitura ? 'Você pode ver' + (ac.concluir ? ' e concluir' : '') + ' este compromisso; editar é com o gestor.' : undefined,
       largo: true,
       cor: COR,
       corTexto: COR_TEXTO,
@@ -441,7 +456,6 @@
         const repeticao = editorRepeticao(v.repeticao, () => data.value);
         const listaSel = U.seletor(A.dados.listas.map((l) => [l.id, l.nome]), v.listaId);
         const colunaSel = U.seletor(A.dados.colunas.map((c) => [c.id, c.nome]), A.coluna(v.colunaId) ? v.colunaId : A.dados.colunas[0].id);
-        const resp = U.seletor(A.pessoas().map((p) => [p.id, p.nome]), v.responsavelId, 'Ninguém');
         let prioridade = v.prioridade || 'normal';
         const prio = U.chips(D.PRIORIDADES, prioridade, (p) => { prioridade = p; });
         const sinal = el('label', 'compras-interruptor');
@@ -451,36 +465,48 @@
         const etiquetas = U.entrada('text', (v.etiquetas || []).join(', '), { placeholder: 'Ex.: Loja, Estoque' });
         const local = U.entrada('text', v.local || '', { maxLength: 200, placeholder: 'Endereço ou nome do lugar (opcional)' });
         // Lugar no mapa: Atual, Ao entrar, Ao sair, Personalizada (agenda/mapa.js).
-        const lugar = window.CicluzAgendaMapa.seletor({ localizacao: v.localizacao, local: v.local }, local);
+        const lugar = soLeitura ? null : window.CicluzAgendaMapa.seletor({ localizacao: v.localizacao, local: v.local }, local);
         const subtarefas = editorSubtarefas(v.subtarefas || []);
+        const pessoas = editorPessoas(v, atual, ac.gestor && !soLeitura);
+        const tipoAvaliacao = U.seletor(D.TIPOS_AVALIACAO, (v.avaliacao && v.avaliacao.tipo) || '');
+        const travadaAvaliacao = !ac.gestor || Boolean(atual && atual.avaliacao && atual.avaliacao.notas && atual.avaliacao.notas.length);
+        tipoAvaliacao.disabled = travadaAvaliacao;
 
         const secao = (nome, ...filhos) => { const s = el('fieldset', 'agenda-form-secao'); s.append(el('legend', null, nome), ...filhos); return s; };
         const grade = (...filhos) => { const g = el('div', 'agenda-form-grade'); g.append(...filhos); return g; };
         const prioCampo = el('div', 'compras-campo agenda-largo');
         prioCampo.append(el('span', 'compras-rotulo', 'Prioridade'), prio);
+        const avaliacaoSecao = secao('Avaliação', U.campo('Tipo de avaliação', tipoAvaliacao, travadaAvaliacao && ac.gestor ? 'Já há avaliação registrada: o tipo não muda.' : 'Depois de concluído, o gestor avalia a execução de cada responsável e cada um se autoavalia.'));
+        avaliacaoSecao.classList.add('agenda-avaliacao');
+        if (atual && atual.concluida && atual.avaliacao && atual.avaliacao.tipo) avaliacaoSecao.append(painelAvaliacao(atual));
 
         form.append(
           U.campo('Título', titulo),
           secao('Quando', grade(U.campo('Data', data), U.campo('Início', hora, 'Sem hora = dia todo.'), U.campo('Término', horaFim), U.campo('Alerta', alerta)), repeticao.no),
-          secao('Organização', grade(U.campo('Lista', listaSel), U.campo('Coluna do Kanban', colunaSel), U.campo('Responsável', resp), U.campo('Etiquetas', etiquetas, 'Separe por vírgula.'), prioCampo), sinal),
-          secao('Local', lugar.no, U.campo('Endereço', local, 'Preenchido ao marcar no mapa; pode escrever ou corrigir.')),
+          secao('Organização', grade(U.campo('Lista', listaSel), U.campo('Coluna do Kanban', colunaSel), U.campo('Etiquetas', etiquetas, 'Separe por vírgula.'), prioCampo), sinal),
+          pessoas.no,
+          secao('Local', ...(lugar ? [lugar.no] : []), U.campo('Endereço', local, soLeitura ? undefined : 'Preenchido ao marcar no mapa; pode escrever ou corrigir.')),
           secao('Detalhes', U.campo('Endereço na internet (URL)', url), U.campo('Notas', notas)),
           subtarefas.no,
+          avaliacaoSecao,
         );
         if (atual) {
           const rodape = el('div', 'agenda-form-rodape');
           const criado = 'Criado em ' + D.dataCurta(atual.criadoEm.slice(0, 10)) + (atual.criadoPor ? ' por ' + A.nomePessoa(atual.criadoPor) : '') + (atual.concluida ? ' · concluído em ' + D.dataCurta(atual.concluidaEm.slice(0, 10)) : '');
-          rodape.append(U.nota(criado), botao('Excluir compromisso', () => excluir(atual), 'btn secondary perigo-texto'));
+          rodape.append(U.nota(criado));
+          if (ac.excluir) rodape.append(botao('Excluir compromisso', () => excluir(atual), 'btn secondary perigo-texto'));
           form.append(rodape);
         }
-        return { titulo, notas, url, local, lugar, data, hora, horaFim, alerta, repeticao, listaSel, colunaSel, resp, sinalBox, etiquetas, subtarefas, prio: () => prioridade };
+        // Só leitura: tudo travado, menos a avaliação (o responsável se autoavalia).
+        if (soLeitura) form.querySelectorAll('input, select, textarea, button').forEach((x) => { if (!x.closest('.agenda-avaliacao-painel, .agenda-form-rodape, .compras-dialog-acoes')) x.disabled = true; });
+        return { titulo, notas, url, local, lugar, data, hora, horaFim, alerta, repeticao, listaSel, colunaSel, pessoas, tipoAvaliacao, sinalBox, etiquetas, subtarefas, prio: () => prioridade };
       },
-      salvar: (c) => {
+      salvar: soLeitura ? undefined : (c) => {
         const r = A.salvarItem(atual ? atual.id : '', {
-          titulo: c.titulo.value, notas: c.notas.value, url: c.url.value, local: c.local.value, localizacao: c.lugar.valor(),
+          titulo: c.titulo.value, notas: c.notas.value, url: c.url.value, local: c.local.value, localizacao: c.lugar ? c.lugar.valor() : (atual && atual.localizacao),
           data: c.data.value, hora: c.hora.value, horaFim: c.horaFim.value, alerta: c.alerta.value,
           repeticao: c.repeticao.valor(atual && atual.repeticao), listaId: c.listaSel.value, colunaId: c.colunaSel.value,
-          responsavelId: c.resp.value, prioridade: c.prio(), sinalizado: c.sinalBox.checked,
+          pessoas: c.pessoas.valor(), avaliacao: { tipo: c.tipoAvaliacao.value }, prioridade: c.prio(), sinalizado: c.sinalBox.checked,
           etiquetas: c.etiquetas.value, subtarefas: c.subtarefas.valor(),
         });
         if (r.erro) return r.erro;
@@ -488,6 +514,128 @@
         return undefined;
       },
     });
+  }
+
+  /**
+   * Pessoas e permissões: o gestor (quem criou) escolhe quem participa — responsáveis (pode ter mais de
+   * um) e outros — e o que cada um pode: ver, editar, concluir, excluir. Quem não está aqui não vê.
+   */
+  function editorPessoas(v, atual, podeMudar) {
+    const lista = D.normalizarPessoas(v.pessoas);
+    const no = el('fieldset', 'agenda-form-secao agenda-pessoas');
+    const gestorId = atual ? atual.criadoPor : A.usuarioAtual();
+    no.append(el('legend', null, 'Pessoas e permissões'), U.nota('Gestor: ' + (gestorId ? A.nomePessoa(gestorId) : 'quem criar o compromisso') + ' (quem criou). Ele escolhe quem participa e o que cada um pode fazer; quem não está aqui não vê o compromisso.'));
+    const linhas = el('div', 'agenda-pessoas-lista');
+    const adicionar = el('div', 'agenda-pessoas-adicionar');
+    no.append(linhas, adicionar);
+    const OPCOES = [['responsavel', 'Responsável'], ...D.PERMISSOES];
+    function desenhar() {
+      linhas.replaceChildren(...(lista.length ? lista.map((p, n) => {
+        const r = el('div', 'agenda-pessoa');
+        r.append(el('b', 'agenda-pessoa-nome', A.nomePessoa(p.id)));
+        const chips = el('div', 'compras-chips');
+        chips.setAttribute('role', 'group');
+        chips.setAttribute('aria-label', 'Permissões de ' + A.nomePessoa(p.id));
+        OPCOES.forEach(([k, rotulo]) => {
+          const b = botao(rotulo, () => {
+            p[k] = !p[k];
+            if (k !== 'ver' && p[k]) p.ver = true; // quem faz algo também vê
+            if (k === 'ver' && !p.ver) { p.editar = p.concluir = p.excluir = p.responsavel = false; }
+            desenhar();
+          }, 'compras-chip' + (p[k] ? ' ativo' : ''));
+          b.setAttribute('aria-pressed', String(Boolean(p[k])));
+          b.disabled = !podeMudar;
+          chips.append(b);
+        });
+        r.append(chips);
+        if (podeMudar) {
+          const tirar = botao('', () => { lista.splice(n, 1); desenhar(); }, 'agenda-icone-botao');
+          tirar.innerHTML = svg(ICONES.lixeira);
+          tirar.setAttribute('aria-label', 'Tirar ' + A.nomePessoa(p.id) + ' do compromisso');
+          r.append(tirar);
+        }
+        return r;
+      }) : [U.nota('Ninguém além do gestor. Adicione o responsável abaixo.')]));
+      adicionar.replaceChildren();
+      const livres = A.pessoas().filter((x) => x.id !== gestorId && !lista.some((p) => p.id === x.id));
+      if (podeMudar && livres.length) {
+        const sel = U.seletor(livres.map((x) => [x.id, x.nome]), '', 'Escolha a pessoa');
+        adicionar.append(U.campo('Adicionar pessoa', sel), botao('Adicionar como responsável', () => { if (!sel.value) return; lista.push(D.pessoaResponsavel(sel.value)); desenhar(); }, 'btn secondary'));
+      }
+    }
+    desenhar();
+    return { no, valor: () => D.normalizarPessoas(lista) };
+  }
+
+  /**
+   * Avaliação de um compromisso concluído: por responsável, a nota do gestor e a autoavaliação.
+   * O gestor vê as duas; o responsável vê a dele. Quem pode, registra a sua (e ela não muda).
+   */
+  function painelAvaliacao(item) {
+    const box = el('div', 'agenda-avaliacao-painel');
+    const u = A.usuarioAtual();
+    const tipo = item.avaliacao.tipo;
+    const desenhar = () => {
+      const atual = A.item(item.id) || item;
+      const comp = D.comparativo(atual, u);
+      box.replaceChildren();
+      if (!comp.length) { box.append(U.nota(D.responsaveis(atual).length ? 'A avaliação é vista pelo gestor e por cada responsável.' : 'Sem responsável: não há execução para avaliar.')); return; }
+      comp.forEach((c) => {
+        const cartao = el('div', 'agenda-avaliacao-cartao');
+        cartao.append(el('b', null, 'Execução de ' + A.nomePessoa(c.id)));
+        const colunas = el('div', 'agenda-avaliacao-colunas');
+        const verGestor = !u || !atual.criadoPor || atual.criadoPor === u;
+        const slot = (papel, rotulo, nota) => {
+          const s = el('div', 'agenda-avaliacao-slot');
+          s.append(el('small', null, rotulo));
+          if (nota) {
+            s.append(el('span', 'agenda-nota-valor', D.textoNota(tipo, nota.valor)));
+            if (nota.comentario) s.append(el('em', null, nota.comentario));
+            s.append(el('small', 'agenda-nota-quando', 'Em ' + D.dataCurta(nota.em.slice(0, 10))));
+          } else {
+            const pode = D.podeAvaliar(atual, u, c.id);
+            if (!pode.erro && pode.papel === papel) s.append(entradaNota(atual, c.id, desenhar));
+            else s.append(el('span', 'agenda-nota-pendente', 'Ainda não avaliou'));
+          }
+          return s;
+        };
+        if (verGestor) colunas.append(slot('gestor', 'Avaliação do gestor', c.gestor));
+        colunas.append(slot('auto', verGestor ? 'Autoavaliação' : 'Sua autoavaliação', c.auto));
+        cartao.append(colunas);
+        box.append(cartao);
+      });
+      if (!u && atual.criadoPor === '') box.append(U.nota('Para registrar avaliação, entre com seu usuário.'));
+    };
+    desenhar();
+    return box;
+  }
+
+  /** Escolher a nota (estrelas, 5 níveis, NPS ou feito) e registrar, com confirmação: não muda depois. */
+  function entradaNota(item, avaliadoId, depois) {
+    const tipo = item.avaliacao.tipo;
+    const box = el('div', 'agenda-nota-entrada');
+    let valor = null;
+    const opcoes = tipo === 'estrelas' ? [1, 2, 3, 4, 5].map((n) => [n, '★'.repeat(n)])
+      : tipo === 'niveis' ? D.NIVEIS.map((t, n) => [n + 1, t])
+      : tipo === 'nps' ? Array.from({ length: 11 }, (_, n) => [n, String(n)])
+      : [[1, 'Feito'], [0, 'Não feito']];
+    const chips = U.chips(opcoes, '', (v) => { valor = Number(v); });
+    chips.classList.add('agenda-nota-opcoes', 'tipo-' + tipo);
+    const comentario = U.entrada('text', '', { maxLength: 500, placeholder: 'Comentário (opcional)' });
+    comentario.dataset.textoLivre = '';
+    comentario.setAttribute('aria-label', 'Comentário da avaliação');
+    const registrar = botao('Registrar avaliação', () => {
+      if (valor === null) return U.avisar('Escolha a nota.');
+      U.confirmar('Registrar avaliação', 'Depois de registrada, a avaliação não muda. Confirmar ' + D.textoNota(tipo, valor) + '?', 'Registrar', () => {
+        const r = A.avaliar(item.id, avaliadoId, valor, comentario.value);
+        if (r.erro) return r.erro;
+        U.avisar('Avaliação registrada.');
+        depois();
+        return undefined;
+      }, { cor: COR, corTexto: COR_TEXTO, classe: 'agenda-dialog' });
+    }, 'btn secondary');
+    box.append(chips, comentario, registrar);
+    return box;
   }
 
   /** Repetir: as opções do Lembretes, a personalizada (a cada N dias/semanas/meses/anos, dias da semana) e o fim. */
@@ -635,7 +783,7 @@
         iconeCampo.append(el('span', 'compras-rotulo', 'Ícone'), icones);
         form.append(topo, corCampo, iconeCampo);
         if (lista) {
-          const qtd = A.dados.itens.filter((i) => i.listaId === lista.id).length;
+          const qtd = A.visiveis().filter((i) => i.listaId === lista.id).length;
           const rodape = el('div', 'agenda-form-rodape');
           rodape.append(U.nota(qtd + ' compromisso(s) nesta lista.'), botao('Excluir lista', () => {
             const r = A.excluirLista(lista.id);

@@ -28,7 +28,10 @@
   para a próxima data), término, alerta e soneca (`adiadoPara`), URL, local, ordem manual. Campos novos são
   opcionais (dado antigo continua válido). Preferências do aparelho, fora da sincronização:
   `cicluz-agenda-calendario-ocultas` e `cicluz-agenda-alertas-mostrados`.
-  Local: `local` (endereço) + `localizacao` { lat, lng, aviso entrar/sair, raio }.
+  Local: `local` (endereço) + `localizacao` { lat, lng, aviso entrar/sair, raio }. Pessoas: `pessoas`
+  [{ id, responsavel, ver, editar, concluir, excluir }] (o antigo `responsavelId` vira um responsável, na memória,
+  e o formato novo é gravado na próxima alteração); gestor = `criadoPor`. Avaliação: `avaliacao` { tipo, notas
+  [{ avaliadoId, porId, papel gestor|auto, valor, comentario, em }] }, só depois de concluído e sem mudar.
   Código: `dist/agenda/` (dominio, dados, calendario, kanban, telas, alertas, agenda.css).
 
 **Preferência de interface:** `tema`, `menu-ordem`, `menu-item-order-v1`, `sidebar-sections-v1`,
