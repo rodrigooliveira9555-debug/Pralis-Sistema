@@ -30,7 +30,7 @@
     return U.svg(U.ICONES[item ? item[3] : 'compras']);
   };
 
-  const voltarCompras = () => openSection(sections[3][0], 'Compras', 'compras', U.COR);
+  const voltarCompras = () => openSection(sections[3][0], 'Compras (revisar)', 'compras', U.COR);
 
   function registrar(nome, abrir) { telas[nome] = abrir; }
   function abrir(nome) {

@@ -10,7 +10,7 @@
   const SV = window.CicluzComprasServico;
   const M = window.CicluzCompras;
   const { el, botao, campo, entrada, seletor } = U;
-  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras / ';
+  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras (revisar) / ';
   const dataHora = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   const linkFornecedor = (token) => new URL('rodada.html?t=' + encodeURIComponent(token), location.href).href;
 

@@ -9,7 +9,7 @@
   const SV = window.CicluzComprasServico;
   const M = window.CicluzCompras;
   const { el, botao, campo, entrada, seletor } = U;
-  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras / ';
+  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras (revisar) / ';
   const horaDe = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const amanha = () => D.isoData(D.somarDias(new Date(), 1));
 

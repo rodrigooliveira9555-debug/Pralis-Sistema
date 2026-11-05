@@ -11,7 +11,7 @@
   const SV = window.CicluzComprasServico;
   const M = window.CicluzCompras;
   const { el, botao, campo, entrada, seletor } = U;
-  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras / ';
+  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras (revisar) / ';
   const RANK = [['vende', 'Mais vendidos'], ['compra', 'Mais comprados'], ['lucro', 'Mais lucro']];
 
   let tela = null;
