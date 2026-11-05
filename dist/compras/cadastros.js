@@ -1,6 +1,6 @@
 /*
  * Cadastro de Fornecedores, que alimenta Compras (Produtos fica em telas-produto-*.js).
- * Ficam em Configuração · Cadastros / Gerais → Diretor de Operação (área de cadastros do S2).
+ * Ficam em Cadastros → Diretor de Operações (área de cadastros do S2).
  * Espelham /fornecedores e /produtos do S1 (main).
  */
 (function () {
@@ -9,8 +9,8 @@
   const S = window.CicluzComprasDados;
   const U = window.CicluzComprasUI;
   const { el, botao, campo, entrada, seletor } = U;
-  const voltarCadastros = () => openSection(sections[6][0], 'Diretor de Operação', 'settings', '#7c3aed');
-  const CAMINHO = 'Configurações / Diretor de Operação / ';
+  const voltarCadastros = () => openSection(sections[7][0], 'Compras', 'cad-compras', '#7c3aed');
+  const CAMINHO = 'Cadastros / Compras / ';
 
   /* ---------- Máscaras ---------- */
   function mascaraDocumento(v) {
@@ -43,7 +43,7 @@
   let buscaF = '';
   function abrirFornecedores() {
     if (!telaF) {
-      telaF = U.criarTela({ id: 'compras-fornecedores', titulo: 'Fornecedores', caminho: CAMINHO + 'Fornecedores', icone: 'fornecedor', voltar: voltarCadastros });
+      telaF = U.criarTela({ id: 'compras-fornecedores', titulo: 'MER - Fornecedores', caminho: CAMINHO + 'MER - Fornecedores', icone: 'fornecedor', voltar: voltarCadastros });
       U.atalho(telaF, 'Novo fornecedor', 'M12 5v14M5 12h14', () => editarFornecedor(), { criar: true });
     }
     telaF.ativar();

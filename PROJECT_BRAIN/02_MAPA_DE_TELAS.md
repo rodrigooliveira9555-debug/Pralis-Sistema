@@ -39,6 +39,8 @@ Texto fixo "reunirá os principais números".
 ## Agenda · Atividades (roxo)
 - ⬜ Gestão de Pessoas, Diretor de Operações (2)
 
+> **05/11/2026:** os grupos "Configuração · Cadastros Gerais" e "Formulários · Cadastros/Avaliações" viraram cinco tópicos em OUTROS: Configurações (Diretor de Operações, vazio), Cadastros (Diretor de Operações → patrimônio, grupos DES/MER/RET/VND/CNT; Compras → MER - Fornecedores e MER - Produtos; Gestão de Pessoas → `people-settings`), Lançamentos (Financeiro, vazio; Gestão de Pessoas → `forms`: só Uniformes, Compras de Uniformes e Ocorrências; os cadastros de candidato/colaborador ficam em Cadastros › Gestão de Pessoas), Estoques (Compras, vazio) e Avaliações (Diretor de Operações, Gerentes, Colaboradores, Clientes, vazios). As seções abaixo mantêm o conteúdo; só mudou onde ficam no menu. Detalhe em DESIGN_SYSTEM.md.
+
 ## Configuração · Cadastros Gerais (roxo)
 
 ### Gestão de Pessoas (`people-settings`)
@@ -60,7 +62,7 @@ Texto fixo "reunirá os principais números".
 - ✅ **Cadastro completo c/ dependente** (`complete-registration.js`) — 4 etapas: (1) CPF e dados
   pessoais, (2) endereço e contato, (3) outros documentos, (4) dependentes. Anexos **não** são salvos.
 - 🟨 Cadastro simples — nome, CPF, função, turno, admissão. Não salva.
-- 🟨 Cadastro de patrimônio — bem, categoria, marca, modelo, série, nº, valor, área/setor/local.
+- 🟨 RET - Patrimônios (antes Cadastro de patrimônio) — bem, categoria, marca, modelo, série, nº, valor, área/setor/local.
   Não salva.
 
 ## Legado

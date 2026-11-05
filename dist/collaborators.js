@@ -3,7 +3,7 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,F=window.CicluzFieldRules,PH=window.CicluzPhoneBR;if(!P||!U)return;
 const {el,button,iconButton,svg,ICON,fold,dateBR,enumField,dialog,confirmDialog,uniformName,money}=U;
-const ACCENT='#7c3aed',PATH='Formulários / Gestão de Pessoas / Colaboradores Cadastrados';
+const ACCENT='#7c3aed',PATH='Cadastros / Gestão de Pessoas / Colaboradores Cadastrados';
 const STATUS_PILL={ATIVO:['Ativo','p-green'],INATIVO:['Inativo','p-red'],CANDIDATO:['Em admissão','p-yellow']};
 const data=()=>P.get();
 const pill=(t,c)=>el('span','pill '+c,t);
@@ -12,14 +12,14 @@ const view=el('section','view');view.id='collaborators-view';view.style.setPrope
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
 const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(ICON.user);const heading=el('div'),title=el('h2',null,'Colaboradores Cadastrados'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
-let back=()=>openSection(sections[7][0],'Gestão de Pessoas','forms',ACCENT);addShortcuts(view.id,()=>back());
+let back=()=>openSection(sections[7][0],'Gestão de Pessoas','people-settings',ACCENT);addShortcuts(view.id,()=>back());
 const note=el('div','form-note','Central do Departamento Pessoal neste navegador. Exames, ocorrências e uniformes aparecem na ficha pelo identificador do colaborador. Colaboradores marcados como demonstrativos vieram dos exemplos anteriores.');
 const tabs=el('div','uniforms-tabs');tabs.setAttribute('role','tablist');const tabDefs=[['list','Colaboradores'],['tracking','Acompanhamento da admissão']],tabBtn={},tabPanel={};
 for(const [k,l] of tabDefs){const b=button(l,()=>selectTab(k),'uniforms-tab');b.setAttribute('role','tab');b.id='collab-tab-'+k;tabBtn[k]=b;tabs.append(b);const pnl=el('div','uniforms-section');pnl.setAttribute('role','tabpanel');pnl.setAttribute('aria-labelledby',b.id);tabPanel[k]=pnl}
 const fileBox=el('div','uniforms-section people-file');
 body.append(note,tabs,tabPanel.list,tabPanel.tracking,fileBox);
 let active='list';
-function selectTab(k){active=k;fileBox.hidden=true;tabs.hidden=false;for(const [x,b] of Object.entries(tabBtn)){b.setAttribute('aria-selected',String(x===k));b.tabIndex=x===k?0:-1;tabPanel[x].hidden=x!==k}title.textContent='Colaboradores Cadastrados';subtitle.textContent=PATH;back=()=>openSection(sections[7][0],'Gestão de Pessoas','forms',ACCENT);if(k==='list')renderList();else renderTracking()}
+function selectTab(k){active=k;fileBox.hidden=true;tabs.hidden=false;for(const [x,b] of Object.entries(tabBtn)){b.setAttribute('aria-selected',String(x===k));b.tabIndex=x===k?0:-1;tabPanel[x].hidden=x!==k}title.textContent='Colaboradores Cadastrados';subtitle.textContent=PATH;back=()=>openSection(sections[7][0],'Gestão de Pessoas','people-settings',ACCENT);if(k==='list')renderList();else renderTracking()}
 
 /* ---------- Lista ---------- */
 const lp=tabPanel.list;

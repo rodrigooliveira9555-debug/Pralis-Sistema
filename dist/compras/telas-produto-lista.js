@@ -2,7 +2,7 @@
  * Produtos — lista (S1: pages/produtos/index.vue, ProdutoFiltros, ProdutoCard, ProdutoListaLinha,
  * ProdutoInativarLote). Busca, "Só ativos", "Só os que já vendi", filtros, 6 ordenações do S1 + menor
  * estoque (S2), paginação de 12, cards ou lista, foto ampliada e inativação em lote com frase.
- * Fica em Configuração · Cadastros / Gerais → Diretor de Operação.
+ * Fica em Cadastros → Diretor de Operações.
  */
 (function () {
   'use strict';
@@ -13,7 +13,7 @@
   const X = window.CicluzProdutoExtras;
   const PF = window.CicluzProdutoForm;
   const { el, botao, campo, entrada, seletor } = U;
-  const voltarCadastros = () => openSection(sections[6][0], 'Diretor de Operação', 'settings', '#7c3aed');
+  const voltarCadastros = () => openSection(sections[7][0], 'Compras', 'cad-compras', '#7c3aed');
   const TAMANHO_PAGINA = 12;
 
   let tela = null;
@@ -32,7 +32,7 @@
 
   function abrir() {
     if (!tela) {
-      tela = U.criarTela({ id: 'compras-produtos', titulo: 'Produtos', caminho: 'Configurações / Diretor de Operação / Produtos', icone: 'produto', voltar: voltarCadastros });
+      tela = U.criarTela({ id: 'compras-produtos', titulo: 'MER - Produtos', caminho: 'Cadastros / Compras / MER - Produtos', icone: 'produto', voltar: voltarCadastros });
       U.atalho(tela, 'Novo produto', 'M12 5v14M5 12h14', () => PF.editarProduto(null, render), { criar: true });
     }
     tela.ativar();

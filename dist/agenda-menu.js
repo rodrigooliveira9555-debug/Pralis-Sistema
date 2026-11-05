@@ -1,6 +1,6 @@
 (()=>{
-const tree=document.querySelector('.nav-tree'),other=tree?.querySelector('details[data-menu-name^="Configuração"]');if(!tree||!other)return;
-const members=[...tree.children],management=members.filter(n=>n!==other&&!n.dataset.menuName?.startsWith('Formulários')),others=members.filter(n=>!management.includes(n));
+const tree=document.querySelector('.nav-tree'),otherNames=['Configurações','Cadastros','Lançamentos','Estoques','Avaliações'],other=tree?.querySelector('details[data-menu-name="Configurações"]');if(!tree||!other)return;
+const members=[...tree.children],others=members.filter(n=>otherNames.includes(n.dataset.menuName)),management=members.filter(n=>!others.includes(n));
 const key='cicluz-sidebar-sections-v1';let state={};try{state=JSON.parse(localStorage.getItem(key)||'{}')}catch(e){}
 const calendar='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18M7 15h3M14 15h3"/></svg>';
 const agenda=document.createElement('details');agenda.className='agenda-menu-item';agenda.dataset.menuName='Agenda/Atividades';agenda.innerHTML='<summary title="Agenda · Atividades"><span class="drag-handle" aria-label="Segure e arraste para mover Agenda" title="Segure e arraste para mover">⠿</span><span class="menu-icon-circle" style="color:#7c3aed">'+calendar+'</span><span class="menu-name"><span>Agenda</span><small>Atividades</small></span></summary><div class="children"></div>';other.before(agenda);agenda.querySelector('summary').addEventListener('click',e=>{const side=document.querySelector('.side');if(side?.classList.contains('collapsed')){e.preventDefault();document.getElementById('toggleMenu').click();agenda.open=true}});
