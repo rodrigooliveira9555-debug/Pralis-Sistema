@@ -19,16 +19,10 @@
   const MAQUININHAS = [['pagbank-1', 'PagBank Moderninha · série 8C12-4471'], ['pagbank-2', 'PagBank Smart · série 9A03-1180']];
   const CAMINHO = 'Entradas · Vendas / Faturamento / Caixas / Abertura do caixa';
 
-  const moeda = (centavos) => (centavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  /** "1.234,56" → 123456; vazio ou inválido → null. */
-  function centavos(texto) {
-    const limpo = String(texto || '').replace(/[R$\s.]/g, '').replace(',', '.');
-    if (!limpo || !/^\d+(\.\d{1,2})?$/.test(limpo)) return null;
-    return Math.round(Number(limpo) * 100);
-  }
-  const hora = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const { moeda, centavos, hora } = C;
 
-  const novoEstado = () => ({ lacre: '', encontrado: false, conferido: null, dinheiro: '', moedas: '', motivo: '', responsavel: '', supervisor: '', maquininha: '', tentou: false, abertoEm: null });
+  // Campos do formulário (só da Abertura). O que vale para as outras telas fica em C.estado.
+  const novoEstado = () => ({ lacre: '', encontrado: false, conferido: null, dinheiro: '', moedas: '', motivo: '', responsavel: '', supervisor: '', maquininha: '', tentou: false });
   let estado = novoEstado();
   let tela = null;
   let espera = 0;
@@ -66,7 +60,7 @@
   }
 
   function render() {
-    if (estado.abertoEm) return renderAberto();
+    if (C.estado.status !== 'fechado') return renderAberto();
     const aviso = U.nota('Demonstração: dados fictícios, nada é gravado. Na casca, o único lacre válido é 001.');
     aviso.classList.add('caixa-aviso');
     const intro = U.nota('Preencha os três blocos. A abertura só é confirmada depois da conferência do malote.');
@@ -205,20 +199,40 @@
           ? el('p', 'caixa-diferenca bateu', '✓ Composição confirmada: dinheiro ' + moeda(MALOTE.dinheiro) + ' · moedas ' + moeda(MALOTE.moedas) + '.')
           : el('p', 'caixa-diferenca falta', 'Contagem informada: ' + moeda(contado) + ' para ' + moeda(MALOTE.dinheiro + MALOTE.moedas) + ' declarado.' + (estado.motivo.trim() ? ' Motivo: ' + estado.motivo.trim() : '')));
       },
-      salvar: () => { estado.abertoEm = hora(); render(); U.avisar('Caixa aberto às ' + estado.abertoEm + '.'); },
+      salvar: () => {
+        const abertoEm = hora();
+        // O turno nasce no estado único: o saldo inicial é o declarado (confere) ou o contado (divergência).
+        C.abrirCaixa({
+          pdv: POSTO.pdv, turno: POSTO.turno, usuario: POSTO.usuario, abertoEm,
+          lacre: estado.lacre.trim(), maquininha: maq,
+          responsavel: estado.responsavel, supervisor: estado.supervisor,
+          valorInicial: estado.conferido ? MALOTE.dinheiro + MALOTE.moedas : contado,
+          divergencia: estado.conferido ? 0 : contado - (MALOTE.dinheiro + MALOTE.moedas),
+          motivoDivergencia: estado.conferido ? '' : estado.motivo.trim(),
+          lacresSangria: MALOTE.lacresSangria.slice(), lacreFechamento: MALOTE.lacreFechamento,
+        });
+        render();
+        U.avisar('Caixa aberto às ' + abertoEm + '.');
+      },
     });
   }
 
   function renderAberto() {
+    const e = C.estado;
+    const a = e.abertura;
     const s = el('section', 'compras-secao caixa-bloco');
     const cab = el('div', 'compras-secao-cab');
-    cab.append(el('h3', null, 'Caixa aberto · ' + POSTO.pdv + ' · ' + POSTO.turno), U.situacao('Aberto às ' + estado.abertoEm, 'positivo'));
-    s.append(cab, U.nota('Responsável: ' + estado.responsavel + ' · Supervisor: ' + estado.supervisor + ' · Lacre ' + estado.lacre.trim() + '.'),
-      U.nota('As próximas telas da casca (turno, sangria, fechamento e Tesouraria) ainda serão desenhadas.'));
+    const fechando = e.status === 'em_fechamento';
+    cab.append(el('h3', null, (fechando ? 'Vendas encerradas · ' : 'Caixa aberto · ') + a.pdv + ' · ' + a.turno),
+      U.situacao(fechando ? 'Aguardando conferência' : 'Aberto às ' + a.abertoEm, fechando ? 'atencao' : 'positivo'));
+    s.append(cab, U.nota('Responsável: ' + a.responsavel + ' · Supervisor: ' + a.supervisor + ' · Lacre ' + a.lacre + '.'),
+      U.nota(fechando ? 'O fechamento será a próxima tela da casca.' : 'Próximo passo: acompanhar o turno (resumo, sangria, PDV e vendas).'));
     const acoes = el('div', 'caixa-acoes');
-    acoes.append(botao('Recomeçar a demonstração', () => { estado = novoEstado(); render(); }, 'btn secondary'));
+    acoes.append(botao('Recomeçar a demonstração', () => { C.reiniciar(); render(); }, 'btn secondary'));
+    if (!fechando) acoes.append(botao('Ir para o turno', () => C.abrir('turno'), 'btn'));
     tela.body.replaceChildren(s, acoes);
   }
 
+  C.aoReiniciar(() => { estado = novoEstado(); });
   C.registrar('abertura', abrir);
 })();
