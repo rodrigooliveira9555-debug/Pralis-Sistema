@@ -35,6 +35,8 @@
   let justContagem = '';
   let corrigindoContagem = false;
   let revisao = false;
+  let gerarRefresh = null; // recalcula o botão "Gerar relatório" no lugar
+  let fecharRefresh = null; // idem para "Encerrar" na etapa 4
 
   const corpoSecao = (...nos) => { const c = el('div', 'compras-corpo'); c.append(...nos); return c; };
   const dl = (pares) => {
@@ -189,7 +191,7 @@
     const g = el('div', 'caixa-grade');
     const campoDin = (chave, rotulo) => {
       const i = entrada('text', c[chave], { inputMode: 'decimal', placeholder: '0,00', readOnly: trancada });
-      i.oninput = () => { c[chave] = i.value; total.textContent = moeda((centavos(c.especie) || 0) + (centavos(c.moedas) || 0)); };
+      i.oninput = () => { c[chave] = i.value; total.textContent = moeda((centavos(c.especie) || 0) + (centavos(c.moedas) || 0)); if (gerarRefresh) gerarRefresh(); };
       return campo(rotulo, i);
     };
     const total = el('strong', 'caixa-dinheiro', moeda((centavos(c.especie) || 0) + (centavos(c.moedas) || 0)));
@@ -204,7 +206,7 @@
         const t = el('textarea');
         t.rows = 2;
         t.value = justContagem;
-        t.oninput = () => { justContagem = t.value; };
+        t.oninput = () => { justContagem = t.value; if (gerarRefresh) gerarRefresh(); };
         corpoS.push(campo('Por que a contagem mudou? (obrigatório)', t, 'Mínimo 5 letras. A primeira contagem fica no histórico.'));
       }
       if (c.registrada.correcoes.length) corpoS.push(U.nota('Correções: ' + c.registrada.correcoes.map((x) => moeda(x.de) + ' → ' + moeda(x.para) + ' (' + x.justificativa + ')').join(' · ')));
@@ -276,31 +278,43 @@
       const j = el('textarea');
       j.rows = 2;
       j.value = fo.correcao;
-      j.oninput = () => { fo.correcao = j.value; };
+      j.oninput = () => { fo.correcao = j.value; if (gerarRefresh) gerarRefresh(); };
       caixa.append(campo('Explique por que o valor mudou (mínimo 5 letras)', j, 'Fica registrado em "Correções manuais" no relatório final e no dossiê da Tesouraria.'));
     }
     return caixa;
   }
 
-  function blocoGerar(f) {
+  /** Pendências para gerar o relatório (recalculadas sem redesenhar a tela: o botão não pode trocar de lugar entre o foco e o clique). */
+  function pendenciasGerar(f) {
     const c = f.contagem;
     const fo = f.folha;
+    const p = [];
+    if (!fo.anexo) p.push('Anexe a folha do CREARE.');
+    else if (!fo.campos) p.push('Leia a folha (os valores precisam estar preenchidos).');
+    if (centavos(c.especie) === null || centavos(c.moedas) === null) p.push('Informe cédulas e moedas no passo 1 para gerar o relatório.');
+    if (corrigindoContagem && justContagem.trim().length < 5) p.push('Explique por que a contagem mudou para gerar de novo.');
+    if (fo.campos && !fo.travados && fo.correcao.trim().length < 5) p.push('Explique por que o valor da folha mudou (mínimo 5 letras).');
+    return p;
+  }
+
+  function blocoGerar(f) {
+    const c = f.contagem;
     const s = U.secao('3 · Gerar relatório de vendas');
     const itens = [];
-    const pendencias = [];
-    if (!fo.anexo) pendencias.push('Anexe a folha do CREARE.');
-    else if (!fo.campos) pendencias.push('Leia a folha (os valores precisam estar preenchidos).');
-    if (centavos(c.especie) === null || centavos(c.moedas) === null) pendencias.push('Informe cédulas e moedas no passo 1 para gerar o relatório.');
-    if (corrigindoContagem && justContagem.trim().length < 5) pendencias.push('Explique por que a contagem mudou para gerar de novo.');
-    if (fo.campos && !fo.travados && fo.correcao.trim().length < 5) pendencias.push('Explique por que o valor da folha mudou (mínimo 5 letras).');
-    if (pendencias.length) itens.push(el('ul', 'caixa-lista-pend'));
-    pendencias.forEach((p) => itens[0].append(el('li', null, p)));
+    const lista = el('ul', 'caixa-lista-pend');
+    const b = botao(f.relatorioGerado ? 'Gerar de novo' : 'Gerar relatório de vendas', gerarRelatorio, 'btn');
+    gerarRefresh = () => {
+      const p = pendenciasGerar(f);
+      lista.replaceChildren(...p.map((t) => el('li', null, t)));
+      lista.hidden = !p.length;
+      b.disabled = p.length > 0;
+    };
+    gerarRefresh();
+    itens.push(lista);
     const msg = el('div', 'caixa-pendencias');
     msg.setAttribute('role', 'alert');
     if (erroGerar) msg.append(el('b', null, erroGerar));
     itens.push(msg);
-    const b = botao(f.relatorioGerado ? 'Gerar de novo' : 'Gerar relatório de vendas', gerarRelatorio, 'btn');
-    b.disabled = pendencias.length > 0;
     const acoes = el('div', 'caixa-acoes');
     acoes.append(b);
     itens.push(acoes);
@@ -499,21 +513,26 @@
     const obs = el('textarea');
     obs.rows = 2;
     obs.value = f.observacao;
-    obs.oninput = () => { f.observacao = obs.value; };
-    obs.onchange = () => atualizar();
+    obs.oninput = () => { f.observacao = obs.value; if (fecharRefresh) fecharRefresh(); };
     const diverge = f.contagem.registrada && f.contagem.registrada.diferenca !== 0;
     itens.push(campo(diverge ? 'Observação da divergência (obrigatória)' : 'Observação do fechamento', obs, 'Máximo 500 caracteres. (No principal também dá para ditar por voz.)'));
     itens.push(dl([['Caixa responsável', a.responsavel], ['Gerente responsável', f.gerente || 'Falta confirmar']]));
 
-    const pend = pendencias(f);
+    // Pendências e botão são atualizados no lugar (digitar a observação não pode trocar o botão antes do clique).
     const box = el('div', 'caixa-pendencias');
     box.setAttribute('role', 'alert');
-    if (pend.length) { box.append(el('b', null, 'Antes de encerrar:')); const ul = el('ul'); pend.forEach((p) => ul.append(el('li', null, p))); box.append(ul); }
+    const b = botao('', revisar, 'btn');
+    fecharRefresh = () => {
+      const pend = pendencias(f);
+      box.replaceChildren();
+      if (pend.length) { box.append(el('b', null, 'Antes de encerrar:')); const ul = el('ul'); pend.forEach((p) => ul.append(el('li', null, p))); box.append(ul); }
+      const falta = f.contagem.registrada && f.contagem.registrada.diferenca < 0;
+      b.textContent = falta ? 'Encerrar com divergência' : 'Encerrar e enviar à Tesouraria';
+      b.disabled = pend.length > 0;
+    };
+    fecharRefresh();
     itens.push(box);
     const acoes = el('div', 'caixa-acoes');
-    const falta = f.contagem.registrada && f.contagem.registrada.diferenca < 0;
-    const b = botao(falta ? 'Encerrar com divergência' : 'Encerrar e enviar à Tesouraria', revisar, 'btn');
-    b.disabled = pend.length > 0;
     acoes.append(b);
     itens.push(acoes);
     s.append(corpoSecao(...itens));
