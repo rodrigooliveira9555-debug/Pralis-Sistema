@@ -148,7 +148,7 @@
   let telaU = null;
   function abrirUnidades() {
     if (!telaU) {
-      telaU = U.criarTela({ id: 'compras-unidades', titulo: 'Unidades de medida', caminho: 'Saídas · Mercadorias / CMV / Compras / Unidades de medida', icone: 'lista', voltar: M.voltarCompras });
+      telaU = U.criarTela({ id: 'compras-unidades', titulo: 'Unidades de medida', caminho: 'Saídas · Mercadorias / Cadastros Geral / Unidades de medida', icone: 'lista', voltar: () => menuBack(3, 'Cadastros Geral')() });
       U.atalho(telaU, 'Nova unidade', 'M12 5v14M5 12h14', () => editarUnidade(), { criar: true });
     }
     telaU.ativar();

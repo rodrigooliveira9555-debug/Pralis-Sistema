@@ -17,11 +17,11 @@
     ['conferencias', 'Conferências de estoque', 'Contagens agendadas', 'conferencia'],
     ['estoque', 'Estoques de produtos', 'Saldo por produto e extrato', 'estoque'],
     ['cadastro', 'Cadastro de compras', 'Catálogo, histórico e preço-base', 'cadastro'],
-    ['unidades', 'Unidades de medida', 'Siglas de embalagem, medida de compra e conversões', 'lista'],
   ];
   const CADASTROS = [
     ['fornecedores', 'MER - Fornecedores', 'Quem vende para a loja', 'fornecedor'],
     ['produtos', 'MER - Produtos', 'Cadastro, como se compra e estoque mínimo', 'produto'],
+    ['unidades', 'Unidades de medida', 'Siglas de embalagem, medida de compra e conversões', 'lista'],
   ];
   const icone = (target) => {
     const nome = target.replace(/^compras:/, '');
