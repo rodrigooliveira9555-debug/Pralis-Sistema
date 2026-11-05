@@ -21,7 +21,7 @@
   let aba = 'caminho';
   let filtroForn = '';
   function abrirPedidos() {
-    if (!telaP) telaP = U.criarTela({ id: 'compras-pedidos', titulo: 'Pedidos a receber', caminho: CAMINHO + 'Pedidos a receber', icone: 'caminhao', voltar: M.voltarCompras });
+    if (!telaP) telaP = U.criarTela({ id: 'compras-pedidos', titulo: 'Pedidos a Receber', caminho: CAMINHO + 'Pedidos a Receber', icone: 'caminhao', voltar: M.voltarCompras });
     telaP.ativar();
     renderPedidos();
   }

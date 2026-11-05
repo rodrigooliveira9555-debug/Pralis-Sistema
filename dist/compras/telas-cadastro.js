@@ -19,7 +19,7 @@
   const fh = { meses: 3, busca: '' };
 
   function abrir() {
-    if (!tela) tela = U.criarTela({ id: 'compras-cadastro', titulo: 'Cadastro de compras', caminho: CAMINHO + 'Cadastro de compras', icone: 'cadastro', voltar: M.voltarCompras });
+    if (!tela) tela = U.criarTela({ id: 'compras-cadastro', titulo: 'Cadastro de Compras', caminho: CAMINHO + 'Cadastro de Compras', icone: 'cadastro', voltar: M.voltarCompras });
     tela.ativar();
     render();
   }

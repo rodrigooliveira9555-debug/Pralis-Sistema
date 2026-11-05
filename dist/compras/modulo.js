@@ -10,11 +10,11 @@
   const telas = {};
 
   const CARDS = [
-    ['solicitacao', 'Solicitação de compra', 'Fazer o pedido e enviar aos fornecedores', 'lista'],
-    ['cotacao', 'Cotação por fornecedor', 'Produtos em cotação e decisões', 'compras'],
-    ['pedidos', 'Pedidos a receber', 'O que foi comprado e o recebimento', 'caminhao'],
-    ['conferencias', 'Conferências de estoque', 'Contagens agendadas', 'conferencia'],
-    ['cadastro', 'Cadastro de compras', 'Catálogo, histórico e preço-base', 'cadastro'],
+    ['solicitacao', 'Solicitação de Compra', 'Fazer o pedido e enviar aos fornecedores', 'lista'],
+    ['cotacao', 'Cotação por Fornecedor', 'Produtos em cotação e decisões', 'compras'],
+    ['pedidos', 'Pedidos a Receber', 'O que foi comprado e o recebimento', 'caminhao'],
+    ['conferencias', 'Conferências de Estoque', 'Contagens agendadas', 'conferencia'],
+    ['cadastro', 'Cadastro de Compras', 'Catálogo, histórico e preço-base', 'cadastro'],
   ];
   const ESTOQUES = [
     ['estoque', 'MER - Grupo Mercadorias', '', 'estoque'],
@@ -22,7 +22,7 @@
   const CADASTROS = [
     ['fornecedores', 'MER - Fornecedores', 'Quem vende para a loja', 'fornecedor'],
     ['produtos', 'MER - Produtos', 'Cadastro, como se compra e estoque mínimo', 'produto'],
-    ['unidades', 'Unidades de medida', 'Siglas de embalagem, medida de compra e conversões', 'lista'],
+    ['unidades', 'Unidades de Medida', 'Siglas de embalagem, medida de compra e conversões', 'lista'],
   ];
   const icone = (target) => {
     const nome = target.replace(/^compras:/, '');

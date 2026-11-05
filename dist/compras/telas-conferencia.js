@@ -18,7 +18,7 @@
   let modo = 'fazer';
   function abrir() {
     if (!tela) {
-      tela = U.criarTela({ id: 'compras-conferencias', titulo: 'Conferências de estoque', caminho: CAMINHO + 'Conferências de estoque', icone: 'conferencia', voltar: M.voltarCompras });
+      tela = U.criarTela({ id: 'compras-conferencias', titulo: 'Conferências de Estoque', caminho: CAMINHO + 'Conferências de Estoque', icone: 'conferencia', voltar: M.voltarCompras });
       U.atalho(tela, 'Agendar conferência', 'M12 5v14M5 12h14', () => formulario(), { criar: true });
     }
     SV.processarConferencias();

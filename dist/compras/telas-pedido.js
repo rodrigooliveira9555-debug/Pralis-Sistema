@@ -246,7 +246,7 @@
    * ===================================================================== */
   let telaS = null;
   function abrirSolicitacao() {
-    if (!telaS) telaS = U.criarTela({ id: 'compras-solicitacao', titulo: 'Solicitação de compra', caminho: CAMINHO + 'Solicitação de compra', icone: 'lista', voltar: M.voltarCompras });
+    if (!telaS) telaS = U.criarTela({ id: 'compras-solicitacao', titulo: 'Solicitação de Compra', caminho: CAMINHO + 'Solicitação de Compra', icone: 'lista', voltar: M.voltarCompras });
     SV.processarAgendas();
     telaS.ativar();
     renderSolicitacao();

@@ -36,7 +36,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   // Entrada pelo menu: Mercadorias → Compras → cards
   await p.evaluate(() => openSection(sections[3][0], 'Compras (revisar)', 'compras', '#22c55e'));
   const cards = await p.locator('#sector-content .section-card b').allTextContents();
-  ok(cards.includes('Cotação por fornecedor (revisar)') && !cards.includes('Unidades de medida') && !cards.includes('Estoques de produtos') && !cards.includes('Agendamento de pedidos') && cards.length === 5, 'Cards de Compras no setor Mercadorias → Compras (5; Unidades de medida fica em Cadastros Geral, o estoque em Estoques e a agenda de pedidos em Agenda)');
+  ok(cards.includes('Cotação por Fornecedor (revisar)') && !cards.includes('Unidades de Medida') && !cards.includes('Estoques de produtos') && !cards.includes('Agendamento de pedidos') && cards.length === 5, 'Cards de Compras no setor Mercadorias → Compras (5; Unidades de medida fica em Cadastros Geral, o estoque em Estoques e a agenda de pedidos em Agenda)');
 
   // "+" fixo do menu rápido aciona a criação da tela (header-add-circle)
   for (const [tela, titulo] of [['produtos', 'Novo produto'], ['fornecedores', 'Novo fornecedor'], ['cotacao', 'Pedido urgente'], ['conferencias', 'Agendar conferência']]) {
