@@ -1,8 +1,9 @@
-/* Tela de entrada no mesmo padrão das telas internas da loja (DESIGN_SYSTEM.md): a tela toda é cinza;
-   o cabeçalho colorido ocupa a largura inteira no topo, colado nas bordas, e o rodapé branco ocupa a
-   largura inteira embaixo, ambos com os cantos de dentro arredondados em 12px; os campos brancos ficam
-   no meio, em uma coluna centralizada; campos de 42px, raio 8px e borda 1px; título 16px, subtítulo
-   11px; ação principal preenchida com o acento; roxo de formulários (#7c3aed) como cor de origem. */
+/* Tela de entrada no mesmo padrão das telas internas da loja (DESIGN_SYSTEM.md): quadro cinza com o
+   cabeçalho colorido colado no topo e o rodapé branco colado na base, ocupando a largura inteira do
+   quadro, ambos com os cantos de dentro arredondados em 12px; os campos brancos ficam no meio. Em
+   telas largas o quadro é pequeno e centralizado; em telas estreitas (até 600px) o mesmo layout ocupa a
+   tela inteira, borda a borda. Campos de 42px, raio 8px e borda 1px; título 16px, subtítulo 11px;
+   ação principal preenchida com o acento; roxo de formulários (#7c3aed) como cor de origem. */
 :root {
   --ui-font: Montserrat, system-ui, sans-serif;
   --menu-accent: #7c3aed;
@@ -59,9 +60,12 @@ html, body { min-height: 100%; }
 
 body {
   margin: 0;
+  display: grid;
+  place-items: center;
   min-height: 100vh;
   min-height: 100dvh;
-  background: var(--entrada-area);
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: var(--layout-gap);
   color: var(--ui-input-color);
   font: 400 var(--ui-text)/1.5 var(--ui-font);
   -webkit-font-smoothing: antialiased;
@@ -71,8 +75,10 @@ body {
   display: grid;
   grid-template-rows: auto 1fr auto;
   width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  max-width: var(--entrada-largura);
+  overflow: hidden;
+  border: 1px solid var(--borda-quadro);
+  border-radius: var(--canto);
   background: var(--entrada-area);
   animation: entrada-surge .32s var(--ease-saida) both;
 }
@@ -404,8 +410,17 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* Telas estreitas: o mesmo layout ocupa a tela inteira, borda a borda, como as telas internas. */
 @media (max-width: 600px) {
   :root { --recuo: 8px; }
+  body { display: block; padding: 0; background: var(--entrada-area); }
+  .entrada {
+    min-height: 100vh;
+    min-height: 100dvh;
+    max-width: none;
+    border: 0;
+    border-radius: 0;
+  }
   .entrada-campo input { font-size: 16px; }
 }
 
