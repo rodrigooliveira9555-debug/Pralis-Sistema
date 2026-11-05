@@ -1,6 +1,6 @@
 /*
  * Caixa — entrada do módulo no menu do S2 (casca: só tela, dados fictícios, nada gravado).
- * Entradas · Vendas / Faturamento → Caixas abre os cards abaixo. Fluxo e regras vêm do Caixa do
+ * Entradas · Vendas / Faturamento → Lançamentos traz o cartão abaixo. Fluxo e regras vêm do Caixa do
  * sistema principal (web-vue/components/caixa); o visual é o das telas internas do S2.
  * Cada tela se registra com CicluzCaixa.registrar(nome, abrir).
  */
@@ -9,14 +9,14 @@
   const U = window.CicluzComprasUI;
   const COR = '#eab308';
   const COR_TEXTO = '#785600';
-  const ICONE = '<path d="M3 9 4.5 4h15L21 9M3 9v11h18V9M3 9h18M9 20v-6h6v6"/>';
+  const ICONE = '<path d="' + telaIcone.computador + '"/>';
   const telas = {};
 
   const CARDS = [
-    ['abertura', 'Abertura do caixa', 'Conferir o malote e abrir o turno'],
+    ['abertura', 'VND - Abertura de Caixa', 'Conferir o malote e abrir o turno'],
   ];
 
-  const voltar = () => openSection(sections[0][0], 'Caixas', 'caixa', COR);
+  const voltar = () => menuBack(0, 'Lançamentos')();
 
   /** Tela no padrão do S2 (view > panel > head + content), na cor de Vendas. */
   function criarTela({ id, titulo, caminho }) {

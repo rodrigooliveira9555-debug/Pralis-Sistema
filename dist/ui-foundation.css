@@ -352,7 +352,7 @@ body .view label.uniforms-enum,body dialog label.uniforms-enum{border:0!importan
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(form.account-editor,.form-fields,.form-demo,#job-form)>label.uniforms-enum.uniforms-enum{border:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important}
 .uniforms-enum>.uniforms-enum-label{font:inherit;color:inherit}
 .occurrences-choice{gap:8px 12px}.occurrences-choice legend{margin:0;padding:0 0 6px}
-.people-simple-actions>button{white-space:nowrap}
+.people-simple-actions>button{white-space:nowrap;height:40px;min-height:40px}
 /* DP dialogs inside the shared screen shell: size to their content (capped by the viewport) and let the content scroll,
    instead of stretching the dialog while the content area collapses behind the footer. */
 body:is(.dark-theme,:not(.dark-theme)) dialog.shell-dialog.app-screen-shell.uniforms-dialog{height:fit-content!important;max-height:calc(100dvh - 16px)!important}
@@ -390,3 +390,22 @@ body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog{width:min(980px,ca
 body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog form{display:grid;grid-template-columns:minmax(0,1fr)}body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog form>*{grid-column:1/-1;min-width:0}
 @media(max-width:600px){.docs-table th:nth-child(2),.docs-table td:nth-child(2){display:none}.docs-status-cell>span:last-child{display:none}.docs-table td.uniforms-row-actions{white-space:nowrap}}
 .card-inherited-icon .sigla-text{font:700 11px/1 var(--ui-font,inherit);letter-spacing:0}
+.titulo-aviso{display:inline-block;width:1.1em;height:1.1em;margin-left:6px;vertical-align:-.2em;color:#d97706}
+.titulo-aviso svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.card-inherited-icon.revisar svg{color:#ffd60a}
+.icone-revisar{display:inline-flex;width:18px;height:18px;margin-right:8px;vertical-align:-4px;color:#f5c400}
+.icone-revisar svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.view .panel .head .sector-icon.revisar svg{color:#ffd60a;stroke:#ffd60a}
+/* Ícones do menu: tamanho e traço padronizados (traço renderizado ≈1,6 px em todos). */
+.nav-tree .menu-icon-circle svg,.nav-tree .money-icon svg.money-glyph{width:22px;height:22px;stroke-width:1.75}
+#sector-view .sector-icon{--shell-icon-stroke:1.85}
+#sector-view .sector-icon:has(svg.money-glyph){--shell-icon-stroke:1.75}
+#sector-view .sector-icon svg.money-glyph{width:22px;height:22px}
+#sector-view .card-inherited-icon svg:not(.money-glyph){width:17px;height:17px}
+#sector-view .card-inherited-icon svg.money-glyph{width:20px;height:20px;--shell-icon-stroke:1.9}
+/* Ícone pequeno dos subtítulos do menu Gestão: mesmo desenho em todos, só muda a cor da origem. */
+.nav-tree .children .icone-sub{display:inline-flex;width:16px;height:16px;margin-right:8px;vertical-align:-3px;color:var(--item-color,currentColor)}
+.nav-tree .children .icone-sub svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav-tree .children .icone-revisar{width:16px;height:16px;margin-right:8px;vertical-align:-3px}
+/* Botões comuns dentro das telas seguem a cor do menu de origem, não o roxo padrão. */
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .btn:not(.standard-form-action):not(.footer-save-accent):not(.footer-cancel-accent){background:var(--menu-accent,var(--panel-color,#7c3aed));border-color:var(--menu-accent,var(--panel-color,#7c3aed));color:#fff}

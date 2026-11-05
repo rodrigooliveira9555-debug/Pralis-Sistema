@@ -9,7 +9,7 @@
   const SV = window.CicluzComprasServico;
   const M = window.CicluzCompras;
   const { el, botao, campo, entrada, seletor } = U;
-  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras / ';
+  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras (revisar) / ';
   const horaDe = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const amanha = () => D.isoData(D.somarDias(new Date(), 1));
 
@@ -19,7 +19,8 @@
   let telaA = null;
   function abrirAgendamento() {
     if (!telaA) {
-      telaA = U.criarTela({ id: 'compras-agendamento', titulo: 'Agendamento de pedidos', caminho: CAMINHO + 'Agendamento de pedidos', icone: 'agenda', voltar: M.voltarCompras });
+      telaA = U.criarTela({ id: 'compras-agendamento', titulo: 'MER - Agenda de Pedidos (revisar)', caminho: 'Agenda · Atividades / MER - Agenda de Pedidos (revisar)', icone: 'revisar', voltar: () => returnToNavigation() });
+      telaA.head.querySelector('.sector-icon').classList.add('revisar');
       U.atalho(telaA, 'Novo agendamento', 'M12 5v14M5 12h14', () => formularioAgenda(), { criar: true });
     }
     telaA.ativar();
@@ -245,7 +246,7 @@
    * ===================================================================== */
   let telaS = null;
   function abrirSolicitacao() {
-    if (!telaS) telaS = U.criarTela({ id: 'compras-solicitacao', titulo: 'Solicitação de compra', caminho: CAMINHO + 'Solicitação de compra', icone: 'lista', voltar: M.voltarCompras });
+    if (!telaS) telaS = U.criarTela({ id: 'compras-solicitacao', titulo: 'Solicitação de Compra', caminho: CAMINHO + 'Solicitação de Compra', icone: 'lista', voltar: M.voltarCompras });
     SV.processarAgendas();
     telaS.ativar();
     renderSolicitacao();

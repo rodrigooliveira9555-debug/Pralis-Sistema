@@ -3,23 +3,23 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,F=window.CicluzFieldRules,PH=window.CicluzPhoneBR;if(!P||!U)return;
 const {el,button,iconButton,svg,ICON,fold,dateBR,enumField,dialog,confirmDialog,uniformName,money}=U;
-const ACCENT='#7c3aed',PATH='Cadastros / Gestão de Pessoas / Colaboradores Cadastrados';
+const ACCENT='#7c3aed',PATH=menuCrumb(2,'Relatórios','DES - Cadastro Colaborador');
 const STATUS_PILL={ATIVO:['Ativo','p-green'],INATIVO:['Inativo','p-red'],CANDIDATO:['Em admissão','p-yellow']};
 const data=()=>P.get();
 const pill=(t,c)=>el('span','pill '+c,t);
 
 const view=el('section','view');view.id='collaborators-view';view.style.setProperty('--menu-accent',ACCENT);
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
-const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(ICON.user);const heading=el('div'),title=el('h2',null,'Colaboradores Cadastrados'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
+const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(ICON.user);const heading=el('div'),title=el('h2',null,'DES - Cadastro Colaborador'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
-let back=()=>openSection(sections[7][0],'Gestão de Pessoas','people-settings',ACCENT);addShortcuts(view.id,()=>back());
+let back=()=>menuBack(2,'Relatórios')();addShortcuts(view.id,()=>back());
 const note=el('div','form-note','Central do Departamento Pessoal neste navegador. Exames, ocorrências e uniformes aparecem na ficha pelo identificador do colaborador. Colaboradores marcados como demonstrativos vieram dos exemplos anteriores.');
 const tabs=el('div','uniforms-tabs');tabs.setAttribute('role','tablist');const tabDefs=[['list','Colaboradores'],['tracking','Acompanhamento da admissão']],tabBtn={},tabPanel={};
 for(const [k,l] of tabDefs){const b=button(l,()=>selectTab(k),'uniforms-tab');b.setAttribute('role','tab');b.id='collab-tab-'+k;tabBtn[k]=b;tabs.append(b);const pnl=el('div','uniforms-section');pnl.setAttribute('role','tabpanel');pnl.setAttribute('aria-labelledby',b.id);tabPanel[k]=pnl}
 const fileBox=el('div','uniforms-section people-file');
 body.append(note,tabs,tabPanel.list,tabPanel.tracking,fileBox);
 let active='list';
-function selectTab(k){active=k;fileBox.hidden=true;tabs.hidden=false;for(const [x,b] of Object.entries(tabBtn)){b.setAttribute('aria-selected',String(x===k));b.tabIndex=x===k?0:-1;tabPanel[x].hidden=x!==k}title.textContent='Colaboradores Cadastrados';subtitle.textContent=PATH;back=()=>openSection(sections[7][0],'Gestão de Pessoas','people-settings',ACCENT);if(k==='list')renderList();else renderTracking()}
+function selectTab(k){active=k;fileBox.hidden=true;tabs.hidden=false;for(const [x,b] of Object.entries(tabBtn)){b.setAttribute('aria-selected',String(x===k));b.tabIndex=x===k?0:-1;tabPanel[x].hidden=x!==k}title.textContent='DES - Cadastro Colaborador';subtitle.textContent=PATH;back=()=>menuBack(2,'Relatórios')();if(k==='list')renderList();else renderTracking()}
 
 /* ---------- Lista ---------- */
 const lp=tabPanel.list;
@@ -82,7 +82,7 @@ let currentFile=null;
 const sectionBox=(t,...children)=>{const s=el('section','profiles-section');s.append(el('h3',null,t),...children);return s};
 const dl=rows=>{const d=el('dl','profiles-info');for(const [k,v] of rows)d.append(el('dt',null,k),el('dd',null,v||'—'));return d};
 function tableOf(headers,rows,empty){if(!rows.length)return el('p','profiles-note',empty);const w=el('div','uniforms-table-wrap'),t=el('table','uniforms-table'),hr=el('tr');headers.forEach(h=>hr.append(el('th',null,h)));const th=el('thead');th.append(hr);const tb=el('tbody');for(const r of rows){const tr=el('tr');if(r.cancelled)tr.classList.add('is-cancelled');for(const c of r.cells){if(c instanceof Node){const td=el('td');td.append(c);tr.append(td)}else tr.append(el('td',null,c==null||c===''?'—':String(c)))}tb.append(tr)}t.append(th,tb);w.append(t);return w}
-function openFile(id){P.load();const p=P.byId(id);if(!p)return selectTab('list');currentFile=id;tabs.hidden=true;Object.values(tabPanel).forEach(x=>x.hidden=true);fileBox.hidden=false;fileBox.replaceChildren();title.textContent=p.name;subtitle.textContent='Colaboradores Cadastrados / Ficha individual';back=()=>{currentFile=null;selectTab(active)};
+function openFile(id){P.load();const p=P.byId(id);if(!p)return selectTab('list');currentFile=id;tabs.hidden=true;Object.values(tabPanel).forEach(x=>x.hidden=true);fileBox.hidden=false;fileBox.replaceChildren();title.textContent=p.name;subtitle.textContent='DES - Cadastro Colaborador / Ficha individual';back=()=>{currentFile=null;selectTab(active)};
  const registered=p.status==='ATIVO'||p.status==='INATIVO';const [st,sc]=STATUS_PILL[p.status]||[p.status,''];
  const top=el('div','people-file-top');top.append(pill(st,sc),el('span','profiles-note',p.demo?'Colaborador demonstrativo':P.nextStep(p)));
  const tools=el('div','people-banner-tools');tools.append(button('← Voltar à lista',()=>back()));

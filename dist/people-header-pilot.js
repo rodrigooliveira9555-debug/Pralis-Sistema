@@ -143,11 +143,24 @@
   const bought=metricControl('COM','comprado','#22c55e',['com','purchases','bought','comprado']);
   const profit=metricControl('LUC','lucro','#2563eb',['luc','profit','lucro']);
   const result=metricControl('RES','resultado','#7c3aed',['res','result','resultado']);
-  const launchControls=[['vnd','VND','Lançar vendas','#eab308'],['cnt','CNT','Lançar transferências','#f97316'],['des','DES','Lançar despesas','#ef4444'],['ret','RET','Lançar retiradas','#2563eb'],['mer','MER','Lançar mercadorias','#22c55e'],['car','CAR','Lançar cartões','#7c3aed'],['pdv','PDV','Lançar PDV','#7c3aed']].map(([key,code,label,color])=>{
+  const launchControls=[['vnd','VND','Lançar vendas','#eab308'],['cnt','CNT','Lançar transferências','#f97316'],['des','DES','Lançar despesas','#ef4444'],['mer','MER','Lançar mercadorias','#22c55e'],['ret','RET','Lançar retiradas','#2563eb'],['car','CAR','Lançar cartões','#7c3aed'],['pdv','PDV','Lançar PDV','#7c3aed'],['res','RES','Lançar resultado','#7c3aed']].map(([key,code,label,color])=>{
    const button=control(label,'',()=>announce(label+' — tela de lançamento ainda não disponível.'));
    button.textContent=code;button.classList.add('people-launch-control');button.style.setProperty('--launch-color',color);button.setAttribute('aria-description','Atalho preparado; tela de lançamento ainda não disponível.');
    return ['launch-'+key,{button,label}];
   });
+  const whatsapp=control('WhatsApp','<path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/>',()=>announce('WhatsApp — ação ainda não disponível.'));
+  const lib_copy=control('Copiar','<path d="M8 8h12v12H8zM4 16V4h12"/>',()=>announce('Copiar — ação ainda não disponível.'));
+  const lib_share=control('Compartilhar','<path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>',()=>announce('Compartilhar — ação ainda não disponível.'));
+  const lib_email=control('E-mail','<path d="M3 5h18v14H3zM3 7l9 6 9-6"/>',()=>announce('E-mail — ação ainda não disponível.'));
+  const lib_refresh=control('Atualizar','<path d="M20 11a8 8 0 0 0-14.9-3M4 5v4h4M4 13a8 8 0 0 0 14.9 3M20 19v-4h-4"/>',()=>announce('Atualizar — ação ainda não disponível.'));
+  const lib_pdf=control('Baixar PDF','<path d="M14 3H6v18h12V7zM14 3v4h4M12 11v6M9.5 14.5 12 17l2.5-2.5"/>',()=>announce('Baixar PDF — ação ainda não disponível.'));
+  const lib_scan=control('Escanear código de barras','<path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M7 12h10"/>',()=>announce('Escanear código de barras — ação ainda não disponível.'));
+  const lib_camera=control('Câmera','<path d="M4 7h3l1.5-2h7L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>',()=>announce('Câmera — ação ainda não disponível.'));
+  const lib_attach=control('Anexar arquivo','<path d="M21 11l-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/>',()=>announce('Anexar arquivo — ação ainda não disponível.'));
+  const lib_sheet=control('Exportar planilha','<path d="M14 3H6v18h12V7zM14 3v4h4M8 11h8M8 15h8M12 11v8"/>',()=>announce('Exportar planilha — ação ainda não disponível.'));
+  const lib_favorite=control('Favoritar','<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z"/>',()=>announce('Favoritar — ação ainda não disponível.'));
+  const lib_calc=control('Calculadora','<path d="M5 3h14v18H5zM8 6h8v3H8zM8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01M16 17h.01"/>',()=>announce('Calculadora — ação ainda não disponível.'));
+  const lib_help=control('Ajuda','<path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/>',()=>announce('Ajuda — ação ainda não disponível.'));
   const print=control('Imprimir','<path d="M7 8V3h10v5M7 17H3V9h18v8h-4M7 13h10v8H7z"/><path d="M17 11h1"/>',()=>{view.classList.add('shell-print-target');document.body.classList.add('shell-printing');window.addEventListener('afterprint',()=>{view.classList.remove('shell-print-target');document.body.classList.remove('shell-printing')},{once:true});window.print()});
   const exportConfig=control('Exportar configuração','<path d="M12 16V3m-4 4 4-4 4 4M4 14v7h16v-7"/>',()=>{
    const payload={format:'cicluz-screen-toolbar',version:1,screen:context,preferences,display:{compact:!!displayState.compact,dock:displayState.dock,order:records().map(row=>rowId(row))},buttonOrder};
@@ -160,7 +173,7 @@
    try{
     if(file.size>100000)throw Error('Arquivo de configuração muito grande');
     const data=JSON.parse(await file.text());if(!['cicluz-people-toolbar','cicluz-screen-toolbar'].includes(data.format)||data.version!==1)throw Error('Arquivo de configuração incompatível');
-    preferences={};for(const key of controls.keys())if(typeof data.preferences?.[key]==='boolean')preferences[key]=data.preferences[key];if(data.preferences?._disabled&&typeof data.preferences._disabled==='object')preferences._disabled=Object.fromEntries(Object.entries(data.preferences._disabled).filter(([key,value])=>controls.has(key)&&value===true));if(data.preferences?._hidden&&typeof data.preferences._hidden==='object')for(const [key,value] of Object.entries(data.preferences._hidden))if(controls.has(key)&&value===true)preferences[key]=false;
+    preferences={};for(const key of controls.keys())if(typeof data.preferences?.[key]==='boolean')preferences[key]=data.preferences[key];if(data.preferences?._disabled&&typeof data.preferences._disabled==='object')preferences._disabled=Object.fromEntries(Object.entries(data.preferences._disabled).filter(([key,value])=>controls.has(key)&&typeof value==='boolean'));if(data.preferences?._hidden&&typeof data.preferences._hidden==='object')for(const [key,value] of Object.entries(data.preferences._hidden))if(controls.has(key)&&value===true)preferences[key]=false;
     buttonOrder=Array.isArray(data.buttonOrder)?[...new Set(data.buttonOrder.filter(key=>typeof key==='string'&&controls.has(key)))]:[];
     displayState={zoomed:false,compact:data.display?.compact===true,dock:data.display?.dock==='top'?'top':'bottom',order:Array.isArray(data.display?.order)?data.display.order.filter(key=>typeof key==='string').slice(0,1000):[]};
     localStorage.setItem(preferencesKey,JSON.stringify(preferences));localStorage.setItem(displayKey,JSON.stringify(displayState));persistButtonOrder();applyDisplay();applyPreferences();
@@ -176,7 +189,7 @@
   toggle.onclick=()=>{collapsed=!collapsed;toggleState()};
   let preferencesKey='cicluz-people-footer-buttons-v1';let preferences={};
   try{const value=JSON.parse(localStorage.getItem(preferencesKey)||'{}');if(value&&typeof value==='object'&&!Array.isArray(value))preferences=normalizePreferences(value)}catch{}
-  const controls=new Map([['search',{button:searchToggle,label:'Buscar'}],['sort',{button:sort,label:sortLabel}],['date',{button:dateButton,label:'Data de … a …'}],['expand',{button:expand,label:'Expandir / recolher tudo'}],['sold',{button:sold,label:'Organizar por + vendido / − vendido'}],['bought',{button:bought,label:'Organizar por + comprado / − comprado'}],['profit',{button:profit,label:'Organizar por + lucro / − lucro'}],['result',{button:result,label:'Organizar por + resultado / − resultado'}],...launchControls,['print',{button:print,label:'Imprimir'}],['import',{button:importConfig,label:'Importar configuração'}],['export',{button:exportConfig,label:'Exportar configuração'}],['width',{button:width,label:'Maior / menor na horizontal'}],['position',{button:position,label:'Posição da barra'}],['save',{button:save,label:'Salvar'}]]);
+  const controls=new Map([['search',{button:searchToggle,label:'Buscar'}],['sort',{button:sort,label:sortLabel}],['date',{button:dateButton,label:'Data de … a …'}],['expand',{button:expand,label:'Expandir / recolher tudo'}],['position',{button:position,label:'Posição da barra'}],['print',{button:print,label:'Imprimir'}],['import',{button:importConfig,label:'Importar configuração'}],['export',{button:exportConfig,label:'Exportar configuração'}],['width',{button:width,label:'Maior / menor na horizontal'}],['whatsapp',{button:whatsapp,label:'WhatsApp'}],['copy',{button:lib_copy,label:'Copiar'}],['share',{button:lib_share,label:'Compartilhar'}],['email',{button:lib_email,label:'E-mail'}],['refresh',{button:lib_refresh,label:'Atualizar'}],['pdf',{button:lib_pdf,label:'Baixar PDF'}],['scan',{button:lib_scan,label:'Escanear código de barras'}],['camera',{button:lib_camera,label:'Câmera'}],['attach',{button:lib_attach,label:'Anexar arquivo'}],['sheet',{button:lib_sheet,label:'Exportar planilha'}],['favorite',{button:lib_favorite,label:'Favoritar'}],['calc',{button:lib_calc,label:'Calculadora'}],['help',{button:lib_help,label:'Ajuda'}],['sold',{button:sold,label:'Organizar por + vendido / − vendido'}],['bought',{button:bought,label:'Organizar por + comprado / − comprado'}],['profit',{button:profit,label:'Organizar por + lucro / − lucro'}],['result',{button:result,label:'Organizar por + resultado / − resultado'}],...launchControls,['save',{button:save,label:'Salvar'}]]);
   const chooser=document.createElement('div');chooser.className='people-toolbar-options';chooser.id='toolbar-options-'+(view.id||'dialog');chooser.hidden=true;chooser.inert=true;chooser.setAttribute('role','group');chooser.setAttribute('aria-label','Atalhos disponíveis e menu rápido');
   const more=document.createElement('button');more.type='button';more.className='people-toolbar-more';more.title='Mais atalhos';more.setAttribute('aria-label',more.title);more.setAttribute('aria-expanded','false');more.setAttribute('aria-pressed','false');more.setAttribute('aria-controls',chooser.id);more.innerHTML='<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>';
   function setChooserOpen(open){chooser.hidden=!open;chooser.inert=!open;more.setAttribute('aria-expanded',String(open));more.setAttribute('aria-pressed',String(open));if(open){chooserCompact=true;setDateOpen(false);setQuickOpen(false);renderChoices()}}
@@ -186,6 +199,7 @@
   try{const value=JSON.parse(localStorage.getItem(orderKey)||'[]');if(Array.isArray(value))buttonOrder=value.filter(key=>typeof key==='string')}catch{}
   function persistButtonOrder(){try{localStorage.setItem(orderKey,JSON.stringify(buttonOrder))}catch{}}
   const fixedKeys=new Set(['search','sort','date','save']);
+  /* Todos os botões do menu rápido começam ligados, no menu suspenso (três pontinhos), em todas as telas; cada um pode ir para o menu rápido ou ser desligado no painel Configurar menu rápido. */
   const pinned=key=>preferences[key]===true;
   const enabled=key=>fixedKeys.has(key)||preferences._disabled?.[key]!==true;
   function normalizePreferences(value){
@@ -195,7 +209,10 @@
    if(!next._disabled||typeof next._disabled!=='object'||Array.isArray(next._disabled))delete next._disabled;
    return next;
   }
-  function orderedControls(){const keys=[...new Set([...buttonOrder,...controls.keys()])];return keys.filter(key=>controls.has(key)&&!fixedKeys.has(key)).map(key=>[key,controls.get(key)])}
+  /* Ordem padrão do menu rápido, igual em todas as telas: 1) os vermelhos, dos mais usados, por categoria (a posição da barra sempre primeiro; visualizar; imprimir e exportar; comunicar; capturar; utilidades; os botões próprios da tela entram em __tela__); 2) os de ordenação (+VND…); 3) os quadrados de lançamento (VND…). Quem já escolheu uma ordem mantém a sua. */
+ const quickRedOrder=['position','width','__tela__','refresh','print','pdf','sheet','export','import','whatsapp','share','email','copy','camera','scan','attach','favorite','calc','help'];
+ function quickRank(key){if(key.startsWith('launch-'))return 1000;if(['sold','bought','profit','result'].includes(key))return 500;const at=quickRedOrder.indexOf(key);return at>=0?at:quickRedOrder.indexOf('__tela__')}
+ function orderedControls(){const saved=buttonOrder.filter(key=>controls.has(key));const rest=[...controls.keys()].filter(key=>!saved.includes(key)).map((key,index)=>[key,index]).sort((a,b)=>quickRank(a[0])-quickRank(b[0])||a[1]-b[1]).map(item=>item[0]);const keys=[...new Set([...saved,...rest])];return keys.filter(key=>controls.has(key)&&!fixedKeys.has(key)).map(key=>[key,controls.get(key)])}
   function setQuickOpen(open){tools.hidden=!open;footer.classList.toggle('people-quick-open',open);home.setAttribute('aria-expanded',String(open));home.title=open?'Ocultar menu rápido':'Mostrar menu rápido';home.setAttribute('aria-label',home.title);if(open){closeChooser();setDateOpen(false)}}
   home.onclick=()=>setQuickOpen(tools.hidden);
   document.addEventListener('pointerdown',event=>{if(!tools.hidden&&!tools.contains(event.target)&&!home.contains(event.target))setQuickOpen(false)});
@@ -226,8 +243,9 @@
    const resize=document.createElement('button');resize.type='button';resize.className='people-options-resize';resize.setAttribute('aria-expanded',String(!chooserCompact));resize.setAttribute('aria-label',chooserCompact?'Configurar menu rápido':'Voltar aos atalhos disponíveis');resize.title=resize.getAttribute('aria-label');resize.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(chooserCompact?'m15 5-7 7 7 7':'m9 5 7 7-7 7')+'"/></svg>';
    resize.onclick=()=>{chooserCompact=!chooserCompact;renderChoices();chooser.querySelector('.people-options-resize').focus()};
    heading.append(headingIcon,title,resize);const inner=document.createElement('div');inner.className='people-options-inner';chooser.append(heading,inner);
-   const candidates=orderedControls().filter(([key,{button}])=>button.dataset.available!=='false'&&(!chooserCompact||(!pinned(key)&&enabled(key))));if(!chooserCompact)candidates.sort(([a],[b])=>(!enabled(a)?2:pinned(a)?1:0)-(!enabled(b)?2:pinned(b)?1:0));
-   if(!candidates.length){const empty=document.createElement('p');empty.className='people-choices-empty';empty.textContent=chooserCompact?'Expanda para configurar os atalhos.':'Não há funções disponíveis nesta tela.';inner.append(empty)}
+   const candidates=orderedControls().filter(([key,{button}])=>button.dataset.available!=='false'&&(!chooserCompact||(!pinned(key)&&enabled(key))));/* Painel: no alto os ligados que ficam em Mais atalhos; no meio os ainda não selecionados; por último os fixados no menu rápido. */
+ if(!chooserCompact){const grupo=key=>!enabled(key)?1:pinned(key)?2:0;candidates.sort(([a],[b])=>grupo(a)-grupo(b))}
+   if(!candidates.length&&!chooserCompact){const empty=document.createElement('p');empty.className='people-choices-empty';empty.textContent='Não há funções disponíveis nesta tela.';inner.append(empty)}
    for(const [key,{button,label}] of candidates){
     const row=document.createElement('div');row.className='people-toolbar-row';row.dataset.choiceKey=key;
     const handle=document.createElement('button');handle.type='button';handle.className='people-order-handle';handle.draggable=true;handle.title='Arraste para mover ou use as setas para cima e para baixo';handle.setAttribute('aria-label','Mover '+label);handle.innerHTML='<svg viewBox="0 0 12 20"><circle cx="3" cy="4" r="1"/><circle cx="9" cy="4" r="1"/><circle cx="3" cy="10" r="1"/><circle cx="9" cy="10" r="1"/><circle cx="3" cy="16" r="1"/><circle cx="9" cy="16" r="1"/></svg>';
@@ -240,20 +258,17 @@
     const action=document.createElement('button');action.type='button';action.className='people-toolbar-run';action.setAttribute('aria-label','Executar '+label);action.disabled=button.disabled||button.dataset.available==='false';if(button.getAttribute('aria-description'))action.setAttribute('aria-description',button.getAttribute('aria-description'));
     const symbol=document.createElement('span');symbol.className='people-option-symbol';symbol.innerHTML=button.innerHTML;symbol.style.setProperty('--metric-color',button.style.getPropertyValue('--metric-color'));if(button.classList.contains('people-metric-control'))symbol.classList.add('people-metric-control');if(button.classList.contains('people-position-control'))symbol.classList.add('people-position-control');if(button.classList.contains('people-launch-control')){symbol.classList.add('people-launch-control');symbol.style.setProperty('--launch-color',button.style.getPropertyValue('--launch-color'))}
     const name=document.createElement('span');name.textContent=label;name.className='people-option-name';action.append(symbol,name);action.onclick=()=>{closeChooser();button.click()};
-    const pinLabel=()=>!enabled(key)?'Incluir no menu rápido e ligar: '+label:pinned(key)?'Remover do menu rápido: '+label:'Incluir no menu rápido: '+label;
-    const power=document.createElement('button');power.type='button';power.className='people-toolbar-enable';power.setAttribute('role','switch');power.setAttribute('aria-label','Ativar função: '+label);power.setAttribute('aria-checked',String(enabled(key)));power.title=enabled(key)?'Desligar '+label:'Ligar '+label;power.innerHTML='<span class="people-enable-track" aria-hidden="true"><span class="people-enable-thumb"></span></span>';
-    power.onclick=()=>{if(!preferences._disabled)preferences._disabled={};preferences._disabled[key]=enabled(key);persistPreferences();applyPreferences();power.setAttribute('aria-checked',String(enabled(key)));power.title=enabled(key)?'Desligar '+label:'Ligar '+label;action.disabled=button.disabled||button.dataset.available==='false';row.classList.toggle('people-option-disabled',!enabled(key));pin.title=pinLabel();pin.setAttribute('aria-label',pin.title);if(key==='sort'&&enabled(key)&&sortMode!==0)sortRows(sortDirection);chooserSignature=choicesFingerprint()};
-    const pin=document.createElement('button');pin.type='button';pin.className='people-toolbar-pin';pin.title=pinLabel();pin.setAttribute('aria-label',pin.title);pin.setAttribute('aria-pressed',String(pinned(key)));const maskId='quick-pin-logo-'+(++pinLogoId);pin.innerHTML='<svg viewBox="10 6 42 44" aria-hidden="true"><defs><mask id="'+maskId+'" maskUnits="userSpaceOnUse" x="10" y="6" width="42" height="44" style="mask-type:alpha"><image href="cicluz-gestao-padaria-logo.png" width="177.6" height="64" preserveAspectRatio="none"/></mask></defs><rect x="10" y="6" width="42" height="44" fill="currentColor" mask="url(#'+maskId+')"/></svg>';
-    pin.onclick=()=>{
-     const selected=!pinned(key)||!enabled(key);preferences[key]=selected;
-     if(selected&&preferences._disabled)preferences._disabled[key]=false;
-     persistPreferences();applyPreferences();
-     pin.setAttribute('aria-pressed',String(selected));pin.title=pinLabel();pin.setAttribute('aria-label',pin.title);
-     power.setAttribute('aria-checked',String(enabled(key)));power.title=enabled(key)?'Desligar '+label:'Ligar '+label;
-     action.disabled=button.disabled||button.dataset.available==='false';row.classList.toggle('people-option-disabled',!enabled(key));row.classList.toggle('people-option-pinned',selected);
-     chooserSignature=choicesFingerprint();
-    };
-    row.classList.toggle('people-option-disabled',!enabled(key));row.classList.toggle('people-option-pinned',pinned(key));action.title=label;row.append(handle,action,power,pin);inner.append(row);
+    const modeOf=()=>!enabled(key)?'off':pinned(key)?'quick':'menu';
+const power=document.createElement('button');power.type='button';power.className='people-toolbar-enable';power.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>';
+const ou=document.createElement('span');ou.className='people-option-or';ou.textContent='ou';ou.setAttribute('aria-hidden','true');
+const pin=document.createElement('button');pin.type='button';pin.className='people-toolbar-pin';
+const maskId='quick-pin-logo-'+(++pinLogoId);pin.innerHTML='<svg viewBox="10 6 42 44" aria-hidden="true"><defs><mask id="'+maskId+'" maskUnits="userSpaceOnUse" x="10" y="6" width="42" height="44" style="mask-type:alpha"><image href="cicluz-gestao-padaria-logo.png" width="177.6" height="64" preserveAspectRatio="none"/></mask></defs><rect x="10" y="6" width="42" height="44" fill="currentColor" mask="url(#'+maskId+')"/></svg>';
+/* Cada botão fica em um lugar só: no menu suspenso (três pontinhos), no menu rápido, ou desligado. */
+function refreshMode(){const mode=modeOf();power.setAttribute('aria-pressed',String(mode==='menu'));power.title=mode==='menu'?'Tirar do menu suspenso: '+label:'Mostrar no menu suspenso (três pontinhos): '+label;power.setAttribute('aria-label',power.title);pin.setAttribute('aria-pressed',String(mode==='quick'));pin.title=mode==='quick'?'Tirar do menu rápido: '+label:'Mostrar no menu rápido: '+label;pin.setAttribute('aria-label',pin.title);action.disabled=button.disabled||button.dataset.available==='false';row.classList.toggle('people-option-disabled',mode==='off');row.classList.toggle('people-option-pinned',mode==='quick');chooserSignature=choicesFingerprint()}
+function setMode(mode){if(!preferences._disabled)preferences._disabled={};preferences._disabled[key]=mode==='off';preferences[key]=mode==='quick';persistPreferences();applyPreferences();if(key==='sort'&&enabled(key)&&sortMode!==0)sortRows(sortDirection);refreshMode()}
+power.onclick=()=>setMode(modeOf()==='menu'?'off':'menu');
+pin.onclick=()=>setMode(modeOf()==='quick'?'off':'quick');
+refreshMode();action.title=label;row.append(handle,action,power,ou,pin);inner.append(row);
    }
   }
   function persistPreferences(){try{localStorage.setItem(preferencesKey,JSON.stringify(preferences))}catch{announce('Não foi possível salvar os atalhos')}}
@@ -320,7 +335,7 @@
    }
    syncQueries();if(sortMode===0)originalOrders=new WeakMap();rememberOriginalRows();applyPreferences();if(sortMode!==0&&enabled('sort'))sortRows(sortDirection);if(!chooser.hidden&&chooserSignature!==choicesFingerprint())renderChoices();
   }
-  content.addEventListener('pointerdown',e=>{if(e.target.closest('.menu-item-move,.account-move,.drag-handle,.location-move')){sortDirection=null;sortMode=0;originalOrders=new WeakMap();updateSortLabel()}},true);
+  content.addEventListener('pointerdown',e=>{if(e.target.closest('.menu-item-move,.account-move,.location-move')){sortDirection=null;sortMode=0;originalOrders=new WeakMap();updateSortLabel()}},true);
   mounted.set(view,{sync,footer,head,reset:()=>{if(nativeSearchButton?.getAttribute('aria-expanded')==='true')nativeSearchButton.click();for(const [input] of adoptedInputs){input.hidden=true;const host=profileSearchHosts.get(input);if(host)host.hidden=true}previousActive=false;sync()}});
   let queued=false;
   new MutationObserver(records=>{

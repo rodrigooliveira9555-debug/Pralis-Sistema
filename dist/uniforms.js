@@ -2,11 +2,11 @@
 (()=>{
 'use strict';
 const D=window.CicluzUniformData,S=window.CicluzUniformStock;if(!D||!S)return;
-const KEY='cicluz-uniformes-v1',ACCENT='#7c3aed',PATH='Lançamentos / Gestão de Pessoas / Uniformes';
+const KEY='cicluz-uniformes-v1',ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Uniformes Entrega/Recebimento');
 const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
 const button=(text,fn,cls='btn secondary')=>{const b=el('button',cls,text);b.type='button';b.onclick=fn;return b};
 const svg=path=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>';
-const ICON={ok:'m5 12 4 4L19 6',calendar:'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',link:'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',copy:'M8 8h12v12H8zM4 16V4h12',user:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',power:'M12 3v9M6.3 6.3a8 8 0 1 0 11.4 0',shirt:'M8 3 3 6l2 5 3-1v11h8V10l3 1 2-5-5-3a4 4 0 0 1-8 0z',plus:'M12 5v14M5 12h14',eye:'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',edit:'M4 20h4L19 9l-4-4L4 16zM13 7l4 4',ban:'M5.6 5.6l12.8 12.8M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z',trash:'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6'};
+const ICON={ok:'m5 12 4 4L19 6',calendar:'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',link:'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',copy:'M8 8h12v12H8zM4 16V4h12',user:telaIcone.colaborador,power:'M12 3v9M6.3 6.3a8 8 0 1 0 11.4 0',shirt:telaIcone.uniformes,plus:'M12 5v14M5 12h14',eye:'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',edit:'M4 20h4L19 9l-4-4L4 16zM13 7l4 4',ban:'M5.6 5.6l12.8 12.8M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z',trash:'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6'};
 /* The legacy inline script declares a global open(t) that shadows window.open with the old modal; links open through an anchor instead. */
 function openExternal(url){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';document.body.append(a);a.click();a.remove()}
 const iconButton=(label,path,fn,cls='')=>{const b=button('',fn,'uniforms-icon-action'+(cls?' '+cls:''));b.title=label;b.setAttribute('aria-label',label);b.innerHTML=svg(path);return b};
@@ -39,9 +39,9 @@ function referenceFor(collab){const job=jobFor(collab);return job?{job,items:dat
 /* View shell, same structure as the other internal views. */
 const view=el('section','view');view.id='uniforms-view';view.style.setProperty('--menu-accent',ACCENT);
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
-const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(ICON.shirt);const heading=el('div'),title=el('h2',null,'Uniformes'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
+const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(ICON.shirt);const heading=el('div'),title=el('h2',null,'DES - Uniformes Entrega/Recebimento'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
-addShortcuts(view.id,()=>openSection(sections[8][0],'Gestão de Pessoas','forms',ACCENT));
+addShortcuts(view.id,()=>menuBack(2,'Lançamentos Colaboradores')());
 const addButton=button('',()=>{selectTab('launch');resetForm();dateInput.focus()},'shortcut-circle');addButton.title='Novo lançamento';addButton.setAttribute('aria-label','Novo lançamento');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
 
 const note=el('div','form-note','Simulação local: lançamentos, estoque e referências ficam somente neste navegador até a integração com o banco de dados. Colaboradores demonstrativos.');

@@ -10,7 +10,7 @@
   const SV = window.CicluzComprasServico;
   const M = window.CicluzCompras;
   const { el, botao, campo, entrada, seletor } = U;
-  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras / ';
+  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras (revisar) / ';
   const dataHora = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
   const ORIGEM = { agendamento: 'Agendamento', rapida: 'Pedido urgente' };
 
@@ -21,7 +21,7 @@
   let aba = 'caminho';
   let filtroForn = '';
   function abrirPedidos() {
-    if (!telaP) telaP = U.criarTela({ id: 'compras-pedidos', titulo: 'Pedidos a receber', caminho: CAMINHO + 'Pedidos a receber', icone: 'caminhao', voltar: M.voltarCompras });
+    if (!telaP) telaP = U.criarTela({ id: 'compras-pedidos', titulo: 'Pedidos a Receber', caminho: CAMINHO + 'Pedidos a Receber', icone: 'caminhao', voltar: M.voltarCompras });
     telaP.ativar();
     renderPedidos();
   }
@@ -143,7 +143,7 @@
   const fe = { busca: '', grupo: '', area: '', local: '', setor: '', indicador: '' };
   function abrirEstoque() {
     if (!telaE) {
-      telaE = U.criarTela({ id: 'compras-estoque', titulo: 'Estoques de produtos', caminho: CAMINHO + 'Estoques de produtos', icone: 'estoque', voltar: M.voltarCompras });
+      telaE = U.criarTela({ id: 'compras-estoque', titulo: 'MER - Grupo Mercadorias', caminho: 'Saídas · Mercadorias / Estoques / MER - Grupo Mercadorias', icone: 'estoque', voltar: () => menuBack(3, 'Estoques')() });
     }
     telaE.ativar();
     renderEstoque();

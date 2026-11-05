@@ -9,8 +9,8 @@
   const S = window.CicluzComprasDados;
   const U = window.CicluzComprasUI;
   const { el, botao, campo, entrada, seletor } = U;
-  const voltarCadastros = () => openSection(sections[7][0], 'Compras', 'cad-compras', '#7c3aed');
-  const CAMINHO = 'Cadastros / Compras / ';
+  const voltarCadastros = () => menuBack(3, 'Cadastros Geral')();
+  const CAMINHO = 'Saídas · Mercadorias / Cadastros Geral / ';
 
   /* ---------- Máscaras ---------- */
   function mascaraDocumento(v) {

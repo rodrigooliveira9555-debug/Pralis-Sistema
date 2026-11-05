@@ -10,26 +10,27 @@
   const telas = {};
 
   const CARDS = [
-    ['agendamento', 'Agendamento de pedidos', 'Produtos, repetição e responsável', 'agenda'],
-    ['solicitacao', 'Solicitação de compra', 'Fazer o pedido e enviar aos fornecedores', 'lista'],
-    ['cotacao', 'Cotação por fornecedor', 'Produtos em cotação e decisões', 'compras'],
-    ['pedidos', 'Pedidos a receber', 'O que foi comprado e o recebimento', 'caminhao'],
-    ['conferencias', 'Conferências de estoque', 'Contagens agendadas', 'conferencia'],
-    ['estoque', 'Estoques de produtos', 'Saldo por produto e extrato', 'estoque'],
-    ['cadastro', 'Cadastro de compras', 'Catálogo, histórico e preço-base', 'cadastro'],
-    ['unidades', 'Unidades de medida', 'Siglas de embalagem, medida de compra e conversões', 'lista'],
+    ['solicitacao', 'Solicitação de Compra', 'Fazer o pedido e enviar aos fornecedores', 'lista'],
+    ['cotacao', 'Cotação por Fornecedor', 'Produtos em cotação e decisões', 'compras'],
+    ['pedidos', 'Pedidos a Receber', 'O que foi comprado e o recebimento', 'caminhao'],
+    ['conferencias', 'Conferências de Estoque', 'Contagens agendadas', 'conferencia'],
+    ['cadastro', 'Cadastro de Compras', 'Catálogo, histórico e preço-base', 'cadastro'],
+  ];
+  const ESTOQUES = [
+    ['estoque', 'MER - Grupo Mercadorias', '', 'estoque'],
   ];
   const CADASTROS = [
     ['fornecedores', 'MER - Fornecedores', 'Quem vende para a loja', 'fornecedor'],
     ['produtos', 'MER - Produtos', 'Cadastro, como se compra e estoque mínimo', 'produto'],
+    ['unidades', 'Unidades de Medida', 'Siglas de embalagem, medida de compra e conversões', 'lista'],
   ];
   const icone = (target) => {
     const nome = target.replace(/^compras:/, '');
-    const item = [...CARDS, ...CADASTROS].find((c) => c[0] === nome);
+    const item = [...CARDS, ...CADASTROS, ...ESTOQUES].find((c) => c[0] === nome);
     return U.svg(U.ICONES[item ? item[3] : 'compras']);
   };
 
-  const voltarCompras = () => openSection(sections[3][0], 'Compras', 'compras', U.COR);
+  const voltarCompras = () => openSection(sections[3][0], 'Compras (revisar)', 'compras', U.COR);
 
   function registrar(nome, abrir) { telas[nome] = abrir; }
   function abrir(nome) {
@@ -42,6 +43,7 @@
 
   window.CicluzCompras = {
     cards: () => CARDS.map(([id, t, d]) => [t, d, 'compras:' + id]),
+    estoqueCards: () => ESTOQUES.map(([id, t, d]) => [t, d, 'compras:' + id]),
     cadastroCards: () => CADASTROS.map(([id, t, d]) => [t, d, 'compras:' + id]),
     icone, abrir, registrar, voltarCompras,
   };

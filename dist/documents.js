@@ -5,9 +5,9 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,F=window.CicluzFieldRules,DB=window.CicluzDateBR;if(!P||!U||!DB)return;
 const {el,button,iconButton,svg,ICON,fold,newId,dateBR,today,dialog,confirmDialog}=U;
-const KEY='cicluz-documentos-v1',ACCENT='#7c3aed',PATH='Lançamentos / Gestão de Pessoas / Documentações',MAX=10*1024*1024;
+const KEY='cicluz-documentos-v1',ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','Documentações'),MAX=10*1024*1024;
 const ACCEPT=['image/jpeg','image/png','image/webp','application/pdf'];
-const DOC_ICON='M14 3H6v18h12V7zM14 3v4h4M9 13h6M9 17h6',CAMERA='M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',X_ICON='M6 6l12 12M18 6 6 18',DOT='M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',DASH='M6 12h12';
+const DOC_ICON=telaIcone.ocorrencias,CAMERA='M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',X_ICON='M6 6l12 12M18 6 6 18',DOT='M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',DASH='M6 12h12';
 /* Titles as given by the DP. multi = new signed records may be added over the employment; sensitive = health data. */
 const CATS=[
  {id:'armario',name:'Termo de Responsabilidade pelo Uso do Armário e Guarda de Pertences Pessoais'},
@@ -95,7 +95,7 @@ const view=el('section','view');view.id='documents-view';view.style.setProperty(
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
 const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(DOC_ICON);const heading=el('div'),title=el('h2',null,'Documentações'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
-let back=()=>openSection(sections[8][0],'Gestão de Pessoas','forms',ACCENT);addShortcuts(view.id,()=>back());
+let back=()=>menuBack(2,'Lançamentos Colaboradores')();addShortcuts(view.id,()=>back());
 body.append(el('div','form-note','Documentos assinados fisicamente e fotografados ou digitalizados pelo DP. Os anexos ficam somente neste navegador (IndexedDB): não vão para servidores nem para outros aparelhos e somem se os dados do navegador forem limpos. Um documento só fica Concluído depois de Marcar como Conferido.'));
 const status=el('p','profiles-note');status.setAttribute('role','status');
 const screen=el('div','uniforms-section docs-screen');body.append(status,screen);
@@ -109,7 +109,7 @@ const icon=st=>{const i=el('span','docs-icon is-'+st);i.innerHTML=svg(STATE[st].
 function catCounts(c){const s={done:0,review:0,pending:0,na:0};const list=actives();for(const p of list)s[catState(p.id,c)]++;s.total=list.length;return s}
 
 /* Landing: the 11 documents (the same list the menu expands to). */
-function renderIndex(){load();currentCat=null;openPersonId=null;title.textContent='Documentações';subtitle.textContent=PATH;back=()=>openSection(sections[8][0],'Gestão de Pessoas','forms',ACCENT);screen.replaceChildren(el('h3','uniforms-heading','Escolha o documento'));
+function renderIndex(){load();currentCat=null;openPersonId=null;title.textContent='Documentações';subtitle.textContent=PATH;back=()=>menuBack(2,'Lançamentos Colaboradores')();screen.replaceChildren(el('h3','uniforms-heading','Escolha o documento'));
  const list=el('div','docs-nav docs-index');CATS.forEach((cat,i)=>{const s=catCounts(cat.id),b=button('',()=>openCat(cat.id),'docs-nav-item');b.append(icon(s.total&&s.done+s.na===s.total?'done':s.review?'review':'pending'),el('span','docs-nav-index',String(i+1)),el('span','docs-nav-name',cat.name),el('small',null,s.done+' de '+(s.total-s.na)+' concluído(s)'+(s.review?' · '+s.review+' a conferir':'')+(s.na?' · '+s.na+' não aplicável':'')));list.append(b)});screen.append(list)}
 
 /* Document screen: template header + every active collaborator with the status of this document. */

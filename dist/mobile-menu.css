@@ -7,7 +7,6 @@
  .side .brand .mini-brand{display:none!important}
  .side .brand{padding-top:10px!important;margin-top:0!important}
  .side .nav button{font-size:12px;text-align:left}
- .side.collapsed .nav-tree .drag-handle{display:none!important}
  .top{gap:8px;min-width:0}
  .top>div:first-child{min-width:0;flex:1;gap:8px!important}
  .top>div:first-child>div{min-width:0}

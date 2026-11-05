@@ -3,7 +3,7 @@
 'use strict';
 const D=window.CicluzUniformData,S=window.CicluzUniformStock,store=window.CicluzUniformStore,U=window.CicluzUniformUI;if(!D||!S||!store||!U)return;
 const {el,button,iconButton,svg,ICON,fold,newId,money,moneyInput,cents,dateBR,today,enumField,dialog,confirmDialog,uniformName,STATUS}=U;
-const ACCENT='#7c3aed',PATH='Lançamentos / Gestão de Pessoas / Compras de Uniformes',CART='M3 4h2l2 11h11l3-8H6M9 20h.01M17 20h.01';
+const ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Uniformes Compras'),CART=telaIcone.compra;
 const data=()=>store.get(),uniformIds=D.uniforms.map(u=>u.id),uniformById=new Map(D.uniforms.map(u=>[u.id,u]));
 
 /* Supplier source: empty until the registry exists; the database will replace this function. */
@@ -22,9 +22,9 @@ function phoneValid(v){const d=phoneDigits(v);if(!/^[1-9][1-9]/.test(d))return f
 
 const view=el('section','view');view.id='uniform-purchases-view';view.style.setProperty('--menu-accent',ACCENT);
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
-const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(CART);const heading=el('div');heading.append(el('h2',null,'Compras de Uniformes'),el('p',null,PATH));head.append(heading);
+const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(CART);const heading=el('div');heading.append(el('h2',null,'DES - Uniformes Compras'),el('p',null,PATH));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
-addShortcuts(view.id,()=>openSection(sections[8][0],'Gestão de Pessoas','forms',ACCENT));
+addShortcuts(view.id,()=>menuBack(2,'Lançamentos Colaboradores')());
 const addButton=button('',()=>{resetForm();formStatus.textContent='';dateIn.node.focus()},'shortcut-circle');addButton.title='Nova compra';addButton.setAttribute('aria-label','Nova compra');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
 const loadNote=el('p','profiles-error');loadNote.setAttribute('role','alert');
 body.append(el('div','form-note','Simulação local: compras ficam somente neste navegador e entram no mesmo estoque de Uniformes. Sem fornecedores cadastrados por enquanto.'),loadNote);

@@ -3,8 +3,8 @@
 'use strict';
 const D=window.CicluzUniformData,U=window.CicluzUniformUI,DB=window.CicluzDateBR,R=window.CicluzOccurrenceReader;if(!D||!U||!DB||!R)return;
 const {el,button,iconButton,svg,ICON,fold,newId,dateBR,today,enumField,dialog,confirmDialog}=U;
-const KEY='cicluz-ocorrencias-v1',ACCENT='#7c3aed',PATH='Lançamentos / Gestão de Pessoas / Ocorrências',MAX=10*1024*1024;
-const ACCEPT=['image/jpeg','image/png','application/pdf'],DOC_ICON='M14 3H6v18h12V7zM14 3v4h4M9 13h6M9 17h6',CAMERA='M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',SCAN='M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M7 12h10';
+const KEY='cicluz-ocorrencias-v1',ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Ocorrências'),MAX=10*1024*1024;
+const ACCEPT=['image/jpeg','image/png','application/pdf'],DOC_ICON=telaIcone.ocorrencias,CAMERA='M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',SCAN='M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M7 12h10';
 const TYPES=[
  ['DECLARAÇÃO',{medical:true,hint:'Priorize data, documento, clínica e identificação do profissional, quando aplicável.'}],
  ['FALTA INJUSTIFICADA',{days:true,hint:'Registre dias, motivo declarado, comunicação e status. Documento médico não é exigido.'}],
@@ -34,9 +34,9 @@ const sizeText=n=>n<1024*1024?Math.max(1,Math.round(n/1024))+' KB':(n/1024/1024)
 
 const view=el('section','view');view.id='occurrences-view';view.style.setProperty('--menu-accent',ACCENT);
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
-const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(DOC_ICON);const heading=el('div');heading.append(el('h2',null,'Ocorrências'),el('p',null,PATH));head.append(heading);
+const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(DOC_ICON);const heading=el('div');heading.append(el('h2',null,'DES - Ocorrências'),el('p',null,PATH));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
-addShortcuts(view.id,()=>openSection(sections[8][0],'Gestão de Pessoas','forms',ACCENT));
+addShortcuts(view.id,()=>menuBack(2,'Lançamentos Colaboradores')());
 const addButton=button('',()=>{resetForm();formStatus.textContent='';collab.search.closest('label').querySelector('select').focus()},'shortcut-circle');addButton.title='Nova ocorrência';addButton.setAttribute('aria-label','Nova ocorrência');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
 const loadNote=el('p','profiles-error');loadNote.setAttribute('role','alert');
 body.append(el('div','form-note','Simulação local: ocorrências ficam neste navegador. Anexos e dados médicos (clínica, CID, médico e CRM) ficam só na memória e são perdidos ao atualizar a página. Nenhuma penalidade, desconto ou desligamento é aplicado automaticamente.'),loadNote);

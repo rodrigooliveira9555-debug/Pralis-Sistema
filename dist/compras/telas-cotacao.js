@@ -10,7 +10,7 @@
   const SV = window.CicluzComprasServico;
   const M = window.CicluzCompras;
   const { el, botao, campo, entrada, seletor } = U;
-  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras / ';
+  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras (revisar) / ';
   const dataHora = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   const linkFornecedor = (token) => new URL('rodada.html?t=' + encodeURIComponent(token), location.href).href;
 
@@ -20,7 +20,7 @@
 
   function abrir() {
     if (!tela) {
-      tela = U.criarTela({ id: 'compras-cotacao', titulo: 'Cotação por fornecedor', caminho: CAMINHO + 'Cotação por fornecedor', icone: 'compras', voltar: M.voltarCompras });
+      tela = U.criarTela({ id: 'compras-cotacao', titulo: 'Cotação por Fornecedor', caminho: CAMINHO + 'Cotação por Fornecedor', icone: 'compras', voltar: M.voltarCompras });
       U.atalho(tela, 'Pedido urgente', 'M13 2 4 14h7l-1 8 9-12h-7Z', () => pedidoUrgente(), { criar: true });
       // Respostas dadas na página do fornecedor (outra aba) atualizam esta tela.
       document.addEventListener('cicluz-compras-mudou', (e) => { if (e.detail && e.detail.externo && tela.view.classList.contains('show') && !document.querySelector('.compras-dialog[open]')) render(); });
