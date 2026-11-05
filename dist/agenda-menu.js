@@ -1,5 +1,5 @@
 (()=>{
-const tree=document.querySelector('.nav-tree'),otherNames=['Configurações','Cadastros','Lançamentos','Estoques','Avaliações'],other=tree?.querySelector('details[data-menu-name="Configurações"]');if(!tree||!other)return;
+const tree=document.querySelector('.nav-tree'),otherNames=['Configurações','Cadastros','Lançamentos','Estoques','Avaliações','Documentações'],other=tree?.querySelector('details[data-menu-name="Configurações"]');if(!tree||!other)return;
 const members=[...tree.children],others=members.filter(n=>otherNames.includes(n.dataset.menuName)),management=members.filter(n=>!others.includes(n));
 const key='cicluz-sidebar-sections-v1';let state={};try{state=JSON.parse(localStorage.getItem(key)||'{}')}catch(e){}
 const calendar='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18M7 15h3M14 15h3"/></svg>';
