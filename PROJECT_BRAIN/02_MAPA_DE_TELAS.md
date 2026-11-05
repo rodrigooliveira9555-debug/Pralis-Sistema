@@ -47,6 +47,8 @@ Texto fixo "reunirá os principais números".
 - ✅ Chat e arquivos do compromisso (servidor: tabelas `agenda_mensagens`, `agenda_chat_leituras`,
   `agenda_arquivos`, migration 0003 aprovada pelo Zé em 05/11/2026). ⬜ Perfil comportamental: em espera (P-19).
 
+> **05/11/2026:** os grupos "Configuração · Cadastros Gerais" e "Formulários · Cadastros/Avaliações" viraram cinco tópicos em OUTROS: Configurações (Diretor de Operações, Permissões, Usuários, Senhas, todos vazios), Cadastros (Diretor de Operações → patrimônio, grupos DES/MER/RET/VND/CNT; Compras → MER - Fornecedores e MER - Produtos; Gestão de Pessoas → `people-settings`), Lançamentos (Financeiro → seis cards VND/DES/CNT/MER/RET/RES, vazios; Gestão de Pessoas → `forms`: só Uniformes, Compras de Uniformes e Ocorrências; os cadastros de candidato/colaborador ficam em Cadastros › Gestão de Pessoas), Estoques (Compras → três cards MER - Grupo Mercadorias, DES - Grupo Despesas, RET - Grupo Patrimonio, vazios) e Avaliações (Diretor de Operações, Gerentes, Colaboradores, Clientes, vazios). As seções abaixo mantêm o conteúdo; só mudou onde ficam no menu. Detalhe em DESIGN_SYSTEM.md.
+
 ## Configuração · Cadastros Gerais (roxo)
 
 ### Gestão de Pessoas (`people-settings`)
@@ -68,7 +70,7 @@ Texto fixo "reunirá os principais números".
 - ✅ **Cadastro completo c/ dependente** (`complete-registration.js`) — 4 etapas: (1) CPF e dados
   pessoais, (2) endereço e contato, (3) outros documentos, (4) dependentes. Anexos **não** são salvos.
 - 🟨 Cadastro simples — nome, CPF, função, turno, admissão. Não salva.
-- 🟨 Cadastro de patrimônio — bem, categoria, marca, modelo, série, nº, valor, área/setor/local.
+- 🟨 RET - Patrimônios (antes Cadastro de patrimônio) — bem, categoria, marca, modelo, série, nº, valor, área/setor/local.
   Não salva.
 
 ## Legado

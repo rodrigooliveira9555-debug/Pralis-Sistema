@@ -29,10 +29,17 @@ export default defineNuxtConfig({
   components: [{ path: "~/components", pathPrefix: false }],
   modules: ["vuetify-nuxt-module"],
   css: ["~/assets/cicluz.css"],
-  // Desenvolvimento: o app roda em :3100 e fala com a API em :4200 pelo mesmo caminho /api.
+  // Desenvolvimento: o app roda em :3100 e fala com a API em :4200 pelo mesmo caminho /api. A tela
+  // de entrada do site também vem da :4200; sem isso, /entrar.html caía no próprio app e o login
+  // entrava em loop. A origem vai como :4200, a única que a API local aceita (WEB_ORIGINS).
   nitro: {
     devProxy: {
-      "/api": { target: "http://localhost:4200/api", changeOrigin: false }
+      "/api": { target: "http://localhost:4200/api", changeOrigin: false, headers: { origin: "http://localhost:4200" } },
+      ...Object.fromEntries(
+        ["entrar.html", "entrar.css", "entrar.js", "entrar-tema.js", "cicluz-sync.js", "cicluz-gestao-padaria-logo.png", "cicluz-simbolo.png"].map(
+          (arquivo) => [`/${arquivo}`, { target: `http://localhost:4200/${arquivo}`, ignorePath: true }]
+        )
+      )
     }
   },
   vuetify: {
