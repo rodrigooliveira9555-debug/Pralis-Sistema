@@ -22,6 +22,13 @@
       "when": 1793753105771,
       "tag": "0002_lancamentos",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793894362985,
+      "tag": "0003_agenda_chat_arquivos",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 /* Single role-based type and form scale. Edit these tokens, not individual screens. */
-:root{--ui-font:Montserrat,system-ui,sans-serif;--ui-header-icon-diameter:30px;--ui-header-icon-inset:4.5px;--ui-title:16px;--ui-title-line:20px;--ui-subtitle:11px;--ui-subtitle-line:14px;--ui-text:14px;--ui-input-size:14px;--ui-text-line:18px;--ui-note:11px;--ui-field-height:42px;--ui-field-radius:8px;--ui-title-weight:600;--ui-section-title:14px;--ui-section-title-line:20px;--ui-section-title-weight:600;--ui-header-tint:14%;--ui-border-tint:25%;--ui-hover-tint:8%;--ui-focus-tint:14%}
+:root{--ui-font:Montserrat,system-ui,sans-serif;--ui-header-icon-diameter:30px;--ui-header-icon-inset:4.5px;--ui-title:16px;--ui-title-line:20px;--ui-subtitle:11px;--ui-subtitle-line:14px;--ui-text:14px;--ui-input-size:14px;--ui-text-line:18px;--ui-note:11px;--ui-field-height:42px;--ui-field-radius:8px;--row-icon-radius:26%;--row-action-size:32px;--row-action-gap:6px;--ui-title-weight:600;--ui-section-title:14px;--ui-section-title-line:20px;--ui-section-title-weight:600;--ui-header-tint:14%;--ui-border-tint:25%;--ui-hover-tint:8%;--ui-focus-tint:14%}
 body .view>.panel>.head h2,body #sector-view .panel>.head h2,body #jobs-view .panel>.head h2,body #salary-view .panel>.head h2{font-family:var(--ui-font)!important;font-size:var(--ui-title)!important;font-weight:var(--ui-title-weight)!important;line-height:var(--ui-title-line)!important;letter-spacing:normal!important}
 body .view>.panel>.head p{font-family:var(--ui-font)!important;font-size:var(--ui-subtitle)!important;font-weight:400!important;line-height:var(--ui-subtitle-line)!important;letter-spacing:normal!important}
 body .view .form-fields,body .view .form-demo .content,body .view .account-editor,body .location-dialog form{font-family:var(--ui-font);font-size:var(--ui-text);line-height:var(--ui-text-line)}
@@ -72,10 +72,10 @@ body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) sel
 
 /* Icon-library headings share the same role as field labels. */
 body :is(.view,dialog) .identity-advanced>summary{font:var(--ui-label-weight) var(--ui-label)/18px var(--ui-font)!important;color:var(--ui-label-color)!important;letter-spacing:normal!important}
-/* Cargos pilot: full-height joined row actions, clipped by the row border. */
-#jobs-view .job-actions{align-self:stretch;align-items:stretch;gap:0;padding:0!important;transition:width .2s;width:0}
+/* Row actions are solid round buttons; the glyph is a cut-out in the surface colour behind them. */
+#jobs-view .job-actions{align-self:center;align-items:center;justify-content:center;gap:var(--row-action-gap);padding:0!important;transition:width .2s;width:0}
 #jobs-view .job-item.actions-open .job-actions{width:76px;padding:0!important}
-#jobs-view .job-actions>button{box-sizing:border-box;display:flex;align-items:center;justify-content:center;width:38px!important;min-width:38px!important;height:auto!important;min-height:100%;flex:0 0 38px;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;color:white!important}
+#jobs-view .job-actions>button{box-sizing:border-box;display:flex;align-items:center;justify-content:center;width:var(--row-action-size)!important;min-width:var(--row-action-size)!important;height:var(--row-action-size)!important;min-height:0;flex:0 0 var(--row-action-size);padding:0!important;margin:0!important;border:0!important;border-radius:50%!important;color:var(--theme-surface,#fff)!important}
 #jobs-view .job-actions>.job-edit-action{order:0;background:var(--menu-accent,var(--panel-color,#7c3aed))!important}
 #jobs-view .job-actions>.job-delete-action{order:1;background:var(--cicluz-danger,#e34343)!important}
 #jobs-view .job-actions svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -86,12 +86,12 @@ body .job-icon-trash{background:var(--cicluz-danger,#e34343)!important;color:#ff
 :is(.view,.location-dialog) .job-more-options,:is(.view,.location-dialog) .job-inline-tools>.btn{display:block;width:100%;max-width:none;box-sizing:border-box}
 :is(.view,.location-dialog) .job-inline-tools .job-icon-style{width:100%;margin-top:8px}
 
-/* Approved full-height row actions, shared by financial lists and location trees. */
+/* Row actions as solid round buttons, shared by financial lists and location trees. */
 body #sector-view .account-list-row,body .location-row{position:relative;box-sizing:border-box;width:100%;max-width:100%;min-width:0}
-body #sector-view .account-row-actions{position:absolute;top:0;bottom:0;right:0;align-self:stretch;align-items:stretch!important;gap:0!important;padding:0!important;margin:0!important;width:76px!important;flex-basis:auto!important;flex-wrap:nowrap!important;overflow:hidden;border-radius:0 9px 9px 0}
+body #sector-view .account-row-actions{position:absolute;top:0;bottom:0;right:0;align-self:stretch;align-items:center!important;justify-content:center;gap:var(--row-action-gap)!important;padding:0!important;margin:0!important;width:76px!important;flex-basis:auto!important;flex-wrap:nowrap!important;overflow:hidden}
 body #sector-view .account-row-actions[hidden]{display:none!important;width:0!important}
 body #sector-view :is(.account-list-row,.location-row):has(>.account-row-actions:not([hidden])){padding-right:110px!important;flex-wrap:nowrap!important}
-body #sector-view .account-row-actions>button{display:flex;align-items:center;justify-content:center;width:38px!important;min-width:38px!important;height:auto!important;min-height:100%;flex:0 0 38px!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;color:#fff!important}
+body #sector-view .account-row-actions>button{display:flex;align-items:center;justify-content:center;width:var(--row-action-size)!important;min-width:var(--row-action-size)!important;height:var(--row-action-size)!important;min-height:0;flex:0 0 var(--row-action-size)!important;padding:0!important;margin:0!important;border:0!important;border-radius:50%!important;color:var(--theme-surface,#fff)!important}
 body #sector-view .account-row-actions>button:first-child{order:1;background:var(--cicluz-danger,#e34343)!important}
 body #sector-view .account-row-actions>button:last-child{order:0;background:var(--item-color,var(--node-color,var(--menu-accent,var(--panel-color,#7c3aed))))!important}
 body #sector-view .account-row-actions svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8}
@@ -104,7 +104,7 @@ body :is(.view,dialog,.modal) input[type=search]::-webkit-search-cancel-button{-
 
 /* Canonical library roles: all source, online and removed grids share these rules. */
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field){--library-accent:var(--menu-accent,var(--dialog-accent,var(--panel-color,#7c3aed)));font:var(--ui-label-weight) var(--ui-label)/18px var(--ui-font);color:var(--ui-label-color)}
-body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot){box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 32px!important;width:32px!important;height:32px!important;min-height:32px!important;padding:6px!important;border:1px solid var(--library-accent)!important;border-radius:50%!important;background:var(--library-accent)!important;color:var(--theme-field,#fff)!important;box-shadow:none!important;cursor:pointer}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot){box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 32px!important;width:32px!important;height:32px!important;min-height:32px!important;padding:6px!important;border:1px solid var(--library-accent)!important;border-radius:var(--icon-radius,50%)!important;background:var(--library-accent)!important;color:var(--theme-field,#fff)!important;box-shadow:none!important;cursor:pointer}
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot)[hidden]{display:none!important}
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot):is([aria-pressed=true],.selected){border-color:var(--library-accent)!important;background:var(--library-accent)!important;box-shadow:inset 0 0 0 1px var(--library-accent)!important}
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot):hover{border-color:var(--library-accent)!important;background:var(--theme-field,#fff)!important}
@@ -389,3 +389,4 @@ body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog{width:min(980px,ca
 .docs-sub-card>*{grid-area:auto}
 body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog form{display:grid;grid-template-columns:minmax(0,1fr)}body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog form>*{grid-column:1/-1;min-width:0}
 @media(max-width:600px){.docs-table th:nth-child(2),.docs-table td:nth-child(2){display:none}.docs-status-cell>span:last-child{display:none}.docs-table td.uniforms-row-actions{white-space:nowrap}}
+.card-inherited-icon .sigla-text{font:700 11px/1 var(--ui-font,inherit);letter-spacing:0}

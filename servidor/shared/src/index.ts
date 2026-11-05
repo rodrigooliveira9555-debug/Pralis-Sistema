@@ -3,3 +3,4 @@ export * from "./documentos.ts";
 export * from "./sessao.ts";
 export * from "./usuarios.ts";
 export * from "./lancamentos/index.ts";
+export * from "./agenda.ts";

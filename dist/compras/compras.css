@@ -1,0 +1,262 @@
+/*
+ * Compras — estilos próprios do módulo. Usa os tokens do S2 (--ui-*, --layout-*, --theme-*,
+ * --menu-accent) e não redefine tipografia nem medidas de formulário (fonte: ui-foundation.css).
+ */
+.compras-content { gap: 12px; }
+/* Coluna flexível: os blocos não encolhem (senão grade e tabelas são cortadas em vez de rolar). */
+.compras-content > * { min-width: 0; flex-shrink: 0; }
+
+/* Ação principal na cor do menu de origem (o .btn legado é roxo fixo). */
+:is(.compras-view, .compras-dialog) .btn:not(.secondary):not(.footer-cancel-accent) { background: var(--menu-accent); border-color: var(--menu-accent); color: #fff; }
+:is(.compras-view, .compras-dialog) .btn.secondary { color: var(--panel-text, #12672e); border-color: color-mix(in srgb, var(--menu-accent) 45%, white); background: transparent; }
+body.dark-theme :is(.compras-view, .compras-dialog) .btn.secondary { color: #a7e8bd; }
+.compras-corpo-filtros { padding: 10px 14px 0; }
+.compras-secao-rodape { padding: 12px 14px; border-top: 1px solid var(--layout-line, #dedee3); }
+.compras-secao-rodape:empty { display: none; }
+.compras-secao > .compras-tabela-box, .compras-bloco > .compras-tabela-box { border: 0; border-radius: 0; }
+.compras-secao > .compras-corpo-filtros + .compras-tabela-box { margin-top: 10px; border-top: 1px solid var(--layout-line, #dedee3); }
+.compras-agenda { border-top: 1px solid var(--layout-line, #dedee3); }
+.compras-lista > .compras-agenda:first-child { border-top: 0; }
+.compras-agenda > .compras-linha { border-top: 0; }
+.compras-datas { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 0 14px 12px 56px; }
+/* Abas: linha inteira quando dividem a barra com filtros; na coluna do conteúdo, só a própria altura. */
+.compras-abas { flex: 0 0 auto; align-self: flex-start; }
+.profiles-controls > .compras-abas { flex: 1 1 100%; }
+.compras-item-urgente { display: grid; grid-template-columns: minmax(0, 3fr) minmax(90px, 1fr) auto; gap: 8px; align-items: end; }
+.compras-item-urgente > small { grid-column: 1 / -1; margin: -4px 0 4px; }
+.compras-vai-para { font-size: 12px; }
+.btn.secondary.perigo-texto { color: #dc2626; border-color: #fca5a5; }
+@media (max-width: 600px) {
+  .compras-datas { padding-left: 14px; }
+  .compras-item-urgente { grid-template-columns: 1fr 1fr; }
+  .compras-item-urgente > label:first-child { grid-column: 1 / -1; }
+}
+
+/* Busca e controles */
+.compras-busca { flex: 2 1 240px; min-width: 0; }
+.compras-content .profiles-controls { align-items: end; }
+.compras-content .profiles-controls > .compras-campo { flex: 1 1 160px; min-width: 0; }
+.compras-campo { display: grid; gap: 6px; min-width: 0; }
+.compras-rotulo { font: var(--ui-label-weight, 500) var(--ui-label, 12px)/18px var(--ui-font); color: var(--ui-label-color, #3f3f46); }
+.compras-filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.compras-grupo-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.compras-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.compras-chip {
+  font: 500 12px/16px var(--ui-font); padding: 6px 12px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--layout-line, #dedee3); background: var(--theme-card, #fff); color: var(--layout-ink, #606066);
+}
+.compras-chip.ativo { border-color: var(--menu-accent); background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); color: var(--panel-text, #12672e); font-weight: 600; }
+body.dark-theme .compras-chip.ativo { color: #f2f1f6; }
+.compras-interruptor { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); cursor: pointer; }
+.compras-interruptor > small { flex-basis: 100%; margin: 0; }
+.compras-interruptor input { accent-color: var(--menu-accent); width: 20px; height: 20px; }
+.compras-linha-info { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* Seções e contadores */
+.compras-secao { display: grid; gap: 0; background: var(--theme-card, #fff); border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; overflow: hidden; }
+.compras-secao-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-bottom: 1px solid var(--layout-line, #dedee3); }
+.compras-secao-cab h3 { margin: 0; display: flex; align-items: center; gap: 8px; font: var(--ui-section-title-weight, 600) var(--ui-section-title, 14px)/var(--ui-section-title-line, 20px) var(--ui-font); }
+.compras-secao > .compras-corpo { padding: 12px 14px; display: grid; gap: 12px; }
+.compras-conta { font: 600 11px/16px var(--ui-font); min-width: 22px; padding: 1px 7px; border-radius: 999px; text-align: center; background: #f0f0f3; color: #71717a; }
+.compras-conta.ativa { background: color-mix(in srgb, var(--menu-accent) 18%, white); color: var(--panel-text, #12672e); }
+body.dark-theme .compras-conta { background: #34333b; color: #d4d4d8; }
+
+/* Linhas de lista (moldura única, divisor fino, 52px) */
+.compras-lista { display: grid; gap: 0; }
+.compras-linha {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 52px; padding: 8px 14px; width: 100%; box-sizing: border-box;
+  border: 0; border-top: 1px solid var(--layout-line, #dedee3); background: transparent; text-align: left; font: inherit; color: inherit;
+}
+.compras-lista > .compras-linha:first-child { border-top: 0; }
+button.compras-linha { cursor: pointer; }
+button.compras-linha:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+.compras-linha-icone { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--menu-accent); }
+.compras-linha-icone svg { width: 16px; height: 16px; fill: none; stroke: var(--theme-surface, #fff); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+/* O texto nunca fica mais estreito que 180px: sem espaço, os botões descem para a linha de baixo. */
+.compras-linha-texto { flex: 1 1 180px; min-width: min(180px, 100%); display: grid; gap: 2px; }
+.compras-linha-texto b { font-weight: 600; overflow-wrap: anywhere; }
+.compras-linha-texto small { font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); overflow-wrap: anywhere; }
+.compras-linha-direita { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
+
+/* Situações (equivalente ao ComprasSituacao do S1) */
+.compras-situacao { justify-self: start; align-self: center; display: inline-block; font: 600 11px/16px var(--ui-font); padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.tom-neutro { background: #f0f0f3; color: #52525b; }
+.tom-info { background: #e3edfd; color: #174ca1; }
+.tom-marca { background: color-mix(in srgb, var(--menu-accent) 16%, white); color: var(--panel-text, #12672e); }
+.tom-atencao { background: #fdf0d5; color: #8a5300; }
+.tom-positivo { background: #dcf5e4; color: #12672e; }
+.tom-negativo { background: #fde3e3; color: #a11c1c; }
+body.dark-theme .tom-neutro { background: #34333b; color: #d4d4d8; }
+body.dark-theme .tom-info { background: #1d3157; color: #bcd3fb; }
+body.dark-theme .tom-marca, body.dark-theme .tom-positivo { background: #183a25; color: #a7e8bd; }
+body.dark-theme .tom-atencao { background: #3d2e10; color: #f6d38f; }
+body.dark-theme .tom-negativo { background: #45201f; color: #f8b4b4; }
+
+/* Tabelas com rolagem horizontal própria */
+.compras-tabela-box { overflow-x: auto; max-width: 100%; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); }
+.compras-tabela { width: 100%; border-collapse: collapse; font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); }
+.compras-tabela th { text-align: left; font-weight: 600; font-size: 12px; padding: 10px 14px; white-space: nowrap; background: color-mix(in srgb, var(--menu-accent) 10%, var(--theme-card, #fff)); border-bottom: 1px solid var(--layout-line, #dedee3); }
+.compras-tabela td { padding: 10px 14px; border-top: 1px solid var(--layout-line, #dedee3); vertical-align: middle; }
+.compras-tabela tbody tr:first-child td { border-top: 0; }
+.compras-tabela .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.compras-tabela .centro { text-align: center; }
+.compras-tabela tr.clicavel { cursor: pointer; }
+.compras-tabela tr.clicavel:hover td, .compras-tabela tr.clicavel:focus-visible td { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+.compras-tabela tr.inativo td { opacity: .55; }
+.compras-tabela tr.destaque td { background: color-mix(in srgb, #f59e0b 9%, transparent); }
+.compras-tabela td.destaque { color: #8a5300; font-weight: 700; }
+body.dark-theme .compras-tabela td.destaque { color: #f6d38f; }
+.compras-tabela input { min-height: 36px !important; }
+.compras-produto-celula { display: grid; gap: 2px; }
+.compras-produto-celula > b { display: inline; }
+.compras-produto-celula small { color: var(--muted, #73737a); font-size: 11px; line-height: 16px; }
+
+/* Bolinhas */
+.compras-bolinhas { display: inline-flex; gap: 4px; vertical-align: middle; margin-left: 6px; }
+.compras-bolinha { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.b-vende { background: #157f3c; }
+.b-compra { background: #d4a106; }
+.b-lucro { background: #2563eb; }
+.compras-legenda { display: inline-flex; gap: 12px; flex-wrap: wrap; font: 400 11px/16px var(--ui-font); color: var(--muted, #73737a); }
+.compras-legenda-item { display: inline-flex; align-items: center; gap: 5px; }
+
+/* Cards de produto */
+.compras-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.compras-card { text-align: left; font: inherit; color: inherit; cursor: pointer; display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); }
+.compras-card:hover { border-color: var(--menu-accent); }
+.compras-card.inativo { opacity: .55; }
+.compras-card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 12px; }
+.compras-card dt { color: var(--muted, #73737a); }
+.compras-card dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Estado vazio */
+.compras-vazio { padding: 22px 16px; text-align: center; color: var(--muted, #73737a); display: grid; gap: 4px; }
+.compras-vazio b { color: var(--layout-ink, #3f3f46); font-weight: 600; }
+.compras-vazio p { margin: 0; font-size: 12px; }
+
+/* Indicadores (Estoque) */
+.compras-indicadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.compras-indicador { font: inherit; color: inherit; text-align: left; cursor: pointer; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--layout-line, #dedee3); background: var(--theme-card, #fff); display: grid; gap: 2px; }
+.compras-indicador b { font-size: 20px; line-height: 26px; }
+.compras-indicador small { font-size: 11px; color: var(--muted, #73737a); }
+.compras-indicador.ativo { border-color: var(--menu-accent); box-shadow: inset 0 0 0 1px var(--menu-accent); }
+
+/* Etapas (trilha do pedido) */
+.compras-trilha { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 0; padding: 0; list-style: none; font-size: 12px; }
+.compras-trilha li { padding: 4px 10px; border-radius: 999px; background: #f0f0f3; color: #71717a; }
+.compras-trilha li.feito { background: color-mix(in srgb, var(--menu-accent) 18%, white); color: var(--panel-text, #12672e); font-weight: 600; }
+.compras-trilha li.atual { background: var(--menu-accent); color: #fff; font-weight: 600; }
+body.dark-theme .compras-trilha li { background: #34333b; color: #d4d4d8; }
+
+/* Diálogos (o shell do S2 adapta <dialog> em people-header-pilot.js). */
+.compras-dialog { background: var(--theme-surface, #fff); color: var(--layout-ink, #3f3f46); }
+body dialog.shell-dialog.compras-dialog.largo { width: min(1000px, calc(100vw - 16px)) !important; }
+.compras-dialog.largo { width: min(1000px, calc(100vw - 32px)); max-width: none; }
+.compras-dialog h2 { margin: 0 0 4px; font: var(--ui-title-weight, 600) var(--ui-title, 16px)/var(--ui-title-line, 20px) var(--ui-font); }
+.compras-dialog-sub { margin: 0 0 12px; font: 400 var(--ui-subtitle, 11px)/var(--ui-subtitle-line, 14px) var(--ui-font); color: var(--muted, #73737a); }
+.compras-form { display: grid; gap: 12px; }
+/* No diálogo, só os campos dividem colunas; listas, blocos, tabelas e textos usam a largura toda. */
+.compras-dialog .compras-form > :not(.compras-campo):not(label) { grid-column: 1 / -1; }
+/* Itens do diálogo podem encolher: uma tabela larga rola dentro da própria caixa, sem passar da borda. */
+.compras-dialog .compras-form > * { min-width: 0; }
+.compras-fieldset { border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; padding: 12px 14px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; min-width: 0; }
+.compras-fieldset legend { padding: 0 6px; font: 600 13px/18px var(--ui-font); }
+.compras-fieldset > .compras-interruptor, .compras-fieldset > .compras-texto-auto, .compras-fieldset > .compras-largo { grid-column: 1 / -1; }
+.compras-texto-auto { margin: 0; font-size: 12px; color: var(--panel-text, #12672e); font-weight: 600; }
+body.dark-theme .compras-texto-auto { color: #a7e8bd; }
+.compras-dialog-acoes { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; position: sticky; bottom: -24px; background: var(--theme-surface, #fff); padding: 10px 0 0; }
+.compras-dialog .btn.perigo, .compras-content .btn.perigo { background: #ef4444; border-color: #ef4444; color: #fff; }
+.compras-form-rodape { display: flex; justify-content: flex-start; }
+.compras-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted, #73737a); margin: 0; }
+.compras-meta b { color: var(--layout-ink, #3f3f46); font-weight: 600; }
+.compras-grade { display: grid; gap: 10px; }
+.compras-grade-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.compras-bloco { border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; padding: 12px 14px; display: grid; gap: 10px; background: var(--theme-card, #fff); }
+.compras-bloco h4 { margin: 0; font: 600 13px/18px var(--ui-font); }
+.compras-oferta { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 10px 0; border-top: 1px solid var(--layout-line, #dedee3); }
+.compras-oferta:first-of-type { border-top: 0; }
+.compras-oferta-acoes { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* Aviso (snackbar) */
+.compras-aviso { position: fixed; left: 50%; bottom: calc(var(--screen-footer-height, 58px) + 24px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); opacity: 0; pointer-events: none; z-index: 1000; background: #27272a; color: #fff; padding: 10px 16px; border-radius: 10px; font: 500 13px/18px var(--ui-font); transition: opacity .2s, transform .2s; max-width: calc(100vw - 32px); }
+.compras-aviso.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 600px) {
+  .compras-linha { padding: 8px 10px; }
+  .compras-tabela th, .compras-tabela td { padding: 8px 10px; }
+  .compras-fieldset { grid-template-columns: 1fr; }
+  .compras-dialog.largo { width: 100vw; max-height: 100dvh; height: 100dvh; border-radius: 0; margin: 0; }
+}
+
+/* Formulários largos: blocos de lista ocupam a largura toda do diálogo. */
+.compras-form > .compras-fieldset-lista, .compras-form > .compras-largo { grid-column: 1 / -1; }
+.compras-fieldset > .compras-largo, .compras-fieldset > .profiles-note { grid-column: 1 / -1; }
+.compras-dialog .compras-interruptor, .compras-content .compras-interruptor { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.compras-dialog .compras-interruptor > input { flex: 0 0 20px; margin: 0; }
+.compras-fieldset .profiles-controls > select { flex: 1 1 180px; width: auto; min-width: 0; }
+
+/* Cadastro de produtos (04/11/2026) */
+.compras-form-produto:not(.com-ajuda) .compras-dica { display: none; }
+.compras-fieldset-sub { margin: -4px 0 0; font: 400 var(--ui-subtitle, 11px)/var(--ui-subtitle-line, 14px) var(--ui-font); color: var(--muted, #73737a); }
+.compras-alertas:empty { display: none; }
+.compras-alerta { margin: 0; padding: 10px 14px; border-radius: 10px; display: grid; gap: 6px; }
+.compras-alerta p, .compras-alerta ul { margin: 0; }
+.compras-alerta .btn { justify-self: start; }
+.compras-aviso-campo { margin: 0; font-size: 12px; color: #8a5300; }
+body.dark-theme .compras-aviso-campo { color: #f6d38f; }
+.compras-aviso-campo:empty { display: none; }
+.compras-campo-com-botao { display: flex; gap: 8px; align-items: stretch; }
+.compras-campo-com-botao > input { flex: 1; min-width: 0; }
+.compras-subbloco { border-top: 1px dashed var(--layout-line, #dedee3); padding-top: 10px; display: grid; gap: 10px; }
+.compras-subbloco h4 { margin: 0; font: 600 13px/18px var(--ui-font); }
+.compras-fiscal-topo { display: grid; gap: 4px; justify-items: start; }
+.compras-fiscal-topo p { margin: 0; }
+.compras-fiscal-todos summary { cursor: pointer; font-weight: 600; font-size: 12px; color: var(--panel-text, #12672e); }
+body.dark-theme .compras-fiscal-todos summary { color: #a7e8bd; }
+.compras-promocoes, .compras-conversoes { display: grid; gap: 10px; }
+.compras-dias .compras-chip { min-width: 44px; }
+.compras-foto { display: grid; gap: 8px; }
+.compras-foto-area { border: 1px dashed var(--layout-line, #dedee3); border-radius: 12px; padding: 12px; display: grid; gap: 4px; justify-items: center; text-align: center; min-height: 84px; align-content: center; }
+.compras-foto-area.arrastando { border-color: var(--menu-accent); background: color-mix(in srgb, var(--menu-accent) 8%, transparent); }
+.compras-foto-area img { max-height: 160px; max-width: 100%; object-fit: contain; cursor: zoom-in; border-radius: 8px; }
+.compras-foto-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.compras-foto-ampliada { width: 100%; max-height: 72vh; object-fit: contain; }
+.compras-scanner { position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4 / 3; }
+.compras-scanner-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.compras-scanner-alvo { position: absolute; inset: 18% 12%; border: 2px solid #fff; border-radius: 10px; box-shadow: 0 0 0 999px rgba(0, 0, 0, .35); }
+.compras-lote { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.compras-lote.ativa { padding: 8px 12px; border-radius: 12px; background: color-mix(in srgb, var(--menu-accent) 10%, var(--theme-card, #fff)); border: 1px solid var(--layout-line, #dedee3); }
+.compras-paginacao { display: flex; gap: 12px; align-items: center; justify-content: center; }
+.compras-paginacao:empty { display: none; }
+.compras-card-topo { display: flex; gap: 10px; align-items: flex-start; }
+.compras-card-topo > .compras-produto-celula { flex: 1; min-width: 0; }
+.compras-card-foto-botao { padding: 0; border: 0; background: none; cursor: zoom-in; flex: 0 0 56px; }
+.compras-card-foto { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; display: block; }
+.compras-form-produto > .compras-fieldset, .compras-form-produto > .compras-alertas, .compras-form-produto > .compras-form-rodape { grid-column: 1 / -1; }
+.compras-form-produto .compras-fieldset { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); align-items: start; }
+@media (min-width: 601px) { .compras-form-produto [data-campo="codigoBarras"] { grid-column: span 2; } }
+/* Linha de ações substituída pelo rodapé fixo: fora da vista, mas presente para o ✓ repassar o clique. */
+.compras-dialog .compras-dialog-acoes.compras-dialog-acoes-rodape { position: absolute; width: 1px; height: 1px; padding: 0; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+/* Página do fornecedor: referência do item (como no S1). */
+.rodada-dados { margin: 0; display: flex; gap: 6px; align-items: baseline; font-size: 13px; }
+.rodada-dados dt { color: var(--muted, #73737a); }
+.rodada-dados dd { margin: 0; font-weight: 700; color: var(--panel-text, #12672e); }
+.rodada-dica { margin: 0; font-size: 12px; color: var(--panel-text, #12672e); background: color-mix(in srgb, var(--menu-accent) 10%, var(--theme-card, #fff)); border-radius: 8px; padding: 6px 10px; }
+.rodada-campos label > small { color: var(--muted, #73737a); font-size: 11px; }
+
+/* Diálogo: as linhas não esticam para ocupar a altura que sobra; botões no tamanho padrão. */
+.compras-dialog .compras-form { align-content: start; }
+.compras-form-rodape { align-items: center; flex-wrap: wrap; gap: 8px; }
+/* Caixa de seleção com texto ao lado e dica embaixo. A regra .location-dialog input (width 100%, 42px)
+   do S2 também atingia o checkbox e empurrava o texto. */
+.compras-dialog .compras-form > .compras-interruptor { grid-column: 1 / -1; }
+.compras-dialog .compras-interruptor { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: center; column-gap: 10px; row-gap: 4px; }
+.compras-dialog .compras-interruptor > input[type=checkbox] { width: 20px; height: 20px; min-height: 0; margin: 0; }
+.compras-dialog .compras-interruptor > small { grid-column: 2; margin: 0; white-space: normal; }
+
+/* Conferência: campo de quantidade estreito e células com uma linha de apoio embaixo. */
+.compras-contado { max-width: 110px; }
+.compras-contado-celula { display: inline-flex; align-items: center; gap: 6px; justify-content: flex-end; }
+.compras-celula-pilha { display: inline-flex; flex-direction: column; gap: 6px; min-width: 9rem; }
+.compras-celula-pilha > input { width: 100%; }
+.compras-tabela .num .compras-celula-pilha { align-items: flex-end; }

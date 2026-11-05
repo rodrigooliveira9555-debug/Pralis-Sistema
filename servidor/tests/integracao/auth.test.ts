@@ -31,6 +31,9 @@ describe("login", () => {
       empresa: { id: conta.empresaId, nome: conta.empresaNome, dadosImportados: false }
     });
     expect(corpo.data.chavesSincronizadas).toContain("cicluz-financial-hierarchy-v1");
+    expect(corpo.data.chavesSincronizadas).toContain("cicluz-compras-v1");
+    expect(corpo.data.chavesSincronizadas).toContain("cicluz-agenda-v1");
+    expect(corpo.data.chavesAdotadas).toEqual(["cicluz-compras-v1", "cicluz-agenda-v1"]);
   });
 
   it("recusa senha errada sem criar sessão", async () => {

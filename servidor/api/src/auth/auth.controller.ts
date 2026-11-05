@@ -1,6 +1,6 @@
 import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyInstance } from "fastify";
-import { CHAVES_SINCRONIZADAS, ok, problema } from "@cicluz/shared";
+import { CHAVES_ADOTADAS_DO_APARELHO, CHAVES_SINCRONIZADAS, ok, problema } from "@cicluz/shared";
 import { env } from "../env.ts";
 import { auth, CABECALHO_IP_CLIENTE } from "./config.ts";
 import { exigirAutenticacao } from "./guards.ts";
@@ -41,7 +41,7 @@ export async function registrarRotasAuth(app: FastifyInstance) {
   app.get("/api/sessao", async (request) => {
     const perfil = await exigirAutenticacao(request);
     // A lista de chaves vai junto: o navegador não tem cópia própria dela.
-    return ok({ perfil, chavesSincronizadas: CHAVES_SINCRONIZADAS });
+    return ok({ perfil, chavesSincronizadas: CHAVES_SINCRONIZADAS, chavesAdotadas: CHAVES_ADOTADAS_DO_APARELHO });
   });
 
   // Rotas do better-auth (entrar, sair, sessão). Teto de 20 por minuto por IP e de 10 tentativas de
