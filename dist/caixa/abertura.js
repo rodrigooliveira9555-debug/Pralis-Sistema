@@ -12,8 +12,17 @@
 
   // Login de posto: cada conta de operador é um PDV + turno (PDV 1-4 × Manhã/Tarde).
   const POSTO = { pdv: 'PDV 1', turno: 'Manhã', usuario: 'pdv1.manha' };
-  // Malote que a Tesouraria declarou para o lacre 001 (o único válido na casca).
-  const MALOTE = { lacre: '001', dinheiro: 30000, moedas: 5000, lacresSangria: ['SNG-014', 'SNG-015'], lacreFechamento: 'FCH-001', rota: 'Malote Cofre → Conta PDV 1' };
+  // Malote que a Tesouraria declarou para o lacre digitado (vem de C.estado.malotes; o 001 já existe de início).
+  const MALOTE = { lacre: '', dinheiro: 0, moedas: 0, lacresSangria: [], lacreFechamento: '', rota: 'Malote Cofre → Conta do PDV' };
+  /** Consulta o lacre como o servidor: inexistente, já rompido ou de outro PDV recusam com a mensagem do principal. */
+  function consultarLacre(digitado) {
+    const m = C.malotePorLacre(digitado);
+    if (!m) return { erro: 'Lacre inexistente. Confira o número no malote.' };
+    if (m.situacao !== 'disponivel') return { erro: 'Lacre já rompido - não pode ser reutilizado.' };
+    if (m.pdv !== POSTO.pdv) return { erro: 'A conta deste caixa não é destino desta transferência.' };
+    Object.assign(MALOTE, { lacre: m.lacre, dinheiro: m.especie, moedas: m.moedas, lacresSangria: m.lacresRetorno.slice(), lacreFechamento: m.lacreFechamento, rota: 'Malote ' + m.origem + ' → Conta ' + m.pdv, id: m.id });
+    return { m };
+  }
   const RESPONSAVEIS = ['Ana Paula', 'Bruna Costa', 'Carlos Henrique'];
   const SUPERVISORES = ['Marcos Lima', 'Patrícia Souza'];
   const MAQUININHAS = [['pagbank-1', 'PagBank Moderninha · série 8C12-4471'], ['pagbank-2', 'PagBank Smart · série 9A03-1180']];
@@ -61,7 +70,7 @@
 
   function render() {
     if (C.estado.status !== 'fechado') return renderAberto();
-    const aviso = U.nota('Demonstração: dados fictícios, nada é gravado. Na casca, o único lacre válido é 001.');
+    const aviso = U.nota('Demonstração: dados fictícios, nada é gravado. Use um lacre criado em "Malote da Tesouraria" (o 001 do PDV 1 já existe).');
     aviso.classList.add('caixa-aviso');
     const intro = U.nota('Preencha os três blocos. A abertura só é confirmada depois da conferência do malote.');
     const passo = !estado.encontrado || estado.conferido === null ? 2 : 3;
@@ -110,7 +119,7 @@
     const lacre = entrada('text', estado.lacre, { placeholder: 'Ex.: 001', autocomplete: 'off', required: true });
     const status = el('small', 'caixa-status');
     status.setAttribute('role', 'status');
-    if (estado.lacre && !estado.encontrado) { status.textContent = 'Lacre não encontrado. Confira o número no malote.'; status.classList.add('erro'); }
+    if (estado.lacre && !estado.encontrado) { status.textContent = estado.erroLacre || 'Lacre não encontrado. Confira o número no malote.'; status.classList.add('erro'); }
     lacre.oninput = () => {
       clearTimeout(espera);
       estado.lacre = lacre.value;
@@ -121,7 +130,9 @@
       if (!lacre.value.trim()) return;
       // Simula a consulta do lacre na Tesouraria.
       espera = setTimeout(() => {
-        estado.encontrado = lacre.value.trim() === MALOTE.lacre;
+        const r = consultarLacre(lacre.value);
+        estado.encontrado = !r.erro;
+        estado.erroLacre = r.erro || '';
         render();
         const novo = tela.body.querySelector('.caixa-malote input');
         if (novo) { novo.focus(); novo.setSelectionRange(novo.value.length, novo.value.length); }
@@ -211,6 +222,10 @@
           motivoDivergencia: estado.conferido ? '' : estado.motivo.trim(),
           lacresSangria: MALOTE.lacresSangria.slice(), lacreFechamento: MALOTE.lacreFechamento,
         });
+        // Abrir é confirmar o recebimento: o lacre é rompido e o malote não serve para outro caixa.
+        const usado = C.malotePorLacre(MALOTE.lacre);
+        if (usado) { usado.situacao = 'usado'; usado.caixa = POSTO.pdv + ' · ' + POSTO.turno; }
+        estado = novoEstado(); // o formulário não carrega o malote antigo para a próxima abertura
         render();
         U.avisar('Caixa aberto às ' + abertoEm + '.');
       },

@@ -37,7 +37,7 @@
     // A faixa (aviso + "Ver como") fica fora do que é redesenhado, para o foco não se perder ao trocar de visão.
     conteudo = el('div', 'caixa-corpo');
     tela.body.replaceChildren(
-      C.faixaDemo('Demonstração: dados fictícios, nada é gravado. O operador não vê o saldo esperado até o fechamento.', atualizar),
+      C.faixaDemo('Demonstração: dados fictícios, nada é gravado. O operador não vê o saldo esperado até o fechamento.', atualizar, ['operador', 'gerencia']),
       conteudo
     );
     atualizar();
@@ -59,6 +59,7 @@
     if (e.status === 'em_fechamento') return conteudo.replaceChildren(vendasEncerradas());
     const r = C.resumo();
     conteudo.replaceChildren(
+      ...blocoMensagensGerencia(),
       ...(r.pendentes.length ? [blocoRecebimentos(r.pendentes)] : []),
       blocoPdv(), blocoCaixaAberto(), blocoResumo(r), blocoAcoes(r)
     );
@@ -79,9 +80,27 @@
     const s = U.secao('Vendas encerradas · ' + a.pdv + ' · ' + a.turno);
     s.querySelector('.compras-secao-cab').append(U.situacao('Aguardando conferência', 'atencao'));
     const acoes = el('div', 'caixa-acoes');
-    acoes.append(botao('Recomeçar a demonstração', () => { C.reiniciar(); atualizar(); }, 'btn secondary'));
-    s.append(corpo(U.nota('O PDV parou de receber vendas e o caixa segue para a conferência final. O fechamento será a próxima tela da casca.'), acoes));
+    acoes.append(botao('Recomeçar a demonstração', () => { C.reiniciar(); atualizar(); }, 'btn secondary'), botao('Ir para o Fechamento', () => C.abrir('fechamento'), 'btn'));
+    s.append(corpo(U.nota('O PDV parou de receber vendas e o caixa segue para a conferência final: gerente, contagem, folha, maquininha, lacre.'), acoes));
     return s;
+  }
+
+  /* ---------- Mensagens da Gerência (enviadas em Gerência → Mensagens) ---------- */
+
+  function blocoMensagensGerencia() {
+    const pdv = C.estado.abertura.pdv;
+    const pend = [];
+    C.estado.mensagens.filter((m) => !m.encerrada).forEach((m) => m.entregas.forEach((x) => {
+      if (x.pdv === pdv && (x.situacao === 'entregue' || x.situacao === 'visualizada')) pend.push([m, x]);
+    }));
+    return pend.map(([m, x]) => {
+      x.situacao = 'visualizada'; // aparecer na tela já conta como visualizada
+      const s = U.secao('Mensagem da Gerência');
+      const acoes = el('div', 'caixa-acoes');
+      acoes.append(botao('Fechar', () => { x.situacao = 'fechada_sem_confirmar'; atualizar(); }, 'btn secondary'), botao('Entendi', () => { x.situacao = 'confirmada'; atualizar(); }, 'btn'));
+      s.append(corpo(el('b', null, m.titulo), U.nota(m.corpo), acoes));
+      return s;
+    });
   }
 
   /* ---------- 1. Recebimentos pendentes (quem confirma é o operador) ---------- */
@@ -297,7 +316,7 @@
       },
       salvar: () => {
         if (C.resumo().pendentes.length) return 'Resolva os recebimentos pendentes antes de encerrar as vendas.';
-        C.estado.status = 'em_fechamento';
+        C.iniciarFechamento();
         U.avisar('Vendas encerradas às ' + C.hora() + '.');
         atualizar();
       },

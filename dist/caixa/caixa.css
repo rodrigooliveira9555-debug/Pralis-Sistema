@@ -71,13 +71,40 @@ button.caixa-cartao:hover { background: color-mix(in srgb, var(--menu-accent) 6%
 .caixa-venda-texto b { font-weight: 600; overflow-wrap: anywhere; }
 .caixa-venda-texto small { font-size: 12px; color: var(--muted, #71717a); }
 .caixa-venda > :not(summary) { margin-top: 10px; }
+/* Fluxo completo: etapas do fechamento, totais, filtros e tabelas com diferença sempre com sinal + palavra. */
+.caixa-etapas ol { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; padding: 0; list-style: none; }
+.caixa-etapas li { display: flex; align-items: center; gap: 8px; }
+.caixa-etapas .caixa-trilha-marca { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--line, #d4d4d8); font: 600 12px/1 var(--ui-font); color: var(--muted, #71717a); }
+.caixa-etapas li.atual .caixa-trilha-marca { border-color: #a16207; background: #a16207; color: #fff; }
+.caixa-etapas li.feito .caixa-trilha-marca { border-color: #a16207; color: #a16207; }
+.caixa-etapa-btn { min-height: 32px; padding: 4px 2px; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.caixa-etapas li.atual .caixa-etapa-btn { font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+.caixa-acoes-esq { justify-content: flex-start; }
+.caixa-total { margin: 0; font-size: 14px; }
+.caixa-total strong { font-size: 18px; font-variant-numeric: tabular-nums; }
+.caixa-lista-pend { margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted, #71717a); }
+.caixa-situacao-linha { display: grid; gap: 4px; justify-items: start; }
+.caixa-situacao-linha small { font-size: 12px; color: var(--muted, #71717a); }
+.caixa-diferenca-linha { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.caixa-diferenca-linha.falta { color: #a11c1c; }
+.caixa-diferenca-linha.sobra { color: #8a5300; }
+.caixa-diferenca-linha.bateu { color: #12672e; }
+.caixa-subtitulo-solto { margin: 8px 0 0; font-size: 13px; font-weight: 600; }
+.compras-tabela tr.selecionada { background: color-mix(in srgb, var(--menu-accent) 12%, transparent); }
+.caixa-alvos { display: grid; gap: 6px; }
+.caixa-filtros { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.caixa-acoes-esq small { margin-right: 0; }
 body.dark-theme .caixa-content .btn.secondary { color: #f6d38f; }
+body.dark-theme .caixa-diferenca-linha.falta { color: #f8b4b4; }
+body.dark-theme .caixa-diferenca-linha.sobra { color: #f6d38f; }
+body.dark-theme .caixa-diferenca-linha.bateu { color: #a7e8bd; }
+body.dark-theme .caixa-etapas li.feito .caixa-trilha-marca { color: #f6d38f; border-color: #f6d38f; }
 body.dark-theme .caixa-content .btn.secondary.caixa-perigo { color: #f8b4b4; border-color: #f8b4b4; }
 body.dark-theme .caixa-diferenca.falta, body.dark-theme .caixa-pendencias { background: #45201f; color: #f8b4b4; }
 body.dark-theme .caixa-diferenca.sobra, body.dark-theme .caixa-alerta { background: #3d2e10; color: #f6d38f; }
 body.dark-theme .caixa-diferenca.bateu { background: #183a25; color: #a7e8bd; }
 
 @media (max-width: 600px) {
-  .caixa-grade, .caixa-cartoes { grid-template-columns: minmax(0, 1fr); }
+  .caixa-grade, .caixa-cartoes, .caixa-filtros { grid-template-columns: minmax(0, 1fr); }
   .caixa-acoes .btn { flex: 1 1 100%; }
 }
