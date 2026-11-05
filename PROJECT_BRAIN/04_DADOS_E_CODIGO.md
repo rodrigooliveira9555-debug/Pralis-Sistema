@@ -20,6 +20,24 @@
   documento no banco, o primeiro aparelho manda os dados de exemplo (decisão do Zé). Chave **adotada do
   aparelho**: na entrada, se o banco não tem e o aparelho da mesma empresa tem, ele envia o dele em vez de
   apagar (`CHAVES_ADOTADAS_DO_APARELHO`, só para chave que a tela nunca apaga).
+- `agenda-v1` — Agenda inteira num documento: listas (`id`, `nome`, `cor`) e compromissos (título, notas,
+  data/hora, prioridade em 5 níveis, sinalizado, etiquetas, responsável **por id**, subtarefas, concluído).
+  No banco e adotada do aparelho desde 05/11/2026. Abrir a Agenda não grava; as duas listas iniciais têm ids
+  fixos (`lista-gestao-pessoas`, `lista-diretor-operacoes`) para dois aparelhos não criarem listas repetidas.
+  Também: colunas do Kanban, repetição (concluir guarda uma cópia concluída com `origemId` e passa o original
+  para a próxima data), término, alerta e soneca (`adiadoPara`), URL, local, ordem manual. Campos novos são
+  opcionais (dado antigo continua válido). Preferências do aparelho, fora da sincronização:
+  `cicluz-agenda-calendario-ocultas` e `cicluz-agenda-alertas-mostrados`.
+  Local: `local` (endereço) + `localizacao` { lat, lng, aviso entrar/sair, raio }. Pessoas: `pessoas`
+  [{ id, responsavel, ver, editar, concluir, excluir }] (o antigo `responsavelId` vira um responsável, na memória,
+  e o formato novo é gravado na próxima alteração); gestor = `criadoPor`. Avaliação: `avaliacao` { tipo, notas
+  [{ avaliadoId, porId, papel gestor|auto, valor, comentario, em }] }, só depois de concluído e sem mudar.
+  Chat e arquivos NÃO ficam no documento: tabelas `agenda_mensagens`, `agenda_chat_leituras` e `agenda_arquivos`
+  (até 10 MB, tipo conferido pelo conteúdo), API `/api/agenda/...` (`servidor/api/src/agenda`), com a permissão do
+  compromisso lida do documento a cada pedido (essa parte é sigilo de verdade, ao contrário do DT-15).
+  Relações do mapa mental: `relacoes` [{ id, de, para, rotulo }] (somem junto com o compromisso). Preferência do
+  aparelho: `cicluz-agenda-mapa` (estrutura, agrupamento, recolhidos).
+  Código: `dist/agenda/` (dominio, dados, calendario, kanban, telas, alertas, agenda.css).
 
 **Preferência de interface:** `tema`, `menu-ordem`, `menu-item-order-v1`, `sidebar-sections-v1`,
 `menu-visibility`, `people-display-v1`, `people-footer-*`, `{key}-sort`, `{key}-display`,
@@ -31,8 +49,11 @@
 **Seeds:** embutidos em `groups.js:4` (`groupSeed`, até ~linha 1544). `group-seeds.json` é cópia de
 referência — **não** é carregado.
 
-**Chamadas externas:** só `api.iconify.design/search` (`icon-library-manager.js:23`) e Google
-Fonts (Montserrat). Nenhuma API própria.
+**Chamadas externas:** `api.iconify.design/search` (`icon-library-manager.js:23`), Google Fonts
+(Montserrat) e, só quando o mapa da Agenda é aberto, `tile.openstreetmap.org` (mapa) e
+`nominatim.openstreetmap.org` (busca de endereço: vai o texto procurado ou o ponto tocado, nada de pessoa;
+no máximo 1 busca/s, só ao pedir). Leaflet 1.9.4 fica no site (`dist/vendor/leaflet`, SHA-256 oficial).
+Uso justo do OpenStreetMap: se o uso crescer muito, trocar por serviço pago com chave.
 
 **Entidades que ainda não existem:** colaborador/pessoa real (só maquete), loja como entidade,
 agenda, lançamento, caixa operacional, usuário/login.

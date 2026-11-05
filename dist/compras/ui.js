@@ -41,8 +41,9 @@
    * Cria (uma vez) uma tela no padrão do S2 e devolve controles para preenchê-la.
    * caminho: texto do subtítulo; voltar: função do botão Voltar.
    */
-  function criarTela({ id, titulo, caminho, icone, voltar }) {
-    const view = el('section', 'view compras-view');
+  function criarTela({ id, titulo, caminho, icone, voltar, cor = COR, corTexto = COR_TEXTO, classe = '' }) {
+    // cor/corTexto/classe: outro módulo (ex.: Agenda) reaproveita a tela na cor do próprio menu.
+    const view = el('section', 'view compras-view' + (classe ? ' ' + classe : ''));
     view.id = id;
     const panel = el('div', 'panel');
     const head = el('div', 'head');
@@ -59,8 +60,8 @@
     panel.append(head, body);
     view.append(panel);
     document.querySelector('main').append(view);
-    setViewOriginColor(view, COR);
-    panel.style.setProperty('--panel-text', COR_TEXTO);
+    setViewOriginColor(view, cor);
+    panel.style.setProperty('--panel-text', corTexto);
     const tela = { view, head, body, h2, p, voltar };
     addShortcuts(id, () => tela.voltar());
     tela.ativar = function (novoTitulo, novoCaminho) {
@@ -232,10 +233,11 @@
    * Diálogo modal no padrão do S2. montar(form) devolve o contexto; salvar(ctx) devolve
    * mensagem de erro (string) ou nada para fechar. Sem `salvar`, mostra só "Fechar".
    */
-  function dialogo({ titulo, subtitulo, montar, salvar, rotuloSalvar = 'Salvar', largo = false, aoFechar }) {
-    const d = el('dialog', 'location-dialog profiles-dialog compras-dialog' + (largo ? ' largo' : ''));
-    d.style.setProperty('--menu-accent', COR);
-    d.style.setProperty('--dialog-accent', COR);
+  function dialogo({ titulo, subtitulo, montar, salvar, rotuloSalvar = 'Salvar', largo = false, aoFechar, cor = COR, corTexto = COR_TEXTO, classe = '' }) {
+    const d = el('dialog', 'location-dialog profiles-dialog compras-dialog' + (largo ? ' largo' : '') + (classe ? ' ' + classe : ''));
+    d.style.setProperty('--menu-accent', cor);
+    d.style.setProperty('--dialog-accent', cor);
+    d.style.setProperty('--panel-text', corTexto);
     const h = el('h2', null, titulo);
     d.append(h);
     if (subtitulo) d.append(el('p', 'compras-dialog-sub', subtitulo));
@@ -274,9 +276,9 @@
   }
 
   /** Confirmação local (sem janela nativa), como pede o padrão do S2. */
-  function confirmar(titulo, texto, rotulo, acao) {
+  function confirmar(titulo, texto, rotulo, acao, { cor = COR, corTexto = COR_TEXTO, classe = '' } = {}) {
     dialogo({
-      titulo,
+      titulo, cor, corTexto, classe,
       montar: (form) => { form.append(el('p', null, texto)); },
       salvar: () => { const r = acao(); return typeof r === 'string' ? r : undefined; },
       rotuloSalvar: rotulo,

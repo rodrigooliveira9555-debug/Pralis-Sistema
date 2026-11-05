@@ -3,7 +3,8 @@
  * --menu-accent) e não redefine tipografia nem medidas de formulário (fonte: ui-foundation.css).
  */
 .compras-content { gap: 12px; }
-.compras-content > * { min-width: 0; }
+/* Coluna flexível: os blocos não encolhem (senão grade e tabelas são cortadas em vez de rolar). */
+.compras-content > * { min-width: 0; flex-shrink: 0; }
 
 /* Ação principal na cor do menu de origem (o .btn legado é roxo fixo). */
 :is(.compras-view, .compras-dialog) .btn:not(.secondary):not(.footer-cancel-accent) { background: var(--menu-accent); border-color: var(--menu-accent); color: #fff; }

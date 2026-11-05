@@ -37,7 +37,15 @@ Texto fixo "reunirá os principais números".
 - ⬜ 4 setores
 
 ## Agenda · Atividades (roxo)
-- ⬜ Gestão de Pessoas, Diretor de Operações (2)
+- ✅ **Agenda** (`dist/agenda/`, 05/11/2026) — funcionamento do Lembretes e do Calendário do iPhone + Kanban.
+  Os dois submenus abrem a lista de mesmo nome. Listas automáticas (Para hoje, Programados, Todos, Sinalizados,
+  Atrasados, Atribuídos a mim, Concluídos), listas com cor e ícone, escrever "amanhã às 10", repetição, término,
+  alerta com soneca, URL, local, subtarefas, ordem manual, mostrar/limpar concluídos. Calendário Dia/Semana
+  (grade de horas)/Mês/Ano. Kanban com colunas editáveis. Local no mapa (Atual, Ao entrar, Ao sair, Personalizada).
+  Responsáveis e permissões do gestor, avaliação da execução. Mapa mental (estruturas Mapa, Lógico, Organograma,
+  Árvore, Linha do tempo; agrupar por lista, data, responsável, prioridade, coluna, etiqueta; relações; exporta).
+- ✅ Chat e arquivos do compromisso (servidor: tabelas `agenda_mensagens`, `agenda_chat_leituras`,
+  `agenda_arquivos`, migration 0003 aprovada pelo Zé em 05/11/2026). ⬜ Perfil comportamental: em espera (P-19).
 
 > **05/11/2026:** os grupos "Configuração · Cadastros Gerais" e "Formulários · Cadastros/Avaliações" viraram cinco tópicos em OUTROS: Configurações (Permissões, Usuários, Senhas, todos vazios; sem Diretor de Operações), Cadastros (Gerente → VND - Clientes, vazio; Diretor de Operações → DES - Fornecedores (vazio), patrimônio, grupos DES/MER/RET/VND/CNT; Compras → MER - Fornecedores e MER - Produtos; Gestão de Pessoas → `people-settings`), Lançamentos (Financeiro → oito cards VND/DES/CNT/MER/RET/RES/CAR/PDV, vazios; Gestão de Pessoas → `forms`: só Uniformes, Compras de Uniformes e Ocorrências; os cadastros de candidato/colaborador ficam em Cadastros › Gestão de Pessoas), Estoques (Compras → três cards MER - Grupo Mercadorias, DES - Grupo Despesas, RET - Grupo Patrimonio, vazios) e Avaliações (Diretor de Operações, Gerentes, Colaboradores, Clientes, vazios). As seções abaixo mantêm o conteúdo; só mudou onde ficam no menu. Detalhe em DESIGN_SYSTEM.md.
 

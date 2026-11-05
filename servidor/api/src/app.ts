@@ -9,6 +9,7 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastif
 import { ZodError } from "zod";
 import { problema } from "@cicluz/shared";
 import { exigirAutenticacao } from "./auth/guards.ts";
+import { registrarRotasAgenda } from "./agenda/agenda.controller.ts";
 import { registrarRotasAuth } from "./auth/auth.controller.ts";
 import { registrarRotasConsultas } from "./consultas/consultas.controller.ts";
 import { registrarRotasDocumentos } from "./documentos/documentos.controller.ts";
@@ -111,6 +112,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registrarRotasUsuarios(app);
   await registrarRotasConsultas(app);
   await registrarRotasLancamentos(app);
+  await registrarRotasAgenda(app);
 
   // App das telas novas (Nuxt gerado em web/.output/public), em /app/ no mesmo domínio do site.
   // Em produção o Vercel repassa /app/* e /api/* para cá; rota interna do app sem arquivo cai no
