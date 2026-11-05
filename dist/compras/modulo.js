@@ -10,7 +10,6 @@
   const telas = {};
 
   const CARDS = [
-    ['agendamento', 'Agendamento de pedidos', 'Produtos, repetição e responsável', 'agenda'],
     ['solicitacao', 'Solicitação de compra', 'Fazer o pedido e enviar aos fornecedores', 'lista'],
     ['cotacao', 'Cotação por fornecedor', 'Produtos em cotação e decisões', 'compras'],
     ['pedidos', 'Pedidos a receber', 'O que foi comprado e o recebimento', 'caminhao'],

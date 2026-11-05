@@ -19,7 +19,7 @@
   let telaA = null;
   function abrirAgendamento() {
     if (!telaA) {
-      telaA = U.criarTela({ id: 'compras-agendamento', titulo: 'Agendamento de pedidos', caminho: CAMINHO + 'Agendamento de pedidos', icone: 'agenda', voltar: M.voltarCompras });
+      telaA = U.criarTela({ id: 'compras-agendamento', titulo: 'MER - Agenda de Pedidos', caminho: 'Agenda · Atividades / MER - Agenda de Pedidos', icone: 'agenda', voltar: () => returnToNavigation() });
       U.atalho(telaA, 'Novo agendamento', 'M12 5v14M5 12h14', () => formularioAgenda(), { criar: true });
     }
     telaA.ativar();
