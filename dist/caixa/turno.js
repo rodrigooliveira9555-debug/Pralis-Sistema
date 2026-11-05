@@ -50,6 +50,8 @@
     return caixa;
   };
   const plural = (n, um, varios) => n + ' ' + (n === 1 ? um : varios);
+  /** Corpo da seção com o respiro de 14 px (as listas ficam sem ele, de borda a borda). */
+  const corpo = (...nos) => { const c = el('div', 'compras-corpo'); c.append(...nos); return c; };
 
   function atualizar() {
     const e = C.estado;
@@ -66,10 +68,9 @@
 
   function semCaixa() {
     const s = U.secao('Caixa ainda não aberto');
-    s.append(U.nota('O turno só existe depois da abertura. Abra o caixa para acompanhar o resumo, a sangria, o PDV e as vendas.'));
     const acoes = el('div', 'caixa-acoes');
     acoes.append(botao('Ir para a Abertura do caixa', () => C.abrir('abertura'), 'btn'));
-    s.append(acoes);
+    s.append(corpo(U.nota('O turno só existe depois da abertura. Abra o caixa para acompanhar o resumo, a sangria, o PDV e as vendas.'), acoes));
     return s;
   }
 
@@ -77,10 +78,9 @@
     const a = C.estado.abertura;
     const s = U.secao('Vendas encerradas · ' + a.pdv + ' · ' + a.turno);
     s.querySelector('.compras-secao-cab').append(U.situacao('Aguardando conferência', 'atencao'));
-    s.append(U.nota('O PDV parou de receber vendas e o caixa segue para a conferência final. O fechamento será a próxima tela da casca.'));
     const acoes = el('div', 'caixa-acoes');
     acoes.append(botao('Recomeçar a demonstração', () => { C.reiniciar(); atualizar(); }, 'btn secondary'));
-    s.append(acoes);
+    s.append(corpo(U.nota('O PDV parou de receber vendas e o caixa segue para a conferência final. O fechamento será a próxima tela da casca.'), acoes));
     return s;
   }
 
@@ -88,7 +88,7 @@
 
   function blocoRecebimentos(pendentes) {
     const s = U.secao('Recebimentos pendentes', pendentes.length);
-    s.append(U.nota('Dinheiro sem lacre enviado para este caixa. Conte e confirme; só depois ele entra no saldo. O caixa só fecha depois de resolver.'));
+    s.append(corpo(U.nota('Dinheiro sem lacre enviado para este caixa. Conte e confirme; só depois ele entra no saldo. O caixa só fecha depois de resolver.')));
     const lista = el('div', 'compras-lista');
     pendentes.forEach((r) => {
       const direita = [
@@ -130,9 +130,10 @@
       el('span', 'caixa-pdv-texto', ligado ? 'Operação normal' : 'Parado desde ' + t.parada.desde)
     );
     linha.append(botao(ligado ? 'Registrar PDV desligado' : 'Computador voltou', ligado ? dialogoParada : dialogoRetorno, 'btn secondary'));
-    s.append(linha);
-    if (!ligado) s.append(U.nota('Motivos: ' + t.parada.motivos.join(', ') + (t.parada.outro ? ' (' + t.parada.outro + ')' : '') + '.'));
-    if (t.paradas.length) s.append(U.nota(plural(t.paradas.length, 'parada registrada', 'paradas registradas') + ' neste turno.'));
+    const notas = [];
+    if (!ligado) notas.push(U.nota('Motivos: ' + t.parada.motivos.join(', ') + (t.parada.outro ? ' (' + t.parada.outro + ')' : '') + '.'));
+    if (t.paradas.length) notas.push(U.nota(plural(t.paradas.length, 'parada registrada', 'paradas registradas') + ' neste turno.'));
+    s.append(corpo(linha, ...notas));
     return s;
   }
 
@@ -197,13 +198,13 @@
     const t = C.estado.turno;
     const s = U.secao('Caixa aberto');
     s.querySelector('.compras-secao-cab').append(U.situacao('Operação em andamento', 'positivo'));
-    s.append(dl([
+    s.append(corpo(dl([
       ['PDV', a.pdv], ['Turno', a.turno], ['Aberto em', a.abertoEm],
       ['Responsável', a.responsavel], ['Supervisor', a.supervisor], ['Maquininha', a.maquininha],
       ['Lacre do malote de abertura', a.lacre],
       ['Lacres para sangria', t.lacresLivres.length ? t.lacresLivres.join(' · ') : 'Nenhum disponível'],
       ['Lacre reservado para fechar este caixa', a.lacreFechamento],
-    ]));
+    ])));
     return s;
   }
 
@@ -232,7 +233,7 @@
     entradas.append(el('small', null, 'Entradas'), el('strong', null, moeda(r.entradas)),
       el('small', null, 'Vendas do PDV neste turno · ' + plural(t.vendas.length, 'venda', 'vendas')));
     cartoes.append(saldo, entradas);
-    s.append(cartoes);
+    s.append(corpo(cartoes));
 
     s.append(el('h4', 'caixa-subtitulo', 'Movimentações'));
     const mov = el('div', 'compras-lista');
@@ -271,16 +272,16 @@
   function blocoAcoes(r) {
     const s = U.secao('Encerrar turno');
     const travado = r.pendentes.length > 0;
-    s.append(U.nota(travado
+    const aviso = U.nota(travado
       ? 'Fechamento travado: ' + MOTIVO_TRAVA
-      : 'Confira os valores e lance tudo antes de continuar: depois de encerrar as vendas, a sangria também fica bloqueada.'));
+      : 'Confira os valores e lance tudo antes de continuar: depois de encerrar as vendas, a sangria também fica bloqueada.');
     const acoes = el('div', 'caixa-acoes');
     acoes.append(botao('Nova sangria', dialogoNovaSangria, 'btn secondary'));
     const fechar = botao('Fechar caixa', dialogoEncerrar, 'btn');
     fechar.disabled = travado;
     if (travado) fechar.title = 'Resolva os recebimentos pendentes para fechar.';
     acoes.append(fechar);
-    s.append(acoes);
+    s.append(corpo(aviso, acoes));
     return s;
   }
 

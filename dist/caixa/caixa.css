@@ -6,6 +6,12 @@
 .caixa-content > * { flex: none; }
 /* Botão principal no tom forte de Vendas: branco sobre o amarelo #eab308 não passa no contraste. */
 .caixa-content .btn:not(.secondary) { background: #a16207; border-color: #a16207; color: #fff; }
+/* Botão secundário na cor de Vendas (sem isto herda o roxo do S2) e botão desabilitado com cara de desabilitado. */
+.caixa-content .btn.secondary { background: transparent; color: var(--panel-text, #785600); border-color: color-mix(in srgb, var(--menu-accent) 45%, white); }
+.caixa-content .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.caixa-dialog .btn.secondary { color: var(--panel-text, #785600); }
+body.dark-theme .caixa-dialog .btn.secondary { color: #f6d38f; }
+.compras-secao > .caixa-subtitulo { margin: 0; padding: 14px 14px 6px; }
 .caixa-aviso { padding: 8px 12px; border: 1px dashed color-mix(in srgb, var(--menu-accent) 60%, transparent); border-radius: 10px; }
 .caixa-bloco { padding: 14px; border: 1px solid var(--line, #e4e4e7); border-radius: 12px; }
 .caixa-bloco-cab { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
@@ -65,6 +71,7 @@ button.caixa-cartao:hover { background: color-mix(in srgb, var(--menu-accent) 6%
 .caixa-venda-texto b { font-weight: 600; overflow-wrap: anywhere; }
 .caixa-venda-texto small { font-size: 12px; color: var(--muted, #71717a); }
 .caixa-venda > :not(summary) { margin-top: 10px; }
+body.dark-theme .caixa-content .btn.secondary { color: #f6d38f; }
 body.dark-theme .caixa-content .btn.secondary.caixa-perigo { color: #f8b4b4; border-color: #f8b4b4; }
 body.dark-theme .caixa-diferenca.falta, body.dark-theme .caixa-pendencias { background: #45201f; color: #f8b4b4; }
 body.dark-theme .caixa-diferenca.sobra, body.dark-theme .caixa-alerta { background: #3d2e10; color: #f6d38f; }
