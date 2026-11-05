@@ -258,20 +258,17 @@
     const action=document.createElement('button');action.type='button';action.className='people-toolbar-run';action.setAttribute('aria-label','Executar '+label);action.disabled=button.disabled||button.dataset.available==='false';if(button.getAttribute('aria-description'))action.setAttribute('aria-description',button.getAttribute('aria-description'));
     const symbol=document.createElement('span');symbol.className='people-option-symbol';symbol.innerHTML=button.innerHTML;symbol.style.setProperty('--metric-color',button.style.getPropertyValue('--metric-color'));if(button.classList.contains('people-metric-control'))symbol.classList.add('people-metric-control');if(button.classList.contains('people-position-control'))symbol.classList.add('people-position-control');if(button.classList.contains('people-launch-control')){symbol.classList.add('people-launch-control');symbol.style.setProperty('--launch-color',button.style.getPropertyValue('--launch-color'))}
     const name=document.createElement('span');name.textContent=label;name.className='people-option-name';action.append(symbol,name);action.onclick=()=>{closeChooser();button.click()};
-    const pinLabel=()=>!enabled(key)?'Incluir no menu rápido e ligar: '+label:pinned(key)?'Remover do menu rápido: '+label:'Incluir no menu rápido: '+label;
-    const power=document.createElement('button');power.type='button';power.className='people-toolbar-enable';power.setAttribute('role','switch');power.setAttribute('aria-label','Ativar função: '+label);power.setAttribute('aria-checked',String(enabled(key)));power.title=enabled(key)?'Desligar '+label:'Ligar '+label;power.innerHTML='<span class="people-enable-track" aria-hidden="true"><span class="people-enable-thumb"></span></span>';
-    power.onclick=()=>{if(!preferences._disabled)preferences._disabled={};preferences._disabled[key]=enabled(key);persistPreferences();applyPreferences();power.setAttribute('aria-checked',String(enabled(key)));power.title=enabled(key)?'Desligar '+label:'Ligar '+label;action.disabled=button.disabled||button.dataset.available==='false';row.classList.toggle('people-option-disabled',!enabled(key));pin.title=pinLabel();pin.setAttribute('aria-label',pin.title);if(key==='sort'&&enabled(key)&&sortMode!==0)sortRows(sortDirection);chooserSignature=choicesFingerprint()};
-    const pin=document.createElement('button');pin.type='button';pin.className='people-toolbar-pin';pin.title=pinLabel();pin.setAttribute('aria-label',pin.title);pin.setAttribute('aria-pressed',String(pinned(key)));const maskId='quick-pin-logo-'+(++pinLogoId);pin.innerHTML='<svg viewBox="10 6 42 44" aria-hidden="true"><defs><mask id="'+maskId+'" maskUnits="userSpaceOnUse" x="10" y="6" width="42" height="44" style="mask-type:alpha"><image href="cicluz-gestao-padaria-logo.png" width="177.6" height="64" preserveAspectRatio="none"/></mask></defs><rect x="10" y="6" width="42" height="44" fill="currentColor" mask="url(#'+maskId+')"/></svg>';
-    pin.onclick=()=>{
-     const selected=!pinned(key)||!enabled(key);preferences[key]=selected;
-     if(selected){if(!preferences._disabled)preferences._disabled={};preferences._disabled[key]=false}
-     persistPreferences();applyPreferences();
-     pin.setAttribute('aria-pressed',String(selected));pin.title=pinLabel();pin.setAttribute('aria-label',pin.title);
-     power.setAttribute('aria-checked',String(enabled(key)));power.title=enabled(key)?'Desligar '+label:'Ligar '+label;
-     action.disabled=button.disabled||button.dataset.available==='false';row.classList.toggle('people-option-disabled',!enabled(key));row.classList.toggle('people-option-pinned',selected);
-     chooserSignature=choicesFingerprint();
-    };
-    row.classList.toggle('people-option-disabled',!enabled(key));row.classList.toggle('people-option-pinned',pinned(key));action.title=label;row.append(handle,action,power,pin);inner.append(row);
+    const modeOf=()=>!enabled(key)?'off':pinned(key)?'quick':'menu';
+const power=document.createElement('button');power.type='button';power.className='people-toolbar-enable';power.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>';
+const ou=document.createElement('span');ou.className='people-option-or';ou.textContent='ou';ou.setAttribute('aria-hidden','true');
+const pin=document.createElement('button');pin.type='button';pin.className='people-toolbar-pin';
+const maskId='quick-pin-logo-'+(++pinLogoId);pin.innerHTML='<svg viewBox="10 6 42 44" aria-hidden="true"><defs><mask id="'+maskId+'" maskUnits="userSpaceOnUse" x="10" y="6" width="42" height="44" style="mask-type:alpha"><image href="cicluz-gestao-padaria-logo.png" width="177.6" height="64" preserveAspectRatio="none"/></mask></defs><rect x="10" y="6" width="42" height="44" fill="currentColor" mask="url(#'+maskId+')"/></svg>';
+/* Cada botão fica em um lugar só: no menu suspenso (três pontinhos), no menu rápido, ou desligado. */
+function refreshMode(){const mode=modeOf();power.setAttribute('aria-pressed',String(mode==='menu'));power.title=mode==='menu'?'Tirar do menu suspenso: '+label:'Mostrar no menu suspenso (três pontinhos): '+label;power.setAttribute('aria-label',power.title);pin.setAttribute('aria-pressed',String(mode==='quick'));pin.title=mode==='quick'?'Tirar do menu rápido: '+label:'Mostrar no menu rápido: '+label;pin.setAttribute('aria-label',pin.title);action.disabled=button.disabled||button.dataset.available==='false';row.classList.toggle('people-option-disabled',mode==='off');row.classList.toggle('people-option-pinned',mode==='quick');chooserSignature=choicesFingerprint()}
+function setMode(mode){if(!preferences._disabled)preferences._disabled={};preferences._disabled[key]=mode==='off';preferences[key]=mode==='quick';persistPreferences();applyPreferences();if(key==='sort'&&enabled(key)&&sortMode!==0)sortRows(sortDirection);refreshMode()}
+power.onclick=()=>setMode(modeOf()==='menu'?'off':'menu');
+pin.onclick=()=>setMode(modeOf()==='quick'?'off':'quick');
+refreshMode();action.title=label;row.append(handle,action,power,ou,pin);inner.append(row);
    }
   }
   function persistPreferences(){try{localStorage.setItem(preferencesKey,JSON.stringify(preferences))}catch{announce('Não foi possível salvar os atalhos')}}
