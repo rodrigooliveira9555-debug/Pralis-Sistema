@@ -36,8 +36,9 @@ body,
   font-family: var(--ui-font) !important;
 }
 
-/* Botões como no site: texto normal, sem caixa alta. */
-.v-btn {
+/* Botões como no site: texto normal, sem caixa alta (prefixo para vencer o CSS do Vuetify, que
+   carrega depois deste arquivo). */
+.v-application .v-btn {
   letter-spacing: normal;
   text-transform: none;
 }
