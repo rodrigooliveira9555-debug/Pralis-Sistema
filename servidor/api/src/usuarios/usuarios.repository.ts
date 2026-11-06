@@ -1,6 +1,6 @@
 import { and, asc, eq, sql } from "drizzle-orm";
 import { empresas, perfisUsuarios, usuarioAutenticacao, usuariosAuditoria } from "@cicluz/db/schema";
-import type { Papel } from "@cicluz/shared";
+import type { Papel, Posto } from "@cicluz/shared";
 import { banco, type TransacaoBanco } from "../banco/conexao.ts";
 
 type Executor = TransacaoBanco | typeof banco;
@@ -25,8 +25,9 @@ export async function criarEmpresa(nome: string) {
   return empresa;
 }
 
-export async function inserirPerfil(dados: { usuarioId: string; empresaId: string; nome: string; papel: Papel }) {
-  await banco.insert(perfisUsuarios).values(dados);
+export async function inserirPerfil(dados: { usuarioId: string; empresaId: string; nome: string; papel: Papel; posto?: Posto | null }) {
+  const { posto, ...perfil } = dados;
+  await banco.insert(perfisUsuarios).values({ ...perfil, postoPdv: posto?.pdv ?? null, postoTurno: posto?.turno ?? null });
 }
 
 const colunasUsuario = {
@@ -35,6 +36,8 @@ const colunasUsuario = {
   email: usuarioAutenticacao.email,
   papel: perfisUsuarios.papel,
   ativo: perfisUsuarios.ativo,
+  postoPdv: perfisUsuarios.postoPdv,
+  postoTurno: perfisUsuarios.postoTurno,
   criadoEm: perfisUsuarios.criadoEm
 };
 
@@ -76,7 +79,7 @@ export async function registrarAuditoria(
     empresaId: string;
     atorId: string;
     alvoId: string;
-    acao: "criou" | "alterou" | "definiu_senha";
+    acao: "criou" | "alterou" | "definiu_senha" | "alterou_acessos";
     detalhe?: Record<string, unknown>;
   }
 ) {
@@ -87,9 +90,12 @@ export async function atualizarPerfil(
   executor: Executor,
   empresaId: string,
   usuarioId: string,
-  dados: { nome?: string | undefined; papel?: Papel | undefined; ativo?: boolean | undefined }
+  dados: { nome?: string | undefined; papel?: Papel | undefined; ativo?: boolean | undefined; posto?: Posto | null | undefined }
 ) {
-  const mudancas = Object.fromEntries(Object.entries(dados).filter(([, valor]) => valor !== undefined));
+  const { posto, ...resto } = dados;
+  const mudancas: Record<string, unknown> = Object.fromEntries(Object.entries(resto).filter(([, valor]) => valor !== undefined));
+  // posto: undefined = não mexe; null = deixa de ser conta de posto.
+  if (posto !== undefined) Object.assign(mudancas, { postoPdv: posto?.pdv ?? null, postoTurno: posto?.turno ?? null });
   await executor
     .update(perfisUsuarios)
     .set({ ...mudancas, atualizadoEm: sql`now()` })
@@ -97,4 +103,15 @@ export async function atualizarPerfil(
   if (dados.nome) {
     await executor.update(usuarioAutenticacao).set({ name: dados.nome }).where(eq(usuarioAutenticacao.id, usuarioId));
   }
+}
+
+// Quem já usa o posto (PDV × turno) na empresa, fora a própria conta que está sendo editada.
+export async function contaDoPosto(empresaId: string, posto: Posto, excetoUsuarioId?: string) {
+  const linhas = await banco
+    .select({ usuarioId: perfisUsuarios.usuarioId, nome: perfisUsuarios.nome })
+    .from(perfisUsuarios)
+    .where(
+      and(eq(perfisUsuarios.empresaId, empresaId), eq(perfisUsuarios.postoPdv, posto.pdv), eq(perfisUsuarios.postoTurno, posto.turno))
+    );
+  return linhas.find((linha) => linha.usuarioId !== excetoUsuarioId) ?? null;
 }

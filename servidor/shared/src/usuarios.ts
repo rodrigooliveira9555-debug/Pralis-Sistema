@@ -21,7 +21,8 @@ export const editarUsuarioSchema = z
     nome: z.string().trim().min(2).max(120).optional(),
     papel: z.enum(PAPEIS).optional(),
     ativo: z.boolean().optional(),
-    posto: postoSchema.nullable().optional()
+    posto: postoSchema.nullable().optional(),
+    cargos: z.array(z.string().uuid()).max(20).optional()
   })
   .refine((dados) => Object.keys(dados).length > 0, "Nada para alterar");
 

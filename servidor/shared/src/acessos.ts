@@ -215,8 +215,8 @@ export const editarCargoAcessoSchema = z
   })
   .refine((dados) => Object.keys(dados).length > 0, "Nada para alterar");
 
+// Exceções da pessoa (Permissões → Acessos por pessoa). Os cargos dela são escolhidos em Usuários.
 export const acessosUsuarioSchema = z.object({
-  cargos: z.array(z.string().uuid()).max(20),
   excecoes: z.record(chavePermissaoSchema, z.boolean())
 });
 export const cargoIdParamsSchema = z.object({ id: z.string().uuid() });
