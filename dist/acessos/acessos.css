@@ -9,6 +9,8 @@ body.dark-theme :is(.acessos-view, .acessos-dialog) .tom-marca { background: #33
 
 .acessos-barra { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 12px; }
 .acessos-barra > .compras-campo { flex: 1 1 260px; max-width: 420px; }
+.acessos-barra > .acessos-novo { margin-left: auto; }
+@media (max-width: 480px) { .acessos-barra > .acessos-novo { width: 100%; } }
 .acessos-lista-box { display: grid; gap: 12px; }
 .acessos-lista { display: grid; }
 

@@ -59,6 +59,8 @@
     ], estado.filtro, (v) => { estado.filtro = v; desenharLista(); });
     chips.setAttribute('aria-label', 'Filtrar contas');
     barra.append(busca, chips);
+    // Ação com nome visível (pedido do Marco); faz o mesmo que o "+" do menu rápido.
+    if (podeEditar) barra.append(U.botao('Novo usuário', () => editar(null), 'btn acessos-novo'));
     const lista = U.el('div', 'acessos-lista-box');
     tela.body.replaceChildren(barra, lista);
     tela.lista = lista;
