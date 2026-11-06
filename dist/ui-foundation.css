@@ -295,7 +295,7 @@ body .view .occurrences-choice label.profiles-choice{display:flex!important;flex
 .occurrences-suggestion{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:end}
 .occurrences-suggestion>input{width:20px;height:20px;margin:0 0 11px;accent-color:var(--menu-accent,#7c3aed)}
 .occurrences-raw pre{max-height:200px;overflow:auto;white-space:pre-wrap;font:400 var(--ui-note)/16px ui-monospace,monospace;margin:8px 0 0;padding:10px;border:1px solid var(--layout-line,#e5e5ea);border-radius:8px}
-@media(max-width:600px){.occurrences-file{grid-template-columns:48px minmax(0,1fr)}.occurrences-preview{width:48px;height:48px}.occurrences-file-tools{grid-column:1/-1;justify-content:flex-start}.occurrences-tools .btn{flex:1 1 140px}}
+@media(max-width:600px){.occurrences-file{grid-template-columns:48px minmax(0,1fr)}.occurrences-preview{width:48px;height:48px}.occurrences-file-tools{grid-column:1/-1;justify-content:flex-start}.occurrences-tools .btn{flex:1 1 140px;height:40px;min-height:40px}}
 /* Gestão de Pessoas — admission stages, collaborator file and the exam referral guide. */
 .people-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .people-step{display:grid;gap:4px;align-content:start;padding:12px;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;background:var(--theme-card,#fff);min-width:0;font:400 var(--ui-label,12px)/18px var(--ui-font);color:var(--layout-ink,inherit)}
@@ -409,3 +409,8 @@ body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog form{display:grid;
 .nav-tree .children .icone-revisar{width:16px;height:16px;margin-right:8px;vertical-align:-3px}
 /* Botões comuns dentro das telas seguem a cor do menu de origem, não o roxo padrão. */
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .btn:not(.standard-form-action):not(.footer-save-accent):not(.footer-cancel-accent){background:var(--menu-accent,var(--panel-color,#7c3aed));border-color:var(--menu-accent,var(--panel-color,#7c3aed));color:#fff}
+/* Botões com ícone (arquivo, câmera): o ícone vai em um quadrado de cantos arredondados, no mesmo raio dos ícones do menu. */
+.btn-com-icone{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-icone-quadro{display:inline-grid;place-items:center;flex:none;width:24px;height:24px;border-radius:var(--row-icon-radius,26%);background:color-mix(in srgb,#fff 24%,transparent)}
+.btn-icone-quadro svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.uniforms-icon-action.is-accent{border-radius:var(--row-icon-radius,26%)}

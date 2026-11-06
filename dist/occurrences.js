@@ -59,7 +59,7 @@ const attachBox=el('div','uniforms-wide occurrences-attachments');
 const pick=el('input');pick.type='file';pick.accept='.jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf';pick.multiple=true;pick.hidden=true;
 const camera=el('input');camera.type='file';camera.accept='image/*';camera.setAttribute('capture','environment');camera.hidden=true;
 const replace=el('input');replace.type='file';replace.accept=pick.accept;replace.hidden=true;let replacing=null;
-const attachTools=el('div','occurrences-tools');const pickBtn=button('Selecionar arquivos',()=>pick.click());const camBtn=button('Usar câmera',()=>camera.click());attachTools.append(pickBtn,camBtn);
+const attachTools=el('div','occurrences-tools');const comIcone=(btn,d)=>{const quadro=el('span','btn-icone-quadro');quadro.innerHTML=svg(d);btn.prepend(quadro);btn.classList.add('btn-com-icone');return btn};const pickBtn=comIcone(button('Selecionar arquivos',()=>pick.click()),DOC_ICON);const camBtn=comIcone(button('Usar câmera',()=>camera.click()),CAMERA);attachTools.append(pickBtn,camBtn);
 const attachList=el('div','occurrences-files');const attachMsg=el('p','profiles-note');attachMsg.setAttribute('role','status');
 attachBox.append(el('span','uniforms-enum-label','Foto ou documento da ocorrência'),attachTools,el('p','profiles-note','JPG, JPEG, PNG ou PDF, até 10 MB cada. Os arquivos não são enviados a servidores.'),attachList,attachMsg,pick,camera,replace);
 /* Medical document data */
