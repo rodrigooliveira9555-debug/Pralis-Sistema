@@ -33,8 +33,9 @@
   const ACOMPANHAMENTOS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
   const CONFERENCIAS = [['nenhuma', 'Sem conferência'], ['1', 'Conferência em 1 etapa (saída da produção)'], ['2', 'Conferência em 2 etapas (saída e chegada na loja)']];
   const VISOES = [['horario', 'Por horário'], ['turno', 'Por turno'], ['processo', 'Por processo'], ['setor', 'Por setor'], ['cargo', 'Por cargo'], ['produto', 'Por produto']];
-  // Turno pela hora em que a janela começa (provisório: antes das 12:00 é manhã).
-  const turnoDe = (janelaDe) => (!janelaDe ? '' : janelaDe < '12:00' ? 'Manhã' : 'Tarde');
+  // Turno pela hora em que a janela começa (decisão do Zé, 06/11/2026): Manhã das 05:00 às 14:00, Tarde das 14:00 às
+  // 22:00. Das 22:00 às 05:00 não há turno definido: aparece como "Fora do turno" (não se inventa um terceiro turno).
+  const turnoDe = (janelaDe) => (!janelaDe ? '' : janelaDe >= '05:00' && janelaDe < '14:00' ? 'Manhã' : janelaDe >= '14:00' && janelaDe < '22:00' ? 'Tarde' : 'Fora do turno');
   const SITUACOES_PEDIDO = {
     rascunho: ['Para fazer', 'atencao'], enviado: ['Na produção', 'info'], pronto: ['Pronto para abastecer', 'marca'],
     conferencia_loja: ['Conferir na loja', 'atencao'], abastecido: ['Abastecido', 'positivo'], cancelado: ['Cancelado', 'negativo'],
@@ -273,7 +274,7 @@
       horario: (t) => [t.janela || 'Sem horário', t.janela || null],
       processo: (t) => [nomeDe(PROCESSOS, t.processo) || 'Sem processo', t.processo ? String(PROCESSOS.findIndex((p) => p[0] === t.processo)).padStart(2, '0') : null],
       setor: (t) => [t.setor || 'Sem local', t.setor || null],
-      turno: (t) => { const x = turnoDe(t.janelaDe); return [x || 'Sem horário', x === 'Manhã' ? '1' : x === 'Tarde' ? '2' : null]; },
+      turno: (t) => { const x = turnoDe(t.janelaDe); return [x || 'Sem horário', x === 'Manhã' ? '1' : x === 'Tarde' ? '2' : x === 'Fora do turno' ? '3' : null]; },
       cargo: (t) => [t.cargo || 'Sem cargo definido', t.cargo || null],
       produto: (t) => [t.produto + ' · ' + t.quantidadeTexto, (t.janela || '') + t.ordemId],
     }[visao] || ((t) => [t.janela || '', t.janela || '']);

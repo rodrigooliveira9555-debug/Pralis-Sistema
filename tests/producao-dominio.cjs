@@ -146,7 +146,10 @@ t('agrupa por horário, processo, setor e produto', () => {
   assert.deepEqual(D.agrupar(ts, 'setor').map((g) => g.titulo), ['Forno', 'Pré-pesagem']);
   assert.equal(D.agrupar(ts, 'produto').length, 2);
   const tt = [{ janelaDe: '13:00', cargo: 'Padeiro · Ajudante' }, { janelaDe: '06:00', cargo: '' }, { janelaDe: '11:30', cargo: 'Padeiro · Ajudante' }];
-  assert.deepEqual(D.agrupar(tt, 'turno').map((g) => [g.titulo, g.tarefas.length]), [['Manhã', 2], ['Tarde', 1]]);
+  // Turnos: Manhã 05:00–14:00, Tarde 14:00–22:00; fora disso, "Fora do turno" (decisão do Zé, 06/11/2026)
+  for (const [h, t] of [['05:00', 'Manhã'], ['06:00', 'Manhã'], ['13:59', 'Manhã'], ['14:00', 'Tarde'], ['21:59', 'Tarde'], ['22:00', 'Fora do turno'], ['04:59', 'Fora do turno'], ['', '']]) assert.equal(D.turnoDe(h), t, h + ' → ' + t);
+  const tu = [{ janelaDe: '15:00' }, { janelaDe: '23:00' }, { janelaDe: '06:00' }, { janelaDe: '13:00' }, { janelaDe: '' }];
+  assert.deepEqual(D.agrupar(tu, 'turno').map((g) => [g.titulo, g.tarefas.length]), [['Manhã', 2], ['Tarde', 1], ['Fora do turno', 1], ['Sem horário', 1]]);
   assert.deepEqual(D.agrupar(tt, 'cargo').map((g) => [g.titulo, g.tarefas.length]), [['Padeiro · Ajudante', 2], ['Sem cargo definido', 1]]);
 });
 t('situação da ordem', () => {
