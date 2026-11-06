@@ -36,9 +36,7 @@ const demoCollaborators=[
  {id:'demo-colab-04',name:'Renata Alves',jobName:'GERENTE DE LOJA N-1',active:true},
  {id:'demo-colab-05',name:'Marcos Lima',jobName:'OPERADOR DE CAIXA',active:false}
 ];
-/* Uniform suppliers: intentionally empty until the supplier registry exists. Shape: {id,name}. */
-const suppliers=[];
-const api={uniforms,categories,types,demoCollaborators,suppliers};
+const api={uniforms,categories,types,demoCollaborators};
 if(typeof module!=='undefined')module.exports=api;
 root.CicluzUniformData=api;
 })(typeof window!=='undefined'?window:globalThis);
