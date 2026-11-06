@@ -8,6 +8,7 @@ import {
   editarCargoAcessoSchema,
   ok,
   PERMISSOES,
+  PERMISSOES_SEM_CARGO,
   PDVS_POSTO,
   TURNOS_POSTO,
   usuarioIdParamsSchema
@@ -21,6 +22,7 @@ export async function registrarRotasAcessos(app: FastifyInstance) {
     ok({
       areas: AREAS_PERMISSAO.map(([id, nome]) => ({ id, nome })),
       permissoes: PERMISSOES,
+      permissoesSemCargo: PERMISSOES_SEM_CARGO,
       cargosSugeridos: CARGOS_SUGERIDOS.map(({ nome, descricao }) => ({ nome, descricao })),
       postos: { pdvs: PDVS_POSTO, turnos: TURNOS_POSTO.map(([id, nome]) => ({ id, nome })) }
     })
