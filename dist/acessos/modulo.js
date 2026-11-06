@@ -46,31 +46,81 @@
   const api = (caminho, opcoes) => S.api(caminho, opcoes);
 
   /**
+   * Rótulo de um grupo de botões (chips). Não usa <label>: com botão dentro, tocar no rótulo ou na
+   * dica acionaria o primeiro botão (ex.: trocar o papel sem querer).
+   */
+  let seqGrupo = 0;
+  function grupo(rotulo, no, dica) {
+    const g = U.el('div', 'compras-campo acessos-grupo');
+    g.setAttribute('role', 'group');
+    const r = U.el('span', 'compras-rotulo', rotulo);
+    r.id = 'acessos-grupo-' + (++seqGrupo);
+    g.setAttribute('aria-labelledby', r.id);
+    g.append(r, no);
+    if (dica) g.append(U.el('small', 'profiles-note', dica));
+    return g;
+  }
+
+  /** Senha mínima que vale no servidor (8 fora de produção, 10 em produção), vinda do catálogo. */
+  const senhaMinima = (ctx) => (ctx && ctx.catalogo && ctx.catalogo.senhaMinima) || 8;
+
+  /** Campo de senha com "Mostrar" (conferir o que foi digitado antes de entregar a senha a alguém). */
+  function campoSenha(rotulo, autocomplete, dica) {
+    const input = U.entrada('password', '', { autocomplete, maxLength: 128 });
+    const ver = U.botao('Mostrar', () => {
+      const mostrar = input.type === 'password';
+      input.type = mostrar ? 'text' : 'password';
+      ver.textContent = mostrar ? 'Ocultar' : 'Mostrar';
+      ver.setAttribute('aria-pressed', String(mostrar));
+    }, 'acessos-ver-senha');
+    ver.setAttribute('aria-pressed', 'false');
+    ver.setAttribute('aria-label', 'Mostrar ' + rotulo.toLocaleLowerCase('pt-BR'));
+    const linha = U.el('span', 'acessos-senha-linha');
+    linha.append(input, ver);
+    const no = U.el('div', 'compras-campo');
+    const r = U.el('label', 'compras-rotulo', rotulo);
+    r.htmlFor = input.id = 'acessos-senha-' + (++seqGrupo);
+    no.append(r, linha);
+    if (dica) no.append(U.el('small', 'profiles-note', dica));
+    return { input, no };
+  }
+
+  /**
    * Diálogo do S2 que grava pela API: o ✓ fica esperando a resposta e o diálogo só fecha quando o
    * servidor confirma. enviar(ctx) devolve uma Promise; um texto devolvido antes (validação) mantém aberto.
    */
   function dialogoApi({ enviar, aoSalvar, ...opcoes }) {
     let d = null;
     let ocupado = false;
+    // "Salvando…" em aviso neutro (role=status); o vermelho com role=alert fica só para erro.
+    const status = U.el('p', 'acessos-salvando');
+    status.setAttribute('role', 'status');
     d = U.dialogo({
       ...opcoes, cor: COR, corTexto: COR_TEXTO, classe: 'acessos-dialog' + (opcoes.classe ? ' ' + opcoes.classe : ''),
       salvar: (ctx) => {
-        if (ocupado) return 'Salvando…';
+        // Texto de um espaço: mantém o diálogo aberto sem escrever nada no lugar do erro.
+        if (ocupado) return ' ';
         const r = enviar(ctx);
         if (typeof r === 'string') return r;
         ocupado = true;
-        const erro = d.querySelector('.profiles-error');
+        status.textContent = 'Salvando…';
+        d.setAttribute('aria-busy', 'true');
         Promise.resolve(r).then((dados) => {
           ocupado = false;
           d.close();
           if (aoSalvar) aoSalvar(dados);
         }, (falha) => {
           ocupado = false;
+          status.textContent = '';
+          d.removeAttribute('aria-busy');
+          const erro = d.querySelector('.profiles-error');
           if (erro) erro.textContent = mensagemErro(falha);
         });
-        return 'Salvando…';
+        return ' ';
       },
     });
+    const erro = d.querySelector('.profiles-error');
+    if (erro) erro.before(status);
     return d;
   }
 
@@ -119,5 +169,6 @@
     COR, COR_TEXTO, ICONE,
     cards: (setor) => (CARDS[setor] || []).map(([id, t, d]) => [t, d, 'acessos:' + id]),
     criarTela, dialogoApi, confirmar, mensagemErro, contexto, aviso, iniciais, api, abrir, registrar,
+    grupo, campoSenha, senhaMinima,
   };
 })();

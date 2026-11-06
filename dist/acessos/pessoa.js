@@ -35,7 +35,14 @@
   function desenhar() {
     const opcoes = estado.usuarios.map((u) => [u.id, u.nome + (u.id === estado.ctx.perfil.usuarioId ? ' (você)' : '')]);
     const sel = U.seletor(opcoes, estado.escolhido, 'Escolha a pessoa');
-    sel.onchange = () => { estado.escolhido = sel.value; carregarPessoa(); };
+    sel.onchange = () => {
+      const nova = sel.value;
+      const trocar = () => { estado.escolhido = nova; sel.value = nova; carregarPessoa(); };
+      if (!temAjusteNaoSalvo()) return trocar();
+      // Ajuste marcado e não salvo: confirma antes de jogar fora (confirmação local do S2).
+      sel.value = estado.escolhido;
+      A.confirmar('Descartar ajustes?', 'Os ajustes desta pessoa ainda não foram salvos e vão se perder.', 'Descartar e trocar', trocar);
+    };
     const topo = U.el('div', 'acessos-barra');
     topo.append(U.campo('Pessoa', sel));
     tela.area = U.el('div', 'acessos-pessoa-area');
@@ -43,30 +50,39 @@
     carregarPessoa();
   }
 
+  const temAjusteNaoSalvo = () => Boolean(estado.escolhido) && estado.original !== undefined && assinatura(estado.excecoes) !== estado.original;
+
+  let pedido = 0;
   async function carregarPessoa() {
     const area = tela.area;
     const u = estado.usuarios.find((x) => x.id === estado.escolhido);
+    estado.original = undefined;
     if (!u) return area.replaceChildren(U.vazio('Escolha uma pessoa', 'Você vê o que ela pode fazer e de onde vem cada acesso.'));
     if (u.papel === 'administrador') return area.replaceChildren(U.vazio(u.nome + ' é administrador', 'Administrador tem todos os acessos. Para restringir, troque o papel em Usuários.'));
     area.replaceChildren(U.nota('Carregando…'));
+    // Troca rápida de pessoa: só a última resposta desenha (uma resposta atrasada não troca a tela).
+    const meu = ++pedido;
     try {
       const acessos = await A.api('/usuarios/' + encodeURIComponent(u.id) + '/acessos');
+      if (meu !== pedido) return;
       estado.excecoes = { ...acessos.excecoes };
+      estado.legado = acessos.legado;
       estado.original = assinatura(acessos.excecoes);
       desenharPessoa(u);
     } catch (erro) {
-      area.replaceChildren(U.vazio('Não deu para carregar', A.mensagemErro(erro)));
+      if (meu === pedido) area.replaceChildren(U.vazio('Não deu para carregar', A.mensagemErro(erro)));
     }
   }
 
   // Mesmo cálculo do servidor (shared/src/acessos.ts), para mostrar o resultado antes de salvar.
   function resolver(u) {
     const cat = estado.ctx.catalogo;
+    const noCatalogo = new Set(cat.permissoes.map((p) => p.chave));
     const cargos = estado.cargos.filter((c) => c.ativo && u.cargos.some((x) => x.id === c.id));
     const efetivas = new Map();
-    const excecoes = Object.entries(estado.excecoes);
-    if (!cargos.length && !excecoes.length) {
-      cat.permissoesSemCargo.forEach((k) => efetivas.set(k, 'Acesso de antes (sem cargo)'));
+    const excecoes = Object.entries(estado.excecoes).filter(([k]) => noCatalogo.has(k));
+    if (estado.legado) {
+      cat.permissoesSemCargo.forEach((k) => efetivas.set(k, 'Acesso de antes (conta anterior aos cargos)'));
       return efetivas;
     }
     cargos.forEach((c) => c.permissoes.forEach((k) => {
@@ -87,15 +103,17 @@
     const contagem = U.el('span', 'acessos-tags');
     cab.append(av, txt, contagem);
     const blocos = [cab];
-    const semCargo = !u.cargos.length && !Object.keys(estado.excecoes).length;
-    if (semCargo) blocos.push(U.nota('Sem cargo, vale o acesso de antes. Para ajustar, primeiro dê um cargo em Usuários › Pessoas com Acesso: um ajuste sem cargo tiraria o acesso de antes.'));
+    if (estado.legado) blocos.push(U.nota('Conta de antes dos cargos: tem o acesso de antes. Para ajustar, primeiro dê um cargo em Usuários › Pessoas com Acesso; a partir daí vale só o cargo e os ajustes.'));
+    else if (!u.cargos.length) blocos.push(U.nota('Sem cargo de acesso: esta conta só tem o que for liberado aqui. Prefira dar um cargo em Usuários › Pessoas com Acesso.'));
     if (eu) blocos.push(U.nota('Estes são os seus acessos. Ninguém muda os próprios acessos: peça a outra pessoa que cuida das permissões.'));
-    const editavel = !eu && !semCargo;
-    blocos.push(U.chips([['tudo', 'Tudo'], ['pode', 'Só o que pode'], ['ajustes', 'Só ajustes']], estado.filtro, (x) => { estado.filtro = x; desenharLista(); }));
+    const editavel = !eu && !estado.legado;
+    const filtro = U.chips([['tudo', 'Tudo'], ['pode', 'Só o que pode'], ['ajustes', 'Só ajustes']], estado.filtro, (x) => { estado.filtro = x; desenharLista(); });
+    filtro.setAttribute('aria-label', 'Mostrar');
+    blocos.push(filtro);
     const lista = U.el('div', 'acessos-areas');
     blocos.push(lista);
     const acoes = U.el('div', 'acessos-acoes');
-    const salvar = U.botao('Salvar ajustes', () => gravar(u), 'btn');
+    const salvar = U.botao('Salvar ajustes', () => gravar(u, salvar), 'btn');
     const limpar = U.botao('Voltar tudo para o cargo', () => { estado.excecoes = {}; desenharLista(); }, 'btn secondary');
     if (editavel) { acoes.append(limpar, salvar); blocos.push(acoes); }
     area.replaceChildren(...blocos);
@@ -145,13 +163,17 @@
     desenharLista();
   }
 
-  async function gravar(u) {
+  async function gravar(u, botao) {
+    botao.disabled = true;
+    botao.textContent = 'Salvando…';
     try {
       await A.api('/usuarios/' + encodeURIComponent(u.id) + '/acessos', { metodo: 'PUT', corpo: { excecoes: estado.excecoes } });
-      U.avisar('Acessos de ' + u.nome + ' salvos. Valem na próxima ação dela.');
+      U.avisar('Acessos de ' + u.nome + ' salvos. Valem na próxima ação da pessoa.');
       estado.original = assinatura(estado.excecoes);
       carregarPessoa();
     } catch (erro) {
+      botao.disabled = false;
+      botao.textContent = 'Salvar ajustes';
       U.avisar(A.mensagemErro(erro));
     }
   }

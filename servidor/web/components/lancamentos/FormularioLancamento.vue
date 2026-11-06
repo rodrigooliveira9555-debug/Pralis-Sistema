@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { X } from "lucide-vue-next";
-import type { CategoriaLancamento, LancamentoResposta } from "@cicluz/shared";
+import type { CategoriaLancamento, ChavePermissao, LancamentoResposta } from "@cicluz/shared";
 import { corpoParaApi, errosDosNumeros, formDeLancamento, formVazio, usePreviaLancamento } from "~/composables/useFormularioLancamento";
 import { CATEGORIAS, formatarCentavos } from "~/utils/formato";
 
@@ -9,7 +9,8 @@ const aberto = defineModel<boolean>({ required: true });
 const emit = defineEmits<{ salvo: [mensagem: string]; fechado: [] }>();
 
 const sessao = useSessao();
-const administrador = computed(() => sessao.value?.papel === "administrador");
+// Mesmas permissões que a API cobra (cargos de acesso, Configurações › Permissões).
+const pode = (chave: ChavePermissao) => sessao.value?.permissoes.includes(chave) ?? false;
 const categoria = computed(() => props.categoria);
 const info = computed(() => CATEGORIAS[props.categoria]);
 const estilo = useEstiloOrigem(() => info.value.origem);
@@ -22,8 +23,8 @@ const salvando = ref(false);
 const erro = ref("");
 const linhaComErro = ref<number | null>(null);
 const pago = computed(() => Boolean(props.lancamento?.dataPagamento));
-// Lançamento pago: só o administrador altera (permissão editar_pago no servidor).
-const somenteLeitura = computed(() => pago.value && !administrador.value);
+// Lançamento pago: só quem tem "Editar lançamento já pago" altera.
+const somenteLeitura = computed(() => pago.value && !pode("lancamentos_editar_pago"));
 const discriminando = computed(() => props.categoria !== "retiradas" && form.value.discriminar && form.value.itens.length > 0);
 // D5: o Salvar fica bloqueado enquanto a soma dos itens não bate (o servidor também recusa).
 const somaDivergente = computed(() => discriminando.value && previa.value.diferencaItensCentavos !== 0);
@@ -98,13 +99,13 @@ async function salvar() {
       </header>
 
       <section class="tela-conteudo janela-corpo">
-        <v-alert v-if="somenteLeitura" type="info" variant="tonal" class="mb-4">Lançamento pago: só o administrador altera.</v-alert>
+        <v-alert v-if="somenteLeitura" type="info" variant="tonal" class="mb-4">Lançamento pago: você não tem permissão para alterar.</v-alert>
         <v-alert v-if="erroCadastros" type="warning" variant="tonal" class="mb-4">{{ erroCadastros }}</v-alert>
 
         <fieldset :disabled="somenteLeitura" class="grade">
           <CampoData v-model="form.dataReferencia" rotulo="Data do lançamento" obrigatorio />
           <CampoData v-model="form.dataVencimento" rotulo="Vencimento" obrigatorio />
-          <CampoData v-model="form.dataPagamento" rotulo="Pago em (vazio = não pago)" :desabilitado="!administrador" />
+          <CampoData v-model="form.dataPagamento" rotulo="Pago em (vazio = não pago)" :desabilitado="!pode('lancamentos_pagar')" />
           <v-text-field
             v-model="form.valorOriginal"
             label="Valor (R$)"
@@ -154,7 +155,7 @@ async function salvar() {
         <!-- Sempre montado: o leitor de tela anuncia quando o texto muda. -->
         <p class="aviso-soma" role="status">{{ avisoSoma }}</p>
 
-        <template v-if="!lancamento && administrador">
+        <template v-if="!lancamento && pode('lancamentos_recorrencia')">
           <v-switch v-model="form.recorrente" color="primary" label="Repetir este lançamento" hide-details class="my-2" />
           <RecorrenciaCampos v-if="form.recorrente" v-model="form.recorrencia" />
         </template>

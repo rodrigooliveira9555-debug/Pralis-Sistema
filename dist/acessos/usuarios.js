@@ -57,6 +57,7 @@
     const chips = U.chips([
       ['todas', 'Todas'], ['pessoas', 'Pessoas'], ['postos', 'Postos do Caixa'], ['sem-acesso', 'Sem Acesso' + (semAcesso ? ' · ' + semAcesso : '')],
     ], estado.filtro, (v) => { estado.filtro = v; desenharLista(); });
+    chips.setAttribute('aria-label', 'Filtrar contas');
     barra.append(busca, chips);
     const lista = U.el('div', 'acessos-lista-box');
     tela.body.replaceChildren(barra, lista);
@@ -69,7 +70,8 @@
     const caixa = tela.lista;
     if (estado.filtro === 'postos') return caixa.replaceChildren(gradePostos());
     const linhas = filtrados();
-    const s = U.secao(estado.filtro === 'sem-acesso' ? 'Contas sem acesso' : 'Pessoas com acesso', linhas.length);
+    const titulo = { todas: 'Contas', pessoas: 'Pessoas', 'sem-acesso': 'Contas sem acesso' }[estado.filtro] || 'Contas';
+    const s = U.secao(titulo, linhas.length);
     if (!linhas.length) s.append(U.vazio(estado.busca ? 'Ninguém encontrado' : 'Nenhuma conta aqui', estado.busca ? 'Tente outro nome ou e-mail.' : ''));
     const ul = U.el('div', 'acessos-lista');
     linhas.forEach((u) => ul.append(linhaPessoa(u)));
@@ -83,18 +85,21 @@
     if (tela.podeEditar) {
       r.type = 'button';
       r.onclick = () => editar(u);
-      r.setAttribute('aria-label', 'Editar ' + u.nome);
     }
     const av = U.el('span', 'acessos-avatar' + (u.posto ? ' posto' : ''), u.posto ? 'P' + u.posto.pdv : A.iniciais(u.nome));
     av.setAttribute('aria-hidden', 'true');
     const meio = U.el('span', 'acessos-pessoa-texto');
-    meio.append(U.el('b', null, u.nome + (eu ? ' (você)' : '')), U.el('small', null, u.email));
+    const nome = U.el('b', null, u.nome + (eu ? ' (você)' : ''));
+    // O leitor de tela ouve "Editar Fulano, e-mail, etiquetas" (aria-label apagaria o resto da linha).
+    if (tela.podeEditar) nome.prepend(U.el('span', 'acessos-oculto', 'Editar '));
+    meio.append(nome, U.el('small', null, u.email));
     const tags = U.el('span', 'acessos-tags');
     if (!u.ativo) tags.append(U.situacao('Sem acesso', 'negativo'));
     if (u.posto) tags.append(U.situacao(rotuloPosto(u.posto, turnos()), 'info'));
     if (u.papel === 'administrador') tags.append(U.situacao('Administrador', 'marca'));
     else if (u.cargos.length) u.cargos.forEach((c) => tags.append(U.situacao(c.nome, 'neutro')));
-    else tags.append(U.situacao('Sem cargo', 'atencao'));
+    else if (u.legado) tags.append(U.situacao('Acesso de antes', 'atencao'));
+    else tags.append(U.situacao('Sem cargo · não acessa nada', 'negativo'));
     r.append(av, meio, tags);
     return r;
   }
@@ -120,9 +125,8 @@
 
   /** Cargos de acesso como botões liga/desliga (vários podem ficar ligados). */
   function escolhaCargos(selecionados) {
+    // O nome do grupo vem de A.grupo('Cargos de acesso', …) em volta.
     const box = U.el('div', 'acessos-escolha');
-    box.setAttribute('role', 'group');
-    box.setAttribute('aria-label', 'Cargos de acesso');
     const ativos = estado.cargos.filter((c) => c.ativo || selecionados.has(c.id));
     if (!ativos.length) box.append(U.nota('Nenhum cargo de acesso ainda. Monte em Configurações › Permissões › Cargos de Acesso.'));
     ativos.forEach((c) => {
@@ -154,6 +158,7 @@
       const caixa = estado.cargos.find((c) => c.ativo && U.dobrar(c.nome) === 'caixa');
       if (caixa) v.cargos.add(caixa.id);
     }
+    const donoDoPosto = () => estado.usuarios.find((x) => x.posto && x.posto.pdv === v.posto.pdv && x.posto.turno === v.posto.turno && (!u || x.id !== u.id));
     A.dialogoApi({
       titulo: u ? 'Editar ' + u.nome : 'Novo usuário',
       subtitulo: u ? u.email : 'A conta entra no sistema com o e-mail e a senha inicial.',
@@ -161,35 +166,43 @@
       montar: (form) => {
         const ctx = {};
         const grade = U.el('div', 'acessos-form');
-        grade.append(U.campo('Tipo de conta', U.chips([['pessoa', 'Pessoa'], ['posto', 'Posto do caixa']], v.tipo, (x) => { v.tipo = x; mostrar(); })));
+        grade.append(A.grupo('Tipo de conta', U.chips([['pessoa', 'Pessoa'], ['posto', 'Posto do caixa']], v.tipo, (x) => { v.tipo = x; mostrar(); })));
         const blocoPosto = U.el('div', 'acessos-form-linha');
         const pdv = U.seletor(pdvs().map((n) => [String(n), 'PDV' + n]), String(v.posto.pdv));
         pdv.onchange = () => { v.posto.pdv = Number(pdv.value); conferirPosto(); };
         const turno = U.chips(turnos().map((t) => [t.id, t.nome]), v.posto.turno, (x) => { v.posto.turno = x; conferirPosto(); });
         const avisoPosto = U.el('small', 'acessos-alerta');
         avisoPosto.setAttribute('role', 'status');
-        blocoPosto.append(U.campo('PDV', pdv), U.campo('Turno', turno));
+        blocoPosto.append(U.campo('PDV', pdv), A.grupo('Turno', turno));
         grade.append(blocoPosto, avisoPosto);
         ctx.nome = U.entrada('text', u ? u.nome : '', { autocomplete: 'off', maxLength: 120 });
-        grade.append(U.campo('Nome', ctx.nome, 'Conta de posto: use o nome do posto, ex.: PDV1 · Manhã.'));
+        const campoNome = U.campo('Nome', ctx.nome);
+        const dicaNome = U.el('small', 'profiles-note', 'Conta de posto: use o nome do posto, ex.: PDV1 · Manhã.');
+        campoNome.append(dicaNome);
+        grade.append(campoNome);
         if (!u) {
+          const minimo = A.senhaMinima(estado.ctx);
           ctx.email = U.entrada('email', '', { autocomplete: 'off', autocapitalize: 'none', spellcheck: false });
-          ctx.senha = U.entrada('password', '', { autocomplete: 'new-password' });
-          grade.append(U.campo('E-mail', ctx.email), U.campo('Senha inicial', ctx.senha, 'Pelo menos 8 caracteres (10 em produção). A pessoa troca em Minha Senha.'));
+          const senha = A.campoSenha('Senha inicial', 'new-password', 'Pelo menos ' + minimo + ' caracteres. Confira com "Mostrar" antes de entregar; a pessoa troca em Minha Senha.');
+          ctx.senha = senha.input;
+          grade.append(U.campo('E-mail', ctx.email), senha.no);
         }
         if (admin && !eu) {
-          grade.append(U.campo('Papel', U.chips([['usuario', 'Usuário'], ['administrador', 'Administrador']], v.papel, (x) => { v.papel = x; mostrar(); })));
+          grade.append(A.grupo('Papel', U.chips([['usuario', 'Usuário'], ['administrador', 'Administrador']], v.papel, (x) => { v.papel = x; mostrar(); })));
         }
-        const blocoCargos = U.campo('Cargos de acesso', escolhaCargos(v.cargos), 'Sem cargo, a conta continua com o acesso de antes: tudo, menos pagar e configurações.');
+        const dicaCargos = u && u.legado
+          ? 'Conta de antes dos cargos: hoje tem o acesso de antes. Ao salvar com cargo, passa a valer só o que o cargo libera.'
+          : 'Sem cargo, a conta entra mas não acessa nada. Pode escolher mais de um.';
+        const blocoCargos = A.grupo('Cargos de acesso', escolhaCargos(v.cargos), dicaCargos);
         const notaAdmin = U.nota('Administrador tem todos os acessos; cargo não muda nada para ele.');
         grade.append(blocoCargos, notaAdmin);
         if (u && !eu) {
-          grade.append(U.campo('Acesso ao sistema', U.chips([['sim', 'Entra no sistema'], ['nao', 'Sem acesso']], v.ativo ? 'sim' : 'nao', (x) => { v.ativo = x === 'sim'; }),
+          grade.append(A.grupo('Acesso ao sistema', U.chips([['sim', 'Entra no sistema'], ['nao', 'Sem acesso']], v.ativo ? 'sim' : 'nao', (x) => { v.ativo = x === 'sim'; }),
             'Sem acesso, a conta sai dos aparelhos na hora. Nada é apagado.'));
         }
         form.append(grade);
         function conferirPosto() {
-          const dono = estado.usuarios.find((x) => x.posto && x.posto.pdv === v.posto.pdv && x.posto.turno === v.posto.turno && (!u || x.id !== u.id));
+          const dono = donoDoPosto();
           avisoPosto.textContent = v.tipo === 'posto' && dono ? 'Este posto já é da conta ' + dono.nome + '.' : '';
           if (v.tipo === 'posto' && !u && (!ctx.nome.value || ctx.nome.dataset.auto)) {
             ctx.nome.value = rotuloPosto(v.posto, turnos());
@@ -199,6 +212,7 @@
         function mostrar() {
           blocoPosto.hidden = v.tipo !== 'posto';
           avisoPosto.hidden = v.tipo !== 'posto';
+          dicaNome.hidden = v.tipo !== 'posto';
           blocoCargos.hidden = v.papel === 'administrador';
           notaAdmin.hidden = v.papel !== 'administrador';
           conferirPosto();
@@ -211,10 +225,13 @@
         const nome = ctx.nome.value.trim();
         if (nome.length < 2) return 'Informe o nome.';
         const posto = v.tipo === 'posto' ? { pdv: v.posto.pdv, turno: v.posto.turno } : null;
+        const dono = posto && donoDoPosto();
+        if (dono) return 'O posto ' + rotuloPosto(posto, turnos()) + ' já é da conta ' + dono.nome + '. Escolha outro ou edite a conta dele.';
         const cargos = v.papel === 'administrador' ? [] : [...v.cargos];
         if (!u) {
-          if (!/^\S+@\S+\.\S+$/.test(ctx.email.value.trim())) return 'Informe um e-mail válido.';
-          if (ctx.senha.value.length < 8) return 'A senha inicial precisa ter pelo menos 8 caracteres.';
+          const minimo = A.senhaMinima(estado.ctx);
+          if (!/^\S+@\S+\.\S+$/.test(ctx.email.value.trim())) { ctx.email.focus(); return 'Informe um e-mail válido.'; }
+          if (ctx.senha.value.length < minimo) { ctx.senha.focus(); return 'A senha inicial precisa ter pelo menos ' + minimo + ' caracteres.'; }
           return A.api('/usuarios', { metodo: 'POST', corpo: { nome, email: ctx.email.value.trim(), papel: v.papel, senha: ctx.senha.value, cargos, posto } });
         }
         const mudou = {};

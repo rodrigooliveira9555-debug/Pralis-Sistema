@@ -21,7 +21,10 @@ body.dark-theme :is(.acessos-view, .acessos-dialog) .tom-marca { background: #33
 button.acessos-pessoa { cursor: pointer; transition: background-color 160ms ease; }
 button.acessos-pessoa:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
 button.acessos-pessoa:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: -2px; }
-.acessos-pessoa.inativa .acessos-pessoa-texto { opacity: .62; }
+body.dark-theme button.acessos-pessoa:focus-visible { outline-color: #d8c8fb; }
+/* Conta sem acesso: só o nome fica apagado (sem opacidade, que derrubava o contraste do e-mail). */
+.acessos-pessoa.inativa .acessos-pessoa-texto b { color: var(--muted, #73737a); font-weight: 500; }
+.acessos-oculto { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .acessos-avatar {
   flex: 0 0 34px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
   font: 600 12px/1 var(--ui-font); background: color-mix(in srgb, var(--menu-accent) 16%, var(--theme-card, #fff)); color: var(--panel-text, #5520ad);
@@ -61,18 +64,19 @@ body.dark-theme .acessos-alerta { color: #f8b4b4; }
 /* Permissões por área */
 .acessos-areas { display: grid; gap: 12px; grid-column: 1 / -1; }
 .acessos-area {
-  margin: 0; min-width: 0; padding: 0 14px 8px; display: block;
+  position: relative; margin: 0; min-width: 0; padding: 0 14px 8px; display: block;
   border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff);
 }
 .acessos-area legend {
   /* float + largura total: a legenda vira a primeira linha da caixa e "Marcar todas" vai para a direita. */
-  float: left; width: 100%; box-sizing: border-box; padding: 8px 0 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
+  float: left; width: 100%; box-sizing: border-box; padding: 8px 120px 6px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
   font: var(--ui-section-title-weight, 600) var(--ui-section-title, 14px)/20px var(--ui-font);
 }
 .acessos-area-conta { font: 600 11px/16px var(--ui-font); padding: 1px 8px; border-radius: 999px; background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); color: var(--panel-text, #5520ad); }
 body.dark-theme .acessos-area-conta { color: #d8c8fb; }
+/* "Marcar todas": fora da legenda (o nome do grupo é só a área), posto no canto da caixa. */
 .acessos-link {
-  margin-left: auto; padding: 4px 2px; border: 0; background: none; cursor: pointer;
+  position: absolute; top: 6px; right: 14px; padding: 4px 2px; min-height: 24px; border: 0; background: none; cursor: pointer;
   font: 600 12px/16px var(--ui-font); color: var(--panel-text, #5520ad); text-decoration: underline; text-underline-offset: 3px;
 }
 body.dark-theme .acessos-link { color: #d8c8fb; }
@@ -82,7 +86,7 @@ body.dark-theme .acessos-link { color: #d8c8fb; }
   display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-height: 40px; padding: 4px 0;
   border-top: 1px solid var(--layout-line, #dedee3); cursor: pointer;
 }
-.acessos-area > legend + .acessos-check { border-top: 0; }
+.acessos-area > legend + .acessos-check, .acessos-area > legend + .acessos-link + .acessos-check { border-top: 0; }
 .acessos-area > :not(legend) { clear: both; }
 .acessos-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--menu-accent); flex: none; }
 .acessos-check input:disabled + .acessos-check-texto { opacity: .55; }
@@ -108,6 +112,25 @@ body.dark-theme .acessos-link { color: #d8c8fb; }
 .acessos-linha-perm.pode .acessos-check-texto b { font-weight: 600; }
 .acessos-tri .compras-chip { padding: 5px 10px; }
 .acessos-acoes { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+
+/* Diálogo: "Salvando…" neutro, separado do erro vermelho. */
+.acessos-salvando { margin: 0; font: 500 12px/16px var(--ui-font); color: var(--muted, #73737a); }
+.acessos-salvando:empty { display: none; }
+
+/* Senha com "Mostrar" ao lado */
+.acessos-senha-linha { display: flex; gap: 8px; align-items: center; }
+.acessos-senha-linha input { flex: 1 1 auto; min-width: 0; }
+.acessos-ver-senha {
+  flex: none; min-height: 36px; padding: 0 12px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--layout-line, #dedee3); background: var(--theme-card, #fff); color: var(--panel-text, #5520ad);
+  font: 600 12px/16px var(--ui-font);
+}
+body.dark-theme .acessos-ver-senha { color: #d8c8fb; }
+
+/* Toque: chips com alvo de 44 px no celular. */
+@media (pointer: coarse) {
+  :is(.acessos-view, .acessos-dialog) .compras-chip { min-height: 44px; }
+}
 
 /* Senhas */
 .acessos-senha { display: grid; gap: 14px; max-width: 460px; }

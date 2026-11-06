@@ -9,10 +9,10 @@
   const A = window.CicluzAcessos;
   const telas = {};
 
-  function campoSenha(rotulo, autocomplete, dica) {
-    const i = U.entrada('password', '', { autocomplete, maxLength: 128 });
-    return { input: i, no: U.campo(rotulo, i, dica) };
-  }
+  const campoSenha = A.campoSenha;
+  // Senha mínima do servidor (vem do catálogo); até ele responder, vale a de fora de produção.
+  let minimo = 8;
+  A.api('/acessos/catalogo').then((c) => { minimo = A.senhaMinima({ catalogo: c }); }, () => {});
 
   function formulario(tela, montar, enviar) {
     const form = U.el('form', 'acessos-senha');
@@ -45,7 +45,7 @@
     tela.ativar();
     formulario(tela, (form) => {
       const atual = campoSenha('Senha atual', 'current-password');
-      const nova = campoSenha('Nova senha', 'new-password', 'Pelo menos 8 caracteres (10 em produção). Ao trocar, os outros aparelhos saem da conta.');
+      const nova = campoSenha('Nova senha', 'new-password', 'Pelo menos ' + minimo + ' caracteres. Ao trocar, os outros aparelhos saem da conta.');
       const repetir = campoSenha('Repita a nova senha', 'new-password');
       form.append(atual.no, nova.no, repetir.no);
       return {
@@ -54,7 +54,7 @@
       };
     }, (ctx) => {
       if (!ctx.atual.value) { ctx.atual.focus(); return 'Informe a senha atual.'; }
-      if (ctx.nova.value.length < 8) { ctx.nova.focus(); return 'A nova senha precisa ter pelo menos 8 caracteres.'; }
+      if (ctx.nova.value.length < minimo) { ctx.nova.focus(); return 'A nova senha precisa ter pelo menos ' + minimo + ' caracteres.'; }
       if (ctx.nova.value !== ctx.repetir.value) { ctx.repetir.focus(); return 'As duas senhas novas não são iguais.'; }
       return A.api('/auth/change-password', {
         metodo: 'POST',
@@ -88,7 +88,7 @@
     }, (ctx) => {
       const u = usuarios.find((x) => x.id === ctx.pessoa.value);
       if (!u) return 'Escolha a pessoa.';
-      if (ctx.nova.value.length < 8) { ctx.nova.focus(); return 'A senha precisa ter pelo menos 8 caracteres.'; }
+      if (ctx.nova.value.length < minimo) { ctx.nova.focus(); return 'A senha precisa ter pelo menos ' + minimo + ' caracteres.'; }
       return A.api('/usuarios/' + encodeURIComponent(u.id) + '/senha', { metodo: 'POST', corpo: { senha: ctx.nova.value } }).then(() => {
         ctx.nova.value = '';
         return 'Senha de ' + u.nome + ' definida. A pessoa sai de todos os aparelhos.';

@@ -66,11 +66,17 @@
   }
 
   function linhaCargo(c, pode) {
-    const r = U.el(pode ? 'button' : 'div', 'acessos-pessoa acessos-cargo' + (c.ativo ? '' : ' inativa'));
-    if (pode) { r.type = 'button'; r.onclick = () => editar(c); r.setAttribute('aria-label', 'Editar o cargo ' + c.nome); }
+    // Cargo com permissão que a pessoa não tem: só o administrador altera (a API confere de novo).
+    const alcance = c.permissoes.every((k) => estado.ctx.perfil.tem(k));
+    const editavel = pode && alcance;
+    const r = U.el(editavel ? 'button' : 'div', 'acessos-pessoa acessos-cargo' + (c.ativo ? '' : ' inativa'));
+    if (editavel) { r.type = 'button'; r.onclick = () => editar(c); }
     const meio = U.el('span', 'acessos-pessoa-texto');
-    meio.append(U.el('b', null, c.nome), U.el('small', null, c.descricao || 'Sem descrição'));
+    const nome = U.el('b', null, c.nome);
+    if (editavel) nome.prepend(U.el('span', 'acessos-oculto', 'Editar o cargo '));
+    meio.append(nome, U.el('small', null, c.descricao || 'Sem descrição'));
     const tags = U.el('span', 'acessos-tags');
+    if (pode && !alcance) tags.append(U.situacao('Só o administrador altera', 'neutro'));
     if (!c.ativo) tags.append(U.situacao('Desativado', 'negativo'));
     tags.append(U.situacao(c.permissoes.length + ' de ' + totalPermissoes() + ' permissões', 'neutro'));
     tags.append(U.situacao(c.pessoas === 1 ? '1 pessoa' : c.pessoas + ' pessoas', c.pessoas ? 'info' : 'neutro'));
@@ -108,9 +114,9 @@
       leg.append(U.el('span', null, area.nome), conta);
       // Área cujas telas ainda gravam só no aparelho: a marcação fica guardada, mas ainda não bloqueia.
       const naoConfere = itens.every((p) => !p.aplicada);
-      if (naoConfere) leg.append(U.el('small', 'acessos-check-nota', 'fica guardado; a tela ainda não confere'));
-      leg.append(todos);
-      bloco.append(leg);
+      if (naoConfere) leg.append(U.el('small', 'acessos-check-nota', 'ainda não bloqueia nesta área'));
+      // "Marcar todas" fica fora da legenda (o nome do grupo é só o nome da área).
+      bloco.append(leg, todos);
       const caixas = itens.map((p) => {
         const l = U.el('label', 'acessos-check');
         const c = U.entrada('checkbox');
@@ -118,9 +124,9 @@
         c.disabled = !podeMarcar(p.chave);
         c.onchange = () => { if (c.checked) marcadas.add(p.chave); else marcadas.delete(p.chave); sincronizar(); };
         const t = U.el('span', 'acessos-check-texto', p.rotulo);
+        if (c.disabled) t.append(U.el('small', null, 'Você não tem esta permissão, então não pode liberá-la.'));
         l.append(c, t);
-        if (!p.aplicada && !naoConfere) l.append(U.el('small', 'acessos-check-nota', 'tela ainda não confere'));
-        if (c.disabled) l.title = 'Você não tem esta permissão, então não pode liberá-la.';
+        if (!p.aplicada && !naoConfere) l.append(U.el('small', 'acessos-check-nota', 'ainda não bloqueia'));
         bloco.append(l);
         return [p, c];
       });
@@ -129,6 +135,7 @@
         conta.textContent = n + ' de ' + itens.length;
         caixas.forEach(([p, c]) => { c.checked = marcadas.has(p.chave); });
         todos.textContent = itens.some((p) => podeMarcar(p.chave) && !marcadas.has(p.chave)) ? 'Marcar todas' : 'Desmarcar todas';
+        todos.setAttribute('aria-label', todos.textContent + ' de ' + area.nome);
         todos.hidden = !itens.some((p) => podeMarcar(p.chave));
       }
       sincronizar();
@@ -156,8 +163,8 @@
         topo.append(U.campo('Nome', ctx.nome), U.campo('Descrição', ctx.descricao));
         form.append(topo);
         if (c) {
-          form.append(U.campo('Situação', U.chips([['sim', 'Ativo'], ['nao', 'Desativado']], ativo ? 'sim' : 'nao', (x) => { ativo = x === 'sim'; }),
-            'Desativado, o cargo deixa de valer para todo mundo que o tem. Nada é apagado.'));
+          form.append(A.grupo('Situação', U.chips([['sim', 'Ativo'], ['nao', 'Desativado']], ativo ? 'sim' : 'nao', (x) => { ativo = x === 'sim'; }),
+            'Desativado, o cargo deixa de valer para todo mundo que o tem: quem só tem este cargo fica sem acesso. Nada é apagado.'));
         }
         form.append(listaPermissoes(catalogo, marcadas, podeMarcar));
         return ctx;
