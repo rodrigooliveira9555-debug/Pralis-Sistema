@@ -20,7 +20,7 @@
       tela.botaoNovo = U.atalho(tela, 'Novo usuário', 'M12 5v14M5 12h14', () => editar(null), { criar: true });
     }
     tela.ativar();
-    tela.body.replaceChildren(U.nota('Carregando…'));
+    if (!tela.body.childElementCount) tela.body.replaceChildren(U.nota('Carregando…'));
     try {
       estado.ctx = await A.contexto();
       if (!estado.ctx.perfil.tem('usuarios_visualizar') && !estado.ctx.perfil.tem('usuarios_gerenciar')) {

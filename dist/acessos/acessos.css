@@ -61,32 +61,37 @@ body.dark-theme .acessos-alerta { color: #f8b4b4; }
 /* Permissões por área */
 .acessos-areas { display: grid; gap: 12px; grid-column: 1 / -1; }
 .acessos-area {
-  margin: 0; min-width: 0; padding: 4px 14px 10px; display: grid; gap: 2px;
+  margin: 0; min-width: 0; padding: 0 14px 8px; display: block;
   border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff);
 }
 .acessos-area legend {
-  padding: 0 6px; margin-left: -6px; display: flex; align-items: center; gap: 8px;
+  /* float + largura total: a legenda vira a primeira linha da caixa e "Marcar todas" vai para a direita. */
+  float: left; width: 100%; box-sizing: border-box; padding: 8px 0 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
   font: var(--ui-section-title-weight, 600) var(--ui-section-title, 14px)/20px var(--ui-font);
 }
 .acessos-area-conta { font: 600 11px/16px var(--ui-font); padding: 1px 8px; border-radius: 999px; background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); color: var(--panel-text, #5520ad); }
 body.dark-theme .acessos-area-conta { color: #d8c8fb; }
 .acessos-link {
-  justify-self: end; margin-top: -26px; padding: 4px 2px; border: 0; background: none; cursor: pointer;
+  margin-left: auto; padding: 4px 2px; border: 0; background: none; cursor: pointer;
   font: 600 12px/16px var(--ui-font); color: var(--panel-text, #5520ad); text-decoration: underline; text-underline-offset: 3px;
 }
 body.dark-theme .acessos-link { color: #d8c8fb; }
 .acessos-link[hidden] { display: none; }
-.acessos-check {
+/* label.acessos-check dentro da área: vence o "label em grade" dos diálogos (.profiles-dialog label). */
+.acessos-area label.acessos-check {
   display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-height: 40px; padding: 4px 0;
   border-top: 1px solid var(--layout-line, #dedee3); cursor: pointer;
 }
-.acessos-area > legend + .acessos-link + .acessos-check { border-top: 0; }
+.acessos-area > legend + .acessos-check { border-top: 0; }
+.acessos-area > :not(legend) { clear: both; }
 .acessos-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--menu-accent); flex: none; }
 .acessos-check input:disabled + .acessos-check-texto { opacity: .55; }
 .acessos-check-texto { flex: 1 1 200px; min-width: 0; display: grid; gap: 1px; }
 .acessos-check-texto small { font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); }
 .acessos-check-nota { font: 400 11px/16px var(--ui-font); color: var(--muted, #73737a); font-style: italic; }
+.acessos-area legend .acessos-check-nota { font-weight: 400; }
 .acessos-sugeridos { color: var(--muted, #73737a); }
+.acessos-view .compras-vazio > .btn { justify-self: center; width: auto; padding-inline: 20px; }
 
 /* Acessos por pessoa */
 .acessos-pessoa-area { display: grid; gap: 12px; }

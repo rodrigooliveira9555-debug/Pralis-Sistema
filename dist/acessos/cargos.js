@@ -16,7 +16,7 @@
       tela.botaoNovo = U.atalho(tela, 'Novo cargo de acesso', 'M12 5v14M5 12h14', () => editar(null), { criar: true });
     }
     tela.ativar();
-    tela.body.replaceChildren(U.nota('Carregando…'));
+    if (!tela.body.childElementCount) tela.body.replaceChildren(U.nota('Carregando…'));
     try {
       estado.ctx = await A.contexto();
       const pode = estado.ctx.perfil.tem('permissoes_gerenciar');
@@ -106,7 +106,11 @@
         sincronizar();
       }, 'acessos-link');
       leg.append(U.el('span', null, area.nome), conta);
-      bloco.append(leg, todos);
+      // Área cujas telas ainda gravam só no aparelho: a marcação fica guardada, mas ainda não bloqueia.
+      const naoConfere = itens.every((p) => !p.aplicada);
+      if (naoConfere) leg.append(U.el('small', 'acessos-check-nota', 'fica guardado; a tela ainda não confere'));
+      leg.append(todos);
+      bloco.append(leg);
       const caixas = itens.map((p) => {
         const l = U.el('label', 'acessos-check');
         const c = U.entrada('checkbox');
@@ -115,7 +119,7 @@
         c.onchange = () => { if (c.checked) marcadas.add(p.chave); else marcadas.delete(p.chave); sincronizar(); };
         const t = U.el('span', 'acessos-check-texto', p.rotulo);
         l.append(c, t);
-        if (!p.aplicada) l.append(U.el('small', 'acessos-check-nota', 'tela ainda não confere'));
+        if (!p.aplicada && !naoConfere) l.append(U.el('small', 'acessos-check-nota', 'tela ainda não confere'));
         if (c.disabled) l.title = 'Você não tem esta permissão, então não pode liberá-la.';
         bloco.append(l);
         return [p, c];

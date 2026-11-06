@@ -108,6 +108,8 @@
     const m = /^#acessos:([a-z-]+)$/.exec(location.hash);
     if (!m || !telas[m[1]]) return;
     history.replaceState(null, '', location.pathname + location.search);
+    // Vindo do nome no menu lateral ou de outra página: fecha o menu de página cheia antes.
+    document.dispatchEvent(new Event('cicluz-close-menu'));
     abrir(m[1]);
   }
   window.addEventListener('hashchange', abrirPeloEndereco);

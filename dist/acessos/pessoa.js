@@ -15,7 +15,7 @@
   async function abrir(usuarioId) {
     if (!tela) tela = A.criarTela({ id: 'acessos-pessoa-view', titulo: 'Acessos por Pessoa', tela: 'pessoa' });
     tela.ativar();
-    tela.body.replaceChildren(U.nota('Carregando…'));
+    if (!tela.body.childElementCount) tela.body.replaceChildren(U.nota('Carregando…'));
     try {
       estado.ctx = await A.contexto();
       if (!estado.ctx.perfil.tem('permissoes_gerenciar')) {
