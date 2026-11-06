@@ -10,7 +10,7 @@
   const SV = window.CicluzComprasServico;
   const M = window.CicluzCompras;
   const { el, botao, campo, entrada, seletor } = U;
-  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras (revisar) / ';
+  const CAMINHO = 'Saídas · Mercadorias / Lançamentos / ';
   const dataHora = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
   const ORIGEM = { agendamento: 'Agendamento', rapida: 'Pedido urgente' };
 
@@ -21,7 +21,7 @@
   let aba = 'caminho';
   let filtroForn = '';
   function abrirPedidos() {
-    if (!telaP) telaP = U.criarTela({ id: 'compras-pedidos', titulo: 'Pedidos a Receber', caminho: CAMINHO + 'Pedidos a Receber', icone: 'caminhao', voltar: M.voltarCompras });
+    if (!telaP) telaP = U.criarTela({ id: 'compras-pedidos', titulo: 'MER - Pedidos a Receber', caminho: CAMINHO + 'MER - Pedidos a Receber', icone: 'caminhao', voltar: M.voltarLancamentos });
     telaP.ativar();
     renderPedidos();
   }
@@ -186,9 +186,14 @@
       ['Situação', (p) => { const [t, tom] = D.SITUACOES_ESTOQUE[sit(p)]; return U.situacao(t, tom); }],
       ['', (p) => botao('Extrato', () => extrato(p.id))],
     ], lista, { vazioTexto: 'Nenhum produto com esses filtros.' });
-    telaE.body.replaceChildren(U.nota('Saldo por produto. Só o recebimento conferido altera o saldo; produto no mínimo pede revisão do comprador.'), faixa, filtros, tab);
+    telaE.body.replaceChildren(U.nota('Saldo por produto. Alteram o saldo: o recebimento conferido, a conferência aprovada e a Produção (consumo de ingredientes, produção pronta, abastecimento da loja e sobra que volta). Produto no mínimo pede revisão do comprador.'), faixa, filtros, tab);
   }
   function origem(m) {
+    // Movimentos gravados pela Produção (dist/producao/servico.js) carregam o próprio número.
+    if (m.tipo === 'consumo_producao') return 'consumo da produção (ordem nº ' + m.ordemNumero + ')';
+    if (m.tipo === 'entrada_producao') return 'produção pronta (ordem nº ' + m.ordemNumero + ')';
+    if (m.tipo === 'sobra_retorno') return 'sobra que voltou da loja (pedido de produção nº ' + m.producaoPedidoNumero + ')';
+    if (m.tipo === 'saida_abastecimento') return 'abastecimento da loja (pedido de produção nº ' + m.producaoPedidoNumero + ')';
     if (m.tipo === 'ajuste_conferencia') {
       const c = S.dados.conferencias.find((x) => x.id === m.conferenciaId);
       return 'ajuste da conferência' + (c ? ' de ' + D.dataLonga(c.data) : '') + (m.motivo ? ' (' + m.motivo + ')' : '');
@@ -214,10 +219,10 @@
             ['Quantidade', (m) => (m.entrada > 0 ? '+' : '') + D.numero(m.entrada), 'num'],
             ['Saldo anterior', (m) => D.numero(m.saldoAnterior), 'num'],
             ['Saldo posterior', (m) => D.numero(m.saldoPosterior), 'num'],
-          ], movs, { vazioTexto: 'Nenhum movimento. Aparecem aqui os recebimentos conferidos e os ajustes de conferências aprovadas.' }));
+          ], movs, { vazioTexto: 'Nenhum movimento. Aparecem aqui os recebimentos conferidos, os ajustes de conferências aprovadas e os movimentos da Produção.' }));
         };
         filtros.append(campo('Produto', sp), campo('De', de), campo('Até', ate), botao('Filtrar', () => { f.produto = sp.value; f.de = de.value; f.ate = ate.value; desenha(); }, 'btn'));
-        form.append(filtros, box, U.nota('Movimentos: entrada por recebimento de compra e ajuste por conferência aprovada (só no S2). Saída e perda ainda não existem.'));
+        form.append(filtros, box, U.nota('Movimentos: entrada por recebimento de compra, ajuste por conferência aprovada (só no S2) e, da Produção, consumo de ingredientes, produção pronta, abastecimento da loja e sobra que volta.'));
         desenha();
       },
     });

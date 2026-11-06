@@ -1,6 +1,6 @@
 /*
  * Cadastro de Fornecedores, que alimenta Compras (Produtos fica em telas-produto-*.js).
- * Ficam em Cadastros → Diretor de Operações (área de cadastros do S2).
+ * Ficam em Saídas · Mercadorias → Cadastros Geral (MER - Fornecedores; MER - Produtos ao lado).
  * Espelham /fornecedores e /produtos do S1 (main).
  */
 (function () {

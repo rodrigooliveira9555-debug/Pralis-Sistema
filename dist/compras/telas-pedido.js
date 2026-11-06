@@ -9,7 +9,7 @@
   const SV = window.CicluzComprasServico;
   const M = window.CicluzCompras;
   const { el, botao, campo, entrada, seletor } = U;
-  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras (revisar) / ';
+  const CAMINHO = 'Saídas · Mercadorias / Lançamentos / ';
   const horaDe = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const amanha = () => D.isoData(D.somarDias(new Date(), 1));
 
@@ -19,8 +19,7 @@
   let telaA = null;
   function abrirAgendamento() {
     if (!telaA) {
-      telaA = U.criarTela({ id: 'compras-agendamento', titulo: 'MER - Agenda de Pedidos (revisar)', caminho: 'Agenda · Atividades / MER - Agenda de Pedidos (revisar)', icone: 'revisar', voltar: () => returnToNavigation() });
-      telaA.head.querySelector('.sector-icon').classList.add('revisar');
+      telaA = U.criarTela({ id: 'compras-agendamento', titulo: 'MER - Agenda de Pedidos', caminho: 'Agenda · Atividades / MER - Agenda de Pedidos', icone: 'agenda', voltar: () => returnToNavigation() });
       U.atalho(telaA, 'Novo agendamento', 'M12 5v14M5 12h14', () => formularioAgenda(), { criar: true });
     }
     telaA.ativar();
@@ -30,7 +29,7 @@
   function renderAgendas() {
     const ativas = S.dados.agendas.filter((a) => a.status === 'ativa').sort((a, b) => a.inicio.localeCompare(b.inicio));
     const topo = el('div', 'profiles-controls');
-    topo.append(U.nota('Escolha os produtos, a repetição e o responsável. Na data, ele faz o pedido na Solicitação de compra.'));
+    topo.append(U.nota('Escolha os produtos, a repetição e o responsável. Na data, ele faz o pedido em MER - Pedido de Compra.'));
     const sec = U.secao('Agendamentos', ativas.length);
     const lista = el('div', 'compras-lista');
     if (!ativas.length) lista.append(U.vazio('Nenhum agendamento.', 'Crie o primeiro com "Novo agendamento".'));
@@ -74,7 +73,7 @@
         const rodape = form.querySelector('.compras-form-rodape');
         rodape.append(
           botao('Excluir só esta data', () => { const r = SV.cancelarData(a.id, o.previsto); if (r.erro) return U.avisar(r.erro); form.closest('dialog').close(); U.avisar('Data excluída.'); renderAgendas(); }, 'btn secondary'),
-          botao('Gerar o pedido agora (simulação)', () => { form.closest('dialog').close(); const n = SV.processarAgendas({ agendaId: a.id, previsto: o.previsto }); U.avisar(n ? 'Pedido gerado: veja em Solicitação de compra.' : 'Nada gerado.'); renderAgendas(); }, 'btn secondary'),
+          botao('Gerar o pedido agora (simulação)', () => { form.closest('dialog').close(); const n = SV.processarAgendas({ agendaId: a.id, previsto: o.previsto }); U.avisar(n ? 'Pedido gerado: veja em MER - Pedido de Compra.' : 'Nada gerado.'); renderAgendas(); }, 'btn secondary'),
         );
         form.append(U.nota('A simulação faz o papel do agendador do servidor: cria o pedido como se a data tivesse chegado.'));
         return { data, hora };
@@ -246,7 +245,7 @@
    * ===================================================================== */
   let telaS = null;
   function abrirSolicitacao() {
-    if (!telaS) telaS = U.criarTela({ id: 'compras-solicitacao', titulo: 'Solicitação de Compra', caminho: CAMINHO + 'Solicitação de Compra', icone: 'lista', voltar: M.voltarCompras });
+    if (!telaS) telaS = U.criarTela({ id: 'compras-solicitacao', titulo: 'MER - Pedido de Compra', caminho: CAMINHO + 'MER - Pedido de Compra', icone: 'lista', voltar: M.voltarLancamentos });
     SV.processarAgendas();
     telaS.ativar();
     renderSolicitacao();
@@ -258,7 +257,7 @@
     const intro = U.nota('Os pedidos agendados que você executa. Na data, faça o pedido: ponha as quantidades e envie aos fornecedores.');
     const s1 = U.secao('Para enviar', pend.length);
     const l1 = el('div', 'compras-lista');
-    if (!pend.length) l1.append(U.vazio('Nada esperando você agora.', 'Para testar, gere um pedido em Agendamento de pedidos → próxima data → "Gerar o pedido agora".'));
+    if (!pend.length) l1.append(U.vazio('Nada esperando você agora.', 'Para testar, gere um pedido em Agenda → MER - Agenda de Pedidos → próxima data → "Gerar o pedido agora".'));
     pend.forEach((o) => {
       const a = S.dados.agendas.find((x) => x.id === o.agendaId);
       l1.append(U.linhaLista({ icone: 'compras', titulo: S.nomeGrupo(a.grupoId, a.subgrupoId), detalhe: 'Pedido de ' + D.dataCurta(o.data) + ' ' + o.hora + ' · ' + a.produtoIds.length + ' produto(s) · ' + S.responsavel(a.responsavelId), direita: botao('Fazer o pedido', () => fazerPedido(o), 'btn') }));

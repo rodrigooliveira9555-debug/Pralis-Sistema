@@ -1,5 +1,8 @@
 # Validação do padrão compartilhado
 
+## Compras encaixado no menu de Mercadorias — 06/11/2026
+Node: compras-dominio 58, compras-produto 56, agenda-dominio 125, agenda-mapa-layout 30, datas e campos verdes. Navegador: compras-telas 287 (menu de Mercadorias sem "Compras (revisar)"; Lançamentos com as 5 linhas na ordem pede → cota → recebe → conta; Cadastros Geral com MER - Catálogo e Preço-Base; cada linha abre a tela com o mesmo nome e a trilha certa; Agenda → MER - Agenda de Pedidos sem "(revisar)"; fluxo completo + 60 combinações de tela × largura × tema), compras-regras-navegador 52, compras-produto-navegador 68, entrar-adocao 9, agenda-telas 535. Testes antigos corrigidos: compras-telas abria o agendamento por um card que o Rodrigo levou para a Agenda; agenda-telas esperava que a Agenda abrisse na lista Gestão de Pessoas (agora abre em Diretor de Operações) e conferia o foco cedo demais. Não conferido por captura manual: só pela matriz automática de larguras e temas.
+
 ## Ajustes do cadastro de produtos — 04/11/2026
 Node: compras-produto 54, compras-dominio 58, datas 19, campos 21. Navegador: compras-telas 262 (fluxo + 60 combinações; o diálogo de agendamento salva pelo ✓ do rodapé e não mostra a linha duplicada), compras-regras-navegador 23, compras-produto-navegador 68 (formulário sem Curva ABC, vendido por peso, tolerância e código externo; salvar e fechar pelo rodapé). Captura do bloco "Como se compra" com o aviso de embalagem de 1 unidade e sem a linha Cancelar/Salvar, 1280 px claro.
 

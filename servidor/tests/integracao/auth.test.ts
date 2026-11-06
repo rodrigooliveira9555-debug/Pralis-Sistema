@@ -33,7 +33,9 @@ describe("login", () => {
     expect(corpo.data.chavesSincronizadas).toContain("cicluz-financial-hierarchy-v1");
     expect(corpo.data.chavesSincronizadas).toContain("cicluz-compras-v1");
     expect(corpo.data.chavesSincronizadas).toContain("cicluz-agenda-v1");
-    expect(corpo.data.chavesAdotadas).toEqual(["cicluz-compras-v1", "cicluz-agenda-v1"]);
+    expect(corpo.data.chavesSincronizadas).toContain("cicluz-producao-v1");
+    expect(corpo.data.chavesSincronizadas).toContain("cicluz-patrimonio-v1");
+    expect(corpo.data.chavesAdotadas).toEqual(["cicluz-compras-v1", "cicluz-agenda-v1", "cicluz-producao-v1", "cicluz-patrimonio-v1"]);
   });
 
   it("recusa senha errada sem criar sessão", async () => {

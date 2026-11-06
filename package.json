@@ -4,8 +4,8 @@
   "description": "Protótipo visual (S2). O site é estático em dist/; este arquivo só existe para os testes.",
   "scripts": {
     "serve": "node tests/servidor.mjs",
-    "test": "node tests/date-fields.cjs && node tests/field-validation.cjs && node tests/compras-dominio.cjs && node tests/compras-produto.cjs && node tests/agenda-dominio.cjs && node tests/agenda-mapa-layout.cjs",
-    "test:telas": "node tests/compras-telas.mjs && node tests/compras-regras-navegador.mjs && node tests/compras-produto-navegador.mjs && node tests/entrar-adocao.mjs && node tests/agenda-telas.mjs",
+    "test": "node tests/date-fields.cjs && node tests/field-validation.cjs && node tests/compras-dominio.cjs && node tests/compras-produto.cjs && node tests/agenda-dominio.cjs && node tests/agenda-mapa-layout.cjs && node tests/producao-dominio.cjs",
+    "test:telas": "node tests/compras-telas.mjs && node tests/compras-regras-navegador.mjs && node tests/compras-produto-navegador.mjs && node tests/entrar-adocao.mjs && node tests/agenda-telas.mjs && node tests/producao-telas.mjs",
     "versoes": "node scripts/atualizar-versoes.cjs"
   },
   "devDependencies": {

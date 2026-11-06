@@ -33,10 +33,25 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
 /* ---------- 1) Fluxo pela interface ---------- */
 {
   const p = await abrirPagina(1024);
-  // Entrada pelo menu: Mercadorias → Compras → cards
-  await p.evaluate(() => openSection(sections[3][0], 'Compras (revisar)', 'compras', '#22c55e'));
-  const cards = await p.locator('#sector-content .section-card b').allTextContents();
-  ok(cards.includes('Cotação por Fornecedor (revisar)') && !cards.includes('Unidades de Medida') && !cards.includes('Estoques de produtos') && !cards.includes('Agendamento de pedidos') && cards.length === 5, 'Cards de Compras no setor Mercadorias → Compras (5; Unidades de medida fica em Cadastros Geral, o estoque em Estoques e a agenda de pedidos em Agenda)');
+  // Menu de Mercadorias (vídeo do Rodrigo, 06/11/2026): sem o item "Compras (revisar)"; rotina em Lançamentos,
+  // cadastros em Cadastros Geral, estoque em Estoques e o agendamento em Agenda.
+  const subMercadorias = await p.evaluate(() => sections[3][1].join('|'));
+  ok(subMercadorias === 'Lançamentos|Lançamentos Produção|Relatórios|Cadastros Geral|Cadastros Geral Produção|Estoques|Pastas Documentos', 'Mercadorias sem "Compras (revisar)": ' + subMercadorias);
+  const cardsDe = async (sub) => { await p.evaluate((x) => menuBack(3, x)(), sub); return p.locator('#sector-content .section-card b').allTextContents(); };
+  const lanc = await cardsDe('Lançamentos');
+  ok(lanc.join('|') === 'MER - Mercadorias|MER - Pedido de Compra|MER - Cotação por Fornecedor|MER - Pedidos a Receber|MER - Contagem de Estoque', 'Lançamentos: pede → cota → recebe → conta, sem os espaços reservados MER - Pedidos e MER - Estoque: ' + lanc.join('|'));
+  const cad = await cardsDe('Cadastros Geral');
+  ok(cad.join('|') === 'MER - Grupos de Mercadorias|MER - Fornecedores|MER - Produtos|Unidades de Medida|MER - Catálogo e Preço-Base', 'Cadastros Geral com o Catálogo e Preço-Base: ' + cad.join('|'));
+  ok((await cardsDe('Estoques')).join('|') === 'MER - Grupo Mercadorias', 'Estoques só com o estoque');
+  ok(await p.locator('#sector-content .card-inherited-icon.revisar').count() === 0, 'Nenhuma exclamação de revisar nas linhas de Mercadorias');
+  for (const [sub, titulo, id] of [['Lançamentos', 'MER - Pedido de Compra', 'solicitacao'], ['Lançamentos', 'MER - Cotação por Fornecedor', 'cotacao'], ['Lançamentos', 'MER - Pedidos a Receber', 'pedidos'], ['Lançamentos', 'MER - Contagem de Estoque', 'conferencias'], ['Cadastros Geral', 'MER - Catálogo e Preço-Base', 'cadastro']]) {
+    await p.evaluate((x) => menuBack(3, x)(), sub);
+    await p.locator('#sector-content .section-card', { hasText: titulo }).click();
+    ok(await p.locator('#compras-' + id + '.show').count() === 1 && (await p.locator('#compras-' + id + ' .head h2').first().textContent()).trim() === titulo, sub + ' → ' + titulo + ' abre a tela com o mesmo nome');
+    ok((await p.locator('#compras-' + id + ' .head p').first().textContent()).includes('Saídas · Mercadorias / ' + sub + ' / ' + titulo), 'Caminho de ' + titulo + ' mostra ' + sub);
+  }
+  const agendaBotao = await p.evaluate(() => [...document.querySelectorAll('.nav button')].map((b) => b.textContent.trim()).filter((t) => t.includes('Agenda de Pedidos')));
+  ok(agendaBotao.join() === 'MER - Agenda de Pedidos', 'Agenda → MER - Agenda de Pedidos, sem "(revisar)": ' + agendaBotao.join());
 
   // "+" fixo do menu rápido aciona a criação da tela (header-add-circle)
   for (const [tela, titulo] of [['produtos', 'Novo produto'], ['fornecedores', 'Novo fornecedor'], ['cotacao', 'Pedido urgente'], ['conferencias', 'Agendar conferência']]) {
@@ -66,10 +81,9 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
     const altura = (await p.locator('#compras-' + tela + ' .compras-abas').boundingBox()).height;
     ok(altura < 60, 'Abas com a altura dos chips em ' + tela + ' (' + Math.round(altura) + 'px)');
   }
-  await p.evaluate(() => openSection(sections[3][0], 'Compras (revisar)', 'compras', '#22c55e'));
-
-  // Agendamento pela interface
-  await clicarTexto(p, '#sector-content .section-card', 'Agendamento de pedidos');
+  // Agendamento pela interface: fica no menu Agenda → "MER - Agenda de Pedidos" (Rodrigo, 05/11 e 06/11)
+  await p.evaluate(() => [...document.querySelectorAll('.nav button')].find((b) => b.textContent.includes('MER - Agenda de Pedidos')).click());
+  ok(await p.locator('#compras-agendamento.show').count() === 1, 'Agenda → MER - Agenda de Pedidos abre o agendamento do Compras');
   await p.locator('.view.show .people-add-control').click(); // "+" do rodapé fixo
   const d1 = dialogo(p);
   await d1.locator('select[aria-label="Grupo *"]').selectOption({ label: 'BEBIDAS' });
