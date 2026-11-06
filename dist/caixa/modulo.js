@@ -114,9 +114,9 @@
     return id;
   }
   /** Envio sem lacre (R-231): só com caixa aberto naquela conta; o operador confirma. Devolve erro (string) ou null. */
-  function criarSemLacre({ destino, especie, moedas, observacao, criadoPor }) {
+  function criarSemLacre({ origem = 'cofre', destino, especie, moedas, observacao, criadoPor }) {
     if (estado.status !== 'aberto' || !estado.abertura || estado.abertura.contaId !== destino) return 'O ' + conta(destino).nome + ' não tem caixa aberto. Sem caixa aberto o dinheiro vai pelo malote com lacre.';
-    estado.transferencias.push({ id: proximoId('tr', estado.transferencias), tipo: 'sem_lacre', origem: 'cofre', destino, valor: especie + moedas, especie, moedas, valorRecebido: null, lacre: '',
+    estado.transferencias.push({ id: proximoId('tr', estado.transferencias), tipo: 'sem_lacre', origem, destino, valor: especie + moedas, especie, moedas, valorRecebido: null, lacre: '',
       situacao: 'pendente', caixaId: estado.abertura.caixaId, criadoPor, criadoEm: hora(), observacao: observacao || '' });
     return null;
   }
@@ -257,6 +257,9 @@
     return l;
   }
 
+  /** Caixas ABERTOS agora (o monitor da Gerência não mostra os em fechamento). */
+  const caixasAbertos = () => caixas().filter((c) => c.situacao === 'aberto');
+
   /** Recomeça a demonstração inteira; cada tela limpa o que guardou ao se registrar em aoReiniciar. */
   function reiniciar() { Object.assign(estado, base()); reinicios.forEach((f) => f()); }
   const aoReiniciar = (f) => reinicios.push(f);
@@ -341,7 +344,7 @@
     COR, COR_TEXTO, PERFIS, estado, pode,
     moeda, centavos, hora, somarMin, totalItens,
     conta, saldoConta, contaDoPosto, transferencia, malotes, malotePorLacre, lacreExiste, lacre, bolsasLivres, pendentesSemLacre, sangriasDoCaixa,
-    criarMalote, criarSemLacre, abrirCaixa, registrarSangria, resolverRecebimento, confirmarTransferencia, resumo, iniciarFechamento, fecharCaixa, diferencaDe, caixas,
+    criarMalote, criarSemLacre, abrirCaixa, registrarSangria, resolverRecebimento, confirmarTransferencia, resumo, iniciarFechamento, fecharCaixa, diferencaDe, caixas, caixasAbertos,
     reiniciar, aoReiniciar, seletorPerfil, faixaDemo, situacaoDe, ROTULO_SITUACAO, TOM_SITUACAO,
     cards: () => CARDS.map(([id, t, d]) => [t, d, 'caixa:' + id]),
     icone: () => U.svg(ICONE),

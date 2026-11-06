@@ -135,6 +135,22 @@ campos e regras). Cards de Entradas → Caixas, na ordem do fluxo:
   a conta do caixa zera (vendas e quebra/sobra viram lançamentos); o Cofre só recebe quando a Tesouraria
   confirmar (etapa 4).
 
+### Etapa 3 — Gerência (06/11/2026)
+
+- `gerencia.js` (152 linhas): **monitor de caixas abertos** (só `aberto`, não os em fechamento) com **painel do caixa** ao
+  clicar (saldo, entradas, recebimentos pendentes, sangrias, vendas canceladas, PDV ligado/desligado) + histórico de caixas
+  com filtros e detalhe. `gerencia-recebimento.js` (76): **enviar recebimento ao caixa** (transferência sem lacre, R-231).
+  `gerencia-mensagens.js` (93): mensagens para os caixas.
+- **Enviar recebimento:** origem escolhível (Cofre Principal ou Cofre Troco), destino = caixa **aberto**; sem caixa aberto o
+  dinheiro vai pelo malote; sem fundo na origem é recusado; vira transferência **pendente** (o dinheiro já sai da origem) e
+  aparece no Turno do operador. **Quem enviou não confirma** nem recusa (R-028): o Gerente vendo o Turno só lê "Quem enviou não
+  confirma". O envio sem lacre **saiu do card Malote**: um caminho só.
+- **Mensagens:** título, texto, validade (nunca no passado), alvos (todos os abertos, toda a empresa, PDVs, operadores); o
+  operador responde "Entendi"/"Fechar" no Turno; sem edição nem exclusão, só "Encerrar".
+- O **histórico** continua na Gerência até a etapa 5 (Financeiro) decidir o lugar dele.
+- Decisões tomadas sem resposta explícita (revisar se o Rodrigo discordar): origem do recebimento escolhível, histórico fica na
+  Gerência por ora.
+
 ## Falta
 
 1. **Maquininha manhã/tarde** (acumulado − manhã) e posto escolhível (hoje fixo PDV 1 · Manhã).

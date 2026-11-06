@@ -1,12 +1,11 @@
 /*
  * Caixa — Malote da Tesouraria (casca). Começo do fluxo: a Tesouraria cria o malote com lacre
- * (Cofre → conta do posto, ex.: Caixa 1M) e o Gerente pode enviar dinheiro SEM lacre no meio do turno.
+ * (Cofre → conta do posto, ex.: Caixa 1M). O envio SEM lacre (meio do turno) é do Gerente e fica em Gerência.
  * Regras do principal (TransferenciasHost, transferencias.service, Caixa-Brain/02):
  *  - composição obrigatória (dinheiro físico + moedas = valor), lacre de abertura e de fechamento obrigatórios;
  *  - lacres distintos entre si e únicos na empresa ("Lacre já utilizado em outro movimento");
  *  - bolsas de sangria opcionais; o dinheiro "sai" da origem na criação e só entra no caixa quando o operador abre;
- *  - sem lacre: só com caixa aberto na conta de destino (senão o dinheiro vai pelo malote) e quem enviou não confirma.
- * Tudo vai para o estado único (CicluzCaixa.criarMalote / criarSemLacre): a lista e os saldos vêm de lá.
+ * Tudo vai para o estado único (CicluzCaixa.criarMalote): a lista e os saldos vêm de lá.
  * Dados FICTÍCIOS, em centavos, só em memória.
  */
 (function () {
@@ -20,9 +19,7 @@
   let tela = null;
   let corpo = null;
   const form = { destino: 'cx-1m', especie: '', moedas: '', lacre: '', lacreFechamento: '', bolsas: '' };
-  const sem = { destino: 'cx-1m', especie: '', moedas: '', obs: '' };
   let erroMalote = '';
-  let erroSem = '';
 
   const opcoesContas = () => C.estado.contas.filter((c) => c.tipo === 'caixa').map((c) => [c.id, c.nome + ' (' + c.pdv + ' · ' + c.turno + ')']);
   const quemCria = () => (C.estado.perfil === 'gerente' ? 'Patrícia Souza (Gerente)' : C.estado.perfil === 'financeiro' ? 'Financeiro' : 'Carla (Tesoureiro)');
@@ -41,8 +38,7 @@
   }
   C.aoReiniciar(() => {
     Object.assign(form, { destino: 'cx-1m', especie: '', moedas: '', lacre: '', lacreFechamento: '', bolsas: '' });
-    Object.assign(sem, { destino: 'cx-1m', especie: '', moedas: '', obs: '' });
-    erroMalote = erroSem = '';
+    erroMalote = '';
     if (tela) montar();
   });
 
@@ -55,10 +51,7 @@
       s.append(corpoSecao(U.nota('O operador de caixa não cria malote: ele só abre o caixa com o lacre que a Tesouraria entregou. Troque o "Ver como" para Tesoureiro, Gerente ou Financeiro.')));
       return corpo.replaceChildren(s);
     }
-    const partes = [blocoNovoMalote()];
-    if (C.pode('envioSemLacre')) partes.push(blocoSemLacre());
-    partes.push(blocoLista());
-    corpo.replaceChildren(...partes);
+    corpo.replaceChildren(blocoNovoMalote(), blocoLista());
   }
 
   /* ---------- Novo malote (com lacre) ---------- */
@@ -143,44 +136,6 @@
         atualizar();
       },
     });
-  }
-
-  /* ---------- Envio sem lacre (R-231, só Gerente) ---------- */
-
-  function blocoSemLacre() {
-    const s = U.secao('Envio sem lacre (meio do turno)');
-    const destino = seletor(opcoesContas(), sem.destino);
-    destino.onchange = () => { sem.destino = destino.value; };
-    const din = (chave, rotulo) => { const i = entrada('text', sem[chave], { inputMode: 'decimal', placeholder: '0,00' }); i.oninput = () => { sem[chave] = i.value; }; return campo(rotulo, i); };
-    const obs = el('textarea');
-    obs.rows = 2;
-    obs.value = sem.obs;
-    obs.oninput = () => { sem.obs = obs.value; };
-    const g = el('div', 'caixa-grade');
-    g.append(campo('Destino (conta do posto)', destino), din('especie', 'Dinheiro físico (R$)'), din('moedas', 'Moedas (R$)'), campo('Observação (opcional)', obs));
-    g.lastChild.classList.add('caixa-largo');
-    const msg = el('div', 'caixa-pendencias');
-    msg.setAttribute('role', 'alert');
-    if (erroSem) msg.append(el('b', null, erroSem));
-    const acoes = el('div', 'caixa-acoes');
-    acoes.append(el('small', null, 'Só vale com caixa aberto na conta. Quem enviou não confirma: o operador confirma em "Recebimentos pendentes".'), botao('Enviar sem lacre', enviarSemLacre, 'btn secondary'));
-    s.append(corpoSecao(g, msg, acoes));
-    return s;
-  }
-
-  function enviarSemLacre() {
-    const especie = centavos(sem.especie), moedas = centavos(sem.moedas);
-    erroSem = '';
-    if (especie === null || moedas === null) erroSem = 'Informe o dinheiro físico e as moedas (use 0,00 quando não houver).';
-    else if (especie + moedas <= 0) erroSem = 'O valor precisa ser maior que zero.';
-    else if (especie + moedas > 100000000) erroSem = 'Valor acima do limite de R$ 1.000.000,00.';
-    else if (C.saldoConta('cofre') < especie + moedas) erroSem = 'Saldo insuficiente no Cofre Principal.';
-    else erroSem = C.criarSemLacre({ destino: sem.destino, especie, moedas, observacao: sem.obs.trim(), criadoPor: quemCria() }) || '';
-    if (erroSem) return atualizar();
-    const nome = C.conta(sem.destino).nome;
-    Object.assign(sem, { especie: '', moedas: '', obs: '' });
-    U.avisar('Enviado sem lacre. O operador do ' + nome + ' precisa confirmar em "Recebimentos pendentes".');
-    atualizar();
   }
 
   /* ---------- Malotes e lacres ---------- */

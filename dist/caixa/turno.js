@@ -112,7 +112,9 @@
     s.append(corpo(U.nota('Dinheiro sem lacre enviado para este caixa. Conte e confirme; só depois ele entra no saldo. O caixa só fecha depois de resolver.')));
     const lista = el('div', 'compras-lista');
     pendentes.forEach((r) => {
-      const direita = [
+      // R-028: quem enviou não confirma nem recusa o próprio envio (RECEBIMENTO_PROPRIO_ENVIO): só o operador do caixa.
+      const proprio = C.estado.perfil === 'gerente' && /Gerente/.test(r.criadoPor);
+      const direita = proprio ? [U.situacao('Quem enviou não confirma', 'neutro')] : [
         botao('Confirmar recebimento', () => { C.resolverRecebimento(r.id, true); U.avisar('Recebimento de ' + moeda(r.valor) + ' confirmado.'); atualizar(); }, 'btn'),
         botao('Não recebi', () => Dlg.naoRecebi(r), 'btn secondary caixa-perigo'),
       ];
