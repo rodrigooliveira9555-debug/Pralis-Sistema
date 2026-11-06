@@ -153,18 +153,6 @@
     console.warn('Configurações: tela não encontrada', nome);
   }
 
-  // Atalho por endereço (#acessos:senhas): nome no menu lateral e o menu do /app/ abrem a tela certa.
-  function abrirPeloEndereco() {
-    const m = /^#acessos:([a-z-]+)$/.exec(location.hash);
-    if (!m || !telas[m[1]]) return;
-    history.replaceState(null, '', location.pathname + location.search);
-    // Vindo do nome no menu lateral ou de outra página: fecha o menu de página cheia antes.
-    document.dispatchEvent(new Event('cicluz-close-menu'));
-    abrir(m[1]);
-  }
-  window.addEventListener('hashchange', abrirPeloEndereco);
-  window.addEventListener('load', () => setTimeout(abrirPeloEndereco, 0));
-
   window.CicluzAcessos = {
     COR, COR_TEXTO, ICONE,
     cards: (setor) => (CARDS[setor] || []).map(([id, t, d]) => [t, d, 'acessos:' + id]),
