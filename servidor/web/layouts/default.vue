@@ -73,7 +73,7 @@ function alternarTema() {
         </a>
       </li>
       <li>
-        <a href="/#acessos:usuarios" class="menu-item" :style="{ '--cor-item': CORES.formularios.forte }">
+        <a href="/#/configuracoes/usuarios/acessos-usuarios" class="menu-item" :style="{ '--cor-item': CORES.formularios.forte }">
           <span class="menu-icone" aria-hidden="true"><Users :size="18" /></span>
           <span class="menu-texto"><strong>Usuários</strong><small>Senha e acessos</small></span>
         </a>

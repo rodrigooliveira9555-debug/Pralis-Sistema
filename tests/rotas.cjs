@@ -1,0 +1,25 @@
+const assert=require('node:assert/strict');
+const rotas=require('../dist/rotas.js');
+assert.equal(rotas.slugMenu('Entradas · Vendas / Faturamento'),'entradas-vendas');
+assert.equal(rotas.slugMenu('Transferências · Contas / Locais'),'transferencias-contas');
+assert.equal(rotas.slugMenu('Saídas · Despesas / Custos'),'saidas-despesas');
+assert.equal(rotas.slugMenu('Saídas · Mercadorias / CMV'),'saidas-mercadorias');
+assert.equal(rotas.slugMenu('Saídas · Retiradas / Investimentos'),'saidas-retiradas');
+assert.equal(rotas.slugMenu('Resultados · Relatórios'),'resultados-relatorios');
+assert.equal(rotas.slugMenu('Configurações'),'configuracoes');
+assert.equal(rotas.slugMenu('Agenda/Atividades'),'agenda');
+assert.equal(rotas.slugMenu('Avaliações'),'avaliacoes');
+assert.equal(rotas.slug('Lançamentos Produção'),'lancamentos-producao');
+assert.equal(rotas.slug('Gestão de Pessoas (revisar)'),'gestao-de-pessoas-revisar');
+assert.equal(rotas.slug('caixa:abertura'),'caixa-abertura');
+assert.equal(rotas.slug('vz-doc-Imagens'),'vz-doc-imagens');
+assert.deepEqual(rotas.lerEndereco('#/configuracoes/senhas/acessos-senhas'),['configuracoes','senhas','acessos-senhas']);
+assert.deepEqual(rotas.lerEndereco('#/visao-geral/'),['visao-geral']);
+assert.deepEqual(rotas.lerEndereco('#/a/%E0%A4%A'),['a','%E0%A4%A']);
+assert.equal(rotas.lerEndereco('#cadastro-completo/abc'),null,'link de cadastro completo continua com o people.js');
+assert.equal(rotas.lerEndereco(''),null);
+assert.equal(rotas.montarEndereco(['configuracoes','usuarios','acessos-usuarios']),'#/configuracoes/usuarios/acessos-usuarios');
+// Os 7 setores do menu precisam de endereços diferentes.
+const setores=['Entradas · Vendas / Faturamento','Transferências · Contas / Locais','Saídas · Despesas / Custos','Saídas · Mercadorias / CMV','Saídas · Retiradas / Investimentos','Resultados · Relatórios','Configurações','Agenda/Atividades','Entrevistas','Avaliações','Visão geral'];
+assert.equal(new Set(setores.map(rotas.slugMenu)).size,setores.length);
+console.log('21 route address checks passed');
