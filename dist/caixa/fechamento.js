@@ -60,7 +60,7 @@
   }
   function montar() {
     tela.body.replaceChildren(
-      C.faixaDemo('Demonstração: dados fictícios, nada é gravado. A leitura da folha e do comprovante (IA no principal) é simulada por botão.', atualizar, ['operador', 'gerencia']),
+      C.faixaDemo('Demonstração: dados fictícios, nada é gravado. A leitura da folha e do comprovante (IA no principal) é simulada por botão.', atualizar, ['operador', 'gerente']),
       corpo = el('div', 'caixa-corpo')
     );
     atualizar();
@@ -215,7 +215,7 @@
     return s;
   }
 
-  const gerencia = () => C.estado.perfil === 'gerencia';
+  const gerencia = () => C.estado.perfil === 'gerente';
 
   function blocoFolha(f) {
     const fo = f.folha;
@@ -466,7 +466,7 @@
     const mv = U.secao('Movimentações do turno');
     mv.append(corpoSecao(dl([['Entradas no PDV', moeda(r.entradas)], ['Transferências recebidas', moeda(C.estado.abertura.valorInicial + r.recebido)], ['Sangrias', moeda(r.sangrias)],
       ['Despesas / Mercadorias / Retiradas', moeda(0)], ['Vendas canceladas', String(t.canceladas.length)],
-      ['Sangrias com lacre', t.sangrias.length ? t.sangrias.map((x) => x.lacre + ' (' + moeda(x.valor) + ')').join(' · ') : 'Nenhuma']])));
+      ['Sangrias com lacre', C.sangriasDoCaixa().length ? C.sangriasDoCaixa().map((x) => x.lacre + ' (' + moeda(x.valor) + ')').join(' · ') : 'Nenhuma']])));
     caixa.append(mv);
     return caixa;
   }
@@ -577,7 +577,7 @@
       dl([['Fechado por', h.fechadoPor], ['Gerente', h.supervisor], ['Lacre de fechamento', h.lacreFechamento], ['Esperado', moeda(h.esperado)], ['Contado', moeda(h.contado)], ['Diferença', (d > 0 ? '+' : '') + moeda(d)]]),
       el('p', 'caixa-diferenca ' + (d < 0 ? 'falta' : d > 0 ? 'sobra' : 'bateu'), d < 0 ? '▼ Falta de ' + moeda(-d) + ': quebra registrada e Tesouraria avisada.' : d > 0 ? '▲ Sobra de ' + moeda(d) + ': Tesouraria avisada (sem quebra).' : '✓ Bateu: sem diferença.'),
     ];
-    if (h.retorno) itens.push(U.nota('Retorno final ao Cofre: ' + moeda(h.retorno.valor) + ' (sem lacre próprio, aguardando conferência da Tesouraria).'));
+    if (h.retornoId) itens.push(U.nota('Retorno final ao Cofre: ' + moeda(C.transferencia(h.retornoId).valor) + ' (sem lacre próprio, aguardando conferência da Tesouraria).'));
     const acoes = el('div', 'caixa-acoes');
     acoes.append(botao('Recomeçar a demonstração', () => { C.reiniciar(); }, 'btn secondary'), botao('Ir para a Conferência da Tesouraria', () => C.abrir('conferencia'), 'btn'));
     itens.push(acoes);

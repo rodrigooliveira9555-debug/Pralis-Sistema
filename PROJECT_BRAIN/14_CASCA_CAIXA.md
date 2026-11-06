@@ -7,12 +7,24 @@
 
 ## Onde está
 
-- Menu do site: **Entradas · Vendas / Faturamento → Caixas** abre os cards do Caixa
-  (`dist/index.html`: setor `Caixas` → `kind 'caixa'` → `CicluzCaixa.cards()`; card `caixa:<tela>`
-  → `CicluzCaixa.abrir`).
-- Módulo: `dist/caixa/modulo.js` (cards, `criarTela` e `dialogo` na cor de Vendas, `registrar`,
-  `voltar`). Telas: `dist/caixa/abertura.js`. Estilos: `dist/caixa/caixa.css`. Reaproveita
+- Menu do site (06/11/2026, depois que a main reorganizou os setores): **Entradas · Vendas /
+  Faturamento → Lançamentos** traz os cartões do Caixa, com nomes `VND - …`
+  (`dist/index.html`: `index===0&&section==='Lançamentos'?CicluzCaixa.cards()`; cartão `caixa:<tela>`
+  → `CicluzCaixa.abrir`). **Os setores Caixas / Gerência / Financeiro (Entradas) e Tesouraria /
+  Financeiro / Diretor Geral (Transferências) deixaram de existir na main**: cada seção tem hoje
+  Lançamentos, Relatórios, Cadastros Geral e Pastas Documentos. Onde ficam Tesouraria e Financeiro
+  é **pergunta em aberto** (ver "Dúvidas").
+- Módulo: `dist/caixa/modulo.js` guarda o **estado único** (`CicluzCaixa.estado`) e as ações que o
+  alteram; `dados.js` só traz as sementes fictícias. Telas: `abertura.js`, `turno.js` (+ `turno-dialogos.js`),
+  `malote.js`, `fechamento.js`, `conferencia.js`, `gerencia.js`. Estilos: `caixa.css`. Reaproveita
   `CicluzComprasUI` (campos, chips, seção, diálogo, aviso) e os estilos de `compras.css`.
+- **Estado único:** `contas` (Cofre Principal, Cofre Troco, Caixa 1M…4T) · `transferencias` (malote,
+  sem lacre, sangria, retorno final; situação pendente/recebida/cancelada/divergente) · `lacres`
+  (abertura, fechamento reservado, bolsa de sangria) · `lancamentos` · caixa vivo (`abertura`,
+  `turno`, `status`, `fechamento`) · `fechamentos` · `mensagens` · `notificacoes` · `perfil`
+  (operador, gerente, tesoureiro, financeiro). **Saldo de conta** = inicial + transferências recebidas −
+  transferências pendentes/recebidas/divergentes que saem + lançamentos (nunca gravado). A sangria e o
+  retorno final saem do caixa na criação e só entram no Cofre quando a Tesouraria confirma.
 - Cada arquivo novo entra no `dist/index.html` com `?v=` = 12 primeiros caracteres do SHA-256 do
   arquivo no git.
 - A primeira versão (Nuxt, em `/app/caixa` com menu lateral) foi **removida** — não há segundo caminho.
@@ -97,6 +109,17 @@ campos e regras). Cards de Entradas → Caixas, na ordem do fluxo:
   cada perfil não pode.
 - **Testes:** 77 verificações ponta a ponta (Docker, porta 8090) e 72 combinações de largura × tema,
   todas verdes; `date-fields`, `field-validation` e `compras-dominio` verdes.
+
+### Etapa 1 — Turno (06/11/2026): estado único ligado às contas e aos lacres
+
+- Estado movido para listas ligadas entre si; a Abertura continua igual (testada de novo).
+- **Abertura:** o malote vira transferência `recebida` pelo **contado**, o lacre é rompido; o malote
+  de outro posto (ex.: Caixa 1T) é recusado ("não é destino").
+- **Turno:** a **sangria** é uma transferência `pendente` Caixa → Cofre (a bolsa vira "usada,
+  aguardando conferência"); o **recebimento sem lacre** é uma transferência `sem_lacre` que o operador
+  confirma ("entra no saldo") ou recusa ("Não recebi"; volta à origem).
+- `turno.js` (303 linhas) + `turno-dialogos.js` (217): nenhum arquivo acima de ~400 linhas, exceto
+  `fechamento.js` (589), que será quebrado na etapa 2.
 
 ## Falta
 

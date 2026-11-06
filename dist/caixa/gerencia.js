@@ -15,11 +15,6 @@
   const { moeda } = C;
 
   const CAMINHO = 'Entradas · Vendas / Faturamento / Lançamentos / VND - Gerência de Caixas';
-  // Caixas abertos de outros PDVs (só para o monitor ter o que mostrar).
-  const OUTROS_ABERTOS = [
-    { id: 'ab-2', data: new Date().toLocaleDateString('pt-BR'), pdv: 'PDV 2', turno: 'Manhã', operador: 'Bruna Costa', abertura: '06:02', entradas: 214300, transfEntrada: 35000, transfSaida: 0, ficticio: true },
-    { id: 'ab-3', data: new Date().toLocaleDateString('pt-BR'), pdv: 'PDV 3', turno: 'Manhã', operador: 'Carlos Henrique', abertura: '06:00', entradas: 188700, transfEntrada: 35000, transfSaida: 20000, ficticio: true },
-  ];
   const ALVOS = [['abertos', 'Todos os caixas abertos agora'], ['empresa', 'Toda a empresa'], ['pdvs', 'PDVs específicos'], ['operadores', 'Operadores específicos']];
   const ROTULO_ENTREGA = { entregue: 'Entregue', visualizada: 'Visualizada', fechada_sem_confirmar: 'Fechada sem confirmar', confirmada: 'Confirmada' };
 
@@ -45,25 +40,15 @@
   }
   function montar() {
     tela.body.replaceChildren(
-      C.faixaDemo('Demonstração: dados fictícios, nada é gravado. Só a Gerência (caixas_gerenciar) vê o monitor e o histórico.', atualizar, ['operador', 'gerencia', 'tesouraria']),
+      C.faixaDemo('Demonstração: dados fictícios, nada é gravado. Só a Gerência (caixas_gerenciar) vê o monitor e o histórico.', atualizar, ['operador', 'gerente', 'tesoureiro', 'financeiro']),
       corpo = el('div', 'caixa-corpo')
     );
     atualizar();
   }
   C.aoReiniciar(() => { Object.assign(filtro, { de: '', ate: '', pdv: '', operador: '', turno: '', status: '' }); selecionado = null; if (tela) montar(); });
 
-  /** Todas as linhas do histórico: fechados + o caixa desta sessão (aberto ou em fechamento) + abertos fictícios. */
-  function linhas() {
-    const e = C.estado;
-    const l = e.historico.map((h) => ({ ...h, status: 'fechado', saldo: 0 }));
-    if ((e.status === 'aberto' || e.status === 'em_fechamento') && e.abertura) {
-      const r = C.resumo();
-      l.unshift({ id: 'ab-1', data: new Date().toLocaleDateString('pt-BR'), pdv: e.abertura.pdv, turno: e.abertura.turno, operador: e.abertura.responsavel, abertura: e.abertura.abertoEm,
-        fechamento: '', entradas: r.entradas, transfEntrada: e.abertura.valorInicial + r.recebido, transfSaida: r.sangrias, saldo: r.saldo, status: e.status, sessao: true });
-    }
-    OUTROS_ABERTOS.forEach((o) => l.unshift({ ...o, status: 'aberto', saldo: o.transfEntrada + 98000 - o.transfSaida - 40000, fechamento: '' }));
-    return l;
-  }
+  /** Todas as linhas do histórico: fechados + o caixa desta sessão (aberto ou em fechamento) + abertos fictícios (vêm do estado único). */
+  const linhas = () => C.caixas().map((l) => ({ ...l, status: l.situacao }));
   const abertos = () => linhas().filter((l) => l.status === 'aberto');
 
   function atualizar() {

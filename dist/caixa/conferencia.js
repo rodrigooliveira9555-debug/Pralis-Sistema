@@ -37,7 +37,7 @@
   }
   function montar() {
     tela.body.replaceChildren(
-      C.faixaDemo('Demonstração: dados fictícios, nada é gravado. Só a Tesouraria vê e decide; mude o "Ver como" para ver o bloqueio dos outros perfis.', atualizar, ['operador', 'gerencia', 'tesouraria']),
+      C.faixaDemo('Demonstração: dados fictícios, nada é gravado. Só a Tesouraria vê e decide; mude o "Ver como" para ver o bloqueio dos outros perfis.', atualizar, ['operador', 'gerente', 'tesoureiro', 'financeiro']),
       corpo = el('div', 'caixa-corpo')
     );
     atualizar();
@@ -50,7 +50,7 @@
       s.append(corpoSecao(U.nota('Acesso exclusivo da Tesouraria e Direção Geral. Caixa, Gerência e demais perfis não podem consultar nem decidir este fechamento.')));
       return corpo.replaceChildren(s);
     }
-    const todos = C.estado.historico;
+    const todos = C.estado.fechamentos;
     const naFila = todos.filter((h) => PARA_CONFERIR.includes(C.situacaoDe(h)));
     const feitos = todos.filter((h) => !PARA_CONFERIR.includes(C.situacaoDe(h)));
     const lista = (aba === 'conferir' ? naFila : feitos).filter((h) => !filtroPdv || h.pdv === filtroPdv);
@@ -97,7 +97,8 @@
     ];
     if (h.observacao) itens.push(U.nota('Observação do operador: ' + h.observacao));
     itens.push(U.nota('Provas: Folha de fechamento ' + h.anexos.folha + ' · Folha CREARE ' + h.anexos.creare + ' · Comprovantes de cartão ' + h.anexos.comprovantes + '.'));
-    itens.push(U.nota(h.retorno ? 'Retorno ao Cofre: ' + moeda(h.retorno.valor) + ' — ' + (h.retorno.situacao === 'pendente' ? 'pendente de conferência (o caixa declarou valor e conta; sem lacre próprio).' : 'recebido como declarado.') : 'Sem retorno ao Cofre (nada contado).'));
+    const ret = h.retornoId ? C.transferencia(h.retornoId) : null;
+    itens.push(U.nota(ret ? 'Retorno ao Cofre: ' + moeda(ret.valor) + ' — ' + (ret.situacao === 'pendente' ? 'pendente de conferência (o caixa declarou valor e conta; sem lacre próprio).' : 'recebido como declarado.') : 'Sem retorno ao Cofre (nada contado).'));
     const notifs = C.estado.notificacoes.filter((n) => h.desta_sessao && n.titulo.includes(h.operador));
     if (notifs.length) itens.push(U.nota('Notificações geradas: ' + notifs.map((n) => n.tipo + ' → ' + n.para + ' (' + n.titulo + ')').join(' · ')));
 
@@ -132,11 +133,11 @@
       titulo: 'O caixa fechou certo?',
       rotuloSalvar: 'Sim, fechou certo',
       montar: (form) => {
-        form.append(el('p', null, 'O retorno do caixa entra como ele declarou (valor, lacre e conta): ' + (h.retorno ? moeda(h.retorno.valor) : 'sem retorno') + '.'));
+        form.append(el('p', null, 'O retorno do caixa entra como ele declarou (valor, lacre e conta): ' + (h.retornoId ? moeda(C.transferencia(h.retornoId).valor) : 'sem retorno') + '.'));
         if (sit !== 'fechado_sem_pendencias') form.append(el('p', 'caixa-alerta', 'Há diferença ou pendência neste caixa. Confira os dados abaixo e use "Teve quebra" se for o caso.'));
       },
       salvar: () => {
-        if (h.retorno && h.retorno.situacao === 'pendente') h.retorno.situacao = 'recebido'; // recebe como declarado e só então grava a conferência
+        if (h.retornoId && C.transferencia(h.retornoId).situacao === 'pendente') C.confirmarTransferencia(h.retornoId); // recebe como declarado e só então grava a conferência
         h.conferencias.push({ resultado: 'conferido', observacao: '', por: 'Carla (Tesouraria)', em: agora() });
         U.avisar('Conferência registrada: fechou certo.');
         atualizar();
@@ -185,7 +186,7 @@
       salvar: (ctx) => {
         if (!ctx.t.value.trim()) return 'Informe o motivo da alteração de status.';
         if (ctx.novo === ultima.resultado && ctx.t.value.trim() === ultima.observacao) { U.avisar('Nada mudou: a mesma decisão já está registrada.'); return; } // idempotente
-        if (ctx.novo === 'conferido' && h.retorno && h.retorno.situacao === 'pendente') return 'Há transferência pendente de conferência pela Tesouraria.';
+        if (ctx.novo === 'conferido' && h.retornoId && C.transferencia(h.retornoId).situacao === 'pendente') return 'Há transferência pendente de conferência pela Tesouraria.';
         h.conferencias.push({ resultado: ctx.novo, observacao: ctx.t.value.trim(), por: 'Carla (Tesouraria)', em: agora() });
         U.avisar('Conferência atualizada. O histórico anterior foi mantido.');
         atualizar();

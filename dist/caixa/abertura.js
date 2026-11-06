@@ -19,8 +19,8 @@
     const m = C.malotePorLacre(digitado);
     if (!m) return { erro: 'Lacre inexistente. Confira o número no malote.' };
     if (m.situacao !== 'disponivel') return { erro: 'Lacre já rompido - não pode ser reutilizado.' };
-    if (m.pdv !== POSTO.pdv) return { erro: 'A conta deste caixa não é destino desta transferência.' };
-    Object.assign(MALOTE, { lacre: m.lacre, dinheiro: m.especie, moedas: m.moedas, lacresSangria: m.lacresRetorno.slice(), lacreFechamento: m.lacreFechamento, rota: 'Malote ' + m.origem + ' → Conta ' + m.pdv, id: m.id });
+    if (m.pdv !== POSTO.pdv || m.turno !== POSTO.turno) return { erro: 'A conta deste caixa não é destino desta transferência.' };
+    Object.assign(MALOTE, { lacre: m.lacre, dinheiro: m.especie, moedas: m.moedas, lacresSangria: m.lacresRetorno.slice(), lacreFechamento: m.lacreFechamento, rota: 'Malote ' + m.origem + ' → ' + m.destino, id: m.id });
     return { m };
   }
   const RESPONSAVEIS = ['Ana Paula', 'Bruna Costa', 'Carlos Henrique'];
@@ -221,10 +221,9 @@
           divergencia: estado.conferido ? 0 : contado - (MALOTE.dinheiro + MALOTE.moedas),
           motivoDivergencia: estado.conferido ? '' : estado.motivo.trim(),
           lacresSangria: MALOTE.lacresSangria.slice(), lacreFechamento: MALOTE.lacreFechamento,
+          contaId: C.contaDoPosto(POSTO.pdv, POSTO.turno).id, maloteId: MALOTE.id,
         });
-        // Abrir é confirmar o recebimento: o lacre é rompido e o malote não serve para outro caixa.
-        const usado = C.malotePorLacre(MALOTE.lacre);
-        if (usado) { usado.situacao = 'usado'; usado.caixa = POSTO.pdv + ' · ' + POSTO.turno; }
+        // Abrir é confirmar o recebimento: C.abrirCaixa recebe o malote pelo CONTADO e rompe o lacre.
         estado = novoEstado(); // o formulário não carrega o malote antigo para a próxima abertura
         render();
         U.avisar('Caixa aberto às ' + abertoEm + '.');
