@@ -31,7 +31,15 @@ Texto fixo "reunirá os principais números".
 Organização do Rodrigo (vídeo de 06/11/2026); detalhes no `DESIGN_SYSTEM.md`, regra "Compras encaixado no menu de Mercadorias".
 - ✅ **Lançamentos** (`dist/compras/`): MER - Pedido de Compra, MER - Cotação por Fornecedor, MER - Pedidos a Receber,
   MER - Contagem de Estoque. ⬜ MER - Mercadorias (espaço reservado).
-- ⬜ **Lançamentos Produção** e **Cadastros Geral Produção** (pedido de produção em andamento na branch `feat/pedidos-producao`).
+- 🟨 **Produção** (`dist/producao/`, 05/11/2026, aguardando aprovação do Zé) — pedido de produção da TNP, no lugar
+  pela lógica do vídeo do Rodrigo. **Agenda → MER - Agenda de Produção** (janela de demanda, repetição do Compras,
+  quantidade pré-programada). **Lançamentos Produção**: MER - Pedidos de Produção (para fazer, pedido extra, Repor
+  estoque com sugestão aprovada), MER - Mapa de Produção (por horário, processo, setor ou produto; iniciar/concluir etapa
+  em sequência; capacidade repete o processo), MER - Abastecimento (real, conferência em 1 ou 2 etapas, todos ou só a
+  curva A, sobra que volta ao estoque e descarte). **Relatórios**: MER - Produção. **Cadastros Geral Produção**:
+  MER - Produtos da Produção (utensílio, fornada, meia, múltiplos, mínimo/máximo), MER - Ficha Técnica de Produtos (várias por produto; etapas com ingredientes, equipamento, tempo, acompanhamento, cargo
+  e nível; custo C1–C5 e valor sugerido) e MER - Parâmetros de Custo. Usa o estoque do Compras (entrada da produção, consumo
+  de ingredientes, abastecimento, sobra). Especificação: `docs/PRODUCAO_ESPECIFICACAO.md`.
 - ⬜ **Relatórios**: MER - Mercadorias e MER - Pedidos (espaços reservados).
 - ✅ **Cadastros Geral**: MER - Grupos de Mercadorias, MER - Fornecedores, MER - Produtos, Unidades de Medida,
   MER - Catálogo e Preço-Base.
@@ -79,8 +87,9 @@ Organização do Rodrigo (vídeo de 06/11/2026); detalhes no `DESIGN_SYSTEM.md`,
 - ✅ **Cadastro completo c/ dependente** (`complete-registration.js`) — 4 etapas: (1) CPF e dados
   pessoais, (2) endereço e contato, (3) outros documentos, (4) dependentes. Anexos **não** são salvos.
 - 🟨 Cadastro simples — nome, CPF, função, turno, admissão. Não salva.
-- 🟨 RET - Patrimônios (antes Cadastro de patrimônio) — bem, categoria, marca, modelo, série, nº, valor, área/setor/local.
-  Não salva.
+- ✅ RET - Patrimônios (`dist/producao/telas-patrimonio.js`, 05/11/2026; abre em Saídas · Retiradas → Cadastros Geral) — salva em `cicluz-patrimonio-v1`: bem, categoria
+  (Utensílio, Máquina, Equipamento, Mobiliário), marca, modelo, série, nº (único), valor, local pela árvore, capacidade,
+  medidas, energia e consumo por hora. A prévia antiga (`#asset-view`, não salvava) foi removida.
 
 ## Legado
 - `#config-view` ("Configurar") — tela antiga sem atalho (UI_SWEEP 01/11). Candidata a remoção.

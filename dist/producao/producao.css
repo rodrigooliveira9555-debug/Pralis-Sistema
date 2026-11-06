@@ -1,0 +1,50 @@
+/* Produção: só o que o compras.css não cobre (etapas da ficha, linhas de ingrediente/equipamento e
+   cartões do mapa). Cores pelas variáveis do tema (claro e escuro) e pela cor de origem (--menu-accent). */
+
+/* Ficha técnica: etapas */
+.producao-etapas { display: grid; gap: 12px; }
+.producao-etapa { display: grid; gap: 12px; padding: 12px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); min-width: 0; }
+.producao-etapa-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.producao-etapa-cab h4 { margin: 0; font: 600 var(--ui-section-title, 14px)/20px var(--ui-font); color: var(--panel-text, #12672e); }
+.producao-etapa-acoes { display: flex; gap: 6px; flex-wrap: wrap; }
+.producao-etapa-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 10px 12px; }
+.producao-bloco { display: grid; gap: 8px; min-width: 0; }
+.producao-bloco > .btn { justify-self: start; }
+.producao-etapa-resumo { font: 500 var(--ui-note, 11px)/16px var(--ui-font); color: var(--panel-text, #12672e); }
+
+/* Linhas de ingrediente e de equipamento: quebram em telas estreitas */
+.producao-linha { display: grid; grid-template-columns: minmax(0, 3fr) minmax(70px, 1fr) minmax(70px, 1fr) auto; gap: 8px; align-items: end; min-width: 0; }
+/* Equipamento: 2 linhas de 4 (equipamento ocupa 2; tempo, acompanhamento / cargo, nível, de, até) + remover */
+.producao-linha-recurso { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.producao-linha-recurso > :first-child { grid-column: span 2; }
+.producao-linha-recurso > .btn { grid-column: 1 / -1; justify-self: start; }
+.producao-linha > * { min-width: 0; width: 100%; }
+.producao-linha > .btn { width: auto; }
+@media (max-width: 760px) {
+  .producao-linha, .producao-linha-recurso { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-bottom: 8px; border-bottom: 1px dashed var(--layout-line, #dedee3); }
+  .producao-linha > :first-child { grid-column: 1 / -1; }
+  .producao-linha > .btn { grid-column: 1 / -1; justify-self: start; }
+}
+
+/* Parâmetros de custo */
+.producao-formulas { margin: 0; padding: 12px 14px 12px 32px; display: grid; gap: 6px; font: 400 var(--ui-text, 14px)/20px var(--ui-font); }
+
+/* Quantidades */
+.producao-qtd { max-width: 120px; }
+.compras-produto-celula small.producao-erro { color: var(--danger, #b42318); }
+
+/* Mapa de produção */
+.producao-campo-dia { max-width: 220px; }
+.producao-mapa-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 10px; padding: 12px; }
+.producao-tarefa { display: grid; gap: 8px; align-content: start; padding: 12px; border: 1px solid var(--layout-line, #dedee3); border-left: 4px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); min-width: 0; }
+.producao-tarefa.andando { border-left-color: var(--menu-accent); }
+.producao-tarefa.feita { opacity: .72; }
+.producao-tarefa-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+.producao-tarefa-cab b { display: block; font: 600 var(--ui-text, 14px)/20px var(--ui-font); overflow-wrap: anywhere; }
+.producao-tarefa-cab small, .producao-tarefa-det { font: 400 var(--ui-note, 12px)/17px var(--ui-font); color: var(--muted, #73737a); margin: 0; overflow-wrap: anywhere; }
+.producao-tarefa-instrucao { margin: 0; font: 500 var(--ui-note, 12px)/17px var(--ui-font); color: var(--panel-text, #12672e); }
+.producao-tarefa-pendencia { margin: 0; font: 500 var(--ui-note, 12px)/17px var(--ui-font); color: var(--danger, #b42318); }
+.producao-tarefa-ing summary { cursor: pointer; font: 500 12px/18px var(--ui-font); }
+.producao-tarefa-ing ul { margin: 6px 0 0; padding-left: 18px; font: 400 12px/18px var(--ui-font); }
+.producao-tarefa-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.producao-tarefa-acoes .btn { min-height: 44px; }
