@@ -8,15 +8,15 @@
 
 - Menu **Configurações** (OUTROS, roxo #7c3aed): Usuários → *Pessoas com Acesso*, *Dados no
   Servidor*; Permissões → *Cargos de Acesso*, *Acessos por Pessoa*; Senhas → *Minha Senha*,
-  *Senha de Outra Pessoa*. Código em `dist/acessos/`; atalho por endereço `#acessos:<tela>`
-  (o nome no rodapé do menu lateral abre `#acessos:senhas`).
+  *Senha de Outra Pessoa*. Código em `dist/acessos/`; endereço próprio `#/configuracoes/<item>/acessos-<tela>`
+  (o nome no rodapé do menu lateral abre `#/configuracoes/senhas/acessos-senhas`).
 - Servidor: `servidor/api/src/acessos/` (cargos de acesso e exceções) e `servidor/api/src/usuarios/`.
   Catálogo de permissões e cálculo do acesso efetivo em `servidor/shared/src/acessos.ts`.
 - Banco (migration `0004_cargos_acesso_e_postos`): `cargos_acesso`, `cargos_acesso_permissoes`,
   `usuarios_cargos_acesso`, `usuarios_permissoes`, `cargos_acesso_auditoria`; em
   `perfis_usuarios`, `posto_pdv` + `posto_turno` (únicos por empresa).
 - **Removido:** `dist/usuarios.html/.js/.css` (Minha senha, pessoas com acesso e situação dos dados
-  foram para as telas acima). O link "Usuários" do `/app/` aponta para `/#acessos:usuarios`.
+  foram para as telas acima). O link "Usuários" do `/app/` aponta para `/#/configuracoes/usuarios/acessos-usuarios`.
 
 ## Decisões (Marco, 06/11/2026, a confirmar com o Rodrigo onde for regra de negócio)
 

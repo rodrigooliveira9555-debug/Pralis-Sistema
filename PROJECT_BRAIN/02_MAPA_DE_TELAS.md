@@ -4,6 +4,17 @@ O menu é montado em JS (`index.html:154-176`); o `<nav>` estático é substitu�
 arrastar itens (ordem em `cicluz-menu-ordem`). `agenda-menu.js` divide a lateral em GESTÃO /
 AGENDA / OUTROS.
 
+**Endereço de cada tela (06/11/2026, pedido do Marco):** toda tela aberta pelo menu tem endereço
+próprio, `#/<menu>/<item>/<cartão>/…`; Voltar/Avançar do navegador, F5 e link copiado reabrem a
+mesma tela. Ex.: `#/entradas-vendas/lancamentos/caixa-abertura`,
+`#/configuracoes/usuarios/acessos-usuarios`, `#/avaliacoes/avaliacao-individual`, `#/visao-geral`.
+`dist/rotas.js` grava o caminho dos cliques (menu lateral → item → cartões) e, para reabrir, repete
+os mesmos cliques; as telas não sabem que existe rota. O menu vira slug do nome (`Saídas · Despesas
+/ Custos` → `saidas-despesas`), o item idem, e o cartão é o `data-target` em slug (`caixa:abertura`
+→ `caixa-abertura`). Renomear item ou cartão muda o endereço; endereço que não leva a nada fica só
+com o que abriu. Fora das rotas: abas, filtros e passos dentro de uma tela, e o link do cadastro
+completo (`#cadastro-completo/<token>`, do `people.js`). Substitui o atalho `#acessos:<tela>`.
+
 **Status:** ✅ funciona (salva no localStorage) · 🟨 maquete (dados fixos / não salva) · ⬜ vazia
 (só "Área prevista… próximas etapas").
 
