@@ -42,7 +42,7 @@
 
   function titulo() {
     const trilha = document.getElementById('crumb')?.textContent.trim() || '';
-    const nome = rota.length ? trilha.split(' / ').pop() : '';
+    const nome = !rota.length ? '' : rota[0] === 'visao-geral' ? 'Visão Geral' : trilha.split(' / ').pop();
     document.title = nome ? nome + ' · ' + TITULO : TITULO;
   }
   // Cada grade de cartões guarda a rota em que apareceu: um cartão clicado nela soma a partir dali,
@@ -59,7 +59,8 @@
     depois();
   }
 
-  document.addEventListener('click', (e) => {
+  // Na janela, em captura: roda antes dos ouvintes do document que param o clique (documents.js).
+  raiz.addEventListener('click', (e) => {
     if (reabrindo || !(e.target instanceof Element)) return;
     const item = e.target.closest('.nav-tree .children > button');
     const geral = !item && e.target.closest('.nav-tree .overview-link');
@@ -146,5 +147,11 @@
     if (caminho) reabrir(caminho);
   }, 0));
 
-  raiz.CicluzRotas = { ...api, atual: () => [...rota], abrir: (caminho) => reabrir(Array.isArray(caminho) ? caminho : lerEndereco(caminho) || []) };
+  function abrirPorCodigo(destino) {
+    const caminho = Array.isArray(destino) ? destino : lerEndereco(destino) || [];
+    if (caminho.join('/') !== rota.join('/')) history.pushState({ rota: caminho }, '', montarEndereco(caminho));
+    return reabrir(caminho);
+  }
+
+  raiz.CicluzRotas = { ...api, atual: () => [...rota], abrir: abrirPorCodigo };
 })(typeof window !== 'undefined' ? window : globalThis);
