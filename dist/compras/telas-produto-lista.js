@@ -2,7 +2,7 @@
  * Produtos — lista (S1: pages/produtos/index.vue, ProdutoFiltros, ProdutoCard, ProdutoListaLinha,
  * ProdutoInativarLote). Busca, "Só ativos", "Só os que já vendi", filtros, 6 ordenações do S1 + menor
  * estoque (S2), paginação de 12, cards ou lista, foto ampliada e inativação em lote com frase.
- * Fica em Cadastros → Diretor de Operações.
+ * Fica em Saídas · Mercadorias → Cadastros Geral → MER - Produtos.
  */
 (function () {
   'use strict';
@@ -27,7 +27,7 @@
   const EXPLICA_PENDENCIA = {
     'como se compra': 'como se compra (falta embalagem ou medida de compra)',
     'mínimo e máximo': 'sem mínimo e máximo',
-    'fornecedor aprovado': 'fornecedor aprovado (vincule em Cadastro de compras)',
+    'fornecedor aprovado': 'fornecedor aprovado (vincule em MER - Catálogo e Preço-Base)',
   };
 
   function abrir() {

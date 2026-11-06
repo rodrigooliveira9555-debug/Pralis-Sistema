@@ -9,7 +9,6 @@
   const COR_TEXTO = '#12672e';
   const ICONES = {
     compras: '<path d="M2 3h3l3 13h12l2-10H6M10 21h1m6 0h1"/>',
-    revisar: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.6h.01"/>',
     estoque: '<path d="M3 6l9-4 9 4v14l-9 3-9-3Z M3 6l9 4 9-4M12 10v13"/>',
     fornecedor: '<path d="M3 21V8l6-4v4l6-4v4l6-4v17ZM7 17h2m4 0h2"/>',
     produto: '<path d="M4 7h16l-1.5 13h-13ZM9 7a3 3 0 0 1 6 0"/>',
@@ -18,6 +17,7 @@
     caminhao: '<path d="M2 6h11v10H2zM13 10h4l4 4v2h-8M6 19a2 2 0 1 0 0-.01M17 19a2 2 0 1 0 0-.01"/>',
     conferencia: '<path d="M6 4h12v17H6zM9 2h6v4H9zM9 13l2 2 4-4"/>',
     cadastro: '<path d="M12 3c4.4 0 8 1.3 8 3v12c0 1.7-3.6 3-8 3s-8-1.3-8-3V6c0-1.7 3.6-3 8-3ZM4 6c0 1.7 3.6 3 8 3s8-1.3 8-3M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+    cotacao: '<path d="M12 3v18M7 21h10M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2M2 16l3-8 3 8a4.4 4.4 0 0 1-6 0ZM16 16l3-8 3 8a4.4 4.4 0 0 1-6 0Z"/>',
     raio: '<path d="M13 2 4 14h7l-1 8 9-12h-7Z"/>',
   };
   const svg = (path) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + path + '</svg>';

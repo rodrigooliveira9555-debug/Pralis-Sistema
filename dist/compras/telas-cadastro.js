@@ -10,7 +10,7 @@
   const SV = window.CicluzComprasServico;
   const M = window.CicluzCompras;
   const { el, botao, campo, entrada, seletor } = U;
-  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras (revisar) / ';
+  const CAMINHO = 'Saídas · Mercadorias / Cadastros Geral / ';
   const STATUS = { pendente: ['Pendente', 'atencao'], aprovado: ['Aprovado', 'positivo'], rejeitado: ['Rejeitado', 'negativo'] };
 
   let tela = null;
@@ -19,7 +19,7 @@
   const fh = { meses: 3, busca: '' };
 
   function abrir() {
-    if (!tela) tela = U.criarTela({ id: 'compras-cadastro', titulo: 'Cadastro de Compras', caminho: CAMINHO + 'Cadastro de Compras', icone: 'cadastro', voltar: M.voltarCompras });
+    if (!tela) tela = U.criarTela({ id: 'compras-cadastro', titulo: 'MER - Catálogo e Preço-Base', caminho: CAMINHO + 'MER - Catálogo e Preço-Base', icone: 'cadastro', voltar: M.voltarCadastros });
     tela.ativar();
     render();
   }
