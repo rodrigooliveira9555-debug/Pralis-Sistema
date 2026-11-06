@@ -96,7 +96,7 @@ function cabecalho(
 export async function criarLancamento(perfil: PerfilSessao, categoria: CategoriaLancamento, entrada: LancamentoEntrada) {
   exigir(perfil, "criar", "Sem permissão para lançar.");
   const recorrente = entrada.recorrencia && entrada.recorrencia.repeticoes > 1;
-  if (recorrente) exigir(perfil, "recorrencia", "Lançamento recorrente é ato do administrador.");
+  if (recorrente) exigir(perfil, "recorrencia", "Sem permissão para criar recorrência.");
   conferirDataPagamento(categoria, perfil, entrada.dataPagamento);
   const nomes = await conferirCadastros(perfil, categoria, entrada);
   const { itens, valorDescontoCentavos } = calcularItens(categoria, entrada.valorOriginal, entrada, nomes);
@@ -145,7 +145,7 @@ export async function criarLancamento(perfil: PerfilSessao, categoria: Categoria
 
 function exigirEditavel(perfil: PerfilSessao, atual: LinhaLancamento) {
   exigir(perfil, "editar", "Sem permissão para editar lançamentos.");
-  if (atual.dataPagamento) exigir(perfil, "editar_pago", "Lançamento pago só o administrador altera.");
+  if (atual.dataPagamento) exigir(perfil, "editar_pago", "Sem permissão para editar lançamento pago.");
 }
 
 // Edição de UMA ocorrência (a série não muda). Itens substituídos por inteiro.
@@ -160,7 +160,7 @@ export async function editarLancamento(perfil: PerfilSessao, id: string, entrada
     exigirEditavel(perfil, atual);
     exigirMesmaVersao(atual, entrada.atualizadoEmBase);
     if ((entrada.dataPagamento ?? null) !== atual.dataPagamento && atual.dataPagamento) {
-      exigir(perfil, "pagar", "Só o administrador altera o pagamento.");
+      exigir(perfil, "pagar", "Sem permissão para alterar o pagamento.");
     }
     conferirDataPagamento(categoria, perfil, entrada.dataPagamento, atual.dataPagamento);
     const { itens, valorDescontoCentavos } = calcularItens(categoria, entrada.valorOriginal, entrada, nomes);
@@ -200,7 +200,7 @@ export async function discriminarLancamento(perfil: PerfilSessao, id: string, en
 
 // Cancelar série: apaga só as ocorrências futuras e não pagas (R-063 do principal).
 export async function cancelarSerie(perfil: PerfilSessao, recorrenciaId: string) {
-  exigir(perfil, "cancelar_serie", "Só o administrador cancela uma série.");
+  exigir(perfil, "cancelar_serie", "Sem permissão para cancelar uma série.");
   if (!(await serieExiste(perfil.empresa.id, recorrenciaId))) throw new ErroDominio("Série não encontrada", 404, "NOT_FOUND");
   const removidas = await apagarFuturasDaSerie(perfil.empresa.id, recorrenciaId, diaNegocio(new Date()));
   return { removidas };

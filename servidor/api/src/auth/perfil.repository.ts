@@ -9,6 +9,7 @@ export async function obterPerfilPorUsuarioId(usuarioId: string) {
       nome: perfisUsuarios.nome,
       papel: perfisUsuarios.papel,
       ativo: perfisUsuarios.ativo,
+      acessosConfiguradosEm: perfisUsuarios.acessosConfiguradosEm,
       email: usuarioAutenticacao.email,
       empresaId: empresas.id,
       empresaNome: empresas.nome,

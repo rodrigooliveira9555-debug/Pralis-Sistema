@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { Papel } from "../sessao.ts";
 import { recorrenciaSchema } from "./recorrencia.ts";
 
 // Lançamentos do CICLUZ: Despesas (DES), Mercadorias (MER) e Retiradas (RET), com as regras do
@@ -133,13 +132,9 @@ export const ACOES_LANCAMENTO = [
 ] as const;
 export type AcaoLancamento = (typeof ACOES_LANCAMENTO)[number];
 
-const PERMISSOES: Record<Papel, readonly AcaoLancamento[]> = {
-  administrador: ACOES_LANCAMENTO,
-  usuario: ["visualizar", "criar", "editar", "discriminar"]
-};
-
-export function podeNoLancamento(papel: Papel, acao: AcaoLancamento) {
-  return PERMISSOES[papel].includes(acao);
+// Cada ação é a permissão `lancamentos_<acao>` do catálogo (acessos.ts), que vem dos cargos de acesso.
+export function podeNoLancamento(permissoes: readonly string[], acao: AcaoLancamento) {
+  return permissoes.includes(`lancamentos_${acao}`);
 }
 
 export type ItemLancamentoResposta = {
