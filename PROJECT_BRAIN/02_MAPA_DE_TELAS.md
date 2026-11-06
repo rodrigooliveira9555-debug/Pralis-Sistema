@@ -28,7 +28,14 @@ Texto fixo "reunirá os principais números".
 - ⬜ Gerência, DP, Fiscal, Financeiro, Diretor Geral (5)
 
 ## Saídas · Mercadorias/CMV (MER, verde)
-- ⬜ Gerência, Compras, Diretor de Operações, Financeiro, Diretor Geral (5)
+Organização do Rodrigo (vídeo de 06/11/2026); detalhes no `DESIGN_SYSTEM.md`, regra "Compras encaixado no menu de Mercadorias".
+- ✅ **Lançamentos** (`dist/compras/`): MER - Pedido de Compra, MER - Cotação por Fornecedor, MER - Pedidos a Receber,
+  MER - Contagem de Estoque. ⬜ MER - Mercadorias (espaço reservado).
+- ⬜ **Lançamentos Produção** e **Cadastros Geral Produção** (pedido de produção em andamento na branch `feat/pedidos-producao`).
+- ⬜ **Relatórios**: MER - Mercadorias e MER - Pedidos (espaços reservados).
+- ✅ **Cadastros Geral**: MER - Grupos de Mercadorias, MER - Fornecedores, MER - Produtos, Unidades de Medida,
+  MER - Catálogo e Preço-Base.
+- ✅ **Estoques**: MER - Grupo Mercadorias. **Agenda → MER - Agenda de Pedidos** (agendamento do Compras).
 
 ## Saídas · Retiradas/Investimentos (RET, azul)
 - ⬜ Financeiro, Diretor Geral (2)

@@ -11,14 +11,14 @@
   const SV = window.CicluzComprasServico;
   const M = window.CicluzCompras;
   const { el, botao, campo, entrada, seletor } = U;
-  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras (revisar) / ';
+  const CAMINHO = 'Saídas · Mercadorias / Lançamentos / ';
   const RANK = [['vende', 'Mais vendidos'], ['compra', 'Mais comprados'], ['lucro', 'Mais lucro']];
 
   let tela = null;
   let modo = 'fazer';
   function abrir() {
     if (!tela) {
-      tela = U.criarTela({ id: 'compras-conferencias', titulo: 'Conferências de Estoque', caminho: CAMINHO + 'Conferências de Estoque', icone: 'conferencia', voltar: M.voltarCompras });
+      tela = U.criarTela({ id: 'compras-conferencias', titulo: 'MER - Contagem de Estoque', caminho: CAMINHO + 'MER - Contagem de Estoque', icone: 'conferencia', voltar: M.voltarLancamentos });
       U.atalho(tela, 'Agendar conferência', 'M12 5v14M5 12h14', () => formulario(), { criar: true });
     }
     SV.processarConferencias();

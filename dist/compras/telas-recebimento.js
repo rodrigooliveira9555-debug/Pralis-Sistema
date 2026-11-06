@@ -10,7 +10,7 @@
   const SV = window.CicluzComprasServico;
   const M = window.CicluzCompras;
   const { el, botao, campo, entrada, seletor } = U;
-  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras (revisar) / ';
+  const CAMINHO = 'Saídas · Mercadorias / Lançamentos / ';
   const dataHora = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
   const ORIGEM = { agendamento: 'Agendamento', rapida: 'Pedido urgente' };
 
@@ -21,7 +21,7 @@
   let aba = 'caminho';
   let filtroForn = '';
   function abrirPedidos() {
-    if (!telaP) telaP = U.criarTela({ id: 'compras-pedidos', titulo: 'Pedidos a Receber', caminho: CAMINHO + 'Pedidos a Receber', icone: 'caminhao', voltar: M.voltarCompras });
+    if (!telaP) telaP = U.criarTela({ id: 'compras-pedidos', titulo: 'MER - Pedidos a Receber', caminho: CAMINHO + 'MER - Pedidos a Receber', icone: 'caminhao', voltar: M.voltarLancamentos });
     telaP.ativar();
     renderPedidos();
   }
