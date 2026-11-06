@@ -151,6 +151,27 @@ campos e regras). Cards de Entradas → Caixas, na ordem do fluxo:
 - Decisões tomadas sem resposta explícita (revisar se o Rodrigo discordar): origem do recebimento escolhível, histórico fica na
   Gerência por ora.
 
+### Etapa 4 — Tesouraria (06/11/2026)
+
+- **Onde:** **Transferências · Contas / Locais → Lançamentos → CNT - Tesouraria** (uma linha em `dist/index.html`: `index===1&&section==='Lançamentos'?CicluzCaixa.cards('tesouraria')`). O Caixa continua em Entradas → Lançamentos (`cards('caixa')`). O card "Malote da Tesouraria" foi **absorvido** por "Nova transferência".
+- **Acesso:** Tesoureiro, Financeiro e Gerente (operador vê o bloqueio). **Ajustar saldo** só o Tesoureiro (doc 72).
+- **Arquivos:** `tesouraria.js` (abas), `tesouraria-lista.js` (painel, filtros, detalhe, popup de lacres), `tesouraria-conferir.js`,
+  `tesouraria-transferencia.js`, `tesouraria-contas.js`; interface comum em `caixa-ui.js`; `modulo.js` ficou só com estado e ações (351 linhas).
+- **Painel de transferências** (base TesourariaCockpit): colunas Lançamento · Movimento/rota · Valor total · Lacres · Situação; filtros Status, Data inicial/final, PDV e
+  (Mais filtros) Lançado por, Conta de origem, Conta de destino, Lacre; chips aplicados + "Limpar tudo"; mais recente primeiro, 10 por página; detalhe com
+  "Quem usou o malote", "Lacres" e "Conferência e observação". Sem "Agendada" (a casca não agenda).
+- **Lacres** (LacresBotao/SituacaoMalote): popup por transferência (Abertura/Fechamento/Sangria; Disponível · Reservado · Usado · Usada, aguardando conferência · Conferida).
+- **Nova transferência** (OperacaoTransferenciaForm + confirmação): Cofre → conta de posto = **malote** (lacre de abertura, lacre de fechamento reservado, bolsas); qualquer outro par é **comum**.
+  Origem ≠ destino, valor > 0, sem fundo na origem recusa, lacres distintos e únicos; o dinheiro sai da origem na criação.
+- **Conferir recebimento — ADAPTAÇÃO (decisão aprovada em 06/11/2026):** o principal NÃO tem esta tela (lá o "Fechou certo" recebe o retorno como declarado). Na casca a
+  Tesouraria **conta** o retorno do caixa (sangria e retorno final) com o contrato que a API já tem: `/confirmar` estrito (dinheiro + moedas + lacre precisam bater; senão
+  "Conferência divergente: registre a recusa com o motivo") e `/recusar-conferencia` (motivo obrigatório; sem "encerrar" continua pendente e a tentativa fica registrada; com
+  "encerrar" vira **divergente**, o contado entra no destino e a falta vira quebra; contado acima do declarado exige confirmar a sobra). Contagem **cega**: o valor declarado não aparece.
+  Consequência: **"Fechou certo" passou a exigir o retorno já recebido** (um caminho só para receber).
+- **Contas e saldos** (ContasPage + doc 72): Nome, Tipo, Fundo, Saldo atual (derivado); "Ajustar saldo" (saldo desejado + justificativa ≥ 5 letras; ajuste imutável, listado). Sem "Zerar saldos".
+- **Cancelar retorno planejado:** **não implementado** (legado: nada cria esse registro; decisão aprovada). Fica nas pendências.
+- Decisão minha (sem resposta explícita): o **Gerente** também acessa a Tesouraria (no principal ele cria, edita e confere transferências); a conferência é cega.
+
 ## Falta
 
 1. **Maquininha manhã/tarde** (acumulado − manhã) e posto escolhível (hoje fixo PDV 1 · Manhã).

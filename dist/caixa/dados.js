@@ -14,12 +14,12 @@
 
   /** O malote 001 (PDV 1 · Manhã) já está pronto desde o início da demonstração. */
   const transferencias = () => [
-    { id: 'tr-001', tipo: 'malote', origem: 'cofre', destino: 'cx-1m', valor: 35000, especie: 30000, moedas: 5000, valorRecebido: null, lacre: '001', lacreFechamento: 'FCH-001', bolsas: ['SNG-014', 'SNG-015'],
+    { id: 'tr-001', data: new Date().toLocaleDateString('pt-BR'), tipo: 'malote', origem: 'cofre', destino: 'cx-1m', valor: 35000, especie: 30000, moedas: 5000, valorRecebido: null, lacre: '001', lacreFechamento: 'FCH-001', bolsas: ['SNG-014', 'SNG-015'],
       situacao: 'pendente', caixaId: null, criadoPor: 'Carla (Tesoureiro)', criadoEm: '07:30', observacao: '' },
     // Retornos finais dos caixas de ontem, ainda esperando a conferência da Tesouraria.
-    { id: 'tr-090', tipo: 'retorno_final', origem: 'cx-2t', destino: 'cofre', valor: 41200, especie: 41200, moedas: 0, valorRecebido: null, lacre: 'FCH-090', situacao: 'pendente', caixaId: 'cx-90', criadoPor: 'Bruna Costa', criadoEm: '21:58', observacao: '' },
-    { id: 'tr-091', tipo: 'retorno_final', origem: 'cx-3m', destino: 'cofre', valor: 38400, especie: 38400, moedas: 0, valorRecebido: null, lacre: 'FCH-091', situacao: 'pendente', caixaId: 'cx-91', criadoPor: 'Carlos Henrique', criadoEm: '13:55', observacao: '' },
-    { id: 'tr-092', tipo: 'retorno_final', origem: 'cx-1t', destino: 'cofre', valor: 35300, especie: 35300, moedas: 0, valorRecebido: 35300, lacre: 'FCH-088', situacao: 'recebida', caixaId: 'cx-92', criadoPor: 'Ana Paula', criadoEm: '22:01', observacao: '' },
+    { id: 'tr-090', data: '04/11/2026', tipo: 'retorno_final', origem: 'cx-2t', destino: 'cofre', valor: 41200, especie: 41200, moedas: 0, valorRecebido: null, lacre: 'FCH-090', situacao: 'pendente', caixaId: 'cx-90', criadoPor: 'Bruna Costa', criadoEm: '21:58', observacao: '' },
+    { id: 'tr-091', data: '04/11/2026', tipo: 'retorno_final', origem: 'cx-3m', destino: 'cofre', valor: 38400, especie: 38400, moedas: 0, valorRecebido: null, lacre: 'FCH-091', situacao: 'pendente', caixaId: 'cx-91', criadoPor: 'Carlos Henrique', criadoEm: '13:55', observacao: '' },
+    { id: 'tr-092', data: '03/11/2026', tipo: 'retorno_final', origem: 'cx-1t', destino: 'cofre', valor: 35300, especie: 35300, moedas: 0, valorRecebido: 35300, lacre: 'FCH-088', situacao: 'recebida', caixaId: 'cx-92', criadoPor: 'Ana Paula', criadoEm: '22:01', observacao: '' },
   ];
 
   /** Lacres: abertura, fechamento (reservado) e bolsas de sangria. O estado de cada um é gravado aqui. */

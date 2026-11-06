@@ -2,7 +2,7 @@
  * Caixa — Conferência da Tesouraria (casca). Depois do fechamento: fila "Para conferir" / "Já conferidos",
  * dossiê do caixa e as decisões "Fechou certo" / "Teve quebra" (relatorio_fechamento do principal, doc 06 do Caixa-Brain).
  * Regras: só Tesouraria (e Diretor Geral) vê e decide; a conferência é APPEND-ONLY (cada decisão é uma linha nova),
- * não muda os valores nem o status do caixa; "Fechou certo" recebe o retorno pendente como declarado;
+ * não muda os valores nem o status do caixa; "Fechou certo" EXIGE o retorno já recebido (a Tesouraria o confere em CNT - Tesouraria; um caminho só para receber);
  * "Teve quebra" exige motivo; revisar exige motivo. Dados FICTÍCIOS, em centavos, só em memória.
  * Adaptação da casca: o Diretor Geral não tem perfil no "Ver como" (a regra é a mesma da Tesouraria).
  */
@@ -118,7 +118,13 @@
     if (decidido) {
       acoes.append(botao('Alterar status da conferência', () => dialogoRevisao(h), 'btn secondary'));
     } else {
-      if (['aguardando_tesouraria', 'fechado_sem_pendencias'].includes(sit) && lacreOk) acoes.append(botao('Fechou certo', () => dialogoFechouCerto(h, sit), 'btn'));
+      if (['aguardando_tesouraria', 'fechado_sem_pendencias'].includes(sit) && lacreOk) {
+        const pendente = ret && ret.situacao === 'pendente';
+        const b = botao('Fechou certo', () => dialogoFechouCerto(h, sit), 'btn');
+        b.disabled = Boolean(pendente);
+        if (pendente) { b.title = 'Confira o retorno em CNT - Tesouraria antes.'; itens.push(U.nota('O retorno do caixa ainda não foi recebido: a Tesouraria o confere (contagem e lacre) em CNT - Tesouraria antes de "Fechou certo".')); }
+        acoes.append(b);
+      }
       if (sit === 'fechado_sem_pendencias' || sit === 'com_quebra' || sit === 'aguardando_tesouraria') acoes.append(botao('Teve quebra', () => dialogoQuebra(h), 'btn secondary caixa-perigo'));
     }
     itens.push(acoes);
@@ -133,11 +139,11 @@
       titulo: 'O caixa fechou certo?',
       rotuloSalvar: 'Sim, fechou certo',
       montar: (form) => {
-        form.append(el('p', null, 'O retorno do caixa entra como ele declarou (valor, lacre e conta): ' + (h.retornoId ? moeda(C.transferencia(h.retornoId).valor) : 'sem retorno') + '.'));
+        form.append(el('p', null, h.retornoId ? 'O retorno do caixa já foi recebido. Isto marca o caixa como Conferido pela Tesouraria.' : 'Sem retorno ao Cofre. Isto marca o caixa como Conferido pela Tesouraria.'));
         if (sit !== 'fechado_sem_pendencias') form.append(el('p', 'caixa-alerta', 'Há diferença ou pendência neste caixa. Confira os dados abaixo e use "Teve quebra" se for o caso.'));
       },
       salvar: () => {
-        if (h.retornoId && C.transferencia(h.retornoId).situacao === 'pendente') C.confirmarTransferencia(h.retornoId); // recebe como declarado e só então grava a conferência
+        if (h.retornoId && C.transferencia(h.retornoId).situacao === 'pendente') return 'O retorno do caixa ainda não foi recebido. Confira em CNT - Tesouraria.';
         h.conferencias.push({ resultado: 'conferido', observacao: '', por: 'Carla (Tesouraria)', em: agora() });
         U.avisar('Conferência registrada: fechou certo.');
         atualizar();

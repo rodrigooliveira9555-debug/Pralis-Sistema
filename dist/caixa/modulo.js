@@ -18,18 +18,18 @@
   const COR = '#eab308';
   const COR_TEXTO = '#785600';
   const ICONE = '<path d="' + telaIcone.computador + '"/>';
-  const telas = {};
   const reinicios = [];
 
   // Adaptação da casca: no principal a criação do malote fica em Transferências e a Conferência/Histórico
-  // em telas próprias; aqui tudo mora nos cartões de Entradas → Lançamentos, na ordem em que o fluxo acontece.
+  // em telas próprias; aqui o Caixa mora em Entradas → Lançamentos e a Tesouraria em Transferências → Lançamentos.
+  // [grupo, id, título, subtítulo]. Grupo "caixa" = Entradas → Lançamentos; "tesouraria" = Transferências → Lançamentos.
   const CARDS = [
-    ['malote', 'VND - Malote da Tesouraria', 'Criar o malote com lacre e enviar dinheiro ao PDV'],
-    ['abertura', 'VND - Abertura de Caixa', 'Conferir o malote e abrir o turno'],
-    ['turno', 'VND - Turno do Caixa', 'Resumo, sangria, PDV e vendas'],
-    ['fechamento', 'VND - Fechamento de Caixa', 'Contagem, folha, maquininha e lacre'],
-    ['conferencia', 'VND - Conferência de Fechamentos', 'Fechou certo ou teve quebra'],
-    ['gerencia', 'VND - Gerência de Caixas', 'Monitor, mensagens e histórico de caixas'],
+    ['caixa', 'abertura', 'VND - Abertura de Caixa', 'Conferir o malote e abrir o turno'],
+    ['caixa', 'turno', 'VND - Turno do Caixa', 'Resumo, sangria, PDV e vendas'],
+    ['caixa', 'fechamento', 'VND - Fechamento de Caixa', 'Contagem, folha, maquininha e lacre'],
+    ['caixa', 'conferencia', 'VND - Conferência de Fechamentos', 'Fechou certo ou teve quebra'],
+    ['caixa', 'gerencia', 'VND - Gerência de Caixas', 'Monitor, mensagens e histórico de caixas'],
+    ['tesouraria', 'tesouraria', 'CNT - Tesouraria', 'Transferências, lacres, conferência e saldo das contas'],
   ];
   const voltar = () => menuBack(0, 'Lançamentos')();
 
@@ -56,7 +56,9 @@
   // Padrão de referência do principal (Caixa-Brain/07). Quem confere o fechamento (tesoureiro × financeiro) é pergunta em aberto.
   const PODE = {
     operar: ['operador', 'gerente'], verSaldo: ['gerente'], historico: ['gerente'], conferir: ['tesoureiro'],
-    criarMalote: ['tesoureiro', 'gerente', 'financeiro'], envioSemLacre: ['gerente'], mensagens: ['gerente'],
+    tesouraria: ['tesoureiro', 'financeiro', 'gerente'], // ver e criar transferências, conferir recebimentos (transferencias_conferir)
+    ajustarSaldo: ['tesoureiro'], // doc 72: só Tesouraria (e administrador)
+    envioSemLacre: ['gerente'], mensagens: ['gerente'],
   };
   const pode = (acao) => PODE[acao].includes(estado.perfil);
 
@@ -65,7 +67,7 @@
   const base = () => ({
     perfil: 'operador', status: 'fechado', abertura: null, turno: null, fechamento: null,
     contas: D.contas(), transferencias: D.transferencias(), lacres: D.lacres(), lancamentos: D.lancamentos(),
-    fechamentos: D.fechamentos(), caixasFicticios: D.caixasFicticios(), mensagens: [], notificacoes: [],
+    fechamentos: D.fechamentos(), caixasFicticios: D.caixasFicticios(), mensagens: [], notificacoes: [], quebras: [],
   });
   const estado = base();
 
@@ -178,6 +180,67 @@
     const l = t.lacre && lacre(t.lacre);
     if (l) l.situacao = t.tipo === 'sangria' ? 'conferida' : 'usado';
   }
+  const quemOpera = () => ({ tesoureiro: 'Carla (Tesoureiro)', financeiro: 'Financeiro', gerente: 'Patrícia Souza (Gerente)' }[estado.perfil] || 'Usuário');
+
+  /** Transferência comum entre contas/locais (não é malote nem do caixa). Nasce pendente; o dinheiro já sai da origem. Devolve erro ou null. */
+  function criarTransferencia({ origem, destino, especie, moedas, observacao }) {
+    if (origem === destino) return 'Conta de destino deve ser diferente da origem.';
+    if (especie + moedas <= 0) return 'Informe o dinheiro físico ou as moedas.';
+    if (saldoConta(origem) < especie + moedas) return 'Saldo insuficiente em ' + conta(origem).nome + ': não existe transferência sem fundo na origem.';
+    estado.transferencias.push({ id: proximoId('tr', estado.transferencias), tipo: 'comum', origem, destino, valor: especie + moedas, especie, moedas, valorRecebido: null, lacre: '',
+      situacao: 'pendente', caixaId: null, criadoPor: quemOpera(), criadoEm: hora(), observacao: observacao || '', recusas: [] });
+    return null;
+  }
+
+  /**
+   * Conferência ESTRITA do retorno do caixa (sangria e retorno final), como o /confirmar do principal: valor, dinheiro, moedas e lacre
+   * precisam bater com o declarado. Qualquer diferença NÃO confirma: devolve { divergente } e o caminho é recusarConferencia.
+   */
+  function conferirTransferencia(id, { especie, moedas, lacre: informado }) {
+    const t = transferencia(id);
+    if (!t || t.situacao !== 'pendente') return { erro: 'Transferência não está pendente de confirmação.' };
+    if (t.tipo === 'sem_lacre') return { erro: 'Dinheiro sem lacre é confirmado pelo operador, em Recebimentos pendentes na tela do Caixa.' };
+    if (t.tipo === 'malote') return { erro: 'O malote para o PDV só é recebido pela abertura do caixa, usando o lacre do malote.' };
+    if (t.tipo === 'comum') { confirmarTransferencia(id); return {}; } // a Tesouraria é exceção à segregação criador/confirmador (R-189)
+    if (especie + moedas !== t.valor || especie !== t.especie || moedas !== t.moedas || String(informado || '').trim() !== t.lacre) {
+      return { divergente: true, erro: 'Conferência divergente: registre a recusa com o motivo.' };
+    }
+    confirmarTransferencia(id);
+    return {};
+  }
+  /**
+   * Recusa da conferência. Sem "encerrar" a transferência continua pendente e a tentativa fica registrada; com "encerrar" ela vira
+   * divergente (estado final): o CONTADO entra no destino e a falta vira quebra (R-183). Contado acima do declarado exige confirmar a sobra.
+   */
+  function recusarConferencia(id, { motivo, especie, moedas, lacre: informado, encerrar, sobraConfirmada }) {
+    const t = transferencia(id);
+    if (!t || t.situacao !== 'pendente' || !['sangria', 'retorno_final'].includes(t.tipo)) return { erro: 'Registro não encontrado.' };
+    if (!String(motivo || '').trim()) return { erro: 'Informe o motivo da recusa.' };
+    const contado = especie + moedas;
+    if (encerrar && contado > t.valor && !sobraConfirmada) return { erro: 'Contagem acima do declarado: confirme a sobra para encerrar a divergência.' };
+    t.recusas = t.recusas || [];
+    t.recusas.push({ motivo: motivo.trim(), contado, especie, moedas, lacre: String(informado || '').trim(), por: quemOpera(), em: hora(), encerrou: Boolean(encerrar) });
+    estado.notificacoes.push({ tipo: 'transferencia_divergencia', titulo: 'Conferência recusada - ' + (t.tipo === 'sangria' ? 'sangria ' : 'retorno final ') + t.lacre, valor: contado - t.valor, para: 'Tesouraria' });
+    if (!encerrar) return {};
+    t.situacao = 'divergente'; t.valorRecebido = contado;
+    const l = lacre(t.lacre);
+    if (l) l.situacao = t.tipo === 'sangria' ? 'conferida' : 'usado';
+    if (contado < t.valor) {
+      estado.quebras.push({ transferenciaId: t.id, valor: contado - t.valor, motivo: motivo.trim(), por: quemOpera(), em: hora() });
+      estado.notificacoes.push({ tipo: 'quebra_caixa', titulo: 'Quebra na conferência - ' + t.lacre, valor: contado - t.valor, para: 'Tesouraria' });
+    }
+    return {};
+  }
+  /** Ajuste de saldo da conta (doc 72): imutável (saldo anterior, desejado, diferença, motivo, autor). Devolve erro ou null. */
+  function ajustarSaldo(contaId, desejado, motivo) {
+    if (!pode('ajustarSaldo')) return 'Somente o Tesoureiro (ou o administrador) pode ajustar saldo de conta.';
+    if (desejado === null) return 'Informe o saldo desejado.';
+    if (String(motivo || '').trim().length < 5) return 'Informe uma justificativa com pelo menos 5 caracteres.';
+    const atual = saldoConta(contaId);
+    if (desejado === atual) return 'A conta já está com o saldo informado.';
+    estado.lancamentos.push({ contaId, tipo: 'ajuste', valor: desejado - atual, ref: 'ajuste-' + (estado.lancamentos.length + 1), motivo: motivo.trim(), por: quemOpera(), em: hora(), saldoAnterior: atual, saldoPosterior: desejado });
+    return null;
+  }
 
   /** Valores derivados do caixa vivo (a casca calcula aqui; no servidor virá pronto). */
   function resumo() {
@@ -275,79 +338,14 @@
     conferido_tesouraria: 'Conferido pela Tesouraria', divergencia_confirmada_tesouraria: 'Divergência confirmada pela Tesouraria' };
   const TOM_SITUACAO = { aguardando_tesouraria: 'atencao', fechado_sem_pendencias: 'info', com_quebra: 'negativo', conferido_tesouraria: 'positivo', divergencia_confirmada_tesouraria: 'atencao' };
 
-  /* ---------- Telas, diálogos e "Ver como" ---------- */
-
-  /** "Ver como": uma escolha só, guardada no estado. `perfis` limita as opções da tela. */
-  function seletorPerfil(aoMudar, perfis) {
-    const opcoes = perfis ? PERFIS.filter(([v]) => perfis.includes(v)) : PERFIS;
-    if (!opcoes.some(([v]) => v === estado.perfil)) estado.perfil = opcoes[0][0];
-    const box = U.el('div', 'caixa-perfil');
-    box.append(U.el('span', 'compras-rotulo', 'Ver como'), U.chips(opcoes, estado.perfil, (v) => { estado.perfil = v; aoMudar(); }));
-    return box;
-  }
-  function faixaDemo(texto, aoMudar, perfis) {
-    const f = U.el('div', 'caixa-aviso caixa-faixa');
-    f.append(U.el('p', 'profiles-note', texto));
-    if (aoMudar) f.append(seletorPerfil(aoMudar, perfis));
-    return f;
-  }
-
-  /** Tela no padrão do S2 (view > panel > head + content), na cor de Vendas. */
-  function criarTela({ id, titulo, caminho }) {
-    const view = U.el('section', 'view caixa-view');
-    view.id = id;
-    const panel = U.el('div', 'panel');
-    const head = U.el('div', 'head');
-    const badge = U.el('span', 'sector-icon config-inherit-icon header-origin-icon');
-    badge.setAttribute('aria-hidden', 'true');
-    const heading = U.el('div');
-    heading.append(U.el('h2', null, titulo), U.el('p', null, caminho));
-    head.append(badge, heading);
-    const body = U.el('div', 'content profiles-content compras-content caixa-content');
-    panel.append(head, body);
-    view.append(panel);
-    document.querySelector('main').append(view);
-    setViewOriginColor(view, COR);
-    panel.style.setProperty('--panel-text', COR_TEXTO);
-    addShortcuts(id, voltar);
-    return {
-      view, body,
-      ativar() {
-        badge.innerHTML = U.svg(ICONE);
-        badge.style.background = '';
-        document.querySelectorAll('.view').forEach((x) => x.classList.remove('show'));
-        view.classList.add('show');
-        const crumb = document.getElementById('crumb');
-        if (crumb) crumb.textContent = caminho;
-        const t = document.getElementById('title');
-        if (t) t.textContent = titulo;
-        normalizeHeaderActions(view);
-        body.scrollTop = 0;
-      },
-    };
-  }
-  function dialogo(opcoes) {
-    const d = U.dialogo(opcoes);
-    d.style.setProperty('--menu-accent', COR);
-    d.style.setProperty('--dialog-accent', COR);
-    d.classList.add('caixa-dialog');
-    return d;
-  }
-  const registrar = (nome, abrir) => { telas[nome] = abrir; };
-  function abrir(nome) {
-    const t = telas[nome];
-    if (t) return t();
-    console.warn('Caixa: tela não encontrada', nome);
-  }
-
   window.CicluzCaixa = {
     COR, COR_TEXTO, PERFIS, estado, pode,
     moeda, centavos, hora, somarMin, totalItens,
     conta, saldoConta, contaDoPosto, transferencia, malotes, malotePorLacre, lacreExiste, lacre, bolsasLivres, pendentesSemLacre, sangriasDoCaixa,
-    criarMalote, criarSemLacre, abrirCaixa, registrarSangria, resolverRecebimento, confirmarTransferencia, resumo, iniciarFechamento, fecharCaixa, diferencaDe, caixas, caixasAbertos,
-    reiniciar, aoReiniciar, seletorPerfil, faixaDemo, situacaoDe, ROTULO_SITUACAO, TOM_SITUACAO,
-    cards: () => CARDS.map(([id, t, d]) => [t, d, 'caixa:' + id]),
+    criarMalote, criarSemLacre, abrirCaixa, registrarSangria, resolverRecebimento, confirmarTransferencia, quemOpera, criarTransferencia, conferirTransferencia, recusarConferencia, ajustarSaldo, resumo, iniciarFechamento, fecharCaixa, diferencaDe, caixas, caixasAbertos,
+    reiniciar, aoReiniciar, situacaoDe, ROTULO_SITUACAO, TOM_SITUACAO,
+    cards: (grupo = 'caixa') => CARDS.filter((c) => c[0] === grupo).map(([, id, t, d]) => [t, d, 'caixa:' + id]),
     icone: () => U.svg(ICONE),
-    criarTela, dialogo, abrir, registrar, voltar,
+    voltar,
   };
 })();

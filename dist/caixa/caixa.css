@@ -94,6 +94,10 @@ button.caixa-cartao:hover { background: color-mix(in srgb, var(--menu-accent) 6%
 .caixa-alvos { display: grid; gap: 6px; }
 .caixa-filtros { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .caixa-acoes-esq small { margin-right: 0; }
+.caixa-tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.caixa-celula { display: grid; gap: 2px; min-width: 0; }
+.caixa-celula small { font-size: 12px; color: var(--muted, #71717a); overflow-wrap: anywhere; }
+.caixa-linha-lacre { margin: 4px 0; font-variant-numeric: tabular-nums; }
 /* Conteúdo largo (tabela com campos) encolhe e rola dentro do próprio quadro, sem estourar a seção no celular. */
 .compras-secao, .compras-corpo, .caixa-corpo, .caixa-bloco, .caixa-bloco-cab > div { min-width: 0; max-width: 100%; }
 .compras-corpo > *, .caixa-corpo > * { min-width: 0; max-width: 100%; }
@@ -110,6 +114,6 @@ body.dark-theme .caixa-diferenca.sobra, body.dark-theme .caixa-alerta { backgrou
 body.dark-theme .caixa-diferenca.bateu { background: #183a25; color: #a7e8bd; }
 
 @media (max-width: 600px) {
-  .caixa-grade, .caixa-cartoes, .caixa-filtros { grid-template-columns: minmax(0, 1fr); }
+  .caixa-grade, .caixa-cartoes, .caixa-filtros, .caixa-tres { grid-template-columns: minmax(0, 1fr); }
   .caixa-acoes .btn { flex: 1 1 100%; }
 }
