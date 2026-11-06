@@ -7,7 +7,8 @@ const ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Unif
 const data=()=>store.get(),uniformIds=D.uniforms.map(u=>u.id),uniformById=new Map(D.uniforms.map(u=>[u.id,u]));
 
 /* Supplier source: empty until the registry exists; the database will replace this function. */
-function suppliers(){return D.suppliers||[]}
+/* Fornecedores: the Compras register (Cadastros › MER - Fornecedores), linked by id — the same list Compras uses for quotations. */
+function suppliers(){const C=window.CicluzComprasDados;try{return (C?.dados?.fornecedores||[]).filter(x=>x.situacao==='ativo').map(x=>({id:x.id,name:x.nome,whatsapp:x.whatsapp||''}))}catch{return []}}
 function supplierName(id){return suppliers().find(s=>s.id===id)?.name||''}
 
 /* DD/MM/AAAA typing with ISO values for storage. */
@@ -27,13 +28,13 @@ const body=el('div','content uniforms-content');panel.append(head,body);view.app
 addShortcuts(view.id,()=>menuBack(2,'Lançamentos Colaboradores')());
 const addButton=button('',()=>{resetForm();formStatus.textContent='';dateIn.node.focus()},'shortcut-circle');addButton.title='Nova compra';addButton.setAttribute('aria-label','Nova compra');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
 const loadNote=el('p','profiles-error');loadNote.setAttribute('role','alert');
-body.append(el('div','form-note','Simulação local: compras ficam somente neste navegador e entram no mesmo estoque de Uniformes. Sem fornecedores cadastrados por enquanto.'),loadNote);
+body.append(el('div','form-note','Simulação local: compras ficam somente neste navegador e entram no mesmo estoque de Uniformes. Os fornecedores vêm do cadastro de Compras (MER - Fornecedores), o mesmo usado nas cotações.'),loadNote);
 
 /* ---------- Formulário ---------- */
 const form=el('form','form-fields uniforms-form');form.noValidate=true;
 const formTitle=el('h3','uniforms-wide uniforms-heading','Nova compra');
 const dateIn=dateField('Data da compra *');
-const sup=enumField('Tipo de fornecedor','Buscar fornecedor');
+const sup=enumField('Fornecedor','Buscar fornecedor');
 const phoneLabel=el('label','uniforms-phone');phoneLabel.append(el('span','uniforms-enum-label','Contato WhatsApp'));const phone=el('input');phone.type='tel';phone.inputMode='tel';phone.placeholder='(32) 99999-9999';phone.maxLength=15;phone.autocomplete='tel';phone.setAttribute('aria-label','Contato WhatsApp');
 const whatsapp=button('Abrir WhatsApp',()=>{if(phoneValid(phone.value))U.openExternal('https://wa.me/55'+phoneDigits(phone.value))});whatsapp.title='Abrir conversa no WhatsApp sem enviar mensagem';phoneLabel.append(phone,whatsapp);
 const phoneHint=el('small','profiles-note');phoneLabel.append(phoneHint);
@@ -43,7 +44,10 @@ const picker=el('div','uniforms-wide uniforms-picker');const pickLabel=el('label
 const items=el('div','uniforms-wide uniforms-items');
 const formError=el('p','uniforms-wide profiles-error');formError.setAttribute('role','alert');const formStatus=el('p','uniforms-wide profiles-note');formStatus.setAttribute('role','status');
 const actions=el('div','uniforms-wide actions');const save=el('button','btn','Salvar Compra');save.type='submit';actions.append(button('Cancelar',()=>{resetForm();formStatus.textContent='Compra descartada.'}),save);
-form.append(formTitle,dateIn.label,sup.label,phoneLabel,picker,items,formError,formStatus,actions);
+/* Missing supplier: the Compras register opens; a return button brings the user back with the list refreshed. */
+const supLink=el('div','uniforms-wide people-banner-tools');supLink.append(button('Cadastrar fornecedor',()=>{if(!window.CicluzComprasCadastros){formError.textContent='Cadastro de fornecedores de Compras indisponível.';return}window.CicluzComprasCadastros.abrirFornecedores();const v=document.getElementById('compras-fornecedores');if(v&&!v.querySelector('.purchase-return')){const box=el('div','form-note purchase-return');box.append(el('span',null,'Você veio de DES - Uniformes Compras. Cadastre o fornecedor e volte para a compra.'),button('Voltar à compra de uniformes',()=>{box.remove();showUniformPurchases();renderSuppliers()},'btn'));(v.querySelector('.content')||v.querySelector('.panel')||v).prepend(box)}}));
+sup.select.addEventListener('change',()=>{const x=suppliers().find(y=>y.id===sup.select.value);if(x?.whatsapp&&!phone.value)phone.value=maskPhone(x.whatsapp)});
+form.append(formTitle,dateIn.label,sup.label,supLink,phoneLabel,picker,items,formError,formStatus,actions);
 const history=el('div','uniforms-history');body.append(form,history);
 
 let draft={editingId:null,items:new Map()},duplicateOk='';

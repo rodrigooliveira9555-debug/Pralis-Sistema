@@ -1,2 +1,5 @@
 node_modules/
 .playwright-mcp/
+
+# Planilhas de referência com dados reais de colaboradores: nunca versionar.
+planilhas/
