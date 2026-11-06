@@ -16,7 +16,7 @@
   é **pergunta em aberto** (ver "Dúvidas").
 - Módulo: `dist/caixa/modulo.js` guarda o **estado único** (`CicluzCaixa.estado`) e as ações que o
   alteram; `dados.js` só traz as sementes fictícias. Telas: `abertura.js`, `turno.js` (+ `turno-dialogos.js`),
-  `malote.js`, `fechamento.js`, `conferencia.js`, `gerencia.js`. Estilos: `caixa.css`. Reaproveita
+  `malote.js`, `fechamento.js`, `conferencia.js` (hoje `fechamentos*.js`, etapa 5), `gerencia.js`. Estilos: `caixa.css`. Reaproveita
   `CicluzComprasUI` (campos, chips, seção, diálogo, aviso) e os estilos de `compras.css`.
 - **Estado único:** `contas` (Cofre Principal, Cofre Troco, Caixa 1M…4T) · `transferencias` (malote,
   sem lacre, sangria, retorno final; situação pendente/recebida/cancelada/divergente) · `lacres`
@@ -100,11 +100,11 @@ campos e regras). Cards de Entradas → Caixas, na ordem do fluxo:
   o reservado, folha de fechamento, observação obrigatória com falta **ou sobra**, "Encerrar com
   divergência" / "Encerrar e enviar à Tesouraria", revisão). Falta = quebra + aviso; sobra = só aviso;
   o contado volta ao Cofre (retorno pendente).
-- **Conferência da Tesouraria** (`conferencia.js`): só a Tesouraria; fila "Para conferir / Já
+- **Conferência da Tesouraria** (hoje em `fechamentos*.js`, ver etapa 5): só a Tesouraria; fila "Para conferir / Já
   conferidos", dossiê, **"Fechou certo"** (recebe o retorno como declarado) e **"Teve quebra"**
   (motivo obrigatório), revisão com motivo. **Append-only**; não muda valores nem o status do caixa.
 - **Gerência** (`gerencia.js`): monitor de caixas abertos, mensagens (validade no futuro, alvos,
-  encerrar; o operador vê no Turno e confirma "Entendi") e histórico com filtros e detalhe.
+  encerrar; o operador vê no Turno e confirma "Entendi") e (hoje em Fechamentos de Caixa, etapa 5) histórico com filtros e detalhe.
 - "Ver como" agora tem **Operador · Gerência · Tesouraria**; `CicluzCaixa.pode(...)` bloqueia o que
   cada perfil não pode.
 - **Testes:** 77 verificações ponta a ponta (Docker, porta 8090) e 72 combinações de largura × tema,
@@ -172,13 +172,26 @@ campos e regras). Cards de Entradas → Caixas, na ordem do fluxo:
 - **Cancelar retorno planejado:** **não implementado** (legado: nada cria esse registro; decisão aprovada). Fica nas pendências.
 - Decisão minha (sem resposta explícita): o **Gerente** também acessa a Tesouraria (no principal ele cria, edita e confere transferências); a conferência é cega.
 
+### Etapa 5 — Financeiro: uma tela só, "VND - Fechamentos de Caixa" (06/11/2026)
+
+- **Onde:** **Entradas · Vendas / Faturamento → Relatórios → VND - Fechamentos de Caixa** (uma linha em `dist/index.html`: `index===0&&section==='Relatórios'?CicluzCaixa.cards('relatorios')`).
+  Substitui o card "Conferência de Fechamentos" (`conferencia.js` apagado) **e** o histórico que morava na Gerência (a Gerência ficou só com monitor, recebimento e mensagens). Um caminho só para ver/decidir.
+- **Arquivos:** `fechamentos-lista.js` (abas, filtros, tabela), `fechamentos-dossie.js` (dossiê e detalhe da Gerência), `fechamentos-decisao.js` (Fechou certo / Teve quebra / Alterar status), `fechamentos.js` (a tela).
+- **Quem vê o quê (decisão aprovada):** **Tesoureiro** vê o dossiê e **decide**; **Financeiro** só consulta (mesma tela, sem botões; aviso "Consulta"); **Gerente** vê o histórico de todos os caixas (inclui abertos e em fechamento)
+  e o detalhe **sem contagem, diferença, folha comparada nem decisão** (a contagem é cega para a Gerência); **Operador** não entra.
+- **Lista:** abas "Para conferir (n)" / "Já conferidos (n)" (Tesouraria/Financeiro); filtros Data inicial/final, PDV, Operador, Turno e Situação; Esperado, Contado e Diferença com sinal + palavra + cor.
+- **Dossiê (retrato gravado no fechamento, não o turno vivo):** quem fechou e lacres (usado × reservado, alerta se diferem); contagem (cédulas, moedas, correções) e diferença; **folha digital × PDV × maquininha** (só informa);
+  **paradas do computador** (de quando até quando e o motivo — `fecharCaixa` agora guarda `paradas`, `contagem`, `folha`, `maquininha`, `pdvForma`, `canceladas`); transferências do fechamento com lacre e situação; provas e notificações; histórico da conferência.
+- **Decisão:** "Fechou certo" continua exigindo o retorno já recebido em CNT - Tesouraria e só existe para caixa sem falta; "Teve quebra" e "Alterar status" pedem motivo; a mesma decisão repetida não grava de novo; nada é apagado.
+- Sementes dos 3 caixas de ontem ganharam o mesmo retrato (cx-91 tem uma parada de 09:10 a 09:42 e a folha R$ 5,00 a menos que o PDV).
+
 ## Falta
 
 1. **Maquininha manhã/tarde** (acumulado − manhã) e posto escolhível (hoje fixo PDV 1 · Manhã).
 2. **Ajuste do início das vendas** (R-224), planejamentos de retorno (legado), "Últimos lançamentos",
    campanhas, filtros de horário em "Vendas do caixa", paginação do histórico.
-3. **Conferência estrita no cofre** (`confirmar`/`recusar-conferencia` por lacre), conferência física
-   da abertura gravada, prazo de confirmação (423) e `liberar-trava`.
+3. Conferência física da abertura gravada, prazo de confirmação (423) e `liberar-trava` (a conferência estrita do
+   retorno já existe, em Tesouraria; "Fechamentos de Caixa" não pagina a lista).
 4. Perfil **Diretor Geral**, página de **Pendências** e notificações em sino.
 5. **Dúvidas para o Rodrigo/Marco** em `Caixa-Brain/13 - Dúvidas abertas.md` (malote da Tarde com a
    Manhã aberta; quem edita malote; bandeira/operadora na maquininha; Gerência vê o relatório de

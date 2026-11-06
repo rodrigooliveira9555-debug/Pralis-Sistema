@@ -22,13 +22,14 @@
 
   // Adaptação da casca: no principal a criação do malote fica em Transferências e a Conferência/Histórico
   // em telas próprias; aqui o Caixa mora em Entradas → Lançamentos e a Tesouraria em Transferências → Lançamentos.
-  // [grupo, id, título, subtítulo]. Grupo "caixa" = Entradas → Lançamentos; "tesouraria" = Transferências → Lançamentos.
+  // [grupo, id, título, subtítulo]. Grupo "caixa" = Entradas → Lançamentos; "relatorios" = Entradas → Relatórios;
+  // "tesouraria" = Transferências → Lançamentos.
   const CARDS = [
     ['caixa', 'abertura', 'VND - Abertura de Caixa', 'Conferir o malote e abrir o turno'],
     ['caixa', 'turno', 'VND - Turno do Caixa', 'Resumo, sangria, PDV e vendas'],
     ['caixa', 'fechamento', 'VND - Fechamento de Caixa', 'Contagem, folha, maquininha e lacre'],
-    ['caixa', 'conferencia', 'VND - Conferência de Fechamentos', 'Fechou certo ou teve quebra'],
-    ['caixa', 'gerencia', 'VND - Gerência de Caixas', 'Monitor, mensagens e histórico de caixas'],
+    ['caixa', 'gerencia', 'VND - Gerência de Caixas', 'Monitor, recebimento e mensagens'],
+    ['relatorios', 'fechamentos', 'VND - Fechamentos de Caixa', 'Fila, histórico, dossiê e conferência'],
     ['tesouraria', 'tesouraria', 'CNT - Tesouraria', 'Transferências, lacres, conferência e saldo das contas'],
   ];
   const voltar = () => menuBack(0, 'Lançamentos')();
@@ -55,7 +56,7 @@
   const PERFIS = [['operador', 'Operador'], ['gerente', 'Gerente'], ['tesoureiro', 'Tesoureiro'], ['financeiro', 'Financeiro']];
   // Padrão de referência do principal (Caixa-Brain/07). Quem confere o fechamento (tesoureiro × financeiro) é pergunta em aberto.
   const PODE = {
-    operar: ['operador', 'gerente'], verSaldo: ['gerente'], historico: ['gerente'], conferir: ['tesoureiro'],
+    operar: ['operador', 'gerente'], verSaldo: ['gerente'], historico: ['gerente'], conferir: ['tesoureiro'], fechamentos: ['tesoureiro', 'financeiro', 'gerente'], // ver a tela; só a Tesouraria decide
     tesouraria: ['tesoureiro', 'financeiro', 'gerente'], // ver e criar transferências, conferir recebimentos (transferencias_conferir)
     ajustarSaldo: ['tesoureiro'], // doc 72: só Tesouraria (e administrador)
     envioSemLacre: ['gerente'], mensagens: ['gerente'],
@@ -298,6 +299,11 @@
       id, data: new Date().toLocaleDateString('pt-BR'), pdv: a.pdv, turno: a.turno, contaId: a.contaId, operador: a.responsavel, supervisor: f.gerente || a.supervisor, abertura: a.abertoEm, fechamento: hora(), fechadoPor: a.responsavel,
       entradas: r.entradas, transfEntrada: a.valorInicial + r.recebido, transfSaida: r.sangrias, esperado, contado, diferenca, lacreFechamento: lacreInformado, lacreReservado: a.lacreFechamento,
       observacao: String(observacao || '').trim(), retornoId, conferencias: [], anexos: { folha: 1, creare: 1, comprovantes: 1 }, desta_sessao: true,
+      // Retrato do que o dossiê mostra (a tela de Fechamentos não lê o turno vivo, que some ao recomeçar).
+      contagem: { especie: f.contagem.registrada.especie, moedas: f.contagem.registrada.moedas, total: contado, correcoes: f.contagem.registrada.correcoes.slice() },
+      folha: { campos: { ...f.folha.campos }, correcao: f.folha.correcao.trim() }, maquininha: { ...f.maq.valores },
+      pdvForma: Object.fromEntries(['Crédito', 'Débito', 'Dinheiro', 'Pix', 'Voucher'].map((n) => [n, (r.porForma.find((x) => x[0] === n) || [n, 0])[1]])),
+      paradas: estado.turno.paradas.map((p) => ({ ...p })), canceladas: estado.turno.canceladas.length,
     };
     estado.fechamentos.unshift(registro);
     // Notificações como no principal: falta = quebra + aviso; sobra = só aviso; sem usuário de Tesouraria não há aviso.

@@ -44,13 +44,23 @@
   const fechamentos = () => [
     { id: 'cx-90', data: '04/11/2026', pdv: 'PDV 2', turno: 'Tarde', contaId: 'cx-2t', operador: 'Bruna Costa', supervisor: 'Patrícia Souza', abertura: '14:00', fechamento: '21:58', fechadoPor: 'Bruna Costa',
       entradas: 612350, transfEntrada: 35000, transfSaida: 0, esperado: 41200, contado: 41200, diferenca: 0, lacreFechamento: 'FCH-090', lacreReservado: 'FCH-090', observacao: '',
-      retornoId: 'tr-090', conferencias: [], anexos: { folha: 1, creare: 1, comprovantes: 1 } },
+      retornoId: 'tr-090', conferencias: [], anexos: { folha: 1, creare: 1, comprovantes: 1 },
+      contagem: { especie: 41000, moedas: 200, total: 41200, correcoes: [] }, pdvForma: { 'Crédito': 210000, 'Débito': 135050, Dinheiro: 180100, Pix: 65000, Voucher: 22200 },
+      folha: { campos: { trocoInicial: '350,00', saldoInicial: '0,00', clientes: '412', credito: '2.100,00', debito: '1.350,50', dinheiro: '1.801,00', pix: '650,00', voucher: '222,00', total: '6.123,50', despesas: '0,00', sangria: '0,00', saldoFinal: '412,00' }, correcao: '' },
+      maquininha: { credito: '2.100,00', debito: '1.350,50', pix: '650,00', voucher: '222,00' }, paradas: [], canceladas: 0, },
     { id: 'cx-91', data: '04/11/2026', pdv: 'PDV 3', turno: 'Manhã', contaId: 'cx-3m', operador: 'Carlos Henrique', supervisor: 'Marcos Lima', abertura: '06:00', fechamento: '13:55', fechadoPor: 'Carlos Henrique',
       entradas: 488900, transfEntrada: 35000, transfSaida: 0, esperado: 38900, contado: 38400, diferenca: -500, lacreFechamento: 'FCH-091', lacreReservado: 'FCH-091', observacao: 'Faltou uma nota de R$ 5,00 no troco do início da manhã.',
-      retornoId: 'tr-091', conferencias: [], anexos: { folha: 1, creare: 1, comprovantes: 1 } },
+      retornoId: 'tr-091', conferencias: [], anexos: { folha: 1, creare: 1, comprovantes: 1 },
+      contagem: { especie: 38000, moedas: 400, total: 38400, correcoes: [] }, pdvForma: { 'Crédito': 150000, 'Débito': 120000, Dinheiro: 130900, Pix: 60000, Voucher: 28000 },
+      folha: { campos: { trocoInicial: '350,00', saldoInicial: '0,00', clientes: '377', credito: '1.500,00', debito: '1.200,00', dinheiro: '1.304,00', pix: '600,00', voucher: '280,00', total: '4.884,00', despesas: '0,00', sangria: '0,00', saldoFinal: '389,00' }, correcao: '' },
+      maquininha: { credito: '1.500,00', debito: '1.200,00', pix: '600,00', voucher: '280,00' }, canceladas: 1,
+      paradas: [{ desde: '09:10', ate: '09:42', motivos: ['Falta de energia na loja'], outro: '' }], },
     { id: 'cx-92', data: '03/11/2026', pdv: 'PDV 1', turno: 'Tarde', contaId: 'cx-1t', operador: 'Ana Paula', supervisor: 'Marcos Lima', abertura: '14:02', fechamento: '22:01', fechadoPor: 'Ana Paula',
       entradas: 530120, transfEntrada: 35000, transfSaida: 20000, esperado: 35000, contado: 35300, diferenca: 300, lacreFechamento: 'FCH-088', lacreReservado: 'FCH-088', observacao: 'Sobra de R$ 3,00: cliente deixou o troco.',
-      retornoId: 'tr-092', conferencias: [{ resultado: 'conferido', observacao: '', por: 'Carla (Tesoureiro)', em: '04/11 08:10' }], anexos: { folha: 1, creare: 1, comprovantes: 1 } },
+      retornoId: 'tr-092', conferencias: [{ resultado: 'conferido', observacao: '', por: 'Carla (Tesoureiro)', em: '04/11 08:10' }], anexos: { folha: 1, creare: 1, comprovantes: 1 },
+      contagem: { especie: 35000, moedas: 300, total: 35300, correcoes: [] }, pdvForma: { 'Crédito': 160000, 'Débito': 100000, Dinheiro: 150120, Pix: 90000, Voucher: 30000 },
+      folha: { campos: { trocoInicial: '350,00', saldoInicial: '0,00', clientes: '441', credito: '1.600,00', debito: '1.000,00', dinheiro: '1.501,20', pix: '900,00', voucher: '300,00', total: '5.301,20', despesas: '0,00', sangria: '200,00', saldoFinal: '353,00' }, correcao: '' },
+      maquininha: { credito: '1.600,00', debito: '1.000,00', pix: '900,00', voucher: '300,00' }, paradas: [], canceladas: 0, },
   ];
 
   /** Caixas abertos de OUTROS PDVs (só para o monitor da Gerência ter o que mostrar). */
