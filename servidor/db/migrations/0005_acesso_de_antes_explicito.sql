@@ -1,0 +1,1 @@
+ALTER TABLE "perfis_usuarios" ADD COLUMN "acessos_configurados_em" timestamp with time zone;

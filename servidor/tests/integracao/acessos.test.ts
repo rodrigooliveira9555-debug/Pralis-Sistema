@@ -96,10 +96,73 @@ describe("cargos de acesso e permissões", () => {
     expect(await permissoesDaSessao(sessao.cookie)).toEqual(["lancamentos_pagar"]);
   });
 
+  it("desativar o único cargo ou tirar todos os cargos deixa sem acesso, nunca com o acesso de antes", async () => {
+    const admin = await contaLogada("administrador");
+    const pessoa = await criarConta("usuario", admin.empresaNome);
+    const sessao = await entrar(app, pessoa.email, pessoa.senha);
+    const cargo = (await criarCargo(admin.cookie, "Só ver", ["lancamentos_visualizar"])).json().data;
+    await darCargos(admin.cookie, pessoa.usuarioId, [cargo.id]);
+    await app.inject({ method: "PATCH", url: `/api/cargos-acesso/${cargo.id}`, headers: comSessao(admin.cookie), payload: { ativo: false } });
+    expect(await permissoesDaSessao(sessao.cookie)).toEqual([]);
+
+    const outra = await criarConta("usuario", admin.empresaNome);
+    const sessaoOutra = await entrar(app, outra.email, outra.senha);
+    const tirou = await darCargos(admin.cookie, outra.usuarioId, []);
+    expect(tirou.json().data.legado).toBe(false);
+    expect(await permissoesDaSessao(sessaoOutra.cookie)).toEqual([]);
+  });
+
+  it("conta criada pela tela sem cargo nasce sem acesso", async () => {
+    const admin = await contaLogada("administrador");
+    const criado = await app.inject({
+      method: "POST",
+      url: "/api/usuarios",
+      headers: comSessao(admin.cookie),
+      payload: { nome: "Sem cargo", email: "sem.cargo@teste.local", papel: "usuario", senha: "senha-inicial-123" }
+    });
+    expect(criado.json().data).toMatchObject({ legado: false, cargos: [] });
+    const sessao = await entrar(app, "sem.cargo@teste.local", "senha-inicial-123");
+    expect(await permissoesDaSessao(sessao.cookie)).toEqual([]);
+  });
+
+  it("quem não é administrador não devolve acesso tirando bloqueio, não reativa cargo mais forte e não mexe em quem está acima", async () => {
+    const admin = await contaLogada("administrador");
+    const gestor = await contaLogada("usuario", admin.empresaNome);
+    const montador = (await criarCargo(admin.cookie, "Montador 2", ["permissoes_gerenciar", "usuarios_visualizar", "usuarios_gerenciar", "lancamentos_visualizar"])).json().data;
+    await darCargos(admin.cookie, gestor.usuarioId, [montador.id]);
+
+    // Pessoa com cargo que paga, bloqueada pelo admin só no pagamento: o gestor (que não paga) não tira o bloqueio.
+    const pagador = (await criarCargo(admin.cookie, "Pagador forte", ["lancamentos_visualizar", "lancamentos_pagar"])).json().data;
+    const pessoa = await criarConta("usuario", admin.empresaNome);
+    await darCargos(admin.cookie, pessoa.usuarioId, [pagador.id]);
+    await darExcecoes(admin.cookie, pessoa.usuarioId, { lancamentos_pagar: false });
+    expect((await darExcecoes(gestor.cookie, pessoa.usuarioId, {})).json().code).toBe("CANNOT_GRANT");
+
+    // Cargo desativado com permissão que o gestor não tem: ele não reativa nem desativa de volta.
+    await app.inject({ method: "PATCH", url: `/api/cargos-acesso/${pagador.id}`, headers: comSessao(admin.cookie), payload: { ativo: false } });
+    const reativar = await app.inject({ method: "PATCH", url: `/api/cargos-acesso/${pagador.id}`, headers: comSessao(gestor.cookie), payload: { ativo: true } });
+    expect(reativar.json().code).toBe("CANNOT_GRANT");
+
+    // Quem tem acesso que o gestor não tem (conta de antes: lança e edita) só o administrador altera.
+    const antiga = await criarConta("usuario", admin.empresaNome);
+    const mexer = await app.inject({ method: "PATCH", url: `/api/usuarios/${antiga.usuarioId}`, headers: comSessao(gestor.cookie), payload: { ativo: false } });
+    expect(mexer.json().code).toBe("TARGET_ABOVE_YOU");
+
+    // Os próprios cargos, só o administrador muda.
+    const proprios = await darCargos(gestor.cookie, gestor.usuarioId, []);
+    expect(proprios.json().code).toBe("SELF_ACCESS");
+  });
+
   it("quem monta acessos não libera o que não tem nem mexe nos próprios acessos", async () => {
     const admin = await contaLogada("administrador");
     const gestor = await contaLogada("usuario", admin.empresaNome);
-    const outra = await criarConta("usuario", admin.empresaNome);
+    const outraCriada = await app.inject({
+      method: "POST",
+      url: "/api/usuarios",
+      headers: comSessao(admin.cookie),
+      payload: { nome: "Outra", email: "outra.montador@teste.local", papel: "usuario", senha: "senha-inicial-123" }
+    });
+    const outra = { usuarioId: outraCriada.json().data.id as string };
     const montador = (
       await criarCargo(admin.cookie, "Montador", ["permissoes_gerenciar", "usuarios_visualizar", "usuarios_gerenciar", "relatorios_visualizar"])
     ).json().data;

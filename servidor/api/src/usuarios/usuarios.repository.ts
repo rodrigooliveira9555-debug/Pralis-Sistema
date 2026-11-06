@@ -25,9 +25,31 @@ export async function criarEmpresa(nome: string) {
   return empresa;
 }
 
-export async function inserirPerfil(dados: { usuarioId: string; empresaId: string; nome: string; papel: Papel; posto?: Posto | null }) {
-  const { posto, ...perfil } = dados;
-  await banco.insert(perfisUsuarios).values({ ...perfil, postoPdv: posto?.pdv ?? null, postoTurno: posto?.turno ?? null });
+// configurada: conta criada pela tela já segue cargos de acesso (sem cargo = sem acesso). O script de
+// administrador cria conta sem essa marca.
+export async function inserirPerfil(dados: {
+  usuarioId: string;
+  empresaId: string;
+  nome: string;
+  papel: Papel;
+  posto?: Posto | null;
+  configurada?: boolean;
+}) {
+  const { posto, configurada, ...perfil } = dados;
+  await banco.insert(perfisUsuarios).values({
+    ...perfil,
+    postoPdv: posto?.pdv ?? null,
+    postoTurno: posto?.turno ?? null,
+    acessosConfiguradosEm: configurada ? new Date() : null
+  });
+}
+
+// A conta passa a seguir os cargos de acesso (uma vez só; nunca volta a ser conta de antes).
+export async function marcarAcessosConfigurados(executor: Executor, empresaId: string, usuarioId: string) {
+  await executor
+    .update(perfisUsuarios)
+    .set({ acessosConfiguradosEm: sql`coalesce(${perfisUsuarios.acessosConfiguradosEm}, now())` })
+    .where(and(eq(perfisUsuarios.empresaId, empresaId), eq(perfisUsuarios.usuarioId, usuarioId)));
 }
 
 const colunasUsuario = {
@@ -38,6 +60,7 @@ const colunasUsuario = {
   ativo: perfisUsuarios.ativo,
   postoPdv: perfisUsuarios.postoPdv,
   postoTurno: perfisUsuarios.postoTurno,
+  acessosConfiguradosEm: perfisUsuarios.acessosConfiguradosEm,
   criadoEm: perfisUsuarios.criadoEm
 };
 

@@ -31,6 +31,10 @@ export const perfisUsuarios = pgTable(
     // conta só por empresa (doc 73 do principal).
     postoPdv: integer("posto_pdv"),
     postoTurno: text("posto_turno"),
+    // Quando a conta passou a seguir cargos de acesso. Nulo: conta de antes dos cargos, que mantém o
+    // acesso que o papel "usuario" tinha (acessos.ts). Preenchido uma vez, não volta a nulo: tirar
+    // os cargos deixa a pessoa sem acesso, e não com o acesso amplo de antes.
+    acessosConfiguradosEm: timestamp("acessos_configurados_em", { withTimezone: true }),
     criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
     atualizadoEm: timestamp("atualizado_em", { withTimezone: true }).notNull().defaultNow()
   },

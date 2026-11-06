@@ -13,6 +13,7 @@ import {
   TURNOS_POSTO,
   usuarioIdParamsSchema
 } from "@cicluz/shared";
+import { senhaMinimaAutenticacao } from "../auth/config.ts";
 import { perfilDaRequisicao } from "../auth/guards.ts";
 import { criarCargo, criarCargosSugeridos, editarCargo, listarCargos, obterAcessos, salvarAcessos } from "./acessos.service.ts";
 
@@ -23,6 +24,8 @@ export async function registrarRotasAcessos(app: FastifyInstance) {
       areas: AREAS_PERMISSAO.map(([id, nome]) => ({ id, nome })),
       permissoes: PERMISSOES,
       permissoesSemCargo: PERMISSOES_SEM_CARGO,
+      // As telas mostram e conferem a mesma senha mínima que o servidor exige.
+      senhaMinima: senhaMinimaAutenticacao,
       cargosSugeridos: CARGOS_SUGERIDOS.map(({ nome, descricao }) => ({ nome, descricao })),
       postos: { pdvs: PDVS_POSTO, turnos: TURNOS_POSTO.map(([id, nome]) => ({ id, nome })) }
     })

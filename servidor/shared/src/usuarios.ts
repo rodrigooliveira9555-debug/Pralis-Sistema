@@ -44,4 +44,6 @@ export type UsuarioResposta = {
   criadoEm: string;
   posto: Posto | null;
   cargos: { id: string; nome: string }[];
+  // Conta de antes dos cargos de acesso, ainda não configurada: mantém o acesso de antes.
+  legado: boolean;
 };

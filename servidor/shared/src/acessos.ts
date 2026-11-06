@@ -68,8 +68,9 @@ const conjuntoChaves = new Set<string>(CHAVES_PERMISSAO);
 export const ehChavePermissao = (valor: string): valor is ChavePermissao => conjuntoChaves.has(valor);
 
 // O que o papel "usuario" fazia antes dos cargos de acesso (P-12, doc 13): tudo, menos o que era
-// exclusivo do administrador. Vale só para quem ainda não recebeu cargo nem exceção, para que as
-// contas de hoje não percam acesso no dia em que esta tela entrar.
+// exclusivo do administrador. Vale só para as contas de antes desta tela que ainda não foram
+// configuradas (perfis_usuarios.acessos_configurados_em nulo), para não perderem acesso no dia em que
+// ela entrar. Conta nova e conta já configurada nunca caem aqui: sem cargo, ficam sem acesso.
 const SO_ADMINISTRADOR_ANTES: readonly ChavePermissao[] = [
   "lancamentos_pagar",
   "lancamentos_editar_pago",
@@ -86,24 +87,27 @@ export type OrigemPermissao = { tipo: "administrador" } | { tipo: "sem_cargo" } 
 
 export type EntradaPermissoes = {
   papel: Papel;
+  // Conta de antes dos cargos de acesso, ainda não configurada (ver PERMISSOES_SEM_CARGO).
+  legado: boolean;
+  // Só os cargos ATIVOS da pessoa.
   cargos: { nome: string; permissoes: readonly string[] }[];
   excecoes: Record<string, boolean>;
 };
 
-// Ordem: administrador tem tudo → sem cargo e sem exceção, o acesso de antes → senão, a soma dos
-// cargos ativos, e a exceção da pessoa vence o cargo (libera ou bloqueia). Chave fora do catálogo
-// é ignorada: permissão removida do sistema não volta a valer por um registro antigo.
+// Ordem: administrador tem tudo → conta de antes ainda não configurada, o acesso de antes → senão, a
+// soma dos cargos ativos, e a exceção da pessoa vence o cargo (libera ou bloqueia). Chave fora do
+// catálogo é ignorada: permissão removida do sistema não volta a valer por um registro antigo.
 export function resolverPermissoes(entrada: EntradaPermissoes): Map<ChavePermissao, OrigemPermissao> {
   const efetivas = new Map<ChavePermissao, OrigemPermissao>();
   if (entrada.papel === "administrador") {
     for (const chave of CHAVES_PERMISSAO) efetivas.set(chave, { tipo: "administrador" });
     return efetivas;
   }
-  const excecoes = Object.entries(entrada.excecoes).filter(([chave]) => ehChavePermissao(chave));
-  if (!entrada.cargos.length && !excecoes.length) {
+  if (entrada.legado) {
     for (const chave of PERMISSOES_SEM_CARGO) efetivas.set(chave, { tipo: "sem_cargo" });
     return efetivas;
   }
+  const excecoes = Object.entries(entrada.excecoes).filter(([chave]) => ehChavePermissao(chave));
   for (const cargo of entrada.cargos) {
     for (const chave of cargo.permissoes) {
       if (!ehChavePermissao(chave)) continue;
@@ -235,6 +239,7 @@ export type CargoAcessoResposta = {
 };
 
 export type AcessosUsuarioResposta = {
+  legado: boolean;
   cargos: string[];
   excecoes: Record<string, boolean>;
   efetivas: { chave: ChavePermissao; origem: OrigemPermissao }[];
