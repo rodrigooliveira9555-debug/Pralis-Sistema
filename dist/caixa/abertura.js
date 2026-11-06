@@ -12,23 +12,26 @@
 
   // Login de posto: cada conta de operador é um PDV + turno (PDV 1-4 × Manhã/Tarde).
   const POSTO = { pdv: 'PDV 1', turno: 'Manhã', usuario: 'pdv1.manha' };
-  // Malote que a Tesouraria declarou para o lacre 001 (o único válido na casca).
-  const MALOTE = { lacre: '001', dinheiro: 30000, moedas: 5000, lacresSangria: ['SNG-014', 'SNG-015'], lacreFechamento: 'FCH-001', rota: 'Malote Cofre → Conta PDV 1' };
+  // Malote que a Tesouraria declarou para o lacre digitado (vem de C.estado.malotes; o 001 já existe de início).
+  const MALOTE = { lacre: '', dinheiro: 0, moedas: 0, lacresSangria: [], lacreFechamento: '', rota: 'Malote Cofre → Conta do PDV' };
+  /** Consulta o lacre como o servidor: inexistente, já rompido ou de outro PDV recusam com a mensagem do principal. */
+  function consultarLacre(digitado) {
+    const m = C.malotePorLacre(digitado);
+    if (!m) return { erro: 'Lacre inexistente. Confira o número no malote.' };
+    if (m.situacao !== 'disponivel') return { erro: 'Lacre já rompido - não pode ser reutilizado.' };
+    if (m.pdv !== POSTO.pdv || m.turno !== POSTO.turno) return { erro: 'A conta deste caixa não é destino desta transferência.' };
+    Object.assign(MALOTE, { lacre: m.lacre, dinheiro: m.especie, moedas: m.moedas, lacresSangria: m.lacresRetorno.slice(), lacreFechamento: m.lacreFechamento, rota: 'Malote ' + m.origem + ' → ' + m.destino, id: m.id });
+    return { m };
+  }
   const RESPONSAVEIS = ['Ana Paula', 'Bruna Costa', 'Carlos Henrique'];
   const SUPERVISORES = ['Marcos Lima', 'Patrícia Souza'];
   const MAQUININHAS = [['pagbank-1', 'PagBank Moderninha · série 8C12-4471'], ['pagbank-2', 'PagBank Smart · série 9A03-1180']];
   const CAMINHO = 'Entradas · Vendas / Faturamento / Lançamentos / VND - Abertura de Caixa';
 
-  const moeda = (centavos) => (centavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  /** "1.234,56" → 123456; vazio ou inválido → null. */
-  function centavos(texto) {
-    const limpo = String(texto || '').replace(/[R$\s.]/g, '').replace(',', '.');
-    if (!limpo || !/^\d+(\.\d{1,2})?$/.test(limpo)) return null;
-    return Math.round(Number(limpo) * 100);
-  }
-  const hora = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const { moeda, centavos, hora } = C;
 
-  const novoEstado = () => ({ lacre: '', encontrado: false, conferido: null, dinheiro: '', moedas: '', motivo: '', responsavel: '', supervisor: '', maquininha: '', tentou: false, abertoEm: null });
+  // Campos do formulário (só da Abertura). O que vale para as outras telas fica em C.estado.
+  const novoEstado = () => ({ lacre: '', encontrado: false, conferido: null, dinheiro: '', moedas: '', motivo: '', responsavel: '', supervisor: '', maquininha: '', tentou: false });
   let estado = novoEstado();
   let tela = null;
   let espera = 0;
@@ -66,8 +69,8 @@
   }
 
   function render() {
-    if (estado.abertoEm) return renderAberto();
-    const aviso = U.nota('Demonstração: dados fictícios, nada é gravado. Na casca, o único lacre válido é 001.');
+    if (C.estado.status !== 'fechado') return renderAberto();
+    const aviso = U.nota('Demonstração: dados fictícios, nada é gravado. Use um lacre criado em "Malote da Tesouraria" (o 001 do PDV 1 já existe).');
     aviso.classList.add('caixa-aviso');
     const intro = U.nota('Preencha os três blocos. A abertura só é confirmada depois da conferência do malote.');
     const passo = !estado.encontrado || estado.conferido === null ? 2 : 3;
@@ -116,7 +119,7 @@
     const lacre = entrada('text', estado.lacre, { placeholder: 'Ex.: 001', autocomplete: 'off', required: true });
     const status = el('small', 'caixa-status');
     status.setAttribute('role', 'status');
-    if (estado.lacre && !estado.encontrado) { status.textContent = 'Lacre não encontrado. Confira o número no malote.'; status.classList.add('erro'); }
+    if (estado.lacre && !estado.encontrado) { status.textContent = estado.erroLacre || 'Lacre não encontrado. Confira o número no malote.'; status.classList.add('erro'); }
     lacre.oninput = () => {
       clearTimeout(espera);
       estado.lacre = lacre.value;
@@ -127,7 +130,9 @@
       if (!lacre.value.trim()) return;
       // Simula a consulta do lacre na Tesouraria.
       espera = setTimeout(() => {
-        estado.encontrado = lacre.value.trim() === MALOTE.lacre;
+        const r = consultarLacre(lacre.value);
+        estado.encontrado = !r.erro;
+        estado.erroLacre = r.erro || '';
         render();
         const novo = tela.body.querySelector('.caixa-malote input');
         if (novo) { novo.focus(); novo.setSelectionRange(novo.value.length, novo.value.length); }
@@ -205,20 +210,43 @@
           ? el('p', 'caixa-diferenca bateu', '✓ Composição confirmada: dinheiro ' + moeda(MALOTE.dinheiro) + ' · moedas ' + moeda(MALOTE.moedas) + '.')
           : el('p', 'caixa-diferenca falta', 'Contagem informada: ' + moeda(contado) + ' para ' + moeda(MALOTE.dinheiro + MALOTE.moedas) + ' declarado.' + (estado.motivo.trim() ? ' Motivo: ' + estado.motivo.trim() : '')));
       },
-      salvar: () => { estado.abertoEm = hora(); render(); U.avisar('Caixa aberto às ' + estado.abertoEm + '.'); },
+      salvar: () => {
+        const abertoEm = hora();
+        // O turno nasce no estado único: o saldo inicial é o declarado (confere) ou o contado (divergência).
+        C.abrirCaixa({
+          pdv: POSTO.pdv, turno: POSTO.turno, usuario: POSTO.usuario, abertoEm,
+          lacre: estado.lacre.trim(), maquininha: maq,
+          responsavel: estado.responsavel, supervisor: estado.supervisor,
+          valorInicial: estado.conferido ? MALOTE.dinheiro + MALOTE.moedas : contado,
+          divergencia: estado.conferido ? 0 : contado - (MALOTE.dinheiro + MALOTE.moedas),
+          motivoDivergencia: estado.conferido ? '' : estado.motivo.trim(),
+          lacresSangria: MALOTE.lacresSangria.slice(), lacreFechamento: MALOTE.lacreFechamento,
+          contaId: C.contaDoPosto(POSTO.pdv, POSTO.turno).id, maloteId: MALOTE.id,
+        });
+        // Abrir é confirmar o recebimento: C.abrirCaixa recebe o malote pelo CONTADO e rompe o lacre.
+        estado = novoEstado(); // o formulário não carrega o malote antigo para a próxima abertura
+        render();
+        U.avisar('Caixa aberto às ' + abertoEm + '.');
+      },
     });
   }
 
   function renderAberto() {
+    const e = C.estado;
+    const a = e.abertura;
     const s = el('section', 'compras-secao caixa-bloco');
     const cab = el('div', 'compras-secao-cab');
-    cab.append(el('h3', null, 'Caixa aberto · ' + POSTO.pdv + ' · ' + POSTO.turno), U.situacao('Aberto às ' + estado.abertoEm, 'positivo'));
-    s.append(cab, U.nota('Responsável: ' + estado.responsavel + ' · Supervisor: ' + estado.supervisor + ' · Lacre ' + estado.lacre.trim() + '.'),
-      U.nota('As próximas telas da casca (turno, sangria, fechamento e Tesouraria) ainda serão desenhadas.'));
+    const fechando = e.status === 'em_fechamento';
+    cab.append(el('h3', null, (fechando ? 'Vendas encerradas · ' : 'Caixa aberto · ') + a.pdv + ' · ' + a.turno),
+      U.situacao(fechando ? 'Aguardando conferência' : 'Aberto às ' + a.abertoEm, fechando ? 'atencao' : 'positivo'));
+    s.append(cab, U.nota('Responsável: ' + a.responsavel + ' · Supervisor: ' + a.supervisor + ' · Lacre ' + a.lacre + '.'),
+      U.nota(fechando ? 'O fechamento será a próxima tela da casca.' : 'Próximo passo: acompanhar o turno (resumo, sangria, PDV e vendas).'));
     const acoes = el('div', 'caixa-acoes');
-    acoes.append(botao('Recomeçar a demonstração', () => { estado = novoEstado(); render(); }, 'btn secondary'));
+    acoes.append(botao('Recomeçar a demonstração', () => { C.reiniciar(); render(); }, 'btn secondary'));
+    if (!fechando) acoes.append(botao('Ir para o turno', () => C.abrir('turno'), 'btn'));
     tela.body.replaceChildren(s, acoes);
   }
 
+  C.aoReiniciar(() => { estado = novoEstado(); });
   C.registrar('abertura', abrir);
 })();
