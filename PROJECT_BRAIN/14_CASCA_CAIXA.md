@@ -185,6 +185,15 @@ campos e regras). Cards de Entradas → Caixas, na ordem do fluxo:
 - **Decisão:** "Fechou certo" continua exigindo o retorno já recebido em CNT - Tesouraria e só existe para caixa sem falta; "Teve quebra" e "Alterar status" pedem motivo; a mesma decisão repetida não grava de novo; nada é apagado.
 - Sementes dos 3 caixas de ontem ganharam o mesmo retrato (cx-91 tem uma parada de 09:10 a 09:42 e a folha R$ 5,00 a menos que o PDV).
 
+### Etapa 6 — Conferência final (06/11/2026)
+
+- **Fio ponta a ponta** (teste no navegador, 128 verificações): malote da Tesouraria → abertura (credita o caixa pelo contado) → turno (recebimento sem lacre, sangria pendente) →
+  sangria conferida pela Tesouraria (credita o Cofre) → fechamento (zera a conta do caixa, quebra incluída, cria o retorno final pendente) → retorno conferido (inclusive divergência encerrada com quebra) →
+  "Fechou certo" só depois do retorno recebido → histórico na Gerência/Fechamentos sem a contagem. Console sem erros.
+- **Larguras e temas:** 12 telas × 1440/1024/768/390 × Luz/Sombra = 96 combinações, sem rolagem horizontal.
+- **Nota sobre o teste:** o `rotas.js` da main reabre o endereço atual quando o evento `load` dispara; o teste de larguras passou a esperar o `load` antes de clicar (antes, rodadas isoladas falhavam ao acaso porque o menu voltava por cima da tela aberta). Não é código do Caixa.
+- Fora do Caixa nada foi alterado além das linhas do menu em `dist/index.html`. Pendentes de decisão do Rodrigo/Marco: ver "Falta" e `Caixa-Brain/13 - Dúvidas abertas.md`.
+
 ## Falta
 
 1. **Maquininha manhã/tarde** (acumulado − manhã) e posto escolhível (hoje fixo PDV 1 · Manhã).
