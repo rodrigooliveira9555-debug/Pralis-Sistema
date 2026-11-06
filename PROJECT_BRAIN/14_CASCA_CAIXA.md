@@ -119,7 +119,21 @@ campos e regras). Cards de Entradas → Caixas, na ordem do fluxo:
   aguardando conferência"); o **recebimento sem lacre** é uma transferência `sem_lacre` que o operador
   confirma ("entra no saldo") ou recusa ("Não recebi"; volta à origem).
 - `turno.js` (303 linhas) + `turno-dialogos.js` (217): nenhum arquivo acima de ~400 linhas, exceto
-  `fechamento.js` (589), que será quebrado na etapa 2.
+  (o `fechamento.js` de 589 linhas foi quebrado na etapa 2).
+
+### Etapa 2 — Fechamento (06/11/2026)
+
+- `fechamento.js` (162 linhas: tela, gerente responsável, navegação, caixa fechado) + `fechamento-comum.js` (49:
+  constantes, ajudantes e o "valor do PDV" que a folha e a maquininha comparam; `ctx` guarda só o que é da
+  tela) + `fechamento-vendas.js` (189: contagem cega, folha CREARE simulada, gerar relatório) +
+  `fechamento-maquininha.js` (141: maquininha e relatório final Folha × PDV × Maquininha) +
+  `fechamento-revisao.js` (112: etapa 4 e "Revisar fechamento do caixa"). Nenhum arquivo acima de ~400 linhas.
+- Comportamento igual ao já aprovado; novo teste de erro: **folha corrigida à mão** (exige justificativa ≥ 5
+  letras) aparece em "Folha R$ X a mais que o PDV" no relatório final, **só informa** e não bloqueia o
+  fechamento (só a contagem física gera quebra e exige observação).
+- Fio: o lacre de fechamento reservado viaja com o **retorno final** (transferência pendente Caixa → Cofre);
+  a conta do caixa zera (vendas e quebra/sobra viram lançamentos); o Cofre só recebe quando a Tesouraria
+  confirmar (etapa 4).
 
 ## Falta
 
