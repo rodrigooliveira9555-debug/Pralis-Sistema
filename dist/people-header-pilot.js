@@ -199,9 +199,9 @@
   try{const value=JSON.parse(localStorage.getItem(orderKey)||'[]');if(Array.isArray(value))buttonOrder=value.filter(key=>typeof key==='string')}catch{}
   function persistButtonOrder(){try{localStorage.setItem(orderKey,JSON.stringify(buttonOrder))}catch{}}
   const fixedKeys=new Set(['search','sort','date','save']);
-  /* Todos os botões do menu rápido começam ligados, no menu suspenso (três pontinhos), em todas as telas; cada um pode ir para o menu rápido ou ser desligado no painel Configurar menu rápido. */
+  /* Todos os botões do menu rápido começam inativos em todas as telas; o Rodrigo ativa, tela por tela, no painel Configurar menu rápido, o que quiser no menu suspenso (três pontinhos) ou no menu rápido. */
   const pinned=key=>preferences[key]===true;
-  const enabled=key=>fixedKeys.has(key)||preferences._disabled?.[key]!==true;
+  const enabled=key=>fixedKeys.has(key)||preferences._disabled?.[key]===false;
   function normalizePreferences(value){
    const next=value&&typeof value==='object'&&!Array.isArray(value)?{...value}:{};
    if(next._hidden&&typeof next._hidden==='object')for(const [key,hidden] of Object.entries(next._hidden))if(hidden===true)next[key]=false;
