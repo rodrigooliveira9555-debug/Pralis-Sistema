@@ -9,6 +9,7 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastif
 import { ZodError } from "zod";
 import { problema } from "@cicluz/shared";
 import { exigirAutenticacao } from "./auth/guards.ts";
+import { registrarRotasAcessos } from "./acessos/acessos.controller.ts";
 import { registrarRotasAgenda } from "./agenda/agenda.controller.ts";
 import { registrarRotasAuth } from "./auth/auth.controller.ts";
 import { registrarRotasConsultas } from "./consultas/consultas.controller.ts";
@@ -110,6 +111,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registrarRotasAuth(app);
   await registrarRotasDocumentos(app);
   await registrarRotasUsuarios(app);
+  await registrarRotasAcessos(app);
   await registrarRotasConsultas(app);
   await registrarRotasLancamentos(app);
   await registrarRotasAgenda(app);

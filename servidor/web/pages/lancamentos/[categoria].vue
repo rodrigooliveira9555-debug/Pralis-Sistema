@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Package, PiggyBank, Plus, Receipt, Repeat } from "lucide-vue-next";
-import { CATEGORIAS_LANCAMENTO, diaNegocio, type CategoriaLancamento, type LancamentoResposta } from "@cicluz/shared";
+import { CATEGORIAS_LANCAMENTO, diaNegocio, type CategoriaLancamento, type ChavePermissao, type LancamentoResposta } from "@cicluz/shared";
 import { CATEGORIAS, formatarData, formatarMoeda } from "~/utils/formato";
 
 const route = useRoute();
@@ -12,7 +12,8 @@ const info = computed(() => CATEGORIAS[categoria.value]);
 const estilo = useEstiloOrigem(() => info.value.origem);
 const icone = computed(() => ({ despesas: Receipt, mercadorias: Package, retiradas: PiggyBank })[categoria.value]);
 const sessao = useSessao();
-const administrador = computed(() => sessao.value?.papel === "administrador");
+// Mesmas permissões que a API cobra (cargos de acesso, Configurações › Permissões).
+const pode = (chave: ChavePermissao) => sessao.value?.permissoes.includes(chave) ?? false;
 useHead(() => ({ title: `${info.value.titulo} · CICLUZ` }));
 
 // Período padrão: o mês corrente (dia de negócio em São Paulo).
@@ -154,7 +155,7 @@ async function cancelarSerie(item: LancamentoResposta) {
             <span class="linha-valor">{{ formatarMoeda(item.valorTotal) }}</span>
           </button>
           <v-btn
-            v-if="administrador && item.recorrenciaId && !item.dataPagamento"
+            v-if="pode('lancamentos_cancelar_serie') && item.recorrenciaId && !item.dataPagamento"
             size="small"
             variant="text"
             color="error"

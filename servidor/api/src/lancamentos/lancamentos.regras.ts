@@ -18,7 +18,7 @@ import type { NovoItem } from "./lancamentos.repository.ts";
 // Regras de Lançamentos (PROJECT_BRAIN/17 do principal), sem banco: quem grava é o service.
 
 export function exigir(perfil: PerfilSessao, acao: AcaoLancamento, mensagem: string) {
-  if (!podeNoLancamento(perfil.papel, acao)) throw new ErroDominio(mensagem, 403, "INSUFFICIENT_PERMISSION", { permissao: acao });
+  if (!podeNoLancamento(perfil.permissoes, acao)) throw new ErroDominio(mensagem, 403, "INSUFFICIENT_PERMISSION", { permissao: acao });
 }
 
 function erroValidacao(mensagem: string, codigo = "VALIDATION_ERROR") {
@@ -26,7 +26,7 @@ function erroValidacao(mensagem: string, codigo = "VALIDATION_ERROR") {
 }
 
 // Datas de pagamento:
-// - Despesa e mercadoria (R-203): não pode ser anterior a hoje; só o administrador retroage.
+// - Despesa e mercadoria (R-203): não pode ser anterior a hoje; só quem tem pagamento retroativo retroage.
 // - Retirada (R-129): nunca anterior a hoje, para ninguém (o principal tem essa diferença; mantida).
 // Edição que não mexe na data continua valendo, para o histórico seguir editável.
 export function conferirDataPagamento(
@@ -37,9 +37,9 @@ export function conferirDataPagamento(
 ) {
   const data = nova?.slice(0, 10) || null;
   if (!data || (anterior && anterior.slice(0, 10) === data)) return;
-  exigir(perfil, "pagar", "Só o administrador registra pagamento.");
+  exigir(perfil, "pagar", "Sem permissão para registrar pagamento.");
   if (!dataPagamentoNoPassado(data)) return;
-  if (categoria !== "retiradas" && podeNoLancamento(perfil.papel, "pagamento_retroativo")) return;
+  if (categoria !== "retiradas" && podeNoLancamento(perfil.permissoes, "pagamento_retroativo")) return;
   throw erroValidacao("Data de pagamento não pode ser anterior a hoje");
 }
 
