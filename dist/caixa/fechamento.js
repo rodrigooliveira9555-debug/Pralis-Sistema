@@ -14,7 +14,7 @@
   const { el, botao, campo, entrada, seletor } = U;
   const { moeda, centavos } = C;
 
-  const CAMINHO = 'Entradas · Vendas / Faturamento / Caixas / Fechamento do caixa';
+  const CAMINHO = 'Entradas · Vendas / Faturamento / Lançamentos / VND - Fechamento de Caixa';
   const ETAPAS = ['Vendas', 'Maquininha', 'Relatório final', 'Fechamento'];
   // [chave, rótulo, compara com o PDV?]
   const CAMPOS_FOLHA = [
@@ -52,7 +52,7 @@
   };
 
   function abrir() {
-    if (!tela) tela = C.criarTela({ id: 'caixa-fechamento', titulo: 'Fechamento do caixa', caminho: CAMINHO });
+    if (!tela) tela = C.criarTela({ id: 'caixa-fechamento', titulo: 'VND - Fechamento de Caixa', caminho: CAMINHO });
     tela.ativar();
     montar();
     const f = C.estado.fechamento;

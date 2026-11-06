@@ -13,7 +13,7 @@
   const { el, botao, campo, entrada, seletor } = U;
   const { moeda } = C;
 
-  const CAMINHO = 'Entradas · Vendas / Faturamento / Caixas / Conferência da Tesouraria';
+  const CAMINHO = 'Entradas · Vendas / Faturamento / Lançamentos / VND - Conferência de Fechamentos';
   const PARA_CONFERIR = ['aguardando_tesouraria', 'fechado_sem_pendencias', 'com_quebra'];
   let tela = null;
   let corpo = null;
@@ -31,7 +31,7 @@
   const classeDif = (d) => (d < 0 ? 'falta' : d > 0 ? 'sobra' : 'bateu');
 
   function abrir() {
-    if (!tela) tela = C.criarTela({ id: 'caixa-conferencia', titulo: 'Conferência da Tesouraria', caminho: CAMINHO });
+    if (!tela) tela = C.criarTela({ id: 'caixa-conferencia', titulo: 'VND - Conferência de Fechamentos', caminho: CAMINHO });
     tela.ativar();
     montar();
   }

@@ -38,6 +38,18 @@
   Relações do mapa mental: `relacoes` [{ id, de, para, rotulo }] (somem junto com o compromisso). Preferência do
   aparelho: `cicluz-agenda-mapa` (estrutura, agrupamento, recolhidos).
   Código: `dist/agenda/` (dominio, dados, calendario, kanban, telas, alertas, agenda.css).
+- `producao-v1` (05/11/2026) — Produção num documento: `produtos` (configuração por `produtoId` do Compras: `formato`
+  {utensilioId, colunas, linhas, exatidao, aceitaMeia}, `comEstoque`, `estoqueMin/Max`, `producaoMax`, `localEstoqueId`,
+  `processoPrincipal`, `conferencia` nenhuma|1|2), `fichas` (produtoId, nome, padrao, quantidadeBase, rendimento, `etapas`
+  com processo, parte, faixa, localId, instrucao, ingredientes {produtoId, quantidade, unidade} e recursos {patrimonioId,
+  tempoMin, acompanhamento 0–1, nivel, faixa}), `agendas`, `ocorrencias`, `pedidos` (itens com quantidade, real, recebido,
+  sobra, descarte, `doEstoque`, `produzir`, `entrouEstoque`), `ordens` (origem pedido|reposicao, cópia das etapas da ficha no
+  envio com cargo/nível, início/fim de cada etapa, `estoqueLancado`, `pendenciasEstoque`) e `parametros` (horasMes,
+  encargosPct, precoKwh, precoGasKg). O produto do Compras não muda de formato; a Produção grava em `cicluz-compras-v1 ›
+  movimentos` os tipos `consumo_producao`, `entrada_producao`, `saida_abastecimento` e `sobra_retorno` (com o id da
+  ordem/pedido de produção, para não repetir). Código: `dist/producao/` (dominio, dados, servico, modulo, telas-*, producao.css).
+- `patrimonio-v1` (05/11/2026) — bens (RET - Patrimônios). As duas chaves são sincronizadas e adotadas do aparelho
+  (`servidor/shared/src/documentos.ts`); começam vazias, sem dado de exemplo.
 
 **Preferência de interface:** `tema`, `menu-ordem`, `menu-item-order-v1`, `sidebar-sections-v1`,
 `menu-visibility`, `people-display-v1`, `people-footer-*`, `{key}-sort`, `{key}-display`,

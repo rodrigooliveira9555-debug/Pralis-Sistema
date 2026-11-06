@@ -16,7 +16,7 @@
   const { el, botao, campo, entrada, seletor } = U;
   const { moeda, centavos } = C;
 
-  const CAMINHO = 'Entradas · Vendas / Faturamento / Caixas / Turno do caixa';
+  const CAMINHO = 'Entradas · Vendas / Faturamento / Lançamentos / VND - Turno do Caixa';
   const MOTIVOS = [
     'Falta de energia na loja', 'Oscilação ou pane elétrica', 'Internet caiu', 'Esbarrão em fio / cabo desconectado',
     'Computador travou, tive que reiniciar', 'Limpeza ou manutenção na loja', 'Atualização do sistema (Windows)', 'Outro',
@@ -28,7 +28,7 @@
   let conteudo = null;
 
   function abrir() {
-    if (!tela) tela = C.criarTela({ id: 'caixa-turno', titulo: 'Turno do caixa', caminho: CAMINHO });
+    if (!tela) tela = C.criarTela({ id: 'caixa-turno', titulo: 'VND - Turno do Caixa', caminho: CAMINHO });
     tela.ativar();
     montar();
   }

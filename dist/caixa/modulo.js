@@ -1,6 +1,6 @@
 /*
  * Caixa — entrada do módulo no menu do S2 (casca: só tela, dados fictícios, nada gravado).
- * Entradas · Vendas / Faturamento → Caixas abre os cards abaixo. Fluxo e regras vêm do Caixa do
+ * Entradas · Vendas / Faturamento → Lançamentos traz o cartão abaixo. Fluxo e regras vêm do Caixa do
  * sistema principal (web-vue/components/caixa); o visual é o das telas internas do S2.
  * Cada tela se registra com CicluzCaixa.registrar(nome, abrir).
  *
@@ -13,22 +13,22 @@
   const U = window.CicluzComprasUI;
   const COR = '#eab308';
   const COR_TEXTO = '#785600';
-  const ICONE = '<path d="M3 9 4.5 4h15L21 9M3 9v11h18V9M3 9h18M9 20v-6h6v6"/>';
+  const ICONE = '<path d="' + telaIcone.computador + '"/>';
   const telas = {};
   const reinicios = [];
 
   // Adaptação da casca: no principal a criação do malote fica em Transferências e a Conferência/Histórico
   // em telas próprias; aqui tudo mora nos cards de Entradas → Caixas, na ordem em que o fluxo acontece.
   const CARDS = [
-    ['malote', 'Malote da Tesouraria', 'Criar o malote com lacre e enviar dinheiro ao PDV'],
-    ['abertura', 'Abertura do caixa', 'Conferir o malote e abrir o turno'],
-    ['turno', 'Turno do caixa', 'Resumo, sangria, PDV e vendas'],
-    ['fechamento', 'Fechamento do caixa', 'Contagem, folha, maquininha e lacre'],
-    ['conferencia', 'Conferência da Tesouraria', 'Fechou certo ou teve quebra'],
-    ['gerencia', 'Gerência', 'Monitor, mensagens e histórico de caixas'],
+    ['malote', 'VND - Malote da Tesouraria', 'Criar o malote com lacre e enviar dinheiro ao PDV'],
+    ['abertura', 'VND - Abertura de Caixa', 'Conferir o malote e abrir o turno'],
+    ['turno', 'VND - Turno do Caixa', 'Resumo, sangria, PDV e vendas'],
+    ['fechamento', 'VND - Fechamento de Caixa', 'Contagem, folha, maquininha e lacre'],
+    ['conferencia', 'VND - Conferência de Fechamentos', 'Fechou certo ou teve quebra'],
+    ['gerencia', 'VND - Gerência de Caixas', 'Monitor, mensagens e histórico de caixas'],
   ];
 
-  const voltar = () => openSection(sections[0][0], 'Caixas', 'caixa', COR);
+  const voltar = () => menuBack(0, 'Lançamentos')();
 
   /* ---------- Formatação (dinheiro sempre em centavos) ---------- */
 

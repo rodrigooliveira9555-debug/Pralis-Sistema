@@ -29,6 +29,20 @@
       "when": 1793894362985,
       "tag": "0003_agenda_chat_arquivos",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793983770289,
+      "tag": "0004_cargos_acesso_e_postos",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793985700633,
+      "tag": "0005_acesso_de_antes_explicito",
+      "breakpoints": true
     }
   ]
 }

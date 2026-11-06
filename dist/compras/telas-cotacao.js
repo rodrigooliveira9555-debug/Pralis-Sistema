@@ -10,7 +10,7 @@
   const SV = window.CicluzComprasServico;
   const M = window.CicluzCompras;
   const { el, botao, campo, entrada, seletor } = U;
-  const CAMINHO = 'Saídas · Mercadorias / CMV / Compras / ';
+  const CAMINHO = 'Saídas · Mercadorias / Lançamentos / ';
   const dataHora = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   const linkFornecedor = (token) => new URL('rodada.html?t=' + encodeURIComponent(token), location.href).href;
 
@@ -20,7 +20,7 @@
 
   function abrir() {
     if (!tela) {
-      tela = U.criarTela({ id: 'compras-cotacao', titulo: 'Cotação por fornecedor', caminho: CAMINHO + 'Cotação por fornecedor', icone: 'compras', voltar: M.voltarCompras });
+      tela = U.criarTela({ id: 'compras-cotacao', titulo: 'MER - Cotação por Fornecedor', caminho: CAMINHO + 'MER - Cotação por Fornecedor', icone: 'cotacao', voltar: M.voltarLancamentos });
       U.atalho(tela, 'Pedido urgente', 'M13 2 4 14h7l-1 8 9-12h-7Z', () => pedidoUrgente(), { criar: true });
       // Respostas dadas na página do fornecedor (outra aba) atualizam esta tela.
       document.addEventListener('cicluz-compras-mudou', (e) => { if (e.detail && e.detail.externo && tela.view.classList.contains('show') && !document.querySelector('.compras-dialog[open]')) render(); });
@@ -62,7 +62,7 @@
     D.COLUNAS_MATRIZ.forEach(([k, t]) => cols.push([t, (p) => { const n = matriz.get(p.id)[k]; return n ? String(n) : '–'; }, 'num' + (k === 'com_aumento' ? ' col-aumento' : '')]));
     const tab = U.tabela(cols, produtos, {
       aoClicar: (p) => cotacaoProduto(p.id),
-      vazioTexto: linhas.length ? 'Nenhum produto com esse filtro.' : 'Nenhum produto em cotação agora. Envie um pedido em Solicitação de compra ou faça um Pedido urgente.',
+      vazioTexto: linhas.length ? 'Nenhum produto com esse filtro.' : 'Nenhum produto em cotação agora. Envie um pedido em MER - Pedido de Compra ou faça um Pedido urgente.',
       classeLinha: (p) => (matriz.get(p.id).com_aumento > 0 && !(matriz.get(p.id).comprado > 0) ? 'destaque' : ''),
     });
     tab.querySelectorAll('tr.destaque td.col-aumento').forEach((td) => td.classList.add('destaque'));
@@ -109,7 +109,7 @@
         bloco('Para você decidir', grupos.decidir, '', (l) => linhaOferta(l, true));
         bloco('Aguardando o fornecedor', grupos.aguardando, '', (l) => linhaOferta(l, false));
         bloco('Sem oferta', grupos.sem, '', (l) => linhaOferta(l, false));
-        bloco('Comprado', grupos.comprado, 'Já é pedido: acompanhe em Pedidos a receber.', (l) => linhaOferta(l, false));
+        bloco('Comprado', grupos.comprado, 'Já é pedido: acompanhe em MER - Pedidos a Receber.', (l) => linhaOferta(l, false));
         if (!linhas.length) form.append(U.vazio('Nenhuma oferta aberta para este produto.'));
       },
     });
@@ -168,7 +168,7 @@
         salvar: (ctx) => {
           const r = SV.aceitarOferta(c.id, pid, Boolean(ctx.i2 && ctx.i2.checked));
           if (r.erro) return r.erro;
-          fechar(); U.avisar('Comprado. Veja em Pedidos a receber.'); render();
+          fechar(); U.avisar('Comprado. Veja em MER - Pedidos a Receber.'); render();
         },
       });
     }

@@ -14,7 +14,8 @@ servidor/
   Dockerfile, docker-compose.coolify.yml   deploy no Coolify (a imagem gera o app e a API o entrega)
 dist/
   entrar.html, entrar.css, entrar.js, entrar-tema.js   tela de entrada
-  usuarios.html, usuarios.css, usuarios.js              minha senha, acessos e situação dos dados
+  acessos/            Configurações (Usuários, Permissões, Senhas) no menu do site: contas, postos
+                      do caixa, cargos de acesso, exceções por pessoa, senhas e situação dos dados
   cicluz-sync.js      chamadas à API e marcas de sincronização (usado pelas páginas avulsas)
   cicluz-sessao.js    porteiro do index: exige login e envia cada gravação ao servidor
 ```

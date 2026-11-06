@@ -3,7 +3,7 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,DB=window.CicluzDateBR;if(!P||!U||!DB)return;
 const {el,button,iconButton,svg,ICON,fold,dateBR,today,enumField,dialog,confirmDialog}=U;
-const ACCENT='#7c3aed',PATH='Cadastros / Gestão de Pessoas / Período de Teste',HOURGLASS='M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9';
+const ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Período de Teste'),HOURGLASS=telaIcone.periodo;
 const STATUSES=['Aguardando início','Em andamento','Prazo encerrado','Aprovado para continuidade','Não aprovado','Cancelado'];
 const DECISION_STATUS=new Set(['Aprovado para continuidade','Não aprovado']),DATE_STATUS=new Set(['Aguardando início','Em andamento','Prazo encerrado']);
 const PILL={'Aguardando início':'p-yellow','Em andamento':'p-yellow','Prazo encerrado':'p-red','Aprovado para continuidade':'p-green','Não aprovado':'p-red',Cancelado:'p-red'};
@@ -16,9 +16,9 @@ const dateStatus=(start,end)=>{const t=today();return t<start?'Aguardando iníci
 
 const view=el('section','view');view.id='trial-view';view.style.setProperty('--menu-accent',ACCENT);
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
-const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(HOURGLASS);const heading=el('div');heading.append(el('h2',null,'Período de Teste'),el('p',null,PATH));head.append(heading);
+const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(HOURGLASS);const heading=el('div');heading.append(el('h2',null,'DES - Período de Teste'),el('p',null,PATH));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
-addShortcuts(view.id,()=>openSection(sections[7][0],'Gestão de Pessoas','people-settings',ACCENT));
+addShortcuts(view.id,()=>menuBack(2,'Lançamentos Colaboradores')());
 const alerts=el('div','people-alerts');alerts.setAttribute('role','status');
 body.append(el('div','form-note','Etapa de acompanhamento definida pelo DP, entre o Exame Admissional (APTO) e o Cadastro Completo com Dependente. Não gera contrato de experiência, folha, vínculo ou descontos. O prazo encerrado não aprova o candidato: a decisão é sempre do DP.'),alerts);
 
@@ -30,13 +30,16 @@ const cand=enumField('Colaborador *','Buscar candidato');
 const jobOut=el('input');jobOut.readOnly=true;jobOut.placeholder='Selecione o candidato';
 const start=DB.field('Data de início do teste *'),end=DB.field('Data final do teste *');
 const daysOut=el('input');daysOut.readOnly=true;daysOut.placeholder='Calculado pelas datas';
+/* Payment reference of the candidate's sector (information only: no value is calculated or marked as paid here). */
+const payRef=el('p','uniforms-wide profiles-note trial-pay-ref');
+function paintPayRef(p){const R=window.CicluzPaymentRefs;if(!p){payRef.textContent='';return}if(!p.sector){payRef.textContent='Referência de pagamento: setor do candidato não informado.';return}const r=R?.current(p.sector,'trial');payRef.textContent=r?'Referência de pagamento do setor '+p.sector+': '+U.money(r.valueCents)+' por dia, vigente desde '+dateBR(r.from)+' ('+r.source+'). O cálculo e o status Pendente/Pago aguardam a confirmação da regra.':'Referência de pagamento do setor '+p.sector+': aguardando a tabela oficial (Cadastros Geral Colaboradores → DES - Referências de Pagamento).'}
 const deadline=el('div','uniforms-wide occurrences-period');deadline.setAttribute('aria-live','polite');
 const status=el('select');STATUSES.forEach(s=>{const o=new Option(s,s);if(DECISION_STATUS.has(s))o.disabled=true;status.add(o)});
 const notes=el('textarea');notes.rows=4;notes.addEventListener('focusout',e=>e.stopPropagation());
 const decision=el('div','uniforms-wide people-decision');
 const formError=el('p','uniforms-wide profiles-error');formError.setAttribute('role','alert');const formStatus=el('p','uniforms-wide profiles-note');formStatus.setAttribute('role','status');
 const actions=el('div','uniforms-wide actions');const save=el('button','btn','Salvar');save.type='submit';actions.append(button('Cancelar',()=>{resetForm();formStatus.textContent='Edição descartada.'}),save);
-form.append(formTitle,cand.label,lbl('Função e turno',jobOut),start.label,end.label,lbl('Quantidade de dias',daysOut),lbl('Status do período de teste *',status),deadline,lbl('Observações',notes,'uniforms-wide'),decision,formError,formStatus,actions);
+form.append(formTitle,cand.label,lbl('Função e turno',jobOut),start.label,end.label,lbl('Quantidade de dias',daysOut),payRef,lbl('Status do período de teste *',status),deadline,lbl('Observações',notes,'uniforms-wide'),decision,formError,formStatus,actions);
 const history=el('div','uniforms-history');body.append(form,history);
 
 function candOptions(cur=cand.select.value){const q=fold(cand.search.value);cand.select.replaceChildren(new Option('Selecione o candidato',''));const list=data().people.filter(p=>eligible(p)||p.id===cur);
@@ -44,7 +47,7 @@ function candOptions(cur=cand.select.value){const q=fold(cand.search.value);cand
 cand.search.addEventListener('input',()=>candOptions());
 cand.select.addEventListener('change',()=>{const p=P.byId(cand.select.value);if(p?.trial)loadTrial(p);else{jobOut.value=jobText(p);renderDates();renderDecision()}});
 /* Dates drive the day count, the deadline indicator and, while no decision exists, the date-based status. */
-function renderDates(){const s=start.iso(),e=end.iso();end.node.setCustomValidity(s&&e&&e<s?'A data final não pode ser anterior à inicial.':'');const n=P.trialDays(s,e);daysOut.value=n?n+' dia'+(n>1?'s':'')+' corrido'+(n>1?'s':''):'';
+function renderDates(){const s=start.iso(),e=end.iso();paintPayRef(P.byId(cand.select.value));end.node.setCustomValidity(s&&e&&e<s?'A data final não pode ser anterior à inicial.':'');const n=P.trialDays(s,e);daysOut.value=n?n+' dia'+(n>1?'s':'')+' corrido'+(n>1?'s':''):'';
  const p=P.byId(cand.select.value);deadline.classList.remove('is-emphasis','is-alert');
  if(s&&e&&e<s){deadline.textContent='A data final não pode ser anterior à inicial.';deadline.classList.add('is-alert');return}
  if(!n){deadline.textContent='Informe início e fim para calcular a quantidade de dias e o prazo.';return}

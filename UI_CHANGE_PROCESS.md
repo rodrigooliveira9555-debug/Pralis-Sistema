@@ -366,5 +366,8 @@ Matriz: Gestão de Pessoas, cabeçalho aberto/recolhido/restaurado, menu inicial
 
 Verificação303: reproduzida faixa roxa6px após ocultar; corrigida para branca na prévia375px, com retorno#7c3aed ao reabrir. Padding do conteúdo14px preservado, margem superior móvel6px/safe-area e desktop0px. Três botões de data32px com fundo branco e símbolo#7c3aed; limpar/fechar confirmados. Tema alternado e retorno ao menu conferidos. Sintaxe e diff sem erros. Sem aparelho físico para validar a interface externa do Safari.
 
-## 05/11/2026 — menu Outros em cinco tópicos
+## 05/11/2026 — menu reorganizado por origem (supera "menu Outros em cinco tópicos")
+Impacto: `sections` e `menuTree` em `index.html`, `agenda-menu.js`, trilhas e Voltar de todas as telas movidas (Cargos, Atualização salarial, Ficha de Cargos, Organograma, Área/Setor/Local, Cadastro simples/completo, Colaboradores, Exame, Período de Teste, Uniformes, Compras de Uniformes, Ocorrências, Documentações, grupos financeiros, Patrimônios, Fornecedores e Produtos). Verificar em 320/390/1024, claro e escuro.
+
+## 05/11/2026 — menu Outros em cinco tópicos (superada)
 Impacto: menu principal (OUTROS), `sections` em `index.html`, `agenda-menu.js`, trilhas e botões voltar de Cargos, Área/Setor/Local, Organograma, Ficha de Cargos, Colaboradores, Exame, Entrevista, Ocorrências, Período de Teste, Uniformes e Compras de Uniformes, e Configurações do Diretor de Operações. Verificado em localhost: estrutura do menu e abertura de cada item. Não verificado: celular e tema escuro nessa área; `tests/footer-toolbar.py` não roda neste PC.

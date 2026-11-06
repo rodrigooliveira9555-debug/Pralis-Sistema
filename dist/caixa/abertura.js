@@ -26,7 +26,7 @@
   const RESPONSAVEIS = ['Ana Paula', 'Bruna Costa', 'Carlos Henrique'];
   const SUPERVISORES = ['Marcos Lima', 'Patrícia Souza'];
   const MAQUININHAS = [['pagbank-1', 'PagBank Moderninha · série 8C12-4471'], ['pagbank-2', 'PagBank Smart · série 9A03-1180']];
-  const CAMINHO = 'Entradas · Vendas / Faturamento / Caixas / Abertura do caixa';
+  const CAMINHO = 'Entradas · Vendas / Faturamento / Lançamentos / VND - Abertura de Caixa';
 
   const { moeda, centavos, hora } = C;
 
@@ -37,7 +37,7 @@
   let espera = 0;
 
   function abrir() {
-    if (!tela) tela = C.criarTela({ id: 'caixa-abertura', titulo: 'Abertura do caixa', caminho: CAMINHO });
+    if (!tela) tela = C.criarTela({ id: 'caixa-abertura', titulo: 'VND - Abertura de Caixa', caminho: CAMINHO });
     tela.ativar();
     render();
   }

@@ -3,8 +3,8 @@
 'use strict';
 const D=window.CicluzUniformData,U=window.CicluzUniformUI,DB=window.CicluzDateBR,R=window.CicluzOccurrenceReader;if(!D||!U||!DB||!R)return;
 const {el,button,iconButton,svg,ICON,fold,newId,dateBR,today,enumField,dialog,confirmDialog}=U;
-const KEY='cicluz-ocorrencias-v1',ACCENT='#7c3aed',PATH='Lançamentos / Gestão de Pessoas / Ocorrências',MAX=10*1024*1024;
-const ACCEPT=['image/jpeg','image/png','application/pdf'],DOC_ICON='M14 3H6v18h12V7zM14 3v4h4M9 13h6M9 17h6',CAMERA='M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',SCAN='M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M7 12h10';
+const KEY='cicluz-ocorrencias-v1',ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Ocorrências'),MAX=10*1024*1024;
+const ACCEPT=['image/jpeg','image/png','application/pdf'],DOC_ICON=telaIcone.ocorrencias,CAMERA='M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',SCAN='M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M7 12h10';
 const TYPES=[
  ['DECLARAÇÃO',{medical:true,hint:'Priorize data, documento, clínica e identificação do profissional, quando aplicável.'}],
  ['FALTA INJUSTIFICADA',{days:true,hint:'Registre dias, motivo declarado, comunicação e status. Documento médico não é exigido.'}],
@@ -34,9 +34,9 @@ const sizeText=n=>n<1024*1024?Math.max(1,Math.round(n/1024))+' KB':(n/1024/1024)
 
 const view=el('section','view');view.id='occurrences-view';view.style.setProperty('--menu-accent',ACCENT);
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
-const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(DOC_ICON);const heading=el('div');heading.append(el('h2',null,'Ocorrências'),el('p',null,PATH));head.append(heading);
+const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(DOC_ICON);const heading=el('div');heading.append(el('h2',null,'DES - Ocorrências'),el('p',null,PATH));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
-addShortcuts(view.id,()=>openSection(sections[8][0],'Gestão de Pessoas','forms',ACCENT));
+addShortcuts(view.id,()=>menuBack(2,'Lançamentos Colaboradores')());
 const addButton=button('',()=>{resetForm();formStatus.textContent='';collab.search.closest('label').querySelector('select').focus()},'shortcut-circle');addButton.title='Nova ocorrência';addButton.setAttribute('aria-label','Nova ocorrência');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
 const loadNote=el('p','profiles-error');loadNote.setAttribute('role','alert');
 body.append(el('div','form-note','Simulação local: ocorrências ficam neste navegador. Anexos e dados médicos (clínica, CID, médico e CRM) ficam só na memória e são perdidos ao atualizar a página. Nenhuma penalidade, desconto ou desligamento é aplicado automaticamente.'),loadNote);
@@ -59,7 +59,7 @@ const attachBox=el('div','uniforms-wide occurrences-attachments');
 const pick=el('input');pick.type='file';pick.accept='.jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf';pick.multiple=true;pick.hidden=true;
 const camera=el('input');camera.type='file';camera.accept='image/*';camera.setAttribute('capture','environment');camera.hidden=true;
 const replace=el('input');replace.type='file';replace.accept=pick.accept;replace.hidden=true;let replacing=null;
-const attachTools=el('div','occurrences-tools');const pickBtn=button('Selecionar arquivos',()=>pick.click());const camBtn=button('Usar câmera',()=>camera.click());attachTools.append(pickBtn,camBtn);
+const attachTools=el('div','occurrences-tools');const comIcone=(btn,d)=>{const quadro=el('span','btn-icone-quadro');quadro.innerHTML=svg(d);btn.prepend(quadro);btn.classList.add('btn-com-icone');return btn};const pickBtn=comIcone(button('Selecionar arquivos',()=>pick.click()),DOC_ICON);const camBtn=comIcone(button('Usar câmera',()=>camera.click()),CAMERA);attachTools.append(pickBtn,camBtn);
 const attachList=el('div','occurrences-files');const attachMsg=el('p','profiles-note');attachMsg.setAttribute('role','status');
 attachBox.append(el('span','uniforms-enum-label','Foto ou documento da ocorrência'),attachTools,el('p','profiles-note','JPG, JPEG, PNG ou PDF, até 10 MB cada. Os arquivos não são enviados a servidores.'),attachList,attachMsg,pick,camera,replace);
 /* Medical document data */
@@ -74,8 +74,32 @@ paintMedNote();
 /* Free text and document codes keep exactly what was typed: stop the platform's name capitalization on blur. */
 for(const n of [reason,med.cid,med.crm])n.addEventListener('focusout',e=>e.stopPropagation());
 const formError=el('p','uniforms-wide profiles-error');formError.setAttribute('role','alert');const formStatus=el('p','uniforms-wide profiles-note');formStatus.setAttribute('role','status');
-const actions=el('div','uniforms-wide actions');const save=el('button','btn','Salvar Ocorrência');save.type='submit';actions.append(button('Cancelar',()=>{resetForm();formStatus.textContent='Ocorrência descartada.'}),save);
-form.append(formTitle,collab.label,typeLabel,hint,dateIn.label,daysLabel,period,statusLabel,commBox,reasonLabel,attachBox,...medLabels,medNote,formError,formStatus,actions);
+const actions=el('div','uniforms-wide actions');const save=el('button','btn','Salvar Ocorrência');save.type='submit';actions.append(button('Cancelar',()=>{if(!dirty){resetForm();formStatus.textContent='Nada a descartar.';return}confirmDialog('Descartar alterações?','As alterações não salvas deste formulário serão descartadas. Ocorrências já salvas não são alteradas nem excluídas.','Descartar alterações',()=>{resetForm();formStatus.textContent='Alterações descartadas. Nenhuma ocorrência salva foi alterada.';return null},()=>{})}),save);
+/* Catalog (DES - Tipos de Ocorrência): category of the type, its model, and the suspension conferência. */
+const CAT=()=>window.CicluzOccurrenceCatalog;
+const catSel=el('select'),catLabel=lbl('Categoria',catSel),catNote=el('p','uniforms-wide profiles-note'),modelBox=el('div','uniforms-wide occurrences-model'),ruleBox=el('div','uniforms-wide people-alerts occurrences-rules');ruleBox.setAttribute('aria-live','polite');
+const dayTools=el('div','uniforms-wide occurrences-day-tools'),dayMinus=iconButton('Diminuir quantidade de dias','M5 12h14',()=>stepDays(-1)),dayPlus=iconButton('Aumentar quantidade de dias',ICON.plus,()=>stepDays(1)),dayChips=el('div','occurrences-day-chips');dayTools.append(dayMinus,dayPlus,dayChips);
+function stepDays(d){const n=Math.max(1,(parseInt(days.value,10)||0)+d);days.value=String(n);days.dispatchEvent(new Event('input',{bubbles:true}));paintDays()}
+function paintDays(){dayMinus.disabled=(parseInt(days.value,10)||0)<=1;dayChips.replaceChildren();if(type.value!=='SUSPENSÃO')return;const allowed=CAT()?.suspensionDays()||[];for(const n of allowed){const b=button(n+(n>1?' dias':' dia'),()=>{days.value=String(n);days.dispatchEvent(new Event('input',{bubbles:true}));paintDays()},'btn secondary'+(String(n)===days.value?' is-selected':''));b.setAttribute('aria-pressed',String(String(n)===days.value));dayChips.append(b)}}
+function paintCatalog(){const cfg=typeConfig(type.value),C=CAT();for(const l of medLabels)l.hidden=!cfg.medical;medNote.hidden=!cfg.medical;daysLabel.hidden=dayTools.hidden=!cfg.days;
+ const want=catSel.dataset.want||catSel.value;catSel.replaceChildren(new Option('Sem categoria',''));catLabel.hidden=!type.value;
+ if(type.value&&C){const list=C.catsOf(type.value);const own=want&&!list.some(c=>c.id===want)&&C.byId(want);for(const c of [...list,...(own?[own]:[])])catSel.add(new Option(C.catText(c)+(c.active?'':' (inativa)'),c.id));catSel.value=[...catSel.options].some(o=>o.value===want)?want:'';delete catSel.dataset.want;
+  catNote.textContent=list.length?'':'Nenhuma categoria cadastrada para '+type.value+'. Cadastre em Cadastros Geral Colaboradores → DES - Tipos de Ocorrência.'}else catNote.textContent='';
+ paintModel();paintRules();paintDays()}
+function paintModel(){modelBox.replaceChildren();const C=CAT(),c=catSel.value&&C?.byId(catSel.value);if(!type.value)return;
+ if(c?.model){modelBox.append(el('span',null,'Modelo da categoria: '+c.model.name+' '),button('Ver modelo',()=>C.openModel(c)))}else if(['ADVERTÊNCIA','SUSPENSÃO','JUSTA CAUSA'].includes(type.value))modelBox.append(el('p','profiles-note','Sem modelo cadastrado para '+(c?'esta categoria':'este tipo')+'. Anexe o documento assinado acima; a plataforma não gera o texto do documento.'))}
+function paintRules(){ruleBox.replaceChildren();if(type.value!=='SUSPENSÃO')return;const C=CAT();if(!collab.select.value||!catSel.value){ruleBox.append(el('p','profiles-note','Escolha o colaborador e a categoria da suspensão para conferir advertências anteriores.'));return}
+ const res=C?C.ruleCheck(data.records.filter(r=>r.id!==draft.editingId),collab.select.value,catSel.value,dateIn.iso()):[];
+ if(!res.length){ruleBox.append(el('p','profiles-note','Nenhuma regra de conferência configurada para esta categoria (Cadastros Geral Colaboradores → DES - Tipos de Ocorrência → Regras de suspensão).'));return}
+ for(const r of res){const name=C.catText(r.warning);if(!r.configured){ruleBox.append(el('p','profiles-note','Regra sem período configurado para "'+name+'".'));continue}
+  if(r.found.length){const box=el('div','people-alert');box.append(el('b',null,'Conferência do DP: '+r.found.length+' advertência(s) de "'+name+'" nos últimos '+r.rule.periodDays+' dias'),el('span',null,' (desde '+dateBR(r.from)+'): '+r.found.map(x=>dateBR(x.date)).join(', ')+'.'));ruleBox.append(box)}
+  else ruleBox.append(el('p','profiles-note','Nenhuma advertência de "'+name+'" nos últimos '+r.rule.periodDays+' dias.'))}
+ ruleBox.append(el('p','profiles-note','Alerta apenas para conferência: a suspensão não é aplicada nem bloqueada automaticamente.'))}
+catSel.addEventListener('change',()=>{paintModel();paintRules()});collab.select.addEventListener('change',paintRules);dateIn.node.addEventListener('input',paintRules);days.addEventListener('input',paintDays);
+let dirty=false;form.addEventListener('input',()=>{dirty=true});form.addEventListener('change',()=>{dirty=true});
+/* Order: data, tipo, colaborador, campos do tipo, documentos, confirmação. */
+/* Medical fields stay right below the attachment they are read from (OCR), as decided for Ocorrências. */
+form.append(formTitle,dateIn.label,typeLabel,hint,collab.label,catLabel,catNote,daysLabel,dayTools,period,reasonLabel,attachBox,...medLabels,medNote,modelBox,ruleBox,statusLabel,commBox,formError,formStatus,actions);
 const history=el('div','uniforms-history');body.append(form,history);
 
 let draft={editingId:null,attachments:[]};
@@ -83,7 +107,7 @@ function renderCollaborators(select,search,cur,blank='Selecione o colaborador'){
 collab.search.addEventListener('input',()=>renderCollaborators(collab.select,collab.search,collab.select.value));
 function editing(){return draft.editingId?data.records.find(r=>r.id===draft.editingId):null}
 /* The type adapts emphasis only; values already typed are never cleared. */
-function renderType(){const cfg=typeConfig(type.value);hint.textContent=type.value?cfg.hint:'Selecione o tipo para ver as orientações do registro.';daysLabel.firstChild.textContent=cfg.days?'Quantidade de dias *':'Quantidade de dias';daysLabel.classList.toggle('is-emphasis',!!cfg.period);renderPeriod()}
+function renderType(){const cfg=typeConfig(type.value);hint.textContent=type.value?cfg.hint:'Selecione o tipo para ver as orientações do registro.';daysLabel.firstChild.textContent=cfg.days?'Quantidade de dias *':'Quantidade de dias';daysLabel.classList.toggle('is-emphasis',!!cfg.period);renderPeriod();if(typeof paintCatalog==='function')paintCatalog()}
 function renderPeriod(){const iso=dateIn.iso(),n=Number(days.value),ok=/^\d+$/.test(days.value)&&n>=1;period.classList.toggle('is-emphasis',typeConfig(type.value).period===true);period.textContent=ok&&iso?'Período demonstrativo: '+periodText(iso,n):ok?'Informe uma data válida para calcular o período.':'Informe a quantidade de dias para ver o período.'}
 type.addEventListener('change',renderType);days.addEventListener('input',renderPeriod);dateIn.node.addEventListener('input',renderPeriod);
 
@@ -117,18 +141,18 @@ function reviewSuggestions(found,res,item){const fields=[...MEDICAL,['date','Dat
   return rows},keys.length?rows=>{const applied=[];for(const [k,{check,input}] of Object.entries(rows)){if(!check.checked)continue;const v=input.value.trim();if(k==='date'){const iso=DB.parse(v);if(!iso)return 'Data do documento inválida. Use DD/MM/AAAA ou desmarque.';dateIn.set(iso)}else if(k==='days'){if(!/^\d+$/.test(v)||+v<1)return 'Dias devem ser um número inteiro a partir de 1, ou desmarque.';days.value=v}else{med[k].value=k==='crm'?v.toUpperCase():v;delete med[k].dataset.manual;if(v)med[k].dataset.read='1';else delete med[k].dataset.read}applied.push(fields.find(f=>f[0]===k)[1].split(' →')[0])}
    paintMedNote();renderPeriod();formStatus.textContent=applied.length?'Sugestões aplicadas: '+applied.join(', ')+'. Confira antes de salvar.':'Nenhuma sugestão aplicada.';return null}:null,'Aplicar ao formulário',()=>{})}
 
-function resetForm(){draft.attachments.forEach(release);draft={editingId:null,attachments:[]};formTitle.textContent='Nova ocorrência';collab.search.value='';renderCollaborators(collab.select,collab.search,'');type.value='';status.value='Pendente';dateIn.set(today());days.value='';reason.value='';comm.SIM.checked=comm['NÃO'].checked=false;for(const n of Object.values(med)){n.value='';delete n.dataset.manual;delete n.dataset.read}paintMedNote();formError.textContent='';attachMsg.textContent='';renderType();renderAttachments();save.disabled=loadError}
+function resetForm(){dirty=false;catSel.dataset.want='';draft.attachments.forEach(release);draft={editingId:null,attachments:[]};formTitle.textContent='Nova ocorrência';collab.search.value='';renderCollaborators(collab.select,collab.search,'');type.value='';status.value='Pendente';dateIn.set(today());days.value='';reason.value='';comm.SIM.checked=comm['NÃO'].checked=false;for(const n of Object.values(med)){n.value='';delete n.dataset.manual;delete n.dataset.read}paintMedNote();formError.textContent='';attachMsg.textContent='';renderType();renderAttachments();save.disabled=loadError}
 form.onsubmit=e=>{e.preventDefault();formError.textContent='';formStatus.textContent='';const errors=[],own=editing(),c=collaboratorById(collab.select.value),iso=dateIn.iso(),cfg=typeConfig(type.value);
  if(!collab.select.value)errors.push('Selecione o colaborador.');if(!type.value)errors.push('Selecione o tipo de ocorrência.');if(!iso)errors.push('Informe uma data da ocorrência válida (DD/MM/AAAA).');
  const n=days.value.trim()===''?null:Number(days.value);if(n!==null&&!(Number.isInteger(n)&&n>=1))errors.push('Quantidade de dias deve ser um número inteiro a partir de 1.');if(cfg.days&&n===null)errors.push('Informe a quantidade de dias para '+type.value+'.');
  const communicated=comm.SIM.checked?'SIM':comm['NÃO'].checked?'NÃO':'';if(!communicated)errors.push('Indique se a ocorrência foi comunicada.');
  if(errors.length){formError.textContent=errors.join(' ');return}
- const now=new Date().toISOString(),medicalData=Object.fromEntries(MEDICAL.map(([k])=>[k,med[k].value.trim()])),hasMedical=Object.values(medicalData).some(Boolean);
- const record={id:own?.id||newId(),date:iso,days:n,collaboratorId:collab.select.value,collaboratorName:c?.name||own?.collaboratorName||'',collaboratorActive:c?c.active:own?.collaboratorActive??true,type:type.value,status:status.value,reason:reason.value,communicated,attachmentCount:draft.attachments.length,hasMedical,createdAt:own?.createdAt||now,updatedAt:now,revisions:own?[...(own.revisions||[]),{at:now,previous:{date:own.date,days:own.days,type:own.type,status:own.status,communicated:own.communicated}}]:[]};
+ const now=new Date().toISOString(),medicalData=Object.fromEntries(MEDICAL.map(([k])=>[k,cfg.medical?med[k].value.trim():''])),hasMedical=Object.values(medicalData).some(Boolean);
+ const record={id:own?.id||newId(),date:iso,days:n,collaboratorId:collab.select.value,collaboratorName:c?.name||own?.collaboratorName||'',collaboratorActive:c?c.active:own?.collaboratorActive??true,type:type.value,categoryId:catSel.value||'',categoryName:catSel.value?CAT().catText(CAT().byId(catSel.value)):'',ruleAlerts:type.value==='SUSPENSÃO'&&CAT()?CAT().ruleCheck(data.records.filter(r=>r.id!==own?.id),collab.select.value,catSel.value,iso).filter(r=>r.configured).map(r=>({warning:CAT().catText(r.warning),periodDays:r.rule.periodDays,found:r.found.length})):[],status:status.value,reason:reason.value,communicated,attachmentCount:draft.attachments.length,hasMedical,createdAt:own?.createdAt||now,updatedAt:now,revisions:own?[...(own.revisions||[]),{at:now,previous:{date:own.date,days:own.days,type:own.type,status:own.status,communicated:own.communicated}}]:[]};
  if(!transact(()=>{data.records=[...data.records.filter(r=>r.id!==record.id),record]})){formError.textContent='Não foi possível salvar neste navegador. O formulário foi mantido.';return}
  const previous=sensitive.get(record.id);sensitive.set(record.id,{attachments:[...draft.attachments],medical:medicalData});previous?.attachments.filter(a=>!draft.attachments.includes(a)).forEach(a=>{if(![...sensitive.values()].some(s=>s.attachments.includes(a)))URL.revokeObjectURL(a.url)});
  draft.attachments=[];const msg=(own?'Ocorrência atualizada':'Ocorrência salva')+': '+record.type+' · '+record.collaboratorName+' · '+dateBR(record.date)+(record.days?' · '+periodText(record.date,record.days):'')+'.';resetForm();renderHistory();formStatus.textContent=msg};
-function editRecord(r){draft.attachments.forEach(release);const mem=sensitive.get(r.id);draft={editingId:r.id,attachments:[...(mem?.attachments||[])]};formTitle.textContent='Editar ocorrência de '+dateBR(r.date);collab.search.value='';renderCollaborators(collab.select,collab.search,r.collaboratorId);type.value=r.type;status.value=r.status;dateIn.set(r.date);days.value=r.days?String(r.days):'';reason.value=r.reason||'';comm.SIM.checked=r.communicated==='SIM';comm['NÃO'].checked=r.communicated==='NÃO';for(const [k] of MEDICAL){const n=med[k];n.value=mem?.medical[k]||'';delete n.dataset.read;if(n.value)n.dataset.manual='1';else delete n.dataset.manual}paintMedNote();renderType();renderAttachments();formError.textContent='';
+function editRecord(r){draft.attachments.forEach(release);const mem=sensitive.get(r.id);draft={editingId:r.id,attachments:[...(mem?.attachments||[])]};formTitle.textContent='Editar ocorrência de '+dateBR(r.date);collab.search.value='';renderCollaborators(collab.select,collab.search,r.collaboratorId);type.value=r.type;catSel.dataset.want=r.categoryId||'';status.value=r.status;dateIn.set(r.date);days.value=r.days?String(r.days):'';reason.value=r.reason||'';comm.SIM.checked=r.communicated==='SIM';comm['NÃO'].checked=r.communicated==='NÃO';for(const [k] of MEDICAL){const n=med[k];n.value=mem?.medical[k]||'';delete n.dataset.read;if(n.value)n.dataset.manual='1';else delete n.dataset.manual}paintMedNote();renderType();renderAttachments();formError.textContent='';
  formStatus.textContent='Editando a ocorrência.'+((r.attachmentCount&&!mem)||(r.hasMedical&&!mem)?' Anexos e dados médicos registrados antes de atualizar a página não estão mais disponíveis; anexe novamente se necessário.':'');form.scrollIntoView({block:'start',behavior:'smooth'})}
 
 /* ---------- Histórico ---------- */
@@ -156,6 +180,6 @@ function showDetails(r){const mem=sensitive.get(r.id);dialog('Detalhes da ocorr�
 function showOccurrences(opts={}){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Ocorrências';load();loadNote.textContent=loadError?'Não foi possível ler as ocorrências salvas. Os dados foram preservados; recarregue a página antes de alterar.':'';resetForm();formStatus.textContent='';if(opts.collaboratorId){renderCollaborators(collab.select,collab.search,opts.collaboratorId)}renderHistory();normalizeHeaderActions(view)}
 window.showOccurrences=showOccurrences;
 /* Read-only access for the collaborator file; medical data and attachments stay in this module's memory. */
-window.CicluzOccurrences={list:()=>{if(!view.classList.contains('show'))load();return data.records},attachments:id=>sensitive.get(id)?.attachments||[],show:showOccurrences};
+window.CicluzOccurrences={types:TYPES.map(t=>t[0]),typeConfig,list:()=>{if(!view.classList.contains('show'))load();return data.records},attachments:id=>sensitive.get(id)?.attachments||[],show:showOccurrences};
 window.addEventListener('storage',e=>{if(e.key===KEY&&view.classList.contains('show')){load();renderHistory()}});
 })();

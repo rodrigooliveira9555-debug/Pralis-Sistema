@@ -53,17 +53,18 @@ const definirData = (p, rotulo, iso) => p.evaluate(([r, v]) => { const i = docum
 {
   const p = await abrirPagina(1280, 900);
   const hoje = await hojeDe(p);
-  // Entrada pelo menu lateral: Agenda · Atividades → Gestão de Pessoas
+  // Entrada pelo menu lateral: Agenda · Atividades → Lançamentos (lista Diretor de Operações)
   await p.locator('summary', { hasText: 'Agenda' }).first().click();
-  await p.getByRole('button', { name: 'Gestão de Pessoas', exact: true }).click();
+  await p.getByRole('button', { name: 'Lançamentos', exact: true }).first().click();
   ok(await p.locator('#agenda-view.show').count() === 1, 'O submenu abre a Agenda');
-  ok((await p.locator('.agenda-detalhe-titulo').textContent()).startsWith('Gestão de Pessoas'), 'Abre já na lista do submenu');
+  ok((await p.locator('.agenda-detalhe-titulo').textContent()).startsWith('Diretor de Operações'), 'Abre já na lista do submenu');
   ok(await dados(p) === null, 'Abrir a Agenda não grava nada');
   ok((await p.locator('.agenda-automatica small').allTextContents()).join('|') === 'Para hoje|Programados|Todos|Sinalizados|Atrasados|Atribuídos a mim|Concluídos', 'Listas automáticas do Lembretes + Atrasados');
   ok(await p.locator('.agenda-lateral').isVisible() && await p.locator('.agenda-conteudo').isVisible(), 'Computador: listas e conteúdo lado a lado');
   ok(!(await p.locator('.agenda-voltar-listas').isVisible()), 'Computador: sem "‹ Listas"');
 
-  // Escrever do jeito que se fala
+  // Escrever do jeito que se fala (na lista Gestão de Pessoas; o menu abre em Diretor de Operações desde 05/11)
+  await p.locator('.agenda-lista-linha', { hasText: 'Gestão de Pessoas' }).click();
   await p.locator('.agenda-nova-entrada').fill('ligar para o contador amanhã às 10 #financeiro !');
   ok((await p.locator('.agenda-nova-dica').textContent()).includes('Amanhã às 10:00'), 'A linha nova mostra o que vai entender');
   await p.locator('.agenda-nova-entrada').press('Enter');
@@ -71,7 +72,7 @@ const definirData = (p, rotulo, iso) => p.evaluate(([r, v]) => { const i = docum
   const amanha = await somar(p, hoje, 1);
   ok(i && i.data === amanha && i.hora === '10:00' && i.etiquetas[0] === 'financeiro' && i.prioridade === 'alta' && i.listaId === 'lista-gestao-pessoas', '"amanhã às 10 #financeiro !" vira data, hora, etiqueta e prioridade, sem trocar as letras');
   ok(i.alerta === 0, 'Com data, avisa na hora');
-  ok(await p.evaluate(() => document.activeElement && document.activeElement.classList.contains('agenda-nova-entrada')), 'O foco volta para a linha nova');
+  ok(await p.waitForFunction(() => document.activeElement && document.activeElement.classList.contains('agenda-nova-entrada'), null, { timeout: 2000 }).then(() => true, () => false), 'O foco volta para a linha nova');
   await escrever(p, 'Comprar 2 sacos de farinha');
   ok((await item(p, 'Comprar 2 sacos de farinha')).data === '', 'Número solto não vira data nem hora');
 

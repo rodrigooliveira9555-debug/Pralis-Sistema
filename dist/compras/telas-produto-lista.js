@@ -2,7 +2,7 @@
  * Produtos — lista (S1: pages/produtos/index.vue, ProdutoFiltros, ProdutoCard, ProdutoListaLinha,
  * ProdutoInativarLote). Busca, "Só ativos", "Só os que já vendi", filtros, 6 ordenações do S1 + menor
  * estoque (S2), paginação de 12, cards ou lista, foto ampliada e inativação em lote com frase.
- * Fica em Cadastros → Diretor de Operações.
+ * Fica em Saídas · Mercadorias → Cadastros Geral → MER - Produtos.
  */
 (function () {
   'use strict';
@@ -13,7 +13,7 @@
   const X = window.CicluzProdutoExtras;
   const PF = window.CicluzProdutoForm;
   const { el, botao, campo, entrada, seletor } = U;
-  const voltarCadastros = () => openSection(sections[7][0], 'Compras', 'cad-compras', '#7c3aed');
+  const voltarCadastros = () => menuBack(3, 'Cadastros Geral')();
   const TAMANHO_PAGINA = 12;
 
   let tela = null;
@@ -27,12 +27,12 @@
   const EXPLICA_PENDENCIA = {
     'como se compra': 'como se compra (falta embalagem ou medida de compra)',
     'mínimo e máximo': 'sem mínimo e máximo',
-    'fornecedor aprovado': 'fornecedor aprovado (vincule em Cadastro de compras)',
+    'fornecedor aprovado': 'fornecedor aprovado (vincule em MER - Catálogo e Preço-Base)',
   };
 
   function abrir() {
     if (!tela) {
-      tela = U.criarTela({ id: 'compras-produtos', titulo: 'MER - Produtos', caminho: 'Cadastros / Compras / MER - Produtos', icone: 'produto', voltar: voltarCadastros });
+      tela = U.criarTela({ id: 'compras-produtos', titulo: 'MER - Produtos', caminho: 'Saídas · Mercadorias / Cadastros Geral / MER - Produtos', icone: 'produto', voltar: voltarCadastros });
       U.atalho(tela, 'Novo produto', 'M12 5v14M5 12h14', () => PF.editarProduto(null, render), { criar: true });
     }
     tela.ativar();

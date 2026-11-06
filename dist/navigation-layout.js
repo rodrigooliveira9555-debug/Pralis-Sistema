@@ -8,51 +8,20 @@
  const management=side.querySelector('[data-section="management"]');if(management){management.classList.add('menu-management-heading');side.insertBefore(management,side.querySelector('.nav'))}
  const session=window.CicluzSessao,userName=session?.perfil?.nome||'';const user=document.createElement('div');user.className='sidebar-user';user.setAttribute('role','group');user.setAttribute('aria-label','Usuário: '+userName);
  const avatar=top.querySelector('.avatar');if(avatar)user.append(avatar);
- const name=document.createElement(session?'a':'span');name.className='sidebar-user-name';name.textContent=userName;if(session){name.href='usuarios.html';name.title='Minha senha e usuários'}user.append(name);if(avatar)avatar.textContent=userName.split(/\s+/).filter(Boolean).slice(0,2).map(p=>p[0].toUpperCase()).join('');if(session){const logout=document.createElement('button');logout.type='button';logout.className='sidebar-user-sair';logout.title='Sair';logout.setAttribute('aria-label','Sair do sistema');logout.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>';logout.onclick=async()=>{logout.disabled=true;if(!await session.sair())logout.disabled=false};user.append(logout)}footer.append(user);side.append(footer);
+ const name=document.createElement(session?'a':'span');name.className='sidebar-user-name';name.textContent=userName;if(session){name.href='#acessos:senhas';name.title='Minha senha'}user.append(name);if(avatar)avatar.textContent=userName.split(/\s+/).filter(Boolean).slice(0,2).map(p=>p[0].toUpperCase()).join('');if(session){const logout=document.createElement('button');logout.type='button';logout.className='sidebar-user-sair';logout.title='Sair';logout.setAttribute('aria-label','Sair do sistema');logout.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>';logout.onclick=async()=>{logout.disabled=true;if(!await session.sair())logout.disabled=false};user.append(logout)}footer.append(user);side.append(footer);
  const brand=side.querySelector('.brand');
  const fullLogo=brand?.querySelector('.brand-logo-wrap');
- // The line and logo share one beam profile, thickness, clock and pixel speed.
- const svgNS='http://www.w3.org/2000/svg';
- const beamTracks=[];
- const beamProfile=[[42,.08,5.4],[34,.16,5.7],[26,.28,6],[18,.48,6.3],[12,.88,6.6]];
- function addBeam(svg,d,mask){
-  const group=document.createElementNS(svgNS,'g');
-  if(mask)group.setAttribute('mask',mask);
-  svg.append(group);
-  const layers=beamProfile.map(([size,opacity,width])=>{
-   const path=document.createElementNS(svgNS,'path');
-   for(const [key,value] of Object.entries({d,fill:'none',stroke:'#fff','stroke-width':width,'stroke-opacity':opacity,'stroke-linecap':'butt'}))path.setAttribute(key,value);
-   group.append(path);return {path,size};
-  });
-  const track={svg,layers,length:layers[0].path.getTotalLength()};beamTracks.push(track);return track;
- }
+ // A linha e a marca compartilham o motor de luz (marca-luz.js): mesmo perfil, espessura, relógio e velocidade.
+ const {svgNS,addBeam,FITA}=window.CicluzLuz;
  if(fullLogo){
   fullLogo.querySelectorAll('.logo-path-light,.logo-color-light').forEach(el=>el.remove());
   fullLogo.insertAdjacentHTML('beforeend','<svg class="logo-color-light" viewBox="0 0 220 64" aria-hidden="true"><defs><mask id="logo-ribbon-alpha-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="220" height="64" style="mask-type:alpha"><image href="cicluz-gestao-padaria-logo.png" width="177.6" height="64" preserveAspectRatio="none"/></mask></defs></svg>');
-  addBeam(fullLogo.querySelector('.logo-color-light'),'M 25.7 16 C 25.7 6.8 37.2 6.8 37.2 16 L 37.2 19 C 44 13.6 49.7 15.1 49.3 22.2 C 49 25.2 46.4 27 43 28.8 L 20 41 C 13.4 44.5 9.2 37.4 15.2 32.1 L 18.3 29.2 C 8.2 23.4 12.3 12.9 19.3 16.3 L 43 29.1 C 52.7 34.5 49.3 44 42.5 41.6 L 37.2 39 C 37.2 50.7 25.7 50.7 25.7 41 L 25.7 16 Z','url(#logo-ribbon-alpha-mask)');
+  addBeam(fullLogo.querySelector('.logo-color-light'),FITA,'url(#logo-ribbon-alpha-mask)');
  }
  const lineSvg=document.createElementNS(svgNS,'svg');lineSvg.classList.add('divider-beam');lineSvg.setAttribute('aria-hidden','true');divider.append(lineSvg);
  const lineTrack=addBeam(lineSvg,'M 0 1.5 H 100');
  const resizeBeam=()=>{const width=divider.clientWidth;lineSvg.setAttribute('viewBox','0 0 '+width+' 3');lineTrack.layers.forEach(({path})=>path.setAttribute('d','M 0 1.5 H '+width));lineTrack.length=width;};
  new ResizeObserver(resizeBeam).observe(divider);resizeBeam();
- const reducedMotion=matchMedia('(prefers-reduced-motion:reduce)');
- const start=performance.now();let lastFrame=0;
- function animateBeam(now){
-  if(now-lastFrame>30){
-   lastFrame=now;
-   for(const track of beamTracks){
-    const distance=((now-start)/1000*24)%Math.max(1,track.length);
-    for(const {path,size} of track.layers){
-     path.style.display=reducedMotion.matches?'none':'';
-     const length=Math.min(size,track.length*.8);
-     path.setAttribute('stroke-dasharray',length+' '+Math.max(0,track.length-length));
-     path.setAttribute('stroke-dashoffset',String(-distance+length/2));
-    }
-   }
-  }
-  requestAnimationFrame(animateBeam);
- }
- requestAnimationFrame(animateBeam);
  let outlineId=0;
  window.CicluzBeam={attachOutline(host){
   const svg=document.createElementNS(svgNS,'svg'),id='cicluz-search-outline-'+(++outlineId);
@@ -81,13 +50,6 @@
   dock.hidden=!!actions;
  }
  let pending=false;new MutationObserver(()=>{if(pending)return;pending=true;queueMicrotask(()=>{pending=false;place()})}).observe(main,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});place();
-})();
-
-// Terminologia única da Gestão de Pessoas.
-(()=>{
- const labels=new Map([['Atualização salarial','Atualização salarial de cargos'],['Ficha de Cargos','Ficha de cargos']]);
- const refresh=()=>{const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){const next=labels.get(node.nodeValue.trim());if(next)node.nodeValue=node.nodeValue.replace(node.nodeValue.trim(),next)}};
- refresh();new MutationObserver(refresh).observe(document.body,{childList:true,subtree:true});
 })();
 
 // Main-menu search is transient: it never survives leaving the menu.
@@ -131,7 +93,7 @@
 (()=>{
  const nav=document.querySelector('.nav-tree');if(!nav)return;
  nav.addEventListener('click',event=>{
-  if(event.target.closest('.drag-handle,.menu-item-move,.sidebar-section-toggle'))return;
+  if(event.target.closest('.sidebar-section-toggle'))return;
   const target=event.target.closest('summary,button');if(!target||!nav.contains(target))return;
   nav.querySelectorAll('.menu-selected,.active,[aria-current]').forEach(item=>{
    item.classList.remove('menu-selected','active');item.removeAttribute('aria-current');

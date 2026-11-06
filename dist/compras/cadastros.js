@@ -1,6 +1,6 @@
 /*
  * Cadastro de Fornecedores, que alimenta Compras (Produtos fica em telas-produto-*.js).
- * Ficam em Cadastros → Diretor de Operações (área de cadastros do S2).
+ * Ficam em Saídas · Mercadorias → Cadastros Geral (MER - Fornecedores; MER - Produtos ao lado).
  * Espelham /fornecedores e /produtos do S1 (main).
  */
 (function () {
@@ -9,8 +9,8 @@
   const S = window.CicluzComprasDados;
   const U = window.CicluzComprasUI;
   const { el, botao, campo, entrada, seletor } = U;
-  const voltarCadastros = () => openSection(sections[7][0], 'Compras', 'cad-compras', '#7c3aed');
-  const CAMINHO = 'Cadastros / Compras / ';
+  const voltarCadastros = () => menuBack(3, 'Cadastros Geral')();
+  const CAMINHO = 'Saídas · Mercadorias / Cadastros Geral / ';
 
   /* ---------- Máscaras ---------- */
   function mascaraDocumento(v) {

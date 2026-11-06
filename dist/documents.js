@@ -5,9 +5,9 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,F=window.CicluzFieldRules,DB=window.CicluzDateBR;if(!P||!U||!DB)return;
 const {el,button,iconButton,svg,ICON,fold,newId,dateBR,today,dialog,confirmDialog}=U;
-const KEY='cicluz-documentos-v1',ACCENT='#7c3aed',PATH='Lançamentos / Gestão de Pessoas / Documentações',MAX=10*1024*1024;
+const KEY='cicluz-documentos-v1',ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','Documentações'),MAX=10*1024*1024;
 const ACCEPT=['image/jpeg','image/png','image/webp','application/pdf'];
-const DOC_ICON='M14 3H6v18h12V7zM14 3v4h4M9 13h6M9 17h6',CAMERA='M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',X_ICON='M6 6l12 12M18 6 6 18',DOT='M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',DASH='M6 12h12';
+const DOC_ICON=telaIcone.ocorrencias,CAMERA='M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',X_ICON='M6 6l12 12M18 6 6 18',DOT='M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',DASH='M6 12h12';
 /* Titles as given by the DP. multi = new signed records may be added over the employment; sensitive = health data. */
 const CATS=[
  {id:'armario',name:'Termo de Responsabilidade pelo Uso do Armário e Guarda de Pertences Pessoais'},
@@ -18,9 +18,11 @@ const CATS=[
  {id:'horario',name:'Registro de Alterações de Horário de Trabalho',multi:'Nova alteração de horário'},
  {id:'saude',name:'Formulário de Autodeclaração de Condição de Saúde do Colaborador',sensitive:true},
  {id:'conduta',name:'Código de Conduta — PRALIS',note:'Inclui os termos de ciência, confidencialidade e autorização de uso de imagem do próprio Código: anexe todas as páginas assinadas neste registro.'},
+ {id:'regimento',name:'Regimento Interno — Termo de Ciência'},
+ {id:'imagem',name:'Termo de Autorização de Uso de Imagem'},
  {id:'experiencia',name:'Avaliação do Período de Experiência',multi:'Nova avaliação (ex.: 30 ou 60 dias)'},
  {id:'intervalo',name:'Acordo Individual de Redução do Intervalo Intrajornada'},
- {id:'contrato',name:'Contrato de Trabalho',note:'Anexe o contrato físico assinado. Nenhuma cláusula é gerada pelo sistema.'}];
+ {id:'contrato',name:'Contrato de Trabalho',multi:true,note:'Cada versão gerada em Cadastros Geral Colaboradores → DES - Contrato de Trabalho entra aqui; anexe o contrato físico assinado e confira. Nenhuma cláusula é gerada pelo sistema.'}];
 const catById=id=>CATS.find(c=>c.id===id);
 const STATE={pending:{label:'Pendente',pill:'p-red',icon:X_ICON},review:{label:'Aguardando conferência',pill:'p-yellow',icon:DOT},done:{label:'Concluído',pill:'p-green',icon:ICON.ok},na:{label:'Não aplicável',pill:'',icon:DASH}};
 
@@ -95,8 +97,8 @@ const view=el('section','view');view.id='documents-view';view.style.setProperty(
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
 const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(DOC_ICON);const heading=el('div'),title=el('h2',null,'Documentações'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
-let back=()=>openSection(sections[8][0],'Gestão de Pessoas','forms',ACCENT);addShortcuts(view.id,()=>back());
-body.append(el('div','form-note','Documentos assinados fisicamente e fotografados ou digitalizados pelo DP. Os anexos ficam somente neste navegador (IndexedDB): não vão para servidores nem para outros aparelhos e somem se os dados do navegador forem limpos. Um documento só fica Concluído depois de Marcar como Conferido.'));
+let back=()=>menuBack(2,'Lançamentos Colaboradores')();addShortcuts(view.id,()=>back());
+const internalNote=el('div','form-note','Documentos assinados fisicamente e fotografados ou digitalizados pelo DP. Os anexos ficam somente neste navegador (IndexedDB): não vão para servidores nem para outros aparelhos e somem se os dados do navegador forem limpos. Um documento só fica Concluído depois de Marcar como Conferido.');body.append(internalNote);
 const status=el('p','profiles-note');status.setAttribute('role','status');
 const screen=el('div','uniforms-section docs-screen');body.append(status,screen);
 const fileInput=el('input');fileInput.type='file';fileInput.accept=ACCEPT.join(',');fileInput.multiple=true;fileInput.hidden=true;
@@ -109,17 +111,17 @@ const icon=st=>{const i=el('span','docs-icon is-'+st);i.innerHTML=svg(STATE[st].
 function catCounts(c){const s={done:0,review:0,pending:0,na:0};const list=actives();for(const p of list)s[catState(p.id,c)]++;s.total=list.length;return s}
 
 /* Landing: the 11 documents (the same list the menu expands to). */
-function renderIndex(){load();currentCat=null;openPersonId=null;title.textContent='Documentações';subtitle.textContent=PATH;back=()=>openSection(sections[8][0],'Gestão de Pessoas','forms',ACCENT);screen.replaceChildren(el('h3','uniforms-heading','Escolha o documento'));
- const list=el('div','docs-nav docs-index');CATS.forEach((cat,i)=>{const s=catCounts(cat.id),b=button('',()=>openCat(cat.id),'docs-nav-item');b.append(icon(s.total&&s.done+s.na===s.total?'done':s.review?'review':'pending'),el('span','docs-nav-index',String(i+1)),el('span','docs-nav-name',cat.name),el('small',null,s.done+' de '+(s.total-s.na)+' concluído(s)'+(s.review?' · '+s.review+' a conferir':'')+(s.na?' · '+s.na+' não aplicável':'')));list.append(b)});screen.append(list)}
+function renderIndex(){load();internalNote.hidden=false;currentCat=null;openPersonId=null;title.textContent='Documentações';subtitle.textContent=PATH;back=()=>menuBack(2,'Lançamentos Colaboradores')();screen.replaceChildren(el('h3','uniforms-heading','Documentos internos da empresa'));
+ const list=el('div','docs-nav docs-index');CATS.forEach((cat,i)=>{const s=catCounts(cat.id),b=button('',()=>openCat(cat.id),'docs-nav-item');b.append(icon(s.total&&s.done+s.na===s.total?'done':s.review?'review':'pending'),el('span','docs-nav-index',String(i+1)),el('span','docs-nav-name',cat.name),el('small',null,s.done+' de '+(s.total-s.na)+' concluído(s)'+(s.review?' · '+s.review+' a conferir':'')+(s.na?' · '+s.na+' não aplicável':'')));list.append(b)});screen.append(list);const pr=personalRows(null),po=pr.filter(x=>!x.r.checkedAt).length,pl=el('div','docs-nav docs-index'),pb=button('',()=>openCat(PERSONAL),'docs-nav-item');pb.append(icon(!pr.length?'na':po?'review':'done'),el('span','docs-nav-index','•'),el('span','docs-nav-name',PERSONAL_NAME),el('small',null,pr.length?pr.length+' recebido(s) pelo Cadastro Completo'+(po?' · '+po+' a conferir':''):'Nenhum recebido pelo Cadastro Completo'));pl.append(pb);screen.append(el('h3','uniforms-heading',PERSONAL_NAME),pl);const rr=receiptRows(null),rl=el('div','docs-nav docs-index'),rb=button('',()=>openCat(RECEIPTS),'docs-nav-item');rb.append(icon(rr.length?'done':'na'),el('span','docs-nav-index','•'),el('span','docs-nav-name',RECEIPTS_NAME),el('small',null,rr.length?rr.length+' comprovante(s) de entrega, venda ou devolução':'Nenhum comprovante'));rl.append(rb);screen.append(el('h3','uniforms-heading','Gerados pela plataforma'),rl)}
 
 /* Document screen: template header + every active collaborator with the status of this document. */
-function openCat(id,personId){load();P.load();currentCat=id;openPersonId=personId||null;const cat=catById(id),i=CATS.indexOf(cat);title.textContent=cat.name;subtitle.textContent='Documentações / '+(i+1)+' de 11';back=()=>renderIndex();rerender();view.querySelector('.content').scrollTo?.({top:0})}
-function rerender(){if(!currentCat)return renderIndex();load();const cat=catById(currentCat);screen.replaceChildren();
+function openCat(id,personId){load();P.load();currentCat=id;openPersonId=personId||null;if(id===RECEIPTS){title.textContent=RECEIPTS_NAME;subtitle.textContent='Documentações / Gerados pela plataforma';back=()=>renderIndex();renderReceipts();return}if(id===PERSONAL){title.textContent=PERSONAL_NAME;subtitle.textContent='Documentações / Pessoais (Cadastro Completo)';back=()=>renderIndex();renderPersonal();view.querySelector('.content').scrollTo?.({top:0});return}const cat=catById(id),i=CATS.indexOf(cat);title.textContent=cat.name;subtitle.textContent='Documentações / '+(i+1)+' de 11';back=()=>renderIndex();rerender();view.querySelector('.content').scrollTo?.({top:0})}
+function rerender(){if(!currentCat)return renderIndex();if(currentCat===PERSONAL)return renderPersonal();if(currentCat===RECEIPTS)return renderReceipts();internalNote.hidden=false;load();const cat=catById(currentCat);screen.replaceChildren();
  const tools=el('div','people-banner-tools');const sel=el('select');sel.setAttribute('aria-label','Trocar documento');CATS.forEach((c,i)=>sel.add(new Option((i+1)+'. '+c.name,c.id)));sel.value=cat.id;sel.addEventListener('change',()=>openCat(sel.value));const selLabel=el('label','docs-switch','Documento');selLabel.append(sel);
  tools.append(button('← Documentações',()=>renderIndex()));screen.append(tools,selLabel);
  const card=el('section','profiles-section docs-model');card.append(el('h3',null,cat.name));const m=MODELS[cat.id],mt=el('div','people-banner-tools');
  if(m){mt.append(button('Visualizar Modelo',()=>showModel(cat),'btn'));const a=el('a','btn secondary','Baixar Modelo');namedLink(a,modelUrl(m.pdf),m.file+'.pdf');mt.append(a);if(m.original){const o=el('a','btn secondary','Baixar original (DOCX)');namedLink(o,modelUrl(m.original),m.file+'.docx');mt.append(o)}card.append(mt)}
- else card.append(el('p','profiles-note','Modelo do contrato de trabalho ainda não disponibilizado.'));
+ else card.append(el('p','profiles-note',cat.id==='contrato'?'Modelo do contrato de trabalho ainda não disponibilizado.':'Modelo deste documento ainda não disponibilizado pela empresa: anexe o documento assinado.'));
  if(cat.note)card.append(el('p','profiles-note',cat.note));if(cat.sensitive)card.append(el('p','people-alert','Documento com dados de saúde: abra os anexos somente na área do DP. Esta versão não tem controle de acesso por perfil.'));screen.append(card);
  const list=actives(),s=catCounts(cat.id);screen.append(el('h3','uniforms-heading','Colaboradores'),el('p','profiles-note',list.length?s.done+' concluído(s) · '+s.review+' aguardando conferência · '+s.pending+' pendente(s)'+(s.na?' · '+s.na+' não aplicável':''):'Nenhum colaborador ativo. Colaboradores ativados em Colaboradores Cadastrados aparecem aqui automaticamente.'));
  if(list.length){const wrap=el('div','uniforms-table-wrap'),table=el('table','uniforms-table docs-table'),hr=el('tr');for(const h of ['Colaborador','Função','Status','Ações'])hr.append(el('th',null,h));const th=el('thead');th.append(hr);const tb=el('tbody');
@@ -139,7 +141,7 @@ function rerender(){if(!currentCat)return renderIndex();load();const cat=catById
 /* ---------- Menu: Documentações expands into the 11 documents ---------- */
 document.addEventListener('click',e=>{const card=e.target.closest?.('#sector-content .section-card[data-target=documents]');if(!card||e.target.closest('.menu-item-move'))return;e.preventDefault();e.stopImmediatePropagation();
  const next=card.nextElementSibling;if(next?.classList.contains('docs-subcards')){next.remove();card.setAttribute('aria-expanded','false');return}
- const sub=el('div','docs-subcards');sub.setAttribute('role','group');sub.setAttribute('aria-label','Documentações');CATS.forEach((cat,i)=>{const b=button('',()=>showDocuments({cat:cat.id}),'docs-sub-card');b.dataset.doc=cat.id;b.append(el('span','docs-nav-index',String(i+1)),el('span','docs-sub-name',cat.name),el('span','card-arrow','›'));sub.append(b)});
+ const sub=el('div','docs-subcards');sub.setAttribute('role','group');sub.setAttribute('aria-label','Documentações');CATS.forEach((cat,i)=>{const b=button('',()=>showDocuments({cat:cat.id}),'docs-sub-card');b.dataset.doc=cat.id;b.append(el('span','docs-nav-index',String(i+1)),el('span','docs-sub-name',cat.name),el('span','card-arrow','›'));sub.append(b)});const pb=button('',()=>showDocuments({cat:PERSONAL}),'docs-sub-card');pb.dataset.doc=PERSONAL;pb.append(el('span','docs-nav-index','•'),el('span','docs-sub-name',PERSONAL_NAME),el('span','card-arrow','›'));sub.append(pb);const rb=button('',()=>showDocuments({cat:RECEIPTS}),'docs-sub-card');rb.dataset.doc=RECEIPTS;rb.append(el('span','docs-nav-index','•'),el('span','docs-sub-name',RECEIPTS_NAME),el('span','card-arrow','›'));sub.append(rb);
  card.after(sub);card.setAttribute('aria-expanded','true')},true);
 
 function detail(p,cat,locked){const box=el('section','docs-detail profiles-section'),k=catOf(p.id,cat.id),st=catState(p.id,cat.id);
@@ -161,6 +163,7 @@ const dl=rows=>{const d=el('dl','profiles-info');for(const [a,b] of rows)d.appen
 
 function recordCard(p,cat,r,locked){const st=r?recordState(r):'pending',card=el('div','docs-record');
  const head=el('div','docs-record-head');head.append(icon(st),el('b',null,r?.label||(cat.multi?'Registro':'Documento assinado')),el('span','pill '+STATE[st].pill,STATE[st].label));card.append(head);
+ if(r?.generated)card.append(el('p','profiles-note docs-generated','Gerado pela plataforma em '+dateBR(r.generated.at.slice(0,10))+(r.generated.model?' (modelo '+r.generated.model+')':'')+'. Gerado não significa assinado: anexe o contrato assinado e confira.'),button('Ver dados da versão',()=>window.CicluzContracts?.showVersion(r.generated.versionId)));
  const files=r?.files||[];
  if(files.length){const list=el('div','occurrences-files');for(const f of files){const row=el('div','occurrences-file'),info=el('div','occurrences-file-info');const pv=el('div','occurrences-preview'),ic=el('span','occurrences-pdf');ic.innerHTML=svg(DOC_ICON);ic.append(el('b',null,f.type==='application/pdf'?'PDF':'IMG'));pv.append(ic);info.append(el('b',null,cat.sensitive?'Arquivo de saúde (conteúdo oculto na lista)':f.name),el('small',null,(f.type==='application/pdf'?'PDF':'Imagem')+' · '+sizeText(f.size)));row.append(pv,info);list.append(row)}card.append(list)}
  else card.append(el('p','profiles-note','Nenhum arquivo anexado. Tire uma foto ou selecione a imagem/PDF do documento assinado.'));
@@ -206,6 +209,70 @@ function viewFiles(cat,files,heading){if(!files?.length)return;const open=async(
   const pdfs=[];const d=dialog(heading,(fl,form)=>{if(missing)form.append(el('p','people-alert',missing+' arquivo(s) não estão mais neste navegador (dados do navegador limpos ou outro aparelho).'));for(const {f,u} of items){const fig=el('figure','occurrences-viewer docs-viewer');if(f.type==='application/pdf'){const box=el('div','docs-pdf-box docs-pdf-inline');fig.append(box);requestAnimationFrame(()=>renderPdf(box,u).then(c=>pdfs.push(c)).catch(()=>box.replaceChildren(el('p','profiles-error','Não foi possível abrir este PDF.'))))}else{const img=el('img');img.src=u;img.alt=f.name;fig.append(img)}fig.append(el('figcaption',null,(cat.sensitive?'Arquivo de saúde':f.name)+' · '+sizeText(f.size)));form.append(fig)}},null,null,()=>{});d.classList.add('docs-pdf-dialog');d.addEventListener('close',()=>{pdfs.forEach(c=>c.destroy());urls.forEach(u=>URL.revokeObjectURL(u))})};
  if(cat.sensitive)confirmDialog('Abrir documento de saúde?','Este arquivo contém informações de saúde do colaborador. Abra somente na área do DP e longe de outras pessoas. A plataforma não restringe o acesso por perfil nesta versão.','Abrir documento',()=>{setTimeout(open,0);return null},()=>{});else open()}
 
+/* ---------- Documentos pessoais e cadastrais (Cadastro Completo) ----------
+   Files the person attaches in the Cadastro Completo, kept apart from the 11 internal documents.
+   Same storage as the rest of Documentações: the file in IndexedDB, the record in data.people[id].personal
+   (a list that older saved data simply does not have). Attaching again keeps the earlier record as replaced. */
+const PERSONAL='pessoais',PERSONAL_NAME='Documentos pessoais e cadastrais';
+const PSTATE={received:{label:'Recebido · a conferir',pill:'p-yellow'},checked:{label:'Conferido',pill:'p-green'}};
+const personalOf=id=>(docsOf(id).personal||[]).filter(x=>!x.replacedAt);
+const personalSensitive=t=>/\bASO\b/i.test(t);
+const sameSlot=(r,m)=>r.docType===m.docType&&r.owner===m.owner&&(r.dependent??null)===(m.dependent??null);
+async function attachPersonal(personId,meta,file){load();if(!P.byId(personId))return 'Candidato não encontrado neste navegador.';const bad=await inspect(file);if(bad)return bad;
+ const fid=newId();try{await putFiles([{id:fid,blob:file}])}catch{return 'Não foi possível guardar o arquivo neste navegador.'}
+ const at=new Date().toISOString();load();
+ const ok=transact(d=>{const x=d.people[personId]=d.people[personId]||blank();const list=x.personal=x.personal||[];for(const r of list)if(!r.replacedAt&&sameSlot(r,meta))r.replacedAt=at;
+  list.push({id:newId(),docType:meta.docType,owner:meta.owner,dependent:meta.dependent??null,dependentName:meta.dependentName||'',origin:'Cadastro Completo',at,file:{id:fid,name:file.name,type:file.type,size:file.size},checkedAt:null,checkedBy:''});
+  logDoc(d,personId,'Cadastro Completo: '+meta.docType+(meta.owner==='dependente'?' do dependente'+(meta.dependentName?' '+meta.dependentName:''):'')+' anexado.')});
+ return ok?null:'Não foi possível salvar o registro neste navegador.'}
+function checkPersonal(personId,rid){load();return transact(d=>{const r=(d.people[personId]?.personal||[]).find(x=>x.id===rid);if(!r)throw Error('missing');r.checkedAt=new Date().toISOString();r.checkedBy=reviewer();logDoc(d,personId,'Documento pessoal conferido: '+r.docType+'.')})}
+const ownerText=r=>r.owner==='dependente'?'Dependente'+(r.dependentName?': '+r.dependentName:' '+((r.dependent??0)+1)):'Colaborador';
+const pstate=r=>r.checkedAt?'checked':'received';
+function personalTable(rows,withPerson,after){const wrap=el('div','uniforms-table-wrap');if(!rows.length){wrap.append(el('p','profiles-note','Nenhum documento pessoal recebido pelo Cadastro Completo.'));return wrap}
+ const table=el('table','uniforms-table docs-personal-table'),hr=el('tr');for(const h of [...(withPerson?['Colaborador']:[]),'Documento','Titular','Origem','Data','Status',''])hr.append(el('th',h==='Origem'?'docs-col-origin':null,h));const th=el('thead');th.append(hr);const tb=el('tbody');
+ for(const {p,r} of rows){const tr=el('tr'),st=el('td'),a=el('td','uniforms-row-actions'),s=PSTATE[pstate(r)];st.append(el('span','pill '+s.pill,s.label));
+  a.append(iconButton('Visualizar '+r.docType+' de '+p.name,ICON.eye,()=>viewFiles({sensitive:personalSensitive(r.docType)},[r.file],r.docType+' — '+p.name)));
+  if(!r.checkedAt)a.append(iconButton('Marcar como conferido: '+r.docType+' de '+p.name,ICON.ok,()=>confirmDialog('Marcar como conferido?','Confirma que o arquivo "'+r.docType+'" de '+p.name+' foi conferido? Conferir o documento pessoal não marca nenhum termo como assinado.','Marcar como conferido',()=>checkPersonal(p.id,r.id)?null:'Não foi possível salvar neste navegador.',after),'is-accent'));
+  tr.append(...(withPerson?[el('td',null,p.name)]:[]),el('td',null,r.docType),el('td',null,ownerText(r)),el('td','docs-col-origin',r.origin),el('td',null,dateBR(r.at.slice(0,10))),st,a);tb.append(tr)}
+ table.append(th,tb);wrap.append(table);return wrap}
+function personalRows(personId){P.load();return P.get().people.filter(p=>!personId||p.id===personId).flatMap(p=>personalOf(p.id).map(r=>({p,r}))).sort((a,b)=>a.p.name.localeCompare(b.p.name,'pt-BR')||b.r.at.localeCompare(a.r.at))}
+function renderPersonal(){load();internalNote.hidden=true;screen.replaceChildren();const all=personalRows(null),people=[...new Map(all.map(x=>[x.p.id,x.p])).values()];
+ screen.append(el('div','form-note','Arquivos enviados pelo próprio colaborador no Cadastro Completo (inclusive dos dependentes). Ficam separados dos 11 documentos internos da empresa e não contam como termo assinado. Ficam guardados somente neste navegador: limpar os dados do navegador ou trocar de aparelho apaga os arquivos.'));
+ const sel=el('select');sel.setAttribute('aria-label','Filtrar colaborador');sel.add(new Option('Todos os colaboradores',''));for(const p of people)sel.add(new Option(p.name+(p.status==='CANDIDATO'?' (candidato)':''),p.id));sel.value=people.some(p=>p.id===openPersonId)?openPersonId:'';
+ sel.addEventListener('change',()=>{openPersonId=sel.value||null;renderPersonal()});const l=el('label','docs-switch','Colaborador');l.append(sel);
+ const rows=all.filter(x=>!openPersonId||x.p.id===openPersonId),open=rows.filter(x=>!x.r.checkedAt).length;
+ screen.append(l,el('p','profiles-note',rows.length?rows.length+' documento(s) · '+open+' a conferir.':'Nenhum documento pessoal recebido.'),personalTable(rows,true,renderPersonal))}
+
+/* Cadastro Completo: the camera buttons attach the file to the candidate the form was opened for. */
+const cc=document.getElementById('cadastro-completo');let ccPerson=null;
+const ccNote=cc?.querySelector('.form-note:not(.people-complete-banner)'),ccNoteText=ccNote?.textContent||'';
+function scanMeta(blk){const t=(blk.querySelector('strong')?.textContent||'').replace(/^[^\p{L}\p{N}]+/u,'').replace(/\s*—\s*documento solicitado$/i,'').replace(/\s*\*$/,'').trim();const dep=blk.closest('.dep-card');
+ if(!dep)return {docType:t,owner:'colaborador',dependent:null};const i=[...cc.querySelectorAll('.dep-card')].indexOf(dep);const nm=[...dep.querySelectorAll('input')].find(x=>/^\s*nome/i.test(x.closest('label')?.textContent||''))?.value||'';return {docType:t,owner:'dependente',dependent:i,dependentName:nm.trim()}}
+function paintScan(){if(!cc)return;load();if(ccNote)ccNote.textContent=ccPerson?'Os dados preenchidos e os documentos anexados ficam salvos somente neste navegador e aparecem em Documentações → '+PERSONAL_NAME+'.':ccNoteText;
+ cc.querySelectorAll('.doc-first').forEach(blk=>{const btn=blk.querySelector('.photo-icon'),small=blk.querySelector('.photo-action small');if(!btn)return;const meta=scanMeta(blk);
+  if(!ccPerson){btn.disabled=true;btn.setAttribute('aria-label','Fotografar ou anexar — disponível ao abrir pelo link do candidato');if(small)small.textContent='Disponível ao abrir pelo link do candidato';return}
+  btn.disabled=false;btn.setAttribute('aria-label','Fotografar ou anexar: '+meta.docType);const cur=personalOf(ccPerson).find(r=>sameSlot(r,meta));if(small)small.textContent=cur?'Anexado em '+dateBR(cur.at.slice(0,10))+' · '+cur.file.name:'Nenhum arquivo anexado'})}
+if(cc){document.addEventListener('cicluz-complete-bound',e=>{ccPerson=e.detail?.id||null;paintScan()});
+ cc.addEventListener('click',e=>{if(e.target.closest('#add-dependent'))setTimeout(paintScan,0);const btn=e.target.closest('.doc-first .photo-icon');if(!btn||btn.disabled||!ccPerson)return;const blk=btn.closest('.doc-first'),meta=scanMeta(blk),small=blk.querySelector('.photo-action small'),pid=ccPerson;
+  const input=el('input');input.type='file';input.accept=ACCEPT.join(',');input.onchange=async()=>{const f=input.files?.[0];if(!f)return;if(small)small.textContent='Guardando…';const err=await attachPersonal(pid,meta,f);paintScan();if(err&&small)small.textContent=err};input.click()})}
+
+/* ---------- Comprovantes de uniformes ----------
+   Read straight from the uniform movements (CicluzUniformStore) by collaborator id: no copy is kept here. */
+const RECEIPTS='comprovantes',RECEIPTS_NAME='Comprovantes de uniformes';
+const MOVE_STATUS={ATIVO:['Registrado','p-green'],CORRIGIDO:['Corrigido','p-yellow'],CANCELADO:['Cancelado','p-red']};
+function receiptRows(personId){const R=window.CicluzUniformReceipt,ST=window.CicluzUniformStore;if(!R||!ST)return [];try{ST.load()}catch{return []}P.load();
+ return ST.get().movements.filter(m=>R.types.has(m.type)&&(!personId||m.collaboratorId===personId)).sort((a,b)=>b.date.localeCompare(a.date)||String(b.createdAt).localeCompare(String(a.createdAt))).map(m=>({m,p:P.byId(m.collaboratorId)}))}
+function receiptTable(rows,withPerson){const wrap=el('div','uniforms-table-wrap');if(!rows.length){wrap.append(el('p','profiles-note','Nenhum comprovante de uniforme.'));return wrap}const name=window.CicluzUniformUI?.uniformName||(x=>x);
+ const table=el('table','uniforms-table docs-receipt-table'),hr=el('tr');for(const h of [...(withPerson?['Colaborador']:[]),'Data','Movimentação','Peças','Status',''])hr.append(el('th',null,h));const th=el('thead');th.append(hr);const tb=el('tbody');
+ for(const {m,p} of rows){const tr=el('tr'),st=el('td'),[t,c]=MOVE_STATUS[m.status]||[m.status,''],a=el('td','uniforms-row-actions');if(m.status==='CANCELADO')tr.classList.add('is-cancelled');st.append(el('span','pill '+c,t));
+  a.append(iconButton('Ver comprovante de '+(p?.name||m.collaboratorName)+' em '+dateBR(m.date),ICON.eye,()=>window.CicluzUniformReceipt.open(m.id)));
+  tr.append(...(withPerson?[el('td',null,p?.name||m.collaboratorName)]:[]),el('td',null,dateBR(m.date)),el('td',null,({ENTREGUE:'Entrega',VENDIDO:'Venda',DEVOLVIDO:'Devolução'})[m.type]||m.type),el('td',null,m.items.map(i=>name(i.uniformId)+' ×'+i.quantity).join(', ')),st,a);tb.append(tr)}
+ table.append(th,tb);wrap.append(table);return wrap}
+function renderReceipts(){load();internalNote.hidden=true;screen.replaceChildren();const all=receiptRows(null),people=[...new Map(all.map(x=>[x.m.collaboratorId,x.p?.name||x.m.collaboratorName])).entries()];
+ screen.append(el('div','form-note','Comprovantes gerados a partir dos lançamentos de DES - Uniformes Entrega/Recebimento (entregas, vendas e devoluções). São demonstrativos: para valer como recibo, imprima e colha a assinatura.'));
+ const sel=el('select');sel.setAttribute('aria-label','Filtrar colaborador');sel.add(new Option('Todos os colaboradores',''));for(const [id,n] of people)sel.add(new Option(n,id));sel.value=people.some(([id])=>id===openPersonId)?openPersonId:'';sel.addEventListener('change',()=>{openPersonId=sel.value||null;renderReceipts()});
+ const l=el('label','docs-switch','Colaborador');l.append(sel);const rows=all.filter(x=>!openPersonId||x.m.collaboratorId===openPersonId);screen.append(l,el('p','profiles-note',rows.length+' comprovante(s).'),receiptTable(rows,true))}
+
 /* ---------- Ficha do colaborador (Colaboradores Cadastrados) ---------- */
 function section(p){load();const s=summary(p.id),[t,c]=overall(s),sec=el('section','profiles-section docs-file-section');sec.append(el('h3',null,'Documentações'));
  const top=el('div','people-file-top');top.append(el('span','pill '+c,t),el('span','profiles-note',s.done+' concluída(s) · '+s.open+' pendente(s)'+(s.review?' ('+s.review+' a conferir)':'')+' · '+s.na+' não aplicável(is) · 11 categorias'));sec.append(top);
@@ -213,10 +280,14 @@ function section(p){load();const s=summary(p.id),[t,c]=overall(s),sec=el('sectio
  for(const cat of CATS){const st=catState(p.id,cat.id),k=catOf(p.id,cat.id),withFiles=k.records.filter(r=>r.files?.length),last=withFiles.map(r=>r.receivedAt).filter(Boolean).sort().pop();const tr=el('tr'),stc=el('td');stc.append(el('span','pill '+STATE[st].pill,STATE[st].label+(withFiles.length>1?' · '+withFiles.length+' registros':'')));
   const a=el('td','uniforms-row-actions');const files=withFiles.flatMap(r=>r.files);if(files.length)a.append(iconButton('Visualizar arquivos de '+cat.name,ICON.eye,()=>viewFiles(cat,files,cat.name+' — '+p.name)));a.append(iconButton('Abrir em Documentações: '+cat.name,DOC_ICON,()=>showDocuments({cat:cat.id,personId:p.id})));
   const name=el('td');name.append(icon(st),' ',cat.name);tr.append(name,stc,el('td',null,last?dateBR(last):'—'),a);tb.append(tr)}
- table.append(th,tb);wrap.append(table);sec.append(wrap);return sec}
+ table.append(th,tb);wrap.append(table);sec.append(wrap);const pbox=el('div','docs-file-personal');const paint=()=>{load();pbox.replaceChildren(el('h4',null,PERSONAL_NAME+' (Cadastro Completo)'),personalTable(personalRows(p.id),false,paint))};paint();sec.append(pbox);const rbox=el('div','docs-file-receipts');rbox.append(el('h4',null,RECEIPTS_NAME),receiptTable(receiptRows(p.id),false));sec.append(rbox);return sec}
 
 function showDocuments(opts={}){document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Documentações';status.textContent='';
  if(opts.cat)openCat(opts.cat,opts.personId);else renderIndex();normalizeHeaderActions(view)}
 window.showDocuments=showDocuments;
-window.CicluzDocuments={CATS,MODELS,summary:id=>{load();return summary(id)},catState:(id,c)=>{load();return catState(id,c)},section,show:showDocuments};
+/* Pastas Documentos: the collaborators' folders open these same records (no second copy). */
+document.addEventListener('click',e=>{const c=e.target.closest?.('#sector-content .section-card[data-target=vz-doc-des-documentos-colaboradores],#sector-content .section-card[data-target=vz-doc-des-contratos-colaboradores]');if(!c||e.target.closest('.menu-item-move'))return;e.preventDefault();e.stopImmediatePropagation();showDocuments({cat:c.dataset.target.endsWith('contratos-colaboradores')?'contrato':PERSONAL})},true);
+window.CicluzDocuments={CATS,MODELS,
+ linkGenerated:(personId,g)=>{load();let rid=null;const ok=transact(d=>{const k=ensure(d,personId,'contrato');rid=newId();k.records.push({id:rid,label:g.label,files:[],versions:[],generated:{versionId:g.versionId,at:g.at,model:g.model||''},createdAt:new Date().toISOString()});logDoc(d,personId,'Contrato de Trabalho: '+g.label+' gerado; aguardando assinatura.')});return ok?rid:null},
+ recordById:(personId,rid)=>{load();const r=catOf(personId,'contrato').records.find(x=>x.id===rid);return r?{...r,state:recordState(r)}:null},files:{inspect,put:(id,blob)=>putFiles([{id,blob}]),get:getFile,view:(heading,file,sensitive)=>viewFiles({sensitive:!!sensitive},[file],heading)},personal:id=>{load();return personalOf(id)},summary:id=>{load();return summary(id)},catState:(id,c)=>{load();return catState(id,c)},catLabel:(id,c)=>{load();return STATE[catState(id,c)].label},section,show:showDocuments};
 })();

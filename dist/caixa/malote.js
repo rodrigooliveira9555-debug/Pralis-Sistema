@@ -16,7 +16,7 @@
   const { el, botao, campo, entrada, seletor } = U;
   const { moeda, centavos } = C;
 
-  const CAMINHO = 'Entradas · Vendas / Faturamento / Caixas / Malote da Tesouraria';
+  const CAMINHO = 'Entradas · Vendas / Faturamento / Lançamentos / VND - Malote da Tesouraria';
   const PDVS = ['PDV 1', 'PDV 2', 'PDV 3', 'PDV 4'];
   let tela = null;
   let corpo = null;
@@ -26,7 +26,7 @@
   let erroSem = '';
 
   function abrir() {
-    if (!tela) tela = C.criarTela({ id: 'caixa-malote', titulo: 'Malote da Tesouraria', caminho: CAMINHO });
+    if (!tela) tela = C.criarTela({ id: 'caixa-malote', titulo: 'VND - Malote da Tesouraria', caminho: CAMINHO });
     tela.ativar();
     montar();
   }

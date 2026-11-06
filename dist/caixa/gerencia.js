@@ -14,7 +14,7 @@
   const { el, botao, campo, entrada, seletor } = U;
   const { moeda } = C;
 
-  const CAMINHO = 'Entradas · Vendas / Faturamento / Caixas / Gerência';
+  const CAMINHO = 'Entradas · Vendas / Faturamento / Lançamentos / VND - Gerência de Caixas';
   // Caixas abertos de outros PDVs (só para o monitor ter o que mostrar).
   const OUTROS_ABERTOS = [
     { id: 'ab-2', data: new Date().toLocaleDateString('pt-BR'), pdv: 'PDV 2', turno: 'Manhã', operador: 'Bruna Costa', abertura: '06:02', entradas: 214300, transfEntrada: 35000, transfSaida: 0, ficticio: true },
@@ -38,7 +38,7 @@
   const iso = (br) => br.split('/').reverse().join('-');
 
   function abrir() {
-    if (!tela) tela = C.criarTela({ id: 'caixa-gerencia', titulo: 'Gerência', caminho: CAMINHO });
+    if (!tela) tela = C.criarTela({ id: 'caixa-gerencia', titulo: 'VND - Gerência de Caixas', caminho: CAMINHO });
     tela.ativar();
     atualizadoEm = C.hora();
     montar();

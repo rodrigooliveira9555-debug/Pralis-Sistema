@@ -1,0 +1,154 @@
+/*
+ * Configurações (Permissões, Usuários, Senhas). Roxo de Configurações (#7c3aed, texto #5520ad, o
+ * mesmo par do Agenda). Reaproveita compras.css (seção, chips, situação, diálogo) e os tokens do S2;
+ * aqui só o que é próprio: linha de pessoa com círculo, grade dos 8 postos, lista de permissões.
+ */
+body.dark-theme :is(.acessos-view, .acessos-dialog) .btn.secondary { color: #d8c8fb; }
+:is(.acessos-view, .acessos-dialog) .tom-marca { background: #ede5fd; color: #5520ad; }
+body.dark-theme :is(.acessos-view, .acessos-dialog) .tom-marca { background: #33255a; color: #d8c8fb; }
+
+.acessos-barra { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 12px; }
+.acessos-barra > .compras-campo { flex: 1 1 260px; max-width: 420px; }
+.acessos-barra > .acessos-novo { margin-left: auto; }
+@media (max-width: 480px) { .acessos-barra > .acessos-novo { width: 100%; } }
+.acessos-lista-box { display: grid; gap: 12px; }
+.acessos-lista { display: grid; }
+
+/* Linha de pessoa/cargo: círculo, nome + detalhe, etiquetas à direita (quebram para baixo no celular). */
+.acessos-pessoa {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 56px; padding: 10px 14px; width: 100%; box-sizing: border-box;
+  border: 0; border-top: 1px solid var(--layout-line, #dedee3); background: transparent; text-align: left; font: inherit; color: inherit;
+}
+.acessos-lista > .acessos-pessoa:first-child { border-top: 0; }
+button.acessos-pessoa { cursor: pointer; transition: background-color 160ms ease; }
+button.acessos-pessoa:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+button.acessos-pessoa:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: -2px; }
+body.dark-theme button.acessos-pessoa:focus-visible { outline-color: #d8c8fb; }
+/* Conta sem acesso: só o nome fica apagado (sem opacidade, que derrubava o contraste do e-mail). */
+.acessos-pessoa.inativa .acessos-pessoa-texto b { color: var(--muted, #73737a); font-weight: 500; }
+.acessos-oculto { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.acessos-avatar {
+  flex: 0 0 34px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  font: 600 12px/1 var(--ui-font); background: color-mix(in srgb, var(--menu-accent) 16%, var(--theme-card, #fff)); color: var(--panel-text, #5520ad);
+}
+.acessos-avatar.posto { border-radius: 10px; background: var(--menu-accent); color: #fff; }
+body.dark-theme .acessos-avatar:not(.posto) { color: #d8c8fb; }
+.acessos-pessoa-texto { flex: 1 1 200px; min-width: min(200px, 100%); display: grid; gap: 2px; }
+.acessos-pessoa-texto b { font-weight: 600; overflow-wrap: anywhere; }
+.acessos-pessoa-texto small { font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); overflow-wrap: anywhere; }
+.acessos-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; margin-left: auto; }
+
+/* Os 8 postos do caixa: 4 colunas no desktop, 2 no celular. */
+.acessos-secao-nota { padding: 0 14px; }
+.compras-secao > .profiles-note { margin: 0; padding: 10px 14px 0; }
+.acessos-postos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding: 12px 14px 14px; }
+.acessos-posto {
+  display: grid; gap: 6px; align-content: start; padding: 12px; border-radius: 12px;
+  border: 1px dashed color-mix(in srgb, var(--menu-accent) 45%, var(--layout-line, #dedee3)); background: transparent;
+}
+.acessos-posto b { font-weight: 600; }
+.acessos-posto small { color: var(--muted, #73737a); overflow-wrap: anywhere; }
+.acessos-posto.ocupado { border-style: solid; border-color: var(--layout-line, #dedee3); background: color-mix(in srgb, var(--menu-accent) 6%, var(--theme-card, #fff)); }
+.acessos-posto.inativa small { color: #b91c1c; }
+body.dark-theme .acessos-posto.inativa small { color: #f8b4b4; }
+.acessos-posto .btn { justify-self: start; }
+
+/* Formulário dos diálogos */
+.acessos-form { display: grid; gap: 14px; }
+.acessos-form-linha { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.acessos-form-linha[hidden], .acessos-form > [hidden] { display: none; }
+.acessos-alerta { color: #b91c1c; font: 500 12px/16px var(--ui-font); }
+.acessos-alerta:empty { display: none; }
+body.dark-theme .acessos-alerta { color: #f8b4b4; }
+.acessos-escolha { display: flex; flex-wrap: wrap; gap: 6px; }
+.acessos-dialog .compras-form > .acessos-form-linha { grid-column: 1 / -1; }
+
+/* Permissões por área */
+.acessos-areas { display: grid; gap: 12px; grid-column: 1 / -1; }
+.acessos-area {
+  position: relative; margin: 0; min-width: 0; padding: 0 14px 8px; display: block;
+  border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff);
+}
+.acessos-area legend {
+  /* float + largura total: a legenda vira a primeira linha da caixa e "Marcar todas" vai para a direita. */
+  float: left; width: 100%; box-sizing: border-box; padding: 8px 120px 6px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
+  font: var(--ui-section-title-weight, 600) var(--ui-section-title, 14px)/20px var(--ui-font);
+}
+.acessos-area-conta { font: 600 11px/16px var(--ui-font); padding: 1px 8px; border-radius: 999px; background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); color: var(--panel-text, #5520ad); }
+body.dark-theme .acessos-area-conta { color: #d8c8fb; }
+/* "Marcar todas": fora da legenda (o nome do grupo é só a área), posto no canto da caixa. */
+.acessos-link {
+  position: absolute; top: 6px; right: 14px; padding: 4px 2px; min-height: 24px; border: 0; background: none; cursor: pointer;
+  font: 600 12px/16px var(--ui-font); color: var(--panel-text, #5520ad); text-decoration: underline; text-underline-offset: 3px;
+}
+body.dark-theme .acessos-link { color: #d8c8fb; }
+.acessos-link[hidden] { display: none; }
+/* label.acessos-check dentro da área: vence o "label em grade" dos diálogos (.profiles-dialog label). */
+.acessos-area label.acessos-check {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-height: 40px; padding: 4px 0;
+  border-top: 1px solid var(--layout-line, #dedee3); cursor: pointer;
+}
+.acessos-area > legend + .acessos-check, .acessos-area > legend + .acessos-link + .acessos-check { border-top: 0; }
+.acessos-area > :not(legend) { clear: both; }
+.acessos-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--menu-accent); flex: none; }
+.acessos-check input:disabled + .acessos-check-texto { opacity: .55; }
+.acessos-check-texto { flex: 1 1 200px; min-width: 0; display: grid; gap: 1px; }
+.acessos-check-texto small { font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); }
+.acessos-check-nota { font: 400 11px/16px var(--ui-font); color: var(--muted, #73737a); font-style: italic; }
+.acessos-area legend .acessos-check-nota { font-weight: 400; }
+.acessos-sugeridos { color: var(--muted, #73737a); }
+.acessos-view .compras-vazio > .btn { justify-self: center; width: auto; padding-inline: 20px; }
+
+/* Acessos por pessoa */
+.acessos-pessoa-area { display: grid; gap: 12px; }
+.acessos-resumo {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 14px;
+  border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff);
+}
+.acessos-linha-perm {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 6px 12px; padding: 8px 0;
+  border-top: 1px solid var(--layout-line, #dedee3);
+}
+.acessos-area > legend + .acessos-linha-perm { border-top: 0; }
+.acessos-linha-perm .acessos-check-texto b { font-weight: 500; }
+.acessos-linha-perm.pode .acessos-check-texto b { font-weight: 600; }
+.acessos-tri .compras-chip { padding: 5px 10px; }
+.acessos-acoes { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+
+/* Diálogo: "Salvando…" neutro, separado do erro vermelho. */
+.acessos-salvando { margin: 0; font: 500 12px/16px var(--ui-font); color: var(--muted, #73737a); }
+.acessos-salvando:empty { display: none; }
+
+/* Senha com "Mostrar" ao lado */
+.acessos-senha-linha { display: flex; gap: 8px; align-items: center; }
+.acessos-senha-linha input { flex: 1 1 auto; min-width: 0; }
+.acessos-ver-senha {
+  flex: none; min-height: 36px; padding: 0 12px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--layout-line, #dedee3); background: var(--theme-card, #fff); color: var(--panel-text, #5520ad);
+  font: 600 12px/16px var(--ui-font);
+}
+body.dark-theme .acessos-ver-senha { color: #d8c8fb; }
+
+/* Toque: chips com alvo de 44 px no celular. */
+@media (pointer: coarse) {
+  :is(.acessos-view, .acessos-dialog) .compras-chip { min-height: 44px; }
+}
+
+/* Senhas */
+.acessos-senha { display: grid; gap: 14px; max-width: 460px; }
+.acessos-ok { margin: 0; color: #15803d; font: 500 13px/18px var(--ui-font); }
+.acessos-ok:empty, .acessos-senha .profiles-error:empty { display: none; }
+body.dark-theme .acessos-ok { color: #a7e8bd; }
+
+@media (max-width: 760px) {
+  .acessos-postos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .acessos-linha-perm { grid-template-columns: minmax(0, 1fr) auto; }
+  .acessos-linha-perm .acessos-tri { grid-column: 1 / -1; }
+}
+@media (max-width: 480px) {
+  .acessos-form-linha { grid-template-columns: 1fr; }
+  .acessos-tags { justify-content: flex-start; margin-left: 46px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  button.acessos-pessoa { transition: none; }
+}
