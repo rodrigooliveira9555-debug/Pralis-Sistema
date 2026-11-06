@@ -1,6 +1,7 @@
 # Pedido de produção no S2 — especificação (rascunho para aprovação)
 
-**Status:** rascunho de 05/11/2026, na branch `feat/pedidos-producao`. **Nenhum código escrito.**
+**Status:** 05/11/2026, branch `feat/pedidos-producao`. Fatias 1 a 8 implementadas para o Zé ver localmente e aprovar
+(sem commit). As perguntas da seção 8 foram respondidas pelo Zé no mesmo dia: ver a seção 9.
 Depois de o Zé e o Rodrigo responderem a seção 8, as decisões passam para o `PROJECT_BRAIN`
 (02 telas, 04 dados, 11 pendências) e este arquivo vira o roteiro das entregas.
 
@@ -131,8 +132,8 @@ só nasce o que não existe.
   - g11 **FAB. PRÓPRIA BASE**: recheios, massas, coberturas, ingredientes Pralis (os intermediários e
     os kits);
   - g13 **MAT. PRIMA**: farinha, fermento e os outros ingredientes.
-- **Acrescentar um bloco opcional `producao`** (só campos novos com valor padrão; produto antigo
-  continua igual, sem migração):
+- **Configuração de produção por produto** (implementada na chave `cicluz-producao-v1 › produtos`, ligada pelo
+  `produtoId`; o produto do Compras não muda de formato, então não há migração):
   - entradas: `compraExterna` (sim/não) e `producaoInterna` (sim/não), as duas da planilha;
   - `comEstoque` (sim/não);
   - `lojaPedeParaEstoque` e `lojaPedeParaProducao` (sim/não);
@@ -259,8 +260,8 @@ responsavelId?, inicio?, fim? }] }`
 
 | Dado | Onde |
 |---|---|
-| produto (+ bloco `producao`), unidades, movimentos | `cicluz-compras-v1`, que já existe e já é sincronizado |
-| fichas, formatos, agendas e pedidos de produção, ordens, abastecimentos | **`cicluz-producao-v1`** (nova) |
+| produto, unidades, movimentos | `cicluz-compras-v1`, que já existe e já é sincronizado (só leitura pela Produção) |
+| configuração de produção por produto (com o formato), fichas, agendas e pedidos de produção, ordens, abastecimento | **`cicluz-producao-v1`** (nova) |
 | patrimônio | **`cicluz-patrimonio-v1`** (nova) |
 | grupos MER, locais, cargos, salários | as chaves atuais, só leitura |
 
@@ -374,3 +375,31 @@ Dinheiro em centavos inteiros, com duas casas na tela.
     Está bom assim?
 21. **DUM** (código da caixa) e "nome reduzido (XXX caracteres)": qual o limite de caracteres? O DUM
     entra no produto do Compras?
+
+---
+
+## 9. Decisões do Zé (05/11/2026) e o que a tela faz
+
+| Pergunta | Decisão | Na tela |
+|---|---|---|
+| 1 Partes do produto | Etiqueta opcional + produtos intermediários | "Parte do produto" opcional na etapa; massa, recheio e kit podem ser produtos com ficha e estoque próprios (grupo FAB. PRÓPRIA BASE). |
+| 2 Meia assadeira | Medida só informativa | A meia divide a **largura** (precisa ser par); a medida fica no Patrimônio. |
+| 3 Tempo | Por faixa, como a planilha | Cada linha de equipamento tem tempo e faixa de/até opcional; passou da capacidade, o processo se repete. |
+| 4 Quem faz | Cargo + nível | A etapa guarda o cargo do cadastro de Cargos (chave + nome, porque o S2 não tem id fixo de cargo) e o nível da planilha. |
+| 5 Pedido extra | Pedido separado | O "+" de Pedidos de produção cria um pedido já enviado. |
+| 6 Ordem automática | Sugestão para aprovar | "Repor estoque" lista o que está abaixo do mínimo; "Aprovar e produzir" cria a ordem de reposição (até o máximo, no passo). |
+| 7 Com estoque | Usar o estoque do Compras | O pedido sai do estoque livre; só o que falta vira ordem (arredondada à meia fornada); a ordem pronta entra no saldo; o abastecimento sai dele. |
+| 8 Ingredientes | Baixa ao concluir | Ordem pronta baixa os ingredientes, convertidos para a unidade do estoque (ex.: 60 kg = 2,4 sacos de 25 kg); sem conversão, fica como pendência no mapa. |
+| Sobra | Volta para o estoque | No fechamento, a sobra de produto com estoque volta ao saldo; o descarte só é registrado. |
+| 9 Mapa | + por turno e por cargo | Visões: horário, turno, processo, setor, cargo, produto. Turno pela hora em que a janela começa (antes das 12:00 = manhã; provisório). |
+| 10 Custos | C1–C5 aprovadas como estão | Ficha mostra ingredientes + mão de obra + energia, custo por unidade e valor sugerido. Horas por mês, encargos e preços da energia são preenchidos em Saídas · Mercadorias → Cadastros Geral Produção → Parâmetros de custo (sem valor inventado; vazio = custo parcial com o que falta). |
+| 11 Menu | Lógica do vídeo do Rodrigo (06/11), como no Compras | Saídas · Mercadorias → **Lançamentos Produção**: MER - Pedidos de Produção, MER - Mapa de Produção, MER - Abastecimento; → **Relatórios**: MER - Produção; → **Cadastros Geral Produção**: MER - Produtos da Produção, MER - Ficha Técnica de Produtos, MER - Parâmetros de Custo; **Agenda → MER - Agenda de Produção** (o agendamento fica na Agenda). Verde; RET - Patrimônios em Saídas · Retiradas → Cadastros Geral, azul (RET). |
+| 13 Várias fichas | Recomendação | A ordem usa a ficha padrão e guarda uma cópia das etapas. |
+| 14 Conferência | Curva ABC | "Conferir: todos ou só a curva A". Enquanto o S2 não tem vendas, curva A = os 20% que mais vendem no campo "vendas 3 meses" do Compras (bolinha verde). |
+| 15 Mínimo > máximo | Recomendação | O sistema recusa. |
+| 16 Categoria "Outro" | Recomendação | Saiu; ficaram as 4 do Rodrigo. |
+| 17 Relatórios | Usar as vendas do Compras | Relatórios: pedido, produzido, abastecido, sobra, descarte, desperdício e "vendas 3 meses" (cadastro do Compras, não venda real). Margem por produto ainda não (a fórmula de margem não foi definida). |
+| 18 Recorrência | Recomendação | Campo de repetição do Compras (semestral = personalizado, mensal a cada 6). |
+| 19 Quem pede/confere | Recomendação | Lista provisória de responsáveis do Compras (sem login por pessoa). |
+| 20 Tablet | Recomendação | Mapa com botões de 44 px e cartões em grade. |
+| 21 DUM e nome reduzido | Depois | Não mexeu no cadastro do Compras. |
