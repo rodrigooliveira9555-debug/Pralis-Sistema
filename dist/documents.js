@@ -246,15 +246,28 @@ function renderPersonal(){load();internalNote.hidden=true;screen.replaceChildren
 /* Cadastro Completo: the camera buttons attach the file to the candidate the form was opened for. */
 const cc=document.getElementById('cadastro-completo');let ccPerson=null;
 const ccNote=cc?.querySelector('.form-note:not(.people-complete-banner)'),ccNoteText=ccNote?.textContent||'';
-function scanMeta(blk){const t=(blk.querySelector('strong')?.textContent||'').replace(/^[^\p{L}\p{N}]+/u,'').replace(/\s*—\s*documento solicitado$/i,'').replace(/\s*\*$/,'').trim();const dep=blk.closest('.dep-card');
- if(!dep)return {docType:t,owner:'colaborador',dependent:null};const i=[...cc.querySelectorAll('.dep-card')].indexOf(dep);const nm=[...dep.querySelectorAll('input')].find(x=>/^\s*nome/i.test(x.closest('label')?.textContent||''))?.value||'';return {docType:t,owner:'dependente',dependent:i,dependentName:nm.trim()}}
+function scanMeta(blk,side){const base=CicluzDocCapture.tipo(blk)||(blk.querySelector('strong')?.textContent||'').replace(/^[^\p{L}\p{N}]+/u,'').replace(/\s*—\s*documento solicitado$/i,'').replace(/\s*\*$/,'').trim(),t=side==='frente'||side==='verso'?base+' ('+side+')':base,dep=blk.closest('.dep-card');
+ if(!dep)return {docType:t,base,owner:'colaborador',dependent:null};const i=[...cc.querySelectorAll('.dep-card')].indexOf(dep);const nm=[...dep.querySelectorAll('input')].find(x=>/^\s*nome/i.test(x.closest('label')?.textContent||''))?.value||'';return {docType:t,base,owner:'dependente',dependent:i,dependentName:nm.trim()}}
+/* O bloco com seletor de tipo é o do documento de identificação: ele também lê a foto e preenche nome, CPF e nascimento. */
+const ccLeitor=blk=>!!blk.querySelector('.doc-capture-type');
+const ccCampo=re=>{const achados=[...cc.querySelectorAll('input')].filter(i=>!i.closest('.dep-card')&&re.test(i.closest('label')?.textContent||''));return achados.find(i=>i.dataset.dateNative)||achados[0]};
+function ccPreencher(found){const done=[],set=(re,v,nome)=>{const i=ccCampo(re);if(i&&v){i.value=v;i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new Event('change',{bubbles:true}));done.push(nome)}};
+ set(/^\s*nome completo/i,found.name,'nome');set(/^\s*cpf/i,found.cpf&&F.cpfMask(found.cpf),'CPF');set(/nascimento/i,found.birth,'data de nascimento');return done}
 function paintScan(){if(!cc)return;load();if(ccNote)ccNote.textContent=ccPerson?'Os dados preenchidos e os documentos anexados ficam salvos somente neste navegador e aparecem em Documentações → '+PERSONAL_NAME+'.':ccNoteText;
- cc.querySelectorAll('.doc-capture').forEach(blk=>{const meta=scanMeta(blk);
-  if(!ccPerson){CicluzDocCapture.estado(blk,{texto:'Disponível ao abrir pelo link do candidato',ativo:false});return}
-  const cur=personalOf(ccPerson).find(r=>sameSlot(r,meta));CicluzDocCapture.estado(blk,{texto:cur?'Anexado em '+dateBR(cur.at.slice(0,10))+' · '+cur.file.name:'Nenhum arquivo anexado',ativo:true})})}
+ cc.querySelectorAll('.doc-capture').forEach(blk=>{const meta=scanMeta(blk),leitor=ccLeitor(blk);
+  if(!ccPerson){CicluzDocCapture.estado(blk,{texto:leitor?'Os dados são preenchidos pela foto; o arquivo só é guardado ao abrir pelo link do candidato.':'Disponível ao abrir pelo link do candidato',ativo:leitor});return}
+  const cur=personalOf(ccPerson).filter(r=>r.owner===meta.owner&&(r.dependent??null)===(meta.dependent??null)&&(r.docType===meta.base||r.docType.startsWith(meta.base+' (')));
+  CicluzDocCapture.estado(blk,{texto:cur.length?cur.map(r=>r.docType+': anexado em '+dateBR(r.at.slice(0,10))+' · '+r.file.name).join(' | '):'Nenhum arquivo anexado',ativo:true})})}
 if(cc){document.addEventListener('cicluz-complete-bound',e=>{ccPerson=e.detail?.id||null;paintScan()});
  cc.addEventListener('click',e=>{if(e.target.closest('#add-dependent'))setTimeout(paintScan,0)});
- cc.addEventListener('doc-capture',async e=>{if(!ccPerson)return;const {file,block}=e.detail,meta=scanMeta(block),pid=ccPerson;CicluzDocCapture.estado(block,{texto:'Guardando…',ativo:false});const err=await attachPersonal(pid,meta,file);paintScan();if(err)CicluzDocCapture.estado(block,{texto:err})})}
+ const lido=new WeakMap();
+ cc.addEventListener('doc-capture',async e=>{const {file,block,side}=e.detail,meta=scanMeta(block,side),pid=ccPerson,leitor=ccLeitor(block);let aviso='';
+  if(leitor){CicluzDocCapture.estado(block,{texto:'Lendo o '+meta.base+'…',ativo:false});
+   try{const got=side==='verso'?lido.get(block)||{}:{},found=window.CicluzIdentityReader.extract((await window.CicluzOccurrenceReader.read(file,p=>CicluzDocCapture.estado(block,{texto:'Lendo o '+meta.base+'… '+p+'%',ativo:false}))).text);
+    for(const k of Object.keys(found))if(!got[k])got[k]=found[k];lido.set(block,got);const done=ccPreencher(got);aviso=done.length?'Preenchido: '+done.join(', ')+'. Confira antes de seguir.':'Não consegui ler este documento; preencha à mão.'}
+   catch{aviso='Não foi possível ler a foto neste aparelho; preencha à mão.'}}
+  if(pid){CicluzDocCapture.estado(block,{texto:'Guardando…',ativo:false});const err=await attachPersonal(pid,meta,file);paintScan();if(err||aviso)CicluzDocCapture.estado(block,{texto:err||aviso})}
+  else CicluzDocCapture.estado(block,{texto:aviso,ativo:true})})}
 
 /* ---------- Comprovantes de uniformes ----------
    Read straight from the uniform movements (CicluzUniformStore) by collaborator id: no copy is kept here. */
