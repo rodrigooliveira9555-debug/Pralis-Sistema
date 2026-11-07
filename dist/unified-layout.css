@@ -34,8 +34,8 @@ body #people .dashboard-intro{background:var(--menu-accent,var(--panel-color,#7c
 
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-list-state,.financial-count,.job-item small,.salary-row small){color:var(--layout-ink)!important}
 /* Information blocks remain white in either theme; gray is only the shared spacing surface. */
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.job-identity,.account-identity,.icon-live-preview,.doc-first,.form-note,.identity-advanced,.dep-card,.location-tree,.operator-fees){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.job-identity,.account-identity,.icon-live-preview,.doc-first,.dep-card) :is(label,p,small,strong,b,summary){color:var(--layout-ink)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.job-identity,.account-identity,.icon-live-preview,.doc-capture,.form-note,.identity-advanced,.dep-card,.location-tree,.operator-fees){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.job-identity,.account-identity,.icon-live-preview,.doc-capture,.dep-card) :is(label,p,small,strong,b,summary){color:var(--layout-ink)!important}
 /* Nested information sections and tables keep the common neutral surface. */
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.location-identity,.location-preview-card,.job-preview,.salary-item,.next-card,.process,.card,.panel){border-color:var(--layout-line)!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.location-identity,.location-preview-card,.job-preview,.salary-item,.next-card){background:#fff!important;color:var(--layout-ink)!important}

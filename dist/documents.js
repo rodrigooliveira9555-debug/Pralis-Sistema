@@ -249,12 +249,12 @@ const ccNote=cc?.querySelector('.form-note:not(.people-complete-banner)'),ccNote
 function scanMeta(blk){const t=(blk.querySelector('strong')?.textContent||'').replace(/^[^\p{L}\p{N}]+/u,'').replace(/\s*—\s*documento solicitado$/i,'').replace(/\s*\*$/,'').trim();const dep=blk.closest('.dep-card');
  if(!dep)return {docType:t,owner:'colaborador',dependent:null};const i=[...cc.querySelectorAll('.dep-card')].indexOf(dep);const nm=[...dep.querySelectorAll('input')].find(x=>/^\s*nome/i.test(x.closest('label')?.textContent||''))?.value||'';return {docType:t,owner:'dependente',dependent:i,dependentName:nm.trim()}}
 function paintScan(){if(!cc)return;load();if(ccNote)ccNote.textContent=ccPerson?'Os dados preenchidos e os documentos anexados ficam salvos somente neste navegador e aparecem em Documentações → '+PERSONAL_NAME+'.':ccNoteText;
- cc.querySelectorAll('.doc-first').forEach(blk=>{const btn=blk.querySelector('.photo-icon'),small=blk.querySelector('.photo-action small');if(!btn)return;const meta=scanMeta(blk);
-  if(!ccPerson){btn.disabled=true;btn.setAttribute('aria-label','Fotografar ou anexar — disponível ao abrir pelo link do candidato');if(small)small.textContent='Disponível ao abrir pelo link do candidato';return}
-  btn.disabled=false;btn.setAttribute('aria-label','Fotografar ou anexar: '+meta.docType);const cur=personalOf(ccPerson).find(r=>sameSlot(r,meta));if(small)small.textContent=cur?'Anexado em '+dateBR(cur.at.slice(0,10))+' · '+cur.file.name:'Nenhum arquivo anexado'})}
+ cc.querySelectorAll('.doc-capture').forEach(blk=>{const meta=scanMeta(blk);
+  if(!ccPerson){CicluzDocCapture.estado(blk,{texto:'Disponível ao abrir pelo link do candidato',ativo:false});return}
+  const cur=personalOf(ccPerson).find(r=>sameSlot(r,meta));CicluzDocCapture.estado(blk,{texto:cur?'Anexado em '+dateBR(cur.at.slice(0,10))+' · '+cur.file.name:'Nenhum arquivo anexado',ativo:true})})}
 if(cc){document.addEventListener('cicluz-complete-bound',e=>{ccPerson=e.detail?.id||null;paintScan()});
- cc.addEventListener('click',e=>{if(e.target.closest('#add-dependent'))setTimeout(paintScan,0);const btn=e.target.closest('.doc-first .photo-icon');if(!btn||btn.disabled||!ccPerson)return;const blk=btn.closest('.doc-first'),meta=scanMeta(blk),small=blk.querySelector('.photo-action small'),pid=ccPerson;
-  const input=el('input');input.type='file';input.accept=ACCEPT.join(',');input.onchange=async()=>{const f=input.files?.[0];if(!f)return;if(small)small.textContent='Guardando…';const err=await attachPersonal(pid,meta,f);paintScan();if(err&&small)small.textContent=err};input.click()})}
+ cc.addEventListener('click',e=>{if(e.target.closest('#add-dependent'))setTimeout(paintScan,0)});
+ cc.addEventListener('doc-capture',async e=>{if(!ccPerson)return;const {file,block}=e.detail,meta=scanMeta(block),pid=ccPerson;CicluzDocCapture.estado(block,{texto:'Guardando…',ativo:false});const err=await attachPersonal(pid,meta,file);paintScan();if(err)CicluzDocCapture.estado(block,{texto:err})})}
 
 /* ---------- Comprovantes de uniformes ----------
    Read straight from the uniform movements (CicluzUniformStore) by collaborator id: no copy is kept here. */
