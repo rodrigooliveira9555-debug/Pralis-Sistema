@@ -101,6 +101,19 @@ job.select.addEventListener('change',()=>{const allowed=new Set(orgAllowed().map
 simpleFields.append(lbl('Nome completo *',nameIn),lbl('CPF *',cpfIn),lbl('WhatsApp *',phone),lbl('E-mail',email),birth.label,job.label,lbl('Turno *',shift),orgBox);
  const err=el('p','profiles-error');err.setAttribute('role','alert');const msg=el('p','profiles-note');msg.setAttribute('role','status');
  const title=el('h3','uniforms-heading','Novo cadastro simples');simpleFields.before(title);
+ /* Foto do documento: o aparelho lê nome, CPF e data de nascimento (nada sai do navegador) e só preenche os campos; a imagem não é guardada aqui, ela vai depois para a pasta do colaborador em Documentos. */
+ const docType=el('select');docType.setAttribute('aria-label','Tipo do documento');['RG','CPF','CNH'].forEach(t=>docType.add(new Option(t,t)));
+ const docInput=el('input');docInput.type='file';docInput.accept='image/*';docInput.setAttribute('capture','environment');docInput.hidden=true;
+ const scanStatus=el('p','profiles-note');scanStatus.setAttribute('role','status');
+ const scanBtn=button('Tirar foto do documento',()=>docInput.click(),'btn btn-com-icone');const scanTile=el('span','btn-icone-quadro');scanTile.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>';scanBtn.prepend(scanTile);
+ docInput.onchange=async()=>{const file=docInput.files[0];docInput.value='';if(!file)return;scanBtn.disabled=true;scanStatus.textContent='Lendo o '+docType.value+'…';
+  try{const text=(await window.CicluzOccurrenceReader.read(file,p=>{scanStatus.textContent='Lendo o '+docType.value+'… '+p+'%'})).text,found=window.CicluzIdentityReader.extract(text),done=[];
+   if(found.name){nameIn.value=found.name;done.push('nome')}if(found.cpf){cpfIn.value=F.cpfMask(found.cpf);done.push('CPF')}if(found.birth){birth.set(found.birth);done.push('data de nascimento')}
+   for(const x of [nameIn,cpfIn])x.dispatchEvent(new Event('input',{bubbles:true}));
+   scanStatus.textContent=done.length?'Preenchido: '+done.join(', ')+'. Confira antes de salvar; WhatsApp e e-mail são digitados.':'Não consegui ler este documento. Tire outra foto, de frente, com boa luz e sem reflexo.'}
+  catch{scanStatus.textContent='Não foi possível ler a foto neste aparelho. Preencha os campos à mão.'}
+  finally{scanBtn.disabled=false}};
+ const scanBox=el('div','people-doc-scan');scanBox.append(lbl('Tipo do documento',docType),scanBtn,docInput,scanStatus);title.after(scanBox);
  const actions=el('div','actions people-simple-actions');const saveBtn=button('Salvar Cadastro',()=>saveSimple(false),'btn');const okBtn=button('Marcar Cadastro como OK',()=>saveSimple(true),'btn secondary footer-save-accent');actions.append(button('Cancelar',cancelSimple),okBtn,saveBtn);
  simpleFields.after(dup,err,msg,actions);
  const list=el('div','uniforms-history people-simple-list');const listStatus=el('p','profiles-note');const listTable=el('div','uniforms-table-wrap');list.append(el('h3','uniforms-heading','Acompanhamento dos candidatos'),listStatus,listTable);simpleView.querySelector('.content').append(list);
