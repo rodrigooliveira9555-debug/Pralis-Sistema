@@ -172,9 +172,9 @@ body dialog.location-dialog .location-preview-card .location-icon {
  color:var(--node-ink,#fff)!important;
 }
 body:is(.dark-theme,:not(.dark-theme)) #sector-view .location-tree .location-row .account-row-actions > button[title="Editar"] {
- background:var(--menu-accent,#7c3aed)!important;
- border-color:var(--menu-accent,#7c3aed)!important;
- color:#fff!important;
+ background:var(--node-color,var(--menu-accent,#7c3aed))!important;
+ border-color:var(--node-color,var(--menu-accent,#7c3aed))!important;
+ color:var(--node-ink,#fff)!important;
 }
 
 body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees h3 .fee-header-actions .local-search-toggle {
@@ -302,7 +302,6 @@ body #sector-view .location-tree .location-row>.account-row-actions:not([hidden]
  display:flex!important;flex-wrap:nowrap!important;flex-basis:auto!important;position:absolute;
  right:0;top:0;bottom:0;width:76px!important;animation:location-actions-in .18s ease-out;
 }
-body #sector-view .location-tree .location-row .account-row-actions>button[title="Editar"]{background:#7c3aed!important}
 @keyframes location-actions-in{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
 @media(prefers-reduced-motion:reduce){body #sector-view .location-tree .location-row{transition:none!important}body #sector-view .location-tree .account-row-actions{animation:none!important}}
 
