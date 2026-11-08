@@ -251,7 +251,8 @@ function scanMeta(blk,side){const base=CicluzDocCapture.tipo(blk)||(blk.querySel
 /* O bloco com seletor de tipo é o do documento de identificação: ele também lê a foto e preenche nome, CPF e nascimento. */
 const ccLeitor=blk=>!!blk.querySelector('.doc-capture-type');
 const ccCampo=re=>{const achados=[...cc.querySelectorAll('input')].filter(i=>!i.closest('.dep-card')&&re.test(i.closest('label')?.textContent||''));return achados.find(i=>i.dataset.dateNative)||achados[0]};
-function ccPreencher(found){const done=[],set=(re,v,nome)=>{const i=ccCampo(re);if(i&&v){i.value=v;i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new Event('change',{bubbles:true}));done.push(nome)}};
+/* Com a pessoa vinculada (escolhida do Cadastro Simples), a leitura só completa campo vazio e avisa o que ficou diferente do documento. */
+function ccPreencher(found){const done=[],set=(re,v,nome)=>{const i=ccCampo(re);if(i&&v&&ccPerson&&i.value){if(i.value.replace(/\D/g,'')!==String(v).replace(/\D/g,'')&&i.value!==v)(done.manteve=done.manteve||[]).push(nome);return}if(i&&v){i.value=v;i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new Event('change',{bubbles:true}));done.push(nome)}};
  set(/^\s*nome completo/i,found.name,'nome');set(/^\s*cpf/i,found.cpf&&F.cpfMask(found.cpf),'CPF');set(/nascimento/i,found.birth,'data de nascimento');return done}
 function paintScan(){if(!cc)return;load();if(ccNote)ccNote.textContent=ccPerson?'Os dados preenchidos e os documentos anexados ficam salvos somente neste navegador e aparecem em Documentações → '+PERSONAL_NAME+'.':ccNoteText;
  cc.querySelectorAll('.doc-capture').forEach(blk=>{const meta=scanMeta(blk),leitor=ccLeitor(blk);
@@ -264,7 +265,7 @@ if(cc){document.addEventListener('cicluz-complete-bound',e=>{ccPerson=e.detail?.
  cc.addEventListener('doc-capture',async e=>{const {file,block,side}=e.detail,meta=scanMeta(block,side),pid=ccPerson,leitor=ccLeitor(block);let aviso='';
   if(leitor){CicluzDocCapture.estado(block,{texto:'Lendo o '+meta.base+'…',ativo:false});
    try{const got=side==='verso'?lido.get(block)||{}:{},found=window.CicluzIdentityReader.extract((await window.CicluzOccurrenceReader.read(file,p=>CicluzDocCapture.estado(block,{texto:'Lendo o '+meta.base+'… '+p+'%',ativo:false}))).text);
-    for(const k of Object.keys(found))if(!got[k])got[k]=found[k];lido.set(block,got);const done=ccPreencher(got);aviso=done.length?'Preenchido: '+done.join(', ')+'. Confira antes de seguir.':'Não consegui ler este documento; preencha à mão.'}
+    for(const k of Object.keys(found))if(!got[k])got[k]=found[k];lido.set(block,got);const done=ccPreencher(got);aviso=(done.length?'Preenchido: '+done.join(', ')+'. Confira antes de seguir.':done.manteve?'Os campos já estavam preenchidos.':'Não consegui ler este documento; preencha à mão.')+(done.manteve?' Mantido o que já estava (diferente do documento): '+done.manteve.join(', ')+'.':'')}
    catch{aviso='Não foi possível ler a foto neste aparelho; preencha à mão.'}}
   if(pid){CicluzDocCapture.estado(block,{texto:'Guardando…',ativo:false});const err=await attachPersonal(pid,meta,file);paintScan();if(err||aviso)CicluzDocCapture.estado(block,{texto:err||aviso})}
   else CicluzDocCapture.estado(block,{texto:aviso,ativo:true})})}
