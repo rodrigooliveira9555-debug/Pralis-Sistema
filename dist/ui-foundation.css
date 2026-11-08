@@ -490,3 +490,5 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .btn:not(.standard-
 .avaliacoes-head-icon svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .avaliacoes-head-title{display:grid;gap:2px;min-width:0}.avaliacoes-head-title b{font:600 15px/20px var(--ui-font);color:var(--card-color,#7c3aed)}
 .avaliacoes-head-title small{color:var(--muted,#73737a);font:400 var(--ui-note,12px)/16px var(--ui-font)}
+.people-complete-pickbox{display:grid;gap:6px;margin:0 0 14px}
+.people-complete-pickbox .profiles-note{margin:0}
