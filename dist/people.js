@@ -101,6 +101,17 @@ job.select.addEventListener('change',()=>{const allowed=new Set(orgAllowed().map
 simpleFields.append(lbl('Nome completo *',nameIn),lbl('CPF *',cpfIn),lbl('WhatsApp *',phone),lbl('E-mail',email),birth.label,job.label,lbl('Turno *',shift),orgBox);
  const err=el('p','profiles-error');err.setAttribute('role','alert');const msg=el('p','profiles-note');msg.setAttribute('role','status');
  const title=el('h3','uniforms-heading','Novo cadastro simples');simpleFields.before(title);
+ /* Foto do documento: o aparelho lê nome, CPF e data de nascimento (nada sai do navegador) e só preenche os campos; a imagem não é guardada aqui, ela vai depois para a pasta do colaborador em Documentos. */
+ const scanBox=CicluzDocCapture.create('Foto do documento','Fotografe ou selecione o RG, o CPF ou a CNH: o nome, o CPF e a data de nascimento são preenchidos abaixo. WhatsApp e e-mail são digitados.',{tipos:['RG','CPF','CNH'],frenteVerso:true});
+ let lido={};
+ scanBox.addEventListener('doc-capture',async e=>{const {file,block,side}=e.detail,kind=CicluzDocCapture.tipo(block);CicluzDocCapture.estado(block,{texto:'Lendo o '+kind+'…',ativo:false});
+  try{const text=(await window.CicluzOccurrenceReader.read(file,p=>CicluzDocCapture.estado(block,{texto:'Lendo o '+kind+'… '+p+'%',ativo:false}))).text,extraido=window.CicluzIdentityReader.extract(text),done=[];if(side!=='verso')lido={};for(const k of Object.keys(extraido))if(!lido[k])lido[k]=extraido[k];const found=lido;
+   if(found.name){nameIn.value=found.name;done.push('nome')}if(found.cpf){cpfIn.value=F.cpfMask(found.cpf);done.push('CPF')}if(found.birth){birth.set(found.birth);done.push('data de nascimento')}
+   for(const x of [nameIn,cpfIn])x.dispatchEvent(new Event('input',{bubbles:true}));
+   CicluzDocCapture.estado(block,{texto:done.length?'Preenchido: '+done.join(', ')+'. Confira antes de salvar.':'Não consegui ler este documento. Tire outra foto, de frente, com boa luz e sem reflexo.'})}
+  catch{CicluzDocCapture.estado(block,{texto:'Não foi possível ler a foto neste aparelho. Preencha os campos à mão.'})}
+  finally{CicluzDocCapture.estado(block,{ativo:true})}});
+ title.after(scanBox);
  const actions=el('div','actions people-simple-actions');const saveBtn=button('Salvar Cadastro',()=>saveSimple(false),'btn');const okBtn=button('Marcar Cadastro como OK',()=>saveSimple(true),'btn secondary footer-save-accent');actions.append(button('Cancelar',cancelSimple),okBtn,saveBtn);
  simpleFields.after(dup,err,msg,actions);
  const list=el('div','uniforms-history people-simple-list');const listStatus=el('p','profiles-note');const listTable=el('div','uniforms-table-wrap');list.append(el('h3','uniforms-heading','Acompanhamento dos candidatos'),listStatus,listTable);simpleView.querySelector('.content').append(list);
