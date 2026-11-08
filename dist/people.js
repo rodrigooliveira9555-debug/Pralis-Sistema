@@ -50,7 +50,7 @@ function nextStep(p){const s=stages(p),cur=s.find(x=>x.state!=='done'&&x.state!=
 const STATE_LABEL={pending:'Pendente',progress:'Em andamento',done:'Concluída',blocked:'Bloqueada',failed:'Não aprovado',attention:'Atenção',legacy:'Anterior'};
 /* Candidates whose Período de Teste needs the DP's attention today. */
 function trialAlerts(){return data.people.filter(p=>p.status==='CANDIDATO'&&isFlow2(p)).map(p=>({p,info:trialInfo(p)})).filter(x=>x.info&&(x.info.kind==='ended'||x.info.kind==='today'))}
-function stepper(p){const box=el('ol','people-steps');stages(p).forEach((s,i)=>{const li=el('li','people-step is-'+s.state);li.append(el('span','people-step-index',String(i+1)),el('b',null,s.label),el('span','people-step-state',STATE_LABEL[s.state]),el('small',null,s.text));box.append(li)});return box}
+function stepper(p){const ss=stages(p),now=ss.findIndex(s=>s.state!=='done'&&s.state!=='legacy');return window.CicluzStepper.create({layout:'timeline',label:'Etapas de admissão',steps:ss.map(s=>({label:s.label,state:s.state,status:STATE_LABEL[s.state],text:s.text})),current:now}).el}
 
 /* Demonstration link: a random token tied to the person; no CPF/RG in the URL. Works only inside this browser. */
 const linkFor=p=>p.complete?.token?location.origin+location.pathname+'#cadastro-completo/'+p.complete.token:'';
