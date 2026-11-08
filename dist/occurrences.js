@@ -4,7 +4,7 @@
 const D=window.CicluzUniformData,U=window.CicluzUniformUI,DB=window.CicluzDateBR,R=window.CicluzOccurrenceReader;if(!D||!U||!DB||!R)return;
 const {el,button,iconButton,svg,ICON,fold,newId,dateBR,today,enumField,dialog,confirmDialog}=U;
 const KEY='cicluz-ocorrencias-v1',ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Ocorrências'),MAX=10*1024*1024;
-const ACCEPT=['image/jpeg','image/png','application/pdf'],DOC_ICON=telaIcone.ocorrencias,CAMERA='M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',SCAN='M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M7 12h10';
+const ACCEPT=['image/jpeg','image/png','application/pdf'],DOC_ICON=telaIcone.ocorrencias,SCAN='M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M7 12h10';
 const TYPES=[
  ['DECLARAÇÃO',{medical:true,hint:'Priorize data, documento, clínica e identificação do profissional, quando aplicável.'}],
  ['FALTA INJUSTIFICADA',{days:true,hint:'Registre dias, motivo declarado, comunicação e status. Documento médico não é exigido.'}],
@@ -59,7 +59,7 @@ const attachBox=el('div','uniforms-wide occurrences-attachments');
 const pick=el('input');pick.type='file';pick.accept='.jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf';pick.multiple=true;pick.hidden=true;
 const camera=el('input');camera.type='file';camera.accept='image/*';camera.setAttribute('capture','environment');camera.hidden=true;
 const replace=el('input');replace.type='file';replace.accept=pick.accept;replace.hidden=true;let replacing=null;
-const attachTools=el('div','occurrences-tools');const comIcone=(btn,d)=>{const quadro=el('span','btn-icone-quadro');quadro.innerHTML=svg(d);btn.prepend(quadro);btn.classList.add('btn-com-icone');return btn};const pickBtn=comIcone(button('Selecionar arquivos',()=>pick.click()),DOC_ICON);const camBtn=comIcone(button('Usar câmera',()=>camera.click()),CAMERA);attachTools.append(pickBtn,camBtn);
+const attachTools=el('div','occurrences-tools');const pickBtn=CicluzDocCapture.botao('file','Selecionar arquivos',()=>pick.click());const camBtn=CicluzDocCapture.botao('camera','Usar câmera',()=>camera.click());attachTools.append(pickBtn,camBtn);
 const attachList=el('div','occurrences-files');const attachMsg=el('p','profiles-note');attachMsg.setAttribute('role','status');
 attachBox.append(el('span','uniforms-enum-label','Foto ou documento da ocorrência'),attachTools,el('p','profiles-note','JPG, JPEG, PNG ou PDF, até 10 MB cada. Os arquivos não são enviados a servidores.'),attachList,attachMsg,pick,camera,replace);
 /* Medical document data */
