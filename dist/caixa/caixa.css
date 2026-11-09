@@ -6,6 +6,12 @@
 .caixa-content > * { flex: none; }
 /* Botão principal no tom forte de Vendas: branco sobre o amarelo #eab308 não passa no contraste. */
 .caixa-content .btn:not(.secondary) { background: #a16207; border-color: #a16207; color: #fff; }
+/* Botão secundário na cor de Vendas (sem isto herda o roxo do S2) e botão desabilitado com cara de desabilitado. */
+.caixa-content .btn.secondary { background: transparent; color: var(--panel-text, #785600); border-color: color-mix(in srgb, var(--menu-accent) 45%, white); }
+.caixa-content .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.caixa-dialog .btn.secondary { color: var(--panel-text, #785600); }
+body.dark-theme .caixa-dialog .btn.secondary { color: #f6d38f; }
+.compras-secao > .caixa-subtitulo { margin: 0; padding: 14px 14px 6px; }
 .caixa-aviso { padding: 8px 12px; border: 1px dashed color-mix(in srgb, var(--menu-accent) 60%, transparent); border-radius: 10px; }
 .caixa-bloco { padding: 14px; border: 1px solid var(--line, #e4e4e7); border-radius: 12px; }
 .caixa-bloco-cab { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
@@ -34,11 +40,80 @@
 .caixa-pendencias ul { margin: 6px 0 0; padding-left: 18px; }
 .caixa-acoes { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: flex-end; }
 .caixa-acoes small { margin-right: auto; font-size: 12px; color: var(--muted, #71717a); }
+/* Turno: faixa da casca com "Ver como", cartões do resumo, PDV, vendas em lista e valores alinhados. */
+.caixa-corpo { display: flex; flex-direction: column; gap: 14px; }
+.caixa-corpo > * { flex: none; }
+.caixa-faixa { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.caixa-faixa > p { flex: 1 1 240px; margin: 0; }
+.caixa-perfil { display: flex; align-items: center; gap: 8px; }
+.caixa-subtitulo { margin: 14px 0 6px; font-size: 13px; font-weight: 600; }
+.caixa-cartoes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.caixa-cartao { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--line, #e4e4e7); border-radius: 12px; background: transparent; color: inherit; font: inherit; text-align: left; }
+button.caixa-cartao { cursor: pointer; }
+button.caixa-cartao:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+.caixa-cartao.ancora { border-color: var(--menu-accent); }
+.caixa-cartao small { font-size: 12px; color: var(--muted, #71717a); }
+.caixa-cartao strong { font-size: 22px; font-variant-numeric: tabular-nums; }
+.caixa-lacrado { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.caixa-lacrado svg { flex: none; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.caixa-dinheiro, .caixa-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.caixa-num { text-align: right; }
+.caixa-pdv { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.caixa-pdv-texto { flex: 1 1 140px; font-size: 13px; color: var(--muted, #71717a); }
+.caixa-obs { font-style: italic; }
+.caixa-content .btn.secondary.caixa-perigo { color: #a11c1c; border-color: #a11c1c; }
+.caixa-dialog [hidden] { display: none; }
+.caixa-vendas { display: flex; flex-direction: column; gap: 8px; }
+.caixa-venda { border: 1px solid var(--line, #e4e4e7); border-radius: 10px; padding: 0 12px; }
+.caixa-venda[open] { padding-bottom: 12px; }
+.caixa-venda > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; cursor: pointer; }
+.caixa-venda-texto { display: grid; gap: 2px; min-width: 0; }
+.caixa-venda-texto b { font-weight: 600; overflow-wrap: anywhere; }
+.caixa-venda-texto small { font-size: 12px; color: var(--muted, #71717a); }
+.caixa-venda > :not(summary) { margin-top: 10px; }
+/* Fluxo completo: etapas do fechamento, totais, filtros e tabelas com diferença sempre com sinal + palavra. */
+.caixa-etapas ol { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; padding: 0; list-style: none; }
+.caixa-etapas li { display: flex; align-items: center; gap: 8px; }
+.caixa-etapas .caixa-trilha-marca { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--line, #d4d4d8); font: 600 12px/1 var(--ui-font); color: var(--muted, #71717a); }
+.caixa-etapas li.atual .caixa-trilha-marca { border-color: #a16207; background: #a16207; color: #fff; }
+.caixa-etapas li.feito .caixa-trilha-marca { border-color: #a16207; color: #a16207; }
+.caixa-etapa-btn { min-height: 32px; padding: 4px 2px; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.caixa-etapas li.atual .caixa-etapa-btn { font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+.caixa-acoes-esq { justify-content: flex-start; }
+.caixa-total { margin: 0; font-size: 14px; }
+.caixa-total strong { font-size: 18px; font-variant-numeric: tabular-nums; }
+.caixa-lista-pend { margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted, #71717a); }
+.caixa-situacao-linha { display: grid; gap: 4px; justify-items: start; }
+.caixa-situacao-linha small { font-size: 12px; color: var(--muted, #71717a); }
+.caixa-diferenca-linha { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.caixa-diferenca-linha.falta { color: #a11c1c; }
+.caixa-diferenca-linha.sobra { color: #8a5300; }
+.caixa-diferenca-linha.bateu { color: #12672e; }
+.caixa-subtitulo-solto { margin: 8px 0 0; font-size: 13px; font-weight: 600; }
+.compras-tabela tr.selecionada { background: color-mix(in srgb, var(--menu-accent) 12%, transparent); }
+.caixa-alvos { display: grid; gap: 6px; }
+.caixa-filtros { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.caixa-acoes-esq small { margin-right: 0; }
+.caixa-tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.caixa-celula { display: grid; gap: 2px; min-width: 0; }
+.caixa-celula small { font-size: 12px; color: var(--muted, #71717a); overflow-wrap: anywhere; }
+.caixa-linha-lacre { margin: 4px 0; font-variant-numeric: tabular-nums; }
+/* Conteúdo largo (tabela com campos) encolhe e rola dentro do próprio quadro, sem estourar a seção no celular. */
+.compras-secao, .compras-corpo, .caixa-corpo, .caixa-bloco, .caixa-bloco-cab > div { min-width: 0; max-width: 100%; }
+.compras-corpo > *, .caixa-corpo > * { min-width: 0; max-width: 100%; }
+.caixa-content .compras-tabela input { width: 100%; min-width: 96px; }
+.caixa-content .compras-situacao { white-space: normal; }
+body.dark-theme .caixa-content .btn.secondary { color: #f6d38f; }
+body.dark-theme .caixa-diferenca-linha.falta { color: #f8b4b4; }
+body.dark-theme .caixa-diferenca-linha.sobra { color: #f6d38f; }
+body.dark-theme .caixa-diferenca-linha.bateu { color: #a7e8bd; }
+body.dark-theme .caixa-etapas li.feito .caixa-trilha-marca { color: #f6d38f; border-color: #f6d38f; }
+body.dark-theme .caixa-content .btn.secondary.caixa-perigo { color: #f8b4b4; border-color: #f8b4b4; }
 body.dark-theme .caixa-diferenca.falta, body.dark-theme .caixa-pendencias { background: #45201f; color: #f8b4b4; }
 body.dark-theme .caixa-diferenca.sobra, body.dark-theme .caixa-alerta { background: #3d2e10; color: #f6d38f; }
 body.dark-theme .caixa-diferenca.bateu { background: #183a25; color: #a7e8bd; }
 
 @media (max-width: 600px) {
-  .caixa-grade { grid-template-columns: minmax(0, 1fr); }
+  .caixa-grade, .caixa-cartoes, .caixa-filtros, .caixa-tres { grid-template-columns: minmax(0, 1fr); }
   .caixa-acoes .btn { flex: 1 1 100%; }
 }
