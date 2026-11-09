@@ -32,8 +32,8 @@
   /** Tira caracteres de formato (U+2060 do app, zero-width, BOM, hífen suave), acentos, caixa e espaços repetidos. */
   function limpar(s) {
     return String(s == null ? '' : s)
-      .replace(/[­​-‏⁠-⁤﻿]/g, '')
-      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[\u00AD\u200B-\u200F\u2060-\u2064\uFEFF]/g, '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/\s+/g, ' ').trim().toUpperCase();
   }
   /** "MER BEBIDAS - SUCOS" → { grupo: 'BEBIDAS', sub: 'SUCOS' }. Sem " - ": só o grupo. */
@@ -156,7 +156,7 @@
       const o = b || t;
       const tipo = texto(o.tipo) === 'transformacao' ? 'transformacao' : 'revenda';
       const locais = { setorEstoque: texto(t.setor_estoque), localVenda1: texto(t.local_venda_1), localVenda2: texto(t.local_venda_2), setorVenda1: texto(t.setor_venda_1), setorVenda2: texto(t.setor_venda_2) };
-      const grupoApp = texto(o.grupo).replace(/[­​-‏⁠-⁤﻿]/g, '');
+      const grupoApp = texto(o.grupo).replace(/[\u00AD\u200B-\u200F\u2060-\u2064\uFEFF]/g, '');
       const g = casarGrupo(grupoApp, grupos);
       const unidade = texto(o.medida_base) || 'UN';
       const promos = (promosPorProduto.get(texto(t.id)) || []).sort((a, z) => numero(a.indice) - numero(z.indice)).map(promocaoDe);
