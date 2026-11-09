@@ -143,9 +143,10 @@
   const bought=metricControl('COM','comprado','#22c55e',['com','purchases','bought','comprado']);
   const profit=metricControl('LUC','lucro','#2563eb',['luc','profit','lucro']);
   const result=metricControl('RES','resultado','#7c3aed',['res','result','resultado']);
-  const launchControls=[['vnd','VND','Lançar vendas','#eab308'],['cnt','CNT','Lançar transferências','#f97316'],['des','DES','Lançar despesas','#ef4444'],['mer','MER','Lançar mercadorias','#22c55e'],['ret','RET','Lançar retiradas','#2563eb'],['car','CAR','Lançar cartões','#7c3aed'],['pdv','PDV','Lançar PDV','#7c3aed'],['res','RES','Lançar resultado','#7c3aed']].map(([key,code,label,color])=>{
-   const button=control(label,'',()=>announce(label+' — tela de lançamento ainda não disponível.'));
-   button.textContent=code;button.classList.add('people-launch-control');button.style.setProperty('--launch-color',color);button.setAttribute('aria-description','Atalho preparado; tela de lançamento ainda não disponível.');
+  const launchControls=[['vnd','VND','Lançar vendas','#eab308'],['cnt','CNT','Lançar transferências','#f97316'],['des','DES','Lançar despesas','#ef4444'],['mer','MER','Lançar mercadorias','#22c55e'],['ret','RET','Lançar retiradas','#2563eb'],['car','CAR','Lançar cartões','#7c3aed'],['pdv','PDV','Lançar PDV','#7c3aed'],['res','RES','Lançar resultado','#7c3aed'],['fch','FCH','Fechamento de caixa','#eab308']].map(([key,code,label,color])=>{
+   // Só o Fechamento tem tela pronta (Caixa); os demais seguem avisando até a tela existir (DESIGN_SYSTEM, atalhos de lançamento).
+   const button=control(label,'',()=>{if(key==='fch'&&window.CicluzCaixa){setQuickOpen(false);window.CicluzCaixa.abrir('fechamento');return}announce(label+' — tela de lançamento ainda não disponível.')});
+   button.textContent=code;button.classList.add('people-launch-control');button.style.setProperty('--launch-color',color);button.setAttribute('aria-description',key==='fch'?'Abre o Fechamento de caixa.':'Atalho preparado; tela de lançamento ainda não disponível.');
    return ['launch-'+key,{button,label}];
   });
   const whatsapp=control('WhatsApp','<path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/>',()=>announce('WhatsApp — ação ainda não disponível.'));
