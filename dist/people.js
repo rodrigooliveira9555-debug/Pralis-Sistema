@@ -50,7 +50,7 @@ function nextStep(p){const s=stages(p),cur=s.find(x=>x.state!=='done'&&x.state!=
 const STATE_LABEL={pending:'Pendente',progress:'Em andamento',done:'Concluída',blocked:'Bloqueada',failed:'Não aprovado',attention:'Atenção',legacy:'Anterior'};
 /* Candidates whose Período de Teste needs the DP's attention today. */
 function trialAlerts(){return data.people.filter(p=>p.status==='CANDIDATO'&&isFlow2(p)).map(p=>({p,info:trialInfo(p)})).filter(x=>x.info&&(x.info.kind==='ended'||x.info.kind==='today'))}
-function stepper(p){const box=el('ol','people-steps');stages(p).forEach((s,i)=>{const li=el('li','people-step is-'+s.state);li.append(el('span','people-step-index',String(i+1)),el('b',null,s.label),el('span','people-step-state',STATE_LABEL[s.state]),el('small',null,s.text));box.append(li)});return box}
+function stepper(p){const ss=stages(p),now=ss.findIndex(s=>s.state!=='done'&&s.state!=='legacy');return window.CicluzStepper.create({layout:'timeline',label:'Etapas de admissão',steps:ss.map(s=>({label:s.label,state:s.state,status:STATE_LABEL[s.state],text:s.text})),current:now}).el}
 
 /* Demonstration link: a random token tied to the person; no CPF/RG in the URL. Works only inside this browser. */
 const linkFor=p=>p.complete?.token?location.origin+location.pathname+'#cadastro-completo/'+p.complete.token:'';
@@ -101,6 +101,17 @@ job.select.addEventListener('change',()=>{const allowed=new Set(orgAllowed().map
 simpleFields.append(lbl('Nome completo *',nameIn),lbl('CPF *',cpfIn),lbl('WhatsApp *',phone),lbl('E-mail',email),birth.label,job.label,lbl('Turno *',shift),orgBox);
  const err=el('p','profiles-error');err.setAttribute('role','alert');const msg=el('p','profiles-note');msg.setAttribute('role','status');
  const title=el('h3','uniforms-heading','Novo cadastro simples');simpleFields.before(title);
+ /* Foto do documento: o aparelho lê nome, CPF e data de nascimento (nada sai do navegador) e só preenche os campos; a imagem não é guardada aqui, ela vai depois para a pasta do colaborador em Documentos. */
+ const scanBox=CicluzDocCapture.create('Foto do documento','Fotografe ou selecione o RG, o CPF ou a CNH: o nome, o CPF e a data de nascimento são preenchidos abaixo. WhatsApp e e-mail são digitados.',{tipos:['RG','CPF','CNH'],frenteVerso:true});
+ let lido={};
+ scanBox.addEventListener('doc-capture',async e=>{const {file,block,side}=e.detail,kind=CicluzDocCapture.tipo(block);CicluzDocCapture.estado(block,{texto:'Lendo o '+kind+'…',ativo:false});
+  try{const text=(await window.CicluzOccurrenceReader.read(file,p=>CicluzDocCapture.estado(block,{texto:'Lendo o '+kind+'… '+p+'%',ativo:false}))).text,extraido=window.CicluzIdentityReader.extract(text),done=[];if(side!=='verso')lido={};for(const k of Object.keys(extraido))if(!lido[k])lido[k]=extraido[k];const found=lido;
+   if(found.name){nameIn.value=found.name;done.push('nome')}if(found.cpf){cpfIn.value=F.cpfMask(found.cpf);done.push('CPF')}if(found.birth){birth.set(found.birth);done.push('data de nascimento')}
+   for(const x of [nameIn,cpfIn])x.dispatchEvent(new Event('input',{bubbles:true}));
+   CicluzDocCapture.estado(block,{texto:done.length?'Preenchido: '+done.join(', ')+'. Confira antes de salvar.':'Não consegui ler este documento. Tire outra foto, de frente, com boa luz e sem reflexo.'})}
+  catch{CicluzDocCapture.estado(block,{texto:'Não foi possível ler a foto neste aparelho. Preencha os campos à mão.'})}
+  finally{CicluzDocCapture.estado(block,{ativo:true})}});
+ title.after(scanBox);
  const actions=el('div','actions people-simple-actions');const saveBtn=button('Salvar Cadastro',()=>saveSimple(false),'btn');const okBtn=button('Marcar Cadastro como OK',()=>saveSimple(true),'btn secondary footer-save-accent');actions.append(button('Cancelar',cancelSimple),okBtn,saveBtn);
  simpleFields.after(dup,err,msg,actions);
  const list=el('div','uniforms-history people-simple-list');const listStatus=el('p','profiles-note');const listTable=el('div','uniforms-table-wrap');list.append(el('h3','uniforms-heading','Acompanhamento dos candidatos'),listStatus,listTable);simpleView.querySelector('.content').append(list);
@@ -151,7 +162,20 @@ const completeView=document.getElementById('cadastro-completo'),steps=document.g
 const fieldsOf=()=>[...steps.querySelectorAll('input,select,textarea')].filter(x=>x.type!=='file'&&!x.dataset.dateDisplay&&!x.dataset.datePicker);
 const textOf=node=>{const l=node.closest('label');return l?[...l.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').replace(/\s*\*\s*$/,'').trim():''};
 const banner=el('div','form-note people-complete-banner');
+let syncPick=null;
 if(completeView&&steps){completeView.querySelector('.form-note').after(banner);
+ /* Primeiro campo do Cadastro Completo: escolher a pessoa do Cadastro Simples (só quem já pode seguir para o Completo). O vínculo é pelo ID e os dados vêm do Simples. Opcional: sem escolher, o Completo funciona como antes. */
+ const pick=U.enumField('Colaborador do Cadastro Simples (opcional)','Buscar colaborador por nome ou CPF','people-complete-pick');
+ const pickBox=el('div','people-complete-pickbox');pickBox.append(pick.label,el('p','profiles-note','Só aparecem as pessoas com Exame Admissional APTO (e Período de Teste aprovado). Ao escolher, nome, CPF, nascimento e contato vêm do Cadastro Simples.'));banner.after(pickBox);
+ function pickOptions(cur=pick.select.value){load();const q=fold(pick.search.value),digits=pick.search.value.replace(/D/g,'');pick.select.replaceChildren(new Option('Selecione o colaborador',''));
+  for(const p of data.people.filter(x=>inAdmission(x)&&completeReady(x)).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')))if(p.id===cur||!q||fold(p.name).includes(q)||(digits&&String(p.cpf||'').includes(digits)))pick.select.add(new Option(p.name+(p.cpf?' · '+maskCpf(p.cpf):''),p.id));pick.select.value=cur||''}
+ const typedData=()=>fieldsOf().some(x=>x.tagName!=='SELECT'&&!['checkbox','radio','hidden'].includes(x.type)&&x.value);
+ pick.search.addEventListener('input',()=>pickOptions());pick.select.addEventListener('focus',()=>{if(!pick.select.value)pickOptions('')});
+ pick.select.addEventListener('change',()=>{const id=pick.select.value;if(!id){bindComplete(null);return}
+  if(!boundId&&typedData()){confirmDialog('Substituir os dados digitados?','Os dados já digitados neste formulário serão trocados pelos do Cadastro Simples.','Substituir',()=>{bindComplete(id,true);return null},()=>{pickOptions(boundId||'')});return}
+  bindComplete(id,true)});
+
+ syncPick=pickOptions;pickOptions('');
  document.addEventListener('click',e=>{if(e.target.closest('.section-card[data-target=form]'))bindComplete(null)},true);
  document.addEventListener('cicluz-registration-save',()=>{if(!boundId)return;const invalid=fieldsOf().find(x=>!x.disabled&&!x.checkValidity());if(invalid)return;const p=byId(boundId);if(!p)return;
   const summary=[],deps=[];const value=x=>x.type==='checkbox'||x.type==='radio'?(x.checked?'Sim':''):x.tagName==='SELECT'?(x.value?x.selectedOptions[0].text:''):x.dataset.dateNative?dateBR(x.value).replace('—',''):x.value;
@@ -166,10 +190,10 @@ function renderBanner(){banner.replaceChildren();const p=boundId&&byId(boundId);
  const tools=el('div','people-banner-tools');tools.append(button('Concluir Cadastro',()=>document.dispatchEvent(new Event('cicluz-registration-save')),'btn'),button('Ver acompanhamento',()=>window.showCollaborators?.({tab:'tracking',personId:p.id})));banner.append(tools)}
 /* A pasted link lands on the form itself: the start-up menu covering the screen is closed. */
 function openFromHash(){const m=/^#cadastro-completo\/([\w-]+)$/.exec(location.hash);if(!m)return;load();const p=data.people.find(x=>x.complete?.token===m[1]);openView('cadastro-completo',menuCrumb(2,'Cadastros Geral Colaboradores','DES - Completo Colaborador C/Dependente'));document.dispatchEvent(new Event('cicluz-close-menu'));if(!p){bindComplete(null);banner.replaceChildren(el('b',null,'Link não encontrado neste navegador. '),el('span',null,'Links demonstrativos só existem no navegador em que foram gerados.'));return}bindComplete(p.id,true)}
-function bindComplete(id,fill){boundId=id;renderBanner();document.dispatchEvent(new CustomEvent('cicluz-complete-bound',{detail:{id}}));if(!id||!fill)return;const p=byId(id);
+function bindComplete(id,fill){boundId=id;renderBanner();syncPick?.(id||'');document.dispatchEvent(new CustomEvent('cicluz-complete-bound',{detail:{id}}));if(!id||!fill)return;const p=byId(id);
  steps.querySelectorAll('.dep-card').forEach(c=>c.remove());const saved=p.complete?.fields;
  if(saved){while(steps.querySelectorAll('.dep-card').length<(p.complete.dependents||0))document.getElementById('add-dependent').click();fieldsOf().forEach((x,i)=>{const s=saved[i];if(!s||s.type!==(x.dataset.dateNative?'date':x.type))return;if(['checkbox','radio'].includes(x.type))x.checked=!!s.checked;else x.value=s.value||''})}
- else{fieldsOf().forEach(x=>{if(['checkbox','radio'].includes(x.type))x.checked=false;else x.value=''});const set=(re,v)=>{const x=fieldsOf().find(f=>re.test(textOf(f))&&!f.closest('.dep-card')&&(f.dataset.dateNative||f.tagName!=='INPUT'||f.type!=='hidden'));if(x&&v)x.value=v};set(/^Nome completo/,p.name);set(/^CPF/,p.cpf?F.cpfMask(p.cpf):'');set(/^Data de nascimento/,p.birthDate);set(/^Telefone/,p.whatsapp?PH.mask(p.whatsapp):'')}
+ else{fieldsOf().forEach(x=>{if(['checkbox','radio'].includes(x.type))x.checked=false;else x.value=''});const set=(re,v)=>{const x=fieldsOf().find(f=>re.test(textOf(f))&&!f.closest('.dep-card')&&(f.dataset.dateNative||f.tagName!=='INPUT'||f.type!=='hidden'));if(x&&v)x.value=v};set(/^Nome completo/,p.name);set(/^CPF/,p.cpf?F.cpfMask(p.cpf):'');set(/^Data de nascimento/,p.birthDate);set(/^Telefone/,p.whatsapp?PH.mask(p.whatsapp):'');set(/^E-?mail/,p.email)}
  try{showStep(0)}catch{}const status=completeView.querySelector('.registration-status');if(status)status.textContent=saved?'Cadastro de '+p.name+' recuperado deste navegador.':'Dados já cadastrados de '+p.name+' preenchidos. Complete as demais informações.'}
 function openComplete(id){const p=byId(id);if(!p?.complete?.token)return false;if(location.hash==='#cadastro-completo/'+p.complete.token)openFromHash();else location.hash='cadastro-completo/'+p.complete.token;return true}
 function openView(id,crumb){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));document.getElementById(id).classList.add('show');const c=document.getElementById('crumb');if(c)c.textContent=crumb}
