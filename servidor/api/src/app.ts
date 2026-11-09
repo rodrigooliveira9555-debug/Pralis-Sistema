@@ -15,6 +15,7 @@ import { registrarRotasAuth } from "./auth/auth.controller.ts";
 import { registrarRotasConsultas } from "./consultas/consultas.controller.ts";
 import { registrarRotasDocumentos } from "./documentos/documentos.controller.ts";
 import { registrarRotasLancamentos } from "./lancamentos/lancamentos.controller.ts";
+import { registrarRotasProdutos } from "./produtos/produtos.controller.ts";
 import { env, origensWebPermitidas } from "./env.ts";
 import { ErroDominio, proibido } from "./erros.ts";
 import { registrarRotasSaude } from "./saude/saude.controller.ts";
@@ -114,6 +115,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registrarRotasAcessos(app);
   await registrarRotasConsultas(app);
   await registrarRotasLancamentos(app);
+  await registrarRotasProdutos(app);
   await registrarRotasAgenda(app);
 
   // App das telas novas (Nuxt gerado em web/.output/public), em /app/ no mesmo domínio do site.
