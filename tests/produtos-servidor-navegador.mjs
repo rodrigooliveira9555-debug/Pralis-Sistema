@@ -62,6 +62,14 @@ ok(JSON.stringify(guardado) === JSON.stringify([{ id: 'p-feito-no-s2', saldo: 3,
   'Documento do Compras ficou só com o estado da loja: ' + JSON.stringify(guardado));
 ok(await p.evaluate(() => CicluzComprasDados.dados.catalogo.length === 1 && CicluzComprasDados.dados.fornecedores.length === 1), 'Catálogo de fornecedores e o resto do Compras intactos');
 
+// Página do fornecedor (sem login, mesmo navegador): os produtos vêm do resumo guardado, com nome.
+const forn = await contexto.newPage();
+forn.on('pageerror', (e) => erros.push('fornecedor: ' + e.message));
+await forn.goto(api.url + '/rodada.html?t=inexistente', { waitUntil: 'load' });
+await forn.waitForFunction(() => window.CicluzComprasDados);
+ok(await forn.evaluate(() => (CicluzComprasDados.produto('pi-13001') || {}).descricao) === 'PRODUTO 13001', 'Página do fornecedor acha o produto com nome pelo resumo');
+await forn.close();
+
 /* ---------- 2) Lista e busca ---------- */
 await p.evaluate(() => { if (document.body.classList.contains('mobile-menu-visible')) document.getElementById('toggleMenu').click(); CicluzCompras.abrir('produtos'); });
 const linhas = () => p.locator('#compras-produtos .compras-tabela tbody tr').allTextContents();

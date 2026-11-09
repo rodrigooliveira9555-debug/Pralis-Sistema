@@ -25,8 +25,11 @@
   try { cache = JSON.parse(localStorage.getItem(CHAVE_RESUMO) || 'null'); } catch (e) { cache = null; }
   function gravarCache(c) { cache = c; try { localStorage.setItem(CHAVE_RESUMO, JSON.stringify(c)); } catch (e) { /* segue em memória */ } }
 
-  /** Modo servidor: sessão real e catálogo já no servidor (o último resumo recebido disse ativado). */
-  const modoServidor = () => conectado() && Boolean(cache && cache.ativado);
+  /**
+   * Modo servidor: o último resumo recebido disse que o catálogo está no servidor. Não depende de login: a página do
+   * fornecedor (sem login) e o aparelho sem internet leem os produtos do resumo guardado. Gravar exige login (conectado).
+   */
+  const modoServidor = () => Boolean(cache && cache.ativado);
   /** Produtos ativos do resumo (formato da tela). Vazio fora do modo servidor. */
   const ativos = () => (modoServidor() && cache && Array.isArray(cache.produtos) ? cache.produtos : []);
 
