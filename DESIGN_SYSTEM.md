@@ -1,5 +1,13 @@
 # CICLUZ — referência de interface
 
+## Entradas — Vendas unificada, Documentos, ícone do cabeçalho e atalho de Fechamento (09/11/2026)
+Pedido do Rodrigo, aplicado em `dist/index.html` e `dist/people-header-pilot.js`.
+- **Vendas:** em Entradas, **Lançamentos** e **Relatórios** têm um cartão só, **VND - Vendas** (amarelo, sigla VND, tela vazia por ora). Os dois cartões vazios "Vendas Nfc-e" e "Vendas Nfc" **foram removidos**; nenhum dado dependia deles. Venda não se lança à mão (R-062): a tela será consulta, alimentada pela integração do PDV.
+- **Documentos:** a pasta passa a se chamar **VND - Imagens Vendas Lançadas** (sem "(Nfc-e/Nfc)"); não existem entradas separadas de NFE e NFCE.
+- **Cadastros Geral de Entradas:** Clientes, Grupos de Vendas, Tipos de Venda, Bandeiras, Operadoras. **Tipos de Operação = Tipos de Operadoras Cartões** (respondido por Washington em 09/11/2026); **Taxas** continuam **dentro** do cadastro da operadora (vigência, MDR, antecipação). Clientes segue como está até o Rodrigo definir os campos (P-21).
+- **Ícone do cabeçalho = ícone do cartão:** ao abrir um cadastro (`ti-`) ou uma tela vazia (`vz-`) cujo cartão tem desenho próprio (Clientes, Tipos de Venda, Bandeiras, Operadoras, Cartões, PDV…), o cabeçalho mostra **o mesmo ícone do cartão**, não mais o "$" do setor. Cartão só com **sigla** (Grupos) continua herdando o ícone do setor. Fonte única: o mapa `iconeLinha` e a variável `iconeProprio` no `onclick` do cartão.
+- **Atalho FCH (Fechamento de caixa)** no menu rápido: nono atalho do grupo de lançamento (quadrado amarelo, código FCH, na cor de Entradas). Abre **Entradas › Lançamentos › Fechamento de Caixa**. Segue a regra dos demais: nasce **desligado**, liga e fixa na configuração. Os outros oito (VND, CNT, DES, MER, RET, CAR, PDV, RES) continuam avisando "tela ainda não disponível" até a tela existir; DES, MER e RET aguardam o app (`/app/lancamentos`), cuja publicação depende de P-13.
+
 ## Configurações — Usuários, Permissões e Senhas (06/11/2026)
 Telas em `dist/acessos/`, no roxo de Configurações (#7c3aed; texto #5520ad, o mesmo par do Agenda), com as peças do Compras. Pedido do Marco: permissões **mais simples que as do principal**.
 - **Pessoas com Acesso**: linha por conta com círculo de iniciais (posto: quadrado "P1" cheio na cor), nome, e-mail e etiquetas (Sem acesso, PDVn · Turno, Administrador, cargos ou "Sem cargo"); a linha inteira abre a edição (sem botões na linha). Chips Todas / Pessoas / Postos do Caixa / Sem Acesso. "Postos do Caixa" vira grade dos 8 postos (4 colunas; 2 abaixo de 760 px): livre com borda tracejada e "Criar conta"; ocupado com fundo leve e "Editar".
