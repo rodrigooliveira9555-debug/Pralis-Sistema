@@ -252,6 +252,47 @@
     return [...nomes].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   }
 
+  /** Árvore Área › Setor › Local › Sublocal salva (cicluz-location-tree-v1), como está. */
+  function arvoreLocais() {
+    try { return JSON.parse(localStorage.getItem('cicluz-location-tree-v1') || '[]'); } catch (e) { return []; }
+  }
+  /** Nós da árvore com o caminho completo; o vínculo do produto é pelo id do nó (localId). */
+  const nosLocais = () => window.CicluzProdutoImportacao.nosDaArvore(arvoreLocais()).map((n) => ({ id: n.id, nome: n.nome, caminho: n.caminho.join(' › ') }));
+  /** Alerta de vínculo do produto (pedido do Rodrigo, 09/11/2026): sem grupo de mercadorias e/ou sem local da árvore. */
+  function vinculo(p, grupos = gruposMercadoria(), nos = window.CicluzProdutoImportacao.nosDaArvore(arvoreLocais())) {
+    return window.CicluzProdutoImportacao.alertasDeVinculo(p, grupos, nos);
+  }
+
+  /* ---------- Arquivo de produtos inativos (cicluz-produtos-arquivo-v1, compactado) ----------
+   * Os inativos do app de produtos ficam fora do Compras para caber no aparelho; abrem só quando a lista mostra
+   * os inativos ou alguém edita um deles (aí ele volta para o Compras). Ver produto-importacao.js. */
+  const CHAVE_ARQUIVO = 'cicluz-produtos-arquivo-v1';
+  let arquivoCache = null; let arquivoTexto = null;
+  const textoArquivo = () => { try { return localStorage.getItem(CHAVE_ARQUIVO) || ''; } catch (e) { return ''; } };
+  /** Lista aberta do arquivo (assíncrona: descompacta na primeira vez e guarda até o arquivo mudar). */
+  async function arquivo() {
+    const t = textoArquivo();
+    if (arquivoCache && t === arquivoTexto) return arquivoCache;
+    arquivoCache = (await window.CicluzProdutoImportacao.descompactar(t)).map((p) => ({ ...normalizarProduto(p), arquivado: true }));
+    arquivoTexto = t;
+    return arquivoCache;
+  }
+  /** O arquivo já aberto (síncrono), ou null se ainda não abriu ou se mudou. */
+  const arquivoAberto = () => (arquivoCache && arquivoTexto === textoArquivo() ? arquivoCache : null);
+  const totalArquivo = () => window.CicluzProdutoImportacao.totalDoArquivo(textoArquivo());
+  /** Grava o texto já compactado. Sem espaço no aparelho devolve false e não mexe em nada. */
+  function gravarArquivo(texto) {
+    try { localStorage.setItem(CHAVE_ARQUIVO, texto); } catch (e) { return false; }
+    arquivoCache = null; arquivoTexto = null;
+    document.dispatchEvent(new CustomEvent('cicluz-compras-mudou'));
+    return true;
+  }
+  /** Tira um produto do arquivo (ele passou para o Compras). */
+  async function tirarDoArquivo(id) {
+    const lista = (await arquivo()).filter((p) => p.id !== id).map(({ arquivado, ...p }) => p);
+    return gravarArquivo(await window.CicluzProdutoImportacao.compactar(lista));
+  }
+
   /* ---------- Consultas comuns ---------- */
   const fornecedor = (id) => dados.fornecedores.find((f) => f.id === id);
   const produto = (id) => dados.produtos.find((p) => p.id === id);
@@ -291,7 +332,7 @@
     get dados() { return dados; },
     get erroLeitura() { return erroLeitura; },
     transacao, novoId, agoraIso, hojeIso,
-    gruposMercadoria, nomeGrupo, locais,
+    gruposMercadoria, nomeGrupo, arvoreLocais, nosLocais, vinculo, arquivo, arquivoAberto, totalArquivo, gravarArquivo, tirarDoArquivo, locais,
     fornecedor, produto, responsavel, referencia, definirReferencia, fornecedoresDoProduto, bolinhas,
   };
 })();

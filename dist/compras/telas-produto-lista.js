@@ -17,7 +17,8 @@
   const TAMANHO_PAGINA = 12;
 
   let tela = null;
-  const filtro = { busca: '', soAtivos: true, soVendidos: false, tipo: '', compra: '', grupo: '', setor: '', ordem: 'recentes', modo: 'lista', pagina: 1 };
+  const filtro = { busca: '', soAtivos: true, soVendidos: false, tipo: '', compra: '', vinculo: '', grupo: '', setor: '', ordem: 'recentes', modo: 'lista', pagina: 1 };
+  const SEM_FILTRO = { busca: '', soAtivos: true, soVendidos: false, tipo: '', compra: '', vinculo: '', grupo: '', setor: '', ordem: 'recentes', pagina: 1 };
   try { filtro.modo = localStorage.getItem('cicluz-compras-produtos-modo') || 'lista'; } catch (e) { /* preferência opcional */ }
   const selecionados = new Set();
 
@@ -39,15 +40,41 @@
     render();
   }
 
+  /** Alerta de vínculo de cada produto (grupo e local da árvore), calculado uma vez por desenho da tela. */
+  let vinculos = new Map();
+  function calcularVinculos() {
+    const grupos = S.gruposMercadoria();
+    const nos = window.CicluzProdutoImportacao.nosDaArvore(S.arvoreLocais());
+    vinculos = new Map(S.dados.produtos.map((p) => [p.id, S.vinculo(p, grupos, nos)]));
+  }
+  const vinculoDe = (p) => vinculos.get(p.id) || { semGrupo: false, semLocal: false };
+
+  /** Produtos da lista: os do Compras e, com "Só ativos" desmarcado, também os inativos do arquivo (sem repetir id). */
+  function fonte() {
+    if (filtro.soAtivos) return S.dados.produtos;
+    const arq = S.arquivoAberto();
+    if (!arq) {
+      S.arquivo().then(() => { if (tela && tela.view.classList.contains('show')) render(); })
+        .catch(() => U.avisar('Não foi possível abrir os produtos arquivados neste navegador.'));
+      return S.dados.produtos;
+    }
+    const ids = new Set(S.dados.produtos.map((p) => p.id));
+    return S.dados.produtos.concat(arq.filter((p) => !ids.has(p.id)));
+  }
+
   function filtrados() {
     const termo = U.dobrar(filtro.busca);
-    const lista = S.dados.produtos.filter((p) => {
+    const lista = fonte().filter((p) => {
       if (filtro.soAtivos && p.status !== 'ativo') return false;
       if (filtro.soVendidos && !(p.vendas3m > 0)) return false;
       if (filtro.tipo && p.tipo !== filtro.tipo) return false;
       if (filtro.compra === 'liberados' && !p.liberadoCompra) return false;
       if (filtro.compra === 'nao_liberados' && p.liberadoCompra) return false;
       if (filtro.compra === 'pendentes' && !pendencias(p).length) return false;
+      const v = vinculoDe(p);
+      if (filtro.vinculo === 'sem_vinculo' && !(v.semGrupo || v.semLocal)) return false;
+      if (filtro.vinculo === 'sem_grupo' && !v.semGrupo) return false;
+      if (filtro.vinculo === 'sem_local' && !v.semLocal) return false;
       if (filtro.grupo && p.grupoId !== filtro.grupo) return false;
       if (filtro.setor && p.setorEstoque !== filtro.setor) return false;
       return !termo || U.dobrar([p.descricao, p.nomeCatalogo, p.marca, p.codigoInterno, p.codigoBarras].join(' ')).includes(termo);
@@ -56,6 +83,7 @@
   }
 
   function render() {
+    calcularVinculos();
     const b = S.bolinhas();
     const todos = filtrados();
     const pag = R.paginar(todos, filtro.pagina, TAMANHO_PAGINA);
@@ -74,15 +102,26 @@
     const chk = (rot, chave) => { const l = el('label', 'compras-interruptor'); const c = entrada('checkbox'); c.checked = filtro[chave]; c.onchange = () => { filtro[chave] = c.checked; filtro.pagina = 1; render(); }; l.append(c, el('span', null, rot)); return l; };
     const grupoChips = (rot, opcoes, chave) => { const g = el('div', 'compras-grupo-chips'); g.append(el('span', 'compras-rotulo', rot), U.chips(opcoes, filtro[chave], (v) => { filtro[chave] = v; filtro.pagina = 1; render(); })); return g; };
     const totalPend = S.dados.produtos.filter((p) => p.status === 'ativo' && pendencias(p).length).length;
+    const ativos = S.dados.produtos.filter((p) => p.status === 'ativo');
+    const nSemGrupo = ativos.filter((p) => vinculoDe(p).semGrupo).length; const nSemLocal = ativos.filter((p) => vinculoDe(p).semLocal).length;
+    const nSemVinculo = ativos.filter((p) => { const v = vinculoDe(p); return v.semGrupo || v.semLocal; }).length;
     linha.append(chk('Só ativos', 'soAtivos'), chk('Só os que já vendi', 'soVendidos'),
       grupoChips('Tipo', [['', 'Todos'], ['revenda', 'Revenda'], ['transformacao', 'Transformação']], 'tipo'),
       grupoChips('Compra', [['', 'Todos'], ['liberados', 'Liberados'], ['nao_liberados', 'Não liberados'], ['pendentes', 'Pendentes (' + totalPend + ')']], 'compra'),
+      grupoChips('Vínculo', [['', 'Todos'], ['sem_vinculo', 'Sem vínculo (' + nSemVinculo + ')'], ['sem_grupo', 'Sem grupo (' + nSemGrupo + ')'], ['sem_local', 'Sem local (' + nSemLocal + ')']], 'vinculo'),
       U.chips([['lista', 'Lista'], ['cards', 'Cards']], filtro.modo, (v) => { filtro.modo = v; try { localStorage.setItem('cicluz-compras-produtos-modo', v); } catch (e) { /* opcional */ } render(); }));
-    const temFiltro = filtro.busca || !filtro.soAtivos || filtro.soVendidos || filtro.tipo || filtro.compra || filtro.grupo || filtro.setor || filtro.ordem !== 'recentes';
-    if (temFiltro) linha.append(botao('Limpar', () => { Object.assign(filtro, { busca: '', soAtivos: true, soVendidos: false, tipo: '', compra: '', grupo: '', setor: '', ordem: 'recentes', pagina: 1 }); render(); }));
+    const temFiltro = filtro.busca || !filtro.soAtivos || filtro.soVendidos || filtro.tipo || filtro.compra || filtro.vinculo || filtro.grupo || filtro.setor || filtro.ordem !== 'recentes';
+    if (temFiltro) linha.append(botao('Limpar', () => { Object.assign(filtro, SEM_FILTRO); render(); }));
 
     const info = el('div', 'compras-linha-info');
-    info.append(U.nota(todos.length + ' produto(s). Produto nunca é apagado: inative quando sair de linha.'), U.legendaBolinhas());
+    const nArq = S.totalArquivo();
+    info.append(U.nota(todos.length + ' produto(s). Produto nunca é apagado: inative quando sair de linha.' + (nArq ? ' ' + nArq + ' inativo(s) do app ficam arquivados: desmarque "Só ativos" para vê-los.' : '')), U.legendaBolinhas());
+    const imp = window.CicluzProdutoImportacaoTela;
+    if (imp && imp.podeImportar()) {
+      const acoes = el('div', 'compras-acoes-importacao');
+      acoes.append(botao('Importar do app de produtos', () => imp.importar(render)), botao('Revincular grupo e local', () => imp.revincularTudo(render)));
+      info.append(acoes);
+    }
 
     const lote = barraDoLote(pag.itens);
     // No celular (até 600 px) a lista vira cards, como no S1.
@@ -105,6 +144,12 @@
     c.onchange = () => { c.checked ? selecionados.add(p.id) : selecionados.delete(p.id); render(); };
     return c;
   }
+  /** Alerta de vínculo na linha e no card (pedido do Rodrigo). */
+  const alertaVinculo = (p) => {
+    const v = vinculoDe(p);
+    const falta = [v.semGrupo && 'Sem grupo', v.semLocal && 'Sem local'].filter(Boolean);
+    return falta.length ? U.situacao(falta.join(' · '), 'atencao') : null;
+  };
   const situacaoCompra = (p) => {
     const f = pendencias(p);
     if (p.status !== 'ativo') return U.situacao('Inativo', 'neutro');
@@ -116,7 +161,7 @@
   function tabela(lista, b) {
     return U.tabela([
       ['', (p) => selecao(p), 'centro'],
-      ['Produto', (p) => { const s = el('span', 'compras-produto-celula'); s.append(el('b', null, p.nomeCatalogo || p.descricao), U.bolinhasDe(p.id, b), el('small', null, [p.codigoInterno || 'Sem código', p.marca || 'Sem marca', S.nomeGrupo(p.grupoId, p.subgrupoId)].join(' · '))); return s; }],
+      ['Produto', (p) => { const s = el('span', 'compras-produto-celula'); s.append(el('b', null, p.nomeCatalogo || p.descricao), U.bolinhasDe(p.id, b), el('small', null, [p.codigoInterno || 'Sem código', p.marca || 'Sem marca', S.nomeGrupo(p.grupoId, p.subgrupoId)].join(' · '))); const a = alertaVinculo(p); if (a) s.append(a); return s; }],
       ['Tipo', (p) => (p.tipo === 'revenda' ? 'Revenda' : 'Transformação')],
       ['Estoque', (p) => D.numero(p.saldo) + ' ' + (p.unidade || ''), 'num'],
       ['Mín · Máx', (p) => (p.estoqueMin == null ? '—' : D.numero(p.estoqueMin)) + ' · ' + (p.estoqueMax == null ? '—' : D.numero(p.estoqueMax)), 'num'],
@@ -141,6 +186,7 @@
       titulo.append(el('b', null, p.nomeCatalogo || p.descricao), U.bolinhasDe(p.id, b));
       if (p.nomeCatalogo) titulo.append(el('small', null, p.descricao));
       titulo.append(el('small', null, p.codigoInterno || 'sem código'));
+      { const al = alertaVinculo(p); if (al) titulo.append(al); }
       topo.append(titulo, selecao(p));
       const dl = el('dl');
       const gram = Number(p.quantidadeIndividual) > 0 ? D.numero(p.quantidadeIndividual) + ' ' + (p.unidadeIndividual || '') : '—';

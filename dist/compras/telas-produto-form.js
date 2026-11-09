@@ -77,11 +77,20 @@
   /**
    * Abre o formulário. p = produto existente (ou nada, para novo). aoSalvar() é chamado depois de gravar.
    */
+  /** Valor do "Setor de estoque" → localId (nó da árvore) e o nome, ou só o texto antigo (sem vínculo). */
+  function localDoSetor(valor) {
+    if (!valor) return { localId: null, setorEstoque: '' };
+    if (valor.startsWith('txt:')) return { localId: null, setorEstoque: valor.slice(4) };
+    const no = S.nosLocais().find((n) => n.id === valor);
+    return { localId: valor, setorEstoque: no ? no.nome : '' };
+  }
+
   function editarProduto(p, aoSalvar) {
     const novo = !p;
     const grupos = S.gruposMercadoria();
     const unidades = S.unidades();
     const locais = S.locais();
+    const nosLocais = S.nosLocais();
     let forcar = false;
     let fiscalTimer = null;
     const promocoes = structuredClone(p?.promocoes || []);
@@ -95,6 +104,12 @@
       rotuloSalvar: 'Salvar produto',
       montar: (form) => {
         form.classList.add('compras-form-produto');
+        // Alerta de vínculo (pedido do Rodrigo, 09/11/2026): some quando o grupo e o local da árvore são escolhidos.
+        if (p) {
+          const v = S.vinculo(p);
+          const falta = [v.semGrupo && 'grupo de mercadorias do S2', v.semLocal && 'local na árvore de locais (Setor de estoque)'].filter(Boolean);
+          if (falta.length) form.append(Object.assign(el('p', 'compras-alerta tom-atencao compras-alerta-vinculo'), { textContent: 'Sem vínculo: falta ' + falta.join(' e ') + '. Escolha abaixo e salve.' }));
+        }
         const alertas = el('div', 'compras-alertas');
         form.append(alertas);
         const sec = (titulo, sub) => {
@@ -177,7 +192,10 @@
         montarSub(true);
         s2.append(campoP('Tipo', tipo), campoP('Grupo de mercadorias *', grupo, DICAS.grupo, 'Vem do cadastro MER - Grupos de Mercadorias.', 'grupoId'), campoP('Subgrupo', sub, null, 'Quando o subgrupo tem regra própria, ela vale no lugar da do grupo.'));
         s2.append(el('p', 'compras-fieldset-sub compras-largo', 'Desta loja — estoque, pontos de venda e preço'));
-        const setor = seletor(locais.concat(p?.setorEstoque && !locais.includes(p.setorEstoque) ? [p.setorEstoque] : []), p?.setorEstoque || '', 'Selecione');
+        // Setor de estoque = nó da árvore de locais (vínculo pelo id). Texto antigo sem nó continua como opção, com o alerta.
+        const textosSemNo = locais.concat(p?.setorEstoque && !locais.includes(p.setorEstoque) ? [p.setorEstoque] : []).filter((t) => !nosLocais.some((n) => n.nome === t));
+        const valorSetor = p?.localId && nosLocais.some((n) => n.id === p.localId) ? p.localId : (p?.setorEstoque ? 'txt:' + p.setorEstoque : '');
+        const setor = seletor(nosLocais.map((n) => [n.id, n.caminho]).concat(textosSemNo.map((t) => ['txt:' + t, t + ' (sem vínculo na árvore)'])), valorSetor, 'Selecione');
         const area = seletor(locais.concat(p?.areaEstoque && !locais.includes(p.areaEstoque) ? [p.areaEstoque] : []), p?.areaEstoque || '', 'Selecione');
         const min = entrada('number', p?.estoqueMin ?? '', { min: 0, step: 'any' });
         const max = entrada('number', p?.estoqueMax ?? '', { min: 0, step: 'any' });
@@ -468,24 +486,36 @@
         quantidadeIndividual: gram, unidadeIndividual: c.medida.value, pesavel, teclaBalanca: pesavel ? R.TECLA_BALANCA_FIXA : null, validadeBalanca: pesavel ? validadeBalanca : null,
         descricao, embalagem: c.emb.value, cDe: c.emb.value ? c.cde.value : null, qtdEmbalagem, medidaCompra: c.medCompra.value, compraAproximada: c.aprox.value === 'sim',
         tipo, grupoId: c.grupo.value, subgrupoId: c.sub.value,
-        setorEstoque: c.setor.value, areaEstoque: c.area.value, estoqueMin, estoqueMax,
+        ...localDoSetor(c.setor.value), areaEstoque: c.area.value, estoqueMin, estoqueMax,
         localVenda1: c.local1.value.trim(), localVenda2: c.local2.value.trim(), setorVenda1: c.setor1.value.trim(), setorVenda2: c.setor2.value.trim(), areaVenda: c.areaVenda.value || null,
         custo: num(c.custo.value), margem: margemPct == null ? null : margemPct / 100, auto, precoVenda: c.precoCalculado(),
         transformacao: tipo === 'transformacao' ? { precisao: c.precisao.value || null, quantidade: c.qtdTransf.value === '' ? null : Number(c.qtdTransf.value), unidade: c.unidTransf.value || null, produtoReceituario: c.receituario.value.trim() || null, refReceituario: c.refRec.value.trim() || null } : null,
         promocoes: promos, conversoes: convs.map((x) => ({ unidade: x.unidade, quantidade: Number(x.quantidade) || 1, unidadesIndividuais: Number(x.unidadesIndividuais) || 1 })),
       };
       campos = R.normalizarTextosProduto(campos);
+      // Vínculo escolhido à mão: o "Revincular" não desfaz.
+      if (p) {
+        const manual = { ...(p.vinculoManual || {}) };
+        if (campos.grupoId !== (p.grupoId || '') || campos.subgrupoId !== (p.subgrupoId || '')) manual.grupo = true;
+        if ((campos.localId || null) !== (p.localId || null)) manual.local = true;
+        campos.vinculoManual = manual;
+      }
       let gravado = null;
+      let veioDoArquivo = false;
       const ok = S.transacao((d) => {
         if (novo) {
-          const codigoInterno = R.proximoCodigoInterno(d.produtos.map((x) => x.codigoInterno).filter(Boolean));
+          // Inclui o maior código do app de produtos (importação): o próximo não pode repetir código do PDV, nem de inativo.
+          const codigoInterno = R.proximoCodigoInterno(d.produtos.map((x) => x.codigoInterno).filter(Boolean).concat(d.codigoInternoApp ? [d.codigoInternoApp] : []));
           const codigoBarras = R.codigoBarrasNaCriacao(eanDig, codigoInterno);
           const fiscal = F.fiscalDoProduto({ anterior: anteriorFiscal, nome: campos.nomeCatalogo, codigoBarras, nomeGrupo: n.nomeGrupo, nomeSubgrupo: n.nomeSubgrupo }).fiscal;
           gravado = { id: S.novoId('p'), codigoInterno, codigoBarras, unidade: campos.medidaCompra || campos.unidadeIndividual || 'UN', saldo: 0, vendas3m: 0, compras3m: 0, lucro3m: 0, criadoEm: S.agoraIso(), ...campos, fiscal };
           d.produtos.push(gravado);
         } else {
-          const alvo = d.produtos.find((x) => x.id === p.id);
-          const fiscal = F.fiscalDoProduto({ anterior: anteriorFiscal, nome: campos.nomeCatalogo || campos.descricao, codigoBarras: eanDig || alvo.codigoBarras, nomeGrupo: n.nomeGrupo, nomeSubgrupo: n.nomeSubgrupo }).fiscal;
+          let alvo = d.produtos.find((x) => x.id === p.id);
+          // Produto do arquivo de inativos: ao salvar, passa para o Compras (e sai do arquivo logo depois).
+          if (!alvo && p.arquivado) { const { arquivado, ...semMarca } = structuredClone(p); alvo = semMarca; d.produtos.push(alvo); veioDoArquivo = true; }
+          // Produto vindo do app de produtos: o fiscal é o do app; as tabelas fiscais do S2 ainda são de exemplo e não o sobrescrevem.
+          const fiscal = alvo.appId ? anteriorFiscal : F.fiscalDoProduto({ anterior: anteriorFiscal, nome: campos.nomeCatalogo || campos.descricao, codigoBarras: eanDig || alvo.codigoBarras, nomeGrupo: n.nomeGrupo, nomeSubgrupo: n.nomeSubgrupo }).fiscal;
           const nomeAntes = alvo.nomeCatalogo ?? alvo.descricao;
           if (campos.nomeCatalogo != null && campos.nomeCatalogo !== nomeAntes) {
             d.historicoNomes.push({ id: S.novoId('hn'), produtoId: alvo.id, nomeAnterior: nomeAntes, nomeNovo: campos.nomeCatalogo, alteradoPor: 'José · Compras', alteradoEm: S.agoraIso() });
@@ -495,6 +525,7 @@
         }
       });
       if (!ok) return mostrarErro(c, 'Não foi possível salvar neste navegador. A foto pode ser grande demais para o armazenamento.');
+      if (veioDoArquivo) S.tirarDoArquivo(p.id).then((foi) => { if (!foi) U.avisar('O produto foi salvo, mas não saiu do arquivo de inativos. Aparece uma vez só na lista.'); if (aoSalvar) aoSalvar(gravado); });
       U.avisar('Produto salvo.');
       if (aoSalvar) aoSalvar(gravado);
       return undefined;
