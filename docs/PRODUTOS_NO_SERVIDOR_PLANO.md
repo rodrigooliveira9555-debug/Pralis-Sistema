@@ -128,12 +128,25 @@ Regras puras (casar grupo e local, mesclar, próximo código) **saem de `dist/co
 | Fase | Entrega | Estimativa |
 |---|---|---|
 | 1 | Tabela + API + regras no `shared/` + testes de integração — **feita em 09/11/2026** (migration 0006, `api/src/produtos/`, `shared/src/produtos.ts`; 8 testes de integração + 5 de unidade) | 1,5 dia |
-| 2 | MER - Produtos e importação pela API | 1 dia |
-| 3 | Compras, Produção e estoque lendo o resumo | 1 dia |
-| 4 | Migração dos documentos + aposentar produtos do documento | 0,5 dia |
+| 2 | MER - Produtos e importação pela API — **feita em 09/11/2026** (`dist/compras/produtos-api.js`; formulário, lista, inativar em lote, importação e revincular pela API no modo servidor) | 1 dia |
+| 3 | Compras, Produção e estoque lendo o resumo — **feita em 09/11/2026** (`S.dados.produtos` = resumo dos ativos do servidor + estado da loja do aparelho; as telas não mudaram) | 1 dia |
+| 4 | Migração dos documentos + aposentar produtos do documento — **transferência feita** (automática no 1º aparelho de administrador: `POST /api/produtos/transferencia` + conclusão só se todos chegaram; depois o documento guarda só o estado da loja e o arquivo de inativos sai). **Falta, DEPOIS de publicar e de a transferência acontecer no ar:** apagar o modo antigo (produtos no documento, arquivo compactado) e passar os testes de tela do Compras para o ambiente com a API. | 0,5 dia |
 | — | Publicar a API (com a migration) e o site; conferir no ar | com o Marco |
 
 Cada fase é uma PR própria, com o caminho antigo removido na mesma entrega em que o novo passa a valer.
+
+## 8a. Como ficou (fases 1 a 3, 09/11/2026)
+
+- **Modo servidor** só quando o servidor diz que o catálogo está lá (`GET /api/produtos/resumo` → `ativado`). Antes disso, tudo segue
+  como era (inclusive em sessão local de teste, sem API).
+- **Transferência** (uma vez): o primeiro aparelho de administrador conectado manda os produtos do aparelho (Compras + arquivo de
+  inativos, sem os 19 de exemplo) em lotes; o servidor só insere o que não existe; o catálogo passa a valer num pedido final de
+  conclusão, que a tela só faz se **todos** chegaram. Se faltar algum (ex.: código interno repetido), nada muda e o administrador vê o aviso.
+- **Resumo dos ativos** (cadastro completo) guardado no aparelho em `cicluz-produtos-resumo-v1` (não sincronizado): a loja vê e usa
+  os produtos sem internet. O documento `cicluz-compras-v1` passa a guardar por produto só `saldo, vendas3m, compras3m, lucro3m`.
+- **Inativos**: só pela listagem paginada da API (desmarcar "Só ativos").
+- **Ambiente de teste de tela com a API real**: `npm run test:telas-api` (precisa do Docker).
+- **Teto de pedidos** da API passou a valer só para `/api/` (os arquivos do site, servidos só no modo servidor único local, não contam).
 
 ## 9. Decisões (Zé, 09/11/2026)
 
