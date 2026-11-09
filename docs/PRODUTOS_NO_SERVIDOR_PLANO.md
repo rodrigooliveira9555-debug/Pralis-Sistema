@@ -127,7 +127,7 @@ Regras puras (casar grupo e local, mesclar, próximo código) **saem de `dist/co
 
 | Fase | Entrega | Estimativa |
 |---|---|---|
-| 1 | Tabela + API + regras no `shared/` + testes de integração | 1,5 dia |
+| 1 | Tabela + API + regras no `shared/` + testes de integração — **feita em 09/11/2026** (migration 0006, `api/src/produtos/`, `shared/src/produtos.ts`; 8 testes de integração + 5 de unidade) | 1,5 dia |
 | 2 | MER - Produtos e importação pela API | 1 dia |
 | 3 | Compras, Produção e estoque lendo o resumo | 1 dia |
 | 4 | Migração dos documentos + aposentar produtos do documento | 0,5 dia |
