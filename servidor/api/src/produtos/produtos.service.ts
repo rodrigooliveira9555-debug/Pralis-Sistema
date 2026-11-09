@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import {
-  CAMPOS_RESUMO,
   DADOS_DO_S2,
   PERMISSAO_EDITAR_PRODUTOS,
   PERMISSAO_VER_PRODUTOS,
@@ -74,18 +73,13 @@ export async function listar(perfil: PerfilSessao, filtro: FiltroProdutos): Prom
   return { itens: linhas.map(resposta), total, pagina: filtro.pagina, paginas: Math.max(1, Math.ceil(total / filtro.tamanho)), contagens };
 }
 
-// Resumo dos ATIVOS para Compras, Produção e estoque (a tela guarda no aparelho e funciona sem internet).
+// Resumo dos ATIVOS: o cadastro COMPLETO de cada ativo (a tela guarda no aparelho, edita a partir dele e funciona
+// sem internet; Compras, Produção e estoque leem daqui). Os inativos só pela listagem paginada.
 export async function resumo(perfil: PerfilSessao) {
   exigirVer(perfil);
   const [linhas, ativado] = await Promise.all([listarAtivos(perfil.empresa.id), catalogoAtivado(perfil.empresa.id)]);
   // ativado = o catálogo já está no servidor; antes disso a tela continua com os produtos do aparelho.
-  return { ativado, produtos: linhas.map((l) => {
-    const p = resposta(l);
-    const dados = Object.fromEntries(CAMPOS_RESUMO.filter((c) => c in p.dados).map((c) => [c, p.dados[c]]));
-    return { id: p.id, codigoInterno: p.codigoInterno, codigoBarras: p.codigoBarras, nome: p.nome, descricao: p.descricao, tipo: p.tipo,
-      liberadoCompra: p.liberadoCompra, grupoId: p.grupoId, subgrupoId: p.subgrupoId, localId: p.localId, custo: p.custo, precoVenda: p.precoVenda,
-      semGrupo: p.semGrupo, semLocal: p.semLocal, dados };
-  }) };
+  return { ativado, produtos: linhas.map(resposta) };
 }
 
 /* ---------- Transferência dos produtos do aparelho (uma vez por empresa; nunca sobrescreve) ---------- */
@@ -96,9 +90,10 @@ export async function transferir(perfil: PerfilSessao, lote: TransferenciaProdut
     empresaId, id: p.id, codigoInterno: p.codigoInterno, ...colunas(p),
     appId: nulo(p.appId), appLojaId: nulo(p.appLojaId), criadoPor: perfil.usuarioId, atualizadoPor: perfil.usuarioId
   }));
+  // Os lotes só inserem; o catálogo passa a valer (linha de produtos_codigo) no pedido de conclusão.
   await banco.transaction(async (tx) => {
     await inserirSeNaoExiste(tx, linhas);
-    await gravarUltimoCodigo(tx, empresaId, Math.max(ULTIMO_CODIGO_DE_PRODUTO, lote.maiorCodigo));
+    if (lote.concluir) await gravarUltimoCodigo(tx, empresaId, Math.max(ULTIMO_CODIGO_DE_PRODUTO, lote.maiorCodigo));
   });
   // Quais do lote estão no servidor agora (inseridos agora ou antes). O que faltar fica no aparelho.
   const presentes = await idsExistentes(empresaId, lote.produtos.map((p) => p.id));

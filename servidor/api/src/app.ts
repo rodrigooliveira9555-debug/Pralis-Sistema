@@ -87,7 +87,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   // Iconify: a CSP padrão do helmet quebraria a tela. Quando a API entrega o site, a CSP fica
   // desligada; nas respostas JSON ela não tem efeito.
   await app.register(helmet, { contentSecurityPolicy: false });
-  await app.register(rateLimit, { global: true, max: 300, timeWindow: "1 minute" });
+  // O teto vale para a API. Os arquivos do site (só quando SERVIR_SITE=1, no servidor único local) não contam:
+  // cada abertura do site são ~100 arquivos e algumas recargas bastariam para travar a própria pessoa.
+  await app.register(rateLimit, { global: true, max: 300, timeWindow: "1 minute", allowList: (request) => !request.url.startsWith("/api/") });
 
   // Só JSON: um formulário de outro site não consegue mandar corpo que a API aceite.
   app.removeContentTypeParser("text/plain");

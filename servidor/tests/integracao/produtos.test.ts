@@ -163,13 +163,14 @@ describe("produtos no servidor", () => {
     expect((await app.inject({ method: "POST", url: "/api/produtos", headers: comSessao(c), payload: novo })).statusCode).toBe(403);
   });
 
-  it("resumo traz só os ativos, com os campos que Compras e Produção usam", async () => {
+  it("resumo traz só os ativos, com o cadastro completo", async () => {
     const { cookie } = await empresaPronta();
     await importar(cookie, [importado("13001", { dados: { unidade: "UN", embalagem: "CX", qtdEmbalagem: 6, fiscal: { ncm: "22021000" } } }), importado("13300", { status: "inativo" })]);
     const r = (await app.inject({ method: "GET", url: "/api/produtos/resumo", headers: comSessao(cookie) })).json().data;
     expect(r.ativado).toBe(true);
     expect(r.produtos.map((p: { id: string }) => p.id)).toEqual(["pi-13001"]);
-    expect(r.produtos[0].dados).toEqual({ unidade: "UN", embalagem: "CX", qtdEmbalagem: 6 });
+    expect(r.produtos[0].dados.fiscal).toEqual({ ncm: "22021000" });
+    expect([r.produtos[0].status, r.produtos[0].versao, r.produtos[0].dados.embalagem]).toEqual(["ativo", 1, "CX"]);
   });
 
   it("transferência do aparelho: mesmo id e código, nunca sobrescreve, diz o que faltou e ativa o catálogo", async () => {
@@ -179,7 +180,7 @@ describe("produtos no servidor", () => {
       id, codigoInterno: codigo, nome: "ITEM " + codigo, descricao: "ITEM " + codigo, tipo: "revenda", status: "ativo",
       liberadoCompra: false, calculoAutomatico: false, precoVenda: 3, dados: { fiscal: { ncm: "1" } }, ...extra
     });
-    const t = (produtos: unknown[]) => app.inject({ method: "POST", url: "/api/produtos/transferencia", headers: comSessao(cookie), payload: { produtos, maiorCodigo: 13300 } });
+    const t = (produtos: unknown[], concluir = false) => app.inject({ method: "POST", url: "/api/produtos/transferencia", headers: comSessao(cookie), payload: { produtos, maiorCodigo: 13300, concluir } });
     const r1 = (await t([doAparelho("p-abc", "13100"), doAparelho("pi-13001", "13001", { appId: "app-13001" }), doAparelho("p-dup", "13100")])).json().data;
     expect(r1).toEqual({ recebidos: 3, presentes: 2, faltando: [{ id: "p-dup", codigoInterno: "13100" }] });
     // De novo, com o nome mudado no aparelho: o servidor NÃO sobrescreve.
@@ -187,6 +188,9 @@ describe("produtos no servidor", () => {
     expect(r2.faltando).toEqual([]);
     const p = (await app.inject({ method: "GET", url: "/api/produtos/item/p-abc", headers: comSessao(cookie) })).json().data;
     expect([p.nome, p.liberadoCompra, p.dados.fiscal.ncm]).toEqual(["ITEM 13100", false, "1"]);
+    // Lotes sozinhos não ativam o catálogo: só o pedido de conclusão.
+    expect((await app.inject({ method: "GET", url: "/api/produtos/resumo", headers: comSessao(cookie) })).json().data.ativado).toBe(false);
+    expect((await t([], true)).statusCode).toBe(200);
     const resumo = (await app.inject({ method: "GET", url: "/api/produtos/resumo", headers: comSessao(cookie) })).json().data;
     expect(resumo.ativado).toBe(true);
     // Produto novo depois da transferência: acima do maior código do aparelho.

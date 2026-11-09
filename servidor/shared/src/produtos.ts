@@ -119,7 +119,9 @@ export const produtoTransferidoSchema = z.object({
 });
 export const transferenciaProdutosSchema = z.object({
   produtos: z.array(produtoTransferidoSchema).max(500, "Mande no máximo 500 produtos por lote"),
-  maiorCodigo: z.number().int().nonnegative().max(699_999)
+  maiorCodigo: z.number().int().nonnegative().max(699_999),
+  // Último pedido, sem produtos: o catálogo do servidor passa a valer. A tela só conclui se TODOS chegaram.
+  concluir: z.boolean().default(false)
 });
 export type TransferenciaProdutos = z.infer<typeof transferenciaProdutosSchema>;
 export type ImportacaoProdutos = z.infer<typeof importacaoProdutosSchema>;
@@ -168,8 +170,6 @@ export type PaginaProdutos = {
   paginas: number;
   contagens: { ativos: number; inativos: number; semVinculo: number; semGrupo: number; semLocal: number };
 };
-// Campos do `dados` que vão no resumo dos ativos (Compras, Produção e estoque; fica guardado no aparelho).
-export const CAMPOS_RESUMO = ["unidade", "unidadeIndividual", "quantidadeIndividual", "embalagem", "cDe", "qtdEmbalagem", "medidaCompra", "estoqueMin", "estoqueMax", "setorEstoque"] as const;
 
 /* ---------- Reimportação: o que é do S2 não volta ao valor do app ---------- */
 // No `dados`, estes campos são do S2 (não existem no app) e sobrevivem à reimportação.
