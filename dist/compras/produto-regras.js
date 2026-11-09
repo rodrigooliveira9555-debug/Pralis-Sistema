@@ -1,7 +1,7 @@
 /*
  * Cadastro de produtos — regras puras portadas do S1 (SISTEMA_CAIXA, shared/src/produtos):
  * regras.ts (descrição, como se compra, preço, promoções), regras-cadastro.ts (estoque por embalagem,
- * balança, EAN na criação, maiúsculas), semelhanca-de-nome.ts e codigo-interno.ts. Sem código externo PR-XXXX-XXXX
+ * balança, EAN na criação, maiúsculas), semelhanca-de-nome.ts. Sem código externo PR-XXXX-XXXX
  * (decisão do Zé: o código de barras já identifica o produto).
  * Sem DOM e sem armazenamento: testadas em Node (tests/compras-produto.cjs).
  */
@@ -55,23 +55,8 @@
     return r;
   }
 
-  /* ---------- Códigos ---------- */
-
-  const PRIMEIRO_CODIGO_FORA_DA_FAIXA = 700000;
-  const ULTIMO_CODIGO_DE_PRODUTO = 13129;
-  /** Próximo código interno (sequência do PDV): maior da faixa normal + 1, com 5 dígitos (codigo-interno.ts). */
-  function proximoCodigoInterno(codigosExistentes) {
-    const nums = codigosExistentes.map((c) => Number(c)).filter((n) => Number.isFinite(n) && n < PRIMEIRO_CODIGO_FORA_DA_FAIXA);
-    const maior = Math.max(ULTIMO_CODIGO_DE_PRODUTO, ...nums.map(Math.trunc));
-    const prox = maior + 1;
-    if (prox >= PRIMEIRO_CODIGO_FORA_DA_FAIXA) throw new Error('Faixa de código interno de produto esgotada');
-    return String(prox).padStart(5, '0');
-  }
-  /** Na criação, EAN vazio recebe o código interno; EAN informado fica como veio (regras-cadastro.ts). */
-  function codigoBarrasNaCriacao(codigoBarras, codigoInterno) {
-    if (codigoBarras != null && String(codigoBarras).trim() !== '') return codigoBarras;
-    return codigoInterno ? codigoInterno : null;
-  }
+  /* ---------- Códigos ----------
+   * O código interno e o código de barras na criação são gerados pelo SERVIDOR (api/src/produtos), não aqui. */
 
   /* ---------- Duplicidade ---------- */
 
@@ -252,7 +237,6 @@
 
   return {
     arredondar, montarDescricao, montarValidacaoQtd, montarComoSeCompra, normalizarTextosProduto,
-    proximoCodigoInterno, codigoBarrasNaCriacao,
     semelhanca, checarDuplicidade, SEMELHANCA_MINIMA,
     calcularPrecoVenda, DIAS_PROMO, calcularPrecoVendaComPromocao, promocaoDentroDaValidade, promocoesSeSobrepoem, validarPromocoesDoProduto,
     validarEstoquePorEmbalagem, TECLA_BALANCA_FIXA, validarBalanca, pendenciasDeCompra,

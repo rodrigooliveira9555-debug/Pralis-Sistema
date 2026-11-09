@@ -272,10 +272,10 @@
     if (!c || c.ativado || !perfil || perfil.papel !== 'administrador') return null;
     const I = window.CicluzProdutoImportacao;
     const daqui = dados.produtos.filter((p) => !I.EXEMPLOS.includes(p.id));
-    const arquivados = (await arquivo()).map(({ arquivado, ...p }) => p);
+    const arquivados = await lerArquivoAntigo();
     const ids = new Set(daqui.map((p) => p.id));
     const todos = daqui.concat(arquivados.filter((p) => !ids.has(p.id)));
-    if (!todos.length) return null;
+    // Empresa sem produtos no aparelho (ex.: nova): o catálogo do servidor passa a valer direto (transferência vazia).
     const maior = Math.max(Number(dados.codigoInternoApp) || 0, ...todos.map((p) => Number(p.codigoInterno)).filter((n) => Number.isFinite(n) && n < 700000));
     const r = await P.transferir(todos, maior);
     if (r.faltando.length || r.invalidos.length) return { ...r, total: todos.length };
@@ -329,34 +329,14 @@
     return window.CicluzProdutoImportacao.alertasDeVinculo(p, grupos, nos);
   }
 
-  /* ---------- Arquivo de produtos inativos (cicluz-produtos-arquivo-v1, compactado) ----------
-   * Os inativos do app de produtos ficam fora do Compras para caber no aparelho; abrem só quando a lista mostra
-   * os inativos ou alguém edita um deles (aí ele volta para o Compras). Ver produto-importacao.js. */
+  /* ---------- Arquivo antigo de inativos (cicluz-produtos-arquivo-v1): só LEITURA, para a transferência ----------
+   * Entre 09/11/2026 e a transferência ao servidor, os inativos do app ficavam compactados nesta chave. A transferência
+   * os leva para a tabela e apaga a chave. Nada mais grava aqui. */
   const CHAVE_ARQUIVO = 'cicluz-produtos-arquivo-v1';
-  let arquivoCache = null; let arquivoTexto = null;
-  const textoArquivo = () => { try { return localStorage.getItem(CHAVE_ARQUIVO) || ''; } catch (e) { return ''; } };
-  /** Lista aberta do arquivo (assíncrona: descompacta na primeira vez e guarda até o arquivo mudar). */
-  async function arquivo() {
-    const t = textoArquivo();
-    if (arquivoCache && t === arquivoTexto) return arquivoCache;
-    arquivoCache = (await window.CicluzProdutoImportacao.descompactar(t)).map((p) => ({ ...normalizarProduto(p), arquivado: true }));
-    arquivoTexto = t;
-    return arquivoCache;
-  }
-  /** O arquivo já aberto (síncrono), ou null se ainda não abriu ou se mudou. */
-  const arquivoAberto = () => (arquivoCache && arquivoTexto === textoArquivo() ? arquivoCache : null);
-  const totalArquivo = () => window.CicluzProdutoImportacao.totalDoArquivo(textoArquivo());
-  /** Grava o texto já compactado. Sem espaço no aparelho devolve false e não mexe em nada. */
-  function gravarArquivo(texto) {
-    try { localStorage.setItem(CHAVE_ARQUIVO, texto); } catch (e) { return false; }
-    arquivoCache = null; arquivoTexto = null;
-    document.dispatchEvent(new CustomEvent('cicluz-compras-mudou'));
-    return true;
-  }
-  /** Tira um produto do arquivo (ele passou para o Compras). */
-  async function tirarDoArquivo(id) {
-    const lista = (await arquivo()).filter((p) => p.id !== id).map(({ arquivado, ...p }) => p);
-    return gravarArquivo(await window.CicluzProdutoImportacao.compactar(lista));
+  async function lerArquivoAntigo() {
+    let t = '';
+    try { t = localStorage.getItem(CHAVE_ARQUIVO) || ''; } catch (e) { t = ''; }
+    return (await window.CicluzProdutoImportacao.descompactar(t)).map(normalizarProduto);
   }
 
   /* ---------- Consultas comuns ---------- */
@@ -398,7 +378,7 @@
     get dados() { return dados; },
     get erroLeitura() { return erroLeitura; },
     transacao, novoId, agoraIso, hojeIso,
-    gruposMercadoria, nomeGrupo, arvoreLocais, nosLocais, vinculo, arquivo, arquivoAberto, totalArquivo, gravarArquivo, tirarDoArquivo, transferirSePreciso, emModoServidor: servidor, locais,
+    gruposMercadoria, nomeGrupo, arvoreLocais, nosLocais, vinculo, transferirSePreciso, emModoServidor: servidor, locais,
     fornecedor, produto, responsavel, referencia, definirReferencia, fornecedoresDoProduto, bolinhas,
   };
 

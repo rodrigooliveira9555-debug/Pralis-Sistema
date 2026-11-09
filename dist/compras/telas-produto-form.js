@@ -99,7 +99,7 @@
 
     const dlg = U.dialogo({
       titulo: novo ? 'Novo produto' : 'Editar produto',
-      subtitulo: novo ? 'Os dados ficam salvos só neste navegador.' : (p.codigoInterno ? 'Código interno ' + p.codigoInterno : ''),
+      subtitulo: novo ? 'O código interno é gerado pelo servidor ao salvar.' : (p.codigoInterno ? 'Código interno ' + p.codigoInterno : ''),
       largo: true,
       rotuloSalvar: 'Salvar produto',
       montar: (form) => {
@@ -500,57 +500,29 @@
         if ((campos.localId || null) !== (p.localId || null)) manual.local = true;
         campos.vinculoManual = manual;
       }
-      let gravado = null;
-      let veioDoArquivo = false;
-      // Catálogo no servidor: cria (o servidor gera o código interno) ou edita com a versão aberta (409 se alguém
-      // salvou antes). O histórico de nomes continua no Compras.
-      if (S.emModoServidor()) {
-        const P = window.CicluzProdutos;
-        const nomeAntes = p ? (p.nomeCatalogo ?? p.descricao) : null;
-        const fiscalDerivado = (cod) => F.fiscalDoProduto({ anterior: anteriorFiscal, nome: campos.nomeCatalogo || campos.descricao, codigoBarras: cod, nomeGrupo: n.nomeGrupo, nomeSubgrupo: n.nomeSubgrupo }).fiscal;
-        let pedido;
-        try {
-          pedido = novo
-            ? P.criar({ ...campos, codigoBarras: eanDig || null, unidade: campos.medidaCompra || campos.unidadeIndividual || 'UN', criadoEm: S.agoraIso(), fiscal: fiscalDerivado(eanDig) })
-            : P.editar({ ...p, ...campos, codigoBarras: eanDig || p.codigoBarras, fiscal: p.appId ? anteriorFiscal : fiscalDerivado(eanDig || p.codigoBarras) });
-        } catch (e) { return mostrarErro(c, e.message); }
-        pedido.then((salvo) => {
-          if (!novo && campos.nomeCatalogo != null && campos.nomeCatalogo !== nomeAntes) {
-            S.transacao((d) => { d.historicoNomes.push({ id: S.novoId('hn'), produtoId: salvo.id, nomeAnterior: nomeAntes, nomeNovo: campos.nomeCatalogo, alteradoPor: 'José · Compras', alteradoEm: S.agoraIso() }); });
-          }
-          dlg.close();
-          U.avisar(novo ? 'Produto salvo com o código ' + salvo.codigoInterno + '.' : 'Produto salvo.');
-          if (aoSalvar) aoSalvar(salvo);
-        }).catch((e) => mostrarErro(c, e.message || 'Não foi possível salvar no servidor.'));
-        return 'Salvando no servidor…';
+      // O catálogo fica no servidor (docs/PRODUTOS_NO_SERVIDOR_PLANO.md): cria (o servidor gera o código interno) ou edita
+      // com a versão aberta (409 se alguém salvou antes). O histórico de nomes continua no Compras.
+      if (!S.emModoServidor() || !window.CicluzProdutos.conectado()) {
+        return mostrarErro(c, S.emModoServidor() ? 'Sem conexão com o servidor: o cadastro de produtos só grava conectado.' : 'Os produtos ainda estão sendo levados para o servidor. Peça ao administrador para abrir o S2 e tente de novo.');
       }
-      const ok = S.transacao((d) => {
-        if (novo) {
-          // Inclui o maior código do app de produtos (importação): o próximo não pode repetir código do PDV, nem de inativo.
-          const codigoInterno = R.proximoCodigoInterno(d.produtos.map((x) => x.codigoInterno).filter(Boolean).concat(d.codigoInternoApp ? [d.codigoInternoApp] : []));
-          const codigoBarras = R.codigoBarrasNaCriacao(eanDig, codigoInterno);
-          const fiscal = F.fiscalDoProduto({ anterior: anteriorFiscal, nome: campos.nomeCatalogo, codigoBarras, nomeGrupo: n.nomeGrupo, nomeSubgrupo: n.nomeSubgrupo }).fiscal;
-          gravado = { id: S.novoId('p'), codigoInterno, codigoBarras, unidade: campos.medidaCompra || campos.unidadeIndividual || 'UN', saldo: 0, vendas3m: 0, compras3m: 0, lucro3m: 0, criadoEm: S.agoraIso(), ...campos, fiscal };
-          d.produtos.push(gravado);
-        } else {
-          let alvo = d.produtos.find((x) => x.id === p.id);
-          // Produto do arquivo de inativos: ao salvar, passa para o Compras (e sai do arquivo logo depois).
-          if (!alvo && p.arquivado) { const { arquivado, ...semMarca } = structuredClone(p); alvo = semMarca; d.produtos.push(alvo); veioDoArquivo = true; }
-          // Produto vindo do app de produtos: o fiscal é o do app; as tabelas fiscais do S2 ainda são de exemplo e não o sobrescrevem.
-          const fiscal = alvo.appId ? anteriorFiscal : F.fiscalDoProduto({ anterior: anteriorFiscal, nome: campos.nomeCatalogo || campos.descricao, codigoBarras: eanDig || alvo.codigoBarras, nomeGrupo: n.nomeGrupo, nomeSubgrupo: n.nomeSubgrupo }).fiscal;
-          const nomeAntes = alvo.nomeCatalogo ?? alvo.descricao;
-          if (campos.nomeCatalogo != null && campos.nomeCatalogo !== nomeAntes) {
-            d.historicoNomes.push({ id: S.novoId('hn'), produtoId: alvo.id, nomeAnterior: nomeAntes, nomeNovo: campos.nomeCatalogo, alteradoPor: 'José · Compras', alteradoEm: S.agoraIso() });
-          }
-          Object.assign(alvo, campos, { codigoBarras: eanDig || alvo.codigoBarras, fiscal });
-          gravado = alvo;
+      const P = window.CicluzProdutos;
+      const nomeAntes = p ? (p.nomeCatalogo ?? p.descricao) : null;
+      const fiscalDerivado = (cod) => F.fiscalDoProduto({ anterior: anteriorFiscal, nome: campos.nomeCatalogo || campos.descricao, codigoBarras: cod, nomeGrupo: n.nomeGrupo, nomeSubgrupo: n.nomeSubgrupo }).fiscal;
+      let pedido;
+      try {
+        pedido = novo
+          ? P.criar({ ...campos, codigoBarras: eanDig || null, unidade: campos.medidaCompra || campos.unidadeIndividual || 'UN', criadoEm: S.agoraIso(), fiscal: fiscalDerivado(eanDig) })
+          : P.editar({ ...p, ...campos, codigoBarras: eanDig || p.codigoBarras, fiscal: p.appId ? anteriorFiscal : fiscalDerivado(eanDig || p.codigoBarras) });
+      } catch (e) { return mostrarErro(c, e.message); }
+      pedido.then((salvo) => {
+        if (!novo && campos.nomeCatalogo != null && campos.nomeCatalogo !== nomeAntes) {
+          S.transacao((d) => { d.historicoNomes.push({ id: S.novoId('hn'), produtoId: salvo.id, nomeAnterior: nomeAntes, nomeNovo: campos.nomeCatalogo, alteradoPor: 'José · Compras', alteradoEm: S.agoraIso() }); });
         }
-      });
-      if (!ok) return mostrarErro(c, 'Não foi possível salvar neste navegador. A foto pode ser grande demais para o armazenamento.');
-      if (veioDoArquivo) S.tirarDoArquivo(p.id).then((foi) => { if (!foi) U.avisar('O produto foi salvo, mas não saiu do arquivo de inativos. Aparece uma vez só na lista.'); if (aoSalvar) aoSalvar(gravado); });
-      U.avisar('Produto salvo.');
-      if (aoSalvar) aoSalvar(gravado);
-      return undefined;
+        dlg.close();
+        U.avisar(novo ? 'Produto salvo com o código ' + salvo.codigoInterno + '.' : 'Produto salvo.');
+        if (aoSalvar) aoSalvar(salvo);
+      }).catch((e) => mostrarErro(c, e.message || 'Não foi possível salvar no servidor.'));
+      return 'Salvando no servidor…';
     }
     return dlg;
   }

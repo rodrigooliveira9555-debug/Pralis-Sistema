@@ -67,18 +67,8 @@
     return null;
   }
 
-  function fonte() {
-    if (filtro.soAtivos) return S.dados.produtos;
-    if (S.emModoServidor()) return S.dados.produtos;
-    const arq = S.arquivoAberto();
-    if (!arq) {
-      S.arquivo().then(() => { if (tela && tela.view.classList.contains('show')) render(); })
-        .catch(() => U.avisar('Não foi possível abrir os produtos arquivados neste navegador.'));
-      return S.dados.produtos;
-    }
-    const ids = new Set(S.dados.produtos.map((p) => p.id));
-    return S.dados.produtos.concat(arq.filter((p) => !ids.has(p.id)));
-  }
+  /** Produtos da lista local: os ativos do resumo (com "Só ativos" desmarcado, a página vem do servidor). */
+  const fonte = () => S.dados.produtos;
 
   function filtrados() {
     const termo = U.dobrar(filtro.busca);
@@ -134,9 +124,8 @@
     if (temFiltro) linha.append(botao('Limpar', () => { Object.assign(filtro, SEM_FILTRO); render(); }));
 
     const info = el('div', 'compras-linha-info');
-    const nArq = S.totalArquivo();
     const quantos = servidorTodos ? (pagServidor ? pagServidor.total : 0) : todos.length;
-    info.append(U.nota((servidorTodos && !pagServidor ? 'Buscando no servidor… ' : '') + quantos + ' produto(s). Produto nunca é apagado: inative quando sair de linha.' + (nArq ? ' ' + nArq + ' inativo(s) do app ficam arquivados: desmarque "Só ativos" para vê-los.' : '')), U.legendaBolinhas());
+    info.append(U.nota((servidorTodos && !pagServidor ? 'Buscando no servidor… ' : '') + quantos + ' produto(s). Produto nunca é apagado: inative quando sair de linha.' + (S.emModoServidor() && filtro.soAtivos ? ' Desmarque "Só ativos" para ver também os inativos (busca no servidor).' : '')), U.legendaBolinhas());
     const imp = window.CicluzProdutoImportacaoTela;
     if (imp && imp.podeImportar()) {
       const acoes = el('div', 'compras-acoes-importacao');
@@ -251,19 +240,13 @@
       salvar: (c) => {
         if (c.conf.value.trim().toUpperCase() !== frase) return 'Digite exatamente ' + frase + '.';
         let alterados = 0;
-        if (S.emModoServidor()) {
-          const alvos = S.dados.produtos.filter((p) => ids.includes(p.id) && p.status !== 'inativo');
-          (async () => {
-            for (const p of alvos) { await window.CicluzProdutos.editar({ ...p, status: 'inativo', liberadoCompra: false }); alterados++; }
-          })().then(() => { selecionados.clear(); U.avisar(alterados + ' produto(s) inativado(s).'); render(); })
-            .catch((e) => { U.avisar(alterados + ' inativado(s); parou no servidor: ' + e.message); render(); });
-          return undefined;
-        }
-        const ok = S.transacao((d) => d.produtos.forEach((p) => { if (ids.includes(p.id) && p.status !== 'inativo') { p.status = 'inativo'; p.liberadoCompra = false; alterados++; } }));
-        if (!ok) return 'Não foi possível salvar.';
-        selecionados.clear();
-        U.avisar(alterados + ' produto(s) inativado(s).');
-        render();
+        if (!S.emModoServidor() || !window.CicluzProdutos.conectado()) return 'Sem conexão com o servidor: inativar só funciona conectado.';
+        const alvos = S.dados.produtos.filter((p) => ids.includes(p.id) && p.status !== 'inativo');
+        (async () => {
+          for (const p of alvos) { await window.CicluzProdutos.editar({ ...p, status: 'inativo', liberadoCompra: false }); alterados++; }
+        })().then(() => { selecionados.clear(); U.avisar(alterados + ' produto(s) inativado(s).'); render(); })
+          .catch((e) => { U.avisar(alterados + ' inativado(s); parou no servidor: ' + e.message); render(); });
+        return undefined;
       },
     });
   }

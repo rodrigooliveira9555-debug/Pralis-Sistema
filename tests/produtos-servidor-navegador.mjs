@@ -144,6 +144,69 @@ ok(aposImportar.length === 6, 'Importação: 2 novos no servidor e o 13001 atual
 ok(JSON.stringify(aposImportar.find((x) => x[0] === '13001')) === JSON.stringify(['13001', 'ativo', '8.25', false]), 'Preço do app atualizado no 13001');
 ok(await p.evaluate(() => CicluzComprasDados.dados.produtos.find((x) => x.id === 'pi-13001').saldo === 12), 'Importar não mexe no saldo do aparelho');
 
+/* ---------- 6b) Arquivo errado na importação ---------- */
+await p.locator('#compras-produtos button', { hasText: 'Importar do app de produtos' }).click();
+const errado = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(errado, XLSX.utils.json_to_sheet([{ a: 1 }]), 'Planilha1');
+await dlg().getByLabel('Arquivo do backup (.xlsx)', { exact: true }).setInputFiles({ name: 'outro.xlsx', mimeType: 'application/octet-stream', buffer: Buffer.from(XLSX.write(errado, { type: 'buffer', bookType: 'xlsx' })) });
+await dlg().locator('.compras-alerta.tom-negativo').waitFor({ timeout: 15000 });
+ok((await dlg().locator('.compras-alerta.tom-negativo').textContent()).includes('falta a aba "Produtos"'), 'Arquivo que não é o backup: explica e não grava');
+await dlg().locator('.people-close-control').click();
+await fechado();
+
+/* ---------- 6c) Alerta de vínculo, filtro e escolha à mão ---------- */
+await p.evaluate(() => { if (document.body.classList.contains('mobile-menu-visible')) document.getElementById('toggleMenu').click(); CicluzCompras.abrir('produtos'); });
+const chip = (rot) => p.locator('#compras-produtos .compras-chip', { hasText: rot });
+await chip('Sem grupo').first().click();
+const semGrupoLinhas = await linhas();
+ok(semGrupoLinhas.some((t) => t.includes('NOVO DO APP')) && semGrupoLinhas.every((t) => t.includes('Sem grupo')), 'Filtro "Sem grupo" com o alerta na linha: ' + semGrupoLinhas.length);
+await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'NOVO DO APP' }).click();
+ok((await dlg().locator('.compras-alerta-vinculo').textContent()).includes('grupo de mercadorias'), 'Formulário mostra o alerta de vínculo');
+await dlg().getByLabel('Grupo de mercadorias', { exact: true }).selectOption('g7');
+await dlg().getByLabel('Setor de estoque', { exact: true }).selectOption({ label: 'LJ › VITRINES' });
+await dlg().locator('.people-save-control').click();
+await fechado();
+const vinculado = await p.evaluate(async () => (await CicluzSync.api('/produtos?status=todos&busca=novo%20do%20app')).itens[0]);
+ok(vinculado.grupoId === 'g7' && vinculado.localId === 's-vit' && !vinculado.semGrupo && !vinculado.semLocal && vinculado.dados.vinculoManual.grupo && vinculado.dados.vinculoManual.local, 'Grupo e local escolhidos à mão: alerta some e fica marcado como manual');
+await p.locator('#compras-produtos button', { hasText: 'Limpar' }).click();
+
+/* ---------- 6d) Revincular depois que a árvore muda (no aparelho → servidor) ---------- */
+await p.evaluate(() => localStorage.setItem('cicluz-location-tree-v1', JSON.stringify({ tree: [{ id: 'a-lj2', name: 'LJ', children: [{ id: 's-vit2', name: 'VITRINES', children: [] }] }], history: [] })));
+let religado = null;
+for (let i = 0; i < 20 && !religado; i++) {
+  await p.waitForTimeout(500);
+  await p.evaluate(() => CicluzSync.api('/produtos/revincular', { metodo: 'POST' }));
+  const x = await p.evaluate(async () => (await CicluzSync.api('/produtos/item/pi-13001')).localId);
+  if (x === 's-vit2') religado = x;
+}
+ok(religado === 's-vit2', 'Revincular casa de novo pelo texto do app depois que a árvore chega ao servidor');
+const manual = await p.evaluate(async () => (await CicluzSync.api('/produtos?status=todos&busca=novo%20do%20app')).itens[0].localId);
+ok(manual === 's-vit', 'Vínculo escolhido à mão não muda no Revincular');
+
+/* ---------- 6e) Busca letra por letra: o campo não fecha ---------- */
+const campoBusca2 = p.locator('#compras-produtos .compras-busca');
+if (await campoBusca2.isHidden()) await p.locator('#compras-produtos .local-search-toggle').click();
+await campoBusca2.fill('');
+await campoBusca2.pressSequentially('13150', { delay: 120 });
+await p.waitForTimeout(400);
+ok(await campoBusca2.isVisible() && await campoBusca2.evaluate((e) => document.activeElement === e) && (await campoBusca2.inputValue()) === '13150', 'Busca segue aberta e com o cursor depois de digitar letra por letra');
+ok((await linhas()).length === 1 && (await linhas())[0].includes('BOLO CASEIRO'), 'Acha pelo código interno');
+await campoBusca2.fill('');
+
+/* ---------- 6f) Lista nas larguras do celular, tablet e computador, claro e escuro ---------- */
+let combinacoes = 0;
+for (const largura of [320, 390, 1024]) {
+  await p.setViewportSize({ width: largura, height: 900 });
+  await p.evaluate(() => { if (document.body.classList.contains('mobile-menu-visible')) document.getElementById('toggleMenu').click(); CicluzCompras.abrir('produtos'); });
+  for (const escuro of [false, true]) {
+    await p.evaluate((e) => document.body.classList.toggle('dark-theme', e), escuro);
+    const m = await p.evaluate(() => ({ lateral: document.documentElement.scrollWidth - innerWidth, vazando: [...document.querySelectorAll('#compras-produtos .compras-card')].filter((c) => [...c.querySelectorAll('*')].some((x) => x.getBoundingClientRect().right > c.getBoundingClientRect().right + 1)).length }));
+    ok(m.lateral <= 0 && m.vazando === 0, largura + 'px ' + (escuro ? 'escuro' : 'claro') + ': sem rolagem lateral e nada vazando dos cards (' + JSON.stringify(m) + ')');
+    combinacoes++;
+  }
+}
+await p.evaluate(() => document.body.classList.remove('dark-theme'));
+await p.setViewportSize({ width: 1024, height: 900 });
+
 /* ---------- 7) Outras telas leem os produtos do servidor ---------- */
 for (const tela of ['solicitacao', 'cotacao', 'pedidos', 'conferencias', 'cadastro', 'estoque']) {
   await p.evaluate((t) => CicluzCompras.abrir(t), tela);
@@ -155,4 +218,4 @@ ok(await p.locator('#producao-produtos.show').count() === 1, 'Produção abre no
 ok(erros.length === 0, 'Sem erros de JavaScript: ' + erros.join(' | '));
 await navegador.close();
 api.parar();
-console.log(verificacoes + ' verificações dos produtos no servidor (navegador + API) passaram');
+console.log(verificacoes + ' verificações dos produtos no servidor (navegador + API) passaram (' + combinacoes + ' combinações de largura × tema)');

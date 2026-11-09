@@ -137,9 +137,8 @@
       try { prontos.push({ ...paraApi(p), id: p.id, codigoInterno: String(p.codigoInterno || ''), appId: p.appId || null, appLojaId: p.appLojaId || null }); }
       catch (e) { invalidos.push({ id: p.id, codigoInterno: p.codigoInterno, motivo: e.message }); }
     }
-    const semCodigo = prontos.filter((p) => !p.codigoInterno);
-    semCodigo.forEach((p) => invalidos.push({ id: p.id, codigoInterno: '', motivo: 'sem código interno' }));
-    const validos = prontos.filter((p) => p.codigoInterno);
+    // Sem código interno (produto antigo): o servidor dá o próximo código, pela mesma regra da criação.
+    const validos = prontos.map((p) => (p.codigoInterno ? p : { ...p, codigoInterno: null }));
     for (let i = 0; i < validos.length; i += LOTE) {
       const r = await api('/produtos/transferencia', { metodo: 'POST', corpo: { produtos: validos.slice(i, i + LOTE), maiorCodigo: maiorCodigo || 0 } });
       faltando.push(...r.faltando);

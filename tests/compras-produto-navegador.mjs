@@ -1,10 +1,12 @@
-// Cadastro de produtos no navegador (Playwright + Chromium, isolado, sem dados reais).
-// Rodar: npm run test:telas  (ou node tests/compras-produto-navegador.mjs)
+// Cadastro de produtos no navegador com a API de verdade (Playwright + Chromium + Postgres limpo, dados fictícios).
+// O catálogo fica no servidor (docs/PRODUTOS_NO_SERVIDOR_PLANO.md). O ponto de partida é uma cópia dos dados de
+// exemplo do protótipo com outros ids: eles chegam ao servidor pela transferência automática do aparelho.
+// Rodar: npm run test:telas-api  (ou node tests/compras-produto-navegador.mjs; precisa do Docker)
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { iniciar, SESSAO_LOCAL } from './servidor.mjs';
+import { iniciarApi } from './servidor-api.mjs';
 
-const { servidor, url } = await iniciar();
 const navegador = await chromium.launch();
 const erros = [];
 let verificacoes = 0;
@@ -12,25 +14,40 @@ const ok = (cond, msg) => { assert.ok(cond, msg); verificacoes++; };
 // PNG 2x2 para a foto
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGP4z8DwnwEIGP4zMDAAAA0EAf0ZHZ0yAAAAAElFTkSuQmCC', 'base64');
 
-async function abrirPagina(largura = 1024, prepararDados) {
-  const ctx = await navegador.newContext({ viewport: { width: largura, height: 900 } });
+/** Dados de exemplo do protótipo (semente do Compras), com os ids dos produtos trocados (os de exemplo não vão ao servidor). */
+async function sementeComOutrosIds() {
+  const { servidor, url } = await iniciar();
+  const ctx = await navegador.newContext();
   await ctx.addInitScript((s) => sessionStorage.setItem('cicluz-sync-aba', s), JSON.stringify(SESSAO_LOCAL));
-  if (prepararDados) await ctx.addInitScript(prepararDados);
+  const p = await ctx.newPage();
+  await p.goto(url, { waitUntil: 'load' });
+  await p.waitForFunction(() => window.CicluzComprasDados);
+  const texto = await p.evaluate(() => localStorage.getItem('cicluz-compras-v1'));
+  await ctx.close(); servidor.close();
+  return texto.replace(/"(p-[a-z0-9-]+)"/g, (m, id) => '"x' + id + '"');
+}
+
+async function paginaNaApi(api, documentos, largura = 1024) {
+  const ctx = await navegador.newContext({ viewport: { width: largura, height: 900 } });
+  await api.entrar(ctx, documentos);
   const p = await ctx.newPage();
   p.on('pageerror', (e) => erros.push(largura + 'px: ' + e.message));
   await p.route('https://fonts.googleapis.com/**', (r) => r.abort());
   await p.route('https://fonts.gstatic.com/**', (r) => r.abort());
-  await p.goto(url, { waitUntil: 'load' });
-  await p.waitForFunction(() => window.CicluzComprasProdutos && window.CicluzProdutoForm);
+  await p.goto(api.url + '/index.html', { waitUntil: 'load' });
+  await p.waitForFunction(() => window.CicluzComprasProdutos && window.CicluzProdutoForm && CicluzProdutos.modoServidor() && CicluzComprasDados.dados.produtos.length > 0, null, { timeout: 60000 });
   await p.evaluate(() => { if (document.body.classList.contains('mobile-menu-visible')) document.getElementById('toggleMenu').click(); CicluzCompras.abrir('produtos'); });
   return p;
 }
+const api = await iniciarApi();
+const SEMENTE = await sementeComOutrosIds();
+const abrirPagina = (largura) => paginaNaApi(api, { 'cicluz-compras-v1': SEMENTE }, largura);
 const dlg = (p) => p.locator('dialog.compras-dialog[open]').last();
 // Salvar e fechar pelo rodapé fixo do S2 (✓ e ✕), como o usuário faz.
 const salvarDialogo = (p) => dlg(p).locator('.people-save-control').click();
 /** Espera o diálogo fechar; se continuar aberto, falha mostrando o erro do formulário. */
 async function esperarFechar(p) {
-  try { await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'), null, { timeout: 4000 }); }
+  try { await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'), null, { timeout: 15000 }); }
   catch (e) {
     const msg = await p.evaluate(() => [...document.querySelectorAll('dialog.compras-dialog[open] :is(.compras-alertas, .profiles-error)')].map((x) => x.innerText.trim()).filter(Boolean).join(' | '));
     throw new Error('Diálogo não fechou: ' + msg);
@@ -106,7 +123,7 @@ const sec = (p, legenda) => dlg(p).locator('fieldset', { has: p.locator('legend'
   await esperarFechar(p);
   const g = await p.evaluate(() => CicluzComprasDados.dados.produtos.find((x) => x.nomeCatalogo === 'BISCOITO INTEGRAL'));
   ok(g && g.codigo === undefined && await p.evaluate(() => !document.body.innerText.includes('Código externo')), 'Sem código externo (decisão do Zé)');
-  ok(g.codigoInterno === '13130', 'Código interno sequencial do PDV (piso 13129 + 1)');
+  ok(g.codigoInterno === '13130', 'Código interno gerado pelo servidor (último antes do S2: 13129; próximo 13130)');
   const esperado = {
     descricao: 'BISCOITO INTEGRAL 200 G', codigoBarras: '7899999000011', marca: 'MARCA TESTE', quantidadeIndividual: 200, unidadeIndividual: 'G',
     pesavel: true, teclaBalanca: 0, validadeBalanca: 15, embalagem: 'CX', cDe: 'C/', qtdEmbalagem: 12, medidaCompra: 'UN', compraAproximada: true,
@@ -195,12 +212,14 @@ const sec = (p, legenda) => dlg(p).locator('fieldset', { has: p.locator('legend'
   await conf.getByLabel('Digite INATIVAR 2 PRODUTOS para confirmar', { exact: true }).fill('inativar 2 produtos');
   await conf.locator('.people-save-control').click();
   await esperarFechar(p);
-  const inat = await p.evaluate(() => CicluzComprasDados.dados.produtos.filter((x) => x.nomeCatalogo === 'BISCOITO INTEGRAL AVEIA').map((x) => [x.status, x.liberadoCompra]));
-  ok(inat.every(([s, l]) => s === 'inativo' && l === false), 'Inativar em lote (e desliga a liberação, como no S2)');
+  await p.waitForFunction(() => !CicluzComprasDados.dados.produtos.some((x) => x.nomeCatalogo === 'BISCOITO INTEGRAL AVEIA'), null, { timeout: 15000 });
+  const inat = await p.evaluate(async () => (await CicluzSync.api('/produtos?status=todos&busca=aveia')).itens.map((x) => [x.status, x.liberadoCompra]));
+  ok(inat.length === 2 && inat.every(([s, l]) => s === 'inativo' && l === false), 'Inativar em lote no servidor (e desliga a liberação, como no S2)');
 
   /* ---------- 5) Cards e foto ampliada ---------- */
   await p.locator('#compras-produtos .compras-chips').getByRole('button', { name: 'Cards' }).click();
   await p.locator('#compras-produtos label', { hasText: 'Só ativos' }).locator('input').uncheck();
+  await p.getByRole('button', { name: /Ampliar foto de BISCOITO/ }).first().waitFor({ timeout: 15000 });
   await p.getByRole('button', { name: /Ampliar foto de BISCOITO/ }).first().click();
   ok(await dlg(p).locator('img.compras-foto-ampliada').isVisible(), 'Foto ampliada abre a partir do card');
   await p.close();
@@ -211,9 +230,10 @@ const sec = (p, legenda) => dlg(p).locator('fieldset', { has: p.locator('legend'
   const antigo = () => {
     const dados = { versao: 1, fornecedores: [], produtos: [{ id: 'p-velho', codigo: 'PR-1001', ean: '789123', descricao: 'Produto Antigo', marca: 'X', tipo: 'revenda', grupoId: 'g3', subgrupoId: '', unidade: 'UN', embalagem: 'CX', cDe: 'C/', qtdEmbalagem: 6, medidaCompra: 'UN', liberadoCompra: true, status: 'ativo', saldo: 5, estoqueMin: 6, estoqueMax: 12, areaEstoque: '', setorEstoque: '', localVenda: 'Balcão', curvaAbc: 'A', custo: 10, margem: 0.3, vendas3m: 1, compras3m: 1, lucro3m: 1 }] };
     for (const c of ['catalogo', 'precosBase', 'historico', 'agendas', 'ocorrencias', 'solicitacoes', 'rodadas', 'convites', 'pedidos', 'movimentos', 'conferenciaAgendas', 'conferencias']) dados[c] = [];
-    if (!sessionStorage.getItem('antigo-gravado')) { localStorage.setItem('cicluz-compras-v1', JSON.stringify(dados)); sessionStorage.setItem('antigo-gravado', '1'); }
+    return JSON.stringify(dados);
   };
-  const p = await abrirPagina(390, antigo);
+  const apiAntiga = await iniciarApi();
+  const p = await paginaNaApi(apiAntiga, { 'cicluz-compras-v1': antigo() }, 390);
   // Em 390 px a lista aparece em cards (como no S1).
   const cardAntigo = p.locator('#compras-produtos .compras-card', { hasText: 'Produto Antigo' });
   ok(await cardAntigo.count() === 1, 'Produto antigo aparece na lista (em cards no celular)');
@@ -221,10 +241,12 @@ const sec = (p, legenda) => dlg(p).locator('fieldset', { has: p.locator('legend'
   ok((await sec(p, 'Produto').getByLabel('Nome do produto', { exact: true }).inputValue()) === 'Produto Antigo', 'Formulário do produto antigo abre');
   ok((await sec(p, 'Produto').getByLabel('Código de barras', { exact: true }).inputValue()) === '789123', 'EAN antigo vira código de barras');
   ok(await p.evaluate(() => CicluzComprasDados.dados.unidades.length >= 9 && Array.isArray(CicluzComprasDados.dados.historicoNomes)), 'Coleções novas criadas sem perder o dado');
+  ok(await p.evaluate(() => CicluzComprasDados.dados.produtos.find((x) => x.id === 'p-velho').saldo === 5), 'Saldo do produto antigo preservado no aparelho depois da transferência');
   await p.close();
+  apiAntiga.parar();
 }
 
 await navegador.close();
-servidor.close();
+api.parar();
 assert.deepEqual(erros, [], 'Erros de página: ' + erros.join(' | '));
 console.log(verificacoes + ' verificações do cadastro de produtos no navegador passaram');

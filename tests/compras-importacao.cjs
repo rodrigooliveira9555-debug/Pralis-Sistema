@@ -1,7 +1,6 @@
 // Importação do app de produtos → MER - Produtos (regras puras). Dados 100% fictícios.
 const assert = require('node:assert/strict');
 const I = require('../dist/compras/produto-importacao.js');
-const R = require('../dist/compras/produto-regras.js');
 
 let grupos = 0;
 const t = (nome, fn) => { fn(); grupos++; };
@@ -83,101 +82,33 @@ t('conflitos de código', () => {
   assert.deepEqual(c, { internoRepetido: ['1'], barrasRepetido: ['x'], internoForaDaFaixa: 1, semCodigoInterno: 0 });
 });
 
-const semente = () => ({
-  produtos: [{ id: 'p-coca2l', codigoInterno: '12001' }, { id: 'p-inativo', codigoInterno: '12019' }, { id: 'p-real', codigoInterno: '13100', descricao: 'CADASTRADO À MÃO NO S2', saldo: 5 }],
-  catalogo: [{ id: 'v1', produtoId: 'p-coca2l', fornecedorId: 'f1' }, { id: 'v2', produtoId: 'p-real', fornecedorId: 'f1' }],
-  convites: [{ id: 'c1', itens: ['p-coca2l'] }], rodadas: [{ id: 'r1', itens: [{ produtoId: 'p-real' }] }], fornecedores: [{ id: 'f1' }],
+t('alerta de vínculo: sem grupo, subgrupo que sumiu e local fora da árvore', () => {
+  const nos = I.nosDaArvore(ARVORE);
+  assert.deepEqual(I.alertasDeVinculo({ grupoId: 'g3', subgrupoId: 'g3s0', localId: 's-vit' }, GRUPOS, nos), { semGrupo: false, semLocal: false });
+  assert.deepEqual(I.alertasDeVinculo({ grupoId: 'g99' }, GRUPOS, nos), { semGrupo: true, semLocal: true }, 'grupo apagado no S2 volta a alertar');
+  assert.deepEqual(I.alertasDeVinculo({ grupoId: 'g3', subgrupoId: 'g3s9', localId: 'nao-existe' }, GRUPOS, nos), { semGrupo: true, semLocal: true });
 });
 
-t('prévia e importação: exemplos saem com seus registros; o real do S2 fica', () => {
-  const d = semente();
-  const plano = I.planejar(d, montado, OPC);
-  assert.equal(plano.novos, 7); assert.equal(plano.atualizados, 0); assert.equal(plano.exemplosQueSaem, 2);
-  assert.equal(plano.ativos, 6); assert.equal(plano.inativos, 1); assert.equal(plano.noArquivo, 1);
-  assert.deepEqual(d.produtos.map((p) => p.id), ['p-coca2l', 'p-inativo', 'p-real'], 'a prévia não mexe nos dados');
-  assert.deepEqual(plano.registrosQueSaem, { catalogo: 1, convites: 1 });
-  assert.equal(plano.semGrupo, 2, 'sem grupo no app + grupo que não existe no S2'); assert.equal(plano.semLocal, 4);
-  const r = I.aplicar(d, montado, []);
-  assert.deepEqual([r.novos, r.atualizados, r.arquivados], [7, 0, 1]);
-  assert.deepEqual(r.arquivo.map((p) => [p.id, p.status, p.liberadoCompra]), [['pi-13300', 'inativo', false]], 'inativo do app vai para o arquivo, não liberado');
-  assert.deepEqual(d.produtos.map((p) => p.id).sort(), ['p-real', 'pi-13001', 'pi-13002', 'pi-13003', 'pi-13004', 'pi-13005', 'pi-700123']);
-  assert.deepEqual(d.catalogo.map((x) => x.id), ['v2']); assert.equal(d.convites.length, 0); assert.equal(d.rodadas.length, 1); assert.equal(d.fornecedores.length, 1);
-  const novo = d.produtos.find((p) => p.id === 'pi-13001');
-  assert.equal(novo.liberadoCompra, true, 'ativo importado nasce liberado (decisão do Zé)'); assert.equal(novo.saldo, 0);
-  assert.equal(d.codigoInternoApp, 13300);
+t('exemplos saem com os registros que os citam; o resto fica', () => {
+  const d = {
+    produtos: [{ id: 'p-coca2l' }, { id: 'p-inativo' }, { id: 'p-real' }],
+    catalogo: [{ id: 'v1', produtoId: 'p-coca2l' }, { id: 'v2', produtoId: 'p-real' }],
+    convites: [{ id: 'c1', itens: ['p-coca2l'] }], rodadas: [{ id: 'r1', itens: [{ produtoId: 'p-real' }] }], fornecedores: [{ id: 'f1' }],
+  };
+  assert.equal(I.tirarExemplos(d), 4);
+  assert.deepEqual(d.produtos.map((p) => p.id), ['p-real']);
+  assert.deepEqual([d.catalogo.length, d.convites.length, d.rodadas.length, d.fornecedores.length], [1, 0, 1, 1]);
 });
 
-t('reimportar não duplica e não desfaz o que é do S2 nem o vínculo feito à mão', () => {
-  const d = semente();
-  const arq = I.aplicar(d, montado, []).arquivo;
-  const p = d.produtos.find((x) => x.id === 'pi-13004');
-  Object.assign(p, { saldo: 12, liberadoCompra: false, grupoId: 'g10', subgrupoId: 'g10s0', vinculoManual: { grupo: true } });
-  const outro = I.montarProdutos(LINHAS.map((l) => (l.id === 't13001' ? { ...l, venda_pontual: '10.5' } : l)), [], OPC);
-  const r2 = I.aplicar(d, outro, arq);
-  assert.deepEqual([r2.novos, r2.atualizados, r2.arquivo.length], [0, 7, 1]);
-  assert.equal(d.produtos.length, 7);
-  assert.deepEqual([p.saldo, p.liberadoCompra, p.grupoId, p.subgrupoId], [12, false, 'g10', 'g10s0']);
-  assert.equal(d.produtos.find((x) => x.id === 'pi-13001').precoVenda, 10.5, 'valor do app atualiza');
-  // Casa pelo código interno quando o produto não tem o id do app (ex.: cadastrado antes no S2 com o mesmo código)
-  const d2 = { produtos: [{ id: 'p-xyz', codigoInterno: '13002', saldo: 3 }] };
-  const r3 = I.aplicar(d2, montado, []);
-  assert.deepEqual([r3.novos, r3.atualizados], [6, 1]);
-  assert.equal(d2.produtos.find((x) => x.id === 'p-xyz').appId, 'b13002');
-});
-
-t('alerta de vínculo e revincular depois que a árvore e os grupos mudam', () => {
-  const d = semente();
-  I.aplicar(d, I.montarProdutos(LINHAS, [], { grupos: GRUPOS, arvore: [] }), []);
-  const nos0 = I.nosDaArvore([]);
-  const pao = d.produtos.find((p) => p.id === 'pi-13003');
-  assert.deepEqual(I.alertasDeVinculo(pao, GRUPOS, nos0), { semGrupo: false, semLocal: true });
-  assert.deepEqual(I.alertasDeVinculo({ grupoId: 'g99' }, GRUPOS, nos0), { semGrupo: true, semLocal: true }, 'grupo apagado no S2 volta a alertar');
-  const manual = d.produtos.find((p) => p.id === 'pi-13001');
-  manual.localId = 's-est'; manual.vinculoManual = { local: true };
-  const gruposNovos = GRUPOS.concat([{ id: 'g3x', nome: 'BEBIDAS', subgrupos: [] }]).map((g) => (g.id === 'g3' ? { ...g, subgrupos: g.subgrupos.concat([{ id: 'g3s9', nome: 'VINHOS' }]) } : g));
-  const n = I.revincular(d.produtos, { grupos: gruposNovos, arvore: ARVORE });
-  assert.ok(n >= 2);
-  assert.equal(pao.localId, 's-pan', 'local casou depois da árvore pronta');
-  assert.equal(d.produtos.find((p) => p.id === 'pi-13005').subgrupoId, 'g3s9', 'grupo criado depois casa');
-  assert.equal(manual.localId, 's-est', 'vínculo à mão não muda');
-});
-
-t('próximo código do S2 fica acima do maior do app (inclusive inativo)', () => {
-  const d = semente(); I.aplicar(d, montado, []);
-  const proximo = R.proximoCodigoInterno(d.produtos.map((p) => p.codigoInterno).concat([d.codigoInternoApp]));
-  assert.equal(proximo, '13301');
-  assert.equal(R.codigoBarrasNaCriacao('', proximo), '13301');
-});
-
-t('tamanho medido em bytes UTF-8', () => {
-  assert.equal(I.bytes({ a: 'ç' }), 10);
-  assert.ok(I.LIMITE_BYTES < 4 * 1024 * 1024);
-});
-
-t('inativo no arquivo volta para o Compras quando o app o reativa; ativo que vira inativo fica no Compras', () => {
-  const d = semente();
-  let arq = I.aplicar(d, montado, []).arquivo;
-  const reativado = LINHAS.map((l) => (l.codigo_interno === '13300' ? { ...l, status: 'ativo' } : l.codigo_interno === '13002' ? { ...l, status: 'inativo' } : l));
-  const r = I.aplicar(d, I.montarProdutos(reativado, [], OPC), arq);
-  arq = r.arquivo;
-  assert.equal(r.voltaramDoArquivo, 1); assert.equal(arq.length, 0, 'saiu do arquivo');
-  const volta = d.produtos.find((p) => p.codigoInterno === '13300');
-  assert.deepEqual([volta.id, volta.status, volta.liberadoCompra], ['pi-13300', 'ativo', true]);
-  const virou = d.produtos.find((p) => p.codigoInterno === '13002');
-  assert.deepEqual([virou.status, virou.liberadoCompra], ['inativo', false], 'já estava no Compras: fica lá, inativo e não liberado');
-});
-
+// Arquivo antigo de inativos (09/11 até a transferência): só se LÊ, para levar ao servidor.
 const promessas = [];
 promessas.push((async () => {
-  const lista = I.montarProdutos(LINHAS, PROMOS, OPC).produtos;
-  const texto = await I.compactar(lista);
-  const o = JSON.parse(texto);
-  assert.equal(o.formato, 'gzip-base64'); assert.equal(o.total, lista.length); assert.equal(I.totalDoArquivo(texto), lista.length);
-  assert.deepEqual(await I.descompactar(texto), lista, 'compactar e descompactar devolve a mesma lista');
+  const zlib = require('node:zlib');
+  const lista = montado.inativos;
+  const texto = JSON.stringify({ versao: 1, formato: 'gzip-base64', total: lista.length, dados: zlib.gzipSync(JSON.stringify(lista)).toString('base64') });
+  assert.deepEqual(await I.descompactar(texto), lista, 'lê o arquivo antigo como foi gravado');
   assert.deepEqual(await I.descompactar(''), []); assert.deepEqual(await I.descompactar(null), []);
-  const muitos = Array.from({ length: 4000 }, (_, i) => ({ ...lista[0], id: 'pi-' + i, codigoInterno: String(20000 + i), status: 'inativo' }));
-  const grande = await I.compactar(muitos);
-  assert.ok(grande.length < I.bytes(muitos) / 5, 'compacta bem: ' + grande.length + ' de ' + I.bytes(muitos));
+  assert.deepEqual(await I.descompactar(JSON.stringify({ formato: 'outro' })), []);
   grupos++;
 })());
 
