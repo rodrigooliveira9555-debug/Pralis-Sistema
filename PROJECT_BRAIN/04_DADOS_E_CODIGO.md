@@ -48,6 +48,18 @@
   encargosPct, precoKwh, precoGasKg). O produto do Compras não muda de formato; a Produção grava em `cicluz-compras-v1 ›
   movimentos` os tipos `consumo_producao`, `entrada_producao`, `saida_abastecimento` e `sobra_retorno` (com o id da
   ordem/pedido de produção, para não repetir). Código: `dist/producao/` (dominio, dados, servico, modulo, telas-*, producao.css).
+- **Importação do app de produtos (09/11/2026)** — mesma chave `cicluz-compras-v1`, sem migração (campos novos são
+  opcionais): o produto importado ganha `appId` (id da BASE no app), `appLojaId` (cópia TNP), `appCodigo`, `localId` (id do
+  nó da árvore `cicluz-location-tree-v1`), `origemApp {grupo, locais}` (texto original para revincular) e `vinculoManual
+  {grupo, local}` (escolhido à mão: o Revincular não desfaz). O documento ganha `codigoInternoApp` (maior código do app
+  abaixo de 700000, inclusive de inativo: o próximo código do S2 fica acima dele) e `importacaoProdutos` (data e números).
+  Produto importado novo tem id `pi-<código interno>`. Reimportar casa por `appId`, senão pelo código interno. Os 19
+  produtos de exemplo (`p-…`) e os registros que citam algum deles saem na primeira importação. **Inativos** do app vão
+  para a chave nova **`cicluz-produtos-arquivo-v1`** (sincronizada e adotada do aparelho): `{ versao: 1, formato:
+  'gzip-base64', total, dados }`, a lista de produtos no mesmo formato, compactada (4.819 produtos = ~0,5 MB). Ativo do app
+  que está no arquivo volta para o Compras; produto do arquivo editado no S2 também. Inativo do app que já está no Compras
+  fica lá (inativo, não liberado). Código:
+  `dist/compras/produto-importacao.js` (regras), `telas-produto-importacao.js` (tela), SheetJS 0.20.3 em `dist/vendor/sheetjs`.
 - `patrimonio-v1` (05/11/2026) — bens (RET - Patrimônios). As duas chaves são sincronizadas e adotadas do aparelho
   (`servidor/shared/src/documentos.ts`); começam vazias, sem dado de exemplo.
 

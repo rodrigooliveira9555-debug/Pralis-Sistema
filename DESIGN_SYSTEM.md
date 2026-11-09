@@ -1,5 +1,14 @@
 # CICLUZ — referência de interface
 
+## MER - Produtos — importação do app de produtos e alerta de vínculo (09/11/2026)
+Pedido do Rodrigo (áudio de 09/11) e decisões do Zé. Em **MER - Produtos**, quem administra vê **Importar do app de produtos** e **Revincular grupo e local** na barra de informação (botões `.btn` comuns, na cor do menu). A importação abre um diálogo com o campo do arquivo (Backup XLSX do app) e uma **prévia em linhas** (`.compras-importacao-linha`: rótulo à esquerda, número ou selo de situação à direita) com: ativos da TNP no arquivo, novos, atualizados, sem grupo, sem local, códigos repetidos, códigos ≥ 700000, exemplos e registros de teste que saem, o que fica de fora, próximo código e tamanho do Compras. Só grava pelo ✓; arquivo errado explica em `.compras-alerta.tom-negativo`.
+- **Alerta de vínculo**: na linha e no card, selo `.compras-situacao.tom-atencao` "Sem grupo", "Sem local" ou os dois; no formulário, faixa `.compras-alerta.tom-atencao` no topo dizendo o que falta. Some quando o grupo e o local da árvore são escolhidos.
+- **Filtro**: grupo de chips **Vínculo** (Todos · Sem vínculo (N) · Sem grupo (N) · Sem local (N)), separado do grupo **Compra** (Pendentes é pendência de compra, não de vínculo).
+- **Setor de estoque** no formulário passa a listar a **árvore de locais** com o caminho ("LJ › VITRINES"); texto antigo sem nó aparece como "… (sem vínculo na árvore)". Um controle só para o local.
+- **Todos os produtos**: os inativos do app ficam no arquivo compactado; a lista avisa "N inativo(s) do app ficam arquivados: desmarque "Só ativos" para vê-los". Desmarcado, eles aparecem junto (abertos na hora); editar e salvar um deles o traz para o Compras.
+- **Cards e selos responsivos** (pedido do Zé, 09/11): o card encolhe com a coluna (`.compras-card { min-width: 0 }`, `dl` com `minmax(0, 1fr)`) e os selos `.compras-situacao` dentro de card e de tabela quebram linha em vez de vazar (o texto da pendência de compra é longo). Conferido em 320/390/660/1024, claro e escuro.
+- Sem CSS de cor novo: só layout (`.compras-acoes-importacao`, `.compras-importacao-previa`, `.compras-importacao-linha`) em `compras/compras.css`, borda com `--layout-line`.
+
 ## Caixa — Ajustar início das vendas (R-224, 09/11/2026)
 Etapa 1 (Vendas) do Fechamento, seção da folha do CREARE: lista "Abertura oficial · Início das vendas (ajustado) · Vendas deste caixa · Vendas do PDV sem caixa", nota quando há venda sem caixa e botão secundário **Ajustar início**. Aviso de horário da folha: positivo quando confere (±2 min); alerta com botão primário **Ajustar início para HH:MM** quando a folha começa antes e cabe nos 60 min; só alerta quando está fora da janela ou depois. O diálogo traz a faixa permitida, a hora (campo de hora) e o motivo. O ajuste aparece no Turno ("desde HH:MM (início ajustado)") e no dossiê, em "Início das vendas". Regra e limites em `PROJECT_BRAIN/14_CASCA_CAIXA.md`.
 
