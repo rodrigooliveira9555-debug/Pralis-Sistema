@@ -124,8 +124,11 @@ body.dark-theme .compras-tabela td.destaque { color: #f6d38f; }
 .compras-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
 .compras-card { text-align: left; font: inherit; color: inherit; cursor: pointer; display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); }
 .compras-card:hover { border-color: var(--menu-accent); }
+/* O card encolhe com a coluna e os selos longos (pendência de compra, vínculo) quebram linha em vez de vazar. */
+.compras-card { min-width: 0; }
+.compras-card .compras-situacao, .compras-tabela .compras-situacao { white-space: normal; overflow-wrap: anywhere; }
 .compras-card.inativo { opacity: .55; }
-.compras-card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 12px; }
+.compras-card dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; font-size: 12px; }
 .compras-card dt { color: var(--muted, #73737a); }
 .compras-card dd { margin: 0; overflow-wrap: anywhere; }
 
@@ -260,3 +263,10 @@ body.dark-theme .compras-fiscal-todos summary { color: #a7e8bd; }
 .compras-celula-pilha { display: inline-flex; flex-direction: column; gap: 6px; min-width: 9rem; }
 .compras-celula-pilha > input { width: 100%; }
 .compras-tabela .num .compras-celula-pilha { align-items: flex-end; }
+
+/* Importação do app de produtos (MER - Produtos, 09/11/2026): ações na barra de informação e prévia em linhas. */
+.compras-acoes-importacao { display: flex; gap: 8px; flex-wrap: wrap; }
+.compras-importacao-previa { display: grid; gap: 6px; min-width: 0; }
+.compras-importacao-linha { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--layout-line, #dedee3); overflow-wrap: anywhere; }
+.compras-importacao-linha > b { white-space: nowrap; }
+.compras-produto-celula .compras-situacao { justify-self: start; }
