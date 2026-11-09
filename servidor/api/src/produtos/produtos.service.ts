@@ -13,7 +13,8 @@ import {
   type PerfilSessao,
   type ProdutoCriacao,
   type ProdutoEdicao,
-  type ProdutoResposta
+  type ProdutoResposta,
+  type TransferenciaProdutos
 } from "@cicluz/shared";
 import { banco } from "../banco/conexao.ts";
 import { exigirPermissao } from "../auth/permissoes.ts";
@@ -21,12 +22,15 @@ import { conflito, ErroDominio, proibido } from "../erros.ts";
 import {
   atualizarComVersao,
   atualizarVinculo,
+  catalogoAtivado,
   contarProdutos,
   existeCodigo,
   gravarProdutos,
   gravarUltimoCodigo,
   gruposParaCasar,
+  idsExistentes,
   inserirProduto,
+  inserirSeNaoExiste,
   listarAtivos,
   listarProdutos,
   locaisParaCasar,
@@ -73,14 +77,32 @@ export async function listar(perfil: PerfilSessao, filtro: FiltroProdutos): Prom
 // Resumo dos ATIVOS para Compras, Produção e estoque (a tela guarda no aparelho e funciona sem internet).
 export async function resumo(perfil: PerfilSessao) {
   exigirVer(perfil);
-  const linhas = await listarAtivos(perfil.empresa.id);
-  return linhas.map((l) => {
+  const [linhas, ativado] = await Promise.all([listarAtivos(perfil.empresa.id), catalogoAtivado(perfil.empresa.id)]);
+  // ativado = o catálogo já está no servidor; antes disso a tela continua com os produtos do aparelho.
+  return { ativado, produtos: linhas.map((l) => {
     const p = resposta(l);
     const dados = Object.fromEntries(CAMPOS_RESUMO.filter((c) => c in p.dados).map((c) => [c, p.dados[c]]));
     return { id: p.id, codigoInterno: p.codigoInterno, codigoBarras: p.codigoBarras, nome: p.nome, descricao: p.descricao, tipo: p.tipo,
       liberadoCompra: p.liberadoCompra, grupoId: p.grupoId, subgrupoId: p.subgrupoId, localId: p.localId, custo: p.custo, precoVenda: p.precoVenda,
       semGrupo: p.semGrupo, semLocal: p.semLocal, dados };
+  }) };
+}
+
+/* ---------- Transferência dos produtos do aparelho (uma vez por empresa; nunca sobrescreve) ---------- */
+export async function transferir(perfil: PerfilSessao, lote: TransferenciaProdutos) {
+  exigirAdministrador(perfil);
+  const empresaId = perfil.empresa.id;
+  const linhas: NovoProduto[] = lote.produtos.map((p) => ({
+    empresaId, id: p.id, codigoInterno: p.codigoInterno, ...colunas(p),
+    appId: nulo(p.appId), appLojaId: nulo(p.appLojaId), criadoPor: perfil.usuarioId, atualizadoPor: perfil.usuarioId
+  }));
+  await banco.transaction(async (tx) => {
+    await inserirSeNaoExiste(tx, linhas);
+    await gravarUltimoCodigo(tx, empresaId, Math.max(ULTIMO_CODIGO_DE_PRODUTO, lote.maiorCodigo));
   });
+  // Quais do lote estão no servidor agora (inseridos agora ou antes). O que faltar fica no aparelho.
+  const presentes = await idsExistentes(empresaId, lote.produtos.map((p) => p.id));
+  return { recebidos: lote.produtos.length, presentes: presentes.size, faltando: lote.produtos.filter((p) => !presentes.has(p.id)).map((p) => ({ id: p.id, codigoInterno: p.codigoInterno })) };
 }
 
 export async function obter(perfil: PerfilSessao, id: string) {

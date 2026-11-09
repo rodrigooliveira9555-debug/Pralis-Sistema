@@ -107,6 +107,21 @@ export const importacaoProdutosSchema = z.object({
   maiorCodigoApp: z.number().int().nonnegative().max(699_999)
 });
 export type ProdutoImportado = z.infer<typeof produtoImportadoSchema>;
+
+// Transferência dos produtos que estavam no aparelho (cicluz-compras-v1 + arquivo de inativos) para a tabela,
+// uma vez por empresa. Mesmo id e mesmo código; NUNCA sobrescreve o que já está no servidor.
+export const produtoTransferidoSchema = z.object({
+  ...camposProduto,
+  id: texto(80).min(1),
+  codigoInterno: texto(20).min(1),
+  appId: opcional(texto(80)),
+  appLojaId: opcional(texto(80))
+});
+export const transferenciaProdutosSchema = z.object({
+  produtos: z.array(produtoTransferidoSchema).max(500, "Mande no máximo 500 produtos por lote"),
+  maiorCodigo: z.number().int().nonnegative().max(699_999)
+});
+export type TransferenciaProdutos = z.infer<typeof transferenciaProdutosSchema>;
 export type ImportacaoProdutos = z.infer<typeof importacaoProdutosSchema>;
 
 export const ORDENS_PRODUTOS = ["recentes", "nome", "codigo"] as const;

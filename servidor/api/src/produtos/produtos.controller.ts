@@ -1,8 +1,8 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { importacaoProdutosSchema, LIMITE_CORPO_LOTE, listarProdutosSchema, ok, produtoCriacaoSchema, produtoEdicaoSchema } from "@cicluz/shared";
+import { importacaoProdutosSchema, LIMITE_CORPO_LOTE, listarProdutosSchema, ok, produtoCriacaoSchema, produtoEdicaoSchema, transferenciaProdutosSchema } from "@cicluz/shared";
 import { perfilDaRequisicao } from "../auth/guards.ts";
-import { criar, editar, importar, listar, obter, resumo, revincular } from "./produtos.service.ts";
+import { criar, editar, importar, listar, obter, resumo, revincular, transferir } from "./produtos.service.ts";
 
 const idParams = z.object({ id: z.string().trim().min(1).max(80) });
 
@@ -33,6 +33,9 @@ export async function registrarRotasProdutos(app: FastifyInstance) {
 
   app.post("/api/produtos/importacao", { bodyLimit: LIMITE_CORPO_LOTE, config: limiteImportacao }, async (request) =>
     ok(await importar(perfilDaRequisicao(request), importacaoProdutosSchema.parse(request.body))));
+
+  app.post("/api/produtos/transferencia", { bodyLimit: LIMITE_CORPO_LOTE, config: limiteImportacao }, async (request) =>
+    ok(await transferir(perfilDaRequisicao(request), transferenciaProdutosSchema.parse(request.body))));
 
   app.post("/api/produtos/revincular", { config: limiteImportacao }, async (request) => ok(await revincular(perfilDaRequisicao(request))));
 }

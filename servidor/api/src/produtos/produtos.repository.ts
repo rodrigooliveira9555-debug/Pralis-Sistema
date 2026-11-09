@@ -132,6 +132,24 @@ export async function gravarUltimoCodigo(tx: TransacaoBanco, empresaId: string, 
     .onConflictDoUpdate({ target: produtosCodigo.empresaId, set: { ultimo: sql`greatest(${produtosCodigo.ultimo}, ${ultimo})` } });
 }
 
+// Catálogo já está no servidor? (a linha de produtos_codigo nasce na primeira importação, transferência ou criação)
+export async function catalogoAtivado(empresaId: string) {
+  const [linha] = await banco.select({ ultimo: produtosCodigo.ultimo }).from(produtosCodigo).where(eq(produtosCodigo.empresaId, empresaId)).limit(1);
+  return Boolean(linha);
+}
+
+// Insere só o que não existe (mesmo id, mesmo código interno ou mesmo id do app): nunca sobrescreve.
+export async function inserirSeNaoExiste(tx: TransacaoBanco, linhas: NovoProduto[]) {
+  if (!linhas.length) return [] as string[];
+  const r = await tx.insert(produtos).values(linhas).onConflictDoNothing().returning({ id: produtos.id });
+  return r.map((x) => x.id);
+}
+export async function idsExistentes(empresaId: string, ids: string[]) {
+  if (!ids.length) return new Set<string>();
+  const r = await banco.select({ id: produtos.id }).from(produtos).where(and(eq(produtos.empresaId, empresaId), inArray(produtos.id, ids)));
+  return new Set(r.map((x) => x.id));
+}
+
 export async function inserirProduto(tx: TransacaoBanco, dados: NovoProduto) {
   await tx.insert(produtos).values(dados);
 }
