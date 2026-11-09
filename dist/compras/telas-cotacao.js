@@ -51,8 +51,7 @@
     produtos = produtos.filter((p) => U.dobrar(p.descricao).includes(U.dobrar(busca)));
 
     const topo = el('div', 'profiles-controls');
-    const bx = U.busca('Buscar produto', (v) => { busca = v; render(); setTimeout(() => tela.body.querySelector('.compras-busca')?.focus(), 0); });
-    bx.value = busca;
+    const bx = U.buscaFixa('cotacao', 'Buscar produto', busca, (v) => { busca = v; render(); });
     topo.append(bx);
     const sec = U.secao('Produtos em cotação', produtos.length, U.legendaBolinhas());
     const filtros = el('div', 'compras-filtros compras-corpo-filtros');

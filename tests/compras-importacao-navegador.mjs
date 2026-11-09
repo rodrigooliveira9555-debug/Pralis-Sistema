@@ -103,6 +103,28 @@ ok(depois.some((x) => x.id === 'pi-13500') && depois.length === 4, 'Editado: pas
 ok(await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'INATIVO FICTICIO' }).count() === 1, 'Aparece uma vez só na lista');
 await p.locator('#compras-produtos label', { hasText: 'Só ativos' }).click();
 
+/* ---------- 1b) Busca: digitar letra por letra sem o campo fechar (como no app de produtos) ---------- */
+const campoBusca = p.locator('#compras-produtos .compras-busca');
+if (await campoBusca.isHidden()) await p.locator('#compras-produtos .local-search-toggle').click();
+const linhasVisiveis = () => p.locator('#compras-produtos .compras-tabela tbody tr').allTextContents();
+const buscar = async (texto) => {
+  await campoBusca.fill('');
+  await campoBusca.pressSequentially(texto, { delay: 120 });
+  await p.waitForTimeout(400);
+};
+await buscar('13002');
+ok(await campoBusca.isVisible() && await campoBusca.evaluate((e) => document.activeElement === e) && (await campoBusca.inputValue()) === '13002', 'Busca segue aberta, com o cursor e o texto inteiro depois de digitar letra por letra');
+let achados = await linhasVisiveis();
+ok(achados.length === 1 && achados[0].includes('PAO FICTICIO'), 'Acha pelo código interno');
+await buscar('7890000000017');
+achados = await linhasVisiveis();
+ok(achados.length === 1 && achados[0].includes('REFRI FICTICIO'), 'Acha pelo código de barras');
+await buscar('refri');
+achados = await linhasVisiveis();
+ok(achados.length === 1 && achados[0].includes('REFRI FICTICIO'), 'Acha pelo nome, sem diferenciar maiúscula');
+await buscar('');
+ok((await linhasVisiveis()).length === 3, 'Busca vazia volta a lista inteira');
+
 /* ---------- 2) Alerta e filtro na lista ---------- */
 const chip = (rot) => p.locator('#compras-produtos .compras-chip', { hasText: rot });
 ok(await chip('Sem vínculo (2)').count() === 1 && await chip('Sem grupo (1)').count() === 1 && await chip('Sem local (1)').count() === 1, 'Chips de vínculo com a contagem');

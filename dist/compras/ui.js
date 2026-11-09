@@ -165,6 +165,35 @@
     return i;
   }
 
+  /**
+   * Busca de tela que se redesenha a cada filtro. O MESMO campo é reaproveitado entre um desenho e outro (por chave):
+   * assim o layout-review.js não o recolhe de novo na lupa e o cursor não se perde a cada letra. A lista é refeita
+   * 180 ms depois da última tecla. Devolve o nó para pôr na tela (a caixa da lupa, quando já embrulhado).
+   */
+  const buscasFixas = new Map();
+  function buscaFixa(chave, placeholder, valor, aoBuscar) {
+    let b = buscasFixas.get(chave);
+    if (!b) {
+      const i = busca(placeholder, () => {});
+      let espera = null;
+      b = { i, aoBuscar };
+      i.oninput = () => {
+        clearTimeout(espera);
+        espera = setTimeout(() => {
+          const pos = i.selectionStart;
+          b.aoBuscar(i.value);
+          // O desenho novo pode ter tirado o campo do lugar: devolve o foco e o cursor.
+          if (document.activeElement !== i && i.isConnected) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (e) { /* campo sem seleção */ } }
+        }, 180);
+      };
+      buscasFixas.set(chave, b);
+    }
+    b.aoBuscar = aoBuscar;
+    // Valor mudado por fora (ex.: "Limpar"): acompanha, a não ser enquanto a pessoa digita.
+    if (document.activeElement !== b.i && b.i.value !== (valor || '')) b.i.value = valor || '';
+    return b.i.closest('.local-search-control') || b.i;
+  }
+
   /** Tabela simples com rolagem horizontal própria. colunas: [[rotulo, (linha)=>Node|string, cls]] */
   function tabela(colunas, linhas, { aoClicar, vazioTexto = 'Nada para mostrar.', classeLinha } = {}) {
     const box = el('div', 'compras-tabela-box');
@@ -303,7 +332,7 @@
 
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar,
-    criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca,
+    criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
     tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar,
   };
 })();

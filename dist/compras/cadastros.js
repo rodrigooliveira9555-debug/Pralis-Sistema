@@ -54,8 +54,7 @@
       .filter((f) => U.dobrar([f.nome, f.documento, f.whatsapp, f.categoria].join(' ')).includes(U.dobrar(buscaF)))
       .sort((a, b) => (a.situacao === b.situacao ? a.nome.localeCompare(b.nome, 'pt-BR') : a.situacao === 'ativo' ? -1 : 1));
     const controles = el('div', 'profiles-controls');
-    const b = U.busca('Nome, documento, WhatsApp ou categoria', (v) => { buscaF = v; renderFornecedores(); setTimeout(() => telaF.body.querySelector('.compras-busca')?.focus(), 0); });
-    b.value = buscaF;
+    const b = U.buscaFixa('fornecedores', 'Nome, documento, WhatsApp ou categoria', buscaF, (v) => { buscaF = v; renderFornecedores(); });
     controles.append(b);
     const semWhats = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && !D.podeConvidar(f)).length;
     const tab = U.tabela([

@@ -169,8 +169,7 @@
       return U.dobrar(p.descricao + ' ' + S.nomeGrupo(p.grupoId, p.subgrupoId)).includes(U.dobrar(fe.busca));
     }).sort((a, b) => a.descricao.localeCompare(b.descricao, 'pt-BR'));
     const filtros = el('div', 'profiles-controls');
-    const bx = U.busca('Produto ou grupo', (v) => { fe.busca = v; renderEstoque(); setTimeout(() => telaE.body.querySelector('.compras-busca')?.focus(), 0); });
-    bx.value = fe.busca;
+    const bx = U.buscaFixa('estoque', 'Produto ou grupo', fe.busca, (v) => { fe.busca = v; renderEstoque(); });
     const locais = S.locais();
     const mk = (rot, opcoes, chave, vazio) => { const s = seletor(opcoes, fe[chave], vazio); s.onchange = () => { fe[chave] = s.value; renderEstoque(); }; return campo(rot, s); };
     filtros.append(bx,

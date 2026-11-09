@@ -29,14 +29,12 @@
     const corpo = aba === 'catalogo' ? catalogo() : aba === 'historico' ? historico() : precoBase();
     tela.body.replaceChildren(U.nota('Quem vende o quê, o que já foi comprado e o preço de referência de cada produto.'), abas, corpo);
   }
-  const refoco = () => setTimeout(() => tela.body.querySelector('.compras-busca')?.focus(), 0);
 
   /* ---------- Catálogo ---------- */
   function catalogo() {
     const box = el('div', 'compras-grade');
     const filtros = el('div', 'profiles-controls');
-    const bx = U.busca('Buscar vínculo', (v) => { fc.busca = v; render(); refoco(); });
-    bx.value = fc.busca;
+    const bx = U.buscaFixa('catalogo-vinculos', 'Buscar vínculo', fc.busca, (v) => { fc.busca = v; render(); });
     const mk = (rot, opcoes, chave, vazio) => { const s = seletor(opcoes, fc[chave], vazio); s.onchange = () => { fc[chave] = s.value; render(); }; return campo(rot, s); };
     filtros.append(bx,
       mk('Situação', [['pendente', 'Pendente'], ['aprovado', 'Aprovado'], ['rejeitado', 'Rejeitado']], 'situacao', 'Todas'),
@@ -79,8 +77,7 @@
   function historico() {
     const box = el('div', 'compras-grade');
     const filtros = el('div', 'profiles-controls');
-    const bx = U.busca('Buscar produto ou fornecedor', (v) => { fh.busca = v; render(); refoco(); });
-    bx.value = fh.busca;
+    const bx = U.buscaFixa('catalogo-historico', 'Buscar produto ou fornecedor', fh.busca, (v) => { fh.busca = v; render(); });
     const per = seletor([[1, '1 mês'], [3, '3 meses'], [6, '6 meses'], [12, '12 meses']], String(fh.meses));
     per.onchange = () => { fh.meses = Number(per.value); render(); };
     filtros.append(bx, campo('Período', per));
@@ -124,8 +121,7 @@
     const ativos = S.dados.produtos.filter((p) => p.status === 'ativo' && p.liberadoCompra);
     const semRef = ativos.filter((p) => S.referencia(p.id) == null);
     const filtros = el('div', 'profiles-controls');
-    const bx = U.busca('Buscar produto ou código', (v) => { buscaPB = v; render(); refoco(); });
-    bx.value = buscaPB;
+    const bx = U.buscaFixa('catalogo-preco-base', 'Buscar produto ou código', buscaPB, (v) => { buscaPB = v; render(); });
     filtros.append(bx, U.chips([['todos', 'Todos'], ['sem', 'Sem preço-base (' + semRef.length + ')']], soSemPB ? 'sem' : 'todos', (v) => { soSemPB = v === 'sem'; render(); }));
     const lista = ativos.filter((p) => (!soSemPB || S.referencia(p.id) == null) && U.dobrar(p.descricao + ' ' + (p.codigoInterno || '')).includes(U.dobrar(buscaPB)))
       .sort((x, y) => x.descricao.localeCompare(y.descricao, 'pt-BR'));
