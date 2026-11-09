@@ -53,7 +53,7 @@
 
   function importar(aoTerminar) {
     let preparado = null;
-    U.dialogo({
+    const dlg = U.dialogo({
       titulo: 'Importar do app de produtos',
       subtitulo: 'Backup XLSX do app (Manutenção → Backup XLSX). Entram todos os produtos da loja TNP: ativos no Compras, inativos no arquivo compactado.',
       rotuloSalvar: 'Importar',
@@ -71,6 +71,28 @@
           try {
             const lido = await lerBackup(f);
             if (lido.erro) { previa.replaceChildren(Object.assign(el('p', 'compras-alerta tom-negativo'), { textContent: lido.erro })); return; }
+            // Catálogo no servidor: a prévia sai do arquivo (o servidor casa grupo e local e não duplica ao gravar).
+            if (S.emModoServidor()) {
+              const montado = I.montarProdutos(lido.linhas, lido.promocoes, { grupos: S.gruposMercadoria(), arvore: S.arvoreLocais() });
+              const todos = montado.produtos.concat(montado.inativos);
+              const nos = I.nosDaArvore(S.arvoreLocais()); const grupos = S.gruposMercadoria();
+              const alertas = montado.produtos.map((p) => I.alertasDeVinculo(p, grupos, nos));
+              const cf = I.conflitosDeCodigo(todos);
+              preparado = { servidor: true, montado };
+              previa.replaceChildren(
+                linhaResumo('Produtos da TNP no backup', todos.length),
+                linhaResumo('Ativos', montado.produtos.length),
+                linhaResumo('Inativos', montado.inativos.length),
+                linhaResumo('Sem grupo de mercadorias do S2 (ativos)', alertas.filter((a) => a.semGrupo).length, alertas.some((a) => a.semGrupo) ? 'atencao' : 'positivo'),
+                linhaResumo('Sem local na árvore de locais (ativos)', alertas.filter((a) => a.semLocal).length, alertas.some((a) => a.semLocal) ? 'atencao' : 'positivo'),
+                linhaResumo('Código interno repetido', cf.internoRepetido.length, cf.internoRepetido.length ? 'negativo' : 'positivo'),
+                linhaResumo('Código interno a partir de 700000 (entra como está)', cf.internoForaDaFaixa),
+                linhaResumo('Ficam de fora: outras lojas (BASE, LI, HORA)', montado.contagem.total - (montado.contagem.porLoja.TNP || 0)),
+                linhaResumo('Próximo código de produto novo no S2', 'acima de ' + montado.maiorCodigoApp),
+              );
+              previa.append(U.nota('Vai para o servidor em lotes de 500. Quem já existe é atualizado (pelo id do app ou pelo código interno); nada se duplica.'));
+              return;
+            }
             if (!I.compactacaoDisponivel()) { previa.replaceChildren(Object.assign(el('p', 'compras-alerta tom-negativo'), { textContent: 'Este navegador não compacta arquivos. Atualize o navegador (Safari 16.4 ou mais novo) e tente de novo.' })); return; }
             const opcoes = { grupos: S.gruposMercadoria(), arvore: S.arvoreLocais(), arquivo: await S.arquivo() };
             const montado = I.montarProdutos(lido.linhas, lido.promocoes, opcoes);
@@ -112,6 +134,18 @@
       },
       salvar: () => {
         if (!preparado) return 'Escolha o arquivo do backup e espere a prévia.';
+        if (preparado.servidor) {
+          const erro = dlg.querySelector('.profiles-error');
+          window.CicluzProdutos.importar(preparado.montado, (feitos, total) => { if (erro) erro.textContent = 'Enviando ao servidor: ' + feitos + ' de ' + total + '…'; })
+            .then((r) => {
+              S.transacao((d) => { I.tirarExemplos(d); });
+              dlg.close();
+              U.avisar(r.novos + ' produto(s) novos e ' + r.atualizados + ' atualizado(s) no servidor.');
+              if (aoTerminar) setTimeout(aoTerminar, 0);
+            })
+            .catch((e) => { if (erro) erro.textContent = 'Parou no servidor: ' + e.message + '. Importe de novo: o que já foi não se repete.'; });
+          return 'Enviando ao servidor…';
+        }
         if (!preparado.cabe) return 'Passaria do limite de tamanho. Nada foi gravado.';
         // Primeiro o arquivo de inativos; se não couber no aparelho, nada muda. Depois o Compras.
         if (!S.gravarArquivo(preparado.textoArquivo)) return 'Sem espaço neste navegador para o arquivo de inativos. Nada foi gravado.';
@@ -130,6 +164,11 @@
     U.confirmar('Revincular grupo e local',
       'Casa de novo o grupo e o local de cada produto pelo nome que veio do app, usando os grupos de mercadorias e a árvore de locais de agora. Vínculo escolhido à mão no produto não muda.',
       'Revincular', () => {
+        if (S.emModoServidor()) {
+          window.CicluzProdutos.revincular().then((r) => { U.avisar(r.mudaram ? r.mudaram + ' produto(s) com vínculo atualizado.' : 'Nada mudou: os vínculos já estão em dia.'); if (aoTerminar) aoTerminar(); })
+            .catch((e) => U.avisar('Não foi possível revincular no servidor: ' + e.message));
+          return;
+        }
         let n = 0;
         const ok = S.transacao((d) => { n = I.revincular(d.produtos, { grupos: S.gruposMercadoria(), arvore: S.arvoreLocais() }); });
         U.avisar(ok ? (n ? n + ' vínculo(s) atualizado(s).' : 'Nada mudou: os vínculos já estão em dia.') : 'Não foi possível gravar neste navegador.');

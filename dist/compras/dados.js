@@ -157,10 +157,37 @@
     delete r.ean; delete r.localVenda;
     return r;
   }
+  /* ---------- Produtos no servidor (docs/PRODUTOS_NO_SERVIDOR_PLANO.md) ----------
+   * Modo servidor (catálogo já na tabela): o catálogo vem do resumo de CicluzProdutos (guardado no aparelho, funciona
+   * sem internet) e este documento guarda por produto só o ESTADO da loja (saldo e números do período), pelo id.
+   * As telas continuam lendo S.dados.produtos, montado aqui com as duas partes. Fora do modo servidor, nada muda. */
+  const ESTADO = ['saldo', 'vendas3m', 'compras3m', 'lucro3m'];
+  const servidor = () => Boolean(window.CicluzProdutos && window.CicluzProdutos.modoServidor());
+  function produtosDoServidor(guardados) {
+    const estados = new Map((guardados || []).map((p) => [p.id, p]));
+    const lista = window.CicluzProdutos.ativos().map((c) => {
+      const x = normalizarProduto({ ...c });
+      const e = estados.get(c.id) || {};
+      for (const k of ESTADO) x[k] = Number(e[k]) || 0;
+      return x;
+    });
+    const ids = new Set(lista.map((p) => p.id));
+    // Produto que saiu do resumo (inativado) mas ainda tem saldo ou movimento: continua achável pelo id, inativo.
+    for (const e of guardados || []) {
+      if (!ids.has(e.id) && ESTADO.some((k) => Number(e[k]))) lista.push(normalizarProduto({ ...e, status: 'inativo', liberadoCompra: false, descricao: e.descricao || e.nomeCatalogo || 'Produto inativo' }));
+    }
+    return lista;
+  }
+  /** O que vai para o localStorage (e para o servidor): no modo servidor, produto vira só o estado da loja. */
+  function paraGravar(d) {
+    if (!servidor()) return d;
+    return { ...d, produtos: d.produtos.filter((p) => ESTADO.some((k) => Number(p[k]))).map((p) => ({ id: p.id, ...Object.fromEntries(ESTADO.map((k) => [k, Number(p[k]) || 0])) })) };
+  }
+
   function completar(d) {
     for (const c of COLECOES_NOVAS) if (!Array.isArray(d[c])) d[c] = [];
     if (!d.unidades.length) d.unidades = UNIDADES_INICIAIS.map(([sigla, nome]) => ({ id: 'un-' + sigla.toLowerCase(), sigla, nome, ativa: true }));
-    d.produtos = d.produtos.map(normalizarProduto);
+    d.produtos = servidor() ? produtosDoServidor(d.produtos) : d.produtos.map(normalizarProduto);
     return d;
   }
 
@@ -190,11 +217,11 @@
       if (atual && COLECOES.every((c) => Array.isArray(atual[c]))) dados = completar(atual);
     } catch (e) { /* mantém a cópia em memória */ }
     const antes = structuredClone(dados);
-    const textoAntes = JSON.stringify(dados);
+    const textoAntes = JSON.stringify(paraGravar(dados));
     try {
       if (erroLeitura) throw new Error('leitura');
       const r = mudanca(dados);
-      const texto = JSON.stringify(dados);
+      const texto = JSON.stringify(paraGravar(dados));
       // Só grava quando algo mudou: cada gravação vira uma versão nova no banco (as telas rodam o
       // agendador ao abrir, e abrir sem criar nada não pode gerar versão nem conflito com outro aparelho).
       if (texto !== textoAntes) {
@@ -220,6 +247,45 @@
       }
     } catch (err) { /* ignora valor inválido */ }
   });
+
+  // Resumo de produtos atualizado (servidor): remonta a lista das telas mantendo o saldo do aparelho.
+  document.addEventListener('cicluz-produtos-mudou', () => {
+    if (!servidor()) return;
+    try {
+      const salvo = JSON.parse(localStorage.getItem(KEY) || 'null');
+      dados = completar(salvo && COLECOES.every((c) => Array.isArray(salvo[c])) ? salvo : dados);
+    } catch (e) { dados = completar(dados); }
+    document.dispatchEvent(new CustomEvent('cicluz-compras-mudou', { detail: { externo: true } }));
+  });
+
+  /**
+   * Primeiro aparelho de ADMINISTRADOR conectado com o catálogo ainda no aparelho: leva os produtos (Compras + arquivo
+   * de inativos, sem os de exemplo) para o servidor. Só quando TODOS chegaram o catálogo do servidor passa a valer;
+   * aí o documento fica só com o estado da loja e o arquivo de inativos é aposentado. Senão, nada muda e o
+   * administrador vê o que faltou.
+   */
+  async function transferirSePreciso() {
+    const P = window.CicluzProdutos;
+    const perfil = window.CicluzSessao && window.CicluzSessao.perfil;
+    if (!P || !P.conectado()) return null;
+    const c = await P.atualizar();
+    if (!c || c.ativado || !perfil || perfil.papel !== 'administrador') return null;
+    const I = window.CicluzProdutoImportacao;
+    const daqui = dados.produtos.filter((p) => !I.EXEMPLOS.includes(p.id));
+    const arquivados = (await arquivo()).map(({ arquivado, ...p }) => p);
+    const ids = new Set(daqui.map((p) => p.id));
+    const todos = daqui.concat(arquivados.filter((p) => !ids.has(p.id)));
+    if (!todos.length) return null;
+    const maior = Math.max(Number(dados.codigoInternoApp) || 0, ...todos.map((p) => Number(p.codigoInterno)).filter((n) => Number.isFinite(n) && n < 700000));
+    const r = await P.transferir(todos, maior);
+    if (r.faltando.length || r.invalidos.length) return { ...r, total: todos.length };
+    // Catálogo no servidor: o documento passa a guardar só o estado da loja; o arquivo de inativos sai.
+    dados = completar(dados);
+    try { localStorage.setItem(KEY, JSON.stringify(paraGravar(dados))); } catch (e) { /* grava na próxima mudança */ }
+    try { localStorage.removeItem(CHAVE_ARQUIVO); } catch (e) { /* fica e não é mais lido */ }
+    document.dispatchEvent(new CustomEvent('cicluz-compras-mudou', { detail: { externo: true } }));
+    return { ...r, total: todos.length, concluida: true };
+  }
 
   /* ---------- Integrações com o resto do S2 ---------- */
 
@@ -332,7 +398,17 @@
     get dados() { return dados; },
     get erroLeitura() { return erroLeitura; },
     transacao, novoId, agoraIso, hojeIso,
-    gruposMercadoria, nomeGrupo, arvoreLocais, nosLocais, vinculo, arquivo, arquivoAberto, totalArquivo, gravarArquivo, tirarDoArquivo, locais,
+    gruposMercadoria, nomeGrupo, arvoreLocais, nosLocais, vinculo, arquivo, arquivoAberto, totalArquivo, gravarArquivo, tirarDoArquivo, transferirSePreciso, emModoServidor: servidor, locais,
     fornecedor, produto, responsavel, referencia, definirReferencia, fornecedoresDoProduto, bolinhas,
   };
+
+  // Ao abrir com sessão real: atualiza o resumo de produtos e, se for o caso, faz a transferência (ver acima).
+  setTimeout(() => {
+    transferirSePreciso().then((r) => {
+      if (!r || r.concluida) { if (r && r.concluida && window.CicluzComprasUI) window.CicluzComprasUI.avisar(r.total + ' produtos foram para o servidor.'); return; }
+      const lista = r.faltando.concat(r.invalidos).slice(0, 8).map((x) => x.codigoInterno || x.id).join(', ');
+      console.warn('Produtos que não foram para o servidor', r.faltando, r.invalidos);
+      if (window.CicluzComprasUI) window.CicluzComprasUI.avisar((r.faltando.length + r.invalidos.length) + ' produto(s) não foram para o servidor (' + lista + '…). Tudo continua neste aparelho como antes; confira os códigos repetidos.');
+    }).catch((e) => console.warn('Produtos: servidor indisponível; segue com o que está no aparelho', e));
+  }, 0);
 })();

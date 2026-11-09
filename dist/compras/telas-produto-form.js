@@ -502,6 +502,28 @@
       }
       let gravado = null;
       let veioDoArquivo = false;
+      // Catálogo no servidor: cria (o servidor gera o código interno) ou edita com a versão aberta (409 se alguém
+      // salvou antes). O histórico de nomes continua no Compras.
+      if (S.emModoServidor()) {
+        const P = window.CicluzProdutos;
+        const nomeAntes = p ? (p.nomeCatalogo ?? p.descricao) : null;
+        const fiscalDerivado = (cod) => F.fiscalDoProduto({ anterior: anteriorFiscal, nome: campos.nomeCatalogo || campos.descricao, codigoBarras: cod, nomeGrupo: n.nomeGrupo, nomeSubgrupo: n.nomeSubgrupo }).fiscal;
+        let pedido;
+        try {
+          pedido = novo
+            ? P.criar({ ...campos, codigoBarras: eanDig || null, unidade: campos.medidaCompra || campos.unidadeIndividual || 'UN', criadoEm: S.agoraIso(), fiscal: fiscalDerivado(eanDig) })
+            : P.editar({ ...p, ...campos, codigoBarras: eanDig || p.codigoBarras, fiscal: p.appId ? anteriorFiscal : fiscalDerivado(eanDig || p.codigoBarras) });
+        } catch (e) { return mostrarErro(c, e.message); }
+        pedido.then((salvo) => {
+          if (!novo && campos.nomeCatalogo != null && campos.nomeCatalogo !== nomeAntes) {
+            S.transacao((d) => { d.historicoNomes.push({ id: S.novoId('hn'), produtoId: salvo.id, nomeAnterior: nomeAntes, nomeNovo: campos.nomeCatalogo, alteradoPor: 'José · Compras', alteradoEm: S.agoraIso() }); });
+          }
+          dlg.close();
+          U.avisar(novo ? 'Produto salvo com o código ' + salvo.codigoInterno + '.' : 'Produto salvo.');
+          if (aoSalvar) aoSalvar(salvo);
+        }).catch((e) => mostrarErro(c, e.message || 'Não foi possível salvar no servidor.'));
+        return 'Salvando no servidor…';
+      }
       const ok = S.transacao((d) => {
         if (novo) {
           // Inclui o maior código do app de produtos (importação): o próximo não pode repetir código do PDV, nem de inativo.

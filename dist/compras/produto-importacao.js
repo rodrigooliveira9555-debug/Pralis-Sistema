@@ -241,6 +241,18 @@
    * - Inativo do app: se já está no Compras (tem histórico lá), fica lá com status inativo; senão vai para o arquivo.
    * Tira os exemplos e os registros que os citam. Devolve os números e o arquivo novo (para compactar e gravar).
    */
+  /** Tira os produtos de exemplo e os registros que os citam (sem mexer em mais nada). Devolve quantos saíram. */
+  function tirarExemplos(d) {
+    let saiu = 0;
+    for (const [colecao, lista] of Object.entries(d)) {
+      if (!Array.isArray(lista)) continue;
+      const fica = colecao === 'produtos' ? lista.filter((p) => !ehExemplo(p.id)) : lista.filter((r) => !citaExemplo(r));
+      saiu += lista.length - fica.length;
+      d[colecao] = fica;
+    }
+    return saiu;
+  }
+
   function aplicar(d, montado, arquivo = []) {
     for (const [colecao, lista] of Object.entries(d)) {
       if (!Array.isArray(lista)) continue;
@@ -341,6 +353,6 @@
   return {
     EXEMPLOS, LOJA, LIMITE_BYTES, limpar, separarGrupo, casarGrupo, nosDaArvore, casarLocal,
     montarProdutos, conflitosDeCodigo, alertasDeVinculo, planejar, aplicar, revincular, bytes,
-    compactar, descompactar, totalDoArquivo, compactacaoDisponivel, CHAVE_ARQUIVO: 'cicluz-produtos-arquivo-v1',
+    compactar, descompactar, totalDoArquivo, compactacaoDisponivel, CHAVE_ARQUIVO: 'cicluz-produtos-arquivo-v1', tirarExemplos,
   };
 });

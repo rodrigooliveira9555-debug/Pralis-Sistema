@@ -50,8 +50,26 @@
   const vinculoDe = (p) => vinculos.get(p.id) || { semGrupo: false, semLocal: false };
 
   /** Produtos da lista: os do Compras e, com "Só ativos" desmarcado, também os inativos do arquivo (sem repetir id). */
+  /** Modo servidor sem "Só ativos": catálogo inteiro paginado na API (busca, tipo, grupo, vínculo e ordem no servidor). */
+  let paginaServidor = null; let pedidoServidor = null;
+  const chaveServidor = () => JSON.stringify([filtro.busca, filtro.tipo, filtro.grupo, filtro.vinculo, filtro.ordem, filtro.pagina]);
+  function doServidor() {
+    if (paginaServidor && paginaServidor.chave === chaveServidor()) return paginaServidor;
+    const chave = chaveServidor();
+    if (!pedidoServidor || pedidoServidor.chave !== chave) {
+      pedidoServidor = { chave };
+      window.CicluzProdutos.listar({ ...filtro, status: 'todos', tamanho: TAMANHO_PAGINA }).then((r) => {
+        if (pedidoServidor.chave !== chave) return;
+        paginaServidor = { chave, ...r };
+        if (tela && tela.view.classList.contains('show')) render();
+      }).catch(() => U.avisar('Sem conexão com o servidor: mostrando só os produtos ativos guardados neste aparelho.'));
+    }
+    return null;
+  }
+
   function fonte() {
     if (filtro.soAtivos) return S.dados.produtos;
+    if (S.emModoServidor()) return S.dados.produtos;
     const arq = S.arquivoAberto();
     if (!arq) {
       S.arquivo().then(() => { if (tela && tela.view.classList.contains('show')) render(); })
@@ -85,8 +103,11 @@
   function render() {
     calcularVinculos();
     const b = S.bolinhas();
-    const todos = filtrados();
-    const pag = R.paginar(todos, filtro.pagina, TAMANHO_PAGINA);
+    const servidorTodos = S.emModoServidor() && !filtro.soAtivos;
+    const pagServidor = servidorTodos ? doServidor() : null;
+    if (pagServidor) pagServidor.itens.forEach((p) => vinculos.set(p.id, { semGrupo: p.semGrupo, semLocal: p.semLocal }));
+    const todos = servidorTodos ? (pagServidor ? pagServidor.itens : []) : filtrados();
+    const pag = servidorTodos ? { itens: todos, pagina: pagServidor ? pagServidor.pagina : 1, paginas: pagServidor ? pagServidor.paginas : 1 } : R.paginar(todos, filtro.pagina, TAMANHO_PAGINA);
     filtro.pagina = pag.pagina;
 
     const controles = el('div', 'profiles-controls');
@@ -114,7 +135,8 @@
 
     const info = el('div', 'compras-linha-info');
     const nArq = S.totalArquivo();
-    info.append(U.nota(todos.length + ' produto(s). Produto nunca é apagado: inative quando sair de linha.' + (nArq ? ' ' + nArq + ' inativo(s) do app ficam arquivados: desmarque "Só ativos" para vê-los.' : '')), U.legendaBolinhas());
+    const quantos = servidorTodos ? (pagServidor ? pagServidor.total : 0) : todos.length;
+    info.append(U.nota((servidorTodos && !pagServidor ? 'Buscando no servidor… ' : '') + quantos + ' produto(s). Produto nunca é apagado: inative quando sair de linha.' + (nArq ? ' ' + nArq + ' inativo(s) do app ficam arquivados: desmarque "Só ativos" para vê-los.' : '')), U.legendaBolinhas());
     const imp = window.CicluzProdutoImportacaoTela;
     if (imp && imp.podeImportar()) {
       const acoes = el('div', 'compras-acoes-importacao');
@@ -229,6 +251,14 @@
       salvar: (c) => {
         if (c.conf.value.trim().toUpperCase() !== frase) return 'Digite exatamente ' + frase + '.';
         let alterados = 0;
+        if (S.emModoServidor()) {
+          const alvos = S.dados.produtos.filter((p) => ids.includes(p.id) && p.status !== 'inativo');
+          (async () => {
+            for (const p of alvos) { await window.CicluzProdutos.editar({ ...p, status: 'inativo', liberadoCompra: false }); alterados++; }
+          })().then(() => { selecionados.clear(); U.avisar(alterados + ' produto(s) inativado(s).'); render(); })
+            .catch((e) => { U.avisar(alterados + ' inativado(s); parou no servidor: ' + e.message); render(); });
+          return undefined;
+        }
         const ok = S.transacao((d) => d.produtos.forEach((p) => { if (ids.includes(p.id) && p.status !== 'inativo') { p.status = 'inativo'; p.liberadoCompra = false; alterados++; } }));
         if (!ok) return 'Não foi possível salvar.';
         selecionados.clear();
