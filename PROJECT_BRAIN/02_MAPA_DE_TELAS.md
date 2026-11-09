@@ -54,8 +54,9 @@ Organização do Rodrigo (vídeo de 06/11/2026); detalhes no `DESIGN_SYSTEM.md`,
 - ⬜ **Relatórios**: MER - Mercadorias e MER - Pedidos (espaços reservados).
 - ✅ **Cadastros Geral**: MER - Grupos de Mercadorias, MER - Fornecedores, MER - Produtos, Unidades de Medida,
   MER - Catálogo e Preço-Base. **MER - Produtos** importa TODOS os produtos da TNP do app de produtos (Backup XLSX, só
-  administrador; 09/11/2026): ativos no Compras, inativos no arquivo compactado (aparecem com "Só ativos" desmarcado),
-  com alerta e filtro "Sem vínculo / Sem grupo / Sem local" e o botão Revincular.
+  administrador; 09/11/2026) direto para o servidor (tabela `produtos`): ativos guardados no aparelho para funcionar sem
+  internet, inativos pela busca no servidor ("Só ativos" desmarcado), com alerta e filtro "Sem vínculo / Sem grupo / Sem
+  local" e o botão Revincular.
 - ✅ **Estoques**: MER - Grupo Mercadorias. **Agenda → MER - Agenda de Pedidos** (agendamento do Compras).
 
 ## Saídas · Retiradas/Investimentos (RET, azul)
