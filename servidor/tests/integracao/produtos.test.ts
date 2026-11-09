@@ -97,6 +97,13 @@ describe("produtos no servidor", () => {
     expect(p.id).toMatch(/^p-/);
   });
 
+  it("empresa sem produtos: o primeiro código é 13130 (último antes do S2: 13129) e barras informado fica como veio", async () => {
+    const { cookie } = await empresaPronta();
+    const a = (await app.inject({ method: "POST", url: "/api/produtos", headers: comSessao(cookie), payload: novo })).json().data;
+    const b = (await app.inject({ method: "POST", url: "/api/produtos", headers: comSessao(cookie), payload: { ...novo, codigoBarras: "7891234567895" } })).json().data;
+    expect([a.codigoInterno, a.codigoBarras, b.codigoInterno, b.codigoBarras]).toEqual(["13130", "13130", "13131", "7891234567895"]);
+  });
+
   it("edição com versão velha é recusada (409) e escolha à mão marca o vínculo como manual", async () => {
     const { cookie } = await empresaPronta();
     await importar(cookie, [importado("13002", { origemGrupo: "" })]);
@@ -193,8 +200,13 @@ describe("produtos no servidor", () => {
     expect((await t([], true)).statusCode).toBe(200);
     const resumo = (await app.inject({ method: "GET", url: "/api/produtos/resumo", headers: comSessao(cookie) })).json().data;
     expect(resumo.ativado).toBe(true);
+    // Produto antigo sem código interno: o servidor dá o próximo (acima do maior do aparelho), sem travar o resto.
+    const r3 = (await t([{ ...doAparelho("p-sem-codigo", "x"), codigoInterno: null, codigoBarras: null }])).json().data;
+    expect(r3.faltando).toEqual([]);
+    const semCodigo = (await app.inject({ method: "GET", url: "/api/produtos/item/p-sem-codigo", headers: comSessao(cookie) })).json().data;
+    expect([semCodigo.codigoInterno, semCodigo.codigoBarras]).toEqual(["13301", "13301"]);
     // Produto novo depois da transferência: acima do maior código do aparelho.
     const novoP = (await app.inject({ method: "POST", url: "/api/produtos", headers: comSessao(cookie), payload: novo })).json().data;
-    expect(novoP.codigoInterno).toBe("13301");
+    expect(novoP.codigoInterno).toBe("13302");
   });
 });

@@ -30,6 +30,8 @@ import {
   idsExistentes,
   inserirProduto,
   inserirSeNaoExiste,
+  maiorCodigoGravado,
+  travarEmpresa,
   listarAtivos,
   listarProdutos,
   locaisParaCasar,
@@ -41,9 +43,10 @@ import {
   type NovoProduto
 } from "./produtos.repository.ts";
 
-// Mesmas fronteiras de dist/compras/produto-regras.js: abaixo de 700000 é código de produto; piso 13129.
+// Regra do código interno (veio do S1/app, era a de dist/compras/produto-regras.js e agora mora SÓ aqui): abaixo de
+// 700000 é código de produto; o último código antes do S2 era 13129, então o primeiro produto novo é 13130.
 const FAIXA_PRODUTO = 700_000;
-const ULTIMO_CODIGO_DE_PRODUTO = 13_128;
+const ULTIMO_CODIGO_DE_PRODUTO = 13_129;
 
 const SEM_VER = "Você não tem acesso aos produtos (permissão de Compras).";
 const SEM_EDITAR = "Você não pode cadastrar nem alterar produtos (permissão de Compras).";
@@ -86,18 +89,31 @@ export async function resumo(perfil: PerfilSessao) {
 export async function transferir(perfil: PerfilSessao, lote: TransferenciaProdutos) {
   exigirAdministrador(perfil);
   const empresaId = perfil.empresa.id;
-  const linhas: NovoProduto[] = lote.produtos.map((p) => ({
-    empresaId, id: p.id, codigoInterno: p.codigoInterno, ...colunas(p),
-    appId: nulo(p.appId), appLojaId: nulo(p.appLojaId), criadoPor: perfil.usuarioId, atualizadoPor: perfil.usuarioId
-  }));
   // Os lotes só inserem; o catálogo passa a valer (linha de produtos_codigo) no pedido de conclusão.
   await banco.transaction(async (tx) => {
+    await travarEmpresa(tx, empresaId);
+    const jaNoServidor = await idsExistentes(empresaId, lote.produtos.map((p) => p.id));
+    // Produto antigo sem código interno (e que ainda não está no servidor) recebe o próximo código.
+    let ultimo = Math.max(ULTIMO_CODIGO_DE_PRODUTO, lote.maiorCodigo, await maiorCodigoGravado(tx, empresaId));
+    const linhas: NovoProduto[] = lote.produtos.filter((p) => !jaNoServidor.has(p.id)).map((p) => {
+      const c = colunas(p);
+      let codigoInterno = nulo(p.codigoInterno);
+      if (!codigoInterno) {
+        ultimo += 1;
+        if (ultimo >= FAIXA_PRODUTO) throw new ErroDominio("Faixa de código interno de produto esgotada", 409, "CODIGO_ESGOTADO");
+        codigoInterno = String(ultimo).padStart(5, "0");
+      }
+      return {
+        empresaId, id: p.id, codigoInterno, ...c, codigoBarras: c.codigoBarras ?? (p.codigoInterno ? null : codigoInterno),
+        appId: nulo(p.appId), appLojaId: nulo(p.appLojaId), criadoPor: perfil.usuarioId, atualizadoPor: perfil.usuarioId
+      };
+    });
     await inserirSeNaoExiste(tx, linhas);
     if (lote.concluir) await gravarUltimoCodigo(tx, empresaId, Math.max(ULTIMO_CODIGO_DE_PRODUTO, lote.maiorCodigo));
   });
   // Quais do lote estão no servidor agora (inseridos agora ou antes). O que faltar fica no aparelho.
   const presentes = await idsExistentes(empresaId, lote.produtos.map((p) => p.id));
-  return { recebidos: lote.produtos.length, presentes: presentes.size, faltando: lote.produtos.filter((p) => !presentes.has(p.id)).map((p) => ({ id: p.id, codigoInterno: p.codigoInterno })) };
+  return { recebidos: lote.produtos.length, presentes: presentes.size, faltando: lote.produtos.filter((p) => !presentes.has(p.id)).map((p) => ({ id: p.id, codigoInterno: p.codigoInterno ?? null })) };
 }
 
 export async function obter(perfil: PerfilSessao, id: string) {

@@ -115,15 +115,23 @@ export async function existeCodigo(tx: TransacaoBanco, empresaId: string, codigo
 }
 
 /* ---------- Próximo código interno: linha travada até o fim da transação ---------- */
-export async function travarUltimoCodigo(tx: TransacaoBanco, empresaId: string, piso: number) {
-  await tx.insert(produtosCodigo).values({ empresaId, ultimo: piso }).onConflictDoNothing();
-  const [linha] = await tx.select({ ultimo: produtosCodigo.ultimo }).from(produtosCodigo).where(eq(produtosCodigo.empresaId, empresaId)).for("update");
-  // Código digitado em outro lugar (produto importado ou antigo) também conta.
+// Maior código de produto (abaixo de 700000) já gravado na tabela.
+export async function maiorCodigoGravado(tx: TransacaoBanco, empresaId: string) {
   const [maior] = await tx
     .select({ maior: sql<number | null>`max(${produtos.codigoInterno}::bigint) filter (where ${produtos.codigoInterno} ~ '^[0-9]+$' and ${produtos.codigoInterno}::bigint < 700000)`.mapWith(Number) })
     .from(produtos)
     .where(eq(produtos.empresaId, empresaId));
-  return Math.max(linha?.ultimo ?? piso, piso, maior?.maior ?? 0);
+  return maior?.maior ?? 0;
+}
+export async function travarUltimoCodigo(tx: TransacaoBanco, empresaId: string, piso: number) {
+  await tx.insert(produtosCodigo).values({ empresaId, ultimo: piso }).onConflictDoNothing();
+  const [linha] = await tx.select({ ultimo: produtosCodigo.ultimo }).from(produtosCodigo).where(eq(produtosCodigo.empresaId, empresaId)).for("update");
+  // Código digitado em outro lugar (produto importado ou antigo) também conta.
+  return Math.max(linha?.ultimo ?? piso, piso, await maiorCodigoGravado(tx, empresaId));
+}
+// Na transferência o catálogo ainda não vale (sem linha em produtos_codigo): serializa por empresa com trava da transação.
+export async function travarEmpresa(tx: TransacaoBanco, empresaId: string) {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${"produtos:" + empresaId}))`);
 }
 export async function gravarUltimoCodigo(tx: TransacaoBanco, empresaId: string, ultimo: number) {
   await tx

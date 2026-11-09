@@ -113,7 +113,8 @@ export type ProdutoImportado = z.infer<typeof produtoImportadoSchema>;
 export const produtoTransferidoSchema = z.object({
   ...camposProduto,
   id: texto(80).min(1),
-  codigoInterno: texto(20).min(1),
+  // Produto antigo do S2 sem código interno: o servidor dá o próximo código (mesma regra da criação).
+  codigoInterno: opcional(texto(20)),
   appId: opcional(texto(80)),
   appLojaId: opcional(texto(80))
 });

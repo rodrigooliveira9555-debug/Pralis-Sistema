@@ -37,7 +37,8 @@ export const CHAVES_SINCRONIZADAS = [
   // e Patrimônio (bens). Vínculos pelo id (produto do Compras, bem, local, responsável). Sem dado pessoal.
   "cicluz-producao-v1",
   "cicluz-patrimonio-v1",
-  // Produtos inativos do app de produtos, compactados (gzip + base64): fora do cicluz-compras-v1 para caber no aparelho.
+  // Arquivo ANTIGO de inativos (09/11/2026, gzip + base64). Os produtos agora ficam na tabela `produtos`; esta chave só
+  // existe para os aparelhos ainda receberem o arquivo até a transferência acontecer no ar. Remover depois dela.
   "cicluz-produtos-arquivo-v1",
   // Marcas de importação dos seeds. Precisam acompanhar os dados (e ir no mesmo lote): sem elas,
   // um aparelho novo reimportaria o seed por cima do que veio do servidor.
