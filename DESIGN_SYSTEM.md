@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Caixa — Ajustar início das vendas (R-224, 09/11/2026)
+Etapa 1 (Vendas) do Fechamento, seção da folha do CREARE: lista "Abertura oficial · Início das vendas (ajustado) · Vendas deste caixa · Vendas do PDV sem caixa", nota quando há venda sem caixa e botão secundário **Ajustar início**. Aviso de horário da folha: positivo quando confere (±2 min); alerta com botão primário **Ajustar início para HH:MM** quando a folha começa antes e cabe nos 60 min; só alerta quando está fora da janela ou depois. O diálogo traz a faixa permitida, a hora (campo de hora) e o motivo. O ajuste aparece no Turno ("desde HH:MM (início ajustado)") e no dossiê, em "Início das vendas". Regra e limites em `PROJECT_BRAIN/14_CASCA_CAIXA.md`.
+
 ## Entradas — Vendas unificada, Documentos, ícone do cabeçalho e atalho de Fechamento (09/11/2026)
 Pedido do Rodrigo, aplicado em `dist/index.html` e `dist/people-header-pilot.js`.
 - **Vendas:** em Entradas, **Lançamentos** e **Relatórios** têm um cartão só, **VND - Vendas** (amarelo, sigla VND, tela vazia por ora). Os dois cartões vazios "Vendas Nfc-e" e "Vendas Nfc" **foram removidos**; nenhum dado dependia deles. Venda não se lança à mão (R-062): a tela será consulta, alimentada pela integração do PDV.

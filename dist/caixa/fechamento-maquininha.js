@@ -9,7 +9,7 @@
   const C = window.CicluzCaixa;
   const { el, botao, campo, entrada, seletor } = U;
   const { moeda, centavos } = C;
-  const { ctx: K, corpoSecao, dl, cadeado, fmt, CAMPOS_FOLHA, FORMAS_CARTAO, ICONE_CADEADO, pralis, gerencia } = window.CicluzCaixaFechamentoComum;
+  const { ctx: K, corpoSecao, dl, cadeado, fmt, CAMPOS_FOLHA, FORMAS_CARTAO, ICONE_CADEADO, pralis, lidoNoPdv, gerencia } = window.CicluzCaixaFechamentoComum;
   const P = (window.CicluzCaixaFechamentoPartes = window.CicluzCaixaFechamentoPartes || {});
 
   /* ---------- Etapa 2: Maquininha ---------- */
@@ -27,7 +27,7 @@
     if (m.comprovante) {
       ac.append(U.situacao(m.comprovante, 'info'));
       if (!m.valores) ac.append(botao('Ler comprovante (simulado)', () => {
-        const p = pralis();
+        const p = lidoNoPdv();
         m.valores = { credito: fmt(p.credito), debito: fmt(p.debito), pix: fmt(p.pix), voucher: fmt(p.voucher) };
         m.travados = true;
         K.atualizar();

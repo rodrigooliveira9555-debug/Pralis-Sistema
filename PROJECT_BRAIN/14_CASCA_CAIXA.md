@@ -194,10 +194,19 @@ campos e regras). Cards de Entradas → Caixas, na ordem do fluxo:
 - **Nota sobre o teste:** o `rotas.js` da main reabre o endereço atual quando o evento `load` dispara; o teste de larguras passou a esperar o `load` antes de clicar (antes, rodadas isoladas falhavam ao acaso porque o menu voltava por cima da tela aberta). Não é código do Caixa.
 - Fora do Caixa nada foi alterado além das linhas do menu em `dist/index.html`. Pendentes de decisão do Rodrigo/Marco: ver "Falta" e `Caixa-Brain/13 - Dúvidas abertas.md`.
 
+### R-224 — Ajustar início das vendas (09/11/2026)
+
+- **Regra (Marco, 28/10/2026, registro do principal):** quem abriu o caixa no sistema depois de já vender no PDV recua o **início das vendas** na etapa Vendas do fechamento. As vendas do PDV desse intervalo **sem caixa** passam a ser deste caixa (Entradas, saldo, relatório); a **abertura oficial nunca muda**. Limites: **60 min** antes da abertura oficial, mesmo dia, nunca antes do fechamento do caixa anterior do mesmo PDV, só com o caixa aberto ou em fechamento, **motivo de 3 a 500 letras**. Cada ajuste guarda quem, quando, motivo e as duas horas. Com o caixa em fechamento, o relatório de vendas já gerado é **descartado**. Folha × início: tolerância de **2 min**.
+- **Arquivos:** `inicio-vendas.js` (regra, sem tela), `fechamento-inicio.js` (bloco "Início das vendas", aviso da folha e diálogo "Ajustar início"); `modulo.js` (`turno.semCaixa`, `abertura.inicioVendas` e `edicoes`, retrato no fechamento), `fechamento-comum.js` (`lidoNoPdv`: o que a folha e a maquininha imprimem inclui as vendas sem caixa), `fechamentos-dossie.js` (bloco "Início das vendas" e nota na Gerência), `turno.js` ("desde HH:MM (início ajustado)").
+- **Na tela:** etapa 1 (Vendas), seção da folha: Abertura oficial, Início das vendas, vendas deste caixa e do PDV sem caixa, botão **Ajustar início**. Se a folha lida começa mais de 2 min antes do início e cabe nos 60 min, aparece o aviso com **"Ajustar início para HH:MM"** (hora da folha e motivo já preenchidos). Reajustar para mais tarde **devolve** as vendas que ficaram fora do período.
+- **Adaptações da casca (diferem do principal):** o novo início é uma **hora** do mesmo dia (o principal pede data e hora com fuso, então a recusa de "dia diferente" não existe aqui); a venda "que já pertence a outro caixa" não existe (cada PDV tem um caixa por vez); as 3 vendas sem caixa (07:10, 07:25 e 07:40, R$ 55,60) são **fictícias** e nascem com todo caixa aberto; a folha lida traz o "Período de" simulado (primeira venda do PDV).
+- **Verificado:** o teste `e2e-inicio.js` percorre 33 pontos: recusas (depois da abertura, mais de 60 min, caixa anterior, motivo, mesmo início), efeito em Entradas e saldo (+R$ 55,60 e +R$ 41,60 em dinheiro), registro do ajuste, descarte do relatório, devolução ao reajustar, fechamento, dossiê e Gerência.
+- **Aprovação:** Washington autorizou implementar em 09/11/2026. A leitura do principal é de 04/11/2026 (ver "Falta" abaixo); o Marco deve confirmar que a R-224 não mudou desde então.
+
 ## Falta
 
 1. **Maquininha manhã/tarde** (acumulado − manhã) e posto escolhível (hoje fixo PDV 1 · Manhã).
-2. **Ajuste do início das vendas** (R-224), planejamentos de retorno (legado), "Últimos lançamentos",
+2. Planejamentos de retorno (legado), "Últimos lançamentos",
    campanhas, filtros de horário em "Vendas do caixa", paginação do histórico.
 3. Conferência física da abertura gravada, prazo de confirmação (423) e `liberar-trava` (a conferência estrita do
    retorno já existe, em Tesouraria; "Fechamentos de Caixa" não pagina a lista).
