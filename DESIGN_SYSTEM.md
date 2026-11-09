@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Busca das telas do Compras não fecha a cada letra (09/11/2026)
+Relato do Zé: em MER - Produtos, cada letra digitada fechava a busca. Causa: a tela se redesenha a cada filtro, o campo era recriado e o `layout-review.js` o embrulhava de novo na lupa, fechado. Regra: busca de tela que se redesenha usa **`U.buscaFixa(chave, …)`** (`compras/ui.js`): o mesmo campo sobrevive ao redesenho, continua aberto e com o cursor, e a lista é refeita 180 ms depois da última tecla. Vale para MER - Produtos (nome, código interno, código de barras e marca), Fornecedores, Catálogo e Preço-Base (3 abas), Cotação e Estoque. O refoco antigo (`setTimeout(… .compras-busca …focus())`) foi apagado nas 5 telas.
+
 ## MER - Produtos — importação do app de produtos e alerta de vínculo (09/11/2026)
 Pedido do Rodrigo (áudio de 09/11) e decisões do Zé. Em **MER - Produtos**, quem administra vê **Importar do app de produtos** e **Revincular grupo e local** na barra de informação (botões `.btn` comuns, na cor do menu). A importação abre um diálogo com o campo do arquivo (Backup XLSX do app) e uma **prévia em linhas** (`.compras-importacao-linha`: rótulo à esquerda, número ou selo de situação à direita) com: ativos da TNP no arquivo, novos, atualizados, sem grupo, sem local, códigos repetidos, códigos ≥ 700000, exemplos e registros de teste que saem, o que fica de fora, próximo código e tamanho do Compras. Só grava pelo ✓; arquivo errado explica em `.compras-alerta.tom-negativo`.
 - **Alerta de vínculo**: na linha e no card, selo `.compras-situacao.tom-atencao` "Sem grupo", "Sem local" ou os dois; no formulário, faixa `.compras-alerta.tom-atencao` no topo dizendo o que falta. Some quando o grupo e o local da árvore são escolhidos.

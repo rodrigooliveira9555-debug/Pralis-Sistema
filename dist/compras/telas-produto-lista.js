@@ -90,8 +90,7 @@
     filtro.pagina = pag.pagina;
 
     const controles = el('div', 'profiles-controls');
-    const bx = U.busca('Buscar por nome, código, EAN ou marca...', (v) => { filtro.busca = v; filtro.pagina = 1; render(); setTimeout(() => tela.body.querySelector('.compras-busca')?.focus(), 0); });
-    bx.value = filtro.busca;
+    const bx = U.buscaFixa('produtos', 'Buscar por nome, código interno, código de barras ou marca', filtro.busca, (v) => { filtro.busca = v; filtro.pagina = 1; render(); });
     const mk = (rot, opcoes, chave, vazio) => { const s = seletor(opcoes, filtro[chave], vazio); s.onchange = () => { filtro[chave] = s.value; filtro.pagina = 1; render(); }; return campo(rot, s); };
     controles.append(bx,
       mk('Grupo', S.gruposMercadoria().filter((g) => g.ativo).map((g) => [g.id, g.nome]), 'grupo', 'Todos os grupos'),
