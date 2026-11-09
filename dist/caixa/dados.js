@@ -84,10 +84,17 @@
     [92, 'Débito', [['Sonho', 3, 550]]],
     [105, 'Dinheiro', [['Café coado', 3, 450], ['Pão na chapa', 2, 500]]],
   ];
+  // Vendas do PDV feitas ANTES da abertura do caixa no sistema (R-224): sem caixa até o operador ajustar o início das vendas.
+  // [minutos antes da abertura (negativo), forma, itens]. Ficam todas dentro do recuo máximo de 60 min.
+  const vendasSemCaixa = [
+    [-50, 'Dinheiro', [['Pão francês', 12, 80], ['Café coado', 1, 450]]],
+    [-35, 'Pix', [['Pão de queijo', 4, 350]]],
+    [-20, 'Dinheiro', [['Coxinha', 3, 650], ['Suco de laranja', 1, 800]]],
+  ];
   const canceladas = [
     { min: 35, id: 'CRE-000231', forma: 'Dinheiro', autorizadoPor: 'Marcos Lima', motivo: 'Cliente desistiu', justificativa: 'Cliente saiu sem pagar a venda no balcão.', itens: [['Coxinha', 4, 650]] },
     { min: 88, id: 'CRE-000236', forma: 'Pix', autorizadoPor: 'Patrícia Souza', motivo: 'Produto lançado errado', justificativa: 'Lançado pão de forma em vez de pão integral.', itens: [['Pão de forma', 1, 1190]] },
   ];
 
-  window.CicluzCaixaDados = { contas, transferencias, lacres, lancamentos, fechamentos, caixasFicticios, vendas, canceladas };
+  window.CicluzCaixaDados = { contas, transferencias, lacres, lancamentos, fechamentos, caixasFicticios, vendas, vendasSemCaixa, canceladas };
 })();

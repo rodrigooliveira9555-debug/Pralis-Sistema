@@ -9,7 +9,7 @@
   const C = window.CicluzCaixa;
   const { el, botao, campo, entrada, seletor } = U;
   const { moeda, centavos } = C;
-  const { ctx: K, corpoSecao, dl, cadeado, fmt, CAMPOS_FOLHA, FORMAS_CARTAO, ICONE_CADEADO, pralis, gerencia } = window.CicluzCaixaFechamentoComum;
+  const { ctx: K, corpoSecao, dl, cadeado, fmt, CAMPOS_FOLHA, FORMAS_CARTAO, ICONE_CADEADO, pralis, lidoNoPdv, gerencia } = window.CicluzCaixaFechamentoComum;
   const P = (window.CicluzCaixaFechamentoPartes = window.CicluzCaixaFechamentoPartes || {});
 
   /* ---------- Etapa 1: Vendas (contagem cega + folha CREARE + relatório) ---------- */
@@ -60,29 +60,30 @@
     const acoes = el('div', 'caixa-acoes caixa-acoes-esq');
     acoes.append(botao(fo.anexo ? 'Trocar folha (simulado)' : 'Anexar folha (simulado)', () => {
       fo.anexo = 'folha-creare-' + a.pdv.replace(' ', '').toLowerCase() + '.jpg';
-      fo.campos = null; fo.travados = true; fo.correcao = '';
+      fo.campos = null; fo.travados = true; fo.correcao = ''; fo.periodoDe = '';
       f.relatorioGerado = false; // anexar nova folha invalida o relatório já gerado
       K.atualizar();
     }, 'btn secondary'));
     if (fo.anexo) {
       acoes.append(U.situacao(fo.anexo, 'info'));
-      if (!fo.campos) acoes.append(botao('Ler folha (simulado)', () => { fo.campos = lerFolhaSimulada(); fo.travados = true; K.atualizar(); }, 'btn'));
+      if (!fo.campos) acoes.append(botao('Ler folha (simulado)', () => { fo.campos = lerFolhaSimulada(); fo.periodoDe = C.primeiraVendaPdv(); fo.travados = true; K.atualizar(); }, 'btn'));
     }
     itens.push(acoes);
-    if (fo.campos) itens.push(tabelaFolha(fo), ...avisoHorario());
+    itens.push(...K_INICIO().bloco());
+    if (fo.campos) itens.push(tabelaFolha(fo), ...K_INICIO().avisoFolha(fo));
     s.append(corpoSecao(...itens));
     return s;
   }
 
-  const avisoHorario = () => [U.situacao('Horário da folha: confere com o corte (emissão entre −2 e +15 min)', 'positivo')];
+  const K_INICIO = () => window.CicluzCaixaFechamentoComum.inicio; // "Início das vendas" e o aviso de horário da folha (fechamento-inicio.js, R-224)
 
   /** "Leitura" da folha: devolve o que o CREARE imprimiria, igual ao PDV (o operador pode corrigir). */
   function lerFolhaSimulada() {
-    const p = pralis();
+    const p = lidoNoPdv();
     const r = C.resumo();
     const campos = {
       trocoInicial: p.trocoInicial, saldoInicial: p.trocoInicial, clientes: 0, credito: p.credito, debito: p.debito, dinheiro: p.dinheiro,
-      pix: p.pix, voucher: p.voucher, total: p.total, despesas: p.despesas, sangria: p.sangria, saldoFinal: r.saldo,
+      pix: p.pix, voucher: p.voucher, total: p.total, despesas: p.despesas, sangria: p.sangria, saldoFinal: r.saldo + C.totalSemCaixa('Dinheiro'),
     };
     const texto = {};
     Object.keys(campos).forEach((k) => { texto[k] = fmt(campos[k]); });

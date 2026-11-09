@@ -45,5 +45,12 @@
     };
   }
 
-  window.CicluzCaixaFechamentoComum = { ctx, corpoSecao, dl, cadeado, fmt, CAMPOS_FOLHA, FORMAS_CARTAO, NOME_FORMA, ICONE_CADEADO, pralis, gerencia };
+  /** O que a folha do CREARE e a maquininha imprimem: tudo que o PDV vendeu no período, inclusive o que ainda está SEM caixa (R-224). */
+  function lidoNoPdv() {
+    const p = pralis();
+    const s = (nome) => C.totalSemCaixa(nome);
+    return { ...p, credito: p.credito + s('Crédito'), debito: p.debito + s('Débito'), dinheiro: p.dinheiro + s('Dinheiro'), pix: p.pix + s('Pix'), voucher: p.voucher + s('Voucher'), total: p.total + s() };
+  }
+
+  window.CicluzCaixaFechamentoComum = { ctx, corpoSecao, dl, cadeado, fmt, CAMPOS_FOLHA, FORMAS_CARTAO, NOME_FORMA, ICONE_CADEADO, pralis, lidoNoPdv, gerencia };
 })();

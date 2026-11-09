@@ -245,7 +245,7 @@
     entradas.setAttribute('aria-label', 'Consultar vendas nas Entradas: ' + moeda(r.entradas));
     entradas.onclick = Dlg.vendas;
     entradas.append(el('small', null, 'Entradas'), el('strong', null, moeda(r.entradas)),
-      el('small', null, 'Vendas do PDV neste turno · ' + plural(t.vendas.length, 'venda', 'vendas')));
+      el('small', null, 'Vendas do PDV neste turno · ' + plural(t.vendas.length, 'venda', 'vendas') + (C.estado.abertura.edicoes.length ? ' · desde ' + C.estado.abertura.inicioVendas + ' (início ajustado)' : '')));
     cartoes.append(saldo, entradas);
     s.append(corpo(cartoes));
 

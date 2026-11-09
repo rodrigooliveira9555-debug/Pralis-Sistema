@@ -69,6 +69,19 @@
   }
 
   /** Paradas do computador (PDV desligado) gravadas no turno: de quando até quando e por quê. */
+  /** Início das vendas e, se houve, cada ajuste do operador (R-224): quem, quando, motivo e as duas horas. */
+  function blocoInicio(h) {
+    const eds = h.edicoes || [];
+    const s = U.secao('Início das vendas', eds.length);
+    const itens = [dl([['Abertura oficial', h.abertura], ['Início das vendas', h.inicioVendas || h.abertura], ['Folha do CREARE começa às', h.periodoFolha || '—']])];
+    if (!eds.length) { itens.push(U.nota('Sem ajuste: o início das vendas é a abertura oficial.')); s.append(corpoSecao(...itens)); return s; }
+    const l = el('div', 'compras-lista');
+    eds.forEach((e) => l.append(U.linhaLista({ titulo: e.de + ' → ' + e.para, detalhe: e.por + ' · ' + e.em + ' · ' + e.motivo + ' · ' + e.trazidas + ' venda(s) passaram a ser deste caixa' + (e.devolvidas ? ', ' + e.devolvidas + ' saíram' : '') })));
+    itens.push(l);
+    s.append(corpoSecao(...itens));
+    return s;
+  }
+
   function blocoParadas(h) {
     const s = U.secao('Paradas do computador', h.paradas.length);
     if (!h.paradas.length) { s.append(corpoSecao(U.nota('Nenhuma parada do PDV registrada neste turno.'))); return s; }
@@ -110,7 +123,7 @@
 
   /** Dossiê completo (Tesouraria e Financeiro). A decisão entra por fora, em fechamentos-decisao.js. */
   function dossie(h) {
-    return [blocoQuem(h), blocoContagem(h), blocoFolha(h), blocoParadas(h), blocoTransferencias(h), blocoProvas(h), blocoHistorico(h)];
+    return [blocoQuem(h), blocoContagem(h), blocoFolha(h), blocoInicio(h), blocoParadas(h), blocoTransferencias(h), blocoProvas(h), blocoHistorico(h)];
   }
 
   /** Detalhe da Gerência: sem contagem cega, diferença, folha comparada, correções nem conferência da Tesouraria. */
@@ -122,6 +135,7 @@
     else itens.push(dl([['Responsável', l.sessao ? a.responsavel : l.operador], ['Lacre de abertura', l.sessao ? a.lacre : 'Não registrado'], ['Lacre de fechamento', 'Sem lacre (ainda aberto)']]));
     itens.push(U.nota(l.sessao && a.divergencia ? 'Conferência de abertura (malote): divergente, ' + moeda(a.divergencia) + ' em relação ao declarado. Motivo: ' + a.motivoDivergencia : 'Conferência de abertura do malote: convergente.'));
     if (l.status === 'fechado') itens.push(U.nota('Provas do fechamento: Folha de fechamento ' + l.anexos.folha + ' · Folha CREARE ' + l.anexos.creare + ' · Comprovante de cartão ' + l.anexos.comprovantes + '.'));
+    if (l.edicoes && l.edicoes.length) itens.push(U.nota('Início das vendas ajustado pelo operador: ' + l.edicoes.map((e) => e.de + ' → ' + e.para + ' (' + e.motivo + ')').join(' · ') + '.'));
     itens.push(U.nota('Alterado após o fechamento: não. Vendas canceladas são auditoria e não entram nos totais.'));
     itens.push(U.nota('A contagem cega, as correções e a conferência da Tesouraria não aparecem para a Gerência.'));
     s.append(corpoSecao(...itens));

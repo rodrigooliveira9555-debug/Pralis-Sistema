@@ -46,7 +46,7 @@
   const hora = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   function somarMin(hhmm, minutos) { // as vendas fictícias do turno ficam depois da abertura
     const [h, m] = hhmm.split(':').map(Number);
-    const t = (h * 60 + m + minutos) % 1440;
+    const t = (((h * 60 + m + minutos) % 1440) + 1440) % 1440; // minutos negativos: vendas antes da abertura
     return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0');
   }
   const totalItens = (itens) => itens.reduce((s, [, q, u]) => s + q * u, 0);
@@ -131,12 +131,15 @@
   /** Bolsas de sangria ainda livres do malote com que este caixa abriu. */
   const bolsasLivres = () => (!estado.abertura ? [] : estado.lacres.filter((l) => l.tipo === 'sangria' && l.transferenciaId === estado.abertura.maloteId && l.situacao === 'disponivel').map((l) => l.numero));
 
+  const novaVenda = (id, hora, forma, itens) => {
+    const valor = totalItens(itens);
+    return { id, hora, valor, itens, formas: Array.isArray(forma) ? forma : [[forma, valor]], descricao: itens.map(([p, q]) => q + '× ' + p).join(', ') };
+  };
   const novoTurno = (abertura) => ({
     pdvLigado: true, parada: null, paradas: [],
-    vendas: D.vendas.map(([min, forma, itens], i) => {
-      const valor = totalItens(itens);
-      return { id: 'V-' + (101 + i), hora: somarMin(abertura.abertoEm, min), valor, itens, formas: Array.isArray(forma) ? forma : [[forma, valor]], descricao: itens.map(([p, q]) => q + '× ' + p).join(', ') };
-    }),
+    vendas: D.vendas.map(([min, forma, itens], i) => novaVenda('V-' + (101 + i), somarMin(abertura.abertoEm, min), forma, itens)),
+    // vendas do PDV antes da abertura no sistema: sem caixa até o ajuste do início das vendas (inicio-vendas.js, R-224)
+    semCaixa: D.vendasSemCaixa.map(([min, forma, itens], i) => novaVenda('P-' + (901 + i), somarMin(abertura.abertoEm, min), forma, itens)),
     canceladas: D.canceladas.map((c) => ({ ...c, hora: somarMin(abertura.abertoEm, c.min), valor: totalItens(c.itens), descricao: c.itens.map(([p, q]) => q + '× ' + p).join(', ') })),
   });
 
@@ -144,7 +147,7 @@
   function abrirCaixa(abertura) {
     const m = transferencia(abertura.maloteId);
     const caixaId = proximoId('cx', estado.fechamentos) + '-v';
-    estado.abertura = { ...abertura, caixaId };
+    estado.abertura = { ...abertura, caixaId, inicioVendas: abertura.abertoEm, edicoes: [] }; // início das vendas = abertura até o ajuste (R-224)
     m.situacao = 'recebida'; m.valorRecebido = abertura.valorInicial; m.caixaId = caixaId; m.caixaRotulo = abertura.pdv + ' · ' + abertura.turno;
     lacre(m.lacre).situacao = 'usado';
     if (abertura.divergencia) estado.notificacoes.push({ tipo: 'quebra_caixa', titulo: 'Divergência na abertura do caixa - ' + abertura.responsavel, valor: abertura.divergencia, para: 'Tesouraria' });
@@ -263,7 +266,7 @@
   const novoFechamento = () => ({
     etapa: 1, gerente: '', gerenteOk: false, corte: hora(),
     contagem: { especie: '', moedas: '', registrada: null }, // registrada = { total, esperado, diferenca, correcoes[] }
-    folha: { anexo: null, campos: null, travados: true, correcao: '' }, relatorioGerado: false,
+    folha: { anexo: null, campos: null, travados: true, correcao: '', periodoDe: '' }, relatorioGerado: false,
     maq: { comprovante: null, valores: null, travados: true, salvo: false }, folhaFechamento: null, lacre: '', observacao: '', resultado: null,
   });
   /** "Encerrar vendas": grava o corte e abre o fechamento (sem volta). */
@@ -304,6 +307,7 @@
       folha: { campos: { ...f.folha.campos }, correcao: f.folha.correcao.trim() }, maquininha: { ...f.maq.valores },
       pdvForma: Object.fromEntries(['Crédito', 'Débito', 'Dinheiro', 'Pix', 'Voucher'].map((n) => [n, (r.porForma.find((x) => x[0] === n) || [n, 0])[1]])),
       paradas: estado.turno.paradas.map((p) => ({ ...p })), canceladas: estado.turno.canceladas.length,
+      inicioVendas: a.inicioVendas, edicoes: a.edicoes.map((e) => ({ ...e })), periodoFolha: f.folha.periodoDe,
     };
     estado.fechamentos.unshift(registro);
     // Notificações como no principal: falta = quebra + aviso; sobra = só aviso; sem usuário de Tesouraria não há aviso.
