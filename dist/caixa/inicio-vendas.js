@@ -3,7 +3,7 @@
  * Quando o operador abre o caixa no sistema depois de já estar vendendo no PDV, ele pode recuar o INÍCIO das vendas:
  * as vendas do PDV desse intervalo que estão SEM caixa passam a ser deste caixa (Entradas, saldo e relatório). A abertura
  * oficial nunca muda; muda só o início do período. Limites: no máximo 60 min antes da abertura oficial, no mesmo dia, nunca
- * antes do fechamento do caixa anterior do mesmo PDV, só com o caixa aberto ou em fechamento, motivo de 3 a 500 letras.
+ * no mesmo minuto nem antes do fechamento do caixa anterior do mesmo PDV (o primeiro minuto é o seguinte), só com o caixa aberto ou em fechamento, motivo de 3 a 500 letras.
  * Cada ajuste fica registrado (quem, quando, motivo e as duas horas). Com o caixa em fechamento, o relatório de vendas já
  * gerado é descartado e precisa ser gerado de novo. Folha × início: tolerância de 2 min.
  * Adaptações da casca: o início é uma HORA do mesmo dia (o principal pede data e hora com fuso); a venda "de outro caixa"
@@ -31,11 +31,11 @@
     return horas.length ? Math.max(...horas) : null;
   }
 
-  /** Faixa em que o início pode ficar: [de, ate], em "HH:MM" (ate = abertura oficial). */
+  /** Faixa em que o início pode ficar: [de, ate], em "HH:MM" (ate = abertura oficial). Depois do fechamento do caixa anterior: de = fechamento + 1 min. */
   function janelaInicio() {
     const oficial = min(C.estado.abertura.abertoEm);
     const piso = pisoCaixaAnterior();
-    const de = Math.max(0, oficial - RECUO_MAXIMO_MIN, piso === null ? 0 : piso);
+    const de = Math.max(0, oficial - RECUO_MAXIMO_MIN, piso === null ? 0 : piso + 1);
     return { de: hhmm(de), ate: hhmm(oficial) };
   }
 
@@ -49,7 +49,7 @@
     if (novo > oficial) return 'O início das vendas não pode ser depois da abertura oficial (' + a.abertoEm + ').';
     if (novo < oficial - RECUO_MAXIMO_MIN) return 'O início só pode recuar até ' + RECUO_MAXIMO_MIN + ' minutos antes da abertura oficial (a partir de ' + hhmm(Math.max(0, oficial - RECUO_MAXIMO_MIN)) + ').';
     const piso = pisoCaixaAnterior();
-    if (piso !== null && novo < piso) return 'O início não pode ser antes do fechamento do caixa anterior deste PDV (' + hhmm(piso) + ').';
+    if (piso !== null && novo <= piso) return 'O início não pode ser no mesmo minuto nem antes do fechamento do caixa anterior deste PDV (' + hhmm(piso) + '). O primeiro minuto permitido é ' + hhmm(piso + 1) + '.';
     const m = String(motivo || '').trim();
     if (m.length < 3 || m.length > 500) return 'Informe o motivo do ajuste (de 3 a 500 letras).';
     if (hora === a.inicioVendas) return 'O início das vendas já é ' + hora + '.';
