@@ -520,3 +520,11 @@ button.stepper-node:focus-visible{outline:2px solid var(--stepper-accent);outlin
 .stepper--timeline .stepper-item.is-done:not(:last-child)::after{background:var(--stepper-done)}
 .stepper--timeline .stepper-node{grid-template-columns:var(--stepper-size) 1fr;justify-items:start;text-align:left;column-gap:12px;row-gap:2px}
 .stepper--timeline .stepper-mark{grid-row:1/span 3}}
+
+/* Documentos de pagamento (esboço): totais e aviso de demonstração */
+.folhas-totais{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:8px;min-width:0}
+.folhas-total{display:grid;gap:2px;padding:10px 12px;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;min-width:0}
+.folhas-total small{color:var(--muted,#73737a);font:400 var(--ui-note,12px)/16px var(--ui-font)}
+.folhas-total b{font:600 15px/20px var(--ui-font);overflow-wrap:anywhere}
+.folhas-section{display:grid;gap:8px;min-width:0}
+.folhas-demo-note{align-items:center}
