@@ -23,6 +23,12 @@ const MODES={individual:{name:'Avaliação Individual',desc:'Horário, apresenta
  equipe:{name:'Avaliação em Equipe',desc:'Produto, ambiente e serviço de um setor.'},
  geral:{name:'Avaliação Geral',desc:'Vendas e ticket médio: referência contra realizado.'}};
 const TEAM={produto:'Produto',ambiente:'Ambiente',servico:'Serviço'};
+/* Vínculo com Ocorrências: cada grupo de critérios aponta para uma categoria da matriz de Ocorrências (só consulta; nada vira advertência). */
+const OCC_LINK={horario:'Cumprimento de Horários e Disciplina',apresentacao:'Apresentação e Higiene Pessoal',higiene:'Apresentação e Higiene Pessoal',ambiente:'Cumprimento de Atividades e Rotinas',servico:'Respeito, Comunicação e Relacionamento'};
+const LINK_TITLE={'Cumprimento de Horários e Disciplina':'Avaliações — Cumprimento de Horários','Apresentação e Higiene Pessoal':'Avaliações — Apresentação Pessoal e Higiene','Cumprimento de Atividades e Rotinas':'Avaliações — Ambiente e Rotina','Respeito, Comunicação e Relacionamento':'Avaliações — Serviço e Relacionamento'};
+const occCats=()=>{try{return window.CicluzMatrix?.activeCats()||[]}catch{return []}};
+const catIdByName=n=>occCats().find(c=>fold(c.name)===fold(n))?.id||'';
+const occRecords=()=>window.CicluzOccurrences?.list()||[];
 const INDICATORS=['Aumento de vendas gerais','Aumento de vendas por setor','Aumento do ticket médio'];
 
 /* ---------- Dados próprios ---------- */
@@ -133,6 +139,9 @@ function criteriaScreen(ctx){const answers=[];
  body.append(counter,error,navBar(back(),finish))}
 
 /* --- Resultado e feedback --- */
+function relatedOccurrencesDialog(personId,names){U.dialog('Ocorrências relacionadas — '+(P.byId(personId)?.name||''),(f,form)=>{form.append(el('p','profiles-note','Consulta apenas. Uma avaliação não gera advertência: qualquer medida é decisão do DP, pela análise de ocorrências.'));
+  for(const n of names){const id=catIdByName(n),list=occRecords().filter(r=>r.collaboratorId===personId&&r.matrixCatId&&r.matrixCatId===id).sort((a,b)=>b.date.localeCompare(a.date));form.append(el('h4',null,(LINK_TITLE[n]||n)+' ⇄ Ocorrências → '+n));
+   if(!list.length){form.append(el('p','profiles-note','Nenhuma ocorrência nesta categoria.'));continue}const ul=el('ul','avaliacoes-list');for(const r of list)ul.append(el('li',null,dateBR(r.date)+' · '+r.type+' · '+(window.CicluzMatrix?.label(r.matrixCatId,r.matrixSubId)||'')+' · '+r.status));form.append(ul)}})}
 function describe(ev){const parts=[];const sec=orgNode(ev.sectorId);if(sec)parts.push(sec.name);if(ev.personId)parts.push(P.byId(ev.personId)?.name||'colaborador');if(ev.productId)parts.push(productName(ev.productId));return parts.join(' · ')}
 function feedback(ev,container){const s=score(ev.answers);const bads=ev.answers.filter(a=>a.state==='bad');
  const box=el('section','profiles-section avaliacoes-result');box.append(el('h3',null,'Resultado da avaliação: '+pctText(s.pct)+' de aproveitamento.'));
@@ -140,6 +149,8 @@ function feedback(ev,container){const s=score(ev.answers);const bads=ev.answers.
  box.append(el('p',null,'Pontos a melhorar: '+(bads.length?bads.length+' critério(s) não conforme(s).':'nenhum critério marcado como não conforme.')));
  if(bads.length){const ul=el('ul','avaliacoes-list');for(const a of bads)ul.append(el('li',null,a.label+(a.reason?' — '+a.reason:'')+(a.note?': '+a.note:'')));box.append(ul)}
  box.append(el('p','profiles-note','Avaliados: '+s.applicable+' · Não se aplica: '+s.na+' (fora do cálculo)'+(s.pending?' · Sem avaliação: '+s.pending+' (também fora do cálculo, nunca contam como conformes)':'')+'.'));
+ const relNames=[...new Set([...(ev.groups||[...new Set(ev.answers.map(a=>a.group))]).map(g=>OCC_LINK[g]).filter(Boolean)])];
+ if(ev.personId&&relNames.length){const b=button('Ver ocorrências relacionadas',()=>relatedOccurrencesDialog(ev.personId,relNames),'btn secondary');box.append(b)}
  box.append(el('p','profiles-note','Preparada para a premiação '+(ev.mode==='individual'?'Individual':ev.mode==='equipe'?'em Equipe':'Geral')+' da Ficha de Cargos. Nesta etapa nenhuma premiação é calculada nem concedida.'));container.append(box)}
 function resultScreen({ctx,answers}){const ev={...ctx,answers},head=el('h3','uniforms-heading',(ctx.mode==='individual'?'Avaliação Individual':'Avaliação em Equipe — '+TEAM[ctx.category])+' · '+describe(ctx));body.append(head);feedback(ev,body);const {error,status}=msgs();
  let saved=false;const save=button('Salvar avaliação demonstrativa',()=>{error.textContent=status.textContent='';if(saved){status.textContent='Esta avaliação já foi salva.';return}load();const s=score(answers);
@@ -197,5 +208,8 @@ function show(key){document.querySelectorAll('.view').forEach(v=>v.classList.rem
  bd.append(el('div','form-note','Tela reservada. A Entrevista deixou de ser uma etapa da admissão (o fluxo começa no Cadastro Simples) e ainda não há definição do que este espaço terá. Aguardando as orientações do Rodrigo; nenhum cadastro foi duplicado.'));pn.append(hd,bd);v.append(pn);document.querySelector('main').append(v);addShortcuts(v.id,goHome);
  window.showEntrevistas=()=>{document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));v.classList.add('show');const c=document.getElementById('crumb');if(c)c.textContent='Gestão de Pessoas · Entrevistas';const t=document.getElementById('title');if(t)t.textContent='Entrevistas';normalizeHeaderActions?.(v)}}
 window.showAvaliacoes=show;
-window.CicluzAvaliacoes={score,CRITERIA,evaluationsOf:({personId,sectorId}={})=>{load();return data.evaluations.filter(e=>(!personId||e.personId===personId)&&(!sectorId||e.sectorId===sectorId))}};
+/* Avaliações do mesmo colaborador com itens não conformes nos grupos ligados à categoria da ocorrência. */
+function relatedToOccurrence(r){if(!r.collaboratorId||!r.matrixCatId)return [];load();const cat=window.CicluzMatrix?.catById(r.matrixCatId);if(!cat)return [];const groups=Object.entries(OCC_LINK).filter(([,n])=>fold(n)===fold(cat.name)).map(([g])=>g);
+ return data.evaluations.filter(e=>e.personId===r.collaboratorId).map(e=>({e,bad:e.answers.filter(a=>a.state==='bad'&&groups.includes(a.group))})).filter(x=>x.bad.length||(x.e.answers||[]).some(a=>groups.includes(a.group))).map(x=>({date:x.e.createdAt.slice(0,10),mode:x.e.mode,pct:x.e.pct,bad:x.bad.map(a=>a.label)}))}
+window.CicluzAvaliacoes={relatedToOccurrence,OCC_LINK,LINK_TITLE,score,CRITERIA,evaluationsOf:({personId,sectorId}={})=>{load();return data.evaluations.filter(e=>(!personId||e.personId===personId)&&(!sectorId||e.sectorId===sectorId))}};
 })();

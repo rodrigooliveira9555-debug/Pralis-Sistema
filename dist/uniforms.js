@@ -9,7 +9,7 @@ const svg=path=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/
 const ICON={ok:'m5 12 4 4L19 6',calendar:'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',link:'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',copy:'M8 8h12v12H8zM4 16V4h12',user:telaIcone.colaborador,power:'M12 3v9M6.3 6.3a8 8 0 1 0 11.4 0',shirt:telaIcone.uniformes,plus:'M12 5v14M5 12h14',eye:'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',edit:'M4 20h4L19 9l-4-4L4 16zM13 7l4 4',ban:'M5.6 5.6l12.8 12.8M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z',trash:'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6'};
 /* The legacy inline script declares a global open(t) that shadows window.open with the old modal; links open through an anchor instead. */
 function openExternal(url){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';document.body.append(a);a.click();a.remove()}
-const iconButton=(label,path,fn,cls='')=>{const b=button('',fn,'uniforms-icon-action'+(cls?' '+cls:''));b.title=label;b.setAttribute('aria-label',label);b.innerHTML=svg(path);return b};
+const iconButton=(label,path,fn,cls='')=>{const b=button('',fn,'uniforms-icon-action'+(cls?' '+cls:''));b.dataset.tip=label;b.setAttribute('aria-label',label);b.innerHTML=svg(path);return b};
 const fold=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLocaleLowerCase('pt-BR');
 const newId=()=>crypto.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
 const money=c=>Number.isInteger(c)?(c/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):'—';
