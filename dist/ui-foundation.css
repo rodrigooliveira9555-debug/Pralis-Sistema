@@ -528,3 +528,56 @@ button.stepper-node:focus-visible{outline:2px solid var(--stepper-accent);outlin
 .folhas-total b{font:600 15px/20px var(--ui-font);overflow-wrap:anywhere}
 .folhas-section{display:grid;gap:8px;min-width:0}
 .folhas-demo-note{align-items:center}
+
+/* Exames: alertas, prestadores com vários endereços, botão Salvar e Enviar por WhatsApp */
+.exams-alerts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:8px;min-width:0}
+.exams-alert{display:grid;gap:2px;text-align:left;padding:10px 12px;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;background:transparent;color:inherit;font:inherit;cursor:pointer;min-width:0}
+.exams-alert b{font:600 20px/24px var(--ui-font)}.exams-alert small{color:var(--muted,#73737a);font:400 var(--ui-note,12px)/16px var(--ui-font)}
+.exams-alert.is-attn{border-color:#ef4444;background:color-mix(in srgb,#ef4444 8%,transparent)}.exams-alert.is-attn b{color:#dc2626}
+.exams-alert[aria-expanded=true]{outline:2px solid var(--menu-accent,#7c3aed);outline-offset:-2px}
+.exams-alert-detail{margin-top:8px;padding:10px 12px;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;display:grid;gap:6px}.exams-alert-detail[hidden]{display:none}
+.exams-alerts-box{margin-bottom:12px}
+.exams-save-send{display:inline-flex;align-items:center;gap:8px}.exams-wa-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.prestadores-addresses{display:grid;gap:8px;min-width:0}
+.prestadores-addr{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding:8px;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;min-width:0}
+@media (min-width:760px){.prestadores-addr{grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(0,1fr) 110px auto;align-items:center}}
+
+/* Acompanhamento do Cadastro Simples: Editar, Agendar e Visualizar (redondos, tamanho único; só nesta lista) */
+.people-simple-list .uniforms-icon-action.people-act{width:36px;height:36px;border-radius:50%;margin-left:6px}
+.people-simple-list .uniforms-icon-action.people-act svg{width:18px;height:18px}
+.people-simple-list .uniforms-icon-action.people-act.is-red{background:#ef4444;border-color:#ef4444;color:#fff}
+.people-simple-list .uniforms-icon-action.people-act.is-purple{background:var(--menu-accent,#7c3aed);border-color:var(--menu-accent,#7c3aed);color:#fff}
+.people-simple-list .uniforms-icon-action.people-act:hover{filter:brightness(1.08);border-color:transparent}
+.people-simple-list .uniforms-icon-action.people-act:focus-visible{outline:2px solid currentColor;outline-offset:2px;box-shadow:0 0 0 4px color-mix(in srgb,var(--menu-accent,#7c3aed) 35%,transparent)}
+.people-simple-list .uniforms-icon-action.people-act:disabled{opacity:.45;cursor:not-allowed;filter:none}
+
+/* Documentações: assinatura e andamento */
+.docs-sign{display:grid;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--layout-line,#e4e4e7);min-width:0}
+.docs-sign-mode{display:grid;gap:4px;max-width:320px}
+
+/* DES - Tipos de Ocorrência: configurações adicionais recolhíveis */
+.occurrence-more{border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;padding:8px 12px;min-width:0}
+.occurrence-more>summary{cursor:pointer;font:600 var(--ui-label,13px)/20px var(--ui-font);min-height:32px;display:flex;align-items:center}
+.occurrence-more[open]>summary{margin-bottom:8px}
+.form-fields[hidden],.uniforms-form[hidden]{display:none}
+
+/* Lançamento de Ocorrências: painel de apoio à decisão, documento associado e resumo */
+.matrix-panel{display:grid;gap:6px;padding:10px 12px;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;background:color-mix(in srgb,var(--menu-accent,#7c3aed) 5%,transparent);min-width:0}
+.matrix-panel b{font:600 13px/18px var(--ui-font)}.matrix-panel .profiles-info{margin:0}
+.form-fields input.is-pending{border-color:#ef4444;color:#b91c1c}
+.occurrences-summary{display:grid;gap:6px;min-width:0}.occurrences-summary h4{margin:0}
+
+/* Botão redondo reutilizável (compartilhamento): círculo na cor de destaque, ícone branco, dica no hover, foco e toque longo */
+.share-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:4px}
+.round-action{position:relative;display:inline-grid;place-items:center;width:40px;height:40px;padding:0;border:0;border-radius:50%;background:var(--menu-accent,#7c3aed);color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.18);transition:filter .15s,transform .15s;flex:none;-webkit-touch-callout:none;user-select:none;touch-action:manipulation}
+.round-action svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.round-action:hover{filter:brightness(1.1)}.round-action:active{transform:scale(.96)}
+.round-action:focus-visible{outline:2px solid var(--menu-accent,#7c3aed);outline-offset:3px}
+.round-action:disabled{opacity:.45;cursor:not-allowed}
+.round-tip{position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);z-index:5;padding:5px 9px;border-radius:8px;background:#27272a;color:#fff;font:500 12px/16px var(--ui-font);white-space:nowrap;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .12s}
+.round-action:hover .round-tip,.round-action:focus-visible .round-tip,.round-action.show-tip .round-tip{opacity:1;visibility:visible}
+
+/* Dica imediata dos botões de ícone ([data-tip]): fica acima de janelas, com boa leitura e sem cortar na borda */
+.ui-tip{position:fixed;inset:auto;margin:0;display:none;max-width:min(260px,calc(100vw - 16px));padding:6px 10px;border:0;border-radius:8px;background:#27272a;color:#fff;font:500 12px/16px var(--ui-font);white-space:normal;text-align:center;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.25);overflow:visible}
+.ui-tip.on{display:block}
+.uniforms-icon-action{-webkit-touch-callout:none;user-select:none}
