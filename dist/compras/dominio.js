@@ -223,6 +223,16 @@
     ['gerente-geral', 'Gerente geral'], ['gerente-comercial', 'Gerente comercial'], ['supervisor-geral', 'Supervisor geral'], ['supervisor-comercial', 'Supervisor comercial'],
     ['representante-comercial', 'Representante comercial'], ['administrador', 'Administrador'], ['financeiro', 'Financeiro'], ['procurador', 'Procurador'], ['outro', 'Outro']];
   /** Quem é o contato da 2ª etapa, pela categoria: vendedor (Produto), prestador (Serviço) ou os dois. */
+  /**
+   * Aniversário do vendedor ou prestador, só mês e ano (AAAA-MM; decisão do Rodrigo, 15/11/2026). Quem tem a data
+   * completa antiga (vendedorNascimento) e ainda não tem o campo novo mostra o mês e o ano dela; a data antiga
+   * continua gravada, sem uso. Campo novo vazio ('') é vazio de verdade (a pessoa apagou).
+   */
+  function aniversarioVendedor(f) {
+    if (!f) return '';
+    if (typeof f.vendedorAniversario === 'string') return f.vendedorAniversario;
+    return /^\d{4}-\d{2}-\d{2}$/.test(f.vendedorNascimento || '') ? f.vendedorNascimento.slice(0, 7) : '';
+  }
   function quemVendeFornecedor(categorias) {
     const c = Array.isArray(categorias) ? categorias : [];
     const p = c.includes('produto'); const s = c.includes('servico');
@@ -252,7 +262,7 @@
   /**
    * O que impede salvar, etapa por etapa: devolve 4 textos ('' quando a etapa está em ordem). Obrigatórios: categoria
    * (Produto, Serviço ou os dois), tipo de pessoa, nome (na pessoa jurídica, nome fantasia ou razão social), CNPJ ou CPF
-   * com dígito verificador e WhatsApp do vendedor ou prestador. O nascimento do vendedor é opcional (o CPF dele não é
+   * com dígito verificador e WhatsApp do vendedor ou prestador. O aniversário do vendedor (mês e ano) é opcional (o CPF dele não é
    * mais pedido; valor antigo, se houver, fica guardado sem uso).
    * regras = { cpfValid, cnpjValid } do field-validation.js. A exigência vale ao salvar: fornecedor antigo sem esses
    * dados continua abrindo e sendo usado.
@@ -278,7 +288,12 @@
       if (!digitos(f.whatsapp)) return 'Informe o WhatsApp do vendedor ou prestador.';
       if (telefoneRuim(f.whatsapp)) return 'WhatsApp inválido.';
       if (f.email && !emailValido(f.email)) return 'E-mail do vendedor ou prestador inválido.';
-      if (f.vendedorNascimento && !/^\d{4}-\d{2}-\d{2}$/.test(f.vendedorNascimento)) return 'Data de nascimento inválida.';
+      // Aniversário do vendedor: só mês e ano (AAAA-MM), opcional; ano de 1900 até o mês atual.
+      if (f.vendedorAniversario) {
+        const m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(f.vendedorAniversario);
+        if (!m || +m[1] < 1900) return 'Aniversário inválido: use mês e ano (MM/AAAA).';
+        if (f.vendedorAniversario > new Date().toISOString().slice(0, 7)) return 'O aniversário não pode ser um mês futuro.';
+      }
       return '';
     };
     const contato = (c, quem) => {
@@ -475,7 +490,7 @@
     topoDoRanking,
     digitos, motivoNaoConvidavel, podeConvidar,
     TIPOS_PESSOA, CATEGORIAS_FORNECEDOR, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, tipoPessoaDe, validarFornecedor,
-    validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, migrarVendedorFornecedor,
+    validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, aniversarioVendedor, migrarVendedorFornecedor,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,
     aplicarRecebimento, SITUACOES_PEDIDO,

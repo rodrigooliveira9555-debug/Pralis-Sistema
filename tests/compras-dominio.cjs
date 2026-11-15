@@ -191,15 +191,23 @@ ok(() => {
   assert.match(v({ financeiro: { nome: 'Fin', whatsapp: '123', email: '' } }), /WhatsApp do financeiro/);
   assert.match(v({ financeiro: { nome: 'Fin', whatsapp: '', email: 'x@' } }), /E-mail do financeiro/);
   assert.equal(v({ tipoPessoa: 'fisica', documento: '529.982.247-25' }), '');
-  // Cadastro em etapas: vendedor (CPF e nascimento opcionais, conferidos se vierem), financeiro e representante.
-  assert.equal(v({ vendedorNascimento: '1990-01-01', regimeTributario: 'simples' }), '');
+  // Cadastro em etapas: vendedor (aniversário em mês e ano, opcional), financeiro e representante.
+  assert.equal(v({ vendedorAniversario: '1990-01', regimeTributario: 'simples' }), '');
+  assert.equal(v({ vendedorAniversario: '', vendedorNascimento: '1990-01-01' }), ''); // a data completa antiga não é conferida
+  assert.match(v({ vendedorAniversario: '1990-13' }), /Aniversário/);
+  assert.match(v({ vendedorAniversario: '03/19' }), /Aniversário/);
+  assert.match(v({ vendedorAniversario: '1890-03' }), /Aniversário/);
+  assert.match(v({ vendedorAniversario: '2999-01' }), /futuro/);
+  assert.equal(d.aniversarioVendedor({ vendedorNascimento: '1990-03-15' }), '1990-03');
+  assert.equal(d.aniversarioVendedor({ vendedorNascimento: '1990-03-15', vendedorAniversario: '' }), '');
+  assert.equal(d.aniversarioVendedor({ vendedorNascimento: '1990-03-15', vendedorAniversario: '1991-04' }), '1991-04');
+  assert.equal(d.aniversarioVendedor(null), '');
   assert.equal(v({ vendedorCpf: 'valor antigo qualquer' }), ''); // o CPF do vendedor não é mais pedido nem conferido
   assert.equal(v({ representante: { mesmo: true, cargo: 'socio-proprietario' } }), '');
   assert.match(v({ representante: { cargo: 'chefe' } }), /Cargo do representante/);
   assert.deepEqual(d.CARGOS_REPRESENTANTE.map(([, nome]) => nome), ['Proprietário', 'Sócio-proprietário', 'Diretor geral', 'Diretor comercial', 'Gerente geral', 'Gerente comercial',
     'Supervisor geral', 'Supervisor comercial', 'Representante comercial', 'Administrador', 'Financeiro', 'Procurador', 'Outro']);
   assert.deepEqual(d.etapasFornecedor([]), ['Dados da empresa', 'Dados do vendedor', 'Dados do financeiro', 'Dados do representante']);
-  assert.match(v({ vendedorNascimento: '01/01/1990' }), /nascimento/);
   assert.match(v({ regimeTributario: 'outro' }), /Regime/);
   assert.match(v({ representante: { nome: 'Rep', whatsapp: '12', email: '' } }), /WhatsApp do representante/);
   assert.match(v({ nome: '' }), /nome fantasia ou a razão social/);

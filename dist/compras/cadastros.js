@@ -328,13 +328,15 @@
         /* ----- Etapa 2: vendedor ou prestador de serviço (é o contato do fornecedor; o WhatsApp dele recebe a cotação) ----- */
         const s2 = el('fieldset', 'compras-fieldset');
         const vNome = texto(f?.contatoNome);
-        const vNasc = entrada('date', f?.vendedorNascimento || '');
+        // Aniversário: só mês e ano (MM/AAAA), pela fonte única de datas (date-fields.js). A data completa antiga fica no dado.
+        const DF = window.CicluzDateFields;
+        const vAniv = aplicarMascara(entrada('text', DF.monthDisplay(D.aniversarioVendedor(f)), { inputMode: 'numeric', placeholder: 'MM/AAAA', maxLength: 7, autocomplete: 'off' }), DF.monthMask);
         const whats = telefone(f?.whatsapp);
         const mail = email(f?.email);
         // O CPF do vendedor não é mais pedido (decisão do Rodrigo): o campo saiu; valor já gravado fica como está, sem uso.
         const tituloS2 = el('legend');
         const camposS2 = [[campo('Nome', vNome), vNome, 'Nome do ', ''], [campo('WhatsApp', whats), whats, 'WhatsApp do ', ' *'], [campo('E-mail', mail), mail, 'E-mail do ', '']];
-        s2.append(tituloS2, camposS2[0][0], camposS2[1][0], campo('Data de nascimento', vNasc), camposS2[2][0]);
+        s2.append(tituloS2, camposS2[0][0], camposS2[1][0], campo('Aniversário', vAniv), camposS2[2][0]);
         // Título e rótulos acompanham a categoria: "vendedor", "prestador" ou "vendedor / prestador".
         const pintarVendedor = () => {
           const quem = D.quemVendeFornecedor(marcadas());
@@ -446,17 +448,17 @@
             regimeTributario: pj ? regime.value : '', ramo: ramo.value.trim(),
             endereco: { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value },
             contatoNome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email,
-            vendedorNascimento: vNasc.value,
+            // Texto incompleto segue como está para a validação recusar (não vira vazio em silêncio).
+            vendedorAniversario: DF.monthParse(vAniv.value) || vAniv.value.trim(),
             financeiro: contato(fin), representante: { ...contato(rep), cargo: repCargo.value },
             situacao: ativo.input.checked ? 'ativo' : 'inativo',
           };
         }
         form.append(barra.el, ...quadros, erroEtapa, nav);
         ir(0);
-        return { ler, ir, vNasc };
+        return { ler, ir };
       },
       salvar: (c) => {
-        if (!c.vNasc.checkValidity()) { c.ir(1); return 'Confira a data de nascimento: use DD/MM/AA.'; }
         const campos = c.ler();
         const faltas = D.validarFornecedorEtapas(campos, R(), { fornecedores: S.dados.fornecedores });
         const etapaComFalta = faltas.findIndex(Boolean);

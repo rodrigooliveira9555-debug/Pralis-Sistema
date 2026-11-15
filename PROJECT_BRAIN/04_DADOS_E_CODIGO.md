@@ -73,7 +73,9 @@
   a marca antiga podem ter ficado em dado de teste: nenhum código as lê. Fornecedor antigo sem os obrigatórios novos
   continua válido. **Endereço (15/11/2026):** campo novo e opcional `endereco: { cep, logradouro, numero, complemento, bairro, cidade, uf }`;
   fornecedor sem ele continua válido, sem migração. **Cadastro em etapas (15/11/2026):** entram `regimeTributario` ('mei' | 'simples' | 'presumido' | 'real' |
-  'nao-informado' | ''), `vendedorNascimento` e `representante: { mesmo, nome, whatsapp, email, cargo }` (cargo: valor fixo de
+  'nao-informado' | ''), `vendedorAniversario` ('AAAA-MM' ou ''; só mês e ano, decisão do Rodrigo no mesmo dia: quem tinha a data
+  completa em `vendedorNascimento` continua com ela gravada, sem uso, e a tela mostra o mês e o ano dela até o campo novo existir;
+  sem migração) e `representante: { mesmo, nome, whatsapp, email, cargo }` (cargo: valor fixo de
   `CARGOS_REPRESENTANTE`, ou ''; a lista foi revista no mesmo dia e os valores `socio` e `diretor`, que existiram por cerca de uma hora,
   saíram: quem tiver um deles gravado vê o seletor vazio e escolhe de novo; com `mesmo: true` o nome, o WhatsApp e o e-mail
   gravados são a cópia da etapa anterior, como antes); o `vendedorCpf` existiu por algumas horas e não é mais pedido nem lido (valor já gravado fica no dado); `financeiro`

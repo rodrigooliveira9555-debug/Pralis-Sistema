@@ -6,7 +6,12 @@
  function display(value){const m=isoPattern.exec(value||'');return m?m[3]+'/'+m[2]+'/'+m[1].slice(-2):''}
  function mask(value){const d=String(value||'').replace(/\D/g,'').slice(0,6);return d.slice(0,2)+(d.length>2?'/'+d.slice(2,4):'')+(d.length>4?'/'+d.slice(4,6):'')}
  function parse(value,reference=''){const m=/^(\d{2})\/(\d{2})\/(\d{2})$/.exec(value||'');if(!m)return '';const prior=isoPattern.exec(reference),short=+m[3],year=prior&&+prior[1]%100===short?+prior[1]:(short<50?2000:1900)+short;const iso=String(year).padStart(4,'0')+'-'+m[2]+'-'+m[1];return valid(iso)?iso:''}
- const api={valid,display,mask,parse};if(typeof module!=='undefined')module.exports=api;if(!root.document)return;root.CicluzDateFields=api;
+ /* Mês e ano (15/11/2026): a tela mostra MM/AAAA e o dado guarda AAAA-MM. monthDisplay aceita também uma data ISO completa (mostra só mês/ano). */
+ function monthValid(value){const m=/^(\d{4})-(\d{2})$/.exec(value||'');return !!m&&+m[1]>=1900&&+m[1]<=2100&&+m[2]>=1&&+m[2]<=12}
+ function monthDisplay(value){const m=/^(\d{4})-(\d{2})(?:-\d{2})?$/.exec(value||'');return m?m[2]+'/'+m[1]:''}
+ function monthMask(value){const d=String(value||'').replace(/\D/g,'').slice(0,6);return d.slice(0,2)+(d.length>2?'/'+d.slice(2):'')}
+ function monthParse(value){const m=/^(\d{2})\/(\d{4})$/.exec(value||'');if(!m)return '';const iso=m[2]+'-'+m[1];return monthValid(iso)?iso:''}
+ const api={valid,display,mask,parse,monthValid,monthDisplay,monthMask,monthParse};if(typeof module!=='undefined')module.exports=api;if(!root.document)return;root.CicluzDateFields=api;
  const entries=new Set(),mounted=new WeakSet(),value=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');let serial=0;
  function validate(entry){const {original,input}=entry,raw=input.value,iso=parse(raw,entry.reference);let error=entry.external||'';if(!error&&raw&&!iso)error='Informe uma data válida no formato DD/MM/AA.';if(!error&&iso&&original.min&&iso<original.min)error='A data está antes do limite permitido.';if(!error&&iso&&original.max&&iso>original.max)error='A data está depois do limite permitido.';input.setCustomValidity(error);if(error)input.setAttribute('aria-invalid','true');else input.removeAttribute('aria-invalid');return iso}
  function paint(entry){const iso=value.get.call(entry.original);entry.last=iso;if(valid(iso))entry.reference=iso;else if(!iso)entry.reference='';entry.input.value=display(iso);validate(entry)}

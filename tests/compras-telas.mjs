@@ -114,7 +114,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await df.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).click();
   await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'));
   ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '11.222.333/0001-81' && f.tipoPessoa === 'juridica' && f.categorias.join() === 'produto,servico' && f.ramo.toUpperCase() === 'BEBIDAS' && f.nome.toUpperCase() === 'FORNECEDOR CNPJ TESTE' && f.razaoSocial.toUpperCase().includes('LTDA') && f.regimeTributario === 'simples' && f.contatoNome && f.financeiro.email === 'financeiro@exemplo.test' && f.representante.mesmo && f.representante.email === 'financeiro@exemplo.test' && f.representante.cargo === 'gerente-comercial' && !('vendedorCpf' in f))), 'Fornecedor pessoa jurídica salvo com as 4 etapas (o representante copia o financeiro e guarda o cargo)');
-  // Pessoa física: nome e CPF; nascimento do vendedor é opcional
+  // Pessoa física: nome e CPF; aniversário do vendedor (mês e ano) é opcional
   await p.locator('.view.show .people-add-control').click();
   const dp = p.locator('dialog.compras-dialog[open]').last();
   await dp.getByLabel('Serviço', { exact: true }).check();
@@ -124,11 +124,11 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await dp.getByLabel('CPF *', { exact: true }).pressSequentially('52998224725');
   await avancar(dp);
   await dp.getByLabel('WhatsApp do prestador *', { exact: true }).pressSequentially('31988880000');
-  await dp.getByLabel('Data de nascimento', { exact: true }).fill('15/03/90');
+  await dp.getByLabel('Aniversário', { exact: true }).pressSequentially('031990');
   await avancar(dp); await avancar(dp);
   await dp.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).click();
   await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'));
-  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '529.982.247-25' && f.tipoPessoa === 'fisica' && f.vendedorNascimento === '1990-03-15' && f.categorias.join() === 'servico')), 'Fornecedor pessoa física salvo com CPF, nascimento do prestador e categoria Serviço');
+  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '529.982.247-25' && f.tipoPessoa === 'fisica' && f.vendedorAniversario === '1990-03' && f.categorias.join() === 'servico')), 'Fornecedor pessoa física salvo com CPF, nascimento do prestador e categoria Serviço');
   // DES - Fornecedores abre o mesmo cadastro, na cor de Despesas
   await p.evaluate(() => CicluzCompras.abrir('fornecedores-des'));
   ok(await p.locator('#despesas-fornecedores.show').count() === 1 && (await p.locator('#despesas-fornecedores .head h2').textContent()) === 'DES - Fornecedores' && await p.locator('#despesas-fornecedores .compras-linha', { hasText: 'Prestador CPF Teste' }).count() === 1, 'DES - Fornecedores mostra os mesmos fornecedores');
