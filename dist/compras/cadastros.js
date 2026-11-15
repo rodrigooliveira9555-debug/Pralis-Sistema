@@ -326,10 +326,11 @@
         const regimeCampo = campo('Regime tributário', regime);
         const ramo = texto(f?.ramo, { maxLength: 80, placeholder: 'Ex.: Bebidas, Manutenção' });
         const situacao = U.quadroSituacao('Situação do fornecedor', f ? f.situacao === 'ativo' : true, { dica: 'Fornecedor inativo não aparece no seletor de cotação.' });
-        // Ordem do Rodrigo: categoria, CNPJ (que puxa os dados), razão social, nome fantasia, regime tributário; depois o endereço; por último ramo e o quadro Situação do fornecedor.
+        // Ordem do Rodrigo: categoria, CNPJ (que puxa os dados), razão social, nome fantasia, regime tributário; depois o endereço; por último o ramo.
         const avisoCnpj = el('p', 'profiles-note compras-largo');
         avisoCnpj.setAttribute('role', 'status');
-        s1.append(catBox, cnpjCampo, ...(docAntigo ? [avisoAntigo] : []), avisoCnpj, razaoCampo, nomeCampo, regimeCampo);
+        // Ordem do Rodrigo: a Situação do fornecedor vem logo depois da Categoria.
+        s1.append(catBox, situacao, cnpjCampo, ...(docAntigo ? [avisoAntigo] : []), avisoCnpj, razaoCampo, nomeCampo, regimeCampo);
 
         /* Endereço: CEP primeiro (puxa rua, bairro, cidade e UF); número e complemento são digitados. */
         const sEnd = el('fieldset', 'compras-fieldset');
@@ -349,7 +350,7 @@
         const sResto = el('fieldset', 'compras-fieldset');
         sResto.append(campo('Ramo', ramo));
         const etapa1 = el('div', 'compras-etapa');
-        etapa1.append(s1, sEnd, sResto, situacao);
+        etapa1.append(s1, sEnd, sResto);
 
         /* Buscas (consultas-publicas.js): nunca trocam o que a pessoa digitou; se o serviço falhar, avisam discretamente
            e o cadastro segue à mão. Cada número é consultado uma vez. Um campo é "livre" para a consulta quando está
