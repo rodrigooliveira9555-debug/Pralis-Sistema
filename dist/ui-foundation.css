@@ -1,5 +1,5 @@
 /* Single role-based type and form scale. Edit these tokens, not individual screens. */
-:root{--ui-font:Montserrat,system-ui,sans-serif;--ui-header-icon-diameter:30px;--ui-header-icon-inset:4.5px;--ui-title:16px;--ui-title-line:20px;--ui-subtitle:11px;--ui-subtitle-line:14px;--ui-text:14px;--ui-input-size:14px;--ui-text-line:18px;--ui-note:11px;--ui-field-height:42px;--ui-field-radius:8px;--row-icon-radius:26%;--row-action-size:32px;--row-action-gap:6px;--ui-title-weight:600;--ui-section-title:14px;--ui-section-title-line:20px;--ui-section-title-weight:600;--ui-header-tint:14%;--ui-border-tint:25%;--ui-hover-tint:8%;--ui-focus-tint:14%}
+:root{--ui-font:Montserrat,system-ui,sans-serif;--ui-header-icon-diameter:30px;--ui-header-icon-inset:4.5px;--ui-title:16px;--ui-title-line:20px;--ui-subtitle:11px;--ui-subtitle-line:14px;--ui-text:14px;--ui-input-size:14px;--ui-text-line:18px;--ui-note:11px;--ui-field-height:42px;--ui-field-radius:8px;--row-icon-radius:26%;--row-action-size:32px;--row-action-gap:6px;--ui-title-weight:600;--ui-section-title:14px;--ui-section-title-line:20px;--ui-section-title-weight:600;--ui-header-tint:14%;--ui-border-tint:25%;--ui-hover-tint:8%;--ui-focus-tint:14%;--acao-largura:128px;--acao-circulo:28px;--acao-respiro:5px}
 body .view>.panel>.head h2,body #sector-view .panel>.head h2,body #jobs-view .panel>.head h2,body #salary-view .panel>.head h2{font-family:var(--ui-font)!important;font-size:var(--ui-title)!important;font-weight:var(--ui-title-weight)!important;line-height:var(--ui-title-line)!important;letter-spacing:normal!important}
 body .view>.panel>.head p{font-family:var(--ui-font)!important;font-size:var(--ui-subtitle)!important;font-weight:400!important;line-height:var(--ui-subtitle-line)!important;letter-spacing:normal!important}
 body .view .form-fields,body .view .form-demo .content,body .view .account-editor,body .location-dialog form{font-family:var(--ui-font);font-size:var(--ui-text);line-height:var(--ui-text-line)}
@@ -113,7 +113,7 @@ body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :i
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-library,.account-icon-options,.extra-library){display:flex;flex-wrap:wrap;gap:var(--layout-item-gap,4px)}
 body :is(.view,dialog) :is(.identity-advanced>summary,.most-used-icons>small,.identity-pick>small,.location-sigla-field>small){font:var(--ui-label-weight) var(--ui-label)/18px var(--ui-font)!important;color:var(--ui-label-color)!important;letter-spacing:normal!important}
 body :is(#sector-view,.view,dialog) .identity-advanced[data-library-manager] :is(.job-more-options,.library-action,.job-inline-search .shortcut-circle){background:var(--library-accent)!important;border:1px solid var(--library-accent)!important;color:var(--theme-field,#fff)!important;box-shadow:none!important}
-body :is(#sector-view,.view,dialog) .identity-advanced[data-library-manager] :is(.job-more-options,.library-action,.library-empty){box-sizing:border-box;width:100%;min-height:42px;margin-top:10px;padding:10px 12px;border-radius:var(--ui-field-radius);font:600 12px/18px var(--ui-font)!important}
+body :is(#sector-view,.view,dialog) .identity-advanced[data-library-manager] :is(.job-more-options,.library-action,.library-empty){box-sizing:border-box;width:100%;min-height:40px;margin-top:10px;padding:0 var(--acao-respiro) 0 16px;border-radius:var(--ui-field-radius);font:600 12px/18px var(--ui-font)!important}
 body :is(#sector-view,.view,dialog) .identity-advanced[data-library-manager] .library-empty,body .icon-empty-confirm .danger{background:var(--cicluz-danger,#e34343)!important;border:1px solid var(--cicluz-danger,#e34343)!important;color:#fff!important}
 body :is(#sector-view,.view,dialog) .identity-advanced[data-library-manager] button:disabled{opacity:.5;cursor:default}
 .icon-empty-confirm{max-width:min(440px,90vw);background:var(--ui-control-bg);color:var(--ui-input-color);border:1px solid var(--ui-border-base);border-radius:10px;padding:20px;font:400 14px/20px var(--ui-font)}
@@ -387,10 +387,11 @@ body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog form{display:grid;
 .nav-tree .children .icone-revisar{width:16px;height:16px;margin-right:8px;vertical-align:-3px}
 /* Botões comuns dentro das telas seguem a cor do menu de origem, não o roxo padrão. */
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .btn:not(.standard-form-action):not(.footer-save-accent):not(.footer-cancel-accent){background:var(--menu-accent,var(--panel-color,#7c3aed));border-color:var(--menu-accent,var(--panel-color,#7c3aed));color:#fff}
-/* Botões com ícone (arquivo, câmera): o ícone vai em um quadrado de cantos arredondados, no mesmo raio dos ícones do menu. */
-.btn-com-icone{display:inline-flex;align-items:center;justify-content:center;gap:8px}
-.btn-icone-quadro{display:inline-grid;place-items:center;flex:none;width:24px;height:24px;border-radius:var(--row-icon-radius,26%);background:color-mix(in srgb,#fff 24%,transparent)}
-.btn-icone-quadro svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+/* Botão retangular de ação (Salvar, Cancelar, Voltar, Avançar e todo .btn com ícone): texto à esquerda e o ícone em um círculo à direita, na cor do texto do botão. O círculo fica a --acao-respiro da borda de cima, de baixo e da direita (40 px de altura, 1 px de borda, 28 px de círculo). */
+.footer-action-icon,body #cadastro-completo :is(#prev-step,#next-step) svg{box-sizing:border-box;flex:none;width:var(--acao-circulo);height:var(--acao-circulo);padding:5px;border:1.5px solid currentColor;border-radius:50%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.footer-action-pair>:is(.footer-save-accent,.footer-cancel-accent){min-width:var(--acao-largura)}
+body .btn.acao-com-circulo{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:space-between;gap:10px;height:40px;min-height:40px;padding:0 var(--acao-respiro) 0 16px;text-align:left;white-space:nowrap}
+body .btn.acao-com-circulo[hidden]{display:none}
 .uniforms-icon-action.is-accent{border-radius:var(--row-icon-radius,26%)}
 
 /* Horários e Escalas (06/11/2026): weekday toggles and the multi-select list of collaborators. */
@@ -471,7 +472,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .btn:not(.standard-
 .people-complete-pickbox .profiles-note{margin:0}
 .job-cbo-link{display:grid;gap:6px;align-content:end}
 .job-cbo-link small{font-size:11px;line-height:1.4}
-a.btn.link-externo{display:inline-flex;align-items:center;justify-content:center;width:fit-content;min-height:40px;text-decoration:none;white-space:nowrap}
+a.btn.link-externo{width:fit-content;text-decoration:none}
 .people-doc-scan{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin:0 0 12px}
 .people-doc-scan .profiles-note{flex:1 1 100%;margin:0}
 .doc-capture{display:grid;gap:12px;border:1px dashed color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 35%,white);border-radius:14px;padding:16px;margin:14px 0 20px}
