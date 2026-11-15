@@ -109,4 +109,57 @@ ok(() => assert.equal(d.pendenciasDeTeto([
   { produtoId: 'a', descricao: 'Farinha', quantidade: 3, saldo: 5, estoqueMax: 10 },
 ]).length, 1));
 
+// Fornecedor: categoria de texto livre vira lista (migração) e validação do cadastro novo. Dados fictícios.
+const regras = require('../dist/field-validation.js');
+ok(() => {
+  const doc = { fornecedores: [
+    { id: 'f1', nome: 'A', categoria: 'Laticínios' }, { id: 'f2', nome: 'B', categoria: ' laticinios ' },
+    { id: 'f3', nome: 'C', categoria: 'Matéria-prima' }, { id: 'f4', nome: 'D', categoria: '' }, { id: 'f5', nome: 'E', categoria: 'Frios', categoriaId: 'cf-outra' },
+  ] };
+  d.migrarCategoriasFornecedor(doc);
+  assert.deepEqual(doc.categoriasFornecedor, [{ id: 'cf-laticinios', nome: 'Laticínios', ativa: true }, { id: 'cf-materia-prima', nome: 'Matéria-prima', ativa: true }]);
+  assert.deepEqual(doc.fornecedores.map((f) => f.categoriaId), ['cf-laticinios', 'cf-laticinios', 'cf-materia-prima', undefined, 'cf-outra']);
+  assert.equal(doc.fornecedores[0].categoria, 'Laticínios'); // o texto antigo não é apagado pela migração
+  assert.equal(doc.migracoes.categoriasFornecedor, 1);
+});
+ok(() => {
+  // Roda uma vez só: categoria apagada depois não volta, e quem já migrou não é tocado.
+  const doc = { fornecedores: [{ id: 'f1', nome: 'A', categoria: 'Frios' }] };
+  d.migrarCategoriasFornecedor(doc);
+  doc.categoriasFornecedor = []; doc.fornecedores[0].categoriaId = '';
+  d.migrarCategoriasFornecedor(doc);
+  assert.deepEqual(doc.categoriasFornecedor, []);
+  // Dois aparelhos migrando o mesmo dado chegam ao mesmo resultado (id sai do nome).
+  const a = d.migrarCategoriasFornecedor({ fornecedores: [{ id: 'f1', nome: 'A', categoria: 'Embalagens' }] });
+  const b = d.migrarCategoriasFornecedor({ fornecedores: [{ id: 'f1', nome: 'A', categoria: 'Embalagens' }] });
+  assert.deepEqual(a, b);
+});
+ok(() => {
+  assert.equal(d.tipoPessoaDe({ documento: '529.982.247-25' }), 'fisica');
+  assert.equal(d.tipoPessoaDe({ documento: '11.222.333/0001-81' }), 'juridica');
+  assert.equal(d.tipoPessoaDe({ documento: '' }), '');
+  assert.equal(d.tipoPessoaDe({ documento: '11.222.333/0001-81', tipoPessoa: 'fisica' }), 'fisica');
+});
+ok(() => {
+  const ctx = { fornecedores: [{ id: 'f9', nome: 'Moinho Teste' }], categorias: [{ id: 'cf-frios', nome: 'Frios', ativa: true }] };
+  const pj = { id: 'f1', nome: 'Fornecedor Teste', tipoPessoa: 'juridica', documento: '11.222.333/0001-81', categoriaId: 'cf-frios', whatsapp: '(31) 99999-0000', email: '', financeiro: { nome: '', whatsapp: '', email: '' }, nascimento: '' };
+  const v = (mudanca) => d.validarFornecedor({ ...pj, ...mudanca }, regras, ctx);
+  assert.equal(v({}), '');
+  assert.match(v({ categoriaId: '' }), /categoria/);
+  assert.match(v({ categoriaId: 'cf-sumiu' }), /não existe mais/);
+  assert.match(v({ tipoPessoa: '' }), /tipo de pessoa/);
+  assert.match(v({ nome: ' ' }), /nome/);
+  assert.match(v({ nome: 'MOINHO TESTE' }), /Já existe/);
+  assert.match(v({ documento: '' }), /CNPJ/);
+  assert.match(v({ documento: '11.222.333/0001-80' }), /CNPJ/);
+  assert.match(v({ documento: '529.982.247-25' }), /CNPJ/);
+  assert.match(v({ whatsapp: '' }), /WhatsApp/);
+  assert.match(v({ email: 'sem-arroba' }), /E-mail do fornecedor/);
+  assert.match(v({ financeiro: { nome: 'Fin', whatsapp: '123', email: '' } }), /WhatsApp do financeiro/);
+  assert.match(v({ financeiro: { nome: 'Fin', whatsapp: '', email: 'x@' } }), /E-mail do financeiro/);
+  assert.match(v({ nascimento: '1990-01-01' }), /só para pessoa física/);
+  assert.equal(v({ tipoPessoa: 'fisica', documento: '529.982.247-25', nascimento: '1990-01-01' }), '');
+  assert.match(v({ tipoPessoa: 'fisica', documento: '529.982.247-24' }), /CPF/);
+});
+
 console.log(checks + ' checks de regras de Compras passaram');

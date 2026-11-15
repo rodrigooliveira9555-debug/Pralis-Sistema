@@ -13,7 +13,8 @@
     'conferenciaAgendas', 'conferencias',
   ];
   /* Coleções acrescentadas depois: dado antigo sem elas continua válido (recebe lista vazia ou a carga inicial). */
-  const COLECOES_NOVAS = ['unidades', 'historicoNomes'];
+  // categoriasFornecedor (15/11/2026): lista que o Rodrigo cadastra; o fornecedor aponta para ela por categoriaId.
+  const COLECOES_NOVAS = ['unidades', 'historicoNomes', 'categoriasFornecedor'];
   const UNIDADES_INICIAIS = [['UN', 'Unidade'], ['KG', 'Quilo'], ['CX', 'Caixa'], ['FD', 'Fardo'], ['PC', 'Peça'], ['SC', 'Saco'], ['MI', 'Milheiro'], ['LT', 'Litro'], ['DZ', 'Dúzia'], ['G', 'Grama'], ['ML', 'Mililitro']];
 
   const novoId = (prefixo) => prefixo + '-' + (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
@@ -161,6 +162,9 @@
     for (const c of COLECOES_NOVAS) if (!Array.isArray(d[c])) d[c] = [];
     if (!d.unidades.length) d.unidades = UNIDADES_INICIAIS.map(([sigla, nome]) => ({ id: 'un-' + sigla.toLowerCase(), sigla, nome, ativa: true }));
     d.produtos = d.produtos.map(normalizarProduto);
+    // Categoria de fornecedor: de texto livre para a lista (uma vez por documento, marca em d.migracoes).
+    // Só em memória: vai para o armazenamento na próxima gravação, para abrir a tela não criar versão no banco.
+    window.CicluzComprasDominio.migrarCategoriasFornecedor(d);
     return d;
   }
 
@@ -295,6 +299,8 @@
 
   /* ---------- Consultas comuns ---------- */
   const fornecedor = (id) => dados.fornecedores.find((f) => f.id === id);
+  const categoriaFornecedor = (id) => dados.categoriasFornecedor.find((c) => c.id === id);
+  const nomeCategoriaFornecedor = (id) => { if (!id) return ''; const c = categoriaFornecedor(id); return c ? c.nome : 'Categoria não encontrada'; };
   const produto = (id) => dados.produtos.find((p) => p.id === id);
   const responsavel = (id) => (RESPONSAVEIS.find((u) => u.id === id) || { nome: 'Responsável não encontrado' }).nome;
   /** Preço-base vigente (valido_ate nulo). */
@@ -333,6 +339,6 @@
     get erroLeitura() { return erroLeitura; },
     transacao, novoId, agoraIso, hojeIso,
     gruposMercadoria, nomeGrupo, arvoreLocais, nosLocais, vinculo, arquivo, arquivoAberto, totalArquivo, gravarArquivo, tirarDoArquivo, locais,
-    fornecedor, produto, responsavel, referencia, definirReferencia, fornecedoresDoProduto, bolinhas,
+    fornecedor, categoriaFornecedor, nomeCategoriaFornecedor, produto, responsavel, referencia, definirReferencia, fornecedoresDoProduto, bolinhas,
   };
 })();

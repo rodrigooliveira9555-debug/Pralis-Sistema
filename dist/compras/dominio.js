@@ -158,6 +158,62 @@
   }
   const podeConvidar = (f) => motivoNaoConvidavel(f) === '';
 
+  /* ---------- Cadastro de fornecedor (decisões do Rodrigo, 15/11/2026) ---------- */
+  const TIPOS_PESSOA = [['fisica', 'Pessoa física'], ['juridica', 'Pessoa jurídica']];
+  const semAcento = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  /** Id da categoria criada pela migração: sai do nome, para dois aparelhos migrarem igual sem duplicar. */
+  const idCategoriaFornecedor = (nome) => 'cf-' + (semAcento(nome).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'sem-nome');
+  /**
+   * Migração (marca d.migracoes.categoriasFornecedor): a categoria do fornecedor era texto livre; vira item da
+   * lista d.categoriasFornecedor e o fornecedor passa a apontar para ela por categoriaId. O texto antigo
+   * (f.categoria) não é apagado aqui. Roda uma vez por documento e não toca em quem já tem categoriaId.
+   */
+  function migrarCategoriasFornecedor(d) {
+    if (!Array.isArray(d.categoriasFornecedor)) d.categoriasFornecedor = [];
+    if (d.migracoes && d.migracoes.categoriasFornecedor) return d;
+    for (const f of d.fornecedores || []) {
+      const nome = String(f.categoria || '').trim();
+      if (!nome || f.categoriaId) continue;
+      const id = idCategoriaFornecedor(nome);
+      if (!d.categoriasFornecedor.some((c) => c.id === id)) d.categoriasFornecedor.push({ id, nome, ativa: true });
+      f.categoriaId = id;
+    }
+    d.migracoes = { ...(d.migracoes || {}), categoriasFornecedor: 1 };
+    return d;
+  }
+  /** Tipo de pessoa do fornecedor; no cadastro antigo vem do tamanho do documento (11 = física, 14 = jurídica). */
+  function tipoPessoaDe(f) {
+    if (f && (f.tipoPessoa === 'fisica' || f.tipoPessoa === 'juridica')) return f.tipoPessoa;
+    const n = digitos(f && f.documento).length;
+    return n === 11 ? 'fisica' : n === 14 ? 'juridica' : '';
+  }
+  const emailValido = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
+  /**
+   * O que impede salvar o fornecedor, ou ''. Obrigatórios: categoria, tipo de pessoa, nome, CPF (física) ou CNPJ
+   * (jurídica) com dígito verificador e WhatsApp do contato. regras = { cpfValid, cnpjValid } do field-validation.js.
+   * A exigência vale ao salvar: fornecedor antigo sem esses dados continua abrindo e sendo usado.
+   */
+  function validarFornecedor(f, regras, { fornecedores = [], categorias = [] } = {}) {
+    if (!f.categoriaId) return 'Escolha a categoria do fornecedor.';
+    if (!categorias.some((c) => c.id === f.categoriaId)) return 'A categoria escolhida não existe mais. Escolha outra.';
+    if (f.tipoPessoa !== 'fisica' && f.tipoPessoa !== 'juridica') return 'Escolha o tipo de pessoa (física ou jurídica).';
+    if (!String(f.nome || '').trim()) return 'Informe o nome do fornecedor.';
+    if (fornecedores.some((x) => x.id !== f.id && semAcento(x.nome) === semAcento(f.nome))) return 'Já existe um fornecedor com este nome.';
+    if (f.tipoPessoa === 'fisica' && !regras.cpfValid(f.documento)) return 'Informe um CPF válido (11 dígitos).';
+    if (f.tipoPessoa === 'juridica' && !regras.cnpjValid(f.documento)) return 'Informe um CNPJ válido (14 dígitos).';
+    const whats = digitos(f.whatsapp);
+    if (!whats) return 'Informe o WhatsApp do fornecedor.';
+    if (whats.length < 8 || String(f.whatsapp).length > 30) return 'WhatsApp inválido.';
+    if (f.email && !emailValido(f.email)) return 'E-mail do fornecedor inválido.';
+    const fin = f.financeiro || {};
+    const whatsFin = digitos(fin.whatsapp);
+    if (whatsFin && (whatsFin.length < 8 || String(fin.whatsapp).length > 30)) return 'WhatsApp do financeiro inválido.';
+    if (fin.email && !emailValido(fin.email)) return 'E-mail do financeiro inválido.';
+    if (f.nascimento && f.tipoPessoa !== 'fisica') return 'Data de nascimento é só para pessoa física.';
+    if (f.nascimento && !/^\d{4}-\d{2}-\d{2}$/.test(f.nascimento)) return 'Data de nascimento inválida.';
+    return '';
+  }
+
   /* ---------- Cotação: avaliação automática da resposta do fornecedor ----------
    * Um item é comprado sozinho quando: custo ≤ referência congelada, cabe no teto e a
    * quantidade disponível está dentro da margem aceita. Caso contrário vai para o comprador.
@@ -335,6 +391,7 @@
     REPETICOES, DIAS_SEMANA, MESES, ocorrencias, resumoRegra,
     topoDoRanking,
     digitos, motivoNaoConvidavel, podeConvidar,
+    TIPOS_PESSOA, idCategoriaFornecedor, migrarCategoriasFornecedor, tipoPessoaDe, validarFornecedor,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,
     aplicarRecebimento, SITUACOES_PEDIDO,
