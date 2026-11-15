@@ -326,11 +326,11 @@
         /* ----- Etapa 2: vendedor ou prestador de serviço (é o contato do fornecedor; o WhatsApp dele recebe a cotação) ----- */
         const s2 = el('fieldset', 'compras-fieldset');
         const vNome = texto(f?.contatoNome);
-        const vCpf = entrada('text', f?.vendedorCpf || '', { inputMode: 'numeric' });
         const vNasc = entrada('date', f?.vendedorNascimento || '');
         const whats = telefone(f?.whatsapp);
         const mail = email(f?.email);
-        s2.append(campo('Nome do contato', vNome), campo('WhatsApp *', whats), campo('CPF do contato', vCpf), campo('Data de nascimento', vNasc), campo('E-mail', mail));
+        // O CPF do vendedor não é mais pedido (decisão do Rodrigo): o campo saiu; valor já gravado fica como está, sem uso.
+        s2.append(campo('Nome do contato', vNome), campo('WhatsApp *', whats), campo('Data de nascimento', vNasc), campo('E-mail', mail));
 
         /* ----- Etapas 3 e 4: contato com a opção "O mesmo da etapa anterior" em primeiro lugar ----- */
         function etapaContato(dados, sufixo) {
@@ -350,6 +350,9 @@
         }
         const fin = etapaContato(f?.financeiro, 'financeiro');
         const rep = etapaContato(f?.representante, 'representante');
+        // Cargo na empresa: aparece sempre, também com "O mesmo da etapa anterior" marcado (que esconde só nome, WhatsApp e e-mail).
+        const repCargo = seletor(D.CARGOS_REPRESENTANTE, f?.representante?.cargo || '', 'Selecione');
+        rep.no.append(campo('Cargo na empresa', repCargo));
 
         /* ----- Barra de etapas e navegação ----- */
         const quadros = [etapa1, s2, fin.no, rep.no];
@@ -420,8 +423,8 @@
             regimeTributario: pj ? regime.value : '', ramo: ramo.value.trim(),
             endereco: { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value },
             contatoNome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email,
-            vendedorCpf: vCpf.value.trim(), vendedorNascimento: vNasc.value,
-            financeiro, representante: contato(rep, semMesmo(financeiro)),
+            vendedorNascimento: vNasc.value,
+            financeiro, representante: { ...contato(rep, semMesmo(financeiro)), cargo: repCargo.value },
             situacao: ativo.input.checked ? 'ativo' : 'inativo',
           };
         }

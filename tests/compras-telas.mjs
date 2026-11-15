@@ -109,10 +109,11 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await df.getByLabel('E-mail do financeiro', { exact: true }).fill('financeiro@exemplo.test');
   await avancar(df);
   await df.getByLabel('O mesmo da etapa anterior (representante)', { exact: true }).check();
-  ok(await df.getByLabel('Nome do representante', { exact: true }).isHidden(), '"O mesmo da etapa anterior" esconde os campos');
+  ok(await df.getByLabel('Nome do representante', { exact: true }).isHidden() && await df.getByLabel('Cargo na empresa', { exact: true }).isVisible(), '"O mesmo da etapa anterior" esconde nome, WhatsApp e e-mail, mas o Cargo na empresa continua');
+  await df.getByLabel('Cargo na empresa', { exact: true }).selectOption('gerente-comercial');
   await df.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).click();
   await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'));
-  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '11.222.333/0001-81' && f.tipoPessoa === 'juridica' && f.categorias.join() === 'produto,servico' && f.ramo.toUpperCase() === 'BEBIDAS' && f.nome.toUpperCase() === 'FORNECEDOR CNPJ TESTE' && f.razaoSocial.toUpperCase().includes('LTDA') && f.regimeTributario === 'simples' && f.contatoNome && f.financeiro.email === 'financeiro@exemplo.test' && f.representante.mesmo && f.representante.email === 'financeiro@exemplo.test')), 'Fornecedor pessoa jurídica salvo com as 4 etapas (o representante copia o financeiro)');
+  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '11.222.333/0001-81' && f.tipoPessoa === 'juridica' && f.categorias.join() === 'produto,servico' && f.ramo.toUpperCase() === 'BEBIDAS' && f.nome.toUpperCase() === 'FORNECEDOR CNPJ TESTE' && f.razaoSocial.toUpperCase().includes('LTDA') && f.regimeTributario === 'simples' && f.contatoNome && f.financeiro.email === 'financeiro@exemplo.test' && f.representante.mesmo && f.representante.email === 'financeiro@exemplo.test' && f.representante.cargo === 'gerente-comercial' && !('vendedorCpf' in f))), 'Fornecedor pessoa jurídica salvo com as 4 etapas (o representante copia o financeiro e guarda o cargo)');
   // Pessoa física: nome e CPF; nascimento do vendedor é opcional
   await p.locator('.view.show .people-add-control').click();
   const dp = p.locator('dialog.compras-dialog[open]').last();

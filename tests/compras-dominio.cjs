@@ -192,8 +192,11 @@ ok(() => {
   assert.match(v({ financeiro: { nome: 'Fin', whatsapp: '', email: 'x@' } }), /E-mail do financeiro/);
   assert.equal(v({ tipoPessoa: 'fisica', documento: '529.982.247-25' }), '');
   // Cadastro em etapas: vendedor (CPF e nascimento opcionais, conferidos se vierem), financeiro e representante.
-  assert.equal(v({ vendedorCpf: '529.982.247-25', vendedorNascimento: '1990-01-01', regimeTributario: 'simples' }), '');
-  assert.match(v({ vendedorCpf: '529.982.247-24' }), /CPF do vendedor/);
+  assert.equal(v({ vendedorNascimento: '1990-01-01', regimeTributario: 'simples' }), '');
+  assert.equal(v({ vendedorCpf: 'valor antigo qualquer' }), ''); // o CPF do vendedor não é mais pedido nem conferido
+  assert.equal(v({ representante: { mesmo: true, cargo: 'socio-proprietario' } }), '');
+  assert.match(v({ representante: { cargo: 'chefe' } }), /Cargo do representante/);
+  assert.equal(d.CARGOS_REPRESENTANTE.length, 11);
   assert.match(v({ vendedorNascimento: '01/01/1990' }), /nascimento/);
   assert.match(v({ regimeTributario: 'outro' }), /Regime/);
   assert.match(v({ representante: { nome: 'Rep', whatsapp: '12', email: '' } }), /WhatsApp do representante/);

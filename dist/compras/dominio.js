@@ -218,6 +218,10 @@
   const emailValido = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
   /** Regime tributário do fornecedor pessoa jurídica: só guarda a opção escolhida, não entra em cálculo nenhum. */
   const REGIMES_TRIBUTARIOS = [['mei', 'MEI'], ['simples', 'Simples Nacional'], ['presumido', 'Lucro Presumido'], ['real', 'Lucro Real'], ['nao-informado', 'Não informado']];
+  /** O que o representante é na empresa (lista fixa, escolha única; campo opcional). */
+  const CARGOS_REPRESENTANTE = [['proprietario', 'Proprietário'], ['socio-proprietario', 'Sócio-proprietário'], ['socio', 'Sócio'], ['diretor', 'Diretor'],
+    ['gerente-geral', 'Gerente geral'], ['gerente-comercial', 'Gerente comercial'], ['supervisor-comercial', 'Supervisor comercial'],
+    ['representante-comercial', 'Representante comercial'], ['administrador', 'Administrador'], ['procurador', 'Procurador'], ['outro', 'Outro']];
   /** Etapas do cadastro (decisão do Rodrigo, 15/11/2026). O título da 2ª depende da categoria marcada. */
   function etapasFornecedor(categorias) {
     const c = Array.isArray(categorias) ? categorias : [];
@@ -244,7 +248,8 @@
   /**
    * O que impede salvar, etapa por etapa: devolve 4 textos ('' quando a etapa está em ordem). Obrigatórios: categoria
    * (Produto, Serviço ou os dois), tipo de pessoa, nome (na pessoa jurídica, nome fantasia ou razão social), CNPJ ou CPF
-   * com dígito verificador e WhatsApp do vendedor ou prestador. CPF e nascimento do vendedor são opcionais.
+   * com dígito verificador e WhatsApp do vendedor ou prestador. O nascimento do vendedor é opcional (o CPF dele não é
+   * mais pedido; valor antigo, se houver, fica guardado sem uso).
    * regras = { cpfValid, cnpjValid } do field-validation.js. A exigência vale ao salvar: fornecedor antigo sem esses
    * dados continua abrindo e sendo usado.
    */
@@ -269,7 +274,6 @@
       if (!digitos(f.whatsapp)) return 'Informe o WhatsApp do vendedor ou prestador.';
       if (telefoneRuim(f.whatsapp)) return 'WhatsApp inválido.';
       if (f.email && !emailValido(f.email)) return 'E-mail do vendedor ou prestador inválido.';
-      if (f.vendedorCpf && !regras.cpfValid(f.vendedorCpf)) return 'CPF do vendedor ou prestador inválido.';
       if (f.vendedorNascimento && !/^\d{4}-\d{2}-\d{2}$/.test(f.vendedorNascimento)) return 'Data de nascimento inválida.';
       return '';
     };
@@ -279,7 +283,12 @@
       if (x.email && !emailValido(x.email)) return 'E-mail do ' + quem + ' inválido.';
       return '';
     };
-    return [basico(), vendedor(), contato(f.financeiro, 'financeiro'), contato(f.representante, 'representante')];
+    const representante = () => {
+      const cargo = f.representante && f.representante.cargo;
+      if (cargo && !CARGOS_REPRESENTANTE.some(([id]) => id === cargo)) return 'Cargo do representante inválido.';
+      return contato(f.representante, 'representante');
+    };
+    return [basico(), vendedor(), contato(f.financeiro, 'financeiro'), representante()];
   }
   /** Primeiro impedimento do cadastro inteiro, ou ''. */
   const validarFornecedor = (f, regras, ctx) => validarFornecedorEtapas(f, regras, ctx).find(Boolean) || '';
@@ -462,7 +471,7 @@
     topoDoRanking,
     digitos, motivoNaoConvidavel, podeConvidar,
     TIPOS_PESSOA, CATEGORIAS_FORNECEDOR, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, tipoPessoaDe, validarFornecedor,
-    validarFornecedorEtapas, REGIMES_TRIBUTARIOS, etapasFornecedor, migrarVendedorFornecedor,
+    validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, migrarVendedorFornecedor,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,
     aplicarRecebimento, SITUACOES_PEDIDO,
