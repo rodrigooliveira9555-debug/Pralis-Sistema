@@ -60,7 +60,8 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
     ok(await p.locator('dialog.compras-dialog[open]', { hasText: titulo }).count() === 1, '"+" abre ' + titulo);
     await p.locator('dialog.compras-dialog[open] .people-close-control').click();
   }
-  for (const [tela, rotulo] of [['fornecedores', 'Novo fornecedor'], ['agendamento', 'Novo agendamento'], ['cotacao', 'Pedido urgente'], ['conferencias', 'Agendar conferência'], ['unidades', 'Nova unidade']]) {
+  // Fornecedores tem o botão visível Cadastrar fornecedor (pedido do Rodrigo, 15/11/2026); as outras telas seguem sem repetir o "+".
+  for (const [tela, rotulo] of [['agendamento', 'Novo agendamento'], ['cotacao', 'Pedido urgente'], ['conferencias', 'Agendar conferência'], ['unidades', 'Nova unidade']]) {
     await p.evaluate((n) => CicluzCompras.abrir(n), tela);
     ok(await p.locator('#compras-' + tela + ' .content button', { hasText: rotulo }).count() === 0, 'Sem botão repetido do "+" em ' + tela);
   }
@@ -68,7 +69,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   // verificador e WhatsApp obrigatórios; nascimento só para pessoa física. Dados fictícios.
   ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.every((f) => !f.categoria || CicluzComprasDados.nomeCategoriaFornecedor(f.categoriaId) === f.categoria)), 'Categoria em texto livre virou item da lista, sem perder o nome');
   await p.evaluate(() => CicluzCompras.abrir('fornecedores'));
-  await p.locator('.view.show .people-add-control').click();
+  await p.locator('#compras-fornecedores button.btn', { hasText: 'Cadastrar fornecedor' }).click();
   const df = p.locator('dialog.compras-dialog[open]').last();
   const erroF = () => df.locator('.profiles-error').textContent();
   ok(await df.getByLabel('CPF *', { exact: true }).isHidden() && await df.getByLabel('CNPJ *', { exact: true }).isHidden(), 'Sem tipo de pessoa, nem CPF nem CNPJ aparecem');

@@ -67,9 +67,9 @@
     const controles = el('div', 'profiles-controls');
     const b = U.buscaFixa('fornecedores-' + origemF, 'Nome, documento, WhatsApp, contato ou categoria', buscaF, (v) => { buscaF = v; renderFornecedores(); });
     controles.append(b);
-    // O fornecedor novo entra pelo "+" (as telas do Compras não repetem o "+" num botão); aqui fica só a lista de categorias.
+    // Mesmo padrão do patrimônio (pedido do Rodrigo, 15/11/2026): botão visível de cadastro na tela; o "+" aciona o mesmo cadastro.
     const acoes = el('div', 'compras-form-rodape');
-    acoes.append(botao('Editar categorias', () => editarCategorias()));
+    acoes.append(botao('Cadastrar fornecedor', () => editarFornecedor(), 'btn'), botao('Editar categorias', () => editarCategorias()));
     const semWhats = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && !D.podeConvidar(f)).length;
     const incompletos = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && pendencias(f).length).length;
     const tab = U.tabela([
