@@ -18,12 +18,18 @@
   const cores = { cor: M.COR_RET, corTexto: M.COR_RET_TEXTO };
   const UNIDADES_CAPACIDADE = [['KG', 'kg'], ['G', 'g'], ['UN', 'unidades'], ['LT', 'litros']];
   const dataBR = (iso) => window.CicluzDateFields.display(iso);
-  /** Datas de manutenção já passadas (peça a substituir ou revisão), para o selo da lista. */
-  function vencidos(b) {
+  /** Selo da lista: manutenções vencidas (atenção) ou, se não houver, as dos próximos dias (informação). */
+  function avisoManutencao(b) {
     const hoje = S.hojeIso();
-    const r = (b.pecas || []).filter((p) => p.proximaTroca && p.proximaTroca < hoje).map((p) => 'Substituir ' + p.nome);
-    if (b.revisao && b.revisao.proxima < hoje) r.push('Revisão vencida');
-    return r;
+    const datas = [...(b.pecas || []).map((p) => ['Substituir ' + p.nome, p.proximaTroca]), ['Revisão', b.revisao && b.revisao.proxima]]
+      .map(([rotulo, iso]) => ({ rotulo, iso, situacao: D.situacaoManutencao(iso, hoje) }));
+    for (const [situacao, tom, sufixo, plural] of [['vencida', 'atencao', ' vencida', ' manutenções vencidas'], ['proxima', 'info', ' em ', ' manutenções próximas']]) {
+      const l = datas.filter((x) => x.situacao === situacao).sort((a, b2) => a.iso.localeCompare(b2.iso));
+      if (!l.length) continue;
+      const um = situacao === 'vencida' ? (l[0].rotulo === 'Revisão' ? 'Revisão vencida' : l[0].rotulo) : l[0].rotulo + sufixo + dataBR(l[0].iso);
+      return U.situacao(l.length > 1 ? l.length + plural : um, tom);
+    }
+    return null;
   }
 
   let tela = null;
@@ -47,7 +53,7 @@
     if (b.energia && b.energia !== 'nenhuma') partes.push(D.nomeDe(D.ENERGIAS, b.energia) + ' ' + CD.numero(b.consumoHora) + ' ' + D.UNIDADE_CONSUMO[b.energia]);
     if (b.numeroPatrimonio) partes.push('nº ' + b.numeroPatrimonio);
     if (b.pecas && b.pecas.length) partes.push(b.pecas.length + (b.pecas.length > 1 ? ' peças' : ' peça'));
-    if (b.revisao) partes.push('revisão ' + dataBR(b.revisao.proxima));
+    if (b.revisao && b.revisao.proxima) partes.push('revisão ' + dataBR(b.revisao.proxima));
     if (b.audio) partes.push('áudio');
     return partes.join(' · ');
   }
@@ -78,7 +84,7 @@
       else if (!vis.length) lista.append(U.vazio('Nada neste filtro.'));
       vis.forEach((b) => lista.append(U.linhaLista({
         icone: 'patrimonio', titulo: b.nome, detalhe: detalhe(b),
-        direita: [b.ativo === false ? U.situacao('Inativo', 'neutro') : null, ...vencidos(b).slice(0, 1).map((t) => U.situacao(vencidos(b).length > 1 ? vencidos(b).length + ' manutenções vencidas' : t, 'atencao')), botao('Editar', () => formulario(b))].filter(Boolean),
+        direita: [b.ativo === false ? U.situacao('Inativo', 'neutro') : null, avisoManutencao(b), botao('Editar', () => formulario(b))].filter(Boolean),
       })));
     }
     desenha();
@@ -108,14 +114,28 @@
         const blocoPecas = el('div', 'producao-bloco compras-largo');
         const listaPecas = el('div', 'producao-bloco');
         const linhasPecas = [];
+        const meses = (v) => entrada('number', v ?? '', { min: 1, step: 1, inputMode: 'numeric', placeholder: 'Ex.: 6' });
+        // Última data + intervalo em meses decidem a próxima; sem um dos dois, a próxima é digitada.
+        function ligarRepeticao(ultima, cada, proxima) {
+          const atualiza = () => {
+            const calculada = D.proximaData(ultima.value, cada.value === '' ? null : Number(cada.value));
+            if (calculada) proxima.value = calculada;
+            proxima.readOnly = !!calculada;
+          };
+          [ultima, cada].forEach((x) => { x.addEventListener('input', atualiza); x.addEventListener('change', atualiza); });
+          atualiza();
+        }
         function linhaPeca(p = {}) {
           const r = el('div', 'producao-linha patrimonio-peca');
           const nomeP = entrada('text', p.nome || '', { placeholder: 'Ex.: correia, resistência' });
+          const ultima = entrada('date', p.ultimaTroca || '');
+          const cada = meses(p.intervaloMeses);
           const troca = entrada('date', p.proximaTroca || '');
-          const item = { id: p.id || '', nome: nomeP, troca };
+          const item = { id: p.id || '', nome: nomeP, ultima, cada, troca };
           const rm = botao('Remover', () => { linhasPecas.splice(linhasPecas.indexOf(item), 1); r.remove(); numerar(); }, 'btn secondary perigo-texto');
           item.rm = rm;
-          r.append(campo('Peça', nomeP), campo('Substituir em', troca), rm);
+          r.append(campo('Peça', nomeP), campo('Última troca', ultima), campo('A cada (meses)', cada), campo('Substituir em', troca), rm);
+          ligarRepeticao(ultima, cada, troca);
           linhasPecas.push(item);
           listaPecas.append(r);
           numerar();
@@ -125,20 +145,27 @@
         function numerar() {
           linhasPecas.forEach((x, k) => {
             x.nome.setAttribute('aria-label', 'Peça ' + (k + 1));
-            x.troca.setAttribute('aria-label', 'Substituir a peça ' + (k + 1) + ' em');
+            x.cada.setAttribute('aria-label', 'Trocar a peça ' + (k + 1) + ' a cada (meses)');
             // O date-fields.js copia o rótulo para o campo DD/MM/AA quando monta: renumera a cópia também.
-            const visivel = x.troca.previousElementSibling;
-            if (visivel && visivel.dataset.dateDisplay) visivel.setAttribute('aria-label', x.troca.getAttribute('aria-label'));
+            for (const [data, rotulo] of [[x.ultima, 'Última troca da peça ' + (k + 1)], [x.troca, 'Substituir a peça ' + (k + 1) + ' em']]) {
+              data.setAttribute('aria-label', rotulo);
+              const visivel = data.previousElementSibling;
+              if (visivel && visivel.dataset.dateDisplay) visivel.setAttribute('aria-label', rotulo);
+            }
             x.rm.setAttribute('aria-label', 'Remover peça ' + (k + 1));
           });
         }
         (b?.pecas || []).forEach((p) => linhaPeca(p));
-        s3.append(U.nota('Só para o bem que tem peças de troca. Informe cada peça e a data prevista da próxima substituição.'), blocoPecas);
+        s3.append(U.nota('Só para o bem que tem peças de troca. Com a última troca e o intervalo em meses, a data da próxima substituição é calculada; sem eles, digite a data.'), blocoPecas);
         blocoPecas.append(listaPecas, botao('Adicionar peça', () => linhaPeca().nome.focus()));
 
         const s4 = sec('Revisão periódica');
+        const revisaoUltima = entrada('date', b?.revisao?.ultima || '');
+        const revisaoCada = meses(b?.revisao?.intervaloMeses);
         const revisao = entrada('date', b?.revisao?.proxima || '');
-        s4.append(campo('Próxima revisão', revisao, 'Data agendada para a próxima revisão do bem. Deixe em branco se não houver.'));
+        s4.append(campo('Última revisão', revisaoUltima), campo('A cada (meses)', revisaoCada),
+          campo('Próxima revisão', revisao, 'Calculada pela última revisão e pelo intervalo; sem eles, digite a data. Deixe tudo em branco se não houver revisão.'));
+        ligarRepeticao(revisaoUltima, revisaoCada, revisao);
 
         const s5 = sec('Observação em áudio');
         const audio = window.CicluzAudioNota.criar({ rotulo: '', classe: 'compras-largo', aoSalvar: 'o bem' });
@@ -167,12 +194,12 @@
           );
           form.append(rod);
         }
-        return { nome, categoria, marca, modelo, serie, numero, valor, local, capValor, capUn, larg, comp, energia, consumo, linhasPecas, revisao, audio };
+        return { nome, categoria, marca, modelo, serie, numero, valor, local, capValor, capUn, larg, comp, energia, consumo, linhasPecas, revisaoUltima, revisaoCada, revisao, audio };
       },
       rotuloSalvar: 'Salvar bem',
       salvar: async (c) => {
         if (c.audio.gravando()) return 'Pare a gravação do áudio antes de salvar.';
-        if ([c.revisao, ...c.linhasPecas.map((x) => x.troca)].some((d) => !d.checkValidity())) return 'Confira as datas: use DD/MM/AA.';
+        if ([c.revisaoUltima, c.revisao, ...c.linhasPecas.flatMap((x) => [x.ultima, x.troca])].some((d) => !d.checkValidity())) return 'Confira as datas: use DD/MM/AA.';
         const n = (i) => (String(i.value).trim() ? CD.lerNumero(i.value) : null);
         const cap = n(c.capValor);
         const l = n(c.larg); const co = n(c.comp);
@@ -182,8 +209,8 @@
           capacidade: cap != null ? { valor: cap, unidade: c.capUn.value } : null,
           medidas: l != null || co != null ? { largura: l, comprimento: co } : null,
           energia: c.energia.value, consumoHora: n(c.consumo),
-          pecas: c.linhasPecas.map((x) => ({ id: x.id, nome: x.nome.value, proximaTroca: x.troca.value })),
-          revisao: c.revisao.value ? { proxima: c.revisao.value } : null,
+          pecas: c.linhasPecas.map((x) => ({ id: x.id, nome: x.nome.value, ultimaTroca: x.ultima.value, intervaloMeses: x.cada.value, proximaTroca: x.troca.value })),
+          revisao: { ultima: c.revisaoUltima.value, intervaloMeses: c.revisaoCada.value, proxima: c.revisao.value },
           audio: b?.audio || null,
         };
         // Confere tudo antes de guardar o áudio, para não deixar arquivo sem cadastro.

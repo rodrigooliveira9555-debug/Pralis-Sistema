@@ -111,7 +111,10 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   await d.locator('button', { hasText: 'Adicionar peça' }).click();
   await d.locator('button', { hasText: 'Adicionar peça' }).click();
   await d.getByLabel('Peça 1', { exact: true }).fill('Correia');
-  await d.getByLabel('Substituir a peça 1 em', { exact: true }).fill('20/12/26');
+  // Última troca + intervalo em meses calculam a próxima (e travam o campo); sem eles, a data é digitada
+  await d.getByLabel('Última troca da peça 1', { exact: true }).fill('20/06/26');
+  await d.getByLabel('Trocar a peça 1 a cada (meses)', { exact: true }).fill('6');
+  ok(await d.getByLabel('Substituir a peça 1 em', { exact: true }).inputValue() === '20/12/26' && await d.getByLabel('Substituir a peça 1 em', { exact: true }).evaluate((i) => i.readOnly), 'Próxima substituição = última troca + 6 meses, calculada');
   await d.getByLabel('Substituir a peça 2 em', { exact: true }).fill('10/01/27');
   await salvar(p);
   ok((await erroDialogo(p)).includes('nome da peça'), 'Peça com data e sem nome é recusada');
@@ -130,7 +133,7 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   await d.locator('audio:not([hidden])').waitFor();
   await salvar(p); await fechado(p);
   let masseira = await p.evaluate(() => JSON.parse(localStorage.getItem('cicluz-patrimonio-v1')).bens[0]);
-  ok(masseira.pecas.length === 1 && masseira.pecas[0].nome === 'CORREIA' && masseira.pecas[0].proximaTroca === '2026-12-20' && masseira.pecas[0].id, 'Peça salva com id, nome e data da substituição (linha em branco descartada)');
+  ok(masseira.pecas.length === 1 && masseira.pecas[0].nome === 'CORREIA' && masseira.pecas[0].ultimaTroca === '2026-06-20' && masseira.pecas[0].intervaloMeses === 6 && masseira.pecas[0].proximaTroca === '2026-12-20' && masseira.pecas[0].id, 'Peça salva com id, nome e data da substituição (linha em branco descartada)');
   ok(masseira.revisao.proxima === '2020-01-15' && masseira.capacidade.valor === 40 && masseira.consumoHora === 3.5, 'Revisão salva sem perder o que o bem já tinha');
   ok(masseira.audio && masseira.audio.id && masseira.audio.seconds >= 1 && await p.evaluate(async (id) => !!(await CicluzDocuments.files.get(id)), masseira.audio.id), 'Áudio guardado no aparelho e referenciado pelo bem');
   ok((await p.locator('#producao-patrimonio .compras-linha', { hasText: 'MASSEIRA' }).locator('.compras-situacao').textContent()) === 'Revisão vencida', 'Lista avisa a revisão vencida');

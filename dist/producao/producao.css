@@ -18,8 +18,8 @@
 .producao-linha-recurso { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .producao-linha-recurso > :first-child { grid-column: span 2; }
 .producao-linha-recurso > .btn { grid-column: 1 / -1; justify-self: start; }
-/* Peça principal do bem (RET - Patrimônios): peça, data da substituição e remover */
-.patrimonio-peca { grid-template-columns: minmax(0, 2fr) minmax(120px, 1fr) auto; }
+/* Peça principal do bem (RET - Patrimônios): peça, última troca, a cada N meses, substituir em e remover */
+.patrimonio-peca { grid-template-columns: minmax(0, 2fr) repeat(3, minmax(96px, 1fr)) auto; }
 .producao-linha > * { min-width: 0; width: 100%; }
 .producao-linha > .btn { width: auto; }
 @media (max-width: 760px) {

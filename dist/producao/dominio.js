@@ -45,6 +45,34 @@
   const EPS = 1e-9;
   const arred = (n, casas = 3) => { const f = 10 ** casas; return Math.round((Number(n) + Number.EPSILON) * f) / f; };
 
+  /* ---------- Manutenção do patrimônio (peças e revisão) ---------- */
+
+  /** Dias de antecedência do aviso "próxima" na lista de bens (provisório, a confirmar com o Rodrigo: P-25). */
+  const AVISO_MANUTENCAO_DIAS = 30;
+  const doisDigitos = (n) => String(n).padStart(2, '0');
+  /**
+   * Próxima data = última feita + N meses (decisão do Rodrigo, 15/11/2026). Mês sem o dia
+   * (31/01 + 1 mês) cai no último dia do mês. Sem última data ou sem intervalo, devolve ''.
+   */
+  function proximaData(ultimaIso, meses) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ultimaIso || '');
+    const n = Number(meses);
+    if (!m || !Number.isInteger(n) || n < 1) return '';
+    const total = Number(m[1]) * 12 + (Number(m[2]) - 1) + n;
+    const ano = Math.floor(total / 12);
+    const mes = total % 12;
+    const ultimoDia = new Date(Date.UTC(ano, mes + 1, 0)).getUTCDate();
+    return ano + '-' + doisDigitos(mes + 1) + '-' + doisDigitos(Math.min(Number(m[3]), ultimoDia));
+  }
+  /** 'vencida' (antes de hoje), 'proxima' (de hoje até o aviso) ou '' para a data ISO de uma manutenção. */
+  function situacaoManutencao(iso, hojeIso, dias = AVISO_MANUTENCAO_DIAS) {
+    if (!iso || !hojeIso) return '';
+    if (iso < hojeIso) return 'vencida';
+    const limite = new Date(hojeIso + 'T12:00:00Z');
+    limite.setUTCDate(limite.getUTCDate() + dias);
+    return iso <= limite.toISOString().slice(0, 10) ? 'proxima' : '';
+  }
+
   /* ---------- Formato de pedido (utensílio de fornada) ---------- */
 
   /** Quantos cabem num utensílio inteiro (largura × altura). */
@@ -335,6 +363,7 @@
   return {
     PROCESSOS, PARTES, NIVEIS, CATEGORIAS, ENERGIAS, UNIDADE_CONSUMO, EXATIDOES, ACOMPANHAMENTOS, CONFERENCIAS, VISOES,
     SITUACOES_PEDIDO, SITUACOES_ORDEM, nomeDe, arred,
+    AVISO_MANUTENCAO_DIAS, proximaData, situacaoManutencao,
     fornada, meia, passo, validarFormato, ehMultiplo, utensilios, multiplos, resumoFormato, validarQuantidade, validarConfigProduto,
     tempoEfetivo, naFaixa, emKg, ingredientesPara, lotes, planoDaFicha, perda, validarFicha,
     converter, aProduzir, sugestaoReposicao, turnoDe,

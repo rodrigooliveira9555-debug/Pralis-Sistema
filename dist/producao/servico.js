@@ -36,24 +36,40 @@
     if (np && B.dados.bens.some((x) => x.id !== b.id && texto(x.numeroPatrimonio) === np)) return 'Já existe um bem com o número de patrimônio ' + np + '.';
     for (const p of b.pecas) {
       if (!p.nome) return 'Informe o nome da peça (ou remova a linha).';
-      if (p.proximaTroca && !dataValida(p.proximaTroca)) return 'Data de substituição inválida na peça ' + p.nome + '.';
+      if ([p.ultimaTroca, p.proximaTroca].some((d) => d && !dataValida(d))) return 'Data inválida na peça ' + p.nome + '.';
+      if (!intervaloValido(p.intervaloMeses)) return 'Na peça ' + p.nome + ', "A cada (meses)" deve ser um número inteiro a partir de 1.';
     }
-    if (b.revisao && !dataValida(b.revisao.proxima)) return 'Data da próxima revisão inválida.';
+    if (b.revisao) {
+      if ([b.revisao.ultima, b.revisao.proxima].some((d) => d && !dataValida(d))) return 'Data da revisão inválida.';
+      if (!intervaloValido(b.revisao.intervaloMeses)) return 'Na revisão, "A cada (meses)" deve ser um número inteiro a partir de 1.';
+    }
     return '';
   }
   const dataValida = (iso) => /^\d{4}-\d{2}-\d{2}$/.test(iso) && !Number.isNaN(Date.parse(iso + 'T12:00:00'));
+  const intervaloValido = (n) => n == null || (Number.isInteger(n) && n >= 1);
+  const intervalo = (v) => (texto(v) === '' ? null : Number(v));
   /**
-   * Deixa o bem no formato salvo. Peças principais: [{ id, nome, proximaTroca }] (data ISO ou '');
-   * revisão periódica: { proxima } (data ISO) ou null; áudio: referência { id, type, size, seconds }
-   * do arquivo guardado no aparelho, ou null. Linha de peça toda em branco é descartada.
+   * Deixa o bem no formato salvo. Peças principais: [{ id, nome, ultimaTroca, intervaloMeses, proximaTroca }];
+   * revisão periódica: { ultima, intervaloMeses, proxima } ou null; datas ISO ou '', intervalo inteiro ou null.
+   * Com a última data e o intervalo, a próxima é sempre última + N meses (D.proximaData); sem um dos dois,
+   * vale a próxima digitada. Áudio: referência { id, type, size, seconds } do arquivo guardado no aparelho,
+   * ou null. Linha de peça toda em branco é descartada.
    */
   function prepararBem(entrada) {
     const b = { ...entrada, nome: texto(entrada.nome).toLocaleUpperCase('pt-BR') };
     if (b.energia === 'nenhuma' || !b.energia) { b.energia = 'nenhuma'; b.consumoHora = null; }
     b.pecas = (Array.isArray(entrada.pecas) ? entrada.pecas : [])
-      .map((p) => ({ id: p.id || S.novoId('peca'), nome: texto(p.nome).toLocaleUpperCase('pt-BR'), proximaTroca: texto(p.proximaTroca) }))
-      .filter((p) => p.nome || p.proximaTroca);
-    b.revisao = entrada.revisao && texto(entrada.revisao.proxima) ? { proxima: texto(entrada.revisao.proxima) } : null;
+      .map((p) => {
+        const ultimaTroca = texto(p.ultimaTroca);
+        const intervaloMeses = intervalo(p.intervaloMeses);
+        return { id: p.id || S.novoId('peca'), nome: texto(p.nome).toLocaleUpperCase('pt-BR'), ultimaTroca, intervaloMeses, proximaTroca: D.proximaData(ultimaTroca, intervaloMeses) || texto(p.proximaTroca) };
+      })
+      .filter((p) => p.nome || p.ultimaTroca || p.intervaloMeses != null || p.proximaTroca);
+    const rv = entrada.revisao || {};
+    const ultima = texto(rv.ultima);
+    const meses = intervalo(rv.intervaloMeses);
+    const proxima = D.proximaData(ultima, meses) || texto(rv.proxima);
+    b.revisao = ultima || meses != null || proxima ? { ultima, intervaloMeses: meses, proxima } : null;
     b.audio = entrada.audio && entrada.audio.id ? { id: entrada.audio.id, type: entrada.audio.type || '', size: entrada.audio.size || 0, seconds: entrada.audio.seconds || 0 } : null;
     return b;
   }
