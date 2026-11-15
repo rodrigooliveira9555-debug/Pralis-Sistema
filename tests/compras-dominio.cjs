@@ -166,10 +166,12 @@ ok(() => {
   assert.equal(d.nomeCategoriasFornecedor({}), '');
 });
 ok(() => {
-  assert.equal(d.tipoPessoaDe({ documento: '529.982.247-25' }), 'fisica');
-  assert.equal(d.tipoPessoaDe({ documento: '11.222.333/0001-81' }), 'juridica');
-  assert.equal(d.tipoPessoaDe({ documento: '' }), '');
-  assert.equal(d.tipoPessoaDe({ documento: '11.222.333/0001-81', tipoPessoa: 'fisica' }), 'fisica');
+  // Fornecedor é só por CNPJ; cadastro antigo com outro documento (CPF) continua identificável.
+  assert.equal(d.documentoAntigoFornecedor({ documento: '529.982.247-25' }), '529.982.247-25');
+  assert.equal(d.documentoAntigoFornecedor({ documento: '11.222.333/0001-81' }), '');
+  assert.equal(d.documentoAntigoFornecedor({ documento: '' }), '');
+  assert.equal(d.documentoAntigoFornecedor(null), '');
+  assert.equal(d.TIPOS_PESSOA, undefined);
 });
 ok(() => {
   const ctx = { fornecedores: [{ id: 'f9', nome: 'Moinho Teste' }] };
@@ -180,7 +182,7 @@ ok(() => {
   assert.match(v({ categorias: undefined }), /categoria/);
   assert.match(v({ categorias: ['outra'] }), /inválida/);
   assert.equal(v({ categorias: ['produto', 'servico'] }), '');
-  assert.match(v({ tipoPessoa: '' }), /tipo de pessoa/);
+  assert.equal(v({ tipoPessoa: '' }), ''); // o tipo de pessoa não é mais pedido
   assert.match(v({ nome: ' ' }), /nome/);
   assert.match(v({ nome: 'MOINHO TESTE' }), /Já existe/);
   assert.match(v({ documento: '' }), /CNPJ/);
@@ -190,7 +192,7 @@ ok(() => {
   assert.match(v({ email: 'sem-arroba' }), /E-mail do vendedor/);
   assert.match(v({ financeiro: { nome: 'Fin', whatsapp: '123', email: '' } }), /WhatsApp do financeiro/);
   assert.match(v({ financeiro: { nome: 'Fin', whatsapp: '', email: 'x@' } }), /E-mail do financeiro/);
-  assert.equal(v({ tipoPessoa: 'fisica', documento: '529.982.247-25' }), '');
+  assert.match(v({ tipoPessoa: 'fisica', documento: '529.982.247-25' }), /CNPJ válido/); // CPF não serve mais de documento
   // Cadastro em etapas: vendedor (aniversário em mês e ano, opcional), financeiro e representante.
   assert.equal(v({ vendedorAniversario: '1990-01', regimeTributario: 'simples' }), '');
   assert.equal(v({ vendedorAniversario: '', vendedorNascimento: '1990-01-01' }), ''); // a data completa antiga não é conferida
@@ -225,7 +227,7 @@ ok(() => {
   assert.equal(v({ endereco: {} }), '');
   assert.match(v({ endereco: { cep: '0100' } }), /CEP/);
   assert.match(v({ endereco: { uf: 'sp' } }), /UF/);
-  assert.match(v({ tipoPessoa: 'fisica', documento: '529.982.247-24' }), /CPF/);
+  assert.match(v({ documento: '' }), /CNPJ válido/);
 });
 ok(() => {
   // Migração do cadastro em etapas: o nascimento da pessoa física vira o do vendedor; o resto não se mexe; uma vez só.

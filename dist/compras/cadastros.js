@@ -100,7 +100,7 @@
     const incompletos = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && pendencias(f).length).length;
     // Mesma linha dos cadastros de grupos: tocar edita; a setinha revela Editar e Excluir.
     // Linha fina, uma por fornecedor, em colunas fixas (grade-fornecedor, em compras.css). Sequência final do Rodrigo:
-    // ícone da categoria, Fornecedor (nome fantasia), Categoria, Nome do contato, WhatsApp, Razão social, CPF/CNPJ,
+    // ícone da categoria, Fornecedor (nome fantasia), Categoria, Nome do contato, WhatsApp, Razão social, CNPJ,
     // Ramo, avisos, situação e seta. O ícone e o Fornecedor são fixos (nunca ocultam e ficam parados na rolagem); cada
     // uma das outras colunas tem no título a setinha que a oculta ou mostra (preferência do aparelho); o que não couber
     // rola para o lado dentro da lista.
@@ -118,7 +118,7 @@
       const cabecalho = U.cabecalhoColunas('grade-fornecedor', [
       { chave: 'nome', rotulo: 'Fornecedor' }, { chave: 'categoria', rotulo: 'Categoria', ocultavel: true },
       { chave: 'contato', rotulo: 'Nome do contato', ocultavel: true }, { chave: 'whatsapp', rotulo: 'WhatsApp', ocultavel: true },
-      { chave: 'razao', rotulo: 'Razão social', ocultavel: true }, { chave: 'documento', rotulo: 'CPF / CNPJ', ocultavel: true },
+      { chave: 'razao', rotulo: 'Razão social', ocultavel: true }, { chave: 'documento', rotulo: 'CNPJ', ocultavel: true },
       { chave: 'ramo', rotulo: 'Ramo', ocultavel: true }, { chave: 'selos', rotulo: 'Avisos', ocultavel: true }, { chave: 'estado', rotulo: 'Situação' },
       ], { lista: linhas, preferencia: 'cicluz-fornecedores-colunas' });
       linhas.append(cabecalho);
@@ -132,7 +132,7 @@
       linhas.append(U.linhaLista({
         icones: iconesDaCategoria(f), grade: 'grade-fornecedor',
         colunas: [
-          // nome = nome fantasia (ou o nome da pessoa física): é o nome de uso, o mesmo que cotação e pedido mostram.
+          // nome = nome fantasia: é o nome de uso, o mesmo que cotação e pedido mostram.
           { chave: 'nome', conteudo: f.nome },
           // Sem categoria: o aviso ocupa o lugar do texto da categoria (por isso o ícone está cinza).
           { chave: 'categoria', conteudo: categoria || U.situacao('Completar cadastro', 'atencao') },
@@ -204,8 +204,8 @@
   function pendencias(f) {
     const p = [];
     if (!D.nomeCategoriasFornecedor(f)) p.push('categoria');
-    const tipo = D.tipoPessoaDe(f);
-    if (!tipo || !(tipo === 'fisica' ? R().cpfValid(f.documento) : R().cnpjValid(f.documento))) p.push('CPF ou CNPJ');
+    // Cadastro antigo com CPF (de quando existia pessoa física) também cai aqui: fica em "Completar cadastro" até receber o CNPJ.
+    if (!R().cnpjValid(f.documento)) p.push('CNPJ');
     if (!D.digitos(f.whatsapp)) p.push('WhatsApp');
     return p;
   }
@@ -243,31 +243,27 @@
           return { id, input: l.input };
         });
         catBox.append(el('span', 'compras-rotulo', 'Categoria * (pode marcar as duas)'), catOpcoes);
-        // Cadastro novo começa como pessoa jurídica (é o caso comum: CNPJ primeiro); pessoa física troca no seletor.
-        const tipoInicial = f ? D.tipoPessoaDe(f) : 'juridica';
-        const tipo = seletor(D.TIPOS_PESSOA, tipoInicial, 'Selecione');
-        // Pessoa jurídica: Razão social e Nome fantasia; pessoa física: só o Nome. O campo salvo é sempre "nome"
-        // (o nome de uso, que cotação, pedido e recebimento mostram); a razão social é um campo a mais.
+        // Fornecedor é sempre por CNPJ. Razão social e Nome fantasia; o campo salvo de uso é sempre "nome" (o que
+        // cotação, pedido e recebimento mostram); a razão social é um campo a mais.
         const razao = texto(f?.razaoSocial, { maxLength: 160 });
         const razaoCampo = campo('Razão social', razao);
         const nome = texto(f?.nome);
-        const nomeCampo = campo('Nome *', nome);
-        // Dois campos de documento: o do CPF é tratado pelo field-validation.js (máscara e dígito verificador
-        // pelo rótulo); o do CNPJ usa a máscara e o validador de lá. Só o do tipo escolhido aparece.
-        const cpf = entrada('text', tipoInicial === 'fisica' ? f?.documento || '' : '', { inputMode: 'numeric' });
-        const cnpj = aplicarMascara(entrada('text', tipoInicial === 'juridica' ? f?.documento || '' : '', { inputMode: 'numeric', placeholder: '00.000.000/0000-00', maxLength: 18 }), R().cnpjMask);
-        const cpfCampo = campo('CPF *', cpf);
+        const nomeCampo = campo('Nome fantasia', nome);
+        // Cadastro antigo com CPF: o CNPJ abre vazio e um aviso mostra o documento que está gravado.
+        const docAntigo = D.documentoAntigoFornecedor(f);
+        const cnpj = aplicarMascara(entrada('text', docAntigo ? '' : f?.documento || '', { inputMode: 'numeric', placeholder: '00.000.000/0000-00', maxLength: 18 }), R().cnpjMask);
         const cnpjCampo = campo('CNPJ *', cnpj);
+        const avisoAntigo = el('p', 'profiles-note compras-largo', docAntigo
+          ? 'Este cadastro é antigo e tem outro documento gravado: ' + (D.digitos(docAntigo).length === 11 ? 'CPF ' : '') + docAntigo + '. Fornecedor agora é só por CNPJ: informe o CNPJ para salvar. O documento antigo continua guardado.' : '');
         const regime = seletor(D.REGIMES_TRIBUTARIOS, f?.regimeTributario || '', 'Selecione');
         const regimeCampo = campo('Regime tributário', regime);
-        const semTipo = el('p', 'profiles-note', 'Escolha o tipo de pessoa para informar o CPF ou o CNPJ.');
         const ramo = texto(f?.ramo, { maxLength: 80, placeholder: 'Ex.: Bebidas, Manutenção' });
         const ativo = interruptor('Fornecedor ativo', f ? f.situacao === 'ativo' : true, 'Fornecedor inativo não aparece no seletor de cotação.');
         ativo.classList.add('compras-largo');
-        // Ordem do Rodrigo: categoria, CNPJ (que puxa os dados), razão social, nome fantasia; depois o endereço.
+        // Ordem do Rodrigo: categoria, CNPJ (que puxa os dados), razão social, nome fantasia, regime tributário; depois o endereço; por último ramo e situação.
         const avisoCnpj = el('p', 'profiles-note compras-largo');
         avisoCnpj.setAttribute('role', 'status');
-        s1.append(catBox, campo('Tipo de pessoa *', tipo), cnpjCampo, cpfCampo, semTipo, avisoCnpj, razaoCampo, nomeCampo);
+        s1.append(catBox, cnpjCampo, ...(docAntigo ? [avisoAntigo] : []), avisoCnpj, razaoCampo, nomeCampo, regimeCampo);
 
         /* Endereço: CEP primeiro (puxa rua, bairro, cidade e UF); número e complemento são digitados. */
         const sEnd = el('fieldset', 'compras-fieldset');
@@ -285,7 +281,7 @@
         sEnd.append(campo('CEP', cep), campo('Rua / logradouro', rua), campo('Número', numero), campo('Complemento', complemento), campo('Bairro', bairro), campo('Cidade', cidade), campo('UF', uf), avisoCep);
 
         const sResto = el('fieldset', 'compras-fieldset');
-        sResto.append(regimeCampo, campo('Ramo', ramo), ativo);
+        sResto.append(campo('Ramo', ramo), ativo);
         const etapa1 = el('div', 'compras-etapa');
         etapa1.append(s1, sEnd, sResto);
 
@@ -431,37 +427,22 @@
           const foco = quadros[atual].querySelector('input:not([type=checkbox]):not([readonly]),select');
           if (foco && form.isConnected) foco.focus();
         }
-        const pintarTipo = () => {
-          const pj = tipo.value === 'juridica';
-          mostrar(cpfCampo, tipo.value === 'fisica');
-          mostrar(cnpjCampo, pj);
-          mostrar(razaoCampo, pj);
-          mostrar(regimeCampo, pj);
-          mostrar(semTipo, !tipo.value);
-          if (!pj) avisoCnpj.textContent = '';
-          const rotuloNome = pj ? 'Nome fantasia' : 'Nome *';
-          nomeCampo.querySelector('.compras-rotulo').textContent = rotuloNome;
-          nome.setAttribute('aria-label', rotuloNome);
-        };
-        tipo.onchange = pintarTipo;
         cats.forEach((x) => { x.input.onchange = () => { barra.update(etapas(), atual); pintarVendedor(); }; });
-        pintarTipo();
         pintarVendedor();
 
         /** Lê o formulário no formato salvo. "O mesmo da etapa anterior" copia os dados da etapa de antes. */
         function ler() {
-          const tipoPessoa = tipo.value;
-          const pj = tipoPessoa === 'juridica';
-          const razaoSocial = pj ? razao.value.trim() : '';
+          const razaoSocial = razao.value.trim();
           pintarCopias();
           const vendedor = { nome: vNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() };
           const contato = (c) => ({ mesmo: c.mesmo.checked, ...valores(c) });
           return {
-            id: f?.id, categorias: marcadas(), tipoPessoa,
-            // Pessoa jurídica sem nome fantasia: a razão social vira o nome de uso.
+            // tipoPessoa continua gravado (sempre 'juridica') para quem lê o dado; o documento antigo (CPF) não se perde.
+            id: f?.id, categorias: marcadas(), tipoPessoa: 'juridica', ...(docAntigo ? { documentoAnterior: docAntigo } : {}),
+            // Sem nome fantasia, a razão social vira o nome de uso.
             nome: nome.value.trim() || razaoSocial, razaoSocial,
-            documento: (tipoPessoa === 'fisica' ? cpf.value : pj ? cnpj.value : '').trim(),
-            regimeTributario: pj ? regime.value : '', ramo: ramo.value.trim(),
+            documento: cnpj.value.trim(),
+            regimeTributario: regime.value, ramo: ramo.value.trim(),
             endereco: { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value },
             contatoNome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email,
             // Texto incompleto segue como está para a validação recusar (não vira vazio em silêncio).

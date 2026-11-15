@@ -61,9 +61,10 @@
   fica lá (inativo, não liberado). Código:
   `dist/compras/produto-importacao.js` (regras), `telas-produto-importacao.js` (tela), SheetJS 0.20.3 em `dist/vendor/sheetjs`.
 - **Fornecedor único (15/11/2026)**, dentro de `cicluz-compras-v1` (mesma chave e versão). Campos do fornecedor: `nome`,
-  `documento`, `whatsapp` e `situacao` (já existiam), mais `razaoSocial` (texto, opcional, só pessoa jurídica; o `nome` é o nome fantasia ou o nome da pessoa física, e
+  `documento`, `whatsapp` e `situacao` (já existiam), mais `razaoSocial` (texto, opcional; o `nome` é o nome fantasia, e
   continua sendo o nome exibido em todo o sistema, sem migração), `categorias` (lista com 'produto' e/ou 'servico'), `ramo`
-  (texto, opcional), `tipoPessoa` ('fisica' | 'juridica'), `contatoNome`, `email`, `financeiro: { nome, whatsapp, email }`
+  (texto, opcional), `tipoPessoa` (desde 15/11/2026 o cadastro grava sempre 'juridica': fornecedor é só por CNPJ; registro antigo pode ter 'fisica'
+  e um CPF em `documento`, que fica como está até a pessoa informar o CNPJ, quando o CPF passa para `documentoAnterior`; sem migração), `contatoNome`, `email`, `financeiro: { nome, whatsapp, email }`
   e `nascimento` (ISO, só pessoa física). **Migração** (marca `migracoes.ramoFornecedor = 1` dentro do próprio documento,
   para acompanhar os dados na sincronização): o texto livre antigo `categoria` passa para `ramo` e o campo `categoria`
   sai; ninguém é classificado como Produto ou Serviço (`categorias` fica ausente até alguém marcar). Roda em memória ao

@@ -159,7 +159,6 @@
   const podeConvidar = (f) => motivoNaoConvidavel(f) === '';
 
   /* ---------- Cadastro de fornecedor (decisões do Rodrigo, 15/11/2026) ---------- */
-  const TIPOS_PESSOA = [['fisica', 'Pessoa física'], ['juridica', 'Pessoa jurídica']];
   const semAcento = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
   /** Categoria do fornecedor (decisão do Rodrigo, 15/11/2026): o que ele fornece. Pode ser um, o outro ou os dois. */
   const CATEGORIAS_FORNECEDOR = [['produto', 'Produto'], ['servico', 'Serviço']];
@@ -209,11 +208,14 @@
     d.migracoes = { ...(d.migracoes || {}), categoriaProdutoFornecedor: 1 };
     return d;
   }
-  /** Tipo de pessoa do fornecedor; no cadastro antigo vem do tamanho do documento (11 = física, 14 = jurídica). */
-  function tipoPessoaDe(f) {
-    if (f && (f.tipoPessoa === 'fisica' || f.tipoPessoa === 'juridica')) return f.tipoPessoa;
-    const n = digitos(f && f.documento).length;
-    return n === 11 ? 'fisica' : n === 14 ? 'juridica' : '';
+  /**
+   * Fornecedor é sempre por CNPJ (decisão do Rodrigo, 15/11/2026; o caminho de pessoa física saiu). Cadastro antigo
+   * com outro documento (um CPF, de quando existia pessoa física) continua abrindo: esta função devolve esse
+   * documento antigo, ou '' quando o cadastro já tem CNPJ ou não tem documento.
+   */
+  function documentoAntigoFornecedor(f) {
+    const doc = String((f && f.documento) || '').trim();
+    return doc && digitos(doc).length !== 14 ? doc : '';
   }
   const emailValido = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
   /** Regime tributário do fornecedor pessoa jurídica: só guarda a opção escolhida, não entra em cálculo nenhum. */
@@ -261,10 +263,10 @@
   const telefoneRuim = (v) => { const n = digitos(v); return Boolean(n) && (n.length < 8 || String(v).length > 30); };
   /**
    * O que impede salvar, etapa por etapa: devolve 4 textos ('' quando a etapa está em ordem). Obrigatórios: categoria
-   * (Produto, Serviço ou os dois), tipo de pessoa, nome (na pessoa jurídica, nome fantasia ou razão social), CNPJ ou CPF
+   * (Produto, Serviço ou os dois), nome (nome fantasia ou razão social), CNPJ
    * com dígito verificador e WhatsApp do vendedor ou prestador. O aniversário do vendedor (mês e ano) é opcional (o CPF dele não é
    * mais pedido; valor antigo, se houver, fica guardado sem uso).
-   * regras = { cpfValid, cnpjValid } do field-validation.js. A exigência vale ao salvar: fornecedor antigo sem esses
+   * regras = { cnpjValid } do field-validation.js. A exigência vale ao salvar: fornecedor antigo sem esses
    * dados continua abrindo e sendo usado.
    */
   function validarFornecedorEtapas(f, regras, { fornecedores = [] } = {}) {
@@ -272,11 +274,9 @@
       const cats = Array.isArray(f.categorias) ? f.categorias : [];
       if (!cats.length) return 'Marque a categoria do fornecedor: Produto, Serviço ou os dois.';
       if (cats.some((c) => !CATEGORIAS_FORNECEDOR.some(([id]) => id === c))) return 'Categoria do fornecedor inválida.';
-      if (f.tipoPessoa !== 'fisica' && f.tipoPessoa !== 'juridica') return 'Escolha o tipo de pessoa (física ou jurídica).';
-      if (!String(f.nome || '').trim()) return f.tipoPessoa === 'juridica' ? 'Informe o nome fantasia ou a razão social.' : 'Informe o nome do fornecedor.';
+      if (!String(f.nome || '').trim()) return 'Informe o nome fantasia ou a razão social.';
       if (fornecedores.some((x) => x.id !== f.id && semAcento(x.nome) === semAcento(f.nome))) return 'Já existe um fornecedor com este nome.';
-      if (f.tipoPessoa === 'fisica' && !regras.cpfValid(f.documento)) return 'Informe um CPF válido (11 dígitos).';
-      if (f.tipoPessoa === 'juridica' && !regras.cnpjValid(f.documento)) return 'Informe um CNPJ válido (14 dígitos).';
+      if (!regras.cnpjValid(f.documento)) return 'Informe um CNPJ válido (14 dígitos).';
       if (f.regimeTributario && !REGIMES_TRIBUTARIOS.some(([id]) => id === f.regimeTributario)) return 'Regime tributário inválido.';
       // Endereço é opcional; o que vier preenchido precisa estar no formato.
       const e = f.endereco || {};
@@ -489,7 +489,7 @@
     REPETICOES, DIAS_SEMANA, MESES, ocorrencias, resumoRegra,
     topoDoRanking,
     digitos, motivoNaoConvidavel, podeConvidar,
-    TIPOS_PESSOA, CATEGORIAS_FORNECEDOR, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, tipoPessoaDe, validarFornecedor,
+    CATEGORIAS_FORNECEDOR, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, documentoAntigoFornecedor, validarFornecedor,
     validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, aniversarioVendedor, migrarVendedorFornecedor,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,
