@@ -72,8 +72,30 @@ button.compras-linha { cursor: pointer; }
 /* Linha com a setinha de ações dos cadastros de grupos (createFinancialActions): a seta revela Editar e Excluir,
    redondos de --row-action-size, Editar na cor do menu e Excluir em vermelho, como nos grupos. */
 .compras-linha.com-acoes { cursor: pointer; flex-wrap: nowrap; }
-.compras-linha.com-acoes:hover, .compras-linha.com-acoes:focus-visible { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+/* Formato da linha de DES - Grupos de Despesas (medido na tela): 52 px, ícone quadrado de cantos arredondados
+   (--row-icon-radius) com o símbolo de 20 px, título 14/500, informação menor embaixo, estado à direita e fundo
+   na cor da origem ao passar o cursor ou focar. */
+.compras-linha.com-acoes { padding: 8px 12px; gap: 8px; }
+.compras-linha.com-acoes:hover, .compras-linha.com-acoes:focus-within { background: color-mix(in srgb, var(--menu-accent) 8%, var(--theme-surface, #fff)); }
+body.dark-theme .compras-linha.com-acoes:hover, body.dark-theme .compras-linha.com-acoes:focus-within { background: color-mix(in srgb, var(--menu-accent) 18%, #24232b); }
+body:not(.dark-theme) .compras-linha.com-acoes:hover .compras-linha-texto b { color: var(--panel-text, inherit); }
+.compras-linha.com-acoes .compras-linha-icone { border-radius: var(--row-icon-radius, 26%); }
+.compras-linha.com-acoes .compras-linha-icone svg.money-glyph { width: 20px; height: 20px; stroke-width: 1.9; }
 .compras-linha.com-acoes .compras-linha-texto { flex-basis: 0; min-width: 0; }
+.compras-linha.com-acoes .compras-linha-texto b { font: 500 var(--ui-text, 14px)/18px var(--ui-font); }
+.compras-linha .account-list-state { flex: none; font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); }
+/* Informações menores embaixo do título: corridas na tela estreita; colunas alinhadas a partir de 900 px. */
+.compras-linha-dados { display: flex; flex-wrap: wrap; gap: 0 12px; min-width: 0; }
+.compras-linha-dados small.vazio { display: none; }
+/* Colunas de largura fixa (encolhem só se faltar espaço) e lugar reservado para dois ícones, para as colunas
+   começarem no mesmo ponto em todas as linhas, com um ou dois ícones e com ou sem selo. */
+@media (min-width: 900px) {
+  .compras-linha-dados { display: grid; grid-template-columns: repeat(var(--colunas, 4), minmax(0, 120px)); }
+  .compras-linha-dados small.vazio { display: block; }
+  .compras-linha.com-acoes .compras-linha-icones { min-width: 64px; }
+  /* Dois selos empilham em vez de espremer as colunas. */
+  .compras-linha.com-acoes .compras-linha-direita { max-width: 150px; }
+}
 .compras-linha .account-action-toggle { flex: none; width: 32px; height: 32px; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .compras-linha .account-row-actions { display: flex; flex: none; align-items: center; gap: var(--row-action-gap, 6px); }
 .compras-linha .account-row-actions[hidden] { display: none; }

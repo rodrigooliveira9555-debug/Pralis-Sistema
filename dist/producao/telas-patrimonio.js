@@ -91,7 +91,8 @@
       else if (!vis.length) lista.append(U.vazio('Nada neste filtro.'));
       vis.forEach((b) => lista.append(U.linhaLista({
         icone: 'patrimonio', titulo: b.nome, detalhe: detalhe(b),
-        direita: [b.ativo === false ? U.situacao('Inativo', 'neutro') : null, avisoManutencao(b)].filter(Boolean),
+        estado: b.ativo === false ? 'Inativo' : 'Ativo',
+        direita: [avisoManutencao(b)].filter(Boolean),
         // Mesma linha dos cadastros de grupos: tocar edita; a setinha revela Editar e Excluir.
         acoes: { rotulo: b.nome, lista, aoEditar: () => formulario(b), aoExcluir: () => excluir(b) },
       })));

@@ -98,9 +98,10 @@
       const semDdd = f.situacao === 'ativo' && D.motivoNaoConvidavel(f);
       linhas.append(U.linhaLista({
         icones: iconesDaCategoria(f), titulo: f.nome,
-        detalhe: [D.nomeCategoriasFornecedor(f), f.ramo, f.documento, f.whatsapp, f.contatoNome].filter(Boolean).join(' · '),
+        // Título maior = nome; embaixo, as informações menores (colunas na tela larga): categoria, documento, WhatsApp, ramo e contato.
+        dados: [D.nomeCategoriasFornecedor(f), f.documento, f.whatsapp, f.ramo, f.contatoNome],
+        estado: f.situacao === 'ativo' ? 'Ativo' : 'Inativo',
         direita: [
-          f.situacao !== 'ativo' ? U.situacao('Inativo', 'neutro') : null,
           f.situacao === 'ativo' && pendencias(f).length ? U.situacao('Completar cadastro', 'atencao') : null,
           semDdd ? U.situacao(f.whatsapp ? 'WhatsApp sem DDD' : 'Sem WhatsApp', 'atencao') : null,
         ].filter(Boolean),

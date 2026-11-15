@@ -258,8 +258,11 @@
    * na linha edita. Com acoes a linha não é um <button>, para não haver botão dentro de botão.
    * icones: [{ icone | html, cor, rotulo }] no lugar de icone, quando a linha tem um ou mais ícones com cor própria
    * (ex.: fornecedor de Produto em verde e de Serviço em vermelho); o rótulo vira a dica e o texto do leitor de tela.
+   * dados: lista de textos menores embaixo do título, no lugar de detalhe; em tela larga viram colunas alinhadas
+   * entre as linhas (o vazio mostra "—") e, na estreita, linhas corridas só com o que está preenchido.
+   * estado: texto pequeno à direita, antes da seta (ex.: "Ativo"), como nos cadastros de grupos.
    */
-  function linhaLista({ icone, icones, titulo, detalhe, direita, aoClicar, acoes }) {
+  function linhaLista({ icone, icones, titulo, detalhe, dados, estado, direita, aoClicar, acoes }) {
     const r = el(aoClicar && !acoes ? 'button' : 'div', 'compras-linha');
     if (aoClicar && !acoes) { r.type = 'button'; r.onclick = aoClicar; }
     if (icone) { const i = el('span', 'compras-linha-icone'); i.innerHTML = svg(ICONES[icone] || icone); r.append(i); }
@@ -278,8 +281,15 @@
     const meio = el('span', 'compras-linha-texto');
     meio.append(el('b', null, titulo));
     if (detalhe) meio.append(el('small', null, detalhe));
+    if (dados && dados.length) {
+      const d = el('span', 'compras-linha-dados');
+      d.style.setProperty('--colunas', String(dados.length));
+      dados.forEach((t) => d.append(el('small', t ? null : 'vazio', t || '—')));
+      meio.append(d);
+    }
     r.append(meio);
     if (direita) { const d = el('span', 'compras-linha-direita'); d.append(...[].concat(direita)); r.append(d); }
+    if (estado) r.append(el('span', 'account-list-state', estado));
     if (acoes) {
       // account-list-row: é a classe que o fechamento "tocar fora" do componente procura.
       r.classList.add('com-acoes', 'account-list-row');
