@@ -289,9 +289,24 @@
         const etapa1 = el('div', 'compras-etapa');
         etapa1.append(s1, sEnd, sResto);
 
-        /* Buscas (consultas-publicas.js): só completam campo vazio, nunca trocam o que já foi digitado; se o serviço
-           falhar, avisam discretamente e o cadastro segue à mão. Cada número é consultado uma vez. */
-        const completar = (pares) => pares.filter(([campoAlvo, valor]) => valor && !campoAlvo.value.trim()).map(([campoAlvo, valor, nomeCampoAlvo]) => { campoAlvo.value = valor; return nomeCampoAlvo; });
+        /* Buscas (consultas-publicas.js): nunca trocam o que a pessoa digitou; se o serviço falhar, avisam discretamente
+           e o cadastro segue à mão. Cada número é consultado uma vez. Um campo é "livre" para a consulta quando está
+           vazio ou quando ainda tem exatamente o valor que uma consulta anterior pôs (a pessoa não mexeu): assim, ao
+           trocar o CEP ou o CNPJ, o resultado novo substitui o da consulta anterior em bloco (não sobra a UF antiga). */
+        const daConsulta = new Map();
+        const livre = (c) => !c.value.trim() || daConsulta.get(c) === c.value;
+        const completar = (pares) => {
+          const feitos = []; const limpos = [];
+          pares.forEach(([campoAlvo, valor, nomeCampoAlvo]) => {
+            if (!livre(campoAlvo)) return;
+            const antes = campoAlvo.value;
+            campoAlvo.value = valor || '';
+            if (campoAlvo.value) daConsulta.set(campoAlvo, campoAlvo.value); else daConsulta.delete(campoAlvo);
+            if (campoAlvo.value !== antes) (campoAlvo.value ? feitos : limpos).push(nomeCampoAlvo);
+          });
+          return { feitos, limpos };
+        };
+        const resumo = (r) => (r.limpos.length ? ' Esvaziado, por ser da consulta anterior: ' + r.limpos.join(', ') + '.' : '');
         const FALHA = { 'nao-encontrado': 'não encontrado', indisponivel: 'consulta indisponível agora' };
         let cepConsultado = D.digitos(cep.value);
         async function buscarCep() {
@@ -303,8 +318,9 @@
           if (D.digitos(cep.value) !== n) return;
           if (r.erro) { avisoCep.textContent = 'CEP ' + FALHA[r.erro] + ': preencha o endereço à mão.'; return; }
           const e = r.dados;
-          const feitos = completar([[rua, e.logradouro, 'rua'], [bairro, e.bairro, 'bairro'], [cidade, e.cidade, 'cidade'], [uf, e.uf, 'UF']]);
-          avisoCep.textContent = feitos.length ? 'Preenchido pelo CEP: ' + feitos.join(', ') + '. Confira e informe o número.' : 'Endereço do CEP conferido; nada foi trocado.';
+          // Rua, bairro, cidade e UF vão juntos; número e complemento não vêm do CEP e só são esvaziados se eram da consulta anterior.
+          const r2 = completar([[rua, e.logradouro, 'rua'], [bairro, e.bairro, 'bairro'], [cidade, e.cidade, 'cidade'], [uf, e.uf, 'UF'], [numero, '', 'número'], [complemento, '', 'complemento']]);
+          avisoCep.textContent = (r2.feitos.length ? 'Preenchido pelo CEP: ' + r2.feitos.join(', ') + '. Confira e informe o número.' : 'Endereço do CEP conferido; nada foi trocado.') + resumo(r2);
         }
         cep.addEventListener('input', buscarCep);
         let cnpjConsultado = D.digitos(cnpj.value);
@@ -318,10 +334,10 @@
           if (r.erro) { avisoCnpj.textContent = 'CNPJ ' + FALHA[r.erro] + ': preencha os dados à mão.'; return; }
           const x = r.dados;
           const e = x.endereco;
-          const feitos = completar([[razao, x.razaoSocial, 'razão social'], [nome, x.nomeFantasia, 'nome fantasia'], [cep, e.cep, 'CEP'], [rua, e.logradouro, 'rua'],
+          const r2 = completar([[razao, x.razaoSocial, 'razão social'], [nome, x.nomeFantasia, 'nome fantasia'], [cep, e.cep, 'CEP'], [rua, e.logradouro, 'rua'],
             [numero, e.numero, 'número'], [complemento, e.complemento, 'complemento'], [bairro, e.bairro, 'bairro'], [cidade, e.cidade, 'cidade'], [uf, e.uf, 'UF']]);
           cepConsultado = D.digitos(cep.value);
-          avisoCnpj.textContent = feitos.length ? 'Preenchido pela consulta do CNPJ: ' + feitos.join(', ') + '. Confira antes de salvar.' : 'Dados do CNPJ conferidos; nada foi trocado.';
+          avisoCnpj.textContent = (r2.feitos.length ? 'Preenchido pela consulta do CNPJ: ' + r2.feitos.join(', ') + '. Confira antes de salvar.' : 'Dados do CNPJ conferidos; nada foi trocado.') + resumo(r2);
         }
         cnpj.addEventListener('input', buscarCnpj);
 

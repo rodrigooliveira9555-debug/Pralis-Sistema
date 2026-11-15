@@ -77,8 +77,13 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   const avancar = (d) => d.locator('.compras-etapas-nav button', { hasText: 'Avançar' }).click();
   // Cadastro em 4 etapas, com a barra de etapas do sistema
   ok((await etapaF(df)).includes('Etapa 1 de 4') && await df.locator('.stepper-item').count() === 4, 'Cadastro de fornecedor abre na etapa 1 de 4');
-  // As consultas de CNPJ e CEP não saem para a rede no teste: respondem como serviço indisponível.
-  await p.route('https://brasilapi.com.br/**', (r) => r.abort());
+  // As consultas de CNPJ e CEP não saem para a rede no teste: a resposta é simulada aqui, com dados fictícios.
+  await p.route('https://brasilapi.com.br/**', (r) => {
+    const u = r.request().url();
+    if (u.includes('/cnpj/')) return r.fulfill({ json: { razao_social: 'RAZAO DA CONSULTA LTDA', nome_fantasia: 'FANTASIA DA CONSULTA', cep: '70000000', descricao_tipo_de_logradouro: 'QUADRA', logradouro: 'TESTE', numero: '100', complemento: 'SALA 1', bairro: 'BAIRRO UM', municipio: 'CIDADE UM', uf: 'DF' } });
+    if (u.includes('/cep/v2/01001000')) return r.fulfill({ json: { cep: '01001000', state: 'SP', city: 'Cidade Dois', neighborhood: 'Bairro Dois', street: 'Praça Teste' } });
+    return r.abort();
+  });
   ok((await etapaF(df)).includes('Dados da empresa') && await df.getByLabel('Tipo de pessoa *', { exact: true }).inputValue() === 'juridica' && await df.getByLabel('CNPJ *', { exact: true }).isVisible() && await df.getByLabel('CPF *', { exact: true }).isHidden() && await df.getByLabel('CEP', { exact: true }).isVisible(), 'Etapa 1 é Dados da empresa: abre em pessoa jurídica, com CNPJ e o endereço por CEP');
   ok(await df.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).count() === 0, 'No cadastro novo o Salvar só aparece na última etapa');
   await avancar(df);
@@ -97,6 +102,14 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await avancar(df);
   ok((await erroF()).includes('CNPJ válido'), 'CNPJ com dígito verificador errado é recusado');
   await df.getByLabel('CNPJ *', { exact: true }).fill('11222333000181');
+  // Consulta do CNPJ: preenche o endereço, sem trocar o que foi digitado (razão social e nome fantasia).
+  await df.getByLabel('UF', { exact: true }).evaluate((s) => new Promise((ok2) => { const t = setInterval(() => { if (s.value) { clearInterval(t); ok2(); } }, 50); }));
+  ok(await df.getByLabel('UF', { exact: true }).inputValue() === 'DF' && await df.getByLabel('Número', { exact: true }).inputValue() === '100' && await df.getByLabel('Razão social', { exact: true }).inputValue() === 'Fornecedor CNPJ Teste Comércio Ltda', 'A consulta do CNPJ preenche o endereço e não troca o que foi digitado');
+  // Trocar o CEP: rua, bairro, cidade e UF mudam juntos; número e complemento da consulta anterior saem; o que foi digitado à mão fica.
+  await df.getByLabel('Bairro', { exact: true }).fill('Bairro digitado');
+  await df.getByLabel('CEP', { exact: true }).fill('01001000');
+  await df.getByLabel('UF', { exact: true }).evaluate((s) => new Promise((ok2) => { const t = setInterval(() => { if (s.value === 'SP') { clearInterval(t); ok2(); } }, 50); }));
+  ok(await df.getByLabel('Cidade', { exact: true }).inputValue() === 'Cidade Dois' && await df.getByLabel('Rua / logradouro', { exact: true }).inputValue() === 'Praça Teste' && await df.getByLabel('Número', { exact: true }).inputValue() === '' && await df.getByLabel('Complemento', { exact: true }).inputValue() === '' && await df.getByLabel('Bairro', { exact: true }).inputValue() === 'Bairro digitado', 'Trocar o CEP troca rua, cidade e UF em bloco, esvazia número e complemento da consulta anterior e mantém o bairro digitado');
   await avancar(df);
   ok((await etapaF(df)).includes('Etapa 2 de 4'), 'Etapa 2: vendedor ou prestador');
   await avancar(df);
