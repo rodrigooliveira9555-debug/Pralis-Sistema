@@ -164,6 +164,8 @@
     // Fornecedor: o texto livre antigo de "categoria" vira o campo ramo (uma vez por documento, marca em d.migracoes).
     // Só em memória: vai para o armazenamento na próxima gravação, para abrir a tela não criar versão no banco.
     window.CicluzComprasDominio.migrarRamoFornecedor(d);
+    // Fornecedor antigo ligado a produtos (catálogo, histórico, cotação ou pedido) e sem categoria vira Produto (uma vez).
+    window.CicluzComprasDominio.migrarCategoriaProduto(d);
     return d;
   }
 

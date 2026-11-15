@@ -137,6 +137,29 @@ ok(() => {
   assert.equal(doc.fornecedores[0].ramo, '');
 });
 ok(() => {
+  // Fornecedor antigo ligado a produto (catálogo, histórico, pedido, cotação) e sem categoria vira Produto; uma vez só.
+  const doc = {
+    fornecedores: [
+      { id: 'f1', nome: 'No catálogo' }, { id: 'f2', nome: 'No histórico', categorias: [] }, { id: 'f3', nome: 'Com pedido' },
+      { id: 'f4', nome: 'Em cotação' }, { id: 'f5', nome: 'Sem vínculo' }, { id: 'f6', nome: 'Já é serviço', categorias: ['servico'] },
+    ],
+    catalogo: [{ id: 'v1', fornecedorId: 'f1', produtoId: 'p1' }, { id: 'v2', fornecedorId: 'f6', produtoId: 'p1' }],
+    historico: [{ id: 'h1', fornecedorId: 'f2', produtoId: 'p1' }],
+    pedidos: [{ id: 'pd1', fornecedorId: 'f3', itens: [] }],
+    rodadas: [{ id: 'r1', convites: [{ fornecedorId: 'f4' }] }],
+  };
+  assert.equal(d.vinculosComProdutos(doc, 'f1'), 1);
+  assert.equal(d.vinculosComProdutos(doc, 'f5'), 0);
+  d.migrarCategoriaProduto(doc);
+  assert.deepEqual(doc.fornecedores.map((f) => (f.categorias || []).join()), ['produto', 'produto', 'produto', 'produto', '', 'servico']);
+  assert.equal(doc.migracoes.categoriaProdutoFornecedor, 1);
+  // Não roda de novo: quem ganhou vínculo depois, ou desmarcou a categoria, não é mexido.
+  doc.fornecedores[0].categorias = [];
+  doc.catalogo.push({ id: 'v3', fornecedorId: 'f5', produtoId: 'p2' });
+  d.migrarCategoriaProduto(doc);
+  assert.deepEqual(doc.fornecedores.map((f) => (f.categorias || []).join()), ['', 'produto', 'produto', 'produto', '', 'servico']);
+});
+ok(() => {
   assert.equal(d.nomeCategoriasFornecedor({ categorias: ['servico', 'produto'] }), 'Produto e Serviço');
   assert.equal(d.nomeCategoriasFornecedor({ categorias: ['servico'] }), 'Serviço');
   assert.equal(d.nomeCategoriasFornecedor({ categorias: [] }), '');

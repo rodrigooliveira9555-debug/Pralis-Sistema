@@ -90,7 +90,9 @@
     const tela = telasF[origemF];
     const lista = S.dados.fornecedores
       .filter((f) => U.dobrar([f.nome, f.documento, f.whatsapp, f.contatoNome, f.ramo, D.nomeCategoriasFornecedor(f)].join(' ')).includes(U.dobrar(buscaF[origemF])))
-      .sort((a, b) => (a.situacao === b.situacao ? a.nome.localeCompare(b.nome, 'pt-BR') : a.situacao === 'ativo' ? -1 : 1));
+      // Organizada pela categoria (pedido do Rodrigo): Produto, Produto e Serviço, Serviço e, por último, sem categoria;
+      // dentro de cada uma, os ativos antes dos inativos e, entre eles, por nome.
+      .sort((a, b) => ordemCategoria(a) - ordemCategoria(b) || (a.situacao === b.situacao ? 0 : a.situacao === 'ativo' ? -1 : 1) || a.nome.localeCompare(b.nome, 'pt-BR'));
     // Busca pela lupa do rodapé (um caminho só para buscar); no topo fica só o botão de cadastro (pedido do Rodrigo).
     const origem = origemF;
     const busca = U.buscaRodape(tela, 'Buscar fornecedor', (v) => { buscaF[origem] = v; if (origemF === origem && tela.view.classList.contains('show')) renderFornecedores(); });
@@ -100,14 +102,14 @@
     const incompletos = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && pendencias(f).length).length;
     // Mesma linha dos cadastros de grupos: tocar edita; a setinha revela Editar e Excluir.
     const sec = U.secao('Fornecedores', S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length);
-    const linhas = el('div', 'compras-lista');
+    const linhas = el('div', 'compras-lista compras-lista-grade');
     sec.append(linhas);
     if (!lista.length) linhas.append(U.vazio(buscaF[origemF] ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.'));
     // Ordem da linha (pedido do Rodrigo): ícone da categoria e o nome dela, depois o nome do fornecedor e os outros dados,
     // em colunas fixas (grade-fornecedor, em compras.css) para CNPJ, WhatsApp e ramo caírem sempre na mesma vertical.
     if (lista.length) linhas.append(U.cabecalhoColunas('grade-fornecedor', [
-      { chave: 'categoria', rotulo: 'Categoria' }, { chave: 'nome', rotulo: 'Nome' }, { chave: 'documento', rotulo: 'CPF / CNPJ' },
-      { chave: 'whatsapp', rotulo: 'WhatsApp' }, { chave: 'ramo', rotulo: 'Ramo' }, { chave: 'selos', rotulo: '' },
+      { chave: 'categoria', rotulo: 'Categoria' }, { chave: 'nome', rotulo: 'Fornecedor' }, { chave: 'documento', rotulo: 'CPF / CNPJ' },
+      { chave: 'whatsapp', rotulo: 'WhatsApp' }, { chave: 'ramo', rotulo: 'Ramo' }, { chave: 'selos', rotulo: '' }, { chave: 'estado', rotulo: 'Situação' },
     ]));
     lista.forEach((f) => {
       const ativo = f.situacao === 'ativo';
@@ -139,17 +141,11 @@
       sec,
     );
   }
-  /** Quantas vezes o id aparece na chave dada, em qualquer nível do dado (cotação, pedido, catálogo, histórico…). */
-  function contar(dado, chave, id) {
-    if (!dado || typeof dado !== 'object') return 0;
-    let n = 0;
-    for (const [k, v] of Object.entries(dado)) n += k === chave && v === id ? 1 : contar(v, chave, id);
-    return n;
-  }
+  const contar = D.contarVinculos;
   /** Onde o fornecedor é usado: Compras (catálogo, histórico, cotações, pedidos), peças do patrimônio e compras de uniformes. */
   function usosDoFornecedor(id) {
     const usos = [];
-    const compras = contar({ ...S.dados, fornecedores: null }, 'fornecedorId', id);
+    const compras = D.vinculosComProdutos(S.dados, id);
     if (compras) usos.push(compras + ' registro(s) do Compras (catálogo, histórico, cotação ou pedido)');
     const bens = window.CicluzProducaoDados ? window.CicluzProducaoDados.patrimonio.dados.bens : [];
     const pecas = contar(bens, 'fornecedorId', id);
@@ -183,6 +179,12 @@
       renderFornecedores();
     }, coresF());
   }
+  /** Posição do fornecedor na lista pela categoria: Produto, Produto e Serviço, Serviço, sem categoria. */
+  function ordemCategoria(f) {
+    const c = Array.isArray(f.categorias) ? f.categorias : [];
+    const p = c.includes('produto'); const s = c.includes('servico');
+    return p && s ? 1 : p ? 0 : s ? 2 : 3;
+  }
   /** O que falta no cadastro para os obrigatórios de 15/11/2026 (só para avisar na lista; quem já existia continua valendo). */
   function pendencias(f) {
     const p = [];
@@ -196,12 +198,12 @@
 
   function editarFornecedor(f) {
     U.dialogo({
-      titulo: f ? 'Editar fornecedor' : 'Novo fornecedor', ...coresF(), largo: true,
+      titulo: f ? 'Editar fornecedor' : 'Novo fornecedor', ...coresF(), largo: true, classe: 'compras-form-padrao',
       montar: (form) => {
         const sec = (t) => { const s = el('fieldset', 'compras-fieldset'); s.append(el('legend', null, t)); form.append(s); return s; };
         const texto = (v, extra = {}) => entrada('text', v || '', { maxLength: 120, ...extra });
         const email = (v) => { const i = entrada('email', v || '', { maxLength: 160, inputMode: 'email', autocapitalize: 'off' }); i.dataset.textoLivre = '1'; return i; };
-        const telefone = (v) => aplicarMascara(entrada('tel', v || '', { inputMode: 'numeric' }), mascaraTelefone);
+        const telefone = (v) => aplicarMascara(entrada('tel', v || '', { inputMode: 'numeric', placeholder: '(00) 00000-0000' }), mascaraTelefone);
 
         // Categoria: Produto, Serviço ou os dois (caixas de marcar; pelo menos uma). Fornecedor antigo vem sem nenhuma.
         const catBox = el('div', 'compras-campo compras-largo');
@@ -214,11 +216,11 @@
           catOpcoes.append(l);
           return { id, input: l.input };
         });
-        catBox.append(el('span', 'compras-rotulo', 'Categoria *'), catOpcoes, el('small', 'profiles-note', 'O que este fornecedor fornece. Pode marcar os dois.'));
-        const ramo = texto(f?.ramo, { maxLength: 80 });
+        catBox.append(el('span', 'compras-rotulo', 'Categoria * (pode marcar as duas)'), catOpcoes);
+        const ramo = texto(f?.ramo, { maxLength: 80, placeholder: 'Ex.: Bebidas, Manutenção' });
         const tipo = seletor(D.TIPOS_PESSOA, f ? D.tipoPessoaDe(f) : '', 'Selecione');
         const nome = texto(f?.nome);
-        const contato = texto(f?.contatoNome);
+        const contato = texto(f?.contatoNome, { placeholder: 'Nome da pessoa de contato' });
         // Dois campos de documento: o do CPF é tratado pelo field-validation.js (máscara e dígito verificador
         // pelo rótulo); o do CNPJ usa a máscara e o validador de lá. Só o do tipo escolhido aparece.
         const tipoInicial = f ? D.tipoPessoaDe(f) : '';
@@ -229,8 +231,8 @@
         const semTipo = el('p', 'profiles-note', 'Escolha o tipo de pessoa para informar o CPF ou o CNPJ.');
 
         const s1 = sec('Identificação');
-        s1.append(catBox, campo('Tipo de pessoa *', tipo), campo('Nome *', nome), campo('Contato', contato, 'Nome da pessoa de contato no fornecedor.'), cpfCampo, cnpjCampo, semTipo,
-          campo('Ramo', ramo, 'Opcional. Ex.: Bebidas, Laticínios, Manutenção.'));
+        s1.append(catBox, campo('Tipo de pessoa *', tipo), campo('Nome *', nome), campo('Contato', contato), cpfCampo, cnpjCampo, semTipo,
+          campo('Ramo', ramo));
 
         const s2 = sec('Contato do financeiro');
         const finNome = texto(f?.financeiro?.nome);
@@ -242,8 +244,8 @@
         const whats = telefone(f?.whatsapp);
         const mail = email(f?.email);
         const nasc = entrada('date', f?.nascimento || '');
-        const nascCampo = campo('Data de nascimento', nasc, 'Só para pessoa física.');
-        s3.append(campo('WhatsApp *', whats, 'Com DDD: é por ele que o fornecedor recebe o convite de cotação.'), campo('E-mail', mail), nascCampo);
+        const nascCampo = campo('Data de nascimento', nasc);
+        s3.append(campo('WhatsApp *', whats), campo('E-mail', mail), nascCampo);
 
         const ativo = interruptor('Fornecedor ativo', f ? f.situacao === 'ativo' : true, 'Fornecedor inativo não aparece no seletor de cotação.');
         form.append(ativo);

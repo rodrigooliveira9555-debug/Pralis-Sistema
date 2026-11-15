@@ -185,6 +185,30 @@
     d.migracoes = { ...(d.migracoes || {}), ramoFornecedor: 1 };
     return d;
   }
+  /** Quantas vezes o id aparece na chave dada, em qualquer nível do dado. */
+  function contarVinculos(dado, chave, id) {
+    if (!dado || typeof dado !== 'object') return 0;
+    let n = 0;
+    for (const [k, v] of Object.entries(dado)) n += k === chave && v === id ? 1 : contarVinculos(v, chave, id);
+    return n;
+  }
+  /** Vínculos do fornecedor com produtos no documento do Compras: catálogo, histórico de compras, cotação e pedido. */
+  const vinculosComProdutos = (d, fornecedorId) => contarVinculos({ ...d, fornecedores: null }, 'fornecedorId', fornecedorId);
+  /**
+   * Migração (marca d.migracoes.categoriaProdutoFornecedor; decisão do Rodrigo, 15/11/2026): o fornecedor que já
+   * existia, está ligado a produtos (catálogo, histórico, cotação ou pedido) e ainda não tem categoria passa a ser
+   * Produto. Quem já tem categoria marcada não é tocado; quem não tem vínculo com produto continua sem categoria.
+   * Roda uma vez por documento: fornecedor cadastrado depois escolhe a categoria no formulário.
+   */
+  function migrarCategoriaProduto(d) {
+    if (d.migracoes && d.migracoes.categoriaProdutoFornecedor) return d;
+    for (const f of d.fornecedores || []) {
+      if (Array.isArray(f.categorias) && f.categorias.length) continue;
+      if (vinculosComProdutos(d, f.id)) f.categorias = ['produto'];
+    }
+    d.migracoes = { ...(d.migracoes || {}), categoriaProdutoFornecedor: 1 };
+    return d;
+  }
   /** Tipo de pessoa do fornecedor; no cadastro antigo vem do tamanho do documento (11 = física, 14 = jurídica). */
   function tipoPessoaDe(f) {
     if (f && (f.tipoPessoa === 'fisica' || f.tipoPessoa === 'juridica')) return f.tipoPessoa;
@@ -396,7 +420,7 @@
     REPETICOES, DIAS_SEMANA, MESES, ocorrencias, resumoRegra,
     topoDoRanking,
     digitos, motivoNaoConvidavel, podeConvidar,
-    TIPOS_PESSOA, CATEGORIAS_FORNECEDOR, nomeCategoriasFornecedor, migrarRamoFornecedor, tipoPessoaDe, validarFornecedor,
+    TIPOS_PESSOA, CATEGORIAS_FORNECEDOR, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, tipoPessoaDe, validarFornecedor,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,
     aplicarRecebimento, SITUACOES_PEDIDO,

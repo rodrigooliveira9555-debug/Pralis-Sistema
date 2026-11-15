@@ -91,10 +91,13 @@ body:not(.dark-theme) .compras-linha.com-acoes:hover .compras-linha-texto b { co
 .compras-celula.c-selos { display: flex; flex-wrap: wrap; gap: 4px; }
 .compras-linha-cabecalho { min-height: 0; padding-top: 6px; padding-bottom: 6px; cursor: default; }
 .compras-linha-cabecalho .compras-celula { font: 600 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); text-transform: uppercase; letter-spacing: .04em; }
-/* Fornecedores: ícones (lugar para dois) · categoria · nome · CPF/CNPJ · WhatsApp · ramo · avisos · estado · seta · ações */
+/* A grade responde à largura da própria lista (não da janela), porque o menu lateral aberto estreita o conteúdo. */
+.compras-lista-grade { container-type: inline-size; container-name: lista-grade; }
+/* Fornecedores: ícones (lugar para dois) · categoria · fornecedor · CPF/CNPJ · WhatsApp · ramo · avisos · situação · seta */
 .compras-linha.grade-fornecedor { grid-template-columns: 64px 134px minmax(120px, 1fr) 126px 108px 100px 126px 40px 24px; }
 /* Cada célula tem coluna fixa (não depende da ordem), para a gaveta de Editar/Excluir poder abrir por cima dos avisos. */
 .compras-linha.grade-fornecedor > * { grid-row: 1; }
+.compras-linha.grade-fornecedor > .compras-linha-icones { grid-column: 1; }
 .compras-linha.grade-fornecedor > .c-categoria { grid-column: 2; }
 .compras-linha.grade-fornecedor > .c-nome { grid-column: 3; }
 .compras-linha.grade-fornecedor > .c-documento { grid-column: 4; }
@@ -102,17 +105,31 @@ body:not(.dark-theme) .compras-linha.com-acoes:hover .compras-linha-texto b { co
 .compras-linha.grade-fornecedor > .c-ramo { grid-column: 6; }
 .compras-linha.grade-fornecedor > .c-selos { grid-column: 7; }
 .compras-linha.grade-fornecedor > .account-list-state { grid-column: 8; }
+.compras-linha.grade-fornecedor > .c-estado { grid-column: 8 / span 2; }
 .compras-linha.grade-fornecedor > .account-action-toggle { grid-column: 9; }
-.compras-linha.grade-fornecedor > .compras-linha-icones { grid-column: 1; }
 /* Editar/Excluir abrem no lugar dos avisos (que somem enquanto isso), para as colunas não se mexerem. */
 .compras-linha.grade-fornecedor > .account-row-actions:not([hidden]) { grid-column: 7; grid-row: 1; justify-self: end; }
 .compras-linha.grade-fornecedor:has(> .account-row-actions:not([hidden])) > .c-selos { visibility: hidden; }
-@media (max-width: 999px) {
+/* Lista média (ex.: tablet em pé, ou menu lateral aberto): ficam categoria, fornecedor, CPF/CNPJ, WhatsApp e situação;
+   ramo e avisos ficam para a tela de edição. A gaveta abre por cima da coluna do WhatsApp. */
+@container lista-grade (max-width: 929px) {
+  .compras-linha.grade-fornecedor { grid-template-columns: 64px 134px minmax(110px, 1fr) 126px 108px 40px 24px; }
+  .compras-linha.grade-fornecedor > .c-ramo, .compras-linha.grade-fornecedor > .c-selos { display: none; }
+  .compras-linha.grade-fornecedor > .account-list-state { grid-column: 6; }
+  .compras-linha.grade-fornecedor > .c-estado { grid-column: 6 / span 2; }
+  .compras-linha.grade-fornecedor > .account-action-toggle { grid-column: 7; }
+  .compras-linha.grade-fornecedor > .account-row-actions:not([hidden]) { grid-column: 5; }
+  .compras-linha.grade-fornecedor:has(> .account-row-actions:not([hidden])) > .c-whatsapp { visibility: hidden; }
+}
+/* Lista estreita (celular): sem cabeçalho; os dados descem para baixo do nome, sem rolagem lateral. */
+@container lista-grade (max-width: 689px) {
   .compras-linha.compras-linha-cabecalho { display: none; }
-  .compras-linha.grade-fornecedor { grid-template-columns: auto minmax(0, 1fr) auto auto; grid-auto-flow: row; }
-  .compras-linha.grade-fornecedor > .compras-linha-icones { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
+  .compras-linha.grade-fornecedor { grid-template-columns: auto minmax(0, 1fr) auto auto; }
   .compras-linha.grade-fornecedor > * { grid-row: auto; }
+  .compras-linha.grade-fornecedor > .compras-linha-icones { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
   .compras-linha.grade-fornecedor > .compras-celula { grid-column: 2; }
+  .compras-linha.grade-fornecedor > .c-ramo, .compras-linha.grade-fornecedor > .c-selos { display: flex; }
+  .compras-linha.grade-fornecedor > .c-ramo { display: block; }
   .compras-linha.grade-fornecedor > .compras-celula:empty { display: none; }
   .compras-linha.grade-fornecedor > .c-categoria { grid-row: 1; }
   .compras-linha.grade-fornecedor > .c-nome { grid-row: 2; }
@@ -120,7 +137,8 @@ body:not(.dark-theme) .compras-linha.com-acoes:hover .compras-linha-texto b { co
   .compras-linha.grade-fornecedor > .account-action-toggle { grid-column: 4; grid-row: 1 / span 2; }
   /* Editar/Excluir abrem numa linha própria, à direita, para não espremer os dados. */
   .compras-linha.grade-fornecedor > .account-row-actions:not([hidden]) { grid-column: 1 / -1; grid-row: auto; justify-self: end; }
-  .compras-linha.grade-fornecedor:has(> .account-row-actions:not([hidden])) > .c-selos { visibility: visible; }
+  .compras-linha.grade-fornecedor:has(> .account-row-actions:not([hidden])) > .c-selos,
+  .compras-linha.grade-fornecedor:has(> .account-row-actions:not([hidden])) > .c-whatsapp { visibility: visible; }
 }
 .compras-linha .account-action-toggle { flex: none; width: 32px; height: 32px; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .compras-linha .account-row-actions { display: flex; flex: none; align-items: center; gap: var(--row-action-gap, 6px); }
@@ -231,6 +249,13 @@ body.dark-theme .compras-trilha li { background: #34333b; color: #d4d4d8; }
 .compras-dialog .compras-form > * { min-width: 0; }
 .compras-fieldset { border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; padding: 12px 14px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; min-width: 0; }
 .compras-fieldset legend { padding: 0 6px; font: 600 13px/18px var(--ui-font); }
+/* Campos alinhados pelo topo: a dica embaixo de um campo não desloca os campos vizinhos da mesma linha. */
+.compras-fieldset { align-items: start; }
+/* Formulário no padrão dos cadastros do sistema (medido no editor de DES - Grupos de Despesas): duas colunas,
+   8 px entre linhas e 14 px entre colunas; uma coluna no celular. Os campos (rótulo 12 px, 42 px, raio 8) já vêm
+   do ui-foundation.css. */
+.compras-form-padrao .compras-fieldset { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
+@media (max-width: 600px) { .compras-form-padrao .compras-fieldset { grid-template-columns: minmax(0, 1fr); } }
 .compras-fieldset > .compras-interruptor, .compras-fieldset > .compras-texto-auto, .compras-fieldset > .compras-largo { grid-column: 1 / -1; }
 .compras-texto-auto { margin: 0; font-size: 12px; color: var(--panel-text, #12672e); font-weight: 600; }
 body.dark-theme .compras-texto-auto { color: #a7e8bd; }

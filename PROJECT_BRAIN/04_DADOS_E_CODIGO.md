@@ -70,7 +70,10 @@
   `categoriasFornecedor` com `categoriaId` (marca `migracoes.categoriasFornecedor`) existiu por algumas horas neste
   branch; a migração nova devolve o nome da lista para `ramo` e apaga `categoriaId`. A coleção `categoriasFornecedor` e
   a marca antiga podem ter ficado em dado de teste: nenhum código as lê. Fornecedor antigo sem os obrigatórios novos
-  continua válido. **Dado pessoal:** CPF e data de nascimento de fornecedor pessoa física e e-mails de contato passam a
+  continua válido. **Segunda migração do mesmo dia** (marca `migracoes.categoriaProdutoFornecedor = 1`, decisão do Rodrigo):
+  fornecedor sem categoria que tem vínculo com produto no documento do Compras (qualquer `fornecedorId` igual ao id dele em
+  catálogo, histórico, cotações ou pedidos) recebe `categorias: ['produto']`; quem já tinha categoria ou não tem vínculo não
+  é tocado; roda uma vez, em memória, e é gravada na próxima alteração. **Dado pessoal:** CPF e data de nascimento de fornecedor pessoa física e e-mails de contato passam a
   ir para o servidor junto com o documento do Compras (ver P-28).
 - `patrimonio-v1` (05/11/2026) — bens (RET - Patrimônios). As duas chaves são sincronizadas e adotadas do aparelho
   (`servidor/shared/src/documentos.ts`); começam vazias, sem dado de exemplo.

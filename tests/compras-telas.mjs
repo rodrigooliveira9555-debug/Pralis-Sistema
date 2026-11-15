@@ -67,7 +67,8 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   }
   // Cadastro novo de fornecedor (15/11/2026): categoria da lista, tipo de pessoa, CPF ou CNPJ com dígito
   // verificador e WhatsApp obrigatórios; nascimento só para pessoa física. Dados fictícios.
-  ok(await p.evaluate(() => CicluzComprasDados.fornecedor('f-ambev').ramo === 'Bebidas' && !CicluzComprasDados.dados.fornecedores.some((f) => 'categoria' in f || (f.categorias || []).length)), 'O texto livre antigo virou o ramo, e ninguém foi classificado como Produto ou Serviço');
+  ok(await p.evaluate(() => CicluzComprasDados.fornecedor('f-ambev').ramo === 'Bebidas' && !CicluzComprasDados.dados.fornecedores.some((f) => 'categoria' in f)), 'O texto livre antigo virou o ramo');
+  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.every((f) => ((f.categorias || []).join() === 'produto') === (CicluzComprasDominio.vinculosComProdutos(CicluzComprasDados.dados, f.id) > 0))), 'Fornecedor antigo ligado a produto virou Produto; sem vínculo, fica sem categoria');
   await p.evaluate(() => CicluzCompras.abrir('fornecedores'));
   await p.locator('#compras-fornecedores button.btn', { hasText: 'Cadastrar fornecedor' }).click();
   const df = p.locator('dialog.compras-dialog[open]').last();
