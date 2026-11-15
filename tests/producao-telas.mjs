@@ -79,8 +79,15 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   await p.evaluate(() => menuBack(4, 'Cadastros Geral')());
   await p.locator('#sector-content .section-card', { hasText: 'RET - Patrimônios' }).click();
   ok(await p.locator('#producao-patrimonio.show').count() === 1, 'O card RET - Patrimônios abre o cadastro novo');
-  await mais(p);
+  // Entrada: abre direto o cadastro de um bem novo; a lista fica no botão da tela
   let d = dialogo(p);
+  ok((await d.locator('h2').textContent()) === 'Novo bem' && await p.locator('#producao-patrimonio .compras-linha').count() === 0, 'RET - Patrimônios abre direto no cadastro do bem, sem a lista');
+  await d.locator('.people-close-control').click(); await fechado(p);
+  ok(await p.locator('#producao-patrimonio.show').count() === 1 && (await p.locator('#producao-patrimonio button.btn').textContent()).includes('Ver bens cadastrados (0)'), 'Cancelar fica na tela, com o botão da lista');
+  await p.locator('#producao-patrimonio button.btn', { hasText: 'Ver bens cadastrados' }).click();
+  ok((await p.locator('#producao-patrimonio .compras-vazio').count()) >= 0 && await p.locator('#producao-patrimonio .compras-filtros').count() === 1, 'O botão abre a lista de bens');
+  await p.evaluate(() => CicluzProducao.abrir('patrimonio'));
+  d = dialogo(p);
   await d.getByLabel('Nome do bem *', { exact: true }).fill('Masseira 40 kg');
   await d.getByLabel('Categoria *', { exact: true }).selectOption('maquina');
   await d.getByLabel('Capacidade', { exact: true }).fill('40');
@@ -140,7 +147,7 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   // Recarrega: tudo continua lá, e o áudio pode ser ouvido ou descartado
   await p.reload({ waitUntil: 'load' });
   await p.waitForFunction(() => window.CicluzProducao && window.CicluzProducaoServico && window.CicluzAudioNota);
-  await p.evaluate(() => CicluzProducao.abrir('patrimonio'));
+  await p.evaluate(() => CicluzProducao.abrir('patrimonio', { lista: true }));
   ok((await p.locator('#producao-patrimonio .compras-linha', { hasText: 'MASSEIRA' }).locator('small').textContent()).includes('1 peça · revisão 15/01/20 · áudio'), 'Depois de recarregar, a lista mostra peça, revisão e áudio');
   await p.locator('#producao-patrimonio .compras-linha', { hasText: 'MASSEIRA' }).locator('button.btn', { hasText: 'Editar' }).click();
   d = dialogo(p);
@@ -419,7 +426,8 @@ for (const largura of [320, 390, 1024]) {
   for (const escuro of [false, true]) {
     await p.evaluate((e) => document.body.classList.toggle('dark-theme', e), escuro);
     for (const t of telas) {
-      await p.evaluate((nome) => CicluzProducao.abrir(nome), t);
+      // Patrimônio entra pelo cadastro (diálogo); a matriz de telas confere a lista, e o diálogo é conferido abaixo.
+      await p.evaluate((nome) => CicluzProducao.abrir(nome, ...(nome === 'patrimonio' ? [{ lista: true }] : [])), t);
       await p.waitForTimeout(80);
       const m = await medir(p);
       const rotulo = t + ' ' + largura + 'px ' + (escuro ? 'escuro' : 'claro');
@@ -438,7 +446,7 @@ for (const largura of [320, 390, 1024]) {
     await p.locator('dialog.compras-dialog[open] .people-close-control').click();
     await fechado(p);
     // Cadastro do bem com peças, revisão e áudio
-    await p.evaluate(() => CicluzProducao.abrir('patrimonio'));
+    await p.evaluate(() => CicluzProducao.abrir('patrimonio', { lista: true }));
     await p.locator('#producao-patrimonio button.btn', { hasText: 'Editar' }).first().click();
     await dialogo(p).locator('button', { hasText: 'Adicionar peça' }).click();
     await dialogo(p).getByLabel('Peça 1', { exact: true }).fill('Resistência do forno de lastro');

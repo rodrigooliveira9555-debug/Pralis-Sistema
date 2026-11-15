@@ -5,6 +5,8 @@
  * Manutenção (15/11/2026, pedido do Rodrigo): a Categoria é o primeiro campo; cada bem pode ter peças
  * principais com a data da próxima substituição, a data da próxima revisão periódica e uma observação
  * em áudio (peça compartilhada de audio-nota.js; o áudio fica só no aparelho).
+ * Entrada (15/11/2026, pedido do Rodrigo): clicar em RET - Patrimônios abre direto o cadastro de um bem
+ * novo; a lista de bens (editar, avisos de manutenção) fica no botão "Ver bens cadastrados" da tela.
  */
 (function () {
   'use strict';
@@ -34,15 +36,25 @@
 
   let tela = null;
   const filtro = { busca: '', categoria: '', inativos: false };
+  // 'cadastro': entrada da tela, com o formulário de bem novo aberto; 'lista': os bens cadastrados.
+  let modo = 'cadastro';
 
-  function abrir() {
+  /** opcoes.lista: abre já na lista de bens (sem o formulário de bem novo). */
+  function abrir(opcoes = {}) {
     if (!tela) {
       tela = U.criarTela({ id: 'producao-patrimonio', titulo: 'RET - Patrimônios', caminho: 'Saídas · Retiradas / Cadastros Geral / RET - Patrimônios', icone: 'patrimonio', voltar: M.voltarPatrimonio, ...cores });
       U.atalho(tela, 'Novo bem', 'M12 5v14M5 12h14', () => formulario(), { criar: true });
       document.addEventListener('cicluz-patrimonio-mudou', () => { if (tela.view.classList.contains('show')) render(); });
     }
+    modo = opcoes.lista ? 'lista' : 'cadastro';
     tela.ativar();
     render();
+    if (modo === 'cadastro' && !document.querySelector('dialog.compras-dialog[open]')) formulario();
+  }
+  function mostrar(novoModo) {
+    modo = novoModo;
+    render();
+    tela.body.scrollTop = 0;
   }
 
   function detalhe(b) {
@@ -60,6 +72,17 @@
 
   function render() {
     const bens = S.patrimonio.dados.bens;
+    // Da lista, o Voltar leva à entrada da tela; da entrada, ao menu de onde se veio.
+    tela.voltar = modo === 'lista' ? () => mostrar('cadastro') : M.voltarPatrimonio;
+    if (modo === 'cadastro') {
+      const ativos = bens.filter((b) => b.ativo !== false).length;
+      const entradaTela = el('div', 'profiles-controls');
+      entradaTela.append(U.nota('Cadastro de utensílios, máquinas, equipamentos e mobiliário. O "+" abre o cadastro de um bem novo; os bens já cadastrados, com os avisos de troca de peça e de revisão, ficam na lista.'));
+      const acoes = el('div', 'compras-form-rodape');
+      acoes.append(botao('Ver bens cadastrados (' + ativos + ')', () => mostrar('lista'), 'btn'));
+      tela.body.replaceChildren(entradaTela, acoes);
+      return;
+    }
     const topo = el('div', 'profiles-controls');
     topo.append(U.nota('Utensílios, máquinas, equipamentos e mobiliário. As fichas técnicas usam estes bens em cada etapa, e a capacidade decide quando o processo precisa ser repetido.'));
     const filtros = el('div', 'compras-filtros');
@@ -222,6 +245,8 @@
         const r = SV.salvarBem(dados);
         if (r.erro) return r.erro;
         U.avisar('Bem salvo.');
+        // Salvou: mostra o bem na lista (novo ou editado).
+        mostrar('lista');
       },
     });
   }
