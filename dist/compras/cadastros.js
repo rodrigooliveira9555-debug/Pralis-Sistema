@@ -50,17 +50,26 @@
   };
   /**
    * Ícones da linha pela categoria, iguais nos dois caminhos de entrada (decisão do Rodrigo, 15/11/2026):
-   * Produto = símbolo de Mercadorias (verde), Serviço = símbolo de Despesas (vermelho), os dois = dois ícones lado a lado,
-   * sem categoria = um ícone neutro. O nome da categoria também vai escrito na linha, para não depender só da cor.
+   * o desenho é o próprio ícone da linha do menu (o bonequinho de fornecedor), lido de onde o menu lê (iconeLinha,
+   * em index.html), para acompanhar se o ícone do menu for trocado. Produto = ícone de MER - Fornecedores em verde
+   * (cor de Mercadorias); Serviço = ícone de DES - Fornecedores em vermelho (cor de Despesas); os dois = dois ícones
+   * lado a lado; sem categoria = o mesmo ícone em cinza. O nome da categoria também vai escrito na linha.
    */
+  function iconeDoMenu(grupo, linha) {
+    try {
+      const desenho = typeof iconeLinha !== 'undefined' && iconeLinha[grupo] && iconeLinha[grupo][linha];
+      if (typeof desenho === 'function') return { html: '<svg viewBox="0 0 24 24" aria-hidden="true">' + desenho() + '</svg>' };
+    } catch (e) { /* menu ainda não carregado */ }
+    return { icone: 'fornecedor' };
+  }
   function iconesDaCategoria(f) {
     const cats = Array.isArray(f.categorias) ? f.categorias : [];
+    const mer = iconeDoMenu('3:Cadastros Geral', 'MER - Fornecedores');
+    const des = iconeDoMenu('2:Cadastros Geral', 'DES - Fornecedores');
     const r = [];
-    // O desenho é o símbolo da origem que o menu já usa (moneyMark(2), o "−$" das Saídas); só a cor muda.
-    const simbolo = typeof moneyMark === 'function' ? { html: moneyMark(2) } : { icone: 'fornecedor' };
-    if (cats.includes('produto')) r.push({ ...simbolo, cor: corMercadorias(), rotulo: 'Produto' });
-    if (cats.includes('servico')) r.push({ ...simbolo, cor: corDespesas(), rotulo: 'Serviço' });
-    return r.length ? r : [{ icone: 'fornecedor', cor: 'var(--navigation-ink, #a2a0aa)', rotulo: 'Sem categoria' }];
+    if (cats.includes('produto')) r.push({ ...mer, cor: corMercadorias(), rotulo: 'Produto' });
+    if (cats.includes('servico')) r.push({ ...des, cor: corDespesas(), rotulo: 'Serviço' });
+    return r.length ? r : [{ ...mer, cor: 'var(--navigation-ink, #a2a0aa)', rotulo: 'Sem categoria' }];
   }
   const telasF = {};
   let origemF = 'mer';
