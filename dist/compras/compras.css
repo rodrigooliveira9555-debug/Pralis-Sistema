@@ -300,6 +300,8 @@ body.dark-theme .compras-trilha li { background: #34333b; color: #d4d4d8; }
 .compras-situacao-quadro .account-status-switch:focus-visible { outline-color: var(--menu-accent); }
 .compras-situacao-quadro .account-status-text { font-size: 12px; }
 .compras-situacao-quadro > small { margin: 2px 0 0; font-weight: 400; }
+/* O mesmo quadro também recebe a seleção por cartões (Categoria do fornecedor). */
+.compras-situacao-quadro > .compras-cartoes { margin: 8px 0 4px; }
 /* Campo preenchido por "O mesmo da etapa anterior": à vista, só para leitura. */
 .compras-fieldset input[readonly] { opacity: .7; cursor: default; }
 .compras-fieldset legend { padding: 0 6px; font: 600 13px/18px var(--ui-font); }

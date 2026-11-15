@@ -88,7 +88,8 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   ok(await df.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).count() === 0, 'No cadastro novo o Salvar só aparece na última etapa');
   await avancar(df);
   ok((await erroF()).includes('categoria') && (await etapaF(df)).includes('Etapa 1'), 'Avançar confere a etapa: categoria é obrigatória');
-  // Categoria em cartões de escolha única (rádio): marcar um desmarca o outro.
+  // Categoria em cartões de escolha única (rádio): marcar um desmarca o outro. Fica no mesmo quadro branco da Situação.
+  ok(await df.locator('.compras-situacao-quadro', { hasText: 'Categoria do fornecedor *' }).locator('.compras-cartao-escolha').count() === 2, 'Categoria do fornecedor no quadro branco, com os dois cartões dentro');
   const cartaoF = (d, nome) => d.locator('.compras-cartao-escolha', { hasText: nome });
   ok(await df.locator('.compras-cartao-escolha').count() === 2 && await cartaoF(df, 'Produto').getAttribute('aria-checked') === 'false' && await df.locator('[role=radiogroup] [role=radio]').count() === 2 && await df.locator('input[type=checkbox][aria-label=Produto]').count() === 0, 'Categoria em dois cartões, sem as caixinhas antigas');
   await cartaoF(df, 'Serviço').click();

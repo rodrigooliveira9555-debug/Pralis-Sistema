@@ -297,7 +297,8 @@
         /* ----- Etapa 1: dados da empresa ----- */
         const s1 = el('fieldset', 'compras-fieldset');
         s1.append(el('legend', null, 'Dados da empresa'));
-        const catBox = el('div', 'compras-campo compras-largo');
+        // Mesmo quadro branco da "Situação do fornecedor" (mesmas classes), com os cartões dentro (pedido do Rodrigo).
+        const catBox = el('div', 'account-status compras-situacao-quadro');
         // Categoria em cartões (desenho escolhido pelo Rodrigo): o mesmo ícone e a mesma cor da lista, por categoria
         // (Produto = MER - Fornecedores em verde; Serviço = DES - Fornecedores em vermelho), seja qual for a tela de entrada.
         const desenhoCat = {
@@ -309,7 +310,7 @@
           opcoes: D.CATEGORIAS_FORNECEDOR.map(([id, nomeCat]) => ({ id, titulo: nomeCat, ...desenhoCat[id], marcado: Array.isArray(f?.categorias) && f.categorias.includes(id) })),
           aoMudar: () => { barra.update(etapas(), atual); pintarVendedor(); },
         });
-        catBox.append(el('span', 'compras-rotulo', 'Categoria *'), catOpcoes, el('small', 'profiles-note', 'Toque em uma: Produto ou Serviço.'));
+        catBox.append(el('span', null, 'Categoria do fornecedor *'), catOpcoes, el('small', 'profiles-note', 'Toque em uma: Produto ou Serviço.'));
         // Fornecedor é sempre por CNPJ. Razão social e Nome fantasia; o campo salvo de uso é sempre "nome" (o que
         // cotação, pedido e recebimento mostram); a razão social é um campo a mais.
         const razao = texto(f?.razaoSocial, { maxLength: 160 });
