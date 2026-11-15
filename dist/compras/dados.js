@@ -166,6 +166,8 @@
     window.CicluzComprasDominio.migrarRamoFornecedor(d);
     // Fornecedor antigo ligado a produtos (catálogo, histórico, cotação ou pedido) e sem categoria vira Produto (uma vez).
     window.CicluzComprasDominio.migrarCategoriaProduto(d);
+    // Cadastro em etapas: a data de nascimento do fornecedor pessoa física passa a ser a do vendedor ou prestador (uma vez).
+    window.CicluzComprasDominio.migrarVendedorFornecedor(d);
     return d;
   }
 

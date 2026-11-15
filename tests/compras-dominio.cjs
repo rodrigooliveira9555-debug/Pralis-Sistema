@@ -186,13 +186,42 @@ ok(() => {
   assert.match(v({ documento: '' }), /CNPJ/);
   assert.match(v({ documento: '11.222.333/0001-80' }), /CNPJ/);
   assert.match(v({ documento: '529.982.247-25' }), /CNPJ/);
-  assert.match(v({ whatsapp: '' }), /WhatsApp/);
-  assert.match(v({ email: 'sem-arroba' }), /E-mail do fornecedor/);
+  assert.match(v({ whatsapp: '' }), /WhatsApp do vendedor/);
+  assert.match(v({ email: 'sem-arroba' }), /E-mail do vendedor/);
   assert.match(v({ financeiro: { nome: 'Fin', whatsapp: '123', email: '' } }), /WhatsApp do financeiro/);
   assert.match(v({ financeiro: { nome: 'Fin', whatsapp: '', email: 'x@' } }), /E-mail do financeiro/);
-  assert.match(v({ nascimento: '1990-01-01' }), /só para pessoa física/);
-  assert.equal(v({ tipoPessoa: 'fisica', documento: '529.982.247-25', nascimento: '1990-01-01' }), '');
+  assert.equal(v({ tipoPessoa: 'fisica', documento: '529.982.247-25' }), '');
+  // Cadastro em etapas: vendedor (CPF e nascimento opcionais, conferidos se vierem), financeiro e representante.
+  assert.equal(v({ vendedorCpf: '529.982.247-25', vendedorNascimento: '1990-01-01', regimeTributario: 'simples' }), '');
+  assert.match(v({ vendedorCpf: '529.982.247-24' }), /CPF do vendedor/);
+  assert.match(v({ vendedorNascimento: '01/01/1990' }), /nascimento/);
+  assert.match(v({ regimeTributario: 'outro' }), /Regime/);
+  assert.match(v({ representante: { nome: 'Rep', whatsapp: '12', email: '' } }), /WhatsApp do representante/);
+  assert.match(v({ nome: '' }), /nome fantasia ou a razão social/);
+  // Cada problema aparece na etapa dele.
+  const etapas = d.validarFornecedorEtapas({ ...pj, categorias: [], whatsapp: '', financeiro: { email: 'x@' }, representante: { whatsapp: '1' } }, regras, ctx);
+  assert.deepEqual(etapas.map(Boolean), [true, true, true, true]);
+  assert.deepEqual(d.validarFornecedorEtapas(pj, regras, ctx), ['', '', '', '']);
+  assert.deepEqual(d.etapasFornecedor(['produto']).slice(1, 2), ['Vendedor']);
+  assert.deepEqual(d.etapasFornecedor(['servico']).slice(1, 2), ['Prestador de serviço']);
+  assert.deepEqual(d.etapasFornecedor(['produto', 'servico']).slice(1, 2), ['Vendedor / Prestador de serviço']);
+  assert.equal(d.etapasFornecedor([]).length, 4);
   assert.match(v({ tipoPessoa: 'fisica', documento: '529.982.247-24' }), /CPF/);
+});
+ok(() => {
+  // Migração do cadastro em etapas: o nascimento da pessoa física vira o do vendedor; o resto não se mexe; uma vez só.
+  const doc = { fornecedores: [
+    { id: 'f1', nome: 'A', nascimento: '1990-03-15', whatsapp: '(31) 99999-0000', contatoNome: 'Fulano', email: 'a@exemplo.test' },
+    { id: 'f2', nome: 'B', nascimento: '1980-01-01', vendedorNascimento: '1985-05-05' }, { id: 'f3', nome: 'C' },
+  ] };
+  d.migrarVendedorFornecedor(doc);
+  assert.deepEqual(doc.fornecedores.map((f) => f.vendedorNascimento), ['1990-03-15', '1985-05-05', undefined]);
+  assert.ok(doc.fornecedores.every((f) => !('nascimento' in f)));
+  assert.deepEqual([doc.fornecedores[0].whatsapp, doc.fornecedores[0].contatoNome, doc.fornecedores[0].email], ['(31) 99999-0000', 'Fulano', 'a@exemplo.test']);
+  assert.equal(doc.migracoes.vendedorFornecedor, 1);
+  doc.fornecedores[2].nascimento = '2000-01-01';
+  d.migrarVendedorFornecedor(doc);
+  assert.equal(doc.fornecedores[2].nascimento, '2000-01-01');
 });
 
 console.log(checks + ' checks de regras de Compras passaram');

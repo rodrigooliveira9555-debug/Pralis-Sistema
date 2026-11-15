@@ -216,32 +216,69 @@
     return n === 11 ? 'fisica' : n === 14 ? 'juridica' : '';
   }
   const emailValido = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
-  /**
-   * O que impede salvar o fornecedor, ou ''. Obrigatórios: categoria (Produto, Serviço ou os dois), tipo de pessoa, nome, CPF (física) ou CNPJ
-   * (jurídica) com dígito verificador e WhatsApp do contato. regras = { cpfValid, cnpjValid } do field-validation.js.
-   * A exigência vale ao salvar: fornecedor antigo sem esses dados continua abrindo e sendo usado.
-   */
-  function validarFornecedor(f, regras, { fornecedores = [] } = {}) {
-    const cats = Array.isArray(f.categorias) ? f.categorias : [];
-    if (!cats.length) return 'Marque a categoria do fornecedor: Produto, Serviço ou os dois.';
-    if (cats.some((c) => !CATEGORIAS_FORNECEDOR.some(([id]) => id === c))) return 'Categoria do fornecedor inválida.';
-    if (f.tipoPessoa !== 'fisica' && f.tipoPessoa !== 'juridica') return 'Escolha o tipo de pessoa (física ou jurídica).';
-    if (!String(f.nome || '').trim()) return 'Informe o nome do fornecedor.';
-    if (fornecedores.some((x) => x.id !== f.id && semAcento(x.nome) === semAcento(f.nome))) return 'Já existe um fornecedor com este nome.';
-    if (f.tipoPessoa === 'fisica' && !regras.cpfValid(f.documento)) return 'Informe um CPF válido (11 dígitos).';
-    if (f.tipoPessoa === 'juridica' && !regras.cnpjValid(f.documento)) return 'Informe um CNPJ válido (14 dígitos).';
-    const whats = digitos(f.whatsapp);
-    if (!whats) return 'Informe o WhatsApp do fornecedor.';
-    if (whats.length < 8 || String(f.whatsapp).length > 30) return 'WhatsApp inválido.';
-    if (f.email && !emailValido(f.email)) return 'E-mail do fornecedor inválido.';
-    const fin = f.financeiro || {};
-    const whatsFin = digitos(fin.whatsapp);
-    if (whatsFin && (whatsFin.length < 8 || String(fin.whatsapp).length > 30)) return 'WhatsApp do financeiro inválido.';
-    if (fin.email && !emailValido(fin.email)) return 'E-mail do financeiro inválido.';
-    if (f.nascimento && f.tipoPessoa !== 'fisica') return 'Data de nascimento é só para pessoa física.';
-    if (f.nascimento && !/^\d{4}-\d{2}-\d{2}$/.test(f.nascimento)) return 'Data de nascimento inválida.';
-    return '';
+  /** Regime tributário do fornecedor pessoa jurídica: só guarda a opção escolhida, não entra em cálculo nenhum. */
+  const REGIMES_TRIBUTARIOS = [['mei', 'MEI'], ['simples', 'Simples Nacional'], ['presumido', 'Lucro Presumido'], ['real', 'Lucro Real'], ['nao-informado', 'Não informado']];
+  /** Etapas do cadastro (decisão do Rodrigo, 15/11/2026). O título da 2ª depende da categoria marcada. */
+  function etapasFornecedor(categorias) {
+    const c = Array.isArray(categorias) ? categorias : [];
+    const p = c.includes('produto'); const s = c.includes('servico');
+    const segunda = p && s ? 'Vendedor / Prestador de serviço' : s ? 'Prestador de serviço' : 'Vendedor';
+    return ['Informações básicas', segunda, 'Responsável financeiro', 'Representante da empresa'];
   }
+  /**
+   * Migração (marca d.migracoes.vendedorFornecedor): no cadastro em etapas o contato do fornecedor é o vendedor ou
+   * prestador de serviço (2ª etapa). Nome, WhatsApp e e-mail continuam nos mesmos campos (contatoNome, whatsapp, email:
+   * a cotação segue lendo f.whatsapp); só a data de nascimento, que era do fornecedor pessoa física, passa para
+   * vendedorNascimento. Nada é apagado sem ir para o campo novo.
+   */
+  function migrarVendedorFornecedor(d) {
+    if (d.migracoes && d.migracoes.vendedorFornecedor) return d;
+    for (const f of d.fornecedores || []) {
+      if (f.nascimento && !f.vendedorNascimento) f.vendedorNascimento = f.nascimento;
+      delete f.nascimento;
+    }
+    d.migracoes = { ...(d.migracoes || {}), vendedorFornecedor: 1 };
+    return d;
+  }
+  const telefoneRuim = (v) => { const n = digitos(v); return Boolean(n) && (n.length < 8 || String(v).length > 30); };
+  /**
+   * O que impede salvar, etapa por etapa: devolve 4 textos ('' quando a etapa está em ordem). Obrigatórios: categoria
+   * (Produto, Serviço ou os dois), tipo de pessoa, nome (na pessoa jurídica, nome fantasia ou razão social), CNPJ ou CPF
+   * com dígito verificador e WhatsApp do vendedor ou prestador. CPF e nascimento do vendedor são opcionais.
+   * regras = { cpfValid, cnpjValid } do field-validation.js. A exigência vale ao salvar: fornecedor antigo sem esses
+   * dados continua abrindo e sendo usado.
+   */
+  function validarFornecedorEtapas(f, regras, { fornecedores = [] } = {}) {
+    const basico = () => {
+      const cats = Array.isArray(f.categorias) ? f.categorias : [];
+      if (!cats.length) return 'Marque a categoria do fornecedor: Produto, Serviço ou os dois.';
+      if (cats.some((c) => !CATEGORIAS_FORNECEDOR.some(([id]) => id === c))) return 'Categoria do fornecedor inválida.';
+      if (f.tipoPessoa !== 'fisica' && f.tipoPessoa !== 'juridica') return 'Escolha o tipo de pessoa (física ou jurídica).';
+      if (!String(f.nome || '').trim()) return f.tipoPessoa === 'juridica' ? 'Informe o nome fantasia ou a razão social.' : 'Informe o nome do fornecedor.';
+      if (fornecedores.some((x) => x.id !== f.id && semAcento(x.nome) === semAcento(f.nome))) return 'Já existe um fornecedor com este nome.';
+      if (f.tipoPessoa === 'fisica' && !regras.cpfValid(f.documento)) return 'Informe um CPF válido (11 dígitos).';
+      if (f.tipoPessoa === 'juridica' && !regras.cnpjValid(f.documento)) return 'Informe um CNPJ válido (14 dígitos).';
+      if (f.regimeTributario && !REGIMES_TRIBUTARIOS.some(([id]) => id === f.regimeTributario)) return 'Regime tributário inválido.';
+      return '';
+    };
+    const vendedor = () => {
+      if (!digitos(f.whatsapp)) return 'Informe o WhatsApp do vendedor ou prestador.';
+      if (telefoneRuim(f.whatsapp)) return 'WhatsApp inválido.';
+      if (f.email && !emailValido(f.email)) return 'E-mail do vendedor ou prestador inválido.';
+      if (f.vendedorCpf && !regras.cpfValid(f.vendedorCpf)) return 'CPF do vendedor ou prestador inválido.';
+      if (f.vendedorNascimento && !/^\d{4}-\d{2}-\d{2}$/.test(f.vendedorNascimento)) return 'Data de nascimento inválida.';
+      return '';
+    };
+    const contato = (c, quem) => {
+      const x = c || {};
+      if (telefoneRuim(x.whatsapp)) return 'WhatsApp do ' + quem + ' inválido.';
+      if (x.email && !emailValido(x.email)) return 'E-mail do ' + quem + ' inválido.';
+      return '';
+    };
+    return [basico(), vendedor(), contato(f.financeiro, 'financeiro'), contato(f.representante, 'representante')];
+  }
+  /** Primeiro impedimento do cadastro inteiro, ou ''. */
+  const validarFornecedor = (f, regras, ctx) => validarFornecedorEtapas(f, regras, ctx).find(Boolean) || '';
 
   /* ---------- Cotação: avaliação automática da resposta do fornecedor ----------
    * Um item é comprado sozinho quando: custo ≤ referência congelada, cabe no teto e a
@@ -421,6 +458,7 @@
     topoDoRanking,
     digitos, motivoNaoConvidavel, podeConvidar,
     TIPOS_PESSOA, CATEGORIAS_FORNECEDOR, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, tipoPessoaDe, validarFornecedor,
+    validarFornecedorEtapas, REGIMES_TRIBUTARIOS, etapasFornecedor, migrarVendedorFornecedor,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,
     aplicarRecebimento, SITUACOES_PEDIDO,
