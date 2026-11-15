@@ -1,6 +1,6 @@
 /* Shared rules from the user's cross-tab review. */
 (()=>{
- const searches=new WeakSet();let queued=false;
+ const searches=new WeakSet(),widths=new WeakMap();let queued=false;
  const headerHosts='.head .shortcut-actions,.location-dialog-tools,.organogram-editor-header .shortcut-actions,.fee-header-actions';
  /* Ao lado de Cancelar o botão diz só "Salvar"; o rótulo completo fica na dica e no leitor de tela. Rótulos que distinguem dois salvamentos (rascunho, sem enviar, e Enviar) ficam inteiros. */
  function shorten(save,parent){
@@ -41,6 +41,15 @@
    if(!parent.classList.contains('footer-action-pair'))parent.classList.add('footer-action-pair');
    shorten(save,parent);
    if(save.compareDocumentPosition(cancel)&Node.DOCUMENT_POSITION_FOLLOWING)save.before(cancel);
+  });
+  /* Botões retangulares vizinhos ficam com a mesma largura: a do maior. Só mede de novo quando os rótulos do grupo mudam. */
+  const groups=new Map();
+  document.querySelectorAll('.acao-com-circulo,.footer-save-accent,.footer-cancel-accent').forEach(b=>{if(b.offsetParent){const list=groups.get(b.parentElement)||[];list.push(b);groups.set(b.parentElement,list)}});
+  groups.forEach((list,parent)=>{
+   if(list.length<2)return;
+   const signature=list.map(b=>b.textContent.trim()).join('|');if(widths.get(parent)===signature)return;widths.set(parent,signature);
+   parent.style.removeProperty('--acao-largura');const width=Math.max(...list.map(b=>b.getBoundingClientRect().width));
+   parent.style.setProperty('--acao-largura',Math.ceil(width)+'px');
   });
   document.querySelectorAll('.view label,dialog label,.modal label,.account-field-group,.job-identity,.account-identity,.location-identity').forEach(block=>{
    const inputs=[...block.querySelectorAll('input,select,textarea')].filter(el=>!el.dataset.datePicker&&!['hidden','checkbox','radio'].includes(el.type));
