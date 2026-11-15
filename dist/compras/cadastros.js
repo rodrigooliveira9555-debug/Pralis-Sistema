@@ -46,7 +46,7 @@
   };
   const telasF = {};
   let origemF = 'mer';
-  let buscaF = '';
+  const buscaF = { mer: '', des: '' };
   const coresF = () => ({ cor: ORIGENS[origemF].cor, corTexto: ORIGENS[origemF].corTexto });
   function abrirFornecedores(origem = 'mer') {
     origemF = ORIGENS[origem] ? origem : 'mer';
@@ -62,26 +62,25 @@
   function renderFornecedores() {
     const tela = telasF[origemF];
     const lista = S.dados.fornecedores
-      .filter((f) => U.dobrar([f.nome, f.documento, f.whatsapp, f.contatoNome, S.nomeCategoriaFornecedor(f.categoriaId)].join(' ')).includes(U.dobrar(buscaF)))
+      .filter((f) => U.dobrar([f.nome, f.documento, f.whatsapp, f.contatoNome, f.ramo, D.nomeCategoriasFornecedor(f)].join(' ')).includes(U.dobrar(buscaF[origemF])))
       .sort((a, b) => (a.situacao === b.situacao ? a.nome.localeCompare(b.nome, 'pt-BR') : a.situacao === 'ativo' ? -1 : 1));
-    const controles = el('div', 'profiles-controls');
-    const b = U.buscaFixa('fornecedores-' + origemF, 'Nome, documento, WhatsApp, contato ou categoria', buscaF, (v) => { buscaF = v; renderFornecedores(); });
-    controles.append(b);
-    // Mesmo padrão do patrimônio (pedido do Rodrigo, 15/11/2026): botão visível de cadastro na tela; o "+" aciona o mesmo cadastro.
+    // Busca pela lupa do rodapé (um caminho só para buscar); no topo fica só o botão de cadastro (pedido do Rodrigo).
+    const origem = origemF;
+    const busca = U.buscaRodape(tela, 'Buscar fornecedor', (v) => { buscaF[origem] = v; if (origemF === origem && tela.view.classList.contains('show')) renderFornecedores(); });
     const acoes = el('div', 'compras-form-rodape');
-    acoes.append(botao('Cadastrar fornecedor', () => editarFornecedor(), 'btn'), botao('Editar categorias', () => editarCategorias()));
+    acoes.append(botao('Cadastrar fornecedor', () => editarFornecedor(), 'btn'));
     const semWhats = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && !D.podeConvidar(f)).length;
     const incompletos = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && pendencias(f).length).length;
     // Mesma linha dos cadastros de grupos: tocar edita; a setinha revela Editar e Excluir.
     const sec = U.secao('Fornecedores', S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length);
     const linhas = el('div', 'compras-lista');
     sec.append(linhas);
-    if (!lista.length) linhas.append(U.vazio(buscaF ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.'));
+    if (!lista.length) linhas.append(U.vazio(buscaF[origemF] ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.'));
     lista.forEach((f) => {
       const semDdd = f.situacao === 'ativo' && D.motivoNaoConvidavel(f);
       linhas.append(U.linhaLista({
         icone: 'fornecedor', titulo: f.nome,
-        detalhe: [S.nomeCategoriaFornecedor(f.categoriaId), f.documento, f.whatsapp, f.contatoNome].filter(Boolean).join(' · '),
+        detalhe: [D.nomeCategoriasFornecedor(f), f.ramo, f.documento, f.whatsapp, f.contatoNome].filter(Boolean).join(' · '),
         direita: [
           f.situacao !== 'ativo' ? U.situacao('Inativo', 'neutro') : null,
           f.situacao === 'ativo' && pendencias(f).length ? U.situacao('Completar cadastro', 'atencao') : null,
@@ -91,7 +90,7 @@
       }));
     });
     tela.body.replaceChildren(
-      controles,
+      busca,
       acoes,
       U.nota(lista.length + ' fornecedor(es), os mesmos em Despesas e em Mercadorias. ' + (incompletos ? incompletos + ' ativo(s) com cadastro a completar (toque para editar). ' : '') + (semWhats ? semWhats + ' ativo(s) sem WhatsApp válido não podem receber cotação. ' : '') + 'Fornecedor já usado em cotação, pedido, compra ou peça não é excluído: a lixeira inativa.'),
       sec,
@@ -144,7 +143,7 @@
   /** O que falta no cadastro para os obrigatórios de 15/11/2026 (só para avisar na lista; quem já existia continua valendo). */
   function pendencias(f) {
     const p = [];
-    if (!f.categoriaId || !S.categoriaFornecedor(f.categoriaId)) p.push('categoria');
+    if (!D.nomeCategoriasFornecedor(f)) p.push('categoria');
     const tipo = D.tipoPessoaDe(f);
     if (!tipo || !(tipo === 'fisica' ? R().cpfValid(f.documento) : R().cnpjValid(f.documento))) p.push('CPF ou CNPJ');
     if (!D.digitos(f.whatsapp)) p.push('WhatsApp');
@@ -161,9 +160,19 @@
         const email = (v) => { const i = entrada('email', v || '', { maxLength: 160, inputMode: 'email', autocapitalize: 'off' }); i.dataset.textoLivre = '1'; return i; };
         const telefone = (v) => aplicarMascara(entrada('tel', v || '', { inputMode: 'numeric' }), mascaraTelefone);
 
-        // Categoria: só as ativas da lista do Rodrigo, mais a que o fornecedor já tem.
-        const cats = S.dados.categoriasFornecedor.filter((c) => c.ativa !== false || c.id === f?.categoriaId).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-        const cat = seletor(cats.map((c) => [c.id, c.nome + (c.ativa === false ? ' (inativa)' : '')]), cats.some((c) => c.id === f?.categoriaId) ? f.categoriaId : '', cats.length ? 'Selecione' : 'Cadastre em "Editar categorias"');
+        // Categoria: Produto, Serviço ou os dois (caixas de marcar; pelo menos uma). Fornecedor antigo vem sem nenhuma.
+        const catBox = el('div', 'compras-campo compras-largo');
+        catBox.setAttribute('role', 'group');
+        catBox.setAttribute('aria-label', 'Categoria');
+        const catOpcoes = el('div', 'compras-form-rodape');
+        const cats = D.CATEGORIAS_FORNECEDOR.map(([id, nomeCat]) => {
+          const l = interruptor(nomeCat, Array.isArray(f?.categorias) && f.categorias.includes(id));
+          l.input.setAttribute('aria-label', nomeCat);
+          catOpcoes.append(l);
+          return { id, input: l.input };
+        });
+        catBox.append(el('span', 'compras-rotulo', 'Categoria *'), catOpcoes, el('small', 'profiles-note', 'O que este fornecedor fornece. Pode marcar os dois.'));
+        const ramo = texto(f?.ramo, { maxLength: 80 });
         const tipo = seletor(D.TIPOS_PESSOA, f ? D.tipoPessoaDe(f) : '', 'Selecione');
         const nome = texto(f?.nome);
         const contato = texto(f?.contatoNome);
@@ -177,7 +186,8 @@
         const semTipo = el('p', 'profiles-note', 'Escolha o tipo de pessoa para informar o CPF ou o CNPJ.');
 
         const s1 = sec('Identificação');
-        s1.append(campo('Categoria *', cat), campo('Tipo de pessoa *', tipo), campo('Nome *', nome), campo('Contato', contato, 'Nome da pessoa de contato no fornecedor.'), cpfCampo, cnpjCampo, semTipo);
+        s1.append(catBox, campo('Tipo de pessoa *', tipo), campo('Nome *', nome), campo('Contato', contato, 'Nome da pessoa de contato no fornecedor.'), cpfCampo, cnpjCampo, semTipo,
+          campo('Ramo', ramo, 'Opcional. Ex.: Bebidas, Laticínios, Manutenção.'));
 
         const s2 = sec('Contato do financeiro');
         const finNome = texto(f?.financeiro?.nome);
@@ -205,77 +215,28 @@
         };
         tipo.onchange = mostra;
         mostra();
-        return { cat, tipo, nome, contato, cpf, cnpj, finNome, finWhats, finEmail, whats, mail, nasc, ativo };
+        return { cats, ramo, tipo, nome, contato, cpf, cnpj, finNome, finWhats, finEmail, whats, mail, nasc, ativo };
       },
       salvar: (c) => {
         const tipoPessoa = c.tipo.value;
         if (tipoPessoa === 'fisica' && !c.nasc.checkValidity()) return 'Confira a data de nascimento: use DD/MM/AA.';
         const campos = {
-          id: f?.id, nome: c.nome.value.trim(), tipoPessoa, categoriaId: c.cat.value,
+          id: f?.id, nome: c.nome.value.trim(), tipoPessoa, categorias: c.cats.filter((x) => x.input.checked).map((x) => x.id), ramo: c.ramo.value.trim(),
           documento: (tipoPessoa === 'fisica' ? c.cpf.value : tipoPessoa === 'juridica' ? c.cnpj.value : '').trim(),
           contatoNome: c.contato.value.trim(), whatsapp: c.whats.value.trim(), email: c.mail.value.trim(),
           financeiro: { nome: c.finNome.value.trim(), whatsapp: c.finWhats.value.trim(), email: c.finEmail.value.trim() },
           nascimento: tipoPessoa === 'fisica' ? c.nasc.value : '',
           situacao: c.ativo.input.checked ? 'ativo' : 'inativo',
         };
-        const msg = D.validarFornecedor(campos, R(), { fornecedores: S.dados.fornecedores, categorias: S.dados.categoriasFornecedor });
+        const msg = D.validarFornecedor(campos, R(), { fornecedores: S.dados.fornecedores });
         if (msg) return msg;
         delete campos.id;
         const ok = S.transacao((d) => {
-          if (f) {
-            const x = d.fornecedores.find((y) => y.id === f.id);
-            Object.assign(x, campos);
-            // A categoria agora é o vínculo categoriaId: o texto livre antigo sai quando o cadastro é salvo de novo.
-            delete x.categoria;
-          } else d.fornecedores.push({ id: S.novoId('f'), ...campos });
+          if (f) Object.assign(d.fornecedores.find((y) => y.id === f.id), campos);
+          else d.fornecedores.push({ id: S.novoId('f'), ...campos });
         });
         if (!ok) return 'Não foi possível salvar neste navegador.';
         U.avisar('Fornecedor salvo.');
-        renderFornecedores();
-      },
-    });
-  }
-
-  /** Lista de categorias de fornecedor (o Rodrigo cria e edita; o fornecedor só escolhe). Não se exclui: inativa. */
-  function editarCategorias() {
-    U.dialogo({
-      titulo: 'Categorias de fornecedor', ...coresF(),
-      montar: (form) => {
-        const lista = el('div', 'producao-bloco compras-largo');
-        const linhas = [];
-        const usados = (id) => S.dados.fornecedores.filter((x) => x.categoriaId === id).length;
-        function linha(c = {}) {
-          const r = el('fieldset', 'compras-fieldset');
-          const nome = entrada('text', c.nome || '', { maxLength: 80, placeholder: 'Ex.: Bebidas, Manutenção, Embalagens' });
-          const ativa = interruptor('Categoria ativa', c.ativa !== false, c.id ? usados(c.id) + ' fornecedor(es) nesta categoria.' : 'Categoria nova.');
-          const item = { id: c.id || '', nome, ativa };
-          linhas.push(item);
-          r.append(campo('Categoria', nome), ativa);
-          lista.append(r);
-          numerar();
-          return item;
-        }
-        const numerar = () => linhas.forEach((x, k) => x.nome.setAttribute('aria-label', 'Categoria ' + (k + 1)));
-        [...S.dados.categoriasFornecedor].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).forEach((c) => linha(c));
-        const adicionar = el('div', 'compras-form-rodape');
-        adicionar.append(botao('Adicionar categoria', () => linha().nome.focus()));
-        form.append(U.nota('As categorias aparecem para escolher no cadastro do fornecedor. Categoria inativa some das novas escolhas, mas continua nos fornecedores que já a usam. Linha em branco não é salva.'), lista, adicionar);
-        return { linhas };
-      },
-      salvar: (c) => {
-        const preenchidas = c.linhas.map((x) => ({ id: x.id, nome: x.nome.value.trim(), ativa: x.ativa.input.checked })).filter((x) => x.id || x.nome);
-        if (preenchidas.some((x) => !x.nome)) return 'Informe o nome de cada categoria (categoria que já existe não pode ficar sem nome).';
-        const nomes = preenchidas.map((x) => U.dobrar(x.nome));
-        if (new Set(nomes).size !== nomes.length) return 'Há categorias com o mesmo nome.';
-        const ok = S.transacao((d) => {
-          for (const x of preenchidas) {
-            const atual = x.id && d.categoriasFornecedor.find((y) => y.id === x.id);
-            if (atual) Object.assign(atual, { nome: x.nome, ativa: x.ativa });
-            else d.categoriasFornecedor.push({ id: S.novoId('cf'), nome: x.nome, ativa: x.ativa });
-          }
-        });
-        if (!ok) return 'Não foi possível salvar neste navegador.';
-        U.avisar('Categorias salvas.');
         renderFornecedores();
       },
     });

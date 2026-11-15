@@ -109,30 +109,38 @@ ok(() => assert.equal(d.pendenciasDeTeto([
   { produtoId: 'a', descricao: 'Farinha', quantidade: 3, saldo: 5, estoqueMax: 10 },
 ]).length, 1));
 
-// Fornecedor: categoria de texto livre vira lista (migração) e validação do cadastro novo. Dados fictícios.
+// Fornecedor: o texto livre antigo de "categoria" vira o ramo (migração) e validação do cadastro novo. Dados fictícios.
 const regras = require('../dist/field-validation.js');
 ok(() => {
-  const doc = { fornecedores: [
-    { id: 'f1', nome: 'A', categoria: 'Laticínios' }, { id: 'f2', nome: 'B', categoria: ' laticinios ' },
-    { id: 'f3', nome: 'C', categoria: 'Matéria-prima' }, { id: 'f4', nome: 'D', categoria: '' }, { id: 'f5', nome: 'E', categoria: 'Frios', categoriaId: 'cf-outra' },
-  ] };
-  d.migrarCategoriasFornecedor(doc);
-  assert.deepEqual(doc.categoriasFornecedor, [{ id: 'cf-laticinios', nome: 'Laticínios', ativa: true }, { id: 'cf-materia-prima', nome: 'Matéria-prima', ativa: true }]);
-  assert.deepEqual(doc.fornecedores.map((f) => f.categoriaId), ['cf-laticinios', 'cf-laticinios', 'cf-materia-prima', undefined, 'cf-outra']);
-  assert.equal(doc.fornecedores[0].categoria, 'Laticínios'); // o texto antigo não é apagado pela migração
-  assert.equal(doc.migracoes.categoriasFornecedor, 1);
+  // Três situações de dado antigo: texto livre (main), lista de categorias que existiu só em 15/11 e já com ramo.
+  const doc = {
+    categoriasFornecedor: [{ id: 'cf-frios', nome: 'Frios', ativa: true }, { id: 'cf-solta', nome: 'Manutenção', ativa: true }],
+    migracoes: { categoriasFornecedor: 1 },
+    fornecedores: [
+      { id: 'f1', nome: 'A', categoria: 'Laticínios' },
+      { id: 'f2', nome: 'B', categoriaId: 'cf-frios' },
+      { id: 'f3', nome: 'C', categoria: 'Bebidas', categoriaId: 'cf-frios' },
+      { id: 'f4', nome: 'D' },
+      { id: 'f5', nome: 'E', ramo: 'Embalagens', categoria: 'Outro', categorias: ['produto'] },
+    ],
+  };
+  d.migrarRamoFornecedor(doc);
+  assert.deepEqual(doc.fornecedores.map((f) => f.ramo), ['Laticínios', 'Frios', 'Bebidas', '', 'Embalagens']);
+  assert.ok(doc.fornecedores.every((f) => !('categoria' in f) && !('categoriaId' in f)));
+  // Ninguém é classificado como Produto ou Serviço pela migração; quem já tinha continua.
+  assert.deepEqual(doc.fornecedores.map((f) => f.categorias), [undefined, undefined, undefined, undefined, ['produto']]);
+  assert.equal(doc.categoriasFornecedor.length, 2); // a lista antiga fica no dado, sem uso
+  assert.deepEqual(doc.migracoes, { categoriasFornecedor: 1, ramoFornecedor: 1 });
+  // Roda uma vez só: ramo apagado depois não volta.
+  doc.fornecedores[0].ramo = '';
+  d.migrarRamoFornecedor(doc);
+  assert.equal(doc.fornecedores[0].ramo, '');
 });
 ok(() => {
-  // Roda uma vez só: categoria apagada depois não volta, e quem já migrou não é tocado.
-  const doc = { fornecedores: [{ id: 'f1', nome: 'A', categoria: 'Frios' }] };
-  d.migrarCategoriasFornecedor(doc);
-  doc.categoriasFornecedor = []; doc.fornecedores[0].categoriaId = '';
-  d.migrarCategoriasFornecedor(doc);
-  assert.deepEqual(doc.categoriasFornecedor, []);
-  // Dois aparelhos migrando o mesmo dado chegam ao mesmo resultado (id sai do nome).
-  const a = d.migrarCategoriasFornecedor({ fornecedores: [{ id: 'f1', nome: 'A', categoria: 'Embalagens' }] });
-  const b = d.migrarCategoriasFornecedor({ fornecedores: [{ id: 'f1', nome: 'A', categoria: 'Embalagens' }] });
-  assert.deepEqual(a, b);
+  assert.equal(d.nomeCategoriasFornecedor({ categorias: ['servico', 'produto'] }), 'Produto e Serviço');
+  assert.equal(d.nomeCategoriasFornecedor({ categorias: ['servico'] }), 'Serviço');
+  assert.equal(d.nomeCategoriasFornecedor({ categorias: [] }), '');
+  assert.equal(d.nomeCategoriasFornecedor({}), '');
 });
 ok(() => {
   assert.equal(d.tipoPessoaDe({ documento: '529.982.247-25' }), 'fisica');
@@ -141,12 +149,14 @@ ok(() => {
   assert.equal(d.tipoPessoaDe({ documento: '11.222.333/0001-81', tipoPessoa: 'fisica' }), 'fisica');
 });
 ok(() => {
-  const ctx = { fornecedores: [{ id: 'f9', nome: 'Moinho Teste' }], categorias: [{ id: 'cf-frios', nome: 'Frios', ativa: true }] };
-  const pj = { id: 'f1', nome: 'Fornecedor Teste', tipoPessoa: 'juridica', documento: '11.222.333/0001-81', categoriaId: 'cf-frios', whatsapp: '(31) 99999-0000', email: '', financeiro: { nome: '', whatsapp: '', email: '' }, nascimento: '' };
+  const ctx = { fornecedores: [{ id: 'f9', nome: 'Moinho Teste' }] };
+  const pj = { id: 'f1', nome: 'Fornecedor Teste', tipoPessoa: 'juridica', documento: '11.222.333/0001-81', categorias: ['produto'], whatsapp: '(31) 99999-0000', email: '', financeiro: { nome: '', whatsapp: '', email: '' }, nascimento: '' };
   const v = (mudanca) => d.validarFornecedor({ ...pj, ...mudanca }, regras, ctx);
   assert.equal(v({}), '');
-  assert.match(v({ categoriaId: '' }), /categoria/);
-  assert.match(v({ categoriaId: 'cf-sumiu' }), /não existe mais/);
+  assert.match(v({ categorias: [] }), /categoria/);
+  assert.match(v({ categorias: undefined }), /categoria/);
+  assert.match(v({ categorias: ['outra'] }), /inválida/);
+  assert.equal(v({ categorias: ['produto', 'servico'] }), '');
   assert.match(v({ tipoPessoa: '' }), /tipo de pessoa/);
   assert.match(v({ nome: ' ' }), /nome/);
   assert.match(v({ nome: 'MOINHO TESTE' }), /Já existe/);

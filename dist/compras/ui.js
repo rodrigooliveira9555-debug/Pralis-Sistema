@@ -194,6 +194,32 @@
     return b.i.closest('.local-search-control') || b.i;
   }
 
+  /**
+   * Busca da tela pela lupa do rodapé fixo (people-header-pilot.js), como na Ficha de Cargos: o campo fica numa
+   * caixa .profiles-search que o rodapé adota, e um botão "Buscar" no cabeçalho (que o rodapé aciona pela lupa)
+   * abre e fecha. Fechar limpa a busca. Criada uma vez por tela; devolve a caixa para entrar no corpo a cada desenho.
+   */
+  function buscaRodape(tela, rotulo, aoBuscar) {
+    if (!tela.buscaRodape) {
+      const caixa = el('div', 'profiles-search');
+      caixa.hidden = true;
+      const i = entrada('search', '', { placeholder: rotulo });
+      i.setAttribute('aria-label', rotulo);
+      caixa.append(i);
+      const b = { caixa, i, aoBuscar };
+      let espera = null;
+      i.oninput = () => { clearTimeout(espera); espera = setTimeout(() => b.aoBuscar(i.value), 180); };
+      const botaoBusca = atalho(tela, 'Buscar', 'M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM16 16l5 5', () => {
+        caixa.hidden = !caixa.hidden;
+        if (caixa.hidden) { if (i.value) { i.value = ''; b.aoBuscar(''); } } else i.focus();
+      });
+      botaoBusca.classList.add('header-search-circle');
+      tela.buscaRodape = b;
+    }
+    tela.buscaRodape.aoBuscar = aoBuscar;
+    return tela.buscaRodape.caixa;
+  }
+
   /** Tabela simples com rolagem horizontal própria. colunas: [[rotulo, (linha)=>Node|string, cls]] */
   function tabela(colunas, linhas, { aoClicar, vazioTexto = 'Nada para mostrar.', classeLinha } = {}) {
     const box = el('div', 'compras-tabela-box');
@@ -355,7 +381,7 @@
   }
 
   window.CicluzComprasUI = {
-    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar,
+    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
     tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar,
   };

@@ -70,15 +70,15 @@
     const acoes = el('div', 'compras-form-rodape');
     acoes.append(botao('Cadastrar patrimônio', () => formulario(), 'btn'));
     const filtros = el('div', 'compras-filtros');
-    const busca = U.busca('Buscar bem', (v) => { filtro.busca = v; desenha(); });
-    busca.value = filtro.busca;
+    // Busca pela lupa do rodapé (um caminho só para buscar), como em Fornecedores.
+    const busca = U.buscaRodape(tela, 'Buscar bem', (v) => { filtro.busca = v; if (tela.view.classList.contains('show')) render(); });
     const cat = U.chips([['', 'Todos'], ...D.CATEGORIAS], filtro.categoria, (v) => { filtro.categoria = v; desenha(); });
     const inat = el('label', 'compras-interruptor');
     const inatInput = entrada('checkbox');
     inatInput.checked = filtro.inativos;
     inatInput.onchange = () => { filtro.inativos = inatInput.checked; desenha(); };
     inat.append(inatInput, el('span', null, 'Mostrar inativos'));
-    filtros.append(busca, cat, inat);
+    filtros.append(cat, inat);
     const sec = U.secao('Bens', bens.filter((b) => b.ativo !== false).length);
     const lista = el('div', 'compras-lista');
     sec.append(lista);
@@ -97,7 +97,7 @@
       })));
     }
     desenha();
-    tela.body.replaceChildren(topo, acoes, filtros, sec);
+    tela.body.replaceChildren(busca, topo, acoes, filtros, sec);
   }
 
   /**

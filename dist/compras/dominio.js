@@ -161,24 +161,28 @@
   /* ---------- Cadastro de fornecedor (decisões do Rodrigo, 15/11/2026) ---------- */
   const TIPOS_PESSOA = [['fisica', 'Pessoa física'], ['juridica', 'Pessoa jurídica']];
   const semAcento = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-  /** Id da categoria criada pela migração: sai do nome, para dois aparelhos migrarem igual sem duplicar. */
-  const idCategoriaFornecedor = (nome) => 'cf-' + (semAcento(nome).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'sem-nome');
+  /** Categoria do fornecedor (decisão do Rodrigo, 15/11/2026): o que ele fornece. Pode ser um, o outro ou os dois. */
+  const CATEGORIAS_FORNECEDOR = [['produto', 'Produto'], ['servico', 'Serviço']];
+  const categoriasDe = (f) => CATEGORIAS_FORNECEDOR.filter(([id]) => Array.isArray(f && f.categorias) && f.categorias.includes(id));
+  const nomeCategoriasFornecedor = (f) => categoriasDe(f).map((c) => c[1]).join(' e ');
   /**
-   * Migração (marca d.migracoes.categoriasFornecedor): a categoria do fornecedor era texto livre; vira item da
-   * lista d.categoriasFornecedor e o fornecedor passa a apontar para ela por categoriaId. O texto antigo
-   * (f.categoria) não é apagado aqui. Roda uma vez por documento e não toca em quem já tem categoriaId.
+   * Migração (marca d.migracoes.ramoFornecedor): o texto livre que o cadastro antigo chamava de "categoria"
+   * (Bebidas, Laticínios, Mercearia…) é o ramo do fornecedor e passa para o campo f.ramo. Também desfaz a lista de
+   * categorias que existiu só neste dia: quem tinha categoriaId recebe como ramo o nome que estava na lista. Nada é
+   * classificado como Produto ou Serviço aqui: f.categorias fica vazio até alguém escolher. A lista antiga
+   * d.categoriasFornecedor, se existir, fica no dado sem uso.
    */
-  function migrarCategoriasFornecedor(d) {
-    if (!Array.isArray(d.categoriasFornecedor)) d.categoriasFornecedor = [];
-    if (d.migracoes && d.migracoes.categoriasFornecedor) return d;
+  function migrarRamoFornecedor(d) {
+    if (d.migracoes && d.migracoes.ramoFornecedor) return d;
+    const lista = Array.isArray(d.categoriasFornecedor) ? d.categoriasFornecedor : [];
     for (const f of d.fornecedores || []) {
-      const nome = String(f.categoria || '').trim();
-      if (!nome || f.categoriaId) continue;
-      const id = idCategoriaFornecedor(nome);
-      if (!d.categoriasFornecedor.some((c) => c.id === id)) d.categoriasFornecedor.push({ id, nome, ativa: true });
-      f.categoriaId = id;
+      const daLista = f.categoriaId ? lista.find((c) => c.id === f.categoriaId) : null;
+      const texto = String(f.ramo || f.categoria || (daLista && daLista.nome) || '').trim();
+      f.ramo = texto;
+      delete f.categoria;
+      delete f.categoriaId;
     }
-    d.migracoes = { ...(d.migracoes || {}), categoriasFornecedor: 1 };
+    d.migracoes = { ...(d.migracoes || {}), ramoFornecedor: 1 };
     return d;
   }
   /** Tipo de pessoa do fornecedor; no cadastro antigo vem do tamanho do documento (11 = física, 14 = jurídica). */
@@ -189,13 +193,14 @@
   }
   const emailValido = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
   /**
-   * O que impede salvar o fornecedor, ou ''. Obrigatórios: categoria, tipo de pessoa, nome, CPF (física) ou CNPJ
+   * O que impede salvar o fornecedor, ou ''. Obrigatórios: categoria (Produto, Serviço ou os dois), tipo de pessoa, nome, CPF (física) ou CNPJ
    * (jurídica) com dígito verificador e WhatsApp do contato. regras = { cpfValid, cnpjValid } do field-validation.js.
    * A exigência vale ao salvar: fornecedor antigo sem esses dados continua abrindo e sendo usado.
    */
-  function validarFornecedor(f, regras, { fornecedores = [], categorias = [] } = {}) {
-    if (!f.categoriaId) return 'Escolha a categoria do fornecedor.';
-    if (!categorias.some((c) => c.id === f.categoriaId)) return 'A categoria escolhida não existe mais. Escolha outra.';
+  function validarFornecedor(f, regras, { fornecedores = [] } = {}) {
+    const cats = Array.isArray(f.categorias) ? f.categorias : [];
+    if (!cats.length) return 'Marque a categoria do fornecedor: Produto, Serviço ou os dois.';
+    if (cats.some((c) => !CATEGORIAS_FORNECEDOR.some(([id]) => id === c))) return 'Categoria do fornecedor inválida.';
     if (f.tipoPessoa !== 'fisica' && f.tipoPessoa !== 'juridica') return 'Escolha o tipo de pessoa (física ou jurídica).';
     if (!String(f.nome || '').trim()) return 'Informe o nome do fornecedor.';
     if (fornecedores.some((x) => x.id !== f.id && semAcento(x.nome) === semAcento(f.nome))) return 'Já existe um fornecedor com este nome.';
@@ -391,7 +396,7 @@
     REPETICOES, DIAS_SEMANA, MESES, ocorrencias, resumoRegra,
     topoDoRanking,
     digitos, motivoNaoConvidavel, podeConvidar,
-    TIPOS_PESSOA, idCategoriaFornecedor, migrarCategoriasFornecedor, tipoPessoaDe, validarFornecedor,
+    TIPOS_PESSOA, CATEGORIAS_FORNECEDOR, nomeCategoriasFornecedor, migrarRamoFornecedor, tipoPessoaDe, validarFornecedor,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,
     aplicarRecebimento, SITUACOES_PEDIDO,
