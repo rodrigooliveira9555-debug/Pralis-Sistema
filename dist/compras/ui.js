@@ -566,9 +566,49 @@
     return quadro;
   }
 
+  /**
+   * Seleção por cartões (desenho escolhido pelo Rodrigo, 15/11/2026): para escolha de poucas opções com ícone, no
+   * lugar de caixinhas de marcar. Cada cartão é um botão inteiro (aria-pressed): ícone no quadrado de cantos
+   * arredondados, título e uma linha de detalhe, e um círculo de marcação à direita (cheio, com o "certo", quando
+   * marcado: a cor não é a única indicação). A cor é a de cada opção, não a da tela.
+   * opcoes: [{ id, titulo, detalhe, icone | html, cor, marcado }]; multiplo: pode marcar mais de uma.
+   * Devolve o grupo; grupo.marcados() lista os ids marcados.
+   */
+  function cartoesEscolha({ rotulo, opcoes, multiplo = true, aoMudar }) {
+    const grupo = el('div', 'compras-cartoes');
+    grupo.setAttribute('role', 'group');
+    if (rotulo) grupo.setAttribute('aria-label', rotulo);
+    const itens = opcoes.map((o) => {
+      const b = el('button', 'compras-cartao-escolha');
+      b.type = 'button';
+      if (o.cor) b.style.setProperty('--cartao-cor', o.cor);
+      const i = el('span', 'compras-linha-icone');
+      i.setAttribute('aria-hidden', 'true');
+      i.innerHTML = o.html || svg(ICONES[o.icone] || o.icone);
+      const texto = el('span', 'compras-cartao-texto');
+      texto.append(el('strong', null, o.titulo));
+      if (o.detalhe) texto.append(el('small', null, o.detalhe));
+      const marca = el('span', 'compras-cartao-marca');
+      marca.setAttribute('aria-hidden', 'true');
+      marca.innerHTML = '<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+      b.append(i, texto, marca);
+      b.setAttribute('aria-pressed', String(Boolean(o.marcado)));
+      b.onclick = () => {
+        const ligar = b.getAttribute('aria-pressed') !== 'true';
+        if (!multiplo && ligar) itens.forEach((x) => x.b.setAttribute('aria-pressed', 'false'));
+        b.setAttribute('aria-pressed', String(ligar));
+        if (aoMudar) aoMudar(grupo.marcados());
+      };
+      grupo.append(b);
+      return { id: o.id, b };
+    });
+    grupo.marcados = () => itens.filter((x) => x.b.getAttribute('aria-pressed') === 'true').map((x) => x.id);
+    return grupo;
+  }
+
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, quadroSituacao,
+    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, quadroSituacao, cartoesEscolha,
   };
 })();

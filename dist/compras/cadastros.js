@@ -233,16 +233,18 @@
         const s1 = el('fieldset', 'compras-fieldset');
         s1.append(el('legend', null, 'Dados da empresa'));
         const catBox = el('div', 'compras-campo compras-largo');
-        catBox.setAttribute('role', 'group');
-        catBox.setAttribute('aria-label', 'Categoria');
-        const catOpcoes = el('div', 'compras-form-rodape');
-        const cats = D.CATEGORIAS_FORNECEDOR.map(([id, nomeCat]) => {
-          const l = interruptor(nomeCat, Array.isArray(f?.categorias) && f.categorias.includes(id));
-          l.input.setAttribute('aria-label', nomeCat);
-          catOpcoes.append(l);
-          return { id, input: l.input };
+        // Categoria em cartões (desenho escolhido pelo Rodrigo): o mesmo ícone e a mesma cor da lista, por categoria
+        // (Produto = MER - Fornecedores em verde; Serviço = DES - Fornecedores em vermelho), seja qual for a tela de entrada.
+        const desenhoCat = {
+          produto: { ...iconeDoMenu('3:Cadastros Geral', 'MER - Fornecedores'), cor: corMercadorias(), detalhe: 'Vende mercadorias' },
+          servico: { ...iconeDoMenu('2:Cadastros Geral', 'DES - Fornecedores'), cor: corDespesas(), detalhe: 'Presta serviços' },
+        };
+        const catOpcoes = U.cartoesEscolha({
+          rotulo: 'Categoria',
+          opcoes: D.CATEGORIAS_FORNECEDOR.map(([id, nomeCat]) => ({ id, titulo: nomeCat, ...desenhoCat[id], marcado: Array.isArray(f?.categorias) && f.categorias.includes(id) })),
+          aoMudar: () => { barra.update(etapas(), atual); pintarVendedor(); },
         });
-        catBox.append(el('span', 'compras-rotulo', 'Categoria * (pode marcar as duas)'), catOpcoes);
+        catBox.append(el('span', 'compras-rotulo', 'Categoria *'), catOpcoes, el('small', 'profiles-note', 'Toque em uma ou nas duas.'));
         // Fornecedor é sempre por CNPJ. Razão social e Nome fantasia; o campo salvo de uso é sempre "nome" (o que
         // cotação, pedido e recebimento mostram); a razão social é um campo a mais.
         const razao = texto(f?.razaoSocial, { maxLength: 160 });
@@ -391,7 +393,7 @@
 
         /* ----- Barra de etapas e navegação ----- */
         const quadros = [etapa1, s2, fin.no, rep.no];
-        const marcadas = () => cats.filter((x) => x.input.checked).map((x) => x.id);
+        const marcadas = () => catOpcoes.marcados();
         const etapas = () => D.etapasFornecedor(marcadas()).map((label) => ({ label }));
         let atual = 0;
         const erroEtapa = el('p', 'profiles-error');
@@ -424,7 +426,6 @@
           const foco = quadros[atual].querySelector('input:not([type=checkbox]):not([readonly]),select');
           if (foco && form.isConnected) foco.focus();
         }
-        cats.forEach((x) => { x.input.onchange = () => { barra.update(etapas(), atual); pintarVendedor(); }; });
         pintarVendedor();
 
         /** Lê o formulário no formato salvo. "O mesmo da etapa anterior" copia os dados da etapa de antes. */

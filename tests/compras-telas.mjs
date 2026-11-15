@@ -88,8 +88,12 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   ok(await df.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).count() === 0, 'No cadastro novo o Salvar só aparece na última etapa');
   await avancar(df);
   ok((await erroF()).includes('categoria') && (await etapaF(df)).includes('Etapa 1'), 'Avançar confere a etapa: categoria é obrigatória');
-  await df.getByLabel('Produto', { exact: true }).check();
-  await df.getByLabel('Serviço', { exact: true }).check();
+  // Categoria em cartões: cada cartão é um botão com aria-pressed; pode marcar um, o outro ou os dois.
+  const cartaoF = (d, nome) => d.locator('.compras-cartao-escolha', { hasText: nome });
+  ok(await df.locator('.compras-cartao-escolha').count() === 2 && await cartaoF(df, 'Produto').getAttribute('aria-pressed') === 'false' && await df.locator('input[type=checkbox][aria-label=Produto]').count() === 0, 'Categoria em dois cartões, sem as caixinhas antigas');
+  await cartaoF(df, 'Produto').click();
+  await cartaoF(df, 'Serviço').click();
+  ok(await cartaoF(df, 'Produto').getAttribute('aria-pressed') === 'true' && await cartaoF(df, 'Serviço').getAttribute('aria-pressed') === 'true', 'Os dois cartões ficam marcados');
   ok((await df.locator('.stepper-item').nth(1).textContent()).includes('Dados do vendedor / prestador'), 'O título da 2ª etapa segue a categoria');
   ok(await df.getByLabel('CNPJ *', { exact: true }).isVisible() && await df.getByLabel('Razão social', { exact: true }).isVisible() && await df.getByLabel('Regime tributário', { exact: true }).isVisible() && await df.locator('fieldset').first().getByLabel('Regime tributário', { exact: true }).count() === 1, 'Pessoa jurídica: razão social, nome fantasia, CNPJ e regime tributário');
   await df.getByLabel('Razão social', { exact: true }).fill('Fornecedor CNPJ Teste Comércio Ltda');
@@ -135,7 +139,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   // Segundo fornecedor, só Serviço; aniversário do prestador (mês e ano) é opcional
   await p.locator('.view.show .people-add-control').click();
   const dp = p.locator('dialog.compras-dialog[open]').last();
-  await dp.getByLabel('Serviço', { exact: true }).check();
+  await dp.locator('.compras-cartao-escolha', { hasText: 'Serviço' }).click();
   await dp.getByLabel('Nome fantasia', { exact: true }).fill('Prestador Serviço Teste');
   await dp.getByLabel('CNPJ *', { exact: true }).pressSequentially('11444777000161');
   await avancar(dp);

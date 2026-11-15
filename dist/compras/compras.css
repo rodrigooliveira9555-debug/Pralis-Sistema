@@ -262,6 +262,21 @@ body.dark-theme .compras-trilha li { background: #34333b; color: #d4d4d8; }
 /* Itens do diálogo podem encolher: uma tabela larga rola dentro da própria caixa, sem passar da borda. */
 .compras-dialog .compras-form > * { min-width: 0; }
 .compras-fieldset { border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; padding: 12px 14px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; min-width: 0; }
+/* Seleção por cartões (U.cartoesEscolha): cartão = botão inteiro; lado a lado quando cabe, empilhado no celular.
+   Marcado: borda de 2 px e fundo bem claro na cor da opção, círculo cheio com o "certo". */
+.compras-cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; min-width: 0; }
+.compras-cartao-escolha { --cartao-cor: var(--menu-accent); display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 68px; margin: 0; padding: 12px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); color: var(--layout-ink, inherit); font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); text-align: left; cursor: pointer; }
+.compras-cartao-escolha[aria-pressed=true] { padding: 11px; border: 2px solid var(--cartao-cor); background: color-mix(in srgb, var(--cartao-cor) 9%, var(--theme-card, #fff)); }
+.compras-cartao-escolha:focus-visible { outline: 2px solid var(--cartao-cor); outline-offset: 2px; }
+.compras-cartao-escolha > .compras-linha-icone { flex: none; width: 40px; height: 40px; background: var(--cartao-cor); }
+.compras-cartao-escolha > .compras-linha-icone svg { width: 20px; height: 20px; }
+.compras-cartao-texto { display: grid; gap: 2px; min-width: 0; }
+.compras-cartao-texto > strong { font: 600 15px/20px var(--ui-font); }
+.compras-cartao-texto > small { font: 400 12px/16px var(--ui-font); color: var(--muted, #73737a); }
+.compras-cartao-marca { width: 24px; height: 24px; border: 2px solid var(--layout-line, #dedee3); border-radius: 50%; display: grid; place-items: center; box-sizing: border-box; }
+.compras-cartao-marca svg { width: 14px; height: 14px; fill: none; stroke: var(--theme-surface, #fff); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; visibility: hidden; }
+.compras-cartao-escolha[aria-pressed=true] > .compras-cartao-marca { border-color: var(--cartao-cor); background: var(--cartao-cor); }
+.compras-cartao-escolha[aria-pressed=true] > .compras-cartao-marca svg { visibility: visible; }
 /* Quadro "Situação do(a) <coisa>" (U.quadroSituacao): moldura como a dos quadros do formulário; o interruptor é o
    .account-status-switch dos cadastros financeiros, ligado na cor do menu de origem. */
 .compras-situacao-quadro { grid-column: 1 / -1; display: grid; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; padding: 12px 14px; background: var(--theme-card, #fff); font: 600 12px/1.4 var(--ui-font); min-width: 0; }
