@@ -89,7 +89,7 @@
   function renderFornecedores() {
     const tela = telasF[origemF];
     const lista = S.dados.fornecedores
-      .filter((f) => U.dobrar([f.nome, f.documento, f.whatsapp, f.contatoNome, f.ramo, D.nomeCategoriasFornecedor(f)].join(' ')).includes(U.dobrar(buscaF[origemF])))
+      .filter((f) => U.dobrar([f.nome, f.razaoSocial, f.documento, f.whatsapp, f.contatoNome, f.ramo, D.nomeCategoriasFornecedor(f)].join(' ')).includes(U.dobrar(buscaF[origemF])))
       // Organizada pela categoria (pedido do Rodrigo): Produto, Produto e Serviço, Serviço e, por último, sem categoria;
       // dentro de cada uma, os ativos antes dos inativos e, entre eles, por nome.
       .sort((a, b) => ordemCategoria(a) - ordemCategoria(b) || (a.situacao === b.situacao ? 0 : a.situacao === 'ativo' ? -1 : 1) || a.nome.localeCompare(b.nome, 'pt-BR'));
@@ -101,25 +101,21 @@
     const semWhats = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && !D.podeConvidar(f)).length;
     const incompletos = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && pendencias(f).length).length;
     // Mesma linha dos cadastros de grupos: tocar edita; a setinha revela Editar e Excluir.
-    // Linha fina, uma por fornecedor. O botão do cabeçalho expande ou recolhe as colunas (preferência do aparelho):
-    // recolhida = Categoria, Fornecedor e Situação; expandida = todas, com rolagem lateral dentro da lista.
+    // Linha fina, uma por fornecedor, em colunas fixas (grade-fornecedor, em compras.css). Ordem do Rodrigo: ícone da
+    // categoria, Fornecedor (nome fantasia), Razão social, Categoria, Nome do contato, WhatsApp, CPF/CNPJ, Ramo, avisos,
+    // situação e seta. Cada coluna tem no título a setinha que a oculta ou mostra (preferência do aparelho); o que não
+    // couber rola para o lado dentro da lista.
     const linhas = el('div', 'compras-lista compras-lista-grade');
-    const colunas = U.botaoColunas('cicluz-fornecedores-colunas', (expandida) => {
-      linhas.classList.toggle('colunas-expandidas', expandida);
-      linhas.classList.toggle('colunas-recolhidas', !expandida);
-      if (!expandida) linhas.scrollLeft = 0;
-    });
     U.arrastarParaRolar(linhas);
-    const sec = U.secao('Fornecedores', S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length, colunas);
+    const sec = U.secao('Fornecedores', S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length);
     sec.append(linhas);
     if (!lista.length) linhas.append(U.vazio(buscaF[origemF] ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.'));
-    // Ordem da linha (pedido do Rodrigo): ícone da categoria e o nome dela, depois o nome do fornecedor e os outros dados,
-    // em colunas fixas (grade-fornecedor, em compras.css) para CNPJ, WhatsApp e ramo caírem sempre na mesma vertical.
     if (lista.length) linhas.append(U.cabecalhoColunas('grade-fornecedor', [
-      { chave: 'categoria', rotulo: 'Categoria' }, { chave: 'nome', rotulo: 'Fornecedor' }, { chave: 'documento', rotulo: 'CPF / CNPJ' },
-      { chave: 'whatsapp', rotulo: 'WhatsApp' }, { chave: 'ramo', rotulo: 'Ramo' }, { chave: 'email', rotulo: 'E-mail' },
-      { chave: 'financeiro', rotulo: 'Contato do financeiro' }, { chave: 'selos', rotulo: 'Avisos' }, { chave: 'estado', rotulo: 'Situação' },
-    ]));
+      { chave: 'nome', rotulo: 'Fornecedor', ocultavel: true }, { chave: 'razao', rotulo: 'Razão social', ocultavel: true },
+      { chave: 'categoria', rotulo: 'Categoria', ocultavel: true }, { chave: 'contato', rotulo: 'Nome do contato', ocultavel: true },
+      { chave: 'whatsapp', rotulo: 'WhatsApp', ocultavel: true }, { chave: 'documento', rotulo: 'CPF / CNPJ', ocultavel: true },
+      { chave: 'ramo', rotulo: 'Ramo', ocultavel: true }, { chave: 'selos', rotulo: 'Avisos', ocultavel: true }, { chave: 'estado', rotulo: 'Situação' },
+    ], { lista: linhas, preferencia: 'cicluz-fornecedores-colunas' }));
     lista.forEach((f) => {
       const ativo = f.situacao === 'ativo';
       const categoria = D.nomeCategoriasFornecedor(f);
@@ -128,14 +124,15 @@
       linhas.append(U.linhaLista({
         icones: iconesDaCategoria(f), grade: 'grade-fornecedor',
         colunas: [
+          // nome = nome fantasia (ou o nome da pessoa física): é o nome de uso, o mesmo que cotação e pedido mostram.
+          { chave: 'nome', conteudo: f.nome },
+          { chave: 'razao', conteudo: f.razaoSocial },
           // Sem categoria: o aviso ocupa o lugar do texto da categoria (por isso o ícone está cinza).
           { chave: 'categoria', conteudo: categoria || U.situacao('Completar cadastro', 'atencao') },
-          { chave: 'nome', conteudo: f.nome },
-          { chave: 'documento', conteudo: f.documento },
+          { chave: 'contato', conteudo: f.contatoNome },
           { chave: 'whatsapp', conteudo: f.whatsapp },
+          { chave: 'documento', conteudo: f.documento },
           { chave: 'ramo', conteudo: f.ramo },
-          { chave: 'email', conteudo: f.email },
-          { chave: 'financeiro', conteudo: [f.financeiro?.nome, f.financeiro?.whatsapp].filter(Boolean).join(' · ') },
           { chave: 'selos', conteudo: [
             ativo && categoria && falta.length ? U.situacao('Completar cadastro', 'atencao') : null,
             semDdd ? U.situacao(f.whatsapp ? 'WhatsApp sem DDD' : 'Sem WhatsApp', 'atencao') : null,
@@ -230,8 +227,13 @@
         catBox.append(el('span', 'compras-rotulo', 'Categoria * (pode marcar as duas)'), catOpcoes);
         const ramo = texto(f?.ramo, { maxLength: 80, placeholder: 'Ex.: Bebidas, Manutenção' });
         const tipo = seletor(D.TIPOS_PESSOA, f ? D.tipoPessoaDe(f) : '', 'Selecione');
+        // Pessoa jurídica: Razão social e Nome fantasia; pessoa física: só o Nome. O campo salvo é sempre "nome"
+        // (o nome de uso, que cotação, pedido e recebimento mostram); a razão social é um campo a mais, opcional.
         const nome = texto(f?.nome);
-        const contato = texto(f?.contatoNome, { placeholder: 'Nome da pessoa de contato' });
+        const nomeCampo = campo('Nome *', nome);
+        const razao = texto(f?.razaoSocial, { maxLength: 160 });
+        const razaoCampo = campo('Razão social', razao);
+        const contato = texto(f?.contatoNome, { placeholder: 'Nome da pessoa responsável' });
         // Dois campos de documento: o do CPF é tratado pelo field-validation.js (máscara e dígito verificador
         // pelo rótulo); o do CNPJ usa a máscara e o validador de lá. Só o do tipo escolhido aparece.
         const tipoInicial = f ? D.tipoPessoaDe(f) : '';
@@ -242,21 +244,20 @@
         const semTipo = el('p', 'profiles-note', 'Escolha o tipo de pessoa para informar o CPF ou o CNPJ.');
 
         const s1 = sec('Identificação');
-        s1.append(catBox, campo('Tipo de pessoa *', tipo), campo('Nome *', nome), campo('Contato', contato), cpfCampo, cnpjCampo, semTipo,
-          campo('Ramo', ramo));
+        const nasc = entrada('date', f?.nascimento || '');
+        const nascCampo = campo('Data de nascimento', nasc);
+        s1.append(catBox, campo('Tipo de pessoa *', tipo), razaoCampo, nomeCampo, cpfCampo, cnpjCampo, semTipo, nascCampo, campo('Ramo', ramo));
+
+        const s3 = sec('Contato do responsável');
+        const whats = telefone(f?.whatsapp);
+        const mail = email(f?.email);
+        s3.append(campo('Nome do contato', contato), campo('WhatsApp *', whats), campo('E-mail', mail));
 
         const s2 = sec('Contato do financeiro');
         const finNome = texto(f?.financeiro?.nome);
         const finWhats = telefone(f?.financeiro?.whatsapp);
         const finEmail = email(f?.financeiro?.email);
         s2.append(campo('Nome do financeiro', finNome), campo('WhatsApp do financeiro', finWhats), campo('E-mail do financeiro', finEmail));
-
-        const s3 = sec('Contato do fornecedor');
-        const whats = telefone(f?.whatsapp);
-        const mail = email(f?.email);
-        const nasc = entrada('date', f?.nascimento || '');
-        const nascCampo = campo('Data de nascimento', nasc);
-        s3.append(campo('WhatsApp *', whats), campo('E-mail', mail), nascCampo);
 
         const ativo = interruptor('Fornecedor ativo', f ? f.situacao === 'ativo' : true, 'Fornecedor inativo não aparece no seletor de cotação.');
         form.append(ativo);
@@ -268,16 +269,20 @@
           mostrar(cnpjCampo, tipo.value === 'juridica');
           mostrar(semTipo, !tipo.value);
           mostrar(nascCampo, tipo.value === 'fisica');
+          mostrar(razaoCampo, tipo.value === 'juridica');
+          const rotuloNome = tipo.value === 'juridica' ? 'Nome fantasia *' : 'Nome *';
+          nomeCampo.querySelector('.compras-rotulo').textContent = rotuloNome;
+          nome.setAttribute('aria-label', rotuloNome);
         };
         tipo.onchange = mostra;
         mostra();
-        return { cats, ramo, tipo, nome, contato, cpf, cnpj, finNome, finWhats, finEmail, whats, mail, nasc, ativo };
+        return { cats, ramo, tipo, nome, razao, contato, cpf, cnpj, finNome, finWhats, finEmail, whats, mail, nasc, ativo };
       },
       salvar: (c) => {
         const tipoPessoa = c.tipo.value;
         if (tipoPessoa === 'fisica' && !c.nasc.checkValidity()) return 'Confira a data de nascimento: use DD/MM/AA.';
         const campos = {
-          id: f?.id, nome: c.nome.value.trim(), tipoPessoa, categorias: c.cats.filter((x) => x.input.checked).map((x) => x.id), ramo: c.ramo.value.trim(),
+          id: f?.id, nome: c.nome.value.trim(), razaoSocial: tipoPessoa === 'juridica' ? c.razao.value.trim() : '', tipoPessoa, categorias: c.cats.filter((x) => x.input.checked).map((x) => x.id), ramo: c.ramo.value.trim(),
           documento: (tipoPessoa === 'fisica' ? c.cpf.value : tipoPessoa === 'juridica' ? c.cnpj.value : '').trim(),
           contatoNome: c.contato.value.trim(), whatsapp: c.whats.value.trim(), email: c.mail.value.trim(),
           financeiro: { nome: c.finNome.value.trim(), whatsapp: c.finWhats.value.trim(), email: c.finEmail.value.trim() },

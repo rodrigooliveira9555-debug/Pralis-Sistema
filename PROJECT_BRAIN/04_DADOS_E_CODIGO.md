@@ -61,7 +61,8 @@
   fica lá (inativo, não liberado). Código:
   `dist/compras/produto-importacao.js` (regras), `telas-produto-importacao.js` (tela), SheetJS 0.20.3 em `dist/vendor/sheetjs`.
 - **Fornecedor único (15/11/2026)**, dentro de `cicluz-compras-v1` (mesma chave e versão). Campos do fornecedor: `nome`,
-  `documento`, `whatsapp` e `situacao` (já existiam), mais `categorias` (lista com 'produto' e/ou 'servico'), `ramo`
+  `documento`, `whatsapp` e `situacao` (já existiam), mais `razaoSocial` (texto, opcional, só pessoa jurídica; o `nome` é o nome fantasia ou o nome da pessoa física, e
+  continua sendo o nome exibido em todo o sistema, sem migração), `categorias` (lista com 'produto' e/ou 'servico'), `ramo`
   (texto, opcional), `tipoPessoa` ('fisica' | 'juridica'), `contatoNome`, `email`, `financeiro: { nome, whatsapp, email }`
   e `nascimento` (ISO, só pessoa física). **Migração** (marca `migracoes.ramoFornecedor = 1` dentro do próprio documento,
   para acompanhar os dados na sincronização): o texto livre antigo `categoria` passa para `ramo` e o campo `categoria`
@@ -87,7 +88,7 @@
   (o mesmo de Documentações e Ocorrências), que **não** é sincronizado: o áudio só existe no aparelho em que foi gravado.
   Gravação por `dist/audio-nota.js` (`CicluzAudioNota`), peça única usada também por `occurrence-matrix.js`.
 
-**Preferência de interface:** `cicluz-fornecedores-colunas` (colunas da lista de fornecedores expandidas ou recolhidas, por aparelho; 15/11/2026), `tema`, `menu-ordem`, `menu-item-order-v1`, `sidebar-sections-v1`,
+**Preferência de interface:** `cicluz-fornecedores-colunas` (lista das colunas ocultas na lista de fornecedores, por aparelho; 15/11/2026), `tema`, `menu-ordem`, `menu-item-order-v1`, `sidebar-sections-v1`,
 `menu-visibility`, `people-display-v1`, `people-footer-*`, `{key}-sort`, `{key}-display`,
 `fee-brand-order-{id}`, `account-sort`.
 

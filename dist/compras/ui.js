@@ -194,32 +194,6 @@
     return b.i.closest('.local-search-control') || b.i;
   }
 
-  /**
-   * Botão redondo de expandir/recolher as colunas de uma lista em grade, para o cabeçalho da seção. Recolhida, a lista
-   * mostra só as colunas essenciais; expandida, todas, com rolagem lateral dentro da própria lista. A escolha é
-   * preferência do aparelho (localStorage, chave dada), não dado do cadastro. aplicar(expandida) atualiza a lista.
-   */
-  function botaoColunas(chave, aplicar) {
-    let expandida = false;
-    try { expandida = localStorage.getItem(chave) === 'expandidas'; } catch (e) { /* sem preferência salva */ }
-    const b = el('button', 'shortcut-circle compras-colunas-toggle');
-    b.type = 'button';
-    const pintar = () => {
-      const rotulo = expandida ? 'Recolher colunas' : 'Expandir colunas';
-      b.title = rotulo;
-      b.setAttribute('aria-label', rotulo);
-      b.setAttribute('aria-expanded', String(expandida));
-      b.innerHTML = svg('<path d="' + (expandida ? 'm3 5 6 7-6 7M21 5l-6 7 6 7' : 'm9 5-6 7 6 7M15 5l6 7-6 7') + '"/>');
-      aplicar(expandida);
-    };
-    b.onclick = () => {
-      expandida = !expandida;
-      try { localStorage.setItem(chave, expandida ? 'expandidas' : 'recolhidas'); } catch (e) { /* vale só nesta visita */ }
-      pintar();
-    };
-    pintar();
-    return b;
-  }
   /** Arrastar com o mouse para rolar a lista para os lados (o toque e o trackpad já rolam sozinhos). */
   function arrastarParaRolar(caixa) {
     let inicio = null;
@@ -244,12 +218,45 @@
     caixa.addEventListener('click', (e) => { if (arrastou) { e.stopPropagation(); e.preventDefault(); arrastou = false; } }, true);
   }
 
-  /** Cabeçalho das colunas de uma lista em grade (mesma classe de grade das linhas); some na tela estreita. */
-  function cabecalhoColunas(grade, colunas) {
+  /**
+   * Cabeçalho das colunas de uma lista em grade (mesma classe de grade das linhas). Coluna com ocultavel: true ganha,
+   * ao lado do título, a mesma setinha do fim das linhas; ali ela encolhe a coluna (fica só a setinha, para reabrir)
+   * ou expande. lista: o elemento da lista, que recebe a classe oculta-<chave>; preferencia: chave do localStorage
+   * onde a escolha fica guardada por aparelho (lista das colunas ocultas; não é dado do cadastro).
+   */
+  function cabecalhoColunas(grade, colunas, { lista, preferencia } = {}) {
     const r = el('div', 'compras-linha em-colunas compras-linha-cabecalho ' + grade);
-    r.setAttribute('aria-hidden', 'true');
     r.append(el('span', 'compras-linha-icones'));
-    colunas.forEach(({ chave, rotulo }) => r.append(el('span', 'compras-celula c-' + chave, rotulo || '')));
+    let ocultas = [];
+    try { const v = JSON.parse(localStorage.getItem(preferencia) || '[]'); if (Array.isArray(v)) ocultas = v; } catch (e) { /* sem preferência salva */ }
+    colunas.forEach(({ chave, rotulo, ocultavel }) => {
+      const c = el('span', 'compras-celula c-' + chave);
+      if (rotulo) c.append(el('span', 'compras-coluna-titulo', rotulo));
+      if (ocultavel && lista) {
+        // Mesmo desenho da seta das linhas (createFinancialActions), mas com classe própria: a seta das linhas fecha
+        // todas as .account-action-toggle da lista ao abrir uma, e isso trocaria o estado das colunas.
+        const b = el('button', 'compras-coluna-seta');
+        b.type = 'button';
+        b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>';
+        const pintar = () => {
+          const oculta = ocultas.includes(chave);
+          lista.classList.toggle('oculta-' + chave, oculta);
+          b.setAttribute('aria-expanded', String(!oculta));
+          const dica = (oculta ? 'Mostrar' : 'Ocultar') + ' coluna ' + rotulo;
+          b.title = dica;
+          b.setAttribute('aria-label', dica);
+        };
+        b.onclick = (e) => {
+          e.stopPropagation();
+          ocultas = ocultas.includes(chave) ? ocultas.filter((x) => x !== chave) : [...ocultas, chave];
+          try { localStorage.setItem(preferencia, JSON.stringify(ocultas)); } catch (err) { /* vale só nesta visita */ }
+          pintar();
+        };
+        pintar();
+        c.append(b);
+      }
+      r.append(c);
+    });
     return r;
   }
 
@@ -469,7 +476,7 @@
   }
 
   window.CicluzComprasUI = {
-    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, botaoColunas, arrastarParaRolar,
+    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
     tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar,
   };
