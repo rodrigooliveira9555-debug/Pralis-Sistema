@@ -106,3 +106,4 @@ Organização do Rodrigo (vídeo de 06/11/2026); detalhes no `DESIGN_SYSTEM.md`,
 
 ## Legado
 - `#config-view` ("Configurar") — tela antiga sem atalho (UI_SWEEP 01/11). Candidata a remoção.
+- ✅ DES - Fornecedores e MER - Fornecedores (`dist/compras/cadastros.js`, 15/11/2026): cadastro único de fornecedor, aberto por Saídas · Despesas → Cadastros Geral e por Saídas · Mercadorias → Cadastros Geral; formulário com categoria (lista), tipo de pessoa, CPF ou CNPJ, contato, contato do financeiro e nascimento (pessoa física). DES - Fornecedores deixou de ser tela vazia.

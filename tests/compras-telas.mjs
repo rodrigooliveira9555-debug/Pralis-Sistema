@@ -64,16 +64,57 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
     await p.evaluate((n) => CicluzCompras.abrir(n), tela);
     ok(await p.locator('#compras-' + tela + ' .content button', { hasText: rotulo }).count() === 0, 'Sem botão repetido do "+" em ' + tela);
   }
-  // Fornecedor com CNPJ digitado como uma pessoa (o validador de CPF do S2 não pode cortar em 11 dígitos)
+  // Cadastro novo de fornecedor (15/11/2026): categoria da lista, tipo de pessoa, CPF ou CNPJ com dígito
+  // verificador e WhatsApp obrigatórios; nascimento só para pessoa física. Dados fictícios.
+  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.every((f) => !f.categoria || CicluzComprasDados.nomeCategoriaFornecedor(f.categoriaId) === f.categoria)), 'Categoria em texto livre virou item da lista, sem perder o nome');
   await p.evaluate(() => CicluzCompras.abrir('fornecedores'));
   await p.locator('.view.show .people-add-control').click();
   const df = p.locator('dialog.compras-dialog[open]').last();
+  const erroF = () => df.locator('.profiles-error').textContent();
+  ok(await df.getByLabel('CPF *', { exact: true }).isHidden() && await df.getByLabel('CNPJ *', { exact: true }).isHidden(), 'Sem tipo de pessoa, nem CPF nem CNPJ aparecem');
+  await df.locator('.people-save-control').click();
+  ok((await erroF()).includes('categoria'), 'Categoria é obrigatória');
+  await df.getByLabel('Categoria *', { exact: true }).selectOption('cf-bebidas');
+  await df.getByLabel('Tipo de pessoa *', { exact: true }).selectOption('juridica');
+  ok(await df.getByLabel('CNPJ *', { exact: true }).isVisible() && await df.getByLabel('CPF *', { exact: true }).isHidden() && await df.getByLabel('Data de nascimento', { exact: true }).isHidden(), 'Pessoa jurídica: CNPJ, sem CPF e sem nascimento');
   await df.getByLabel('Nome *', { exact: true }).fill('Fornecedor CNPJ Teste');
-  await df.getByLabel('Documento', { exact: true }).pressSequentially('12345678000190');
-  ok((await df.getByLabel('Documento', { exact: true }).inputValue()) === '12.345.678/0001-90', 'Documento aceita CNPJ com máscara');
+  await df.getByLabel('CNPJ *', { exact: true }).pressSequentially('11222333000180');
+  ok((await df.getByLabel('CNPJ *', { exact: true }).inputValue()) === '11.222.333/0001-80', 'CNPJ com máscara (14 dígitos, sem cortar em 11)');
+  await df.locator('.people-save-control').click();
+  ok((await erroF()).includes('CNPJ válido'), 'CNPJ com dígito verificador errado é recusado');
+  await df.getByLabel('CNPJ *', { exact: true }).fill('11222333000181');
+  await df.locator('.people-save-control').click();
+  ok((await erroF()).includes('WhatsApp'), 'WhatsApp é obrigatório');
+  await df.getByLabel('WhatsApp *', { exact: true }).pressSequentially('31999990000');
+  await df.getByLabel('Nome do financeiro', { exact: true }).fill('Financeiro Teste');
+  await df.getByLabel('E-mail do financeiro', { exact: true }).fill('financeiro@exemplo.test');
   await df.locator('.people-save-control').click();
   await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'));
-  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '12.345.678/0001-90')), 'Fornecedor com CNPJ salvo');
+  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '11.222.333/0001-81' && f.tipoPessoa === 'juridica' && f.categoriaId === 'cf-bebidas' && f.financeiro.email === 'financeiro@exemplo.test' && f.nascimento === '')), 'Fornecedor pessoa jurídica salvo com categoria por id e contato do financeiro');
+  // Pessoa física: CPF e data de nascimento
+  await p.locator('.view.show .people-add-control').click();
+  const dp = p.locator('dialog.compras-dialog[open]').last();
+  await dp.getByLabel('Categoria *', { exact: true }).selectOption('cf-frios');
+  await dp.getByLabel('Tipo de pessoa *', { exact: true }).selectOption('fisica');
+  await dp.getByLabel('Nome *', { exact: true }).fill('Prestador CPF Teste');
+  await dp.getByLabel('CPF *', { exact: true }).pressSequentially('52998224725');
+  await dp.getByLabel('WhatsApp *', { exact: true }).pressSequentially('31988880000');
+  await dp.getByLabel('Data de nascimento', { exact: true }).fill('15/03/90');
+  await dp.locator('.people-save-control').click();
+  await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'));
+  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '529.982.247-25' && f.tipoPessoa === 'fisica' && f.nascimento === '1990-03-15')), 'Fornecedor pessoa física salvo com CPF e nascimento');
+  // DES - Fornecedores abre o mesmo cadastro, na cor de Despesas
+  await p.evaluate(() => CicluzCompras.abrir('fornecedores-des'));
+  ok(await p.locator('#despesas-fornecedores.show').count() === 1 && (await p.locator('#despesas-fornecedores .head h2').textContent()) === 'DES - Fornecedores' && await p.locator('#despesas-fornecedores tbody tr', { hasText: 'Prestador CPF Teste' }).count() === 1, 'DES - Fornecedores mostra os mesmos fornecedores');
+  // Categorias: o Rodrigo cria e renomeia; o fornecedor acompanha pelo id
+  await p.locator('#despesas-fornecedores button', { hasText: 'Editar categorias' }).click();
+  const dc = p.locator('dialog.compras-dialog[open]').last();
+  const nCats = await dc.locator('fieldset').count();
+  await dc.locator('button', { hasText: 'Adicionar categoria' }).click();
+  await dc.getByLabel('Categoria ' + (nCats + 1), { exact: true }).fill('Manutenção');
+  await dc.locator('.people-save-control').click();
+  await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'));
+  ok(await p.evaluate(() => CicluzComprasDados.dados.categoriasFornecedor.some((c) => c.nome.toUpperCase() === 'MANUTENÇÃO' && c.ativa)), 'Categoria nova criada na lista');
   await p.evaluate(() => CicluzCompras.abrir('estoque'));
   ok(await p.locator('#compras-estoque button', { hasText: 'Extrato completo' }).isVisible(), 'Extrato completo visível no Estoque');
   for (const tela of ['cadastro', 'pedidos']) {

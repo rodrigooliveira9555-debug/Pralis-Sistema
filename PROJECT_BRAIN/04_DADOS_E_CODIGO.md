@@ -60,6 +60,16 @@
   que está no arquivo volta para o Compras; produto do arquivo editado no S2 também. Inativo do app que já está no Compras
   fica lá (inativo, não liberado). Código:
   `dist/compras/produto-importacao.js` (regras), `telas-produto-importacao.js` (tela), SheetJS 0.20.3 em `dist/vendor/sheetjs`.
+- **Fornecedor único e categorias (15/11/2026)**, dentro de `cicluz-compras-v1` (mesma chave e versão): coleção nova
+  `categoriasFornecedor: [{ id, nome, ativa }]` e, no fornecedor, `categoriaId`, `tipoPessoa` ('fisica' | 'juridica'),
+  `contatoNome`, `email`, `financeiro: { nome, whatsapp, email }` e `nascimento` (ISO, só pessoa física), além de `nome`,
+  `documento`, `whatsapp` e `situacao` que já existiam. **Migração** (marca `migracoes.categoriasFornecedor = 1` dentro do
+  próprio documento, para acompanhar os dados na sincronização): cada texto livre de `categoria` vira um item da lista com
+  id tirado do nome (`cf-<nome sem acento>`, igual em todos os aparelhos) e o fornecedor ganha `categoriaId`. Roda em
+  memória ao ler e só é gravada na próxima alteração (abrir a tela não cria versão no banco). O texto antigo `categoria`
+  fica no dado até o fornecedor ser salvo de novo pelo formulário; nenhum código o lê mais. Fornecedor antigo sem os
+  obrigatórios novos continua válido. **Dado pessoal:** CPF e data de nascimento de fornecedor pessoa física e e-mails de
+  contato passam a ir para o servidor junto com o documento do Compras (ver P-28).
 - `patrimonio-v1` (05/11/2026) — bens (RET - Patrimônios). As duas chaves são sincronizadas e adotadas do aparelho
   (`servidor/shared/src/documentos.ts`); começam vazias, sem dado de exemplo.
   Em 15/11/2026 o bem ganhou três campos **opcionais** (mesma chave e mesma versão; bem antigo sem eles continua válido,
