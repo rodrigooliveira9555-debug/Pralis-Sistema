@@ -94,6 +94,7 @@ body:not(.dark-theme) .compras-linha.com-acoes:hover .compras-linha-texto b { co
 /* A lista rola para os lados dentro dela mesma (a página não). */
 .compras-lista-grade { container-type: inline-size; container-name: lista-grade; overflow-x: auto; overscroll-behavior-x: contain; }
 .compras-lista-grade.arrastando { cursor: grabbing; user-select: none; }
+.compras-colunas-geral { flex: none; }
 /* Setinha do título de cada coluna: o mesmo desenho, tamanho e cor da seta do fim das linhas (.account-action-toggle);
    aponta para a direita com a coluna oculta e vira com a coluna aberta. */
 .compras-coluna-seta { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; background: transparent; color: var(--navigation-ink, #a2a0aa); cursor: pointer; }

@@ -110,12 +110,17 @@
     const sec = U.secao('Fornecedores', S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length);
     sec.append(linhas);
     if (!lista.length) linhas.append(U.vazio(buscaF[origemF] ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.'));
-    if (lista.length) linhas.append(U.cabecalhoColunas('grade-fornecedor', [
+    if (lista.length) {
+      const cabecalho = U.cabecalhoColunas('grade-fornecedor', [
       { chave: 'nome', rotulo: 'Fornecedor', ocultavel: true }, { chave: 'categoria', rotulo: 'Categoria', ocultavel: true },
       { chave: 'contato', rotulo: 'Nome do contato', ocultavel: true }, { chave: 'whatsapp', rotulo: 'WhatsApp', ocultavel: true },
       { chave: 'razao', rotulo: 'Razão social', ocultavel: true }, { chave: 'documento', rotulo: 'CPF / CNPJ', ocultavel: true },
       { chave: 'ramo', rotulo: 'Ramo', ocultavel: true }, { chave: 'selos', rotulo: 'Avisos', ocultavel: true }, { chave: 'estado', rotulo: 'Situação' },
-    ], { lista: linhas, preferencia: 'cicluz-fornecedores-colunas' }));
+      ], { lista: linhas, preferencia: 'cicluz-fornecedores-colunas' });
+      linhas.append(cabecalho);
+      // Botão "‹ ›" de ocultar ou mostrar todas as colunas: na mesma linha do título "Fornecedores", ao lado da contagem.
+      sec.querySelector('.compras-secao-cab h3').append(cabecalho.botaoGeral);
+    }
     lista.forEach((f) => {
       const ativo = f.situacao === 'ativo';
       const categoria = D.nomeCategoriasFornecedor(f);

@@ -223,12 +223,38 @@
    * ao lado do título, a mesma setinha do fim das linhas; ali ela encolhe a coluna (fica só a setinha, para reabrir)
    * ou expande. lista: o elemento da lista, que recebe a classe oculta-<chave>; preferencia: chave do localStorage
    * onde a escolha fica guardada por aparelho (lista das colunas ocultas; não é dado do cadastro).
+   * O cabeçalho devolvido traz em .botaoGeral o botão redondo "‹ ›" que oculta ou mostra todas as colunas de uma vez
+   * (para pôr ao lado do título da lista); ele acompanha as setinhas: todas abertas, todas ocultas ou misto.
    */
   function cabecalhoColunas(grade, colunas, { lista, preferencia } = {}) {
     const r = el('div', 'compras-linha em-colunas compras-linha-cabecalho ' + grade);
     r.append(el('span', 'compras-linha-icones'));
     let ocultas = [];
     try { const v = JSON.parse(localStorage.getItem(preferencia) || '[]'); if (Array.isArray(v)) ocultas = v; } catch (e) { /* sem preferência salva */ }
+    const ocultaveis = lista ? colunas.filter((c) => c.ocultavel).map((c) => c.chave) : [];
+    const pintores = [];
+    const guardar = () => { try { localStorage.setItem(preferencia, JSON.stringify(ocultas)); } catch (err) { /* vale só nesta visita */ } };
+    const geral = el('button', 'shortcut-circle compras-colunas-geral');
+    geral.type = 'button';
+    geral.innerHTML = svg('<path d="m9 5-6 7 6 7M15 5l6 7-6 7"/>');
+    const pintarGeral = () => {
+      const fechadas = ocultaveis.filter((c) => ocultas.includes(c)).length;
+      const algumaAberta = fechadas < ocultaveis.length;
+      // Com alguma coluna aberta (todas ou misto), o toque oculta todas; com todas ocultas, mostra todas.
+      geral.setAttribute('aria-expanded', String(algumaAberta));
+      geral.dataset.estado = fechadas === 0 ? 'abertas' : algumaAberta ? 'misto' : 'ocultas';
+      const dica = algumaAberta ? 'Ocultar todas as colunas' : 'Mostrar todas as colunas';
+      geral.title = dica;
+      geral.setAttribute('aria-label', dica);
+    };
+    geral.onclick = () => {
+      const algumaAberta = ocultaveis.some((c) => !ocultas.includes(c));
+      ocultas = algumaAberta ? [...new Set([...ocultas, ...ocultaveis])] : ocultas.filter((c) => !ocultaveis.includes(c));
+      guardar();
+      pintores.forEach((p) => p());
+      pintarGeral();
+      if (lista) lista.scrollLeft = 0;
+    };
     colunas.forEach(({ chave, rotulo, ocultavel }) => {
       const c = el('span', 'compras-celula c-' + chave);
       if (rotulo) c.append(el('span', 'compras-coluna-titulo', rotulo));
@@ -249,14 +275,18 @@
         b.onclick = (e) => {
           e.stopPropagation();
           ocultas = ocultas.includes(chave) ? ocultas.filter((x) => x !== chave) : [...ocultas, chave];
-          try { localStorage.setItem(preferencia, JSON.stringify(ocultas)); } catch (err) { /* vale só nesta visita */ }
+          guardar();
           pintar();
+          pintarGeral();
         };
+        pintores.push(pintar);
         pintar();
         c.append(b);
       }
       r.append(c);
     });
+    pintarGeral();
+    if (ocultaveis.length) r.botaoGeral = geral;
     return r;
   }
 
