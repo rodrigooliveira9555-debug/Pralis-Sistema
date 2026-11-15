@@ -256,11 +256,25 @@
    * acoes: { rotulo, lista, aoEditar, aoExcluir } põe à direita a setinha dos cadastros de grupos
    * (createFinancialActions, de financial-components.js): tocar na seta revela Editar e Excluir; tocar
    * na linha edita. Com acoes a linha não é um <button>, para não haver botão dentro de botão.
+   * icones: [{ icone | html, cor, rotulo }] no lugar de icone, quando a linha tem um ou mais ícones com cor própria
+   * (ex.: fornecedor de Produto em verde e de Serviço em vermelho); o rótulo vira a dica e o texto do leitor de tela.
    */
-  function linhaLista({ icone, titulo, detalhe, direita, aoClicar, acoes }) {
+  function linhaLista({ icone, icones, titulo, detalhe, direita, aoClicar, acoes }) {
     const r = el(aoClicar && !acoes ? 'button' : 'div', 'compras-linha');
     if (aoClicar && !acoes) { r.type = 'button'; r.onclick = aoClicar; }
     if (icone) { const i = el('span', 'compras-linha-icone'); i.innerHTML = svg(ICONES[icone] || icone); r.append(i); }
+    if (icones && icones.length) {
+      const grupo = el('span', 'compras-linha-icones');
+      icones.forEach((x) => {
+        const i = el('span', 'compras-linha-icone');
+        // html: desenho pronto (ex.: o símbolo da origem, moneyMark); senão, um ícone do Compras pelo nome.
+        i.innerHTML = x.html || svg(ICONES[x.icone] || x.icone);
+        if (x.cor) i.style.setProperty('--menu-accent', x.cor);
+        if (x.rotulo) { i.title = x.rotulo; i.setAttribute('role', 'img'); i.setAttribute('aria-label', x.rotulo); }
+        grupo.append(i);
+      });
+      r.append(grupo);
+    }
     const meio = el('span', 'compras-linha-texto');
     meio.append(el('b', null, titulo));
     if (detalhe) meio.append(el('small', null, detalhe));

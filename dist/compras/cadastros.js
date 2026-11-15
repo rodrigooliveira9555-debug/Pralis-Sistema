@@ -40,10 +40,28 @@
    * (Saídas · Despesas) e MER - Fornecedores (Saídas · Mercadorias) abrem este mesmo cadastro, cada
    * uma na cor e com o Voltar do menu de onde veio. Os dados são os de cicluz-compras-v1.fornecedores.
    * ===================================================================== */
+  // Cor das origens: a mesma fonte dos cartões do menu (groupConfig, de groups.js), com o padrão de cada origem.
+  const corOrigem = (chave, padrao) => { try { return (typeof groupConfig !== 'undefined' && groupConfig[chave] && groupConfig[chave].color) || padrao; } catch (e) { return padrao; } };
+  const corMercadorias = () => corOrigem('mercadorias', U.COR);
+  const corDespesas = () => corOrigem('despesas', '#ef4444');
   const ORIGENS = {
-    mer: { id: 'compras-fornecedores', titulo: 'MER - Fornecedores', caminho: 'Saídas · Mercadorias / Cadastros Geral / MER - Fornecedores', voltar: () => menuBack(3, 'Cadastros Geral')(), cor: U.COR, corTexto: U.COR_TEXTO },
-    des: { id: 'despesas-fornecedores', titulo: 'DES - Fornecedores', caminho: 'Saídas · Despesas / Cadastros Geral / DES - Fornecedores', voltar: () => menuBack(2, 'Cadastros Geral')(), cor: '#ef4444', corTexto: '#a11c1c' },
+    mer: { id: 'compras-fornecedores', titulo: 'MER - Fornecedores', caminho: 'Saídas · Mercadorias / Cadastros Geral / MER - Fornecedores', voltar: () => menuBack(3, 'Cadastros Geral')(), get cor() { return corMercadorias(); }, corTexto: U.COR_TEXTO },
+    des: { id: 'despesas-fornecedores', titulo: 'DES - Fornecedores', caminho: 'Saídas · Despesas / Cadastros Geral / DES - Fornecedores', voltar: () => menuBack(2, 'Cadastros Geral')(), get cor() { return corDespesas(); }, corTexto: '#a11c1c' },
   };
+  /**
+   * Ícones da linha pela categoria, iguais nos dois caminhos de entrada (decisão do Rodrigo, 15/11/2026):
+   * Produto = símbolo de Mercadorias (verde), Serviço = símbolo de Despesas (vermelho), os dois = dois ícones lado a lado,
+   * sem categoria = um ícone neutro. O nome da categoria também vai escrito na linha, para não depender só da cor.
+   */
+  function iconesDaCategoria(f) {
+    const cats = Array.isArray(f.categorias) ? f.categorias : [];
+    const r = [];
+    // O desenho é o símbolo da origem que o menu já usa (moneyMark(2), o "−$" das Saídas); só a cor muda.
+    const simbolo = typeof moneyMark === 'function' ? { html: moneyMark(2) } : { icone: 'fornecedor' };
+    if (cats.includes('produto')) r.push({ ...simbolo, cor: corMercadorias(), rotulo: 'Produto' });
+    if (cats.includes('servico')) r.push({ ...simbolo, cor: corDespesas(), rotulo: 'Serviço' });
+    return r.length ? r : [{ icone: 'fornecedor', cor: 'var(--navigation-ink, #a2a0aa)', rotulo: 'Sem categoria' }];
+  }
   const telasF = {};
   let origemF = 'mer';
   const buscaF = { mer: '', des: '' };
@@ -79,7 +97,7 @@
     lista.forEach((f) => {
       const semDdd = f.situacao === 'ativo' && D.motivoNaoConvidavel(f);
       linhas.append(U.linhaLista({
-        icone: 'fornecedor', titulo: f.nome,
+        icones: iconesDaCategoria(f), titulo: f.nome,
         detalhe: [D.nomeCategoriasFornecedor(f), f.ramo, f.documento, f.whatsapp, f.contatoNome].filter(Boolean).join(' · '),
         direita: [
           f.situacao !== 'ativo' ? U.situacao('Inativo', 'neutro') : null,

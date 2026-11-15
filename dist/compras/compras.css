@@ -87,6 +87,8 @@ button.compras-linha { cursor: pointer; }
 }
 button.compras-linha:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
 .compras-linha-icone { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--menu-accent); }
+/* Mais de um ícone na linha (ex.: fornecedor de Produto e de Serviço), cada um com a própria cor */
+.compras-linha-icones { display: flex; flex: none; gap: 4px; }
 .compras-linha-icone svg { width: 16px; height: 16px; fill: none; stroke: var(--theme-surface, #fff); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 /* O texto nunca fica mais estreito que 180px: sem espaço, os botões descem para a linha de baixo. */
 .compras-linha-texto { flex: 1 1 180px; min-width: min(180px, 100%); display: grid; gap: 2px; }
