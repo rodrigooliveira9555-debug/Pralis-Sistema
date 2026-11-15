@@ -202,16 +202,18 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-sear
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header>.fixed-header-tools :is(.jobs-toolbar,.financial-list-controls,.location-toolbar){margin:0!important;padding:0!important;background:transparent!important;border:0!important;display:grid!important;gap:8px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header>.fixed-header-tools :is(input,select){width:100%!important;max-width:100%!important;min-width:0!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header>.fixed-header-tools [hidden]{display:none!important}
-body dialog.shell-dialog,body .dialog.shell-dialog{padding:0!important;overflow:hidden!important;max-height:90dvh!important;background:#fff!important;border:1px solid var(--layout-line,#dedee3)!important;border-radius:20px!important;min-width:0}
-body :is(dialog,.dialog).app-screen-shell>.panel{display:flex!important;flex-direction:column;max-height:88dvh!important;height:auto!important;margin:0!important;border:0!important;border-radius:20px!important}
+/* Regra de 15/11/2026: toda janela abre na tela inteira, sem moldura e sem fundo sombreado. */
+body dialog.shell-dialog,body .dialog.shell-dialog{padding:0!important;overflow:hidden!important;max-height:100dvh!important;background:#fff!important;border:0!important;border-radius:0!important;min-width:0}
+body dialog.shell-dialog::backdrop{background:transparent}
+body :is(dialog,.dialog).app-screen-shell>.panel{display:flex!important;flex-direction:column;max-height:100dvh!important;height:100%!important;margin:0!important;border:0!important;border-radius:0!important}
 body :is(dialog,.dialog).app-screen-shell>.panel>.content{min-height:0;overflow-y:auto!important;flex:1 1 auto!important}
 /* Diálogos têm altura automática: a regra das telas (flex 1 1 0, especificidade de id) zerava o conteúdo. */
 body:is(.dark-theme,:not(.dark-theme)) :is(dialog,.dialog):not(#dialog-content-auto).app-screen-shell>.panel>.head+.content{flex:1 1 auto!important}
 body :is(dialog,.dialog).app-screen-shell>.panel>.head{margin:0!important;width:100%!important;max-width:100%!important;box-sizing:border-box;position:relative!important;top:auto!important;left:auto!important;right:auto!important;transform:none!important}
-body dialog.shell-dialog{position:fixed!important;inset:8px!important;margin:auto!important;width:min(760px,calc(100vw - 16px))!important;height:fit-content!important;max-height:calc(100dvh - 16px)!important;box-sizing:border-box}
+body dialog.shell-dialog{position:fixed!important;inset:0!important;margin:0!important;width:100vw!important;max-width:100vw!important;height:100dvh!important;max-height:100dvh!important;box-sizing:border-box}
 body :is(dialog,.dialog).app-screen-shell .people-bottom-header{width:100%;box-sizing:border-box}
-body:is(.dark-theme,:not(.dark-theme)) dialog.shell-dialog.app-screen-shell{height:max-content!important;min-height:0!important;max-height:90dvh!important}
-body:is(.dark-theme,:not(.dark-theme)) dialog.shell-dialog.app-screen-shell>.panel{height:auto!important;min-height:0!important;max-height:88dvh!important}
+
+
 body dialog.app-screen-shell>.panel>.head{z-index:0!important}
 body dialog.app-screen-shell>.panel>.content{position:relative;z-index:1}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell{--shell-icon-stroke:2.2}
@@ -223,7 +225,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell :is(.people-metric-
  body:is(.dark-theme,:not(.dark-theme)):not(.mobile-menu-visible):has(.view.app-screen-shell.show) .main{padding:0!important;background:var(--layout-gap,#f5f5f7)!important}
  body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-top-hidden>.panel{background:var(--layout-gap,#f5f5f7)!important}
  body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.people-top-hidden>.panel>.head+.content{margin-top:0!important;padding-top:max(14px,env(safe-area-inset-top,0px))!important}
- body dialog.shell-dialog,body .dialog.shell-dialog{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important}
+ 
 }
 @media print{
  body .app-screen-shell>.panel>.head>.shortcut-actions,body .app-screen-shell .people-bottom-header{display:none!important}

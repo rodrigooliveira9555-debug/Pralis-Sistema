@@ -153,7 +153,7 @@ body.dark-theme .compras-trilha li { background: #34333b; color: #d4d4d8; }
 
 /* Diálogos (o shell do S2 adapta <dialog> em people-header-pilot.js). */
 .compras-dialog { background: var(--theme-surface, #fff); color: var(--layout-ink, #3f3f46); }
-body dialog.shell-dialog.compras-dialog.largo { width: min(1000px, calc(100vw - 16px)) !important; }
+
 .compras-dialog.largo { width: min(1000px, calc(100vw - 32px)); max-width: none; }
 .compras-dialog h2 { margin: 0 0 4px; font: var(--ui-title-weight, 600) var(--ui-title, 16px)/var(--ui-title-line, 20px) var(--ui-font); }
 .compras-dialog-sub { margin: 0 0 12px; font: 400 var(--ui-subtitle, 11px)/var(--ui-subtitle-line, 14px) var(--ui-font); color: var(--muted, #73737a); }
