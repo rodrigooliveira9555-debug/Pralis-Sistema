@@ -223,7 +223,7 @@
     const c = Array.isArray(categorias) ? categorias : [];
     const p = c.includes('produto'); const s = c.includes('servico');
     const segunda = p && s ? 'Vendedor / Prestador de serviço' : s ? 'Prestador de serviço' : 'Vendedor';
-    return ['Informações básicas', segunda, 'Responsável financeiro', 'Representante da empresa'];
+    return ['Dados da empresa', segunda, 'Responsável financeiro', 'Representante da empresa'];
   }
   /**
    * Migração (marca d.migracoes.vendedorFornecedor): no cadastro em etapas o contato do fornecedor é o vendedor ou
@@ -259,6 +259,10 @@
       if (f.tipoPessoa === 'fisica' && !regras.cpfValid(f.documento)) return 'Informe um CPF válido (11 dígitos).';
       if (f.tipoPessoa === 'juridica' && !regras.cnpjValid(f.documento)) return 'Informe um CNPJ válido (14 dígitos).';
       if (f.regimeTributario && !REGIMES_TRIBUTARIOS.some(([id]) => id === f.regimeTributario)) return 'Regime tributário inválido.';
+      // Endereço é opcional; o que vier preenchido precisa estar no formato.
+      const e = f.endereco || {};
+      if (e.cep && digitos(e.cep).length !== 8) return 'O CEP deve ter 8 dígitos.';
+      if (e.uf && !/^[A-Z]{2}$/.test(e.uf)) return 'UF inválida.';
       return '';
     };
     const vendedor = () => {

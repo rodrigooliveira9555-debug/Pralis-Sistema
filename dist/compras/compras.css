@@ -272,7 +272,12 @@ body.dark-theme .compras-trilha li { background: #34333b; color: #d4d4d8; }
 @media (max-width: 600px) { .compras-form-padrao .compras-fieldset { grid-template-columns: minmax(0, 1fr); } }
 /* Cadastro em etapas: a barra (stepper.js) no topo e Voltar/Avançar/Salvar embaixo, como no Cadastro Completo. */
 .compras-form-padrao .stepper-wrap { margin: 4px 0 8px; }
-.compras-etapas-nav { justify-content: space-between; }
+.compras-etapas-nav { justify-content: flex-end; }
+/* Voltar, Avançar e Salvar com a mesma largura (a do rodapé de formulário, que o layout-review.js mede no grupo). */
+.compras-etapas-nav > .btn { min-width: var(--acao-largura, 128px); }
+/* Uma etapa com mais de um quadro (ex.: dados da empresa + endereço). */
+.compras-etapa { display: grid; gap: 12px; min-width: 0; }
+.compras-form-padrao .compras-form > .compras-etapa { grid-column: 1 / -1; }
 .compras-fieldset > .compras-interruptor, .compras-fieldset > .compras-texto-auto, .compras-fieldset > .compras-largo { grid-column: 1 / -1; }
 .compras-texto-auto { margin: 0; font-size: 12px; color: var(--panel-text, #12672e); font-weight: 600; }
 body.dark-theme .compras-texto-auto { color: #a7e8bd; }

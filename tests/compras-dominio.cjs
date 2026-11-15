@@ -206,6 +206,12 @@ ok(() => {
   assert.deepEqual(d.etapasFornecedor(['servico']).slice(1, 2), ['Prestador de serviço']);
   assert.deepEqual(d.etapasFornecedor(['produto', 'servico']).slice(1, 2), ['Vendedor / Prestador de serviço']);
   assert.equal(d.etapasFornecedor([]).length, 4);
+  assert.equal(d.etapasFornecedor([])[0], 'Dados da empresa');
+  // Endereço é opcional; o que vier precisa estar no formato.
+  assert.equal(v({ endereco: { cep: '01001-000', logradouro: 'Rua Teste', numero: '10', complemento: '', bairro: 'Centro', cidade: 'Cidade Teste', uf: 'SP' } }), '');
+  assert.equal(v({ endereco: {} }), '');
+  assert.match(v({ endereco: { cep: '0100' } }), /CEP/);
+  assert.match(v({ endereco: { uf: 'sp' } }), /UF/);
   assert.match(v({ tipoPessoa: 'fisica', documento: '529.982.247-24' }), /CPF/);
 });
 ok(() => {

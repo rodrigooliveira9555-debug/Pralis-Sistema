@@ -71,7 +71,8 @@
   `categoriasFornecedor` com `categoriaId` (marca `migracoes.categoriasFornecedor`) existiu por algumas horas neste
   branch; a migração nova devolve o nome da lista para `ramo` e apaga `categoriaId`. A coleção `categoriasFornecedor` e
   a marca antiga podem ter ficado em dado de teste: nenhum código as lê. Fornecedor antigo sem os obrigatórios novos
-  continua válido. **Cadastro em etapas (15/11/2026):** entram `regimeTributario` ('mei' | 'simples' | 'presumido' | 'real' |
+  continua válido. **Endereço (15/11/2026):** campo novo e opcional `endereco: { cep, logradouro, numero, complemento, bairro, cidade, uf }`;
+  fornecedor sem ele continua válido, sem migração. **Cadastro em etapas (15/11/2026):** entram `regimeTributario` ('mei' | 'simples' | 'presumido' | 'real' |
   'nao-informado' | ''), `vendedorCpf`, `vendedorNascimento` e `representante: { mesmo, nome, whatsapp, email }`; `financeiro`
   ganha `mesmo` (true = copiado da etapa anterior ao salvar). O vendedor ou prestador é o contato de sempre: `contatoNome`,
   `whatsapp` e `email` ficam nos mesmos campos (a cotação continua lendo `whatsapp`). **Migração** `migracoes.vendedorFornecedor`:
@@ -103,7 +104,10 @@
 **Seeds:** embutidos em `groups.js:4` (`groupSeed`, até ~linha 1544). `group-seeds.json` é cópia de
 referência — **não** é carregado.
 
-**Chamadas externas:** `api.iconify.design/search` (`icon-library-manager.js:23`), Google Fonts
+**Chamadas externas:** `brasilapi.com.br` (`consultas-publicas.js`, 15/11/2026: consulta de **CNPJ** em `/api/cnpj/v1/<cnpj>` e de **CEP** em
+`/api/cep/v2/<cep>`, direto do navegador, no cadastro de fornecedor; vai só o número do CNPJ, que é dado público de empresa, ou
+do CEP; nunca CPF, nome nem contato; sem cookies, sem referrer, 8 s de limite; se falhar, o cadastro segue à mão),
+`api.iconify.design/search` (`icon-library-manager.js:23`), Google Fonts
 (Montserrat) e, só quando o mapa da Agenda é aberto, `tile.openstreetmap.org` (mapa) e
 `nominatim.openstreetmap.org` (busca de endereço: vai o texto procurado ou o ponto tocado, nada de pessoa;
 no máximo 1 busca/s, só ao pedir). Leaflet 1.9.4 fica no site (`dist/vendor/leaflet`, SHA-256 oficial).

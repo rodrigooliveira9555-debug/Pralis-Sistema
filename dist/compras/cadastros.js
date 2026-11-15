@@ -213,7 +213,8 @@
 
   /**
    * Cadastro em 4 etapas, com a barra de etapas única do sistema (CicluzStepper, a mesma do Cadastro Completo):
-   * 1) Informações básicas, 2) Vendedor / Prestador de serviço, 3) Responsável financeiro, 4) Representante da empresa.
+   * 1) Dados da empresa (CNPJ primeiro, que busca razão social, nome fantasia e endereço; endereço começando pelo CEP),
+   * 2) Vendedor / Prestador de serviço, 3) Responsável financeiro, 4) Representante da empresa.
    * No cadastro novo, Avançar confere a etapa antes de seguir; na edição, toca-se direto em qualquer etapa. O ✓ do
    * rodapé (e o Salvar da última etapa) confere tudo e, se faltar algo, leva à etapa onde está o problema.
    */
@@ -227,7 +228,7 @@
         // display, não hidden: o .compras-campo e o fieldset definem display e venceriam o atributo.
         const mostrar = (no, sim) => { no.style.display = sim ? '' : 'none'; };
 
-        /* ----- Etapa 1: informações básicas ----- */
+        /* ----- Etapa 1: dados da empresa ----- */
         const s1 = el('fieldset', 'compras-fieldset');
         const catBox = el('div', 'compras-campo compras-largo');
         catBox.setAttribute('role', 'group');
@@ -240,7 +241,8 @@
           return { id, input: l.input };
         });
         catBox.append(el('span', 'compras-rotulo', 'Categoria * (pode marcar as duas)'), catOpcoes);
-        const tipoInicial = f ? D.tipoPessoaDe(f) : '';
+        // Cadastro novo começa como pessoa jurídica (é o caso comum: CNPJ primeiro); pessoa física troca no seletor.
+        const tipoInicial = f ? D.tipoPessoaDe(f) : 'juridica';
         const tipo = seletor(D.TIPOS_PESSOA, tipoInicial, 'Selecione');
         // Pessoa jurídica: Razão social e Nome fantasia; pessoa física: só o Nome. O campo salvo é sempre "nome"
         // (o nome de uso, que cotação, pedido e recebimento mostram); a razão social é um campo a mais.
@@ -250,8 +252,8 @@
         const nomeCampo = campo('Nome *', nome);
         // Dois campos de documento: o do CPF é tratado pelo field-validation.js (máscara e dígito verificador
         // pelo rótulo); o do CNPJ usa a máscara e o validador de lá. Só o do tipo escolhido aparece.
-        const cpf = entrada('text', tipoInicial === 'fisica' ? f.documento || '' : '', { inputMode: 'numeric' });
-        const cnpj = aplicarMascara(entrada('text', tipoInicial === 'juridica' ? f.documento || '' : '', { inputMode: 'numeric', placeholder: '00.000.000/0000-00', maxLength: 18 }), R().cnpjMask);
+        const cpf = entrada('text', tipoInicial === 'fisica' ? f?.documento || '' : '', { inputMode: 'numeric' });
+        const cnpj = aplicarMascara(entrada('text', tipoInicial === 'juridica' ? f?.documento || '' : '', { inputMode: 'numeric', placeholder: '00.000.000/0000-00', maxLength: 18 }), R().cnpjMask);
         const cpfCampo = campo('CPF *', cpf);
         const cnpjCampo = campo('CNPJ *', cnpj);
         const regime = seletor(D.REGIMES_TRIBUTARIOS, f?.regimeTributario || '', 'Selecione');
@@ -260,7 +262,66 @@
         const ramo = texto(f?.ramo, { maxLength: 80, placeholder: 'Ex.: Bebidas, Manutenção' });
         const ativo = interruptor('Fornecedor ativo', f ? f.situacao === 'ativo' : true, 'Fornecedor inativo não aparece no seletor de cotação.');
         ativo.classList.add('compras-largo');
-        s1.append(catBox, campo('Tipo de pessoa *', tipo), razaoCampo, nomeCampo, cnpjCampo, cpfCampo, regimeCampo, semTipo, campo('Ramo', ramo), ativo);
+        // Ordem do Rodrigo: categoria, CNPJ (que puxa os dados), razão social, nome fantasia; depois o endereço.
+        const avisoCnpj = el('p', 'profiles-note compras-largo');
+        avisoCnpj.setAttribute('role', 'status');
+        s1.append(catBox, campo('Tipo de pessoa *', tipo), cnpjCampo, cpfCampo, semTipo, avisoCnpj, razaoCampo, nomeCampo);
+
+        /* Endereço: CEP primeiro (puxa rua, bairro, cidade e UF); número e complemento são digitados. */
+        const sEnd = el('fieldset', 'compras-fieldset');
+        sEnd.append(el('legend', null, 'Endereço'));
+        const C = window.CicluzConsultas;
+        const cep = aplicarMascara(entrada('text', f?.endereco?.cep || '', { inputMode: 'numeric', placeholder: '00000-000', maxLength: 9 }), C.cepMask);
+        const rua = texto(f?.endereco?.logradouro, { maxLength: 160 });
+        const numero = texto(f?.endereco?.numero, { maxLength: 20 });
+        const complemento = texto(f?.endereco?.complemento, { maxLength: 80 });
+        const bairro = texto(f?.endereco?.bairro, { maxLength: 80 });
+        const cidade = texto(f?.endereco?.cidade, { maxLength: 80 });
+        const uf = seletor(C.UFS, f?.endereco?.uf || '', 'UF');
+        const avisoCep = el('p', 'profiles-note compras-largo');
+        avisoCep.setAttribute('role', 'status');
+        sEnd.append(campo('CEP', cep), campo('Rua / logradouro', rua), campo('Número', numero), campo('Complemento', complemento), campo('Bairro', bairro), campo('Cidade', cidade), campo('UF', uf), avisoCep);
+
+        const sResto = el('fieldset', 'compras-fieldset');
+        sResto.append(regimeCampo, campo('Ramo', ramo), ativo);
+        const etapa1 = el('div', 'compras-etapa');
+        etapa1.append(s1, sEnd, sResto);
+
+        /* Buscas (consultas-publicas.js): só completam campo vazio, nunca trocam o que já foi digitado; se o serviço
+           falhar, avisam discretamente e o cadastro segue à mão. Cada número é consultado uma vez. */
+        const completar = (pares) => pares.filter(([campoAlvo, valor]) => valor && !campoAlvo.value.trim()).map(([campoAlvo, valor, nomeCampoAlvo]) => { campoAlvo.value = valor; return nomeCampoAlvo; });
+        const FALHA = { 'nao-encontrado': 'não encontrado', indisponivel: 'consulta indisponível agora' };
+        let cepConsultado = D.digitos(cep.value);
+        async function buscarCep() {
+          const n = D.digitos(cep.value);
+          if (n.length !== 8 || n === cepConsultado) return;
+          cepConsultado = n;
+          avisoCep.textContent = 'Buscando o endereço do CEP…';
+          const r = await C.cep(n);
+          if (D.digitos(cep.value) !== n) return;
+          if (r.erro) { avisoCep.textContent = 'CEP ' + FALHA[r.erro] + ': preencha o endereço à mão.'; return; }
+          const e = r.dados;
+          const feitos = completar([[rua, e.logradouro, 'rua'], [bairro, e.bairro, 'bairro'], [cidade, e.cidade, 'cidade'], [uf, e.uf, 'UF']]);
+          avisoCep.textContent = feitos.length ? 'Preenchido pelo CEP: ' + feitos.join(', ') + '. Confira e informe o número.' : 'Endereço do CEP conferido; nada foi trocado.';
+        }
+        cep.addEventListener('input', buscarCep);
+        let cnpjConsultado = D.digitos(cnpj.value);
+        async function buscarCnpj() {
+          const n = D.digitos(cnpj.value);
+          if (n.length !== 14 || n === cnpjConsultado || !R().cnpjValid(n)) return;
+          cnpjConsultado = n;
+          avisoCnpj.textContent = 'Buscando os dados da empresa pelo CNPJ…';
+          const r = await C.cnpj(n);
+          if (D.digitos(cnpj.value) !== n) return;
+          if (r.erro) { avisoCnpj.textContent = 'CNPJ ' + FALHA[r.erro] + ': preencha os dados à mão.'; return; }
+          const x = r.dados;
+          const e = x.endereco;
+          const feitos = completar([[razao, x.razaoSocial, 'razão social'], [nome, x.nomeFantasia, 'nome fantasia'], [cep, e.cep, 'CEP'], [rua, e.logradouro, 'rua'],
+            [numero, e.numero, 'número'], [complemento, e.complemento, 'complemento'], [bairro, e.bairro, 'bairro'], [cidade, e.cidade, 'cidade'], [uf, e.uf, 'UF']]);
+          cepConsultado = D.digitos(cep.value);
+          avisoCnpj.textContent = feitos.length ? 'Preenchido pela consulta do CNPJ: ' + feitos.join(', ') + '. Confira antes de salvar.' : 'Dados do CNPJ conferidos; nada foi trocado.';
+        }
+        cnpj.addEventListener('input', buscarCnpj);
 
         /* ----- Etapa 2: vendedor ou prestador de serviço (é o contato do fornecedor; o WhatsApp dele recebe a cotação) ----- */
         const s2 = el('fieldset', 'compras-fieldset');
@@ -291,18 +352,21 @@
         const rep = etapaContato(f?.representante, 'representante');
 
         /* ----- Barra de etapas e navegação ----- */
-        const quadros = [s1, s2, fin.no, rep.no];
+        const quadros = [etapa1, s2, fin.no, rep.no];
         const marcadas = () => cats.filter((x) => x.input.checked).map((x) => x.id);
         const etapas = () => D.etapasFornecedor(marcadas()).map((label) => ({ label }));
         let atual = 0;
         const erroEtapa = el('p', 'profiles-error');
         erroEtapa.setAttribute('role', 'alert');
-        const voltar = botao('Voltar', () => ir(atual - 1));
+        // Rodapé do formulário no padrão: Voltar sem cor (contorno, como o Cancelar), Avançar e Salvar na cor do menu,
+        // todos com a mesma largura (o layout-review.js iguala os botões destas classes dentro do mesmo grupo).
+        const voltar = botao('Voltar', () => ir(atual - 1), 'btn secondary footer-cancel-accent form-back-action');
+        voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
         const avancar = botao('Avançar', () => {
           const falta = D.validarFornecedorEtapas(ler(), R(), { fornecedores: S.dados.fornecedores })[atual];
           if (falta) { erroEtapa.textContent = falta; return; }
           ir(atual + 1);
-        }, 'btn');
+        }, 'btn form-next-action');
         const salvarFim = el('button', 'btn', 'Salvar');
         salvarFim.type = 'submit';
         const nav = el('div', 'compras-form-rodape compras-etapas-nav');
@@ -330,6 +394,7 @@
           mostrar(razaoCampo, pj);
           mostrar(regimeCampo, pj);
           mostrar(semTipo, !tipo.value);
+          if (!pj) avisoCnpj.textContent = '';
           const rotuloNome = pj ? 'Nome fantasia' : 'Nome *';
           nomeCampo.querySelector('.compras-rotulo').textContent = rotuloNome;
           nome.setAttribute('aria-label', rotuloNome);
@@ -353,6 +418,7 @@
             nome: nome.value.trim() || razaoSocial, razaoSocial,
             documento: (tipoPessoa === 'fisica' ? cpf.value : pj ? cnpj.value : '').trim(),
             regimeTributario: pj ? regime.value : '', ramo: ramo.value.trim(),
+            endereco: { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value },
             contatoNome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email,
             vendedorCpf: vCpf.value.trim(), vendedorNascimento: vNasc.value,
             financeiro, representante: contato(rep, semMesmo(financeiro)),
