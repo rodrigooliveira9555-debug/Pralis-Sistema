@@ -76,8 +76,10 @@
     inatInput.onchange = () => { filtro.inativos = inatInput.checked; desenha(); };
     inat.append(inatInput, el('span', null, 'Mostrar inativos'));
     filtros.append(cat, inat);
-    // Cabeçalho branco da lista, igual ao de Fornecedores: título e contagem de um lado, a bolinha "+" na outra ponta.
-    const sec = U.secao('Bens', bens.filter((b) => b.ativo !== false).length, U.botaoRedondo('Cadastrar patrimônio', 'M12 5v14M5 12h14', () => formulario()));
+    // Cabeçalho branco da lista, igual ao de Fornecedores: título de um lado; na outra ponta, a quantidade num círculo e a bolinha "+".
+    const ativos = bens.filter((b) => b.ativo !== false).length;
+    const sec = U.secao('Bens', undefined, U.contagemECadastro(ativos, ativos + (ativos === 1 ? ' bem ativo' : ' bens ativos'),
+      U.botaoRedondo('Cadastrar patrimônio', 'M12 5v14M5 12h14', () => formulario())));
     const lista = el('div', 'compras-lista');
     sec.append(lista);
     function desenha() {

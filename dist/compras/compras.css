@@ -97,6 +97,11 @@ body:not(.dark-theme) .compras-linha.com-acoes:hover .compras-linha-texto b { co
 /* Bolinhas do cabeçalho branco da lista (o "‹ ›" ao lado do título e o "+" na outra ponta): círculo cheio na cor do
    menu de onde se veio (--menu-accent), com o desenho na cor da superfície, como os redondos do rodapé. */
 .compras-secao-cab .compras-redondo { flex: none; width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: var(--theme-surface, #fff); }
+/* Quantidade da lista: círculo do mesmo diâmetro da bolinha "+", ao lado dela, mas só com contorno e fundo claro na cor
+   do menu, para não parecer botão. Com mais dígitos vira pílula. */
+.compras-secao-ponta { display: flex; align-items: center; gap: 8px; flex: none; }
+.compras-contagem { box-sizing: border-box; min-width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); padding: 0 8px; border-radius: 999px; display: grid; place-items: center; border: 1.5px solid var(--menu-accent); background: color-mix(in srgb, var(--menu-accent) 10%, var(--theme-surface, #fff)); color: var(--panel-text, inherit); font: 600 var(--ui-note, 11px)/1 var(--ui-font); cursor: default; }
+body.dark-theme .compras-contagem { color: var(--layout-ink, #f2f1f6); }
 .compras-secao-cab .compras-redondo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 /* Setinha do título de cada coluna: o mesmo desenho, tamanho e cor da seta do fim das linhas (.account-action-toggle);
    aponta para a direita com a coluna oculta e vira com a coluna aberta. */

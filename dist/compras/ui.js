@@ -233,6 +233,21 @@
   }
 
   /**
+   * Ponta direita do cabeçalho branco de uma lista: a quantidade dentro de um círculo (só informação: contorno e fundo
+   * claro na cor do menu, sem foco nem clique; vira pílula com 2 ou 3 dígitos) e, ao lado, a bolinha cheia de cadastrar.
+   * descricao: texto para o leitor de tela (ex.: "7 fornecedores ativos").
+   */
+  function contagemECadastro(quantidade, descricao, botao) {
+    const g = el('span', 'compras-secao-ponta');
+    const c = el('span', 'compras-contagem', String(quantidade));
+    c.setAttribute('role', 'img');
+    c.setAttribute('aria-label', descricao);
+    c.title = descricao;
+    g.append(c, botao);
+    return g;
+  }
+
+  /**
    * Cabeçalho das colunas de uma lista em grade (mesma classe de grade das linhas). Coluna com ocultavel: true ganha,
    * ao lado do título, a mesma setinha do fim das linhas; ali ela encolhe a coluna (fica só a setinha, para reabrir)
    * ou expande. lista: o elemento da lista, que recebe a classe oculta-<chave>; preferencia: chave do localStorage
@@ -520,7 +535,7 @@
   }
 
   window.CicluzComprasUI = {
-    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoRedondo,
+    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoRedondo, contagemECadastro,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
     tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar,
   };

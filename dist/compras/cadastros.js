@@ -105,9 +105,10 @@
     // couber rola para o lado dentro da lista.
     const linhas = el('div', 'compras-lista compras-lista-grade');
     U.arrastarParaRolar(linhas);
-    // Cabeçalho branco da lista: título, contagem e o "‹ ›" de um lado; na outra ponta, a bolinha "+" de cadastrar.
-    const sec = U.secao('Fornecedores', S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length,
-      U.botaoRedondo('Cadastrar fornecedor', 'M12 5v14M5 12h14', () => editarFornecedor()));
+    // Cabeçalho branco da lista: o título e o "‹ ›" de um lado; na outra ponta, a quantidade num círculo e a bolinha "+".
+    const ativos = S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length;
+    const sec = U.secao('Fornecedores', undefined, U.contagemECadastro(ativos, ativos + (ativos === 1 ? ' fornecedor ativo' : ' fornecedores ativos'),
+      U.botaoRedondo('Cadastrar fornecedor', 'M12 5v14M5 12h14', () => editarFornecedor())));
     sec.append(linhas);
     if (!lista.length) linhas.append(U.vazio(buscaF[origemF] ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.'));
     if (lista.length) {
