@@ -110,7 +110,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await p.evaluate(() => CicluzCompras.abrir('fornecedores-des'));
   ok(await p.locator('#despesas-fornecedores.show').count() === 1 && (await p.locator('#despesas-fornecedores .head h2').textContent()) === 'DES - Fornecedores' && await p.locator('#despesas-fornecedores .compras-linha', { hasText: 'Prestador CPF Teste' }).count() === 1, 'DES - Fornecedores mostra os mesmos fornecedores');
   ok(await p.locator('#despesas-fornecedores .compras-content button.btn').count() === 1 && await p.locator('#despesas-fornecedores .compras-content input[type=search]').count() === 0, 'No topo só o botão Cadastrar fornecedor; a busca é a do rodapé');
-  ok((await p.locator('#despesas-fornecedores .compras-linha', { hasText: 'Prestador CPF Teste' }).locator('small').first().textContent()).startsWith('Serviço'), 'A linha mostra a categoria marcada');
+  ok((await p.locator('#despesas-fornecedores .compras-linha', { hasText: 'Prestador CPF Teste' }).locator('.c-categoria').textContent()) === 'Serviço', 'A linha mostra a categoria marcada');
   await p.evaluate(() => CicluzCompras.abrir('estoque'));
   ok(await p.locator('#compras-estoque button', { hasText: 'Extrato completo' }).isVisible(), 'Extrato completo visível no Estoque');
   for (const tela of ['cadastro', 'pedidos']) {

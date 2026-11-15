@@ -194,6 +194,15 @@
     return b.i.closest('.local-search-control') || b.i;
   }
 
+  /** Cabeçalho das colunas de uma lista em grade (mesma classe de grade das linhas); some na tela estreita. */
+  function cabecalhoColunas(grade, colunas) {
+    const r = el('div', 'compras-linha em-colunas compras-linha-cabecalho ' + grade);
+    r.setAttribute('aria-hidden', 'true');
+    r.append(el('span', 'compras-linha-icones'));
+    colunas.forEach(({ chave, rotulo }) => r.append(el('span', 'compras-celula c-' + chave, rotulo || '')));
+    return r;
+  }
+
   /**
    * Busca da tela pela lupa do rodapé fixo (people-header-pilot.js), como na Ficha de Cargos: o campo fica numa
    * caixa .profiles-search que o rodapé adota, e um botão "Buscar" no cabeçalho (que o rodapé aciona pela lupa)
@@ -258,11 +267,12 @@
    * na linha edita. Com acoes a linha não é um <button>, para não haver botão dentro de botão.
    * icones: [{ icone | html, cor, rotulo }] no lugar de icone, quando a linha tem um ou mais ícones com cor própria
    * (ex.: fornecedor de Produto em verde e de Serviço em vermelho); o rótulo vira a dica e o texto do leitor de tela.
-   * dados: lista de textos menores embaixo do título, no lugar de detalhe; em tela larga viram colunas alinhadas
-   * entre as linhas (o vazio mostra "—") e, na estreita, linhas corridas só com o que está preenchido.
+   * colunas + grade: no lugar de titulo/detalhe/direita, a linha vira uma grade de colunas fixas, igual em todas as
+   * linhas (as larguras ficam no CSS, na classe passada em grade). colunas = [{ chave, conteudo }], conteudo texto,
+   * nó ou lista de nós; célula sem conteúdo fica vazia. Na tela estreita as células empilham sob o nome.
    * estado: texto pequeno à direita, antes da seta (ex.: "Ativo"), como nos cadastros de grupos.
    */
-  function linhaLista({ icone, icones, titulo, detalhe, dados, estado, direita, aoClicar, acoes }) {
+  function linhaLista({ icone, icones, titulo, detalhe, colunas, grade, estado, direita, aoClicar, acoes }) {
     const r = el(aoClicar && !acoes ? 'button' : 'div', 'compras-linha');
     if (aoClicar && !acoes) { r.type = 'button'; r.onclick = aoClicar; }
     if (icone) { const i = el('span', 'compras-linha-icone'); i.innerHTML = svg(ICONES[icone] || icone); r.append(i); }
@@ -278,17 +288,21 @@
       });
       r.append(grupo);
     }
-    const meio = el('span', 'compras-linha-texto');
-    meio.append(el('b', null, titulo));
-    if (detalhe) meio.append(el('small', null, detalhe));
-    if (dados && dados.length) {
-      const d = el('span', 'compras-linha-dados');
-      d.style.setProperty('--colunas', String(dados.length));
-      dados.forEach((t) => d.append(el('small', t ? null : 'vazio', t || '—')));
-      meio.append(d);
+    if (colunas) {
+      r.classList.add('em-colunas', grade);
+      colunas.forEach(({ chave, conteudo }) => {
+        const c = el('span', 'compras-celula c-' + chave);
+        const itens = [].concat(conteudo == null ? [] : conteudo).filter((x) => x !== '' && x != null);
+        c.append(...itens);
+        r.append(c);
+      });
+    } else {
+      const meio = el('span', 'compras-linha-texto');
+      meio.append(el('b', null, titulo));
+      if (detalhe) meio.append(el('small', null, detalhe));
+      r.append(meio);
+      if (direita) { const d = el('span', 'compras-linha-direita'); d.append(...[].concat(direita)); r.append(d); }
     }
-    r.append(meio);
-    if (direita) { const d = el('span', 'compras-linha-direita'); d.append(...[].concat(direita)); r.append(d); }
     if (estado) r.append(el('span', 'account-list-state', estado));
     if (acoes) {
       // account-list-row: é a classe que o fechamento "tocar fora" do componente procura.
@@ -405,7 +419,7 @@
   }
 
   window.CicluzComprasUI = {
-    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape,
+    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
     tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar,
   };

@@ -103,17 +103,32 @@
     const linhas = el('div', 'compras-lista');
     sec.append(linhas);
     if (!lista.length) linhas.append(U.vazio(buscaF[origemF] ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.'));
+    // Ordem da linha (pedido do Rodrigo): ícone da categoria e o nome dela, depois o nome do fornecedor e os outros dados,
+    // em colunas fixas (grade-fornecedor, em compras.css) para CNPJ, WhatsApp e ramo caírem sempre na mesma vertical.
+    if (lista.length) linhas.append(U.cabecalhoColunas('grade-fornecedor', [
+      { chave: 'categoria', rotulo: 'Categoria' }, { chave: 'nome', rotulo: 'Nome' }, { chave: 'documento', rotulo: 'CPF / CNPJ' },
+      { chave: 'whatsapp', rotulo: 'WhatsApp' }, { chave: 'ramo', rotulo: 'Ramo' }, { chave: 'selos', rotulo: '' },
+    ]));
     lista.forEach((f) => {
-      const semDdd = f.situacao === 'ativo' && D.motivoNaoConvidavel(f);
+      const ativo = f.situacao === 'ativo';
+      const categoria = D.nomeCategoriasFornecedor(f);
+      const falta = pendencias(f).filter((p) => p !== 'categoria');
+      const semDdd = ativo && D.motivoNaoConvidavel(f);
       linhas.append(U.linhaLista({
-        icones: iconesDaCategoria(f), titulo: f.nome,
-        // Título maior = nome; embaixo, as informações menores (colunas na tela larga): categoria, documento, WhatsApp, ramo e contato.
-        dados: [D.nomeCategoriasFornecedor(f), f.documento, f.whatsapp, f.ramo, f.contatoNome],
-        estado: f.situacao === 'ativo' ? 'Ativo' : 'Inativo',
-        direita: [
-          f.situacao === 'ativo' && pendencias(f).length ? U.situacao('Completar cadastro', 'atencao') : null,
-          semDdd ? U.situacao(f.whatsapp ? 'WhatsApp sem DDD' : 'Sem WhatsApp', 'atencao') : null,
-        ].filter(Boolean),
+        icones: iconesDaCategoria(f), grade: 'grade-fornecedor',
+        colunas: [
+          // Sem categoria: o aviso ocupa o lugar do texto da categoria (por isso o ícone está cinza).
+          { chave: 'categoria', conteudo: categoria || U.situacao('Completar cadastro', 'atencao') },
+          { chave: 'nome', conteudo: f.nome },
+          { chave: 'documento', conteudo: f.documento },
+          { chave: 'whatsapp', conteudo: f.whatsapp },
+          { chave: 'ramo', conteudo: f.ramo },
+          { chave: 'selos', conteudo: [
+            ativo && categoria && falta.length ? U.situacao('Completar cadastro', 'atencao') : null,
+            semDdd ? U.situacao(f.whatsapp ? 'WhatsApp sem DDD' : 'Sem WhatsApp', 'atencao') : null,
+          ] },
+        ],
+        estado: ativo ? 'Ativo' : 'Inativo',
         acoes: { rotulo: f.nome, lista: linhas, aoEditar: () => editarFornecedor(f), aoExcluir: () => excluirFornecedor(f) },
       }));
     });

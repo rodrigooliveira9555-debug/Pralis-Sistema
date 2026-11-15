@@ -82,17 +82,45 @@ body:not(.dark-theme) .compras-linha.com-acoes:hover .compras-linha-texto b { co
 .compras-linha.com-acoes .compras-linha-texto { flex-basis: 0; min-width: 0; }
 .compras-linha.com-acoes .compras-linha-texto b { font: 500 var(--ui-text, 14px)/18px var(--ui-font); }
 .compras-linha .account-list-state { flex: none; font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); }
-/* Informações menores embaixo do título: corridas na tela estreita; colunas alinhadas a partir de 900 px. */
-.compras-linha-dados { display: flex; flex-wrap: wrap; gap: 0 12px; min-width: 0; }
-.compras-linha-dados small.vazio { display: none; }
-/* Colunas de largura fixa (encolhem só se faltar espaço) e lugar reservado para dois ícones, para as colunas
-   começarem no mesmo ponto em todas as linhas, com um ou dois ícones e com ou sem selo. */
-@media (min-width: 900px) {
-  .compras-linha-dados { display: grid; grid-template-columns: repeat(var(--colunas, 4), minmax(0, 120px)); }
-  .compras-linha-dados small.vazio { display: block; }
-  .compras-linha.com-acoes .compras-linha-icones { min-width: 64px; }
-  /* Dois selos empilham em vez de espremer as colunas. */
-  .compras-linha.com-acoes .compras-linha-direita { max-width: 150px; }
+/* Lista em grade (ex.: fornecedores): colunas de largura fixa, iguais em todas as linhas, para cada dado cair
+   sempre na mesma vertical; célula sem dado fica vazia. Abaixo de 1000 px as células empilham sob o nome. */
+.compras-linha.em-colunas { display: grid; align-items: center; column-gap: 8px; row-gap: 2px; }
+.compras-celula { min-width: 0; overflow-wrap: anywhere; font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); }
+.compras-celula.c-nome { font: 500 var(--ui-text, 14px)/18px var(--ui-font); color: inherit; }
+.compras-celula.c-categoria { font-weight: 500; color: inherit; }
+.compras-celula.c-selos { display: flex; flex-wrap: wrap; gap: 4px; }
+.compras-linha-cabecalho { min-height: 0; padding-top: 6px; padding-bottom: 6px; cursor: default; }
+.compras-linha-cabecalho .compras-celula { font: 600 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); text-transform: uppercase; letter-spacing: .04em; }
+/* Fornecedores: ícones (lugar para dois) · categoria · nome · CPF/CNPJ · WhatsApp · ramo · avisos · estado · seta · ações */
+.compras-linha.grade-fornecedor { grid-template-columns: 64px 134px minmax(120px, 1fr) 126px 108px 100px 126px 40px 24px; }
+/* Cada célula tem coluna fixa (não depende da ordem), para a gaveta de Editar/Excluir poder abrir por cima dos avisos. */
+.compras-linha.grade-fornecedor > * { grid-row: 1; }
+.compras-linha.grade-fornecedor > .c-categoria { grid-column: 2; }
+.compras-linha.grade-fornecedor > .c-nome { grid-column: 3; }
+.compras-linha.grade-fornecedor > .c-documento { grid-column: 4; }
+.compras-linha.grade-fornecedor > .c-whatsapp { grid-column: 5; }
+.compras-linha.grade-fornecedor > .c-ramo { grid-column: 6; }
+.compras-linha.grade-fornecedor > .c-selos { grid-column: 7; }
+.compras-linha.grade-fornecedor > .account-list-state { grid-column: 8; }
+.compras-linha.grade-fornecedor > .account-action-toggle { grid-column: 9; }
+.compras-linha.grade-fornecedor > .compras-linha-icones { grid-column: 1; }
+/* Editar/Excluir abrem no lugar dos avisos (que somem enquanto isso), para as colunas não se mexerem. */
+.compras-linha.grade-fornecedor > .account-row-actions:not([hidden]) { grid-column: 7; grid-row: 1; justify-self: end; }
+.compras-linha.grade-fornecedor:has(> .account-row-actions:not([hidden])) > .c-selos { visibility: hidden; }
+@media (max-width: 999px) {
+  .compras-linha.compras-linha-cabecalho { display: none; }
+  .compras-linha.grade-fornecedor { grid-template-columns: auto minmax(0, 1fr) auto auto; grid-auto-flow: row; }
+  .compras-linha.grade-fornecedor > .compras-linha-icones { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
+  .compras-linha.grade-fornecedor > * { grid-row: auto; }
+  .compras-linha.grade-fornecedor > .compras-celula { grid-column: 2; }
+  .compras-linha.grade-fornecedor > .compras-celula:empty { display: none; }
+  .compras-linha.grade-fornecedor > .c-categoria { grid-row: 1; }
+  .compras-linha.grade-fornecedor > .c-nome { grid-row: 2; }
+  .compras-linha.grade-fornecedor > .account-list-state { grid-column: 3; grid-row: 1 / span 2; }
+  .compras-linha.grade-fornecedor > .account-action-toggle { grid-column: 4; grid-row: 1 / span 2; }
+  /* Editar/Excluir abrem numa linha própria, à direita, para não espremer os dados. */
+  .compras-linha.grade-fornecedor > .account-row-actions:not([hidden]) { grid-column: 1 / -1; grid-row: auto; justify-self: end; }
+  .compras-linha.grade-fornecedor:has(> .account-row-actions:not([hidden])) > .c-selos { visibility: visible; }
 }
 .compras-linha .account-action-toggle { flex: none; width: 32px; height: 32px; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .compras-linha .account-row-actions { display: flex; flex: none; align-items: center; gap: var(--row-action-gap, 6px); }
@@ -102,7 +130,7 @@ body:not(.dark-theme) .compras-linha.com-acoes:hover .compras-linha-texto b { co
 .compras-linha .account-row-actions svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 /* No celular os selos descem para a linha de baixo, alinhados ao texto, e a seta fica na primeira linha. */
 @media (max-width: 560px) {
-  .compras-linha.com-acoes { flex-wrap: wrap; }
+  .compras-linha.com-acoes:not(.em-colunas) { flex-wrap: wrap; }
   .compras-linha.com-acoes .compras-linha-direita { order: 5; flex: 1 0 100%; justify-content: flex-start; margin-left: 0; padding-left: 42px; box-sizing: border-box; }
 }
 button.compras-linha:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
