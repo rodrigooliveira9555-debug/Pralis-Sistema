@@ -543,7 +543,73 @@
         rep.no.append(campo('Cargo na empresa', repCargo));
 
         /* ----- Barra de etapas e navegação ----- */
-        const quadros = [etapa1, etapa2, fin.no, rep.no];
+        /* ----- Etapa 5: vínculos. Só guarda o vínculo; não cria lançamento nem regra de dinheiro. -----
+           Produto: os produtos que este fornecedor fornece. É outra porta para o MESMO dado do Compras (d.catalogo,
+           o vínculo produto × fornecedor de "Cadastro de compras", "Vincular aos selecionados" e do alerta de
+           vínculo): marcar aqui cria o vínculo aprovado igual ao de lá. O Compras não tem como desfazer vínculo
+           aprovado, então o que já está vinculado aparece marcado e travado.
+           Serviço: um ou mais grupos de despesa (DES - Grupos de Despesas), por id, em f.gruposDespesaIds. */
+        const s5 = el('fieldset', 'compras-fieldset');
+        s5.append(el('legend', null, 'Vínculos'));
+        const doFornecedor = (status) => new Set(f ? S.dados.catalogo.filter((v) => v.fornecedorId === f.id && v.status === status).map((v) => v.produtoId) : []);
+        const jaVinculados = doFornecedor('aprovado');
+        const sugeridos = doFornecedor('pendente');
+        const novosProdutos = new Set();
+        const boxProdutos = el('div', 'compras-campo compras-largo');
+        const buscaProduto = texto('', { placeholder: 'Buscar produto pelo nome', maxLength: 80, autocomplete: 'off' });
+        buscaProduto.setAttribute('aria-label', 'Buscar produto');
+        buscaProduto.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
+        const resumoProdutos = el('p', 'profiles-note');
+        resumoProdutos.setAttribute('role', 'status');
+        const listaProdutos = el('div', 'compras-vinculos-lista');
+        const LIMITE_PRODUTOS = 60;
+        const desenharProdutos = () => {
+          const termo = U.dobrar(buscaProduto.value.trim());
+          const marcado = (p) => jaVinculados.has(p.id) || novosProdutos.has(p.id);
+          const todos = S.dados.produtos.filter((p) => (p.status === 'ativo' || marcado(p)) && (!termo || U.dobrar(p.descricao).includes(termo)))
+            .sort((a, b2) => (marcado(a) === marcado(b2) ? a.descricao.localeCompare(b2.descricao, 'pt-BR') : marcado(a) ? -1 : 1));
+          listaProdutos.replaceChildren(...todos.slice(0, LIMITE_PRODUTOS).map((p) => {
+            const l = interruptor(p.descricao, marcado(p), jaVinculados.has(p.id) ? 'Já vinculado.' : sugeridos.has(p.id) ? 'Sugestão do fornecedor aguardando decisão no Cadastro de compras.' : '');
+            l.input.disabled = jaVinculados.has(p.id) || sugeridos.has(p.id);
+            l.input.onchange = () => { if (l.input.checked) novosProdutos.add(p.id); else novosProdutos.delete(p.id); pintarResumoProdutos(todos.length); };
+            return l;
+          }));
+          if (!todos.length) listaProdutos.append(el('p', 'profiles-note', termo ? 'Nenhum produto encontrado.' : 'Nenhum produto ativo cadastrado.'));
+          pintarResumoProdutos(todos.length);
+        };
+        const pintarResumoProdutos = (achados) => {
+          const n = jaVinculados.size + novosProdutos.size;
+          resumoProdutos.textContent = (n === 1 ? '1 produto vinculado' : n + ' produtos vinculados') + (novosProdutos.size ? ' (' + novosProdutos.size + ' a vincular ao salvar)' : '') + '.'
+            + (achados > LIMITE_PRODUTOS ? ' Mostrando ' + LIMITE_PRODUTOS + ' de ' + achados + ': use a busca.' : '');
+        };
+        buscaProduto.addEventListener('input', desenharProdutos);
+        boxProdutos.append(el('span', 'compras-rotulo', 'Produtos que este fornecedor fornece'), buscaProduto, resumoProdutos, listaProdutos);
+
+        const gruposEscolhidos = new Set(Array.isArray(f?.gruposDespesaIds) ? f.gruposDespesaIds : []);
+        const boxGrupos = el('div', 'compras-campo compras-largo');
+        boxGrupos.setAttribute('role', 'group');
+        boxGrupos.setAttribute('aria-label', 'Grupos de despesa');
+        const chipsGrupos = el('div', 'compras-chips');
+        const desenharGrupos = () => {
+          const grupos = ((window.CicluzProducaoDados && window.CicluzProducaoDados.gruposDespesa()) || []).filter((g) => g.ativo || gruposEscolhidos.has(g.id));
+          chipsGrupos.replaceChildren(...grupos.map((g) => {
+            const c = botao(g.nome + (g.ativo ? '' : ' (inativo)'), () => { if (gruposEscolhidos.has(g.id)) gruposEscolhidos.delete(g.id); else gruposEscolhidos.add(g.id); desenharGrupos(); }, 'compras-chip' + (gruposEscolhidos.has(g.id) ? ' ativo' : ''));
+            c.setAttribute('aria-pressed', String(gruposEscolhidos.has(g.id)));
+            return c;
+          }));
+          if (!grupos.length) chipsGrupos.append(el('p', 'profiles-note', 'Nenhum grupo de despesa cadastrado em DES - Grupos de Despesas.'));
+        };
+        boxGrupos.append(el('span', 'compras-rotulo', 'Grupos de despesa deste prestador (um ou mais)'), chipsGrupos);
+        const semCategoria = el('p', 'profiles-note compras-largo', 'Escolha a categoria na primeira etapa para vincular produtos ou grupos de despesa.');
+        s5.append(boxProdutos, boxGrupos, semCategoria);
+        const pintarVinculos = () => {
+          const c = marcadas(); const cat = c.length === 1 ? c[0] : '';
+          mostrar(boxProdutos, cat === 'produto'); mostrar(boxGrupos, cat === 'servico'); mostrar(semCategoria, !cat);
+          if (cat === 'produto') desenharProdutos();
+          if (cat === 'servico') desenharGrupos();
+        };
+
+        const quadros = [etapa1, etapa2, fin.no, rep.no, s5];
         const marcadas = () => catOpcoes.marcados();
         const etapas = () => D.etapasFornecedor(marcadas()).map((label) => ({ label }));
         let atual = 0;
@@ -567,6 +633,7 @@
         function ir(i) {
           atual = Math.max(0, Math.min(quadros.length - 1, i));
           pintarCopias();
+          pintarVinculos();
           quadros.forEach((q, k) => mostrar(q, k === atual));
           barra.update(etapas(), atual);
           erroEtapa.textContent = '';
@@ -598,6 +665,8 @@
             vendedorAniversario: DF.monthParse(vAniv.value) || vAniv.value.trim(),
             // Serviço: a lista de prestadores; o 1º espelha o contato acima (é dele que a lista e a cotação leem).
             // Produto: a chave não vai, para não apagar prestadores gravados se a categoria for trocada por engano.
+            // Grupos de despesa: só na categoria Serviço (em Produto a chave não vai, para não apagar o que estava gravado).
+            ...(ehServico() ? { gruposDespesaIds: [...gruposEscolhidos] } : {}),
             ...(ehServico() ? { prestadores: [
               { id: idPrestador1, nome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email, aniversario: DF.monthParse(vAniv.value) || vAniv.value.trim(), funcoes: funcoes1.valores() },
               ...extras.map((x) => ({ id: x.id, nome: x.nome.value.trim(), whatsapp: x.whatsapp.value.trim(), email: x.email.value.trim(), aniversario: DF.monthParse(x.aniversario.value) || x.aniversario.value.trim(), funcoes: x.funcoes.valores() })),
@@ -608,7 +677,8 @@
         }
         form.append(barra.el, ...quadros, erroEtapa, nav);
         ir(0);
-        return { ler, ir };
+        // Produtos marcados agora (categoria Produto): viram vínculo no mesmo catálogo do Compras ao salvar.
+        return { ler, ir, novosProdutos: () => (marcadas().join() === 'produto' ? [...novosProdutos] : []) };
       },
       salvar: (c) => {
         const campos = c.ler();
@@ -616,9 +686,15 @@
         const etapaComFalta = faltas.findIndex(Boolean);
         if (etapaComFalta >= 0) { c.ir(etapaComFalta); return faltas[etapaComFalta]; }
         delete campos.id;
+        const idFornecedor = f ? f.id : S.novoId('f');
         const ok = S.transacao((d) => {
           if (f) Object.assign(d.fornecedores.find((y) => y.id === f.id), campos);
-          else d.fornecedores.push({ id: S.novoId('f'), ...campos });
+          else d.fornecedores.push({ id: idFornecedor, ...campos });
+          // Vínculo produto × fornecedor: o mesmo registro que SV.vincular cria (catálogo do Compras), sem duplicar.
+          for (const produtoId of c.novosProdutos()) {
+            if (d.catalogo.some((v) => v.fornecedorId === idFornecedor && v.produtoId === produtoId && v.status !== 'rejeitado')) continue;
+            d.catalogo.push({ id: S.novoId('v'), fornecedorId: idFornecedor, produtoId, origem: 'compras', status: 'aprovado', precoOfertado: null, criadoEm: S.agoraIso() });
+          }
         });
         if (!ok) return 'Não foi possível salvar neste navegador.';
         U.avisar('Fornecedor salvo.');

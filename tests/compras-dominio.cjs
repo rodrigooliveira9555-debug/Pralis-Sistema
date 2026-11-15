@@ -214,7 +214,10 @@ ok(() => {
   assert.match(v({ representante: { cargo: 'chefe' } }), /Cargo do representante/);
   assert.deepEqual(d.CARGOS_REPRESENTANTE.map(([, nome]) => nome), ['Proprietário', 'Sócio-proprietário', 'Diretor geral', 'Diretor comercial', 'Gerente geral', 'Gerente comercial',
     'Supervisor geral', 'Supervisor comercial', 'Representante comercial', 'Administrador', 'Financeiro', 'Procurador', 'Outro']);
-  assert.deepEqual(d.etapasFornecedor([]), ['Dados da empresa', 'Dados do vendedor', 'Dados do financeiro', 'Dados do representante']);
+  assert.deepEqual(d.etapasFornecedor([]), ['Dados da empresa', 'Dados do vendedor', 'Dados do financeiro', 'Dados do representante', 'Vínculos']);
+  assert.equal(v({ categorias: ['servico'], gruposDespesaIds: ['g1', 'g2'] }), '');
+  assert.match(v({ categorias: ['servico'], gruposDespesaIds: ['g1', ''] }), /Grupo de despesa/);
+  assert.match(v({ categorias: ['servico'], gruposDespesaIds: 'g1' }), /Grupo de despesa/);
   // Prestadores (Serviço): do 2º em diante, nome obrigatório e formato conferido; função precisa existir no cadastro.
   const fn = [{ id: 'fp-pintor', nome: 'Pintor', ativa: true }];
   const vp = (prestadores) => d.validarFornecedor({ ...pj, categorias: ['servico'], prestadores }, regras, { fornecedores: [], funcoes: fn });
@@ -251,12 +254,12 @@ ok(() => {
   assert.match(v({ nome: '' }), /nome fantasia ou a razão social/);
   // Cada problema aparece na etapa dele.
   const etapas = d.validarFornecedorEtapas({ ...pj, categorias: [], whatsapp: '', financeiro: { email: 'x@' }, representante: { whatsapp: '1' } }, regras, ctx);
-  assert.deepEqual(etapas.map(Boolean), [true, true, true, true]);
-  assert.deepEqual(d.validarFornecedorEtapas(pj, regras, ctx), ['', '', '', '']);
+  assert.deepEqual(etapas.map(Boolean), [true, true, true, true, false]);
+  assert.deepEqual(d.validarFornecedorEtapas(pj, regras, ctx), ['', '', '', '', '']);
   assert.deepEqual(d.etapasFornecedor(['produto']).slice(1, 2), ['Dados do vendedor']);
   assert.deepEqual(d.etapasFornecedor(['servico']).slice(1, 2), ['Dados do prestador']);
   assert.deepEqual(d.etapasFornecedor(['produto', 'servico']).slice(1, 2), ['Dados do vendedor']);
-  assert.equal(d.etapasFornecedor([]).length, 4);
+  assert.equal(d.etapasFornecedor([]).length, 5);
   assert.equal(d.etapasFornecedor([])[0], 'Dados da empresa');
   // Endereço é opcional; o que vier precisa estar no formato.
   assert.equal(v({ endereco: { cep: '01001-000', logradouro: 'Rua Teste', numero: '10', complemento: '', bairro: 'Centro', cidade: 'Cidade Teste', uf: 'SP' } }), '');

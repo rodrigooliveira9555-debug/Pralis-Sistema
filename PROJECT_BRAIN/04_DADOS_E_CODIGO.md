@@ -63,7 +63,9 @@
 - **Fornecedor único (15/11/2026)**, dentro de `cicluz-compras-v1` (mesma chave e versão). Campos do fornecedor: `nome`,
   `documento`, `whatsapp` e `situacao` (já existiam), mais `razaoSocial` (texto, opcional; o `nome` é o nome fantasia, e
   continua sendo o nome exibido em todo o sistema, sem migração), `categorias` (lista com 'produto' e/ou 'servico'), `ramo`
-  (texto, opcional), `prestadores` (só categoria Serviço, 15/11/2026: `[{ id, nome, whatsapp, email, aniversario 'AAAA-MM', funcoes: [ids] }]`; o 1º espelha
+  (texto, opcional), `gruposDespesaIds` (só categoria Serviço, 15/11/2026: ids dos grupos de `cicluz-financial-hierarchy-v1`.despesas a que o prestador
+  está ligado; só vínculo, sem lançamento; o vínculo com **produtos** não é campo do fornecedor: é o `catalogo` que já existia, e a etapa
+  Vínculos só acrescenta registros lá), `prestadores` (só categoria Serviço, 15/11/2026: `[{ id, nome, whatsapp, email, aniversario 'AAAA-MM', funcoes: [ids] }]`; o 1º espelha
   `contatoNome`/`whatsapp`/`email`/`vendedorAniversario`, que continuam sendo o que a lista e a cotação leem; migração
   `migracoes.prestadoresFornecedor`: o contato único vira o Prestador 1, nada é apagado), `categorias` (lista com **um** item, 'produto' ou 'servico': escolha única desde 15/11/2026; registro com os dois, de quando
   podia, fica gravado como está e conta como "sem categoria escolhida" até a pessoa escolher; sem migração), `tipoPessoa` (desde 15/11/2026 o cadastro grava sempre 'juridica': fornecedor é só por CNPJ; registro antigo pode ter 'fisica'

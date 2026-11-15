@@ -248,7 +248,7 @@
   /** Etapas do cadastro (decisão do Rodrigo, 15/11/2026), nomes padronizados "Dados do …". A 2ª depende da categoria. */
   function etapasFornecedor(categorias) {
     const c = Array.isArray(categorias) ? categorias : [];
-    return ['Dados da empresa', 'Dados do ' + quemVendeFornecedor(c), 'Dados do financeiro', 'Dados do representante'];
+    return ['Dados da empresa', 'Dados do ' + quemVendeFornecedor(c), 'Dados do financeiro', 'Dados do representante', 'Vínculos'];
   }
   /**
    * Migração (marca d.migracoes.vendedorFornecedor): no cadastro em etapas o contato do fornecedor é o vendedor ou
@@ -302,7 +302,7 @@
   }
   const telefoneRuim = (v) => { const n = digitos(v); return Boolean(n) && (n.length < 8 || String(v).length > 30); };
   /**
-   * O que impede salvar, etapa por etapa: devolve 4 textos ('' quando a etapa está em ordem). Obrigatórios: categoria
+   * O que impede salvar, etapa por etapa: devolve um texto por etapa ('' quando a etapa está em ordem). Obrigatórios: categoria
    * (Produto ou Serviço, uma só), nome (nome fantasia ou razão social), CNPJ
    * com dígito verificador e WhatsApp do vendedor ou prestador. O aniversário do vendedor (mês e ano) é opcional (o CPF dele não é
    * mais pedido; valor antigo, se houver, fica guardado sem uso).
@@ -360,7 +360,9 @@
       if (cargo && !CARGOS_REPRESENTANTE.some(([id]) => id === cargo)) return 'Cargo do representante inválido.';
       return contato(f.representante, 'representante');
     };
-    return [basico(), vendedor(), contato(f.financeiro, 'financeiro'), representante()];
+    // Vínculos: grupos de despesa (Serviço) vão por id; a lista só guarda o vínculo, sem lançamento nem regra de dinheiro.
+    const vinculos = () => (f.gruposDespesaIds != null && (!Array.isArray(f.gruposDespesaIds) || f.gruposDespesaIds.some((id) => !id || typeof id !== 'string')) ? 'Grupo de despesa inválido.' : '');
+    return [basico(), vendedor(), contato(f.financeiro, 'financeiro'), representante(), vinculos()];
   }
   /** Primeiro impedimento do cadastro inteiro, ou ''. */
   const validarFornecedor = (f, regras, ctx) => validarFornecedorEtapas(f, regras, ctx).find(Boolean) || '';
