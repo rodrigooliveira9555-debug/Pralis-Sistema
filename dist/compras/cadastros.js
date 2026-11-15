@@ -101,9 +101,9 @@
     const semWhats = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && !D.podeConvidar(f)).length;
     const incompletos = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && pendencias(f).length).length;
     // Mesma linha dos cadastros de grupos: tocar edita; a setinha revela Editar e Excluir.
-    // Linha fina, uma por fornecedor, em colunas fixas (grade-fornecedor, em compras.css). Ordem do Rodrigo: ícone da
-    // categoria, Fornecedor (nome fantasia), Razão social, Categoria, Nome do contato, WhatsApp, CPF/CNPJ, Ramo, avisos,
-    // situação e seta. Cada coluna tem no título a setinha que a oculta ou mostra (preferência do aparelho); o que não
+    // Linha fina, uma por fornecedor, em colunas fixas (grade-fornecedor, em compras.css). Sequência final do Rodrigo:
+    // ícone da categoria, Fornecedor (nome fantasia), Categoria, Nome do contato, WhatsApp, Razão social, CPF/CNPJ,
+    // Ramo, avisos, situação e seta. Cada coluna tem no título a setinha que a oculta ou mostra (preferência do aparelho); o que não
     // couber rola para o lado dentro da lista.
     const linhas = el('div', 'compras-lista compras-lista-grade');
     U.arrastarParaRolar(linhas);
@@ -111,9 +111,9 @@
     sec.append(linhas);
     if (!lista.length) linhas.append(U.vazio(buscaF[origemF] ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.'));
     if (lista.length) linhas.append(U.cabecalhoColunas('grade-fornecedor', [
-      { chave: 'nome', rotulo: 'Fornecedor', ocultavel: true }, { chave: 'razao', rotulo: 'Razão social', ocultavel: true },
-      { chave: 'categoria', rotulo: 'Categoria', ocultavel: true }, { chave: 'contato', rotulo: 'Nome do contato', ocultavel: true },
-      { chave: 'whatsapp', rotulo: 'WhatsApp', ocultavel: true }, { chave: 'documento', rotulo: 'CPF / CNPJ', ocultavel: true },
+      { chave: 'nome', rotulo: 'Fornecedor', ocultavel: true }, { chave: 'categoria', rotulo: 'Categoria', ocultavel: true },
+      { chave: 'contato', rotulo: 'Nome do contato', ocultavel: true }, { chave: 'whatsapp', rotulo: 'WhatsApp', ocultavel: true },
+      { chave: 'razao', rotulo: 'Razão social', ocultavel: true }, { chave: 'documento', rotulo: 'CPF / CNPJ', ocultavel: true },
       { chave: 'ramo', rotulo: 'Ramo', ocultavel: true }, { chave: 'selos', rotulo: 'Avisos', ocultavel: true }, { chave: 'estado', rotulo: 'Situação' },
     ], { lista: linhas, preferencia: 'cicluz-fornecedores-colunas' }));
     lista.forEach((f) => {
@@ -126,11 +126,11 @@
         colunas: [
           // nome = nome fantasia (ou o nome da pessoa física): é o nome de uso, o mesmo que cotação e pedido mostram.
           { chave: 'nome', conteudo: f.nome },
-          { chave: 'razao', conteudo: f.razaoSocial },
           // Sem categoria: o aviso ocupa o lugar do texto da categoria (por isso o ícone está cinza).
           { chave: 'categoria', conteudo: categoria || U.situacao('Completar cadastro', 'atencao') },
           { chave: 'contato', conteudo: f.contatoNome },
           { chave: 'whatsapp', conteudo: f.whatsapp },
+          { chave: 'razao', conteudo: f.razaoSocial },
           { chave: 'documento', conteudo: f.documento },
           { chave: 'ramo', conteudo: f.ramo },
           { chave: 'selos', conteudo: [

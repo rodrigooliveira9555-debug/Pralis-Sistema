@@ -101,22 +101,22 @@ body:not(.dark-theme) .compras-linha.com-acoes:hover .compras-linha-texto b { co
 .compras-coluna-seta[aria-expanded=true] svg { transform: rotate(180deg); }
 .compras-linha-cabecalho .compras-celula { display: flex; align-items: center; gap: 4px; }
 .compras-linha-cabecalho .compras-coluna-titulo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* Fornecedores: ícones (lugar para dois) · fornecedor · razão social · categoria · nome do contato · WhatsApp · CPF/CNPJ ·
+/* Fornecedores: ícones (lugar para dois) · fornecedor · categoria · nome do contato · WhatsApp · razão social · CPF/CNPJ ·
    ramo · avisos · situação · seta. Cada célula tem coluna fixa, igual em todas as linhas; a largura de cada coluna
    ocultável vem de uma variável, que a classe oculta-<chave> da lista reduz à faixa da setinha. */
 .compras-linha.grade-fornecedor {
-  grid-template-columns: 64px var(--w-nome, minmax(190px, 1fr)) var(--w-razao, 190px) var(--w-categoria, 128px) var(--w-contato, 148px)
-    var(--w-whatsapp, 124px) var(--w-documento, 138px) var(--w-ramo, 116px) var(--w-selos, 130px) 72px 24px;
+  grid-template-columns: 64px var(--w-nome, minmax(190px, 1fr)) var(--w-categoria, 128px) var(--w-contato, 148px) var(--w-whatsapp, 124px)
+    var(--w-razao, 190px) var(--w-documento, 138px) var(--w-ramo, 116px) var(--w-selos, 130px) 72px 24px;
   width: max-content; min-width: 100%; background: var(--theme-card, #fff);
 }
 .compras-linha.grade-fornecedor > * { grid-row: 1; }
 /* O ícone da categoria fica sempre à vista, fixo à esquerda. */
 .compras-linha.grade-fornecedor > .compras-linha-icones { grid-column: 1; position: sticky; left: 0; z-index: 2; align-self: stretch; align-items: center; background: inherit; padding-left: 12px; margin-left: -12px; }
 .compras-linha.grade-fornecedor > .c-nome { grid-column: 2; }
-.compras-linha.grade-fornecedor > .c-razao { grid-column: 3; }
-.compras-linha.grade-fornecedor > .c-categoria { grid-column: 4; }
-.compras-linha.grade-fornecedor > .c-contato { grid-column: 5; }
-.compras-linha.grade-fornecedor > .c-whatsapp { grid-column: 6; }
+.compras-linha.grade-fornecedor > .c-categoria { grid-column: 3; }
+.compras-linha.grade-fornecedor > .c-contato { grid-column: 4; }
+.compras-linha.grade-fornecedor > .c-whatsapp { grid-column: 5; }
+.compras-linha.grade-fornecedor > .c-razao { grid-column: 6; }
 .compras-linha.grade-fornecedor > .c-documento { grid-column: 7; }
 .compras-linha.grade-fornecedor > .c-ramo { grid-column: 8; }
 .compras-linha.grade-fornecedor > .c-selos { grid-column: 9; }
