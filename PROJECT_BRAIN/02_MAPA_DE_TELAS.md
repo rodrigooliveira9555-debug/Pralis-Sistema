@@ -103,7 +103,7 @@ Organização do Rodrigo (vídeo de 06/11/2026); detalhes no `DESIGN_SYSTEM.md`,
 - ✅ RET - Patrimônios (`dist/producao/telas-patrimonio.js`, 05/11/2026; em 15/11/2026 ganhou Categoria como primeiro campo, peças/materiais da manutenção periódica (marca, modelo, fornecedor, grupo de despesas, valor, imagem e data de substituição), manutenção periódica e observação em áudio; abre em Saídas · Retiradas → Cadastros Geral) — salva em `cicluz-patrimonio-v1`: bem, categoria
   (Utensílio, Máquina, Equipamento, Mobiliário), marca, modelo, série, nº (único), valor, local pela árvore, capacidade,
   medidas, energia e consumo por hora. A prévia antiga (`#asset-view`, não salvava) foi removida.
+- ✅ DES - Fornecedores e MER - Fornecedores (`dist/compras/cadastros.js`, 15/11/2026): cadastro único de fornecedor, aberto por Saídas · Despesas → Cadastros Geral e por Saídas · Mercadorias → Cadastros Geral; formulário com categoria (lista), tipo de pessoa, CPF ou CNPJ, contato, contato do financeiro e nascimento (pessoa física). DES - Fornecedores deixou de ser tela vazia.
 
 ## Legado
 - `#config-view` ("Configurar") — tela antiga sem atalho (UI_SWEEP 01/11). Candidata a remoção.
-- ✅ DES - Fornecedores e MER - Fornecedores (`dist/compras/cadastros.js`, 15/11/2026): cadastro único de fornecedor, aberto por Saídas · Despesas → Cadastros Geral e por Saídas · Mercadorias → Cadastros Geral; formulário com categoria (lista), tipo de pessoa, CPF ou CNPJ, contato, contato do financeiro e nascimento (pessoa física). DES - Fornecedores deixou de ser tela vazia.
