@@ -577,13 +577,16 @@
    * lugar de caixinhas de marcar. Cada cartão é um botão inteiro (aria-pressed): ícone no quadrado de cantos
    * arredondados, título e uma linha de detalhe, e um círculo de marcação à direita (cheio, com o "certo", quando
    * marcado: a cor não é a única indicação). A cor é a de cada opção, não a da tela.
-   * opcoes: [{ id, titulo, detalhe, icone | html, cor, marcado }]; multiplo: pode marcar mais de uma.
+   * opcoes: [{ id, titulo, detalhe, icone | html, cor, marcado }]; multiplo: pode marcar mais de uma (botões com
+   * aria-pressed). Escolha única (multiplo: false): grupo de rádio (role=radiogroup, cartões role=radio com
+   * aria-checked); marcar um desmarca os outros e tocar no marcado não desmarca.
    * Devolve o grupo; grupo.marcados() lista os ids marcados.
    */
   function cartoesEscolha({ rotulo, opcoes, multiplo = true, aoMudar }) {
     const grupo = el('div', 'compras-cartoes');
-    grupo.setAttribute('role', 'group');
+    grupo.setAttribute('role', multiplo ? 'group' : 'radiogroup');
     if (rotulo) grupo.setAttribute('aria-label', rotulo);
+    const estado = multiplo ? 'aria-pressed' : 'aria-checked';
     const itens = opcoes.map((o) => {
       const b = el('button', 'compras-cartao-escolha');
       b.type = 'button';
@@ -598,17 +601,26 @@
       marca.setAttribute('aria-hidden', 'true');
       marca.innerHTML = '<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
       b.append(i, texto, marca);
-      b.setAttribute('aria-pressed', String(Boolean(o.marcado)));
+      if (!multiplo) b.setAttribute('role', 'radio');
+      b.setAttribute(estado, String(Boolean(o.marcado)));
       b.onclick = () => {
-        const ligar = b.getAttribute('aria-pressed') !== 'true';
-        if (!multiplo && ligar) itens.forEach((x) => x.b.setAttribute('aria-pressed', 'false'));
-        b.setAttribute('aria-pressed', String(ligar));
+        const ligar = multiplo ? b.getAttribute(estado) !== 'true' : true;
+        if (!multiplo) itens.forEach((x) => x.b.setAttribute(estado, 'false'));
+        b.setAttribute(estado, String(ligar));
         if (aoMudar) aoMudar(grupo.marcados());
+      };
+      // Rádio pelo teclado: as setas passam de um cartão para o outro e já marcam.
+      if (!multiplo) b.onkeydown = (e) => {
+        const passo = ['ArrowRight', 'ArrowDown'].includes(e.key) ? 1 : ['ArrowLeft', 'ArrowUp'].includes(e.key) ? -1 : 0;
+        if (!passo) return;
+        e.preventDefault();
+        const alvo = itens[(itens.findIndex((x) => x.b === b) + passo + itens.length) % itens.length].b;
+        alvo.focus(); alvo.click();
       };
       grupo.append(b);
       return { id: o.id, b };
     });
-    grupo.marcados = () => itens.filter((x) => x.b.getAttribute('aria-pressed') === 'true').map((x) => x.id);
+    grupo.marcados = () => itens.filter((x) => x.b.getAttribute(estado) === 'true').map((x) => x.id);
     return grupo;
   }
 

@@ -160,7 +160,11 @@ ok(() => {
   assert.deepEqual(doc.fornecedores.map((f) => (f.categorias || []).join()), ['', 'produto', 'produto', 'produto', '', 'servico']);
 });
 ok(() => {
-  assert.equal(d.nomeCategoriasFornecedor({ categorias: ['servico', 'produto'] }), 'Produto e Serviço');
+  // Escolha única: cadastro antigo com as duas fica "sem categoria escolhida" (não é decidido pelo sistema).
+  assert.equal(d.nomeCategoriasFornecedor({ categorias: ['servico', 'produto'] }), '');
+  assert.equal(d.categoriaFornecedor({ categorias: ['servico', 'produto'] }), '');
+  assert.equal(d.categoriaFornecedor({ categorias: ['servico'] }), 'servico');
+  assert.equal(d.categoriaFornecedor({}), '');
   assert.equal(d.nomeCategoriasFornecedor({ categorias: ['servico'] }), 'Serviço');
   assert.equal(d.nomeCategoriasFornecedor({ categorias: [] }), '');
   assert.equal(d.nomeCategoriasFornecedor({}), '');
@@ -181,7 +185,8 @@ ok(() => {
   assert.match(v({ categorias: [] }), /categoria/);
   assert.match(v({ categorias: undefined }), /categoria/);
   assert.match(v({ categorias: ['outra'] }), /inválida/);
-  assert.equal(v({ categorias: ['produto', 'servico'] }), '');
+  assert.match(v({ categorias: ['produto', 'servico'] }), /só uma categoria/);
+  assert.equal(v({ categorias: ['servico'] }), '');
   assert.equal(v({ tipoPessoa: '' }), ''); // o tipo de pessoa não é mais pedido
   assert.match(v({ nome: ' ' }), /nome/);
   assert.match(v({ nome: 'MOINHO TESTE' }), /Já existe/);
@@ -219,7 +224,7 @@ ok(() => {
   assert.deepEqual(d.validarFornecedorEtapas(pj, regras, ctx), ['', '', '', '']);
   assert.deepEqual(d.etapasFornecedor(['produto']).slice(1, 2), ['Dados do vendedor']);
   assert.deepEqual(d.etapasFornecedor(['servico']).slice(1, 2), ['Dados do prestador']);
-  assert.deepEqual(d.etapasFornecedor(['produto', 'servico']).slice(1, 2), ['Dados do vendedor / prestador']);
+  assert.deepEqual(d.etapasFornecedor(['produto', 'servico']).slice(1, 2), ['Dados do vendedor']);
   assert.equal(d.etapasFornecedor([]).length, 4);
   assert.equal(d.etapasFornecedor([])[0], 'Dados da empresa');
   // Endereço é opcional; o que vier precisa estar no formato.

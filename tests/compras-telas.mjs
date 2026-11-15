@@ -88,13 +88,13 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   ok(await df.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).count() === 0, 'No cadastro novo o Salvar só aparece na última etapa');
   await avancar(df);
   ok((await erroF()).includes('categoria') && (await etapaF(df)).includes('Etapa 1'), 'Avançar confere a etapa: categoria é obrigatória');
-  // Categoria em cartões: cada cartão é um botão com aria-pressed; pode marcar um, o outro ou os dois.
+  // Categoria em cartões de escolha única (rádio): marcar um desmarca o outro.
   const cartaoF = (d, nome) => d.locator('.compras-cartao-escolha', { hasText: nome });
-  ok(await df.locator('.compras-cartao-escolha').count() === 2 && await cartaoF(df, 'Produto').getAttribute('aria-pressed') === 'false' && await df.locator('input[type=checkbox][aria-label=Produto]').count() === 0, 'Categoria em dois cartões, sem as caixinhas antigas');
-  await cartaoF(df, 'Produto').click();
+  ok(await df.locator('.compras-cartao-escolha').count() === 2 && await cartaoF(df, 'Produto').getAttribute('aria-checked') === 'false' && await df.locator('[role=radiogroup] [role=radio]').count() === 2 && await df.locator('input[type=checkbox][aria-label=Produto]').count() === 0, 'Categoria em dois cartões, sem as caixinhas antigas');
   await cartaoF(df, 'Serviço').click();
-  ok(await cartaoF(df, 'Produto').getAttribute('aria-pressed') === 'true' && await cartaoF(df, 'Serviço').getAttribute('aria-pressed') === 'true', 'Os dois cartões ficam marcados');
-  ok((await df.locator('.stepper-item').nth(1).textContent()).includes('Dados do vendedor / prestador'), 'O título da 2ª etapa segue a categoria');
+  ok(await cartaoF(df, 'Serviço').getAttribute('aria-checked') === 'true' && (await df.locator('.stepper-item').nth(1).textContent()).includes('Dados do prestador'), 'Serviço marcado: a 2ª etapa vira Dados do prestador');
+  await cartaoF(df, 'Produto').click();
+  ok(await cartaoF(df, 'Produto').getAttribute('aria-checked') === 'true' && await cartaoF(df, 'Serviço').getAttribute('aria-checked') === 'false' && (await df.locator('.stepper-item').nth(1).textContent()).includes('Dados do vendedor'), 'Marcar Produto desmarca Serviço (escolha única) e a 2ª etapa volta a Dados do vendedor');
   ok(await df.getByLabel('CNPJ *', { exact: true }).isVisible() && await df.getByLabel('Razão social', { exact: true }).isVisible() && await df.getByLabel('Regime tributário', { exact: true }).isVisible() && await df.locator('fieldset').first().getByLabel('Regime tributário', { exact: true }).count() === 1, 'Pessoa jurídica: razão social, nome fantasia, CNPJ e regime tributário');
   await df.getByLabel('Razão social', { exact: true }).fill('Fornecedor CNPJ Teste Comércio Ltda');
   await df.getByLabel('Nome fantasia', { exact: true }).fill('Fornecedor CNPJ Teste');
@@ -123,8 +123,8 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   ok((await etapaF(df)).includes('Etapa 2 de 4'), 'Etapa 2: vendedor ou prestador');
   await avancar(df);
   ok((await erroF()).includes('WhatsApp'), 'WhatsApp do vendedor é obrigatório');
-  await df.getByLabel('Nome do vendedor / prestador', { exact: true }).fill('Responsável Teste');
-  await df.getByLabel('WhatsApp do vendedor / prestador *', { exact: true }).pressSequentially('31999990000');
+  await df.getByLabel('Nome do vendedor', { exact: true }).fill('Responsável Teste');
+  await df.getByLabel('WhatsApp do vendedor *', { exact: true }).pressSequentially('31999990000');
   await avancar(df);
   ok(await df.getByLabel('O mesmo da etapa anterior (financeiro)', { exact: true }).isVisible(), 'Etapa 3: financeiro, com "O mesmo da etapa anterior" em primeiro');
   await df.getByLabel('Nome do financeiro', { exact: true }).fill('Financeiro Teste');
@@ -135,7 +135,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await df.getByLabel('Cargo na empresa', { exact: true }).selectOption('gerente-comercial');
   await df.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).click();
   await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'));
-  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '11.222.333/0001-81' && f.tipoPessoa === 'juridica' && f.categorias.join() === 'produto,servico' && f.ramo.toUpperCase() === 'BEBIDAS' && f.nome.toUpperCase() === 'FORNECEDOR CNPJ TESTE' && f.razaoSocial.toUpperCase().includes('LTDA') && f.regimeTributario === 'simples' && f.contatoNome && f.financeiro.email === 'financeiro@exemplo.test' && f.representante.mesmo && f.representante.email === 'financeiro@exemplo.test' && f.representante.cargo === 'gerente-comercial' && !('vendedorCpf' in f))), 'Fornecedor pessoa jurídica salvo com as 4 etapas (o representante copia o financeiro e guarda o cargo)');
+  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '11.222.333/0001-81' && f.tipoPessoa === 'juridica' && f.categorias.join() === 'produto' && f.ramo.toUpperCase() === 'BEBIDAS' && f.nome.toUpperCase() === 'FORNECEDOR CNPJ TESTE' && f.razaoSocial.toUpperCase().includes('LTDA') && f.regimeTributario === 'simples' && f.contatoNome && f.financeiro.email === 'financeiro@exemplo.test' && f.representante.mesmo && f.representante.email === 'financeiro@exemplo.test' && f.representante.cargo === 'gerente-comercial' && !('vendedorCpf' in f))), 'Fornecedor pessoa jurídica salvo com as 4 etapas (o representante copia o financeiro e guarda o cargo)');
   // Segundo fornecedor, só Serviço; aniversário do prestador (mês e ano) é opcional
   await p.locator('.view.show .people-add-control').click();
   const dp = p.locator('dialog.compras-dialog[open]').last();

@@ -52,8 +52,8 @@
    * Ícones da linha pela categoria, iguais nos dois caminhos de entrada (decisão do Rodrigo, 15/11/2026):
    * o desenho é o próprio ícone da linha do menu (o bonequinho de fornecedor), lido de onde o menu lê (iconeLinha,
    * em index.html), para acompanhar se o ícone do menu for trocado. Produto = ícone de MER - Fornecedores em verde
-   * (cor de Mercadorias); Serviço = ícone de DES - Fornecedores em vermelho (cor de Despesas); os dois = dois ícones
-   * lado a lado; sem categoria = o mesmo ícone em cinza. O nome da categoria também vai escrito na linha.
+   * (cor de Mercadorias); Serviço = ícone de DES - Fornecedores em vermelho (cor de Despesas); sem categoria
+   * escolhida (nenhuma, ou as duas de um cadastro antigo) = o mesmo ícone em cinza. O nome da categoria também vai escrito na linha.
    */
   function iconeDoMenu(grupo, linha) {
     try {
@@ -63,13 +63,12 @@
     return { icone: 'fornecedor' };
   }
   function iconesDaCategoria(f) {
-    const cats = Array.isArray(f.categorias) ? f.categorias : [];
+    const cat = D.categoriaFornecedor(f);
     const mer = iconeDoMenu('3:Cadastros Geral', 'MER - Fornecedores');
     const des = iconeDoMenu('2:Cadastros Geral', 'DES - Fornecedores');
-    const r = [];
-    if (cats.includes('produto')) r.push({ ...mer, cor: corMercadorias(), rotulo: 'Produto' });
-    if (cats.includes('servico')) r.push({ ...des, cor: corDespesas(), rotulo: 'Serviço' });
-    return r.length ? r : [{ ...mer, cor: 'var(--navigation-ink, #a2a0aa)', rotulo: 'Sem categoria' }];
+    if (cat === 'produto') return [{ ...mer, cor: corMercadorias(), rotulo: 'Produto' }];
+    if (cat === 'servico') return [{ ...des, cor: corDespesas(), rotulo: 'Serviço' }];
+    return [{ ...mer, cor: 'var(--navigation-ink, #a2a0aa)', rotulo: 'Sem categoria' }];
   }
   /* ---------- Enviar link para cadastro (P-29): a parte visível existe; o envio está desligado ---------- */
   const PRAZOS_CONVITE = [['1', '1 dia útil'], ['3', '3 dias úteis'], ['5', '5 dias úteis'], ['7', '7 dias úteis'], ['data', 'Escolher data e hora']];
@@ -172,7 +171,7 @@
     const tela = telasF[origemF];
     const lista = S.dados.fornecedores
       .filter((f) => U.dobrar([f.nome, f.razaoSocial, f.documento, f.whatsapp, f.contatoNome, f.ramo, D.nomeCategoriasFornecedor(f)].join(' ')).includes(U.dobrar(buscaF[origemF])))
-      // Organizada pela categoria (pedido do Rodrigo): Produto, Produto e Serviço, Serviço e, por último, sem categoria;
+      // Organizada pela categoria (pedido do Rodrigo): Produto, Serviço e, por último, sem categoria escolhida;
       // dentro de cada uma, os ativos antes dos inativos e, entre eles, por nome.
       .sort((a, b) => ordemCategoria(a) - ordemCategoria(b) || (a.situacao === b.situacao ? 0 : a.situacao === 'ativo' ? -1 : 1) || a.nome.localeCompare(b.nome, 'pt-BR'));
     // Busca pela lupa do rodapé (um caminho só para buscar). O cadastro novo é a bolinha "+" do cabeçalho da lista.
@@ -276,11 +275,10 @@
       renderFornecedores();
     }, coresF());
   }
-  /** Posição do fornecedor na lista pela categoria: Produto, Produto e Serviço, Serviço, sem categoria. */
+  /** Posição do fornecedor na lista pela categoria: Produto, Serviço, sem categoria escolhida. */
   function ordemCategoria(f) {
-    const c = Array.isArray(f.categorias) ? f.categorias : [];
-    const p = c.includes('produto'); const s = c.includes('servico');
-    return p && s ? 1 : p ? 0 : s ? 2 : 3;
+    const cat = D.categoriaFornecedor(f);
+    return cat === 'produto' ? 0 : cat === 'servico' ? 1 : 2;
   }
   /** O que falta no cadastro para os obrigatórios de 15/11/2026 (só para avisar na lista; quem já existia continua valendo). */
   function pendencias(f) {
@@ -322,11 +320,11 @@
           servico: { ...iconeDoMenu('2:Cadastros Geral', 'DES - Fornecedores'), cor: corDespesas(), detalhe: 'Presta serviços' },
         };
         const catOpcoes = U.cartoesEscolha({
-          rotulo: 'Categoria',
+          rotulo: 'Categoria', multiplo: false,
           opcoes: D.CATEGORIAS_FORNECEDOR.map(([id, nomeCat]) => ({ id, titulo: nomeCat, ...desenhoCat[id], marcado: Array.isArray(f?.categorias) && f.categorias.includes(id) })),
           aoMudar: () => { barra.update(etapas(), atual); pintarVendedor(); },
         });
-        catBox.append(el('span', 'compras-rotulo', 'Categoria *'), catOpcoes, el('small', 'profiles-note', 'Toque em uma ou nas duas.'));
+        catBox.append(el('span', 'compras-rotulo', 'Categoria *'), catOpcoes, el('small', 'profiles-note', 'Toque em uma: Produto ou Serviço.'));
         // Fornecedor é sempre por CNPJ. Razão social e Nome fantasia; o campo salvo de uso é sempre "nome" (o que
         // cotação, pedido e recebimento mostram); a razão social é um campo a mais.
         const razao = texto(f?.razaoSocial, { maxLength: 160 });
