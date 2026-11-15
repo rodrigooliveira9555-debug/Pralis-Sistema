@@ -100,7 +100,7 @@
   (o mesmo de Documentações e Ocorrências), que **não** é sincronizado: o áudio só existe no aparelho em que foi gravado.
   Gravação por `dist/audio-nota.js` (`CicluzAudioNota`), peça única usada também por `occurrence-matrix.js`.
 
-**Preferência de interface:** `cicluz-fornecedores-colunas` (lista das colunas ocultas na lista de fornecedores, por aparelho; 15/11/2026), `tema`, `menu-ordem`, `menu-item-order-v1`, `sidebar-sections-v1`,
+**Preferência de interface:** `cicluz-fornecedores-colunas` (lista das colunas ocultas na lista de fornecedores, por aparelho; 15/11/2026), `cicluz-fornecedores-prazo-convite` (prazo padrão de resposta do "Enviar link para cadastro", em dias úteis: '1' | '3' | '5' | '7'; sem valor = 3; por aparelho, até existir a parte do servidor da P-29; 15/11/2026), `tema`, `menu-ordem`, `menu-item-order-v1`, `sidebar-sections-v1`,
 `menu-visibility`, `people-display-v1`, `people-footer-*`, `{key}-sort`, `{key}-display`,
 `fee-brand-order-{id}`, `account-sort`.
 

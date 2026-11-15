@@ -154,7 +154,12 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await enviarF.click();
   const painelF = p.locator('.view.show .compras-enviar-painel');
   ok(await painelF.isVisible() && await painelF.locator('.compras-enviar-canais button').count() === 4 && await painelF.locator('select').inputValue() === '3', 'Enviar abre o painel com fechar, WhatsApp, e-mail e SMS e o prazo padrão de 3 dias úteis');
+  // Trocar o prazo guarda o novo padrão para os próximos envios (preferência do aparelho); data e hora não vira padrão.
+  await painelF.locator('select').selectOption('5');
+  ok(await p.evaluate(() => localStorage.getItem('cicluz-fornecedores-prazo-convite')) === '5' && (await painelF.textContent()).includes('Tipo de envio'), 'O prazo escolhido fica guardado como padrão e o painel mostra o Tipo de envio');
   await painelF.locator('select').selectOption('data');
+  ok(await p.evaluate(() => localStorage.getItem('cicluz-fornecedores-prazo-convite')) === '5', 'Data e hora não troca o padrão guardado');
+  await p.evaluate(() => localStorage.removeItem('cicluz-fornecedores-prazo-convite'));
   ok(await painelF.getByLabel('Hora', { exact: true }).isVisible(), 'O prazo aceita data e hora');
   for (const canal of ['WhatsApp', 'E-mail', 'SMS']) {
     await painelF.locator('button[aria-label="Enviar por ' + canal + '"]').click();

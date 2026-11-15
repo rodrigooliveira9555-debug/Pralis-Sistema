@@ -74,6 +74,14 @@
   /* ---------- Enviar link para cadastro (P-29): a parte visível existe; o envio está desligado ---------- */
   const PRAZOS_CONVITE = [['1', '1 dia útil'], ['3', '3 dias úteis'], ['5', '5 dias úteis'], ['7', '7 dias úteis'], ['data', 'Escolher data e hora']];
   const CANAIS_CONVITE = [['whatsapp', 'WhatsApp'], ['email', 'E-mail'], ['sms', 'SMS']];
+  /* Prazo padrão dos convites: preferência do sistema neste aparelho (não é dado de fornecedor). Vem preenchido com o
+     último prazo em dias úteis escolhido (3 enquanto ninguém trocar); "data e hora" vale só para aquele envio. */
+  const CHAVE_PRAZO_CONVITE = 'cicluz-fornecedores-prazo-convite';
+  const prazoPadraoConvite = () => {
+    try { const v = localStorage.getItem(CHAVE_PRAZO_CONVITE); if (PRAZOS_CONVITE.some(([id]) => id === v && id !== 'data')) return v; } catch (e) { /* sem preferência salva */ }
+    return '3';
+  };
+  const guardarPrazoConvite = (v) => { if (v === 'data') return; try { localStorage.setItem(CHAVE_PRAZO_CONVITE, v); } catch (e) { /* vale só nesta visita */ } };
   /**
    * ÚNICO ponto para ligar o envio quando a P-29 (parte do servidor) for decidida: recebe o canal e o prazo e deve
    * devolver { url } para abrir (wa.me, mailto:, sms:) com a mensagem e o link do convite. Hoje devolve null, porque
@@ -117,16 +125,18 @@
       return x;
     };
     const canais = el('div', 'compras-enviar-canais');
+    canais.setAttribute('role', 'group');
+    canais.setAttribute('aria-label', 'Tipo de envio');
     const fechar = bolinha('Fechar', U.ICONES.voltar, () => { abrir(false); b.focus(); }, 'compras-enviar-fechar');
     const aviso = el('p', 'profiles-note');
     aviso.setAttribute('role', 'status');
-    const prazo = seletor(PRAZOS_CONVITE, '3');
+    const prazo = seletor(PRAZOS_CONVITE, prazoPadraoConvite());
     const data = entrada('date', '');
     const hora = entrada('time', '');
     const dataCampo = campo('Responder até (data)', data);
     const horaCampo = campo('Hora', hora);
     const pintarPrazo = () => { const livre = prazo.value === 'data'; dataCampo.style.display = livre ? '' : 'none'; horaCampo.style.display = livre ? '' : 'none'; };
-    prazo.onchange = pintarPrazo;
+    prazo.onchange = () => { pintarPrazo(); guardarPrazoConvite(prazo.value); };
     const lerPrazo = () => (prazo.value === 'data' ? { tipo: 'data', data: data.value, hora: hora.value } : { tipo: 'dias-uteis', dias: Number(prazo.value) });
     canais.append(fechar, ...CANAIS_CONVITE.map(([id, nomeCanal]) => bolinha('Enviar por ' + nomeCanal, U.ICONES[id], () => {
       const convite = conviteCadastro(id, lerPrazo());
@@ -134,7 +144,9 @@
       window.open(convite.url, '_blank', 'noopener');
     })));
     const lado = el('div', 'compras-enviar-prazo');
-    lado.append(campo('Prazo de resposta', prazo), dataCampo, horaCampo, aviso);
+    const tipo = el('div', 'compras-campo');
+    tipo.append(el('span', 'compras-rotulo', 'Tipo de envio'), el('small', 'profiles-note', 'Toque em WhatsApp, e-mail ou SMS, nos ícones ao lado.'));
+    lado.append(campo('Prazo de resposta', prazo), dataCampo, horaCampo, tipo, aviso);
     pintarPrazo();
     painel.append(canais, lado);
     painel.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); abrir(false); b.focus(); } });
