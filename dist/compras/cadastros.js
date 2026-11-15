@@ -609,7 +609,22 @@
           if (cat === 'servico') desenharGrupos();
         };
 
-        const quadros = [etapa1, etapa2, fin.no, rep.no, s5];
+        /* ----- Etapa 6: contrato. Vigência, valor (só informado, sem fórmula; guardado em centavos) e observações.
+           O anexo do modelo de contrato e o preenchimento com os dados do cadastro ainda não existem (em definição). ----- */
+        const s6 = el('fieldset', 'compras-fieldset');
+        s6.append(el('legend', null, 'Contrato'));
+        const cInicio = entrada('date', f?.contrato?.inicio || '');
+        const cFim = entrada('date', f?.contrato?.fim || '');
+        const cValor = entrada('text', f?.contrato?.valorCentavos != null ? D.moeda(f.contrato.valorCentavos / 100) : '', { inputMode: 'decimal', placeholder: 'R$ 0,00', maxLength: 20 });
+        const cObs = el('textarea');
+        cObs.rows = 4; cObs.maxLength = 2000; cObs.value = f?.contrato?.observacoes || '';
+        const obsCampo = campo('Observações do contrato', cObs);
+        obsCampo.classList.add('compras-largo');
+        s6.append(campo('Início do contrato', cInicio), campo('Fim do contrato', cFim), campo('Valor do contrato', cValor, 'Só o valor combinado; não gera lançamento.'), obsCampo,
+          el('p', 'profiles-note compras-largo', 'O anexo do modelo de contrato ainda não está disponível.'));
+        const lerValorContrato = () => { const n = String(cValor.value).trim() ? D.lerNumero(cValor.value) : null; return n == null ? (String(cValor.value).trim() ? NaN : null) : Math.round(n * 100); };
+
+        const quadros = [etapa1, etapa2, fin.no, rep.no, s5, s6];
         const marcadas = () => catOpcoes.marcados();
         const etapas = () => D.etapasFornecedor(marcadas()).map((label) => ({ label }));
         let atual = 0;
@@ -665,6 +680,7 @@
             vendedorAniversario: DF.monthParse(vAniv.value) || vAniv.value.trim(),
             // Serviço: a lista de prestadores; o 1º espelha o contato acima (é dele que a lista e a cotação leem).
             // Produto: a chave não vai, para não apagar prestadores gravados se a categoria for trocada por engano.
+            contrato: { inicio: cInicio.value, fim: cFim.value, valorCentavos: lerValorContrato(), observacoes: cObs.value.trim() },
             // Grupos de despesa: só na categoria Serviço (em Produto a chave não vai, para não apagar o que estava gravado).
             ...(ehServico() ? { gruposDespesaIds: [...gruposEscolhidos] } : {}),
             ...(ehServico() ? { prestadores: [
@@ -678,9 +694,10 @@
         form.append(barra.el, ...quadros, erroEtapa, nav);
         ir(0);
         // Produtos marcados agora (categoria Produto): viram vínculo no mesmo catálogo do Compras ao salvar.
-        return { ler, ir, novosProdutos: () => (marcadas().join() === 'produto' ? [...novosProdutos] : []) };
+        return { ler, ir, datasContrato: [cInicio, cFim], novosProdutos: () => (marcadas().join() === 'produto' ? [...novosProdutos] : []) };
       },
       salvar: (c) => {
+        if (c.datasContrato.some((d2) => !d2.checkValidity())) { c.ir(5); return 'Confira as datas do contrato: use DD/MM/AA.'; }
         const campos = c.ler();
         const faltas = D.validarFornecedorEtapas(campos, R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador });
         const etapaComFalta = faltas.findIndex(Boolean);

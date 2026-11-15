@@ -63,7 +63,8 @@
 - **Fornecedor único (15/11/2026)**, dentro de `cicluz-compras-v1` (mesma chave e versão). Campos do fornecedor: `nome`,
   `documento`, `whatsapp` e `situacao` (já existiam), mais `razaoSocial` (texto, opcional; o `nome` é o nome fantasia, e
   continua sendo o nome exibido em todo o sistema, sem migração), `categorias` (lista com 'produto' e/ou 'servico'), `ramo`
-  (texto, opcional), `gruposDespesaIds` (só categoria Serviço, 15/11/2026: ids dos grupos de `cicluz-financial-hierarchy-v1`.despesas a que o prestador
+  (texto, opcional), `contrato` (15/11/2026, opcional: `{ inicio, fim (AAAA-MM-DD ou ''), valorCentavos (inteiro ou null; só informado, sem fórmula), observacoes }`;
+  sem anexo ainda), `gruposDespesaIds` (só categoria Serviço, 15/11/2026: ids dos grupos de `cicluz-financial-hierarchy-v1`.despesas a que o prestador
   está ligado; só vínculo, sem lançamento; o vínculo com **produtos** não é campo do fornecedor: é o `catalogo` que já existia, e a etapa
   Vínculos só acrescenta registros lá), `prestadores` (só categoria Serviço, 15/11/2026: `[{ id, nome, whatsapp, email, aniversario 'AAAA-MM', funcoes: [ids] }]`; o 1º espelha
   `contatoNome`/`whatsapp`/`email`/`vendedorAniversario`, que continuam sendo o que a lista e a cotação leem; migração

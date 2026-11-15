@@ -248,7 +248,7 @@
   /** Etapas do cadastro (decisão do Rodrigo, 15/11/2026), nomes padronizados "Dados do …". A 2ª depende da categoria. */
   function etapasFornecedor(categorias) {
     const c = Array.isArray(categorias) ? categorias : [];
-    return ['Dados da empresa', 'Dados do ' + quemVendeFornecedor(c), 'Dados do financeiro', 'Dados do representante', 'Vínculos'];
+    return ['Dados da empresa', 'Dados do ' + quemVendeFornecedor(c), 'Dados do financeiro', 'Dados do representante', 'Vínculos', 'Contrato'];
   }
   /**
    * Migração (marca d.migracoes.vendedorFornecedor): no cadastro em etapas o contato do fornecedor é o vendedor ou
@@ -362,7 +362,19 @@
     };
     // Vínculos: grupos de despesa (Serviço) vão por id; a lista só guarda o vínculo, sem lançamento nem regra de dinheiro.
     const vinculos = () => (f.gruposDespesaIds != null && (!Array.isArray(f.gruposDespesaIds) || f.gruposDespesaIds.some((id) => !id || typeof id !== 'string')) ? 'Grupo de despesa inválido.' : '');
-    return [basico(), vendedor(), contato(f.financeiro, 'financeiro'), representante(), vinculos()];
+    // Contrato: tudo opcional. Vigência por datas (AAAA-MM-DD), valor só informado (inteiro em centavos, sem fórmula) e observações.
+    const contrato = () => {
+      const c = f.contrato;
+      if (c == null) return '';
+      if (typeof c !== 'object') return 'Contrato inválido.';
+      const dataRuim = (v) => Boolean(v) && !/^\d{4}-\d{2}-\d{2}$/.test(v);
+      if (dataRuim(c.inicio) || dataRuim(c.fim)) return 'Confira as datas do contrato: use DD/MM/AA.';
+      if (c.inicio && c.fim && c.fim < c.inicio) return 'O fim do contrato não pode ser antes do início.';
+      if (c.valorCentavos != null && (!Number.isInteger(c.valorCentavos) || c.valorCentavos < 0)) return 'Valor do contrato inválido.';
+      if (String(c.observacoes || '').length > 2000) return 'As observações do contrato devem ter no máximo 2000 caracteres.';
+      return '';
+    };
+    return [basico(), vendedor(), contato(f.financeiro, 'financeiro'), representante(), vinculos(), contrato()];
   }
   /** Primeiro impedimento do cadastro inteiro, ou ''. */
   const validarFornecedor = (f, regras, ctx) => validarFornecedorEtapas(f, regras, ctx).find(Boolean) || '';

@@ -76,7 +76,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   const etapaF = (d) => d.locator('.stepper-summary').textContent();
   const avancar = (d) => d.locator('.compras-etapas-nav button', { hasText: 'Avançar' }).click();
   // Cadastro em 4 etapas, com a barra de etapas do sistema
-  ok((await etapaF(df)).includes('Etapa 1 de 5') && await df.locator('.stepper-item').count() === 5, 'Cadastro de fornecedor abre na etapa 1 de 5');
+  ok((await etapaF(df)).includes('Etapa 1 de 6') && await df.locator('.stepper-item').count() === 6, 'Cadastro de fornecedor abre na etapa 1 de 6');
   // As consultas de CNPJ e CEP não saem para a rede no teste: a resposta é simulada aqui, com dados fictícios.
   await p.route('https://brasilapi.com.br/**', (r) => {
     const u = r.request().url();
@@ -120,7 +120,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await df.getByLabel('UF', { exact: true }).evaluate((s) => new Promise((ok2) => { const t = setInterval(() => { if (s.value === 'SP') { clearInterval(t); ok2(); } }, 50); }));
   ok(await df.getByLabel('Cidade', { exact: true }).inputValue() === 'Cidade Dois' && await df.getByLabel('Rua / logradouro', { exact: true }).inputValue() === 'Praça Teste' && await df.getByLabel('Número', { exact: true }).inputValue() === '' && await df.getByLabel('Complemento', { exact: true }).inputValue() === '' && await df.getByLabel('Bairro', { exact: true }).inputValue() === 'Bairro digitado', 'Trocar o CEP troca rua, cidade e UF em bloco, esvazia número e complemento da consulta anterior e mantém o bairro digitado');
   await avancar(df);
-  ok((await etapaF(df)).includes('Etapa 2 de 5'), 'Etapa 2: vendedor ou prestador');
+  ok((await etapaF(df)).includes('Etapa 2 de 6'), 'Etapa 2: vendedor ou prestador');
   await avancar(df);
   ok((await erroF()).includes('WhatsApp'), 'WhatsApp do vendedor é obrigatório');
   await df.getByLabel('Nome do vendedor', { exact: true }).fill('Responsável Teste');
@@ -137,9 +137,18 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await avancar(df);
   ok((await etapaF(df)).includes('Vínculos') && await df.getByLabel('Buscar produto', { exact: true }).isVisible() && await df.locator('.compras-chip', { hasText: 'inativo' }).count() === 0, 'Etapa 5: Vínculos, com os produtos para a categoria Produto');
   await df.locator('.compras-vinculos-lista input[type=checkbox]:not(:disabled)').first().check();
+  // Etapa 6, Contrato: vigência, valor (guardado em centavos) e observações.
+  await avancar(df);
+  ok((await etapaF(df)).includes('Contrato'), 'Etapa 6: Contrato');
+  await df.getByLabel('Início do contrato', { exact: true }).fill('01/01/26');
+  await df.getByLabel('Fim do contrato', { exact: true }).fill('31/12/25');
+  await df.getByLabel('Valor do contrato', { exact: true }).fill('1.500,00');
+  await df.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).click();
+  ok((await erroF()).includes('antes do início'), 'Fim do contrato antes do início é recusado');
+  await df.getByLabel('Fim do contrato', { exact: true }).fill('31/12/26');
   await df.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).click();
   await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'));
-  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '11.222.333/0001-81' && CicluzComprasDados.dados.catalogo.filter((v) => v.fornecedorId === f.id && v.status === 'aprovado').length === 1 && f.tipoPessoa === 'juridica' && f.categorias.join() === 'produto' && f.ramo.toUpperCase() === 'BEBIDAS' && f.nome.toUpperCase() === 'FORNECEDOR CNPJ TESTE' && f.razaoSocial.toUpperCase().includes('LTDA') && f.regimeTributario === 'simples' && f.contatoNome && f.financeiro.email === 'financeiro@exemplo.test' && f.representante.mesmo && f.representante.email === 'financeiro@exemplo.test' && f.representante.cargo === 'gerente-comercial' && !('vendedorCpf' in f))), 'Fornecedor pessoa jurídica salvo com as 4 etapas (o representante copia o financeiro e guarda o cargo)');
+  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '11.222.333/0001-81' && f.contrato.valorCentavos === 150000 && f.contrato.inicio === '2026-01-01' && f.contrato.fim === '2026-12-31' && CicluzComprasDados.dados.catalogo.filter((v) => v.fornecedorId === f.id && v.status === 'aprovado').length === 1 && f.tipoPessoa === 'juridica' && f.categorias.join() === 'produto' && f.ramo.toUpperCase() === 'BEBIDAS' && f.nome.toUpperCase() === 'FORNECEDOR CNPJ TESTE' && f.razaoSocial.toUpperCase().includes('LTDA') && f.regimeTributario === 'simples' && f.contatoNome && f.financeiro.email === 'financeiro@exemplo.test' && f.representante.mesmo && f.representante.email === 'financeiro@exemplo.test' && f.representante.cargo === 'gerente-comercial' && !('vendedorCpf' in f))), 'Fornecedor pessoa jurídica salvo com as 4 etapas (o representante copia o financeiro e guarda o cargo)');
   // Segundo fornecedor, só Serviço; aniversário do prestador (mês e ano) é opcional
   await p.locator('.view.show .people-add-control').click();
   const dp = p.locator('dialog.compras-dialog[open]').last();
@@ -160,6 +169,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await dp.getByLabel('Aniversário', { exact: true }).pressSequentially('031990');
   await avancar(dp); await avancar(dp); await avancar(dp);
   ok(await dp.locator('[aria-label="Grupos de despesa"]').isVisible() && await dp.getByLabel('Buscar produto', { exact: true }).isHidden(), 'Etapa 5 na categoria Serviço: grupos de despesa, sem a lista de produtos');
+  await avancar(dp);
   await dp.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).click();
   await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'));
   ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '11.444.777/0001-61' && f.tipoPessoa === 'juridica' && f.vendedorAniversario === '1990-03' && f.categorias.join() === 'servico' && f.prestadores.length === 2 && f.prestadores[0].funcoes.length === 2 && f.prestadores[0].whatsapp === f.whatsapp && f.prestadores[1].nome.toUpperCase() === 'SEGUNDO PRESTADOR TESTE')), 'Segundo fornecedor salvo com CNPJ, categoria Serviço e dois prestadores (o 1º espelha o contato, com duas funções)');
