@@ -77,7 +77,9 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   const avancar = (d) => d.locator('.compras-etapas-nav button', { hasText: 'Avançar' }).click();
   // Cadastro em 4 etapas, com a barra de etapas do sistema
   ok((await etapaF(df)).includes('Etapa 1 de 4') && await df.locator('.stepper-item').count() === 4, 'Cadastro de fornecedor abre na etapa 1 de 4');
-  ok(await df.getByLabel('CPF *', { exact: true }).isHidden() && await df.getByLabel('CNPJ *', { exact: true }).isHidden(), 'Sem tipo de pessoa, nem CPF nem CNPJ aparecem');
+  // As consultas de CNPJ e CEP não saem para a rede no teste: respondem como serviço indisponível.
+  await p.route('https://brasilapi.com.br/**', (r) => r.abort());
+  ok((await etapaF(df)).includes('Dados da empresa') && await df.getByLabel('Tipo de pessoa *', { exact: true }).inputValue() === 'juridica' && await df.getByLabel('CNPJ *', { exact: true }).isVisible() && await df.getByLabel('CPF *', { exact: true }).isHidden() && await df.getByLabel('CEP', { exact: true }).isVisible(), 'Etapa 1 é Dados da empresa: abre em pessoa jurídica, com CNPJ e o endereço por CEP');
   ok(await df.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).count() === 0, 'No cadastro novo o Salvar só aparece na última etapa');
   await avancar(df);
   ok((await erroF()).includes('categoria') && (await etapaF(df)).includes('Etapa 1'), 'Avançar confere a etapa: categoria é obrigatória');
