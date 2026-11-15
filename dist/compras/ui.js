@@ -225,16 +225,34 @@
     return box;
   }
 
-  /** Linha de lista no padrão das listas do S2 (moldura única, divisor fino). */
-  function linhaLista({ icone, titulo, detalhe, direita, aoClicar }) {
-    const r = el(aoClicar ? 'button' : 'div', 'compras-linha');
-    if (aoClicar) { r.type = 'button'; r.onclick = aoClicar; }
+  /**
+   * Linha de lista no padrão das listas do S2 (moldura única, divisor fino).
+   * acoes: { rotulo, lista, aoEditar, aoExcluir } põe à direita a setinha dos cadastros de grupos
+   * (createFinancialActions, de financial-components.js): tocar na seta revela Editar e Excluir; tocar
+   * na linha edita. Com acoes a linha não é um <button>, para não haver botão dentro de botão.
+   */
+  function linhaLista({ icone, titulo, detalhe, direita, aoClicar, acoes }) {
+    const r = el(aoClicar && !acoes ? 'button' : 'div', 'compras-linha');
+    if (aoClicar && !acoes) { r.type = 'button'; r.onclick = aoClicar; }
     if (icone) { const i = el('span', 'compras-linha-icone'); i.innerHTML = svg(ICONES[icone] || icone); r.append(i); }
     const meio = el('span', 'compras-linha-texto');
     meio.append(el('b', null, titulo));
     if (detalhe) meio.append(el('small', null, detalhe));
     r.append(meio);
     if (direita) { const d = el('span', 'compras-linha-direita'); d.append(...[].concat(direita)); r.append(d); }
+    if (acoes) {
+      // account-list-row: é a classe que o fechamento "tocar fora" do componente procura.
+      r.classList.add('com-acoes', 'account-list-row');
+      r.tabIndex = 0;
+      const { arrow, actions } = createFinancialActions({ label: acoes.rotulo, container: acoes.lista, onEdit: acoes.aoEditar, onDelete: acoes.aoExcluir });
+      r.append(arrow, actions);
+      r.onclick = (e) => {
+        if (e.target.closest('button')) return;
+        if (!actions.hidden) { actions.hidden = true; arrow.setAttribute('aria-expanded', 'false'); return; }
+        acoes.aoEditar();
+      };
+      r.onkeydown = (e) => { if (e.target === r && e.key === 'Enter') { e.preventDefault(); acoes.aoEditar(); } };
+    }
     return r;
   }
 

@@ -442,7 +442,7 @@ for (const largura of [320, 390, 1024]) {
     await fechado(p);
     // Cadastro do bem com peças, revisão e áudio
     await p.evaluate(() => CicluzProducao.abrir('patrimonio'));
-    await p.locator('#producao-patrimonio button.compras-linha').first().click();
+    await p.locator('#producao-patrimonio .compras-linha.com-acoes').first().click();
     await dialogo(p).locator('button', { hasText: 'Adicionar peça' }).click();
     await dialogo(p).getByLabel('Peça 1', { exact: true }).fill('Resistência do forno de lastro');
     await p.waitForTimeout(150);

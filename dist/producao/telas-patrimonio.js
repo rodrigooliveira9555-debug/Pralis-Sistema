@@ -92,11 +92,28 @@
       vis.forEach((b) => lista.append(U.linhaLista({
         icone: 'patrimonio', titulo: b.nome, detalhe: detalhe(b),
         direita: [b.ativo === false ? U.situacao('Inativo', 'neutro') : null, avisoManutencao(b)].filter(Boolean),
-        aoClicar: () => formulario(b),
+        // Mesma linha dos cadastros de grupos: tocar edita; a setinha revela Editar e Excluir.
+        acoes: { rotulo: b.nome, lista, aoEditar: () => formulario(b), aoExcluir: () => excluir(b) },
       })));
     }
     desenha();
     tela.body.replaceChildren(topo, acoes, filtros, sec);
+  }
+
+  /**
+   * Lixeira da linha. Bem usado em ficha técnica ou formato de produto não é excluído: a lixeira oferece
+   * inativar, e se já está inativo só explica. Sem uso, exclui depois de confirmar.
+   */
+  function excluir(b) {
+    const usos = SV.usosDoBem(b.id);
+    if (!usos.length) {
+      return U.confirmar('Excluir bem', 'Excluir "' + b.nome + '"? Não dá para desfazer.', 'Excluir', () => { const r = SV.excluirBem(b.id); if (r.erro) return r.erro; U.avisar('Bem excluído.'); }, cores);
+    }
+    const onde = 'Usado em: ' + usos.slice(0, 3).join(', ') + (usos.length > 3 ? '…' : '') + '.';
+    if (b.ativo === false) {
+      return U.dialogo({ titulo: 'Bem não pode ser excluído', ...cores, montar: (form) => { form.append(el('p', null, '"' + b.nome + '" já está inativo e não pode ser excluído enquanto estiver em uso. ' + onde)); } });
+    }
+    U.confirmar('Inativar bem', '"' + b.nome + '" não pode ser excluído enquanto estiver em uso. ' + onde + ' Inativar?', 'Inativar', () => { const r = SV.alternarBem(b.id); if (r.erro) return r.erro; U.avisar('Bem inativado.'); }, cores);
   }
 
   function formulario(b) {
@@ -233,7 +250,6 @@
           const rod = el('div', 'compras-form-rodape');
           rod.append(
             botao(b.ativo === false ? 'Reativar' : 'Inativar', () => { const r = SV.alternarBem(b.id); if (r.erro) return U.avisar(r.erro); form.closest('dialog').close(); U.avisar(b.ativo === false ? 'Bem reativado.' : 'Bem inativado.'); }),
-            botao('Excluir', () => { form.closest('dialog').close(); U.confirmar('Excluir bem', 'Excluir "' + b.nome + '"? Não dá para desfazer.', 'Excluir', () => { const r = SV.excluirBem(b.id); if (r.erro) return r.erro; U.avisar('Bem excluído.'); }, cores); }, 'btn secondary perigo-texto'),
           );
           form.append(rod);
         }

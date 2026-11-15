@@ -72,18 +72,74 @@
     acoes.append(botao('Cadastrar fornecedor', () => editarFornecedor(), 'btn'), botao('Editar categorias', () => editarCategorias()));
     const semWhats = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && !D.podeConvidar(f)).length;
     const incompletos = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && pendencias(f).length).length;
-    const tab = U.tabela([
-      ['Nome', (f) => { const s = el('span'); s.append(el('b', null, f.nome)); if (f.situacao !== 'ativo') s.append(' ', U.situacao('Inativo', 'neutro')); if (f.situacao === 'ativo' && pendencias(f).length) s.append(' ', U.situacao('Completar cadastro', 'atencao')); return s; }],
-      ['Documento', (f) => f.documento || '—'],
-      ['WhatsApp', (f) => { const m = D.motivoNaoConvidavel(f); return f.situacao === 'ativo' && m ? U.situacao(f.whatsapp ? f.whatsapp + ' · sem DDD' : 'Sem WhatsApp', 'atencao') : f.whatsapp || '—'; }],
-      ['Categoria', (f) => S.nomeCategoriaFornecedor(f.categoriaId) || '—'],
-    ], lista, { aoClicar: editarFornecedor, vazioTexto: buscaF ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.', classeLinha: (f) => (f.situacao !== 'ativo' ? 'inativo' : '') });
+    // Mesma linha dos cadastros de grupos: tocar edita; a setinha revela Editar e Excluir.
+    const sec = U.secao('Fornecedores', S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length);
+    const linhas = el('div', 'compras-lista');
+    sec.append(linhas);
+    if (!lista.length) linhas.append(U.vazio(buscaF ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.'));
+    lista.forEach((f) => {
+      const semDdd = f.situacao === 'ativo' && D.motivoNaoConvidavel(f);
+      linhas.append(U.linhaLista({
+        icone: 'fornecedor', titulo: f.nome,
+        detalhe: [S.nomeCategoriaFornecedor(f.categoriaId), f.documento, f.whatsapp, f.contatoNome].filter(Boolean).join(' · '),
+        direita: [
+          f.situacao !== 'ativo' ? U.situacao('Inativo', 'neutro') : null,
+          f.situacao === 'ativo' && pendencias(f).length ? U.situacao('Completar cadastro', 'atencao') : null,
+          semDdd ? U.situacao(f.whatsapp ? 'WhatsApp sem DDD' : 'Sem WhatsApp', 'atencao') : null,
+        ].filter(Boolean),
+        acoes: { rotulo: f.nome, lista: linhas, aoEditar: () => editarFornecedor(f), aoExcluir: () => excluirFornecedor(f) },
+      }));
+    });
     tela.body.replaceChildren(
       controles,
       acoes,
-      U.nota(lista.length + ' fornecedor(es), os mesmos em Despesas e em Mercadorias. ' + (incompletos ? incompletos + ' ativo(s) com cadastro a completar (toque para editar). ' : '') + (semWhats ? semWhats + ' ativo(s) sem WhatsApp válido não podem receber cotação. ' : '') + 'Fornecedor não é excluído: inative quando deixar de atender.'),
-      tab,
+      U.nota(lista.length + ' fornecedor(es), os mesmos em Despesas e em Mercadorias. ' + (incompletos ? incompletos + ' ativo(s) com cadastro a completar (toque para editar). ' : '') + (semWhats ? semWhats + ' ativo(s) sem WhatsApp válido não podem receber cotação. ' : '') + 'Fornecedor já usado em cotação, pedido, compra ou peça não é excluído: a lixeira inativa.'),
+      sec,
     );
+  }
+  /** Quantas vezes o id aparece na chave dada, em qualquer nível do dado (cotação, pedido, catálogo, histórico…). */
+  function contar(dado, chave, id) {
+    if (!dado || typeof dado !== 'object') return 0;
+    let n = 0;
+    for (const [k, v] of Object.entries(dado)) n += k === chave && v === id ? 1 : contar(v, chave, id);
+    return n;
+  }
+  /** Onde o fornecedor é usado: Compras (catálogo, histórico, cotações, pedidos), peças do patrimônio e compras de uniformes. */
+  function usosDoFornecedor(id) {
+    const usos = [];
+    const compras = contar({ ...S.dados, fornecedores: null }, 'fornecedorId', id);
+    if (compras) usos.push(compras + ' registro(s) do Compras (catálogo, histórico, cotação ou pedido)');
+    const bens = window.CicluzProducaoDados ? window.CicluzProducaoDados.patrimonio.dados.bens : [];
+    const pecas = contar(bens, 'fornecedorId', id);
+    if (pecas) usos.push(pecas + ' peça(s) do patrimônio');
+    let uniformes = 0;
+    try { uniformes = contar(JSON.parse(localStorage.getItem('cicluz-uniformes-v1') || 'null'), 'supplierId', id); } catch (e) { /* sem compras de uniformes */ }
+    if (uniformes) usos.push(uniformes + ' compra(s) de uniformes');
+    return usos;
+  }
+  /**
+   * Lixeira da linha. Fornecedor com vínculo não é excluído (regra do Compras): a lixeira oferece inativar, e se já
+   * está inativo só explica. Sem vínculo nenhum, exclui depois de confirmar.
+   */
+  function excluirFornecedor(f) {
+    const usos = usosDoFornecedor(f.id);
+    if (!usos.length) {
+      return U.confirmar('Excluir fornecedor', 'Excluir "' + f.nome + '"? Ele não tem cotação, pedido, compra nem peça vinculada. Não dá para desfazer.', 'Excluir', () => {
+        if (usosDoFornecedor(f.id).length) return 'Este fornecedor passou a ter vínculos. Inative em vez de excluir.';
+        if (!S.transacao((d) => { d.fornecedores = d.fornecedores.filter((x) => x.id !== f.id); })) return 'Não foi possível salvar neste navegador.';
+        U.avisar('Fornecedor excluído.');
+        renderFornecedores();
+      }, coresF());
+    }
+    const onde = 'Usado em: ' + usos.join('; ') + '.';
+    if (f.situacao !== 'ativo') {
+      return U.dialogo({ titulo: 'Fornecedor não pode ser excluído', ...coresF(), montar: (form) => { form.append(el('p', null, '"' + f.nome + '" já está inativo e não pode ser excluído, para o histórico não ficar sem fornecedor. ' + onde)); } });
+    }
+    U.confirmar('Inativar fornecedor', '"' + f.nome + '" não pode ser excluído, para o histórico não ficar sem fornecedor. ' + onde + ' Inativar? Ele deixa de aparecer para novas cotações e peças.', 'Inativar', () => {
+      if (!S.transacao((d) => { d.fornecedores.find((x) => x.id === f.id).situacao = 'inativo'; })) return 'Não foi possível salvar neste navegador.';
+      U.avisar('Fornecedor inativado.');
+      renderFornecedores();
+    }, coresF());
   }
   /** O que falta no cadastro para os obrigatórios de 15/11/2026 (só para avisar na lista; quem já existia continua valendo). */
   function pendencias(f) {

@@ -69,6 +69,22 @@ body.dark-theme .compras-conta { background: #34333b; color: #d4d4d8; }
 }
 .compras-lista > .compras-linha:first-child { border-top: 0; }
 button.compras-linha { cursor: pointer; }
+/* Linha com a setinha de ações dos cadastros de grupos (createFinancialActions): a seta revela Editar e Excluir,
+   redondos de --row-action-size, Editar na cor do menu e Excluir em vermelho, como nos grupos. */
+.compras-linha.com-acoes { cursor: pointer; flex-wrap: nowrap; }
+.compras-linha.com-acoes:hover, .compras-linha.com-acoes:focus-visible { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+.compras-linha.com-acoes .compras-linha-texto { flex-basis: 0; min-width: 0; }
+.compras-linha .account-action-toggle { flex: none; width: 32px; height: 32px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.compras-linha .account-row-actions { display: flex; flex: none; align-items: center; gap: var(--row-action-gap, 6px); }
+.compras-linha .account-row-actions[hidden] { display: none; }
+.compras-linha .account-row-actions > button { width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); flex: none; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: var(--theme-surface, #fff); }
+.compras-linha .account-row-actions > button:first-child { order: 1; background: var(--cicluz-danger, #ef4444); }
+.compras-linha .account-row-actions svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+/* No celular os selos descem para a linha de baixo, alinhados ao texto, e a seta fica na primeira linha. */
+@media (max-width: 560px) {
+  .compras-linha.com-acoes { flex-wrap: wrap; }
+  .compras-linha.com-acoes .compras-linha-direita { order: 5; flex: 1 0 100%; justify-content: flex-start; margin-left: 0; padding-left: 42px; box-sizing: border-box; }
+}
 button.compras-linha:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
 .compras-linha-icone { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--menu-accent); }
 .compras-linha-icone svg { width: 16px; height: 16px; fill: none; stroke: var(--theme-surface, #fff); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
