@@ -262,6 +262,14 @@ body.dark-theme .compras-trilha li { background: #34333b; color: #d4d4d8; }
 /* Itens do diálogo podem encolher: uma tabela larga rola dentro da própria caixa, sem passar da borda. */
 .compras-dialog .compras-form > * { min-width: 0; }
 .compras-fieldset { border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; padding: 12px 14px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; min-width: 0; }
+/* Quadro "Situação do(a) <coisa>" (U.quadroSituacao): moldura como a dos quadros do formulário; o interruptor é o
+   .account-status-switch dos cadastros financeiros, ligado na cor do menu de origem. */
+.compras-situacao-quadro { grid-column: 1 / -1; display: grid; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; padding: 12px 14px; background: var(--theme-card, #fff); font: 600 12px/1.4 var(--ui-font); min-width: 0; }
+.compras-situacao-quadro .account-status-row { height: 40px; margin-top: 6px; }
+.compras-situacao-quadro .account-status-switch[aria-checked=true] { background: var(--menu-accent); }
+.compras-situacao-quadro .account-status-switch:focus-visible { outline-color: var(--menu-accent); }
+.compras-situacao-quadro .account-status-text { font-size: 12px; }
+.compras-situacao-quadro > small { margin: 2px 0 0; font-weight: 400; }
 /* Campo preenchido por "O mesmo da etapa anterior": à vista, só para leitura. */
 .compras-fieldset input[readonly] { opacity: .7; cursor: default; }
 .compras-fieldset legend { padding: 0 6px; font: 600 13px/18px var(--ui-font); }

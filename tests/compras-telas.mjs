@@ -95,6 +95,12 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await df.getByLabel('Razão social', { exact: true }).fill('Fornecedor CNPJ Teste Comércio Ltda');
   await df.getByLabel('Nome fantasia', { exact: true }).fill('Fornecedor CNPJ Teste');
   await df.getByLabel('Regime tributário', { exact: true }).selectOption('simples');
+  // Ativo/inativo no quadro padrão "Situação do fornecedor" (interruptor), não em caixa de marcar.
+  const chaveF = df.getByRole('switch', { name: 'Situação do fornecedor' });
+  ok(await chaveF.getAttribute('aria-checked') === 'true' && (await df.locator('.compras-situacao-quadro .account-status-text').textContent()) === 'Ativo' && await df.getByLabel('Fornecedor ativo').count() === 0, 'Situação do fornecedor: interruptor ligado em Ativo, sem a caixa antiga');
+  await chaveF.click();
+  ok(await chaveF.getAttribute('aria-checked') === 'false' && (await df.locator('.compras-situacao-quadro .account-status-text').textContent()) === 'Inativo', 'O interruptor desliga e o texto vira Inativo');
+  await chaveF.click();
   await df.getByLabel('Ramo', { exact: true }).fill('Bebidas');
   await df.getByLabel('CNPJ *', { exact: true }).pressSequentially('11222333000180');
   ok((await df.getByLabel('CNPJ *', { exact: true }).inputValue()) === '11.222.333/0001-80', 'CNPJ com máscara (14 dígitos, sem cortar em 11)');

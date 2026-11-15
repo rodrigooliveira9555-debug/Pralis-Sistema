@@ -537,9 +537,38 @@
     a._t = setTimeout(() => a.classList.remove('show'), 3500);
   }
 
+  /**
+   * Quadro "Situação do(a) <coisa>" (regra do Rodrigo, 15/11/2026): o ativo/inativo de todo cadastro é este quadro
+   * com interruptor e o texto Ativo/Inativo ao lado, na cor do menu de origem. É o mesmo interruptor dos cadastros
+   * financeiros (.account-status / .account-status-switch de Grupos, Bandeiras e Contas), não uma caixa de marcar.
+   * Devolve o quadro; quadro.ativo lê (e escreve) o estado. feminino troca o texto para Ativa/Inativa.
+   */
+  function quadroSituacao(titulo, ativo, { dica = '', feminino = false, aoMudar } = {}) {
+    const quadro = el('div', 'account-status compras-situacao-quadro');
+    const linha = el('div', 'account-status-row');
+    const chave = el('button', 'account-status-switch');
+    chave.type = 'button';
+    chave.setAttribute('role', 'switch');
+    chave.setAttribute('aria-label', titulo);
+    chave.append(el('span'));
+    const texto = el('span', 'account-status-text');
+    let ligado = Boolean(ativo);
+    const pintar = () => {
+      chave.setAttribute('aria-checked', String(ligado));
+      texto.textContent = ligado ? (feminino ? 'Ativa' : 'Ativo') : (feminino ? 'Inativa' : 'Inativo');
+    };
+    chave.onclick = () => { ligado = !ligado; pintar(); if (aoMudar) aoMudar(ligado); };
+    pintar();
+    linha.append(chave, texto);
+    quadro.append(el('span', null, titulo), linha);
+    if (dica) quadro.append(el('small', 'profiles-note', dica));
+    Object.defineProperty(quadro, 'ativo', { get: () => ligado, set: (v) => { ligado = Boolean(v); pintar(); } });
+    return quadro;
+  }
+
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar,
+    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, quadroSituacao,
   };
 })();

@@ -258,9 +258,8 @@
         const regime = seletor(D.REGIMES_TRIBUTARIOS, f?.regimeTributario || '', 'Selecione');
         const regimeCampo = campo('Regime tributário', regime);
         const ramo = texto(f?.ramo, { maxLength: 80, placeholder: 'Ex.: Bebidas, Manutenção' });
-        const ativo = interruptor('Fornecedor ativo', f ? f.situacao === 'ativo' : true, 'Fornecedor inativo não aparece no seletor de cotação.');
-        ativo.classList.add('compras-largo');
-        // Ordem do Rodrigo: categoria, CNPJ (que puxa os dados), razão social, nome fantasia, regime tributário; depois o endereço; por último ramo e situação.
+        const situacao = U.quadroSituacao('Situação do fornecedor', f ? f.situacao === 'ativo' : true, { dica: 'Fornecedor inativo não aparece no seletor de cotação.' });
+        // Ordem do Rodrigo: categoria, CNPJ (que puxa os dados), razão social, nome fantasia, regime tributário; depois o endereço; por último ramo e o quadro Situação do fornecedor.
         const avisoCnpj = el('p', 'profiles-note compras-largo');
         avisoCnpj.setAttribute('role', 'status');
         s1.append(catBox, cnpjCampo, ...(docAntigo ? [avisoAntigo] : []), avisoCnpj, razaoCampo, nomeCampo, regimeCampo);
@@ -281,9 +280,9 @@
         sEnd.append(campo('CEP', cep), campo('Rua / logradouro', rua), campo('Número', numero), campo('Complemento', complemento), campo('Bairro', bairro), campo('Cidade', cidade), campo('UF', uf), avisoCep);
 
         const sResto = el('fieldset', 'compras-fieldset');
-        sResto.append(campo('Ramo', ramo), ativo);
+        sResto.append(campo('Ramo', ramo));
         const etapa1 = el('div', 'compras-etapa');
-        etapa1.append(s1, sEnd, sResto);
+        etapa1.append(s1, sEnd, sResto, situacao);
 
         /* Buscas (consultas-publicas.js): nunca trocam o que a pessoa digitou; se o serviço falhar, avisam discretamente
            e o cadastro segue à mão. Cada número é consultado uma vez. Um campo é "livre" para a consulta quando está
@@ -418,12 +417,10 @@
           quadros.forEach((q, k) => mostrar(q, k === atual));
           barra.update(etapas(), atual);
           erroEtapa.textContent = '';
-          // Botões pelo atributo hidden (o formato do botão retangular define display e venceria o estilo em linha).
-          // Na edição o Salvar aparece em todas as etapas; no cadastro novo, só na última.
-          voltar.hidden = atual === 0;
-          avancar.hidden = atual === quadros.length - 1;
-          // O Salvar entra e sai da barra (o formato padrão do botão de salvar força a exibição mesmo com hidden).
-          if (f || atual === quadros.length - 1) nav.append(salvarFim); else salvarFim.remove();
+          // Os botões entram e saem da barra (o formato padrão dos botões de rodapé força a exibição mesmo com hidden):
+          // Voltar a partir da 2ª etapa, Avançar até a penúltima; Salvar em todas na edição e só na última no cadastro novo.
+          const ultima = atual === quadros.length - 1;
+          nav.replaceChildren(...[atual > 0 && voltar, !ultima && avancar, (f || ultima) && salvarFim].filter(Boolean));
           const foco = quadros[atual].querySelector('input:not([type=checkbox]):not([readonly]),select');
           if (foco && form.isConnected) foco.focus();
         }
@@ -448,7 +445,7 @@
             // Texto incompleto segue como está para a validação recusar (não vira vazio em silêncio).
             vendedorAniversario: DF.monthParse(vAniv.value) || vAniv.value.trim(),
             financeiro: contato(fin), representante: { ...contato(rep), cargo: repCargo.value },
-            situacao: ativo.input.checked ? 'ativo' : 'inativo',
+            situacao: situacao.ativo ? 'ativo' : 'inativo',
           };
         }
         form.append(barra.el, ...quadros, erroEtapa, nav);

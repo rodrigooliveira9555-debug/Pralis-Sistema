@@ -248,14 +248,10 @@
           campo('Largura (cm)', larg), campo('Comprimento (cm)', comp), campo('Energia', energia), consumoCampo,
           U.nota('O consumo fica guardado para o custo de energia, que entra depois de as fórmulas de custo serem aprovadas.'));
         mostra();
-        if (b) {
-          const rod = el('div', 'compras-form-rodape');
-          rod.append(
-            botao(b.ativo === false ? 'Reativar' : 'Inativar', () => { const r = SV.alternarBem(b.id); if (r.erro) return U.avisar(r.erro); form.closest('dialog').close(); U.avisar(b.ativo === false ? 'Bem reativado.' : 'Bem inativado.'); }),
-          );
-          form.append(rod);
-        }
-        return { nome, categoria, marca, modelo, serie, numero, valor, local, capValor, capUn, larg, comp, energia, consumo, linhasPecas, revisaoUltima, revisaoCada, revisao, audio };
+        // Ativo/inativo no quadro padrão (substitui o botão Inativar/Reativar); vale ao salvar.
+        const situacao = U.quadroSituacao('Situação do patrimônio', b ? b.ativo !== false : true, { dica: 'Patrimônio inativo sai da lista (aparece com "Mostrar inativos") e das escolhas de equipamento.' });
+        form.append(situacao);
+        return { situacao, nome, categoria, marca, modelo, serie, numero, valor, local, capValor, capUn, larg, comp, energia, consumo, linhasPecas, revisaoUltima, revisaoCada, revisao, audio };
       },
       rotuloSalvar: 'Salvar bem',
       salvar: async (c) => {
@@ -289,6 +285,10 @@
         dados.audio = som.meta;
         const r = SV.salvarBem(dados);
         if (r.erro) return r.erro;
+        if (c.situacao.ativo !== (b ? b.ativo !== false : true)) {
+          const r2 = SV.alternarBem(r.id);
+          if (r2.erro) return r2.erro;
+        }
         U.avisar('Bem salvo.');
       },
     });
