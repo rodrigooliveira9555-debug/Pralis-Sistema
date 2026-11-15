@@ -60,7 +60,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
     ok(await p.locator('dialog.compras-dialog[open]', { hasText: titulo }).count() === 1, '"+" abre ' + titulo);
     await p.locator('dialog.compras-dialog[open] .people-close-control').click();
   }
-  // Fornecedores tem o botão visível Cadastrar fornecedor (pedido do Rodrigo, 15/11/2026); as outras telas seguem sem repetir o "+".
+  // Fornecedores tem a bolinha "+" no cabeçalho da lista (pedido do Rodrigo, 15/11/2026); as outras telas seguem sem repetir o "+".
   for (const [tela, rotulo] of [['agendamento', 'Novo agendamento'], ['cotacao', 'Pedido urgente'], ['conferencias', 'Agendar conferência'], ['unidades', 'Nova unidade']]) {
     await p.evaluate((n) => CicluzCompras.abrir(n), tela);
     ok(await p.locator('#compras-' + tela + ' .content button', { hasText: rotulo }).count() === 0, 'Sem botão repetido do "+" em ' + tela);
@@ -70,7 +70,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   ok(await p.evaluate(() => CicluzComprasDados.fornecedor('f-ambev').ramo === 'Bebidas' && !CicluzComprasDados.dados.fornecedores.some((f) => 'categoria' in f)), 'O texto livre antigo virou o ramo');
   ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.every((f) => ((f.categorias || []).join() === 'produto') === (CicluzComprasDominio.vinculosComProdutos(CicluzComprasDados.dados, f.id) > 0))), 'Fornecedor antigo ligado a produto virou Produto; sem vínculo, fica sem categoria');
   await p.evaluate(() => CicluzCompras.abrir('fornecedores'));
-  await p.locator('#compras-fornecedores button.btn', { hasText: 'Cadastrar fornecedor' }).click();
+  await p.locator('#compras-fornecedores .compras-secao-cab button[aria-label="Cadastrar fornecedor"]').click();
   const df = p.locator('dialog.compras-dialog[open]').last();
   const erroF = () => df.locator('.profiles-error').textContent();
   ok(await df.getByLabel('CPF *', { exact: true }).isHidden() && await df.getByLabel('CNPJ *', { exact: true }).isHidden(), 'Sem tipo de pessoa, nem CPF nem CNPJ aparecem');
@@ -114,7 +114,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   // DES - Fornecedores abre o mesmo cadastro, na cor de Despesas
   await p.evaluate(() => CicluzCompras.abrir('fornecedores-des'));
   ok(await p.locator('#despesas-fornecedores.show').count() === 1 && (await p.locator('#despesas-fornecedores .head h2').textContent()) === 'DES - Fornecedores' && await p.locator('#despesas-fornecedores .compras-linha', { hasText: 'Prestador CPF Teste' }).count() === 1, 'DES - Fornecedores mostra os mesmos fornecedores');
-  ok(await p.locator('#despesas-fornecedores .compras-content button.btn').count() === 1 && await p.locator('#despesas-fornecedores .compras-content input[type=search]').count() === 0, 'No topo só o botão Cadastrar fornecedor; a busca é a do rodapé');
+  ok(await p.locator('#despesas-fornecedores .compras-content button.btn').count() === 0 && await p.locator('#despesas-fornecedores .compras-secao-cab .compras-redondo').count() === 2 && await p.locator('#despesas-fornecedores .compras-content input[type=search]').count() === 0, 'No topo só o botão Cadastrar fornecedor; a busca é a do rodapé');
   ok((await p.locator('#despesas-fornecedores .compras-linha.com-acoes', { hasText: 'Prestador CPF Teste' }).locator('.c-categoria').textContent()) === 'Serviço', 'A linha mostra a categoria marcada');
   // Setinha do título oculta e mostra a coluna (preferência do aparelho)
   const setaRamo = p.locator('#despesas-fornecedores .compras-linha-cabecalho .c-ramo .compras-coluna-seta');

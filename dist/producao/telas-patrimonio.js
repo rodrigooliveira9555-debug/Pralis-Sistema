@@ -8,7 +8,7 @@
  * compartilhada de audio-nota.js; o áudio fica só no aparelho). No dado salvo a manutenção periódica
  * continua no campo `revisao` (nome antigo do quadro), para não mudar o formato.
  * Entrada (15/11/2026, decisão final do Rodrigo): a tela abre na lista de todos os bens; tocar no bem abre
- * a edição dele e o botão "Cadastrar patrimônio" (ou o "+" da barra) abre o cadastro de um bem novo.
+ * a edição dele e a bolinha "+" do cabeçalho da lista (ou o "+" da barra) abre o cadastro de um bem novo.
  */
 (function () {
   'use strict';
@@ -66,9 +66,6 @@
     const bens = S.patrimonio.dados.bens;
     const topo = el('div', 'profiles-controls');
     topo.append(U.nota('Utensílios, máquinas, equipamentos e mobiliário. As fichas técnicas usam estes bens em cada etapa, e a capacidade decide quando o processo precisa ser repetido. Toque em um bem para editar.'));
-    // Botão visível de cadastro (pedido do Rodrigo); o "+" da barra aciona o mesmo cadastro.
-    const acoes = el('div', 'compras-form-rodape');
-    acoes.append(botao('Cadastrar patrimônio', () => formulario(), 'btn'));
     const filtros = el('div', 'compras-filtros');
     // Busca pela lupa do rodapé (um caminho só para buscar), como em Fornecedores.
     const busca = U.buscaRodape(tela, 'Buscar bem', (v) => { filtro.busca = v; if (tela.view.classList.contains('show')) render(); });
@@ -79,7 +76,8 @@
     inatInput.onchange = () => { filtro.inativos = inatInput.checked; desenha(); };
     inat.append(inatInput, el('span', null, 'Mostrar inativos'));
     filtros.append(cat, inat);
-    const sec = U.secao('Bens', bens.filter((b) => b.ativo !== false).length);
+    // Cabeçalho branco da lista, igual ao de Fornecedores: título e contagem de um lado, a bolinha "+" na outra ponta.
+    const sec = U.secao('Bens', bens.filter((b) => b.ativo !== false).length, U.botaoRedondo('Cadastrar patrimônio', 'M12 5v14M5 12h14', () => formulario()));
     const lista = el('div', 'compras-lista');
     sec.append(lista);
     function desenha() {
@@ -87,7 +85,7 @@
         && U.dobrar([b.nome, b.marca, b.modelo, b.numeroPatrimonio, b.numeroSerie, ...(b.pecas || []).flatMap((p) => [p.nome, p.marca, p.modelo])].join(' ')).includes(U.dobrar(filtro.busca)))
         .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
       lista.replaceChildren();
-      if (!bens.length) lista.append(U.vazio('Nenhum bem cadastrado.', 'Use "Cadastrar patrimônio": por exemplo, a masseira de 40 kg e as assadeiras.'));
+      if (!bens.length) lista.append(U.vazio('Nenhum bem cadastrado.', 'Use o "+" para cadastrar: por exemplo, a masseira de 40 kg e as assadeiras.'));
       else if (!vis.length) lista.append(U.vazio('Nada neste filtro.'));
       vis.forEach((b) => lista.append(U.linhaLista({
         icone: 'patrimonio', titulo: b.nome, detalhe: detalhe(b),
@@ -98,7 +96,7 @@
       })));
     }
     desenha();
-    tela.body.replaceChildren(busca, topo, acoes, filtros, sec);
+    tela.body.replaceChildren(busca, topo, filtros, sec);
   }
 
   /**

@@ -219,6 +219,20 @@
   }
 
   /**
+   * Botão redondo ("bolinha") do cabeçalho branco de uma lista, na cor do menu de onde se veio (--menu-accent):
+   * ex.: o "+" de cadastrar, na ponta direita do cabeçalho. rotulo vira a dica e o texto do leitor de tela.
+   */
+  function botaoRedondo(rotulo, path, acao) {
+    const b = el('button', 'shortcut-circle compras-redondo');
+    b.type = 'button';
+    b.title = rotulo;
+    b.setAttribute('aria-label', rotulo);
+    b.innerHTML = svg('<path d="' + path + '"/>');
+    b.onclick = acao;
+    return b;
+  }
+
+  /**
    * Cabeçalho das colunas de uma lista em grade (mesma classe de grade das linhas). Coluna com ocultavel: true ganha,
    * ao lado do título, a mesma setinha do fim das linhas; ali ela encolhe a coluna (fica só a setinha, para reabrir)
    * ou expande. lista: o elemento da lista, que recebe a classe oculta-<chave>; preferencia: chave do localStorage
@@ -234,7 +248,7 @@
     const ocultaveis = lista ? colunas.filter((c) => c.ocultavel).map((c) => c.chave) : [];
     const pintores = [];
     const guardar = () => { try { localStorage.setItem(preferencia, JSON.stringify(ocultas)); } catch (err) { /* vale só nesta visita */ } };
-    const geral = el('button', 'shortcut-circle compras-colunas-geral');
+    const geral = el('button', 'shortcut-circle compras-redondo compras-colunas-geral');
     geral.type = 'button';
     geral.innerHTML = svg('<path d="m9 5-6 7 6 7M15 5l6 7-6 7"/>');
     const pintarGeral = () => {
@@ -506,7 +520,7 @@
   }
 
   window.CicluzComprasUI = {
-    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar,
+    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoRedondo,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
     tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar,
   };

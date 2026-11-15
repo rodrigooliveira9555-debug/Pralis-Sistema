@@ -93,11 +93,9 @@
       // Organizada pela categoria (pedido do Rodrigo): Produto, Produto e Serviço, Serviço e, por último, sem categoria;
       // dentro de cada uma, os ativos antes dos inativos e, entre eles, por nome.
       .sort((a, b) => ordemCategoria(a) - ordemCategoria(b) || (a.situacao === b.situacao ? 0 : a.situacao === 'ativo' ? -1 : 1) || a.nome.localeCompare(b.nome, 'pt-BR'));
-    // Busca pela lupa do rodapé (um caminho só para buscar); no topo fica só o botão de cadastro (pedido do Rodrigo).
+    // Busca pela lupa do rodapé (um caminho só para buscar). O cadastro novo é a bolinha "+" do cabeçalho da lista.
     const origem = origemF;
     const busca = U.buscaRodape(tela, 'Buscar fornecedor', (v) => { buscaF[origem] = v; if (origemF === origem && tela.view.classList.contains('show')) renderFornecedores(); });
-    const acoes = el('div', 'compras-form-rodape');
-    acoes.append(botao('Cadastrar fornecedor', () => editarFornecedor(), 'btn'));
     const semWhats = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && !D.podeConvidar(f)).length;
     const incompletos = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && pendencias(f).length).length;
     // Mesma linha dos cadastros de grupos: tocar edita; a setinha revela Editar e Excluir.
@@ -107,7 +105,9 @@
     // couber rola para o lado dentro da lista.
     const linhas = el('div', 'compras-lista compras-lista-grade');
     U.arrastarParaRolar(linhas);
-    const sec = U.secao('Fornecedores', S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length);
+    // Cabeçalho branco da lista: título, contagem e o "‹ ›" de um lado; na outra ponta, a bolinha "+" de cadastrar.
+    const sec = U.secao('Fornecedores', S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length,
+      U.botaoRedondo('Cadastrar fornecedor', 'M12 5v14M5 12h14', () => editarFornecedor()));
     sec.append(linhas);
     if (!lista.length) linhas.append(U.vazio(buscaF[origemF] ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.'));
     if (lista.length) {
@@ -149,7 +149,6 @@
     });
     tela.body.replaceChildren(
       busca,
-      acoes,
       U.nota(lista.length + ' fornecedor(es), os mesmos em Despesas e em Mercadorias. ' + (incompletos ? incompletos + ' ativo(s) com cadastro a completar (toque para editar). ' : '') + (semWhats ? semWhats + ' ativo(s) sem WhatsApp válido não podem receber cotação. ' : '') + 'Fornecedor já usado em cotação, pedido, compra ou peça não é excluído: a lixeira inativa.'),
       sec,
     );
