@@ -63,7 +63,9 @@
 - **Fornecedor único (15/11/2026)**, dentro de `cicluz-compras-v1` (mesma chave e versão). Campos do fornecedor: `nome`,
   `documento`, `whatsapp` e `situacao` (já existiam), mais `razaoSocial` (texto, opcional; o `nome` é o nome fantasia, e
   continua sendo o nome exibido em todo o sistema, sem migração), `categorias` (lista com 'produto' e/ou 'servico'), `ramo`
-  (texto, opcional), `categorias` (lista com **um** item, 'produto' ou 'servico': escolha única desde 15/11/2026; registro com os dois, de quando
+  (texto, opcional), `prestadores` (só categoria Serviço, 15/11/2026: `[{ id, nome, whatsapp, email, aniversario 'AAAA-MM', funcoes: [ids] }]`; o 1º espelha
+  `contatoNome`/`whatsapp`/`email`/`vendedorAniversario`, que continuam sendo o que a lista e a cotação leem; migração
+  `migracoes.prestadoresFornecedor`: o contato único vira o Prestador 1, nada é apagado), `categorias` (lista com **um** item, 'produto' ou 'servico': escolha única desde 15/11/2026; registro com os dois, de quando
   podia, fica gravado como está e conta como "sem categoria escolhida" até a pessoa escolher; sem migração), `tipoPessoa` (desde 15/11/2026 o cadastro grava sempre 'juridica': fornecedor é só por CNPJ; registro antigo pode ter 'fisica'
   e um CPF em `documento`, que fica como está até a pessoa informar o CNPJ, quando o CPF passa para `documentoAnterior`; sem migração), `contatoNome`, `email`, `financeiro: { nome, whatsapp, email }`
   e `nascimento` (ISO, só pessoa física). **Migração** (marca `migracoes.ramoFornecedor = 1` dentro do próprio documento,
@@ -100,6 +102,10 @@
   e `audio: { id, type, size, seconds }` ou `null`. O `audio.id` aponta para o arquivo no IndexedDB `cicluz-documentos`
   (o mesmo de Documentações e Ocorrências), que **não** é sincronizado: o áudio só existe no aparelho em que foi gravado.
   Gravação por `dist/audio-nota.js` (`CicluzAudioNota`), peça única usada também por `occurrence-matrix.js`.
+
+**Funções do prestador (15/11/2026):** coleção nova `funcoesPrestador: [{ id, nome, ativa }]` dentro do próprio `cicluz-compras-v1`
+(sincroniza com o servidor junto do documento, sem tabela nem migration de banco); nasce com 18 funções de id fixo (`fp-<nome>`,
+igual em todo aparelho) pela mesma migração `prestadoresFornecedor`, e cresce pelo "Acrescentar opção" do cadastro de fornecedor.
 
 **Preferência de interface:** `cicluz-fornecedores-colunas` (lista das colunas ocultas na lista de fornecedores, por aparelho; 15/11/2026), `cicluz-fornecedores-prazo-convite` (prazo padrão de resposta do "Enviar link para cadastro", em dias úteis: '1' | '3' | '5' | '7'; sem valor = 3; por aparelho, até existir a parte do servidor da P-29; 15/11/2026), `tema`, `menu-ordem`, `menu-item-order-v1`, `sidebar-sections-v1`,
 `menu-visibility`, `people-display-v1`, `people-footer-*`, `{key}-sort`, `{key}-display`,

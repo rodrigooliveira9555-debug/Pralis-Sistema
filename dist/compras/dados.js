@@ -168,6 +168,8 @@
     window.CicluzComprasDominio.migrarCategoriaProduto(d);
     // Cadastro em etapas: a data de nascimento do fornecedor pessoa física passa a ser a do vendedor ou prestador (uma vez).
     window.CicluzComprasDominio.migrarVendedorFornecedor(d);
+    // Funções do prestador (cadastro próprio, com a lista inicial) e o contato único do fornecedor de Serviço como Prestador 1 (uma vez).
+    window.CicluzComprasDominio.migrarPrestadoresFornecedor(d);
     return d;
   }
 

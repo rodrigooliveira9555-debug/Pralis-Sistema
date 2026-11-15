@@ -272,7 +272,9 @@ body.dark-theme .compras-trilha li { background: #34333b; color: #d4d4d8; }
 .compras-secao-cab .compras-enviar-fechar { background: transparent; color: var(--panel-text, #12672e); }
 .compras-enviar-prazo { display: grid; gap: 8px; padding: 12px; width: min(230px, calc(100vw - 84px)); box-sizing: border-box; }
 .compras-enviar-prazo .profiles-note { margin: 0; }
-.compras-enviar-prazo > .profiles-note:empty { display: none; }
+.compras-enviar-prazo > .profiles-note:empty, .compras-enviar-prazo > .profiles-error:empty { display: none; }
+/* "+ Acrescentar opção": chip tracejado, para não parecer uma opção da lista. */
+.compras-chip-mais { border-style: dashed; }
 /* Seleção por cartões (U.cartoesEscolha): cartão = botão inteiro; lado a lado quando cabe, empilhado no celular.
    Marcado: borda de 2 px e fundo bem claro na cor da opção, círculo cheio com o "certo". */
 .compras-cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; min-width: 0; }

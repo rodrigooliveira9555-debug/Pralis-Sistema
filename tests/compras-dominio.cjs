@@ -215,6 +215,37 @@ ok(() => {
   assert.deepEqual(d.CARGOS_REPRESENTANTE.map(([, nome]) => nome), ['Proprietário', 'Sócio-proprietário', 'Diretor geral', 'Diretor comercial', 'Gerente geral', 'Gerente comercial',
     'Supervisor geral', 'Supervisor comercial', 'Representante comercial', 'Administrador', 'Financeiro', 'Procurador', 'Outro']);
   assert.deepEqual(d.etapasFornecedor([]), ['Dados da empresa', 'Dados do vendedor', 'Dados do financeiro', 'Dados do representante']);
+  // Prestadores (Serviço): do 2º em diante, nome obrigatório e formato conferido; função precisa existir no cadastro.
+  const fn = [{ id: 'fp-pintor', nome: 'Pintor', ativa: true }];
+  const vp = (prestadores) => d.validarFornecedor({ ...pj, categorias: ['servico'], prestadores }, regras, { fornecedores: [], funcoes: fn });
+  assert.equal(vp([{ id: 'a', nome: '', funcoes: ['fp-pintor'] }, { id: 'b', nome: 'Segundo', whatsapp: '', email: '', aniversario: '1990-03', funcoes: [] }]), '');
+  assert.match(vp([{ id: 'a', nome: 'Um' }, { id: 'b', nome: ' ' }]), /nome do prestador 2/);
+  assert.match(vp([{ id: 'a', nome: 'Um' }, { id: 'b', nome: 'Dois', whatsapp: '12' }]), /WhatsApp do prestador 2/);
+  assert.match(vp([{ id: 'a', nome: 'Um' }, { id: 'b', nome: 'Dois', email: 'x@' }]), /E-mail do prestador 2/);
+  assert.match(vp([{ id: 'a', nome: 'Um' }, { id: 'b', nome: 'Dois', aniversario: '1990-13' }]), /Aniversário do prestador 2/);
+  assert.match(vp([{ id: 'a', nome: 'Um', funcoes: ['nao-existe'] }]), /Função do prestador 1/);
+  // Cadastro de funções: sem nome vazio nem repetido (ignora maiúsculas e acentos).
+  assert.equal(d.validarFuncaoPrestador('Vidraceiro', fn), '');
+  assert.match(d.validarFuncaoPrestador('  ', fn), /nome da função/);
+  assert.match(d.validarFuncaoPrestador('PÍNTOR', fn), /Já existe/);
+  assert.equal(d.idFuncaoPrestador('Mecânico de refrigeração'), 'fp-mecanico-de-refrigeracao');
+  assert.equal(d.FUNCOES_PRESTADOR_INICIAIS.length, 18);
+  // Migração: cria a lista inicial e transforma o contato único do fornecedor de Serviço no Prestador 1; uma vez só.
+  const docP = { fornecedores: [
+    { id: 'f1', nome: 'S', categorias: ['servico'], contatoNome: 'Fulano', whatsapp: '(31) 99999-0000', email: 'a@exemplo.test', vendedorAniversario: '1990-03' },
+    { id: 'f2', nome: 'P', categorias: ['produto'], contatoNome: 'Beltrano', whatsapp: '(31) 98888-0000' },
+    { id: 'f3', nome: 'D', categorias: ['produto', 'servico'], contatoNome: 'Sicrano' },
+  ] };
+  d.migrarPrestadoresFornecedor(docP);
+  assert.equal(docP.funcoesPrestador.length, 18);
+  assert.deepEqual(docP.fornecedores[0].prestadores, [{ id: 'pr-f1', nome: 'Fulano', whatsapp: '(31) 99999-0000', email: 'a@exemplo.test', aniversario: '1990-03', funcoes: [] }]);
+  assert.equal(docP.fornecedores[0].contatoNome, 'Fulano');
+  assert.ok(!('prestadores' in docP.fornecedores[1]) && !('prestadores' in docP.fornecedores[2]));
+  assert.equal(docP.migracoes.prestadoresFornecedor, 1);
+  docP.fornecedores[0].prestadores[0].nome = 'Alterado'; docP.funcoesPrestador.pop();
+  d.migrarPrestadoresFornecedor(docP);
+  assert.equal(docP.fornecedores[0].prestadores[0].nome, 'Alterado');
+  assert.equal(docP.funcoesPrestador.length, 17);
   assert.match(v({ regimeTributario: 'outro' }), /Regime/);
   assert.match(v({ representante: { nome: 'Rep', whatsapp: '12', email: '' } }), /WhatsApp do representante/);
   assert.match(v({ nome: '' }), /nome fantasia ou a razão social/);

@@ -100,22 +100,7 @@
     painel.hidden = true;
     painel.setAttribute('role', 'dialog');
     painel.setAttribute('aria-label', 'Enviar link para cadastro');
-    // Tocar fora fecha; o ouvinte só existe enquanto o painel está aberto (a lista é redesenhada muitas vezes).
-    const fora = (e) => { if (!caixa.isConnected || !caixa.contains(e.target)) abrir(false); };
-    const abrir = (sim) => {
-      painel.hidden = !sim;
-      b.setAttribute('aria-expanded', String(sim));
-      document.removeEventListener('pointerdown', fora);
-      if (!sim) return;
-      document.addEventListener('pointerdown', fora);
-      const r = b.getBoundingClientRect();
-      painel.style.top = Math.round(r.bottom + 6) + 'px';
-      painel.style.left = Math.max(8, Math.min(Math.round(r.left), window.innerWidth - painel.offsetWidth - 8)) + 'px';
-      fechar.focus();
-    };
     const b = U.botaoTitulo('Enviar', 'Enviar link para cadastro', () => abrir(painel.hidden), U.ICONES.send);
-    b.setAttribute('aria-haspopup', 'dialog');
-    b.setAttribute('aria-expanded', 'false');
     const bolinha = (rotulo, desenho, acao, classe = '') => {
       const x = el('button', 'shortcut-circle compras-redondo ' + classe);
       x.type = 'button'; x.title = rotulo; x.setAttribute('aria-label', rotulo);
@@ -148,7 +133,7 @@
     lado.append(campo('Prazo de resposta', prazo), dataCampo, horaCampo, tipo, aviso);
     pintarPrazo();
     painel.append(canais, lado);
-    painel.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); abrir(false); b.focus(); } });
+    const abrir = U.flutuante(b, painel, { foco: fechar });
     caixa.append(b, painel);
     return caixa;
   }
@@ -429,15 +414,101 @@
         // O CPF do vendedor não é mais pedido (decisão do Rodrigo): o campo saiu; valor já gravado fica como está, sem uso.
         const tituloS2 = el('legend');
         const camposS2 = [[campo('Nome', vNome), vNome, 'Nome do ', ''], [campo('WhatsApp', whats), whats, 'WhatsApp do ', ' *'], [campo('E-mail', mail), mail, 'E-mail do ', '']];
-        s2.append(tituloS2, camposS2[0][0], camposS2[1][0], campo('Aniversário', vAniv), camposS2[2][0]);
-        // Título e rótulos acompanham a categoria: "vendedor", "prestador" ou "vendedor / prestador".
+
+        /* Funções do prestador: seleção múltipla sobre o cadastro d.funcoesPrestador (vínculo por id). "Acrescentar
+           opção" abre a janelinha flutuante (a mesma do Prazo de resposta do Enviar) com o nome e Salvar; a função
+           nova entra na lista de todos os fornecedores. */
+        const quadrosFuncoes = [];
+        function quadroFuncoes(marcadasAntes, numero) {
+          const escolhidas = new Set(marcadasAntes || []);
+          const box = el('div', 'compras-campo compras-largo');
+          box.setAttribute('role', 'group');
+          box.setAttribute('aria-label', 'Funções do prestador ' + numero);
+          const chips = el('div', 'compras-chips');
+          const desenhar = () => chips.replaceChildren(...S.dados.funcoesPrestador.filter((x) => x.ativa !== false || escolhidas.has(x.id))
+            .sort((a, b2) => a.nome.localeCompare(b2.nome, 'pt-BR')).map((x) => {
+              const c = botao(x.nome, () => { if (escolhidas.has(x.id)) escolhidas.delete(x.id); else escolhidas.add(x.id); desenhar(); }, 'compras-chip' + (escolhidas.has(x.id) ? ' ativo' : ''));
+              c.setAttribute('aria-pressed', String(escolhidas.has(x.id)));
+              return c;
+            }));
+          // Janelinha de acrescentar: só o nome e Salvar. Enter salva aqui (não envia o cadastro de trás).
+          const nomeNovo = texto('', { maxLength: 60 });
+          const erroNovo = el('p', 'profiles-error');
+          erroNovo.setAttribute('role', 'alert');
+          const painel = el('div', 'compras-enviar-painel');
+          painel.setAttribute('role', 'dialog');
+          painel.setAttribute('aria-label', 'Acrescentar função');
+          const caixa = el('div', 'compras-enviar-prazo');
+          const salvarNovo = () => {
+            const falta = D.validarFuncaoPrestador(nomeNovo.value, S.dados.funcoesPrestador);
+            const igual = D.funcaoPrestadorIgual(S.dados.funcoesPrestador, nomeNovo.value);
+            // Nome que já existe não duplica: a função existente fica marcada.
+            if (igual && String(nomeNovo.value).trim()) { escolhidas.add(igual.id); if (igual.ativa === false) S.transacao((d) => { d.funcoesPrestador.find((x) => x.id === igual.id).ativa = true; }); }
+            else if (falta) { erroNovo.textContent = falta; return; }
+            else {
+              const id = S.novoId('fp');
+              if (!S.transacao((d) => { d.funcoesPrestador.push({ id, nome: nomeNovo.value.trim(), ativa: true }); })) { erroNovo.textContent = 'Não foi possível salvar neste navegador.'; return; }
+              escolhidas.add(id);
+            }
+            nomeNovo.value = ''; erroNovo.textContent = '';
+            quadrosFuncoes.forEach((q) => q.desenhar());
+            abrirNovo(false); mais.focus();
+          };
+          nomeNovo.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); salvarNovo(); } });
+          caixa.append(campo('Nova função', nomeNovo), erroNovo, botao('Salvar', salvarNovo, 'btn'));
+          painel.append(caixa);
+          const mais = botao('+ Acrescentar opção', () => abrirNovo(painel.hidden), 'compras-chip compras-chip-mais');
+          const abrirNovo = U.flutuante(mais, painel, { foco: nomeNovo });
+          const linha = el('div', 'compras-form-rodape');
+          linha.append(mais);
+          box.append(el('span', 'compras-rotulo', 'Funções (pode marcar várias)'), chips, linha, painel);
+          desenhar();
+          const q = { no: box, desenhar, valores: () => [...escolhidas] };
+          quadrosFuncoes.push(q);
+          return q;
+        }
+        const funcoes1 = quadroFuncoes(f?.prestadores?.[0]?.funcoes, 1);
+        s2.append(tituloS2, camposS2[0][0], camposS2[1][0], campo('Aniversário', vAniv), camposS2[2][0], funcoes1.no);
+
+        /* Prestadores 2, 3…: só na categoria Serviço. Cada quadro pode ser removido. */
+        const idPrestador1 = f?.prestadores?.[0]?.id || S.novoId('pr');
+        const extras = [];
+        const listaExtras = el('div', 'compras-etapa');
+        const numerar = () => extras.forEach((x, i) => { x.titulo.textContent = 'Prestador ' + (i + 2); });
+        function quadroPrestador(p) {
+          const q = el('fieldset', 'compras-fieldset');
+          const x = {
+            id: p?.id || S.novoId('pr'), no: q, titulo: el('legend'), nome: texto(p?.nome), whatsapp: telefone(p?.whatsapp), email: email(p?.email),
+            aniversario: aplicarMascara(entrada('text', DF.monthDisplay(p?.aniversario || ''), { inputMode: 'numeric', placeholder: 'MM/AAAA', maxLength: 7, autocomplete: 'off' }), DF.monthMask),
+          };
+          x.funcoes = quadroFuncoes(p?.funcoes, extras.length + 2);
+          const remover = botao('Remover prestador', () => {
+            extras.splice(extras.indexOf(x), 1); quadrosFuncoes.splice(quadrosFuncoes.indexOf(x.funcoes), 1); q.remove(); numerar();
+          }, 'btn secondary');
+          const rod = el('div', 'compras-form-rodape compras-largo');
+          rod.append(remover);
+          q.append(x.titulo, campo('Nome do prestador *', x.nome), campo('WhatsApp do prestador', x.whatsapp), campo('Aniversário', x.aniversario), campo('E-mail do prestador', x.email), x.funcoes.no, rod);
+          extras.push(x); listaExtras.append(q); numerar();
+          return x;
+        }
+        (f?.prestadores || []).slice(1).forEach(quadroPrestador);
+        const adicionar = U.botaoTitulo('Adicionar prestador', 'Adicionar prestador', () => quadroPrestador().nome.focus());
+        const adicionarLinha = el('div', 'compras-form-rodape');
+        adicionarLinha.append(adicionar);
+        const etapa2 = el('div', 'compras-etapa');
+        etapa2.append(s2, listaExtras, adicionarLinha);
+        const ehServico = () => { const c = marcadas(); return c.length === 1 && c[0] === 'servico'; };
+        // Título e rótulos acompanham a categoria: Produto = "Dados do vendedor"; Serviço = "Prestador 1", com as
+        // funções e os demais prestadores (que somem, sem perder o que foi digitado, se a categoria voltar a Produto).
         const pintarVendedor = () => {
           const quem = D.quemVendeFornecedor(marcadas());
-          tituloS2.textContent = 'Dados do ' + quem;
+          const servico = ehServico();
+          tituloS2.textContent = servico ? 'Prestador 1' : 'Dados do ' + quem;
           camposS2.forEach(([no, input, antes, depois]) => {
             no.querySelector('.compras-rotulo').textContent = antes + quem + depois;
             input.setAttribute('aria-label', antes + quem + depois);
           });
+          [funcoes1.no, listaExtras, adicionarLinha].forEach((no) => mostrar(no, servico));
         };
 
         /* ----- Etapas 3 e 4: contato com a opção "O mesmo da etapa anterior" em primeiro lugar. Marcada, os campos
@@ -472,7 +543,7 @@
         rep.no.append(campo('Cargo na empresa', repCargo));
 
         /* ----- Barra de etapas e navegação ----- */
-        const quadros = [etapa1, s2, fin.no, rep.no];
+        const quadros = [etapa1, etapa2, fin.no, rep.no];
         const marcadas = () => catOpcoes.marcados();
         const etapas = () => D.etapasFornecedor(marcadas()).map((label) => ({ label }));
         let atual = 0;
@@ -483,7 +554,7 @@
         const voltar = botao('Voltar', () => ir(atual - 1), 'btn secondary footer-cancel-accent form-back-action');
         voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
         const avancar = botao('Avançar', () => {
-          const falta = D.validarFornecedorEtapas(ler(), R(), { fornecedores: S.dados.fornecedores })[atual];
+          const falta = D.validarFornecedorEtapas(ler(), R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador })[atual];
           if (falta) { erroEtapa.textContent = falta; return; }
           ir(atual + 1);
         }, 'btn form-next-action');
@@ -525,6 +596,12 @@
             contatoNome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email,
             // Texto incompleto segue como está para a validação recusar (não vira vazio em silêncio).
             vendedorAniversario: DF.monthParse(vAniv.value) || vAniv.value.trim(),
+            // Serviço: a lista de prestadores; o 1º espelha o contato acima (é dele que a lista e a cotação leem).
+            // Produto: a chave não vai, para não apagar prestadores gravados se a categoria for trocada por engano.
+            ...(ehServico() ? { prestadores: [
+              { id: idPrestador1, nome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email, aniversario: DF.monthParse(vAniv.value) || vAniv.value.trim(), funcoes: funcoes1.valores() },
+              ...extras.map((x) => ({ id: x.id, nome: x.nome.value.trim(), whatsapp: x.whatsapp.value.trim(), email: x.email.value.trim(), aniversario: DF.monthParse(x.aniversario.value) || x.aniversario.value.trim(), funcoes: x.funcoes.valores() })),
+            ] } : {}),
             financeiro: contato(fin), representante: { ...contato(rep), cargo: repCargo.value },
             situacao: situacao.ativo ? 'ativo' : 'inativo',
           };
@@ -535,7 +612,7 @@
       },
       salvar: (c) => {
         const campos = c.ler();
-        const faltas = D.validarFornecedorEtapas(campos, R(), { fornecedores: S.dados.fornecedores });
+        const faltas = D.validarFornecedorEtapas(campos, R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador });
         const etapaComFalta = faltas.findIndex(Boolean);
         if (etapaComFalta >= 0) { c.ir(etapaComFalta); return faltas[etapaComFalta]; }
         delete campos.id;

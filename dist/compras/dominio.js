@@ -265,6 +265,41 @@
     d.migracoes = { ...(d.migracoes || {}), vendedorFornecedor: 1 };
     return d;
   }
+  /* ---------- Prestadores de serviço e as funções deles (decisão do Rodrigo, 15/11/2026) ---------- */
+  /** Lista inicial de funções do prestador; depois dela, a lista cresce pelo "Acrescentar opção" do cadastro. */
+  const FUNCOES_PRESTADOR_INICIAIS = ['Advogado', 'Advogado trabalhista', 'Advogado tributarista', 'Departamento pessoal', 'Contador', 'Mecânico',
+    'Mecânico de máquinas', 'Mecânico de refrigeração', 'Mecânico eletricista', 'Eletricista', 'Pintor', 'Marceneiro', 'Carpinteiro', 'Serralheiro',
+    'Encanador', 'Pedreiro', 'Técnico de informática', 'Dedetizador'];
+  /** Id da função inicial a partir do nome: igual em todo aparelho, para dois aparelhos não criarem a mesma função duas vezes. */
+  const idFuncaoPrestador = (nome) => 'fp-' + semAcento(nome).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  /** Função com o mesmo nome (sem diferenciar maiúsculas nem acentos), ou undefined. */
+  const funcaoPrestadorIgual = (lista, nome) => (lista || []).find((x) => semAcento(x.nome) === semAcento(nome));
+  /** O que impede acrescentar a função: nome vazio, longo demais ou repetido. */
+  function validarFuncaoPrestador(nome, lista) {
+    const n = String(nome || '').trim();
+    if (!n) return 'Informe o nome da função.';
+    if (n.length > 60) return 'O nome da função deve ter no máximo 60 caracteres.';
+    if (funcaoPrestadorIgual(lista, n)) return 'Já existe uma função com este nome.';
+    return '';
+  }
+  /**
+   * Migração (marca d.migracoes.prestadoresFornecedor): (1) cria o cadastro d.funcoesPrestador ({ id, nome, ativa })
+   * com a lista inicial, se ainda estiver vazio; (2) no fornecedor de categoria Serviço, o contato único vira o
+   * Prestador 1 em f.prestadores ([{ id, nome, whatsapp, email, aniversario, funcoes: [ids] }]). Os campos de
+   * contato do fornecedor (contatoNome, whatsapp, email, vendedorAniversario) continuam como estão e seguem
+   * espelhando o primeiro prestador: é deles que a lista e a cotação leem. Nada é apagado. Uma vez por documento.
+   */
+  function migrarPrestadoresFornecedor(d) {
+    if (d.migracoes && d.migracoes.prestadoresFornecedor) return d;
+    if (!Array.isArray(d.funcoesPrestador)) d.funcoesPrestador = [];
+    if (!d.funcoesPrestador.length) d.funcoesPrestador = FUNCOES_PRESTADOR_INICIAIS.map((nome) => ({ id: idFuncaoPrestador(nome), nome, ativa: true }));
+    for (const f of d.fornecedores || []) {
+      if (categoriaFornecedor(f) !== 'servico' || (Array.isArray(f.prestadores) && f.prestadores.length)) continue;
+      f.prestadores = [{ id: 'pr-' + f.id, nome: String(f.contatoNome || ''), whatsapp: String(f.whatsapp || ''), email: String(f.email || ''), aniversario: aniversarioVendedor(f), funcoes: [] }];
+    }
+    d.migracoes = { ...(d.migracoes || {}), prestadoresFornecedor: 1 };
+    return d;
+  }
   const telefoneRuim = (v) => { const n = digitos(v); return Boolean(n) && (n.length < 8 || String(v).length > 30); };
   /**
    * O que impede salvar, etapa por etapa: devolve 4 textos ('' quando a etapa está em ordem). Obrigatórios: categoria
@@ -274,7 +309,13 @@
    * regras = { cnpjValid } do field-validation.js. A exigência vale ao salvar: fornecedor antigo sem esses
    * dados continua abrindo e sendo usado.
    */
-  function validarFornecedorEtapas(f, regras, { fornecedores = [] } = {}) {
+  function validarFornecedorEtapas(f, regras, { fornecedores = [], funcoes = null } = {}) {
+    const aniversarioRuim = (v) => {
+      if (!v) return '';
+      const m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(v);
+      if (!m || +m[1] < 1900) return 'Aniversário inválido: use mês e ano (MM/AAAA).';
+      return v > new Date().toISOString().slice(0, 7) ? 'O aniversário não pode ser um mês futuro.' : '';
+    };
     const basico = () => {
       const cats = Array.isArray(f.categorias) ? f.categorias : [];
       if (!cats.length) return 'Escolha a categoria do fornecedor: Produto ou Serviço.';
@@ -295,10 +336,16 @@
       if (telefoneRuim(f.whatsapp)) return 'WhatsApp inválido.';
       if (f.email && !emailValido(f.email)) return 'E-mail do vendedor ou prestador inválido.';
       // Aniversário do vendedor: só mês e ano (AAAA-MM), opcional; ano de 1900 até o mês atual.
-      if (f.vendedorAniversario) {
-        const m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(f.vendedorAniversario);
-        if (!m || +m[1] < 1900) return 'Aniversário inválido: use mês e ano (MM/AAAA).';
-        if (f.vendedorAniversario > new Date().toISOString().slice(0, 7)) return 'O aniversário não pode ser um mês futuro.';
+      if (aniversarioRuim(f.vendedorAniversario)) return aniversarioRuim(f.vendedorAniversario);
+      // Prestadores (categoria Serviço): o 1º espelha o contato acima; do 2º em diante, nome obrigatório e o resto no formato.
+      const prestadores = Array.isArray(f.prestadores) ? f.prestadores : [];
+      for (let i = 0; i < prestadores.length; i++) {
+        const p = prestadores[i] || {}; const quem = 'prestador ' + (i + 1);
+        if (i > 0 && !String(p.nome || '').trim()) return 'Informe o nome do ' + quem + ' (ou remova o quadro dele).';
+        if (i > 0 && telefoneRuim(p.whatsapp)) return 'WhatsApp do ' + quem + ' inválido.';
+        if (i > 0 && p.email && !emailValido(p.email)) return 'E-mail do ' + quem + ' inválido.';
+        if (i > 0 && aniversarioRuim(p.aniversario)) return 'Aniversário do ' + quem + ' inválido: use mês e ano (MM/AAAA), sem mês futuro.';
+        if (funcoes && (p.funcoes || []).some((id) => !funcoes.some((x) => x.id === id))) return 'Função do ' + quem + ' inválida.';
       }
       return '';
     };
@@ -497,6 +544,7 @@
     digitos, motivoNaoConvidavel, podeConvidar,
     CATEGORIAS_FORNECEDOR, categoriaFornecedor, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, documentoAntigoFornecedor, validarFornecedor,
     validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, aniversarioVendedor, migrarVendedorFornecedor,
+    FUNCOES_PRESTADOR_INICIAIS, idFuncaoPrestador, funcaoPrestadorIgual, validarFuncaoPrestador, migrarPrestadoresFornecedor,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,
     aplicarRecebimento, SITUACOES_PEDIDO,

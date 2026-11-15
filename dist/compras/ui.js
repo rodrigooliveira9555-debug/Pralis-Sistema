@@ -573,6 +573,32 @@
   }
 
   /**
+   * Janelinha flutuante presa a um botão (a do Prazo de resposta do Enviar e a do "Acrescentar opção"): fica por cima
+   * da tela (fixa), logo abaixo do botão, ou acima quando não cabe embaixo. Fecha no Esc (sem fechar a janela de
+   * trás) e tocando fora. Devolve abrir(sim). O ouvinte de "tocar fora" só existe enquanto está aberta.
+   */
+  function flutuante(ancora, painel, { foco } = {}) {
+    painel.hidden = true;
+    ancora.setAttribute('aria-haspopup', 'dialog');
+    ancora.setAttribute('aria-expanded', 'false');
+    const fora = (e) => { if (!painel.isConnected || !(painel.contains(e.target) || ancora.contains(e.target))) abrir(false); };
+    function abrir(sim) {
+      painel.hidden = !sim;
+      ancora.setAttribute('aria-expanded', String(sim));
+      document.removeEventListener('pointerdown', fora);
+      if (!sim) return;
+      document.addEventListener('pointerdown', fora);
+      const r = ancora.getBoundingClientRect();
+      const embaixo = r.bottom + 6 + painel.offsetHeight <= window.innerHeight - 8;
+      painel.style.top = Math.max(8, Math.round(embaixo ? r.bottom + 6 : r.top - 6 - painel.offsetHeight)) + 'px';
+      painel.style.left = Math.max(8, Math.min(Math.round(r.left), window.innerWidth - painel.offsetWidth - 8)) + 'px';
+      if (foco) foco.focus();
+    }
+    painel.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); abrir(false); ancora.focus(); } });
+    return abrir;
+  }
+
+  /**
    * Seleção por cartões (desenho escolhido pelo Rodrigo, 15/11/2026): para escolha de poucas opções com ícone, no
    * lugar de caixinhas de marcar. Cada cartão é um botão inteiro (aria-pressed): ícone no quadrado de cantos
    * arredondados, título e uma linha de detalhe, e um círculo de marcação à direita (cheio, com o "certo", quando
@@ -627,6 +653,6 @@
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, quadroSituacao, cartoesEscolha,
+    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, quadroSituacao, cartoesEscolha, flutuante,
   };
 })();
