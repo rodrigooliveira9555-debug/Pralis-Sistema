@@ -130,8 +130,6 @@ body.dark-theme .compras-contagem { color: var(--layout-ink, #f2f1f6); }
 .compras-linha.grade-fornecedor > .c-ramo { grid-column: 8; }
 .compras-linha.grade-fornecedor > .c-selos { grid-column: 9; }
 .compras-linha.grade-fornecedor > .account-list-state, .compras-linha.grade-fornecedor > .c-estado { grid-column: 10; }
-.oculta-nome { --w-nome: 24px; }
-.oculta-nome .grade-fornecedor:not(.compras-linha-cabecalho) > .c-nome, .oculta-nome .compras-linha-cabecalho > .c-nome > .compras-coluna-titulo { display: none; }
 .oculta-razao { --w-razao: 24px; }
 .oculta-razao .grade-fornecedor:not(.compras-linha-cabecalho) > .c-razao, .oculta-razao .compras-linha-cabecalho > .c-razao > .compras-coluna-titulo { display: none; }
 .oculta-categoria { --w-categoria: 24px; }
@@ -150,9 +148,11 @@ body.dark-theme .compras-contagem { color: var(--layout-ink, #f2f1f6); }
 .compras-linha.grade-fornecedor > .account-action-toggle { grid-column: 11; position: sticky; right: 0; z-index: 2; align-self: stretch; height: auto; background: inherit; }
 .compras-linha.grade-fornecedor > .account-row-actions:not([hidden]) { grid-column: 10; grid-row: 1; justify-self: end; position: sticky; right: 32px; z-index: 2; background: inherit; }
 .compras-linha.grade-fornecedor:has(> .account-row-actions:not([hidden])) > .account-list-state { visibility: hidden; }
-/* O nome fica fixo à esquerda quando a lista rola (não no celular, onde ocuparia quase toda a largura). */
-@container lista-grade (min-width: 520px) {
-  .grade-fornecedor > .c-nome { position: sticky; left: 76px; z-index: 1; align-self: stretch; display: flex; align-items: center; background: inherit; box-shadow: 1px 0 0 var(--layout-line, #dedee3); padding-right: 8px; }
+/* O ícone e o nome do fornecedor nunca ocultam e ficam fixos à esquerda quando a lista rola (regra do Rodrigo).
+   No celular a coluna do nome estreita, para sobrar espaço para as colunas que rolam. */
+.grade-fornecedor > .c-nome { position: sticky; left: 76px; z-index: 1; align-self: stretch; display: flex; align-items: center; background: inherit; box-shadow: 1px 0 0 var(--layout-line, #dedee3); padding-right: 8px; }
+@container lista-grade (max-width: 519px) {
+  .compras-linha.grade-fornecedor { --w-nome: 112px; }
 }
 .compras-linha .account-action-toggle { flex: none; width: 32px; height: 32px; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .compras-linha .account-row-actions { display: flex; flex: none; align-items: center; gap: var(--row-action-gap, 6px); }

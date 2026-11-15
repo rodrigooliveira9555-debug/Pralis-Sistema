@@ -101,26 +101,28 @@
     // Mesma linha dos cadastros de grupos: tocar edita; a setinha revela Editar e Excluir.
     // Linha fina, uma por fornecedor, em colunas fixas (grade-fornecedor, em compras.css). Sequência final do Rodrigo:
     // ícone da categoria, Fornecedor (nome fantasia), Categoria, Nome do contato, WhatsApp, Razão social, CPF/CNPJ,
-    // Ramo, avisos, situação e seta. Cada coluna tem no título a setinha que a oculta ou mostra (preferência do aparelho); o que não
-    // couber rola para o lado dentro da lista.
+    // Ramo, avisos, situação e seta. O ícone e o Fornecedor são fixos (nunca ocultam e ficam parados na rolagem); cada
+    // uma das outras colunas tem no título a setinha que a oculta ou mostra (preferência do aparelho); o que não couber
+    // rola para o lado dentro da lista.
     const linhas = el('div', 'compras-lista compras-lista-grade');
     U.arrastarParaRolar(linhas);
-    // Cabeçalho branco da lista: o título e o "‹ ›" de um lado; na outra ponta, a quantidade num círculo e a bolinha "+".
+    // Cabeçalho branco da lista (desenho final do Rodrigo): à esquerda, o botão retangular "Fornecedores" com o "+", que abre
+    // o cadastro; na outra ponta, a quantidade num círculo e a bolinha "‹ ›" de ocultar ou mostrar todas as colunas.
     const ativos = S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length;
-    const sec = U.secao('Fornecedores', undefined, U.contagemECadastro(ativos, ativos + (ativos === 1 ? ' fornecedor ativo' : ' fornecedores ativos'),
-      U.botaoRedondo('Cadastrar fornecedor', 'M12 5v14M5 12h14', () => editarFornecedor())));
+    const ponta = U.pontaDaLista(ativos, ativos + (ativos === 1 ? ' fornecedor ativo' : ' fornecedores ativos'));
+    const sec = U.secao('Fornecedores', undefined, ponta);
+    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Fornecedores', 'Cadastrar fornecedor', () => editarFornecedor()));
     sec.append(linhas);
     if (!lista.length) linhas.append(U.vazio(buscaF[origemF] ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.'));
     if (lista.length) {
       const cabecalho = U.cabecalhoColunas('grade-fornecedor', [
-      { chave: 'nome', rotulo: 'Fornecedor', ocultavel: true }, { chave: 'categoria', rotulo: 'Categoria', ocultavel: true },
+      { chave: 'nome', rotulo: 'Fornecedor' }, { chave: 'categoria', rotulo: 'Categoria', ocultavel: true },
       { chave: 'contato', rotulo: 'Nome do contato', ocultavel: true }, { chave: 'whatsapp', rotulo: 'WhatsApp', ocultavel: true },
       { chave: 'razao', rotulo: 'Razão social', ocultavel: true }, { chave: 'documento', rotulo: 'CPF / CNPJ', ocultavel: true },
       { chave: 'ramo', rotulo: 'Ramo', ocultavel: true }, { chave: 'selos', rotulo: 'Avisos', ocultavel: true }, { chave: 'estado', rotulo: 'Situação' },
-      ], { lista: linhas, preferencia: 'cicluz-fornecedores-colunas', titulo: 'Fornecedores' });
+      ], { lista: linhas, preferencia: 'cicluz-fornecedores-colunas' });
       linhas.append(cabecalho);
-      // O título "Fornecedores" é o próprio botão retangular (círculo "‹ ›" à direita) que oculta ou mostra todas as colunas.
-      sec.querySelector('.compras-secao-cab h3').replaceChildren(cabecalho.botaoGeral);
+      ponta.append(cabecalho.botaoGeral);
     }
     lista.forEach((f) => {
       const ativo = f.situacao === 'ativo';

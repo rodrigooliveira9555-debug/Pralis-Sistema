@@ -219,31 +219,32 @@
   }
 
   /**
-   * Botão redondo ("bolinha") do cabeçalho branco de uma lista, na cor do menu de onde se veio (--menu-accent):
-   * ex.: o "+" de cadastrar, na ponta direita do cabeçalho. rotulo vira a dica e o texto do leitor de tela.
+   * Título da lista dentro de um botão retangular no padrão do sistema (texto à esquerda, círculo com "+" à direita, na
+   * cor do menu de onde se veio): tocar abre o cadastro de um item novo. rotuloAcao vira a dica e o texto do leitor de
+   * tela (ex.: "Cadastrar fornecedor"). O .footer-action-icon próprio faz o layout-review.js manter o "+".
    */
-  function botaoRedondo(rotulo, path, acao) {
-    const b = el('button', 'shortcut-circle compras-redondo');
+  function botaoTitulo(titulo, rotuloAcao, acao) {
+    const b = el('button', 'btn compras-titulo-botao', titulo);
     b.type = 'button';
-    b.title = rotulo;
-    b.setAttribute('aria-label', rotulo);
-    b.innerHTML = svg('<path d="' + path + '"/>');
+    b.title = rotuloAcao;
+    b.setAttribute('aria-label', rotuloAcao);
+    b.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>');
     b.onclick = acao;
     return b;
   }
 
   /**
    * Ponta direita do cabeçalho branco de uma lista: a quantidade dentro de um círculo (só informação: contorno e fundo
-   * claro na cor do menu, sem foco nem clique; vira pílula com 2 ou 3 dígitos) e, ao lado, a bolinha cheia de cadastrar.
-   * descricao: texto para o leitor de tela (ex.: "7 fornecedores ativos").
+   * claro na cor do menu, sem foco nem clique; vira pílula com 2 ou 3 dígitos). Ao lado dela pode entrar uma bolinha
+   * (ex.: o "‹ ›" de ocultar/mostrar colunas). descricao: texto para o leitor de tela (ex.: "7 fornecedores ativos").
    */
-  function contagemECadastro(quantidade, descricao, botao) {
+  function pontaDaLista(quantidade, descricao) {
     const g = el('span', 'compras-secao-ponta');
     const c = el('span', 'compras-contagem', String(quantidade));
     c.setAttribute('role', 'img');
     c.setAttribute('aria-label', descricao);
     c.title = descricao;
-    g.append(c, botao);
+    g.append(c);
     return g;
   }
 
@@ -252,23 +253,22 @@
    * ao lado do título, a mesma setinha do fim das linhas; ali ela encolhe a coluna (fica só a setinha, para reabrir)
    * ou expande. lista: o elemento da lista, que recebe a classe oculta-<chave>; preferencia: chave do localStorage
    * onde a escolha fica guardada por aparelho (lista das colunas ocultas; não é dado do cadastro).
-   * O cabeçalho devolvido traz em .botaoGeral o botão que oculta ou mostra todas as colunas de uma vez: um botão
-   * retangular no padrão do sistema (texto = titulo da lista à esquerda, círculo com "‹ ›" à direita), para ficar no
-   * lugar do título da lista; ele acompanha as setinhas: todas abertas, todas ocultas ou misto.
+   * O cabeçalho devolvido traz em .botaoGeral a bolinha "‹ ›" que oculta ou mostra todas as colunas de uma vez (para a
+   * ponta direita do cabeçalho da lista); ela acompanha as setinhas: todas abertas, todas ocultas ou misto.
    */
-  function cabecalhoColunas(grade, colunas, { lista, preferencia, titulo = 'Colunas' } = {}) {
+  function cabecalhoColunas(grade, colunas, { lista, preferencia } = {}) {
     const r = el('div', 'compras-linha em-colunas compras-linha-cabecalho ' + grade);
     r.append(el('span', 'compras-linha-icones'));
     let ocultas = [];
     try { const v = JSON.parse(localStorage.getItem(preferencia) || '[]'); if (Array.isArray(v)) ocultas = v; } catch (e) { /* sem preferência salva */ }
     const ocultaveis = lista ? colunas.filter((c) => c.ocultavel).map((c) => c.chave) : [];
+    // Preferência antiga com coluna que não é mais ocultável (ex.: o nome) é ignorada.
+    ocultas = ocultas.filter((c) => ocultaveis.includes(c));
     const pintores = [];
     const guardar = () => { try { localStorage.setItem(preferencia, JSON.stringify(ocultas)); } catch (err) { /* vale só nesta visita */ } };
-    // .btn com o próprio .footer-action-icon: o layout-review.js mantém o desenho dado e aplica o formato do botão
-    // retangular com círculo à direita (regra de 15/11/2026), na cor do menu.
-    const geral = el('button', 'btn compras-colunas-geral', titulo);
+    const geral = el('button', 'shortcut-circle compras-redondo compras-colunas-geral');
     geral.type = 'button';
-    geral.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5-6 7 6 7M15 5l6 7-6 7"/></svg>');
+    geral.innerHTML = svg('<path d="m9 5-6 7 6 7M15 5l6 7-6 7"/>');
     const pintarGeral = () => {
       const fechadas = ocultaveis.filter((c) => ocultas.includes(c)).length;
       const algumaAberta = fechadas < ocultaveis.length;
@@ -538,7 +538,7 @@
   }
 
   window.CicluzComprasUI = {
-    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoRedondo, contagemECadastro,
+    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
     tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar,
   };
