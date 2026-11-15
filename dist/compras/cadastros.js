@@ -211,16 +211,24 @@
   }
   const R = () => window.CicluzFieldRules;
 
+  /**
+   * Cadastro em 4 etapas, com a barra de etapas única do sistema (CicluzStepper, a mesma do Cadastro Completo):
+   * 1) Informações básicas, 2) Vendedor / Prestador de serviço, 3) Responsável financeiro, 4) Representante da empresa.
+   * No cadastro novo, Avançar confere a etapa antes de seguir; na edição, toca-se direto em qualquer etapa. O ✓ do
+   * rodapé (e o Salvar da última etapa) confere tudo e, se faltar algo, leva à etapa onde está o problema.
+   */
   function editarFornecedor(f) {
     U.dialogo({
       titulo: f ? 'Editar fornecedor' : 'Novo fornecedor', ...coresF(), largo: true, classe: 'compras-form-padrao',
       montar: (form) => {
-        const sec = (t) => { const s = el('fieldset', 'compras-fieldset'); s.append(el('legend', null, t)); form.append(s); return s; };
         const texto = (v, extra = {}) => entrada('text', v || '', { maxLength: 120, ...extra });
         const email = (v) => { const i = entrada('email', v || '', { maxLength: 160, inputMode: 'email', autocapitalize: 'off' }); i.dataset.textoLivre = '1'; return i; };
         const telefone = (v) => aplicarMascara(entrada('tel', v || '', { inputMode: 'numeric', placeholder: '(00) 00000-0000' }), mascaraTelefone);
+        // display, não hidden: o .compras-campo e o fieldset definem display e venceriam o atributo.
+        const mostrar = (no, sim) => { no.style.display = sim ? '' : 'none'; };
 
-        // Categoria: Produto, Serviço ou os dois (caixas de marcar; pelo menos uma). Fornecedor antigo vem sem nenhuma.
+        /* ----- Etapa 1: informações básicas ----- */
+        const s1 = el('fieldset', 'compras-fieldset');
         const catBox = el('div', 'compras-campo compras-largo');
         catBox.setAttribute('role', 'group');
         catBox.setAttribute('aria-label', 'Categoria');
@@ -232,72 +240,135 @@
           return { id, input: l.input };
         });
         catBox.append(el('span', 'compras-rotulo', 'Categoria * (pode marcar as duas)'), catOpcoes);
-        const ramo = texto(f?.ramo, { maxLength: 80, placeholder: 'Ex.: Bebidas, Manutenção' });
-        const tipo = seletor(D.TIPOS_PESSOA, f ? D.tipoPessoaDe(f) : '', 'Selecione');
+        const tipoInicial = f ? D.tipoPessoaDe(f) : '';
+        const tipo = seletor(D.TIPOS_PESSOA, tipoInicial, 'Selecione');
         // Pessoa jurídica: Razão social e Nome fantasia; pessoa física: só o Nome. O campo salvo é sempre "nome"
-        // (o nome de uso, que cotação, pedido e recebimento mostram); a razão social é um campo a mais, opcional.
-        const nome = texto(f?.nome);
-        const nomeCampo = campo('Nome *', nome);
+        // (o nome de uso, que cotação, pedido e recebimento mostram); a razão social é um campo a mais.
         const razao = texto(f?.razaoSocial, { maxLength: 160 });
         const razaoCampo = campo('Razão social', razao);
-        const contato = texto(f?.contatoNome, { placeholder: 'Nome da pessoa responsável' });
+        const nome = texto(f?.nome);
+        const nomeCampo = campo('Nome *', nome);
         // Dois campos de documento: o do CPF é tratado pelo field-validation.js (máscara e dígito verificador
         // pelo rótulo); o do CNPJ usa a máscara e o validador de lá. Só o do tipo escolhido aparece.
-        const tipoInicial = f ? D.tipoPessoaDe(f) : '';
         const cpf = entrada('text', tipoInicial === 'fisica' ? f.documento || '' : '', { inputMode: 'numeric' });
         const cnpj = aplicarMascara(entrada('text', tipoInicial === 'juridica' ? f.documento || '' : '', { inputMode: 'numeric', placeholder: '00.000.000/0000-00', maxLength: 18 }), R().cnpjMask);
         const cpfCampo = campo('CPF *', cpf);
         const cnpjCampo = campo('CNPJ *', cnpj);
+        const regime = seletor(D.REGIMES_TRIBUTARIOS, f?.regimeTributario || '', 'Selecione');
+        const regimeCampo = campo('Regime tributário', regime);
         const semTipo = el('p', 'profiles-note', 'Escolha o tipo de pessoa para informar o CPF ou o CNPJ.');
+        const ramo = texto(f?.ramo, { maxLength: 80, placeholder: 'Ex.: Bebidas, Manutenção' });
+        const ativo = interruptor('Fornecedor ativo', f ? f.situacao === 'ativo' : true, 'Fornecedor inativo não aparece no seletor de cotação.');
+        ativo.classList.add('compras-largo');
+        s1.append(catBox, campo('Tipo de pessoa *', tipo), razaoCampo, nomeCampo, cnpjCampo, cpfCampo, regimeCampo, semTipo, campo('Ramo', ramo), ativo);
 
-        const s1 = sec('Identificação');
-        const nasc = entrada('date', f?.nascimento || '');
-        const nascCampo = campo('Data de nascimento', nasc);
-        s1.append(catBox, campo('Tipo de pessoa *', tipo), razaoCampo, nomeCampo, cpfCampo, cnpjCampo, semTipo, nascCampo, campo('Ramo', ramo));
-
-        const s3 = sec('Contato do responsável');
+        /* ----- Etapa 2: vendedor ou prestador de serviço (é o contato do fornecedor; o WhatsApp dele recebe a cotação) ----- */
+        const s2 = el('fieldset', 'compras-fieldset');
+        const vNome = texto(f?.contatoNome);
+        const vCpf = entrada('text', f?.vendedorCpf || '', { inputMode: 'numeric' });
+        const vNasc = entrada('date', f?.vendedorNascimento || '');
         const whats = telefone(f?.whatsapp);
         const mail = email(f?.email);
-        s3.append(campo('Nome do contato', contato), campo('WhatsApp *', whats), campo('E-mail', mail));
+        s2.append(campo('Nome do contato', vNome), campo('WhatsApp *', whats), campo('CPF do contato', vCpf), campo('Data de nascimento', vNasc), campo('E-mail', mail));
 
-        const s2 = sec('Contato do financeiro');
-        const finNome = texto(f?.financeiro?.nome);
-        const finWhats = telefone(f?.financeiro?.whatsapp);
-        const finEmail = email(f?.financeiro?.email);
-        s2.append(campo('Nome do financeiro', finNome), campo('WhatsApp do financeiro', finWhats), campo('E-mail do financeiro', finEmail));
+        /* ----- Etapas 3 e 4: contato com a opção "O mesmo da etapa anterior" em primeiro lugar ----- */
+        function etapaContato(dados, sufixo) {
+          const s = el('fieldset', 'compras-fieldset');
+          const mesmo = interruptor('O mesmo da etapa anterior', Boolean(dados?.mesmo), 'Usa o nome, o WhatsApp e o e-mail da etapa anterior.');
+          mesmo.classList.add('compras-largo');
+          mesmo.input.setAttribute('aria-label', 'O mesmo da etapa anterior (' + sufixo + ')');
+          const n = texto(dados?.nome);
+          const w = telefone(dados?.whatsapp);
+          const m = email(dados?.email);
+          const campos = [campo('Nome do ' + sufixo, n), campo('WhatsApp do ' + sufixo, w), campo('E-mail do ' + sufixo, m)];
+          const pintar = () => campos.forEach((c) => mostrar(c, !mesmo.input.checked));
+          mesmo.input.onchange = pintar;
+          pintar();
+          s.append(mesmo, ...campos);
+          return { no: s, mesmo: mesmo.input, nome: n, whatsapp: w, email: m };
+        }
+        const fin = etapaContato(f?.financeiro, 'financeiro');
+        const rep = etapaContato(f?.representante, 'representante');
 
-        const ativo = interruptor('Fornecedor ativo', f ? f.situacao === 'ativo' : true, 'Fornecedor inativo não aparece no seletor de cotação.');
-        form.append(ativo);
-
-        const mostra = () => {
-          // display, não hidden: o .compras-campo define display e venceria o atributo.
-          const mostrar = (no, sim) => { no.style.display = sim ? '' : 'none'; };
+        /* ----- Barra de etapas e navegação ----- */
+        const quadros = [s1, s2, fin.no, rep.no];
+        const marcadas = () => cats.filter((x) => x.input.checked).map((x) => x.id);
+        const etapas = () => D.etapasFornecedor(marcadas()).map((label) => ({ label }));
+        let atual = 0;
+        const erroEtapa = el('p', 'profiles-error');
+        erroEtapa.setAttribute('role', 'alert');
+        const voltar = botao('Voltar', () => ir(atual - 1));
+        const avancar = botao('Avançar', () => {
+          const falta = D.validarFornecedorEtapas(ler(), R(), { fornecedores: S.dados.fornecedores })[atual];
+          if (falta) { erroEtapa.textContent = falta; return; }
+          ir(atual + 1);
+        }, 'btn');
+        const salvarFim = el('button', 'btn', 'Salvar');
+        salvarFim.type = 'submit';
+        const nav = el('div', 'compras-form-rodape compras-etapas-nav');
+        nav.append(voltar, avancar, salvarFim);
+        // No cadastro novo só se volta pela barra (para a frente, pelo Avançar, que confere a etapa); na edição, qualquer etapa.
+        const barra = window.CicluzStepper.create({ steps: etapas(), current: 0, label: 'Etapas do cadastro do fornecedor', onSelect: (i) => { if (f || i <= atual) ir(i); } });
+        function ir(i) {
+          atual = Math.max(0, Math.min(quadros.length - 1, i));
+          quadros.forEach((q, k) => mostrar(q, k === atual));
+          barra.update(etapas(), atual);
+          erroEtapa.textContent = '';
+          // Botões pelo atributo hidden (o formato do botão retangular define display e venceria o estilo em linha).
+          // Na edição o Salvar aparece em todas as etapas; no cadastro novo, só na última.
+          voltar.hidden = atual === 0;
+          avancar.hidden = atual === quadros.length - 1;
+          // O Salvar entra e sai da barra (o formato padrão do botão de salvar força a exibição mesmo com hidden).
+          if (f || atual === quadros.length - 1) nav.append(salvarFim); else salvarFim.remove();
+          const foco = quadros[atual].querySelector('input:not([type=checkbox]),select');
+          if (foco && form.isConnected) foco.focus();
+        }
+        const pintarTipo = () => {
+          const pj = tipo.value === 'juridica';
           mostrar(cpfCampo, tipo.value === 'fisica');
-          mostrar(cnpjCampo, tipo.value === 'juridica');
+          mostrar(cnpjCampo, pj);
+          mostrar(razaoCampo, pj);
+          mostrar(regimeCampo, pj);
           mostrar(semTipo, !tipo.value);
-          mostrar(nascCampo, tipo.value === 'fisica');
-          mostrar(razaoCampo, tipo.value === 'juridica');
-          const rotuloNome = tipo.value === 'juridica' ? 'Nome fantasia *' : 'Nome *';
+          const rotuloNome = pj ? 'Nome fantasia' : 'Nome *';
           nomeCampo.querySelector('.compras-rotulo').textContent = rotuloNome;
           nome.setAttribute('aria-label', rotuloNome);
         };
-        tipo.onchange = mostra;
-        mostra();
-        return { cats, ramo, tipo, nome, razao, contato, cpf, cnpj, finNome, finWhats, finEmail, whats, mail, nasc, ativo };
+        tipo.onchange = pintarTipo;
+        cats.forEach((x) => { x.input.onchange = () => barra.update(etapas(), atual); });
+        pintarTipo();
+
+        /** Lê o formulário no formato salvo. "O mesmo da etapa anterior" copia os dados da etapa de antes. */
+        function ler() {
+          const tipoPessoa = tipo.value;
+          const pj = tipoPessoa === 'juridica';
+          const razaoSocial = pj ? razao.value.trim() : '';
+          const vendedor = { nome: vNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() };
+          const contato = (c, anterior) => (c.mesmo.checked ? { mesmo: true, ...anterior } : { mesmo: false, nome: c.nome.value.trim(), whatsapp: c.whatsapp.value.trim(), email: c.email.value.trim() });
+          const financeiro = contato(fin, vendedor);
+          const semMesmo = ({ nome: n, whatsapp: w, email: m }) => ({ nome: n, whatsapp: w, email: m });
+          return {
+            id: f?.id, categorias: marcadas(), tipoPessoa,
+            // Pessoa jurídica sem nome fantasia: a razão social vira o nome de uso.
+            nome: nome.value.trim() || razaoSocial, razaoSocial,
+            documento: (tipoPessoa === 'fisica' ? cpf.value : pj ? cnpj.value : '').trim(),
+            regimeTributario: pj ? regime.value : '', ramo: ramo.value.trim(),
+            contatoNome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email,
+            vendedorCpf: vCpf.value.trim(), vendedorNascimento: vNasc.value,
+            financeiro, representante: contato(rep, semMesmo(financeiro)),
+            situacao: ativo.input.checked ? 'ativo' : 'inativo',
+          };
+        }
+        form.append(barra.el, ...quadros, erroEtapa, nav);
+        ir(0);
+        return { ler, ir, vNasc };
       },
       salvar: (c) => {
-        const tipoPessoa = c.tipo.value;
-        if (tipoPessoa === 'fisica' && !c.nasc.checkValidity()) return 'Confira a data de nascimento: use DD/MM/AA.';
-        const campos = {
-          id: f?.id, nome: c.nome.value.trim(), razaoSocial: tipoPessoa === 'juridica' ? c.razao.value.trim() : '', tipoPessoa, categorias: c.cats.filter((x) => x.input.checked).map((x) => x.id), ramo: c.ramo.value.trim(),
-          documento: (tipoPessoa === 'fisica' ? c.cpf.value : tipoPessoa === 'juridica' ? c.cnpj.value : '').trim(),
-          contatoNome: c.contato.value.trim(), whatsapp: c.whats.value.trim(), email: c.mail.value.trim(),
-          financeiro: { nome: c.finNome.value.trim(), whatsapp: c.finWhats.value.trim(), email: c.finEmail.value.trim() },
-          nascimento: tipoPessoa === 'fisica' ? c.nasc.value : '',
-          situacao: c.ativo.input.checked ? 'ativo' : 'inativo',
-        };
-        const msg = D.validarFornecedor(campos, R(), { fornecedores: S.dados.fornecedores });
-        if (msg) return msg;
+        if (!c.vNasc.checkValidity()) { c.ir(1); return 'Confira a data de nascimento: use DD/MM/AA.'; }
+        const campos = c.ler();
+        const faltas = D.validarFornecedorEtapas(campos, R(), { fornecedores: S.dados.fornecedores });
+        const etapaComFalta = faltas.findIndex(Boolean);
+        if (etapaComFalta >= 0) { c.ir(etapaComFalta); return faltas[etapaComFalta]; }
         delete campos.id;
         const ok = S.transacao((d) => {
           if (f) Object.assign(d.fornecedores.find((y) => y.id === f.id), campos);

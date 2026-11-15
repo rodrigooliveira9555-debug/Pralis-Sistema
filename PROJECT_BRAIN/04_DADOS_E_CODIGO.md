@@ -71,7 +71,12 @@
   `categoriasFornecedor` com `categoriaId` (marca `migracoes.categoriasFornecedor`) existiu por algumas horas neste
   branch; a migração nova devolve o nome da lista para `ramo` e apaga `categoriaId`. A coleção `categoriasFornecedor` e
   a marca antiga podem ter ficado em dado de teste: nenhum código as lê. Fornecedor antigo sem os obrigatórios novos
-  continua válido. **Segunda migração do mesmo dia** (marca `migracoes.categoriaProdutoFornecedor = 1`, decisão do Rodrigo):
+  continua válido. **Cadastro em etapas (15/11/2026):** entram `regimeTributario` ('mei' | 'simples' | 'presumido' | 'real' |
+  'nao-informado' | ''), `vendedorCpf`, `vendedorNascimento` e `representante: { mesmo, nome, whatsapp, email }`; `financeiro`
+  ganha `mesmo` (true = copiado da etapa anterior ao salvar). O vendedor ou prestador é o contato de sempre: `contatoNome`,
+  `whatsapp` e `email` ficam nos mesmos campos (a cotação continua lendo `whatsapp`). **Migração** `migracoes.vendedorFornecedor`:
+  a data `nascimento` (que era do fornecedor pessoa física) passa para `vendedorNascimento`; nada mais se mexe.
+  **Segunda migração do mesmo dia** (marca `migracoes.categoriaProdutoFornecedor = 1`, decisão do Rodrigo):
   fornecedor sem categoria que tem vínculo com produto no documento do Compras (qualquer `fornecedorId` igual ao id dele em
   catálogo, histórico, cotações ou pedidos) recebe `categorias: ['produto']`; quem já tinha categoria ou não tem vínculo não
   é tocado; roda uma vez, em memória, e é gravada na próxima alteração. **Dado pessoal:** CPF e data de nascimento de fornecedor pessoa física e e-mails de contato passam a
