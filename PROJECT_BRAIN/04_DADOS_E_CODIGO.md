@@ -62,6 +62,11 @@
   `dist/compras/produto-importacao.js` (regras), `telas-produto-importacao.js` (tela), SheetJS 0.20.3 em `dist/vendor/sheetjs`.
 - `patrimonio-v1` (05/11/2026) — bens (RET - Patrimônios). As duas chaves são sincronizadas e adotadas do aparelho
   (`servidor/shared/src/documentos.ts`); começam vazias, sem dado de exemplo.
+  Em 15/11/2026 o bem ganhou três campos **opcionais** (mesma chave e mesma versão; bem antigo sem eles continua válido,
+  sem migração): `pecas: [{ id, nome, proximaTroca }]` (data ISO ou ''), `revisao: { proxima }` (data ISO) ou `null`,
+  e `audio: { id, type, size, seconds }` ou `null`. O `audio.id` aponta para o arquivo no IndexedDB `cicluz-documentos`
+  (o mesmo de Documentações e Ocorrências), que **não** é sincronizado: o áudio só existe no aparelho em que foi gravado.
+  Gravação por `dist/audio-nota.js` (`CicluzAudioNota`), peça única usada também por `occurrence-matrix.js`.
 
 **Preferência de interface:** `tema`, `menu-ordem`, `menu-item-order-v1`, `sidebar-sections-v1`,
 `menu-visibility`, `people-display-v1`, `people-footer-*`, `{key}-sort`, `{key}-display`,

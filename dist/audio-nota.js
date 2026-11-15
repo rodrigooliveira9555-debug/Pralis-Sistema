@@ -30,7 +30,7 @@
   }
 
   /**
-   * rotulo: título do bloco; classe: classes extras da caixa; aoSalvar: o que salva o áudio
+   * rotulo: título do bloco ('' quando a seção já tem o título); classe: classes extras da caixa; aoSalvar: o que salva o áudio
    * ("a ocorrência", "o bem"), usado na frase de orientação.
    */
   function criar({ rotulo = 'Observação em áudio (opcional)', classe = '', aoSalvar = 'o cadastro' } = {}) {
@@ -50,7 +50,8 @@
     const suporta = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
     const ferramentas = el('div', 'people-banner-tools');
     ferramentas.append(bGravar, bParar, bOuvir, bDescartar);
-    caixa.append(el('span', 'uniforms-enum-label', rotulo), ferramentas, msg, player);
+    if (rotulo) caixa.append(el('span', 'uniforms-enum-label', rotulo));
+    caixa.append(ferramentas, msg, player);
     const info = suporta
       ? 'O áudio é gravado e guardado só neste aparelho. Não há transcrição automática: digite ou revise o texto da observação à mão.'
       : 'Gravação de áudio indisponível neste navegador: digite a observação.';

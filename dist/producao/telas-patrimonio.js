@@ -105,7 +105,8 @@
 
         // Peças principais: uma linha por peça; a linha em branco não é salva.
         const s3 = sec('Peças principais');
-        const listaPecas = el('div', 'producao-bloco compras-largo');
+        const blocoPecas = el('div', 'producao-bloco compras-largo');
+        const listaPecas = el('div', 'producao-bloco');
         const linhasPecas = [];
         function linhaPeca(p = {}) {
           const r = el('div', 'producao-linha patrimonio-peca');
@@ -132,15 +133,15 @@
           });
         }
         (b?.pecas || []).forEach((p) => linhaPeca(p));
-        s3.append(U.nota('Só para o bem que tem peças de troca. Informe cada peça e a data prevista da próxima substituição.'), listaPecas,
-          botao('Adicionar peça', () => linhaPeca().nome.focus()));
+        s3.append(U.nota('Só para o bem que tem peças de troca. Informe cada peça e a data prevista da próxima substituição.'), blocoPecas);
+        blocoPecas.append(listaPecas, botao('Adicionar peça', () => linhaPeca().nome.focus()));
 
         const s4 = sec('Revisão periódica');
         const revisao = entrada('date', b?.revisao?.proxima || '');
         s4.append(campo('Próxima revisão', revisao, 'Data agendada para a próxima revisão do bem. Deixe em branco se não houver.'));
 
         const s5 = sec('Observação em áudio');
-        const audio = window.CicluzAudioNota.criar({ rotulo: 'Observação em áudio (opcional)', classe: 'compras-largo', aoSalvar: 'o bem' });
+        const audio = window.CicluzAudioNota.criar({ rotulo: '', classe: 'compras-largo', aoSalvar: 'o bem' });
         audio.definir(b?.audio || null);
         s5.append(audio.no);
 
