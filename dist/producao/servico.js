@@ -34,11 +34,33 @@
     if (b.energia && b.energia !== 'nenhuma' && !(b.consumoHora > 0)) return 'Informe o consumo por hora do equipamento.';
     const np = texto(b.numeroPatrimonio);
     if (np && B.dados.bens.some((x) => x.id !== b.id && texto(x.numeroPatrimonio) === np)) return 'Já existe um bem com o número de patrimônio ' + np + '.';
+    for (const p of b.pecas) {
+      if (!p.nome) return 'Informe o nome da peça (ou remova a linha).';
+      if (p.proximaTroca && !dataValida(p.proximaTroca)) return 'Data de substituição inválida na peça ' + p.nome + '.';
+    }
+    if (b.revisao && !dataValida(b.revisao.proxima)) return 'Data da próxima revisão inválida.';
     return '';
   }
-  function salvarBem(entrada) {
+  const dataValida = (iso) => /^\d{4}-\d{2}-\d{2}$/.test(iso) && !Number.isNaN(Date.parse(iso + 'T12:00:00'));
+  /**
+   * Deixa o bem no formato salvo. Peças principais: [{ id, nome, proximaTroca }] (data ISO ou '');
+   * revisão periódica: { proxima } (data ISO) ou null; áudio: referência { id, type, size, seconds }
+   * do arquivo guardado no aparelho, ou null. Linha de peça toda em branco é descartada.
+   */
+  function prepararBem(entrada) {
     const b = { ...entrada, nome: texto(entrada.nome).toLocaleUpperCase('pt-BR') };
     if (b.energia === 'nenhuma' || !b.energia) { b.energia = 'nenhuma'; b.consumoHora = null; }
+    b.pecas = (Array.isArray(entrada.pecas) ? entrada.pecas : [])
+      .map((p) => ({ id: p.id || S.novoId('peca'), nome: texto(p.nome).toLocaleUpperCase('pt-BR'), proximaTroca: texto(p.proximaTroca) }))
+      .filter((p) => p.nome || p.proximaTroca);
+    b.revisao = entrada.revisao && texto(entrada.revisao.proxima) ? { proxima: texto(entrada.revisao.proxima) } : null;
+    b.audio = entrada.audio && entrada.audio.id ? { id: entrada.audio.id, type: entrada.audio.type || '', size: entrada.audio.size || 0, seconds: entrada.audio.seconds || 0 } : null;
+    return b;
+  }
+  /** Mensagem do que impede salvar, ou '' (a tela confere antes de guardar o áudio no aparelho). */
+  const conferirBem = (entrada) => validarBem(prepararBem(entrada));
+  function salvarBem(entrada) {
+    const b = prepararBem(entrada);
     const msg = validarBem(b);
     if (msg) return erro(msg);
     let id = b.id;
@@ -505,7 +527,7 @@
 
   window.CicluzProducaoServico = {
     salvarParametros, custoDaFicha,
-    salvarBem, excluirBem, alternarBem, usosDoBem,
+    salvarBem, conferirBem, excluirBem, alternarBem, usosDoBem,
     salvarConfig, desligarProducao,
     salvarFicha, duplicarFicha, definirPadrao, excluirFicha,
     salvarAgenda, encerrarAgenda, proximasDatas, cancelarData, processarAgendas,

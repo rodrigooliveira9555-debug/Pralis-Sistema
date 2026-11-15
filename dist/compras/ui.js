@@ -287,10 +287,16 @@
       acoes.append(s);
     }
     form.append(erro, acoes);
-    form.onsubmit = (e) => {
+    // salvar pode devolver uma promessa (ex.: guardar um áudio antes de gravar o cadastro);
+    // enquanto ela não termina, um segundo toque no ✓ não salva de novo.
+    let salvando = false;
+    form.onsubmit = async (e) => {
       e.preventDefault();
       if (!salvar) return d.close();
-      const msg = salvar(ctx);
+      if (salvando) return;
+      salvando = true;
+      let msg;
+      try { msg = await salvar(ctx); } catch (err) { console.warn(err); msg = 'Não foi possível salvar. Tente de novo.'; } finally { salvando = false; }
       if (msg) { erro.textContent = msg; return; }
       d.close();
     };
