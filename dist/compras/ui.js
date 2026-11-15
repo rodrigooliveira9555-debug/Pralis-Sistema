@@ -194,6 +194,56 @@
     return b.i.closest('.local-search-control') || b.i;
   }
 
+  /**
+   * Botão redondo de expandir/recolher as colunas de uma lista em grade, para o cabeçalho da seção. Recolhida, a lista
+   * mostra só as colunas essenciais; expandida, todas, com rolagem lateral dentro da própria lista. A escolha é
+   * preferência do aparelho (localStorage, chave dada), não dado do cadastro. aplicar(expandida) atualiza a lista.
+   */
+  function botaoColunas(chave, aplicar) {
+    let expandida = false;
+    try { expandida = localStorage.getItem(chave) === 'expandidas'; } catch (e) { /* sem preferência salva */ }
+    const b = el('button', 'shortcut-circle compras-colunas-toggle');
+    b.type = 'button';
+    const pintar = () => {
+      const rotulo = expandida ? 'Recolher colunas' : 'Expandir colunas';
+      b.title = rotulo;
+      b.setAttribute('aria-label', rotulo);
+      b.setAttribute('aria-expanded', String(expandida));
+      b.innerHTML = svg('<path d="' + (expandida ? 'm3 5 6 7-6 7M21 5l-6 7 6 7' : 'm9 5-6 7 6 7M15 5l6 7-6 7') + '"/>');
+      aplicar(expandida);
+    };
+    b.onclick = () => {
+      expandida = !expandida;
+      try { localStorage.setItem(chave, expandida ? 'expandidas' : 'recolhidas'); } catch (e) { /* vale só nesta visita */ }
+      pintar();
+    };
+    pintar();
+    return b;
+  }
+  /** Arrastar com o mouse para rolar a lista para os lados (o toque e o trackpad já rolam sozinhos). */
+  function arrastarParaRolar(caixa) {
+    let inicio = null;
+    let arrastou = false;
+    caixa.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0 || caixa.scrollWidth <= caixa.clientWidth || e.target.closest('button,input,select,a')) return;
+      inicio = { x: e.clientX, rolagem: caixa.scrollLeft };
+      arrastou = false;
+    });
+    caixa.addEventListener('pointermove', (e) => {
+      if (!inicio) return;
+      const dx = e.clientX - inicio.x;
+      if (!arrastou && Math.abs(dx) < 6) return;
+      arrastou = true;
+      caixa.classList.add('arrastando');
+      caixa.scrollLeft = inicio.rolagem - dx;
+    });
+    const soltar = () => { inicio = null; caixa.classList.remove('arrastando'); };
+    caixa.addEventListener('pointerup', soltar);
+    caixa.addEventListener('pointerleave', soltar);
+    // Depois de arrastar, o clique que sobra não abre a edição da linha.
+    caixa.addEventListener('click', (e) => { if (arrastou) { e.stopPropagation(); e.preventDefault(); arrastou = false; } }, true);
+  }
+
   /** Cabeçalho das colunas de uma lista em grade (mesma classe de grade das linhas); some na tela estreita. */
   function cabecalhoColunas(grade, colunas) {
     const r = el('div', 'compras-linha em-colunas compras-linha-cabecalho ' + grade);
@@ -419,7 +469,7 @@
   }
 
   window.CicluzComprasUI = {
-    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas,
+    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, botaoColunas, arrastarParaRolar,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
     tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar,
   };

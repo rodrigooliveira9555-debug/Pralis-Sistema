@@ -101,15 +101,24 @@
     const semWhats = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && !D.podeConvidar(f)).length;
     const incompletos = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && pendencias(f).length).length;
     // Mesma linha dos cadastros de grupos: tocar edita; a setinha revela Editar e Excluir.
-    const sec = U.secao('Fornecedores', S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length);
+    // Linha fina, uma por fornecedor. O botão do cabeçalho expande ou recolhe as colunas (preferência do aparelho):
+    // recolhida = Categoria, Fornecedor e Situação; expandida = todas, com rolagem lateral dentro da lista.
     const linhas = el('div', 'compras-lista compras-lista-grade');
+    const colunas = U.botaoColunas('cicluz-fornecedores-colunas', (expandida) => {
+      linhas.classList.toggle('colunas-expandidas', expandida);
+      linhas.classList.toggle('colunas-recolhidas', !expandida);
+      if (!expandida) linhas.scrollLeft = 0;
+    });
+    U.arrastarParaRolar(linhas);
+    const sec = U.secao('Fornecedores', S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length, colunas);
     sec.append(linhas);
     if (!lista.length) linhas.append(U.vazio(buscaF[origemF] ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.'));
     // Ordem da linha (pedido do Rodrigo): ícone da categoria e o nome dela, depois o nome do fornecedor e os outros dados,
     // em colunas fixas (grade-fornecedor, em compras.css) para CNPJ, WhatsApp e ramo caírem sempre na mesma vertical.
     if (lista.length) linhas.append(U.cabecalhoColunas('grade-fornecedor', [
       { chave: 'categoria', rotulo: 'Categoria' }, { chave: 'nome', rotulo: 'Fornecedor' }, { chave: 'documento', rotulo: 'CPF / CNPJ' },
-      { chave: 'whatsapp', rotulo: 'WhatsApp' }, { chave: 'ramo', rotulo: 'Ramo' }, { chave: 'selos', rotulo: '' }, { chave: 'estado', rotulo: 'Situação' },
+      { chave: 'whatsapp', rotulo: 'WhatsApp' }, { chave: 'ramo', rotulo: 'Ramo' }, { chave: 'email', rotulo: 'E-mail' },
+      { chave: 'financeiro', rotulo: 'Contato do financeiro' }, { chave: 'selos', rotulo: 'Avisos' }, { chave: 'estado', rotulo: 'Situação' },
     ]));
     lista.forEach((f) => {
       const ativo = f.situacao === 'ativo';
@@ -125,6 +134,8 @@
           { chave: 'documento', conteudo: f.documento },
           { chave: 'whatsapp', conteudo: f.whatsapp },
           { chave: 'ramo', conteudo: f.ramo },
+          { chave: 'email', conteudo: f.email },
+          { chave: 'financeiro', conteudo: [f.financeiro?.nome, f.financeiro?.whatsapp].filter(Boolean).join(' · ') },
           { chave: 'selos', conteudo: [
             ativo && categoria && falta.length ? U.situacao('Completar cadastro', 'atencao') : null,
             semDdd ? U.situacao(f.whatsapp ? 'WhatsApp sem DDD' : 'Sem WhatsApp', 'atencao') : null,

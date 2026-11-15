@@ -91,54 +91,52 @@ body:not(.dark-theme) .compras-linha.com-acoes:hover .compras-linha-texto b { co
 .compras-celula.c-selos { display: flex; flex-wrap: wrap; gap: 4px; }
 .compras-linha-cabecalho { min-height: 0; padding-top: 6px; padding-bottom: 6px; cursor: default; }
 .compras-linha-cabecalho .compras-celula { font: 600 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); text-transform: uppercase; letter-spacing: .04em; }
-/* A grade responde à largura da própria lista (não da janela), porque o menu lateral aberto estreita o conteúdo. */
-.compras-lista-grade { container-type: inline-size; container-name: lista-grade; }
-/* Fornecedores: ícones (lugar para dois) · categoria · fornecedor · CPF/CNPJ · WhatsApp · ramo · avisos · situação · seta */
-.compras-linha.grade-fornecedor { grid-template-columns: 64px 134px minmax(120px, 1fr) 126px 108px 100px 126px 40px 24px; }
-/* Cada célula tem coluna fixa (não depende da ordem), para a gaveta de Editar/Excluir poder abrir por cima dos avisos. */
+/* A lista rola para os lados dentro dela mesma (a página não), e responde à própria largura, não à da janela. */
+.compras-lista-grade { container-type: inline-size; container-name: lista-grade; overflow-x: auto; overscroll-behavior-x: contain; }
+.compras-lista-grade.arrastando { cursor: grabbing; user-select: none; }
+.compras-colunas-toggle { flex: none; }
+/* Fornecedores: cada célula tem coluna fixa (não depende da ordem), igual em todas as linhas.
+   Recolhida (padrão): ícones (lugar para dois) · categoria · fornecedor · situação · seta. */
+.compras-linha.grade-fornecedor { grid-template-columns: 64px 134px minmax(0, 1fr) 64px 24px; background: var(--theme-card, #fff); }
 .compras-linha.grade-fornecedor > * { grid-row: 1; }
 .compras-linha.grade-fornecedor > .compras-linha-icones { grid-column: 1; }
 .compras-linha.grade-fornecedor > .c-categoria { grid-column: 2; }
 .compras-linha.grade-fornecedor > .c-nome { grid-column: 3; }
-.compras-linha.grade-fornecedor > .c-documento { grid-column: 4; }
-.compras-linha.grade-fornecedor > .c-whatsapp { grid-column: 5; }
-.compras-linha.grade-fornecedor > .c-ramo { grid-column: 6; }
-.compras-linha.grade-fornecedor > .c-selos { grid-column: 7; }
-.compras-linha.grade-fornecedor > .account-list-state { grid-column: 8; }
-.compras-linha.grade-fornecedor > .c-estado { grid-column: 8 / span 2; }
-.compras-linha.grade-fornecedor > .account-action-toggle { grid-column: 9; }
-/* Editar/Excluir abrem no lugar dos avisos (que somem enquanto isso), para as colunas não se mexerem. */
-.compras-linha.grade-fornecedor > .account-row-actions:not([hidden]) { grid-column: 7; grid-row: 1; justify-self: end; }
-.compras-linha.grade-fornecedor:has(> .account-row-actions:not([hidden])) > .c-selos { visibility: hidden; }
-/* Lista média (ex.: tablet em pé, ou menu lateral aberto): ficam categoria, fornecedor, CPF/CNPJ, WhatsApp e situação;
-   ramo e avisos ficam para a tela de edição. A gaveta abre por cima da coluna do WhatsApp. */
-@container lista-grade (max-width: 929px) {
-  .compras-linha.grade-fornecedor { grid-template-columns: 64px 134px minmax(110px, 1fr) 126px 108px 40px 24px; }
-  .compras-linha.grade-fornecedor > .c-ramo, .compras-linha.grade-fornecedor > .c-selos { display: none; }
-  .compras-linha.grade-fornecedor > .account-list-state { grid-column: 6; }
-  .compras-linha.grade-fornecedor > .c-estado { grid-column: 6 / span 2; }
-  .compras-linha.grade-fornecedor > .account-action-toggle { grid-column: 7; }
-  .compras-linha.grade-fornecedor > .account-row-actions:not([hidden]) { grid-column: 5; }
-  .compras-linha.grade-fornecedor:has(> .account-row-actions:not([hidden])) > .c-whatsapp { visibility: hidden; }
-}
-/* Lista estreita (celular): sem cabeçalho; os dados descem para baixo do nome, sem rolagem lateral. */
-@container lista-grade (max-width: 689px) {
-  .compras-linha.compras-linha-cabecalho { display: none; }
-  .compras-linha.grade-fornecedor { grid-template-columns: auto minmax(0, 1fr) auto auto; }
-  .compras-linha.grade-fornecedor > * { grid-row: auto; }
-  .compras-linha.grade-fornecedor > .compras-linha-icones { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
-  .compras-linha.grade-fornecedor > .compras-celula { grid-column: 2; }
-  .compras-linha.grade-fornecedor > .c-ramo, .compras-linha.grade-fornecedor > .c-selos { display: flex; }
-  .compras-linha.grade-fornecedor > .c-ramo { display: block; }
-  .compras-linha.grade-fornecedor > .compras-celula:empty { display: none; }
-  .compras-linha.grade-fornecedor > .c-categoria { grid-row: 1; }
-  .compras-linha.grade-fornecedor > .c-nome { grid-row: 2; }
-  .compras-linha.grade-fornecedor > .account-list-state { grid-column: 3; grid-row: 1 / span 2; }
-  .compras-linha.grade-fornecedor > .account-action-toggle { grid-column: 4; grid-row: 1 / span 2; }
-  /* Editar/Excluir abrem numa linha própria, à direita, para não espremer os dados. */
-  .compras-linha.grade-fornecedor > .account-row-actions:not([hidden]) { grid-column: 1 / -1; grid-row: auto; justify-self: end; }
-  .compras-linha.grade-fornecedor:has(> .account-row-actions:not([hidden])) > .c-selos,
-  .compras-linha.grade-fornecedor:has(> .account-row-actions:not([hidden])) > .c-whatsapp { visibility: visible; }
+.compras-linha.grade-fornecedor > .account-list-state, .compras-linha.grade-fornecedor > .c-estado { grid-column: 4; }
+.compras-linha.grade-fornecedor > .account-action-toggle { grid-column: 5; }
+.colunas-recolhidas .grade-fornecedor > :is(.c-documento, .c-whatsapp, .c-ramo, .c-email, .c-financeiro, .c-selos) { display: none; }
+/* Editar/Excluir abrem por cima de uma coluna (a situação, quando recolhida), sem mexer nas outras. */
+.compras-linha.grade-fornecedor > .account-row-actions:not([hidden]) { grid-column: 4; grid-row: 1; justify-self: end; }
+.colunas-recolhidas .grade-fornecedor:has(> .account-row-actions:not([hidden])) > .account-list-state { visibility: hidden; }
+.colunas-recolhidas .compras-linha.grade-fornecedor { grid-template-columns: 64px 134px minmax(0, 1fr) 76px 24px; }
+/* Expandida: todas as colunas com largura fixa; o que não couber rola para o lado, com o nome fixo à esquerda. */
+.colunas-expandidas .compras-linha.grade-fornecedor { grid-template-columns: 64px 134px 200px 132px 118px 120px 200px 190px 132px 64px 24px; width: max-content; min-width: 100%; }
+.colunas-expandidas .grade-fornecedor > .c-nome { position: sticky; left: 0; z-index: 1; align-self: stretch; display: flex; align-items: center; background: inherit; box-shadow: 1px 0 0 var(--layout-line, #dedee3); padding: 0 8px 0 12px; margin-left: -12px; }
+.colunas-expandidas .grade-fornecedor > .c-documento { grid-column: 4; }
+.colunas-expandidas .grade-fornecedor > .c-whatsapp { grid-column: 5; }
+.colunas-expandidas .grade-fornecedor > .c-ramo { grid-column: 6; }
+.colunas-expandidas .grade-fornecedor > .c-email { grid-column: 7; }
+.colunas-expandidas .grade-fornecedor > .c-financeiro { grid-column: 8; }
+.colunas-expandidas .grade-fornecedor > .c-selos { grid-column: 9; }
+.colunas-expandidas .grade-fornecedor > .account-list-state, .colunas-expandidas .grade-fornecedor > .c-estado { grid-column: 10; }
+.colunas-expandidas .grade-fornecedor > .account-action-toggle { grid-column: 11; }
+.colunas-expandidas .grade-fornecedor > .account-row-actions:not([hidden]) { grid-column: 9; }
+.colunas-expandidas .grade-fornecedor:has(> .account-row-actions:not([hidden])) > .c-selos { visibility: hidden; }
+/* O fundo de foco/cursor precisa ser opaco aqui, porque a célula fixa do nome herda dele. */
+.compras-linha.grade-fornecedor.compras-linha-cabecalho { background: var(--theme-card, #fff); }
+/* Lista estreita e recolhida (celular): sem cabeçalho; a categoria fica em cima do nome, numa linha fina. */
+@container lista-grade (max-width: 519px) {
+  /* No celular o nome não fica fixo: ocuparia quase toda a largura. */
+  .colunas-expandidas .grade-fornecedor > .c-nome { position: static; box-shadow: none; }
+  .colunas-recolhidas .compras-linha.compras-linha-cabecalho { display: none; }
+  .colunas-recolhidas .compras-linha.grade-fornecedor { grid-template-columns: auto minmax(0, 1fr) auto 24px; }
+  .colunas-recolhidas .grade-fornecedor > * { grid-row: auto; }
+  .colunas-recolhidas .grade-fornecedor > .compras-linha-icones { grid-column: 1; grid-row: 1 / span 2; }
+  .colunas-recolhidas .grade-fornecedor > .c-categoria { grid-column: 2; grid-row: 1; }
+  .colunas-recolhidas .grade-fornecedor > .c-nome { grid-column: 2; grid-row: 2; }
+  .colunas-recolhidas .grade-fornecedor > .account-list-state { grid-column: 3; grid-row: 1 / span 2; }
+  .colunas-recolhidas .grade-fornecedor > .account-action-toggle { grid-column: 4; grid-row: 1 / span 2; }
+  .colunas-recolhidas .grade-fornecedor > .account-row-actions:not([hidden]) { grid-column: 3; grid-row: 1 / span 2; }
 }
 .compras-linha .account-action-toggle { flex: none; width: 32px; height: 32px; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .compras-linha .account-row-actions { display: flex; flex: none; align-items: center; gap: var(--row-action-gap, 6px); }
