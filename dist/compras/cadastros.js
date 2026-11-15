@@ -71,6 +71,76 @@
     if (cats.includes('servico')) r.push({ ...des, cor: corDespesas(), rotulo: 'Serviço' });
     return r.length ? r : [{ ...mer, cor: 'var(--navigation-ink, #a2a0aa)', rotulo: 'Sem categoria' }];
   }
+  /* ---------- Enviar link para cadastro (P-29): a parte visível existe; o envio está desligado ---------- */
+  const PRAZOS_CONVITE = [['1', '1 dia útil'], ['3', '3 dias úteis'], ['5', '5 dias úteis'], ['7', '7 dias úteis'], ['data', 'Escolher data e hora']];
+  const CANAIS_CONVITE = [['whatsapp', 'WhatsApp'], ['email', 'E-mail'], ['sms', 'SMS']];
+  /**
+   * ÚNICO ponto para ligar o envio quando a P-29 (parte do servidor) for decidida: recebe o canal e o prazo e deve
+   * devolver { url } para abrir (wa.me, mailto:, sms:) com a mensagem e o link do convite. Hoje devolve null, porque
+   * o link ainda não tem para onde levar: nada de link falso nem de abrir o WhatsApp com endereço que não existe.
+   */
+  function conviteCadastro(canal, prazo) { // eslint-disable-line no-unused-vars
+    return null;
+  }
+  /**
+   * Botão retangular "Enviar" (aviãozinho) do cabeçalho da lista e o painel que ele abre: uma coluna branca estreita
+   * com a seta de fechar e as bolinhas dos canais (WhatsApp, e-mail, SMS), e ao lado o Prazo de resposta (padrão
+   * 3 dias úteis, ou data e hora). O painel fica por cima da tela (fixo), alinhado ao botão.
+   */
+  function botaoEnviarConvite() {
+    const caixa = el('span', 'compras-enviar');
+    const painel = el('div', 'compras-enviar-painel');
+    painel.hidden = true;
+    painel.setAttribute('role', 'dialog');
+    painel.setAttribute('aria-label', 'Enviar link para cadastro');
+    // Tocar fora fecha; o ouvinte só existe enquanto o painel está aberto (a lista é redesenhada muitas vezes).
+    const fora = (e) => { if (!caixa.isConnected || !caixa.contains(e.target)) abrir(false); };
+    const abrir = (sim) => {
+      painel.hidden = !sim;
+      b.setAttribute('aria-expanded', String(sim));
+      document.removeEventListener('pointerdown', fora);
+      if (!sim) return;
+      document.addEventListener('pointerdown', fora);
+      const r = b.getBoundingClientRect();
+      painel.style.top = Math.round(r.bottom + 6) + 'px';
+      painel.style.left = Math.max(8, Math.min(Math.round(r.left), window.innerWidth - painel.offsetWidth - 8)) + 'px';
+      fechar.focus();
+    };
+    const b = U.botaoTitulo('Enviar', 'Enviar link para cadastro', () => abrir(painel.hidden), U.ICONES.send);
+    b.setAttribute('aria-haspopup', 'dialog');
+    b.setAttribute('aria-expanded', 'false');
+    const bolinha = (rotulo, desenho, acao, classe = '') => {
+      const x = el('button', 'shortcut-circle compras-redondo ' + classe);
+      x.type = 'button'; x.title = rotulo; x.setAttribute('aria-label', rotulo);
+      x.innerHTML = U.svg(desenho);
+      x.onclick = acao;
+      return x;
+    };
+    const canais = el('div', 'compras-enviar-canais');
+    const fechar = bolinha('Fechar', U.ICONES.voltar, () => { abrir(false); b.focus(); }, 'compras-enviar-fechar');
+    const aviso = el('p', 'profiles-note');
+    aviso.setAttribute('role', 'status');
+    const prazo = seletor(PRAZOS_CONVITE, '3');
+    const data = entrada('date', '');
+    const hora = entrada('time', '');
+    const dataCampo = campo('Responder até (data)', data);
+    const horaCampo = campo('Hora', hora);
+    const pintarPrazo = () => { const livre = prazo.value === 'data'; dataCampo.style.display = livre ? '' : 'none'; horaCampo.style.display = livre ? '' : 'none'; };
+    prazo.onchange = pintarPrazo;
+    const lerPrazo = () => (prazo.value === 'data' ? { tipo: 'data', data: data.value, hora: hora.value } : { tipo: 'dias-uteis', dias: Number(prazo.value) });
+    canais.append(fechar, ...CANAIS_CONVITE.map(([id, nomeCanal]) => bolinha('Enviar por ' + nomeCanal, U.ICONES[id], () => {
+      const convite = conviteCadastro(id, lerPrazo());
+      if (!convite) { aviso.textContent = 'O link de cadastro ainda não está ativo. Falta a liberação da parte do servidor.'; return; }
+      window.open(convite.url, '_blank', 'noopener');
+    })));
+    const lado = el('div', 'compras-enviar-prazo');
+    lado.append(campo('Prazo de resposta', prazo), dataCampo, horaCampo, aviso);
+    pintarPrazo();
+    painel.append(canais, lado);
+    painel.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); abrir(false); b.focus(); } });
+    caixa.append(b, painel);
+    return caixa;
+  }
   const telasF = {};
   let origemF = 'mer';
   const buscaF = { mer: '', des: '' };
@@ -107,11 +177,11 @@
     const linhas = el('div', 'compras-lista compras-lista-grade');
     U.arrastarParaRolar(linhas);
     // Cabeçalho branco da lista (desenho final do Rodrigo): à esquerda, o botão retangular "Fornecedores" com o "+", que abre
-    // o cadastro; na outra ponta, a quantidade num círculo e a bolinha "‹ ›" de ocultar ou mostrar todas as colunas.
+    // o cadastro, e o botão retangular "Enviar" (aviãozinho), que abre o painel do link de cadastro; na outra ponta, a quantidade num círculo e a bolinha "‹ ›" de ocultar ou mostrar todas as colunas.
     const ativos = S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length;
     const ponta = U.pontaDaLista(ativos, ativos + (ativos === 1 ? ' fornecedor ativo' : ' fornecedores ativos'));
     const sec = U.secao('Fornecedores', undefined, ponta);
-    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Fornecedores', 'Cadastrar fornecedor', () => editarFornecedor()));
+    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Fornecedores', 'Cadastrar fornecedor', () => editarFornecedor()), botaoEnviarConvite());
     sec.append(linhas);
     if (!lista.length) linhas.append(U.vazio(buscaF[origemF] ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.'));
     if (lista.length) {

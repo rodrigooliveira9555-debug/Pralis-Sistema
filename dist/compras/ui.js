@@ -19,6 +19,11 @@
     cadastro: '<path d="M12 3c4.4 0 8 1.3 8 3v12c0 1.7-3.6 3-8 3s-8-1.3-8-3V6c0-1.7 3.6-3 8-3ZM4 6c0 1.7 3.6 3 8 3s8-1.3 8-3M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
     cotacao: '<path d="M12 3v18M7 21h10M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2M2 16l3-8 3 8a4.4 4.4 0 0 1-6 0ZM16 16l3-8 3 8a4.4 4.4 0 0 1-6 0Z"/>',
     raio: '<path d="M13 2 4 14h7l-1 8 9-12h-7Z"/>',
+    send: '<path d="M21 3 10 14M21 3l-7 18-4-7-7-4Z"/>',
+    whatsapp: '<path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/>',
+    email: '<path d="M3 6h18v12H3zM3 7l9 6 9-6"/>',
+    sms: '<path d="M4 5h16v11H9l-5 4zM8 10h.01M12 10h.01M16 10h.01"/>',
+    voltar: '<path d="m15 5-7 7 7 7"/>',
   };
   const svg = (path) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + path + '</svg>';
 
@@ -223,12 +228,13 @@
    * cor do menu de onde se veio): tocar abre o cadastro de um item novo. rotuloAcao vira a dica e o texto do leitor de
    * tela (ex.: "Cadastrar fornecedor"). O .footer-action-icon próprio faz o layout-review.js manter o "+".
    */
-  function botaoTitulo(titulo, rotuloAcao, acao) {
+  function botaoTitulo(titulo, rotuloAcao, acao, desenho = '<path d="M12 5v14M5 12h14"/>') {
     const b = el('button', 'btn compras-titulo-botao', titulo);
     b.type = 'button';
     b.title = rotuloAcao;
     b.setAttribute('aria-label', rotuloAcao);
-    b.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>');
+    // desenho: o que vai no círculo (o "+" por padrão; ex.: o aviãozinho de enviar).
+    b.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true">' + desenho + '</svg>');
     b.onclick = acao;
     return b;
   }

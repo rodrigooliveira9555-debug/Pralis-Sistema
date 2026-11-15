@@ -262,6 +262,17 @@ body.dark-theme .compras-trilha li { background: #34333b; color: #d4d4d8; }
 /* Itens do diálogo podem encolher: uma tabela larga rola dentro da própria caixa, sem passar da borda. */
 .compras-dialog .compras-form > * { min-width: 0; }
 .compras-fieldset { border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; padding: 12px 14px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; min-width: 0; }
+/* "Enviar link para cadastro": botão retangular no cabeçalho da lista e painel fixo por cima da tela (o quadro da
+   lista corta o que sai dele): coluna branca estreita com a seta de fechar e as bolinhas dos canais, e ao lado o prazo. */
+.compras-enviar { display: inline-flex; }
+.compras-enviar-painel { position: fixed; z-index: 30; display: flex; align-items: flex-start; gap: 8px; font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); }
+.compras-enviar-painel[hidden] { display: none; }
+.compras-enviar-canais, .compras-enviar-prazo { background: var(--theme-card, #fff); border: 1px solid var(--layout-line, #dedee3); border-radius: 14px; box-shadow: 0 8px 24px rgb(0 0 0 / .14); }
+.compras-enviar-canais { display: grid; justify-items: center; gap: 10px; padding: 10px 8px; }
+.compras-secao-cab .compras-enviar-fechar { background: transparent; color: var(--panel-text, #12672e); }
+.compras-enviar-prazo { display: grid; gap: 8px; padding: 12px; width: min(230px, calc(100vw - 84px)); box-sizing: border-box; }
+.compras-enviar-prazo > .profiles-note { margin: 0; }
+.compras-enviar-prazo > .profiles-note:empty { display: none; }
 /* Seleção por cartões (U.cartoesEscolha): cartão = botão inteiro; lado a lado quando cabe, empilhado no celular.
    Marcado: borda de 2 px e fundo bem claro na cor da opção, círculo cheio com o "certo". */
 .compras-cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; min-width: 0; }

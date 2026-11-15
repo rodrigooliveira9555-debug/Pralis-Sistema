@@ -149,6 +149,19 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await dp.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).click();
   await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'));
   ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '11.444.777/0001-61' && f.tipoPessoa === 'juridica' && f.vendedorAniversario === '1990-03' && f.categorias.join() === 'servico')), 'Segundo fornecedor salvo com CNPJ, aniversário do prestador e categoria Serviço');
+  // Enviar link para cadastro (P-29): o botão e o painel existem; o envio fica desligado, sem abrir nada.
+  const enviarF = p.locator('.view.show button[aria-label="Enviar link para cadastro"]');
+  await enviarF.click();
+  const painelF = p.locator('.view.show .compras-enviar-painel');
+  ok(await painelF.isVisible() && await painelF.locator('.compras-enviar-canais button').count() === 4 && await painelF.locator('select').inputValue() === '3', 'Enviar abre o painel com fechar, WhatsApp, e-mail e SMS e o prazo padrão de 3 dias úteis');
+  await painelF.locator('select').selectOption('data');
+  ok(await painelF.getByLabel('Hora', { exact: true }).isVisible(), 'O prazo aceita data e hora');
+  for (const canal of ['WhatsApp', 'E-mail', 'SMS']) {
+    await painelF.locator('button[aria-label="Enviar por ' + canal + '"]').click();
+    ok((await painelF.locator('[role=status]').textContent()).includes('ainda não está ativo') && p.context().pages().length === 1, canal + ': o envio está desligado e nada é aberto');
+  }
+  await painelF.locator('button[aria-label="Fechar"]').click();
+  ok(await painelF.isHidden(), 'A seta fecha o painel');
   // DES - Fornecedores abre o mesmo cadastro, na cor de Despesas
   await p.evaluate(() => CicluzCompras.abrir('fornecedores-des'));
   ok(await p.locator('#despesas-fornecedores.show').count() === 1 && (await p.locator('#despesas-fornecedores .head h2').textContent()) === 'DES - Fornecedores' && await p.locator('#despesas-fornecedores .compras-linha', { hasText: 'Prestador Serviço Teste' }).count() === 1, 'DES - Fornecedores mostra os mesmos fornecedores');
