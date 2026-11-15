@@ -252,10 +252,11 @@
    * ao lado do título, a mesma setinha do fim das linhas; ali ela encolhe a coluna (fica só a setinha, para reabrir)
    * ou expande. lista: o elemento da lista, que recebe a classe oculta-<chave>; preferencia: chave do localStorage
    * onde a escolha fica guardada por aparelho (lista das colunas ocultas; não é dado do cadastro).
-   * O cabeçalho devolvido traz em .botaoGeral o botão redondo "‹ ›" que oculta ou mostra todas as colunas de uma vez
-   * (para pôr ao lado do título da lista); ele acompanha as setinhas: todas abertas, todas ocultas ou misto.
+   * O cabeçalho devolvido traz em .botaoGeral o botão que oculta ou mostra todas as colunas de uma vez: um botão
+   * retangular no padrão do sistema (texto = titulo da lista à esquerda, círculo com "‹ ›" à direita), para ficar no
+   * lugar do título da lista; ele acompanha as setinhas: todas abertas, todas ocultas ou misto.
    */
-  function cabecalhoColunas(grade, colunas, { lista, preferencia } = {}) {
+  function cabecalhoColunas(grade, colunas, { lista, preferencia, titulo = 'Colunas' } = {}) {
     const r = el('div', 'compras-linha em-colunas compras-linha-cabecalho ' + grade);
     r.append(el('span', 'compras-linha-icones'));
     let ocultas = [];
@@ -263,9 +264,11 @@
     const ocultaveis = lista ? colunas.filter((c) => c.ocultavel).map((c) => c.chave) : [];
     const pintores = [];
     const guardar = () => { try { localStorage.setItem(preferencia, JSON.stringify(ocultas)); } catch (err) { /* vale só nesta visita */ } };
-    const geral = el('button', 'shortcut-circle compras-redondo compras-colunas-geral');
+    // .btn com o próprio .footer-action-icon: o layout-review.js mantém o desenho dado e aplica o formato do botão
+    // retangular com círculo à direita (regra de 15/11/2026), na cor do menu.
+    const geral = el('button', 'btn compras-colunas-geral', titulo);
     geral.type = 'button';
-    geral.innerHTML = svg('<path d="m9 5-6 7 6 7M15 5l6 7-6 7"/>');
+    geral.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5-6 7 6 7M15 5l6 7-6 7"/></svg>');
     const pintarGeral = () => {
       const fechadas = ocultaveis.filter((c) => ocultas.includes(c)).length;
       const algumaAberta = fechadas < ocultaveis.length;

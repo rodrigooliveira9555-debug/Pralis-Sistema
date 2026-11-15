@@ -117,10 +117,10 @@
       { chave: 'contato', rotulo: 'Nome do contato', ocultavel: true }, { chave: 'whatsapp', rotulo: 'WhatsApp', ocultavel: true },
       { chave: 'razao', rotulo: 'Razão social', ocultavel: true }, { chave: 'documento', rotulo: 'CPF / CNPJ', ocultavel: true },
       { chave: 'ramo', rotulo: 'Ramo', ocultavel: true }, { chave: 'selos', rotulo: 'Avisos', ocultavel: true }, { chave: 'estado', rotulo: 'Situação' },
-      ], { lista: linhas, preferencia: 'cicluz-fornecedores-colunas' });
+      ], { lista: linhas, preferencia: 'cicluz-fornecedores-colunas', titulo: 'Fornecedores' });
       linhas.append(cabecalho);
-      // Botão "‹ ›" de ocultar ou mostrar todas as colunas: na mesma linha do título "Fornecedores", ao lado da contagem.
-      sec.querySelector('.compras-secao-cab h3').append(cabecalho.botaoGeral);
+      // O título "Fornecedores" é o próprio botão retangular (círculo "‹ ›" à direita) que oculta ou mostra todas as colunas.
+      sec.querySelector('.compras-secao-cab h3').replaceChildren(cabecalho.botaoGeral);
     }
     lista.forEach((f) => {
       const ativo = f.situacao === 'ativo';

@@ -114,7 +114,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   // DES - Fornecedores abre o mesmo cadastro, na cor de Despesas
   await p.evaluate(() => CicluzCompras.abrir('fornecedores-des'));
   ok(await p.locator('#despesas-fornecedores.show').count() === 1 && (await p.locator('#despesas-fornecedores .head h2').textContent()) === 'DES - Fornecedores' && await p.locator('#despesas-fornecedores .compras-linha', { hasText: 'Prestador CPF Teste' }).count() === 1, 'DES - Fornecedores mostra os mesmos fornecedores');
-  ok(await p.locator('#despesas-fornecedores .compras-content button.btn').count() === 0 && await p.locator('#despesas-fornecedores .compras-secao-cab .compras-redondo').count() === 2 && await p.locator('#despesas-fornecedores .compras-content input[type=search]').count() === 0, 'No topo só o botão Cadastrar fornecedor; a busca é a do rodapé');
+  ok(await p.locator('#despesas-fornecedores .compras-content button.btn').count() === 1 && (await p.locator('#despesas-fornecedores .compras-secao-cab h3 button.btn').textContent()).trim() === 'Fornecedores' && await p.locator('#despesas-fornecedores .compras-secao-cab .compras-redondo').count() === 1 && await p.locator('#despesas-fornecedores .compras-content input[type=search]').count() === 0, 'No topo só o botão Cadastrar fornecedor; a busca é a do rodapé');
   ok((await p.locator('#despesas-fornecedores .compras-linha.com-acoes', { hasText: 'Prestador CPF Teste' }).locator('.c-categoria').textContent()) === 'Serviço', 'A linha mostra a categoria marcada');
   // Setinha do título oculta e mostra a coluna (preferência do aparelho)
   const setaRamo = p.locator('#despesas-fornecedores .compras-linha-cabecalho .c-ramo .compras-coluna-seta');
