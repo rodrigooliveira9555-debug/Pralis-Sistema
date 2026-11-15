@@ -120,7 +120,7 @@
 
   function formulario(b) {
     U.dialogo({
-      titulo: b ? 'Editar bem' : 'Novo bem', ...cores, largo: true,
+      titulo: b ? 'Editar bem' : 'Cadastro patrimônio', ...cores, largo: true,
       montar: (form) => {
         const sec = (t) => { const s = el('fieldset', 'compras-fieldset'); s.append(el('legend', null, t)); form.append(s); return s; };
         const s1 = sec('Identificação');

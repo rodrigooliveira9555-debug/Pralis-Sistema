@@ -196,7 +196,9 @@ ok(() => {
   assert.equal(v({ vendedorCpf: 'valor antigo qualquer' }), ''); // o CPF do vendedor não é mais pedido nem conferido
   assert.equal(v({ representante: { mesmo: true, cargo: 'socio-proprietario' } }), '');
   assert.match(v({ representante: { cargo: 'chefe' } }), /Cargo do representante/);
-  assert.equal(d.CARGOS_REPRESENTANTE.length, 11);
+  assert.deepEqual(d.CARGOS_REPRESENTANTE.map(([, nome]) => nome), ['Proprietário', 'Sócio-proprietário', 'Diretor geral', 'Diretor comercial', 'Gerente geral', 'Gerente comercial',
+    'Supervisor geral', 'Supervisor comercial', 'Representante comercial', 'Administrador', 'Financeiro', 'Procurador', 'Outro']);
+  assert.deepEqual(d.etapasFornecedor([]), ['Dados da empresa', 'Dados do vendedor', 'Dados do financeiro', 'Dados do representante']);
   assert.match(v({ vendedorNascimento: '01/01/1990' }), /nascimento/);
   assert.match(v({ regimeTributario: 'outro' }), /Regime/);
   assert.match(v({ representante: { nome: 'Rep', whatsapp: '12', email: '' } }), /WhatsApp do representante/);
@@ -205,9 +207,9 @@ ok(() => {
   const etapas = d.validarFornecedorEtapas({ ...pj, categorias: [], whatsapp: '', financeiro: { email: 'x@' }, representante: { whatsapp: '1' } }, regras, ctx);
   assert.deepEqual(etapas.map(Boolean), [true, true, true, true]);
   assert.deepEqual(d.validarFornecedorEtapas(pj, regras, ctx), ['', '', '', '']);
-  assert.deepEqual(d.etapasFornecedor(['produto']).slice(1, 2), ['Vendedor']);
-  assert.deepEqual(d.etapasFornecedor(['servico']).slice(1, 2), ['Prestador de serviço']);
-  assert.deepEqual(d.etapasFornecedor(['produto', 'servico']).slice(1, 2), ['Vendedor / Prestador de serviço']);
+  assert.deepEqual(d.etapasFornecedor(['produto']).slice(1, 2), ['Dados do vendedor']);
+  assert.deepEqual(d.etapasFornecedor(['servico']).slice(1, 2), ['Dados do prestador']);
+  assert.deepEqual(d.etapasFornecedor(['produto', 'servico']).slice(1, 2), ['Dados do vendedor / prestador']);
   assert.equal(d.etapasFornecedor([]).length, 4);
   assert.equal(d.etapasFornecedor([])[0], 'Dados da empresa');
   // Endereço é opcional; o que vier precisa estar no formato.

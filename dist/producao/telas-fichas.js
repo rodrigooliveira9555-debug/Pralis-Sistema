@@ -95,7 +95,7 @@
     let resumoGeral;
 
     U.dialogo({
-      titulo: existente ? 'Editar ficha técnica' : 'Nova ficha técnica', largo: true, classe: 'producao-ficha-dialog',
+      titulo: existente ? 'Editar ficha técnica' : 'Cadastro ficha técnica', largo: true, classe: 'producao-ficha-dialog',
       montar: (form) => {
         const sec = (t) => { const s = el('fieldset', 'compras-fieldset'); s.append(el('legend', null, t)); form.append(s); return s; };
         const s1 = sec('Cabeçalho');

@@ -214,13 +214,14 @@
   /**
    * Cadastro em 4 etapas, com a barra de etapas única do sistema (CicluzStepper, a mesma do Cadastro Completo):
    * 1) Dados da empresa (CNPJ primeiro, que busca razão social, nome fantasia e endereço; endereço começando pelo CEP),
-   * 2) Vendedor / Prestador de serviço, 3) Responsável financeiro, 4) Representante da empresa.
+   * 2) Dados do vendedor (ou do prestador, pela categoria), 3) Dados do financeiro, 4) Dados do representante.
+   * O nome da etapa é o mesmo na barra, no título do quadro e nos rótulos dos campos.
    * No cadastro novo, Avançar confere a etapa antes de seguir; na edição, toca-se direto em qualquer etapa. O ✓ do
    * rodapé (e o Salvar da última etapa) confere tudo e, se faltar algo, leva à etapa onde está o problema.
    */
   function editarFornecedor(f) {
     U.dialogo({
-      titulo: f ? 'Editar fornecedor' : 'Novo fornecedor', ...coresF(), largo: true, classe: 'compras-form-padrao',
+      titulo: f ? 'Editar fornecedor' : 'Cadastro fornecedor', ...coresF(), largo: true, classe: 'compras-form-padrao',
       montar: (form) => {
         const texto = (v, extra = {}) => entrada('text', v || '', { maxLength: 120, ...extra });
         const email = (v) => { const i = entrada('email', v || '', { maxLength: 160, inputMode: 'email', autocapitalize: 'off' }); i.dataset.textoLivre = '1'; return i; };
@@ -230,6 +231,7 @@
 
         /* ----- Etapa 1: dados da empresa ----- */
         const s1 = el('fieldset', 'compras-fieldset');
+        s1.append(el('legend', null, 'Dados da empresa'));
         const catBox = el('div', 'compras-campo compras-largo');
         catBox.setAttribute('role', 'group');
         catBox.setAttribute('aria-label', 'Categoria');
@@ -330,27 +332,47 @@
         const whats = telefone(f?.whatsapp);
         const mail = email(f?.email);
         // O CPF do vendedor não é mais pedido (decisão do Rodrigo): o campo saiu; valor já gravado fica como está, sem uso.
-        s2.append(campo('Nome do contato', vNome), campo('WhatsApp *', whats), campo('Data de nascimento', vNasc), campo('E-mail', mail));
+        const tituloS2 = el('legend');
+        const camposS2 = [[campo('Nome', vNome), vNome, 'Nome do ', ''], [campo('WhatsApp', whats), whats, 'WhatsApp do ', ' *'], [campo('E-mail', mail), mail, 'E-mail do ', '']];
+        s2.append(tituloS2, camposS2[0][0], camposS2[1][0], campo('Data de nascimento', vNasc), camposS2[2][0]);
+        // Título e rótulos acompanham a categoria: "vendedor", "prestador" ou "vendedor / prestador".
+        const pintarVendedor = () => {
+          const quem = D.quemVendeFornecedor(marcadas());
+          tituloS2.textContent = 'Dados do ' + quem;
+          camposS2.forEach(([no, input, antes, depois]) => {
+            no.querySelector('.compras-rotulo').textContent = antes + quem + depois;
+            input.setAttribute('aria-label', antes + quem + depois);
+          });
+        };
 
-        /* ----- Etapas 3 e 4: contato com a opção "O mesmo da etapa anterior" em primeiro lugar ----- */
-        function etapaContato(dados, sufixo) {
+        /* ----- Etapas 3 e 4: contato com a opção "O mesmo da etapa anterior" em primeiro lugar. Marcada, os campos
+           continuam à vista, preenchidos com a etapa anterior e só para leitura; a cópia acompanha a etapa anterior
+           enquanto a opção estiver marcada. Desmarcada, o que foi copiado fica e volta a ser editável. ----- */
+        function etapaContato(dados, sufixo, anterior) {
           const s = el('fieldset', 'compras-fieldset');
-          const mesmo = interruptor('O mesmo da etapa anterior', Boolean(dados?.mesmo), 'Usa o nome, o WhatsApp e o e-mail da etapa anterior.');
+          s.append(el('legend', null, 'Dados do ' + sufixo));
+          const mesmo = interruptor('O mesmo da etapa anterior', Boolean(dados?.mesmo), 'Preenche o nome, o WhatsApp e o e-mail com os da etapa anterior.');
           mesmo.classList.add('compras-largo');
           mesmo.input.setAttribute('aria-label', 'O mesmo da etapa anterior (' + sufixo + ')');
           const n = texto(dados?.nome);
           const w = telefone(dados?.whatsapp);
           const m = email(dados?.email);
           const campos = [campo('Nome do ' + sufixo, n), campo('WhatsApp do ' + sufixo, w), campo('E-mail do ' + sufixo, m)];
-          const pintar = () => campos.forEach((c) => mostrar(c, !mesmo.input.checked));
+          const pintar = () => {
+            const copia = mesmo.input.checked;
+            if (copia) { const a = anterior(); n.value = a.nome; w.value = a.whatsapp; m.value = a.email; }
+            [n, w, m].forEach((i) => { i.readOnly = copia; });
+          };
           mesmo.input.onchange = pintar;
-          pintar();
           s.append(mesmo, ...campos);
-          return { no: s, mesmo: mesmo.input, nome: n, whatsapp: w, email: m };
+          return { no: s, mesmo: mesmo.input, nome: n, whatsapp: w, email: m, pintar };
         }
-        const fin = etapaContato(f?.financeiro, 'financeiro');
-        const rep = etapaContato(f?.representante, 'representante');
-        // Cargo na empresa: aparece sempre, também com "O mesmo da etapa anterior" marcado (que esconde só nome, WhatsApp e e-mail).
+        const valores = (c) => ({ nome: c.nome.value.trim(), whatsapp: c.whatsapp.value.trim(), email: c.email.value.trim() });
+        const fin = etapaContato(f?.financeiro, 'financeiro', () => ({ nome: vNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() }));
+        const rep = etapaContato(f?.representante, 'representante', () => valores(fin));
+        // A cópia segue a ordem das etapas: primeiro o financeiro (copia o vendedor), depois o representante (copia o financeiro).
+        const pintarCopias = () => { fin.pintar(); rep.pintar(); };
+        // Cargo na empresa: não é copiado; com "O mesmo da etapa anterior" marcado, é o único campo a preencher na etapa.
         const repCargo = seletor(D.CARGOS_REPRESENTANTE, f?.representante?.cargo || '', 'Selecione');
         rep.no.append(campo('Cargo na empresa', repCargo));
 
@@ -378,6 +400,7 @@
         const barra = window.CicluzStepper.create({ steps: etapas(), current: 0, label: 'Etapas do cadastro do fornecedor', onSelect: (i) => { if (f || i <= atual) ir(i); } });
         function ir(i) {
           atual = Math.max(0, Math.min(quadros.length - 1, i));
+          pintarCopias();
           quadros.forEach((q, k) => mostrar(q, k === atual));
           barra.update(etapas(), atual);
           erroEtapa.textContent = '';
@@ -387,7 +410,7 @@
           avancar.hidden = atual === quadros.length - 1;
           // O Salvar entra e sai da barra (o formato padrão do botão de salvar força a exibição mesmo com hidden).
           if (f || atual === quadros.length - 1) nav.append(salvarFim); else salvarFim.remove();
-          const foco = quadros[atual].querySelector('input:not([type=checkbox]),select');
+          const foco = quadros[atual].querySelector('input:not([type=checkbox]):not([readonly]),select');
           if (foco && form.isConnected) foco.focus();
         }
         const pintarTipo = () => {
@@ -403,18 +426,18 @@
           nome.setAttribute('aria-label', rotuloNome);
         };
         tipo.onchange = pintarTipo;
-        cats.forEach((x) => { x.input.onchange = () => barra.update(etapas(), atual); });
+        cats.forEach((x) => { x.input.onchange = () => { barra.update(etapas(), atual); pintarVendedor(); }; });
         pintarTipo();
+        pintarVendedor();
 
         /** Lê o formulário no formato salvo. "O mesmo da etapa anterior" copia os dados da etapa de antes. */
         function ler() {
           const tipoPessoa = tipo.value;
           const pj = tipoPessoa === 'juridica';
           const razaoSocial = pj ? razao.value.trim() : '';
+          pintarCopias();
           const vendedor = { nome: vNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() };
-          const contato = (c, anterior) => (c.mesmo.checked ? { mesmo: true, ...anterior } : { mesmo: false, nome: c.nome.value.trim(), whatsapp: c.whatsapp.value.trim(), email: c.email.value.trim() });
-          const financeiro = contato(fin, vendedor);
-          const semMesmo = ({ nome: n, whatsapp: w, email: m }) => ({ nome: n, whatsapp: w, email: m });
+          const contato = (c) => ({ mesmo: c.mesmo.checked, ...valores(c) });
           return {
             id: f?.id, categorias: marcadas(), tipoPessoa,
             // Pessoa jurídica sem nome fantasia: a razão social vira o nome de uso.
@@ -424,7 +447,7 @@
             endereco: { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value },
             contatoNome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email,
             vendedorNascimento: vNasc.value,
-            financeiro, representante: { ...contato(rep, semMesmo(financeiro)), cargo: repCargo.value },
+            financeiro: contato(fin), representante: { ...contato(rep), cargo: repCargo.value },
             situacao: ativo.input.checked ? 'ativo' : 'inativo',
           };
         }

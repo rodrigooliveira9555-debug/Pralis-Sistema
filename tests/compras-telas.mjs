@@ -54,7 +54,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   ok(agendaBotao.join() === 'MER - Agenda de Pedidos', 'Agenda → MER - Agenda de Pedidos, sem "(revisar)": ' + agendaBotao.join());
 
   // "+" fixo do menu rápido aciona a criação da tela (header-add-circle)
-  for (const [tela, titulo] of [['produtos', 'Novo produto'], ['fornecedores', 'Novo fornecedor'], ['cotacao', 'Pedido urgente'], ['conferencias', 'Agendar conferência']]) {
+  for (const [tela, titulo] of [['produtos', 'Cadastro produto'], ['fornecedores', 'Cadastro fornecedor'], ['cotacao', 'Pedido urgente'], ['conferencias', 'Agendar conferência']]) {
     await p.evaluate((n) => CicluzCompras.abrir(n), tela);
     await p.locator('.view.show .people-add-control').click();
     ok(await p.locator('dialog.compras-dialog[open]', { hasText: titulo }).count() === 1, '"+" abre ' + titulo);
@@ -85,7 +85,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   ok((await erroF()).includes('categoria') && (await etapaF(df)).includes('Etapa 1'), 'Avançar confere a etapa: categoria é obrigatória');
   await df.getByLabel('Produto', { exact: true }).check();
   await df.getByLabel('Serviço', { exact: true }).check();
-  ok((await df.locator('.stepper-item').nth(1).textContent()).includes('Vendedor / Prestador de serviço'), 'O título da 2ª etapa segue a categoria');
+  ok((await df.locator('.stepper-item').nth(1).textContent()).includes('Dados do vendedor / prestador'), 'O título da 2ª etapa segue a categoria');
   await df.getByLabel('Tipo de pessoa *', { exact: true }).selectOption('juridica');
   ok(await df.getByLabel('CNPJ *', { exact: true }).isVisible() && await df.getByLabel('CPF *', { exact: true }).isHidden() && await df.getByLabel('Razão social', { exact: true }).isVisible() && await df.getByLabel('Regime tributário', { exact: true }).isVisible(), 'Pessoa jurídica: razão social, nome fantasia, CNPJ e regime tributário');
   await df.getByLabel('Razão social', { exact: true }).fill('Fornecedor CNPJ Teste Comércio Ltda');
@@ -101,15 +101,15 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   ok((await etapaF(df)).includes('Etapa 2 de 4'), 'Etapa 2: vendedor ou prestador');
   await avancar(df);
   ok((await erroF()).includes('WhatsApp'), 'WhatsApp do vendedor é obrigatório');
-  await df.getByLabel('Nome do contato', { exact: true }).fill('Responsável Teste');
-  await df.getByLabel('WhatsApp *', { exact: true }).pressSequentially('31999990000');
+  await df.getByLabel('Nome do vendedor / prestador', { exact: true }).fill('Responsável Teste');
+  await df.getByLabel('WhatsApp do vendedor / prestador *', { exact: true }).pressSequentially('31999990000');
   await avancar(df);
   ok(await df.getByLabel('O mesmo da etapa anterior (financeiro)', { exact: true }).isVisible(), 'Etapa 3: financeiro, com "O mesmo da etapa anterior" em primeiro');
   await df.getByLabel('Nome do financeiro', { exact: true }).fill('Financeiro Teste');
   await df.getByLabel('E-mail do financeiro', { exact: true }).fill('financeiro@exemplo.test');
   await avancar(df);
   await df.getByLabel('O mesmo da etapa anterior (representante)', { exact: true }).check();
-  ok(await df.getByLabel('Nome do representante', { exact: true }).isHidden() && await df.getByLabel('Cargo na empresa', { exact: true }).isVisible(), '"O mesmo da etapa anterior" esconde nome, WhatsApp e e-mail, mas o Cargo na empresa continua');
+  ok(await df.getByLabel('Nome do representante', { exact: true }).inputValue() === 'Financeiro Teste' && await df.getByLabel('Nome do representante', { exact: true }).getAttribute('readonly') !== null && await df.getByLabel('Cargo na empresa', { exact: true }).isEditable(), '"O mesmo da etapa anterior" preenche nome, WhatsApp e e-mail (só leitura) e deixa o Cargo na empresa para escolher');
   await df.getByLabel('Cargo na empresa', { exact: true }).selectOption('gerente-comercial');
   await df.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).click();
   await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'));
@@ -123,7 +123,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await dp.getByLabel('Nome *', { exact: true }).fill('Prestador CPF Teste');
   await dp.getByLabel('CPF *', { exact: true }).pressSequentially('52998224725');
   await avancar(dp);
-  await dp.getByLabel('WhatsApp *', { exact: true }).pressSequentially('31988880000');
+  await dp.getByLabel('WhatsApp do prestador *', { exact: true }).pressSequentially('31988880000');
   await dp.getByLabel('Data de nascimento', { exact: true }).fill('15/03/90');
   await avancar(dp); await avancar(dp);
   await dp.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).click();

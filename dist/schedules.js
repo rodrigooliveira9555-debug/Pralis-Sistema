@@ -66,7 +66,7 @@ const storageWarning=()=>loadError?el('p','people-alert','Não foi possível ler
 
 /* ---------- Cadastro de Horários ---------- */
 {const V=makeView('shifts','DES - Horários','Cadastros Geral Colaboradores','Modelos de horário reutilizáveis. O modelo não tem colaborador: o vínculo é feito em Lançamentos Colaboradores → DES - Lançamento de Horários, onde cada pessoa pode ter o próprio intervalo sem alterar o modelo. Os horários são exemplos de cadastro, não jornadas oficiais definidas pela plataforma.');
- const form=el('form','form-fields uniforms-form');form.noValidate=true;const heading=el('h3','uniforms-wide uniforms-heading','Novo horário');
+ const form=el('form','form-fields uniforms-form');form.noValidate=true;const heading=el('h3','uniforms-wide uniforms-heading','Cadastro horário');
  const name=el('input'),start=time(),end=time(),bs=time(),be=time(),brkOut=el('input'),totalOut=el('input'),active=el('select');name.maxLength=60;name.placeholder='Ex.: Horário 01 — Manhã';brkOut.readOnly=totalOut.readOnly=true;active.add(new Option('Ativo','1'));active.add(new Option('Inativo','0'));
  const sixNote=el('p','uniforms-wide people-alert schedules-six');sixNote.hidden=true;
 const {error,status}=messages(),actions=el('div','uniforms-wide actions'),save=el('button','btn','Salvar horário');save.type='submit';let editing=null;
@@ -76,7 +76,7 @@ const {error,status}=messages(),actions=el('div','uniforms-wide actions'),save=e
  /* Same reference as the CARGOS/HORÁRIOS/ESCALAS sheet: an interval is expected when the workday passes 6h. Alert only. */
 function recalc(){const c=calc(start.value,end.value,bs.value,be.value);brkOut.value=bs.value&&be.value?hm(c.brk):'';totalOut.value=c.net==null||!c.work?'':hm(c.net);sixNote.hidden=!(c.work>360&&!(bs.value&&be.value));sixNote.textContent='Jornada acima de 6h sem intervalo. Na planilha de horários o intervalo entra quando a jornada passa de 6h: confira antes de salvar.'}
  for(const i of [start,end,bs,be])i.addEventListener('input',recalc);
- function reset(){editing=null;form.reset();name.value='';active.value='1';heading.textContent='Novo horário';save.textContent='Salvar horário';error.textContent='';recalc()}
+ function reset(){editing=null;form.reset();name.value='';active.value='1';heading.textContent='Cadastro horário';save.textContent='Salvar horário';error.textContent='';recalc()}
  function edit(s){editing=s.id;name.value=s.name;start.value=s.start;end.value=s.end;bs.value=s.breakStart||'';be.value=s.breakEnd||'';active.value=s.active?'1':'0';heading.textContent='Editar horário: '+s.name;save.textContent='Salvar alterações';error.textContent='';status.textContent='';recalc();form.scrollIntoView({block:'start',behavior:'smooth'})}
  form.onsubmit=e=>{e.preventDefault();error.textContent='';status.textContent='';load();const n=name.value.trim(),errs=timeErrors(start.value,end.value,bs.value,be.value);if(!n)errs.unshift('Informe o nome do horário.');
   if(data.shifts.some(s=>s.id!==editing&&fold(s.name)===fold(n)))errs.push('Já existe um horário com este nome.');
@@ -98,7 +98,7 @@ function recalc(){const c=calc(start.value,end.value,bs.value,be.value);brkOut.v
 
 /* ---------- Cadastro de Escalas ---------- */
 {const V=makeView('scales','DES - Escalas','Cadastros Geral Colaboradores','Modelos de escala reutilizáveis: dias de trabalho e de folga na semana. O modelo não tem colaborador: o vínculo é feito em Lançamentos Colaboradores → DES - Escalas de Folga. A plataforma não aplica regras de folga ou jornada que não estejam configuradas aqui.');
- const form=el('form','form-fields uniforms-form');form.noValidate=true;const heading=el('h3','uniforms-wide uniforms-heading','Nova escala');
+ const form=el('form','form-fields uniforms-form');form.noValidate=true;const heading=el('h3','uniforms-wide uniforms-heading','Cadastro escala');
  const name=el('input'),type=el('select'),notes=el('textarea'),active=el('select'),offOut=el('input');name.maxLength=60;name.placeholder='Ex.: Segunda a sábado';SCALE_TYPES.forEach(x=>type.add(new Option(x,x)));notes.rows=3;notes.addEventListener('focusout',e=>e.stopPropagation());active.add(new Option('Ativo','1'));active.add(new Option('Inativo','0'));offOut.readOnly=true;
  const daysBox=el('fieldset','uniforms-wide jornada-days');daysBox.append(el('legend',null,'Dias de trabalho *'));const checks=DAYS.map((d,i)=>{const l=el('label','jornada-day'),c=el('input');c.type='checkbox';c.value=String(i);c.setAttribute('aria-label',DAY_NAMES[i]);l.append(c,el('span',null,d));daysBox.append(l);c.addEventListener('change',paintOff);return c});
  const {error,status}=messages(),actions=el('div','uniforms-wide actions'),save=el('button','btn','Salvar escala');save.type='submit';let editing=null;
@@ -107,7 +107,7 @@ function recalc(){const c=calc(start.value,end.value,bs.value,be.value);brkOut.v
  const listNote=el('p','profiles-note'),wrap=el('div','uniforms-table-wrap');V.body.append(form,el('h3','uniforms-heading','Escalas cadastradas'),listNote,wrap);
  const chosen=()=>checks.filter(c=>c.checked).map(c=>+c.value);
  function paintOff(){const d=chosen();offOut.value=d.length?offText(d):''}
- function reset(){editing=null;name.value='';type.value=SCALE_TYPES[0];notes.value='';active.value='1';checks.forEach(c=>c.checked=false);heading.textContent='Nova escala';save.textContent='Salvar escala';error.textContent='';paintOff()}
+ function reset(){editing=null;name.value='';type.value=SCALE_TYPES[0];notes.value='';active.value='1';checks.forEach(c=>c.checked=false);heading.textContent='Cadastro escala';save.textContent='Salvar escala';error.textContent='';paintOff()}
  function edit(s){editing=s.id;name.value=s.name;type.value=s.type;notes.value=s.notes||'';active.value=s.active?'1':'0';checks.forEach(c=>c.checked=s.days.includes(+c.value));heading.textContent='Editar escala: '+s.name;save.textContent='Salvar alterações';error.textContent='';status.textContent='';paintOff();form.scrollIntoView({block:'start',behavior:'smooth'})}
  form.onsubmit=e=>{e.preventDefault();error.textContent='';status.textContent='';load();const n=name.value.trim(),days=chosen(),errs=[];if(!n)errs.push('Informe o nome da escala.');if(!days.length)errs.push('Marque ao menos um dia de trabalho.');
   if(data.scales.some(s=>s.id!==editing&&fold(s.name)===fold(n)))errs.push('Já existe uma escala com este nome.');

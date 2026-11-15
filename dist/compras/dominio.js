@@ -219,15 +219,19 @@
   /** Regime tributário do fornecedor pessoa jurídica: só guarda a opção escolhida, não entra em cálculo nenhum. */
   const REGIMES_TRIBUTARIOS = [['mei', 'MEI'], ['simples', 'Simples Nacional'], ['presumido', 'Lucro Presumido'], ['real', 'Lucro Real'], ['nao-informado', 'Não informado']];
   /** O que o representante é na empresa (lista fixa, escolha única; campo opcional). */
-  const CARGOS_REPRESENTANTE = [['proprietario', 'Proprietário'], ['socio-proprietario', 'Sócio-proprietário'], ['socio', 'Sócio'], ['diretor', 'Diretor'],
-    ['gerente-geral', 'Gerente geral'], ['gerente-comercial', 'Gerente comercial'], ['supervisor-comercial', 'Supervisor comercial'],
-    ['representante-comercial', 'Representante comercial'], ['administrador', 'Administrador'], ['procurador', 'Procurador'], ['outro', 'Outro']];
-  /** Etapas do cadastro (decisão do Rodrigo, 15/11/2026). O título da 2ª depende da categoria marcada. */
-  function etapasFornecedor(categorias) {
+  const CARGOS_REPRESENTANTE = [['proprietario', 'Proprietário'], ['socio-proprietario', 'Sócio-proprietário'], ['diretor-geral', 'Diretor geral'], ['diretor-comercial', 'Diretor comercial'],
+    ['gerente-geral', 'Gerente geral'], ['gerente-comercial', 'Gerente comercial'], ['supervisor-geral', 'Supervisor geral'], ['supervisor-comercial', 'Supervisor comercial'],
+    ['representante-comercial', 'Representante comercial'], ['administrador', 'Administrador'], ['financeiro', 'Financeiro'], ['procurador', 'Procurador'], ['outro', 'Outro']];
+  /** Quem é o contato da 2ª etapa, pela categoria: vendedor (Produto), prestador (Serviço) ou os dois. */
+  function quemVendeFornecedor(categorias) {
     const c = Array.isArray(categorias) ? categorias : [];
     const p = c.includes('produto'); const s = c.includes('servico');
-    const segunda = p && s ? 'Vendedor / Prestador de serviço' : s ? 'Prestador de serviço' : 'Vendedor';
-    return ['Dados da empresa', segunda, 'Responsável financeiro', 'Representante da empresa'];
+    return p && s ? 'vendedor / prestador' : s ? 'prestador' : 'vendedor';
+  }
+  /** Etapas do cadastro (decisão do Rodrigo, 15/11/2026), nomes padronizados "Dados do …". A 2ª depende da categoria. */
+  function etapasFornecedor(categorias) {
+    const c = Array.isArray(categorias) ? categorias : [];
+    return ['Dados da empresa', 'Dados do ' + quemVendeFornecedor(c), 'Dados do financeiro', 'Dados do representante'];
   }
   /**
    * Migração (marca d.migracoes.vendedorFornecedor): no cadastro em etapas o contato do fornecedor é o vendedor ou
@@ -471,7 +475,7 @@
     topoDoRanking,
     digitos, motivoNaoConvidavel, podeConvidar,
     TIPOS_PESSOA, CATEGORIAS_FORNECEDOR, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, tipoPessoaDe, validarFornecedor,
-    validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, migrarVendedorFornecedor,
+    validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, migrarVendedorFornecedor,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,
     aplicarRecebimento, SITUACOES_PEDIDO,

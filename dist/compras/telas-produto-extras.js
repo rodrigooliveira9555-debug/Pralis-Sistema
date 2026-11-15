@@ -174,7 +174,7 @@
   }
   function editarUnidade(u) {
     U.dialogo({
-      titulo: u ? 'Editar unidade' : 'Nova unidade',
+      titulo: u ? 'Editar unidade' : 'Cadastro unidade',
       montar: (form) => {
         const sigla = entrada('text', u?.sigla || '', { maxLength: 6, required: true });
         sigla.addEventListener('input', () => { sigla.value = sigla.value.toUpperCase().replace(/[^A-Z0-9/]/g, ''); });

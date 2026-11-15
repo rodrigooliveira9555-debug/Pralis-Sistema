@@ -98,7 +98,7 @@
     const legado = p && !p.nomeCatalogo;
 
     const dlg = U.dialogo({
-      titulo: novo ? 'Novo produto' : 'Editar produto',
+      titulo: novo ? 'Cadastro produto' : 'Editar produto',
       subtitulo: novo ? 'Os dados ficam salvos só neste navegador.' : (p.codigoInterno ? 'Código interno ' + p.codigoInterno : ''),
       largo: true,
       rotuloSalvar: 'Salvar produto',

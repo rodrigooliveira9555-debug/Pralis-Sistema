@@ -262,6 +262,8 @@ body.dark-theme .compras-trilha li { background: #34333b; color: #d4d4d8; }
 /* Itens do diálogo podem encolher: uma tabela larga rola dentro da própria caixa, sem passar da borda. */
 .compras-dialog .compras-form > * { min-width: 0; }
 .compras-fieldset { border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; padding: 12px 14px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; min-width: 0; }
+/* Campo preenchido por "O mesmo da etapa anterior": à vista, só para leitura. */
+.compras-fieldset input[readonly] { opacity: .7; cursor: default; }
 .compras-fieldset legend { padding: 0 6px; font: 600 13px/18px var(--ui-font); }
 /* Campos alinhados pelo topo: a dica embaixo de um campo não desloca os campos vizinhos da mesma linha. */
 .compras-fieldset { align-items: start; }

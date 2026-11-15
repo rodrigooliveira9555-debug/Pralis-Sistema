@@ -83,7 +83,7 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   ok(await p.locator('dialog[open]').count() === 0 && await p.locator('#producao-patrimonio .compras-filtros').count() === 1, 'RET - Patrimônios abre na lista de bens, sem abrir o cadastro sozinho');
   await p.locator('#producao-patrimonio .compras-secao-cab button[aria-label="Cadastrar patrimônio"]').click();
   let d = dialogo(p);
-  ok((await d.locator('h2').textContent()) === 'Novo bem', 'A bolinha + do cabeçalho da lista abre o cadastro de um bem novo');
+  ok((await d.locator('h2').textContent()) === 'Cadastro patrimônio', 'A bolinha + do cabeçalho da lista abre o cadastro de um bem novo');
   await d.getByLabel('Nome do bem *', { exact: true }).fill('Masseira 40 kg');
   await d.getByLabel('Categoria *', { exact: true }).selectOption('maquina');
   await d.getByLabel('Capacidade', { exact: true }).fill('40');

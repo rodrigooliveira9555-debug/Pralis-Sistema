@@ -74,7 +74,9 @@
   continua válido. **Endereço (15/11/2026):** campo novo e opcional `endereco: { cep, logradouro, numero, complemento, bairro, cidade, uf }`;
   fornecedor sem ele continua válido, sem migração. **Cadastro em etapas (15/11/2026):** entram `regimeTributario` ('mei' | 'simples' | 'presumido' | 'real' |
   'nao-informado' | ''), `vendedorNascimento` e `representante: { mesmo, nome, whatsapp, email, cargo }` (cargo: valor fixo de
-  `CARGOS_REPRESENTANTE`, ou ''); o `vendedorCpf` existiu por algumas horas e não é mais pedido nem lido (valor já gravado fica no dado); `financeiro`
+  `CARGOS_REPRESENTANTE`, ou ''; a lista foi revista no mesmo dia e os valores `socio` e `diretor`, que existiram por cerca de uma hora,
+  saíram: quem tiver um deles gravado vê o seletor vazio e escolhe de novo; com `mesmo: true` o nome, o WhatsApp e o e-mail
+  gravados são a cópia da etapa anterior, como antes); o `vendedorCpf` existiu por algumas horas e não é mais pedido nem lido (valor já gravado fica no dado); `financeiro`
   ganha `mesmo` (true = copiado da etapa anterior ao salvar). O vendedor ou prestador é o contato de sempre: `contatoNome`,
   `whatsapp` e `email` ficam nos mesmos campos (a cotação continua lendo `whatsapp`). **Migração** `migracoes.vendedorFornecedor`:
   a data `nascimento` (que era do fornecedor pessoa física) passa para `vendedorNascimento`; nada mais se mexe.

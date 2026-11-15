@@ -100,7 +100,7 @@ function orgSet(ids){orgPicked.clear();for(const id of ids||[])orgPicked.add(id)
 job.select.addEventListener('change',()=>{const allowed=new Set(orgAllowed().map(n=>n.id));for(const id of [...orgPicked])if(!allowed.has(id))orgPicked.delete(id);renderOrg()});
 simpleFields.append(lbl('Nome completo *',nameIn),lbl('CPF *',cpfIn),lbl('WhatsApp *',phone),lbl('E-mail',email),birth.label,job.label,lbl('Turno *',shift),orgBox);
  const err=el('p','profiles-error');err.setAttribute('role','alert');const msg=el('p','profiles-note');msg.setAttribute('role','status');
- const title=el('h3','uniforms-heading','Novo cadastro simples');simpleFields.before(title);
+ const title=el('h3','uniforms-heading','Cadastro simples');simpleFields.before(title);
  /* Foto do documento: o aparelho lê nome, CPF e data de nascimento (nada sai do navegador) e só preenche os campos; a imagem não é guardada aqui, ela vai depois para a pasta do colaborador em Documentos. */
  const scanBox=CicluzDocCapture.create('Foto do documento','Fotografe ou selecione o RG, o CPF ou a CNH: o nome, o CPF e a data de nascimento são preenchidos abaixo. WhatsApp e e-mail são digitados.',{tipos:['RG','CPF','CNH'],frenteVerso:true});
  let lido={};
@@ -124,7 +124,7 @@ simpleFields.append(lbl('Nome completo *',nameIn),lbl('CPF *',cpfIn),lbl('WhatsA
   box.append(other.status==='CANDIDATO'?button('Abrir cadastro existente',()=>{dirty=false;selectCandidate(other.id)},'btn'):button('Ver em Colaboradores Cadastrados',()=>window.showCollaborators?.({personId:other.id}),'btn'));dup.append(box);return other}
  cpfIn.addEventListener('input',()=>queueMicrotask(checkDuplicate));
  function paintButtons(){saveBtn.disabled=busy||loadError;const locked=!!(editing&&byId(editing)?.simple?.status==='ok');cpfIn.readOnly=locked;cpfIn.tabIndex=locked?-1:0;cpfIn.title=locked?'CPF confirmado no Cadastro Simples OK.':''}
- function fill(p){editing=p?.id||null;nameIn.value=p?.name||'';cpfIn.value=p?.cpf?F.cpfMask(p.cpf):'';phone.value=p?.whatsapp?PH.mask(p.whatsapp):'';email.value=p?.email||'';birth.set(p?.birthDate||'');jobOptions(p?.jobName||'');shift.value=p?.shift||'';orgSet(p?.orgUnitIds||[]);title.textContent=p?'Cadastro simples de '+p.name:'Novo cadastro simples';dirty=false;err.textContent='';dup.replaceChildren();paintButtons()}
+ function fill(p){editing=p?.id||null;nameIn.value=p?.name||'';cpfIn.value=p?.cpf?F.cpfMask(p.cpf):'';phone.value=p?.whatsapp?PH.mask(p.whatsapp):'';email.value=p?.email||'';birth.set(p?.birthDate||'');jobOptions(p?.jobName||'');shift.value=p?.shift||'';orgSet(p?.orgUnitIds||[]);title.textContent=p?'Cadastro simples de '+p.name:'Cadastro simples';dirty=false;err.textContent='';dup.replaceChildren();paintButtons()}
  function selectCandidate(id){if(dirty&&editing!==id){confirmDialog('Descartar alterações?','As alterações não salvas serão descartadas.','Descartar',()=>{loadCandidate(id);return null},()=>{});return}loadCandidate(id)}
  function loadCandidate(id){load();fill(id?byId(id):null);msg.textContent=id?(byId(id).simple?.status==='ok'?'Cadastro já marcado como OK; alterações salvas continuam válidas.':'Complete os campos e salve.'):''}
  /* Any correction clears the previous message, so it never contradicts the browser's own field warning. */
