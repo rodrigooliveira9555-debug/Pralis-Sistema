@@ -2,6 +2,12 @@
 (()=>{
  const searches=new WeakSet();let queued=false;
  const headerHosts='.head .shortcut-actions,.location-dialog-tools,.organogram-editor-header .shortcut-actions,.fee-header-actions';
+ /* Ao lado de Cancelar o botão diz só "Salvar"; o rótulo completo fica na dica e no leitor de tela. Rótulos que distinguem dois salvamentos (rascunho, sem enviar, e Enviar) ficam inteiros. */
+ function shorten(save,parent){
+  const node=[...save.childNodes].find(n=>n.nodeType===3&&n.textContent.trim()),text=node?node.textContent.trim():'';
+  if(text==='Salvar'||!text.startsWith('Salvar ')||[' e ','rascunho','sem enviar','só esta'].some(k=>text.includes(k))||parent.querySelectorAll('.footer-save-accent').length!==1)return;
+  save.setAttribute('aria-label',text);save.title=text;node.textContent='Salvar';
+ }
  function sync(){
   document.querySelectorAll('button.standard-form-action,.view button,dialog button,.modal button').forEach(button=>{
    if(button.closest('.head,.location-dialog-header,.organogram-editor-header,.people-bottom-header'))return;
@@ -18,6 +24,7 @@
    const parent=save.parentElement,cancel=[...parent.children].find(el=>el.classList.contains('footer-cancel-accent'));
    if(!cancel)return;
    if(!parent.classList.contains('footer-action-pair'))parent.classList.add('footer-action-pair');
+   shorten(save,parent);
    if(save.compareDocumentPosition(cancel)&Node.DOCUMENT_POSITION_FOLLOWING)save.before(cancel);
   });
   document.querySelectorAll('.view label,dialog label,.modal label,.account-field-group,.job-identity,.account-identity,.location-identity').forEach(block=>{

@@ -197,8 +197,8 @@ body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button:is(.foote
 body :is(.view,dialog,.modal) button.form-next-action:not(:disabled){background:var(--menu-accent,var(--panel-color,#7c3aed))!important;border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;color:#fff!important;box-shadow:none!important}
 body :is(.view,dialog,.modal) button:is(.footer-save-accent,.footer-cancel-accent,.form-back-action,.form-next-action):disabled{background:transparent!important;border:1px solid var(--navigation-ink)!important;color:var(--navigation-ink)!important;box-shadow:none!important}
 
-body :is(.view,dialog,.modal) :is(.footer-save-accent,.footer-cancel-accent){display:inline-flex!important;align-items:center;justify-content:center;gap:8px}
-body .footer-action-icon{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body :is(.view,dialog,.modal) :is(.footer-save-accent,.footer-cancel-accent){display:inline-flex!important;align-items:center;justify-content:space-between;gap:10px}
+
 
 body :is(.view,dialog,.modal) .footer-action-pair{display:flex!important;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px}
 body .footer-action-pair>.footer-cancel-accent{order:0!important}
@@ -311,8 +311,8 @@ body #job-edit>.panel>.head>.config-inherit-icon{border:1px solid #fff!important
 body #job-edit .icon-live-preview::after{color:var(--navigation-ink,#a2a0aa)!important}
 body #cadastro-completo .form-actions>[hidden]{display:none!important}
 body #cadastro-completo .form-actions>div{margin-left:auto}
-body #cadastro-completo :is(#prev-step,#next-step){width:auto;min-width:112px;height:40px;min-height:40px;gap:8px;border-radius:10px;padding:8px 12px;font:600 12px/1.25 var(--ui-font)}
-body #cadastro-completo :is(#prev-step,#next-step) svg{width:17px;height:17px;stroke-width:1.8}
+body #cadastro-completo :is(#prev-step,#next-step){box-sizing:border-box;width:auto;min-width:var(--acao-largura);height:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:space-between;gap:10px;border-radius:10px;padding:0 var(--acao-respiro) 0 16px;font:600 12px/1.25 var(--ui-font)}
+
 body #cadastro-completo .registration-next[hidden]{display:none!important}
 
 /* The content rounds into the secondary header, matching the main header. */
