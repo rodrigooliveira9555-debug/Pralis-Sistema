@@ -42,9 +42,9 @@
    shorten(save,parent);
    if(save.compareDocumentPosition(cancel)&Node.DOCUMENT_POSITION_FOLLOWING)save.before(cancel);
   });
-  /* Botões retangulares vizinhos ficam com a mesma largura: a do maior. Só mede de novo quando os rótulos do grupo mudam. */
+  /* Só os botões do rodapé do formulário (Cancelar/Salvar, Voltar/Avançar) ficam com a mesma largura: a do maior. Botão no meio da tela tem a largura do próprio texto. Só mede de novo quando os rótulos do grupo mudam. */
   const groups=new Map();
-  document.querySelectorAll('.acao-com-circulo,.footer-save-accent,.footer-cancel-accent').forEach(b=>{if(b.offsetParent){const list=groups.get(b.parentElement)||[];list.push(b);groups.set(b.parentElement,list)}});
+  document.querySelectorAll('.footer-save-accent,.footer-cancel-accent,.form-back-action,.form-next-action').forEach(b=>{if(b.offsetParent){const list=groups.get(b.parentElement)||[];list.push(b);groups.set(b.parentElement,list)}});
   groups.forEach((list,parent)=>{
    if(list.length<2)return;
    const signature=list.map(b=>b.textContent.trim()).join('|');if(widths.get(parent)===signature)return;widths.set(parent,signature);

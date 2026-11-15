@@ -390,7 +390,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .btn:not(.standard-
 /* Botão retangular de ação (Salvar, Cancelar, Voltar, Avançar e todo .btn com ícone): texto à esquerda e o ícone em um círculo à direita, na cor do texto do botão. O círculo fica a --acao-respiro da borda de cima, de baixo e da direita (40 px de altura, 1 px de borda, 28 px de círculo). */
 .footer-action-icon,body #cadastro-completo :is(#prev-step,#next-step) svg{box-sizing:border-box;flex:none;width:var(--acao-circulo);height:var(--acao-circulo);padding:5px;border:1.5px solid currentColor;border-radius:50%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .footer-action-pair>:is(.footer-save-accent,.footer-cancel-accent){min-width:var(--acao-largura)}
-body .btn.acao-com-circulo{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:space-between;gap:10px;min-width:var(--acao-largura);height:40px;min-height:40px;padding:0 var(--acao-respiro) 0 16px;text-align:left;white-space:nowrap}
+body .btn.acao-com-circulo{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:space-between;gap:10px;height:40px;min-height:40px;padding:0 var(--acao-respiro) 0 16px;text-align:left;white-space:nowrap}
 body .btn.acao-com-circulo[hidden]{display:none}
 .uniforms-icon-action.is-accent{border-radius:var(--row-icon-radius,26%)}
 
