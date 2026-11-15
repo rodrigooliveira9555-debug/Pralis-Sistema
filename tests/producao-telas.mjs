@@ -109,7 +109,7 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   await p.locator('#producao-patrimonio .compras-linha', { hasText: 'MASSEIRA' }).click();
   d = dialogo(p);
   ok(await d.locator('.compras-fieldset').first().locator('.compras-campo').first().locator('.compras-rotulo').textContent() === 'Categoria *', 'Categoria é o primeiro campo do bem');
-  ok((await d.locator('.compras-fieldset legend').allTextContents()).join('|') === 'Identificação|Peças principais|Revisão periódica|Observação em áudio|Para a produção', 'Blocos do bem na ordem pedida');
+  ok((await d.locator('.compras-fieldset legend').allTextContents()).join('|') === 'Identificação|Peças/Materiais manutenção periódica|Manutenção periódica|Observação em áudio|Para a produção', 'Blocos do bem na ordem pedida');
   await d.locator('button', { hasText: 'Adicionar peça' }).click();
   await d.locator('button', { hasText: 'Adicionar peça' }).click();
   await d.locator('button', { hasText: 'Adicionar peça' }).click();
@@ -123,10 +123,10 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   ok((await erroDialogo(p)).includes('nome da peça'), 'Peça com data e sem nome é recusada');
   await d.locator('button[aria-label="Remover peça 2"]').click();
   ok(await d.locator('.patrimonio-peca').count() === 2 && await d.getByLabel('Substituir a peça 2 em', { exact: true }).count() === 1, 'Remover a peça renumera as linhas');
-  await d.getByLabel('Próxima revisão', { exact: true }).fill('31/02/27');
+  await d.getByLabel('Próxima manutenção', { exact: true }).fill('31/02/27');
   await salvar(p);
   ok((await erroDialogo(p)).includes('DD/MM/AA'), 'Data de revisão impossível é recusada');
-  await d.getByLabel('Próxima revisão', { exact: true }).fill('15/01/20');
+  await d.getByLabel('Próxima manutenção', { exact: true }).fill('15/01/20');
   await d.locator('button', { hasText: 'Gravar áudio' }).click();
   await d.locator('button', { hasText: 'Parar gravação' }).waitFor();
   await salvar(p);
@@ -139,18 +139,18 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   ok(masseira.pecas.length === 1 && masseira.pecas[0].nome === 'CORREIA' && masseira.pecas[0].ultimaTroca === '2026-06-20' && masseira.pecas[0].intervaloMeses === 6 && masseira.pecas[0].proximaTroca === '2026-12-20' && masseira.pecas[0].id, 'Peça salva com id, nome e data da substituição (linha em branco descartada)');
   ok(masseira.revisao.proxima === '2020-01-15' && masseira.capacidade.valor === 40 && masseira.consumoHora === 3.5, 'Revisão salva sem perder o que o bem já tinha');
   ok(masseira.audio && masseira.audio.id && masseira.audio.seconds >= 1 && await p.evaluate(async (id) => !!(await CicluzDocuments.files.get(id)), masseira.audio.id), 'Áudio guardado no aparelho e referenciado pelo bem');
-  ok((await p.locator('#producao-patrimonio .compras-linha', { hasText: 'MASSEIRA' }).locator('.compras-situacao').textContent()) === 'Revisão vencida', 'Lista avisa a revisão vencida');
+  ok((await p.locator('#producao-patrimonio .compras-linha', { hasText: 'MASSEIRA' }).locator('.compras-situacao').textContent()) === 'Manutenção vencida', 'Lista avisa a revisão vencida');
   // Recarrega: tudo continua lá, e o áudio pode ser ouvido ou descartado
   await p.reload({ waitUntil: 'load' });
   await p.waitForFunction(() => window.CicluzProducao && window.CicluzProducaoServico && window.CicluzAudioNota);
   await p.evaluate(() => CicluzProducao.abrir('patrimonio'));
-  ok((await p.locator('#producao-patrimonio .compras-linha', { hasText: 'MASSEIRA' }).locator('small').textContent()).includes('1 peça · revisão 15/01/20 · áudio'), 'Depois de recarregar, a lista mostra peça, revisão e áudio');
+  ok((await p.locator('#producao-patrimonio .compras-linha', { hasText: 'MASSEIRA' }).locator('small').textContent()).includes('1 peça · manutenção 15/01/20 · áudio'), 'Depois de recarregar, a lista mostra peça, revisão e áudio');
   await p.locator('#producao-patrimonio .compras-linha', { hasText: 'MASSEIRA' }).click();
   d = dialogo(p);
-  ok(await d.getByLabel('Peça 1', { exact: true }).inputValue() === 'CORREIA' && await d.getByLabel('Substituir a peça 1 em', { exact: true }).inputValue() === '20/12/26' && await d.getByLabel('Próxima revisão', { exact: true }).inputValue() === '15/01/20', 'Edição traz peça, data e revisão');
+  ok(await d.getByLabel('Peça 1', { exact: true }).inputValue() === 'CORREIA' && await d.getByLabel('Substituir a peça 1 em', { exact: true }).inputValue() === '20/12/26' && await d.getByLabel('Próxima manutenção', { exact: true }).inputValue() === '15/01/20', 'Edição traz peça, data e revisão');
   await d.locator('button', { hasText: 'Ouvir áudio' }).click();
   await d.locator('audio:not([hidden])').waitFor();
-  await d.getByLabel('Próxima revisão', { exact: true }).fill('');
+  await d.getByLabel('Próxima manutenção', { exact: true }).fill('');
   await d.locator('button', { hasText: 'Descartar áudio' }).click();
   await salvar(p); await fechado(p);
   masseira = await p.evaluate(() => JSON.parse(localStorage.getItem('cicluz-patrimonio-v1')).bens[0]);

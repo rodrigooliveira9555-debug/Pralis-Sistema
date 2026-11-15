@@ -2,9 +2,11 @@
  * RET - Patrimônios (Saídas · Retiradas → Cadastros Geral). Substitui a prévia que não salvava.
  * Bens nas 4 categorias do Rodrigo, com o que a produção precisa: capacidade (o tempo dobra quando
  * passa dela), medidas (assadeiras) e energia com consumo por hora (guardado para o custo futuro).
- * Manutenção (15/11/2026, pedido do Rodrigo): a Categoria é o primeiro campo; cada bem pode ter peças
- * principais com a data da próxima substituição, a data da próxima revisão periódica e uma observação
- * em áudio (peça compartilhada de audio-nota.js; o áudio fica só no aparelho).
+ * Manutenção (15/11/2026, pedido do Rodrigo): a Categoria é o primeiro campo; cada bem pode ter peças e
+ * materiais da manutenção periódica (marca, modelo, fornecedor, grupo de despesas, valor, imagem e a data
+ * da próxima substituição), a data da próxima manutenção periódica e uma observação em áudio (peça
+ * compartilhada de audio-nota.js; o áudio fica só no aparelho). No dado salvo a manutenção periódica
+ * continua no campo `revisao` (nome antigo do quadro), para não mudar o formato.
  * Entrada (15/11/2026, decisão final do Rodrigo): a tela abre na lista de todos os bens; tocar no bem abre
  * a edição dele e o botão "Cadastrar patrimônio" (ou o "+" da barra) abre o cadastro de um bem novo.
  */
@@ -23,12 +25,12 @@
   /** Selo da lista: manutenções vencidas (atenção) ou, se não houver, as dos próximos dias (informação). */
   function avisoManutencao(b) {
     const hoje = S.hojeIso();
-    const datas = [...(b.pecas || []).map((p) => ['Substituir ' + p.nome, p.proximaTroca]), ['Revisão', b.revisao && b.revisao.proxima]]
+    const datas = [...(b.pecas || []).map((p) => ['Substituir ' + p.nome, p.proximaTroca]), ['Manutenção', b.revisao && b.revisao.proxima]]
       .map(([rotulo, iso]) => ({ rotulo, iso, situacao: D.situacaoManutencao(iso, hoje) }));
     for (const [situacao, tom, sufixo, plural] of [['vencida', 'atencao', ' vencida', ' manutenções vencidas'], ['proxima', 'info', ' em ', ' manutenções próximas']]) {
       const l = datas.filter((x) => x.situacao === situacao).sort((a, b2) => a.iso.localeCompare(b2.iso));
       if (!l.length) continue;
-      const um = situacao === 'vencida' ? (l[0].rotulo === 'Revisão' ? 'Revisão vencida' : l[0].rotulo) : l[0].rotulo + sufixo + dataBR(l[0].iso);
+      const um = situacao === 'vencida' ? (l[0].rotulo === 'Manutenção' ? 'Manutenção vencida' : l[0].rotulo) : l[0].rotulo + sufixo + dataBR(l[0].iso);
       return U.situacao(l.length > 1 ? l.length + plural : um, tom);
     }
     return null;
@@ -55,7 +57,7 @@
     if (b.energia && b.energia !== 'nenhuma') partes.push(D.nomeDe(D.ENERGIAS, b.energia) + ' ' + CD.numero(b.consumoHora) + ' ' + D.UNIDADE_CONSUMO[b.energia]);
     if (b.numeroPatrimonio) partes.push('nº ' + b.numeroPatrimonio);
     if (b.pecas && b.pecas.length) partes.push(b.pecas.length + (b.pecas.length > 1 ? ' peças' : ' peça'));
-    if (b.revisao && b.revisao.proxima) partes.push('revisão ' + dataBR(b.revisao.proxima));
+    if (b.revisao && b.revisao.proxima) partes.push('manutenção ' + dataBR(b.revisao.proxima));
     if (b.audio) partes.push('áudio');
     return partes.join(' · ');
   }
@@ -82,7 +84,7 @@
     sec.append(lista);
     function desenha() {
       const vis = bens.filter((b) => (filtro.inativos || b.ativo !== false) && (!filtro.categoria || b.categoria === filtro.categoria)
-        && U.dobrar([b.nome, b.marca, b.modelo, b.numeroPatrimonio, b.numeroSerie, ...(b.pecas || []).map((p) => p.nome)].join(' ')).includes(U.dobrar(filtro.busca)))
+        && U.dobrar([b.nome, b.marca, b.modelo, b.numeroPatrimonio, b.numeroSerie, ...(b.pecas || []).flatMap((p) => [p.nome, p.marca, p.modelo])].join(' ')).includes(U.dobrar(filtro.busca)))
         .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
       lista.replaceChildren();
       if (!bens.length) lista.append(U.vazio('Nenhum bem cadastrado.', 'Use "Cadastrar patrimônio": por exemplo, a masseira de 40 kg e as assadeiras.'));
@@ -115,10 +117,10 @@
           campo('Número de série', serie), campo('Número de patrimônio', numero), campo('Valor', valor),
           campo('Onde fica', local, S.locais().length ? 'Da árvore Área / Setor / Local (Saídas · Despesas → Cadastros Geral Colaboradores).' : 'Cadastre a árvore em Saídas · Despesas → Cadastros Geral Colaboradores → DES - Área / Setor / Local.'));
 
-        // Peças principais: uma linha por peça; a linha em branco não é salva.
-        const s3 = sec('Peças principais');
+        // Peças e materiais da manutenção: um cartão por peça; o cartão em branco não é salvo.
+        const s3 = sec('Peças/Materiais manutenção periódica');
         const blocoPecas = el('div', 'producao-bloco compras-largo');
-        const listaPecas = el('div', 'producao-bloco');
+        const listaPecas = el('div', 'producao-etapas');
         const linhasPecas = [];
         const meses = (v) => entrada('number', v ?? '', { min: 1, step: 1, inputMode: 'numeric', placeholder: 'Ex.: 6' });
         // Última data + intervalo em meses decidem a próxima; sem um dos dois, a próxima é digitada.
@@ -131,46 +133,81 @@
           [ultima, cada].forEach((x) => { x.addEventListener('input', atualiza); x.addEventListener('change', atualiza); });
           atualiza();
         }
+        // Fornecedor (cadastro do Compras) e grupo de despesas (DES - Grupos de Despesas): vínculo pelo id.
+        // O que já está escolhido continua na lista mesmo se foi inativado depois.
+        const opcoesFornecedor = (atual) => S.fornecedores().filter((f) => f.situacao === 'ativo' || f.id === atual)
+          .sort((a, b2) => a.nome.localeCompare(b2.nome, 'pt-BR')).map((f) => [f.id, f.nome + (f.situacao === 'ativo' ? '' : ' (inativo)')]);
+        function opcoesGrupo(grupoAtual, subAtual) {
+          const r = [];
+          S.gruposDespesa().forEach((g) => {
+            const meu = g.id === grupoAtual;
+            if (g.ativo || (meu && !subAtual)) r.push([g.id + '|', g.nome]);
+            g.subgrupos.forEach((s) => { if ((g.ativo && s.ativo) || (meu && s.id === subAtual)) r.push([g.id + '|' + s.id, g.nome + ' › ' + s.nome]); });
+          });
+          if (grupoAtual && !r.some((o) => o[0] === grupoAtual + '|' + (subAtual || ''))) r.push([grupoAtual + '|' + (subAtual || ''), S.nomeGrupoDespesa(grupoAtual, subAtual)]);
+          return r;
+        }
         function linhaPeca(p = {}) {
-          const r = el('div', 'producao-linha patrimonio-peca');
+          const r = el('section', 'producao-etapa patrimonio-peca');
+          const cab = el('div', 'producao-etapa-cab');
+          const titulo = el('h4');
           const nomeP = entrada('text', p.nome || '', { placeholder: 'Ex.: correia, resistência' });
+          const marcaP = entrada('text', p.marca || '');
+          const modeloP = entrada('text', p.modelo || '');
+          const forn = seletor(opcoesFornecedor(p.fornecedorId), p.fornecedorId || '', S.fornecedores().length ? 'Sem fornecedor' : 'Cadastre em MER - Fornecedores');
+          const grupo = seletor(opcoesGrupo(p.grupoDespesaId, p.subgrupoDespesaId), p.grupoDespesaId ? p.grupoDespesaId + '|' + (p.subgrupoDespesaId || '') : '', 'Sem grupo');
+          const valorP = entrada('text', p.valor != null ? CD.moeda(p.valor) : '', { inputMode: 'decimal', placeholder: 'R$ 0,00' });
           const ultima = entrada('date', p.ultimaTroca || '');
           const cada = meses(p.intervaloMeses);
           const troca = entrada('date', p.proximaTroca || '');
-          const item = { id: p.id || '', nome: nomeP, ultima, cada, troca };
+          const foto = window.CicluzProdutoExtras.campoFoto(p.foto || null, () => nomeP.value.trim(), { vazio: 'Adicione uma imagem da peça (opcional)', pendente: 'A imagem nova é gravada ao salvar o bem.', coisa: 'peça' });
+          foto.no.classList.add('compras-largo');
+          const item = { id: p.id || '', titulo, nome: nomeP, marca: marcaP, modelo: modeloP, forn, grupo, valor: valorP, ultima, cada, troca, foto };
           const rm = botao('Remover', () => { linhasPecas.splice(linhasPecas.indexOf(item), 1); r.remove(); numerar(); }, 'btn secondary perigo-texto');
           item.rm = rm;
-          r.append(campo('Peça', nomeP), campo('Última troca', ultima), campo('A cada (meses)', cada), campo('Substituir em', troca), rm);
+          cab.append(titulo, rm);
+          const grade = el('div', 'producao-etapa-grade');
+          grade.append(campo('Peça', nomeP), campo('Marca', marcaP), campo('Modelo', modeloP), campo('Fornecedor', forn),
+            campo('Grupo de despesas', grupo, 'Ao lançar a despesa desta peça, é este o grupo que deve vir preenchido.'), campo('Valor', valorP),
+            campo('Última troca', ultima), campo('A cada (meses)', cada), campo('Substituir em', troca));
+          r.append(cab, grade, foto.no);
           ligarRepeticao(ultima, cada, troca);
           linhasPecas.push(item);
           listaPecas.append(r);
           numerar();
           return item;
         }
-        // O rótulo numerado distingue as linhas para o leitor de tela.
+        // O número no título e nos rótulos distingue os cartões, também para o leitor de tela.
         function numerar() {
           linhasPecas.forEach((x, k) => {
-            x.nome.setAttribute('aria-label', 'Peça ' + (k + 1));
-            x.cada.setAttribute('aria-label', 'Trocar a peça ' + (k + 1) + ' a cada (meses)');
+            const n = k + 1;
+            x.titulo.textContent = 'Peça ' + n;
+            x.nome.setAttribute('aria-label', 'Peça ' + n);
+            x.marca.setAttribute('aria-label', 'Marca da peça ' + n);
+            x.modelo.setAttribute('aria-label', 'Modelo da peça ' + n);
+            x.forn.setAttribute('aria-label', 'Fornecedor da peça ' + n);
+            x.grupo.setAttribute('aria-label', 'Grupo de despesas da peça ' + n);
+            x.valor.setAttribute('aria-label', 'Valor da peça ' + n);
+            x.cada.setAttribute('aria-label', 'Trocar a peça ' + n + ' a cada (meses)');
             // O date-fields.js copia o rótulo para o campo DD/MM/AA quando monta: renumera a cópia também.
-            for (const [data, rotulo] of [[x.ultima, 'Última troca da peça ' + (k + 1)], [x.troca, 'Substituir a peça ' + (k + 1) + ' em']]) {
+            for (const [data, rotulo] of [[x.ultima, 'Última troca da peça ' + n], [x.troca, 'Substituir a peça ' + n + ' em']]) {
               data.setAttribute('aria-label', rotulo);
               const visivel = data.previousElementSibling;
               if (visivel && visivel.dataset.dateDisplay) visivel.setAttribute('aria-label', rotulo);
             }
-            x.rm.setAttribute('aria-label', 'Remover peça ' + (k + 1));
+            x.rm.setAttribute('aria-label', 'Remover peça ' + n);
           });
         }
         (b?.pecas || []).forEach((p) => linhaPeca(p));
-        s3.append(U.nota('Só para o bem que tem peças de troca. Com a última troca e o intervalo em meses, a data da próxima substituição é calculada; sem eles, digite a data.'), blocoPecas);
+        s3.append(U.nota('Peças e materiais que este bem troca na manutenção. Cada peça tem marca, modelo, fornecedor, grupo de despesas, valor e imagem; com a última troca e o intervalo em meses, a data da próxima substituição é calculada (sem eles, digite a data).'), blocoPecas);
         blocoPecas.append(listaPecas, botao('Adicionar peça', () => linhaPeca().nome.focus()));
 
-        const s4 = sec('Revisão periódica');
+        const s4 = sec('Manutenção periódica');
         const revisaoUltima = entrada('date', b?.revisao?.ultima || '');
         const revisaoCada = meses(b?.revisao?.intervaloMeses);
         const revisao = entrada('date', b?.revisao?.proxima || '');
-        s4.append(campo('Última revisão', revisaoUltima), campo('A cada (meses)', revisaoCada),
-          campo('Próxima revisão', revisao, 'Calculada pela última revisão e pelo intervalo; sem eles, digite a data. Deixe tudo em branco se não houver revisão.'));
+        s4.append(campo('Última manutenção', revisaoUltima), campo('A cada (meses)', revisaoCada),
+          campo('Próxima manutenção', revisao, 'Calculada pela última manutenção e pelo intervalo; sem eles, digite a data. Deixe tudo em branco se não houver manutenção periódica.'));
         ligarRepeticao(revisaoUltima, revisaoCada, revisao);
 
         const s5 = sec('Observação em áudio');
@@ -215,7 +252,14 @@
           capacidade: cap != null ? { valor: cap, unidade: c.capUn.value } : null,
           medidas: l != null || co != null ? { largura: l, comprimento: co } : null,
           energia: c.energia.value, consumoHora: n(c.consumo),
-          pecas: c.linhasPecas.map((x) => ({ id: x.id, nome: x.nome.value, ultimaTroca: x.ultima.value, intervaloMeses: x.cada.value, proximaTroca: x.troca.value })),
+          pecas: c.linhasPecas.map((x) => {
+            const [grupoDespesaId = '', subgrupoDespesaId = ''] = x.grupo.value.split('|');
+            return {
+              id: x.id, nome: x.nome.value, marca: x.marca.value, modelo: x.modelo.value, fornecedorId: x.forn.value,
+              grupoDespesaId, subgrupoDespesaId, valor: n(x.valor), foto: x.foto.valor(),
+              ultimaTroca: x.ultima.value, intervaloMeses: x.cada.value, proximaTroca: x.troca.value,
+            };
+          }),
           revisao: { ultima: c.revisaoUltima.value, intervaloMeses: c.revisaoCada.value, proxima: c.revisao.value },
           audio: b?.audio || null,
         };

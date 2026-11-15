@@ -38,6 +38,9 @@
       if (!p.nome) return 'Informe o nome da peça (ou remova a linha).';
       if ([p.ultimaTroca, p.proximaTroca].some((d) => d && !dataValida(d))) return 'Data inválida na peça ' + p.nome + '.';
       if (!intervaloValido(p.intervaloMeses)) return 'Na peça ' + p.nome + ', "A cada (meses)" deve ser um número inteiro a partir de 1.';
+      if (p.valor != null && !(p.valor >= 0)) return 'Na peça ' + p.nome + ', o valor não pode ser negativo.';
+      if (p.foto && !/^data:image\/(jpeg|png|webp);base64,/.test(p.foto)) return 'Na peça ' + p.nome + ', a imagem não é válida.';
+      if (p.subgrupoDespesaId && !p.grupoDespesaId) return 'Na peça ' + p.nome + ', escolha o grupo de despesas.';
     }
     if (b.revisao) {
       if ([b.revisao.ultima, b.revisao.proxima].some((d) => d && !dataValida(d))) return 'Data da revisão inválida.';
@@ -49,7 +52,9 @@
   const intervaloValido = (n) => n == null || (Number.isInteger(n) && n >= 1);
   const intervalo = (v) => (texto(v) === '' ? null : Number(v));
   /**
-   * Deixa o bem no formato salvo. Peças principais: [{ id, nome, ultimaTroca, intervaloMeses, proximaTroca }];
+   * Deixa o bem no formato salvo. Peças/materiais: [{ id, nome, marca, modelo, fornecedorId, grupoDespesaId,
+   * subgrupoDespesaId, valor, foto, ultimaTroca, intervaloMeses, proximaTroca }] (fornecedor do Compras e grupo de
+   * DES - Grupos de Despesas pelos ids; valor em reais com 2 casas, como o valor do bem; foto reduzida em data URL);
    * revisão periódica: { ultima, intervaloMeses, proxima } ou null; datas ISO ou '', intervalo inteiro ou null.
    * Com a última data e o intervalo, a próxima é sempre última + N meses (D.proximaData); sem um dos dois,
    * vale a próxima digitada. Áudio: referência { id, type, size, seconds } do arquivo guardado no aparelho,
@@ -62,9 +67,15 @@
       .map((p) => {
         const ultimaTroca = texto(p.ultimaTroca);
         const intervaloMeses = intervalo(p.intervaloMeses);
-        return { id: p.id || S.novoId('peca'), nome: texto(p.nome).toLocaleUpperCase('pt-BR'), ultimaTroca, intervaloMeses, proximaTroca: D.proximaData(ultimaTroca, intervaloMeses) || texto(p.proximaTroca) };
+        const valor = num(p.valor);
+        return {
+          id: p.id || S.novoId('peca'), nome: texto(p.nome).toLocaleUpperCase('pt-BR'), marca: texto(p.marca), modelo: texto(p.modelo),
+          fornecedorId: texto(p.fornecedorId), grupoDespesaId: texto(p.grupoDespesaId), subgrupoDespesaId: texto(p.subgrupoDespesaId),
+          valor: valor == null ? null : D.centavos(valor), foto: p.foto || null,
+          ultimaTroca, intervaloMeses, proximaTroca: D.proximaData(ultimaTroca, intervaloMeses) || texto(p.proximaTroca),
+        };
       })
-      .filter((p) => p.nome || p.ultimaTroca || p.intervaloMeses != null || p.proximaTroca);
+      .filter((p) => p.nome || p.marca || p.modelo || p.fornecedorId || p.grupoDespesaId || p.valor != null || p.foto || p.ultimaTroca || p.intervaloMeses != null || p.proximaTroca);
     const rv = entrada.revisao || {};
     const ultima = texto(rv.ultima);
     const meses = intervalo(rv.intervaloMeses);

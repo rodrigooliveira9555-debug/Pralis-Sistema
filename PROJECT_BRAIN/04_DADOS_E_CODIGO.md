@@ -63,7 +63,10 @@
 - `patrimonio-v1` (05/11/2026) — bens (RET - Patrimônios). As duas chaves são sincronizadas e adotadas do aparelho
   (`servidor/shared/src/documentos.ts`); começam vazias, sem dado de exemplo.
   Em 15/11/2026 o bem ganhou três campos **opcionais** (mesma chave e mesma versão; bem antigo sem eles continua válido,
-  sem migração): `pecas: [{ id, nome, ultimaTroca, intervaloMeses, proximaTroca }]` e `revisao: { ultima, intervaloMeses, proxima }`
+  sem migração): `pecas: [{ id, nome, marca, modelo, fornecedorId, grupoDespesaId, subgrupoDespesaId, valor, foto, ultimaTroca,
+  intervaloMeses, proximaTroca }]` (fornecedor = id em `cicluz-compras-v1.fornecedores`; grupo e subgrupo = ids de `despesas` em
+  `cicluz-financial-hierarchy-v1`; valor em reais com 2 casas; foto = data URL JPEG reduzida a 320 px, dentro do documento, que
+  o servidor limita a 4 MB) e `revisao: { ultima, intervaloMeses, proxima }` (na tela o quadro chama "Manutenção periódica")
   ou `null` (datas ISO ou '', intervalo inteiro em meses ou `null`; com última e intervalo, próxima = última + N meses),
   e `audio: { id, type, size, seconds }` ou `null`. O `audio.id` aponta para o arquivo no IndexedDB `cicluz-documentos`
   (o mesmo de Documentações e Ocorrências), que **não** é sincronizado: o áudio só existe no aparelho em que foi gravado.

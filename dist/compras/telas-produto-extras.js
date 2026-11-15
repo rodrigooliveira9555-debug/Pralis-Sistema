@@ -79,8 +79,12 @@
       leitor.readAsDataURL(arquivo);
     });
   }
-  /** Bloco de foto do formulário (Tirar foto, Galeria, arrastar e soltar, Remover). Devolve { no, valor() }. */
-  function campoFoto(atual, nomeProduto) {
+  /**
+   * Bloco de foto do formulário (Tirar foto, Galeria, arrastar e soltar, Remover). Devolve { no, valor() }.
+   * textos: para outro cadastro reaproveitar o bloco (ex.: peça do patrimônio) com as próprias frases.
+   */
+  function campoFoto(atual, nomeProduto, textos = {}) {
+    const T = { vazio: 'Adicione uma foto do produto', pendente: 'A foto nova é gravada ao salvar o produto.', coisa: 'produto', ...textos };
     let valor = atual || null;
     let pendente = false;
     const box = el('div', 'compras-foto');
@@ -105,13 +109,13 @@
       area.replaceChildren();
       acoes.replaceChildren(botao('Tirar foto', () => camera.click()), botao('Galeria', () => galeria.click()));
       if (valor) {
-        const img = el('img'); img.src = valor; img.alt = 'Foto de ' + (nomeProduto() || 'produto');
+        const img = el('img'); img.src = valor; img.alt = 'Foto de ' + (nomeProduto() || T.coisa);
         img.onclick = () => fotoAmpliada(valor, nomeProduto());
         area.append(img);
-        if (pendente) area.append(el('small', 'profiles-note', 'A foto nova é gravada ao salvar o produto.'));
+        if (pendente) area.append(el('small', 'profiles-note', T.pendente));
         acoes.append(botao('Remover', () => { valor = null; pendente = true; desenha(); }, 'btn secondary perigo-texto'));
       } else {
-        area.append(el('b', null, 'Adicione uma foto do produto'), el('small', 'profiles-note', 'JPEG, PNG ou WebP · até 8 MB'));
+        area.append(el('b', null, T.vazio), el('small', 'profiles-note', 'JPEG, PNG ou WebP · até 8 MB'));
       }
     }
     desenha();
