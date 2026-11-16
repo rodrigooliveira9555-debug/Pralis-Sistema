@@ -51,7 +51,7 @@ function ruleCheck(records,personId,categoryId,dateIso){load();const out=[];if(!
 const discMatch=(r,catId)=>r.active&&r.catId===catId;
 const discOf=c=>c?data.disc.find(r=>r.catId===c.catId&&r.active)||data.disc.find(r=>r.catId===c.catId)||null:null;
 function discCheck(records,personId,row,type,dateIso,excludeId){load();const out=[];if(!personId||!row||!row.catId||!dateIso)return out;
- for(const r of data.disc.filter(x=>discMatch(x,row.catId))){const from=new Date(Date.parse(dateIso+'T12:00:00')-r.lookbackDays*864e5).toISOString().slice(0,10);
+ for(const r of data.disc.filter(x=>discMatch(x,row.catId))){const from=r.lookbackDays?new Date(Date.parse(dateIso+'T12:00:00')-r.lookbackDays*864e5).toISOString().slice(0,10):'0000-01-01';
   /* só o mesmo colaborador, a mesma categoria e o período configurado; categorias diferentes nunca se somam */
   const mine=records.filter(x=>x.id!==excludeId&&x.collaboratorId===personId&&!/^Cancelad/.test(x.status||'')&&x.date>=from&&x.date<=dateIso&&x.classification?.catId===r.catId);
   const adv=mine.filter(x=>x.type==='ADVERTÊNCIA').length+(type==='ADVERTÊNCIA'?1:0),susp=mine.filter(x=>x.type==='SUSPENSÃO').length+(type==='SUSPENSÃO'?1:0);
@@ -71,19 +71,17 @@ const pill=a=>el('span','pill '+(a?'p-green':'p-red'),a?'Ativo':'Inativo');
 function table(heads){const t=el('table','uniforms-table'),hr=el('tr');for(const h of heads)hr.append(el('th',null,h));const th=el('thead');th.append(hr);const tb=el('tbody');t.append(th,tb);const w=el('div','uniforms-table-wrap');w.append(t);return {w,tb}}
 
 /* Parte superior: tabela */
-const topBar=el('div','people-banner-tools'),newBtn=button('Novo Cadastro',()=>openForm(null),'btn');topBar.append(newBtn);
 const tableBox=el('div'),flash=el('p','profiles-note'),fFilter=el('select');fFilter.setAttribute('aria-label','Filtrar por tipo de ocorrência');fFilter.addEventListener('change',()=>renderTable());const filterLbl=lbl('Filtrar por tipo de ocorrência',fFilter);flash.setAttribute('role','status');
 /* Cadastro de Regras Disciplinares (alerta para análise humana; não aplica suspensão nem justa causa) */
-body.append(el('h3','uniforms-heading','Tipos de ocorrência cadastrados'),topBar,filterLbl,flash,tableBox);
-const discTools=el('div','people-banner-tools'),discBox=el('div'),discFlash=el('p','profiles-note');discFlash.setAttribute('role','status');
-discTools.append(button('Nova regra',()=>editDisc(null),'btn'));
+body.append(filterLbl,flash,tableBox);
+const discBox=el('div'),discFlash=el('p','profiles-note');discFlash.setAttribute('role','status');
 /* Cadastro de Regras Disciplinares: painel recolhido por padrão, abaixo da tabela; abre e fecha na vertical */
 const rulesPanel=el('section','rules-panel'),rulesToggle=el('button','tree-toggle rules-toggle'),rulesBody=el('div','rules-panel-body'),rulesInner=el('div','rules-panel-inner');
 rulesToggle.type='button';rulesToggle.id='rules-toggle';rulesBody.id='rules-body';rulesToggle.setAttribute('aria-controls','rules-body');rulesToggle.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
-const rulesTitle=el('span','tree-name','Cadastro de Regras Disciplinares');rulesToggle.append(rulesTitle);
+const rulesTitle=el('span','tree-name','Regras Disciplinares');rulesToggle.append(rulesTitle);
 function setRules(on){rulesToggle.setAttribute('aria-expanded',String(on));rulesPanel.classList.toggle('is-open',on);rulesInner.inert=!on}
 rulesToggle.onclick=()=>setRules(rulesToggle.getAttribute('aria-expanded')!=='true');setRules(false);
-rulesInner.append(el('p','profiles-note','Valores configuráveis pela empresa: servem para o sistema avisar o DP de que vale analisar uma medida mais séria. A suspensão ou a justa causa nunca são aplicadas automaticamente: a decisão é humana, conforme as normas aplicáveis.'),discTools,discFlash,discBox);rulesBody.append(rulesInner);rulesPanel.append(rulesToggle,rulesBody);body.append(rulesPanel);
+rulesInner.append(el('p','profiles-note','Valores configuráveis pela empresa: servem para o sistema avisar o DP de que vale analisar uma medida mais séria. A suspensão ou a justa causa nunca são aplicadas automaticamente: a decisão é humana, conforme as normas aplicáveis.'),discFlash,discBox);rulesBody.append(rulesInner);rulesPanel.append(rulesToggle,rulesBody);body.append(rulesPanel);
 
 /* Parte inferior: formulário */
 const form=el('form','form-fields uniforms-form');form.noValidate=true;form.hidden=true;const formTitle=el('h3','uniforms-wide uniforms-heading','Novo cadastro');
@@ -150,62 +148,64 @@ function openModel(c){window.CicluzDocuments?.files.view('Modelo — '+catText(c
 function saveDays(){dm.textContent='';const parts=dayIn.value.split(/[,;\s]+/).filter(Boolean),nums=parts.map(Number);if(nums.some(x=>!(Number.isInteger(x)&&x>=1))){dm.textContent='Use números inteiros a partir de 1, separados por vírgula.';return}
  const list=[...new Set(nums)].sort((a,b)=>a-b);if(!transact(d=>{d.suspensionDays=list})){dm.textContent='Não foi possível salvar neste navegador.';return}dm.textContent=list.length?'Dias permitidos: '+list.join(', ')+'.':'Sem restrição de dias.'}
 
-const CHEV='m9 6 6 6-6 6';
-function ruleCell(c){const td=el('td'),r=discOf(c);td.dataset.label='Regra para suspensão ou justa causa';if(!r){td.textContent='Sem regra configurada.';return td}const box=el('div','rule-cell');if(r.warnCount)box.append(el('span',null,r.warnCount+' advertência(s) → Análise de suspensão'));if(r.suspCount)box.append(el('span',null,r.suspCount+' suspensão(ões) → Análise de justa causa'));box.append(el('small',null,r.name+' · '+r.lookbackDays+' dia(s)'+(r.active?'':' · INATIVA')));td.append(box);return td}
-let lastList=[];
-function leafRow(c){const tr=el('tr','tree-leaf'),st=el('td'),a=el('td','uniforms-row-actions');st.append(pill(c.active));if(!c.active)tr.classList.add('is-cancelled');
- a.append(iconButton('Visualizar '+catText(c),ICON.eye,()=>viewRow(c)),iconButton('Editar '+catText(c),ICON.edit,()=>openForm(c),'is-accent'),iconButton((c.active?'Desativar ':'Ativar ')+catText(c),c.active?ICON.ban:ICON.ok,()=>toggleRow(c)));
- const cell=(label,text)=>{const td=el('td',null,text);td.dataset.label=label;return td};st.dataset.label='Status';a.dataset.label='Ações';
- tr.append(cell('Tipo de ocorrência',c.type),cell('Categoria',c.name),cell('Subcategoria',c.subcategory||'—'),cell('Tipo de documento',docName(c)||'—'),ruleCell(c),st,a);return tr}
-const COLS=['Tipo de ocorrência','Categoria','Subcategoria','Tipo de documento','Regra para suspensão ou justa causa','Status','Ações'],WEIGHT=[12,17,16,14,25,8,12],colHidden=new Set(),COLW=40;
-let lastW=null;window.addEventListener('resize',()=>{if(lastW?.isConnected)applyCols(lastW)});
-function applyCols(w){lastW=w;const t=w.querySelector('table'),cg=t.querySelector('colgroup'),avail=t.getBoundingClientRect().width-colHidden.size*COLW,sum=WEIGHT.reduce((q,x,i)=>colHidden.has(i)?q:q+x,0)||1;
- [...cg.children].forEach((c,i)=>{c.style.width=colHidden.has(i)?COLW+'px':Math.max(60,Math.round(avail*WEIGHT[i]/sum))+'px'});
- t.querySelectorAll('tr').forEach(tr=>{if(tr.cells.length===COLS.length)[...tr.cells].forEach((c,i)=>c.classList.toggle('col-collapsed',colHidden.has(i)))});
- t.querySelectorAll('thead .col-toggle').forEach((b,i)=>{const on=!colHidden.has(i);b.setAttribute('aria-expanded',String(on));b.setAttribute('aria-label',(on?'Recolher':'Expandir')+' coluna '+COLS[i])})}
-function colHeads(w){const t=w.querySelector('table'),cg=document.createElement('colgroup');for(const c of COLS)cg.append(document.createElement('col'));t.prepend(cg);
- [...t.querySelectorAll('thead th')].forEach((th,i)=>{th.replaceChildren();const sp=el('span','col-label',COLS[i]),b=el('button','col-toggle');b.type='button';b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+CHEV+'"/></svg>';b.onclick=()=>{colHidden.has(i)?colHidden.delete(i):colHidden.add(i);applyCols(w)};th.append(sp,b)})}
+const CU=()=>window.CicluzComprasUI,DOC_ICON='M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6';
+function ruleLines(c){const r=discOf(c);if(!r)return ['Sem regra configurada.'];const o=[];if(r.warnCount)o.push(r.warnCount+(r.warnCount===1?' advertência':' advertências')+' → avaliar suspensão');if(r.suspCount)o.push(r.suspCount+(r.suspCount===1?' suspensão':' suspensões')+' → avaliar justa causa');if(!r.active)o.push('Regra inativa');return o}
+function leafRow(c,linhas){const stack=lines=>lines.map(t=>el('span',null,t));
+ const row=CU().linhaLista({icones:[{icone:'<path d="'+DOC_ICON+'"/>',rotulo:c.type}],grade:'grade-ocorrencia',
+  colunas:[{chave:'nome',conteudo:c.type},{chave:'categoria',conteudo:c.name},{chave:'subcategoria',conteudo:c.subcategory||'—'},{chave:'tipodoc',conteudo:docName(c)||'—'},{chave:'regra',conteudo:stack(ruleLines(c))}],
+  estado:c.active?'Ativo':'Inativo',
+  acoes:{rotulo:catText(c),lista:linhas,aoEditar:()=>openForm(c),aoExcluir:()=>toggleRow(c)}});
+ if(!c.active)row.classList.add('inativo');
+ /* tocar na linha mostra os detalhes; a seta revela o lápis (editar) e o botão de ativar/desativar (não há exclusão de cadastro: o histórico depende dele) */
+ const arrow=row.querySelector('.account-action-toggle'),drawer=row.querySelector('.account-row-actions'),off=[...drawer.children].find(b=>/^Excluir/.test(b.getAttribute('aria-label')||'')),label=(c.active?'Desativar ':'Ativar ')+catText(c);
+ off.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(c.active?ICON.ban:ICON.ok)+'"/></svg>';off.title=label;off.setAttribute('aria-label',label);
+ row.onclick=e=>{if(e.target.closest('button'))return;if(!drawer.hidden){drawer.hidden=true;arrow.setAttribute('aria-expanded','false');return}viewRow(c)};
+ row.onkeydown=e=>{if(e.target===row&&e.key==='Enter'){e.preventDefault();viewRow(c)}};
+ row.setAttribute('aria-label','Visualizar '+catText(c));return row}
 function renderTable(){tableBox.replaceChildren();const curF=fFilter.value;fFilter.replaceChildren(new Option('Todos os tipos',''));for(const t of types())fFilter.add(new Option(t,t));fFilter.value=curF;
- const list=data.categories.filter(c=>!fFilter.value||c.type===fFilter.value).sort((a,b)=>a.type.localeCompare(b.type,'pt-BR')||a.name.localeCompare(b.name,'pt-BR')||(a.subcategory||'').localeCompare(b.subcategory||'','pt-BR'));lastList=list;
- if(!list.length){tableBox.append(el('p','profiles-note',fFilter.value?'Nenhum cadastro para este tipo.':'Nenhum cadastro ainda. Use "Novo Cadastro" para ligar um tipo de ocorrência a uma categoria, uma subcategoria e um documento.'));return}
- const {w,tb}=table(COLS);w.classList.add('tree-table');colHeads(w);
- for(const c of list)tb.append(leafRow(c));
- tableBox.append(w);applyCols(w)}
+ const list=data.categories.filter(c=>!fFilter.value||c.type===fFilter.value).sort((a,b)=>a.type.localeCompare(b.type,'pt-BR')||a.name.localeCompare(b.name,'pt-BR')||(a.subcategory||'').localeCompare(b.subcategory||'','pt-BR'));
+ const cu=CU();if(!cu){tableBox.append(el('p','profiles-note','Não foi possível carregar a lista padrão do sistema. Recarregue a página.'));return}
+ const ativos=data.categories.filter(c=>c.active).length,ponta=cu.pontaDaLista(ativos,ativos+(ativos===1?' cadastro ativo':' cadastros ativos'));
+ const sec=cu.secao('Tipos de Ocorrência',undefined,ponta),linhas=el('div','compras-lista compras-lista-grade');cu.arrastarParaRolar(linhas);
+ sec.querySelector('.compras-secao-cab h3').replaceChildren(cu.botaoTitulo('Novo Cadastro','Novo cadastro de tipo de ocorrência',()=>openForm(null)),cu.botaoTitulo('Nova regra','Nova regra disciplinar',()=>editDisc(null)));
+ sec.append(linhas);
+ if(!list.length)linhas.append(cu.vazio(fFilter.value?'Nenhum cadastro para este tipo.':'Nenhum cadastro ainda.',fFilter.value?'':'Use "Novo Cadastro" para ligar um tipo de ocorrência a uma categoria, uma subcategoria e um documento.'));
+ else{const cab=cu.cabecalhoColunas('grade-ocorrencia',[{chave:'nome',rotulo:'Tipo de ocorrência'},{chave:'categoria',rotulo:'Categoria',ocultavel:true},{chave:'subcategoria',rotulo:'Subcategoria',ocultavel:true},{chave:'tipodoc',rotulo:'Tipo de documento',ocultavel:true},{chave:'regra',rotulo:'Regra para suspensão ou justa causa',ocultavel:true},{chave:'estado',rotulo:'Status'}],{lista:linhas,preferencia:'cicluz-ocorrencias-colunas'});
+  linhas.append(cab);ponta.append(cab.botaoGeral);for(const c of list)linhas.append(leafRow(c,linhas))}
+ tableBox.append(sec)}
 /* ---- Regras disciplinares: lista e edição em janela própria ---- */
-function discText(r){return [r.warnCount?r.warnCount+' advertência(s) → Análise de suspensão':'',r.suspCount?r.suspCount+' suspensão(ões) → Análise de justa causa':''].filter(Boolean).join('; ')+' · apuração em '+r.lookbackDays+' dia(s)'}
+function discLines(r){return [r.warnCount?'Para '+r.warnCount+(r.warnCount===1?' advertência':' advertências')+', aplicar suspensão (avaliação humana).':'',r.suspCount?'Para '+r.suspCount+(r.suspCount===1?' suspensão':' suspensões')+', aplicar justa causa (avaliação humana).':''].filter(Boolean)}
 function scopeText(r){const c=data.categories.find(x=>x.catId===r.catId);return c?c.name:'Categoria não encontrada'}
-function renderDisc(){discBox.replaceChildren();if(!data.disc.length){discBox.append(el('p','profiles-note','Nenhuma regra disciplinar cadastrada. Use "Nova regra".'));return}
- const {w,tb}=table(['Regra','Categoria','Alertas','Status','Ações']);w.classList.add('tree-table');
- for(const r of [...data.disc].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))){const tr=el('tr','tree-leaf'),st=el('td'),a=el('td','uniforms-row-actions');st.append(pill(r.active));if(!r.active)tr.classList.add('is-cancelled');
-  a.append(iconButton('Visualizar regra '+r.name,ICON.eye,()=>viewDisc(r)),iconButton('Editar regra '+r.name,ICON.edit,()=>editDisc(r),'is-accent'),iconButton((r.active?'Desativar regra ':'Ativar regra ')+r.name,r.active?ICON.ban:ICON.ok,()=>toggleDisc(r)));
+function renderDisc(){discBox.replaceChildren();if(!data.disc.length){discBox.append(el('p','profiles-note','Nenhuma regra disciplinar cadastrada. Use o botão "Nova regra" no topo da lista.'));return}
+ const {w,tb}=table(['Categoria','Advertências','Suspensões','Status','Ações']);
+ for(const r of [...data.disc].sort((a,b)=>scopeText(a).localeCompare(scopeText(b),'pt-BR'))){const tr=el('tr','tree-leaf'),st=el('td'),a=el('td','uniforms-row-actions');st.append(pill(r.active));if(!r.active)tr.classList.add('is-cancelled');
+  const sc=scopeText(r);a.append(iconButton('Visualizar regra de '+sc,ICON.eye,()=>viewDisc(r)),iconButton('Editar regra de '+sc,ICON.edit,()=>editDisc(r),'is-accent'),iconButton((r.active?'Desativar regra de ':'Ativar regra de ')+sc,r.active?ICON.ban:ICON.ok,()=>toggleDisc(r)));
   const cell=(l,t)=>{const td=el('td',null,t);td.dataset.label=l;return td};st.dataset.label='Status';a.dataset.label='Ações';
-  tr.append(cell('Regra',r.name),cell('Categoria',scopeText(r)),cell('Alertas',discText(r)),st,a);tb.append(tr)}discBox.append(w)}
-function viewDisc(r){dialog('Regra disciplinar — '+r.name,(f,form)=>{const dl=el('dl','profiles-info');for(const [k,v] of [['Nome da regra',r.name],['Categoria',scopeText(r)],['Quantidade de advertências (1ª etapa)',r.warnCount?r.warnCount+' → Alerta para análise de possível suspensão':'Não definido'],['Quantidade de suspensões (2ª etapa)',r.suspCount?r.suspCount+' → Alerta para análise de possível justa causa':'Não definido'],['Período de apuração',r.lookbackDays+' dia(s)'],['Status',r.active?'Ativa':'Inativa'],['Observações',r.notes||'—'],['Alterações',String((r.history||[]).length)]]){dl.append(el('dt',null,k),el('dd',null,v))}form.append(dl,el('p','profiles-note','Critério interno de alerta. Não aplica suspensão nem justa causa: a decisão é do DP, do jurídico e dos demais responsáveis.'))})}
-function toggleDisc(r){const run=()=>{transact(d=>{const x=d.disc.find(y=>y.id===r.id);(x.history=x.history||[]).push({at:now(),before:{active:x.active}});x.active=!x.active;x.updatedAt=now()});renderDisc();renderTable();discFlash.textContent=(r.active?'Regra desativada: ':'Regra ativada: ')+r.name+'.';return null};
- if(r.active)confirmDialog('Desativar regra?',r.name+' deixa de gerar alertas em novos lançamentos. Ocorrências já registradas e o histórico continuam como estão.','Desativar',run,()=>{});else run()}
+  tr.append(cell('Categoria',sc),cell('Advertências',r.warnCount?String(r.warnCount):'—'),cell('Suspensões',r.suspCount?String(r.suspCount):'—'),st,a);tb.append(tr)}discBox.append(w)}
+function viewDisc(r){const sc=scopeText(r);dialog('Regra disciplinar — '+sc,(f,form)=>{const dl=el('dl','profiles-info');for(const [k,v] of [['Categoria',sc],['1 — Advertência',r.warnCount?'Para '+r.warnCount+(r.warnCount===1?' advertência':' advertências')+', aplicar suspensão.':'Não definido'],['2 — Suspensão',r.suspCount?'Para '+r.suspCount+(r.suspCount===1?' suspensão':' suspensões')+', aplicar justa causa.':'Não definido'],...(r.lookbackDays?[['Período de apuração (regra anterior)',r.lookbackDays+' dia(s)']]:[]),['Status',r.active?'Ativa':'Inativa'],...(r.notes?[['Observações',r.notes]]:[]),['Alterações',String((r.history||[]).length)]]){dl.append(el('dt',null,k),el('dd',null,v))}form.append(dl,el('p','profiles-note','Ao atingir o limite, o sistema só sinaliza: "avaliar suspensão" ou "avaliar justa causa". Nada é aplicado automaticamente: a decisão é do Departamento Pessoal e dos responsáveis autorizados.'))})}
+function toggleDisc(r){const sc=scopeText(r),run=()=>{transact(d=>{const x=d.disc.find(y=>y.id===r.id);(x.history=x.history||[]).push({at:now(),before:{active:x.active}});x.active=!x.active;x.updatedAt=now()});renderDisc();renderTable();discFlash.textContent=(r.active?'Regra desativada: ':'Regra ativada: ')+sc+'.';return null};
+ if(r.active)confirmDialog('Desativar regra?','A regra de '+sc+' deixa de gerar alertas em novos lançamentos. Ocorrências já registradas e o histórico continuam como estão.','Desativar',run,()=>{});else run()}
 function editDisc(r){load();
  dialog(r?'Editar regra disciplinar':'Nova regra disciplinar',(field,form)=>{
-  const nameIn=el('input'),catSel2=el('select'),warnIn=el('input'),suspIn=el('input'),lookIn=el('input'),actSel=el('select'),notes=el('textarea');
-  nameIn.maxLength=100;nameIn.dataset.textoLivre='';notes.rows=3;notes.maxLength=500;notes.dataset.textoLivre='';for(const i of [warnIn,suspIn,lookIn]){i.type='number';i.min='1';i.step='1';i.inputMode='numeric'}
-  catSel2.add(new Option('Selecione a categoria',''));const seen=new Set();for(const c of [...data.categories].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))){if(!c.catId||seen.has(c.catId))continue;seen.add(c.catId);catSel2.add(new Option(c.name,c.catId))}
-  actSel.add(new Option('Ativa','1'));actSel.add(new Option('Inativa','0'));
-  const ro=v=>{const i=el('input');i.value=v;i.disabled=true;return i};
-  field('Nome da regra *',nameIn);field('Categoria *',catSel2);
-  field('Quantidade de advertências *',warnIn);field('Tipo de ocorrência da primeira etapa',ro('Advertência'));field('Resultado da primeira etapa',ro('Alerta para análise de suspensão'));
-  field('Quantidade de suspensões *',suspIn);field('Tipo de ocorrência da segunda etapa',ro('Suspensão'));field('Resultado da segunda etapa',ro('Alerta para análise de possível justa causa'));
-  field('Período de apuração (dias) *',lookIn);field('Status',actSel);field('Observações',notes);
-  form.append(el('p','profiles-note','Cada categoria conta só as próprias ocorrências do colaborador no período. Os números são escolhidos pela empresa: critérios internos de alerta, não regra legal automática.'));
-  if(r){nameIn.value=r.name;catSel2.value=r.catId;warnIn.value=r.warnCount||'';suspIn.value=r.suspCount||'';lookIn.value=r.lookbackDays||'';actSel.value=r.active?'1':'0';notes.value=r.notes||''}
-  return {nameIn,catSel2,warnIn,suspIn,lookIn,actSel,notes}},
- x=>{const name=x.nameIn.value.trim(),warn=x.warnIn.value===''?null:Number(x.warnIn.value),susp=x.suspIn.value===''?null:Number(x.suspIn.value),look=Number(x.lookIn.value);
-  if(!name)return 'Informe o nome da regra.';if(!x.catSel2.value)return 'Selecione a categoria.';
-  if([warn,susp].some(v=>v!==null&&!(Number.isInteger(v)&&v>=1)))return 'As quantidades devem ser números inteiros a partir de 1.';if(warn===null&&susp===null)return 'Informe a quantidade de advertências e/ou de suspensões.';
-  if(!(Number.isInteger(look)&&look>=1))return 'Informe o período de apuração em dias (número inteiro a partir de 1).';
-  if(data.disc.some(y=>y.id!==r?.id&&fold(y.name)===fold(name)))return 'Já existe uma regra com este nome.';
-  if(x.actSel.value==='1'&&data.disc.some(y=>y.id!==r?.id&&y.active&&y.catId===x.catSel2.value))return 'Já existe uma regra ativa para esta categoria. Edite a existente.';
-  const rec={name,catId:x.catSel2.value,type:'',subId:'',warnCount:warn,suspCount:susp,lookbackDays:look,active:x.actSel.value==='1',notes:x.notes.value.trim()};
+  const catSel2=el('select'),warnSel=el('select'),suspSel=el('select'),warnTxt=el('p','profiles-note'),suspTxt=el('p','profiles-note');
+  catSel2.add(new Option('Selecionar categoria',''));const seen=new Set();for(const x of [...data.categories].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))){if(!x.catId||seen.has(x.catId))continue;seen.add(x.catId);catSel2.add(new Option(x.name,x.catId))}
+  const nums=(sel,cur)=>{sel.add(new Option('Selecionar número',''));for(let i=1;i<=Math.max(10,cur||0);i++)sel.add(new Option(String(i),String(i)))};nums(warnSel,r?.warnCount);nums(suspSel,r?.suspCount);
+  const paint=()=>{const w=warnSel.value,s=suspSel.value;warnTxt.textContent='Para '+(w||'X')+(w==='1'?' advertência':' advertências')+', aplicar suspensão.';suspTxt.textContent='Para '+(s||'X')+(s==='1'?' suspensão':' suspensões')+', aplicar justa causa.'};
+  warnSel.onchange=suspSel.onchange=paint;
+  field('Categoria *',catSel2);
+  form.append(el('h4','uniforms-wide uniforms-heading','1 — Advertência'));field('Quantidade de advertências *',warnSel);form.append(warnTxt);
+  form.append(el('h4','uniforms-wide uniforms-heading','2 — Suspensão'));field('Quantidade de suspensões *',suspSel);form.append(suspTxt);
+  form.append(el('p','profiles-note','O sistema apenas sinaliza ("avaliar suspensão" ou "avaliar justa causa"). Nada é aplicado automaticamente: a decisão é do Departamento Pessoal.'));
+  if(r){catSel2.value=r.catId;warnSel.value=r.warnCount?String(r.warnCount):'';suspSel.value=r.suspCount?String(r.suspCount):''}paint();
+  return {catSel2,warnSel,suspSel}},
+ x=>{const catId=x.catSel2.value,warn=Number(x.warnSel.value),susp=Number(x.suspSel.value);
+  if(!catId)return 'Selecione a categoria.';if(!x.warnSel.value)return 'Selecione a quantidade de advertências.';if(!x.suspSel.value)return 'Selecione a quantidade de suspensões.';
+  if(!(Number.isInteger(warn)&&warn>=1&&Number.isInteger(susp)&&susp>=1))return 'As quantidades devem ser números inteiros a partir de 1.';
+  const active=r?r.active:true,catName=data.categories.find(y=>y.catId===catId)?.name||'';
+  if(active&&data.disc.some(y=>y.id!==r?.id&&y.active&&y.catId===catId))return 'Já existe uma regra ativa para esta categoria. Edite a existente.';
+  const rec={name:r&&r.catId===catId?r.name:catName,catId,type:'',subId:'',warnCount:warn,suspCount:susp,lookbackDays:r?r.lookbackDays:null,active,notes:r?.notes||''};
   const ok=transact(d=>{if(r){const o=d.disc.find(y=>y.id===r.id);(o.history=o.history||[]).push({at:now(),before:{name:o.name,catId:o.catId,warnCount:o.warnCount,suspCount:o.suspCount,lookbackDays:o.lookbackDays,active:o.active,notes:o.notes}});Object.assign(o,rec,{updatedAt:now()})}else d.disc.push({id:newId(),...rec,createdAt:now(),history:[]})});
-  if(!ok)return 'Não foi possível salvar neste navegador.';discFlash.textContent=(r?'Regra atualizada: ':'Regra salva: ')+name+'.';return null},'Salvar',()=>{renderDisc();renderTable()})}
+  if(!ok)return 'Não foi possível salvar neste navegador.';discFlash.textContent=(r?'Regra atualizada: ':'Regra salva: ')+catName+'.';return null},'Salvar',()=>{renderDisc();renderTable();setRules(true)})}
 function render(){load();warn.hidden=!loadError;warn.textContent='Não foi possível ler o cadastro salvo neste navegador. Nada será gravado para não sobrescrever os dados.';dayIn.value=data.suspensionDays.join(', ');renderDisc();renderTable()}
 function show(){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=menuCrumb(2,GROUP,TITLE);const t=document.getElementById('title');if(t)t.textContent=TITLE;closeForm();flash.textContent='';render();normalizeHeaderActions(view)}
 window.showOccurrenceCatalog=show;

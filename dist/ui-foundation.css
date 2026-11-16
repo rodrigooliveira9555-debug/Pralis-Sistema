@@ -640,27 +640,32 @@ button.stepper-node:focus-visible{outline:2px solid var(--stepper-accent);outlin
 }
 .tree-count{white-space:nowrap;flex:none}.tree-name{min-width:0}
 
-/* Colunas recolhíveis na horizontal (Tipos de Ocorrência) e célula de regra (2026-11) */
-.col-toggle{display:inline-grid;place-items:center;width:22px;height:22px;margin-left:6px;padding:0;border:0;border-radius:50%;background:var(--menu-accent,#ef4444);color:#fff;cursor:pointer;vertical-align:middle;flex:none}
-.col-toggle svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s ease}
-.col-toggle[aria-expanded=true] svg{transform:rotate(0)}
-.col-toggle[aria-expanded=false] svg{transform:rotate(180deg)}
-.col-toggle:focus-visible{outline:2px solid var(--menu-accent,#ef4444);outline-offset:2px}
-.rule-cell{display:grid;gap:2px}.rule-cell small{opacity:.75}
-.rule-cell-actions{display:flex;gap:6px;margin-top:6px}
-@media (min-width:761px){
- .tree-table table{table-layout:fixed;width:100%;min-width:900px}
- .tree-table col{transition:width .22s ease}
- .tree-table th{white-space:nowrap}
- .tree-table th,.tree-table td{overflow:hidden}
- .tree-table th.col-collapsed .col-label{display:none}
- .tree-table th.col-collapsed{padding-left:0;padding-right:0;text-align:center}
- .tree-table th.col-collapsed .col-toggle{margin-left:0}
- .tree-table td.col-collapsed{padding-left:0;padding-right:0;font-size:0;color:transparent}
- .tree-table td.col-collapsed>*{display:none}
-}
-@media (max-width:760px){.col-toggle{display:none}}
-@media (prefers-reduced-motion:reduce){.tree-table col,.col-toggle svg{transition:none}}
+/* DES - Tipos de Ocorrência: mesma grade de linhas de Fornecedores (compras.css), com as colunas próprias.
+   Ícone · tipo de ocorrência (fixo) · categoria · subcategoria · tipo de documento · regra · status · seta. As colunas
+   com seta no título usam as mesmas classes oculta-<chave> (largura vem de variável). */
+.compras-linha.grade-ocorrencia{grid-template-columns:64px var(--w-nome,minmax(170px,1fr)) var(--w-categoria,170px) var(--w-subcategoria,170px) var(--w-tipodoc,170px) var(--w-regra,330px) 72px 24px;width:max-content;min-width:100%;background:var(--theme-card,#fff)}
+.compras-linha.grade-ocorrencia>*{grid-row:1}
+.compras-linha.grade-ocorrencia>.compras-linha-icones{grid-column:1;position:sticky;left:0;z-index:2;align-self:stretch;align-items:center;background:inherit;padding-left:12px;margin-left:-12px}
+.compras-linha.grade-ocorrencia>.c-nome{grid-column:2;position:sticky;left:76px;z-index:1;align-self:stretch;display:flex;align-items:center;background:inherit;box-shadow:1px 0 0 var(--layout-line,#dedee3);padding-right:8px}
+.compras-linha.grade-ocorrencia>.c-categoria{grid-column:3}
+.compras-linha.grade-ocorrencia>.c-subcategoria{grid-column:4}
+.compras-linha.grade-ocorrencia>.c-tipodoc{grid-column:5}
+.compras-linha.grade-ocorrencia>.c-regra{grid-column:6}
+.compras-linha.grade-ocorrencia>.account-list-state,.compras-linha.grade-ocorrencia>.c-estado{grid-column:7}
+.compras-linha.grade-ocorrencia:not(.compras-linha-cabecalho)>.c-regra{display:grid;gap:2px;white-space:normal}
+.oculta-categoria{--w-categoria:24px}
+.oculta-categoria .grade-ocorrencia:not(.compras-linha-cabecalho)>.c-categoria,.oculta-categoria .compras-linha-cabecalho.grade-ocorrencia>.c-categoria>.compras-coluna-titulo{display:none}
+.oculta-subcategoria{--w-subcategoria:24px}
+.oculta-subcategoria .grade-ocorrencia:not(.compras-linha-cabecalho)>.c-subcategoria,.oculta-subcategoria .compras-linha-cabecalho.grade-ocorrencia>.c-subcategoria>.compras-coluna-titulo{display:none}
+.oculta-tipodoc{--w-tipodoc:24px}
+.oculta-tipodoc .grade-ocorrencia:not(.compras-linha-cabecalho)>.c-tipodoc,.oculta-tipodoc .compras-linha-cabecalho.grade-ocorrencia>.c-tipodoc>.compras-coluna-titulo{display:none}
+.oculta-regra{--w-regra:24px}
+.oculta-regra .grade-ocorrencia:not(.compras-linha-cabecalho)>.c-regra,.oculta-regra .compras-linha-cabecalho.grade-ocorrencia>.c-regra>.compras-coluna-titulo{display:none}
+.compras-linha.grade-ocorrencia>.account-action-toggle{grid-column:8;position:sticky;right:0;z-index:2;align-self:stretch;height:auto;background:inherit}
+.compras-linha.grade-ocorrencia>.account-row-actions:not([hidden]){grid-column:7;grid-row:1;justify-self:end;position:sticky;right:32px;z-index:2;background:inherit}
+.compras-linha.grade-ocorrencia:has(>.account-row-actions:not([hidden]))>.account-list-state{visibility:hidden}
+@container lista-grade (max-width:519px){.compras-linha.grade-ocorrencia{--w-nome:120px}}
+@media (prefers-reduced-motion:reduce){.compras-coluna-seta svg{transition:none}}
 
 /* Cadastro de Regras Disciplinares: painel recolhível na vertical (2026-11) */
 .rules-panel{margin-top:16px;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;background:transparent}
