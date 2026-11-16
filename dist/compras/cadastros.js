@@ -1,6 +1,7 @@
 /*
  * Cadastro de Fornecedores, que alimenta Compras (Produtos fica em telas-produto-*.js).
- * Ficam em Saídas · Mercadorias → Cadastros Geral (MER - Fornecedores; MER - Produtos ao lado).
+ * É o cadastro único de fornecedor do sistema: abre por Saídas · Mercadorias → Cadastros Geral
+ * (MER - Fornecedores) e por Saídas · Despesas → Cadastros Geral (DES - Fornecedores).
  * Espelham /fornecedores e /produtos do S1 (main).
  */
 (function () {
@@ -9,8 +10,6 @@
   const S = window.CicluzComprasDados;
   const U = window.CicluzComprasUI;
   const { el, botao, campo, entrada, seletor } = U;
-  const voltarCadastros = () => menuBack(3, 'Cadastros Geral')();
-  const CAMINHO = 'Saídas · Mercadorias / Cadastros Geral / ';
 
   /* ---------- Máscaras ---------- */
   function mascaraDocumento(v) {
@@ -37,70 +36,813 @@
   }
 
   /* =====================================================================
-   * Fornecedores
+   * Fornecedores — cadastro único (decisão do Rodrigo, 15/11/2026). As linhas DES - Fornecedores
+   * (Saídas · Despesas) e MER - Fornecedores (Saídas · Mercadorias) abrem este mesmo cadastro, cada
+   * uma na cor e com o Voltar do menu de onde veio. Os dados são os de cicluz-compras-v1.fornecedores.
    * ===================================================================== */
-  let telaF = null;
-  let buscaF = '';
-  function abrirFornecedores() {
-    if (!telaF) {
-      telaF = U.criarTela({ id: 'compras-fornecedores', titulo: 'MER - Fornecedores', caminho: CAMINHO + 'MER - Fornecedores', icone: 'fornecedor', voltar: voltarCadastros });
-      U.atalho(telaF, 'Novo fornecedor', 'M12 5v14M5 12h14', () => editarFornecedor(), { criar: true });
+  // Cor das origens: a mesma fonte dos cartões do menu (groupConfig, de groups.js), com o padrão de cada origem.
+  const corOrigem = (chave, padrao) => { try { return (typeof groupConfig !== 'undefined' && groupConfig[chave] && groupConfig[chave].color) || padrao; } catch (e) { return padrao; } };
+  const corMercadorias = () => corOrigem('mercadorias', U.COR);
+  const corDespesas = () => corOrigem('despesas', '#ef4444');
+  const ORIGENS = {
+    mer: { id: 'compras-fornecedores', titulo: 'MER - Fornecedores', caminho: 'Saídas · Mercadorias / Cadastros Geral / MER - Fornecedores', voltar: () => menuBack(3, 'Cadastros Geral')(), get cor() { return corMercadorias(); }, corTexto: U.COR_TEXTO },
+    des: { id: 'despesas-fornecedores', titulo: 'DES - Fornecedores', caminho: 'Saídas · Despesas / Cadastros Geral / DES - Fornecedores', voltar: () => menuBack(2, 'Cadastros Geral')(), get cor() { return corDespesas(); }, corTexto: '#a11c1c' },
+  };
+  /**
+   * Ícones da linha pela categoria, iguais nos dois caminhos de entrada (decisão do Rodrigo, 15/11/2026):
+   * o desenho é o próprio ícone da linha do menu (o bonequinho de fornecedor), lido de onde o menu lê (iconeLinha,
+   * em index.html), para acompanhar se o ícone do menu for trocado. Produto = ícone de MER - Fornecedores em verde
+   * (cor de Mercadorias); Serviço = ícone de DES - Fornecedores em vermelho (cor de Despesas); sem categoria
+   * escolhida (nenhuma, ou as duas de um cadastro antigo) = o mesmo ícone em cinza. O nome da categoria também vai escrito na linha.
+   */
+  function iconeDoMenu(grupo, linha) {
+    try {
+      const desenho = typeof iconeLinha !== 'undefined' && iconeLinha[grupo] && iconeLinha[grupo][linha];
+      if (typeof desenho === 'function') return { html: '<svg viewBox="0 0 24 24" aria-hidden="true">' + desenho() + '</svg>' };
+    } catch (e) { /* menu ainda não carregado */ }
+    return { icone: 'fornecedor' };
+  }
+  function iconesDaCategoria(f) {
+    const cat = D.categoriaFornecedor(f);
+    const mer = iconeDoMenu('3:Cadastros Geral', 'MER - Fornecedores');
+    const des = iconeDoMenu('2:Cadastros Geral', 'DES - Fornecedores');
+    if (cat === 'produto') return [{ ...mer, cor: corMercadorias(), rotulo: 'Produto' }];
+    if (cat === 'servico') return [{ ...des, cor: corDespesas(), rotulo: 'Serviço' }];
+    return [{ ...mer, cor: 'var(--navigation-ink, #a2a0aa)', rotulo: 'Sem categoria' }];
+  }
+  /* ---------- Enviar link para cadastro (P-29): a parte visível existe; o envio está desligado ---------- */
+  const PRAZOS_CONVITE = [['1', '1 dia útil'], ['3', '3 dias úteis'], ['5', '5 dias úteis'], ['7', '7 dias úteis'], ['data', 'Escolher data e hora']];
+  const CANAIS_CONVITE = [['whatsapp', 'WhatsApp'], ['email', 'E-mail'], ['sms', 'SMS']];
+  /* Prazo padrão dos convites: preferência do sistema neste aparelho (não é dado de fornecedor). Vem preenchido com o
+     último prazo em dias úteis escolhido (3 enquanto ninguém trocar); "data e hora" vale só para aquele envio. */
+  const CHAVE_PRAZO_CONVITE = 'cicluz-fornecedores-prazo-convite';
+  const prazoPadraoConvite = () => {
+    try { const v = localStorage.getItem(CHAVE_PRAZO_CONVITE); if (PRAZOS_CONVITE.some(([id]) => id === v && id !== 'data')) return v; } catch (e) { /* sem preferência salva */ }
+    return '3';
+  };
+  const guardarPrazoConvite = (v) => { if (v === 'data') return; try { localStorage.setItem(CHAVE_PRAZO_CONVITE, v); } catch (e) { /* vale só nesta visita */ } };
+  /**
+   * ÚNICO ponto para ligar o envio quando a P-29 (parte do servidor) for decidida: recebe o canal e o prazo e deve
+   * devolver { url } para abrir (wa.me, mailto:, sms:) com a mensagem e o link do convite. Hoje devolve null, porque
+   * o link ainda não tem para onde levar: nada de link falso nem de abrir o WhatsApp com endereço que não existe.
+   */
+  function conviteCadastro(canal, prazo) { // eslint-disable-line no-unused-vars
+    return null;
+  }
+  /**
+   * Botão retangular "Enviar" (aviãozinho) do cabeçalho da lista e o painel que ele abre: uma coluna branca estreita
+   * com a seta de fechar e as bolinhas dos canais (WhatsApp, e-mail, SMS), e ao lado o Prazo de resposta (padrão
+   * 3 dias úteis, ou data e hora). O painel fica por cima da tela (fixo), alinhado ao botão.
+   */
+  function botaoEnviarConvite() {
+    const caixa = el('span', 'compras-enviar');
+    const painel = el('div', 'compras-enviar-painel');
+    painel.hidden = true;
+    painel.setAttribute('role', 'dialog');
+    painel.setAttribute('aria-label', 'Enviar link para cadastro');
+    const b = U.botaoTitulo('Enviar', 'Enviar link para cadastro', () => abrir(painel.hidden), U.ICONES.send);
+    const bolinha = (rotulo, desenho, acao, classe = '') => {
+      const x = el('button', 'shortcut-circle compras-redondo ' + classe);
+      x.type = 'button'; x.title = rotulo; x.setAttribute('aria-label', rotulo);
+      x.innerHTML = U.svg(desenho);
+      x.onclick = acao;
+      return x;
+    };
+    const canais = el('div', 'compras-enviar-canais');
+    canais.setAttribute('role', 'group');
+    canais.setAttribute('aria-label', 'Tipo de envio');
+    const fechar = bolinha('Fechar', U.ICONES.voltar, () => { abrir(false); b.focus(); }, 'compras-enviar-fechar');
+    const aviso = el('p', 'profiles-note');
+    aviso.setAttribute('role', 'status');
+    const prazo = seletor(PRAZOS_CONVITE, prazoPadraoConvite());
+    const data = entrada('date', '');
+    const hora = entrada('time', '');
+    const dataCampo = campo('Responder até (data)', data);
+    const horaCampo = campo('Hora', hora);
+    const pintarPrazo = () => { const livre = prazo.value === 'data'; dataCampo.style.display = livre ? '' : 'none'; horaCampo.style.display = livre ? '' : 'none'; };
+    prazo.onchange = () => { pintarPrazo(); guardarPrazoConvite(prazo.value); };
+    const lerPrazo = () => (prazo.value === 'data' ? { tipo: 'data', data: data.value, hora: hora.value } : { tipo: 'dias-uteis', dias: Number(prazo.value) });
+    canais.append(fechar, ...CANAIS_CONVITE.map(([id, nomeCanal]) => bolinha('Enviar por ' + nomeCanal, U.ICONES[id], () => {
+      const convite = conviteCadastro(id, lerPrazo());
+      if (!convite) { aviso.textContent = 'O link de cadastro ainda não está ativo. Falta a liberação da parte do servidor.'; return; }
+      window.open(convite.url, '_blank', 'noopener');
+    })));
+    const lado = el('div', 'compras-enviar-prazo');
+    const tipo = el('div', 'compras-campo');
+    tipo.append(el('span', 'compras-rotulo', 'Tipo de envio'), el('small', 'profiles-note', 'Toque em WhatsApp, e-mail ou SMS, nos ícones ao lado.'));
+    lado.append(campo('Prazo de resposta', prazo), dataCampo, horaCampo, tipo, aviso);
+    pintarPrazo();
+    painel.append(canais, lado);
+    const abrir = U.flutuante(b, painel, { foco: fechar });
+    caixa.append(b, painel);
+    return caixa;
+  }
+  const telasF = {};
+  let origemF = 'mer';
+  const buscaF = { mer: '', des: '' };
+  const coresF = () => ({ cor: ORIGENS[origemF].cor, corTexto: ORIGENS[origemF].corTexto });
+  function abrirFornecedores(origem = 'mer') {
+    origemF = ORIGENS[origem] ? origem : 'mer';
+    const o = ORIGENS[origemF];
+    if (!telasF[origemF]) {
+      const t = U.criarTela({ id: o.id, titulo: o.titulo, caminho: o.caminho, icone: 'fornecedor', voltar: o.voltar, cor: o.cor, corTexto: o.corTexto });
+      U.atalho(t, 'Novo fornecedor', 'M12 5v14M5 12h14', () => editarFornecedor(), { criar: true });
+      telasF[origemF] = t;
     }
-    telaF.ativar();
+    telasF[origemF].ativar();
     renderFornecedores();
   }
   function renderFornecedores() {
+    const tela = telasF[origemF];
     const lista = S.dados.fornecedores
-      .filter((f) => U.dobrar([f.nome, f.documento, f.whatsapp, f.categoria].join(' ')).includes(U.dobrar(buscaF)))
-      .sort((a, b) => (a.situacao === b.situacao ? a.nome.localeCompare(b.nome, 'pt-BR') : a.situacao === 'ativo' ? -1 : 1));
-    const controles = el('div', 'profiles-controls');
-    const b = U.buscaFixa('fornecedores', 'Nome, documento, WhatsApp ou categoria', buscaF, (v) => { buscaF = v; renderFornecedores(); });
-    controles.append(b);
+      .filter((f) => U.dobrar([f.nome, f.razaoSocial, f.documento, f.whatsapp, f.contatoNome, f.ramo, D.nomeCategoriasFornecedor(f)].join(' ')).includes(U.dobrar(buscaF[origemF])))
+      // Organizada pela categoria (pedido do Rodrigo): Produto, Serviço e, por último, sem categoria escolhida;
+      // dentro de cada uma, os ativos antes dos inativos e, entre eles, por nome.
+      .sort((a, b) => ordemCategoria(a) - ordemCategoria(b) || (a.situacao === b.situacao ? 0 : a.situacao === 'ativo' ? -1 : 1) || a.nome.localeCompare(b.nome, 'pt-BR'));
+    // Busca pela lupa do rodapé (um caminho só para buscar). O cadastro novo é a bolinha "+" do cabeçalho da lista.
+    const origem = origemF;
+    const busca = U.buscaRodape(tela, 'Buscar fornecedor', (v) => { buscaF[origem] = v; if (origemF === origem && tela.view.classList.contains('show')) renderFornecedores(); });
     const semWhats = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && !D.podeConvidar(f)).length;
-    const tab = U.tabela([
-      ['Nome', (f) => { const s = el('span'); s.append(el('b', null, f.nome)); if (f.situacao !== 'ativo') s.append(' ', U.situacao('Inativo', 'neutro')); return s; }],
-      ['Documento', (f) => f.documento || '—'],
-      ['WhatsApp', (f) => { const m = D.motivoNaoConvidavel(f); return f.situacao === 'ativo' && m ? U.situacao(f.whatsapp ? f.whatsapp + ' · sem DDD' : 'Sem WhatsApp', 'atencao') : f.whatsapp || '—'; }],
-      ['Categoria', (f) => f.categoria || '—'],
-    ], lista, { aoClicar: editarFornecedor, vazioTexto: buscaF ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.', classeLinha: (f) => (f.situacao !== 'ativo' ? 'inativo' : '') });
-    telaF.body.replaceChildren(
-      controles,
-      U.nota(lista.length + ' fornecedor(es). ' + (semWhats ? semWhats + ' ativo(s) sem WhatsApp válido não podem receber cotação. ' : '') + 'Fornecedor não é excluído: inative quando deixar de atender.'),
-      tab,
+    const incompletos = S.dados.fornecedores.filter((f) => f.situacao === 'ativo' && pendencias(f).length).length;
+    // Mesma linha dos cadastros de grupos: tocar edita; a setinha revela Editar e Excluir.
+    // Linha fina, uma por fornecedor, em colunas fixas (grade-fornecedor, em compras.css). Sequência final do Rodrigo:
+    // ícone da categoria, Fornecedor (nome fantasia), Categoria, Nome do contato, WhatsApp, Razão social, CNPJ,
+    // Ramo, avisos, situação e seta. O ícone e o Fornecedor são fixos (nunca ocultam e ficam parados na rolagem); cada
+    // uma das outras colunas tem no título a setinha que a oculta ou mostra (preferência do aparelho); o que não couber
+    // rola para o lado dentro da lista.
+    const linhas = el('div', 'compras-lista compras-lista-grade');
+    U.arrastarParaRolar(linhas);
+    // Cabeçalho branco da lista (desenho final do Rodrigo): à esquerda, o botão retangular "Fornecedores" com o "+", que abre
+    // o cadastro, e o botão retangular "Enviar" (aviãozinho), que abre o painel do link de cadastro; na outra ponta, a quantidade num círculo e a bolinha "‹ ›" de ocultar ou mostrar todas as colunas.
+    const ativos = S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length;
+    const ponta = U.pontaDaLista(ativos, ativos + (ativos === 1 ? ' fornecedor ativo' : ' fornecedores ativos'));
+    const sec = U.secao('Fornecedores', undefined, ponta);
+    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Fornecedores', 'Cadastrar fornecedor', () => editarFornecedor()), botaoEnviarConvite());
+    sec.append(linhas);
+    if (!lista.length) linhas.append(U.vazio(buscaF[origemF] ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.'));
+    if (lista.length) {
+      const cabecalho = U.cabecalhoColunas('grade-fornecedor', [
+      { chave: 'nome', rotulo: 'Fornecedor' }, { chave: 'categoria', rotulo: 'Categoria', ocultavel: true },
+      { chave: 'contato', rotulo: 'Nome do contato', ocultavel: true }, { chave: 'whatsapp', rotulo: 'WhatsApp', ocultavel: true },
+      { chave: 'razao', rotulo: 'Razão social', ocultavel: true }, { chave: 'documento', rotulo: 'CNPJ', ocultavel: true },
+      { chave: 'ramo', rotulo: 'Ramo', ocultavel: true }, { chave: 'selos', rotulo: 'Avisos', ocultavel: true }, { chave: 'estado', rotulo: 'Situação' },
+      ], { lista: linhas, preferencia: 'cicluz-fornecedores-colunas' });
+      linhas.append(cabecalho);
+      ponta.append(cabecalho.botaoGeral);
+    }
+    lista.forEach((f) => {
+      const ativo = f.situacao === 'ativo';
+      const categoria = D.nomeCategoriasFornecedor(f);
+      const falta = pendencias(f).filter((p) => p !== 'categoria');
+      const semDdd = ativo && D.motivoNaoConvidavel(f);
+      linhas.append(U.linhaLista({
+        icones: iconesDaCategoria(f), grade: 'grade-fornecedor',
+        colunas: [
+          // nome = nome fantasia: é o nome de uso, o mesmo que cotação e pedido mostram.
+          { chave: 'nome', conteudo: f.nome },
+          // Sem categoria: o aviso ocupa o lugar do texto da categoria (por isso o ícone está cinza).
+          { chave: 'categoria', conteudo: categoria || U.situacao('Completar cadastro', 'atencao') },
+          { chave: 'contato', conteudo: f.contatoNome },
+          { chave: 'whatsapp', conteudo: f.whatsapp },
+          { chave: 'razao', conteudo: f.razaoSocial },
+          { chave: 'documento', conteudo: f.documento },
+          { chave: 'ramo', conteudo: f.ramo },
+          { chave: 'selos', conteudo: [
+            ativo && categoria && falta.length ? U.situacao('Completar cadastro', 'atencao') : null,
+            semDdd ? U.situacao(f.whatsapp ? 'WhatsApp sem DDD' : 'Sem WhatsApp', 'atencao') : null,
+          ] },
+        ],
+        estado: ativo ? 'Ativo' : 'Inativo',
+        acoes: { rotulo: f.nome, lista: linhas, aoEditar: () => editarFornecedor(f), aoExcluir: () => excluirFornecedor(f) },
+      }));
+    });
+    tela.body.replaceChildren(
+      busca,
+      U.nota(lista.length + ' fornecedor(es), os mesmos em Despesas e em Mercadorias. ' + (incompletos ? incompletos + ' ativo(s) com cadastro a completar (toque para editar). ' : '') + (semWhats ? semWhats + ' ativo(s) sem WhatsApp válido não podem receber cotação. ' : '') + 'Fornecedor já usado em cotação, pedido, compra ou peça não é excluído: a lixeira inativa.'),
+      sec,
     );
   }
+  const contar = D.contarVinculos;
+  /** Onde o fornecedor é usado: Compras (catálogo, histórico, cotações, pedidos), peças do patrimônio e compras de uniformes. */
+  function usosDoFornecedor(id) {
+    const usos = [];
+    const compras = D.vinculosComProdutos(S.dados, id);
+    if (compras) usos.push(compras + ' registro(s) do Compras (catálogo, histórico, cotação ou pedido)');
+    const bens = window.CicluzProducaoDados ? window.CicluzProducaoDados.patrimonio.dados.bens : [];
+    const pecas = contar(bens, 'fornecedorId', id);
+    if (pecas) usos.push(pecas + ' peça(s) do patrimônio');
+    let uniformes = 0;
+    try { uniformes = contar(JSON.parse(localStorage.getItem('cicluz-uniformes-v1') || 'null'), 'supplierId', id); } catch (e) { /* sem compras de uniformes */ }
+    if (uniformes) usos.push(uniformes + ' compra(s) de uniformes');
+    return usos;
+  }
+  /**
+   * Lixeira da linha. Fornecedor com vínculo não é excluído (regra do Compras): a lixeira oferece inativar, e se já
+   * está inativo só explica. Sem vínculo nenhum, exclui depois de confirmar.
+   */
+  function excluirFornecedor(f) {
+    const usos = usosDoFornecedor(f.id);
+    if (!usos.length) {
+      return U.confirmar('Excluir fornecedor', 'Excluir "' + f.nome + '"? Ele não tem cotação, pedido, compra nem peça vinculada. Não dá para desfazer.', 'Excluir', () => {
+        if (usosDoFornecedor(f.id).length) return 'Este fornecedor passou a ter vínculos. Inative em vez de excluir.';
+        if (!S.transacao((d) => { d.fornecedores = d.fornecedores.filter((x) => x.id !== f.id); })) return 'Não foi possível salvar neste navegador.';
+        U.avisar('Fornecedor excluído.');
+        renderFornecedores();
+      }, coresF());
+    }
+    const onde = 'Usado em: ' + usos.join('; ') + '.';
+    if (f.situacao !== 'ativo') {
+      return U.dialogo({ titulo: 'Fornecedor não pode ser excluído', ...coresF(), montar: (form) => { form.append(el('p', null, '"' + f.nome + '" já está inativo e não pode ser excluído, para o histórico não ficar sem fornecedor. ' + onde)); } });
+    }
+    U.confirmar('Inativar fornecedor', '"' + f.nome + '" não pode ser excluído, para o histórico não ficar sem fornecedor. ' + onde + ' Inativar? Ele deixa de aparecer para novas cotações e peças.', 'Inativar', () => {
+      if (!S.transacao((d) => { d.fornecedores.find((x) => x.id === f.id).situacao = 'inativo'; })) return 'Não foi possível salvar neste navegador.';
+      U.avisar('Fornecedor inativado.');
+      renderFornecedores();
+    }, coresF());
+  }
+  /** Posição do fornecedor na lista pela categoria: Produto, Serviço, sem categoria escolhida. */
+  function ordemCategoria(f) {
+    const cat = D.categoriaFornecedor(f);
+    return cat === 'produto' ? 0 : cat === 'servico' ? 1 : 2;
+  }
+  /** O que falta no cadastro para os obrigatórios de 15/11/2026 (só para avisar na lista; quem já existia continua valendo). */
+  function pendencias(f) {
+    const p = [];
+    if (!D.nomeCategoriasFornecedor(f)) p.push('categoria');
+    // Cadastro antigo com CPF (de quando existia pessoa física) também cai aqui: fica em "Completar cadastro" até receber o CNPJ.
+    if (!R().cnpjValid(f.documento)) p.push('CNPJ');
+    if (!D.digitos(f.whatsapp)) p.push('WhatsApp');
+    return p;
+  }
+  const R = () => window.CicluzFieldRules;
+
+  /**
+   * Cadastro em 4 etapas, com a barra de etapas única do sistema (CicluzStepper, a mesma do Cadastro Completo):
+   * 1) Dados da empresa (CNPJ primeiro, que busca razão social, nome fantasia e endereço; endereço começando pelo CEP),
+   * 2) Dados do vendedor (ou do prestador, pela categoria), 3) Dados do financeiro, 4) Dados do representante.
+   * O nome da etapa é o mesmo na barra, no título do quadro e nos rótulos dos campos.
+   * No cadastro novo, Avançar confere a etapa antes de seguir; na edição, toca-se direto em qualquer etapa. O ✓ do
+   * rodapé (e o Salvar da última etapa) confere tudo e, se faltar algo, leva à etapa onde está o problema.
+   */
   function editarFornecedor(f) {
     U.dialogo({
-      titulo: f ? 'Editar fornecedor' : 'Novo fornecedor',
+      titulo: f ? 'Editar fornecedor' : 'Cadastro fornecedor', ...coresF(), largo: true, classe: 'compras-form-padrao',
       montar: (form) => {
-        const nome = entrada('text', f?.nome || '', { required: true, maxLength: 120 });
-        const doc = aplicarMascara(entrada('text', f?.documento || '', { inputMode: 'numeric' }), mascaraDocumento);
-        const whats = aplicarMascara(entrada('tel', f?.whatsapp || '', { inputMode: 'numeric' }), mascaraTelefone);
-        const cat = entrada('text', f?.categoria || '', { maxLength: 80 });
-        const ativo = interruptor('Fornecedor ativo', f ? f.situacao === 'ativo' : true, 'Fornecedor inativo não aparece no seletor de cotação.');
-        form.append(
-          campo('Nome *', nome),
-          // Sem a palavra "CPF" no rótulo: o field-validation.js do S2 trata como CPF (11 dígitos) todo campo
-          // cujo rótulo a contém, o que impedia digitar CNPJ. A máscara deste campo formata os dois.
-          campo('Documento', doc, 'Pessoa física ou jurídica: 11 ou 14 dígitos.'),
-          campo('WhatsApp', whats, 'Opcional no cadastro; obrigatório só para convidar o fornecedor para uma cotação.'),
-          campo('Categoria', cat, 'Ex.: Bebidas, Laticínios, Embalagens.'),
-          ativo,
-        );
-        return { nome, doc, whats, cat, ativo };
+        const texto = (v, extra = {}) => entrada('text', v || '', { maxLength: 120, ...extra });
+        const email = (v) => { const i = entrada('email', v || '', { maxLength: 160, inputMode: 'email', autocapitalize: 'off' }); i.dataset.textoLivre = '1'; return i; };
+        const telefone = (v) => aplicarMascara(entrada('tel', v || '', { inputMode: 'numeric', placeholder: '(00) 00000-0000' }), mascaraTelefone);
+        // display, não hidden: o .compras-campo e o fieldset definem display e venceriam o atributo.
+        const mostrar = (no, sim) => { no.style.display = sim ? '' : 'none'; };
+
+        /* ----- Etapa 1: dados da empresa ----- */
+        const s1 = el('fieldset', 'compras-fieldset');
+        s1.append(el('legend', null, 'Dados da empresa'));
+        // Mesmo quadro branco da "Situação do fornecedor" (mesmas classes), com os cartões dentro (pedido do Rodrigo).
+        const catBox = el('div', 'account-status compras-situacao-quadro');
+        // Categoria em cartões (desenho escolhido pelo Rodrigo): o mesmo ícone e a mesma cor da lista, por categoria
+        // (Produto = MER - Fornecedores em verde; Serviço = DES - Fornecedores em vermelho), seja qual for a tela de entrada.
+        const desenhoCat = {
+          produto: { ...iconeDoMenu('3:Cadastros Geral', 'MER - Fornecedores'), cor: corMercadorias(), detalhe: 'Vende mercadorias' },
+          servico: { ...iconeDoMenu('2:Cadastros Geral', 'DES - Fornecedores'), cor: corDespesas(), detalhe: 'Presta serviços' },
+        };
+        const catOpcoes = U.cartoesEscolha({
+          rotulo: 'Categoria', multiplo: false,
+          opcoes: D.CATEGORIAS_FORNECEDOR.map(([id, nomeCat]) => ({ id, titulo: nomeCat, ...desenhoCat[id], marcado: Array.isArray(f?.categorias) && f.categorias.includes(id) })),
+          aoMudar: () => { barra.update(etapas(), atual); pintarVendedor(); },
+        });
+        catBox.append(el('span', null, 'Categoria do fornecedor *'), catOpcoes, el('small', 'profiles-note', 'Toque em uma: Produto ou Serviço.'));
+        // Fornecedor é sempre por CNPJ. Razão social e Nome fantasia; o campo salvo de uso é sempre "nome" (o que
+        // cotação, pedido e recebimento mostram); a razão social é um campo a mais.
+        const razao = texto(f?.razaoSocial, { maxLength: 160 });
+        const razaoCampo = campo('Razão social', razao);
+        const nome = texto(f?.nome);
+        const nomeCampo = campo('Nome fantasia', nome);
+        // Cadastro antigo com CPF: o CNPJ abre vazio e um aviso mostra o documento que está gravado.
+        const docAntigo = D.documentoAntigoFornecedor(f);
+        const cnpj = aplicarMascara(entrada('text', docAntigo ? '' : f?.documento || '', { inputMode: 'numeric', placeholder: '00.000.000/0000-00', maxLength: 18 }), R().cnpjMask);
+        const cnpjCampo = campo('CNPJ *', cnpj);
+        const avisoAntigo = el('p', 'profiles-note compras-largo', docAntigo
+          ? 'Este cadastro é antigo e tem outro documento gravado: ' + (D.digitos(docAntigo).length === 11 ? 'CPF ' : '') + docAntigo + '. Fornecedor agora é só por CNPJ: informe o CNPJ para salvar. O documento antigo continua guardado.' : '');
+        const regime = seletor(D.REGIMES_TRIBUTARIOS, f?.regimeTributario || '', 'Selecione');
+        const regimeCampo = campo('Regime tributário', regime);
+        const ramo = texto(f?.ramo, { maxLength: 80, placeholder: 'Ex.: Bebidas, Manutenção' });
+        const situacao = U.quadroSituacao('Situação do fornecedor', f ? f.situacao === 'ativo' : true, { dica: 'Fornecedor inativo não aparece no seletor de cotação.' });
+        // Ordem do Rodrigo: categoria, CNPJ (que puxa os dados), razão social, nome fantasia, regime tributário; depois o endereço; por último o ramo.
+        const avisoCnpj = el('p', 'profiles-note compras-largo');
+        avisoCnpj.setAttribute('role', 'status');
+        // Ordem do Rodrigo: a Situação do fornecedor vem logo depois da Categoria.
+        s1.append(catBox, situacao, cnpjCampo, ...(docAntigo ? [avisoAntigo] : []), avisoCnpj, razaoCampo, nomeCampo, regimeCampo);
+
+        /* Endereço: CEP primeiro (puxa rua, bairro, cidade e UF); número e complemento são digitados. */
+        const sEnd = el('fieldset', 'compras-fieldset');
+        sEnd.append(el('legend', null, 'Endereço'));
+        const C = window.CicluzConsultas;
+        const cep = aplicarMascara(entrada('text', f?.endereco?.cep || '', { inputMode: 'numeric', placeholder: '00000-000', maxLength: 9 }), C.cepMask);
+        const rua = texto(f?.endereco?.logradouro, { maxLength: 160 });
+        const numero = texto(f?.endereco?.numero, { maxLength: 20 });
+        const complemento = texto(f?.endereco?.complemento, { maxLength: 80 });
+        const bairro = texto(f?.endereco?.bairro, { maxLength: 80 });
+        const cidade = texto(f?.endereco?.cidade, { maxLength: 80 });
+        const uf = seletor(C.UFS, f?.endereco?.uf || '', 'UF');
+        const avisoCep = el('p', 'profiles-note compras-largo');
+        avisoCep.setAttribute('role', 'status');
+        sEnd.append(campo('CEP', cep), campo('Rua / logradouro', rua), campo('Número', numero), campo('Complemento', complemento), campo('Bairro', bairro), campo('Cidade', cidade), campo('UF', uf), avisoCep);
+
+        const sResto = el('fieldset', 'compras-fieldset');
+        sResto.append(campo('Ramo', ramo));
+        const etapa1 = el('div', 'compras-etapa');
+        etapa1.append(s1, sEnd, sResto);
+
+        /* Buscas (consultas-publicas.js): nunca trocam o que a pessoa digitou; se o serviço falhar, avisam discretamente
+           e o cadastro segue à mão. Cada número é consultado uma vez. Um campo é "livre" para a consulta quando está
+           vazio ou quando ainda tem exatamente o valor que uma consulta anterior pôs (a pessoa não mexeu): assim, ao
+           trocar o CEP ou o CNPJ, o resultado novo substitui o da consulta anterior em bloco (não sobra a UF antiga). */
+        const daConsulta = new Map();
+        const livre = (c) => !c.value.trim() || daConsulta.get(c) === c.value;
+        const completar = (pares) => {
+          const feitos = []; const limpos = [];
+          pares.forEach(([campoAlvo, valor, nomeCampoAlvo]) => {
+            if (!livre(campoAlvo)) return;
+            const antes = campoAlvo.value;
+            campoAlvo.value = valor || '';
+            if (campoAlvo.value) daConsulta.set(campoAlvo, campoAlvo.value); else daConsulta.delete(campoAlvo);
+            if (campoAlvo.value !== antes) (campoAlvo.value ? feitos : limpos).push(nomeCampoAlvo);
+          });
+          return { feitos, limpos };
+        };
+        const resumo = (r) => (r.limpos.length ? ' Esvaziado, por ser da consulta anterior: ' + r.limpos.join(', ') + '.' : '');
+        const FALHA = { 'nao-encontrado': 'não encontrado', indisponivel: 'consulta indisponível agora' };
+        let cepConsultado = D.digitos(cep.value);
+        async function buscarCep() {
+          const n = D.digitos(cep.value);
+          if (n.length !== 8 || n === cepConsultado) return;
+          cepConsultado = n;
+          avisoCep.textContent = 'Buscando o endereço do CEP…';
+          const r = await C.cep(n);
+          if (D.digitos(cep.value) !== n) return;
+          if (r.erro) { avisoCep.textContent = 'CEP ' + FALHA[r.erro] + ': preencha o endereço à mão.'; return; }
+          const e = r.dados;
+          // Rua, bairro, cidade e UF vão juntos; número e complemento não vêm do CEP e só são esvaziados se eram da consulta anterior.
+          const r2 = completar([[rua, e.logradouro, 'rua'], [bairro, e.bairro, 'bairro'], [cidade, e.cidade, 'cidade'], [uf, e.uf, 'UF'], [numero, '', 'número'], [complemento, '', 'complemento']]);
+          avisoCep.textContent = (r2.feitos.length ? 'Preenchido pelo CEP: ' + r2.feitos.join(', ') + '. Confira e informe o número.' : 'Endereço do CEP conferido; nada foi trocado.') + resumo(r2);
+        }
+        cep.addEventListener('input', buscarCep);
+        let cnpjConsultado = D.digitos(cnpj.value);
+        async function buscarCnpj() {
+          const n = D.digitos(cnpj.value);
+          if (n.length !== 14 || n === cnpjConsultado || !R().cnpjValid(n)) return;
+          cnpjConsultado = n;
+          avisoCnpj.textContent = 'Buscando os dados da empresa pelo CNPJ…';
+          const r = await C.cnpj(n);
+          if (D.digitos(cnpj.value) !== n) return;
+          if (r.erro) { avisoCnpj.textContent = 'CNPJ ' + FALHA[r.erro] + ': preencha os dados à mão.'; return; }
+          const x = r.dados;
+          const e = x.endereco;
+          const r2 = completar([[razao, x.razaoSocial, 'razão social'], [nome, x.nomeFantasia, 'nome fantasia'], [cep, e.cep, 'CEP'], [rua, e.logradouro, 'rua'],
+            [numero, e.numero, 'número'], [complemento, e.complemento, 'complemento'], [bairro, e.bairro, 'bairro'], [cidade, e.cidade, 'cidade'], [uf, e.uf, 'UF']]);
+          cepConsultado = D.digitos(cep.value);
+          avisoCnpj.textContent = (r2.feitos.length ? 'Preenchido pela consulta do CNPJ: ' + r2.feitos.join(', ') + '. Confira antes de salvar.' : 'Dados do CNPJ conferidos; nada foi trocado.') + resumo(r2);
+        }
+        cnpj.addEventListener('input', buscarCnpj);
+
+        /* ----- Etapa 2: vendedor ou prestador de serviço (é o contato do fornecedor; o WhatsApp dele recebe a cotação) ----- */
+        const s2 = el('fieldset', 'compras-fieldset');
+        const vNome = texto(f?.contatoNome);
+        // Aniversário: só mês e ano (MM/AAAA), pela fonte única de datas (date-fields.js). A data completa antiga fica no dado.
+        const DF = window.CicluzDateFields;
+        const vAniv = aplicarMascara(entrada('text', DF.monthDisplay(D.aniversarioVendedor(f)), { inputMode: 'numeric', placeholder: 'MM/AAAA', maxLength: 7, autocomplete: 'off' }), DF.monthMask);
+        const whats = telefone(f?.whatsapp);
+        const mail = email(f?.email);
+        // O CPF do vendedor não é mais pedido (decisão do Rodrigo): o campo saiu; valor já gravado fica como está, sem uso.
+        const tituloS2 = el('legend');
+        const camposS2 = [[campo('Nome', vNome), vNome, 'Nome do ', ''], [campo('WhatsApp', whats), whats, 'WhatsApp do ', ' *'], [campo('E-mail', mail), mail, 'E-mail do ', '']];
+
+        /* Funções do prestador: seleção múltipla sobre o cadastro d.funcoesPrestador (vínculo por id). "Acrescentar
+           opção" abre a janelinha flutuante (a mesma do Prazo de resposta do Enviar) com o nome e Salvar; a função
+           nova entra na lista de todos os fornecedores. */
+        const quadrosFuncoes = [];
+        function quadroFuncoes(marcadasAntes, numero) {
+          const escolhidas = new Set(marcadasAntes || []);
+          const box = el('div', 'compras-campo compras-largo');
+          box.setAttribute('role', 'group');
+          box.setAttribute('aria-label', 'Funções do prestador ' + numero);
+          const chips = el('div', 'compras-chips');
+          const desenhar = () => chips.replaceChildren(...S.dados.funcoesPrestador.filter((x) => x.ativa !== false || escolhidas.has(x.id))
+            .sort((a, b2) => a.nome.localeCompare(b2.nome, 'pt-BR')).map((x) => {
+              const c = botao(x.nome, () => { if (escolhidas.has(x.id)) escolhidas.delete(x.id); else escolhidas.add(x.id); desenhar(); }, 'compras-chip' + (escolhidas.has(x.id) ? ' ativo' : ''));
+              c.setAttribute('aria-pressed', String(escolhidas.has(x.id)));
+              return c;
+            }));
+          // Janelinha de acrescentar: só o nome e Salvar. Enter salva aqui (não envia o cadastro de trás).
+          const nomeNovo = texto('', { maxLength: 60 });
+          const erroNovo = el('p', 'profiles-error');
+          erroNovo.setAttribute('role', 'alert');
+          const painel = el('div', 'compras-enviar-painel');
+          painel.setAttribute('role', 'dialog');
+          painel.setAttribute('aria-label', 'Acrescentar função');
+          const caixa = el('div', 'compras-enviar-prazo');
+          const salvarNovo = () => {
+            const falta = D.validarFuncaoPrestador(nomeNovo.value, S.dados.funcoesPrestador);
+            const igual = D.funcaoPrestadorIgual(S.dados.funcoesPrestador, nomeNovo.value);
+            // Nome que já existe não duplica: a função existente fica marcada.
+            if (igual && String(nomeNovo.value).trim()) { escolhidas.add(igual.id); if (igual.ativa === false) S.transacao((d) => { d.funcoesPrestador.find((x) => x.id === igual.id).ativa = true; }); }
+            else if (falta) { erroNovo.textContent = falta; return; }
+            else {
+              const id = S.novoId('fp');
+              if (!S.transacao((d) => { d.funcoesPrestador.push({ id, nome: nomeNovo.value.trim(), ativa: true }); })) { erroNovo.textContent = 'Não foi possível salvar neste navegador.'; return; }
+              escolhidas.add(id);
+            }
+            nomeNovo.value = ''; erroNovo.textContent = '';
+            quadrosFuncoes.forEach((q) => q.desenhar());
+            abrirNovo(false); mais.focus();
+          };
+          nomeNovo.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); salvarNovo(); } });
+          caixa.append(campo('Nova função', nomeNovo), erroNovo, botao('Salvar', salvarNovo, 'btn'));
+          painel.append(caixa);
+          const mais = botao('+ Acrescentar opção', () => abrirNovo(painel.hidden), 'compras-chip compras-chip-mais');
+          const abrirNovo = U.flutuante(mais, painel, { foco: nomeNovo });
+          const linha = el('div', 'compras-form-rodape');
+          linha.append(mais);
+          box.append(el('span', 'compras-rotulo', 'Funções (pode marcar várias)'), chips, linha, painel);
+          desenhar();
+          const q = { no: box, desenhar, valores: () => [...escolhidas] };
+          quadrosFuncoes.push(q);
+          return q;
+        }
+        const funcoes1 = quadroFuncoes(f?.prestadores?.[0]?.funcoes, 1);
+        s2.append(tituloS2, camposS2[0][0], camposS2[1][0], campo('Aniversário', vAniv), camposS2[2][0], funcoes1.no);
+
+        /* Prestadores 2, 3…: só na categoria Serviço. Cada quadro pode ser removido. */
+        const idPrestador1 = f?.prestadores?.[0]?.id || S.novoId('pr');
+        const extras = [];
+        const listaExtras = el('div', 'compras-etapa');
+        const numerar = () => extras.forEach((x, i) => { x.titulo.textContent = 'Prestador ' + (i + 2); });
+        function quadroPrestador(p) {
+          const q = el('fieldset', 'compras-fieldset');
+          const x = {
+            id: p?.id || S.novoId('pr'), no: q, titulo: el('legend'), nome: texto(p?.nome), whatsapp: telefone(p?.whatsapp), email: email(p?.email),
+            aniversario: aplicarMascara(entrada('text', DF.monthDisplay(p?.aniversario || ''), { inputMode: 'numeric', placeholder: 'MM/AAAA', maxLength: 7, autocomplete: 'off' }), DF.monthMask),
+          };
+          x.funcoes = quadroFuncoes(p?.funcoes, extras.length + 2);
+          const remover = botao('Remover prestador', () => {
+            extras.splice(extras.indexOf(x), 1); quadrosFuncoes.splice(quadrosFuncoes.indexOf(x.funcoes), 1); q.remove(); numerar();
+          }, 'btn secondary');
+          const rod = el('div', 'compras-form-rodape compras-largo');
+          rod.append(remover);
+          q.append(x.titulo, campo('Nome do prestador *', x.nome), campo('WhatsApp do prestador', x.whatsapp), campo('Aniversário', x.aniversario), campo('E-mail do prestador', x.email), x.funcoes.no, rod);
+          extras.push(x); listaExtras.append(q); numerar();
+          return x;
+        }
+        (f?.prestadores || []).slice(1).forEach(quadroPrestador);
+        const adicionar = U.botaoTitulo('Adicionar prestador', 'Adicionar prestador', () => quadroPrestador().nome.focus());
+        const adicionarLinha = el('div', 'compras-form-rodape');
+        adicionarLinha.append(adicionar);
+        const etapa2 = el('div', 'compras-etapa');
+        etapa2.append(s2, listaExtras, adicionarLinha);
+        const ehServico = () => { const c = marcadas(); return c.length === 1 && c[0] === 'servico'; };
+        // Título e rótulos acompanham a categoria: Produto = "Dados do vendedor"; Serviço = "Prestador 1", com as
+        // funções e os demais prestadores (que somem, sem perder o que foi digitado, se a categoria voltar a Produto).
+        const pintarVendedor = () => {
+          const quem = D.quemVendeFornecedor(marcadas());
+          const servico = ehServico();
+          tituloS2.textContent = servico ? 'Prestador 1' : 'Dados do ' + quem;
+          camposS2.forEach(([no, input, antes, depois]) => {
+            no.querySelector('.compras-rotulo').textContent = antes + quem + depois;
+            input.setAttribute('aria-label', antes + quem + depois);
+          });
+          [funcoes1.no, listaExtras, adicionarLinha].forEach((no) => mostrar(no, servico));
+        };
+
+        /* ----- Etapas 3 e 4: contato com a opção "O mesmo da etapa anterior" em primeiro lugar. Marcada, os campos
+           continuam à vista, preenchidos com a etapa anterior e só para leitura; a cópia acompanha a etapa anterior
+           enquanto a opção estiver marcada. Desmarcada, o que foi copiado fica e volta a ser editável. ----- */
+        function etapaContato(dados, sufixo, anterior) {
+          const s = el('fieldset', 'compras-fieldset');
+          s.append(el('legend', null, 'Dados do ' + sufixo));
+          const mesmo = interruptor('O mesmo da etapa anterior', Boolean(dados?.mesmo), 'Preenche o nome, o WhatsApp e o e-mail com os da etapa anterior.');
+          mesmo.classList.add('compras-largo');
+          mesmo.input.setAttribute('aria-label', 'O mesmo da etapa anterior (' + sufixo + ')');
+          const n = texto(dados?.nome);
+          const w = telefone(dados?.whatsapp);
+          const m = email(dados?.email);
+          const campos = [campo('Nome do ' + sufixo, n), campo('WhatsApp do ' + sufixo, w), campo('E-mail do ' + sufixo, m)];
+          const pintar = () => {
+            const copia = mesmo.input.checked;
+            if (copia) { const a = anterior(); n.value = a.nome; w.value = a.whatsapp; m.value = a.email; }
+            [n, w, m].forEach((i) => { i.readOnly = copia; });
+          };
+          mesmo.input.onchange = pintar;
+          s.append(mesmo, ...campos);
+          return { no: s, mesmo: mesmo.input, nome: n, whatsapp: w, email: m, pintar };
+        }
+        const valores = (c) => ({ nome: c.nome.value.trim(), whatsapp: c.whatsapp.value.trim(), email: c.email.value.trim() });
+        const fin = etapaContato(f?.financeiro, 'financeiro', () => ({ nome: vNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() }));
+        const rep = etapaContato(f?.representante, 'representante', () => valores(fin));
+        // A cópia segue a ordem das etapas: primeiro o financeiro (copia o vendedor), depois o representante (copia o financeiro).
+        const pintarCopias = () => { fin.pintar(); rep.pintar(); };
+        // Cargo na empresa: não é copiado; com "O mesmo da etapa anterior" marcado, é o único campo a preencher na etapa.
+        const repCargo = seletor(D.CARGOS_REPRESENTANTE, f?.representante?.cargo || '', 'Selecione');
+        rep.no.append(campo('Cargo na empresa', repCargo));
+
+        /* ----- Barra de etapas e navegação ----- */
+        /* ----- Etapa 5: vínculos. Só guarda o vínculo; não cria lançamento nem regra de dinheiro. -----
+           Produto: os produtos que este fornecedor fornece. É outra porta para o MESMO dado do Compras (d.catalogo,
+           o vínculo produto × fornecedor de "Cadastro de compras", "Vincular aos selecionados" e do alerta de
+           vínculo): marcar aqui cria o vínculo aprovado igual ao de lá. O Compras não tem como desfazer vínculo
+           aprovado, então o que já está vinculado aparece marcado e travado.
+           Serviço: um ou mais grupos e subgrupos de despesa (DES - Grupos de Despesas), em f.gruposDespesaIds: o id
+           do grupo, ou "idDoGrupo|idDoSubgrupo" para um subgrupo (o mesmo formato do patrimônio).
+           Nos dois casos (pedido do Rodrigo): um botão retangular abre a lista em tela cheia, com busca, marcação
+           múltipla e confirmar; a etapa mostra só o que foi escolhido, com opção de remover. */
+        const s5 = el('fieldset', 'compras-fieldset');
+        s5.append(el('legend', null, 'Vínculos'));
+        const doFornecedor = (status) => new Set(f ? S.dados.catalogo.filter((v) => v.fornecedorId === f.id && v.status === status).map((v) => v.produtoId) : []);
+        const jaVinculados = doFornecedor('aprovado');
+        const sugeridos = doFornecedor('pendente');
+        const novosProdutos = new Set();
+        /** Janela de escolha: busca, lista de caixas de marcar (com níveis) e confirmar. itens: [{ id, rotulo, busca, nivel, travado, dica }]. */
+        function abrirSeletor({ titulo, rotuloBusca, itens, marcados, aoConfirmar, limite = 80 }) {
+          const escolha = new Set(marcados);
+          const LIMITE = limite;
+          U.dialogo({
+            titulo, ...coresF(), rotuloSalvar: 'Confirmar',
+            montar: (fm) => {
+              const busca = texto('', { placeholder: rotuloBusca, maxLength: 80, autocomplete: 'off' });
+              busca.setAttribute('aria-label', rotuloBusca);
+              busca.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
+              const resumo = el('p', 'profiles-note');
+              resumo.setAttribute('role', 'status');
+              const lista = el('div', 'compras-vinculos-lista');
+              const desenhar = () => {
+                const termo = U.dobrar(busca.value.trim());
+                const achados = itens.filter((i) => !termo || U.dobrar(i.busca || i.rotulo).includes(termo));
+                lista.replaceChildren(...achados.slice(0, LIMITE).map((i) => {
+                  const l = interruptor(i.rotulo, Boolean(i.travado) || escolha.has(i.id), i.dica || '');
+                  if (i.nivel) l.classList.add('compras-vinculo-nivel');
+                  l.input.disabled = Boolean(i.travado);
+                  l.input.onchange = () => { if (l.input.checked) escolha.add(i.id); else escolha.delete(i.id); contar(achados.length); };
+                  return l;
+                }));
+                if (!achados.length) lista.append(el('p', 'profiles-note', termo ? 'Nada encontrado.' : 'Nada cadastrado.'));
+                contar(achados.length);
+              };
+              const contar = (achados) => {
+                resumo.textContent = (escolha.size === 1 ? '1 marcado' : escolha.size + ' marcados') + '.' + (achados > LIMITE ? ' Mostrando ' + LIMITE + ' de ' + achados + ': use a busca.' : '');
+              };
+              busca.addEventListener('input', desenhar);
+              const box = el('div', 'compras-campo compras-largo');
+              box.append(busca, resumo, lista);
+              fm.append(box);
+              desenhar();
+            },
+            salvar: () => { aoConfirmar(escolha); },
+          });
+        }
+        /** Chip do que foi escolhido: com "×" para remover, ou travado (sem ação). */
+        const chipEscolhido = (rotulo, aoRemover) => {
+          if (!aoRemover) return el('span', 'compras-chip ativo', rotulo);
+          const c = botao(rotulo + ' ×', aoRemover, 'compras-chip ativo');
+          c.setAttribute('aria-label', 'Remover ' + rotulo);
+          return c;
+        };
+
+        const boxProdutos = el('div', 'compras-campo compras-largo');
+        const escolhidosProdutos = el('div', 'compras-chips');
+        const resumoProdutos = el('p', 'profiles-note');
+        resumoProdutos.setAttribute('role', 'status');
+        const desenharProdutos = () => {
+          const nomeP = (id) => (S.produto(id) || {}).descricao || 'Produto removido';
+          const porNome = (a, b2) => nomeP(a).localeCompare(nomeP(b2), 'pt-BR');
+          escolhidosProdutos.replaceChildren(
+            ...[...jaVinculados].sort(porNome).map((id) => chipEscolhido(nomeP(id))),
+            ...[...novosProdutos].sort(porNome).map((id) => chipEscolhido(nomeP(id), () => { novosProdutos.delete(id); desenharProdutos(); })),
+          );
+          const n = jaVinculados.size + novosProdutos.size;
+          resumoProdutos.textContent = (n === 1 ? '1 produto vinculado' : n + ' produtos vinculados') + (novosProdutos.size ? ' (' + novosProdutos.size + ' a vincular ao salvar)' : '') + '.'
+            + (jaVinculados.size ? ' Os que já estavam vinculados não saem por aqui.' : '');
+        };
+        const escolherProdutos = () => abrirSeletor({
+          titulo: 'Produtos do fornecedor', rotuloBusca: 'Buscar produto',
+          itens: S.dados.produtos.filter((p) => p.status === 'ativo' || jaVinculados.has(p.id) || novosProdutos.has(p.id))
+            .sort((a, b2) => a.descricao.localeCompare(b2.descricao, 'pt-BR'))
+            .map((p) => ({ id: p.id, rotulo: p.descricao, travado: jaVinculados.has(p.id) || sugeridos.has(p.id),
+              dica: jaVinculados.has(p.id) ? 'Já vinculado.' : sugeridos.has(p.id) ? 'Sugestão do fornecedor aguardando decisão no Cadastro de compras.' : '' })),
+          marcados: novosProdutos,
+          aoConfirmar: (escolha) => { novosProdutos.clear(); escolha.forEach((id) => { if (!jaVinculados.has(id) && !sugeridos.has(id)) novosProdutos.add(id); }); desenharProdutos(); },
+        });
+        const linhaProdutos = el('div', 'compras-form-rodape');
+        linhaProdutos.append(U.botaoTitulo('Produtos', 'Escolher os produtos que este fornecedor fornece', escolherProdutos));
+        boxProdutos.append(el('span', 'compras-rotulo', 'Produtos que este fornecedor fornece'), linhaProdutos, resumoProdutos, escolhidosProdutos);
+
+        const gruposEscolhidos = new Set(Array.isArray(f?.gruposDespesaIds) ? f.gruposDespesaIds : []);
+        const boxGrupos = el('div', 'compras-campo compras-largo');
+        const escolhidosGrupos = el('div', 'compras-chips');
+        const resumoGrupos = el('p', 'profiles-note');
+        resumoGrupos.setAttribute('role', 'status');
+        const gruposDeDespesa = () => (window.CicluzProducaoDados && window.CicluzProducaoDados.gruposDespesa()) || [];
+        /** Todos os grupos e subgrupos, na ordem da hierarquia; inativo só entra se já estava escolhido. */
+        const itensGrupos = () => gruposDeDespesa().flatMap((g) => {
+          const filhos = g.subgrupos.filter((s) => (g.ativo && s.ativo) || gruposEscolhidos.has(g.id + '|' + s.id))
+            .map((s) => ({ id: g.id + '|' + s.id, rotulo: s.nome + (g.ativo && s.ativo ? '' : ' (inativo)'), busca: g.nome + ' ' + s.nome, nivel: 1, nomeCompleto: g.nome + ' › ' + s.nome }));
+          const proprio = g.ativo || gruposEscolhidos.has(g.id) || filhos.length;
+          return proprio ? [{ id: g.id, rotulo: g.nome + (g.ativo ? '' : ' (inativo)'), busca: g.nome, nomeCompleto: g.nome }, ...filhos] : [];
+        });
+        const desenharGrupos = () => {
+          const itens = itensGrupos();
+          const nomeG = (id) => (itens.find((i) => i.id === id) || {}).nomeCompleto || 'Grupo removido';
+          escolhidosGrupos.replaceChildren(...[...gruposEscolhidos].map((id) => chipEscolhido(nomeG(id), () => { gruposEscolhidos.delete(id); desenharGrupos(); })));
+          resumoGrupos.textContent = gruposEscolhidos.size ? (gruposEscolhidos.size === 1 ? '1 grupo ou subgrupo vinculado.' : gruposEscolhidos.size + ' grupos ou subgrupos vinculados.') : 'Nenhum grupo de despesa vinculado.';
+        };
+        const escolherGrupos = () => abrirSeletor({
+          // Sem limite: a lista traz todos os grupos e subgrupos de uma vez (são poucas centenas, no máximo).
+          titulo: 'Grupos de despesa', rotuloBusca: 'Buscar grupo ou subgrupo', itens: itensGrupos(), marcados: gruposEscolhidos, limite: Infinity,
+          aoConfirmar: (escolha) => { gruposEscolhidos.clear(); escolha.forEach((id) => gruposEscolhidos.add(id)); desenharGrupos(); },
+        });
+        const linhaGrupos = el('div', 'compras-form-rodape');
+        linhaGrupos.append(U.botaoTitulo('Grupo de despesas', 'Escolher os grupos e subgrupos de despesa deste prestador', escolherGrupos));
+        boxGrupos.append(el('span', 'compras-rotulo', 'Grupos de despesa deste prestador (um ou mais)'), linhaGrupos, resumoGrupos, escolhidosGrupos);
+        const semCategoria = el('p', 'profiles-note compras-largo', 'Escolha a categoria na primeira etapa para vincular produtos ou grupos de despesa.');
+        s5.append(boxProdutos, boxGrupos, semCategoria);
+        const pintarVinculos = () => {
+          const c = marcadas(); const cat = c.length === 1 ? c[0] : '';
+          mostrar(boxProdutos, cat === 'produto'); mostrar(boxGrupos, cat === 'servico'); mostrar(semCategoria, !cat);
+          if (cat === 'produto') desenharProdutos();
+          if (cat === 'servico') desenharGrupos();
+        };
+
+        /* ----- Contrato, dentro dos dados do financeiro (etapa 3): quadro "Tem contrato?" (Sim / Não) no padrão do
+           quadro de Situação; com Sim aparecem a forma de pagamento, a recorrência, o vencimento, o valor, a vigência e
+           o reajuste. Tudo só informado: sem fórmula, sem lançamento e sem cálculo de reajuste. ----- */
+        const ct = f?.contrato || {};
+        const cDados = el('fieldset', 'compras-fieldset');
+        cDados.append(el('legend', null, 'Dados do contrato'));
+        const temContrato = U.quadroSituacao('Tem contrato?', Boolean(ct.tem), { textos: ['Sim', 'Não'], dica: 'Contrato de fornecimento ou de prestação de serviço com este fornecedor.', aoMudar: () => pintarContrato() });
+        const cForma = seletor(D.FORMAS_PAGAMENTO_CONTRATO, ct.formaPagamento || '', 'Selecione');
+        const cRecorrencia = seletor(D.RECORRENCIAS_CONTRATO, ct.recorrencia || '', 'Selecione');
+        // Vencimento: contrato por mês usa o dia do mês (1 a 31); nas outras recorrências, uma data.
+        const cVencDia = entrada('text', ct.vencimentoDia != null ? String(ct.vencimentoDia) : '', { inputMode: 'numeric', maxLength: 2, placeholder: '1 a 31' });
+        const cVencData = entrada('date', ct.vencimentoData || '');
+        const vencDiaCampo = campo('Dia do vencimento', cVencDia, 'Dia do mês em que o pagamento vence.');
+        const vencDataCampo = campo('Data de vencimento', cVencData);
+        const cValor = entrada('text', ct.valorCentavos != null ? D.moeda(ct.valorCentavos / 100) : '', { inputMode: 'decimal', placeholder: 'R$ 0,00', maxLength: 20 });
+        const cInicio = entrada('date', ct.inicio || '');
+        const cFim = entrada('date', ct.fim || '');
+        const cReajuste = seletor(D.REAJUSTES_CONTRATO, ct.reajuste || '', 'Selecione');
+        const cPercentual = entrada('text', ct.reajustePercentual != null ? String(ct.reajustePercentual).replace('.', ',') : '', { inputMode: 'decimal', placeholder: '0,00', maxLength: 6 });
+        const percentualCampo = campo('Percentual do reajuste (%) *', cPercentual);
+        const cObs = el('textarea');
+        cObs.rows = 3; cObs.maxLength = 2000; cObs.value = ct.observacoes || '';
+        const obsCampo = campo('Observações do contrato', cObs);
+        obsCampo.classList.add('compras-largo');
+        cDados.append(campo('Forma de pagamento', cForma), campo('Recorrência', cRecorrencia), vencDiaCampo, vencDataCampo,
+          campo('Valor', cValor, 'Só o valor combinado; não gera lançamento.'), campo('Início da vigência', cInicio), campo('Término da vigência', cFim),
+          campo('Reajuste', cReajuste, 'Só o índice combinado; o sistema não calcula o reajuste.'), percentualCampo, obsCampo);
+        const pintarContrato = () => {
+          mostrar(cDados, temContrato.ativo);
+          mostrar(vencDiaCampo, cRecorrencia.value === 'mes');
+          mostrar(vencDataCampo, cRecorrencia.value !== 'mes');
+          mostrar(percentualCampo, cReajuste.value === 'percentual');
+        };
+        cRecorrencia.onchange = pintarContrato;
+        cReajuste.onchange = pintarContrato;
+        pintarContrato();
+        // Número digitado: null quando vazio, NaN quando não é número (para a validação recusar em vez de virar vazio).
+        const numeroOuNada = (input) => { const t = String(input.value).trim(); if (!t) return null; const n = D.lerNumero(t); return n == null ? NaN : n; };
+        const lerContrato = () => {
+          const valor = numeroOuNada(cValor); const dia = numeroOuNada(cVencDia); const pct = numeroOuNada(cPercentual); const mensal = cRecorrencia.value === 'mes';
+          return {
+            tem: temContrato.ativo, formaPagamento: cForma.value, recorrencia: cRecorrencia.value,
+            vencimentoDia: mensal ? dia : null, vencimentoData: mensal ? '' : cVencData.value,
+            valorCentavos: valor == null ? null : Math.round(valor * 100), inicio: cInicio.value, fim: cFim.value,
+            reajuste: cReajuste.value, reajustePercentual: cReajuste.value === 'percentual' ? (pct == null ? null : Math.round(pct * 100) / 100) : null,
+            observacoes: cObs.value.trim(),
+          };
+        };
+        const etapa3 = el('div', 'compras-etapa');
+        etapa3.append(fin.no, temContrato, cDados);
+
+        /* ----- Etapa 6: contrato (o documento). Mostra o que foi combinado no financeiro; o modelo de contrato e a
+           assinatura ainda não existem (aguardam decisão). ----- */
+        const s6 = el('fieldset', 'compras-fieldset');
+        s6.append(el('legend', null, 'Contrato'));
+        const resumoContrato = el('div', 'compras-campo compras-largo');
+        const nomeDe = (lista, id) => (lista.find(([x]) => x === id) || [])[1] || '';
+        const pintarResumoContrato = () => {
+          const c = lerContrato();
+          const dataBR = (iso) => (iso ? window.CicluzDateFields.display(iso) : '');
+          const linhas = !c.tem ? [] : [
+            ['Forma de pagamento', nomeDe(D.FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)], ['Recorrência', nomeDe(D.RECORRENCIAS_CONTRATO, c.recorrencia)],
+            ['Vencimento', c.recorrencia === 'mes' ? (Number.isInteger(c.vencimentoDia) ? 'Todo dia ' + c.vencimentoDia : '') : dataBR(c.vencimentoData)],
+            ['Valor', Number.isInteger(c.valorCentavos) ? D.moeda(c.valorCentavos / 100) : ''],
+            ['Vigência', [dataBR(c.inicio), dataBR(c.fim)].filter(Boolean).join(' a ')],
+            ['Reajuste', nomeDe(D.REAJUSTES_CONTRATO, c.reajuste) + (c.reajuste === 'percentual' && typeof c.reajustePercentual === 'number' && !Number.isNaN(c.reajustePercentual) ? ' de ' + String(c.reajustePercentual).replace('.', ',') + '%' : '')],
+          ].filter(([, v]) => v);
+          resumoContrato.replaceChildren(el('span', 'compras-rotulo', 'Combinado nos dados do financeiro'),
+            ...(linhas.length ? linhas.map(([k, v]) => el('p', 'profiles-note', k + ': ' + v)) : [el('p', 'profiles-note', c.tem ? 'Contrato marcado, ainda sem dados preenchidos.' : 'Este fornecedor está sem contrato (etapa Dados do financeiro).')]));
+        };
+        // As duas formas de assinar (pedido do Rodrigo). Ainda desligadas: tocar só avisa, sem gerar documento nem
+        // enviar nada. ÚNICO ponto para ligar depois: gerarContrato(forma), que hoje devolve null.
+        const gerarContrato = (forma) => null; // eslint-disable-line no-unused-vars
+        const avisoContrato = el('p', 'profiles-note compras-largo');
+        avisoContrato.setAttribute('role', 'status');
+        const AVISOS_CONTRATO = {
+          manual: 'A impressão do contrato ainda não está ativa: falta definir o modelo de contrato.',
+          digital: 'A assinatura digital ainda não está ativa: depende do modelo de contrato e de um serviço de assinatura.',
+        };
+        const acaoContrato = (forma) => () => { if (!gerarContrato(forma)) avisoContrato.textContent = AVISOS_CONTRATO[forma]; };
+        const acoesContrato = el('div', 'compras-form-rodape compras-largo');
+        acoesContrato.append(botao('Impressão / assinatura manual', acaoContrato('manual'), 'btn secondary'), botao('Envio / assinatura digital', acaoContrato('digital'), 'btn secondary'));
+        s6.append(resumoContrato, el('span', 'compras-rotulo compras-largo', 'Assinatura do contrato'), acoesContrato, avisoContrato);
+
+        const quadros = [etapa1, etapa2, etapa3, rep.no, s5, s6];
+        const marcadas = () => catOpcoes.marcados();
+        const etapas = () => D.etapasFornecedor(marcadas()).map((label) => ({ label }));
+        let atual = 0;
+        const erroEtapa = el('p', 'profiles-error');
+        erroEtapa.setAttribute('role', 'alert');
+        // Rodapé do formulário no padrão: Voltar sem cor (contorno, como o Cancelar), Avançar e Salvar na cor do menu,
+        // todos com a mesma largura (o layout-review.js iguala os botões destas classes dentro do mesmo grupo).
+        const voltar = botao('Voltar', () => ir(atual - 1), 'btn secondary footer-cancel-accent form-back-action');
+        voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
+        const avancar = botao('Avançar', () => {
+          const falta = D.validarFornecedorEtapas(ler(), R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador })[atual];
+          if (falta) { erroEtapa.textContent = falta; return; }
+          ir(atual + 1);
+        }, 'btn form-next-action');
+        const salvarFim = el('button', 'btn', 'Salvar');
+        salvarFim.type = 'submit';
+        const nav = el('div', 'compras-form-rodape compras-etapas-nav');
+        nav.append(voltar, avancar, salvarFim);
+        // No cadastro novo só se volta pela barra (para a frente, pelo Avançar, que confere a etapa); na edição, qualquer etapa.
+        const barra = window.CicluzStepper.create({ steps: etapas(), current: 0, label: 'Etapas do cadastro do fornecedor', onSelect: (i) => { if (f || i <= atual) ir(i); } });
+        function ir(i) {
+          atual = Math.max(0, Math.min(quadros.length - 1, i));
+          pintarCopias();
+          pintarVinculos();
+          pintarResumoContrato();
+          quadros.forEach((q, k) => mostrar(q, k === atual));
+          barra.update(etapas(), atual);
+          erroEtapa.textContent = '';
+          // Os botões entram e saem da barra (o formato padrão dos botões de rodapé força a exibição mesmo com hidden):
+          // Voltar a partir da 2ª etapa, Avançar até a penúltima; Salvar em todas na edição e só na última no cadastro novo.
+          const ultima = atual === quadros.length - 1;
+          nav.replaceChildren(...[atual > 0 && voltar, !ultima && avancar, (f || ultima) && salvarFim].filter(Boolean));
+          const foco = quadros[atual].querySelector('input:not([type=checkbox]):not([readonly]),select');
+          if (foco && form.isConnected) foco.focus();
+        }
+        pintarVendedor();
+
+        /** Lê o formulário no formato salvo. "O mesmo da etapa anterior" copia os dados da etapa de antes. */
+        function ler() {
+          const razaoSocial = razao.value.trim();
+          pintarCopias();
+          const vendedor = { nome: vNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() };
+          const contato = (c) => ({ mesmo: c.mesmo.checked, ...valores(c) });
+          return {
+            // tipoPessoa continua gravado (sempre 'juridica') para quem lê o dado; o documento antigo (CPF) não se perde.
+            id: f?.id, categorias: marcadas(), tipoPessoa: 'juridica', ...(docAntigo ? { documentoAnterior: docAntigo } : {}),
+            // Sem nome fantasia, a razão social vira o nome de uso.
+            nome: nome.value.trim() || razaoSocial, razaoSocial,
+            documento: cnpj.value.trim(),
+            regimeTributario: regime.value, ramo: ramo.value.trim(),
+            endereco: { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value },
+            contatoNome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email,
+            // Texto incompleto segue como está para a validação recusar (não vira vazio em silêncio).
+            vendedorAniversario: DF.monthParse(vAniv.value) || vAniv.value.trim(),
+            // Serviço: a lista de prestadores; o 1º espelha o contato acima (é dele que a lista e a cotação leem).
+            // Produto: a chave não vai, para não apagar prestadores gravados se a categoria for trocada por engano.
+            contrato: lerContrato(),
+            // Grupos de despesa: só na categoria Serviço (em Produto a chave não vai, para não apagar o que estava gravado).
+            ...(ehServico() ? { gruposDespesaIds: [...gruposEscolhidos] } : {}),
+            ...(ehServico() ? { prestadores: [
+              { id: idPrestador1, nome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email, aniversario: DF.monthParse(vAniv.value) || vAniv.value.trim(), funcoes: funcoes1.valores() },
+              ...extras.map((x) => ({ id: x.id, nome: x.nome.value.trim(), whatsapp: x.whatsapp.value.trim(), email: x.email.value.trim(), aniversario: DF.monthParse(x.aniversario.value) || x.aniversario.value.trim(), funcoes: x.funcoes.valores() })),
+            ] } : {}),
+            financeiro: contato(fin), representante: { ...contato(rep), cargo: repCargo.value },
+            situacao: situacao.ativo ? 'ativo' : 'inativo',
+          };
+        }
+        form.append(barra.el, ...quadros, erroEtapa, nav);
+        ir(0);
+        // Produtos marcados agora (categoria Produto): viram vínculo no mesmo catálogo do Compras ao salvar.
+        return { ler, ir, datasContrato: [cVencData, cInicio, cFim], novosProdutos: () => (marcadas().join() === 'produto' ? [...novosProdutos] : []) };
       },
       salvar: (c) => {
-        const nome = c.nome.value.trim();
-        if (!nome) return 'Informe o nome do fornecedor.';
-        const dig = D.digitos(c.whats.value);
-        if (dig && (dig.length < 8 || c.whats.value.length > 30)) return 'WhatsApp inválido.';
-        const docDig = D.digitos(c.doc.value);
-        if (docDig && docDig.length !== 11 && docDig.length !== 14) return 'O documento deve ter 11 dígitos (pessoa física) ou 14 (pessoa jurídica).';
-        if (S.dados.fornecedores.some((x) => x.id !== f?.id && U.dobrar(x.nome) === U.dobrar(nome))) return 'Já existe um fornecedor com este nome.';
-        const campos = { nome, documento: c.doc.value.trim(), whatsapp: c.whats.value.trim(), categoria: c.cat.value.trim(), situacao: c.ativo.input.checked ? 'ativo' : 'inativo' };
+        if (c.datasContrato.some((d2) => !d2.checkValidity())) { c.ir(2); return 'Confira as datas do contrato: use DD/MM/AA.'; }
+        const campos = c.ler();
+        const faltas = D.validarFornecedorEtapas(campos, R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador });
+        const etapaComFalta = faltas.findIndex(Boolean);
+        if (etapaComFalta >= 0) { c.ir(etapaComFalta); return faltas[etapaComFalta]; }
+        delete campos.id;
+        const idFornecedor = f ? f.id : S.novoId('f');
         const ok = S.transacao((d) => {
-          if (f) Object.assign(d.fornecedores.find((x) => x.id === f.id), campos);
-          else d.fornecedores.push({ id: S.novoId('f'), ...campos });
+          if (f) Object.assign(d.fornecedores.find((y) => y.id === f.id), campos);
+          else d.fornecedores.push({ id: idFornecedor, ...campos });
+          // Vínculo produto × fornecedor: o mesmo registro que SV.vincular cria (catálogo do Compras), sem duplicar.
+          for (const produtoId of c.novosProdutos()) {
+            if (d.catalogo.some((v) => v.fornecedorId === idFornecedor && v.produtoId === produtoId && v.status !== 'rejeitado')) continue;
+            d.catalogo.push({ id: S.novoId('v'), fornecedorId: idFornecedor, produtoId, origem: 'compras', status: 'aprovado', precoOfertado: null, criadoEm: S.agoraIso() });
+          }
         });
         if (!ok) return 'Não foi possível salvar neste navegador.';
         U.avisar('Fornecedor salvo.');

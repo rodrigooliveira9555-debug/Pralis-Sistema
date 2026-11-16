@@ -100,9 +100,10 @@ Organização do Rodrigo (vídeo de 06/11/2026); detalhes no `DESIGN_SYSTEM.md`,
 - ✅ **Cadastro completo c/ dependente** (`complete-registration.js`) — 4 etapas: (1) CPF e dados
   pessoais, (2) endereço e contato, (3) outros documentos, (4) dependentes. Anexos **não** são salvos.
 - 🟨 Cadastro simples — nome, CPF, função, turno, admissão. Não salva.
-- ✅ RET - Patrimônios (`dist/producao/telas-patrimonio.js`, 05/11/2026; abre em Saídas · Retiradas → Cadastros Geral) — salva em `cicluz-patrimonio-v1`: bem, categoria
+- ✅ RET - Patrimônios (`dist/producao/telas-patrimonio.js`, 05/11/2026; em 15/11/2026 ganhou Categoria como primeiro campo, peças/materiais da manutenção periódica (marca, modelo, fornecedor, grupo de despesas, valor, imagem e data de substituição), manutenção periódica e observação em áudio; abre em Saídas · Retiradas → Cadastros Geral) — salva em `cicluz-patrimonio-v1`: bem, categoria
   (Utensílio, Máquina, Equipamento, Mobiliário), marca, modelo, série, nº (único), valor, local pela árvore, capacidade,
   medidas, energia e consumo por hora. A prévia antiga (`#asset-view`, não salvava) foi removida.
+- ✅ DES - Fornecedores e MER - Fornecedores (`dist/compras/cadastros.js`, 15/11/2026): cadastro único de fornecedor, aberto por Saídas · Despesas → Cadastros Geral e por Saídas · Mercadorias → Cadastros Geral; formulário com categoria (Produto e/ou Serviço), ramo, CNPJ (fornecedor é só por CNPJ desde 15/11/2026, sem tipo de pessoa), endereço, e as etapas do vendedor, do financeiro e do representante. DES - Fornecedores deixou de ser tela vazia.
 
 ## Legado
 - `#config-view` ("Configurar") — tela antiga sem atalho (UI_SWEEP 01/11). Candidata a remoção.

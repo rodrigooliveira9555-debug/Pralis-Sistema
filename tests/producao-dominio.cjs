@@ -196,6 +196,24 @@ t('relatório por produto no período', () => {
   const [l] = D.relatorio(pedidos, ordens, '2026-11-01', '2026-11-30');
   assert.deepEqual(l, { produtoId: 'pao', pedido: 108, produzido: 72, real: 106, sobra: 4, descarte: 2, desperdicio: 0.0189 });
 });
+t('manutenção do patrimônio: próxima data = última + N meses', () => {
+  assert.equal(D.proximaData('2026-06-20', 6), '2026-12-20');
+  assert.equal(D.proximaData('2026-11-15', 3), '2027-02-15'); // vira o ano
+  assert.equal(D.proximaData('2027-01-31', 1), '2027-02-28'); // mês sem o dia 31
+  assert.equal(D.proximaData('2027-12-31', 2), '2028-02-29'); // ano bissexto
+  assert.equal(D.proximaData('2026-06-20', 24), '2028-06-20');
+  assert.equal(D.proximaData('', 6), '');
+  assert.equal(D.proximaData('2026-06-20', null), '');
+  assert.equal(D.proximaData('2026-06-20', 0), '');
+  assert.equal(D.proximaData('2026-06-20', 1.5), '');
+});
+t('manutenção do patrimônio: vencida, próxima ou sem aviso', () => {
+  assert.equal(D.situacaoManutencao('2026-11-14', '2026-11-15'), 'vencida');
+  assert.equal(D.situacaoManutencao('2026-11-15', '2026-11-15'), 'proxima');
+  assert.equal(D.situacaoManutencao('2026-12-15', '2026-11-15'), 'proxima'); // 30 dias
+  assert.equal(D.situacaoManutencao('2026-12-16', '2026-11-15'), '');
+  assert.equal(D.situacaoManutencao('', '2026-11-15'), '');
+});
 t('textos de tempo', () => {
   assert.equal(D.minutos(45), '45 min');
   assert.equal(D.minutos(60), '1 h');

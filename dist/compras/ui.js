@@ -19,6 +19,11 @@
     cadastro: '<path d="M12 3c4.4 0 8 1.3 8 3v12c0 1.7-3.6 3-8 3s-8-1.3-8-3V6c0-1.7 3.6-3 8-3ZM4 6c0 1.7 3.6 3 8 3s8-1.3 8-3M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
     cotacao: '<path d="M12 3v18M7 21h10M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2M2 16l3-8 3 8a4.4 4.4 0 0 1-6 0ZM16 16l3-8 3 8a4.4 4.4 0 0 1-6 0Z"/>',
     raio: '<path d="M13 2 4 14h7l-1 8 9-12h-7Z"/>',
+    send: '<path d="M21 3 10 14M21 3l-7 18-4-7-7-4Z"/>',
+    whatsapp: '<path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/>',
+    email: '<path d="M3 6h18v12H3zM3 7l9 6 9-6"/>',
+    sms: '<path d="M4 5h16v11H9l-5 4zM8 10h.01M12 10h.01M16 10h.01"/>',
+    voltar: '<path d="m15 5-7 7 7 7"/>',
   };
   const svg = (path) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + path + '</svg>';
 
@@ -194,6 +199,161 @@
     return b.i.closest('.local-search-control') || b.i;
   }
 
+  /** Arrastar com o mouse para rolar a lista para os lados (o toque e o trackpad já rolam sozinhos). */
+  function arrastarParaRolar(caixa) {
+    let inicio = null;
+    let arrastou = false;
+    caixa.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0 || caixa.scrollWidth <= caixa.clientWidth || e.target.closest('button,input,select,a')) return;
+      inicio = { x: e.clientX, rolagem: caixa.scrollLeft };
+      arrastou = false;
+    });
+    caixa.addEventListener('pointermove', (e) => {
+      if (!inicio) return;
+      const dx = e.clientX - inicio.x;
+      if (!arrastou && Math.abs(dx) < 6) return;
+      arrastou = true;
+      caixa.classList.add('arrastando');
+      caixa.scrollLeft = inicio.rolagem - dx;
+    });
+    const soltar = () => { inicio = null; caixa.classList.remove('arrastando'); };
+    caixa.addEventListener('pointerup', soltar);
+    caixa.addEventListener('pointerleave', soltar);
+    // Depois de arrastar, o clique que sobra não abre a edição da linha.
+    caixa.addEventListener('click', (e) => { if (arrastou) { e.stopPropagation(); e.preventDefault(); arrastou = false; } }, true);
+  }
+
+  /**
+   * Título da lista dentro de um botão retangular no padrão do sistema (texto à esquerda, círculo com "+" à direita, na
+   * cor do menu de onde se veio): tocar abre o cadastro de um item novo. rotuloAcao vira a dica e o texto do leitor de
+   * tela (ex.: "Cadastrar fornecedor"). O .footer-action-icon próprio faz o layout-review.js manter o "+".
+   */
+  function botaoTitulo(titulo, rotuloAcao, acao, desenho = '<path d="M12 5v14M5 12h14"/>') {
+    const b = el('button', 'btn compras-titulo-botao', titulo);
+    b.type = 'button';
+    b.title = rotuloAcao;
+    b.setAttribute('aria-label', rotuloAcao);
+    // desenho: o que vai no círculo (o "+" por padrão; ex.: o aviãozinho de enviar).
+    b.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true">' + desenho + '</svg>');
+    b.onclick = acao;
+    return b;
+  }
+
+  /**
+   * Ponta direita do cabeçalho branco de uma lista: a quantidade dentro de um círculo (só informação: contorno e fundo
+   * claro na cor do menu, sem foco nem clique; vira pílula com 2 ou 3 dígitos). Ao lado dela pode entrar uma bolinha
+   * (ex.: o "‹ ›" de ocultar/mostrar colunas). descricao: texto para o leitor de tela (ex.: "7 fornecedores ativos").
+   */
+  function pontaDaLista(quantidade, descricao) {
+    const g = el('span', 'compras-secao-ponta');
+    const c = el('span', 'compras-contagem', String(quantidade));
+    c.setAttribute('role', 'img');
+    c.setAttribute('aria-label', descricao);
+    c.title = descricao;
+    g.append(c);
+    return g;
+  }
+
+  /**
+   * Cabeçalho das colunas de uma lista em grade (mesma classe de grade das linhas). Coluna com ocultavel: true ganha,
+   * ao lado do título, a mesma setinha do fim das linhas; ali ela encolhe a coluna (fica só a setinha, para reabrir)
+   * ou expande. lista: o elemento da lista, que recebe a classe oculta-<chave>; preferencia: chave do localStorage
+   * onde a escolha fica guardada por aparelho (lista das colunas ocultas; não é dado do cadastro).
+   * O cabeçalho devolvido traz em .botaoGeral a bolinha "‹ ›" que oculta ou mostra todas as colunas de uma vez (para a
+   * ponta direita do cabeçalho da lista); ela acompanha as setinhas: todas abertas, todas ocultas ou misto.
+   */
+  function cabecalhoColunas(grade, colunas, { lista, preferencia } = {}) {
+    const r = el('div', 'compras-linha em-colunas compras-linha-cabecalho ' + grade);
+    r.append(el('span', 'compras-linha-icones'));
+    let ocultas = [];
+    try { const v = JSON.parse(localStorage.getItem(preferencia) || '[]'); if (Array.isArray(v)) ocultas = v; } catch (e) { /* sem preferência salva */ }
+    const ocultaveis = lista ? colunas.filter((c) => c.ocultavel).map((c) => c.chave) : [];
+    // Preferência antiga com coluna que não é mais ocultável (ex.: o nome) é ignorada.
+    ocultas = ocultas.filter((c) => ocultaveis.includes(c));
+    const pintores = [];
+    const guardar = () => { try { localStorage.setItem(preferencia, JSON.stringify(ocultas)); } catch (err) { /* vale só nesta visita */ } };
+    const geral = el('button', 'shortcut-circle compras-redondo compras-colunas-geral');
+    geral.type = 'button';
+    geral.innerHTML = svg('<path d="m9 5-6 7 6 7M15 5l6 7-6 7"/>');
+    const pintarGeral = () => {
+      const fechadas = ocultaveis.filter((c) => ocultas.includes(c)).length;
+      const algumaAberta = fechadas < ocultaveis.length;
+      // Com alguma coluna aberta (todas ou misto), o toque oculta todas; com todas ocultas, mostra todas.
+      geral.setAttribute('aria-expanded', String(algumaAberta));
+      geral.dataset.estado = fechadas === 0 ? 'abertas' : algumaAberta ? 'misto' : 'ocultas';
+      const dica = algumaAberta ? 'Ocultar todas as colunas' : 'Mostrar todas as colunas';
+      geral.title = dica;
+      geral.setAttribute('aria-label', dica);
+    };
+    geral.onclick = () => {
+      const algumaAberta = ocultaveis.some((c) => !ocultas.includes(c));
+      ocultas = algumaAberta ? [...new Set([...ocultas, ...ocultaveis])] : ocultas.filter((c) => !ocultaveis.includes(c));
+      guardar();
+      pintores.forEach((p) => p());
+      pintarGeral();
+      if (lista) lista.scrollLeft = 0;
+    };
+    colunas.forEach(({ chave, rotulo, ocultavel }) => {
+      const c = el('span', 'compras-celula c-' + chave);
+      if (rotulo) c.append(el('span', 'compras-coluna-titulo', rotulo));
+      if (ocultavel && lista) {
+        // Mesmo desenho da seta das linhas (createFinancialActions), mas com classe própria: a seta das linhas fecha
+        // todas as .account-action-toggle da lista ao abrir uma, e isso trocaria o estado das colunas.
+        const b = el('button', 'compras-coluna-seta');
+        b.type = 'button';
+        b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>';
+        const pintar = () => {
+          const oculta = ocultas.includes(chave);
+          lista.classList.toggle('oculta-' + chave, oculta);
+          b.setAttribute('aria-expanded', String(!oculta));
+          const dica = (oculta ? 'Mostrar' : 'Ocultar') + ' coluna ' + rotulo;
+          b.title = dica;
+          b.setAttribute('aria-label', dica);
+        };
+        b.onclick = (e) => {
+          e.stopPropagation();
+          ocultas = ocultas.includes(chave) ? ocultas.filter((x) => x !== chave) : [...ocultas, chave];
+          guardar();
+          pintar();
+          pintarGeral();
+        };
+        pintores.push(pintar);
+        pintar();
+        c.append(b);
+      }
+      r.append(c);
+    });
+    pintarGeral();
+    if (ocultaveis.length) r.botaoGeral = geral;
+    return r;
+  }
+
+  /**
+   * Busca da tela pela lupa do rodapé fixo (people-header-pilot.js), como na Ficha de Cargos: o campo fica numa
+   * caixa .profiles-search que o rodapé adota, e um botão "Buscar" no cabeçalho (que o rodapé aciona pela lupa)
+   * abre e fecha. Fechar limpa a busca. Criada uma vez por tela; devolve a caixa para entrar no corpo a cada desenho.
+   */
+  function buscaRodape(tela, rotulo, aoBuscar) {
+    if (!tela.buscaRodape) {
+      const caixa = el('div', 'profiles-search');
+      caixa.hidden = true;
+      const i = entrada('search', '', { placeholder: rotulo });
+      i.setAttribute('aria-label', rotulo);
+      caixa.append(i);
+      const b = { caixa, i, aoBuscar };
+      let espera = null;
+      i.oninput = () => { clearTimeout(espera); espera = setTimeout(() => b.aoBuscar(i.value), 180); };
+      const botaoBusca = atalho(tela, 'Buscar', 'M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM16 16l5 5', () => {
+        caixa.hidden = !caixa.hidden;
+        if (caixa.hidden) { if (i.value) { i.value = ''; b.aoBuscar(''); } } else i.focus();
+      });
+      botaoBusca.classList.add('header-search-circle');
+      tela.buscaRodape = b;
+    }
+    tela.buscaRodape.aoBuscar = aoBuscar;
+    return tela.buscaRodape.caixa;
+  }
+
   /** Tabela simples com rolagem horizontal própria. colunas: [[rotulo, (linha)=>Node|string, cls]] */
   function tabela(colunas, linhas, { aoClicar, vazioTexto = 'Nada para mostrar.', classeLinha } = {}) {
     const box = el('div', 'compras-tabela-box');
@@ -225,16 +385,63 @@
     return box;
   }
 
-  /** Linha de lista no padrão das listas do S2 (moldura única, divisor fino). */
-  function linhaLista({ icone, titulo, detalhe, direita, aoClicar }) {
-    const r = el(aoClicar ? 'button' : 'div', 'compras-linha');
-    if (aoClicar) { r.type = 'button'; r.onclick = aoClicar; }
+  /**
+   * Linha de lista no padrão das listas do S2 (moldura única, divisor fino).
+   * acoes: { rotulo, lista, aoEditar, aoExcluir } põe à direita a setinha dos cadastros de grupos
+   * (createFinancialActions, de financial-components.js): tocar na seta revela Editar e Excluir; tocar
+   * na linha edita. Com acoes a linha não é um <button>, para não haver botão dentro de botão.
+   * icones: [{ icone | html, cor, rotulo }] no lugar de icone, quando a linha tem um ou mais ícones com cor própria
+   * (ex.: fornecedor de Produto em verde e de Serviço em vermelho); o rótulo vira a dica e o texto do leitor de tela.
+   * colunas + grade: no lugar de titulo/detalhe/direita, a linha vira uma grade de colunas fixas, igual em todas as
+   * linhas (as larguras ficam no CSS, na classe passada em grade). colunas = [{ chave, conteudo }], conteudo texto,
+   * nó ou lista de nós; célula sem conteúdo fica vazia. Na tela estreita as células empilham sob o nome.
+   * estado: texto pequeno à direita, antes da seta (ex.: "Ativo"), como nos cadastros de grupos.
+   */
+  function linhaLista({ icone, icones, titulo, detalhe, colunas, grade, estado, direita, aoClicar, acoes }) {
+    const r = el(aoClicar && !acoes ? 'button' : 'div', 'compras-linha');
+    if (aoClicar && !acoes) { r.type = 'button'; r.onclick = aoClicar; }
     if (icone) { const i = el('span', 'compras-linha-icone'); i.innerHTML = svg(ICONES[icone] || icone); r.append(i); }
-    const meio = el('span', 'compras-linha-texto');
-    meio.append(el('b', null, titulo));
-    if (detalhe) meio.append(el('small', null, detalhe));
-    r.append(meio);
-    if (direita) { const d = el('span', 'compras-linha-direita'); d.append(...[].concat(direita)); r.append(d); }
+    if (icones && icones.length) {
+      const grupo = el('span', 'compras-linha-icones');
+      icones.forEach((x) => {
+        const i = el('span', 'compras-linha-icone');
+        // html: desenho pronto (ex.: o símbolo da origem, moneyMark); senão, um ícone do Compras pelo nome.
+        i.innerHTML = x.html || svg(ICONES[x.icone] || x.icone);
+        if (x.cor) i.style.setProperty('--menu-accent', x.cor);
+        if (x.rotulo) { i.title = x.rotulo; i.setAttribute('role', 'img'); i.setAttribute('aria-label', x.rotulo); }
+        grupo.append(i);
+      });
+      r.append(grupo);
+    }
+    if (colunas) {
+      r.classList.add('em-colunas', grade);
+      colunas.forEach(({ chave, conteudo }) => {
+        const c = el('span', 'compras-celula c-' + chave);
+        const itens = [].concat(conteudo == null ? [] : conteudo).filter((x) => x !== '' && x != null);
+        c.append(...itens);
+        r.append(c);
+      });
+    } else {
+      const meio = el('span', 'compras-linha-texto');
+      meio.append(el('b', null, titulo));
+      if (detalhe) meio.append(el('small', null, detalhe));
+      r.append(meio);
+      if (direita) { const d = el('span', 'compras-linha-direita'); d.append(...[].concat(direita)); r.append(d); }
+    }
+    if (estado) r.append(el('span', 'account-list-state', estado));
+    if (acoes) {
+      // account-list-row: é a classe que o fechamento "tocar fora" do componente procura.
+      r.classList.add('com-acoes', 'account-list-row');
+      r.tabIndex = 0;
+      const { arrow, actions } = createFinancialActions({ label: acoes.rotulo, container: acoes.lista, onEdit: acoes.aoEditar, onDelete: acoes.aoExcluir });
+      r.append(arrow, actions);
+      r.onclick = (e) => {
+        if (e.target.closest('button')) return;
+        if (!actions.hidden) { actions.hidden = true; arrow.setAttribute('aria-expanded', 'false'); return; }
+        acoes.aoEditar();
+      };
+      r.onkeydown = (e) => { if (e.target === r && e.key === 'Enter') { e.preventDefault(); acoes.aoEditar(); } };
+    }
     return r;
   }
 
@@ -287,10 +494,16 @@
       acoes.append(s);
     }
     form.append(erro, acoes);
-    form.onsubmit = (e) => {
+    // salvar pode devolver uma promessa (ex.: guardar um áudio antes de gravar o cadastro);
+    // enquanto ela não termina, um segundo toque no ✓ não salva de novo.
+    let salvando = false;
+    form.onsubmit = async (e) => {
       e.preventDefault();
       if (!salvar) return d.close();
-      const msg = salvar(ctx);
+      if (salvando) return;
+      salvando = true;
+      let msg;
+      try { msg = await salvar(ctx); } catch (err) { console.warn(err); msg = 'Não foi possível salvar. Tente de novo.'; } finally { salvando = false; }
       if (msg) { erro.textContent = msg; return; }
       d.close();
     };
@@ -330,9 +543,117 @@
     a._t = setTimeout(() => a.classList.remove('show'), 3500);
   }
 
+  /**
+   * Quadro "Situação do(a) <coisa>" (regra do Rodrigo, 15/11/2026): o ativo/inativo de todo cadastro é este quadro
+   * com interruptor e o texto Ativo/Inativo ao lado, na cor do menu de origem. É o mesmo interruptor dos cadastros
+   * financeiros (.account-status / .account-status-switch de Grupos, Bandeiras e Contas), não uma caixa de marcar.
+   * Devolve o quadro; quadro.ativo lê (e escreve) o estado. feminino troca o texto para Ativa/Inativa.
+   */
+  function quadroSituacao(titulo, ativo, { dica = '', feminino = false, aoMudar, textos } = {}) {
+    const quadro = el('div', 'account-status compras-situacao-quadro');
+    const linha = el('div', 'account-status-row');
+    const chave = el('button', 'account-status-switch');
+    chave.type = 'button';
+    chave.setAttribute('role', 'switch');
+    chave.setAttribute('aria-label', titulo);
+    chave.append(el('span'));
+    const texto = el('span', 'account-status-text');
+    let ligado = Boolean(ativo);
+    const pintar = () => {
+      chave.setAttribute('aria-checked', String(ligado));
+      // textos: [ligado, desligado] para perguntas de sim ou não (ex.: "Tem contrato?" → Sim / Não).
+      texto.textContent = textos ? textos[ligado ? 0 : 1] : ligado ? (feminino ? 'Ativa' : 'Ativo') : (feminino ? 'Inativa' : 'Inativo');
+    };
+    chave.onclick = () => { ligado = !ligado; pintar(); if (aoMudar) aoMudar(ligado); };
+    pintar();
+    linha.append(chave, texto);
+    quadro.append(el('span', null, titulo), linha);
+    if (dica) quadro.append(el('small', 'profiles-note', dica));
+    Object.defineProperty(quadro, 'ativo', { get: () => ligado, set: (v) => { ligado = Boolean(v); pintar(); } });
+    return quadro;
+  }
+
+  /**
+   * Janelinha flutuante presa a um botão (a do Prazo de resposta do Enviar e a do "Acrescentar opção"): fica por cima
+   * da tela (fixa), logo abaixo do botão, ou acima quando não cabe embaixo. Fecha no Esc (sem fechar a janela de
+   * trás) e tocando fora. Devolve abrir(sim). O ouvinte de "tocar fora" só existe enquanto está aberta.
+   */
+  function flutuante(ancora, painel, { foco } = {}) {
+    painel.hidden = true;
+    ancora.setAttribute('aria-haspopup', 'dialog');
+    ancora.setAttribute('aria-expanded', 'false');
+    const fora = (e) => { if (!painel.isConnected || !(painel.contains(e.target) || ancora.contains(e.target))) abrir(false); };
+    function abrir(sim) {
+      painel.hidden = !sim;
+      ancora.setAttribute('aria-expanded', String(sim));
+      document.removeEventListener('pointerdown', fora);
+      if (!sim) return;
+      document.addEventListener('pointerdown', fora);
+      const r = ancora.getBoundingClientRect();
+      const embaixo = r.bottom + 6 + painel.offsetHeight <= window.innerHeight - 8;
+      painel.style.top = Math.max(8, Math.round(embaixo ? r.bottom + 6 : r.top - 6 - painel.offsetHeight)) + 'px';
+      painel.style.left = Math.max(8, Math.min(Math.round(r.left), window.innerWidth - painel.offsetWidth - 8)) + 'px';
+      if (foco) foco.focus();
+    }
+    painel.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); abrir(false); ancora.focus(); } });
+    return abrir;
+  }
+
+  /**
+   * Seleção por cartões (desenho escolhido pelo Rodrigo, 15/11/2026): para escolha de poucas opções com ícone, no
+   * lugar de caixinhas de marcar. Cada cartão é um botão inteiro (aria-pressed): ícone no quadrado de cantos
+   * arredondados, título e uma linha de detalhe, e um círculo de marcação à direita (cheio, com o "certo", quando
+   * marcado: a cor não é a única indicação). A cor é a de cada opção, não a da tela.
+   * opcoes: [{ id, titulo, detalhe, icone | html, cor, marcado }]; multiplo: pode marcar mais de uma (botões com
+   * aria-pressed). Escolha única (multiplo: false): grupo de rádio (role=radiogroup, cartões role=radio com
+   * aria-checked); marcar um desmarca os outros e tocar no marcado não desmarca.
+   * Devolve o grupo; grupo.marcados() lista os ids marcados.
+   */
+  function cartoesEscolha({ rotulo, opcoes, multiplo = true, aoMudar }) {
+    const grupo = el('div', 'compras-cartoes');
+    grupo.setAttribute('role', multiplo ? 'group' : 'radiogroup');
+    if (rotulo) grupo.setAttribute('aria-label', rotulo);
+    const estado = multiplo ? 'aria-pressed' : 'aria-checked';
+    const itens = opcoes.map((o) => {
+      const b = el('button', 'compras-cartao-escolha');
+      b.type = 'button';
+      if (o.cor) b.style.setProperty('--cartao-cor', o.cor);
+      const i = el('span', 'compras-linha-icone');
+      i.setAttribute('aria-hidden', 'true');
+      i.innerHTML = o.html || svg(ICONES[o.icone] || o.icone);
+      const texto = el('span', 'compras-cartao-texto');
+      texto.append(el('strong', null, o.titulo));
+      if (o.detalhe) texto.append(el('small', null, o.detalhe));
+      const marca = el('span', 'compras-cartao-marca');
+      marca.setAttribute('aria-hidden', 'true');
+      marca.innerHTML = '<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+      b.append(i, texto, marca);
+      if (!multiplo) b.setAttribute('role', 'radio');
+      b.setAttribute(estado, String(Boolean(o.marcado)));
+      b.onclick = () => {
+        const ligar = multiplo ? b.getAttribute(estado) !== 'true' : true;
+        if (!multiplo) itens.forEach((x) => x.b.setAttribute(estado, 'false'));
+        b.setAttribute(estado, String(ligar));
+        if (aoMudar) aoMudar(grupo.marcados());
+      };
+      // Rádio pelo teclado: as setas passam de um cartão para o outro e já marcam.
+      if (!multiplo) b.onkeydown = (e) => {
+        const passo = ['ArrowRight', 'ArrowDown'].includes(e.key) ? 1 : ['ArrowLeft', 'ArrowUp'].includes(e.key) ? -1 : 0;
+        if (!passo) return;
+        e.preventDefault();
+        const alvo = itens[(itens.findIndex((x) => x.b === b) + passo + itens.length) % itens.length].b;
+        alvo.focus(); alvo.click();
+      };
+      grupo.append(b);
+      return { id: o.id, b };
+    });
+    grupo.marcados = () => itens.filter((x) => x.b.getAttribute(estado) === 'true').map((x) => x.id);
+    return grupo;
+  }
+
   window.CicluzComprasUI = {
-    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar,
+    COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar,
+    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, quadroSituacao, cartoesEscolha, flutuante,
   };
 })();

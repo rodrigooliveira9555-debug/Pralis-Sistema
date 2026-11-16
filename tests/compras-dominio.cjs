@@ -109,4 +109,205 @@ ok(() => assert.equal(d.pendenciasDeTeto([
   { produtoId: 'a', descricao: 'Farinha', quantidade: 3, saldo: 5, estoqueMax: 10 },
 ]).length, 1));
 
+// Fornecedor: o texto livre antigo de "categoria" vira o ramo (migração) e validação do cadastro novo. Dados fictícios.
+const regras = require('../dist/field-validation.js');
+ok(() => {
+  // Três situações de dado antigo: texto livre (main), lista de categorias que existiu só em 15/11 e já com ramo.
+  const doc = {
+    categoriasFornecedor: [{ id: 'cf-frios', nome: 'Frios', ativa: true }, { id: 'cf-solta', nome: 'Manutenção', ativa: true }],
+    migracoes: { categoriasFornecedor: 1 },
+    fornecedores: [
+      { id: 'f1', nome: 'A', categoria: 'Laticínios' },
+      { id: 'f2', nome: 'B', categoriaId: 'cf-frios' },
+      { id: 'f3', nome: 'C', categoria: 'Bebidas', categoriaId: 'cf-frios' },
+      { id: 'f4', nome: 'D' },
+      { id: 'f5', nome: 'E', ramo: 'Embalagens', categoria: 'Outro', categorias: ['produto'] },
+    ],
+  };
+  d.migrarRamoFornecedor(doc);
+  assert.deepEqual(doc.fornecedores.map((f) => f.ramo), ['Laticínios', 'Frios', 'Bebidas', '', 'Embalagens']);
+  assert.ok(doc.fornecedores.every((f) => !('categoria' in f) && !('categoriaId' in f)));
+  // Ninguém é classificado como Produto ou Serviço pela migração; quem já tinha continua.
+  assert.deepEqual(doc.fornecedores.map((f) => f.categorias), [undefined, undefined, undefined, undefined, ['produto']]);
+  assert.equal(doc.categoriasFornecedor.length, 2); // a lista antiga fica no dado, sem uso
+  assert.deepEqual(doc.migracoes, { categoriasFornecedor: 1, ramoFornecedor: 1 });
+  // Roda uma vez só: ramo apagado depois não volta.
+  doc.fornecedores[0].ramo = '';
+  d.migrarRamoFornecedor(doc);
+  assert.equal(doc.fornecedores[0].ramo, '');
+});
+ok(() => {
+  // Fornecedor antigo ligado a produto (catálogo, histórico, pedido, cotação) e sem categoria vira Produto; uma vez só.
+  const doc = {
+    fornecedores: [
+      { id: 'f1', nome: 'No catálogo' }, { id: 'f2', nome: 'No histórico', categorias: [] }, { id: 'f3', nome: 'Com pedido' },
+      { id: 'f4', nome: 'Em cotação' }, { id: 'f5', nome: 'Sem vínculo' }, { id: 'f6', nome: 'Já é serviço', categorias: ['servico'] },
+    ],
+    catalogo: [{ id: 'v1', fornecedorId: 'f1', produtoId: 'p1' }, { id: 'v2', fornecedorId: 'f6', produtoId: 'p1' }],
+    historico: [{ id: 'h1', fornecedorId: 'f2', produtoId: 'p1' }],
+    pedidos: [{ id: 'pd1', fornecedorId: 'f3', itens: [] }],
+    rodadas: [{ id: 'r1', convites: [{ fornecedorId: 'f4' }] }],
+  };
+  assert.equal(d.vinculosComProdutos(doc, 'f1'), 1);
+  assert.equal(d.vinculosComProdutos(doc, 'f5'), 0);
+  d.migrarCategoriaProduto(doc);
+  assert.deepEqual(doc.fornecedores.map((f) => (f.categorias || []).join()), ['produto', 'produto', 'produto', 'produto', '', 'servico']);
+  assert.equal(doc.migracoes.categoriaProdutoFornecedor, 1);
+  // Não roda de novo: quem ganhou vínculo depois, ou desmarcou a categoria, não é mexido.
+  doc.fornecedores[0].categorias = [];
+  doc.catalogo.push({ id: 'v3', fornecedorId: 'f5', produtoId: 'p2' });
+  d.migrarCategoriaProduto(doc);
+  assert.deepEqual(doc.fornecedores.map((f) => (f.categorias || []).join()), ['', 'produto', 'produto', 'produto', '', 'servico']);
+});
+ok(() => {
+  // Escolha única: cadastro antigo com as duas fica "sem categoria escolhida" (não é decidido pelo sistema).
+  assert.equal(d.nomeCategoriasFornecedor({ categorias: ['servico', 'produto'] }), '');
+  assert.equal(d.categoriaFornecedor({ categorias: ['servico', 'produto'] }), '');
+  assert.equal(d.categoriaFornecedor({ categorias: ['servico'] }), 'servico');
+  assert.equal(d.categoriaFornecedor({}), '');
+  assert.equal(d.nomeCategoriasFornecedor({ categorias: ['servico'] }), 'Serviço');
+  assert.equal(d.nomeCategoriasFornecedor({ categorias: [] }), '');
+  assert.equal(d.nomeCategoriasFornecedor({}), '');
+});
+ok(() => {
+  // Fornecedor é só por CNPJ; cadastro antigo com outro documento (CPF) continua identificável.
+  assert.equal(d.documentoAntigoFornecedor({ documento: '529.982.247-25' }), '529.982.247-25');
+  assert.equal(d.documentoAntigoFornecedor({ documento: '11.222.333/0001-81' }), '');
+  assert.equal(d.documentoAntigoFornecedor({ documento: '' }), '');
+  assert.equal(d.documentoAntigoFornecedor(null), '');
+  assert.equal(d.TIPOS_PESSOA, undefined);
+});
+ok(() => {
+  const ctx = { fornecedores: [{ id: 'f9', nome: 'Moinho Teste' }] };
+  const pj = { id: 'f1', nome: 'Fornecedor Teste', tipoPessoa: 'juridica', documento: '11.222.333/0001-81', categorias: ['produto'], whatsapp: '(31) 99999-0000', email: '', financeiro: { nome: '', whatsapp: '', email: '' }, nascimento: '' };
+  const v = (mudanca) => d.validarFornecedor({ ...pj, ...mudanca }, regras, ctx);
+  assert.equal(v({}), '');
+  assert.match(v({ categorias: [] }), /categoria/);
+  assert.match(v({ categorias: undefined }), /categoria/);
+  assert.match(v({ categorias: ['outra'] }), /inválida/);
+  assert.match(v({ categorias: ['produto', 'servico'] }), /só uma categoria/);
+  assert.equal(v({ categorias: ['servico'] }), '');
+  assert.equal(v({ tipoPessoa: '' }), ''); // o tipo de pessoa não é mais pedido
+  assert.match(v({ nome: ' ' }), /nome/);
+  assert.match(v({ nome: 'MOINHO TESTE' }), /Já existe/);
+  assert.match(v({ documento: '' }), /CNPJ/);
+  assert.match(v({ documento: '11.222.333/0001-80' }), /CNPJ/);
+  assert.match(v({ documento: '529.982.247-25' }), /CNPJ/);
+  assert.match(v({ whatsapp: '' }), /WhatsApp do vendedor/);
+  assert.match(v({ email: 'sem-arroba' }), /E-mail do vendedor/);
+  assert.match(v({ financeiro: { nome: 'Fin', whatsapp: '123', email: '' } }), /WhatsApp do financeiro/);
+  assert.match(v({ financeiro: { nome: 'Fin', whatsapp: '', email: 'x@' } }), /E-mail do financeiro/);
+  assert.match(v({ tipoPessoa: 'fisica', documento: '529.982.247-25' }), /CNPJ válido/); // CPF não serve mais de documento
+  // Cadastro em etapas: vendedor (aniversário em mês e ano, opcional), financeiro e representante.
+  assert.equal(v({ vendedorAniversario: '1990-01', regimeTributario: 'simples' }), '');
+  assert.equal(v({ vendedorAniversario: '', vendedorNascimento: '1990-01-01' }), ''); // a data completa antiga não é conferida
+  assert.match(v({ vendedorAniversario: '1990-13' }), /Aniversário/);
+  assert.match(v({ vendedorAniversario: '03/19' }), /Aniversário/);
+  assert.match(v({ vendedorAniversario: '1890-03' }), /Aniversário/);
+  assert.match(v({ vendedorAniversario: '2999-01' }), /futuro/);
+  assert.equal(d.aniversarioVendedor({ vendedorNascimento: '1990-03-15' }), '1990-03');
+  assert.equal(d.aniversarioVendedor({ vendedorNascimento: '1990-03-15', vendedorAniversario: '' }), '');
+  assert.equal(d.aniversarioVendedor({ vendedorNascimento: '1990-03-15', vendedorAniversario: '1991-04' }), '1991-04');
+  assert.equal(d.aniversarioVendedor(null), '');
+  assert.equal(v({ vendedorCpf: 'valor antigo qualquer' }), ''); // o CPF do vendedor não é mais pedido nem conferido
+  assert.equal(v({ representante: { mesmo: true, cargo: 'socio-proprietario' } }), '');
+  assert.match(v({ representante: { cargo: 'chefe' } }), /Cargo do representante/);
+  assert.deepEqual(d.CARGOS_REPRESENTANTE.map(([, nome]) => nome), ['Proprietário', 'Sócio-proprietário', 'Diretor geral', 'Diretor comercial', 'Gerente geral', 'Gerente comercial',
+    'Supervisor geral', 'Supervisor comercial', 'Representante comercial', 'Administrador', 'Financeiro', 'Procurador', 'Outro']);
+  assert.deepEqual(d.etapasFornecedor([]), ['Dados da empresa', 'Dados do vendedor', 'Dados do financeiro', 'Dados do representante', 'Vínculos', 'Contrato']);
+  // Contrato (quadro "Tem contrato?" do financeiro): só é conferido quando tem; valor e índice só informados.
+  const vc = (contrato) => d.validarFornecedorEtapas({ ...pj, contrato: { tem: true, ...contrato } }, regras, ctx);
+  assert.deepEqual(vc({ formaPagamento: 'boleto', recorrencia: 'mes', vencimentoDia: 10, valorCentavos: 150000, inicio: '2026-01-01', fim: '2026-12-31', reajuste: 'ipca', observacoes: 'Mensal' }), ['', '', '', '', '', '']);
+  assert.deepEqual(vc({}), ['', '', '', '', '', '']);
+  assert.match(vc({ inicio: '2026-12-31', fim: '2026-01-01' })[2], /antes do início/);
+  assert.match(vc({ inicio: '31/12/2026' })[2], /datas do contrato/);
+  assert.match(vc({ valorCentavos: 10.5 })[2], /Valor do contrato/);
+  assert.match(vc({ valorCentavos: NaN })[2], /Valor do contrato/);
+  assert.match(vc({ formaPagamento: 'cheque' })[2], /Forma de pagamento/);
+  assert.match(vc({ recorrencia: 'semana' })[2], /Recorrência/);
+  assert.match(vc({ vencimentoDia: 32 })[2], /1 a 31/);
+  assert.match(vc({ vencimentoData: '10/01/2026' })[2], /vencimento/);
+  assert.match(vc({ reajuste: 'dolar' })[2], /Reajuste/);
+  assert.match(vc({ reajuste: 'percentual' })[2], /percentual/);
+  assert.match(vc({ reajuste: 'percentual', reajustePercentual: 150 })[2], /percentual/);
+  assert.equal(vc({ reajuste: 'percentual', reajustePercentual: 4.5 })[2], '');
+  assert.match(vc({ observacoes: 'x'.repeat(2001) })[2], /2000/);
+  // Sem contrato, nada é conferido (o que estiver preenchido fica guardado como está).
+  assert.equal(v({ contrato: { tem: false, valorCentavos: -1, inicio: 'x' } }), '');
+  assert.deepEqual([d.FORMAS_PAGAMENTO_CONTRATO.length, d.RECORRENCIAS_CONTRATO.length, d.REAJUSTES_CONTRATO.length], [4, 5, 6]);
+  // Migração: quem já tinha início, fim, valor ou observações passa a ter contrato; vazio fica sem; uma vez só.
+  const docC = { fornecedores: [{ id: 'a', contrato: { inicio: '2026-01-01', fim: '', valorCentavos: null, observacoes: '' } }, { id: 'b', contrato: { inicio: '', fim: '', valorCentavos: null, observacoes: '' } },
+    { id: 'c', contrato: { inicio: '', fim: '', valorCentavos: 0, observacoes: '' } }, { id: 'd' }, { id: 'e', contrato: { tem: false, inicio: '2026-01-01' } }] };
+  d.migrarContratoFinanceiro(docC);
+  assert.deepEqual(docC.fornecedores.map((x) => x.contrato && x.contrato.tem), [true, false, true, undefined, false]);
+  assert.equal(docC.fornecedores[0].contrato.inicio, '2026-01-01');
+  assert.equal(docC.migracoes.contratoFinanceiro, 1);
+  docC.fornecedores[1].contrato.inicio = '2027-01-01'; d.migrarContratoFinanceiro(docC);
+  assert.equal(docC.fornecedores[1].contrato.tem, false);
+  // Prestadores (Serviço): do 2º em diante, nome obrigatório e formato conferido; função precisa existir no cadastro.
+  const fn = [{ id: 'fp-pintor', nome: 'Pintor', ativa: true }];
+  const vp = (prestadores) => d.validarFornecedor({ ...pj, categorias: ['servico'], prestadores }, regras, { fornecedores: [], funcoes: fn });
+  assert.equal(vp([{ id: 'a', nome: '', funcoes: ['fp-pintor'] }, { id: 'b', nome: 'Segundo', whatsapp: '', email: '', aniversario: '1990-03', funcoes: [] }]), '');
+  assert.match(vp([{ id: 'a', nome: 'Um' }, { id: 'b', nome: ' ' }]), /nome do prestador 2/);
+  assert.match(vp([{ id: 'a', nome: 'Um' }, { id: 'b', nome: 'Dois', whatsapp: '12' }]), /WhatsApp do prestador 2/);
+  assert.match(vp([{ id: 'a', nome: 'Um' }, { id: 'b', nome: 'Dois', email: 'x@' }]), /E-mail do prestador 2/);
+  assert.match(vp([{ id: 'a', nome: 'Um' }, { id: 'b', nome: 'Dois', aniversario: '1990-13' }]), /Aniversário do prestador 2/);
+  assert.match(vp([{ id: 'a', nome: 'Um', funcoes: ['nao-existe'] }]), /Função do prestador 1/);
+  // Cadastro de funções: sem nome vazio nem repetido (ignora maiúsculas e acentos).
+  assert.equal(d.validarFuncaoPrestador('Vidraceiro', fn), '');
+  assert.match(d.validarFuncaoPrestador('  ', fn), /nome da função/);
+  assert.match(d.validarFuncaoPrestador('PÍNTOR', fn), /Já existe/);
+  assert.equal(d.idFuncaoPrestador('Mecânico de refrigeração'), 'fp-mecanico-de-refrigeracao');
+  assert.equal(d.FUNCOES_PRESTADOR_INICIAIS.length, 18);
+  // Migração: cria a lista inicial e transforma o contato único do fornecedor de Serviço no Prestador 1; uma vez só.
+  const docP = { fornecedores: [
+    { id: 'f1', nome: 'S', categorias: ['servico'], contatoNome: 'Fulano', whatsapp: '(31) 99999-0000', email: 'a@exemplo.test', vendedorAniversario: '1990-03' },
+    { id: 'f2', nome: 'P', categorias: ['produto'], contatoNome: 'Beltrano', whatsapp: '(31) 98888-0000' },
+    { id: 'f3', nome: 'D', categorias: ['produto', 'servico'], contatoNome: 'Sicrano' },
+  ] };
+  d.migrarPrestadoresFornecedor(docP);
+  assert.equal(docP.funcoesPrestador.length, 18);
+  assert.deepEqual(docP.fornecedores[0].prestadores, [{ id: 'pr-f1', nome: 'Fulano', whatsapp: '(31) 99999-0000', email: 'a@exemplo.test', aniversario: '1990-03', funcoes: [] }]);
+  assert.equal(docP.fornecedores[0].contatoNome, 'Fulano');
+  assert.ok(!('prestadores' in docP.fornecedores[1]) && !('prestadores' in docP.fornecedores[2]));
+  assert.equal(docP.migracoes.prestadoresFornecedor, 1);
+  docP.fornecedores[0].prestadores[0].nome = 'Alterado'; docP.funcoesPrestador.pop();
+  d.migrarPrestadoresFornecedor(docP);
+  assert.equal(docP.fornecedores[0].prestadores[0].nome, 'Alterado');
+  assert.equal(docP.funcoesPrestador.length, 17);
+  assert.match(v({ regimeTributario: 'outro' }), /Regime/);
+  assert.match(v({ representante: { nome: 'Rep', whatsapp: '12', email: '' } }), /WhatsApp do representante/);
+  assert.match(v({ nome: '' }), /nome fantasia ou a razão social/);
+  // Cada problema aparece na etapa dele.
+  const etapas = d.validarFornecedorEtapas({ ...pj, categorias: [], whatsapp: '', financeiro: { email: 'x@' }, representante: { whatsapp: '1' } }, regras, ctx);
+  assert.deepEqual(etapas.map(Boolean), [true, true, true, true, false, false]);
+  assert.deepEqual(d.validarFornecedorEtapas(pj, regras, ctx), ['', '', '', '', '', '']);
+  assert.deepEqual(d.etapasFornecedor(['produto']).slice(1, 2), ['Dados do vendedor']);
+  assert.deepEqual(d.etapasFornecedor(['servico']).slice(1, 2), ['Dados do prestador']);
+  assert.deepEqual(d.etapasFornecedor(['produto', 'servico']).slice(1, 2), ['Dados do vendedor']);
+  assert.equal(d.etapasFornecedor([]).length, 6);
+  assert.equal(d.etapasFornecedor([])[0], 'Dados da empresa');
+  // Endereço é opcional; o que vier precisa estar no formato.
+  assert.equal(v({ endereco: { cep: '01001-000', logradouro: 'Rua Teste', numero: '10', complemento: '', bairro: 'Centro', cidade: 'Cidade Teste', uf: 'SP' } }), '');
+  assert.equal(v({ endereco: {} }), '');
+  assert.match(v({ endereco: { cep: '0100' } }), /CEP/);
+  assert.match(v({ endereco: { uf: 'sp' } }), /UF/);
+  assert.match(v({ documento: '' }), /CNPJ válido/);
+});
+ok(() => {
+  // Migração do cadastro em etapas: o nascimento da pessoa física vira o do vendedor; o resto não se mexe; uma vez só.
+  const doc = { fornecedores: [
+    { id: 'f1', nome: 'A', nascimento: '1990-03-15', whatsapp: '(31) 99999-0000', contatoNome: 'Fulano', email: 'a@exemplo.test' },
+    { id: 'f2', nome: 'B', nascimento: '1980-01-01', vendedorNascimento: '1985-05-05' }, { id: 'f3', nome: 'C' },
+  ] };
+  d.migrarVendedorFornecedor(doc);
+  assert.deepEqual(doc.fornecedores.map((f) => f.vendedorNascimento), ['1990-03-15', '1985-05-05', undefined]);
+  assert.ok(doc.fornecedores.every((f) => !('nascimento' in f)));
+  assert.deepEqual([doc.fornecedores[0].whatsapp, doc.fornecedores[0].contatoNome, doc.fornecedores[0].email], ['(31) 99999-0000', 'Fulano', 'a@exemplo.test']);
+  assert.equal(doc.migracoes.vendedorFornecedor, 1);
+  doc.fornecedores[2].nascimento = '2000-01-01';
+  d.migrarVendedorFornecedor(doc);
+  assert.equal(doc.fornecedores[2].nascimento, '2000-01-01');
+});
+
 console.log(checks + ' checks de regras de Compras passaram');

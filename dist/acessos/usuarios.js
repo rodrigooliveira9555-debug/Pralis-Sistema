@@ -162,7 +162,7 @@
     }
     const donoDoPosto = () => estado.usuarios.find((x) => x.posto && x.posto.pdv === v.posto.pdv && x.posto.turno === v.posto.turno && (!u || x.id !== u.id));
     A.dialogoApi({
-      titulo: u ? 'Editar ' + u.nome : 'Novo usuário',
+      titulo: u ? 'Editar ' + u.nome : 'Cadastro usuário',
       subtitulo: u ? u.email : 'A conta entra no sistema com o e-mail e a senha inicial.',
       rotuloSalvar: u ? 'Salvar alterações' : 'Criar conta',
       montar: (form) => {

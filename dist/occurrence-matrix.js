@@ -5,7 +5,7 @@
    `cicluz-ocorrencias-matriz-v1`. O áudio fica no IndexedDB (nunca no localStorage) e não sai do aparelho: sem transcrição automática. */
 (()=>{
 'use strict';
-const U=window.CicluzUniformUI,DB=window.CicluzDateBR,G=window.CicluzGP;if(!U||!DB||!G)return;
+const U=window.CicluzUniformUI,DB=window.CicluzDateBR,G=window.CicluzGP;if(!U||!DB||!G||!window.CicluzAudioNota)return;
 /* occurrences.js carrega antes de people.js: o cadastro de pessoas é lido só quando necessário. */
 const P=new Proxy({},{get:(_,k)=>window.CicluzPeople?.[k]});
 const {el,button,iconButton,ICON,fold,newId,dateBR,today,dialog,confirmDialog}=U;
@@ -83,17 +83,8 @@ function create(ctx){
   if(l.length){const t=el('table','uniforms-table'),hr=el('tr');for(const h of ['Data','Tipo','Categoria','Subcategoria','Situação','Conta?'])hr.append(el('th',null,h));const th=el('thead');th.append(hr);const tb=el('tbody');
    for(const r of l){const tr=el('tr');if(isCancelled(r.status))tr.classList.add('is-cancelled');tr.append(el('td',null,dateBR(r.date)),el('td',null,r.type),el('td',null,catById(r.matrixCatId)?.name||(r.matrixLabel||'').split(' · ')[0]||'—'),el('td',null,r.subcategoryName||subById(r.matrixCatId,r.matrixSubId)?.name||(r.matrixLabel||'').split(' · ')[1]||'—'),el('td',null,r.status),el('td',null,counts(r)?'Sim':'Não'));tb.append(tr)}t.append(th,tb);const w=el('div','uniforms-table-wrap');w.append(t);histBody.append(w)}}
 
- /* áudio (local; sem transcrição automática) */
- const audioBox=el('div','uniforms-wide matrix-audio');let rec=null,chunks=[],blob=null,url='',startedAt=0,seconds=0;
- const aMsg=el('p','profiles-note');aMsg.setAttribute('role','status');const player=el('audio');player.controls=true;player.hidden=true;
- const OT=window.CicluzOccTools.ICON,bRec=G.roundButton('Gravar áudio',OT.mic,startRec),bStop=G.roundButton('Parar gravação',OT.stop,stopRec),bDel=G.roundButton('Descartar áudio',OT.trash,discard);bStop.hidden=bDel.hidden=true;
- const supported=!!(navigator.mediaDevices?.getUserMedia&&window.MediaRecorder);
- const aTools=el('div','people-banner-tools');aTools.append(bRec,bStop,bDel);audioBox.append(el('span','uniforms-enum-label','Observação por áudio (opcional)'),aTools,aMsg,player);
- const infoMsg=supported?'O áudio é gravado e guardado só neste aparelho. Não há transcrição automática: digite ou revise o texto da observação à mão.':'Gravação de áudio indisponível neste navegador: digite a observação.';aMsg.textContent=infoMsg;bRec.disabled=!supported;
- async function startRec(){aMsg.textContent='';try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];rec=new MediaRecorder(stream);rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};rec.onstop=()=>{stream.getTracks().forEach(t=>t.stop());seconds=Math.max(1,Math.round((Date.now()-startedAt)/1000));blob=new Blob(chunks,{type:rec.mimeType||'audio/webm'});if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(blob);player.src=url;player.hidden=false;bDel.hidden=false;bRec.hidden=false;bStop.hidden=true;aMsg.textContent='Áudio gravado ('+seconds+' s). Ouça, descarte ou salve a ocorrência para guardá-lo.'};startedAt=Date.now();rec.start();bRec.hidden=true;bStop.hidden=false;aMsg.textContent='Gravando…'}catch{aMsg.textContent='Não foi possível acessar o microfone. Verifique a permissão do navegador ou digite a observação.'}}
- function stopRec(){try{rec?.stop()}catch{}}
- function discard(){blob=null;if(url)URL.revokeObjectURL(url);url='';player.removeAttribute('src');player.hidden=true;bDel.hidden=true;aMsg.textContent='Áudio descartado.'}
- async function saveAudio(){if(!blob)return null;const id=newId();try{await window.CicluzDocuments.files.put(id,blob)}catch{return {error:'Não foi possível guardar o áudio neste navegador.'}}return {meta:{id,type:blob.type,size:blob.size,seconds}}}
+ /* áudio (local; sem transcrição automática): peça compartilhada de audio-nota.js */
+ const AN=window.CicluzAudioNota.criar({rotulo:'Observação por áudio (opcional)',classe:'uniforms-wide matrix-audio',aoSalvar:'a ocorrência'}),audioBox=AN.no;
 
  /* prévia do documento (não altera o status) */
  function previewDoc(){const p=P.byId(ctx.collab()),c=catById(catSel.value),s=S(),type=ctx.type(),iso=ctx.date();
@@ -105,9 +96,9 @@ function create(ctx){
  const matrixNodes=[catLabel,subLabel,noteEl,docLabel,info,hist];
  return {nodes:matrixNodes,audioBox,previewBtn,fillRow:(rowId,cid,sid)=>{const r=rowOf(rowId)||(cid&&sid?rowsOfType().find(x=>x.catId===cid&&x.subId===sid):null);fillCats(r?.catId||cid||'');if(r)fillSubs(r.id)},row:()=>rowOf(subSel.value),refresh:()=>{fillCats('',true);paintHistory()},docText:()=>docField.value,paintHistory,
   value:()=>{const s=S(),c=catById(catSel.value);return {matrixCatId:catSel.value,matrixSubId:s?.id||'',matrixLabel:c?c.name+(s&&s.id?' · '+s.name:''):'',rowId:subSel.value}},
-  required:t=>isDisciplinary(t),show:t=>{catLabel.hidden=subLabel.hidden=false},saveAudio,hasAudio:()=>!!blob,clearAudio:()=>{discard();aMsg.textContent=infoMsg},
+  required:t=>isDisciplinary(t),show:t=>{catLabel.hidden=subLabel.hidden=false},saveAudio:async()=>AN.temNovo()?AN.guardar():null,hasAudio:()=>AN.temNovo(),clearAudio:()=>AN.limpar(),
   sub:()=>S()}}
 window.CicluzMatrix={create,addCategory,addSub,FLOW,DISCIPLINARY,isDisciplinary,isCancelled,counts,catById,subById,label,load,activeCats,
- playAudio:async meta=>{const b=await window.CicluzDocuments.files.get(meta.id);if(!b)return null;return URL.createObjectURL(b)},
+ playAudio:meta=>window.CicluzAudioNota.ouvir(meta),
  relatedByEvaluation:(personId)=>{load();return (window.CicluzOccurrences?.list()||[]).filter(r=>r.collaboratorId===personId&&!isCancelled(r.status))}};
 })();

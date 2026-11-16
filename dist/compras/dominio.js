@@ -158,6 +158,258 @@
   }
   const podeConvidar = (f) => motivoNaoConvidavel(f) === '';
 
+  /* ---------- Cadastro de fornecedor (decisões do Rodrigo, 15/11/2026) ---------- */
+  const semAcento = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  /**
+   * Categoria do fornecedor (decisão do Rodrigo, 15/11/2026): o que ele fornece, Produto OU Serviço (escolha única;
+   * a opção de marcar os dois existiu por algumas horas e saiu). O dado continua em f.categorias (lista), agora com
+   * um item só. Registro antigo com os dois não é decidido pelo sistema: fica como "sem categoria escolhida" (nome
+   * vazio aqui), aparece em "Completar cadastro" e a pessoa escolhe ao editar; o que está gravado não é apagado.
+   */
+  const CATEGORIAS_FORNECEDOR = [['produto', 'Produto'], ['servico', 'Serviço']];
+  const categoriasDe = (f) => CATEGORIAS_FORNECEDOR.filter(([id]) => Array.isArray(f && f.categorias) && f.categorias.includes(id));
+  const categoriaFornecedor = (f) => { const c = categoriasDe(f); return c.length === 1 ? c[0][0] : ''; };
+  const nomeCategoriasFornecedor = (f) => { const c = categoriasDe(f); return c.length === 1 ? c[0][1] : ''; };
+  /**
+   * Migração (marca d.migracoes.ramoFornecedor): o texto livre que o cadastro antigo chamava de "categoria"
+   * (Bebidas, Laticínios, Mercearia…) é o ramo do fornecedor e passa para o campo f.ramo. Também desfaz a lista de
+   * categorias que existiu só neste dia: quem tinha categoriaId recebe como ramo o nome que estava na lista. Nada é
+   * classificado como Produto ou Serviço aqui: f.categorias fica vazio até alguém escolher. A lista antiga
+   * d.categoriasFornecedor, se existir, fica no dado sem uso.
+   */
+  function migrarRamoFornecedor(d) {
+    if (d.migracoes && d.migracoes.ramoFornecedor) return d;
+    const lista = Array.isArray(d.categoriasFornecedor) ? d.categoriasFornecedor : [];
+    for (const f of d.fornecedores || []) {
+      const daLista = f.categoriaId ? lista.find((c) => c.id === f.categoriaId) : null;
+      const texto = String(f.ramo || f.categoria || (daLista && daLista.nome) || '').trim();
+      f.ramo = texto;
+      delete f.categoria;
+      delete f.categoriaId;
+    }
+    d.migracoes = { ...(d.migracoes || {}), ramoFornecedor: 1 };
+    return d;
+  }
+  /** Quantas vezes o id aparece na chave dada, em qualquer nível do dado. */
+  function contarVinculos(dado, chave, id) {
+    if (!dado || typeof dado !== 'object') return 0;
+    let n = 0;
+    for (const [k, v] of Object.entries(dado)) n += k === chave && v === id ? 1 : contarVinculos(v, chave, id);
+    return n;
+  }
+  /** Vínculos do fornecedor com produtos no documento do Compras: catálogo, histórico de compras, cotação e pedido. */
+  const vinculosComProdutos = (d, fornecedorId) => contarVinculos({ ...d, fornecedores: null }, 'fornecedorId', fornecedorId);
+  /**
+   * Migração (marca d.migracoes.categoriaProdutoFornecedor; decisão do Rodrigo, 15/11/2026): o fornecedor que já
+   * existia, está ligado a produtos (catálogo, histórico, cotação ou pedido) e ainda não tem categoria passa a ser
+   * Produto. Quem já tem categoria marcada não é tocado; quem não tem vínculo com produto continua sem categoria.
+   * Roda uma vez por documento: fornecedor cadastrado depois escolhe a categoria no formulário.
+   */
+  function migrarCategoriaProduto(d) {
+    if (d.migracoes && d.migracoes.categoriaProdutoFornecedor) return d;
+    for (const f of d.fornecedores || []) {
+      if (Array.isArray(f.categorias) && f.categorias.length) continue;
+      if (vinculosComProdutos(d, f.id)) f.categorias = ['produto'];
+    }
+    d.migracoes = { ...(d.migracoes || {}), categoriaProdutoFornecedor: 1 };
+    return d;
+  }
+  /**
+   * Fornecedor é sempre por CNPJ (decisão do Rodrigo, 15/11/2026; o caminho de pessoa física saiu). Cadastro antigo
+   * com outro documento (um CPF, de quando existia pessoa física) continua abrindo: esta função devolve esse
+   * documento antigo, ou '' quando o cadastro já tem CNPJ ou não tem documento.
+   */
+  function documentoAntigoFornecedor(f) {
+    const doc = String((f && f.documento) || '').trim();
+    return doc && digitos(doc).length !== 14 ? doc : '';
+  }
+  const emailValido = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
+  /** Regime tributário do fornecedor pessoa jurídica: só guarda a opção escolhida, não entra em cálculo nenhum. */
+  const REGIMES_TRIBUTARIOS = [['mei', 'MEI'], ['simples', 'Simples Nacional'], ['presumido', 'Lucro Presumido'], ['real', 'Lucro Real'], ['nao-informado', 'Não informado']];
+  /** O que o representante é na empresa (lista fixa, escolha única; campo opcional). */
+  const CARGOS_REPRESENTANTE = [['proprietario', 'Proprietário'], ['socio-proprietario', 'Sócio-proprietário'], ['diretor-geral', 'Diretor geral'], ['diretor-comercial', 'Diretor comercial'],
+    ['gerente-geral', 'Gerente geral'], ['gerente-comercial', 'Gerente comercial'], ['supervisor-geral', 'Supervisor geral'], ['supervisor-comercial', 'Supervisor comercial'],
+    ['representante-comercial', 'Representante comercial'], ['administrador', 'Administrador'], ['financeiro', 'Financeiro'], ['procurador', 'Procurador'], ['outro', 'Outro']];
+  /**
+   * Aniversário do vendedor ou prestador, só mês e ano (AAAA-MM; decisão do Rodrigo, 15/11/2026). Quem tem a data
+   * completa antiga (vendedorNascimento) e ainda não tem o campo novo mostra o mês e o ano dela; a data antiga
+   * continua gravada, sem uso. Campo novo vazio ('') é vazio de verdade (a pessoa apagou).
+   */
+  function aniversarioVendedor(f) {
+    if (!f) return '';
+    if (typeof f.vendedorAniversario === 'string') return f.vendedorAniversario;
+    return /^\d{4}-\d{2}-\d{2}$/.test(f.vendedorNascimento || '') ? f.vendedorNascimento.slice(0, 7) : '';
+  }
+  /** Quem é o contato da 2ª etapa, pela categoria: prestador (Serviço) ou vendedor (Produto, e enquanto nada foi escolhido). */
+  function quemVendeFornecedor(categorias) {
+    const c = Array.isArray(categorias) ? categorias : [];
+    return c.length === 1 && c[0] === 'servico' ? 'prestador' : 'vendedor';
+  }
+  /** Etapas do cadastro (decisão do Rodrigo, 15/11/2026), nomes padronizados "Dados do …". A 2ª depende da categoria. */
+  function etapasFornecedor(categorias) {
+    const c = Array.isArray(categorias) ? categorias : [];
+    return ['Dados da empresa', 'Dados do ' + quemVendeFornecedor(c), 'Dados do financeiro', 'Dados do representante', 'Vínculos', 'Contrato'];
+  }
+  /**
+   * Migração (marca d.migracoes.vendedorFornecedor): no cadastro em etapas o contato do fornecedor é o vendedor ou
+   * prestador de serviço (2ª etapa). Nome, WhatsApp e e-mail continuam nos mesmos campos (contatoNome, whatsapp, email:
+   * a cotação segue lendo f.whatsapp); só a data de nascimento, que era do fornecedor pessoa física, passa para
+   * vendedorNascimento. Nada é apagado sem ir para o campo novo.
+   */
+  function migrarVendedorFornecedor(d) {
+    if (d.migracoes && d.migracoes.vendedorFornecedor) return d;
+    for (const f of d.fornecedores || []) {
+      if (f.nascimento && !f.vendedorNascimento) f.vendedorNascimento = f.nascimento;
+      delete f.nascimento;
+    }
+    d.migracoes = { ...(d.migracoes || {}), vendedorFornecedor: 1 };
+    return d;
+  }
+  /* ---------- Prestadores de serviço e as funções deles (decisão do Rodrigo, 15/11/2026) ---------- */
+  /** Lista inicial de funções do prestador; depois dela, a lista cresce pelo "Acrescentar opção" do cadastro. */
+  const FUNCOES_PRESTADOR_INICIAIS = ['Advogado', 'Advogado trabalhista', 'Advogado tributarista', 'Departamento pessoal', 'Contador', 'Mecânico',
+    'Mecânico de máquinas', 'Mecânico de refrigeração', 'Mecânico eletricista', 'Eletricista', 'Pintor', 'Marceneiro', 'Carpinteiro', 'Serralheiro',
+    'Encanador', 'Pedreiro', 'Técnico de informática', 'Dedetizador'];
+  /** Id da função inicial a partir do nome: igual em todo aparelho, para dois aparelhos não criarem a mesma função duas vezes. */
+  const idFuncaoPrestador = (nome) => 'fp-' + semAcento(nome).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  /** Função com o mesmo nome (sem diferenciar maiúsculas nem acentos), ou undefined. */
+  const funcaoPrestadorIgual = (lista, nome) => (lista || []).find((x) => semAcento(x.nome) === semAcento(nome));
+  /** O que impede acrescentar a função: nome vazio, longo demais ou repetido. */
+  function validarFuncaoPrestador(nome, lista) {
+    const n = String(nome || '').trim();
+    if (!n) return 'Informe o nome da função.';
+    if (n.length > 60) return 'O nome da função deve ter no máximo 60 caracteres.';
+    if (funcaoPrestadorIgual(lista, n)) return 'Já existe uma função com este nome.';
+    return '';
+  }
+  /**
+   * Migração (marca d.migracoes.prestadoresFornecedor): (1) cria o cadastro d.funcoesPrestador ({ id, nome, ativa })
+   * com a lista inicial, se ainda estiver vazio; (2) no fornecedor de categoria Serviço, o contato único vira o
+   * Prestador 1 em f.prestadores ([{ id, nome, whatsapp, email, aniversario, funcoes: [ids] }]). Os campos de
+   * contato do fornecedor (contatoNome, whatsapp, email, vendedorAniversario) continuam como estão e seguem
+   * espelhando o primeiro prestador: é deles que a lista e a cotação leem. Nada é apagado. Uma vez por documento.
+   */
+  function migrarPrestadoresFornecedor(d) {
+    if (d.migracoes && d.migracoes.prestadoresFornecedor) return d;
+    if (!Array.isArray(d.funcoesPrestador)) d.funcoesPrestador = [];
+    if (!d.funcoesPrestador.length) d.funcoesPrestador = FUNCOES_PRESTADOR_INICIAIS.map((nome) => ({ id: idFuncaoPrestador(nome), nome, ativa: true }));
+    for (const f of d.fornecedores || []) {
+      if (categoriaFornecedor(f) !== 'servico' || (Array.isArray(f.prestadores) && f.prestadores.length)) continue;
+      f.prestadores = [{ id: 'pr-' + f.id, nome: String(f.contatoNome || ''), whatsapp: String(f.whatsapp || ''), email: String(f.email || ''), aniversario: aniversarioVendedor(f), funcoes: [] }];
+    }
+    d.migracoes = { ...(d.migracoes || {}), prestadoresFornecedor: 1 };
+    return d;
+  }
+  /* ---------- Contrato do fornecedor, dentro dos dados do financeiro (decisão do Rodrigo, 16/11/2026) ---------- */
+  const FORMAS_PAGAMENTO_CONTRATO = [['dinheiro', 'Dinheiro'], ['boleto', 'Boleto'], ['pix', 'PIX'], ['transferencia', 'Transferência']];
+  const RECORRENCIAS_CONTRATO = [['hora', 'Por hora'], ['visita', 'Por visita / solicitação'], ['dia', 'Por dia'], ['mes', 'Por mês'], ['ano', 'Por ano']];
+  /** Só o índice escolhido fica guardado: o sistema NÃO calcula reajuste nem valor futuro. */
+  const REAJUSTES_CONTRATO = [['sem', 'Sem reajuste'], ['salario-minimo', 'Salário mínimo'], ['ipca', 'IPCA'], ['igpm', 'IGP-M'], ['inpc', 'INPC'], ['percentual', 'Percentual fixo']];
+  /**
+   * Migração (marca d.migracoes.contratoFinanceiro): início, fim, valor e observações do contrato, que por um dia
+   * ficaram na etapa "Contrato", passam a pertencer ao quadro "Tem contrato?" dos dados do financeiro. Os campos
+   * continuam em f.contrato; quem já tinha algum deles preenchido passa a ter contrato.tem = true, para os dados
+   * continuarem à vista. Nada é apagado. Uma vez por documento.
+   */
+  function migrarContratoFinanceiro(d) {
+    if (d.migracoes && d.migracoes.contratoFinanceiro) return d;
+    for (const f of d.fornecedores || []) {
+      const c = f.contrato;
+      if (!c || typeof c !== 'object' || typeof c.tem === 'boolean') continue;
+      c.tem = Boolean(c.inicio || c.fim || c.valorCentavos != null || String(c.observacoes || '').trim());
+    }
+    d.migracoes = { ...(d.migracoes || {}), contratoFinanceiro: 1 };
+    return d;
+  }
+  const telefoneRuim = (v) => { const n = digitos(v); return Boolean(n) && (n.length < 8 || String(v).length > 30); };
+  /**
+   * O que impede salvar, etapa por etapa: devolve um texto por etapa ('' quando a etapa está em ordem). Obrigatórios: categoria
+   * (Produto ou Serviço, uma só), nome (nome fantasia ou razão social), CNPJ
+   * com dígito verificador e WhatsApp do vendedor ou prestador. O aniversário do vendedor (mês e ano) é opcional (o CPF dele não é
+   * mais pedido; valor antigo, se houver, fica guardado sem uso).
+   * regras = { cnpjValid } do field-validation.js. A exigência vale ao salvar: fornecedor antigo sem esses
+   * dados continua abrindo e sendo usado.
+   */
+  function validarFornecedorEtapas(f, regras, { fornecedores = [], funcoes = null } = {}) {
+    const aniversarioRuim = (v) => {
+      if (!v) return '';
+      const m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(v);
+      if (!m || +m[1] < 1900) return 'Aniversário inválido: use mês e ano (MM/AAAA).';
+      return v > new Date().toISOString().slice(0, 7) ? 'O aniversário não pode ser um mês futuro.' : '';
+    };
+    const basico = () => {
+      const cats = Array.isArray(f.categorias) ? f.categorias : [];
+      if (!cats.length) return 'Escolha a categoria do fornecedor: Produto ou Serviço.';
+      if (cats.length > 1) return 'Escolha só uma categoria: Produto ou Serviço.';
+      if (cats.some((c) => !CATEGORIAS_FORNECEDOR.some(([id]) => id === c))) return 'Categoria do fornecedor inválida.';
+      if (!String(f.nome || '').trim()) return 'Informe o nome fantasia ou a razão social.';
+      if (fornecedores.some((x) => x.id !== f.id && semAcento(x.nome) === semAcento(f.nome))) return 'Já existe um fornecedor com este nome.';
+      if (!regras.cnpjValid(f.documento)) return 'Informe um CNPJ válido (14 dígitos).';
+      if (f.regimeTributario && !REGIMES_TRIBUTARIOS.some(([id]) => id === f.regimeTributario)) return 'Regime tributário inválido.';
+      // Endereço é opcional; o que vier preenchido precisa estar no formato.
+      const e = f.endereco || {};
+      if (e.cep && digitos(e.cep).length !== 8) return 'O CEP deve ter 8 dígitos.';
+      if (e.uf && !/^[A-Z]{2}$/.test(e.uf)) return 'UF inválida.';
+      return '';
+    };
+    const vendedor = () => {
+      if (!digitos(f.whatsapp)) return 'Informe o WhatsApp do vendedor ou prestador.';
+      if (telefoneRuim(f.whatsapp)) return 'WhatsApp inválido.';
+      if (f.email && !emailValido(f.email)) return 'E-mail do vendedor ou prestador inválido.';
+      // Aniversário do vendedor: só mês e ano (AAAA-MM), opcional; ano de 1900 até o mês atual.
+      if (aniversarioRuim(f.vendedorAniversario)) return aniversarioRuim(f.vendedorAniversario);
+      // Prestadores (categoria Serviço): o 1º espelha o contato acima; do 2º em diante, nome obrigatório e o resto no formato.
+      const prestadores = Array.isArray(f.prestadores) ? f.prestadores : [];
+      for (let i = 0; i < prestadores.length; i++) {
+        const p = prestadores[i] || {}; const quem = 'prestador ' + (i + 1);
+        if (i > 0 && !String(p.nome || '').trim()) return 'Informe o nome do ' + quem + ' (ou remova o quadro dele).';
+        if (i > 0 && telefoneRuim(p.whatsapp)) return 'WhatsApp do ' + quem + ' inválido.';
+        if (i > 0 && p.email && !emailValido(p.email)) return 'E-mail do ' + quem + ' inválido.';
+        if (i > 0 && aniversarioRuim(p.aniversario)) return 'Aniversário do ' + quem + ' inválido: use mês e ano (MM/AAAA), sem mês futuro.';
+        if (funcoes && (p.funcoes || []).some((id) => !funcoes.some((x) => x.id === id))) return 'Função do ' + quem + ' inválida.';
+      }
+      return '';
+    };
+    const contato = (c, quem) => {
+      const x = c || {};
+      if (telefoneRuim(x.whatsapp)) return 'WhatsApp do ' + quem + ' inválido.';
+      if (x.email && !emailValido(x.email)) return 'E-mail do ' + quem + ' inválido.';
+      return '';
+    };
+    const representante = () => {
+      const cargo = f.representante && f.representante.cargo;
+      if (cargo && !CARGOS_REPRESENTANTE.some(([id]) => id === cargo)) return 'Cargo do representante inválido.';
+      return contato(f.representante, 'representante');
+    };
+    // Vínculos: grupos de despesa (Serviço) vão por id; a lista só guarda o vínculo, sem lançamento nem regra de dinheiro.
+    const vinculos = () => (f.gruposDespesaIds != null && (!Array.isArray(f.gruposDespesaIds) || f.gruposDespesaIds.some((id) => !id || typeof id !== 'string')) ? 'Grupo de despesa inválido.' : '');
+    // Contrato (quadro "Tem contrato?" dos dados do financeiro): só é conferido quando tem. Tudo opcional, menos o
+    // percentual quando o reajuste é "Percentual fixo". O valor e o índice são só informados: sem fórmula.
+    const contrato = () => {
+      const c = f.contrato;
+      if (c == null) return '';
+      if (typeof c !== 'object') return 'Contrato inválido.';
+      if (!c.tem) return '';
+      const naLista = (lista, v) => !v || lista.some(([id]) => id === v);
+      if (!naLista(FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)) return 'Forma de pagamento do contrato inválida.';
+      if (!naLista(RECORRENCIAS_CONTRATO, c.recorrencia)) return 'Recorrência do contrato inválida.';
+      if (c.vencimentoDia != null && (!Number.isInteger(c.vencimentoDia) || c.vencimentoDia < 1 || c.vencimentoDia > 31)) return 'O dia do vencimento deve ser de 1 a 31.';
+      const dataRuim = (v) => Boolean(v) && !/^\d{4}-\d{2}-\d{2}$/.test(v);
+      if (dataRuim(c.vencimentoData)) return 'Confira a data de vencimento: use DD/MM/AA.';
+      if (c.valorCentavos != null && (!Number.isInteger(c.valorCentavos) || c.valorCentavos < 0)) return 'Valor do contrato inválido.';
+      if (dataRuim(c.inicio) || dataRuim(c.fim)) return 'Confira as datas do contrato: use DD/MM/AA.';
+      if (c.inicio && c.fim && c.fim < c.inicio) return 'O término do contrato não pode ser antes do início.';
+      if (!naLista(REAJUSTES_CONTRATO, c.reajuste)) return 'Reajuste do contrato inválido.';
+      if (c.reajuste === 'percentual' && !(typeof c.reajustePercentual === 'number' && c.reajustePercentual > 0 && c.reajustePercentual <= 100)) return 'Informe o percentual do reajuste (maior que 0 e até 100).';
+      if (String(c.observacoes || '').length > 2000) return 'As observações do contrato devem ter no máximo 2000 caracteres.';
+      return '';
+    };
+    // O contrato é conferido na etapa do financeiro (3ª); a 6ª (o documento do contrato) não tem campo a conferir.
+    return [basico(), vendedor(), contato(f.financeiro, 'financeiro') || contrato(), representante(), vinculos(), ''];
+  }
+  /** Primeiro impedimento do cadastro inteiro, ou ''. */
+  const validarFornecedor = (f, regras, ctx) => validarFornecedorEtapas(f, regras, ctx).find(Boolean) || '';
+
   /* ---------- Cotação: avaliação automática da resposta do fornecedor ----------
    * Um item é comprado sozinho quando: custo ≤ referência congelada, cabe no teto e a
    * quantidade disponível está dentro da margem aceita. Caso contrário vai para o comprador.
@@ -335,6 +587,10 @@
     REPETICOES, DIAS_SEMANA, MESES, ocorrencias, resumoRegra,
     topoDoRanking,
     digitos, motivoNaoConvidavel, podeConvidar,
+    CATEGORIAS_FORNECEDOR, categoriaFornecedor, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, documentoAntigoFornecedor, validarFornecedor,
+    validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, aniversarioVendedor, migrarVendedorFornecedor,
+    FUNCOES_PRESTADOR_INICIAIS, idFuncaoPrestador, funcaoPrestadorIgual, validarFuncaoPrestador, migrarPrestadoresFornecedor,
+    FORMAS_PAGAMENTO_CONTRATO, RECORRENCIAS_CONTRATO, REAJUSTES_CONTRATO, migrarContratoFinanceiro,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,
     aplicarRecebimento, SITUACOES_PEDIDO,

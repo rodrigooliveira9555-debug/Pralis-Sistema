@@ -34,11 +34,60 @@
     if (b.energia && b.energia !== 'nenhuma' && !(b.consumoHora > 0)) return 'Informe o consumo por hora do equipamento.';
     const np = texto(b.numeroPatrimonio);
     if (np && B.dados.bens.some((x) => x.id !== b.id && texto(x.numeroPatrimonio) === np)) return 'Já existe um bem com o número de patrimônio ' + np + '.';
+    for (const p of b.pecas) {
+      if (!p.nome) return 'Informe o nome da peça (ou remova a linha).';
+      if ([p.ultimaTroca, p.proximaTroca].some((d) => d && !dataValida(d))) return 'Data inválida na peça ' + p.nome + '.';
+      if (!intervaloValido(p.intervaloMeses)) return 'Na peça ' + p.nome + ', "A cada (meses)" deve ser um número inteiro a partir de 1.';
+      if (p.valor != null && !(p.valor >= 0)) return 'Na peça ' + p.nome + ', o valor não pode ser negativo.';
+      if (p.foto && !/^data:image\/(jpeg|png|webp);base64,/.test(p.foto)) return 'Na peça ' + p.nome + ', a imagem não é válida.';
+      if (p.subgrupoDespesaId && !p.grupoDespesaId) return 'Na peça ' + p.nome + ', escolha o grupo de despesas.';
+    }
+    if (b.revisao) {
+      if ([b.revisao.ultima, b.revisao.proxima].some((d) => d && !dataValida(d))) return 'Data da revisão inválida.';
+      if (!intervaloValido(b.revisao.intervaloMeses)) return 'Na revisão, "A cada (meses)" deve ser um número inteiro a partir de 1.';
+    }
     return '';
   }
-  function salvarBem(entrada) {
+  const dataValida = (iso) => /^\d{4}-\d{2}-\d{2}$/.test(iso) && !Number.isNaN(Date.parse(iso + 'T12:00:00'));
+  const intervaloValido = (n) => n == null || (Number.isInteger(n) && n >= 1);
+  const intervalo = (v) => (texto(v) === '' ? null : Number(v));
+  /**
+   * Deixa o bem no formato salvo. Peças/materiais: [{ id, nome, marca, modelo, fornecedorId, grupoDespesaId,
+   * subgrupoDespesaId, valor, foto, ultimaTroca, intervaloMeses, proximaTroca }] (fornecedor do Compras e grupo de
+   * DES - Grupos de Despesas pelos ids; valor em reais com 2 casas, como o valor do bem; foto reduzida em data URL);
+   * revisão periódica: { ultima, intervaloMeses, proxima } ou null; datas ISO ou '', intervalo inteiro ou null.
+   * Com a última data e o intervalo, a próxima é sempre última + N meses (D.proximaData); sem um dos dois,
+   * vale a próxima digitada. Áudio: referência { id, type, size, seconds } do arquivo guardado no aparelho,
+   * ou null. Linha de peça toda em branco é descartada.
+   */
+  function prepararBem(entrada) {
     const b = { ...entrada, nome: texto(entrada.nome).toLocaleUpperCase('pt-BR') };
     if (b.energia === 'nenhuma' || !b.energia) { b.energia = 'nenhuma'; b.consumoHora = null; }
+    b.pecas = (Array.isArray(entrada.pecas) ? entrada.pecas : [])
+      .map((p) => {
+        const ultimaTroca = texto(p.ultimaTroca);
+        const intervaloMeses = intervalo(p.intervaloMeses);
+        const valor = num(p.valor);
+        return {
+          id: p.id || S.novoId('peca'), nome: texto(p.nome).toLocaleUpperCase('pt-BR'), marca: texto(p.marca), modelo: texto(p.modelo),
+          fornecedorId: texto(p.fornecedorId), grupoDespesaId: texto(p.grupoDespesaId), subgrupoDespesaId: texto(p.subgrupoDespesaId),
+          valor: valor == null ? null : D.centavos(valor), foto: p.foto || null,
+          ultimaTroca, intervaloMeses, proximaTroca: D.proximaData(ultimaTroca, intervaloMeses) || texto(p.proximaTroca),
+        };
+      })
+      .filter((p) => p.nome || p.marca || p.modelo || p.fornecedorId || p.grupoDespesaId || p.valor != null || p.foto || p.ultimaTroca || p.intervaloMeses != null || p.proximaTroca);
+    const rv = entrada.revisao || {};
+    const ultima = texto(rv.ultima);
+    const meses = intervalo(rv.intervaloMeses);
+    const proxima = D.proximaData(ultima, meses) || texto(rv.proxima);
+    b.revisao = ultima || meses != null || proxima ? { ultima, intervaloMeses: meses, proxima } : null;
+    b.audio = entrada.audio && entrada.audio.id ? { id: entrada.audio.id, type: entrada.audio.type || '', size: entrada.audio.size || 0, seconds: entrada.audio.seconds || 0 } : null;
+    return b;
+  }
+  /** Mensagem do que impede salvar, ou '' (a tela confere antes de guardar o áudio no aparelho). */
+  const conferirBem = (entrada) => validarBem(prepararBem(entrada));
+  function salvarBem(entrada) {
+    const b = prepararBem(entrada);
     const msg = validarBem(b);
     if (msg) return erro(msg);
     let id = b.id;
@@ -505,7 +554,7 @@
 
   window.CicluzProducaoServico = {
     salvarParametros, custoDaFicha,
-    salvarBem, excluirBem, alternarBem, usosDoBem,
+    salvarBem, conferirBem, excluirBem, alternarBem, usosDoBem,
     salvarConfig, desligarProducao,
     salvarFicha, duplicarFicha, definirPadrao, excluirFicha,
     salvarAgenda, encerrarAgenda, proximasDatas, cancelarData, processarAgendas,

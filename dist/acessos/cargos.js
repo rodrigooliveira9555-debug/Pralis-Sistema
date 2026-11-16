@@ -151,7 +151,7 @@
     const podeMarcar = (chave) => perfil.tem(chave) || marcadas.has(chave);
     let ativo = c ? c.ativo : true;
     A.dialogoApi({
-      titulo: c ? 'Cargo ' + c.nome : 'Novo cargo de acesso',
+      titulo: c ? 'Cargo ' + c.nome : 'Cadastro cargo de acesso',
       subtitulo: c ? (c.pessoas === 1 ? '1 pessoa tem este cargo. A mudança vale na próxima ação dela.' : c.pessoas + ' pessoas têm este cargo. A mudança vale na próxima ação delas.') : 'Marque o que quem tiver este cargo pode fazer.',
       rotuloSalvar: c ? 'Salvar cargo' : 'Criar cargo',
       largo: true,

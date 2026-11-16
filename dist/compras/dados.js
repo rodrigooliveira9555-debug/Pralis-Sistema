@@ -161,6 +161,17 @@
     for (const c of COLECOES_NOVAS) if (!Array.isArray(d[c])) d[c] = [];
     if (!d.unidades.length) d.unidades = UNIDADES_INICIAIS.map(([sigla, nome]) => ({ id: 'un-' + sigla.toLowerCase(), sigla, nome, ativa: true }));
     d.produtos = d.produtos.map(normalizarProduto);
+    // Fornecedor: o texto livre antigo de "categoria" vira o campo ramo (uma vez por documento, marca em d.migracoes).
+    // Só em memória: vai para o armazenamento na próxima gravação, para abrir a tela não criar versão no banco.
+    window.CicluzComprasDominio.migrarRamoFornecedor(d);
+    // Fornecedor antigo ligado a produtos (catálogo, histórico, cotação ou pedido) e sem categoria vira Produto (uma vez).
+    window.CicluzComprasDominio.migrarCategoriaProduto(d);
+    // Cadastro em etapas: a data de nascimento do fornecedor pessoa física passa a ser a do vendedor ou prestador (uma vez).
+    window.CicluzComprasDominio.migrarVendedorFornecedor(d);
+    // Funções do prestador (cadastro próprio, com a lista inicial) e o contato único do fornecedor de Serviço como Prestador 1 (uma vez).
+    window.CicluzComprasDominio.migrarPrestadoresFornecedor(d);
+    // Contrato: início, fim, valor e observações passam a ser do quadro "Tem contrato?" do financeiro (uma vez).
+    window.CicluzComprasDominio.migrarContratoFinanceiro(d);
     return d;
   }
 

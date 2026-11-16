@@ -69,8 +69,107 @@ body.dark-theme .compras-conta { background: #34333b; color: #d4d4d8; }
 }
 .compras-lista > .compras-linha:first-child { border-top: 0; }
 button.compras-linha { cursor: pointer; }
+/* Linha com a setinha de ações dos cadastros de grupos (createFinancialActions): a seta revela Editar e Excluir,
+   redondos de --row-action-size, Editar na cor do menu e Excluir em vermelho, como nos grupos. */
+.compras-linha.com-acoes { cursor: pointer; flex-wrap: nowrap; }
+/* Formato da linha de DES - Grupos de Despesas (medido na tela): 52 px, ícone quadrado de cantos arredondados
+   (--row-icon-radius), título 14/500, informação menor embaixo, estado à direita e fundo
+   na cor da origem ao passar o cursor ou focar. */
+.compras-linha.com-acoes { padding: 8px 12px; gap: 8px; }
+.compras-linha.com-acoes:hover, .compras-linha.com-acoes:focus-within { background: color-mix(in srgb, var(--menu-accent) 8%, var(--theme-surface, #fff)); }
+body.dark-theme .compras-linha.com-acoes:hover, body.dark-theme .compras-linha.com-acoes:focus-within { background: color-mix(in srgb, var(--menu-accent) 18%, #24232b); }
+body:not(.dark-theme) .compras-linha.com-acoes:hover .compras-linha-texto b { color: var(--panel-text, inherit); }
+.compras-linha.com-acoes .compras-linha-texto { flex-basis: 0; min-width: 0; }
+.compras-linha.com-acoes .compras-linha-texto b { font: 500 var(--ui-text, 14px)/18px var(--ui-font); }
+.compras-linha .account-list-state { flex: none; font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); }
+/* Lista em grade (ex.: fornecedores): colunas de largura fixa, iguais em todas as linhas, para cada dado cair
+   sempre na mesma vertical; célula sem dado fica vazia. Abaixo de 1000 px as células empilham sob o nome. */
+.compras-linha.em-colunas { display: grid; align-items: center; column-gap: 8px; row-gap: 2px; }
+.compras-celula { min-width: 0; overflow-wrap: anywhere; font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); }
+.compras-celula.c-nome { font: 500 var(--ui-text, 14px)/18px var(--ui-font); color: inherit; }
+.compras-celula.c-categoria { font-weight: 500; color: inherit; }
+.compras-celula.c-selos { display: flex; flex-wrap: wrap; gap: 4px; }
+.compras-linha-cabecalho { min-height: 0; padding-top: 6px; padding-bottom: 6px; cursor: default; }
+.compras-linha-cabecalho .compras-celula { font: 600 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); text-transform: uppercase; letter-spacing: .04em; }
+/* A lista rola para os lados dentro dela mesma (a página não). */
+.compras-lista-grade { container-type: inline-size; container-name: lista-grade; overflow-x: auto; overscroll-behavior-x: contain; }
+.compras-lista-grade.arrastando { cursor: grabbing; user-select: none; }
+/* Bolinhas do cabeçalho branco da lista (o "‹ ›" ao lado do título e o "+" na outra ponta): círculo cheio na cor do
+   menu de onde se veio (--menu-accent), com o desenho na cor da superfície, como os redondos do rodapé. */
+.compras-secao-cab .compras-redondo { flex: none; width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: var(--theme-surface, #fff); }
+/* Quantidade da lista: círculo do mesmo diâmetro da bolinha "+", ao lado dela, mas só com contorno e fundo claro na cor
+   do menu, para não parecer botão. Com mais dígitos vira pílula. */
+.compras-secao-ponta { display: flex; align-items: center; gap: 8px; flex: none; }
+.compras-contagem { box-sizing: border-box; min-width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); padding: 0 8px; border-radius: 999px; display: grid; place-items: center; border: 1.5px solid var(--menu-accent); background: color-mix(in srgb, var(--menu-accent) 10%, var(--theme-surface, #fff)); color: var(--panel-text, inherit); font: 600 var(--ui-note, 11px)/1 var(--ui-font); cursor: default; }
+body.dark-theme .compras-contagem { color: var(--layout-ink, #f2f1f6); }
+.compras-secao-cab .compras-redondo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* Setinha do título de cada coluna: o mesmo desenho, tamanho e cor da seta do fim das linhas (.account-action-toggle);
+   aponta para a direita com a coluna oculta e vira com a coluna aberta. */
+.compras-coluna-seta { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; background: transparent; color: var(--navigation-ink, #a2a0aa); cursor: pointer; }
+.compras-coluna-seta svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
+.compras-coluna-seta[aria-expanded=true] svg { transform: rotate(180deg); }
+.compras-linha-cabecalho .compras-celula { display: flex; align-items: center; gap: 4px; }
+.compras-linha-cabecalho .compras-coluna-titulo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Fornecedores: ícones (lugar para dois) · fornecedor · categoria · nome do contato · WhatsApp · razão social · CPF/CNPJ ·
+   ramo · avisos · situação · seta. Cada célula tem coluna fixa, igual em todas as linhas; a largura de cada coluna
+   ocultável vem de uma variável, que a classe oculta-<chave> da lista reduz à faixa da setinha. */
+.compras-linha.grade-fornecedor {
+  grid-template-columns: 64px var(--w-nome, minmax(190px, 1fr)) var(--w-categoria, 128px) var(--w-contato, 148px) var(--w-whatsapp, 124px)
+    var(--w-razao, 190px) var(--w-documento, 138px) var(--w-ramo, 116px) var(--w-selos, 130px) 72px 24px;
+  width: max-content; min-width: 100%; background: var(--theme-card, #fff);
+}
+.compras-linha.grade-fornecedor > * { grid-row: 1; }
+/* O ícone da categoria fica sempre à vista, fixo à esquerda. */
+.compras-linha.grade-fornecedor > .compras-linha-icones { grid-column: 1; position: sticky; left: 0; z-index: 2; align-self: stretch; align-items: center; background: inherit; padding-left: 12px; margin-left: -12px; }
+.compras-linha.grade-fornecedor > .c-nome { grid-column: 2; }
+.compras-linha.grade-fornecedor > .c-categoria { grid-column: 3; }
+.compras-linha.grade-fornecedor > .c-contato { grid-column: 4; }
+.compras-linha.grade-fornecedor > .c-whatsapp { grid-column: 5; }
+.compras-linha.grade-fornecedor > .c-razao { grid-column: 6; }
+.compras-linha.grade-fornecedor > .c-documento { grid-column: 7; }
+.compras-linha.grade-fornecedor > .c-ramo { grid-column: 8; }
+.compras-linha.grade-fornecedor > .c-selos { grid-column: 9; }
+.compras-linha.grade-fornecedor > .account-list-state, .compras-linha.grade-fornecedor > .c-estado { grid-column: 10; }
+.oculta-razao { --w-razao: 24px; }
+.oculta-razao .grade-fornecedor:not(.compras-linha-cabecalho) > .c-razao, .oculta-razao .compras-linha-cabecalho > .c-razao > .compras-coluna-titulo { display: none; }
+.oculta-categoria { --w-categoria: 24px; }
+.oculta-categoria .grade-fornecedor:not(.compras-linha-cabecalho) > .c-categoria, .oculta-categoria .compras-linha-cabecalho > .c-categoria > .compras-coluna-titulo { display: none; }
+.oculta-contato { --w-contato: 24px; }
+.oculta-contato .grade-fornecedor:not(.compras-linha-cabecalho) > .c-contato, .oculta-contato .compras-linha-cabecalho > .c-contato > .compras-coluna-titulo { display: none; }
+.oculta-whatsapp { --w-whatsapp: 24px; }
+.oculta-whatsapp .grade-fornecedor:not(.compras-linha-cabecalho) > .c-whatsapp, .oculta-whatsapp .compras-linha-cabecalho > .c-whatsapp > .compras-coluna-titulo { display: none; }
+.oculta-documento { --w-documento: 24px; }
+.oculta-documento .grade-fornecedor:not(.compras-linha-cabecalho) > .c-documento, .oculta-documento .compras-linha-cabecalho > .c-documento > .compras-coluna-titulo { display: none; }
+.oculta-ramo { --w-ramo: 24px; }
+.oculta-ramo .grade-fornecedor:not(.compras-linha-cabecalho) > .c-ramo, .oculta-ramo .compras-linha-cabecalho > .c-ramo > .compras-coluna-titulo { display: none; }
+.oculta-selos { --w-selos: 24px; }
+.oculta-selos .grade-fornecedor:not(.compras-linha-cabecalho) > .c-selos, .oculta-selos .compras-linha-cabecalho > .c-selos > .compras-coluna-titulo { display: none; }
+/* A seta de Editar/Excluir fica sempre à vista, fixa à direita; a gaveta abre ao lado dela, por cima da situação. */
+.compras-linha.grade-fornecedor > .account-action-toggle { grid-column: 11; position: sticky; right: 0; z-index: 2; align-self: stretch; height: auto; background: inherit; }
+.compras-linha.grade-fornecedor > .account-row-actions:not([hidden]) { grid-column: 10; grid-row: 1; justify-self: end; position: sticky; right: 32px; z-index: 2; background: inherit; }
+.compras-linha.grade-fornecedor:has(> .account-row-actions:not([hidden])) > .account-list-state { visibility: hidden; }
+/* O ícone e o nome do fornecedor nunca ocultam e ficam fixos à esquerda quando a lista rola (regra do Rodrigo).
+   No celular a coluna do nome estreita, para sobrar espaço para as colunas que rolam. */
+.grade-fornecedor > .c-nome { position: sticky; left: 76px; z-index: 1; align-self: stretch; display: flex; align-items: center; background: inherit; box-shadow: 1px 0 0 var(--layout-line, #dedee3); padding-right: 8px; }
+@container lista-grade (max-width: 519px) {
+  .compras-linha.grade-fornecedor { --w-nome: 112px; }
+}
+.compras-linha .account-action-toggle { flex: none; width: 32px; height: 32px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.compras-linha .account-row-actions { display: flex; flex: none; align-items: center; gap: var(--row-action-gap, 6px); }
+.compras-linha .account-row-actions[hidden] { display: none; }
+.compras-linha .account-row-actions > button { width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); flex: none; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: var(--theme-surface, #fff); }
+.compras-linha .account-row-actions > button:first-child { order: 1; background: var(--cicluz-danger, #ef4444); }
+.compras-linha .account-row-actions svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+/* No celular os selos descem para a linha de baixo, alinhados ao texto, e a seta fica na primeira linha. */
+@media (max-width: 560px) {
+  .compras-linha.com-acoes:not(.em-colunas) { flex-wrap: wrap; }
+  .compras-linha.com-acoes .compras-linha-direita { order: 5; flex: 1 0 100%; justify-content: flex-start; margin-left: 0; padding-left: 42px; box-sizing: border-box; }
+}
 button.compras-linha:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
-.compras-linha-icone { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--menu-accent); }
+/* Ícone de linha é só imagem: quadrado de cantos arredondados (--row-icon-radius). Círculo fica para botão (regra de 15/11/2026). */
+.compras-linha-icone { flex: 0 0 30px; width: 30px; height: 30px; border-radius: var(--row-icon-radius, 26%); display: grid; place-items: center; background: var(--menu-accent); }
+/* Mais de um ícone na linha (ex.: fornecedor de Produto e de Serviço), cada um com a própria cor */
+.compras-linha-icones { display: flex; flex: none; gap: 4px; }
 .compras-linha-icone svg { width: 16px; height: 16px; fill: none; stroke: var(--theme-surface, #fff); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 /* O texto nunca fica mais estreito que 180px: sem espaço, os botões descem para a linha de baixo. */
 .compras-linha-texto { flex: 1 1 180px; min-width: min(180px, 100%); display: grid; gap: 2px; }
@@ -153,7 +252,7 @@ body.dark-theme .compras-trilha li { background: #34333b; color: #d4d4d8; }
 
 /* Diálogos (o shell do S2 adapta <dialog> em people-header-pilot.js). */
 .compras-dialog { background: var(--theme-surface, #fff); color: var(--layout-ink, #3f3f46); }
-body dialog.shell-dialog.compras-dialog.largo { width: min(1000px, calc(100vw - 16px)) !important; }
+
 .compras-dialog.largo { width: min(1000px, calc(100vw - 32px)); max-width: none; }
 .compras-dialog h2 { margin: 0 0 4px; font: var(--ui-title-weight, 600) var(--ui-title, 16px)/var(--ui-title-line, 20px) var(--ui-font); }
 .compras-dialog-sub { margin: 0 0 12px; font: 400 var(--ui-subtitle, 11px)/var(--ui-subtitle-line, 14px) var(--ui-font); color: var(--muted, #73737a); }
@@ -163,7 +262,67 @@ body dialog.shell-dialog.compras-dialog.largo { width: min(1000px, calc(100vw - 
 /* Itens do diálogo podem encolher: uma tabela larga rola dentro da própria caixa, sem passar da borda. */
 .compras-dialog .compras-form > * { min-width: 0; }
 .compras-fieldset { border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; padding: 12px 14px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; min-width: 0; }
+/* "Enviar link para cadastro": botão retangular no cabeçalho da lista e painel fixo por cima da tela (o quadro da
+   lista corta o que sai dele): coluna branca estreita com a seta de fechar e as bolinhas dos canais, e ao lado o prazo. */
+.compras-enviar { display: inline-flex; }
+.compras-enviar-painel { position: fixed; z-index: 30; display: flex; align-items: flex-start; gap: 8px; font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); }
+.compras-enviar-painel[hidden] { display: none; }
+.compras-enviar-canais, .compras-enviar-prazo { background: var(--theme-card, #fff); border: 1px solid var(--layout-line, #dedee3); border-radius: 14px; box-shadow: 0 8px 24px rgb(0 0 0 / .14); }
+.compras-enviar-canais { display: grid; justify-items: center; gap: 10px; padding: 10px 8px; }
+.compras-secao-cab .compras-enviar-fechar { background: transparent; color: var(--panel-text, #12672e); }
+.compras-enviar-prazo { display: grid; gap: 8px; padding: 12px; width: min(230px, calc(100vw - 84px)); box-sizing: border-box; }
+.compras-enviar-prazo .profiles-note { margin: 0; }
+.compras-enviar-prazo > .profiles-note:empty, .compras-enviar-prazo > .profiles-error:empty { display: none; }
+/* Janela de escolha da etapa Vínculos (produtos; grupos e subgrupos de despesa): lista de caixas de marcar. */
+.compras-vinculos-lista { display: grid; gap: 8px; padding: 4px 2px; min-width: 0; }
+/* Subgrupo dentro do grupo: recuado, para a hierarquia aparecer. */
+.compras-vinculos-lista > .compras-vinculo-nivel { margin-left: 28px; }
+span.compras-chip { cursor: default; }
+/* "+ Acrescentar opção": chip tracejado, para não parecer uma opção da lista. */
+.compras-chip-mais { border-style: dashed; }
+/* Seleção por cartões (U.cartoesEscolha): cartão = botão inteiro; lado a lado quando cabe, empilhado no celular.
+   Marcado: borda de 2 px e fundo bem claro na cor da opção, círculo cheio com o "certo". */
+.compras-cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; min-width: 0; }
+.compras-cartao-escolha { --cartao-cor: var(--menu-accent); display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 68px; margin: 0; padding: 12px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); color: var(--layout-ink, inherit); font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); text-align: left; cursor: pointer; }
+.compras-cartao-escolha:is([aria-pressed=true], [aria-checked=true]) { padding: 11px; border: 2px solid var(--cartao-cor); background: color-mix(in srgb, var(--cartao-cor) 9%, var(--theme-card, #fff)); }
+.compras-cartao-escolha:focus-visible { outline: 2px solid var(--cartao-cor); outline-offset: 2px; }
+.compras-cartao-escolha > .compras-linha-icone { flex: none; width: 40px; height: 40px; background: var(--cartao-cor); }
+.compras-cartao-escolha > .compras-linha-icone svg { width: 20px; height: 20px; }
+.compras-cartao-texto { display: grid; gap: 2px; min-width: 0; }
+.compras-cartao-texto > strong { font: 600 15px/20px var(--ui-font); }
+.compras-cartao-texto > small { font: 400 12px/16px var(--ui-font); color: var(--muted, #73737a); }
+.compras-cartao-marca { width: 24px; height: 24px; border: 2px solid var(--layout-line, #dedee3); border-radius: 50%; display: grid; place-items: center; box-sizing: border-box; }
+.compras-cartao-marca svg { width: 14px; height: 14px; fill: none; stroke: var(--theme-surface, #fff); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; visibility: hidden; }
+.compras-cartao-escolha:is([aria-pressed=true], [aria-checked=true]) > .compras-cartao-marca { border-color: var(--cartao-cor); background: var(--cartao-cor); }
+.compras-cartao-escolha:is([aria-pressed=true], [aria-checked=true]) > .compras-cartao-marca svg { visibility: visible; }
+/* Quadro "Situação do(a) <coisa>" (U.quadroSituacao): moldura como a dos quadros do formulário; o interruptor é o
+   .account-status-switch dos cadastros financeiros, ligado na cor do menu de origem. */
+.compras-situacao-quadro { grid-column: 1 / -1; display: grid; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; padding: 12px 14px; background: var(--theme-card, #fff); font: 600 12px/1.4 var(--ui-font); min-width: 0; }
+.compras-situacao-quadro .account-status-row { height: 40px; margin-top: 6px; }
+.compras-situacao-quadro .account-status-switch[aria-checked=true] { background: var(--menu-accent); }
+.compras-situacao-quadro .account-status-switch:focus-visible { outline-color: var(--menu-accent); }
+.compras-situacao-quadro .account-status-text { font-size: 12px; }
+.compras-situacao-quadro > small { margin: 2px 0 0; font-weight: 400; }
+/* O mesmo quadro também recebe a seleção por cartões (Categoria do fornecedor). */
+.compras-situacao-quadro > .compras-cartoes { margin: 8px 0 4px; }
+/* Campo preenchido por "O mesmo da etapa anterior": à vista, só para leitura. */
+.compras-fieldset input[readonly] { opacity: .7; cursor: default; }
 .compras-fieldset legend { padding: 0 6px; font: 600 13px/18px var(--ui-font); }
+/* Campos alinhados pelo topo: a dica embaixo de um campo não desloca os campos vizinhos da mesma linha. */
+.compras-fieldset { align-items: start; }
+/* Formulário no padrão dos cadastros do sistema (medido no editor de DES - Grupos de Despesas): duas colunas,
+   8 px entre linhas e 14 px entre colunas; uma coluna no celular. Os campos (rótulo 12 px, 42 px, raio 8) já vêm
+   do ui-foundation.css. */
+.compras-form-padrao .compras-fieldset { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
+@media (max-width: 600px) { .compras-form-padrao .compras-fieldset { grid-template-columns: minmax(0, 1fr); } }
+/* Cadastro em etapas: a barra (stepper.js) no topo e Voltar/Avançar/Salvar embaixo, como no Cadastro Completo. */
+.compras-form-padrao .stepper-wrap { margin: 4px 0 8px; }
+.compras-etapas-nav { justify-content: flex-end; }
+/* Voltar, Avançar e Salvar com a mesma largura (a do rodapé de formulário, que o layout-review.js mede no grupo). */
+.compras-etapas-nav > .btn { min-width: var(--acao-largura, 128px); }
+/* Uma etapa com mais de um quadro (ex.: dados da empresa + endereço). */
+.compras-etapa { display: grid; gap: 12px; min-width: 0; }
+.compras-form-padrao .compras-form > .compras-etapa { grid-column: 1 / -1; }
 .compras-fieldset > .compras-interruptor, .compras-fieldset > .compras-texto-auto, .compras-fieldset > .compras-largo { grid-column: 1 / -1; }
 .compras-texto-auto { margin: 0; font-size: 12px; color: var(--panel-text, #12672e); font-weight: 600; }
 body.dark-theme .compras-texto-auto { color: #a7e8bd; }
