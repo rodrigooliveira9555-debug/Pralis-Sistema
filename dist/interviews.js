@@ -3,14 +3,14 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,DB=window.CicluzDateBR,T=window.CicluzTimeBR,F=window.CicluzFieldRules;if(!P||!U||!DB||!T||!F)return;
 const {el,button,iconButton,svg,ICON,fold,newId,dateBR,today,dialog,confirmDialog}=U;
-const ACCENT='#7c3aed',PATH=menuCrumb(2,'Cadastros Geral Colaboradores','Entrevista'),CHAT='M4 5h16v11H9l-5 4zM8 9h8M8 12h5';
+const ACCENT='var(--section-accent,#ef4444)',PATH=menuCrumb(2,'Cadastros Geral Colaboradores','Entrevista'),CHAT='M4 5h16v11H9l-5 4zM8 9h8M8 12h5';
 const STATUSES=[['Agendada','p-yellow'],['Realizada','p-yellow'],['Aprovado para continuidade','p-green'],['Não aprovado','p-red'],['Cancelada','p-red']];
 const pillOf=s=>(STATUSES.find(x=>x[0]===s)||[,''])[1];
 const data=()=>P.get();
 const interviewed=()=>data().people.filter(p=>p.interview);
 
 const view=el('section','view');view.id='interviews-view';view.style.setProperty('--menu-accent',ACCENT);
-const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
+const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
 const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(CHAT);const heading=el('div');heading.append(el('h2',null,'Entrevista'),el('p',null,PATH));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
 addShortcuts(view.id,()=>menuBack(2,'Cadastros Geral Colaboradores')());
@@ -29,7 +29,7 @@ const status=el('select');STATUSES.forEach(([s])=>status.add(new Option(s,s)));
 const notes=el('textarea');notes.rows=4;notes.addEventListener('focusout',e=>e.stopPropagation());
 const dup=el('div','uniforms-wide');
 const formError=el('p','uniforms-wide profiles-error');formError.setAttribute('role','alert');const formStatus=el('p','uniforms-wide profiles-note');formStatus.setAttribute('role','status');
-const actions=el('div','uniforms-wide actions');const save=el('button','btn','Salvar');save.type='submit';const cont=button('Dar Continuidade',()=>continueCandidate(draft.editingId));actions.append(button('Cancelar',()=>{resetForm();formStatus.textContent='Edição descartada.'}),cont,save);
+const actions=el('div','uniforms-wide actions');const save=el('button','btn','Salvar');save.type='submit';const cont=button('Dar Continuidade',()=>continueCandidate(draft.editingId));actions.append(button('Cancelar',()=>{resetForm();formStatus.textContent='Edição descartada.'}),cont,save); U.iconizeActions(actions);
 form.append(formTitle,lbl('Nome completo do candidato *',nameIn),lbl('CPF *',cpfIn),dateIn.label,lbl('Horário da entrevista',timeIn),times,lbl('Status da entrevista *',status),lbl('Observações da entrevista',notes,'uniforms-wide'),dup,formError,formStatus,actions);
 const history=el('div','uniforms-history');body.append(form,history);
 
@@ -38,8 +38,8 @@ let draft={editingId:null};
 function checkDuplicate(){dup.replaceChildren();const cpf=cpfIn.value.replace(/\D/g,'');if(cpf.length!==11)return null;const other=data().people.find(p=>p.cpf===cpf&&p.id!==draft.editingId);if(!other)return null;const box=el('p','people-alert');box.append(el('span',null,'Já existe cadastro com este CPF: '+other.name+' ('+({ATIVO:'colaborador ativo',INATIVO:'colaborador inativo',CANDIDATO:'candidato'})[other.status]+'). '));if(other.interview)box.append(button('Abrir entrevista existente',()=>editInterview(other)));else box.append(button('Ver ficha',()=>window.showCollaborators?.({personId:other.id})));dup.append(box);return other}
 cpfIn.addEventListener('input',()=>{queueMicrotask(checkDuplicate)});
 function renderCont(){const p=draft.editingId&&P.byId(draft.editingId);cont.hidden=!(p&&p.interview.status==='Aprovado para continuidade'&&!p.interview.continuedAt);status.disabled=!!p?.interview.continuedAt;if(p?.interview.continuedAt)status.title='Status fixado: o candidato já seguiu para o Cadastro Simples.';else status.removeAttribute('title')}
-function resetForm(){draft={editingId:null};formTitle.textContent='Nova entrevista';nameIn.value='';cpfIn.value='';dateIn.set(today());timeIn.value='';status.value='Agendada';notes.value='';dup.replaceChildren();formError.textContent='';renderCont()}
-function editInterview(p){draft={editingId:p.id};formTitle.textContent='Editar entrevista de '+p.name;nameIn.value=p.name;cpfIn.value=F.cpfMask(p.cpf);dateIn.set(p.interview.date);timeIn.value=p.interview.time||'';status.value=p.interview.status;notes.value=p.interview.notes||'';dup.replaceChildren();formError.textContent='';renderCont();formStatus.textContent=p.interview.continuedAt?'Este candidato já seguiu para o Cadastro Simples; nome e CPF continuam editáveis aqui e no Cadastro Simples.':'Editando a entrevista.';form.scrollIntoView({block:'start',behavior:'smooth'})}
+function resetForm(){U.closeEditor(form);draft={editingId:null};formTitle.textContent='Nova entrevista';nameIn.value='';cpfIn.value='';dateIn.set(today());timeIn.value='';status.value='Agendada';notes.value='';dup.replaceChildren();formError.textContent='';renderCont()}
+function editInterview(p){draft={editingId:p.id};formTitle.textContent='Editar entrevista de '+p.name;nameIn.value=p.name;cpfIn.value=F.cpfMask(p.cpf);dateIn.set(p.interview.date);timeIn.value=p.interview.time||'';status.value=p.interview.status;notes.value=p.interview.notes||'';dup.replaceChildren();formError.textContent='';renderCont();formStatus.textContent=p.interview.continuedAt?'Este candidato já seguiu para o Cadastro Simples; nome e CPF continuam editáveis aqui e no Cadastro Simples.':'Editando a entrevista.';U.openEditor(form,formTitle.textContent,resetForm)}
 form.onsubmit=e=>{e.preventDefault();formError.textContent='';formStatus.textContent='';const errors=[],cpf=cpfIn.value.replace(/\D/g,''),date=dateIn.iso(),own=draft.editingId&&P.byId(draft.editingId);
  if(!nameIn.value.trim())errors.push('Informe o nome completo do candidato.');if(!F.cpfValid(cpf))errors.push('Informe um CPF válido.');else if(checkDuplicate())errors.push('CPF já cadastrado: abra o registro existente em vez de criar outro.');
  if(!date)errors.push('Informe a data da entrevista (DD/MM/AAAA).');if(timeIn.value&&!T.valid(timeIn.value))errors.push('Horário inválido (HH:MM).');

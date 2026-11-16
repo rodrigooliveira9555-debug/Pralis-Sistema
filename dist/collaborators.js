@@ -3,13 +3,13 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,F=window.CicluzFieldRules,PH=window.CicluzPhoneBR;if(!P||!U)return;
 const {el,button,iconButton,svg,ICON,fold,dateBR,enumField,dialog,confirmDialog,uniformName,money}=U;
-const ACCENT='#7c3aed',PATH=menuCrumb(2,'Relatórios','DES - Cadastro Colaborador');
+const ACCENT='var(--section-accent,#ef4444)',PATH=menuCrumb(2,'Relatórios','DES - Cadastro Colaborador');
 const STATUS_PILL={ATIVO:['Ativo','p-green'],INATIVO:['Inativo','p-red'],CANDIDATO:['Em admissão','p-yellow']};
 const data=()=>P.get();
 const pill=(t,c)=>el('span','pill '+c,t);
 
 const view=el('section','view');view.id='collaborators-view';view.style.setProperty('--menu-accent',ACCENT);
-const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
+const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
 const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(ICON.user);const heading=el('div'),title=el('h2',null,'DES - Cadastro Colaborador'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
 let back=()=>menuBack(2,'Relatórios')();addShortcuts(view.id,()=>back());

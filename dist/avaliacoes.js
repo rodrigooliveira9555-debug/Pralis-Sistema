@@ -8,7 +8,7 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,DB=window.CicluzDateBR;if(!P||!U||!DB)return;
 const {el,button,iconButton,svg,ICON,fold,newId,money,moneyInput,cents,dateBR,today,confirmDialog}=U;
-const KEY='cicluz-avaliacoes-v1',ACCENT='#7c3aed',TITLE='Avaliações',CLIPBOARD='M9 4h6v3H9zM7 5H5v16h14V5h-2M9 14l2 2 4-4';
+const KEY='cicluz-avaliacoes-v1',ACCENT='var(--section-accent,#ef4444)',TITLE='Avaliações',CLIPBOARD='M9 4h6v3H9zM7 5H5v16h14V5h-2M9 14l2 2 4-4';
 
 /* ---------- Critérios (textos do Rodrigo) ---------- */
 const APRESENTACAO=['Touca/Boné','Camisa','Avental','Crachá','Calça','Sapato'];
@@ -65,7 +65,7 @@ const pctText=p=>p==null?'—':String(p).replace('.',',')+'%';
 
 /* ---------- Tela ---------- */
 const view=el('section','view');view.id='avaliacoes-view';view.style.setProperty('--menu-accent',ACCENT);
-const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
+const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
 const head=el('div','head'),heading=el('div'),h2=el('h2',null,TITLE),crumbP=el('p',null,'Gestão de Pessoas · '+TITLE);heading.append(h2,crumbP);head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
 const stack=[];let current=null;
@@ -203,7 +203,7 @@ function linksScreen(){load();body.append(el('h3','uniforms-heading','Vínculos 
 
 function show(key){document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));view.classList.add('show');const c=document.getElementById('crumb');if(c)c.textContent='Gestão de Pessoas · '+TITLE;const t=document.getElementById('title');if(t)t.textContent=TITLE;P.load();load();stack.length=0;go(homeScreen);const direct={individual:individualPick,equipe:teamPick,geral:generalScreen,vinculos:linksScreen,salvas:savedScreen}[key];if(direct)go(direct)}
 /* Entrevistas: a aba de Entrevista saiu do fluxo de admissão em 04/11/2026 (Cadastro Simples começa o fluxo). O ícone só reserva o lugar. */
-{const v=el('section','view');v.id='entrevistas-view';v.style.setProperty('--menu-accent',ACCENT);const pn=el('div','panel form-demo uniforms-panel');pn.style.setProperty('--panel-color',ACCENT);pn.style.setProperty('--panel-text','#5520ad');
+{const v=el('section','view');v.id='entrevistas-view';v.style.setProperty('--menu-accent',ACCENT);const pn=el('div','panel form-demo uniforms-panel');pn.style.setProperty('--panel-color',ACCENT);pn.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
  const hd=el('div','head'),hh=el('div');hh.append(el('h2',null,'Entrevistas'),el('p',null,'Gestão de Pessoas · Entrevistas'));hd.append(hh);const bd=el('div','content uniforms-content');
  bd.append(el('div','form-note','Tela reservada. A Entrevista deixou de ser uma etapa da admissão (o fluxo começa no Cadastro Simples) e ainda não há definição do que este espaço terá. Aguardando as orientações do Rodrigo; nenhum cadastro foi duplicado.'));pn.append(hd,bd);v.append(pn);document.querySelector('main').append(v);addShortcuts(v.id,goHome);
  window.showEntrevistas=()=>{document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));v.classList.add('show');const c=document.getElementById('crumb');if(c)c.textContent='Gestão de Pessoas · Entrevistas';const t=document.getElementById('title');if(t)t.textContent='Entrevistas';normalizeHeaderActions?.(v)}}

@@ -582,3 +582,95 @@ button.stepper-node:focus-visible{outline:2px solid var(--stepper-accent);outlin
 .ui-tip{position:fixed;inset:auto;margin:0;display:none;max-width:min(260px,calc(100vw - 16px));padding:6px 10px;border:0;border-radius:8px;background:#27272a;color:#fff;font:500 12px/16px var(--ui-font);white-space:normal;text-align:center;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.25);overflow:visible}
 .ui-tip.on{display:block}
 .uniforms-icon-action{-webkit-touch-callout:none;user-select:none}
+
+/* Exames: Salvar/Cancelar/Enviar redondos e menu de envio (2026-11) */
+.exam-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.exam-send{position:relative;display:inline-block}
+.exam-send-menu{position:absolute;bottom:calc(100% + 10px);right:0;z-index:30;display:flex;gap:12px;padding:10px 12px;background:#fff;color:#1c1a1f;border:1px solid rgba(0,0,0,.14);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.exam-send-menu[hidden]{display:none}
+.exam-complementary{border:1px solid var(--line,rgba(0,0,0,.18));border-radius:10px;padding:10px 14px;margin:0}
+.exam-complementary[hidden]{display:none}
+.exam-complementary legend{font-weight:700;padding:0 6px}
+.exam-comp-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px 14px}
+.exam-comp-item{display:flex;align-items:center;gap:8px;min-height:36px}
+.exam-comp-item input{width:18px;height:18px;flex:none}
+.exam-comp-add{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.exam-comp-add input{flex:1 1 200px;min-width:0}
+.edit-panel{width:min(760px,calc(100vw - 24px));max-height:calc(100dvh - 24px)}
+.edit-panel>form{max-width:100%}
+
+/* Tabela em árvore (Tipos de Ocorrência) e botões de recolher/expandir (2026-11) */
+.tree-toggle{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:4px 8px;border:0;border-radius:8px;background:transparent;color:inherit;font:inherit;font-weight:700;cursor:pointer;text-align:left}
+.tree-toggle:hover{background:color-mix(in srgb,var(--menu-accent,#7c3aed) 10%,transparent)}
+.tree-toggle:focus-visible{outline:2px solid var(--menu-accent,#7c3aed);outline-offset:2px}
+.tree-toggle svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .18s ease}
+.tree-toggle[aria-expanded=true] svg{transform:rotate(90deg)}
+.tree-count{font-weight:400;font-size:12px;opacity:.75}
+@media (prefers-reduced-motion:reduce){.tree-toggle svg{transition:none}}
+.tree-table .tree-cat td{padding-left:28px}
+.tree-table .tree-group td{background:color-mix(in srgb,var(--menu-accent,#7c3aed) 6%,transparent)}
+.tree-table .tree-leaf td:first-child{padding-left:28px}
+@media (max-width:760px){
+ .tree-table table,.tree-table thead,.tree-table tbody,.tree-table tr,.tree-table td{display:block}
+ .tree-table thead{position:absolute;left:-9999px}
+ .tree-table tr.tree-leaf{padding:8px 10px;margin:6px 0;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px}
+ .tree-table tr.tree-leaf td{display:flex;gap:8px;justify-content:space-between;padding:4px 0;border:0;text-align:right}
+ .tree-table tr.tree-leaf td::before{content:attr(data-label);font-weight:600;text-align:left;flex:none;max-width:45%}
+ .tree-table tr.tree-leaf td:first-child{padding-left:0}
+ .tree-table .tree-cat td{padding-left:12px}
+}
+/* Ações de linha: círculo preenchido na cor da seção (herdada de --menu-accent), ícone branco (2026-11) */
+.uniforms-icon-action,.uniforms-icon-action.is-accent,.people-simple-list .uniforms-icon-action.people-act{width:36px;height:36px;border-radius:50%;background:var(--menu-accent,#ef4444);border-color:var(--menu-accent,#ef4444);color:#fff}
+.uniforms-icon-action:hover{filter:brightness(1.1);border-color:transparent}
+.uniforms-icon-action:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.actions .round-action{margin-left:0}
+/* Ocorrências: câmera, assinatura demonstrativa e ações do documento (2026-11) */
+.occ-camera-video,.occ-camera-shot{display:block;width:100%;max-height:60dvh;object-fit:contain;background:#111;border-radius:10px}
+.occ-sign-pad{display:block;width:100%;max-width:520px;aspect-ratio:520/180;background:#fff;border:1px dashed #71717a;border-radius:10px;touch-action:none;cursor:crosshair}
+.occ-sign-img{display:block;max-width:260px;max-height:90px;background:#fff;border:1px solid #d4d4d8;border-radius:8px;padding:4px}
+.occ-sign-view{display:grid;gap:8px;justify-items:start;margin-top:8px}.occ-sign-view[hidden]{display:none}
+.occ-doc-actions{margin-top:12px}
+.occurrences-tools,.matrix-audio .people-banner-tools{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.round-action[hidden]{display:none}
+.edit-panel form>.uniforms-heading:first-child{display:none}
+@media (max-width:760px){
+ .tree-table .uniforms-table,.tree-table .shell-table-scroll{min-width:0;width:100%;overflow-x:visible}
+ .tree-table .tree-toggle{max-width:100%;white-space:normal;text-align:left}
+ .tree-table td{min-width:0}
+}
+.tree-count{white-space:nowrap;flex:none}.tree-name{min-width:0}
+
+/* Colunas recolhíveis na horizontal (Tipos de Ocorrência) e célula de regra (2026-11) */
+.col-toggle{display:inline-grid;place-items:center;width:22px;height:22px;margin-left:6px;padding:0;border:0;border-radius:50%;background:var(--menu-accent,#ef4444);color:#fff;cursor:pointer;vertical-align:middle;flex:none}
+.col-toggle svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s ease}
+.col-toggle[aria-expanded=true] svg{transform:rotate(0)}
+.col-toggle[aria-expanded=false] svg{transform:rotate(180deg)}
+.col-toggle:focus-visible{outline:2px solid var(--menu-accent,#ef4444);outline-offset:2px}
+.rule-cell{display:grid;gap:2px}.rule-cell small{opacity:.75}
+.rule-cell-actions{display:flex;gap:6px;margin-top:6px}
+@media (min-width:761px){
+ .tree-table table{table-layout:fixed;width:100%;min-width:900px}
+ .tree-table col{transition:width .22s ease}
+ .tree-table th{white-space:nowrap}
+ .tree-table th,.tree-table td{overflow:hidden}
+ .tree-table th.col-collapsed .col-label{display:none}
+ .tree-table th.col-collapsed{padding-left:0;padding-right:0;text-align:center}
+ .tree-table th.col-collapsed .col-toggle{margin-left:0}
+ .tree-table td.col-collapsed{padding-left:0;padding-right:0;font-size:0;color:transparent}
+ .tree-table td.col-collapsed>*{display:none}
+}
+@media (max-width:760px){.col-toggle{display:none}}
+@media (prefers-reduced-motion:reduce){.tree-table col,.col-toggle svg{transition:none}}
+
+/* Cadastro de Regras Disciplinares: painel recolhível na vertical (2026-11) */
+.rules-panel{margin-top:16px;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;background:transparent}
+.rules-toggle{width:100%;justify-content:flex-start;min-height:44px;padding:8px 14px;font-size:1rem}
+.rules-toggle svg{width:20px;height:20px;padding:2px;border-radius:50%;background:var(--menu-accent,#ef4444);color:#fff;stroke-width:2.6;transform:none}
+.rules-toggle[aria-expanded=true] svg{transform:rotate(180deg)}
+.rules-panel-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .25s ease}
+.rules-panel.is-open .rules-panel-body{grid-template-rows:1fr}
+.rules-panel-inner{min-height:0;overflow:hidden;padding:0 14px}
+.rules-panel.is-open .rules-panel-inner{padding-bottom:14px}
+@media (prefers-reduced-motion:reduce){.rules-panel-body{transition:none}}
+.rules-panel-inner{visibility:visible;transition:visibility 0s}
+.rules-panel:not(.is-open) .rules-panel-inner{visibility:hidden;transition:visibility 0s .25s}

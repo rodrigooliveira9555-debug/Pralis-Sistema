@@ -5,7 +5,7 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,DB=window.CicluzDateBR;if(!P||!U||!DB)return;
 const {el,button,iconButton,svg,ICON,fold,newId,dateBR,today,dialog,confirmDialog}=U;
-const KEY='cicluz-jornadas-v1',ACCENT='#7c3aed';
+const KEY='cicluz-jornadas-v1',ACCENT='var(--section-accent,#ef4444)';
 const DAYS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],DAY_NAMES=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
 const SCALE_TYPES=['Dias fixos da semana','Revezamento','Outra'];
 const CLOCK='M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z';
@@ -53,7 +53,7 @@ const lbl=(name,node,cls)=>{const l=el('label',cls,name);node.setAttribute('aria
 const time=()=>{const i=el('input');i.type='time';i.step=60;return i};
 const views={};
 function makeView(key,title,group,note){const view=el('section','view');view.id='jornada-'+key+'-view';view.style.setProperty('--menu-accent',ACCENT);
- const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
+ const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
  const head=el('div','head'),heading=el('div');heading.append(el('h2',null,title),el('p',null,menuCrumb(2,group,title)));head.append(heading);
  const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
  addShortcuts(view.id,()=>menuBack(2,group)());if(note)body.append(el('div','form-note',note));
@@ -70,14 +70,14 @@ const storageWarning=()=>loadError?el('p','people-alert','Não foi possível ler
  const name=el('input'),start=time(),end=time(),bs=time(),be=time(),brkOut=el('input'),totalOut=el('input'),active=el('select');name.maxLength=60;name.placeholder='Ex.: Horário 01 — Manhã';brkOut.readOnly=totalOut.readOnly=true;active.add(new Option('Ativo','1'));active.add(new Option('Inativo','0'));
  const sixNote=el('p','uniforms-wide people-alert schedules-six');sixNote.hidden=true;
 const {error,status}=messages(),actions=el('div','uniforms-wide actions'),save=el('button','btn','Salvar horário');save.type='submit';let editing=null;
- actions.append(button('Cancelar',()=>{reset();status.textContent='Edição descartada.'}),save);
+ actions.append(button('Cancelar',()=>{reset();status.textContent='Edição descartada.'}),save); U.iconizeActions(actions);
  form.append(heading,lbl('Nome do horário *',name,'uniforms-wide'),lbl('Hora de entrada *',start),lbl('Hora de saída *',end),lbl('Início do intervalo',bs),lbl('Fim do intervalo',be),lbl('Duração do intervalo',brkOut),lbl('Jornada total (sem o intervalo)',totalOut),sixNote,lbl('Status do modelo',active),error,status,actions);
  const listNote=el('p','profiles-note'),wrap=el('div','uniforms-table-wrap');V.body.append(form,el('h3','uniforms-heading','Horários cadastrados'),listNote,wrap);
  /* Same reference as the CARGOS/HORÁRIOS/ESCALAS sheet: an interval is expected when the workday passes 6h. Alert only. */
 function recalc(){const c=calc(start.value,end.value,bs.value,be.value);brkOut.value=bs.value&&be.value?hm(c.brk):'';totalOut.value=c.net==null||!c.work?'':hm(c.net);sixNote.hidden=!(c.work>360&&!(bs.value&&be.value));sixNote.textContent='Jornada acima de 6h sem intervalo. Na planilha de horários o intervalo entra quando a jornada passa de 6h: confira antes de salvar.'}
  for(const i of [start,end,bs,be])i.addEventListener('input',recalc);
- function reset(){editing=null;form.reset();name.value='';active.value='1';heading.textContent='Cadastro horário';save.textContent='Salvar horário';error.textContent='';recalc()}
- function edit(s){editing=s.id;name.value=s.name;start.value=s.start;end.value=s.end;bs.value=s.breakStart||'';be.value=s.breakEnd||'';active.value=s.active?'1':'0';heading.textContent='Editar horário: '+s.name;save.textContent='Salvar alterações';error.textContent='';status.textContent='';recalc();form.scrollIntoView({block:'start',behavior:'smooth'})}
+ function reset(){U.closeEditor(form);editing=null;form.reset();name.value='';active.value='1';heading.textContent='Cadastro horário';save.textContent='Salvar horário';error.textContent='';recalc()}
+ function edit(s){editing=s.id;name.value=s.name;start.value=s.start;end.value=s.end;bs.value=s.breakStart||'';be.value=s.breakEnd||'';active.value=s.active?'1':'0';heading.textContent='Editar horário: '+s.name;save.textContent='Salvar alterações';error.textContent='';status.textContent='';recalc();U.openEditor(form,heading.textContent,reset)}
  form.onsubmit=e=>{e.preventDefault();error.textContent='';status.textContent='';load();const n=name.value.trim(),errs=timeErrors(start.value,end.value,bs.value,be.value);if(!n)errs.unshift('Informe o nome do horário.');
   if(data.shifts.some(s=>s.id!==editing&&fold(s.name)===fold(n)))errs.push('Já existe um horário com este nome.');
   const same=data.shifts.find(s=>s.id!==editing&&s.start===start.value&&s.end===end.value&&(s.breakStart||'')===bs.value&&(s.breakEnd||'')===be.value);if(same)errs.push('Estes horários já estão cadastrados em "'+same.name+'". Reutilize esse modelo.');
@@ -102,13 +102,13 @@ function recalc(){const c=calc(start.value,end.value,bs.value,be.value);brkOut.v
  const name=el('input'),type=el('select'),notes=el('textarea'),active=el('select'),offOut=el('input');name.maxLength=60;name.placeholder='Ex.: Segunda a sábado';SCALE_TYPES.forEach(x=>type.add(new Option(x,x)));notes.rows=3;notes.addEventListener('focusout',e=>e.stopPropagation());active.add(new Option('Ativo','1'));active.add(new Option('Inativo','0'));offOut.readOnly=true;
  const daysBox=el('fieldset','uniforms-wide jornada-days');daysBox.append(el('legend',null,'Dias de trabalho *'));const checks=DAYS.map((d,i)=>{const l=el('label','jornada-day'),c=el('input');c.type='checkbox';c.value=String(i);c.setAttribute('aria-label',DAY_NAMES[i]);l.append(c,el('span',null,d));daysBox.append(l);c.addEventListener('change',paintOff);return c});
  const {error,status}=messages(),actions=el('div','uniforms-wide actions'),save=el('button','btn','Salvar escala');save.type='submit';let editing=null;
- actions.append(button('Cancelar',()=>{reset();status.textContent='Edição descartada.'}),save);
+ actions.append(button('Cancelar',()=>{reset();status.textContent='Edição descartada.'}),save); U.iconizeActions(actions);
  form.append(heading,lbl('Nome da escala *',name,'uniforms-wide'),lbl('Tipo de escala *',type),lbl('Status do modelo',active),daysBox,lbl('Dias de folga',offOut,'uniforms-wide'),lbl('Observações',notes,'uniforms-wide'),error,status,actions);
  const listNote=el('p','profiles-note'),wrap=el('div','uniforms-table-wrap');V.body.append(form,el('h3','uniforms-heading','Escalas cadastradas'),listNote,wrap);
  const chosen=()=>checks.filter(c=>c.checked).map(c=>+c.value);
  function paintOff(){const d=chosen();offOut.value=d.length?offText(d):''}
- function reset(){editing=null;name.value='';type.value=SCALE_TYPES[0];notes.value='';active.value='1';checks.forEach(c=>c.checked=false);heading.textContent='Cadastro escala';save.textContent='Salvar escala';error.textContent='';paintOff()}
- function edit(s){editing=s.id;name.value=s.name;type.value=s.type;notes.value=s.notes||'';active.value=s.active?'1':'0';checks.forEach(c=>c.checked=s.days.includes(+c.value));heading.textContent='Editar escala: '+s.name;save.textContent='Salvar alterações';error.textContent='';status.textContent='';paintOff();form.scrollIntoView({block:'start',behavior:'smooth'})}
+ function reset(){U.closeEditor(form);editing=null;name.value='';type.value=SCALE_TYPES[0];notes.value='';active.value='1';checks.forEach(c=>c.checked=false);heading.textContent='Cadastro escala';save.textContent='Salvar escala';error.textContent='';paintOff()}
+ function edit(s){editing=s.id;name.value=s.name;type.value=s.type;notes.value=s.notes||'';active.value=s.active?'1':'0';checks.forEach(c=>c.checked=s.days.includes(+c.value));heading.textContent='Editar escala: '+s.name;save.textContent='Salvar alterações';error.textContent='';status.textContent='';paintOff();U.openEditor(form,heading.textContent,reset)}
  form.onsubmit=e=>{e.preventDefault();error.textContent='';status.textContent='';load();const n=name.value.trim(),days=chosen(),errs=[];if(!n)errs.push('Informe o nome da escala.');if(!days.length)errs.push('Marque ao menos um dia de trabalho.');
   if(data.scales.some(s=>s.id!==editing&&fold(s.name)===fold(n)))errs.push('Já existe uma escala com este nome.');
   const same=data.scales.find(s=>s.id!==editing&&s.type===type.value&&s.days.length===days.length&&s.days.every(x=>days.includes(x)));if(same&&n)errs.push('Estes dias já estão cadastrados em "'+same.name+'" ('+same.type+'). Reutilize esse modelo.');
@@ -143,7 +143,7 @@ function makeLinker(kind){const isShift=kind==='shift',key=isShift?'shift-links'
  const V=makeView(key,isShift?'DES - Lançamento de Horários':'DES - Escalas de Folga','Lançamentos Colaboradores',isShift?'Vincule um modelo de horário a um ou vários colaboradores a partir de uma data. O intervalo individual vale só para aquele colaborador e não altera o modelo. Vínculos anteriores ficam no histórico.':'Vincule um modelo de escala a um ou vários colaboradores a partir de uma data e registre folgas e exceções. Vínculos anteriores ficam no histórico.');
  const form=el('form','form-fields uniforms-form');form.noValidate=true;const from=DB.field('Data de início *'),modelWrap=el('div','uniforms-wide jornada-model'),preview=el('p','uniforms-wide profiles-note');preview.setAttribute('aria-live','polite');let model=modelSelect(kind);
  const bs=time(),be=time(),picker=peoplePicker(),{error,status}=messages(),actions=el('div','uniforms-wide actions'),save=el('button','btn','Vincular aos selecionados');save.type='submit';
- actions.append(button('Cancelar',()=>{reset();status.textContent='Seleção descartada. Nada foi salvo.'}),save);
+ actions.append(button('Cancelar',()=>{reset();status.textContent='Seleção descartada. Nada foi salvo.'}),save); U.iconizeActions(actions);
  const parts=[el('h3','uniforms-wide uniforms-heading','Vincular '+noun),from.label,modelWrap,preview];if(isShift)parts.push(lbl('Intervalo individual: início',bs),lbl('Intervalo individual: fim',be),el('p','uniforms-wide profiles-note','Deixe o intervalo individual em branco para usar o intervalo do modelo.'));
  parts.push(picker.box,error,status,actions);form.append(...parts);
  const goCad=button('Cadastrar '+noun,()=>show(isShift?'shifts':'scales'));

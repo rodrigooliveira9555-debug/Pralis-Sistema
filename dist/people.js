@@ -3,7 +3,7 @@
 'use strict';
 const D=window.CicluzUniformData,U=window.CicluzUniformUI,F=window.CicluzFieldRules,PH=window.CicluzPhoneBR;if(!D||!U||!F||!PH)return;
 const {el,button,iconButton,svg,ICON,fold,newId,dateBR,confirmDialog}=U;
-const KEY='cicluz-pessoas-v1',ACCENT='#7c3aed';
+const KEY='cicluz-pessoas-v1',ACCENT='var(--section-accent,#ef4444)';
 
 /* ---------- Registry ---------- */
 let data={version:1,people:[],exams:[],companies:[]},loadError=false;

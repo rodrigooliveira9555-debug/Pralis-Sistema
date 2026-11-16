@@ -5,7 +5,7 @@
 'use strict';
 const U=window.CicluzUniformUI,PH=window.CicluzPhoneBR;if(!U)return;
 const {el,button,fold,newId,dateBR,today}=U;
-const KEY='cicluz-gp-config-v1',ACCENT='#7c3aed',TITLE='DES - Comunicação da Gestão de Pessoas',GROUP='Cadastros Geral Colaboradores';
+const KEY='cicluz-gp-config-v1',ACCENT='var(--section-accent,#ef4444)',TITLE='DES - Comunicação da Gestão de Pessoas',GROUP='Cadastros Geral Colaboradores';
 
 /* ---------- Sessão ---------- */
 const profile=()=>{try{return JSON.parse(sessionStorage.getItem('cicluz-sync-aba')||'null')?.perfil||null}catch{return null}};
@@ -44,7 +44,7 @@ const viewFile=(heading,meta,sensitive=true)=>window.CicluzDocuments?.files.view
 
 /* ---------- Tela de configuração ---------- */
 const view=el('section','view');view.id='gp-config-view';view.style.setProperty('--menu-accent',ACCENT);
-const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
+const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
 const head=el('div','head'),heading=el('div');heading.append(el('h2',null,TITLE),el('p',null,menuCrumb(2,GROUP,TITLE)));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);addShortcuts(view.id,()=>menuBack(2,GROUP)());
 body.append(el('div','form-note','Configuração única da comunicação da Gestão de Pessoas para a empresa da sessão. O WhatsApp oficial é usado como referência para receber exames, atestados e documentos. Não há números por departamento: essa decisão ainda não foi definida.'));

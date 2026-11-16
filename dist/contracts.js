@@ -7,7 +7,7 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,DB=window.CicluzDateBR,F=window.CicluzFieldRules;if(!P||!U||!DB)return;
 const {el,button,iconButton,ICON,fold,newId,dateBR,today,dialog,confirmDialog}=U;
-const KEY='cicluz-contratos-v1',ACCENT='#7c3aed',TITLE='DES - Contrato de Trabalho',GROUP='Cadastros Geral Colaboradores';
+const KEY='cicluz-contratos-v1',ACCENT='var(--section-accent,#ef4444)',TITLE='DES - Contrato de Trabalho',GROUP='Cadastros Geral Colaboradores';
 const NO_MODEL='Modelo oficial de Contrato de Trabalho pendente de disponibilização.';
 let data={version:1,models:[],versions:[],experience:{}},loadError=false;
 function load(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s){if(s.version!==1||!Array.isArray(s.models)||!Array.isArray(s.versions))throw Error('format');data=s}if(!data.experience||typeof data.experience!=='object')data.experience={};loadError=false}catch{loadError=true}}
@@ -49,7 +49,7 @@ function versionStatus(v){const r=window.CicluzDocuments?.recordById(v.personId,
 
 /* ---------- Screen ---------- */
 const view=el('section','view');view.id='contracts-view';view.style.setProperty('--menu-accent',ACCENT);
-const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
+const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
 const head=el('div','head'),heading=el('div');heading.append(el('h2',null,TITLE),el('p',null,menuCrumb(2,GROUP,TITLE)));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);addShortcuts(view.id,()=>menuBack(2,GROUP)());
 body.append(el('div','form-note','Reúne os dados do colaborador a partir dos cadastros (Cadastro, Ficha de Cargo, Estrutura organizacional, Horários e Escalas) para preparar o Contrato de Trabalho. A plataforma não escreve cláusulas: a versão do contrato só é registrada com o modelo oficial aprovado pela empresa e vai para Documentações → Contrato de Trabalho, onde o contrato assinado é anexado e conferido. Gerado não significa assinado.'));

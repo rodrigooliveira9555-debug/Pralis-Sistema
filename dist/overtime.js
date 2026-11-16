@@ -7,7 +7,7 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,DB=window.CicluzDateBR;if(!P||!U||!DB)return;
 const {el,button,iconButton,ICON,fold,newId,money,dateBR,today,dialog,confirmDialog}=U;
-const KEY='cicluz-horas-v1',ACCENT='#7c3aed',TITLE='DES - Horas Extras e Noturno',GROUP='Lançamentos Colaboradores';
+const KEY='cicluz-horas-v1',ACCENT='var(--section-accent,#ef4444)',TITLE='DES - Horas Extras e Noturno',GROUP='Lançamentos Colaboradores';
 const CONTRACTS=['CLT - MÊS','CLT - HORA'];
 const MISSING_LABEL={divisor:'divisor mensal do contrato',overtimePct:'percentual da hora extra',nightPct:'percentual do adicional noturno'};
 
@@ -51,7 +51,7 @@ function compute({salaryCents,type,divisorOverride,normal,extra,night,date}){con
 
 /* ---------- Screen ---------- */
 const view=el('section','view');view.id='overtime-view';view.style.setProperty('--menu-accent',ACCENT);
-const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
+const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
 const head=el('div','head'),heading=el('div');heading.append(el('h2',null,TITLE),el('p',null,menuCrumb(2,GROUP,TITLE)));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);addShortcuts(view.id,()=>menuBack(2,GROUP)());
 body.append(el('div','form-note','Lançamento de horas normais, horas extras e horas noturnas por colaborador. O valor-base usa o salário do cargo e o divisor do contrato. Percentuais, divisor, período noturno e limite diário são parâmetros oficiais que o DP informa abaixo: a plataforma não traz valores. Sem o parâmetro, o total fica pendente em vez de mostrar um valor incorreto.'));
