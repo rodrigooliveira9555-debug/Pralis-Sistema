@@ -130,6 +130,24 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   ok(await df.getByLabel('O mesmo da etapa anterior (financeiro)', { exact: true }).isVisible(), 'Etapa 3: financeiro, com "O mesmo da etapa anterior" em primeiro');
   await df.getByLabel('Nome do financeiro', { exact: true }).fill('Financeiro Teste');
   await df.getByLabel('E-mail do financeiro', { exact: true }).fill('financeiro@exemplo.test');
+  // Contrato dentro do financeiro: interruptor "Tem contrato?" (Sim / Não); com Sim aparecem os dados.
+  const chaveC = df.getByRole('switch', { name: 'Tem contrato?' });
+  ok(await chaveC.getAttribute('aria-checked') === 'false' && await df.getByLabel('Forma de pagamento', { exact: true }).isHidden(), 'Sem contrato, os dados do contrato ficam escondidos');
+  await chaveC.click();
+  await df.getByLabel('Forma de pagamento', { exact: true }).selectOption('boleto');
+  await df.getByLabel('Recorrência', { exact: true }).selectOption('mes');
+  ok(await df.getByLabel('Dia do vencimento', { exact: true }).isVisible() && await df.getByLabel('Data de vencimento', { exact: true }).isHidden(), 'Contrato por mês pede o dia do vencimento');
+  await df.getByLabel('Dia do vencimento', { exact: true }).fill('10');
+  await df.getByLabel('Valor', { exact: true }).fill('1.500,00');
+  await df.getByLabel('Início da vigência', { exact: true }).fill('01/01/26');
+  await df.getByLabel('Término da vigência', { exact: true }).fill('31/12/25');
+  await df.getByLabel('Reajuste', { exact: true }).selectOption('percentual');
+  await avancar(df);
+  ok((await erroF()).includes('antes do início'), 'Término do contrato antes do início é recusado');
+  await df.getByLabel('Término da vigência', { exact: true }).fill('31/12/26');
+  await avancar(df);
+  ok((await erroF()).includes('percentual'), 'Reajuste por percentual fixo pede o percentual');
+  await df.getByLabel('Percentual do reajuste (%) *', { exact: true }).fill('4,5');
   await avancar(df);
   await df.getByLabel('O mesmo da etapa anterior (representante)', { exact: true }).check();
   ok(await df.getByLabel('Nome do representante', { exact: true }).inputValue() === 'Financeiro Teste' && await df.getByLabel('Nome do representante', { exact: true }).getAttribute('readonly') !== null && await df.getByLabel('Cargo na empresa', { exact: true }).isEditable(), '"O mesmo da etapa anterior" preenche nome, WhatsApp e e-mail (só leitura) e deixa o Cargo na empresa para escolher');
@@ -143,18 +161,12 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await seletorF.locator('.compras-vinculos-lista input[type=checkbox]:not(:disabled)').first().check();
   await seletorF.locator('.people-save-control').click();
   ok(await df.locator('.compras-chip.ativo').count() === 1, 'O produto escolhido aparece na etapa, com opção de remover');
-  // Etapa 6, Contrato: vigência, valor (guardado em centavos) e observações.
+  // Etapa 6, Contrato (o documento): mostra o que foi combinado no financeiro.
   await avancar(df);
-  ok((await etapaF(df)).includes('Contrato'), 'Etapa 6: Contrato');
-  await df.getByLabel('Início do contrato', { exact: true }).fill('01/01/26');
-  await df.getByLabel('Fim do contrato', { exact: true }).fill('31/12/25');
-  await df.getByLabel('Valor do contrato', { exact: true }).fill('1.500,00');
-  await df.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).click();
-  ok((await erroF()).includes('antes do início'), 'Fim do contrato antes do início é recusado');
-  await df.getByLabel('Fim do contrato', { exact: true }).fill('31/12/26');
+  ok((await etapaF(df)).includes('Contrato') && (await df.locator('fieldset', { has: p.locator('legend', { hasText: /^Contrato$/ }) }).textContent()).includes('Todo dia 10'), 'Etapa 6: Contrato, com o resumo do financeiro');
   await df.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).click();
   await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'));
-  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '11.222.333/0001-81' && f.contrato.valorCentavos === 150000 && f.contrato.inicio === '2026-01-01' && f.contrato.fim === '2026-12-31' && CicluzComprasDados.dados.catalogo.filter((v) => v.fornecedorId === f.id && v.status === 'aprovado').length === 1 && f.tipoPessoa === 'juridica' && f.categorias.join() === 'produto' && f.ramo.toUpperCase() === 'BEBIDAS' && f.nome.toUpperCase() === 'FORNECEDOR CNPJ TESTE' && f.razaoSocial.toUpperCase().includes('LTDA') && f.regimeTributario === 'simples' && f.contatoNome && f.financeiro.email === 'financeiro@exemplo.test' && f.representante.mesmo && f.representante.email === 'financeiro@exemplo.test' && f.representante.cargo === 'gerente-comercial' && !('vendedorCpf' in f))), 'Fornecedor pessoa jurídica salvo com as 4 etapas (o representante copia o financeiro e guarda o cargo)');
+  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '11.222.333/0001-81' && f.contrato.tem === true && f.contrato.formaPagamento === 'boleto' && f.contrato.recorrencia === 'mes' && f.contrato.vencimentoDia === 10 && f.contrato.reajuste === 'percentual' && f.contrato.reajustePercentual === 4.5 && f.contrato.valorCentavos === 150000 && f.contrato.inicio === '2026-01-01' && f.contrato.fim === '2026-12-31' && CicluzComprasDados.dados.catalogo.filter((v) => v.fornecedorId === f.id && v.status === 'aprovado').length === 1 && f.tipoPessoa === 'juridica' && f.categorias.join() === 'produto' && f.ramo.toUpperCase() === 'BEBIDAS' && f.nome.toUpperCase() === 'FORNECEDOR CNPJ TESTE' && f.razaoSocial.toUpperCase().includes('LTDA') && f.regimeTributario === 'simples' && f.contatoNome && f.financeiro.email === 'financeiro@exemplo.test' && f.representante.mesmo && f.representante.email === 'financeiro@exemplo.test' && f.representante.cargo === 'gerente-comercial' && !('vendedorCpf' in f))), 'Fornecedor pessoa jurídica salvo com as 4 etapas (o representante copia o financeiro e guarda o cargo)');
   // Segundo fornecedor, só Serviço; aniversário do prestador (mês e ano) é opcional
   await p.locator('.view.show .people-add-control').click();
   const dp = p.locator('dialog.compras-dialog[open]').last();

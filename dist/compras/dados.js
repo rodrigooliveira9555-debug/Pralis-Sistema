@@ -170,6 +170,8 @@
     window.CicluzComprasDominio.migrarVendedorFornecedor(d);
     // Funções do prestador (cadastro próprio, com a lista inicial) e o contato único do fornecedor de Serviço como Prestador 1 (uma vez).
     window.CicluzComprasDominio.migrarPrestadoresFornecedor(d);
+    // Contrato: início, fim, valor e observações passam a ser do quadro "Tem contrato?" do financeiro (uma vez).
+    window.CicluzComprasDominio.migrarContratoFinanceiro(d);
     return d;
   }
 

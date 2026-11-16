@@ -300,6 +300,27 @@
     d.migracoes = { ...(d.migracoes || {}), prestadoresFornecedor: 1 };
     return d;
   }
+  /* ---------- Contrato do fornecedor, dentro dos dados do financeiro (decisão do Rodrigo, 16/11/2026) ---------- */
+  const FORMAS_PAGAMENTO_CONTRATO = [['dinheiro', 'Dinheiro'], ['boleto', 'Boleto'], ['pix', 'PIX'], ['transferencia', 'Transferência']];
+  const RECORRENCIAS_CONTRATO = [['hora', 'Por hora'], ['visita', 'Por visita / solicitação'], ['dia', 'Por dia'], ['mes', 'Por mês'], ['ano', 'Por ano']];
+  /** Só o índice escolhido fica guardado: o sistema NÃO calcula reajuste nem valor futuro. */
+  const REAJUSTES_CONTRATO = [['sem', 'Sem reajuste'], ['salario-minimo', 'Salário mínimo'], ['ipca', 'IPCA'], ['igpm', 'IGP-M'], ['inpc', 'INPC'], ['percentual', 'Percentual fixo']];
+  /**
+   * Migração (marca d.migracoes.contratoFinanceiro): início, fim, valor e observações do contrato, que por um dia
+   * ficaram na etapa "Contrato", passam a pertencer ao quadro "Tem contrato?" dos dados do financeiro. Os campos
+   * continuam em f.contrato; quem já tinha algum deles preenchido passa a ter contrato.tem = true, para os dados
+   * continuarem à vista. Nada é apagado. Uma vez por documento.
+   */
+  function migrarContratoFinanceiro(d) {
+    if (d.migracoes && d.migracoes.contratoFinanceiro) return d;
+    for (const f of d.fornecedores || []) {
+      const c = f.contrato;
+      if (!c || typeof c !== 'object' || typeof c.tem === 'boolean') continue;
+      c.tem = Boolean(c.inicio || c.fim || c.valorCentavos != null || String(c.observacoes || '').trim());
+    }
+    d.migracoes = { ...(d.migracoes || {}), contratoFinanceiro: 1 };
+    return d;
+  }
   const telefoneRuim = (v) => { const n = digitos(v); return Boolean(n) && (n.length < 8 || String(v).length > 30); };
   /**
    * O que impede salvar, etapa por etapa: devolve um texto por etapa ('' quando a etapa está em ordem). Obrigatórios: categoria
@@ -362,19 +383,29 @@
     };
     // Vínculos: grupos de despesa (Serviço) vão por id; a lista só guarda o vínculo, sem lançamento nem regra de dinheiro.
     const vinculos = () => (f.gruposDespesaIds != null && (!Array.isArray(f.gruposDespesaIds) || f.gruposDespesaIds.some((id) => !id || typeof id !== 'string')) ? 'Grupo de despesa inválido.' : '');
-    // Contrato: tudo opcional. Vigência por datas (AAAA-MM-DD), valor só informado (inteiro em centavos, sem fórmula) e observações.
+    // Contrato (quadro "Tem contrato?" dos dados do financeiro): só é conferido quando tem. Tudo opcional, menos o
+    // percentual quando o reajuste é "Percentual fixo". O valor e o índice são só informados: sem fórmula.
     const contrato = () => {
       const c = f.contrato;
       if (c == null) return '';
       if (typeof c !== 'object') return 'Contrato inválido.';
+      if (!c.tem) return '';
+      const naLista = (lista, v) => !v || lista.some(([id]) => id === v);
+      if (!naLista(FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)) return 'Forma de pagamento do contrato inválida.';
+      if (!naLista(RECORRENCIAS_CONTRATO, c.recorrencia)) return 'Recorrência do contrato inválida.';
+      if (c.vencimentoDia != null && (!Number.isInteger(c.vencimentoDia) || c.vencimentoDia < 1 || c.vencimentoDia > 31)) return 'O dia do vencimento deve ser de 1 a 31.';
       const dataRuim = (v) => Boolean(v) && !/^\d{4}-\d{2}-\d{2}$/.test(v);
-      if (dataRuim(c.inicio) || dataRuim(c.fim)) return 'Confira as datas do contrato: use DD/MM/AA.';
-      if (c.inicio && c.fim && c.fim < c.inicio) return 'O fim do contrato não pode ser antes do início.';
+      if (dataRuim(c.vencimentoData)) return 'Confira a data de vencimento: use DD/MM/AA.';
       if (c.valorCentavos != null && (!Number.isInteger(c.valorCentavos) || c.valorCentavos < 0)) return 'Valor do contrato inválido.';
+      if (dataRuim(c.inicio) || dataRuim(c.fim)) return 'Confira as datas do contrato: use DD/MM/AA.';
+      if (c.inicio && c.fim && c.fim < c.inicio) return 'O término do contrato não pode ser antes do início.';
+      if (!naLista(REAJUSTES_CONTRATO, c.reajuste)) return 'Reajuste do contrato inválido.';
+      if (c.reajuste === 'percentual' && !(typeof c.reajustePercentual === 'number' && c.reajustePercentual > 0 && c.reajustePercentual <= 100)) return 'Informe o percentual do reajuste (maior que 0 e até 100).';
       if (String(c.observacoes || '').length > 2000) return 'As observações do contrato devem ter no máximo 2000 caracteres.';
       return '';
     };
-    return [basico(), vendedor(), contato(f.financeiro, 'financeiro'), representante(), vinculos(), contrato()];
+    // O contrato é conferido na etapa do financeiro (3ª); a 6ª (o documento do contrato) não tem campo a conferir.
+    return [basico(), vendedor(), contato(f.financeiro, 'financeiro') || contrato(), representante(), vinculos(), ''];
   }
   /** Primeiro impedimento do cadastro inteiro, ou ''. */
   const validarFornecedor = (f, regras, ctx) => validarFornecedorEtapas(f, regras, ctx).find(Boolean) || '';
@@ -559,6 +590,7 @@
     CATEGORIAS_FORNECEDOR, categoriaFornecedor, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, documentoAntigoFornecedor, validarFornecedor,
     validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, aniversarioVendedor, migrarVendedorFornecedor,
     FUNCOES_PRESTADOR_INICIAIS, idFuncaoPrestador, funcaoPrestadorIgual, validarFuncaoPrestador, migrarPrestadoresFornecedor,
+    FORMAS_PAGAMENTO_CONTRATO, RECORRENCIAS_CONTRATO, REAJUSTES_CONTRATO, migrarContratoFinanceiro,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,
     aplicarRecebimento, SITUACOES_PEDIDO,

@@ -215,18 +215,35 @@ ok(() => {
   assert.deepEqual(d.CARGOS_REPRESENTANTE.map(([, nome]) => nome), ['Proprietário', 'Sócio-proprietário', 'Diretor geral', 'Diretor comercial', 'Gerente geral', 'Gerente comercial',
     'Supervisor geral', 'Supervisor comercial', 'Representante comercial', 'Administrador', 'Financeiro', 'Procurador', 'Outro']);
   assert.deepEqual(d.etapasFornecedor([]), ['Dados da empresa', 'Dados do vendedor', 'Dados do financeiro', 'Dados do representante', 'Vínculos', 'Contrato']);
-  // Contrato: tudo opcional; datas em ordem, valor inteiro em centavos, observações curtas.
-  assert.equal(v({ contrato: { inicio: '2026-01-01', fim: '2026-12-31', valorCentavos: 150000, observacoes: 'Mensal' } }), '');
-  assert.equal(v({ contrato: { inicio: '', fim: '', valorCentavos: null, observacoes: '' } }), '');
-  assert.match(v({ contrato: { inicio: '2026-12-31', fim: '2026-01-01' } }), /antes do início/);
-  assert.match(v({ contrato: { inicio: '31/12/2026' } }), /datas do contrato/);
-  assert.match(v({ contrato: { valorCentavos: 10.5 } }), /Valor do contrato/);
-  assert.match(v({ contrato: { valorCentavos: -1 } }), /Valor do contrato/);
-  assert.match(v({ contrato: { valorCentavos: NaN } }), /Valor do contrato/);
-  assert.match(v({ contrato: { observacoes: 'x'.repeat(2001) } }), /2000/);
-  assert.equal(v({ categorias: ['servico'], gruposDespesaIds: ['g1', 'g2'] }), '');
-  assert.match(v({ categorias: ['servico'], gruposDespesaIds: ['g1', ''] }), /Grupo de despesa/);
-  assert.match(v({ categorias: ['servico'], gruposDespesaIds: 'g1' }), /Grupo de despesa/);
+  // Contrato (quadro "Tem contrato?" do financeiro): só é conferido quando tem; valor e índice só informados.
+  const vc = (contrato) => d.validarFornecedorEtapas({ ...pj, contrato: { tem: true, ...contrato } }, regras, ctx);
+  assert.deepEqual(vc({ formaPagamento: 'boleto', recorrencia: 'mes', vencimentoDia: 10, valorCentavos: 150000, inicio: '2026-01-01', fim: '2026-12-31', reajuste: 'ipca', observacoes: 'Mensal' }), ['', '', '', '', '', '']);
+  assert.deepEqual(vc({}), ['', '', '', '', '', '']);
+  assert.match(vc({ inicio: '2026-12-31', fim: '2026-01-01' })[2], /antes do início/);
+  assert.match(vc({ inicio: '31/12/2026' })[2], /datas do contrato/);
+  assert.match(vc({ valorCentavos: 10.5 })[2], /Valor do contrato/);
+  assert.match(vc({ valorCentavos: NaN })[2], /Valor do contrato/);
+  assert.match(vc({ formaPagamento: 'cheque' })[2], /Forma de pagamento/);
+  assert.match(vc({ recorrencia: 'semana' })[2], /Recorrência/);
+  assert.match(vc({ vencimentoDia: 32 })[2], /1 a 31/);
+  assert.match(vc({ vencimentoData: '10/01/2026' })[2], /vencimento/);
+  assert.match(vc({ reajuste: 'dolar' })[2], /Reajuste/);
+  assert.match(vc({ reajuste: 'percentual' })[2], /percentual/);
+  assert.match(vc({ reajuste: 'percentual', reajustePercentual: 150 })[2], /percentual/);
+  assert.equal(vc({ reajuste: 'percentual', reajustePercentual: 4.5 })[2], '');
+  assert.match(vc({ observacoes: 'x'.repeat(2001) })[2], /2000/);
+  // Sem contrato, nada é conferido (o que estiver preenchido fica guardado como está).
+  assert.equal(v({ contrato: { tem: false, valorCentavos: -1, inicio: 'x' } }), '');
+  assert.deepEqual([d.FORMAS_PAGAMENTO_CONTRATO.length, d.RECORRENCIAS_CONTRATO.length, d.REAJUSTES_CONTRATO.length], [4, 5, 6]);
+  // Migração: quem já tinha início, fim, valor ou observações passa a ter contrato; vazio fica sem; uma vez só.
+  const docC = { fornecedores: [{ id: 'a', contrato: { inicio: '2026-01-01', fim: '', valorCentavos: null, observacoes: '' } }, { id: 'b', contrato: { inicio: '', fim: '', valorCentavos: null, observacoes: '' } },
+    { id: 'c', contrato: { inicio: '', fim: '', valorCentavos: 0, observacoes: '' } }, { id: 'd' }, { id: 'e', contrato: { tem: false, inicio: '2026-01-01' } }] };
+  d.migrarContratoFinanceiro(docC);
+  assert.deepEqual(docC.fornecedores.map((x) => x.contrato && x.contrato.tem), [true, false, true, undefined, false]);
+  assert.equal(docC.fornecedores[0].contrato.inicio, '2026-01-01');
+  assert.equal(docC.migracoes.contratoFinanceiro, 1);
+  docC.fornecedores[1].contrato.inicio = '2027-01-01'; d.migrarContratoFinanceiro(docC);
+  assert.equal(docC.fornecedores[1].contrato.tem, false);
   // Prestadores (Serviço): do 2º em diante, nome obrigatório e formato conferido; função precisa existir no cadastro.
   const fn = [{ id: 'fp-pintor', nome: 'Pintor', ativa: true }];
   const vp = (prestadores) => d.validarFornecedor({ ...pj, categorias: ['servico'], prestadores }, regras, { fornecedores: [], funcoes: fn });

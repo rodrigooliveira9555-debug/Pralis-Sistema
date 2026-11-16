@@ -670,22 +670,79 @@
           if (cat === 'servico') desenharGrupos();
         };
 
-        /* ----- Etapa 6: contrato. Vigência, valor (só informado, sem fórmula; guardado em centavos) e observações.
-           O anexo do modelo de contrato e o preenchimento com os dados do cadastro ainda não existem (em definição). ----- */
-        const s6 = el('fieldset', 'compras-fieldset');
-        s6.append(el('legend', null, 'Contrato'));
-        const cInicio = entrada('date', f?.contrato?.inicio || '');
-        const cFim = entrada('date', f?.contrato?.fim || '');
-        const cValor = entrada('text', f?.contrato?.valorCentavos != null ? D.moeda(f.contrato.valorCentavos / 100) : '', { inputMode: 'decimal', placeholder: 'R$ 0,00', maxLength: 20 });
+        /* ----- Contrato, dentro dos dados do financeiro (etapa 3): quadro "Tem contrato?" (Sim / Não) no padrão do
+           quadro de Situação; com Sim aparecem a forma de pagamento, a recorrência, o vencimento, o valor, a vigência e
+           o reajuste. Tudo só informado: sem fórmula, sem lançamento e sem cálculo de reajuste. ----- */
+        const ct = f?.contrato || {};
+        const cDados = el('fieldset', 'compras-fieldset');
+        cDados.append(el('legend', null, 'Dados do contrato'));
+        const temContrato = U.quadroSituacao('Tem contrato?', Boolean(ct.tem), { textos: ['Sim', 'Não'], dica: 'Contrato de fornecimento ou de prestação de serviço com este fornecedor.', aoMudar: () => pintarContrato() });
+        const cForma = seletor(D.FORMAS_PAGAMENTO_CONTRATO, ct.formaPagamento || '', 'Selecione');
+        const cRecorrencia = seletor(D.RECORRENCIAS_CONTRATO, ct.recorrencia || '', 'Selecione');
+        // Vencimento: contrato por mês usa o dia do mês (1 a 31); nas outras recorrências, uma data.
+        const cVencDia = entrada('text', ct.vencimentoDia != null ? String(ct.vencimentoDia) : '', { inputMode: 'numeric', maxLength: 2, placeholder: '1 a 31' });
+        const cVencData = entrada('date', ct.vencimentoData || '');
+        const vencDiaCampo = campo('Dia do vencimento', cVencDia, 'Dia do mês em que o pagamento vence.');
+        const vencDataCampo = campo('Data de vencimento', cVencData);
+        const cValor = entrada('text', ct.valorCentavos != null ? D.moeda(ct.valorCentavos / 100) : '', { inputMode: 'decimal', placeholder: 'R$ 0,00', maxLength: 20 });
+        const cInicio = entrada('date', ct.inicio || '');
+        const cFim = entrada('date', ct.fim || '');
+        const cReajuste = seletor(D.REAJUSTES_CONTRATO, ct.reajuste || '', 'Selecione');
+        const cPercentual = entrada('text', ct.reajustePercentual != null ? String(ct.reajustePercentual).replace('.', ',') : '', { inputMode: 'decimal', placeholder: '0,00', maxLength: 6 });
+        const percentualCampo = campo('Percentual do reajuste (%) *', cPercentual);
         const cObs = el('textarea');
-        cObs.rows = 4; cObs.maxLength = 2000; cObs.value = f?.contrato?.observacoes || '';
+        cObs.rows = 3; cObs.maxLength = 2000; cObs.value = ct.observacoes || '';
         const obsCampo = campo('Observações do contrato', cObs);
         obsCampo.classList.add('compras-largo');
-        s6.append(campo('Início do contrato', cInicio), campo('Fim do contrato', cFim), campo('Valor do contrato', cValor, 'Só o valor combinado; não gera lançamento.'), obsCampo,
-          el('p', 'profiles-note compras-largo', 'O anexo do modelo de contrato ainda não está disponível.'));
-        const lerValorContrato = () => { const n = String(cValor.value).trim() ? D.lerNumero(cValor.value) : null; return n == null ? (String(cValor.value).trim() ? NaN : null) : Math.round(n * 100); };
+        cDados.append(campo('Forma de pagamento', cForma), campo('Recorrência', cRecorrencia), vencDiaCampo, vencDataCampo,
+          campo('Valor', cValor, 'Só o valor combinado; não gera lançamento.'), campo('Início da vigência', cInicio), campo('Término da vigência', cFim),
+          campo('Reajuste', cReajuste, 'Só o índice combinado; o sistema não calcula o reajuste.'), percentualCampo, obsCampo);
+        const pintarContrato = () => {
+          mostrar(cDados, temContrato.ativo);
+          mostrar(vencDiaCampo, cRecorrencia.value === 'mes');
+          mostrar(vencDataCampo, cRecorrencia.value !== 'mes');
+          mostrar(percentualCampo, cReajuste.value === 'percentual');
+        };
+        cRecorrencia.onchange = pintarContrato;
+        cReajuste.onchange = pintarContrato;
+        pintarContrato();
+        // Número digitado: null quando vazio, NaN quando não é número (para a validação recusar em vez de virar vazio).
+        const numeroOuNada = (input) => { const t = String(input.value).trim(); if (!t) return null; const n = D.lerNumero(t); return n == null ? NaN : n; };
+        const lerContrato = () => {
+          const valor = numeroOuNada(cValor); const dia = numeroOuNada(cVencDia); const pct = numeroOuNada(cPercentual); const mensal = cRecorrencia.value === 'mes';
+          return {
+            tem: temContrato.ativo, formaPagamento: cForma.value, recorrencia: cRecorrencia.value,
+            vencimentoDia: mensal ? dia : null, vencimentoData: mensal ? '' : cVencData.value,
+            valorCentavos: valor == null ? null : Math.round(valor * 100), inicio: cInicio.value, fim: cFim.value,
+            reajuste: cReajuste.value, reajustePercentual: cReajuste.value === 'percentual' ? (pct == null ? null : Math.round(pct * 100) / 100) : null,
+            observacoes: cObs.value.trim(),
+          };
+        };
+        const etapa3 = el('div', 'compras-etapa');
+        etapa3.append(fin.no, temContrato, cDados);
 
-        const quadros = [etapa1, etapa2, fin.no, rep.no, s5, s6];
+        /* ----- Etapa 6: contrato (o documento). Mostra o que foi combinado no financeiro; o modelo de contrato e a
+           assinatura ainda não existem (aguardam decisão). ----- */
+        const s6 = el('fieldset', 'compras-fieldset');
+        s6.append(el('legend', null, 'Contrato'));
+        const resumoContrato = el('div', 'compras-campo compras-largo');
+        const nomeDe = (lista, id) => (lista.find(([x]) => x === id) || [])[1] || '';
+        const pintarResumoContrato = () => {
+          const c = lerContrato();
+          const dataBR = (iso) => (iso ? window.CicluzDateFields.display(iso) : '');
+          const linhas = !c.tem ? [] : [
+            ['Forma de pagamento', nomeDe(D.FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)], ['Recorrência', nomeDe(D.RECORRENCIAS_CONTRATO, c.recorrencia)],
+            ['Vencimento', c.recorrencia === 'mes' ? (Number.isInteger(c.vencimentoDia) ? 'Todo dia ' + c.vencimentoDia : '') : dataBR(c.vencimentoData)],
+            ['Valor', Number.isInteger(c.valorCentavos) ? D.moeda(c.valorCentavos / 100) : ''],
+            ['Vigência', [dataBR(c.inicio), dataBR(c.fim)].filter(Boolean).join(' a ')],
+            ['Reajuste', nomeDe(D.REAJUSTES_CONTRATO, c.reajuste) + (c.reajuste === 'percentual' && typeof c.reajustePercentual === 'number' && !Number.isNaN(c.reajustePercentual) ? ' de ' + String(c.reajustePercentual).replace('.', ',') + '%' : '')],
+          ].filter(([, v]) => v);
+          resumoContrato.replaceChildren(el('span', 'compras-rotulo', 'Combinado nos dados do financeiro'),
+            ...(linhas.length ? linhas.map(([k, v]) => el('p', 'profiles-note', k + ': ' + v)) : [el('p', 'profiles-note', c.tem ? 'Contrato marcado, ainda sem dados preenchidos.' : 'Este fornecedor está sem contrato (etapa Dados do financeiro).')]));
+        };
+        s6.append(resumoContrato, el('p', 'profiles-note compras-largo', 'O modelo de contrato e a assinatura ainda não estão disponíveis.'));
+
+        const quadros = [etapa1, etapa2, etapa3, rep.no, s5, s6];
         const marcadas = () => catOpcoes.marcados();
         const etapas = () => D.etapasFornecedor(marcadas()).map((label) => ({ label }));
         let atual = 0;
@@ -710,6 +767,7 @@
           atual = Math.max(0, Math.min(quadros.length - 1, i));
           pintarCopias();
           pintarVinculos();
+          pintarResumoContrato();
           quadros.forEach((q, k) => mostrar(q, k === atual));
           barra.update(etapas(), atual);
           erroEtapa.textContent = '';
@@ -741,7 +799,7 @@
             vendedorAniversario: DF.monthParse(vAniv.value) || vAniv.value.trim(),
             // Serviço: a lista de prestadores; o 1º espelha o contato acima (é dele que a lista e a cotação leem).
             // Produto: a chave não vai, para não apagar prestadores gravados se a categoria for trocada por engano.
-            contrato: { inicio: cInicio.value, fim: cFim.value, valorCentavos: lerValorContrato(), observacoes: cObs.value.trim() },
+            contrato: lerContrato(),
             // Grupos de despesa: só na categoria Serviço (em Produto a chave não vai, para não apagar o que estava gravado).
             ...(ehServico() ? { gruposDespesaIds: [...gruposEscolhidos] } : {}),
             ...(ehServico() ? { prestadores: [
@@ -755,10 +813,10 @@
         form.append(barra.el, ...quadros, erroEtapa, nav);
         ir(0);
         // Produtos marcados agora (categoria Produto): viram vínculo no mesmo catálogo do Compras ao salvar.
-        return { ler, ir, datasContrato: [cInicio, cFim], novosProdutos: () => (marcadas().join() === 'produto' ? [...novosProdutos] : []) };
+        return { ler, ir, datasContrato: [cVencData, cInicio, cFim], novosProdutos: () => (marcadas().join() === 'produto' ? [...novosProdutos] : []) };
       },
       salvar: (c) => {
-        if (c.datasContrato.some((d2) => !d2.checkValidity())) { c.ir(5); return 'Confira as datas do contrato: use DD/MM/AA.'; }
+        if (c.datasContrato.some((d2) => !d2.checkValidity())) { c.ir(2); return 'Confira as datas do contrato: use DD/MM/AA.'; }
         const campos = c.ler();
         const faltas = D.validarFornecedorEtapas(campos, R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador });
         const etapaComFalta = faltas.findIndex(Boolean);

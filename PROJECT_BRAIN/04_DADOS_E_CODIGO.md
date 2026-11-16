@@ -63,8 +63,11 @@
 - **Fornecedor único (15/11/2026)**, dentro de `cicluz-compras-v1` (mesma chave e versão). Campos do fornecedor: `nome`,
   `documento`, `whatsapp` e `situacao` (já existiam), mais `razaoSocial` (texto, opcional; o `nome` é o nome fantasia, e
   continua sendo o nome exibido em todo o sistema, sem migração), `categorias` (lista com 'produto' e/ou 'servico'), `ramo`
-  (texto, opcional), `contrato` (15/11/2026, opcional: `{ inicio, fim (AAAA-MM-DD ou ''), valorCentavos (inteiro ou null; só informado, sem fórmula), observacoes }`;
-  sem anexo ainda), `gruposDespesaIds` (só categoria Serviço, 15/11/2026: ids de `cicluz-financial-hierarchy-v1`.despesas a que o prestador
+  (texto, opcional), `contrato` (16/11/2026; é o quadro "Tem contrato?" dos dados do financeiro: `{ tem, formaPagamento ('dinheiro' | 'boleto' | 'pix' |
+  'transferencia' | ''), recorrencia ('hora' | 'visita' | 'dia' | 'mes' | 'ano' | ''), vencimentoDia (1 a 31, só por mês, ou null), vencimentoData
+  (AAAA-MM-DD ou ''), valorCentavos (inteiro ou null), inicio, fim, reajuste ('sem' | 'salario-minimo' | 'ipca' | 'igpm' | 'inpc' | 'percentual' | ''),
+  reajustePercentual (número ou null), observacoes }`; tudo só informado, sem fórmula; migração `migracoes.contratoFinanceiro`: quem tinha
+  início, fim, valor ou observações da versão de 15/11 recebe `tem: true`; sem anexo ainda), `gruposDespesaIds` (só categoria Serviço, 15/11/2026: ids de `cicluz-financial-hierarchy-v1`.despesas a que o prestador
   está ligado: o id do grupo ou, para subgrupo, "idDoGrupo|idDoSubgrupo" (16/11/2026; o mesmo formato do patrimônio); só vínculo, sem lançamento; o vínculo com **produtos** não é campo do fornecedor: é o `catalogo` que já existia, e a etapa
   Vínculos só acrescenta registros lá), `prestadores` (só categoria Serviço, 15/11/2026: `[{ id, nome, whatsapp, email, aniversario 'AAAA-MM', funcoes: [ids] }]`; o 1º espelha
   `contatoNome`/`whatsapp`/`email`/`vendedorAniversario`, que continuam sendo o que a lista e a cotação leem; migração

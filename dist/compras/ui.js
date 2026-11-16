@@ -549,7 +549,7 @@
    * financeiros (.account-status / .account-status-switch de Grupos, Bandeiras e Contas), não uma caixa de marcar.
    * Devolve o quadro; quadro.ativo lê (e escreve) o estado. feminino troca o texto para Ativa/Inativa.
    */
-  function quadroSituacao(titulo, ativo, { dica = '', feminino = false, aoMudar } = {}) {
+  function quadroSituacao(titulo, ativo, { dica = '', feminino = false, aoMudar, textos } = {}) {
     const quadro = el('div', 'account-status compras-situacao-quadro');
     const linha = el('div', 'account-status-row');
     const chave = el('button', 'account-status-switch');
@@ -561,7 +561,8 @@
     let ligado = Boolean(ativo);
     const pintar = () => {
       chave.setAttribute('aria-checked', String(ligado));
-      texto.textContent = ligado ? (feminino ? 'Ativa' : 'Ativo') : (feminino ? 'Inativa' : 'Inativo');
+      // textos: [ligado, desligado] para perguntas de sim ou não (ex.: "Tem contrato?" → Sim / Não).
+      texto.textContent = textos ? textos[ligado ? 0 : 1] : ligado ? (feminino ? 'Ativa' : 'Ativo') : (feminino ? 'Inativa' : 'Inativo');
     };
     chave.onclick = () => { ligado = !ligado; pintar(); if (aoMudar) aoMudar(ligado); };
     pintar();
