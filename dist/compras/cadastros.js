@@ -1030,5 +1030,5 @@
     });
   }
 
-  window.CicluzComprasCadastros = { abrirFornecedores, mascaraTelefone, mascaraDocumento };
+  window.CicluzComprasCadastros = { abrirFornecedores, mascaraTelefone, mascaraDocumento, seletoresAniversario, linhasContrato };
 })();

@@ -431,6 +431,35 @@
   }
   const telefoneRuim = (v) => { const n = digitos(v); return Boolean(n) && (n.length < 8 || String(v).length > 30); };
   /**
+   * Contrato (quadro "Tem contrato?" dos dados do financeiro; vale para fornecedor e cliente): só é conferido quando tem.
+   * Tudo opcional, menos o percentual quando o reajuste é "Percentual fixo". O valor e o índice são só informados: sem fórmula.
+   */
+  function validarContratoFinanceiro(c) {
+    if (c == null) return '';
+    if (typeof c !== 'object') return 'Contrato inválido.';
+    if (!c.tem) return '';
+    const naLista = (lista, v) => !v || lista.some(([id]) => id === v);
+    if (!naLista(FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)) return 'Forma de pagamento do contrato inválida.';
+    if (!naLista(RECORRENCIAS_CONTRATO, c.recorrencia)) return 'Recorrência do contrato inválida.';
+    if (c.recorrencia === 'personalizado') { const m = validarRecorrenciaPersonalizada(c.recorrenciaPersonalizada); if (m) return m; }
+    if (c.diaPagamento != null && c.diaPagamento !== '' && c.diaPagamento !== 'sexta') return 'Dia de pagamento inválido.';
+    const sm = c.salarioMinimo;
+    if (sm != null) {
+      if (typeof sm !== 'object') return 'Referência do salário mínimo inválida.';
+      if (sm.ativo && !(typeof sm.percentual === 'number' && sm.percentual > 0 && sm.percentual <= 10000)) return 'Informe o percentual do salário mínimo (maior que 0).';
+    }
+    if (c.vencimentoDia != null && (!Number.isInteger(c.vencimentoDia) || c.vencimentoDia < 1 || c.vencimentoDia > 31)) return 'O dia do vencimento deve ser de 1 a 31.';
+    const dataRuim = (v) => Boolean(v) && !/^\d{4}-\d{2}-\d{2}$/.test(v);
+    if (dataRuim(c.vencimentoData)) return 'Confira a data de vencimento: use DD/MM/AA.';
+    if (c.valorCentavos != null && (!Number.isInteger(c.valorCentavos) || c.valorCentavos < 0)) return 'Valor do contrato inválido.';
+    if (dataRuim(c.inicio) || dataRuim(c.fim)) return 'Confira as datas do contrato: use DD/MM/AA.';
+    if (c.inicio && c.fim && c.fim < c.inicio) return 'O término do contrato não pode ser antes do início.';
+    if (!naLista(REAJUSTES_CONTRATO, c.reajuste)) return 'Reajuste do contrato inválido.';
+    if (c.reajuste === 'percentual' && !(typeof c.reajustePercentual === 'number' && c.reajustePercentual > 0 && c.reajustePercentual <= 100)) return 'Informe o percentual do reajuste (maior que 0 e até 100).';
+    if (String(c.observacoes || '').length > 2000) return 'As observações do contrato devem ter no máximo 2000 caracteres.';
+    return '';
+  }
+  /**
    * O que impede salvar, etapa por etapa: devolve um texto por etapa ('' quando a etapa está em ordem). Obrigatórios: categoria
    * (Produto ou Serviço, uma só), nome (nome fantasia ou razão social), CNPJ
    * com dígito verificador e WhatsApp do vendedor ou prestador. O aniversário do vendedor (mês e ano) é opcional (o CPF dele não é
@@ -493,37 +522,91 @@
     const vinculos = () => (f.gruposDespesaIds != null && (!Array.isArray(f.gruposDespesaIds) || f.gruposDespesaIds.some((id) => !id || typeof id !== 'string')) ? 'Grupo de despesa inválido.' : '');
     // Contrato (quadro "Tem contrato?" dos dados do financeiro): só é conferido quando tem. Tudo opcional, menos o
     // percentual quando o reajuste é "Percentual fixo". O valor e o índice são só informados: sem fórmula.
-    const contrato = () => {
-      const c = f.contrato;
-      if (c == null) return '';
-      if (typeof c !== 'object') return 'Contrato inválido.';
-      if (!c.tem) return '';
-      const naLista = (lista, v) => !v || lista.some(([id]) => id === v);
-      if (!naLista(FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)) return 'Forma de pagamento do contrato inválida.';
-      if (!naLista(RECORRENCIAS_CONTRATO, c.recorrencia)) return 'Recorrência do contrato inválida.';
-      if (c.recorrencia === 'personalizado') { const m = validarRecorrenciaPersonalizada(c.recorrenciaPersonalizada); if (m) return m; }
-      if (c.diaPagamento != null && c.diaPagamento !== '' && c.diaPagamento !== 'sexta') return 'Dia de pagamento inválido.';
-      const sm = c.salarioMinimo;
-      if (sm != null) {
-        if (typeof sm !== 'object') return 'Referência do salário mínimo inválida.';
-        if (sm.ativo && !(typeof sm.percentual === 'number' && sm.percentual > 0 && sm.percentual <= 10000)) return 'Informe o percentual do salário mínimo (maior que 0).';
-      }
-      if (c.vencimentoDia != null && (!Number.isInteger(c.vencimentoDia) || c.vencimentoDia < 1 || c.vencimentoDia > 31)) return 'O dia do vencimento deve ser de 1 a 31.';
-      const dataRuim = (v) => Boolean(v) && !/^\d{4}-\d{2}-\d{2}$/.test(v);
-      if (dataRuim(c.vencimentoData)) return 'Confira a data de vencimento: use DD/MM/AA.';
-      if (c.valorCentavos != null && (!Number.isInteger(c.valorCentavos) || c.valorCentavos < 0)) return 'Valor do contrato inválido.';
-      if (dataRuim(c.inicio) || dataRuim(c.fim)) return 'Confira as datas do contrato: use DD/MM/AA.';
-      if (c.inicio && c.fim && c.fim < c.inicio) return 'O término do contrato não pode ser antes do início.';
-      if (!naLista(REAJUSTES_CONTRATO, c.reajuste)) return 'Reajuste do contrato inválido.';
-      if (c.reajuste === 'percentual' && !(typeof c.reajustePercentual === 'number' && c.reajustePercentual > 0 && c.reajustePercentual <= 100)) return 'Informe o percentual do reajuste (maior que 0 e até 100).';
-      if (String(c.observacoes || '').length > 2000) return 'As observações do contrato devem ter no máximo 2000 caracteres.';
-      return '';
-    };
+    const contrato = () => validarContratoFinanceiro(f.contrato);
     // O contrato é conferido na etapa do financeiro (3ª); a 6ª (o documento do contrato) não tem campo a conferir.
     return [basico(), vendedor(), contato(f.financeiro, 'financeiro') || contrato(), representante(), vinculos(), ''];
   }
   /** Primeiro impedimento do cadastro inteiro, ou ''. */
   const validarFornecedor = (f, regras, ctx) => validarFornecedorEtapas(f, regras, ctx).find(Boolean) || '';
+
+  /* ---------- Clientes (VND - Clientes; 17/11/2026) ----------
+   * Quatro modalidades: Pessoa Física ou Jurídica × Cadastro Simples (uma página) ou Completo (etapas). O mesmo registro
+   * muda de Simples para Completo sem duplicar: os campos de cada tipo ficam guardados no registro, e salvar só mexe nos
+   * do tipo e da modalidade em uso. Só informação cadastral: nada aqui gera cobrança, pagamento ou sorteio. */
+  const TIPOS_PESSOA_CLIENTE = [['fisica', 'Pessoa Física'], ['juridica', 'Pessoa Jurídica']];
+  const TIPOS_CADASTRO_CLIENTE = [['simples', 'Simples'], ['completo', 'Completo']];
+  /** Nome para listas e buscas: a pessoa, ou o nome fantasia (ou a razão social) da empresa. */
+  function nomeCliente(c) {
+    if (!c) return '';
+    return String(c.tipoPessoa === 'juridica' ? (c.nomeFantasia || c.razaoSocial) : c.nome || '').trim();
+  }
+  /** Etapas do cadastro completo (o simples é uma página só, sem etapas). */
+  function etapasCliente(tipoPessoa, cadastro) {
+    if (cadastro !== 'completo') return [];
+    return tipoPessoa === 'juridica'
+      ? ['Dados da empresa', 'Dados do contato', 'Dados do financeiro', 'Dados do representante', 'Revisão']
+      : ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão'];
+  }
+  const dataIsoValida = (v) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); if (!m) return false; const d = new Date(+m[1], +m[2] - 1, +m[3]); return d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3]; };
+  /**
+   * O que impede salvar, uma mensagem por etapa ('' quando em ordem). Simples: um item só. Completo: um por etapa.
+   * Obrigatórios — PF simples: nome, WhatsApp, e-mail e data de nascimento (sem CPF nem endereço); PF completo: os mesmos
+   * mais CPF válido; PJ: CNPJ válido, razão social e WhatsApp. O resto é opcional, mas o que vier preenchido precisa estar no
+   * formato. regras = { cpfValid, cnpjValid } do field-validation.js.
+   */
+  function validarClienteEtapas(c, regras, { clientes = [] } = {}) {
+    const outros = clientes.filter((x) => x.id !== c.id);
+    const pj = c.tipoPessoa === 'juridica'; const completo = c.cadastro === 'completo';
+    const enderecoRuim = () => {
+      const e = c.endereco || {};
+      if (e.cep && digitos(e.cep).length !== 8) return 'O CEP deve ter 8 dígitos.';
+      if (e.uf && !/^[A-Z]{2}$/.test(e.uf)) return 'UF inválida.';
+      return '';
+    };
+    const contatoRuim = (x, quem) => {
+      const v = x || {};
+      if (telefoneRuim(v.whatsapp)) return 'WhatsApp do ' + quem + ' inválido.';
+      if (v.email && !emailValido(v.email)) return 'E-mail do ' + quem + ' inválido.';
+      return '';
+    };
+    const whatsEmail = (emailObrigatorio) => {
+      if (!digitos(c.whatsapp)) return 'Informe o WhatsApp.';
+      if (telefoneRuim(c.whatsapp)) return 'WhatsApp inválido.';
+      if (emailObrigatorio && !String(c.email || '').trim()) return 'Informe o e-mail.';
+      if (c.email && !emailValido(c.email)) return 'E-mail inválido.';
+      return '';
+    };
+    const pessoa = () => {
+      if (!String(c.nome || '').trim()) return 'Informe o nome completo.';
+      if (completo) {
+        if (!regras.cpfValid(c.cpf)) return 'Informe um CPF válido (11 dígitos).';
+        if (outros.some((x) => x.tipoPessoa !== 'juridica' && x.cpf && digitos(x.cpf) === digitos(c.cpf))) return 'Já existe um cliente com este CPF.';
+      }
+      const r = whatsEmail(true);
+      if (r) return r;
+      if (!c.nascimento) return 'Informe a data de nascimento.';
+      if (!dataIsoValida(c.nascimento) || c.nascimento < '1900-01-01' || c.nascimento > isoData(new Date())) return 'Data de nascimento inválida: use DD/MM/AA, sem data futura.';
+      if (!completo && outros.some((x) => x.tipoPessoa !== 'juridica' && semAcento(x.nome) === semAcento(c.nome) && digitos(x.whatsapp) === digitos(c.whatsapp))) return 'Já existe um cliente com este nome e WhatsApp.';
+      return '';
+    };
+    const empresa = () => {
+      if (!regras.cnpjValid(c.cnpj)) return 'Informe um CNPJ válido (14 dígitos).';
+      if (outros.some((x) => x.tipoPessoa === 'juridica' && x.cnpj && digitos(x.cnpj) === digitos(c.cnpj))) return 'Já existe um cliente com este CNPJ.';
+      if (!String(c.razaoSocial || '').trim()) return 'Informe a razão social.';
+      if (c.regimeTributario && !REGIMES_TRIBUTARIOS.some(([id]) => id === c.regimeTributario)) return 'Regime tributário inválido.';
+      return completo ? enderecoRuim() : '';
+    };
+    if (!completo) return [pj ? empresa() || whatsEmail(false) : pessoa()];
+    if (!pj) return [pessoa(), enderecoRuim(), '', ''];
+    return [
+      empresa(),
+      whatsEmail(false) || (aniversarioRuim(c.contatoAniversario) ? 'Aniversário do contato inválido: escolha o dia e o mês.' : ''),
+      contatoRuim(c.financeiro, 'financeiro') || validarContratoFinanceiro(c.contrato),
+      (() => { const cargo = c.representante && c.representante.cargo; return cargo && !CARGOS_REPRESENTANTE.some(([id]) => id === cargo) ? 'Cargo do representante inválido.' : contatoRuim(c.representante, 'representante'); })(),
+      '',
+    ];
+  }
+  const validarCliente = (c, regras, ctx) => validarClienteEtapas(c, regras, ctx).find(Boolean) || '';
 
   /* ---------- Cotação: avaliação automática da resposta do fornecedor ----------
    * Um item é comprado sozinho quando: custo ≤ referência congelada, cabe no teto e a
@@ -706,6 +789,7 @@
     validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, aniversarioVendedor, migrarVendedorFornecedor,
     FUNCOES_PRESTADOR_INICIAIS, idFuncaoPrestador, funcaoPrestadorIgual, validarFuncaoPrestador, migrarPrestadoresFornecedor,
     FORMAS_PAGAMENTO_CONTRATO, FORMAS_PAGAMENTO_FORNECEDOR, RECORRENCIAS_CONTRATO, UNIDADES_REPETICAO, POSICOES_MES, DIAS_SEMANA_LONGOS, REAJUSTES_CONTRATO, migrarContratoFinanceiro,
+    validarContratoFinanceiro, TIPOS_PESSOA_CLIENTE, TIPOS_CADASTRO_CLIENTE, nomeCliente, etapasCliente, validarClienteEtapas, validarCliente,
     validarRecorrenciaPersonalizada, resumoRecorrenciaPersonalizada, resumoValorRecorrencia, aniversarioPartes, aniversarioRuim, aniversarioTexto,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,

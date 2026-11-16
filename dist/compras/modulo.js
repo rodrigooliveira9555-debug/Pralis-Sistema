@@ -40,6 +40,8 @@
     if (nome === 'fornecedores') return window.CicluzComprasCadastros.abrirFornecedores('mer');
     // DES - Fornecedores (Saídas · Despesas) abre o mesmo cadastro, na cor e com o Voltar de Despesas.
     if (nome === 'fornecedores-des') return window.CicluzComprasCadastros.abrirFornecedores('des');
+    // VND - Clientes (Entradas · Vendas): cadastro próprio, na cor de Entradas.
+    if (nome === 'clientes-vnd') return window.CicluzComprasClientes.abrir();
     if (nome === 'produtos') return window.CicluzComprasProdutos.abrir();
     const t = telas[nome];
     if (t) return t();

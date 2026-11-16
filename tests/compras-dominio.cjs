@@ -400,4 +400,70 @@ ok(() => {
   assert.equal(doc.fornecedores[2].nascimento, '2000-01-01');
 });
 
+// Clientes (VND - Clientes): PF/PJ × Simples/Completo no mesmo registro.
+ok(() => {
+  assert.deepEqual(d.TIPOS_PESSOA_CLIENTE.map(([, n]) => n), ['Pessoa Física', 'Pessoa Jurídica']);
+  assert.deepEqual(d.TIPOS_CADASTRO_CLIENTE.map(([, n]) => n), ['Simples', 'Completo']);
+  assert.deepEqual(d.etapasCliente('fisica', 'simples'), []);
+  assert.deepEqual(d.etapasCliente('juridica', 'simples'), []);
+  assert.deepEqual(d.etapasCliente('fisica', 'completo'), ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão']);
+  assert.deepEqual(d.etapasCliente('juridica', 'completo'), ['Dados da empresa', 'Dados do contato', 'Dados do financeiro', 'Dados do representante', 'Revisão']);
+  assert.equal(d.nomeCliente({ tipoPessoa: 'fisica', nome: ' Ana Teste ' }), 'Ana Teste');
+  assert.equal(d.nomeCliente({ tipoPessoa: 'juridica', razaoSocial: 'Empresa Ltda', nomeFantasia: 'Fantasia' }), 'Fantasia');
+  assert.equal(d.nomeCliente({ tipoPessoa: 'juridica', razaoSocial: 'Empresa Ltda' }), 'Empresa Ltda');
+  assert.equal(d.nomeCliente(null), '');
+  const ctx = { clientes: [{ id: 'x1', tipoPessoa: 'fisica', cadastro: 'completo', nome: 'Outro Cliente', cpf: '111.444.777-35', whatsapp: '(31) 90000-0000' }, { id: 'x2', tipoPessoa: 'juridica', cadastro: 'simples', cnpj: '45.723.174/0001-10', razaoSocial: 'Existente' }] };
+  const e = (c) => d.validarClienteEtapas(c, regras, ctx);
+  const pfs = { id: 'n1', tipoPessoa: 'fisica', cadastro: 'simples', nome: 'Ana Teste', whatsapp: '(31) 98888-0000', email: 'ana@exemplo.test', nascimento: '1990-08-15' };
+  // PF simples: uma página; nome, WhatsApp, e-mail e nascimento obrigatórios; sem CPF nem endereço.
+  assert.deepEqual(e(pfs), ['']);
+  assert.match(e({ ...pfs, nome: ' ' })[0], /nome completo/);
+  assert.match(e({ ...pfs, whatsapp: '' })[0], /WhatsApp/);
+  assert.match(e({ ...pfs, whatsapp: '12' })[0], /WhatsApp inválido/);
+  assert.match(e({ ...pfs, email: '' })[0], /Informe o e-mail/);
+  assert.match(e({ ...pfs, email: 'sem-arroba' })[0], /E-mail inválido/);
+  assert.match(e({ ...pfs, nascimento: '' })[0], /nascimento/);
+  assert.match(e({ ...pfs, nascimento: '1990-02-31' })[0], /nascimento inválida/);
+  assert.match(e({ ...pfs, nascimento: '2999-01-01' })[0], /nascimento inválida/);
+  assert.match(e({ ...pfs, nascimento: '1890-01-01' })[0], /nascimento inválida/);
+  assert.match(e({ ...pfs, nome: 'outro cliente', whatsapp: '(31) 90000-0000' })[0], /nome e WhatsApp/); // não duplica
+  assert.deepEqual(e({ ...pfs, id: 'x1', nome: 'Outro Cliente', whatsapp: '(31) 90000-0000' }), ['']); // o próprio registro não conta como duplicado
+  // PF completo: o mesmo mais CPF válido; endereço opcional, mas no formato.
+  const pfc = { ...pfs, cadastro: 'completo', cpf: '529.982.247-25', endereco: { cep: '30130-000', uf: 'MG' } };
+  assert.deepEqual(e(pfc), ['', '', '', '']);
+  assert.match(e({ ...pfc, cpf: '' })[0], /CPF válido/);
+  assert.match(e({ ...pfc, cpf: '111.111.111-11' })[0], /CPF válido/);
+  assert.match(e({ ...pfc, cpf: '111.444.777-35' })[0], /Já existe um cliente com este CPF/);
+  assert.deepEqual(e({ ...pfc, endereco: undefined }), ['', '', '', '']);
+  assert.match(e({ ...pfc, endereco: { cep: '123' } })[1], /CEP/);
+  assert.match(e({ ...pfc, endereco: { uf: 'minas' } })[1], /UF/);
+  // PJ simples: CNPJ válido, razão social e WhatsApp; fantasia e e-mail opcionais.
+  const pjs = { id: 'n2', tipoPessoa: 'juridica', cadastro: 'simples', cnpj: '11.222.333/0001-81', razaoSocial: 'Empresa Alfa Ltda', whatsapp: '(31) 3333-4444' };
+  assert.deepEqual(e(pjs), ['']);
+  assert.match(e({ ...pjs, cnpj: '11.222.333/0001-80' })[0], /CNPJ válido/);
+  assert.match(e({ ...pjs, cnpj: '45.723.174/0001-10' })[0], /Já existe um cliente com este CNPJ/);
+  assert.match(e({ ...pjs, razaoSocial: '' })[0], /razão social/);
+  assert.match(e({ ...pjs, whatsapp: '' })[0], /WhatsApp/);
+  assert.match(e({ ...pjs, email: 'x@' })[0], /E-mail inválido/);
+  assert.deepEqual(e({ ...pjs, nome: '', cpf: '' }), ['']); // campos de PF não entram na PJ
+  // PJ completo: cinco etapas (base de Fornecedores): empresa, contato, financeiro, representante, revisão.
+  const pjc = { ...pjs, cadastro: 'completo', regimeTributario: 'simples', contatoAniversario: '02-29', financeiro: { nome: 'Fin', whatsapp: '(31) 99999-0000', email: 'fin@exemplo.test' }, representante: { nome: 'Rep', cargo: 'diretor-geral' },
+    contrato: { tem: true, formaPagamento: 'boleto', recorrencia: 'mes', valorCentavos: 250000, salarioMinimo: { ativo: true, percentual: 150 } } };
+  assert.deepEqual(e(pjc), ['', '', '', '', '']);
+  assert.match(e({ ...pjc, regimeTributario: 'xx' })[0], /Regime/);
+  assert.match(e({ ...pjc, contatoAniversario: '02-30' })[1], /Aniversário do contato/);
+  assert.match(e({ ...pjc, financeiro: { whatsapp: '1' } })[2], /WhatsApp do financeiro/);
+  assert.match(e({ ...pjc, contrato: { tem: true, recorrencia: 'personalizado' } })[2], /recorrência personalizada/i);
+  assert.match(e({ ...pjc, contrato: { tem: true, salarioMinimo: { ativo: true, percentual: 0 } } })[2], /percentual do salário mínimo/);
+  assert.deepEqual(e({ ...pjc, contrato: { tem: false, valorCentavos: -1 } }), ['', '', '', '', '']); // sem contrato, nada é conferido
+  assert.match(e({ ...pjc, representante: { cargo: 'chefe' } })[3], /Cargo do representante/);
+  assert.match(e({ ...pjc, representante: { whatsapp: '1' } })[3], /WhatsApp do representante/);
+  assert.equal(d.validarCliente(pjs, regras, ctx), '');
+  assert.match(d.validarCliente({ ...pjs, razaoSocial: '' }, regras, ctx), /razão social/);
+  // A regra do contrato é a mesma do fornecedor (extraída para uma função só).
+  assert.equal(d.validarContratoFinanceiro(null), '');
+  assert.equal(d.validarContratoFinanceiro({ tem: false, valorCentavos: -9 }), '');
+  assert.match(d.validarContratoFinanceiro({ tem: true, formaPagamento: 'cheque' }), /Forma de pagamento/);
+});
+
 console.log(checks + ' checks de regras de Compras passaram');
