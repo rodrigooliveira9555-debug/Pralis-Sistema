@@ -47,9 +47,9 @@ D.registerExtension((card,p,cat,r,locked,H)=>{
  box.append(tools);card.append(box)});
 
 /* ---------- Tela: Receber Documentos ---------- */
-const ACCENT='#7c3aed',TITLE='DES - Receber Documentos',GROUP='Lançamentos Colaboradores';
+const ACCENT='var(--section-accent,#ef4444)',TITLE='DES - Receber Documentos',GROUP='Lançamentos Colaboradores';
 const view=el('section','view');view.id='doc-receive-view';view.style.setProperty('--menu-accent',ACCENT);
-const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
+const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
 const head=el('div','head'),heading=el('div');heading.append(el('h2',null,TITLE),el('p',null,menuCrumb(2,GROUP,TITLE)));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);addShortcuts(view.id,()=>menuBack(2,GROUP)());
 body.append(el('div','form-note','Registro manual de documentos recebidos por entrega física, WhatsApp, e-mail ou outro meio. O arquivo vai para o mesmo registro de Documentações do colaborador. Não há recebimento automático: o DP anexa e confere.'));

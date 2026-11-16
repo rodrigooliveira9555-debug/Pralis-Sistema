@@ -6,7 +6,7 @@
 'use strict';
 const U=window.CicluzUniformUI,DB=window.CicluzDateBR;if(!U||!DB)return;
 const {el,button,iconButton,ICON,fold,newId,dateBR,today,money,moneyInput,cents,confirmDialog}=U;
-const KEY='cicluz-referencias-pagamento-v1',ACCENT='#7c3aed',TITLE='DES - Referências de Pagamento',GROUP='Cadastros Geral Colaboradores';
+const KEY='cicluz-referencias-pagamento-v1',ACCENT='var(--section-accent,#ef4444)',TITLE='DES - Referências de Pagamento',GROUP='Cadastros Geral Colaboradores';
 const KINDS=[['trial','Período de teste','por dia'],['daily','Diária','por dia'],['double','Dobra','por dobra'],['overtime','Hora extra','por hora'],['transport','Vale-transporte','por vale']];
 const kindName=k=>(KINDS.find(x=>x[0]===k)||[,k])[1],kindUnit=k=>(KINDS.find(x=>x[0]===k)||[,,''])[2];
 
@@ -21,7 +21,7 @@ function knownSectors(){const set=new Map();try{window.CicluzPeople?.load();for(
  try{const d=JSON.parse(localStorage.getItem('cicluz-job-profiles-v1')||'null');for(const a of d?.areas||[])if(a.name)set.set(fold(a.name),a.name)}catch{}return [...set.values()].sort((a,b)=>a.localeCompare(b,'pt-BR'))}
 
 const view=el('section','view');view.id='payment-refs-view';view.style.setProperty('--menu-accent',ACCENT);
-const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
+const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
 const head=el('div','head'),heading=el('div');heading.append(el('h2',null,TITLE),el('p',null,menuCrumb(2,GROUP,TITLE)));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);addShortcuts(view.id,()=>menuBack(2,GROUP)());
 body.append(el('div','form-note','Estrutura para a tabela oficial de valores por setor (período de teste, diárias, dobras, horas extras e vale-transporte). A plataforma não traz valores e ainda não calcula pagamentos: os valores são informados pelo DP a partir da tabela oficial, e a regra de cálculo será ligada depois de confirmada com a empresa. Grupo de despesa de referência: Folha de Pagamento → Diárias e Horas Extras (nenhuma despesa é lançada daqui).'));

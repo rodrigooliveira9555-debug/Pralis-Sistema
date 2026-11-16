@@ -7,7 +7,7 @@
 'use strict';
 const U=window.CicluzUniformUI;if(!U)return;
 const {el,button}=U;
-const GROUP='Cadastros Geral Colaboradores',ACCENT='#7c3aed';
+const GROUP='Cadastros Geral Colaboradores',ACCENT='var(--section-accent,#ef4444)';
 const fmt=n=>n==null||n===''?'—':Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const NATUREZA={1:'Provento',2:'Vantagem',3:'Desconto',4:'Informativo'};
 
@@ -58,7 +58,7 @@ const VIEWERS={folha05:viewFolha,folha20:viewFolha,rescisao:viewRescisao,ferias:
 const views={};
 function makeScreen(key){const T=TIPOS[key];
  const view=el('section','view');view.id='folhas-'+key+'-view';view.style.setProperty('--menu-accent',ACCENT);
- const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
+ const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
  const head=el('div','head'),heading=el('div');heading.append(el('h2',null,T.titulo),el('p',null,menuCrumb(2,GROUP,T.titulo)));head.append(heading);
  const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
  let detail=false;addShortcuts(view.id,()=>{if(detail)list();else menuBack(2,GROUP)()});

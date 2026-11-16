@@ -5,7 +5,7 @@
 'use strict';
 const P=window.CicluzPeople,U=window.CicluzUniformUI,F=window.CicluzFieldRules,DB=window.CicluzDateBR;if(!P||!U||!DB)return;
 const {el,button,iconButton,svg,ICON,fold,newId,dateBR,today,dialog,confirmDialog}=U;
-const KEY='cicluz-documentos-v1',ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','Documentações'),MAX=10*1024*1024;
+const KEY='cicluz-documentos-v1',ACCENT='var(--section-accent,#ef4444)',PATH=menuCrumb(2,'Lançamentos Colaboradores','Documentações'),MAX=10*1024*1024;
 const ORIGINS=['Entrega física','WhatsApp','E-mail','Outro'];const EXT=[];
 const ACCEPT=['image/jpeg','image/png','image/webp','application/pdf'];
 const DOC_ICON=telaIcone.ocorrencias,CAMERA='M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',X_ICON='M6 6l12 12M18 6 6 18',DOT='M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',DASH='M6 12h12';
@@ -95,7 +95,7 @@ function showModel(cat){const m=MODELS[cat.id];if(!m)return;const dls=[['Baixar 
 
 /* ---------- View ---------- */
 const view=el('section','view');view.id='documents-view';view.style.setProperty('--menu-accent',ACCENT);
-const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
+const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
 const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(DOC_ICON);const heading=el('div'),title=el('h2',null,'Documentações'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
 let back=()=>menuBack(2,'Lançamentos Colaboradores')();addShortcuts(view.id,()=>back());

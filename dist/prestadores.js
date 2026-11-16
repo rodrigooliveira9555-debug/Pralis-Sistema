@@ -7,7 +7,7 @@
 'use strict';
 const U=window.CicluzUniformUI,PH=window.CicluzPhoneBR;if(!U)return;
 const {el,button,iconButton,ICON,fold,newId,today,confirmDialog}=U;
-const KEY='cicluz-prestadores-v1',ACCENT='#7c3aed',TITLE='DES - Prestadores de Serviços',GROUP='Cadastros Geral Colaboradores';
+const KEY='cicluz-prestadores-v1',ACCENT='var(--section-accent,#ef4444)',TITLE='DES - Prestadores de Serviços',GROUP='Cadastros Geral Colaboradores';
 const SERVICES=['Medicina do Trabalho','Segurança do Trabalho','Contabilidade','Outro'];
 const SEED={name:'AcessaMed+ Trabalho',service:'Medicina do Trabalho',phone:'(32) 3031-6269',mobile:'(32) 99813-4294',site:'www.acessamedmais.com.br',hours:'Horário de atendimento: de segunda a sexta-feira, das 7h às 19h.',
  notes:'Pagamento: boleto bancário com vencimento dez dias fora o mês em que o exame foi realizado. É reservado o direito de não atender cliente com débito vencido.',
@@ -28,7 +28,7 @@ const list=({service,activeOnly=true}={})=>{load();return data.providers.filter(
 
 /* ---------- Tela ---------- */
 const view=el('section','view');view.id='prestadores-view';view.style.setProperty('--menu-accent',ACCENT);
-const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
+const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
 const head=el('div','head'),heading=el('div');heading.append(el('h2',null,TITLE),el('p',null,menuCrumb(2,GROUP,TITLE)));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);addShortcuts(view.id,()=>menuBack(2,GROUP)());
 body.append(el('div','form-note','Clínicas e outros prestadores usados pela Gestão de Pessoas. Cada prestador pode ter vários endereços; o agendamento de exames escolhe o prestador e depois o endereço. Nada é apagado: prestadores e endereços são desativados.'));
@@ -40,7 +40,7 @@ name.maxLength=80;site.maxLength=80;site.dataset.textoLivre='1';hours.maxLength=
 SERVICES.forEach(s=>service.add(new Option(s,s)));active.add(new Option('Ativo','1'));active.add(new Option('Inativo','0'));
 const addrBox=el('div','uniforms-wide prestadores-addresses');let addrs=[];
 const error=el('p','uniforms-wide profiles-error'),status=el('p','uniforms-wide profiles-note');error.setAttribute('role','alert');status.setAttribute('role','status');
-const act=el('div','uniforms-wide actions'),save=el('button','btn','Salvar prestador');save.type='submit';let editing=null;act.append(button('Cancelar',()=>{reset();status.textContent='Edição descartada.'}),save);
+const act=el('div','uniforms-wide actions'),save=el('button','btn','Salvar prestador');save.type='submit';let editing=null;act.append(button('Cancelar',()=>{reset();status.textContent='Edição descartada.'}),save); U.iconizeActions(act);
 form.append(heading2,lbl('Nome do prestador *',name,'uniforms-wide'),lbl('Tipo de serviço *',service),lbl('Situação',active),lbl('Telefone',phone),lbl('Celular',mobile),lbl('Site',site),lbl('Horário de atendimento',hours,'uniforms-wide'),lbl('Observações e condições',notes,'uniforms-wide'),addrBox,error,status,act);
 const listBox=el('div');body.append(warn,form,el('h3','uniforms-heading','Prestadores cadastrados'),listBox);
 function drawAddrs(){addrBox.replaceChildren(el('h4',null,'Endereços de atendimento *'));
@@ -49,8 +49,8 @@ function drawAddrs(){addrBox.replaceChildren(el('h4',null,'Endereços de atendim
   lab.oninput=()=>{a.label=lab.value};st.oninput=()=>{a.street=st.value};ci.oninput=()=>{a.city=ci.value};on.onchange=()=>{a.active=on.value==='1'};
   row.append(lab,st,ci,on);if(!a.id)row.append(iconButton('Remover endereço '+(i+1)+' ainda não salvo',ICON.trash,()=>{addrs.splice(i,1);drawAddrs()}));addrBox.append(row)});
  addrBox.append(button('Adicionar endereço',()=>{addrs.push({label:'',street:'',city:'',active:true});drawAddrs()}))}
-function reset(){editing=null;form.reset();name.value=phone.value=mobile.value=site.value=hours.value=notes.value='';service.value=SERVICES[0];active.value='1';addrs=[{label:'',street:'',city:'',active:true}];heading2.textContent='Novo prestador';save.textContent='Salvar prestador';error.textContent='';drawAddrs()}
-function edit(p){editing=p.id;name.value=p.name;service.value=SERVICES.includes(p.service)?p.service:'Outro';phone.value=p.phone||'';mobile.value=p.mobile||'';site.value=p.site||'';hours.value=p.hours||'';notes.value=p.notes||'';active.value=p.active?'1':'0';addrs=p.addresses.map(a=>({...a}));heading2.textContent='Editar prestador: '+p.name;save.textContent='Salvar alterações';error.textContent=status.textContent='';drawAddrs();form.scrollIntoView({block:'start',behavior:'smooth'})}
+function reset(){U.closeEditor(form);editing=null;form.reset();name.value=phone.value=mobile.value=site.value=hours.value=notes.value='';service.value=SERVICES[0];active.value='1';addrs=[{label:'',street:'',city:'',active:true}];heading2.textContent='Novo prestador';save.textContent='Salvar prestador';error.textContent='';drawAddrs()}
+function edit(p){editing=p.id;name.value=p.name;service.value=SERVICES.includes(p.service)?p.service:'Outro';phone.value=p.phone||'';mobile.value=p.mobile||'';site.value=p.site||'';hours.value=p.hours||'';notes.value=p.notes||'';active.value=p.active?'1':'0';addrs=p.addresses.map(a=>({...a}));heading2.textContent='Editar prestador: '+p.name;save.textContent='Salvar alterações';error.textContent=status.textContent='';drawAddrs();U.openEditor(form,heading2.textContent,reset)}
 form.onsubmit=e=>{e.preventDefault();error.textContent=status.textContent='';load();const n=name.value.trim(),errs=[];if(!n)errs.push('Informe o nome do prestador.');
  const used=addrs.filter(a=>(a.label||'').trim()||(a.street||'').trim()||(a.city||'').trim());if(!used.length)errs.push('Cadastre ao menos um endereço.');
  for(const a of used)if(!(a.label||'').trim()||!(a.street||'').trim()||!(a.city||'').trim()){errs.push('Cada endereço precisa de unidade, endereço completo e cidade.');break}

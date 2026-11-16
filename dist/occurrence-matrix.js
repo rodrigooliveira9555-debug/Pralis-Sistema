@@ -9,7 +9,7 @@ const U=window.CicluzUniformUI,DB=window.CicluzDateBR,G=window.CicluzGP;if(!U||!
 /* occurrences.js carrega antes de people.js: o cadastro de pessoas é lido só quando necessário. */
 const P=new Proxy({},{get:(_,k)=>window.CicluzPeople?.[k]});
 const {el,button,iconButton,ICON,fold,newId,dateBR,today,dialog,confirmDialog}=U;
-const KEY='cicluz-ocorrencias-matriz-v1',ACCENT='#7c3aed',TITLE='DES - Categorias e Matriz Disciplinar',GROUP='Cadastros Geral Colaboradores';
+const KEY='cicluz-ocorrencias-matriz-v1',ACCENT='var(--section-accent,#ef4444)',TITLE='DES - Categorias e Matriz Disciplinar',GROUP='Cadastros Geral Colaboradores';
 const SEVERITY=['Leve','Moderado','Grave'];
 const SEED=[
  ['Cumprimento de Horários e Disciplina',['Atraso','Saída antecipada','Descumprimento de intervalo','Falta injustificada','Falta justificada','Ausência de comunicação de atraso','Ausência de comunicação de falta','Descumprimento de escala']],
@@ -86,7 +86,7 @@ function create(ctx){
  /* áudio (local; sem transcrição automática) */
  const audioBox=el('div','uniforms-wide matrix-audio');let rec=null,chunks=[],blob=null,url='',startedAt=0,seconds=0;
  const aMsg=el('p','profiles-note');aMsg.setAttribute('role','status');const player=el('audio');player.controls=true;player.hidden=true;
- const bRec=button('Gravar áudio',startRec,'btn secondary'),bStop=button('Parar gravação',stopRec,'btn secondary'),bDel=button('Descartar áudio',discard,'btn secondary');bStop.hidden=bDel.hidden=true;
+ const OT=window.CicluzOccTools.ICON,bRec=G.roundButton('Gravar áudio',OT.mic,startRec),bStop=G.roundButton('Parar gravação',OT.stop,stopRec),bDel=G.roundButton('Descartar áudio',OT.trash,discard);bStop.hidden=bDel.hidden=true;
  const supported=!!(navigator.mediaDevices?.getUserMedia&&window.MediaRecorder);
  const aTools=el('div','people-banner-tools');aTools.append(bRec,bStop,bDel);audioBox.append(el('span','uniforms-enum-label','Observação por áudio (opcional)'),aTools,aMsg,player);
  const infoMsg=supported?'O áudio é gravado e guardado só neste aparelho. Não há transcrição automática: digite ou revise o texto da observação à mão.':'Gravação de áudio indisponível neste navegador: digite a observação.';aMsg.textContent=infoMsg;bRec.disabled=!supported;
@@ -99,8 +99,8 @@ function create(ctx){
  function previewDoc(){const p=P.byId(ctx.collab()),c=catById(catSel.value),s=S(),type=ctx.type(),iso=ctx.date();
   const rows=[['Empresa',G.companyName()||'Empresa não identificada pela sessão'],['Colaborador',p?.name||'—'],['Cargo',p?.jobName||'—'],['Data da ocorrência',iso?dateBR(iso):'—'],['Tipo de ocorrência',type||'—'],['Categoria',c?.name||'—'],['Subcategoria',s?.name||'—'],['Documento associado',docField.value||'—']];
   if(type==='SUSPENSÃO'&&ctx.days())rows.push(['Quantidade de dias',String(ctx.days())]);rows.push(['Motivo declarado',ctx.reason()||'—'],['Observação',ctx.note()||'—']);if(s?.severity)rows.push(['Nível (classificação administrativa)',s.severity]);const m=ctx.modelName();rows.push(['Modelo',m?'Modelo cadastrado: '+m:'Sem modelo oficial: prévia demonstrativa']);
-  dialog('Prévia do documento',(f,form)=>{form.append(el('p','people-alert','Prévia'+(m?'':' demonstrativa')+': não é um documento emitido. Visualizar não altera o status da ocorrência e a plataforma não gera o texto jurídico.'));const dl=el('dl','profiles-info');for(const [k,v] of rows)dl.append(el('dt',null,k),el('dd',null,v));form.append(dl)})}
- const previewBtn=button('Visualizar documento',previewDoc,'btn secondary');
+  dialog('Prévia do documento',(f,form)=>{form.append(el('p','people-alert','Prévia'+(m?'':' demonstrativa')+': não é um documento emitido. Visualizar não altera o status da ocorrência e a plataforma não gera o texto jurídico.'));const dl=el('dl','profiles-info');for(const [k,v] of rows)dl.append(el('dt',null,k),el('dd',null,v));form.append(dl,window.CicluzOccTools.docActions('Documento de ocorrência'+(m?'':' (prévia demonstrativa)'),rows))})}
+ const previewBtn=G.roundButton('Visualizar documento',window.CicluzOccTools.ICON.eye,previewDoc);
 
  const matrixNodes=[catLabel,subLabel,noteEl,docLabel,info,hist];
  return {nodes:matrixNodes,audioBox,previewBtn,fillRow:(rowId,cid,sid)=>{const r=rowOf(rowId)||(cid&&sid?rowsOfType().find(x=>x.catId===cid&&x.subId===sid):null);fillCats(r?.catId||cid||'');if(r)fillSubs(r.id)},row:()=>rowOf(subSel.value),refresh:()=>{fillCats('',true);paintHistory()},docText:()=>docField.value,paintHistory,

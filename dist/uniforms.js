@@ -2,7 +2,7 @@
 (()=>{
 'use strict';
 const D=window.CicluzUniformData,S=window.CicluzUniformStock;if(!D||!S)return;
-const KEY='cicluz-uniformes-v1',ACCENT='#7c3aed',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Uniformes Entrega/Recebimento');
+const KEY='cicluz-uniformes-v1',ACCENT='var(--section-accent,#ef4444)',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Uniformes Entrega/Recebimento');
 const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
 const button=(text,fn,cls='btn secondary')=>{const b=el('button',cls,text);b.type='button';b.onclick=fn;return b};
 const svg=path=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>';
@@ -38,7 +38,7 @@ function referenceFor(collab){const job=jobFor(collab);return job?{job,items:dat
 
 /* View shell, same structure as the other internal views. */
 const view=el('section','view');view.id='uniforms-view';view.style.setProperty('--menu-accent',ACCENT);
-const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','#5520ad');
+const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
 const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(ICON.shirt);const heading=el('div'),title=el('h2',null,'DES - Uniformes Entrega/Recebimento'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
 addShortcuts(view.id,()=>menuBack(2,'Lançamentos Colaboradores')());
@@ -55,7 +55,14 @@ let activeTab='launch';
 function selectTab(key){activeTab=key;for(const [k,b] of Object.entries(tabButtons)){const on=k===key;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;tabPanels[k].hidden=!on}renderTab()}
 function renderTab(){loadNote.textContent=loadError?'Não foi possível ler os lançamentos salvos. Os dados foram preservados; recarregue a página antes de alterar.':'';if(activeTab==='launch'){renderForm();renderHistory()}else if(activeTab==='stock')renderStock();else renderReferences()}
 
-function dialog(titleText,build,onSave,saveLabel='Salvar',after=renderTab){const d=el('dialog','location-dialog profiles-dialog uniforms-dialog');d.style.setProperty('--menu-accent',ACCENT);const h=el('h2',null,titleText),form=el('form','account-editor'),err=el('p','profiles-error');err.setAttribute('role','alert');form.noValidate=true;const field=(name,node)=>{const l=el('label',null,name);node.setAttribute('aria-label',name);l.append(node);form.append(l);return node};const result=build(field,form);const actions=el('div','actions');if(onSave){const save=el('button','btn',saveLabel);save.type='submit';actions.append(button('Cancelar',()=>d.close()),save)}else actions.append(button('Fechar',()=>d.close()));form.append(err,actions);form.onsubmit=e=>{e.preventDefault();if(!onSave)return d.close();const message=onSave(result);if(message){err.textContent=message;return}d.close();after()};d.append(h,form);document.body.append(d);d.onclose=()=>d.remove();d.showModal();form.querySelector('input,select,textarea')?.focus();return d}
+/* Botões de formulário circulares: Salvar (check) e Cancelar/Fechar (X), com o nome em dica; o texto passa a ser rótulo acessível. */
+const ICO_CHECK='m5 12 4 4L19 6',ICO_CLOSE='M6 6l12 12M18 6 6 18';
+function iconize(b,label,path){b.classList.remove('btn','secondary','shortcut-circle');b.classList.add('round-action');b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>';b.setAttribute('aria-label',label);b.dataset.tip=label;Object.defineProperty(b,'textContent',{configurable:true,get(){return ''},set(v){b.setAttribute('aria-label',v);b.dataset.tip=v}});return b}
+function iconizeActions(box){for(const b of box.querySelectorAll(':scope>button')){const t=(b.getAttribute('aria-label')||b.textContent||'').trim();if(b.type==='submit')iconize(b,t||'Salvar',ICO_CHECK);else if(/^(Cancelar|Fechar)$/.test(t))iconize(b,t,ICO_CLOSE)}return box}
+function dialog(titleText,build,onSave,saveLabel='Salvar',after=renderTab){const d=el('dialog','location-dialog profiles-dialog uniforms-dialog');d.style.setProperty('--menu-accent',ACCENT);const h=el('h2',null,titleText),form=el('form','account-editor'),err=el('p','profiles-error');err.setAttribute('role','alert');form.noValidate=true;const field=(name,node)=>{const l=el('label',null,name);node.setAttribute('aria-label',name);l.append(node);form.append(l);return node};const result=build(field,form);const actions=el('div','actions');if(onSave){const save=el('button','btn',saveLabel);save.type='submit';actions.append(button('Cancelar',()=>d.close()),save)}else actions.append(button('Fechar',()=>d.close()));iconizeActions(actions);form.append(err,actions);form.onsubmit=e=>{e.preventDefault();if(!onSave)return d.close();const message=onSave(result);if(message){err.textContent=message;return}d.close();after()};d.append(h,form);document.body.append(d);d.onclose=()=>d.remove();d.showModal();form.querySelector('input,select,textarea')?.focus();return d}
+/* Painel de edição único: o formulário existente abre em janela própria (sem rolar a página) e volta ao lugar ao fechar. */
+function openEditor(form,titleText,onCancel){if(form._ed)return;const d=el('dialog','location-dialog profiles-dialog uniforms-dialog edit-panel');d.style.setProperty('--menu-accent',ACCENT);const host=form.closest('.view')||document.body,home=document.createComment('editor');form.before(home);form.hidden=false;d.append(el('h2',null,titleText),form);host.append(d);form._ed={d,home,onCancel};d.addEventListener('close',()=>{const e=form._ed;if(!e)return;form._ed=null;e.home.replaceWith(form);e.d.remove();e.onCancel?.()});d.showModal();d.querySelector('input:not([type=hidden]),select,textarea')?.focus({preventScroll:true})}
+function closeEditor(form){const e=form._ed;if(!e)return;form._ed=null;e.home.replaceWith(form);e.d.close();e.d.remove()}
 function confirmDialog(titleText,text,confirmLabel,onConfirm,after){return dialog(titleText,(field,form)=>{form.append(el('p','uniforms-confirm-text',text))},()=>onConfirm(),confirmLabel,after)}
 
 /* ---------- Seção 1: formulário de lançamento ---------- */
@@ -82,7 +89,7 @@ const history=el('div','uniforms-history');launch.append(form,history);
 
 /* Draft: selected uniforms keep their own quantity and price text while typing. */
 let draft={editingId:null,items:new Map()};
-function resetForm(){draft={editingId:null,items:new Map()};formTitle.textContent='Novo lançamento';dateInput.value=today();collabSearch.node.value='';collab.node.value='';typeField.node.value='';origin.node.value='';pickerSearch.node.value='';formError.textContent='';renderForm()}
+function resetForm(){closeEditor(form);draft={editingId:null,items:new Map()};formTitle.textContent='Novo lançamento';dateInput.value=today();collabSearch.node.value='';collab.node.value='';typeField.node.value='';origin.node.value='';pickerSearch.node.value='';formError.textContent='';renderForm()}
 function editingMovement(){return draft.editingId?data.movements.find(m=>m.id===draft.editingId):null}
 function currentTotals(){return S.totals(data,D.uniforms.map(u=>u.id))}
 /* Balance available to the draft: an edited outflow gives its own quantity back. */
@@ -148,7 +155,7 @@ form.onsubmit=e=>{e.preventDefault();formError.textContent='';formStatus.textCon
  if(!transact(()=>{data.movements=[...data.movements.filter(m=>m.id!==movement.id),movement]})){formError.textContent='Não foi possível salvar neste navegador. O formulário foi mantido.';return}
  const message=(own?'Lançamento corrigido':'Lançamento salvo')+': '+movement.type+' · '+movement.items.map(i=>uniformName(i.uniformId)+' ×'+i.quantity).join(', ')+'.';resetForm();renderHistory();formStatus.textContent=message;if(RECEIPT_TYPES.has(movement.type))formStatus.append(' ',button('Ver comprovante',()=>receiptDialog(movement),'btn'))};
 
-function editMovement(m){if(m.status==='CANCELADO')return;selectTab('launch');draft={editingId:m.id,items:new Map(m.items.map(i=>[i.uniformId,{quantity:String(i.quantity),price:moneyInput(i.unitPrice)}]))};formTitle.textContent='Editar lançamento de '+dateBR(m.date);dateInput.value=m.date;collabSearch.node.value='';collab.node.value='';renderCollaborators();collab.node.value=m.collaboratorId;if(collab.node.value!==m.collaboratorId){collab.node.add(new Option(m.collaboratorName+' (preservado)',m.collaboratorId));collab.node.value=m.collaboratorId}typeField.node.value=m.type;renderForm();if(m.type==='DEVOLVIDO'){origin.node.value=m.returnOf||'';renderPicker();renderItems()}formError.textContent='';formStatus.textContent='Editando: ao salvar, o lançamento fica marcado como corrigido e a versão anterior é preservada nos detalhes.';form.scrollIntoView({block:'start',behavior:'smooth'});dateInput.focus({preventScroll:true})}
+function editMovement(m){if(m.status==='CANCELADO')return;selectTab('launch');draft={editingId:m.id,items:new Map(m.items.map(i=>[i.uniformId,{quantity:String(i.quantity),price:moneyInput(i.unitPrice)}]))};formTitle.textContent='Editar lançamento de '+dateBR(m.date);dateInput.value=m.date;collabSearch.node.value='';collab.node.value='';renderCollaborators();collab.node.value=m.collaboratorId;if(collab.node.value!==m.collaboratorId){collab.node.add(new Option(m.collaboratorName+' (preservado)',m.collaboratorId));collab.node.value=m.collaboratorId}typeField.node.value=m.type;renderForm();if(m.type==='DEVOLVIDO'){origin.node.value=m.returnOf||'';renderPicker();renderItems()}formError.textContent='';formStatus.textContent='Editando: ao salvar, o lançamento fica marcado como corrigido e a versão anterior é preservada nos detalhes.';openEditor(form,formTitle.textContent,resetForm);dateInput.focus({preventScroll:true})}
 
 /* ---------- Seção 1: histórico ---------- */
 const historyStatus=el('p','profiles-note');historyStatus.setAttribute('role','status');const historyTable=el('div','uniforms-table-wrap');
@@ -233,6 +240,6 @@ window.showUniforms=showUniforms;
 /* Shared with Compras de Uniformes: one store, one set of components. */
 window.CicluzUniformStore={load,transact,get:()=>data,failed:()=>loadError}
 window.CicluzUniformReceipt={types:RECEIPT_TYPES,lines:m=>receiptLines(m),open:id=>{load();const m=data.movements.find(x=>x.id===id);if(m)receiptDialog(m)}};;
-window.CicluzUniformUI={openExternal,el,button,iconButton,svg,ICON,fold,newId,money,moneyInput,cents,dateBR,today,enumField,dialog,confirmDialog,uniformName,STATUS};
+window.CicluzUniformUI={openExternal,el,button,iconButton,svg,ICON,fold,newId,money,moneyInput,cents,dateBR,today,enumField,dialog,confirmDialog,openEditor,closeEditor,iconize,iconizeActions,uniformName,STATUS};
 window.addEventListener('storage',e=>{if(e.key===KEY){load();if(view.classList.contains('show'))renderTab()}});
 })();
