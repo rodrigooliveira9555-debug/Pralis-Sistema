@@ -164,6 +164,11 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   // Etapa 6, Contrato (o documento): mostra o que foi combinado no financeiro.
   await avancar(df);
   ok((await etapaF(df)).includes('Contrato') && (await df.locator('fieldset', { has: p.locator('legend', { hasText: /^Contrato$/ }) }).textContent()).includes('Todo dia 10'), 'Etapa 6: Contrato, com o resumo do financeiro');
+  // As duas formas de assinatura existem, mas estão desligadas: só avisam.
+  for (const forma of ['Impressão / assinatura manual', 'Envio / assinatura digital']) {
+    await df.locator('button', { hasText: forma }).click();
+    ok((await df.locator('fieldset', { has: p.locator('legend', { hasText: /^Contrato$/ }) }).locator('[role=status]').textContent()).includes('ainda não está ativa') && p.context().pages().length === 1, forma + ': desligada, só avisa');
+  }
   await df.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).click();
   await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'));
   ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '11.222.333/0001-81' && f.contrato.tem === true && f.contrato.formaPagamento === 'boleto' && f.contrato.recorrencia === 'mes' && f.contrato.vencimentoDia === 10 && f.contrato.reajuste === 'percentual' && f.contrato.reajustePercentual === 4.5 && f.contrato.valorCentavos === 150000 && f.contrato.inicio === '2026-01-01' && f.contrato.fim === '2026-12-31' && CicluzComprasDados.dados.catalogo.filter((v) => v.fornecedorId === f.id && v.status === 'aprovado').length === 1 && f.tipoPessoa === 'juridica' && f.categorias.join() === 'produto' && f.ramo.toUpperCase() === 'BEBIDAS' && f.nome.toUpperCase() === 'FORNECEDOR CNPJ TESTE' && f.razaoSocial.toUpperCase().includes('LTDA') && f.regimeTributario === 'simples' && f.contatoNome && f.financeiro.email === 'financeiro@exemplo.test' && f.representante.mesmo && f.representante.email === 'financeiro@exemplo.test' && f.representante.cargo === 'gerente-comercial' && !('vendedorCpf' in f))), 'Fornecedor pessoa jurídica salvo com as 4 etapas (o representante copia o financeiro e guarda o cargo)');

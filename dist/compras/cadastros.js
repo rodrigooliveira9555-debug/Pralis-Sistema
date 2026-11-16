@@ -740,7 +740,19 @@
           resumoContrato.replaceChildren(el('span', 'compras-rotulo', 'Combinado nos dados do financeiro'),
             ...(linhas.length ? linhas.map(([k, v]) => el('p', 'profiles-note', k + ': ' + v)) : [el('p', 'profiles-note', c.tem ? 'Contrato marcado, ainda sem dados preenchidos.' : 'Este fornecedor está sem contrato (etapa Dados do financeiro).')]));
         };
-        s6.append(resumoContrato, el('p', 'profiles-note compras-largo', 'O modelo de contrato e a assinatura ainda não estão disponíveis.'));
+        // As duas formas de assinar (pedido do Rodrigo). Ainda desligadas: tocar só avisa, sem gerar documento nem
+        // enviar nada. ÚNICO ponto para ligar depois: gerarContrato(forma), que hoje devolve null.
+        const gerarContrato = (forma) => null; // eslint-disable-line no-unused-vars
+        const avisoContrato = el('p', 'profiles-note compras-largo');
+        avisoContrato.setAttribute('role', 'status');
+        const AVISOS_CONTRATO = {
+          manual: 'A impressão do contrato ainda não está ativa: falta definir o modelo de contrato.',
+          digital: 'A assinatura digital ainda não está ativa: depende do modelo de contrato e de um serviço de assinatura.',
+        };
+        const acaoContrato = (forma) => () => { if (!gerarContrato(forma)) avisoContrato.textContent = AVISOS_CONTRATO[forma]; };
+        const acoesContrato = el('div', 'compras-form-rodape compras-largo');
+        acoesContrato.append(botao('Impressão / assinatura manual', acaoContrato('manual'), 'btn secondary'), botao('Envio / assinatura digital', acaoContrato('digital'), 'btn secondary'));
+        s6.append(resumoContrato, el('span', 'compras-rotulo compras-largo', 'Assinatura do contrato'), acoesContrato, avisoContrato);
 
         const quadros = [etapa1, etapa2, etapa3, rep.no, s5, s6];
         const marcadas = () => catOpcoes.marcados();
