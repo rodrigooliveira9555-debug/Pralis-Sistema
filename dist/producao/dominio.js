@@ -25,8 +25,9 @@
   const PARTES = [['massa', 'Massa'], ['recheio', 'Recheio'], ['cobertura', 'Cobertura'], ['ingrediente', 'Ingrediente']];
   // Lista NIVELPROFISSIONAL da planilha. Decisão do Zé (05/11): a etapa guarda o cargo (cadastro de Cargos) e o nível.
   const NIVEIS = [['ajudante', 'Ajudante'], ['iniciante', 'Profissional iniciante'], ['intermediario', 'Profissional intermediário'], ['avancado', 'Profissional avançado'], ['especialista', 'Especialista']];
-  // As 4 categorias decididas pelo Rodrigo [06:50].
-  const CATEGORIAS = [['utensilio', 'Utensílio'], ['maquina', 'Máquina'], ['equipamento', 'Equipamento'], ['mobiliario', 'Mobiliário']];
+  // As 4 categorias decididas pelo Rodrigo [06:50]; em 17/11/2026 ganharam ao lado as do patrimônio completo (só acréscimo: os códigos de hoje não mudam).
+  const NOVAS = (typeof module === 'object' && module.exports ? require('./patrimonio-dominio.js') : (typeof self !== 'undefined' ? self : this).CicluzPatrimonioDominio || { CATEGORIAS_NOVAS: [] }).CATEGORIAS_NOVAS;
+  const CATEGORIAS = [['utensilio', 'Utensílio'], ['maquina', 'Máquina'], ['equipamento', 'Equipamento'], ['mobiliario', 'Mobiliário'], ...NOVAS];
   const ENERGIAS = [['nenhuma', 'Não consome'], ['eletrica', 'Energia elétrica'], ['gas', 'Gás']];
   const UNIDADE_CONSUMO = { eletrica: 'kWh por hora', gas: 'kg de gás por hora' };
   const EXATIDOES = [['exato', 'Exato'], ['aproximado', 'Aproximado']];

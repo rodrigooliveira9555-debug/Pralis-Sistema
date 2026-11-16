@@ -48,3 +48,101 @@
 .producao-tarefa-ing ul { margin: 6px 0 0; padding-left: 18px; font: 400 12px/18px var(--ui-font); }
 .producao-tarefa-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
 .producao-tarefa-acoes .btn { min-height: 44px; }
+
+/* ---------- RET - Patrimônios (17/11/2026): lista em colunas recolhíveis (mesma grade de Fornecedores e Tipos de Ocorrência), cadastro em seis etapas e ficha ---------- */
+.compras-linha.grade-patrimonio{grid-template-columns:64px var(--w-nome,minmax(190px,1fr)) var(--w-numero,140px) var(--w-imagem,80px) var(--w-categoria,170px) var(--w-marca,130px) var(--w-modelo,150px) var(--w-serie,150px) var(--w-empresa,170px) var(--w-unidade,140px) var(--w-setor,190px) var(--w-responsavel,160px) var(--w-qtd,100px) var(--w-valor,130px) var(--w-conservacao,150px) var(--w-avisos,170px) 130px 24px;width:max-content;min-width:100%;background:var(--theme-card,#fff)}
+.compras-linha.grade-patrimonio>*{grid-row:1}
+.compras-linha.grade-patrimonio>.compras-linha-icones{grid-column:1;position:sticky;left:0;z-index:2;align-self:stretch;align-items:center;background:inherit;padding-left:12px;margin-left:-12px}
+.compras-linha.grade-patrimonio>.c-nome{grid-column:2;position:sticky;left:76px;z-index:1;align-self:stretch;display:flex;align-items:center;background:inherit;box-shadow:1px 0 0 var(--layout-line,#dedee3);padding-right:8px}
+.compras-linha.grade-patrimonio>.c-numero{grid-column:3}
+.compras-linha.grade-patrimonio>.c-imagem{grid-column:4}
+.compras-linha.grade-patrimonio>.c-categoria{grid-column:5}
+.compras-linha.grade-patrimonio>.c-marca{grid-column:6}
+.compras-linha.grade-patrimonio>.c-modelo{grid-column:7}
+.compras-linha.grade-patrimonio>.c-serie{grid-column:8}
+.compras-linha.grade-patrimonio>.c-empresa{grid-column:9}
+.compras-linha.grade-patrimonio>.c-unidade{grid-column:10}
+.compras-linha.grade-patrimonio>.c-setor{grid-column:11}
+.compras-linha.grade-patrimonio>.c-responsavel{grid-column:12}
+.compras-linha.grade-patrimonio>.c-qtd{grid-column:13}
+.compras-linha.grade-patrimonio>.c-valor{grid-column:14}
+.compras-linha.grade-patrimonio>.c-conservacao{grid-column:15}
+.compras-linha.grade-patrimonio>.c-avisos{grid-column:16}
+.compras-linha.grade-patrimonio>.account-list-state,.compras-linha.grade-patrimonio>.c-estado{grid-column:17}
+.oculta-numero{--w-numero:24px}
+.oculta-numero .grade-patrimonio:not(.compras-linha-cabecalho)>.c-numero,.oculta-numero .compras-linha-cabecalho.grade-patrimonio>.c-numero>.compras-coluna-titulo{display:none}
+.oculta-imagem{--w-imagem:24px}
+.oculta-imagem .grade-patrimonio:not(.compras-linha-cabecalho)>.c-imagem,.oculta-imagem .compras-linha-cabecalho.grade-patrimonio>.c-imagem>.compras-coluna-titulo{display:none}
+.oculta-categoria{--w-categoria:24px}
+.oculta-categoria .grade-patrimonio:not(.compras-linha-cabecalho)>.c-categoria,.oculta-categoria .compras-linha-cabecalho.grade-patrimonio>.c-categoria>.compras-coluna-titulo{display:none}
+.oculta-marca{--w-marca:24px}
+.oculta-marca .grade-patrimonio:not(.compras-linha-cabecalho)>.c-marca,.oculta-marca .compras-linha-cabecalho.grade-patrimonio>.c-marca>.compras-coluna-titulo{display:none}
+.oculta-modelo{--w-modelo:24px}
+.oculta-modelo .grade-patrimonio:not(.compras-linha-cabecalho)>.c-modelo,.oculta-modelo .compras-linha-cabecalho.grade-patrimonio>.c-modelo>.compras-coluna-titulo{display:none}
+.oculta-serie{--w-serie:24px}
+.oculta-serie .grade-patrimonio:not(.compras-linha-cabecalho)>.c-serie,.oculta-serie .compras-linha-cabecalho.grade-patrimonio>.c-serie>.compras-coluna-titulo{display:none}
+.oculta-empresa{--w-empresa:24px}
+.oculta-empresa .grade-patrimonio:not(.compras-linha-cabecalho)>.c-empresa,.oculta-empresa .compras-linha-cabecalho.grade-patrimonio>.c-empresa>.compras-coluna-titulo{display:none}
+.oculta-unidade{--w-unidade:24px}
+.oculta-unidade .grade-patrimonio:not(.compras-linha-cabecalho)>.c-unidade,.oculta-unidade .compras-linha-cabecalho.grade-patrimonio>.c-unidade>.compras-coluna-titulo{display:none}
+.oculta-setor{--w-setor:24px}
+.oculta-setor .grade-patrimonio:not(.compras-linha-cabecalho)>.c-setor,.oculta-setor .compras-linha-cabecalho.grade-patrimonio>.c-setor>.compras-coluna-titulo{display:none}
+.oculta-responsavel{--w-responsavel:24px}
+.oculta-responsavel .grade-patrimonio:not(.compras-linha-cabecalho)>.c-responsavel,.oculta-responsavel .compras-linha-cabecalho.grade-patrimonio>.c-responsavel>.compras-coluna-titulo{display:none}
+.oculta-qtd{--w-qtd:24px}
+.oculta-qtd .grade-patrimonio:not(.compras-linha-cabecalho)>.c-qtd,.oculta-qtd .compras-linha-cabecalho.grade-patrimonio>.c-qtd>.compras-coluna-titulo{display:none}
+.oculta-valor{--w-valor:24px}
+.oculta-valor .grade-patrimonio:not(.compras-linha-cabecalho)>.c-valor,.oculta-valor .compras-linha-cabecalho.grade-patrimonio>.c-valor>.compras-coluna-titulo{display:none}
+.oculta-conservacao{--w-conservacao:24px}
+.oculta-conservacao .grade-patrimonio:not(.compras-linha-cabecalho)>.c-conservacao,.oculta-conservacao .compras-linha-cabecalho.grade-patrimonio>.c-conservacao>.compras-coluna-titulo{display:none}
+.oculta-avisos{--w-avisos:24px}
+.oculta-avisos .grade-patrimonio:not(.compras-linha-cabecalho)>.c-avisos,.oculta-avisos .compras-linha-cabecalho.grade-patrimonio>.c-avisos>.compras-coluna-titulo{display:none}
+.compras-linha.grade-patrimonio>.account-action-toggle{grid-column:18;position:sticky;right:0;z-index:2;align-self:stretch;height:auto;background:inherit}
+.compras-linha.grade-patrimonio>.account-row-actions:not([hidden]){grid-column:17;grid-row:1;justify-self:end;position:sticky;right:32px;z-index:2;background:inherit}
+.compras-linha.grade-patrimonio:has(>.account-row-actions:not([hidden]))>.account-list-state{visibility:hidden}
+@container lista-grade (max-width:519px){.compras-linha.grade-patrimonio{--w-nome:120px}}
+.patrimonio-mini{display:inline-grid;place-items:center;width:44px;height:36px;border-radius:8px;overflow:hidden;background:color-mix(in srgb,var(--menu-accent) 10%,var(--theme-card,#fff));color:var(--navigation-ink,#6d6c76)}
+.patrimonio-mini img{width:100%;height:100%;object-fit:cover;display:block}
+.compras-tabela td.num{text-align:right;white-space:nowrap}
+.patrimonio-tabela-box{overflow-x:auto;max-width:100%}
+.patrimonio-acoes{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.patrimonio-acoes .compras-redondo{flex:none;width:var(--row-action-size,32px);height:var(--row-action-size,32px);padding:0;border:0;border-radius:50%;display:grid;place-items:center;cursor:pointer;background:var(--menu-accent);color:#fff}
+.patrimonio-acoes .compras-redondo svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.patrimonio-barra,.patrimonio-barra-docs,.patrimonio-barra-mov,.patrimonio-barra-pecas,.patrimonio-barra-man{display:flex;flex-wrap:wrap;gap:8px}
+.patrimonio-galeria{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;grid-column:1/-1}
+.patrimonio-foto{display:grid;gap:6px;align-content:start;padding:8px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff)}
+.patrimonio-foto.principal{border-color:var(--menu-accent);box-shadow:0 0 0 1px var(--menu-accent)}
+.patrimonio-foto small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.patrimonio-foto .rotulo-principal{color:var(--panel-text);font-weight:600}
+.patrimonio-miniatura{display:block;width:100%;aspect-ratio:4/3;padding:0;border:0;border-radius:8px;overflow:hidden;background:color-mix(in srgb,var(--menu-accent) 8%,var(--theme-card,#fff));cursor:zoom-in}
+.patrimonio-miniatura img{width:100%;height:100%;object-fit:cover;display:block}
+.patrimonio-miniatura.sem-arquivo::after{content:'Arquivo não está neste aparelho';font:12px/1.3 var(--ui-font);color:var(--navigation-ink,#6d6c76);padding:8px;display:block}
+.patrimonio-docs{display:grid;gap:8px;grid-column:1/-1}
+.patrimonio-doc{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,.8fr) minmax(0,1.2fr) auto;gap:8px;align-items:end;padding:10px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff)}
+.patrimonio-doc>b,.patrimonio-doc>span{overflow-wrap:anywhere}
+@media (max-width:760px){.patrimonio-doc{grid-template-columns:minmax(0,1fr)}}
+.patrimonio-indicadores{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;grid-column:1/-1}
+.patrimonio-indicador{display:grid;gap:2px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--menu-accent) 8%,var(--theme-card,#fff))}
+.patrimonio-indicador b{font:700 20px/1.1 var(--ui-font)}
+.patrimonio-indicador small{color:var(--navigation-ink,#6d6c76)}
+.patrimonio-condicional,.patrimonio-tecnicas{display:contents}
+.patrimonio-vinculados{display:grid;gap:6px}
+.patrimonio-vinculo{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border:1px solid var(--layout-line,#dedee3);border-radius:12px}
+.patrimonio-revisao{display:grid;gap:10px}
+.patrimonio-revisao-grupo{padding:10px 12px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff)}
+.patrimonio-revisao-cab{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.patrimonio-ficha-topo{display:flex;flex-wrap:wrap;align-items:center;gap:14px}
+.patrimonio-ficha-foto{width:150px;height:112px;flex:none;display:grid;place-items:center;overflow:hidden;border-radius:12px;background:color-mix(in srgb,var(--menu-accent) 10%,var(--theme-card,#fff));color:var(--menu-accent)}
+.patrimonio-ficha-foto svg{width:48px;height:48px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.patrimonio-ficha-foto.com-imagem{cursor:zoom-in}
+.patrimonio-ficha-foto img{width:100%;height:100%;object-fit:cover;display:block}
+.patrimonio-ficha-id{display:grid;gap:4px;flex:1 1 220px;min-width:0}
+.patrimonio-ficha-id b{font:700 18px/1.2 var(--ui-font);overflow-wrap:anywhere}
+.patrimonio-ficha-acoes{flex:1 1 100%}
+.patrimonio-etiqueta{display:flex;align-items:center;gap:14px;width:fit-content;max-width:100%;padding:14px;border:2px solid #111;border-radius:12px;background:#fff;color:#000}
+.patrimonio-etiqueta-qr svg{display:block;width:140px;height:140px}
+.patrimonio-etiqueta-texto{display:grid;gap:4px;min-width:0}
+.patrimonio-etiqueta-numero{font:700 20px/1.1 var(--ui-font)}
+.patrimonio-etiqueta-texto span,.patrimonio-etiqueta-texto small{overflow-wrap:anywhere}
+.patrimonio-linha-campo{display:flex;align-items:center;gap:8px}
+.patrimonio-linha-campo>input{flex:1 1 auto;min-width:0}
