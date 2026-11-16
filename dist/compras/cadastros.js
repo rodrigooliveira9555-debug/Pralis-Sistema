@@ -271,7 +271,17 @@
   const telasF = {};
   let origemF = 'mer';
   const buscaF = { mer: '', des: '' };
-  const coresF = () => ({ cor: ORIGENS[origemF].cor, corTexto: ORIGENS[origemF].corTexto });
+  /**
+   * Cor do cadastro (17/11/2026): quem escolhe é o tipo do fornecedor. Produto = verde de Mercadorias; Serviço = vermelho de Despesas;
+   * sem tipo escolhido (ou com os dois, de um cadastro antigo), vale a cor da entrada (MER - Fornecedores verde, DES - Fornecedores vermelho).
+   * temaForm é o tipo em uso enquanto o formulário está aberto; as janelas de dentro dele (peças, vínculos, confirmações) herdam a mesma cor.
+   */
+  let temaForm = null;
+  const TEMAS = {
+    produto: { get cor() { return corMercadorias(); }, corTexto: U.COR_TEXTO },
+    servico: { get cor() { return corDespesas(); }, corTexto: '#a11c1c' },
+  };
+  const coresF = () => { const t = temaForm && TEMAS[temaForm]; return t ? { cor: t.cor, corTexto: t.corTexto } : { cor: ORIGENS[origemF].cor, corTexto: ORIGENS[origemF].corTexto }; };
   function abrirFornecedores(origem = 'mer') {
     origemF = ORIGENS[origem] ? origem : 'mer';
     const o = ORIGENS[origemF];
@@ -417,8 +427,9 @@
    */
   function editarFornecedor(f) {
     U.dialogo({
-      titulo: f ? 'Editar fornecedor' : 'Cadastro fornecedor', ...coresF(), largo: true, classe: 'compras-form-padrao',
-      montar: (form) => {
+      titulo: f ? 'Editar fornecedor' : 'Cadastro fornecedor', ...(() => { temaForm = Array.isArray(f && f.categorias) && f.categorias.length === 1 ? f.categorias[0] : null; return coresF(); })(), largo: true, classe: 'compras-form-padrao',
+      aoFechar: () => { temaForm = null; },
+      montar: (form, dlg) => {
         const texto = (v, extra = {}) => entrada('text', v || '', { maxLength: 120, ...extra });
         const email = (v) => { const i = entrada('email', v || '', { maxLength: 160, inputMode: 'email', autocapitalize: 'off' }); i.dataset.textoLivre = '1'; return i; };
         const telefone = (v) => aplicarMascara(entrada('tel', v || '', { inputMode: 'numeric', placeholder: '(00) 00000-0000' }), mascaraTelefone);
@@ -439,7 +450,7 @@
         const catOpcoes = U.cartoesEscolha({
           rotulo: 'Categoria', multiplo: false,
           opcoes: D.CATEGORIAS_FORNECEDOR.map(([id, nomeCat]) => ({ id, titulo: nomeCat, ...desenhoCat[id], marcado: Array.isArray(f?.categorias) && f.categorias.includes(id) })),
-          aoMudar: () => { barra.update(etapas(), atual); pintarVendedor(); },
+          aoMudar: () => { barra.update(etapas(), atual); pintarVendedor(); aplicarTema(); },
         });
         catBox.append(el('span', null, 'Categoria do fornecedor *'), catOpcoes, el('small', 'profiles-note', 'Toque em uma: Produto ou Serviço.'));
         // Fornecedor é sempre por CNPJ. Razão social e Nome fantasia; o campo salvo de uso é sempre "nome" (o que
@@ -464,8 +475,8 @@
         const tipoOpcoes = U.cartoesEscolha({
           rotulo: 'Tipo de pessoa', multiplo: false,
           opcoes: [
-            { id: 'fisica', titulo: 'Pessoa Física (PF)', icone: '<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/>', cor: coresF().cor, detalhe: 'CPF e endereço completo', marcado: tipoInicial === 'fisica' },
-            { id: 'juridica', titulo: 'Pessoa Jurídica (PJ)', icone: U.ICONES.fornecedor, cor: coresF().cor, detalhe: 'CNPJ e razão social', marcado: tipoInicial === 'juridica' },
+            { id: 'fisica', titulo: 'Pessoa Física (PF)', icone: '<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/>', cor: 'var(--menu-accent)', detalhe: 'CPF e endereço completo', marcado: tipoInicial === 'fisica' },
+            { id: 'juridica', titulo: 'Pessoa Jurídica (PJ)', icone: U.ICONES.fornecedor, cor: 'var(--menu-accent)', detalhe: 'CNPJ e razão social', marcado: tipoInicial === 'juridica' },
           ],
           aoMudar: () => pintarTipo(),
         });
@@ -496,6 +507,7 @@
         const etapa1 = el('div', 'compras-etapa');
         etapa1.append(s1, sEnd);
         // Pessoa física: CPF, nome completo e endereço completo; razão social, CNPJ e regime tributário saem da vista (o que foi digitado fica).
+        let aoMudarTipo = () => {};
         function pintarTipo() {
           const pf = ehPF();
           [cnpjCampo, razaoCampo, regimeCampo, avisoCnpj, ...(docAntigo ? [avisoAntigo] : [])].forEach((n) => mostrar(n, !pf));
@@ -503,6 +515,7 @@
           const rot = pf ? 'Nome completo' : 'Nome fantasia';
           nomeCampo.querySelector('.compras-rotulo').textContent = rot; nome.setAttribute('aria-label', rot);
           sEnd.querySelector('legend').textContent = pf ? 'Endereço completo' : 'Endereço';
+          aoMudarTipo();
         }
         pintarTipo();
 
@@ -622,7 +635,24 @@
           return q;
         }
         const funcoes1 = quadroFuncoes(f?.prestadores?.[0]?.funcoes, 1);
-        s2.append(tituloS2, camposS2[0][0], camposS2[1][0], vAniv.no, camposS2[2][0], funcoes1.no);
+        // Pessoa Física (vale para Produto e para Serviço): a própria pessoa é o contato. Mesmo quadro Sim/Não da Situação; copia só o Nome completo.
+        const mesmoPF = U.quadroSituacao('O mesmo da etapa anterior', Boolean(f && f.contatoMesmo), { textos: ['Sim', 'Não'], dica: 'Preenche o nome com o Nome completo da etapa anterior. WhatsApp e e-mail são digitados aqui.',
+          aoMudar: (ligado) => { if (ligado) pedirCopiaNome(); else vNome.readOnly = false; } });
+        mesmoPF.classList.add('compras-largo');
+        mesmoPF.querySelector('.account-status-switch').setAttribute('aria-label', 'O mesmo da etapa anterior (Pessoa Física)');
+        function copiarNome() { if (mesmoPF.ativo && ehPF()) { vNome.value = nome.value.trim(); vNome.readOnly = true; } else vNome.readOnly = false; }
+        function pedirCopiaNome() {
+          const atual = vNome.value.trim();
+          if (!atual || atual === nome.value.trim()) { copiarNome(); return; }
+          let confirmado = false;
+          U.dialogo({ titulo: 'Substituir o nome?', ...coresF(), rotuloSalvar: 'Substituir',
+            montar: (f2) => { f2.append(el('p', null, 'O nome desta etapa ("' + atual + '") é diferente do Nome completo da etapa anterior. Substituir pelo Nome completo?')); },
+            salvar: () => { confirmado = true; copiarNome(); },
+            aoFechar: () => { if (!confirmado) mesmoPF.ativo = false; } });
+        }
+        nome.addEventListener('input', copiarNome);
+        aoMudarTipo = () => { mostrar(mesmoPF, ehPF()); copiarNome(); };
+        s2.append(tituloS2, mesmoPF, camposS2[0][0], camposS2[1][0], vAniv.no, camposS2[2][0], funcoes1.no);
 
         /* Prestadores 2, 3…: só na categoria Serviço. Cada quadro pode ser removido. */
         const idPrestador1 = f?.prestadores?.[0]?.id || S.novoId('pr');
@@ -935,6 +965,12 @@
                 const quadros = [etapa1, etapa2, etapa3, rep.no, s5, s6];
         const marcadas = () => catOpcoes.marcados();
         const etapas = () => D.etapasFornecedor(marcadas()).map((label) => ({ label }));
+        // Troca a cor na hora, sem recarregar nem mexer nos dados: as mesmas variáveis que a janela recebeu ao abrir.
+        function aplicarTema() {
+          const m = marcadas(); temaForm = m.length === 1 ? m[0] : null;
+          const c = coresF();
+          dlg.style.setProperty('--menu-accent', c.cor); dlg.style.setProperty('--dialog-accent', c.cor); dlg.style.setProperty('--panel-text', c.corTexto);
+        }
         let atual = 0;
         const erroEtapa = el('p', 'profiles-error');
         erroEtapa.setAttribute('role', 'alert');
@@ -969,6 +1005,8 @@
           if (foco && form.isConnected) foco.focus();
         }
         pintarVendedor();
+        aplicarTema();
+        aoMudarTipo();
 
         /** Lê o formulário no formato salvo. "O mesmo da etapa anterior" copia os dados da etapa de antes. */
         function ler() {
@@ -987,7 +1025,7 @@
             endereco: { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value },
             contatoNome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email,
             // Texto incompleto segue como está para a validação recusar (não vira vazio em silêncio).
-            vendedorAniversario: vAniv.valor(),
+            vendedorAniversario: vAniv.valor(), contatoMesmo: ehPF() && mesmoPF.ativo,
             // Serviço: a lista de prestadores; o 1º espelha o contato acima (é dele que a lista e a cotação leem).
             // Produto: a chave não vai, para não apagar prestadores gravados se a categoria for trocada por engano.
             contrato: lerContrato(),
