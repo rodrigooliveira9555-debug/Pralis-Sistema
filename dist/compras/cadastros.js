@@ -24,6 +24,137 @@
     if (d.length <= 10) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
     return '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7);
   }
+  /* ----- Etapa 6: ficha do fornecedor (impressão e envio) e documentos. A ficha é montada só com o que está no cadastro;
+     não é contrato nem documento assinado, e nada é gerado ou enviado sem a pessoa tocar e confirmar. ----- */
+  const dataBR = (iso) => (iso ? window.CicluzDateFields.display(iso) : '');
+  const nomeDe = (lista, id) => (lista.find(([x]) => x === id) || [])[1] || '';
+  /** Linhas [rótulo, valor] do contrato, só as preenchidas. */
+  function linhasContrato(c) {
+    const sm = c.salarioMinimo;
+    const rec = c.recorrencia === 'personalizado' ? 'Personalizado — ' + (D.resumoRecorrenciaPersonalizada(c.recorrenciaPersonalizada) || 'a configurar') : nomeDe(D.RECORRENCIAS_CONTRATO, c.recorrencia);
+    const dinheiro = c.formaPagamento === 'dinheiro';
+    return [
+      ['Forma de pagamento', nomeDe(D.FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)],
+      dinheiro ? ['Dia de pagamento', 'Toda sexta-feira'] : ['Vencimento', dataBR(c.vencimentoData) || (Number.isInteger(c.vencimentoDia) ? 'Todo dia ' + c.vencimentoDia : '')],
+      ['Recorrência', rec],
+      ['Valor', Number.isInteger(c.valorCentavos) ? D.resumoValorRecorrencia(c.valorCentavos, c.recorrencia).replace(/\.$/, '') : ''],
+      ['Referência do salário mínimo', sm && sm.ativo && typeof sm.percentual === 'number' && !Number.isNaN(sm.percentual) ? String(sm.percentual).replace('.', ',') + '% do salário mínimo' : ''],
+      ['Vigência', [dataBR(c.inicio), dataBR(c.fim)].filter(Boolean).join(' a ')],
+      ['Reajuste', c.reajuste ? nomeDe(D.REAJUSTES_CONTRATO, c.reajuste) + (c.reajuste === 'percentual' && typeof c.reajustePercentual === 'number' && !Number.isNaN(c.reajustePercentual) ? ' de ' + String(c.reajustePercentual).replace('.', ',') + '%' : '') : ''],
+    ].filter(([, v]) => v);
+  }
+  /** Seções [título, [[rótulo, valor]]] da ficha, a partir do cadastro lido do formulário. */
+  function secoesFicha(c) {
+    const pf = c.tipoPessoa === 'fisica'; const e = c.endereco || {};
+    const contato = (x, extra = []) => [['Nome', x && x.nome], ['WhatsApp', x && x.whatsapp], ['E-mail', x && x.email], ...extra];
+    const secoes = [
+      ['Identificação', [['Categoria', D.nomeCategoriasFornecedor(c)], ['Tipo de pessoa', pf ? 'Pessoa Física' : 'Pessoa Jurídica'], [pf ? 'Nome completo' : 'Nome fantasia', c.nome], ...(pf ? [] : [['Razão social', c.razaoSocial], ['Regime tributário', nomeDe(D.REGIMES_TRIBUTARIOS, c.regimeTributario)]]), [pf ? 'CPF' : 'CNPJ', c.documento], ['Situação', c.situacao === 'ativo' ? 'Ativo' : 'Inativo']]],
+      [pf ? 'Endereço completo' : 'Endereço', [['CEP', e.cep], ['Rua / logradouro', e.logradouro], ['Número', e.numero], ['Complemento', e.complemento], ['Bairro', e.bairro], ['Cidade', e.cidade], ['UF', e.uf]]],
+      ['Contato (vendedor ou prestador)', [['Nome', c.contatoNome], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Aniversário', D.aniversarioTexto(c.vendedorAniversario)]]],
+      ['Financeiro', contato(c.financeiro)],
+      ['Representante', contato(c.representante, [['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
+    ];
+    if (c.contrato && c.contrato.tem) secoes.push(['Contrato', linhasContrato(c.contrato)]);
+    return secoes.map(([t, l]) => [t, l.filter(([, v]) => v)]).filter(([, l]) => l.length);
+  }
+  const textoFicha = (c) => ['FICHA DE CADASTRO DO FORNECEDOR', '(gerada pelo sistema a partir do cadastro; não é contrato nem documento assinado)', ''].concat(
+    ...secoesFicha(c).map(([t, l]) => [t.toUpperCase(), ...l.map(([k, v]) => k + ': ' + v), ''])).join('\n').trim();
+  /** Impressão: a ficha vai para um quadro invisível e abre a impressão do navegador (que oferece a prévia e o PDF). */
+  function imprimirFicha(c) {
+    const ifr = document.createElement('iframe');
+    ifr.setAttribute('aria-hidden', 'true'); ifr.tabIndex = -1;
+    ifr.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0';
+    document.body.append(ifr);
+    const d = ifr.contentDocument;
+    d.open(); d.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Ficha do fornecedor</title></head><body></body></html>'); d.close();
+    const mk = (tag, texto, css) => { const n = d.createElement(tag); if (texto != null) n.textContent = texto; if (css) n.style.cssText = css; return n; };
+    d.body.style.cssText = 'font:13px/1.45 Arial,sans-serif;color:#111;margin:24px';
+    d.body.append(mk('h1', 'Ficha de cadastro do fornecedor', 'font-size:20px;margin:0 0 4px'), mk('p', 'Gerada pelo sistema a partir do cadastro. Não é contrato nem documento assinado.', 'margin:0 0 16px;color:#555'));
+    secoesFicha(c).forEach(([titulo, linhas]) => {
+      d.body.append(mk('h2', titulo, 'font-size:14px;margin:16px 0 6px;border-bottom:1px solid #999;padding-bottom:2px'));
+      linhas.forEach(([k, v]) => { const p = mk('p', null, 'margin:2px 0'); p.append(mk('b', k + ': '), d.createTextNode(v)); d.body.append(p); });
+    });
+    const limpar = () => { if (ifr.isConnected) ifr.remove(); };
+    ifr.contentWindow.addEventListener('afterprint', limpar);
+    setTimeout(limpar, 120000);
+    ifr.contentWindow.focus();
+    ifr.contentWindow.print();
+  }
+  /** Envio: mostra a mensagem e deixa a pessoa escolher o canal; o aplicativo abre com a mensagem pronta e só envia quando ela confirma lá. */
+  function enviarFicha(c, cores) {
+    U.dialogo({
+      titulo: 'Enviar ficha do fornecedor', ...cores,
+      montar: (form) => {
+        const texto = el('textarea'); texto.readOnly = true; texto.rows = 10; texto.value = textoFicha(c); texto.setAttribute('aria-label', 'Mensagem que será aberta no canal escolhido');
+        texto.dataset.textoLivre = '1';
+        const aviso = el('p', 'profiles-note compras-largo'); aviso.setAttribute('role', 'status');
+        aviso.textContent = 'Escolha o canal. O sistema só abre o aplicativo com a mensagem pronta; nada é enviado até você confirmar lá.';
+        const G = window.CicluzGP;
+        const abrir = (url) => { const X = window.CicluzUniformUI; if (X && X.openExternal) X.openExternal(url); else window.open(url, '_blank', 'noopener'); };
+        const canal = (rotulo, icone, acao) => {
+          const b = el('button', 'shortcut-circle compras-redondo'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo);
+          b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + icone + '</svg>';
+          b.onclick = () => { acao(); aviso.textContent = rotulo + ': aplicativo aberto com a mensagem. Ela só é enviada quando você confirmar lá.'; };
+          return b;
+        };
+        const linha = el('div', 'compras-form-rodape compras-largo compras-doc-acoes');
+        linha.append(
+          canal('Enviar por WhatsApp', U.ICONES.whatsapp, () => abrir(G && G.waLink ? G.waLink(c.whatsapp, texto.value) : 'https://wa.me/?text=' + encodeURIComponent(texto.value))),
+          canal('Enviar por e-mail', U.ICONES.email, () => abrir(G && G.mailLink ? G.mailLink(c.email, 'Ficha de cadastro do fornecedor', texto.value) : 'mailto:' + encodeURIComponent(c.email || '') + '?subject=' + encodeURIComponent('Ficha de cadastro do fornecedor') + '&body=' + encodeURIComponent(texto.value))),
+        );
+        form.append(campo('Mensagem', texto), linha, aviso);
+      },
+    });
+  }
+  /** Documentos do fornecedor: f.documentos = [{ id, nome, tipo (MIME), dados (data URL) }]. Só lê e baixa uma cópia; o original não muda. */
+  function documentosDoFornecedor(f) {
+    return (f && Array.isArray(f.documentos) ? f.documentos : []).filter((x) => x && x.nome && typeof x.dados === 'string' && x.dados.startsWith('data:'));
+  }
+  function verDocumentos(f, cores) {
+    const docs = documentosDoFornecedor(f);
+    U.dialogo({
+      titulo: 'Documentos do fornecedor', ...cores, largo: true,
+      montar: (form) => {
+        const previa = el('div', 'compras-largo compras-doc-previa');
+        docs.forEach((x) => {
+          const linha = el('div', 'compras-form-rodape compras-largo');
+          const ver = botao('Visualizar ' + x.nome, () => {
+            previa.replaceChildren(/^image\//.test(x.tipo || '') ? Object.assign(el('img'), { src: x.dados, alt: x.nome }) : Object.assign(el('iframe'), { src: x.dados, title: x.nome }));
+          }, 'btn secondary');
+          const baixar = el('a', 'btn secondary', 'Baixar cópia'); baixar.href = x.dados; baixar.download = x.nome;
+          linha.append(ver, baixar); form.append(linha);
+        });
+        form.append(previa);
+      },
+    });
+  }
+  /**
+   * Aniversário por dois seletores, Dia e Mês, sem ano (16/11/2026). valor() devolve "MM-DD", '' quando nada foi escolhido,
+   * ou o formato antigo (AAAA-MM) intacto enquanto a pessoa não mexer; escolha pela metade segue incompleta para a validação recusar.
+   */
+  const MESES_LONGOS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  function seletoresAniversario(valorInicial) {
+    const p = D.aniversarioPartes(valorInicial);
+    const dia = seletor(Array.from({ length: 31 }, (_, i) => [String(i + 1).padStart(2, '0'), String(i + 1)]), p.dia, 'Selecionar dia');
+    const mes = seletor(MESES_LONGOS.map((n, i) => [String(i + 1).padStart(2, '0'), n]), p.mes, 'Selecionar mês');
+    dia.setAttribute('aria-label', 'Aniversário: dia'); mes.setAttribute('aria-label', 'Aniversário: mês');
+    const no = el('div', 'compras-campo compras-largo compras-aniv');
+    const linha = el('div', 'compras-recorr-linha');
+    const rotuloDia = el('label', 'compras-campo'); rotuloDia.append(el('span', 'compras-rotulo', 'Dia'), dia);
+    const rotuloMes = el('label', 'compras-campo'); rotuloMes.append(el('span', 'compras-rotulo', 'Mês'), mes);
+    linha.append(rotuloDia, rotuloMes);
+    const resumo = el('small', 'profiles-note'); resumo.setAttribute('aria-live', 'polite');
+    no.append(el('span', 'compras-rotulo', 'Aniversário'), linha, resumo);
+    const valor = () => {
+      if (dia.value && mes.value) return mes.value + '-' + dia.value;
+      if (!dia.value && !mes.value) return '';
+      if (p.legado && !dia.value && mes.value === p.mes) return String(valorInicial);
+      return mes.value + '-' + dia.value;
+    };
+    const pintar = () => { const v = valor(); resumo.textContent = D.aniversarioRuim(v) || (D.aniversarioTexto(v) ? 'Aniversário: ' + D.aniversarioTexto(v) : ''); };
+    dia.addEventListener('change', pintar); mes.addEventListener('change', pintar); pintar();
+    return { no, valor };
+  }
   const aplicarMascara = (input, fn) => { input.addEventListener('input', () => { input.value = fn(input.value); }); return input; };
   function interruptor(rotulo, marcado, dica) {
     const l = el('label', 'compras-interruptor');
@@ -184,7 +315,7 @@
       const cabecalho = U.cabecalhoColunas('grade-fornecedor', [
       { chave: 'nome', rotulo: 'Fornecedor' }, { chave: 'categoria', rotulo: 'Categoria', ocultavel: true },
       { chave: 'contato', rotulo: 'Nome do contato', ocultavel: true }, { chave: 'whatsapp', rotulo: 'WhatsApp', ocultavel: true },
-      { chave: 'razao', rotulo: 'Razão social', ocultavel: true }, { chave: 'documento', rotulo: 'CNPJ', ocultavel: true },
+      { chave: 'razao', rotulo: 'Razão social', ocultavel: true }, { chave: 'documento', rotulo: 'CNPJ / CPF', ocultavel: true },
       { chave: 'ramo', rotulo: 'Ramo', ocultavel: true }, { chave: 'selos', rotulo: 'Avisos', ocultavel: true }, { chave: 'estado', rotulo: 'Situação' },
       ], { lista: linhas, preferencia: 'cicluz-fornecedores-colunas' });
       linhas.append(cabecalho);
@@ -270,7 +401,7 @@
     const p = [];
     if (!D.nomeCategoriasFornecedor(f)) p.push('categoria');
     // Cadastro antigo com CPF (de quando existia pessoa física) também cai aqui: fica em "Completar cadastro" até receber o CNPJ.
-    if (!R().cnpjValid(f.documento)) p.push('CNPJ');
+    if (f.tipoPessoa === 'fisica' ? !R().cpfValid(f.documento) : !R().cnpjValid(f.documento)) p.push(f.tipoPessoa === 'fisica' ? 'CPF' : 'CNPJ');
     if (!D.digitos(f.whatsapp)) p.push('WhatsApp');
     return p;
   }
@@ -319,19 +450,33 @@
         const nomeCampo = campo('Nome fantasia', nome);
         // Cadastro antigo com CPF: o CNPJ abre vazio e um aviso mostra o documento que está gravado.
         const docAntigo = D.documentoAntigoFornecedor(f);
-        const cnpj = aplicarMascara(entrada('text', docAntigo ? '' : f?.documento || '', { inputMode: 'numeric', placeholder: '00.000.000/0000-00', maxLength: 18 }), R().cnpjMask);
+        // Pessoa física ou jurídica: cadastro novo começa em PJ; o antigo segue o que foi gravado (CPF de 11 dígitos é PF).
+        const tipoInicial = f && (f.tipoPessoa === 'fisica' || D.digitos(f.documento).length === 11) ? 'fisica' : 'juridica';
+        const cnpj = aplicarMascara(entrada('text', docAntigo || tipoInicial === 'fisica' ? '' : f?.documento || '', { inputMode: 'numeric', placeholder: '00.000.000/0000-00', maxLength: 18 }), R().cnpjMask);
         const cnpjCampo = campo('CNPJ *', cnpj);
         const avisoAntigo = el('p', 'profiles-note compras-largo', docAntigo
           ? 'Este cadastro é antigo e tem outro documento gravado: ' + (D.digitos(docAntigo).length === 11 ? 'CPF ' : '') + docAntigo + '. Fornecedor agora é só por CNPJ: informe o CNPJ para salvar. O documento antigo continua guardado.' : '');
         const regime = seletor(D.REGIMES_TRIBUTARIOS, f?.regimeTributario || '', 'Selecione');
         const regimeCampo = campo('Regime tributário', regime);
-        const ramo = texto(f?.ramo, { maxLength: 80, placeholder: 'Ex.: Bebidas, Manutenção' });
+        const cpf = aplicarMascara(entrada('text', tipoInicial === 'fisica' ? f?.documento || '' : '', { inputMode: 'numeric', placeholder: '000.000.000-00', maxLength: 14 }), R().cpfMask);
+        const cpfCampo = campo('CPF *', cpf);
+        const tipoBox = el('div', 'account-status compras-situacao-quadro');
+        const tipoOpcoes = U.cartoesEscolha({
+          rotulo: 'Tipo de pessoa', multiplo: false,
+          opcoes: [
+            { id: 'fisica', titulo: 'Pessoa Física (PF)', icone: '<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/>', cor: coresF().cor, detalhe: 'CPF e endereço completo', marcado: tipoInicial === 'fisica' },
+            { id: 'juridica', titulo: 'Pessoa Jurídica (PJ)', icone: U.ICONES.fornecedor, cor: coresF().cor, detalhe: 'CNPJ e razão social', marcado: tipoInicial === 'juridica' },
+          ],
+          aoMudar: () => pintarTipo(),
+        });
+        tipoBox.append(el('span', null, 'Tipo de pessoa *'), tipoOpcoes);
+        const ehPF = () => tipoOpcoes.marcados()[0] === 'fisica';
         const situacao = U.quadroSituacao('Situação do fornecedor', f ? f.situacao === 'ativo' : true, { dica: 'Fornecedor inativo não aparece no seletor de cotação.' });
         // Ordem do Rodrigo: categoria, CNPJ (que puxa os dados), razão social, nome fantasia, regime tributário; depois o endereço; por último o ramo.
         const avisoCnpj = el('p', 'profiles-note compras-largo');
         avisoCnpj.setAttribute('role', 'status');
         // Ordem do Rodrigo: a Situação do fornecedor vem logo depois da Categoria.
-        s1.append(catBox, situacao, cnpjCampo, ...(docAntigo ? [avisoAntigo] : []), avisoCnpj, razaoCampo, nomeCampo, regimeCampo);
+        s1.append(catBox, tipoBox, situacao, cnpjCampo, cpfCampo, ...(docAntigo ? [avisoAntigo] : []), avisoCnpj, razaoCampo, nomeCampo, regimeCampo);
 
         /* Endereço: CEP primeiro (puxa rua, bairro, cidade e UF); número e complemento são digitados. */
         const sEnd = el('fieldset', 'compras-fieldset');
@@ -348,10 +493,18 @@
         avisoCep.setAttribute('role', 'status');
         sEnd.append(campo('CEP', cep), campo('Rua / logradouro', rua), campo('Número', numero), campo('Complemento', complemento), campo('Bairro', bairro), campo('Cidade', cidade), campo('UF', uf), avisoCep);
 
-        const sResto = el('fieldset', 'compras-fieldset');
-        sResto.append(campo('Ramo', ramo));
         const etapa1 = el('div', 'compras-etapa');
-        etapa1.append(s1, sEnd, sResto);
+        etapa1.append(s1, sEnd);
+        // Pessoa física: CPF, nome completo e endereço completo; razão social, CNPJ e regime tributário saem da vista (o que foi digitado fica).
+        function pintarTipo() {
+          const pf = ehPF();
+          [cnpjCampo, razaoCampo, regimeCampo, avisoCnpj, ...(docAntigo ? [avisoAntigo] : [])].forEach((n) => mostrar(n, !pf));
+          mostrar(cpfCampo, pf);
+          const rot = pf ? 'Nome completo' : 'Nome fantasia';
+          nomeCampo.querySelector('.compras-rotulo').textContent = rot; nome.setAttribute('aria-label', rot);
+          sEnd.querySelector('legend').textContent = pf ? 'Endereço completo' : 'Endereço';
+        }
+        pintarTipo();
 
         /* Buscas (consultas-publicas.js): nunca trocam o que a pessoa digitou; se o serviço falhar, avisam discretamente
            e o cadastro segue à mão. Cada número é consultado uma vez. Um campo é "livre" para a consulta quando está
@@ -408,9 +561,8 @@
         /* ----- Etapa 2: vendedor ou prestador de serviço (é o contato do fornecedor; o WhatsApp dele recebe a cotação) ----- */
         const s2 = el('fieldset', 'compras-fieldset');
         const vNome = texto(f?.contatoNome);
-        // Aniversário: só mês e ano (MM/AAAA), pela fonte única de datas (date-fields.js). A data completa antiga fica no dado.
-        const DF = window.CicluzDateFields;
-        const vAniv = aplicarMascara(entrada('text', DF.monthDisplay(D.aniversarioVendedor(f)), { inputMode: 'numeric', placeholder: 'MM/AAAA', maxLength: 7, autocomplete: 'off' }), DF.monthMask);
+        // Aniversário: dia e mês, sem ano (dois seletores). A data completa antiga fica no dado.
+        const vAniv = seletoresAniversario(D.aniversarioVendedor(f));
         const whats = telefone(f?.whatsapp);
         const mail = email(f?.email);
         // O CPF do vendedor não é mais pedido (decisão do Rodrigo): o campo saiu; valor já gravado fica como está, sem uso.
@@ -470,7 +622,7 @@
           return q;
         }
         const funcoes1 = quadroFuncoes(f?.prestadores?.[0]?.funcoes, 1);
-        s2.append(tituloS2, camposS2[0][0], camposS2[1][0], campo('Aniversário', vAniv), camposS2[2][0], funcoes1.no);
+        s2.append(tituloS2, camposS2[0][0], camposS2[1][0], vAniv.no, camposS2[2][0], funcoes1.no);
 
         /* Prestadores 2, 3…: só na categoria Serviço. Cada quadro pode ser removido. */
         const idPrestador1 = f?.prestadores?.[0]?.id || S.novoId('pr');
@@ -481,7 +633,7 @@
           const q = el('fieldset', 'compras-fieldset');
           const x = {
             id: p?.id || S.novoId('pr'), no: q, titulo: el('legend'), nome: texto(p?.nome), whatsapp: telefone(p?.whatsapp), email: email(p?.email),
-            aniversario: aplicarMascara(entrada('text', DF.monthDisplay(p?.aniversario || ''), { inputMode: 'numeric', placeholder: 'MM/AAAA', maxLength: 7, autocomplete: 'off' }), DF.monthMask),
+            aniversario: seletoresAniversario(p?.aniversario || ''),
           };
           x.funcoes = quadroFuncoes(p?.funcoes, extras.length + 2);
           const remover = botao('Remover prestador', () => {
@@ -489,7 +641,7 @@
           }, 'btn secondary');
           const rod = el('div', 'compras-form-rodape compras-largo');
           rod.append(remover);
-          q.append(x.titulo, campo('Nome do prestador *', x.nome), campo('WhatsApp do prestador', x.whatsapp), campo('Aniversário', x.aniversario), campo('E-mail do prestador', x.email), x.funcoes.no, rod);
+          q.append(x.titulo, campo('Nome do prestador *', x.nome), campo('WhatsApp do prestador', x.whatsapp), x.aniversario.no, campo('E-mail do prestador', x.email), x.funcoes.no, rod);
           extras.push(x); listaExtras.append(q); numerar();
           return x;
         }
@@ -519,21 +671,21 @@
         function etapaContato(dados, sufixo, anterior) {
           const s = el('fieldset', 'compras-fieldset');
           s.append(el('legend', null, 'Dados do ' + sufixo));
-          const mesmo = interruptor('O mesmo da etapa anterior', Boolean(dados?.mesmo), 'Preenche o nome, o WhatsApp e o e-mail com os da etapa anterior.');
+          // Mesmo quadro da "Situação do fornecedor" (16/11/2026): interruptor com Sim / Não ao lado.
+          const mesmo = U.quadroSituacao('O mesmo da etapa anterior', Boolean(dados?.mesmo), { textos: ['Sim', 'Não'], dica: 'Preenche o nome, o WhatsApp e o e-mail com os da etapa anterior.', aoMudar: () => pintar() });
           mesmo.classList.add('compras-largo');
-          mesmo.input.setAttribute('aria-label', 'O mesmo da etapa anterior (' + sufixo + ')');
+          mesmo.querySelector('.account-status-switch').setAttribute('aria-label', 'O mesmo da etapa anterior (' + sufixo + ')');
           const n = texto(dados?.nome);
           const w = telefone(dados?.whatsapp);
           const m = email(dados?.email);
           const campos = [campo('Nome do ' + sufixo, n), campo('WhatsApp do ' + sufixo, w), campo('E-mail do ' + sufixo, m)];
           const pintar = () => {
-            const copia = mesmo.input.checked;
+            const copia = mesmo.ativo;
             if (copia) { const a = anterior(); n.value = a.nome; w.value = a.whatsapp; m.value = a.email; }
             [n, w, m].forEach((i) => { i.readOnly = copia; });
           };
-          mesmo.input.onchange = pintar;
           s.append(mesmo, ...campos);
-          return { no: s, mesmo: mesmo.input, nome: n, whatsapp: w, email: m, pintar };
+          return { no: s, mesmo, nome: n, whatsapp: w, email: m, pintar };
         }
         const valores = (c) => ({ nome: c.nome.value.trim(), whatsapp: c.whatsapp.value.trim(), email: c.email.value.trim() });
         const fin = etapaContato(f?.financeiro, 'financeiro', () => ({ nome: vNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() }));
@@ -677,14 +829,35 @@
         const cDados = el('fieldset', 'compras-fieldset');
         cDados.append(el('legend', null, 'Dados do contrato'));
         const temContrato = U.quadroSituacao('Tem contrato?', Boolean(ct.tem), { textos: ['Sim', 'Não'], dica: 'Contrato de fornecimento ou de prestação de serviço com este fornecedor.', aoMudar: () => pintarContrato() });
-        const cForma = seletor(D.FORMAS_PAGAMENTO_CONTRATO, ct.formaPagamento || '', 'Selecione');
-        const cRecorrencia = seletor(D.RECORRENCIAS_CONTRATO, ct.recorrencia || '', 'Selecione');
-        // Vencimento: contrato por mês usa o dia do mês (1 a 31); nas outras recorrências, uma data.
-        const cVencDia = entrada('text', ct.vencimentoDia != null ? String(ct.vencimentoDia) : '', { inputMode: 'numeric', maxLength: 2, placeholder: '1 a 31' });
+        // Forma de pagamento: Boleto ou Dinheiro. Valor antigo (PIX, transferência) continua aparecendo até ser trocado.
+        const formas = [...D.FORMAS_PAGAMENTO_FORNECEDOR];
+        const formaAntiga = ct.formaPagamento && !formas.some(([id]) => id === ct.formaPagamento) ? D.FORMAS_PAGAMENTO_CONTRATO.find(([id]) => id === ct.formaPagamento) : null;
+        if (formaAntiga) formas.push([formaAntiga[0], formaAntiga[1] + ' (cadastro anterior)']);
+        const cForma = seletor(formas, ct.formaPagamento || '', 'Selecione');
         const cVencData = entrada('date', ct.vencimentoData || '');
-        const vencDiaCampo = campo('Dia do vencimento', cVencDia, 'Dia do mês em que o pagamento vence.');
-        const vencDataCampo = campo('Data de vencimento', cVencData);
-        const cValor = entrada('text', ct.valorCentavos != null ? D.moeda(ct.valorCentavos / 100) : '', { inputMode: 'decimal', placeholder: 'R$ 0,00', maxLength: 20 });
+        const vencDataCampo = campo('Data de vencimento do boleto', cVencData);
+        const diaPagtoCampo = el('div', 'compras-campo');
+        diaPagtoCampo.append(el('span', 'compras-rotulo', 'Dia de pagamento'), el('strong', null, 'Toda sexta-feira'), el('small', 'profiles-note', 'Só informativo: o sistema não faz o pagamento nem marca como pago.'));
+        // Tipo de recorrência no estilo do Calendário e dos Lembretes (recorrencia.js): lista compacta e painel Personalizado.
+        const rec = window.CicluzComprasRecorrencia.criar({ valor: ct.recorrencia || '', personalizada: ct.recorrenciaPersonalizada || null, cores: coresF(), aoMudar: () => pintarValor() });
+        // Valor: máscara brasileira (R$ 1.500,00) e a frase informativa conforme a recorrência. Não calcula total nem cria pagamento.
+        const cValor = entrada('text', Number.isInteger(ct.valorCentavos) ? R().moneyMask(String(ct.valorCentavos)) : '', { inputMode: 'numeric', placeholder: 'R$ 0,00', maxLength: 24 });
+        const valorCampo = campo('Valor (R$)', cValor);
+        const valorResumo = el('small', 'profiles-note compras-valor-resumo'); valorResumo.setAttribute('aria-live', 'polite');
+        valorCampo.append(valorResumo);
+        const valorCentavos = () => { const n = D.digitos(cValor.value).replace(/^0+(?=\d)/, ''); return n ? parseInt(n, 10) : null; };
+        function pintarValor() { const c = valorCentavos(); valorResumo.textContent = c == null ? '' : D.resumoValorRecorrencia(c, rec.atual()); }
+        cValor.addEventListener('input', () => { cValor.value = R().moneyMask(cValor.value); pintarValor(); });
+        // Referência ao salário mínimo: só informação cadastral (percentual); não consulta o mínimo nem calcula.
+        const sm0 = ct.salarioMinimo || {};
+        const smQuadro = U.quadroSituacao('Referência do salário mínimo', Boolean(sm0.ativo), { aoMudar: () => pintarContrato() });
+        const smPct = entrada('text', typeof sm0.percentual === 'number' ? String(sm0.percentual).replace('.', ',') : '', { inputMode: 'decimal', placeholder: 'Ex.: 50', maxLength: 8 });
+        const smPctCampo = campo('Percentual do salário mínimo (%)', smPct);
+        // O rótulo com "salário" faria o field-validation.js tratar o campo como dinheiro: o nome para leitor de tela evita isso.
+        smPct.setAttribute('aria-label', 'Percentual sobre o mínimo (%)');
+        smPct.addEventListener('input', () => { smPct.value = smPct.value.replace(/[^\d,]/g, '').replace(/,(?=.*,)/g, ''); });
+        const smBox = el('div', 'compras-largo compras-sm');
+        smBox.append(smQuadro, smPctCampo, el('small', 'profiles-note', 'Só informação cadastral: o sistema não consulta o salário mínimo, não calcula reajuste e não troca o valor informado.'));
         const cInicio = entrada('date', ct.inicio || '');
         const cFim = entrada('date', ct.fim || '');
         const cReajuste = seletor(D.REAJUSTES_CONTRATO, ct.reajuste || '', 'Selecione');
@@ -694,26 +867,33 @@
         cObs.rows = 3; cObs.maxLength = 2000; cObs.value = ct.observacoes || '';
         const obsCampo = campo('Observações do contrato', cObs);
         obsCampo.classList.add('compras-largo');
-        cDados.append(campo('Forma de pagamento', cForma), campo('Recorrência', cRecorrencia), vencDiaCampo, vencDataCampo,
-          campo('Valor', cValor, 'Só o valor combinado; não gera lançamento.'), campo('Início da vigência', cInicio), campo('Término da vigência', cFim),
+        cDados.append(campo('Forma de pagamento', cForma), vencDataCampo, diaPagtoCampo, rec.no, valorCampo, smBox, campo('Início da vigência', cInicio), campo('Término da vigência', cFim),
           campo('Reajuste', cReajuste, 'Só o índice combinado; o sistema não calcula o reajuste.'), percentualCampo, obsCampo);
         const pintarContrato = () => {
           mostrar(cDados, temContrato.ativo);
-          mostrar(vencDiaCampo, cRecorrencia.value === 'mes');
-          mostrar(vencDataCampo, cRecorrencia.value !== 'mes');
+          mostrar(vencDataCampo, cForma.value !== 'dinheiro' && cForma.value !== '');
+          vencDataCampo.querySelector('.compras-rotulo').textContent = cForma.value === 'boleto' ? 'Data de vencimento do boleto' : 'Data de vencimento';
+          mostrar(diaPagtoCampo, cForma.value === 'dinheiro');
+          mostrar(smPctCampo, smQuadro.ativo);
           mostrar(percentualCampo, cReajuste.value === 'percentual');
         };
-        cRecorrencia.onchange = pintarContrato;
+        cForma.onchange = pintarContrato;
         cReajuste.onchange = pintarContrato;
         pintarContrato();
+        pintarValor();
         // Número digitado: null quando vazio, NaN quando não é número (para a validação recusar em vez de virar vazio).
         const numeroOuNada = (input) => { const t = String(input.value).trim(); if (!t) return null; const n = D.lerNumero(t); return n == null ? NaN : n; };
         const lerContrato = () => {
-          const valor = numeroOuNada(cValor); const dia = numeroOuNada(cVencDia); const pct = numeroOuNada(cPercentual); const mensal = cRecorrencia.value === 'mes';
+          const pct = numeroOuNada(cPercentual); const pctMinimo = numeroOuNada(smPct);
           return {
-            tem: temContrato.ativo, formaPagamento: cForma.value, recorrencia: cRecorrencia.value,
-            vencimentoDia: mensal ? dia : null, vencimentoData: mensal ? '' : cVencData.value,
-            valorCentavos: valor == null ? null : Math.round(valor * 100), inicio: cInicio.value, fim: cFim.value,
+            tem: temContrato.ativo, formaPagamento: cForma.value,
+            // Vencimento: só em dinheiro some (o pagamento é toda sexta-feira, informativo). O dia do mês antigo fica guardado como estava.
+            vencimentoData: cForma.value === 'dinheiro' ? '' : cVencData.value, vencimentoDia: ct.vencimentoDia != null ? ct.vencimentoDia : null,
+            diaPagamento: cForma.value === 'dinheiro' ? 'sexta' : '',
+            ...rec.ler(),
+            valorCentavos: valorCentavos(),
+            salarioMinimo: { ativo: smQuadro.ativo, percentual: pctMinimo == null ? null : Number.isNaN(pctMinimo) ? NaN : Math.round(pctMinimo * 100) / 100 },
+            inicio: cInicio.value, fim: cFim.value,
             reajuste: cReajuste.value, reajustePercentual: cReajuste.value === 'percentual' ? (pct == null ? null : Math.round(pct * 100) / 100) : null,
             observacoes: cObs.value.trim(),
           };
@@ -726,35 +906,33 @@
         const s6 = el('fieldset', 'compras-fieldset');
         s6.append(el('legend', null, 'Contrato'));
         const resumoContrato = el('div', 'compras-campo compras-largo');
-        const nomeDe = (lista, id) => (lista.find(([x]) => x === id) || [])[1] || '';
         const pintarResumoContrato = () => {
           const c = lerContrato();
-          const dataBR = (iso) => (iso ? window.CicluzDateFields.display(iso) : '');
-          const linhas = !c.tem ? [] : [
-            ['Forma de pagamento', nomeDe(D.FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)], ['Recorrência', nomeDe(D.RECORRENCIAS_CONTRATO, c.recorrencia)],
-            ['Vencimento', c.recorrencia === 'mes' ? (Number.isInteger(c.vencimentoDia) ? 'Todo dia ' + c.vencimentoDia : '') : dataBR(c.vencimentoData)],
-            ['Valor', Number.isInteger(c.valorCentavos) ? D.moeda(c.valorCentavos / 100) : ''],
-            ['Vigência', [dataBR(c.inicio), dataBR(c.fim)].filter(Boolean).join(' a ')],
-            ['Reajuste', nomeDe(D.REAJUSTES_CONTRATO, c.reajuste) + (c.reajuste === 'percentual' && typeof c.reajustePercentual === 'number' && !Number.isNaN(c.reajustePercentual) ? ' de ' + String(c.reajustePercentual).replace('.', ',') + '%' : '')],
-          ].filter(([, v]) => v);
+          const linhas = !c.tem ? [] : linhasContrato(c);
           resumoContrato.replaceChildren(el('span', 'compras-rotulo', 'Combinado nos dados do financeiro'),
             ...(linhas.length ? linhas.map(([k, v]) => el('p', 'profiles-note', k + ': ' + v)) : [el('p', 'profiles-note', c.tem ? 'Contrato marcado, ainda sem dados preenchidos.' : 'Este fornecedor está sem contrato (etapa Dados do financeiro).')]));
         };
-        // As duas formas de assinar (pedido do Rodrigo). Ainda desligadas: tocar só avisa, sem gerar documento nem
-        // enviar nada. ÚNICO ponto para ligar depois: gerarContrato(forma), que hoje devolve null.
-        const gerarContrato = (forma) => null; // eslint-disable-line no-unused-vars
-        const avisoContrato = el('p', 'profiles-note compras-largo');
-        avisoContrato.setAttribute('role', 'status');
-        const AVISOS_CONTRATO = {
-          manual: 'A impressão do contrato ainda não está ativa: falta definir o modelo de contrato.',
-          digital: 'A assinatura digital ainda não está ativa: depende do modelo de contrato e de um serviço de assinatura.',
+        // Documentos (16/11/2026): imprimir a ficha, enviar e visualizar o documento do fornecedor. Nada é gerado ou enviado sozinho.
+        const avisoDoc = el('p', 'profiles-note compras-largo');
+        avisoDoc.setAttribute('role', 'status');
+        const bolinha = (rotuloBtn, desenho, acao) => {
+          const b = el('button', 'shortcut-circle compras-redondo'); b.type = 'button'; b.title = rotuloBtn; b.setAttribute('aria-label', rotuloBtn);
+          b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + desenho + '</svg>';
+          b.onclick = acao;
+          return b;
         };
-        const acaoContrato = (forma) => () => { if (!gerarContrato(forma)) avisoContrato.textContent = AVISOS_CONTRATO[forma]; };
-        const acoesContrato = el('div', 'compras-form-rodape compras-largo');
-        acoesContrato.append(botao('Impressão / assinatura manual', acaoContrato('manual'), 'btn secondary'), botao('Envio / assinatura digital', acaoContrato('digital'), 'btn secondary'));
-        s6.append(resumoContrato, el('span', 'compras-rotulo compras-largo', 'Assinatura do contrato'), acoesContrato, avisoContrato);
+        const acoesDoc = el('div', 'compras-form-rodape compras-largo compras-doc-acoes');
+        acoesDoc.append(
+          bolinha('Imprimir ficha do fornecedor', '<path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M7 14h10v7H7z"/>', () => { avisoDoc.textContent = ''; imprimirFicha(ler()); }),
+          bolinha('Enviar ficha do fornecedor', U.ICONES.send, () => { avisoDoc.textContent = ''; enviarFicha(ler(), coresF()); }),
+          botao('Visualizar documento', () => {
+            if (documentosDoFornecedor(f).length) { avisoDoc.textContent = ''; verDocumentos(f, coresF()); return; }
+            avisoDoc.textContent = 'Este fornecedor não tem documento disponível.';
+          }, 'btn secondary'),
+        );
+        s6.append(resumoContrato, el('span', 'compras-rotulo compras-largo', 'Documentos'), acoesDoc, avisoDoc);
 
-        const quadros = [etapa1, etapa2, etapa3, rep.no, s5, s6];
+                const quadros = [etapa1, etapa2, etapa3, rep.no, s5, s6];
         const marcadas = () => catOpcoes.marcados();
         const etapas = () => D.etapasFornecedor(marcadas()).map((label) => ({ label }));
         let atual = 0;
@@ -797,26 +975,27 @@
           const razaoSocial = razao.value.trim();
           pintarCopias();
           const vendedor = { nome: vNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() };
-          const contato = (c) => ({ mesmo: c.mesmo.checked, ...valores(c) });
+          const contato = (c) => ({ mesmo: c.mesmo.ativo, ...valores(c) });
           return {
             // tipoPessoa continua gravado (sempre 'juridica') para quem lê o dado; o documento antigo (CPF) não se perde.
-            id: f?.id, categorias: marcadas(), tipoPessoa: 'juridica', ...(docAntigo ? { documentoAnterior: docAntigo } : {}),
-            // Sem nome fantasia, a razão social vira o nome de uso.
-            nome: nome.value.trim() || razaoSocial, razaoSocial,
-            documento: cnpj.value.trim(),
-            regimeTributario: regime.value, ramo: ramo.value.trim(),
+            // O campo Ramo saiu do cadastro (16/11/2026); o que já estava gravado em f.ramo fica como está (a chave não vai no salvamento).
+            id: f?.id, categorias: marcadas(), tipoPessoa: ehPF() ? 'fisica' : 'juridica', ...(docAntigo && !ehPF() ? { documentoAnterior: docAntigo } : {}),
+            // Sem nome fantasia, a razão social vira o nome de uso. Pessoa física: nome completo, CPF, sem razão social nem regime.
+            nome: ehPF() ? nome.value.trim() : nome.value.trim() || razaoSocial, razaoSocial: ehPF() ? '' : razaoSocial,
+            documento: ehPF() ? cpf.value.trim() : cnpj.value.trim(),
+            regimeTributario: ehPF() ? '' : regime.value,
             endereco: { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value },
             contatoNome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email,
             // Texto incompleto segue como está para a validação recusar (não vira vazio em silêncio).
-            vendedorAniversario: DF.monthParse(vAniv.value) || vAniv.value.trim(),
+            vendedorAniversario: vAniv.valor(),
             // Serviço: a lista de prestadores; o 1º espelha o contato acima (é dele que a lista e a cotação leem).
             // Produto: a chave não vai, para não apagar prestadores gravados se a categoria for trocada por engano.
             contrato: lerContrato(),
             // Grupos de despesa: só na categoria Serviço (em Produto a chave não vai, para não apagar o que estava gravado).
             ...(ehServico() ? { gruposDespesaIds: [...gruposEscolhidos] } : {}),
             ...(ehServico() ? { prestadores: [
-              { id: idPrestador1, nome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email, aniversario: DF.monthParse(vAniv.value) || vAniv.value.trim(), funcoes: funcoes1.valores() },
-              ...extras.map((x) => ({ id: x.id, nome: x.nome.value.trim(), whatsapp: x.whatsapp.value.trim(), email: x.email.value.trim(), aniversario: DF.monthParse(x.aniversario.value) || x.aniversario.value.trim(), funcoes: x.funcoes.valores() })),
+              { id: idPrestador1, nome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email, aniversario: vAniv.valor(), funcoes: funcoes1.valores() },
+              ...extras.map((x) => ({ id: x.id, nome: x.nome.value.trim(), whatsapp: x.whatsapp.value.trim(), email: x.email.value.trim(), aniversario: x.aniversario.valor(), funcoes: x.funcoes.valores() })),
             ] } : {}),
             financeiro: contato(fin), representante: { ...contato(rep), cargo: repCargo.value },
             situacao: situacao.ativo ? 'ativo' : 'inativo',

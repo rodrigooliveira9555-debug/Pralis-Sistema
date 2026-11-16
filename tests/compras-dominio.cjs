@@ -170,8 +170,9 @@ ok(() => {
   assert.equal(d.nomeCategoriasFornecedor({}), '');
 });
 ok(() => {
-  // Fornecedor é só por CNPJ; cadastro antigo com outro documento (CPF) continua identificável.
-  assert.equal(d.documentoAntigoFornecedor({ documento: '529.982.247-25' }), '529.982.247-25');
+  // CPF (11 dígitos) voltou como pessoa física; só o que não é CPF nem CNPJ continua "documento antigo".
+  assert.equal(d.documentoAntigoFornecedor({ documento: '529.982.247-25' }), '');
+  assert.equal(d.documentoAntigoFornecedor({ documento: 'RG 12345' }), 'RG 12345');
   assert.equal(d.documentoAntigoFornecedor({ documento: '11.222.333/0001-81' }), '');
   assert.equal(d.documentoAntigoFornecedor({ documento: '' }), '');
   assert.equal(d.documentoAntigoFornecedor(null), '');
@@ -197,15 +198,37 @@ ok(() => {
   assert.match(v({ email: 'sem-arroba' }), /E-mail do vendedor/);
   assert.match(v({ financeiro: { nome: 'Fin', whatsapp: '123', email: '' } }), /WhatsApp do financeiro/);
   assert.match(v({ financeiro: { nome: 'Fin', whatsapp: '', email: 'x@' } }), /E-mail do financeiro/);
-  assert.match(v({ tipoPessoa: 'fisica', documento: '529.982.247-25' }), /CNPJ válido/); // CPF não serve mais de documento
+  // Pessoa física: CPF válido e endereço completo (só o complemento é opcional); sem CNPJ nem regime tributário.
+  const pf = { tipoPessoa: 'fisica', documento: '529.982.247-25', nome: 'Pessoa Teste', endereco: { cep: '30130-000', logradouro: 'Rua Teste', numero: '10', complemento: '', bairro: 'Centro', cidade: 'Cidade Teste', uf: 'MG' } };
+  assert.equal(v(pf), '');
+  assert.match(v({ ...pf, documento: '111.111.111-11' }), /CPF válido/);
+  assert.match(v({ ...pf, documento: '11.222.333/0001-81' }), /CPF válido/);
+  assert.match(v({ ...pf, nome: ' ' }), /nome completo/);
+  assert.match(v({ ...pf, endereco: { ...pf.endereco, numero: '', cidade: '' } }), /endereço completo \(falta número, cidade\)/);
+  assert.match(v({ ...pf, endereco: undefined }), /endereço completo/);
+  assert.equal(v({ ...pf, regimeTributario: 'inexistente' }), ''); // regime não vale para pessoa física
+  assert.match(v({ regimeTributario: 'inexistente' }), /Regime/); // para pessoa jurídica continua valendo
   // Cadastro em etapas: vendedor (aniversário em mês e ano, opcional), financeiro e representante.
   assert.equal(v({ vendedorAniversario: '1990-01', regimeTributario: 'simples' }), '');
   assert.equal(v({ vendedorAniversario: '', vendedorNascimento: '1990-01-01' }), ''); // a data completa antiga não é conferida
   assert.match(v({ vendedorAniversario: '1990-13' }), /Aniversário/);
   assert.match(v({ vendedorAniversario: '03/19' }), /Aniversário/);
   assert.match(v({ vendedorAniversario: '1890-03' }), /Aniversário/);
-  assert.match(v({ vendedorAniversario: '2999-01' }), /futuro/);
-  assert.equal(d.aniversarioVendedor({ vendedorNascimento: '1990-03-15' }), '1990-03');
+  // Aniversário só com dia e mês ("MM-DD"), sem ano; 29/02 vale; o formato antigo AAAA-MM continua aceito como está.
+  assert.equal(v({ vendedorAniversario: '08-15' }), '');
+  assert.equal(v({ vendedorAniversario: '02-29' }), '');
+  assert.match(v({ vendedorAniversario: '02-30' }), /não tem dia 30/);
+  assert.match(v({ vendedorAniversario: '04-31' }), /não tem dia 31/);
+  assert.match(v({ vendedorAniversario: '13-01' }), /mês/);
+  assert.match(v({ vendedorAniversario: '08-' }), /incompleto/);
+  assert.match(v({ vendedorAniversario: '-15' }), /incompleto/);
+  assert.equal(d.aniversarioTexto('08-15'), '15/08');
+  assert.equal(d.aniversarioTexto('1990-03-15'), '15/03');
+  assert.equal(d.aniversarioTexto('1990-03'), ''); // só mês: não inventa o dia
+  assert.deepEqual(d.aniversarioPartes('1990-03'), { mes: '03', dia: '', legado: true });
+  assert.deepEqual(d.aniversarioPartes('02-29'), { mes: '02', dia: '29', legado: false });
+  assert.deepEqual(d.aniversarioPartes(''), { mes: '', dia: '', legado: false });
+  assert.equal(d.aniversarioVendedor({ vendedorNascimento: '1990-03-15' }), '03-15');
   assert.equal(d.aniversarioVendedor({ vendedorNascimento: '1990-03-15', vendedorAniversario: '' }), '');
   assert.equal(d.aniversarioVendedor({ vendedorNascimento: '1990-03-15', vendedorAniversario: '1991-04' }), '1991-04');
   assert.equal(d.aniversarioVendedor(null), '');
@@ -234,7 +257,74 @@ ok(() => {
   assert.match(vc({ observacoes: 'x'.repeat(2001) })[2], /2000/);
   // Sem contrato, nada é conferido (o que estiver preenchido fica guardado como está).
   assert.equal(v({ contrato: { tem: false, valorCentavos: -1, inicio: 'x' } }), '');
-  assert.deepEqual([d.FORMAS_PAGAMENTO_CONTRATO.length, d.RECORRENCIAS_CONTRATO.length, d.REAJUSTES_CONTRATO.length], [4, 5, 6]);
+  assert.deepEqual([d.FORMAS_PAGAMENTO_CONTRATO.length, d.RECORRENCIAS_CONTRATO.length, d.REAJUSTES_CONTRATO.length], [4, 7, 6]);
+  assert.deepEqual(d.FORMAS_PAGAMENTO_FORNECEDOR, [['boleto', 'Boleto'], ['dinheiro', 'Dinheiro']]);
+  assert.deepEqual(d.RECORRENCIAS_CONTRATO.map(([, n]) => n), ['Por visita', 'Por solicitação', 'Por hora', 'Por dia', 'Por mês', 'Por ano', 'Personalizado']);
+  // Forma de pagamento, recorrência, valor e referência ao salário mínimo (16/11/2026): só informação, sem cálculo.
+  assert.equal(vc({ formaPagamento: 'dinheiro', diaPagamento: 'sexta', recorrencia: 'visita', valorCentavos: 15000 })[2], '');
+  assert.equal(vc({ formaPagamento: 'pix', recorrencia: 'mes' })[2], ''); // valor antigo continua válido
+  assert.match(vc({ diaPagamento: 'segunda' })[2], /Dia de pagamento/);
+  assert.equal(vc({ salarioMinimo: { ativo: true, percentual: 150.5 } })[2], ''); // acima de 100% vale
+  assert.equal(vc({ salarioMinimo: { ativo: false, percentual: null } })[2], '');
+  assert.match(vc({ salarioMinimo: { ativo: true, percentual: 0 } })[2], /percentual do salário mínimo/);
+  assert.match(vc({ salarioMinimo: { ativo: true, percentual: NaN } })[2], /percentual do salário mínimo/);
+  assert.match(vc({ salarioMinimo: { ativo: true, percentual: null } })[2], /percentual do salário mínimo/);
+  assert.match(vc({ recorrencia: 'personalizado' })[2], /recorrência personalizada/i);
+  assert.equal(vc({ recorrencia: 'personalizado', recorrenciaPersonalizada: { intervalo: 2, unidade: 'semana', diasSemana: [1, 5], termina: { tipo: 'nunca' } } })[2], '');
+  // Recorrência personalizada (modelo Calendário/Lembretes).
+  const rp = (x) => d.validarRecorrenciaPersonalizada({ intervalo: 1, unidade: 'dia', termina: { tipo: 'nunca' }, ...x });
+  assert.equal(rp({}), '');
+  assert.match(rp({ intervalo: 0 }), /número inteiro a partir de 1/);
+  assert.match(rp({ intervalo: -2 }), /a partir de 1/);
+  assert.match(rp({ intervalo: 1.5 }), /a partir de 1/);
+  assert.match(rp({ unidade: 'minuto' }), /unidade/);
+  assert.match(rp({ unidade: 'semana' }), /ao menos um dia da semana/);
+  assert.match(rp({ unidade: 'semana', diasSemana: [] }), /ao menos um dia/);
+  assert.match(rp({ unidade: 'semana', diasSemana: [7] }), /Dia da semana inválido/);
+  assert.equal(rp({ unidade: 'semana', diasSemana: [0, 3] }), '');
+  assert.match(rp({ unidade: 'mes' }), /como repetir no mês/);
+  assert.match(rp({ unidade: 'mes', mensal: { modo: 'dia', dia: 32 } }), /1 a 31/);
+  assert.match(rp({ unidade: 'mes', mensal: { modo: 'dia', dia: null } }), /1 a 31/);
+  assert.equal(rp({ unidade: 'mes', mensal: { modo: 'dia', dia: 10 } }), '');
+  assert.match(rp({ unidade: 'mes', mensal: { modo: 'posicao', posicao: '5', diaSemana: 1 } }), /posição/);
+  assert.match(rp({ unidade: 'mes', mensal: { modo: 'posicao', posicao: '1', diaSemana: 9 } }), /dia da semana/);
+  assert.equal(rp({ unidade: 'mes', mensal: { modo: 'posicao', posicao: 'ultima', diaSemana: 5 } }), '');
+  assert.match(rp({ termina: { tipo: 'data' } }), /data de término/);
+  assert.match(rp({ termina: { tipo: 'data', data: '10/01/2027' } }), /data de término/);
+  assert.equal(rp({ termina: { tipo: 'data', data: '2027-01-10' } }), '');
+  assert.match(rp({ termina: { tipo: 'ocorrencias', ocorrencias: 0 } }), /quantidade de ocorrências/);
+  assert.match(rp({ termina: { tipo: 'ocorrencias' } }), /quantidade de ocorrências/);
+  assert.equal(rp({ termina: { tipo: 'ocorrencias', ocorrencias: 3 } }), '');
+  assert.match(rp({ termina: { tipo: 'jamais' } }), /termina/);
+  assert.match(d.validarRecorrenciaPersonalizada(null), /Configure/);
+  // Resumo automático.
+  const rs = (x) => d.resumoRecorrenciaPersonalizada({ intervalo: 1, unidade: 'dia', termina: { tipo: 'nunca' }, ...x });
+  assert.equal(rs({ intervalo: 2, unidade: 'semana', diasSemana: [1, 5] }), 'Repete a cada 2 semanas, às segundas e sextas-feiras, sem data de término.');
+  assert.equal(rs({ unidade: 'semana', diasSemana: [1, 3, 5] }), 'Repete toda semana, às segundas, quartas e sextas-feiras, sem data de término.');
+  assert.equal(rs({ unidade: 'semana', diasSemana: [0, 6] }), 'Repete toda semana, aos domingos e sábados, sem data de término.');
+  assert.equal(rs({ unidade: 'mes', mensal: { modo: 'dia', dia: 10 } }), 'Repete todo dia 10 de cada mês, sem data de término.');
+  assert.equal(rs({ intervalo: 3, unidade: 'mes', mensal: { modo: 'dia', dia: 10 } }), 'Repete a cada 3 meses, no dia 10, sem data de término.');
+  assert.equal(rs({ unidade: 'mes', mensal: { modo: 'posicao', posicao: '1', diaSemana: 1 } }), 'Repete toda primeira segunda-feira do mês, sem data de término.');
+  assert.equal(rs({ unidade: 'mes', mensal: { modo: 'posicao', posicao: 'ultima', diaSemana: 5 } }), 'Repete toda última sexta-feira do mês, sem data de término.');
+  assert.equal(rs({ unidade: 'mes', mensal: { modo: 'posicao', posicao: '1', diaSemana: 0 } }), 'Repete todo primeiro domingo do mês, sem data de término.');
+  assert.equal(rs({ intervalo: 2, unidade: 'hora' }), 'Repete a cada 2 horas, sem data de término.');
+  assert.equal(rs({ unidade: 'hora' }), 'Repete toda hora, sem data de término.');
+  assert.equal(rs({ intervalo: 3 }), 'Repete a cada 3 dias, sem data de término.');
+  assert.equal(rs({}), 'Repete todos os dias, sem data de término.');
+  assert.equal(rs({ unidade: 'ano' }), 'Repete todo ano, sem data de término.');
+  assert.equal(rs({ intervalo: 2, unidade: 'ano', termina: { tipo: 'ocorrencias', ocorrencias: 4 } }), 'Repete a cada 2 anos, por 4 ocorrências.');
+  assert.equal(rs({ termina: { tipo: 'ocorrencias', ocorrencias: 1 } }), 'Repete todos os dias, por 1 ocorrência.');
+  assert.equal(rs({ termina: { tipo: 'data', data: '2027-03-05' } }), 'Repete todos os dias, até 05/03/2027.');
+  assert.equal(rs({ unidade: 'semana' }), ''); // incompleto não vira frase
+  // Frase informativa do valor: só texto.
+  const nb = (t) => t.replace(/\u00a0/g, ' ');
+  assert.equal(nb(d.resumoValorRecorrencia(15000, 'visita')), 'R$ 150,00 por visita.');
+  assert.equal(nb(d.resumoValorRecorrencia(20000, 'solicitacao')), 'R$ 200,00 por solicitação.');
+  assert.equal(nb(d.resumoValorRecorrencia(8000, 'hora')), 'R$ 80,00 por hora.');
+  assert.equal(nb(d.resumoValorRecorrencia(150000, 'mes')), 'R$ 1.500,00 por mês.');
+  assert.equal(nb(d.resumoValorRecorrencia(1200000, 'ano')), 'R$ 12.000,00 por ano.');
+  assert.equal(nb(d.resumoValorRecorrencia(30000, 'personalizado')), 'R$ 300,00 conforme recorrência personalizada.');
+  assert.equal(d.resumoValorRecorrencia(null, 'mes'), '');
   // Migração: quem já tinha início, fim, valor ou observações passa a ter contrato; vazio fica sem; uma vez só.
   const docC = { fornecedores: [{ id: 'a', contrato: { inicio: '2026-01-01', fim: '', valorCentavos: null, observacoes: '' } }, { id: 'b', contrato: { inicio: '', fim: '', valorCentavos: null, observacoes: '' } },
     { id: 'c', contrato: { inicio: '', fim: '', valorCentavos: 0, observacoes: '' } }, { id: 'd' }, { id: 'e', contrato: { tem: false, inicio: '2026-01-01' } }] };

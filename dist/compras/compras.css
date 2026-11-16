@@ -429,3 +429,35 @@ body.dark-theme .compras-fiscal-todos summary { color: #a7e8bd; }
 .compras-importacao-linha { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--layout-line, #dedee3); overflow-wrap: anywhere; }
 .compras-importacao-linha > b { white-space: nowrap; }
 .compras-produto-celula .compras-situacao { justify-self: start; }
+
+/* ---------- Cadastro de fornecedor: recorrência no estilo Calendário e Lembretes, aniversário, salário mínimo e documentos (16/11/2026) ---------- */
+.compras-escolha-gatilho { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 42px; padding: 0 12px; box-sizing: border-box; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); color: var(--layout-ink, #27272a); font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); cursor: pointer; text-align: left; }
+.compras-escolha-texto.vazio { color: var(--navigation-ink, #a2a0aa); }
+.compras-escolha-seta { display: inline-grid; place-items: center; flex: none; }
+.compras-escolha-seta svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
+.compras-escolha-gatilho[aria-expanded=true] .compras-escolha-seta svg { transform: rotate(180deg); }
+.compras-escolha-gatilho:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
+.compras-escolha-painel { position: fixed; z-index: 30; display: grid; min-width: min(260px, calc(100vw - 24px)); box-sizing: border-box; padding: 6px; border: 1px solid var(--layout-line, #dedee3); border-radius: 14px; background: var(--theme-card, #fff); box-shadow: 0 8px 24px rgb(0 0 0 / .14); font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); }
+.compras-escolha-painel[hidden] { display: none; }
+.compras-escolha-opcao { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+.compras-escolha-opcao:hover, .compras-escolha-opcao:focus-visible { background: color-mix(in srgb, var(--menu-accent) 10%, var(--theme-card, #fff)); outline: none; }
+.compras-escolha-opcao.ativo { font-weight: 600; color: var(--panel-text, #9c1c1c); }
+body.dark-theme .compras-escolha-opcao.ativo { color: #f2f1f6; }
+.compras-escolha-check { width: 18px; height: 18px; flex: none; color: var(--menu-accent); }
+.compras-escolha-check svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.compras-recorr-linha { display: flex; flex-wrap: wrap; gap: 8px; }
+.compras-recorr-linha > * { flex: 1 1 120px; min-width: 0; }
+.compras-recorr-pers { display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 8px 8px 8px 12px; border-radius: 12px; background: color-mix(in srgb, var(--menu-accent) 8%, var(--theme-card, #fff)); }
+.compras-recorr-pers-texto { flex: 1; min-width: 0; font: 500 var(--ui-text)/var(--ui-text-line) var(--ui-font); overflow-wrap: anywhere; }
+.compras-recorr-resumo { margin: 0; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--menu-accent) 8%, var(--theme-card, #fff)); font: 600 var(--ui-text)/var(--ui-text-line) var(--ui-font); }
+.compras-recorr-resumo.pendente { font-weight: 400; color: var(--navigation-ink, #6d6c76); }
+.compras-recorr-dialogo .compras-recorr-linha > select { flex: 1 1 100px; }
+.compras-sm { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; align-items: start; }
+.compras-sm > small { grid-column: 1 / -1; }
+.compras-sm > .compras-situacao-quadro { grid-column: auto; }
+@media (max-width: 560px) { .compras-sm { grid-template-columns: minmax(0, 1fr); } }
+.compras-valor-resumo:empty { display: none; }
+.compras-doc-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.compras-doc-acoes .compras-redondo, .compras-recorr-pers .compras-redondo { flex: none; width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: #fff; }
+.compras-doc-acoes .compras-redondo svg, .compras-recorr-pers .compras-redondo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.compras-doc-previa img, .compras-doc-previa iframe { display: block; width: 100%; max-width: 100%; min-height: 320px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; }

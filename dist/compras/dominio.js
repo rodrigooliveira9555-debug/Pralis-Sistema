@@ -221,7 +221,9 @@
    */
   function documentoAntigoFornecedor(f) {
     const doc = String((f && f.documento) || '').trim();
-    return doc && digitos(doc).length !== 14 ? doc : '';
+    const n = digitos(doc).length;
+    // 11 dígitos é CPF de pessoa física (voltou em 16/11/2026); só o que não é CPF nem CNPJ é "antigo".
+    return doc && n !== 14 && n !== 11 ? doc : '';
   }
   const emailValido = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
   /** Regime tributário do fornecedor pessoa jurídica: só guarda a opção escolhida, não entra em cálculo nenhum. */
@@ -238,7 +240,38 @@
   function aniversarioVendedor(f) {
     if (!f) return '';
     if (typeof f.vendedorAniversario === 'string') return f.vendedorAniversario;
-    return /^\d{4}-\d{2}-\d{2}$/.test(f.vendedorNascimento || '') ? f.vendedorNascimento.slice(0, 7) : '';
+    return /^\d{4}-\d{2}-\d{2}$/.test(f.vendedorNascimento || '') ? f.vendedorNascimento.slice(5) : '';
+  }
+  /**
+   * Aniversário só com dia e mês, sem ano (decisão de 16/11/2026): guardado como "MM-DD" (ex.: "08-15"). Dado antigo
+   * continua legível: "AAAA-MM-DD" vira dia e mês; "AAAA-MM" (mês e ano, formato do dia anterior) mostra só o mês e fica
+   * como está enquanto a pessoa não escolher o dia. Nunca inventa ano. 29/02 vale.
+   */
+  function aniversarioPartes(v) {
+    const t = String(v || '');
+    let m = /^(\d{2})-(\d{2})$/.exec(t);
+    if (m) return { mes: m[1], dia: m[2], legado: false };
+    m = /^\d{4}-(\d{2})-(\d{2})$/.exec(t);
+    if (m) return { mes: m[1], dia: m[2], legado: true };
+    m = /^\d{4}-(\d{2})$/.exec(t);
+    if (m) return { mes: m[1], dia: '', legado: true };
+    return { mes: '', dia: '', legado: false };
+  }
+  /** Texto de erro do aniversário, ou ''. Aceita '', "MM-DD" e o formato antigo "AAAA-MM" já gravado. */
+  function aniversarioRuim(v) {
+    if (!v) return '';
+    if (/^\d{4}-(0[1-9]|1[0-2])$/.test(v)) return +v.slice(0, 4) >= 1900 ? '' : 'Aniversário inválido: escolha o dia e o mês.';
+    const m = /^(\d{2})-(\d{2})$/.exec(v);
+    if (!m) return 'Aniversário incompleto: escolha o dia e o mês.';
+    const mes = +m[1]; const dia = +m[2];
+    if (mes < 1 || mes > 12) return 'Aniversário inválido: escolha um mês.';
+    if (dia < 1 || dia > diasNoMes(2000, mes - 1)) return 'Aniversário inválido: esse mês não tem dia ' + dia + '.';
+    return '';
+  }
+  /** Aniversário no formato DD/MM, ou '' quando falta o dia ou o mês. */
+  function aniversarioTexto(v) {
+    const p = aniversarioPartes(v);
+    return p.dia && p.mes ? p.dia + '/' + p.mes : '';
   }
   /** Quem é o contato da 2ª etapa, pela categoria: prestador (Serviço) ou vendedor (Produto, e enquanto nada foi escolhido). */
   function quemVendeFornecedor(categorias) {
@@ -302,7 +335,82 @@
   }
   /* ---------- Contrato do fornecedor, dentro dos dados do financeiro (decisão do Rodrigo, 16/11/2026) ---------- */
   const FORMAS_PAGAMENTO_CONTRATO = [['dinheiro', 'Dinheiro'], ['boleto', 'Boleto'], ['pix', 'PIX'], ['transferencia', 'Transferência']];
-  const RECORRENCIAS_CONTRATO = [['hora', 'Por hora'], ['visita', 'Por visita / solicitação'], ['dia', 'Por dia'], ['mes', 'Por mês'], ['ano', 'Por ano']];
+  /** O que o cadastro oferece hoje (a lista acima segue valendo para o que já foi gravado: PIX e transferência não se perdem). */
+  const FORMAS_PAGAMENTO_FORNECEDOR = [['boleto', 'Boleto'], ['dinheiro', 'Dinheiro']];
+  const RECORRENCIAS_CONTRATO = [['visita', 'Por visita'], ['solicitacao', 'Por solicitação'], ['hora', 'Por hora'], ['dia', 'Por dia'], ['mes', 'Por mês'], ['ano', 'Por ano'], ['personalizado', 'Personalizado']];
+  const UNIDADES_REPETICAO = [['hora', 'Hora'], ['dia', 'Dia'], ['semana', 'Semana'], ['mes', 'Mês'], ['ano', 'Ano']];
+  const POSICOES_MES = [['1', 'Primeira'], ['2', 'Segunda'], ['3', 'Terceira'], ['4', 'Quarta'], ['ultima', 'Última']];
+  const DIAS_SEMANA_LONGOS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+  /**
+   * Recorrência personalizada (modelo do Calendário e dos Lembretes): { intervalo, unidade, diasSemana[], mensal, termina }.
+   * unidade: hora | dia | semana | mes | ano. diasSemana: 0 (domingo) a 6, só na unidade semana.
+   * mensal (só na unidade mes): { modo: 'dia', dia: 1-31 } ou { modo: 'posicao', posicao: '1'-'4'|'ultima', diaSemana: 0-6 }.
+   * termina: { tipo: 'nunca' } | { tipo: 'data', data: 'AAAA-MM-DD' } | { tipo: 'ocorrencias', ocorrencias: N }.
+   * Só descreve a repetição: nada aqui gera pagamento, lançamento ou data futura.
+   */
+  function validarRecorrenciaPersonalizada(p) {
+    if (!p || typeof p !== 'object') return 'Configure a recorrência personalizada.';
+    if (!Number.isInteger(p.intervalo) || p.intervalo < 1 || p.intervalo > 999) return 'Repetir a cada: informe um número inteiro a partir de 1.';
+    if (!UNIDADES_REPETICAO.some(([id]) => id === p.unidade)) return 'Escolha a unidade da repetição (hora, dia, semana, mês ou ano).';
+    if (p.unidade === 'semana') {
+      const d = p.diasSemana;
+      if (!Array.isArray(d) || !d.length) return 'Escolha ao menos um dia da semana.';
+      if (d.some((x) => !Number.isInteger(x) || x < 0 || x > 6)) return 'Dia da semana inválido.';
+    }
+    if (p.unidade === 'mes') {
+      const m = p.mensal;
+      if (!m || (m.modo !== 'dia' && m.modo !== 'posicao')) return 'Escolha como repetir no mês: dia do mês ou dia da semana.';
+      if (m.modo === 'dia' && !(Number.isInteger(m.dia) && m.dia >= 1 && m.dia <= 31)) return 'Escolha o dia do mês (1 a 31).';
+      if (m.modo === 'posicao') {
+        if (!POSICOES_MES.some(([id]) => id === String(m.posicao))) return 'Escolha a posição do dia no mês (primeira, segunda… última).';
+        if (!(Number.isInteger(m.diaSemana) && m.diaSemana >= 0 && m.diaSemana <= 6)) return 'Escolha o dia da semana.';
+      }
+    }
+    const t = p.termina;
+    if (!t || !['nunca', 'data', 'ocorrencias'].includes(t.tipo)) return 'Escolha quando a recorrência termina.';
+    if (t.tipo === 'data' && !/^\d{4}-\d{2}-\d{2}$/.test(t.data || '')) return 'Informe a data de término.';
+    if (t.tipo === 'ocorrencias' && !(Number.isInteger(t.ocorrencias) && t.ocorrencias >= 1 && t.ocorrencias <= 9999)) return 'Informe a quantidade de ocorrências (número inteiro a partir de 1).';
+    return '';
+  }
+  /** Frase da recorrência personalizada, ex.: "Repete a cada 2 semanas, às segundas e sextas-feiras, sem data de término." */
+  function resumoRecorrenciaPersonalizada(p) {
+    if (!p || validarRecorrenciaPersonalizada(p)) return '';
+    const n = p.intervalo; const u = p.unidade;
+    const cada = (sing, plural, un) => (n === 1 ? sing : 'a cada ' + n + ' ' + un[plural]);
+    let txt;
+    if (u === 'hora') txt = cada('toda hora', 1, ['hora', 'horas']);
+    else if (u === 'dia') txt = n === 1 ? 'todos os dias' : 'a cada ' + n + ' dias';
+    else if (u === 'ano') txt = n === 1 ? 'todo ano' : 'a cada ' + n + ' anos';
+    else if (u === 'semana') {
+      txt = n === 1 ? 'toda semana' : 'a cada ' + n + ' semanas';
+      const dias = [...new Set(p.diasSemana)].sort((a, b) => a - b);
+      const util = dias.every((x) => x >= 1 && x <= 5);
+      const nomes = ['domingos', 'segundas', 'terças', 'quartas', 'quintas', 'sextas', 'sábados'];
+      const lista = dias.map((x, i) => nomes[x] + (util ? (i === dias.length - 1 ? '-feiras' : '') : (x >= 1 && x <= 5 ? '-feiras' : '')));
+      const junto = lista.length > 1 ? lista.slice(0, -1).join(', ') + ' e ' + lista[lista.length - 1] : lista[0];
+      txt += ', ' + (util ? 'às ' : 'aos ') + junto;
+    } else {
+      const m = p.mensal;
+      if (m.modo === 'dia') txt = n === 1 ? 'todo dia ' + m.dia + ' de cada mês' : 'a cada ' + n + ' meses, no dia ' + m.dia;
+      else {
+        const fem = m.diaSemana >= 1 && m.diaSemana <= 5;
+        const ordF = { 1: 'primeira', 2: 'segunda', 3: 'terceira', 4: 'quarta', ultima: 'última' }; const ordM = { 1: 'primeiro', 2: 'segundo', 3: 'terceiro', 4: 'quarto', ultima: 'último' };
+        const dia = DIAS_SEMANA_LONGOS[m.diaSemana].toLowerCase();
+        const pos = (fem ? ordF : ordM)[String(m.posicao)];
+        txt = n === 1 ? (fem ? 'toda ' : 'todo ') + pos + ' ' + dia + ' do mês' : 'a cada ' + n + ' meses, ' + (fem ? 'na ' : 'no ') + pos + ' ' + dia;
+      }
+    }
+    const t = p.termina;
+    const fim = t.tipo === 'nunca' ? 'sem data de término' : t.tipo === 'data' ? 'até ' + t.data.slice(8, 10) + '/' + t.data.slice(5, 7) + '/' + t.data.slice(0, 4) : 'por ' + t.ocorrencias + (t.ocorrencias === 1 ? ' ocorrência' : ' ocorrências');
+    return 'Repete ' + txt + ', ' + fim + '.';
+  }
+  const POR_RECORRENCIA = { visita: 'por visita', solicitacao: 'por solicitação', hora: 'por hora', dia: 'por dia', mes: 'por mês', ano: 'por ano', personalizado: 'conforme recorrência personalizada' };
+  /** Frase informativa sob o campo Valor, ex.: "R$ 150,00 por visita." Só texto: não calcula total nem cria pagamento. */
+  function resumoValorRecorrencia(centavos, recorrencia) {
+    if (!Number.isInteger(centavos) || centavos < 0) return '';
+    const como = POR_RECORRENCIA[recorrencia];
+    return moeda(centavos / 100) + (como ? ' ' + como : '') + '.';
+  }
   /** Só o índice escolhido fica guardado: o sistema NÃO calcula reajuste nem valor futuro. */
   const REAJUSTES_CONTRATO = [['sem', 'Sem reajuste'], ['salario-minimo', 'Salário mínimo'], ['ipca', 'IPCA'], ['igpm', 'IGP-M'], ['inpc', 'INPC'], ['percentual', 'Percentual fixo']];
   /**
@@ -331,32 +439,32 @@
    * dados continua abrindo e sendo usado.
    */
   function validarFornecedorEtapas(f, regras, { fornecedores = [], funcoes = null } = {}) {
-    const aniversarioRuim = (v) => {
-      if (!v) return '';
-      const m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(v);
-      if (!m || +m[1] < 1900) return 'Aniversário inválido: use mês e ano (MM/AAAA).';
-      return v > new Date().toISOString().slice(0, 7) ? 'O aniversário não pode ser um mês futuro.' : '';
-    };
     const basico = () => {
+      const pf = f.tipoPessoa === 'fisica';
       const cats = Array.isArray(f.categorias) ? f.categorias : [];
       if (!cats.length) return 'Escolha a categoria do fornecedor: Produto ou Serviço.';
       if (cats.length > 1) return 'Escolha só uma categoria: Produto ou Serviço.';
       if (cats.some((c) => !CATEGORIAS_FORNECEDOR.some(([id]) => id === c))) return 'Categoria do fornecedor inválida.';
-      if (!String(f.nome || '').trim()) return 'Informe o nome fantasia ou a razão social.';
+      if (!String(f.nome || '').trim()) return pf ? 'Informe o nome completo.' : 'Informe o nome fantasia ou a razão social.';
       if (fornecedores.some((x) => x.id !== f.id && semAcento(x.nome) === semAcento(f.nome))) return 'Já existe um fornecedor com este nome.';
-      if (!regras.cnpjValid(f.documento)) return 'Informe um CNPJ válido (14 dígitos).';
-      if (f.regimeTributario && !REGIMES_TRIBUTARIOS.some(([id]) => id === f.regimeTributario)) return 'Regime tributário inválido.';
+      if (pf ? !regras.cpfValid(f.documento) : !regras.cnpjValid(f.documento)) return pf ? 'Informe um CPF válido (11 dígitos).' : 'Informe um CNPJ válido (14 dígitos).';
+      if (!pf && f.regimeTributario && !REGIMES_TRIBUTARIOS.some(([id]) => id === f.regimeTributario)) return 'Regime tributário inválido.';
       // Endereço é opcional; o que vier preenchido precisa estar no formato.
       const e = f.endereco || {};
       if (e.cep && digitos(e.cep).length !== 8) return 'O CEP deve ter 8 dígitos.';
       if (e.uf && !/^[A-Z]{2}$/.test(e.uf)) return 'UF inválida.';
+      // Pessoa física: endereço completo (só o complemento é opcional).
+      if (pf) {
+        const falta = [['cep', 'CEP'], ['logradouro', 'rua'], ['numero', 'número'], ['bairro', 'bairro'], ['cidade', 'cidade'], ['uf', 'UF']].filter(([k]) => !String(e[k] || '').trim()).map(([, n]) => n);
+        if (falta.length) return 'Pessoa física: informe o endereço completo (falta ' + falta.join(', ') + ').';
+      }
       return '';
     };
     const vendedor = () => {
       if (!digitos(f.whatsapp)) return 'Informe o WhatsApp do vendedor ou prestador.';
       if (telefoneRuim(f.whatsapp)) return 'WhatsApp inválido.';
       if (f.email && !emailValido(f.email)) return 'E-mail do vendedor ou prestador inválido.';
-      // Aniversário do vendedor: só mês e ano (AAAA-MM), opcional; ano de 1900 até o mês atual.
+      // Aniversário do vendedor: dia e mês (MM-DD), opcional; não existe ano.
       if (aniversarioRuim(f.vendedorAniversario)) return aniversarioRuim(f.vendedorAniversario);
       // Prestadores (categoria Serviço): o 1º espelha o contato acima; do 2º em diante, nome obrigatório e o resto no formato.
       const prestadores = Array.isArray(f.prestadores) ? f.prestadores : [];
@@ -365,7 +473,7 @@
         if (i > 0 && !String(p.nome || '').trim()) return 'Informe o nome do ' + quem + ' (ou remova o quadro dele).';
         if (i > 0 && telefoneRuim(p.whatsapp)) return 'WhatsApp do ' + quem + ' inválido.';
         if (i > 0 && p.email && !emailValido(p.email)) return 'E-mail do ' + quem + ' inválido.';
-        if (i > 0 && aniversarioRuim(p.aniversario)) return 'Aniversário do ' + quem + ' inválido: use mês e ano (MM/AAAA), sem mês futuro.';
+        if (i > 0 && aniversarioRuim(p.aniversario)) return 'Aniversário do ' + quem + ' inválido: escolha o dia e o mês.';
         if (funcoes && (p.funcoes || []).some((id) => !funcoes.some((x) => x.id === id))) return 'Função do ' + quem + ' inválida.';
       }
       return '';
@@ -393,6 +501,13 @@
       const naLista = (lista, v) => !v || lista.some(([id]) => id === v);
       if (!naLista(FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)) return 'Forma de pagamento do contrato inválida.';
       if (!naLista(RECORRENCIAS_CONTRATO, c.recorrencia)) return 'Recorrência do contrato inválida.';
+      if (c.recorrencia === 'personalizado') { const m = validarRecorrenciaPersonalizada(c.recorrenciaPersonalizada); if (m) return m; }
+      if (c.diaPagamento != null && c.diaPagamento !== '' && c.diaPagamento !== 'sexta') return 'Dia de pagamento inválido.';
+      const sm = c.salarioMinimo;
+      if (sm != null) {
+        if (typeof sm !== 'object') return 'Referência do salário mínimo inválida.';
+        if (sm.ativo && !(typeof sm.percentual === 'number' && sm.percentual > 0 && sm.percentual <= 10000)) return 'Informe o percentual do salário mínimo (maior que 0).';
+      }
       if (c.vencimentoDia != null && (!Number.isInteger(c.vencimentoDia) || c.vencimentoDia < 1 || c.vencimentoDia > 31)) return 'O dia do vencimento deve ser de 1 a 31.';
       const dataRuim = (v) => Boolean(v) && !/^\d{4}-\d{2}-\d{2}$/.test(v);
       if (dataRuim(c.vencimentoData)) return 'Confira a data de vencimento: use DD/MM/AA.';
@@ -590,7 +705,8 @@
     CATEGORIAS_FORNECEDOR, categoriaFornecedor, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, documentoAntigoFornecedor, validarFornecedor,
     validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, aniversarioVendedor, migrarVendedorFornecedor,
     FUNCOES_PRESTADOR_INICIAIS, idFuncaoPrestador, funcaoPrestadorIgual, validarFuncaoPrestador, migrarPrestadoresFornecedor,
-    FORMAS_PAGAMENTO_CONTRATO, RECORRENCIAS_CONTRATO, REAJUSTES_CONTRATO, migrarContratoFinanceiro,
+    FORMAS_PAGAMENTO_CONTRATO, FORMAS_PAGAMENTO_FORNECEDOR, RECORRENCIAS_CONTRATO, UNIDADES_REPETICAO, POSICOES_MES, DIAS_SEMANA_LONGOS, REAJUSTES_CONTRATO, migrarContratoFinanceiro,
+    validarRecorrenciaPersonalizada, resumoRecorrenciaPersonalizada, resumoValorRecorrencia, aniversarioPartes, aniversarioRuim, aniversarioTexto,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,
     aplicarRecebimento, SITUACOES_PEDIDO,

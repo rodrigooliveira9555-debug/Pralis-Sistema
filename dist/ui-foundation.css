@@ -679,3 +679,10 @@ button.stepper-node:focus-visible{outline:2px solid var(--stepper-accent);outlin
 @media (prefers-reduced-motion:reduce){.rules-panel-body{transition:none}}
 .rules-panel-inner{visibility:visible;transition:visibility 0s}
 .rules-panel:not(.is-open) .rules-panel-inner{visibility:hidden;transition:visibility 0s .25s}
+
+/* Importação CSV das folhas: janela de prévia e documento (2026-11) */
+.folhas-import-dialog,.folhas-doc-dialog{width:min(980px,calc(100vw - 24px));max-height:calc(100dvh - 24px)}
+.folhas-map{max-height:320px;overflow:auto}
+.folhas-map select{min-width:200px;max-width:100%}
+.folhas-import-sum{display:grid;gap:8px}
+.folhas-import-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
