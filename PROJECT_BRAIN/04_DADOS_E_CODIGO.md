@@ -64,8 +64,8 @@
   `documento`, `whatsapp` e `situacao` (já existiam), mais `razaoSocial` (texto, opcional; o `nome` é o nome fantasia, e
   continua sendo o nome exibido em todo o sistema, sem migração), `categorias` (lista com 'produto' e/ou 'servico'), `ramo`
   (texto, opcional), `contrato` (15/11/2026, opcional: `{ inicio, fim (AAAA-MM-DD ou ''), valorCentavos (inteiro ou null; só informado, sem fórmula), observacoes }`;
-  sem anexo ainda), `gruposDespesaIds` (só categoria Serviço, 15/11/2026: ids dos grupos de `cicluz-financial-hierarchy-v1`.despesas a que o prestador
-  está ligado; só vínculo, sem lançamento; o vínculo com **produtos** não é campo do fornecedor: é o `catalogo` que já existia, e a etapa
+  sem anexo ainda), `gruposDespesaIds` (só categoria Serviço, 15/11/2026: ids de `cicluz-financial-hierarchy-v1`.despesas a que o prestador
+  está ligado: o id do grupo ou, para subgrupo, "idDoGrupo|idDoSubgrupo" (16/11/2026; o mesmo formato do patrimônio); só vínculo, sem lançamento; o vínculo com **produtos** não é campo do fornecedor: é o `catalogo` que já existia, e a etapa
   Vínculos só acrescenta registros lá), `prestadores` (só categoria Serviço, 15/11/2026: `[{ id, nome, whatsapp, email, aniversario 'AAAA-MM', funcoes: [ids] }]`; o 1º espelha
   `contatoNome`/`whatsapp`/`email`/`vendedorAniversario`, que continuam sendo o que a lista e a cotação leem; migração
   `migracoes.prestadoresFornecedor`: o contato único vira o Prestador 1, nada é apagado), `categorias` (lista com **um** item, 'produto' ou 'servico': escolha única desde 15/11/2026; registro com os dois, de quando

@@ -273,8 +273,11 @@ body.dark-theme .compras-trilha li { background: #34333b; color: #d4d4d8; }
 .compras-enviar-prazo { display: grid; gap: 8px; padding: 12px; width: min(230px, calc(100vw - 84px)); box-sizing: border-box; }
 .compras-enviar-prazo .profiles-note { margin: 0; }
 .compras-enviar-prazo > .profiles-note:empty, .compras-enviar-prazo > .profiles-error:empty { display: none; }
-/* Etapa Vínculos: lista de produtos para marcar, com rolagem própria (a página não rola de lado). */
-.compras-vinculos-lista { display: grid; gap: 8px; max-height: 340px; overflow-y: auto; padding: 4px 2px; min-width: 0; }
+/* Janela de escolha da etapa Vínculos (produtos; grupos e subgrupos de despesa): lista de caixas de marcar. */
+.compras-vinculos-lista { display: grid; gap: 8px; padding: 4px 2px; min-width: 0; }
+/* Subgrupo dentro do grupo: recuado, para a hierarquia aparecer. */
+.compras-vinculos-lista > .compras-vinculo-nivel { margin-left: 28px; }
+span.compras-chip { cursor: default; }
 /* "+ Acrescentar opção": chip tracejado, para não parecer uma opção da lista. */
 .compras-chip-mais { border-style: dashed; }
 /* Seleção por cartões (U.cartoesEscolha): cartão = botão inteiro; lado a lado quando cabe, empilhado no celular.

@@ -550,58 +550,117 @@
            o vínculo produto × fornecedor de "Cadastro de compras", "Vincular aos selecionados" e do alerta de
            vínculo): marcar aqui cria o vínculo aprovado igual ao de lá. O Compras não tem como desfazer vínculo
            aprovado, então o que já está vinculado aparece marcado e travado.
-           Serviço: um ou mais grupos de despesa (DES - Grupos de Despesas), por id, em f.gruposDespesaIds. */
+           Serviço: um ou mais grupos e subgrupos de despesa (DES - Grupos de Despesas), em f.gruposDespesaIds: o id
+           do grupo, ou "idDoGrupo|idDoSubgrupo" para um subgrupo (o mesmo formato do patrimônio).
+           Nos dois casos (pedido do Rodrigo): um botão retangular abre a lista em tela cheia, com busca, marcação
+           múltipla e confirmar; a etapa mostra só o que foi escolhido, com opção de remover. */
         const s5 = el('fieldset', 'compras-fieldset');
         s5.append(el('legend', null, 'Vínculos'));
         const doFornecedor = (status) => new Set(f ? S.dados.catalogo.filter((v) => v.fornecedorId === f.id && v.status === status).map((v) => v.produtoId) : []);
         const jaVinculados = doFornecedor('aprovado');
         const sugeridos = doFornecedor('pendente');
         const novosProdutos = new Set();
+        /** Janela de escolha: busca, lista de caixas de marcar (com níveis) e confirmar. itens: [{ id, rotulo, busca, nivel, travado, dica }]. */
+        function abrirSeletor({ titulo, rotuloBusca, itens, marcados, aoConfirmar, limite = 80 }) {
+          const escolha = new Set(marcados);
+          const LIMITE = limite;
+          U.dialogo({
+            titulo, ...coresF(), rotuloSalvar: 'Confirmar',
+            montar: (fm) => {
+              const busca = texto('', { placeholder: rotuloBusca, maxLength: 80, autocomplete: 'off' });
+              busca.setAttribute('aria-label', rotuloBusca);
+              busca.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
+              const resumo = el('p', 'profiles-note');
+              resumo.setAttribute('role', 'status');
+              const lista = el('div', 'compras-vinculos-lista');
+              const desenhar = () => {
+                const termo = U.dobrar(busca.value.trim());
+                const achados = itens.filter((i) => !termo || U.dobrar(i.busca || i.rotulo).includes(termo));
+                lista.replaceChildren(...achados.slice(0, LIMITE).map((i) => {
+                  const l = interruptor(i.rotulo, Boolean(i.travado) || escolha.has(i.id), i.dica || '');
+                  if (i.nivel) l.classList.add('compras-vinculo-nivel');
+                  l.input.disabled = Boolean(i.travado);
+                  l.input.onchange = () => { if (l.input.checked) escolha.add(i.id); else escolha.delete(i.id); contar(achados.length); };
+                  return l;
+                }));
+                if (!achados.length) lista.append(el('p', 'profiles-note', termo ? 'Nada encontrado.' : 'Nada cadastrado.'));
+                contar(achados.length);
+              };
+              const contar = (achados) => {
+                resumo.textContent = (escolha.size === 1 ? '1 marcado' : escolha.size + ' marcados') + '.' + (achados > LIMITE ? ' Mostrando ' + LIMITE + ' de ' + achados + ': use a busca.' : '');
+              };
+              busca.addEventListener('input', desenhar);
+              const box = el('div', 'compras-campo compras-largo');
+              box.append(busca, resumo, lista);
+              fm.append(box);
+              desenhar();
+            },
+            salvar: () => { aoConfirmar(escolha); },
+          });
+        }
+        /** Chip do que foi escolhido: com "×" para remover, ou travado (sem ação). */
+        const chipEscolhido = (rotulo, aoRemover) => {
+          if (!aoRemover) return el('span', 'compras-chip ativo', rotulo);
+          const c = botao(rotulo + ' ×', aoRemover, 'compras-chip ativo');
+          c.setAttribute('aria-label', 'Remover ' + rotulo);
+          return c;
+        };
+
         const boxProdutos = el('div', 'compras-campo compras-largo');
-        const buscaProduto = texto('', { placeholder: 'Buscar produto pelo nome', maxLength: 80, autocomplete: 'off' });
-        buscaProduto.setAttribute('aria-label', 'Buscar produto');
-        buscaProduto.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
+        const escolhidosProdutos = el('div', 'compras-chips');
         const resumoProdutos = el('p', 'profiles-note');
         resumoProdutos.setAttribute('role', 'status');
-        const listaProdutos = el('div', 'compras-vinculos-lista');
-        const LIMITE_PRODUTOS = 60;
         const desenharProdutos = () => {
-          const termo = U.dobrar(buscaProduto.value.trim());
-          const marcado = (p) => jaVinculados.has(p.id) || novosProdutos.has(p.id);
-          const todos = S.dados.produtos.filter((p) => (p.status === 'ativo' || marcado(p)) && (!termo || U.dobrar(p.descricao).includes(termo)))
-            .sort((a, b2) => (marcado(a) === marcado(b2) ? a.descricao.localeCompare(b2.descricao, 'pt-BR') : marcado(a) ? -1 : 1));
-          listaProdutos.replaceChildren(...todos.slice(0, LIMITE_PRODUTOS).map((p) => {
-            const l = interruptor(p.descricao, marcado(p), jaVinculados.has(p.id) ? 'Já vinculado.' : sugeridos.has(p.id) ? 'Sugestão do fornecedor aguardando decisão no Cadastro de compras.' : '');
-            l.input.disabled = jaVinculados.has(p.id) || sugeridos.has(p.id);
-            l.input.onchange = () => { if (l.input.checked) novosProdutos.add(p.id); else novosProdutos.delete(p.id); pintarResumoProdutos(todos.length); };
-            return l;
-          }));
-          if (!todos.length) listaProdutos.append(el('p', 'profiles-note', termo ? 'Nenhum produto encontrado.' : 'Nenhum produto ativo cadastrado.'));
-          pintarResumoProdutos(todos.length);
-        };
-        const pintarResumoProdutos = (achados) => {
+          const nomeP = (id) => (S.produto(id) || {}).descricao || 'Produto removido';
+          const porNome = (a, b2) => nomeP(a).localeCompare(nomeP(b2), 'pt-BR');
+          escolhidosProdutos.replaceChildren(
+            ...[...jaVinculados].sort(porNome).map((id) => chipEscolhido(nomeP(id))),
+            ...[...novosProdutos].sort(porNome).map((id) => chipEscolhido(nomeP(id), () => { novosProdutos.delete(id); desenharProdutos(); })),
+          );
           const n = jaVinculados.size + novosProdutos.size;
           resumoProdutos.textContent = (n === 1 ? '1 produto vinculado' : n + ' produtos vinculados') + (novosProdutos.size ? ' (' + novosProdutos.size + ' a vincular ao salvar)' : '') + '.'
-            + (achados > LIMITE_PRODUTOS ? ' Mostrando ' + LIMITE_PRODUTOS + ' de ' + achados + ': use a busca.' : '');
+            + (jaVinculados.size ? ' Os que já estavam vinculados não saem por aqui.' : '');
         };
-        buscaProduto.addEventListener('input', desenharProdutos);
-        boxProdutos.append(el('span', 'compras-rotulo', 'Produtos que este fornecedor fornece'), buscaProduto, resumoProdutos, listaProdutos);
+        const escolherProdutos = () => abrirSeletor({
+          titulo: 'Produtos do fornecedor', rotuloBusca: 'Buscar produto',
+          itens: S.dados.produtos.filter((p) => p.status === 'ativo' || jaVinculados.has(p.id) || novosProdutos.has(p.id))
+            .sort((a, b2) => a.descricao.localeCompare(b2.descricao, 'pt-BR'))
+            .map((p) => ({ id: p.id, rotulo: p.descricao, travado: jaVinculados.has(p.id) || sugeridos.has(p.id),
+              dica: jaVinculados.has(p.id) ? 'Já vinculado.' : sugeridos.has(p.id) ? 'Sugestão do fornecedor aguardando decisão no Cadastro de compras.' : '' })),
+          marcados: novosProdutos,
+          aoConfirmar: (escolha) => { novosProdutos.clear(); escolha.forEach((id) => { if (!jaVinculados.has(id) && !sugeridos.has(id)) novosProdutos.add(id); }); desenharProdutos(); },
+        });
+        const linhaProdutos = el('div', 'compras-form-rodape');
+        linhaProdutos.append(U.botaoTitulo('Produtos', 'Escolher os produtos que este fornecedor fornece', escolherProdutos));
+        boxProdutos.append(el('span', 'compras-rotulo', 'Produtos que este fornecedor fornece'), linhaProdutos, resumoProdutos, escolhidosProdutos);
 
         const gruposEscolhidos = new Set(Array.isArray(f?.gruposDespesaIds) ? f.gruposDespesaIds : []);
         const boxGrupos = el('div', 'compras-campo compras-largo');
-        boxGrupos.setAttribute('role', 'group');
-        boxGrupos.setAttribute('aria-label', 'Grupos de despesa');
-        const chipsGrupos = el('div', 'compras-chips');
+        const escolhidosGrupos = el('div', 'compras-chips');
+        const resumoGrupos = el('p', 'profiles-note');
+        resumoGrupos.setAttribute('role', 'status');
+        const gruposDeDespesa = () => (window.CicluzProducaoDados && window.CicluzProducaoDados.gruposDespesa()) || [];
+        /** Todos os grupos e subgrupos, na ordem da hierarquia; inativo só entra se já estava escolhido. */
+        const itensGrupos = () => gruposDeDespesa().flatMap((g) => {
+          const filhos = g.subgrupos.filter((s) => (g.ativo && s.ativo) || gruposEscolhidos.has(g.id + '|' + s.id))
+            .map((s) => ({ id: g.id + '|' + s.id, rotulo: s.nome + (g.ativo && s.ativo ? '' : ' (inativo)'), busca: g.nome + ' ' + s.nome, nivel: 1, nomeCompleto: g.nome + ' › ' + s.nome }));
+          const proprio = g.ativo || gruposEscolhidos.has(g.id) || filhos.length;
+          return proprio ? [{ id: g.id, rotulo: g.nome + (g.ativo ? '' : ' (inativo)'), busca: g.nome, nomeCompleto: g.nome }, ...filhos] : [];
+        });
         const desenharGrupos = () => {
-          const grupos = ((window.CicluzProducaoDados && window.CicluzProducaoDados.gruposDespesa()) || []).filter((g) => g.ativo || gruposEscolhidos.has(g.id));
-          chipsGrupos.replaceChildren(...grupos.map((g) => {
-            const c = botao(g.nome + (g.ativo ? '' : ' (inativo)'), () => { if (gruposEscolhidos.has(g.id)) gruposEscolhidos.delete(g.id); else gruposEscolhidos.add(g.id); desenharGrupos(); }, 'compras-chip' + (gruposEscolhidos.has(g.id) ? ' ativo' : ''));
-            c.setAttribute('aria-pressed', String(gruposEscolhidos.has(g.id)));
-            return c;
-          }));
-          if (!grupos.length) chipsGrupos.append(el('p', 'profiles-note', 'Nenhum grupo de despesa cadastrado em DES - Grupos de Despesas.'));
+          const itens = itensGrupos();
+          const nomeG = (id) => (itens.find((i) => i.id === id) || {}).nomeCompleto || 'Grupo removido';
+          escolhidosGrupos.replaceChildren(...[...gruposEscolhidos].map((id) => chipEscolhido(nomeG(id), () => { gruposEscolhidos.delete(id); desenharGrupos(); })));
+          resumoGrupos.textContent = gruposEscolhidos.size ? (gruposEscolhidos.size === 1 ? '1 grupo ou subgrupo vinculado.' : gruposEscolhidos.size + ' grupos ou subgrupos vinculados.') : 'Nenhum grupo de despesa vinculado.';
         };
-        boxGrupos.append(el('span', 'compras-rotulo', 'Grupos de despesa deste prestador (um ou mais)'), chipsGrupos);
+        const escolherGrupos = () => abrirSeletor({
+          // Sem limite: a lista traz todos os grupos e subgrupos de uma vez (são poucas centenas, no máximo).
+          titulo: 'Grupos de despesa', rotuloBusca: 'Buscar grupo ou subgrupo', itens: itensGrupos(), marcados: gruposEscolhidos, limite: Infinity,
+          aoConfirmar: (escolha) => { gruposEscolhidos.clear(); escolha.forEach((id) => gruposEscolhidos.add(id)); desenharGrupos(); },
+        });
+        const linhaGrupos = el('div', 'compras-form-rodape');
+        linhaGrupos.append(U.botaoTitulo('Grupo de despesas', 'Escolher os grupos e subgrupos de despesa deste prestador', escolherGrupos));
+        boxGrupos.append(el('span', 'compras-rotulo', 'Grupos de despesa deste prestador (um ou mais)'), linhaGrupos, resumoGrupos, escolhidosGrupos);
         const semCategoria = el('p', 'profiles-note compras-largo', 'Escolha a categoria na primeira etapa para vincular produtos ou grupos de despesa.');
         s5.append(boxProdutos, boxGrupos, semCategoria);
         const pintarVinculos = () => {

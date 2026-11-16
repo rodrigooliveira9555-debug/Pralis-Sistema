@@ -136,8 +136,13 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await df.getByLabel('Cargo na empresa', { exact: true }).selectOption('gerente-comercial');
   // Etapa 5, Vínculos (Produto): marcar um produto cria o vínculo no mesmo catálogo do Compras.
   await avancar(df);
-  ok((await etapaF(df)).includes('Vínculos') && await df.getByLabel('Buscar produto', { exact: true }).isVisible() && await df.locator('.compras-chip', { hasText: 'inativo' }).count() === 0, 'Etapa 5: Vínculos, com os produtos para a categoria Produto');
-  await df.locator('.compras-vinculos-lista input[type=checkbox]:not(:disabled)').first().check();
+  ok((await etapaF(df)).includes('Vínculos') && await df.locator('button', { hasText: 'Produtos' }).isVisible() && await df.locator('.compras-chip', { hasText: 'inativo' }).count() === 0, 'Etapa 5: Vínculos, com os produtos para a categoria Produto');
+  // O botão Produtos abre a lista em outra janela: busca, marcar e confirmar; a etapa mostra o escolhido.
+  await df.locator('button', { hasText: 'Produtos' }).click();
+  const seletorF = p.locator('dialog.compras-dialog[open]').last();
+  await seletorF.locator('.compras-vinculos-lista input[type=checkbox]:not(:disabled)').first().check();
+  await seletorF.locator('.people-save-control').click();
+  ok(await df.locator('.compras-chip.ativo').count() === 1, 'O produto escolhido aparece na etapa, com opção de remover');
   // Etapa 6, Contrato: vigência, valor (guardado em centavos) e observações.
   await avancar(df);
   ok((await etapaF(df)).includes('Contrato'), 'Etapa 6: Contrato');
@@ -169,7 +174,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await dp.locator('fieldset', { has: p.locator('legend', { hasText: 'Prestador 2' }) }).getByLabel('Nome do prestador *', { exact: true }).fill('Segundo Prestador Teste');
   await dp.getByLabel('Aniversário', { exact: true }).pressSequentially('031990');
   await avancar(dp); await avancar(dp); await avancar(dp);
-  ok(await dp.locator('[aria-label="Grupos de despesa"]').isVisible() && await dp.getByLabel('Buscar produto', { exact: true }).isHidden(), 'Etapa 5 na categoria Serviço: grupos de despesa, sem a lista de produtos');
+  ok(await dp.locator('button', { hasText: 'Grupo de despesas' }).isVisible() && await dp.locator('button', { hasText: 'Produtos' }).isHidden(), 'Etapa 5 na categoria Serviço: botão Grupo de despesas, sem o de produtos');
   await avancar(dp);
   await dp.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).click();
   await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'));
