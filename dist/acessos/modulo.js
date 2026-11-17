@@ -16,6 +16,7 @@
   U.ICONES.acessos = ICONE;
 
   const CARDS = {
+    'Empresa': [['empresa', 'Dados da Empresa', 'CNPJ, razão social, regime tributário, endereço e responsável geral']],
     'Usuários': [['usuarios', 'Pessoas com Acesso', 'Criar contas, postos do caixa e cargos'], ['dados', 'Dados no Servidor', 'Situação de cada assunto gravado']],
     'Permissões': [['cargos', 'Cargos de Acesso', 'O que cada cargo pode fazer'], ['pessoa', 'Acessos por Pessoa', 'Ajustar só para uma pessoa']],
     'Senhas': [['senhas', 'Minha Senha', 'Trocar a sua senha'], ['senha-outra', 'Senha de Outra Pessoa', 'Quando alguém esqueceu a senha']],
