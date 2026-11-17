@@ -212,7 +212,9 @@
            1 Dados da empresa (empresa e endereço) · 2 Dados dos responsáveis legais · 3 Revisão.
            Leitura × edição: com dados gravados, a ficha abre na Revisão, travada; "Editar" (ou o lápis de um bloco) libera
            os campos. Sem dados, já abre na etapa 1 para preencher; Avançar confere a etapa. */
-        const etapa1 = el('div', 'compras-etapa compras-largo'); etapa1.append(empresa, endereco);
+        const situacao = U.quadroSituacao('Situação da empresa', v.situacao ? v.situacao === 'ativo' : true, { feminino: true, dica: 'Empresa inativa continua cadastrada.' });
+        situacao.classList.add('compras-largo');
+        const etapa1 = el('div', 'compras-etapa compras-largo'); etapa1.append(situacao, empresa, endereco);
         // Responsáveis legais são de cada empresa. A que não é Matriz pode usar os da Matriz (o caso da Filial, que é a mesma pessoa jurídica).
         const mesmos = U.quadroSituacao('Mesmos responsáveis legais da matriz', !matriz && Boolean(emp ? emp.responsaveisDaMatriz : false), { textos: ['Sim', 'Não'], dica: 'Sim: esta empresa usa os responsáveis legais cadastrados na Matriz. Não: informe os responsáveis dela abaixo.', aoMudar: () => pintarModo() });
         mesmos.classList.add('compras-largo');
@@ -239,7 +241,7 @@
         function pintarRevisao() {
           const x = ler(); const en = x.endereco;
           const blocos = [
-            ['Dados da empresa', 0, [['Tipo de vínculo', nomeDoVinculo(x.vinculo)], ['CNPJ', x.cnpj], ['Razão Social', x.razaoSocial], ['Nome Fantasia', x.nomeFantasia], ['Regime tributário', nomeDe(D.REGIMES_TRIBUTARIOS, x.regimeTributario)]]],
+            ['Dados da empresa', 0, [['Situação', x.situacao === 'inativo' ? 'Inativa' : 'Ativa'], ['Tipo de vínculo', nomeDoVinculo(x.vinculo)], ['CNPJ', x.cnpj], ['Razão Social', x.razaoSocial], ['Nome Fantasia', x.nomeFantasia], ['Regime tributário', nomeDe(D.REGIMES_TRIBUTARIOS, x.regimeTributario)]]],
             ['Endereço', 0, [['CEP', en.cep], ['Rua / logradouro', en.logradouro], ['Número', en.numero], ['Complemento', en.complemento], ['Bairro', en.bairro], ['Cidade', en.cidade], ['UF', en.uf]]],
             ...x.responsaveis.map((r) => [tituloDoResponsavel(r.cargo), 1, [['Nome completo', r.nome], ['CPF', r.cpf], ['RG', r.rg + (r.rg && r.rgOrgao ? ' · ' + r.rgOrgao : '')], ['Nacionalidade', r.nacionalidade], ['Estado civil', nomeDe(ESTADOS_CIVIS, r.estadoCivil)], ['Profissão', r.profissao], ['WhatsApp', r.whatsapp], ['E-mail', r.email],
               ['Endereço', [r.endereco.logradouro, r.endereco.numero, r.endereco.complemento, r.endereco.bairro, r.endereco.cidade, r.endereco.uf, r.endereco.cep].filter(Boolean).join(', ')]]]),
@@ -260,6 +262,7 @@
           [empresa, endereco, ...caixaResp.querySelectorAll(':scope > fieldset')].forEach((q) => { q.disabled = !editando; });
           const daMatriz = !matriz && mesmos.ativo;
           mesmos.querySelector('.account-status-switch').disabled = !editando;
+          situacao.querySelector('.account-status-switch').disabled = !editando;
           caixaResp.style.display = daMatriz ? 'none' : '';
           adicionar.disabled = !editando; linhaAdicionar.style.display = editando && !daMatriz ? '' : 'none';
           caixaResp.querySelectorAll('.compras-empresa-remover').forEach((x) => { x.style.display = editando ? '' : 'none'; });
@@ -279,6 +282,7 @@
           U.subirAoTopo(barra.el, form);
         }
         const ler = () => ({
+          situacao: situacao.ativo ? 'ativo' : 'inativo',
           vinculo: matriz ? 'matriz' : vinculo.value, responsaveisDaMatriz: !matriz && mesmos.ativo,
           cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), regimeTributario: regime.value,
           endereco: { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value },
@@ -331,6 +335,7 @@
       linhas.append(U.linhaLista({
         icone: 'fornecedor', titulo: x.nomeFantasia || x.razaoSocial || 'Empresa sem nome',
         detalhe: [nomeDoVinculo(x.vinculo) || 'Sem vínculo', x.cnpj, x.razaoSocial, quantos].filter(Boolean).join(' · '),
+        direita: el('span', 'account-list-state', x.situacao === 'inativo' ? 'Inativa' : 'Ativa'),
         aoClicar: () => abrirFicha(x, render),
       }));
     });
