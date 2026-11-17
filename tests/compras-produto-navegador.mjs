@@ -99,7 +99,7 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   await s4.getByLabel('Início', { exact: true }).fill('08:00');
   await s4.getByLabel('Término', { exact: true }).fill('10:00');
   // date-fields.js do S2 mostra um campo DD/MM/AA no lugar do original (que guarda ISO).
-  await s4.getByLabel('Válida até', { exact: true }).filter({ visible: true }).fill('31/12/26');
+  await s4.getByLabel('Terminar repetição', { exact: true }).filter({ visible: true }).fill('31/12/26');
   await s4.getByRole('button', { name: 'Promoção 1: Dom' }).click();
   await etapa(p, 1);
   const s5 = sec(p, 'Conversões de unidade');

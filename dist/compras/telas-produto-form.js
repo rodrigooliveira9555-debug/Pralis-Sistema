@@ -49,6 +49,51 @@
   // Dias da promoção na ordem da lista (domingo primeiro, como no calendário); o número é a posição em promocao.dias.
   const DIAS_LISTA = [[6, 'Domingo'], [0, 'Segunda-feira'], [1, 'Terça-feira'], [2, 'Quarta-feira'], [3, 'Quinta-feira'], [4, 'Sexta-feira'], [5, 'Sábado']];
   const VISTO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 7"/></svg>';
+  /*
+   * Repetição da promoção, no modelo da repetição dos Lembretes (pedido do Rodrigo, 17/11/2026). A lista "Repetição"
+   * são atalhos para o que é salvo em promocao.repeticao { tipo, intervalo } e promocao.dias (regra em produto-regras.js):
+   * Dias de semana = semanal de segunda a sexta; Fins de semana = semanal sábado e domingo; Quinzenalmente = semanal a
+   * cada 2; A cada 3/6 meses = mensal a cada 3/6. "Personalizada" abre Frequência e "A cada".
+   */
+  const REPETICOES = [['nunca', 'Nunca'], ['diaria', 'Diariamente'], ['dias_semana', 'Dias de semana'], ['fins_semana', 'Fins de semana'], ['semanal', 'Semanalmente'], ['quinzenal', 'Quinzenalmente'], ['mensal', 'Mensalmente'], ['tri', 'A cada 3 meses'], ['sem', 'A cada 6 meses'], ['anual', 'Anualmente'], ['personalizada', 'Personalizada']];
+  const FREQUENCIAS = [['diaria', 'Diariamente'], ['semanal', 'Semanalmente'], ['mensal', 'Mensalmente'], ['anual', 'Anualmente']];
+  const MESES_CURTOS = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
+  const DIAS_UTEIS = [true, true, true, true, true, false, false];
+  const FIM_DE_SEMANA = [false, false, false, false, false, true, true];
+  const mesmosDias = (a, b) => b.every((x, i) => Boolean(a[i]) === x);
+  /** Qual atalho da lista corresponde ao que está salvo. */
+  function repeticaoDe(pr) {
+    const r = pr.repeticao; const n = Number(r.intervalo) || 1;
+    if (r.tipo === 'nunca') return 'nunca';
+    if (r.tipo === 'diaria') return n === 1 ? 'diaria' : 'personalizada';
+    if (r.tipo === 'semanal') return n === 2 ? 'quinzenal' : n !== 1 ? 'personalizada' : mesmosDias(pr.dias, DIAS_UTEIS) ? 'dias_semana' : mesmosDias(pr.dias, FIM_DE_SEMANA) ? 'fins_semana' : 'semanal';
+    if (r.tipo === 'mensal') return n === 1 ? 'mensal' : n === 3 ? 'tri' : n === 6 ? 'sem' : 'personalizada';
+    if (r.tipo === 'anual') return n === 1 ? 'anual' : 'personalizada';
+    return 'personalizada';
+  }
+  function aplicarRepeticao(pr, id) {
+    const r = pr.repeticao;
+    const por = (tipo, intervalo) => { r.tipo = tipo; r.intervalo = intervalo; };
+    if (id === 'nunca') por('nunca', 1);
+    if (id === 'diaria') por('diaria', 1);
+    if (id === 'dias_semana') { por('semanal', 1); pr.dias = [...DIAS_UTEIS]; }
+    if (id === 'fins_semana') { por('semanal', 1); pr.dias = [...FIM_DE_SEMANA]; }
+    if (id === 'semanal') por('semanal', 1);
+    if (id === 'quinzenal') por('semanal', 2);
+    if (id === 'mensal') por('mensal', 1);
+    if (id === 'tri') por('mensal', 3);
+    if (id === 'sem') por('mensal', 6);
+    if (id === 'anual') por('anual', 1);
+    if (id === 'personalizada' && r.tipo === 'nunca') por('diaria', 1);
+  }
+  // O atalho que a pessoa escolheu nesta visita (ex.: "Personalizada" ou "Semanalmente"), enquanto ainda combinar com os dados.
+  const repeticaoEscolhida = new WeakMap();
+  function repeticaoMostrada(pr) {
+    const e = repeticaoEscolhida.get(pr); const r = pr.repeticao;
+    if (e === 'personalizada' && r.tipo !== 'nunca') return e;
+    if (e === 'semanal' && r.tipo === 'semanal' && (Number(r.intervalo) || 1) === 1) return e;
+    return repeticaoDe(pr);
+  }
   // Campos fiscais que já têm campo próprio no quadro; os outros aparecem ao ligar "Ver os 27 campos fiscais".
   const FISCAIS_NO_TOPO = ['ncm', 'cest', 'categoriaFiscal'];
 
@@ -290,50 +335,98 @@
         ePromo.append(notaPromo);
         const listaPromo = el('div', 'compras-largo compras-promocoes');
         const precoPromo = el('p', 'compras-texto-auto compras-largo');
-        const addPromo = botao('+ Adicionar promoção', () => { promocoes.push({ tipo: 'valor', valor: null, descontoFracao: null, horaInicio: '', horaFim: '', dias: [true, true, true, true, true, true, true], validaAte: '' }); desenharPromos(); atualizar(); });
+        const addPromo = botao('+ Adicionar promoção', () => { promocoes.push({ tipo: 'valor', valor: null, descontoFracao: null, dataInicio: '', horaInicio: '', horaFim: '', dias: [true, true, true, true, true, true, true], validaAte: '', repeticao: { tipo: 'semanal', intervalo: 1 } }); desenharPromos(); atualizar(); });
         s4.append(listaPromo, addPromo, precoPromo);
         function desenharPromos() {
           listaPromo.replaceChildren();
           if (!promocoes.length) listaPromo.append(el('p', 'profiles-note', 'Sem promoção.'));
           promocoes.forEach((pr, i) => {
+            if (!Array.isArray(pr.dias) || pr.dias.length !== 7) pr.dias = [true, true, true, true, true, true, true];
+            // Promoção antiga (sem repetição) abre como semanal nos dias marcados: é a mesma regra de antes.
+            if (!pr.repeticao) pr.repeticao = { tipo: 'semanal', intervalo: 1 };
+            const rp = pr.repeticao;
             const card = el('div', 'compras-bloco compras-promo');
             const cab = el('div', 'compras-linha-info');
             cab.append(el('b', null, 'Promoção ' + (i + 1)), botao('Remover', () => { promocoes.splice(i, 1); desenharPromos(); atualizar(); }, 'btn secondary perigo-texto'));
             const t = seletor([['valor', 'Valor fixo'], ['desconto', 'Desconto %']], pr.tipo);
             const v = entrada('text', pr.valor != null ? D.moeda(pr.valor) : '', { inputMode: 'decimal', placeholder: 'R$ 0,00' });
             const d = entrada('number', pr.descontoFracao != null ? Math.round(pr.descontoFracao * 10000) / 100 : '', { min: 0, max: 100, step: 'any' });
+            const di = entrada('date', pr.dataInicio || '');
             const hi = entrada('time', pr.horaInicio || ''); const hf = entrada('time', pr.horaFim || '');
             const va = entrada('date', pr.validaAte || '');
+            const repete = seletor(REPETICOES, repeticaoMostrada(pr));
+            const freq = seletor(FREQUENCIAS, rp.tipo === 'nunca' ? 'diaria' : rp.tipo);
+            const cada = entrada('number', rp.intervalo || 1, { min: 1, max: 99, step: 1 });
             const cV = campoP('Valor promo', v); const cD = campoP('Desconto %', d);
-            // Dias da semana em lista (pedido do Rodrigo, 17/11/2026, referência: repetição semanal dos Lembretes):
-            // um cartão com uma linha por dia; o dia marcado mostra o visto à direita. Tocar marca ou desmarca.
+            const cFreq = campoP('Frequência', freq); const cCada = campoP('A cada', cada);
+            const resumo = el('p', 'compras-recorr-resumo compras-largo'); resumo.setAttribute('role', 'status');
+            // Cartão de escolha com uma linha por dia e o visto à direita (repetição semanal).
             const dias = el('div', 'compras-dias-lista');
-            const marca = () => { dias.replaceChildren(...DIAS_LISTA.map(([j, nomeDia]) => {
-              const b = el('button', 'compras-dia-linha' + (pr.dias[j] ? ' marcado' : ''));
+            const celula = (texto, marcado, rotulo, aoTocar) => {
+              const b = el('button', 'compras-grade-celula', texto);
               b.type = 'button';
-              b.append(el('span', null, nomeDia));
-              b.insertAdjacentHTML('beforeend', VISTO);
-              b.onclick = () => { pr.dias[j] = !pr.dias[j]; marca(); atualizar(); };
-              b.setAttribute('aria-pressed', String(Boolean(pr.dias[j])));
-              b.setAttribute('aria-label', 'Promoção ' + (i + 1) + ': ' + R.DIAS_PROMO[j][1]);
+              b.setAttribute('aria-pressed', String(Boolean(marcado)));
+              b.setAttribute('aria-label', 'Promoção ' + (i + 1) + ': ' + rotulo);
+              b.onclick = aoTocar;
               return b;
-            })); };
-            if (!Array.isArray(pr.dias) || pr.dias.length !== 7) pr.dias = [true, true, true, true, true, true, true];
-            marca();
+            };
+            // Grade de 1 a 31 (repetição mensal) e grade dos meses (repetição anual): tocar marca ou desmarca.
+            const gradeMes = el('div', 'compras-grade-escolha em-7');
+            const gradeAno = el('div', 'compras-grade-escolha em-4');
+            const alternar = (lista, valor) => (lista.includes(valor) ? lista.filter((x) => x !== valor) : [...lista, valor].sort((a, b) => a - b));
+            const marca = () => {
+              dias.replaceChildren(...DIAS_LISTA.map(([j, nomeDia]) => {
+                const b = el('button', 'compras-dia-linha' + (pr.dias[j] ? ' marcado' : ''));
+                b.type = 'button';
+                b.append(el('span', null, nomeDia));
+                b.insertAdjacentHTML('beforeend', VISTO);
+                b.onclick = () => { pr.dias[j] = !pr.dias[j]; pintar(); atualizar(); };
+                b.setAttribute('aria-pressed', String(Boolean(pr.dias[j])));
+                b.setAttribute('aria-label', 'Promoção ' + (i + 1) + ': ' + R.DIAS_PROMO[j][1]);
+                return b;
+              }));
+              const diasMes = Array.isArray(rp.diasMes) ? rp.diasMes : [];
+              gradeMes.replaceChildren(...Array.from({ length: 31 }, (_, k) => celula(String(k + 1), diasMes.includes(k + 1), 'dia ' + (k + 1), () => { rp.diasMes = alternar(diasMes, k + 1); pintar(); atualizar(); })));
+              const meses = Array.isArray(rp.meses) ? rp.meses : [];
+              gradeAno.replaceChildren(...MESES_CURTOS.map((m, k) => celula(m, meses.includes(k + 1), m, () => { rp.meses = alternar(meses, k + 1); pintar(); atualizar(); })));
+            };
+            const bloco = (rotulo, no, nota) => { const b = el('div', 'compras-campo compras-largo'); b.append(el('span', 'compras-rotulo', rotulo), no); if (nota) b.append(el('small', 'profiles-note', nota)); return b; };
+            const lDias = bloco('Dias da semana', dias);
+            const lMes = bloco('Dias do mês', gradeMes, 'Sem nenhum dia marcado, vale o dia da data de início.');
+            const lAno = bloco('Meses', gradeAno, 'Vale no dia do mês da data de início. Sem nenhum mês marcado, vale o mês da data de início.');
+            const ver = (no, sim) => { no.style.display = sim ? '' : 'none'; };
+            function pintar() {
+              const id = repeticaoMostrada(pr);
+              repete.value = id;
+              ver(cFreq, id === 'personalizada'); ver(cCada, id === 'personalizada');
+              if (rp.tipo !== 'nunca') freq.value = rp.tipo;
+              if (document.activeElement !== cada) cada.value = rp.intervalo || 1;
+              ver(lDias, rp.tipo === 'semanal' && ['semanal', 'quinzenal', 'personalizada'].includes(id));
+              ver(lMes, rp.tipo === 'mensal'); ver(lAno, rp.tipo === 'anual');
+              cV.style.display = pr.tipo === 'valor' ? '' : 'none'; cD.style.display = pr.tipo === 'desconto' ? '' : 'none';
+              marca();
+              resumo.textContent = R.resumoRepeticaoPromocao(pr);
+            }
             const sync = () => {
               pr.tipo = t.value; pr.valor = pr.tipo === 'valor' ? num(v.value) : null;
               pr.descontoFracao = pr.tipo === 'desconto' && d.value !== '' ? Number(d.value) / 100 : null;
-              pr.horaInicio = hi.value; pr.horaFim = hf.value; pr.validaAte = va.value;
-              cV.style.display = pr.tipo === 'valor' ? '' : 'none'; cD.style.display = pr.tipo === 'desconto' ? '' : 'none';
+              pr.horaInicio = hi.value; pr.horaFim = hf.value; pr.validaAte = va.value; pr.dataInicio = di.value;
+              pintar();
               atualizar();
             };
-            [t, v, d, hi, hf, va].forEach((x) => x.addEventListener('input', sync));
+            [t, v, d, di, hi, hf, va].forEach((x) => x.addEventListener('input', sync));
+            [di, va].forEach((x) => x.addEventListener('change', sync));
+            repete.addEventListener('change', () => { repeticaoEscolhida.set(pr, repete.value); aplicarRepeticao(pr, repete.value); pintar(); atualizar(); });
+            freq.addEventListener('change', () => { rp.tipo = freq.value; pintar(); atualizar(); });
+            cada.addEventListener('input', () => { const q = Math.trunc(Number(cada.value)); rp.intervalo = q >= 1 ? Math.min(q, 99) : 1; pintar(); atualizar(); });
             const grade = el('div', 'compras-grade-2');
-            grade.append(campoP('Tipo', t), cV, cD, campoP('Início', hi), campoP('Término', hf), campoP('Válida até', va, null, 'Vazio = sem prazo.'));
-            const lDias = el('div', 'compras-campo compras-largo'); lDias.append(el('span', 'compras-rotulo', 'Dias da semana'), dias);
-            card.append(cab, grade, lDias);
+            grade.append(campoP('Tipo', t), cV, cD,
+              campoP('Data de início', di, null, 'Vazio = já está valendo.'), campoP('Início', hi), campoP('Término', hf),
+              campoP('Repetição', repete), cFreq, cCada,
+              campoP('Terminar repetição', va, null, 'Vazio = nunca termina.'));
+            card.append(cab, grade, resumo, lDias, lMes, lAno);
             listaPromo.append(card);
-            cV.style.display = pr.tipo === 'valor' ? '' : 'none'; cD.style.display = pr.tipo === 'desconto' ? '' : 'none';
+            pintar();
           });
         }
         desenharPromos();
@@ -487,7 +580,7 @@
             });
             if (k === 3 && tipo.value !== 'transformacao') {
               por('Promoções', promocoes.length ? String(promocoes.length) : 'Sem promoção');
-              promocoes.forEach((pr, j) => por('Promoção ' + (j + 1) + ' · dias', DIAS_LISTA.filter(([d]) => pr.dias[d]).map(([, nomeDia]) => nomeDia).join(', ') || 'Nenhum dia marcado'));
+              promocoes.forEach((pr, j) => por('Promoção ' + (j + 1) + ' · quando vale', R.resumoRepeticaoPromocao(pr)));
             }
             const editar = botao('Editar', () => ir(k), 'btn secondary');
             const pe = el('div', 'compras-form-rodape compras-largo');

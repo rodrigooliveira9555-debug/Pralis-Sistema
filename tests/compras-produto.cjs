@@ -61,6 +61,47 @@ ok(() => assert.deepEqual(R.validarPromocoesDoProduto([{ tipo: 'valor', valor: n
 ok(() => assert.match(R.validarPromocoesDoProduto([{ tipo: 'desconto', descontoFracao: 1.2 }])[0], /entre 0% e 100%/));
 ok(() => assert.match(R.validarPromocoesDoProduto([{ tipo: 'valor', valor: 5, horaInicio: '22:00', horaFim: '02:00' }])[0], /dividida em duas/));
 ok(() => assert.match(R.validarPromocoesDoProduto([promoSeg, { tipo: 'valor', valor: 5, dias: promoSeg.dias, horaInicio: '11:00', horaFim: '13:00' }])[0], /se sobrepõem/));
+// Repetição da promoção (17/11/2026). 02/11/2026 é segunda; 17/11/2026 é terça.
+const diaEm = (a, m, d, h = 10) => new Date(a, m - 1, d, h, 0);
+const precoEm = (promo, quando) => R.calcularPrecoVendaComPromocao({ precoVenda: 10, promocoes: [promo], agora: quando });
+const promoBase = { tipo: 'valor', valor: 6, dias: [true, true, true, true, true, true, true] };
+// sem 'repeticao' continua como antes (já coberto acima); com semanal de intervalo 1 dá o mesmo resultado
+ok(() => assert.equal(precoEm({ ...promoSeg, repeticao: { tipo: 'semanal', intervalo: 1 } }, seg10h), 8));
+ok(() => assert.equal(precoEm({ ...promoSeg, repeticao: { tipo: 'semanal', intervalo: 1 } }, diaEm(2026, 11, 3)), 10));
+// nunca: só no dia da data de início
+ok(() => assert.equal(precoEm({ ...promoBase, dataInicio: '2026-11-17', repeticao: { tipo: 'nunca' } }, diaEm(2026, 11, 17)), 6));
+ok(() => assert.equal(precoEm({ ...promoBase, dataInicio: '2026-11-17', repeticao: { tipo: 'nunca' } }, diaEm(2026, 11, 18)), 10));
+// diária: todos os dias, mas não antes da data de início; a cada 3 dias conta da data de início
+ok(() => assert.equal(precoEm({ ...promoBase, dataInicio: '2026-11-17', repeticao: { tipo: 'diaria', intervalo: 1 } }, diaEm(2026, 11, 16)), 10));
+ok(() => assert.equal(precoEm({ ...promoBase, dataInicio: '2026-11-17', repeticao: { tipo: 'diaria', intervalo: 1 } }, diaEm(2026, 11, 25)), 6));
+ok(() => assert.equal(precoEm({ ...promoBase, dataInicio: '2026-11-17', repeticao: { tipo: 'diaria', intervalo: 3 } }, diaEm(2026, 11, 20)), 6));
+ok(() => assert.equal(precoEm({ ...promoBase, dataInicio: '2026-11-17', repeticao: { tipo: 'diaria', intervalo: 3 } }, diaEm(2026, 11, 21)), 10));
+// quinzenal (semanal, a cada 2): terça sim, terça não, contando da semana de 17/11
+const quinzenal = { ...promoBase, dias: [false, true, false, false, false, false, false], dataInicio: '2026-11-17', repeticao: { tipo: 'semanal', intervalo: 2 } };
+ok(() => assert.equal(precoEm(quinzenal, diaEm(2026, 11, 17)), 6));
+ok(() => assert.equal(precoEm(quinzenal, diaEm(2026, 11, 24)), 10));
+ok(() => assert.equal(precoEm(quinzenal, diaEm(2026, 12, 1)), 6));
+// mensal: dias do mês marcados; sem nenhum marcado, o dia da data de início; a cada 3 meses
+ok(() => assert.equal(precoEm({ ...promoBase, repeticao: { tipo: 'mensal', intervalo: 1, diasMes: [5, 17] } }, diaEm(2026, 12, 5)), 6));
+ok(() => assert.equal(precoEm({ ...promoBase, repeticao: { tipo: 'mensal', intervalo: 1, diasMes: [5, 17] } }, diaEm(2026, 12, 6)), 10));
+ok(() => assert.equal(precoEm({ ...promoBase, dataInicio: '2026-11-17', repeticao: { tipo: 'mensal', intervalo: 3 } }, diaEm(2027, 2, 17)), 6));
+ok(() => assert.equal(precoEm({ ...promoBase, dataInicio: '2026-11-17', repeticao: { tipo: 'mensal', intervalo: 3 } }, diaEm(2026, 12, 17)), 10));
+// anual: no dia da data de início, nos meses marcados
+ok(() => assert.equal(precoEm({ ...promoBase, dataInicio: '2026-11-17', repeticao: { tipo: 'anual', intervalo: 1 } }, diaEm(2027, 11, 17)), 6));
+ok(() => assert.equal(precoEm({ ...promoBase, dataInicio: '2026-11-17', repeticao: { tipo: 'anual', intervalo: 1, meses: [11, 12] } }, diaEm(2026, 12, 17)), 6));
+ok(() => assert.equal(precoEm({ ...promoBase, dataInicio: '2026-11-17', repeticao: { tipo: 'anual', intervalo: 1, meses: [11, 12] } }, diaEm(2027, 1, 17)), 10));
+// terminar repetição (validaAte) e horário continuam valendo
+ok(() => assert.equal(precoEm({ ...promoBase, validaAte: '2026-11-20', repeticao: { tipo: 'diaria', intervalo: 1 } }, diaEm(2026, 11, 21)), 10));
+ok(() => assert.equal(precoEm({ ...promoBase, horaInicio: '08:00', horaFim: '09:00', repeticao: { tipo: 'diaria', intervalo: 1 } }, diaEm(2026, 11, 17, 10)), 10));
+// validação e sobreposição
+ok(() => assert.match(R.validarPromocoesDoProduto([{ tipo: 'valor', valor: 5, repeticao: { tipo: 'nunca' } }])[0], /data de início/));
+ok(() => assert.match(R.validarPromocoesDoProduto([{ tipo: 'valor', valor: 5, repeticao: { tipo: 'semanal', intervalo: 2 } }])[0], /contar o intervalo/));
+ok(() => assert.match(R.validarPromocoesDoProduto([{ tipo: 'valor', valor: 5, repeticao: { tipo: 'mensal', intervalo: 1 } }])[0], /dia do mês/));
+ok(() => assert.deepEqual(R.validarPromocoesDoProduto([{ tipo: 'valor', valor: 5, dias: [false, false, false, false, false, false, false], repeticao: { tipo: 'mensal', intervalo: 1, diasMes: [10] } }]), []));
+ok(() => assert.equal(R.promocoesSeSobrepoem({ ...promoBase, repeticao: { tipo: 'mensal', intervalo: 1, diasMes: [10] } }, { ...promoBase, repeticao: { tipo: 'mensal', intervalo: 1, diasMes: [11] } }, diaEm(2026, 11, 17)), false));
+ok(() => assert.equal(R.promocoesSeSobrepoem({ ...promoBase, repeticao: { tipo: 'mensal', intervalo: 1, diasMes: [10] } }, { ...promoBase, repeticao: { tipo: 'diaria', intervalo: 1 } }, diaEm(2026, 11, 17)), true));
+ok(() => assert.equal(R.resumoRepeticaoPromocao({ ...promoBase, repeticao: { tipo: 'mensal', intervalo: 1, diasMes: [17, 5] } }), 'Vale todo mês, nos dias 5, 17.'));
+ok(() => assert.equal(R.resumoRepeticaoPromocao(quinzenal), 'Vale a cada 2 semanas: terça-feira, contando de 17/11/26.'));
 
 // Estoque por embalagem e balança
 ok(() => assert.match(R.validarEstoquePorEmbalagem({ quantidadeCaixa: 10, estoqueMin: 5, estoqueMax: 20 })[0].mensagem, /menor que a Qt. embalagem/));
