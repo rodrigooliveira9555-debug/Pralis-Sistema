@@ -45,7 +45,12 @@
   const MEDIDAS_BASE = ['UN', 'KG', 'G', 'LT', 'ML'];
   const UNIDADES_TRANSF = ['UN', 'G', 'ML'];
   // Nomes das etapas definidos pelo Rodrigo (17/11/2026).
-  const ETAPAS = ['Cadastro geral', 'Cadastro produção/transformação', 'Cadastro específico', 'Cadastro promoção', 'Cadastro fiscal'];
+  const ETAPAS = ['Cadastro geral', 'Cadastro produção/​transformação', 'Cadastro específico', 'Cadastro promoção', 'Cadastro fiscal', 'Revisão'];
+  // Dias da promoção na ordem da lista (domingo primeiro, como no calendário); o número é a posição em promocao.dias.
+  const DIAS_LISTA = [[6, 'Domingo'], [0, 'Segunda-feira'], [1, 'Terça-feira'], [2, 'Quarta-feira'], [3, 'Quinta-feira'], [4, 'Sexta-feira'], [5, 'Sábado']];
+  const VISTO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 7"/></svg>';
+  // Campos fiscais que já têm campo próprio no quadro; os outros aparecem ao ligar "Ver os 27 campos fiscais".
+  const FISCAIS_NO_TOPO = ['ncm', 'cest', 'categoriaFiscal'];
 
   /** Campo com rótulo, dica opcional (só com ajuda ligada) e nota fixa opcional. */
   function campoP(rotulo, no, dica, nota, nomeCampo) {
@@ -117,7 +122,7 @@
         // Cadastro em 5 etapas (pedido do Rodrigo, 17/11/2026), com a barra de etapas única do sistema. Só o lugar dos
         // quadros mudou: campos, regras e o que é salvo são os mesmos.
         const etapasNo = ETAPAS.map(() => el('div', 'compras-etapa'));
-        const [eGeral, eTransf, eLoja, ePromo, eFiscal] = etapasNo;
+        const [eGeral, eTransf, eLoja, ePromo, eFiscal, eRevisao] = etapasNo;
         const sec = (titulo, sub, etapa) => {
           const s = el('fieldset', 'compras-fieldset');
           const lg = el('legend', null, titulo);
@@ -129,7 +134,9 @@
 
         /* ===== Produto (Identificação) ===== */
         const s1 = sec('Produto', 'Identificação e apresentação no catálogo', eGeral);
-        const status = seletor([['ativo', 'Ativo'], ['inativo', 'Inativo']], p?.status || 'ativo');
+        // Ativo/inativo no quadro padrão "Situação" com interruptor (regra de 15/11/2026). Inativar desliga a liberação.
+        const situacao = U.quadroSituacao('Situação do produto', (p?.status || 'ativo') === 'ativo', { dica: 'Produto inativo sai de uso nesta loja. Nada é apagado.', aoMudar: (ativo) => { if (!ativo) liberado.input.checked = false; atualizar(); } });
+        const status = { get value() { return situacao.ativo ? 'ativo' : 'inativo'; } };
         const ajuda = interruptor('Habilitar ajuda', p?.habilitarAjuda);
         const liberado = interruptor('Liberado para compra', p ? p.liberadoCompra : true, 'Só produto liberado aparece no agendamento e na solicitação de compra.');
         const ean = entrada('text', p?.codigoBarras || '', { inputMode: 'numeric', maxLength: 20 });
@@ -153,7 +160,7 @@
         ean.setAttribute('aria-label', 'Código de barras');
         const fotoBox = el('div', 'compras-largo');
         fotoBox.append(foto.no);
-        s1.append(campoP('Status', status), ajuda, liberado, fotoBox, eanCampo);
+        s1.append(situacao, ajuda, liberado, fotoBox, eanCampo);
         if (!novo) {
           s1.append(campoP('Código interno', entrada('text', p.codigoInterno || '—', { readOnly: true })));
         }
@@ -185,7 +192,7 @@
         s1b.append(campoP('Embalagem', emb, DICAS.embalagem), campoP('C/ ou DE', cde, DICAS.cDe), campoP('Qt. embalagem', qtdEmb, DICAS.qtd, '', 'qtdEmbalagem'), campoP('Medida de compra', medCompra, DICAS.medidaCompra), campoP('Quantidade da embalagem', aprox, DICAS.aproximado), campoComo, avisoComo, U.nota('As siglas vêm do cadastro de Unidades de medida (Compras).'));
 
         /* ===== Revenda ou transformação ===== */
-        const s2 = sec('Revenda ou transformação', 'Classificação e operação do produto', eGeral);
+        const s2 = sec('Revenda ou transformação', 'Classificação e operação do produto', eTransf);
         const tipo = seletor([['revenda', 'Revenda'], ['transformacao', 'Transformação']], p?.tipo || 'revenda');
         const grupo = seletor(grupos.filter((g) => g.ativo || g.id === p?.grupoId).map((g) => [g.id, g.nome]), p?.grupoId || '', 'Selecione o grupo');
         const sub = el('select');
@@ -248,7 +255,7 @@
         const cv = campoP('Validação de quantidade (automática)', validacaoQtd); cv.classList.add('compras-largo'); gradeTransf.append(cv);
         caixaTransf.append(gradeTransf);
         const sTransf = sec('Transformação', 'Quantidade, unidade e receituário', eTransf);
-        const notaTransf = el('p', 'profiles-note compras-largo', 'Este produto está como Revenda. A transformação só é preenchida quando o Tipo, na etapa 1, é Transformação.');
+        const notaTransf = el('p', 'profiles-note compras-largo', 'Este produto está como Revenda. A transformação só é preenchida quando o Tipo, no quadro acima, é Transformação.');
         sTransf.append(notaTransf, caixaTransf);
 
         /* ===== Fiscal ===== */
@@ -260,18 +267,26 @@
         const fCat = entrada('text', fiscalAtual.categoriaFiscal || '', { maxLength: 60 });
         const leitura = {};
         ['cstPisCofins', 'cstReforma', 'cClassTrib', 'aliquotaIbs', 'aliquotaCbs'].forEach((k) => { leitura[k] = entrada('text', '', { readOnly: true }); });
-        const todos = el('details', 'compras-largo compras-fiscal-todos');
-        todos.append(el('summary', null, 'Ver os 27 campos fiscais'));
-        const tabelaTodos = el('div');
-        todos.append(tabelaTodos);
+        // "Ver os 27 campos fiscais": interruptor que abre os campos (pedido do Rodrigo, 17/11/2026). Os que uma pessoa
+        // digita (F.FISCAIS_MANUAIS) são editáveis; os derivados da regra do grupo ficam só para leitura.
+        const camposFiscais = {};
+        const gradeFiscal = el('div', 'compras-grade-fiscal compras-largo');
+        F.CAMPOS_FISCAIS.filter(([k]) => !FISCAIS_NO_TOPO.includes(k)).forEach(([k, rot]) => {
+          const manual = F.FISCAIS_MANUAIS.includes(k);
+          const i = entrada('text', manual && fiscalAtual[k] != null ? decimal(fiscalAtual[k]) : '', manual ? { inputMode: 'decimal', maxLength: 12 } : { readOnly: true });
+          camposFiscais[k] = { i, manual };
+          gradeFiscal.append(campoP(rot + (manual ? '' : ' (automático)'), i));
+        });
+        gradeFiscal.style.display = 'none';
+        const todos = U.quadroSituacao('Ver os 27 campos fiscais', false, { textos: ['Sim', 'Não'], dica: 'Os campos marcados como automático vêm da regra do grupo de mercadorias e não são digitados.', aoMudar: (sim) => { gradeFiscal.style.display = sim ? '' : 'none'; } });
         s3.append(fiscalTopo,
           campoP('NCM (automático quando encontrado)', fNcm, DICAS.ncm), campoP('Código CEST', fCest, DICAS.cest), campoP('Categoria', fCat, DICAS.categoria),
           campoP('CST PIS/COFINS (automático)', leitura.cstPisCofins), campoP('CST reforma', leitura.cstReforma), campoP('cClassTrib', leitura.cClassTrib),
-          campoP('IBS %', leitura.aliquotaIbs), campoP('CBS %', leitura.aliquotaCbs), todos);
+          campoP('IBS %', leitura.aliquotaIbs), campoP('CBS %', leitura.aliquotaCbs), todos, gradeFiscal);
 
         /* ===== Promoção (só revenda) ===== */
         const s4 = sec('Promoção', 'Condições e período de oferta', ePromo);
-        const notaPromo = el('p', 'profiles-note', 'Promoção vale só para produto de Revenda. Este produto está como Transformação (etapa 1).');
+        const notaPromo = el('p', 'profiles-note', 'Promoção vale só para produto de Revenda. Este produto está como Transformação (etapa 2).');
         ePromo.append(notaPromo);
         const listaPromo = el('div', 'compras-largo compras-promocoes');
         const precoPromo = el('p', 'compras-texto-auto compras-largo');
@@ -290,8 +305,19 @@
             const hi = entrada('time', pr.horaInicio || ''); const hf = entrada('time', pr.horaFim || '');
             const va = entrada('date', pr.validaAte || '');
             const cV = campoP('Valor promo', v); const cD = campoP('Desconto %', d);
-            const dias = el('div', 'compras-chips compras-dias');
-            const marca = () => { dias.replaceChildren(...R.DIAS_PROMO.map(([k, rot], j) => { const b = botao(rot.toUpperCase(), () => { pr.dias[j] = !pr.dias[j]; marca(); atualizar(); }, 'compras-chip' + (pr.dias[j] ? ' ativo' : '')); b.setAttribute('aria-pressed', String(Boolean(pr.dias[j]))); b.setAttribute('aria-label', 'Promoção ' + (i + 1) + ': ' + rot); return b; })); };
+            // Dias da semana em lista (pedido do Rodrigo, 17/11/2026, referência: repetição semanal dos Lembretes):
+            // um cartão com uma linha por dia; o dia marcado mostra o visto à direita. Tocar marca ou desmarca.
+            const dias = el('div', 'compras-dias-lista');
+            const marca = () => { dias.replaceChildren(...DIAS_LISTA.map(([j, nomeDia]) => {
+              const b = el('button', 'compras-dia-linha' + (pr.dias[j] ? ' marcado' : ''));
+              b.type = 'button';
+              b.append(el('span', null, nomeDia));
+              b.insertAdjacentHTML('beforeend', VISTO);
+              b.onclick = () => { pr.dias[j] = !pr.dias[j]; marca(); atualizar(); };
+              b.setAttribute('aria-pressed', String(Boolean(pr.dias[j])));
+              b.setAttribute('aria-label', 'Promoção ' + (i + 1) + ': ' + R.DIAS_PROMO[j][1]);
+              return b;
+            })); };
             if (!Array.isArray(pr.dias) || pr.dias.length !== 7) pr.dias = [true, true, true, true, true, true, true];
             marca();
             const sync = () => {
@@ -353,9 +379,15 @@
           const m = margem.value === '' ? null : num(margem.value) / 100;
           return R.calcularPrecoVenda({ auto: auto.input.checked, custo: num(custo.value) || 0, quantidadeCaixa: Number(qtdEmb.value) || 1, margem: m, margemGrupo: margemDoGrupo() || 0, precoManual: num(pontual.value) || 0, temProduto: Boolean(nome.value.trim()) });
         }
+        /** Campos fiscais digitados no quadro aberto (número, ou vazio = sem valor). */
+        function fiscaisDigitados() {
+          const o = {};
+          Object.entries(camposFiscais).forEach(([k, c]) => { if (c.manual) o[k] = c.i.value.trim() === '' ? null : num(c.i.value); });
+          return o;
+        }
         function atualizarFiscal() {
           const n = nomesDoGrupo(grupos, grupo.value, sub.value);
-          const anterior = { ...fiscalAtual, ncm: fNcm.value || null, cest: fCest.value || null, categoriaFiscal: fCat.value || null };
+          const anterior = { ...fiscalAtual, ...fiscaisDigitados(), ncm: fNcm.value || null, cest: fCest.value || null, categoriaFiscal: fCat.value || null };
           const r = F.fiscalDoProduto({ anterior, nome: nome.value, codigoBarras: ean.value, nomeGrupo: n.nomeGrupo, nomeSubgrupo: n.nomeSubgrupo });
           const fx = r.fiscal;
           const tom = r.resultado.estado === 'completo' ? 'positivo' : r.resultado.estado === 'parcial' ? 'info' : 'atencao';
@@ -370,7 +402,7 @@
             if (c.ecf && c.ecf.categoria) fCat.value = c.ecf.categoria;
           } else fNcm.readOnly = false;
           Object.entries(leitura).forEach(([k, i]) => { i.value = fx[k] == null || fx[k] === '' ? '—' : String(fx[k]); });
-          tabelaTodos.replaceChildren(U.tabela([['Campo', (x) => x[1]], ['Valor', (x) => (fx[x[0]] == null || fx[x[0]] === '' ? '—' : String(fx[x[0]]))]], F.CAMPOS_FISCAIS));
+          Object.entries(camposFiscais).forEach(([k, c]) => { if (!c.manual) c.i.value = fx[k] == null || fx[k] === '' ? '—' : String(fx[k]); });
           return r;
         }
         let eanTimer = null;
@@ -416,9 +448,8 @@
         });
         sub.addEventListener('change', () => { const mg = margemDoGrupo(); if (mg != null) margem.value = decimal(Math.round(mg * 10000) / 100); atualizar(); });
         ean.addEventListener('input', () => { avisarEanRepetido(); atualizar(); });
-        [status, nome, gramatura, medida, balanca, emb, cde, qtdEmb, medCompra, aprox, tipo, custo, margem, pontual, precisao, qtdTransf, unidTransf, fNcm, fCest, fCat].forEach((x) => x.addEventListener('input', atualizar));
+        [nome, gramatura, medida, balanca, emb, cde, qtdEmb, medCompra, aprox, tipo, custo, margem, pontual, precisao, qtdTransf, unidTransf, fNcm, fCest, fCat, ...Object.values(camposFiscais).filter((c) => c.manual).map((c) => c.i)].forEach((x) => x.addEventListener('input', atualizar));
         [ajuda.input, auto.input, liberado.input].forEach((x) => x.addEventListener('change', atualizar));
-        status.addEventListener('change', () => { if (status.value === 'inativo') liberado.input.checked = false; });
         atualizar();
         atualizarFiscal();
         avisarEanRepetido();
@@ -432,8 +463,42 @@
         salvarFim.type = 'submit';
         const nav = el('div', 'compras-form-rodape compras-etapas-nav');
         const barra = window.CicluzStepper.create({ steps: ETAPAS.map((label) => ({ label })), current: 0, label: 'Etapas do cadastro do produto', onSelect: (i) => ir(i) });
+        /* Etapa 6 · Revisão: tudo o que foi preenchido nas outras etapas, só para leitura, com "Editar" por etapa. */
+        const escondido = (no, raiz) => { for (let x = no; x && x !== raiz; x = x.parentElement) if (x.style && x.style.display === 'none') return true; return false; };
+        function valorDe(no) {
+          if (no.tagName === 'SELECT') return no.selectedOptions[0] && no.value !== '' ? no.selectedOptions[0].textContent : '';
+          return no.value.trim();
+        }
+        function pintarRevisao() {
+          eRevisao.replaceChildren();
+          etapasNo.slice(0, -1).forEach((etapa, k) => {
+            const quadro = el('fieldset', 'compras-fieldset compras-revisao');
+            quadro.append(el('legend', null, (k + 1) + ' · ' + ETAPAS[k]));
+            const linhas = el('dl', 'compras-revisao-lista compras-largo');
+            const por = (rotulo, valor) => { linhas.append(el('dt', null, rotulo), el('dd', null, valor || '—')); };
+            if (k === 0) { por('Situação do produto', situacao.ativo ? 'Ativo' : 'Inativo'); por('Foto', foto.valor() ? 'Com foto' : 'Sem foto'); }
+            etapa.querySelectorAll('label.compras-campo, label.compras-interruptor').forEach((l) => {
+              if (escondido(l, etapa)) return;
+              const no = l.querySelector('input,select');
+              if (!no || no.type === 'file') return;
+              const base = (l.querySelector('.compras-rotulo') || l.querySelector('span')).textContent;
+              const rotulo = base.endsWith(' *') ? base.slice(0, -2) : base;
+              por(rotulo, no.type === 'checkbox' ? (no.checked ? 'Sim' : 'Não') : valorDe(no));
+            });
+            if (k === 3 && tipo.value !== 'transformacao') {
+              por('Promoções', promocoes.length ? String(promocoes.length) : 'Sem promoção');
+              promocoes.forEach((pr, j) => por('Promoção ' + (j + 1) + ' · dias', DIAS_LISTA.filter(([d]) => pr.dias[d]).map(([, nomeDia]) => nomeDia).join(', ') || 'Nenhum dia marcado'));
+            }
+            const editar = botao('Editar', () => ir(k), 'btn secondary');
+            const pe = el('div', 'compras-form-rodape compras-largo');
+            pe.append(editar);
+            quadro.append(linhas, pe);
+            eRevisao.append(quadro);
+          });
+        }
         function ir(i) {
           atual = Math.max(0, Math.min(etapasNo.length - 1, i));
+          if (atual === etapasNo.length - 1) pintarRevisao();
           etapasNo.forEach((q, k) => { q.style.display = k === atual ? '' : 'none'; });
           barra.set(atual);
           // Voltar a partir da 2ª etapa, Avançar até a penúltima; Salvar em todas na edição e só na última no cadastro novo.
@@ -447,7 +512,7 @@
         return {
           alertas, status, ajuda, liberado, foto, ean, marca, nome, gramatura, medida, balanca, validade, emb, cde, qtdEmb, medCompra, aprox,
           tipo, grupo, sub, setor, area, min, max, local1, local2, setor1, setor2, areaVenda, custo, margem, auto, pontual,
-          precisao, qtdTransf, unidTransf, receituario, refRec, fNcm, fCest, fCat, descricaoAtual, precoCalculado, atualizarFiscal, form,
+          precisao, qtdTransf, unidTransf, receituario, refRec, fNcm, fCest, fCat, descricaoAtual, precoCalculado, atualizarFiscal, fiscaisDigitados, form,
           irParaEtapaDe: (no) => { const k = etapasNo.indexOf(no.closest('.compras-etapa')); if (k >= 0 && k !== atual) ir(k); },
         };
       },
@@ -510,7 +575,7 @@
 
       const n = nomesDoGrupo(grupos, c.grupo.value, c.sub.value);
       // Categoria fiscal digitada vai em maiúsculas, como no S1 (normalizarTextosProduto).
-      const anteriorFiscal = { ...(p?.fiscal || {}), ncm: c.fNcm.value.replace(/\D/g, '') || null, cest: c.fCest.value.replace(/\D/g, '') || null, categoriaFiscal: c.fCat.value.trim().toLocaleUpperCase('pt-BR') || null };
+      const anteriorFiscal = { ...(p?.fiscal || {}), ...c.fiscaisDigitados(), ncm: c.fNcm.value.replace(/\D/g, '') || null, cest: c.fCest.value.replace(/\D/g, '') || null, categoriaFiscal: c.fCat.value.trim().toLocaleUpperCase('pt-BR') || null };
       const descricao = c.descricaoAtual();
       const auto = c.auto.input.checked;
       const status = c.status.value;
