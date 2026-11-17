@@ -40,9 +40,9 @@
     const enderecoLinhas = [['CEP', e.cep], ['Rua / logradouro', e.logradouro], ['Número', e.numero], ['Complemento', e.complemento], ['Bairro', e.bairro], ['Cidade', e.cidade], ['UF', e.uf]];
     const contato = (x, extra = []) => [['Nome', x && x.nome], ['WhatsApp', x && x.whatsapp], ['E-mail', x && x.email], ...extra];
     let secoes;
-    if (!pj && !completo) secoes = [['Dados do cliente', [['Nome', c.nome], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Data de aniversário', D.aniversarioTexto(D.aniversarioCliente(c))]]], ['Endereço', enderecoLinhas]];
+    if (!pj && !completo) secoes = [['Dados do cliente', [['Nome', c.nome], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Data de aniversário', D.aniversarioTexto(D.aniversarioCliente(c))], ['Situação', c.situacao === 'inativo' ? 'Inativo' : 'Ativo']]], ['Endereço', enderecoLinhas]];
     else if (!pj) secoes = [
-      ['Dados pessoais', [['Nome completo', c.nome], ['CPF', c.cpf], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Data de aniversário', D.aniversarioTexto(D.aniversarioCliente(c))]]],
+      ['Dados pessoais', [['Nome completo', c.nome], ['CPF', c.cpf], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Data de aniversário', D.aniversarioTexto(D.aniversarioCliente(c))], ['Situação', c.situacao === 'inativo' ? 'Inativo' : 'Ativo']]],
       ['Endereço', enderecoLinhas],
       ['Informações complementares', [['Sorteio', 'Em definição']]],
     ];
@@ -308,27 +308,29 @@
         }
         function paginas() {
           marcarObrigatorios();
-          if (tipo === 'fisica' && cadastro === 'simples') return [bloco(F.nome, F.whats, F.mail, F.nasc, endSw, sEnd)];
+          // A "Situação do cliente" (ativo/inativo) aparece em toda modalidade do cadastro feito aqui dentro; no link de cadastro, não.
+          const sit = opcoes.externo ? [] : [situacao];
+          if (tipo === 'fisica' && cadastro === 'simples') return [bloco(...sit, F.nome, F.whats, F.mail, F.nasc, endSw, sEnd)];
           if (tipo === 'fisica') {
             const comp = el('fieldset', 'compras-fieldset'); comp.append(el('legend', null, 'Sorteio'), el('p', 'profiles-note', 'Sorteio — Em definição'), el('small', 'profiles-note', 'Funcionalidade futura: por enquanto não há número, participação, prêmio nem regra de sorteio.'));
-            return [bloco(F.nome, F.cpf, F.whats, F.mail, F.nasc), bloco(sEnd), bloco(comp), bloco(revisao)];
+            return [bloco(...sit, F.nome, F.cpf, F.whats, F.mail, F.nasc), bloco(sEnd), bloco(comp), bloco(revisao)];
           }
-          if (cadastro === 'simples') return [bloco(F.cnpj, avisoCnpj, F.razao, F.fantasia, F.whats, F.mail, endSw, sEnd)];
+          if (cadastro === 'simples') return [bloco(...sit, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.whats, F.mail, endSw, sEnd)];
           // 17/11/2026 (Rodrigo): o contato e o financeiro viram uma etapa só, "Dados do responsável financeiro": o quadro
           // "Dados do responsável" em cima e as Informações de Pagamento embaixo; não existe mais um contato do financeiro à parte.
           const contato = el('fieldset', 'compras-fieldset'); contato.append(el('legend', null, 'Dados do responsável'), F.contatoNome, F.whats, F.mail, aniv.no);
-          return [bloco(...(opcoes.externo ? [] : [situacao]), F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime, sEnd), bloco(contato, cDados), bloco(rep.no), bloco(revisao)];
+          return [bloco(...sit, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime, sEnd), bloco(contato, cDados), bloco(rep.no), bloco(revisao)];
         }
         /** Cadastro lido do formulário: só o tipo e a modalidade em uso (o resto do registro fica como está). */
         function pintarEndereco() { mostrar(sEnd, cadastro === 'completo' || endSw.ativo); }
         function ler() {
-          const base = { tipoPessoa: tipo, cadastro };
+          const base = { tipoPessoa: tipo, cadastro, ...(opcoes.externo ? {} : { situacao: situacao.ativo ? 'ativo' : 'inativo' }) };
           const endereco = cadastro === 'simples' && !endSw.ativo ? (c && c.endereco ? c.endereco : undefined) : { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value };
           if (tipo === 'fisica') return { ...base, nome: nome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim(), aniversario: anivPF.valor(), nascimento: v.nascimento && v.nascimento.slice(5) === anivPF.valor() ? v.nascimento : undefined, endereco, ...(cadastro === 'completo' ? { cpf: cpf.value.trim() } : {}) };
           if (cadastro === 'simples') return { ...base, cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim(), endereco };
           fin.pintar(); rep.pintar();
           return { ...base, cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), regimeTributario: regime.value, endereco, whatsapp: whats.value.trim(), email: mail.value.trim(),
-            contatoNome: contatoNome.value.trim(), contatoAniversario: aniv.valor(), financeiro: fin.ler(), representante: { ...rep.ler(), cargo: repCargo.value }, contrato: lerContrato(), situacao: situacao.ativo ? 'ativo' : 'inativo' };
+            contatoNome: contatoNome.value.trim(), contatoAniversario: aniv.valor(), financeiro: fin.ler(), representante: { ...rep.ler(), cargo: repCargo.value }, contrato: lerContrato() };
         }
         const registro = () => ({ ...(c || {}), ...ler(), id: c ? c.id : undefined });
         const conferir = () => D.validarClienteEtapas(registro(), R(), { clientes: clientes() });
