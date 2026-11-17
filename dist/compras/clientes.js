@@ -228,7 +228,10 @@
         /* Controles principais */
         const m0 = c ? v : (opcoes.modelo || v);
         let tipo = m0.tipoPessoa === 'juridica' ? 'juridica' : 'fisica';
-        let cadastro = m0.cadastro === 'completo' ? 'completo' : 'simples';
+        // Cliente novo cadastrado aqui dentro (não o link nem a prévia): Pessoa Jurídica abre no cadastro em etapas, com a barra
+        // de evolução, como era antes de 17/11/2026 (pedido do Rodrigo); Pessoa Física continua numa página só.
+        const novoPorDentro = !c && !opcoes.externo && !opcoes.previa;
+        let cadastro = m0.cadastro === 'completo' || (novoPorDentro && tipo === 'juridica') ? 'completo' : 'simples';
         let passo = 0;
         // Uma só seção no alto: Pessoa Física e Pessoa Jurídica lado a lado; o Tipo de cadastro (Simples | Completo) mora dentro do cartão marcado.
         // A escolha só muda a tela depois de pedirTroca/aplicar (que pode pedir confirmação); pintarTopo() redesenha a partir de tipo e cadastro.
@@ -288,7 +291,7 @@
             aoFechar: () => { if (!confirmado) reverter(); },
           });
         }
-        function aplicar(novoTipo, novoCad) { tipo = novoTipo; cadastro = novoCad; passo = 0; desenhar(); }
+        function aplicar(novoTipo, novoCad) { tipo = novoTipo; cadastro = novoPorDentro ? (novoTipo === 'juridica' ? 'completo' : 'simples') : novoCad; passo = 0; desenhar(); }
 
         /* Páginas de cada modalidade (os mesmos campos mudam de lugar) */
         const bloco = (...nos) => nos;

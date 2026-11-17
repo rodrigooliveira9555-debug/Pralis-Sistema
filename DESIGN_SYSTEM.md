@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## VND - Clientes — pessoa jurídica nova abre em etapas (17/11/2026)
+Pedido do Rodrigo: o cadastro de **cliente pessoa jurídica** feito aqui dentro (botão Novo Cliente) volta a abrir com a **barra de etapas** (`CicluzStepper`): Dados da empresa, Dados do contato, Informações de Pagamento, Dados do Responsável, Revisão — o cadastro Completo, como era em 16/11. Pessoa física nova continua numa página só. Isto muda a regra de 17/11 (links externos) só neste ponto: o formulário do **link de cadastro** e a prévia seguem como estavam (pessoa jurídica numa página), e ao **editar** um cliente que já existe vale a modalidade gravada, com o seletor Simples | Completo.
+
 ## Data de aniversário — campo único DD/MM com painel (17/11/2026)
 Pedido do Rodrigo. **No cadastro de cliente pessoa física não existe mais "Data de nascimento": é "Data de aniversário", só dia e mês**, obrigatória como era a de nascimento. O dado novo é `cliente.aniversario` ("MM-DD"); cliente antigo, só com `nascimento`, mostra e valida pelo dia e mês dele (`D.aniversarioCliente`), sem migração em massa, e a data antiga só sai do registro se a pessoa trocar o dia ou o mês.
 
