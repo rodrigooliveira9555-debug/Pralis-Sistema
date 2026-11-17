@@ -37,8 +37,9 @@
    *   Empresa do mesmo grupo  → outro CNPJ, com os mesmos donos.
    *   Franquia                → outro dono, que usa a marca por contrato.
    *   Loja parceira           → empresa independente que trabalha junto.
+   *   Associado               → empresa independente ligada por associação ou rede (opção pedida pelo Rodrigo).
    */
-  const VINCULOS = [['matriz', 'Matriz'], ['filial', 'Filial'], ['grupo', 'Empresa do mesmo grupo'], ['franquia', 'Franquia'], ['parceira', 'Loja parceira']];
+  const VINCULOS = [['matriz', 'Matriz'], ['filial', 'Filial'], ['grupo', 'Empresa do mesmo grupo'], ['franquia', 'Franquia'], ['parceira', 'Loja parceira'], ['associado', 'Associado']];
   const nomeDoVinculo = (id) => (VINCULOS.find(([x]) => x === id) || [])[1] || '';
   const empresasEm = (d) => (Array.isArray(d.empresas) ? d.empresas : d.empresa && cheio(d.empresa.cnpj) ? [{ id: 'emp-matriz', vinculo: 'matriz', ...d.empresa }] : []);
   const todas = () => empresasEm(S.dados);
@@ -139,7 +140,7 @@
         const empresa = el('fieldset', 'compras-fieldset');
         // Primeira pergunta das empresas que não são a Matriz: o tipo de vínculo.
         const vinculo = seletor(VINCULOS.filter(([id]) => id !== 'matriz'), matriz ? '' : (v.vinculo || ''), 'Selecione');
-        const vinculoCampo = campo('Tipo de vínculo com a matriz *', vinculo, 'Filial: mesmo CNPJ raiz. Mesmo grupo: mesmos donos, outro CNPJ. Franquia: outro dono, usa a marca. Loja parceira: empresa independente.');
+        const vinculoCampo = campo('Tipo de vínculo com a matriz *', vinculo, 'Filial: mesmo CNPJ raiz. Mesmo grupo: mesmos donos, outro CNPJ. Franquia: outro dono, usa a marca. Loja parceira: empresa independente. Associado: empresa ligada por associação ou rede.');
         vinculoCampo.classList.add('compras-largo');
         const matrizNota = el('p', 'profiles-note compras-largo', 'Esta é a Matriz: a primeira empresa cadastrada.');
         empresa.append(el('legend', null, 'Dados da empresa'), matriz ? matrizNota : vinculoCampo, campo('CNPJ *', cnpj), avisoCnpj, campo('Razão Social *', razao), campo('Nome Fantasia *', fantasia), campo('Regime tributário *', regime));
