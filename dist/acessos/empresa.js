@@ -151,11 +151,17 @@
         const responsaveis = responsaveisDe(v);
         if (!responsaveis.length) responsaveis.push(RESPONSAVEL_VAZIO());
         const CAD = window.CicluzComprasCadastros;
+        // "Mesmos responsáveis legais da matriz" = Sim: os blocos vêm preenchidos com os da Matriz, só para leitura (pedido do
+        // Rodrigo, 17/11/2026). Nada é copiado para esta empresa: ela guarda só a marca e mostra sempre o que está na Matriz.
+        const daMatrizCopia = responsaveisDe(gravadas.find((x) => x.vinculo === 'matriz') || {});
+        let usarDaMatriz = !matriz && Boolean(emp ? emp.responsaveisDaMatriz : false);
         const caixaResp = el('div', 'compras-etapa compras-largo');
         const adicionar = botao('Adicionar responsável', () => { responsaveis.push(RESPONSAVEL_VAZIO()); desenharResponsaveis(); pintarModo(); }, 'btn');
         const linhaAdicionar = el('div', 'compras-form-rodape compras-largo'); linhaAdicionar.append(adicionar);
         function desenharResponsaveis() {
-          caixaResp.replaceChildren(...responsaveis.map((r, i) => {
+          const lista = usarDaMatriz ? daMatrizCopia : responsaveis;
+          const avisoMatriz = usarDaMatriz ? [el('p', 'profiles-note', lista.length ? 'Preenchido com os responsáveis legais da Matriz. Para mudar algum dado, altere na ficha da Matriz.' : 'A Matriz ainda não tem responsáveis legais cadastrados.')] : [];
+          caixaResp.replaceChildren(...avisoMatriz, ...lista.map((r, i) => {
             const bloco = el('fieldset', 'compras-fieldset');
             const titulo = el('legend', null, tituloDoResponsavel(r.cargo));
             const cargo = seletor(CARGOS_EMPRESA, r.cargo, 'Selecione');
@@ -199,7 +205,7 @@
                 campo('Nacionalidade', nacionalidade), campo('Estado civil', estadoCivil), campo('Profissão', profissao),
                 campo('WhatsApp do responsável', whats), campo('E-mail do responsável', mail)),
               quadro('Endereço do responsável legal', campo('CEP do responsável', rCep), campo('Rua / logradouro', rRua), campo('Número', rNumero), campo('Complemento', rCompl), campo('Bairro', rBairro), campo('Cidade', rCidade), campo('UF', rUf), avisoCepR));
-            if (responsaveis.length > 1) {
+            if (!usarDaMatriz && responsaveis.length > 1) {
               const tirar = botao('Remover', () => { responsaveis.splice(i, 1); desenharResponsaveis(); pintarModo(); }, 'btn secondary perigo-texto');
               const pe = el('div', 'compras-form-rodape compras-largo compras-empresa-remover'); pe.append(tirar);
               bloco.append(pe);
@@ -217,9 +223,9 @@
         situacao.classList.add('compras-largo');
         const etapa1 = el('div', 'compras-etapa compras-largo'); etapa1.append(situacao, empresa, endereco);
         // Responsáveis legais são de cada empresa. A que não é Matriz pode usar os da Matriz (o caso da Filial, que é a mesma pessoa jurídica).
-        const mesmos = U.quadroSituacao('Mesmos responsáveis legais da matriz', !matriz && Boolean(emp ? emp.responsaveisDaMatriz : false), { textos: ['Sim', 'Não'], dica: 'Sim: esta empresa usa os responsáveis legais cadastrados na Matriz. Não: informe os responsáveis dela abaixo.', aoMudar: () => pintarModo() });
+        const mesmos = U.quadroSituacao('Mesmos responsáveis legais da matriz', !matriz && Boolean(emp ? emp.responsaveisDaMatriz : false), { textos: ['Sim', 'Não'], dica: 'Sim: os responsáveis da Matriz aparecem preenchidos abaixo. Não: cadastre os responsáveis desta empresa.', aoMudar: () => { usarDaMatriz = mesmos.ativo; desenharResponsaveis(); pintarModo(); } });
         mesmos.classList.add('compras-largo');
-        vinculo.addEventListener('change', () => { if (!emp && vinculo.value === 'filial') mesmos.ativo = true; pintarModo(); });
+        vinculo.addEventListener('change', () => { if (!emp && vinculo.value === 'filial') { mesmos.ativo = true; usarDaMatriz = true; desenharResponsaveis(); } pintarModo(); });
         const etapa2 = el('div', 'compras-etapa compras-largo'); etapa2.append(...(matriz ? [] : [mesmos]), caixaResp, linhaAdicionar);
         const etapa3 = el('div', 'compras-etapa compras-largo');
         const quadros = [etapa1, etapa2, etapa3];
@@ -244,10 +250,10 @@
           const blocos = [
             ['Dados da empresa', 0, [['Situação', x.situacao === 'inativo' ? 'Inativa' : 'Ativa'], ['Tipo de vínculo', nomeDoVinculo(x.vinculo)], ['CNPJ', x.cnpj], ['Razão Social', x.razaoSocial], ['Nome Fantasia', x.nomeFantasia], ['Regime tributário', nomeDe(D.REGIMES_TRIBUTARIOS, x.regimeTributario)]]],
             ['Endereço', 0, [['CEP', en.cep], ['Rua / logradouro', en.logradouro], ['Número', en.numero], ['Complemento', en.complemento], ['Bairro', en.bairro], ['Cidade', en.cidade], ['UF', en.uf]]],
-            ...x.responsaveis.map((r) => [tituloDoResponsavel(r.cargo), 1, [['Nome completo', r.nome], ['CPF', r.cpf], ['RG', r.rg + (r.rg && r.rgOrgao ? ' · ' + r.rgOrgao : '')], ['Nacionalidade', r.nacionalidade], ['Estado civil', nomeDe(ESTADOS_CIVIS, r.estadoCivil)], ['Profissão', r.profissao], ['WhatsApp', r.whatsapp], ['E-mail', r.email],
+            ...(x.responsaveisDaMatriz ? daMatrizCopia : x.responsaveis).map((r) => [tituloDoResponsavel(r.cargo) + (x.responsaveisDaMatriz ? ' (da Matriz)' : ''), 1, [['Nome completo', r.nome], ['CPF', r.cpf], ['RG', r.rg + (r.rg && r.rgOrgao ? ' · ' + r.rgOrgao : '')], ['Nacionalidade', r.nacionalidade], ['Estado civil', nomeDe(ESTADOS_CIVIS, r.estadoCivil)], ['Profissão', r.profissao], ['WhatsApp', r.whatsapp], ['E-mail', r.email],
               ['Endereço', [r.endereco.logradouro, r.endereco.numero, r.endereco.complemento, r.endereco.bairro, r.endereco.cidade, r.endereco.uf, r.endereco.cep].filter(Boolean).join(', ')]]]),
           ];
-          if (x.responsaveisDaMatriz) blocos.push(['Dados dos responsáveis legais', 1, [['Responsáveis', 'Os mesmos da Matriz']]]);
+if (x.responsaveisDaMatriz) { if (!daMatrizCopia.length) blocos.push(['Dados dos responsáveis legais', 1, [['Responsáveis', 'Os mesmos da Matriz (ela ainda não tem responsáveis cadastrados)']]]); }
           else if (!x.responsaveis.length) blocos.push(['Dados dos responsáveis legais', 1, [['Responsáveis', 'Nenhum responsável informado']]]);
           etapa3.replaceChildren(...blocos.map(([titulo, etapa, linhas]) => {
             const fs0 = el('fieldset', 'compras-fieldset'); fs0.append(el('legend', null, titulo));
@@ -264,7 +270,7 @@
           const daMatriz = !matriz && mesmos.ativo;
           mesmos.querySelector('.account-status-switch').disabled = !editando;
           situacao.querySelector('.account-status-switch').disabled = !editando;
-          caixaResp.style.display = daMatriz ? 'none' : '';
+          caixaResp.querySelectorAll(':scope > fieldset').forEach((q) => { q.disabled = !editando || daMatriz; });
           adicionar.disabled = !editando; linhaAdicionar.style.display = editando && !daMatriz ? '' : 'none';
           caixaResp.querySelectorAll('.compras-empresa-remover').forEach((x) => { x.style.display = editando ? '' : 'none'; });
           notaModo.textContent = editando ? '' : 'Dados gravados. Toque em Editar, ou no lápis de um bloco, para alterar.';
