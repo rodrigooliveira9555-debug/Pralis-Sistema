@@ -402,7 +402,7 @@ ok(() => {
 
 // Clientes (VND - Clientes): PF/PJ × Simples/Completo no mesmo registro.
 ok(() => {
-  assert.deepEqual(d.TIPOS_PESSOA_CLIENTE.map(([, n]) => n), ['Pessoa Física', 'Pessoa Jurídica']);
+  assert.deepEqual(d.TIPOS_PESSOA_CLIENTE.map(([, n]) => n), ['PF - Pessoa Física', 'PJ - Pessoa Jurídica']);
   assert.deepEqual(d.TIPOS_CADASTRO_CLIENTE.map(([, n]) => n), ['Simples', 'Completo']);
   assert.deepEqual(d.etapasCliente('fisica', 'simples'), []);
   assert.deepEqual(d.etapasCliente('juridica', 'simples'), []);

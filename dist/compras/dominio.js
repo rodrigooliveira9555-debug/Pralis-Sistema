@@ -712,7 +712,7 @@
    * Quatro modalidades: Pessoa Física ou Jurídica × Cadastro Simples (uma página) ou Completo (etapas). O mesmo registro
    * muda de Simples para Completo sem duplicar: os campos de cada tipo ficam guardados no registro, e salvar só mexe nos
    * do tipo e da modalidade em uso. Só informação cadastral: nada aqui gera cobrança, pagamento ou sorteio. */
-  const TIPOS_PESSOA_CLIENTE = [['fisica', 'Pessoa Física'], ['juridica', 'Pessoa Jurídica']];
+  const TIPOS_PESSOA_CLIENTE = [['fisica', 'PF - Pessoa Física'], ['juridica', 'PJ - Pessoa Jurídica']];
   const TIPOS_CADASTRO_CLIENTE = [['simples', 'Simples'], ['completo', 'Completo']];
   /** Nome para listas e buscas: a pessoa, ou o nome fantasia (ou a razão social) da empresa. */
   function nomeCliente(c) {

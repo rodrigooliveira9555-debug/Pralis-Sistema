@@ -236,12 +236,12 @@
         // Uma só seção no alto: Pessoa Física e Pessoa Jurídica lado a lado; o Tipo de cadastro (Simples | Completo) mora dentro do cartão marcado.
         // A escolha só muda a tela depois de pedirTroca/aplicar (que pode pedir confirmação); pintarTopo() redesenha a partir de tipo e cadastro.
         const ICO_PF = '<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/>';
-        const cartoesTopo = el('div', 'compras-tipo-cartoes'); cartoesTopo.setAttribute('role', 'radiogroup'); cartoesTopo.setAttribute('aria-label', 'Tipo de pessoa');
+        const cartoesTopo = el('div', 'compras-tipo-cartoes'); cartoesTopo.setAttribute('role', 'radiogroup'); cartoesTopo.setAttribute('aria-label', 'Tipo de cliente');
         const topo = ['fisica', 'juridica'].map((id) => {
           const box = el('div', 'compras-tipo-cartao');
           const cab = el('button', 'compras-tipo-cab'); cab.type = 'button'; cab.setAttribute('role', 'radio');
           const ic = el('span', 'compras-linha-icone'); ic.setAttribute('aria-hidden', 'true'); ic.innerHTML = U.svg(id === 'fisica' ? ICO_PF : U.ICONES.fornecedor);
-          const tx = el('span', 'compras-cartao-texto'); tx.append(el('strong', null, id === 'fisica' ? 'Pessoa Física' : 'Pessoa Jurídica'));
+          const tx = el('span', 'compras-cartao-texto'); tx.append(el('strong', null, id === 'fisica' ? 'PF - Pessoa Física' : 'PJ - Pessoa Jurídica'));
           const marca = el('span', 'compras-cartao-marca'); marca.setAttribute('aria-hidden', 'true'); marca.innerHTML = '<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
           cab.append(ic, tx, marca);
           cab.onclick = () => { if (id !== tipo) pedirTroca('tipo', id === 'juridica'); };
@@ -263,7 +263,7 @@
         }
         const tipoSw = { set ativo(_) { pintarTopo(); }, get ativo() { return tipo === 'juridica'; } };
         const cadSw = { set ativo(_) { pintarTopo(); }, get ativo() { return cadastro === 'completo'; } };
-        const tipoBox = el('div', 'account-status compras-situacao-quadro compras-tipo-pessoa'); tipoBox.append(el('span', null, 'Tipo de pessoa'), cartoesTopo);
+        const tipoBox = el('div', 'account-status compras-situacao-quadro compras-tipo-pessoa'); tipoBox.append(el('span', null, 'Tipo de cliente'), cartoesTopo);
         pintarTopo();
         const controles = el('div', 'compras-largo compras-cliente-controles'); controles.append(tipoBox);
         const barraBox = el('div', 'compras-largo');
@@ -417,7 +417,7 @@
     if (!lista.length) linhas.append(U.vazio(busca ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado.', busca ? '' : 'Use "Novo Cliente" para escolher Pessoa Física ou Jurídica e o cadastro Simples ou Completo.'));
     else {
       const cab = U.cabecalhoColunas('grade-cliente', [
-        { chave: 'nome', rotulo: 'Cliente' }, { chave: 'tipo', rotulo: 'Tipo de pessoa', ocultavel: true }, { chave: 'cadastro', rotulo: 'Tipo de cadastro', ocultavel: true },
+        { chave: 'nome', rotulo: 'Cliente' }, { chave: 'tipo', rotulo: 'Tipo de cliente', ocultavel: true }, { chave: 'cadastro', rotulo: 'Tipo de cadastro', ocultavel: true },
         { chave: 'whatsapp', rotulo: 'WhatsApp', ocultavel: true }, { chave: 'email', rotulo: 'E-mail', ocultavel: true }, { chave: 'estado', rotulo: 'Situação' },
       ], { lista: linhas, preferencia: 'cicluz-clientes-colunas' });
       linhas.append(cab); ponta.append(cab.botaoGeral);
