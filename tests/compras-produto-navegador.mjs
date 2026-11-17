@@ -176,23 +176,9 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   ok(await dlg(p).getByText('Estoque mínimo deve ser múltiplo da Qt. embalagem (10)').first().isVisible(), 'Mínimo precisa ser múltiplo da embalagem');
   await dlg(p).locator('.people-close-control').click();
 
-  /* ---------- 4) Filtros, ordenações, paginação e lote ---------- */
-  const primeira = () => p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)').first().innerText();
-  await p.locator('#compras-produtos select[aria-label="Ordenar"]').selectOption('az');
-  ok((await primeira()).includes('AÇÚCAR'), 'Ordenação A–Z');
-  await p.locator('#compras-produtos select[aria-label="Ordenar"]').selectOption('codigo_desc');
-  ok((await primeira()).includes('13131'), 'Ordenação por código decrescente');
-  await p.locator('#compras-produtos select[aria-label="Ordenar"]').selectOption('recentes');
-  ok((await primeira()).includes('BISCOITO'), 'Ordenação mais recentes');
+  /* ---------- 4) Paginação e lote (a tela não tem mais filtros nem ordenação: busca pela lupa do rodapé) ---------- */
+  ok((await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)').first().innerText()).includes('BISCOITO'), 'Lista começa pelos mais recentes');
   ok(await p.getByText(/Página 1 de 2/).isVisible(), 'Paginação de 12 por página');
-  const total = async () => Number((await p.locator('#compras-produtos .compras-linha-info .profiles-note').innerText()).match(/^(\d+)/)[1]);
-  const antes = await total();
-  await p.locator('#compras-produtos label', { hasText: 'Só os que já vendi' }).locator('input').check();
-  ok((await total()) === 13 && antes === 20, '"Só os que já vendi" filtra (20 ativos → 13 com venda)');
-  await p.locator('#compras-produtos label', { hasText: 'Só os que já vendi' }).locator('input').uncheck();
-  await p.locator('#compras-produtos .compras-grupo-chips', { hasText: 'Tipo' }).getByRole('button', { name: 'Transformação' }).click();
-  ok((await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)').count()) === 3, 'Filtro Transformação');
-  await p.getByRole('button', { name: 'Limpar' }).click();
   await p.getByRole('checkbox', { name: 'Selecionar BISCOITO INTEGRAL AVEIA' }).first().check();
   await p.getByRole('checkbox', { name: 'Selecionar BISCOITO INTEGRAL AVEIA' }).last().check();
   await p.getByRole('button', { name: 'Inativar selecionados' }).click();
@@ -207,8 +193,9 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   ok(inat.every(([s, l]) => s === 'inativo' && l === false), 'Inativar em lote (e desliga a liberação, como no S2)');
 
   /* ---------- 5) Cards e foto ampliada ---------- */
-  await p.locator('#compras-produtos .compras-chips').getByRole('button', { name: 'Cards' }).click();
-  await p.locator('#compras-produtos label', { hasText: 'Só ativos' }).locator('input').uncheck();
+  // Cards só no celular (até 600 px); os inativados aparecem pelo botão "Inativos" do cabeçalho da lista.
+  await p.setViewportSize({ width: 390, height: 900 });
+  await p.locator('#compras-produtos .compras-secao-cab button', { hasText: 'Inativos' }).click();
   await p.getByRole('button', { name: /Ampliar foto de BISCOITO/ }).first().click();
   ok(await dlg(p).locator('img.compras-foto-ampliada').isVisible(), 'Foto ampliada abre a partir do card');
   await p.close();

@@ -2,6 +2,7 @@
  * Produtos — lista (S1: pages/produtos/index.vue, ProdutoFiltros, ProdutoCard, ProdutoListaLinha,
  * ProdutoInativarLote). Lista em linhas com colunas ocultáveis (modelo de Fornecedores). Busca, "Só ativos", "Só os que já vendi", filtros, 6 ordenações do S1 + menor
  * estoque (S2), paginação de 12, cards ou lista, foto ampliada e inativação em lote com frase.
+ * Sem filtros na tela: busca pela lupa do rodapé e botão "Inativos" no cabeçalho da lista.
  * Fica em Saídas · Mercadorias → Cadastros Geral → MER - Produtos.
  */
 (function () {
@@ -12,14 +13,14 @@
   const R = window.CicluzProdutoRegras;
   const X = window.CicluzProdutoExtras;
   const PF = window.CicluzProdutoForm;
-  const { el, botao, campo, entrada, seletor } = U;
+  const { el, botao, campo, entrada } = U;
   const voltarCadastros = () => menuBack(3, 'Cadastros Geral')();
   const TAMANHO_PAGINA = 12;
 
   let tela = null;
-  const filtro = { busca: '', soAtivos: true, soVendidos: false, tipo: '', compra: '', vinculo: '', grupo: '', setor: '', ordem: 'recentes', modo: 'lista', pagina: 1 };
-  const SEM_FILTRO = { busca: '', soAtivos: true, soVendidos: false, tipo: '', compra: '', vinculo: '', grupo: '', setor: '', ordem: 'recentes', pagina: 1 };
-  try { filtro.modo = localStorage.getItem('cicluz-compras-produtos-modo') || 'lista'; } catch (e) { /* preferência opcional */ }
+  // Sem filtros na tela (pedido do Rodrigo, 17/11/2026): a busca é a lupa do rodapé; a lista mostra os ativos e o
+  // botão "Inativos" do cabeçalho da lista troca para os inativos (incluindo os arquivados do app).
+  const filtro = { busca: '', soAtivos: true, pagina: 1 };
   const selecionados = new Set();
 
   /** Pendência de compra (regra do S1) com o fornecedor aprovado do catálogo. */
@@ -66,21 +67,10 @@
   function filtrados() {
     const termo = U.dobrar(filtro.busca);
     const lista = fonte().filter((p) => {
-      if (filtro.soAtivos && p.status !== 'ativo') return false;
-      if (filtro.soVendidos && !(p.vendas3m > 0)) return false;
-      if (filtro.tipo && p.tipo !== filtro.tipo) return false;
-      if (filtro.compra === 'liberados' && !p.liberadoCompra) return false;
-      if (filtro.compra === 'nao_liberados' && p.liberadoCompra) return false;
-      if (filtro.compra === 'pendentes' && !pendencias(p).length) return false;
-      const v = vinculoDe(p);
-      if (filtro.vinculo === 'sem_vinculo' && !(v.semGrupo || v.semLocal)) return false;
-      if (filtro.vinculo === 'sem_grupo' && !v.semGrupo) return false;
-      if (filtro.vinculo === 'sem_local' && !v.semLocal) return false;
-      if (filtro.grupo && p.grupoId !== filtro.grupo) return false;
-      if (filtro.setor && p.setorEstoque !== filtro.setor) return false;
+      if (filtro.soAtivos ? p.status !== 'ativo' : p.status === 'ativo') return false;
       return !termo || U.dobrar([p.descricao, p.nomeCatalogo, p.marca, p.codigoInterno, p.codigoBarras].join(' ')).includes(termo);
     });
-    return R.ordenarProdutos(lista, filtro.ordem);
+    return R.ordenarProdutos(lista, 'recentes');
   }
 
   function render() {
@@ -90,47 +80,27 @@
     const pag = R.paginar(todos, filtro.pagina, TAMANHO_PAGINA);
     filtro.pagina = pag.pagina;
 
-    const controles = el('div', 'profiles-controls');
-    const bx = U.buscaFixa('produtos', 'Buscar por nome, código interno, código de barras ou marca', filtro.busca, (v) => { filtro.busca = v; filtro.pagina = 1; render(); });
-    const mk = (rot, opcoes, chave, vazio) => { const s = seletor(opcoes, filtro[chave], vazio); s.onchange = () => { filtro[chave] = s.value; filtro.pagina = 1; render(); }; return campo(rot, s); };
-    controles.append(bx,
-      mk('Grupo', S.gruposMercadoria().filter((g) => g.ativo).map((g) => [g.id, g.nome]), 'grupo', 'Todos os grupos'),
-      mk('Setor de estoque', [...new Set(S.dados.produtos.map((p) => p.setorEstoque).filter(Boolean))].sort(), 'setor', 'Todos os setores'),
-      mk('Ordenar', R.ORDENACOES, 'ordem'));
-
-    const linha = el('div', 'compras-filtros');
-    const chk = (rot, chave) => { const l = el('label', 'compras-interruptor'); const c = entrada('checkbox'); c.checked = filtro[chave]; c.onchange = () => { filtro[chave] = c.checked; filtro.pagina = 1; render(); }; l.append(c, el('span', null, rot)); return l; };
-    const grupoChips = (rot, opcoes, chave) => { const g = el('div', 'compras-grupo-chips'); g.append(el('span', 'compras-rotulo', rot), U.chips(opcoes, filtro[chave], (v) => { filtro[chave] = v; filtro.pagina = 1; render(); })); return g; };
-    const totalPend = S.dados.produtos.filter((p) => p.status === 'ativo' && pendencias(p).length).length;
-    const ativos = S.dados.produtos.filter((p) => p.status === 'ativo');
-    const nSemGrupo = ativos.filter((p) => vinculoDe(p).semGrupo).length; const nSemLocal = ativos.filter((p) => vinculoDe(p).semLocal).length;
-    const nSemVinculo = ativos.filter((p) => { const v = vinculoDe(p); return v.semGrupo || v.semLocal; }).length;
-    linha.append(chk('Só ativos', 'soAtivos'), chk('Só os que já vendi', 'soVendidos'),
-      grupoChips('Tipo', [['', 'Todos'], ['revenda', 'Revenda'], ['transformacao', 'Transformação']], 'tipo'),
-      grupoChips('Compra', [['', 'Todos'], ['liberados', 'Liberados'], ['nao_liberados', 'Não liberados'], ['pendentes', 'Pendentes (' + totalPend + ')']], 'compra'),
-      grupoChips('Vínculo', [['', 'Todos'], ['sem_vinculo', 'Sem vínculo (' + nSemVinculo + ')'], ['sem_grupo', 'Sem grupo (' + nSemGrupo + ')'], ['sem_local', 'Sem local (' + nSemLocal + ')']], 'vinculo'),
-      U.chips([['lista', 'Lista'], ['cards', 'Cards']], filtro.modo, (v) => { filtro.modo = v; try { localStorage.setItem('cicluz-compras-produtos-modo', v); } catch (e) { /* opcional */ } render(); }));
-    const temFiltro = filtro.busca || !filtro.soAtivos || filtro.soVendidos || filtro.tipo || filtro.compra || filtro.vinculo || filtro.grupo || filtro.setor || filtro.ordem !== 'recentes';
-    if (temFiltro) linha.append(botao('Limpar', () => { Object.assign(filtro, SEM_FILTRO); render(); }));
-
-    const info = el('div', 'compras-linha-info');
-    const nArq = S.totalArquivo();
-    info.append(U.nota(todos.length + ' produto(s). Produto nunca é apagado: inative quando sair de linha.' + (nArq ? ' ' + nArq + ' inativo(s) do app ficam arquivados: desmarque "Só ativos" para vê-los.' : '')), U.legendaBolinhas());
-    const imp = window.CicluzProdutoImportacaoTela;
-    if (imp && imp.podeImportar()) {
-      const acoes = el('div', 'compras-acoes-importacao');
-      acoes.append(botao('Importar do app de produtos', () => imp.importar(render)), botao('Revincular grupo e local', () => imp.revincularTudo(render)));
-      info.append(acoes);
-    }
-
+    // Busca pela lupa do rodapé (um caminho só para buscar). A caixa é criada uma vez e fica no lugar a cada desenho,
+    // para o campo não perder o cursor a cada letra.
+    const busca = U.buscaRodape(tela, 'Buscar por nome, código interno, código de barras ou marca', (v) => { filtro.busca = v; filtro.pagina = 1; if (tela.view.classList.contains('show')) render(); });
     const lote = barraDoLote(pag.itens);
     // No celular (até 600 px) a lista vira cards, como no S1.
-    const emCards = filtro.modo === 'cards' || window.matchMedia('(max-width: 600px)').matches;
+    const emCards = window.matchMedia('(max-width: 600px)').matches;
     // Cabeçalho branco da lista, igual ao de Fornecedores e Tipos de Ocorrência: botão retangular "Novo Produto" com o "+",
     // e na outra ponta a quantidade num círculo e a bolinha "‹ ›" de ocultar ou mostrar todas as colunas.
-    const ponta = U.pontaDaLista(todos.length, todos.length + (todos.length === 1 ? ' produto na lista' : ' produtos na lista'));
+    const oQue = filtro.soAtivos ? 'ativo' : 'inativo';
+    const ponta = U.pontaDaLista(todos.length, todos.length + (todos.length === 1 ? ' produto ' + oQue : ' produtos ' + oQue + 's'));
     const sec = U.secao('Produtos', undefined, ponta);
-    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Novo Produto', 'Cadastrar produto', () => PF.editarProduto(null, render)));
+    // Botões do cabeçalho: cadastrar, ver os inativos (ou voltar aos ativos) e, para quem administra, importar e revincular.
+    const nArq = S.totalArquivo();
+    const verInativos = filtro.soAtivos
+      ? U.botaoTitulo('Inativos', 'Ver os produtos inativos' + (nArq ? ' (' + nArq + ' arquivados do app)' : ''), () => { filtro.soAtivos = false; filtro.pagina = 1; render(); }, '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>')
+      : U.botaoTitulo('Ativos', 'Voltar aos produtos ativos', () => { filtro.soAtivos = true; filtro.pagina = 1; render(); }, '<path d="m15 5-7 7 7 7"/>');
+    const imp = window.CicluzProdutoImportacaoTela;
+    const admin = imp && imp.podeImportar()
+      ? [U.botaoTitulo('Importar', 'Importar do app de produtos', () => imp.importar(render), '<path d="M12 16V5M7 9l5-5 5 5M5 20h14"/>'), U.botaoTitulo('Revincular', 'Revincular grupo e local', () => imp.revincularTudo(render), '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>')]
+      : [];
+    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Novo Produto', 'Cadastrar produto', () => PF.editarProduto(null, render)), verInativos, ...admin);
     sec.append(emCards ? cards(pag.itens, b) : linhas(pag.itens, b, ponta));
     const paginacao = el('div', 'compras-paginacao');
     if (pag.paginas > 1) {
@@ -138,7 +108,9 @@
       paginacao.querySelectorAll('button')[0].disabled = pag.pagina <= 1;
       paginacao.querySelectorAll('button')[1].disabled = pag.pagina >= pag.paginas;
     }
-    tela.body.replaceChildren(controles, linha, info, lote, sec, paginacao);
+    if (busca.parentNode !== tela.body) tela.body.prepend(busca);
+    while (busca.nextSibling) busca.nextSibling.remove();
+    tela.body.append(lote, sec, paginacao);
   }
 
   function selecao(p) {
@@ -243,10 +215,7 @@
   /* ---------- Inativar em lote ---------- */
   function barraDoLote(pagina) {
     const box = el('div', 'compras-lote');
-    if (!selecionados.size) {
-      box.append(botao('Selecionar página atual', () => { pagina.forEach((p) => selecionados.add(p.id)); render(); }));
-      return box;
-    }
+    if (!selecionados.size) return box;
     box.classList.add('ativa');
     box.append(el('b', null, selecionados.size + ' produto(s) selecionado(s)'),
       botao('Selecionar página atual', () => { pagina.forEach((p) => selecionados.add(p.id)); render(); }),
