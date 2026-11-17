@@ -421,6 +421,16 @@ ok(() => {
   assert.equal(d.validarContratoFinanceiro({ tem: true, clienteMensal: true, formaPagamento: 'boleto', vencimentoDia: 10 }), '');
   assert.match(d.validarContratoFinanceiro({ tem: true, clienteMensal: true, formaPagamento: 'dinheiro' }), /boleto/);
   assert.equal(d.resumoTermino({ tipo: 'ocorrencias', ocorrencias: 3 }), 'por 3 ocorrências');
+  // Endereço nos cadastros simples (18/11/2026): CEP com 8 dígitos e UF válida quando informados; vazio continua valendo
+  const rg = { cpfValid: () => true, cnpjValid: () => true };
+  const pfS = { tipoPessoa: 'fisica', cadastro: 'simples', nome: 'A', whatsapp: '(31) 98888-0000', email: 'a@b.co', nascimento: '1990-01-01' };
+  assert.equal(d.validarCliente({ ...pfS, endereco: { cep: '30130-010', uf: 'MG' } }, rg), '');
+  assert.equal(d.validarCliente({ ...pfS }, rg), '');
+  assert.match(d.validarCliente({ ...pfS, endereco: { cep: '123' } }, rg), /CEP deve ter 8/);
+  assert.match(d.validarCliente({ ...pfS, endereco: { cep: '', uf: 'mg' } }, rg), /UF inválida/);
+  const pjS = { tipoPessoa: 'juridica', cadastro: 'simples', cnpj: '11.222.333/0001-81', razaoSocial: 'X', whatsapp: '(31) 98888-0000' };
+  assert.equal(d.validarCliente({ ...pjS, endereco: { cep: '30130010' } }, rg), '');
+  assert.match(d.validarCliente({ ...pjS, endereco: { cep: '1234' } }, rg), /CEP deve ter 8/);
   assert.equal(d.nomeCliente({ tipoPessoa: 'fisica', nome: ' Ana Teste ' }), 'Ana Teste');
   assert.equal(d.nomeCliente({ tipoPessoa: 'juridica', razaoSocial: 'Empresa Ltda', nomeFantasia: 'Fantasia' }), 'Fantasia');
   assert.equal(d.nomeCliente({ tipoPessoa: 'juridica', razaoSocial: 'Empresa Ltda' }), 'Empresa Ltda');

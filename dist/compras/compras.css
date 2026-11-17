@@ -487,3 +487,26 @@ body.dark-theme .compras-escolha-opcao.ativo { color: #f2f1f6; }
 .compras-cliente-controles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 @media (max-width:560px){.compras-cliente-controles{grid-template-columns:minmax(0,1fr)}}
 .compras-cliente-controles>.compras-situacao-quadro{grid-column:auto}
+.compras-cliente-controles>.compras-tipo-pessoa{grid-column:1/-1}
+.compras-convite-link .compras-fieldset{margin:0 0 12px}
+.compras-convite-link .compras-fieldset>*{grid-column:1/-1}
+.compras-convite-linha{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.compras-convite-acoes{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+@media (max-width:560px){.compras-convite-linha{grid-template-columns:minmax(0,1fr)}.compras-convite-acoes>button{flex:1 1 100%}}
+.compras-convite-simulacao{margin:0;padding:10px 12px;border:1px dashed var(--menu-accent);border-radius:12px;font:400 12px/16px var(--ui-font);color:var(--muted,#73737a)}
+body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-search){display:none}
+.compras-tipo-cartoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start;margin:8px 0 4px}
+@media (max-width:560px){.compras-tipo-cartoes{grid-template-columns:minmax(0,1fr)}}
+.compras-tipo-cartao{--cartao-cor:var(--menu-accent);display:grid;gap:10px;min-width:0;padding:12px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff)}
+.compras-tipo-cartao[data-marcado=true]{padding:11px;border:2px solid var(--cartao-cor);background:color-mix(in srgb,var(--cartao-cor) 9%,var(--theme-card,#fff))}
+.compras-tipo-cab{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;min-height:44px;margin:0;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer;font:inherit}
+.compras-tipo-cab:focus-visible{outline:2px solid var(--cartao-cor);outline-offset:4px;border-radius:8px}
+.compras-tipo-cab>.compras-linha-icone{flex:none;width:40px;height:40px;background:var(--cartao-cor)}
+.compras-tipo-cab>.compras-linha-icone svg{width:20px;height:20px}
+.compras-tipo-cartao[data-marcado=true] .compras-cartao-marca{border-color:var(--cartao-cor);background:var(--cartao-cor)}
+.compras-tipo-cartao[data-marcado=true] .compras-cartao-marca svg{visibility:visible}
+.compras-segmentado{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:3px;border:1px solid var(--layout-line,#dedee3);border-radius:999px;background:var(--theme-surface,#fff)}
+.compras-segmentado[hidden]{display:none}
+.compras-segmentado>button{min-height:34px;margin:0;padding:0 12px;border:0;border-radius:999px;background:transparent;color:inherit;font:600 14px/20px var(--ui-font);cursor:pointer}
+.compras-segmentado>button[aria-checked=true]{background:var(--cartao-cor);color:var(--menu-ink,#1b1b1f)}
+.compras-segmentado>button:focus-visible{outline:2px solid var(--cartao-cor);outline-offset:2px}

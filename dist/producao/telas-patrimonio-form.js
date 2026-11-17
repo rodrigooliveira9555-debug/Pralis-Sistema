@@ -127,13 +127,14 @@
 
   /* ================================================================ Formulário ================================================================ */
   /**
-   * opcoes (cadastro aberto de dentro de outro): { categoria } fixa a categoria (ex.: UTS ao cadastrar um utensílio a partir de um equipamento)
+   * opcoes { previa } abre o formulário para visualizar, sem salvar nada. opcoes (cadastro aberto de dentro de outro): { categoria } fixa a categoria (ex.: UTS ao cadastrar um utensílio a partir de um equipamento)
    * e { aoSalvar(id) } avisa quem abriu com o id do bem recém-salvo.
    */
   function abrirFormulario(b, opcoes = {}) {
-    const novo = !b;
+    const novo = !b; let enviado = false; // opcoes.externo: aberto pelo link de teste; o cadastro fica "Recebido", inativo, à espera de conferência
     U.dialogo({
-      titulo: opcoes.categoria ? 'Novo utensílio' : novo ? 'Novo patrimônio' : 'Editar patrimônio', ...cores, largo: true, classe: 'compras-form-padrao patrimonio-form', rotuloSalvar: 'Salvar Patrimônio',
+      aoFechar: () => { if (opcoes.externo && !enviado) window.CicluzConviteLink.sairModoExterno(); },
+      titulo: opcoes.previa ? 'Prévia — Novo patrimônio' : opcoes.externo ? 'Cadastro de patrimônio' : opcoes.categoria ? 'Novo utensílio' : novo ? 'Novo patrimônio' : 'Editar patrimônio', ...cores, largo: true, classe: 'compras-form-padrao patrimonio-form', rotuloSalvar: 'Salvar Patrimônio',
       montar: (form, dlg) => {
         const v = b || {}; const hoje = S.hojeIso();
         const fin = v.financeiro || {}; const cont = v.contabil || {}; const gar = v.garantia || {}; const seg = v.seguro || {}; const loc = v.localizacao || {}; const resp = v.responsavel || {};
@@ -647,15 +648,18 @@
         return { ler, conferir, ir, datas, audio, b };
       },
       salvar: async (c) => {
+        if (opcoes.previa) return 'Isto é só uma prévia do formulário: nada é salvo.';
         if (c.audio.gravando()) return 'Pare a gravação do áudio antes de salvar.';
         if (c.datas.some((d) => !d.checkValidity())) return 'Confira as datas: use DD/MM/AA.';
         const dados = c.ler();
+        if (opcoes.externo) { dados.statusCadastro = 'recebido'; dados.origem = 'link-teste'; dados.situacaoPatrimonial = 'inativo'; }
         const faltas = c.conferir(); const k = faltas.findIndex(Boolean);
         if (k >= 0) { c.ir(k); return faltas[k]; }
         const falta = SV.conferirBem(dados); if (falta) return falta;
         const som = await c.audio.guardar(); if (som.error) return som.error;
         dados.audio = som.meta;
         const r = SV.salvarBem(dados); if (r.erro) return r.erro;
+        if (opcoes.externo) { enviado = true; window.CicluzConviteLink.confirmarRecebimento(cores); return null; }
         U.avisar(opcoes.categoria ? 'Utensílio salvo.' : 'Patrimônio salvo.');
         if (opcoes.aoSalvar) opcoes.aoSalvar(r.id);
         return null;
@@ -663,4 +667,12 @@
     });
   }
   window.CicluzProducaoPatrimonioForm = { abrir: (b, opcoes) => abrirFormulario(b, opcoes) };
+  // Link de teste (?cadastro-teste=<modelo>): abre só o formulário do modelo, depois que o sistema terminou de carregar.
+  if (window.CicluzConviteLink) {
+    const abridores = { patrimonio: { pronto: () => true, abrir: () => abrirFormulario(null, { externo: true }) } };
+    ['pf-simples', 'pf-completo', 'pj-simples', 'pj-completo'].forEach((id) => {
+      abridores[id] = { pronto: () => Boolean(window.CicluzComprasClientes && window.CicluzComprasClientes.abrirExterno), abrir: () => window.CicluzComprasClientes.abrirExterno(window.CicluzComprasClientes.MODELOS_LINK.find((m) => m.id === id).modelo) };
+    });
+    window.CicluzConviteLink.iniciarPeloEndereco(abridores);
+  }
 })();

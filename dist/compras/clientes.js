@@ -16,6 +16,14 @@
   // Cor da seção Entradas (a do menu, índice 0) e o texto escuro correspondente.
   const cor = () => (typeof menuColor !== 'undefined' && menuColor[0]) || '#eab308';
   const cores = () => ({ cor: cor(), corTexto: '#785600' });
+  const ICO_PESSOA = '<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/>';
+  /** Os quatro modelos de link de cadastro (Enviar Link de Cadastro): o modelo vem do link, quem preenche não escolhe. */
+  const MODELOS_LINK = [
+    { id: 'pf-simples', titulo: 'Pessoa Física — Simples', icone: ICO_PESSOA, modelo: { tipoPessoa: 'fisica', cadastro: 'simples' } },
+    { id: 'pf-completo', titulo: 'Pessoa Física — Completo', icone: ICO_PESSOA, modelo: { tipoPessoa: 'fisica', cadastro: 'completo' } },
+    { id: 'pj-simples', titulo: 'Pessoa Jurídica — Simples', icone: U.ICONES.fornecedor, modelo: { tipoPessoa: 'juridica', cadastro: 'simples' } },
+    { id: 'pj-completo', titulo: 'Pessoa Jurídica — Completo', icone: U.ICONES.fornecedor, modelo: { tipoPessoa: 'juridica', cadastro: 'completo' } },
+  ];
   const mascara = (input, fn) => { input.addEventListener('input', () => { input.value = fn(input.value); }); return input; };
   const texto = (v, extra = {}) => entrada('text', v || '', { maxLength: 120, ...extra });
   const email = (v) => { const i = entrada('email', v || '', { maxLength: 160, inputMode: 'email', autocapitalize: 'off' }); i.dataset.textoLivre = '1'; return i; };
@@ -32,13 +40,13 @@
     const enderecoLinhas = [['CEP', e.cep], ['Rua / logradouro', e.logradouro], ['Número', e.numero], ['Complemento', e.complemento], ['Bairro', e.bairro], ['Cidade', e.cidade], ['UF', e.uf]];
     const contato = (x, extra = []) => [['Nome', x && x.nome], ['WhatsApp', x && x.whatsapp], ['E-mail', x && x.email], ...extra];
     let secoes;
-    if (!pj && !completo) secoes = [['Dados do cliente', [['Nome', c.nome], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Data de nascimento', dataBR(c.nascimento)]]]];
+    if (!pj && !completo) secoes = [['Dados do cliente', [['Nome', c.nome], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Data de nascimento', dataBR(c.nascimento)]]], ['Endereço', enderecoLinhas]];
     else if (!pj) secoes = [
       ['Dados pessoais', [['Nome completo', c.nome], ['CPF', c.cpf], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Data de nascimento', dataBR(c.nascimento)]]],
       ['Endereço', enderecoLinhas],
       ['Informações complementares', [['Sorteio', 'Em definição']]],
     ];
-    else if (!completo) secoes = [['Dados da empresa', [['CNPJ', c.cnpj], ['Razão Social', c.razaoSocial], ['Nome Fantasia', c.nomeFantasia], ['WhatsApp', c.whatsapp], ['E-mail', c.email]]]];
+    else if (!completo) secoes = [['Dados da empresa', [['CNPJ', c.cnpj], ['Razão Social', c.razaoSocial], ['Nome Fantasia', c.nomeFantasia], ['WhatsApp', c.whatsapp], ['E-mail', c.email]]], ['Endereço', enderecoLinhas]];
     else {
       secoes = [
         ['Dados cadastrais', [['CNPJ', c.cnpj], ['Razão Social', c.razaoSocial], ['Nome Fantasia', c.nomeFantasia], ['Regime tributário', nomeDe(D.REGIMES_TRIBUTARIOS, c.regimeTributario)], ['Situação', c.situacao === 'inativo' ? 'Inativo' : 'Ativo']]],
@@ -63,9 +71,11 @@
   };
 
   /* ---------------------------------------------------------------- Formulário ---------------------------------------------------------------- */
-  function editarCliente(c) {
+  /** opcoes: { modelo: { tipoPessoa, cadastro }, previa } — a prévia abre o formulário no modelo escolhido e não salva nada. */
+  function editarCliente(c, opcoes = {}) {
+    let enviado = false; // cadastro enviado pelo link de teste (opcoes.externo): o modelo vem do link e a pessoa não escolhe nada acima do formulário
     U.dialogo({
-      titulo: c ? 'Editar cliente' : 'Novo cliente', ...cores(), largo: true, classe: 'compras-form-padrao', rotuloSalvar: 'Salvar Cliente',
+      titulo: opcoes.previa ? 'Prévia — Novo cliente' : opcoes.externo ? 'Cadastro de cliente' : c ? 'Editar cliente' : 'Novo cliente', aoFechar: () => { if (opcoes.externo && !enviado) window.CicluzConviteLink.sairModoExterno(); }, ...cores(), largo: true, classe: 'compras-form-padrao', rotuloSalvar: 'Salvar Cliente',
       montar: (form, dlg) => {
         const v = c || {}; const e = v.endereco || {};
         const C = window.CicluzConsultas;
@@ -211,14 +221,42 @@
         const revisao = el('div', 'compras-largo');
 
         /* Controles principais */
-        let tipo = v.tipoPessoa === 'juridica' ? 'juridica' : 'fisica';
-        let cadastro = v.cadastro === 'completo' ? 'completo' : 'simples';
+        const m0 = c ? v : (opcoes.modelo || v);
+        let tipo = m0.tipoPessoa === 'juridica' ? 'juridica' : 'fisica';
+        let cadastro = m0.cadastro === 'completo' ? 'completo' : 'simples';
         let passo = 0;
-        const tipoSw = U.quadroSituacao('Tipo de pessoa', tipo === 'juridica', { textos: ['Pessoa Jurídica', 'Pessoa Física'], dica: 'Escolha uma: Pessoa Física ou Pessoa Jurídica.', aoMudar: (lig) => pedirTroca('tipo', lig) });
-        const cadSw = U.quadroSituacao('Tipo de cadastro', cadastro === 'completo', { textos: ['Completo', 'Simples'], dica: 'Simples: uma página, poucos dados. Completo: todas as informações, em etapas.', aoMudar: (lig) => pedirTroca('cadastro', lig) });
-        tipoSw.querySelector('.account-status-switch').setAttribute('aria-label', 'Tipo de pessoa');
-        cadSw.querySelector('.account-status-switch').setAttribute('aria-label', 'Tipo de cadastro');
-        const controles = el('div', 'compras-largo compras-cliente-controles'); controles.append(tipoSw, cadSw);
+        // Uma só seção no alto: Pessoa Física e Pessoa Jurídica lado a lado; o Tipo de cadastro (Simples | Completo) mora dentro do cartão marcado.
+        // A escolha só muda a tela depois de pedirTroca/aplicar (que pode pedir confirmação); pintarTopo() redesenha a partir de tipo e cadastro.
+        const ICO_PF = '<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/>';
+        const cartoesTopo = el('div', 'compras-tipo-cartoes'); cartoesTopo.setAttribute('role', 'radiogroup'); cartoesTopo.setAttribute('aria-label', 'Tipo de pessoa');
+        const topo = ['fisica', 'juridica'].map((id) => {
+          const box = el('div', 'compras-tipo-cartao');
+          const cab = el('button', 'compras-tipo-cab'); cab.type = 'button'; cab.setAttribute('role', 'radio');
+          const ic = el('span', 'compras-linha-icone'); ic.setAttribute('aria-hidden', 'true'); ic.innerHTML = U.svg(id === 'fisica' ? ICO_PF : U.ICONES.fornecedor);
+          const tx = el('span', 'compras-cartao-texto'); tx.append(el('strong', null, id === 'fisica' ? 'Pessoa Física' : 'Pessoa Jurídica'));
+          const marca = el('span', 'compras-cartao-marca'); marca.setAttribute('aria-hidden', 'true'); marca.innerHTML = '<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+          cab.append(ic, tx, marca);
+          cab.onclick = () => { if (id !== tipo) pedirTroca('tipo', id === 'juridica'); };
+          const seg = el('div', 'compras-segmentado'); seg.setAttribute('role', 'radiogroup'); seg.setAttribute('aria-label', 'Tipo de cadastro');
+          const segBtns = [['simples', 'Simples'], ['completo', 'Completo']].map(([cid, rot]) => {
+            const b = el('button', null, rot); b.type = 'button'; b.setAttribute('role', 'radio');
+            b.onclick = () => { if (id === tipo && cid !== cadastro) pedirTroca('cadastro', cid === 'completo'); };
+            seg.append(b); return [cid, b];
+          });
+          box.append(cab, seg); cartoesTopo.append(box);
+          return { id, box, cab, seg, segBtns };
+        });
+        function pintarTopo() {
+          topo.forEach((t) => {
+            const on = t.id === tipo; t.box.dataset.marcado = String(on); t.cab.setAttribute('aria-checked', String(on)); t.seg.hidden = !on;
+            t.segBtns.forEach(([cid, b]) => { b.setAttribute('aria-checked', String(on && cid === cadastro)); });
+          });
+        }
+        const tipoSw = { set ativo(_) { pintarTopo(); }, get ativo() { return tipo === 'juridica'; } };
+        const cadSw = { set ativo(_) { pintarTopo(); }, get ativo() { return cadastro === 'completo'; } };
+        const tipoBox = el('div', 'account-status compras-situacao-quadro compras-tipo-pessoa'); tipoBox.append(el('span', null, 'Tipo de pessoa'), cartoesTopo);
+        pintarTopo();
+        const controles = el('div', 'compras-largo compras-cliente-controles'); controles.append(tipoBox);
         const barraBox = el('div', 'compras-largo');
         const corpo = el('div', 'compras-largo');
         const erroEtapa = el('p', 'profiles-error compras-largo'); erroEtapa.setAttribute('role', 'alert');
@@ -249,21 +287,21 @@
         /* Páginas de cada modalidade (os mesmos campos mudam de lugar) */
         const bloco = (...nos) => nos;
         function paginas() {
-          if (tipo === 'fisica' && cadastro === 'simples') return [bloco(F.nome, F.whats, F.mail, F.nasc)];
+          if (tipo === 'fisica' && cadastro === 'simples') return [bloco(F.nome, F.whats, F.mail, F.nasc, sEnd)];
           if (tipo === 'fisica') {
             const comp = el('fieldset', 'compras-fieldset'); comp.append(el('legend', null, 'Sorteio'), el('p', 'profiles-note', 'Sorteio — Em definição'), el('small', 'profiles-note', 'Funcionalidade futura: por enquanto não há número, participação, prêmio nem regra de sorteio.'));
             return [bloco(F.nome, F.cpf, F.whats, F.mail, F.nasc), bloco(sEnd), bloco(comp), bloco(revisao)];
           }
-          if (cadastro === 'simples') return [bloco(F.cnpj, avisoCnpj, F.razao, F.fantasia, F.whats, F.mail)];
+          if (cadastro === 'simples') return [bloco(F.cnpj, avisoCnpj, F.razao, F.fantasia, F.whats, F.mail, sEnd)];
           const contato = el('fieldset', 'compras-fieldset'); contato.append(el('legend', null, 'Dados do contato'), F.contatoNome, F.whats, F.mail, aniv.no);
-          return [bloco(situacao, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime, sEnd), bloco(contato), bloco(fin.no, cDados), bloco(rep.no), bloco(revisao)];
+          return [bloco(...(opcoes.externo ? [] : [situacao]), F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime, sEnd), bloco(contato), bloco(fin.no, cDados), bloco(rep.no), bloco(revisao)];
         }
         /** Cadastro lido do formulário: só o tipo e a modalidade em uso (o resto do registro fica como está). */
         function ler() {
           const base = { tipoPessoa: tipo, cadastro };
           const endereco = { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value };
-          if (tipo === 'fisica') return { ...base, nome: nome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim(), nascimento: nasc.value, ...(cadastro === 'completo' ? { cpf: cpf.value.trim(), endereco } : {}) };
-          if (cadastro === 'simples') return { ...base, cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() };
+          if (tipo === 'fisica') return { ...base, nome: nome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim(), nascimento: nasc.value, endereco, ...(cadastro === 'completo' ? { cpf: cpf.value.trim() } : {}) };
+          if (cadastro === 'simples') return { ...base, cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim(), endereco };
           fin.pintar(); rep.pintar();
           return { ...base, cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), regimeTributario: regime.value, endereco, whatsapp: whats.value.trim(), email: mail.value.trim(),
             contatoNome: contatoNome.value.trim(), contatoAniversario: aniv.valor(), financeiro: fin.ler(), representante: { ...rep.ler(), cargo: repCargo.value }, contrato: lerContrato(), situacao: situacao.ativo ? 'ativo' : 'inativo' };
@@ -300,11 +338,12 @@
           nav.replaceChildren(...(etapas ? [passo > 0 && voltar, !ultima && avancar, (c || ultima) && salvarFim] : [cancelar, salvarFim]).filter(Boolean));
         }
         const nomes0 = () => D.etapasCliente(tipo, cadastro).map((label) => ({ label }));
-        form.append(controles, barraBox, corpo, erroEtapa, nav);
+        form.append(...(opcoes.externo ? [] : [controles]), barraBox, corpo, erroEtapa, nav);
         desenhar();
         return { ler, registro, conferir, ir, datas: [nasc, cVencData, cInicio, cFim] };
       },
       salvar: (ctx) => {
+        if (opcoes.previa) return 'Isto é só uma prévia do formulário: nada é salvo.';
         if (ctx.datas.some((d) => !d.checkValidity())) return 'Confira as datas: use DD/MM/AA.';
         const dados = ctx.ler();
         const faltas = ctx.conferir(); const k = faltas.findIndex(Boolean);
@@ -317,11 +356,12 @@
             if (!x) throw new Error('cliente');
             if (x.cadastro !== dados.cadastro || x.tipoPessoa !== dados.tipoPessoa) x.historico = [...(x.historico || []), { em: agora, de: (x.tipoPessoa || '') + '/' + (x.cadastro || ''), para: dados.tipoPessoa + '/' + dados.cadastro }];
             Object.assign(x, dados, { atualizadoEm: agora });
-          } else d.clientes.push({ id: S.novoId('cl'), situacao: 'ativo', ...dados, criadoEm: agora, atualizadoEm: agora });
+          } else d.clientes.push({ id: S.novoId('cl'), situacao: 'ativo', ...dados, ...(opcoes.externo ? { situacao: 'inativo', statusCadastro: 'recebido', origem: 'link-teste' } : {}), criadoEm: agora, atualizadoEm: agora });
         });
         if (!ok) return 'Não foi possível salvar neste navegador.';
-        U.avisar('Cliente salvo.');
         render();
+        if (opcoes.externo) { enviado = true; window.CicluzConviteLink.confirmarRecebimento(cores()); return; }
+        U.avisar('Cliente salvo.');
       },
     });
   }
@@ -362,7 +402,7 @@
     const ativos = todos.filter((c) => c.situacao !== 'inativo').length;
     const ponta = U.pontaDaLista(ativos, ativos + (ativos === 1 ? ' cliente ativo' : ' clientes ativos'));
     const sec = U.secao('Clientes', undefined, ponta);
-    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Novo Cliente', 'Cadastrar cliente', () => editarCliente()));
+    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Novo Cliente', 'Cadastrar cliente', () => editarCliente()), ...(window.CicluzConviteLink ? [window.CicluzConviteLink.botao({ cores: cores(), modelos: MODELOS_LINK, visualizar: (id) => editarCliente(null, { modelo: MODELOS_LINK.find((m) => m.id === id).modelo, previa: true }) })] : []));
     sec.append(linhas);
     if (!lista.length) linhas.append(U.vazio(busca ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado.', busca ? '' : 'Use "Novo Cliente" para escolher Pessoa Física ou Jurídica e o cadastro Simples ou Completo.'));
     else {
@@ -381,7 +421,7 @@
       icones: [{ icone: c.tipoPessoa === 'juridica' ? ICONE_PJ : ICONE_PF, rotulo: nomeDe(D.TIPOS_PESSOA_CLIENTE, c.tipoPessoa) }], grade: 'grade-cliente',
       colunas: [{ chave: 'nome', conteudo: nomeC }, { chave: 'tipo', conteudo: nomeDe(D.TIPOS_PESSOA_CLIENTE, c.tipoPessoa) }, { chave: 'cadastro', conteudo: nomeDe(D.TIPOS_CADASTRO_CLIENTE, c.cadastro) },
         { chave: 'whatsapp', conteudo: c.whatsapp }, { chave: 'email', conteudo: c.email }],
-      estado: inativo ? 'Inativo' : 'Ativo',
+      estado: c.statusCadastro === 'recebido' ? 'Recebido' : inativo ? 'Inativo' : 'Ativo',
       acoes: { rotulo: nomeC, lista: linhas, aoEditar: () => editarCliente(c), aoExcluir: () => alternarSituacao(c) },
     });
     if (inativo) row.classList.add('inativo');
@@ -397,5 +437,5 @@
     return row;
   }
 
-  window.CicluzComprasClientes = { abrir, secoesCliente };
+  window.CicluzComprasClientes = { abrir, secoesCliente, MODELOS_LINK, abrirExterno: (modelo) => editarCliente(null, { modelo, externo: true }) };
 })();

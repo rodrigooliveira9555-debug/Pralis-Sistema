@@ -616,9 +616,9 @@
       if (outros.some((x) => x.tipoPessoa === 'juridica' && x.cnpj && digitos(x.cnpj) === digitos(c.cnpj))) return 'Já existe um cliente com este CNPJ.';
       if (!String(c.razaoSocial || '').trim()) return 'Informe a razão social.';
       if (c.regimeTributario && !REGIMES_TRIBUTARIOS.some(([id]) => id === c.regimeTributario)) return 'Regime tributário inválido.';
-      return completo ? enderecoRuim() : '';
+      return enderecoRuim();
     };
-    if (!completo) return [pj ? empresa() || whatsEmail(false) : pessoa()];
+    if (!completo) return [pj ? empresa() || whatsEmail(false) : pessoa() || enderecoRuim()];
     if (!pj) return [pessoa(), enderecoRuim(), '', ''];
     return [
       empresa(),

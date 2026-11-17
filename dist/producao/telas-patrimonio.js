@@ -254,11 +254,11 @@
     const ativos = bens.filter((b) => b.ativo !== false).length;
     const ponta = U.pontaDaLista(ativos, ativos + (ativos === 1 ? ' patrimônio ativo' : ' patrimônios ativos'));
     const sec = U.secao('Patrimônios', undefined, ponta);
-    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Patrimônios', 'Cadastrar patrimônio', () => window.CicluzProducaoPatrimonioForm.abrir()));
+    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Patrimônios', 'Cadastrar patrimônio', () => window.CicluzProducaoPatrimonioForm.abrir()), ...(window.CicluzConviteLink ? [window.CicluzConviteLink.botao({ cores: { cor: M.COR_RET, corTexto: M.COR_RET_TEXTO }, modelos: [{ id: 'patrimonio', titulo: 'Cadastro de patrimônio', detalhe: 'Formulário completo de patrimônio, com as seis etapas (identificação, imagens e documentos, localização, composição e especificação técnica, aquisição e manutenção).' }], visualizar: () => window.CicluzProducaoPatrimonioForm.abrir(null, { previa: true }) })] : []));
     const linhas = el('div', 'compras-lista compras-lista-grade'); U.arrastarParaRolar(linhas);
     sec.append(linhas);
     function desenha() {
-      const vis = bens.filter((b) => (filtro.inativos || b.ativo !== false) && (!filtro.categoria || b.categoria === filtro.categoria) && (!filtro.situacao || situacaoDe(b) === filtro.situacao) && textoBusca(b).includes(U.dobrar(filtro.busca)))
+      const vis = bens.filter((b) => (filtro.inativos || b.ativo !== false || b.statusCadastro === 'recebido') && (!filtro.categoria || b.categoria === filtro.categoria) && (!filtro.situacao || situacaoDe(b) === filtro.situacao) && textoBusca(b).includes(U.dobrar(filtro.busca)))
         .sort((a, c) => a.nome.localeCompare(c.nome, 'pt-BR'));
       linhas.replaceChildren();
       ponta.querySelector('.compras-colunas-geral')?.remove();
@@ -285,7 +285,7 @@
       colunas: [{ chave: 'nome', conteudo: b.nome }, { chave: 'numero', conteudo: b.numeroPatrimonio }, { chave: 'imagem', conteudo: mini }, { chave: 'categoria', conteudo: nomeDe(D.CATEGORIAS, b.categoria) }, { chave: 'marca', conteudo: b.marca }, { chave: 'modelo', conteudo: b.modelo },
         { chave: 'serie', conteudo: b.numeroSerie }, { chave: 'empresa', conteudo: l.empresa }, { chave: 'unidade', conteudo: l.unidade }, { chave: 'setor', conteudo: setorDe(b) }, { chave: 'responsavel', conteudo: r.nome },
         { chave: 'qtd', conteudo: b.quantidade != null ? b.quantidade + (b.unidade ? ' ' + b.unidade : '') : '' }, { chave: 'valor', conteudo: dinheiro(b.valor) }, { chave: 'conservacao', conteudo: nomeDe(PD.CONSERVACAO, b.conservacao) }, { chave: 'avisos', conteudo: [avisoManutencao(b)].filter(Boolean) }],
-      estado: nomeDe(PD.SITUACOES, situacaoDe(b)),
+      estado: b.statusCadastro === 'recebido' ? 'Recebido' : nomeDe(PD.SITUACOES, situacaoDe(b)),
       acoes: { rotulo: b.nome, lista: linhas, aoEditar: () => window.CicluzProducaoPatrimonioForm.abrir(b), aoExcluir: () => baixa(b) },
     });
     if (b.ativo === false) row.classList.add('inativo');

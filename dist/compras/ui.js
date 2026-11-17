@@ -648,6 +648,8 @@
       return { id: o.id, b };
     });
     grupo.marcados = () => itens.filter((x) => x.b.getAttribute(estado) === 'true').map((x) => x.id);
+    /** Marca por código (só escolha única), sem disparar aoMudar: serve para a tela desfazer ou refletir uma troca. */
+    grupo.definir = (id) => itens.forEach((x) => x.b.setAttribute(estado, String(x.id === id)));
     return grupo;
   }
 
