@@ -1,5 +1,10 @@
 # CICLUZ — referência de interface
 
+## Data de aniversário — campo único DD/MM com painel (17/11/2026)
+Pedido do Rodrigo. **No cadastro de cliente pessoa física não existe mais "Data de nascimento": é "Data de aniversário", só dia e mês**, obrigatória como era a de nascimento. O dado novo é `cliente.aniversario` ("MM-DD"); cliente antigo, só com `nascimento`, mostra e valida pelo dia e mês dele (`D.aniversarioCliente`), sem migração em massa, e a data antiga só sai do registro se a pessoa trocar o dia ou o mês.
+
+**A peça de aniversário é uma só** (`CAD.seletoresAniversario`, em `compras/cadastros.js`) e vale para cliente (PF e contato da PJ), vendedor e prestadores do fornecedor: um campo com a máscara **DD/MM** para digitar e, ao tocar no campo ou no botão redondo do calendário, um painel flutuante (`U.flutuante`) com a grade dos 12 meses e a grade dos dias do mês escolhido (`.compras-grade-escolha`, marcado cheio na cor do menu); escolhidos mês e dia, o painel fecha. Embaixo do campo aparece o aniversário por extenso ("15 de agosto") ou o erro. Isto substitui os dois seletores Dia e Mês de 16/11/2026.
+
 ## MER - Produtos — cadastro em 5 etapas e lista em linhas (17/11/2026)
 Pedido do Rodrigo. Só o layout mudou; campos, regras e o que é salvo são os mesmos.
 - **Cadastro em etapas** (`CicluzStepper`, o mesmo do fornecedor e do Cadastro Completo; rodapé Voltar / Avançar / Salvar): **1 Cadastro geral** (Produto, Como se compra, Revenda ou transformação — tipo, grupo e subgrupo —, Conversões de unidade e, na edição, Histórico de nomes) · **2 Cadastro produção/transformação** (só o quadro Transformação) · **3 Cadastro específico** (quadro "Desta loja": estoque, pontos de venda e preço) · **4 Cadastro promoção** (só Promoção) · **5 Cadastro fiscal** (só Fiscal). Qualquer etapa abre pelo toque na barra. Erro ao salvar leva à etapa do campo. Quando a etapa não vale para o tipo (Transformação em produto de Revenda; Promoção em produto de Transformação), ela mostra uma nota em vez de sumir.

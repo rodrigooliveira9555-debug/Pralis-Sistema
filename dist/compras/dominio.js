@@ -268,6 +268,16 @@
     if (dia < 1 || dia > diasNoMes(2000, mes - 1)) return 'Aniversário inválido: esse mês não tem dia ' + dia + '.';
     return '';
   }
+  /**
+   * Data de aniversário do cliente pessoa física ("MM-DD"; decisão do Rodrigo, 17/11/2026: só dia e mês, não mais a
+   * data de nascimento). Quem tem só a data de nascimento antiga mostra o dia e o mês dela; nada é migrado em massa.
+   */
+  function aniversarioCliente(c) {
+    if (!c) return '';
+    if (typeof c.aniversario === 'string' && c.aniversario) return c.aniversario;
+    const n = String(c.nascimento || '');
+    return n.length === 10 && n[4] === '-' && n[7] === '-' && !aniversarioRuim(n.slice(5)) ? n.slice(5) : '';
+  }
   /** Aniversário no formato DD/MM, ou '' quando falta o dia ou o mês. */
   function aniversarioTexto(v) {
     const p = aniversarioPartes(v);
@@ -752,8 +762,10 @@
       }
       const r = whatsEmail(true);
       if (r) return r;
-      if (!c.nascimento) return 'Informe a data de nascimento.';
-      if (!dataIsoValida(c.nascimento) || c.nascimento < '1900-01-01' || c.nascimento > isoData(new Date())) return 'Data de nascimento inválida: use DD/MM/AA, sem data futura.';
+      // Data de aniversário (dia e mês, "MM-DD"), obrigatória como era a de nascimento; cliente antigo vale pelo dia e mês do nascimento.
+      const aniv = aniversarioCliente(c);
+      if (!aniv) return 'Informe a data de aniversário.';
+      if (aniversarioRuim(aniv) || aniv.length !== 5) return 'Data de aniversário inválida: escolha o dia e o mês.';
       if (!completo && outros.some((x) => x.tipoPessoa !== 'juridica' && semAcento(x.nome) === semAcento(c.nome) && digitos(x.whatsapp) === digitos(c.whatsapp))) return 'Já existe um cliente com este nome e WhatsApp.';
       return '';
     };
@@ -960,7 +972,7 @@
     FUNCOES_PRESTADOR_INICIAIS, idFuncaoPrestador, funcaoPrestadorIgual, validarFuncaoPrestador, migrarPrestadoresFornecedor,
     FORMAS_PAGAMENTO_CONTRATO, FORMAS_PAGAMENTO_FORNECEDOR, RECORRENCIAS_CONTRATO, RECORRENCIAS_CLIENTE, CLIENTE_MENSAL, periodoMensal, validarTermino, resumoTermino, UNIDADES_REPETICAO, POSICOES_MES, DIAS_SEMANA_LONGOS, REAJUSTES_CONTRATO, migrarContratoFinanceiro,
     validarContratoFinanceiro, TIPOS_PESSOA_CLIENTE, TIPOS_CADASTRO_CLIENTE, nomeCliente, etapasCliente, validarClienteEtapas, validarCliente,
-    validarRecorrenciaPersonalizada, resumoRecorrenciaPersonalizada, resumoValorRecorrencia, aniversarioPartes, aniversarioRuim, aniversarioTexto,
+    validarRecorrenciaPersonalizada, resumoRecorrenciaPersonalizada, resumoValorRecorrencia, aniversarioPartes, aniversarioRuim, aniversarioTexto, aniversarioCliente,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,
     aplicarRecebimento, SITUACOES_PEDIDO,

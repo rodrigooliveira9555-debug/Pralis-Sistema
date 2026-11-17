@@ -486,10 +486,15 @@ ok(() => {
   assert.match(e({ ...pfs, whatsapp: '12' })[0], /WhatsApp inválido/);
   assert.match(e({ ...pfs, email: '' })[0], /Informe o e-mail/);
   assert.match(e({ ...pfs, email: 'sem-arroba' })[0], /E-mail inválido/);
-  assert.match(e({ ...pfs, nascimento: '' })[0], /nascimento/);
-  assert.match(e({ ...pfs, nascimento: '1990-02-31' })[0], /nascimento inválida/);
-  assert.match(e({ ...pfs, nascimento: '2999-01-01' })[0], /nascimento inválida/);
-  assert.match(e({ ...pfs, nascimento: '1890-01-01' })[0], /nascimento inválida/);
+  assert.match(e({ ...pfs, nascimento: '' })[0], /data de aniversário/);
+  assert.match(e({ ...pfs, nascimento: '1990-02-31' })[0], /data de aniversário/); // nascimento antigo impossível não vale como aniversário
+  // Data de aniversário (17/11/2026): dia e mês; o cliente antigo, só com nascimento, vale pelo dia e mês dele.
+  assert.equal(e({ ...pfs, nascimento: undefined, aniversario: '08-15' })[0], '');
+  assert.match(e({ ...pfs, nascimento: undefined, aniversario: '02-30' })[0], /aniversário inválida/);
+  assert.match(e({ ...pfs, nascimento: undefined, aniversario: '08-' })[0], /aniversário inválida/);
+  assert.equal(d.aniversarioCliente({ nascimento: '1990-08-15' }), '08-15');
+  assert.equal(d.aniversarioCliente({ nascimento: '1990-08-15', aniversario: '09-01' }), '09-01');
+  assert.equal(d.aniversarioCliente({}), '');
   assert.match(e({ ...pfs, nome: 'outro cliente', whatsapp: '(31) 90000-0000' })[0], /nome e WhatsApp/); // não duplica
   assert.deepEqual(e({ ...pfs, id: 'x1', nome: 'Outro Cliente', whatsapp: '(31) 90000-0000' }), ['']); // o próprio registro não conta como duplicado
   // PF completo: o mesmo mais CPF válido; endereço opcional, mas no formato.

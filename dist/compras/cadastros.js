@@ -132,31 +132,69 @@
     });
   }
   /**
-   * Aniversário por dois seletores, Dia e Mês, sem ano (16/11/2026). valor() devolve "MM-DD", '' quando nada foi escolhido,
-   * ou o formato antigo (AAAA-MM) intacto enquanto a pessoa não mexer; escolha pela metade segue incompleta para a validação recusar.
+   * Data de aniversário: dia e mês, sem ano, num campo só (pedido do Rodrigo, 17/11/2026; substitui os dois seletores de
+   * 16/11). O campo tem a máscara DD/MM para digitar e, ao tocar nele ou no botão do calendário, abre um painel com os
+   * meses e os dias: escolhe-se o mês e o dia e o painel fecha. valor() devolve "MM-DD", '' quando nada foi escolhido, ou
+   * o formato antigo (AAAA-MM) intacto enquanto a pessoa não mexer; escolha pela metade segue incompleta para a
+   * validação recusar. rotulo: o nome do campo (um " *" no fim marca obrigatório).
    */
   const MESES_LONGOS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-  function seletoresAniversario(valorInicial) {
+  const MESES_CURTOS = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
+  const DIAS_DO_MES = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  function seletoresAniversario(valorInicial, { rotulo = 'Aniversário' } = {}) {
     const p = D.aniversarioPartes(valorInicial);
-    const dia = seletor(Array.from({ length: 31 }, (_, i) => [String(i + 1).padStart(2, '0'), String(i + 1)]), p.dia, 'Selecionar dia');
-    const mes = seletor(MESES_LONGOS.map((n, i) => [String(i + 1).padStart(2, '0'), n]), p.mes, 'Selecionar mês');
-    dia.setAttribute('aria-label', 'Aniversário: dia'); mes.setAttribute('aria-label', 'Aniversário: mês');
-    const no = el('div', 'compras-campo compras-largo compras-aniv');
-    const linha = el('div', 'compras-recorr-linha');
-    const rotuloDia = el('label', 'compras-campo'); rotuloDia.append(el('span', 'compras-rotulo', 'Dia'), dia);
-    const rotuloMes = el('label', 'compras-campo'); rotuloMes.append(el('span', 'compras-rotulo', 'Mês'), mes);
-    linha.append(rotuloDia, rotuloMes);
+    let dia = p.dia; let mes = p.mes; let mexeu = false;
+    const nomeCampo = rotulo.endsWith(' *') ? rotulo.slice(0, -2) : rotulo;
+    const escrito = () => (dia || mes ? (dia || '') + (mes ? '/' + mes : '') : '');
+    const input = entrada('text', dia && mes ? dia + '/' + mes : '', { inputMode: 'numeric', placeholder: 'DD/MM', maxLength: 5, autocomplete: 'off' });
+    input.setAttribute('aria-label', nomeCampo);
+    const botaoPainel = el('button', 'shortcut-circle compras-redondo');
+    botaoPainel.type = 'button'; botaoPainel.title = 'Escolher o dia e o mês'; botaoPainel.setAttribute('aria-label', nomeCampo + ': escolher o dia e o mês');
+    botaoPainel.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/></svg>';
+    const caixa = el('div', 'compras-aniv-campo'); caixa.append(input, botaoPainel);
+    const painel = el('div', 'compras-escolha-painel compras-aniv-painel'); painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', nomeCampo + ': dia e mês');
+    const gradeMes = el('div', 'compras-grade-escolha em-4'); const gradeDia = el('div', 'compras-grade-escolha em-7');
+    painel.append(el('span', 'compras-rotulo', 'Mês'), gradeMes, el('span', 'compras-rotulo', 'Dia'), gradeDia);
+    const abrir = U.flutuante(caixa, painel);
     const resumo = el('small', 'profiles-note'); resumo.setAttribute('aria-live', 'polite');
-    no.append(el('span', 'compras-rotulo', 'Aniversário'), linha, resumo);
+    const no = el('div', 'compras-campo compras-aniv');
+    no.append(el('span', 'compras-rotulo', rotulo), caixa, painel, resumo);
+    let pelaMetade = false; // digitou só parte de DD/MM
     const valor = () => {
-      if (dia.value && mes.value) return mes.value + '-' + dia.value;
-      if (!dia.value && !mes.value) return '';
-      if (p.legado && !dia.value && mes.value === p.mes) return String(valorInicial);
-      return mes.value + '-' + dia.value;
+      if (dia && mes) return mes + '-' + dia;
+      if (pelaMetade) return '-' + dia;
+      if (!dia && !mes) return '';
+      if (p.legado && !mexeu) return String(valorInicial);
+      return mes + '-' + dia;
     };
-    const pintar = () => { const v = valor(); resumo.textContent = D.aniversarioRuim(v) || (D.aniversarioTexto(v) ? 'Aniversário: ' + D.aniversarioTexto(v) : ''); };
-    dia.addEventListener('change', pintar); mes.addEventListener('change', pintar); pintar();
-    return { no, valor };
+    const celula = (texto, marcado, nome, aoTocar) => {
+      const b = el('button', 'compras-grade-celula', texto);
+      b.type = 'button'; b.setAttribute('aria-pressed', String(marcado)); b.setAttribute('aria-label', nome); b.onclick = aoTocar;
+      return b;
+    };
+    function pintar(escreve = true) {
+      if (escreve) input.value = dia && mes ? dia + '/' + mes : escrito();
+      const v = valor();
+      resumo.textContent = D.aniversarioRuim(v) || (dia && mes ? Number(dia) + ' de ' + MESES_LONGOS[Number(mes) - 1].toLowerCase() : '');
+      gradeMes.replaceChildren(...MESES_CURTOS.map((m, i) => { const n = String(i + 1).padStart(2, '0'); return celula(m, n === mes, MESES_LONGOS[i], () => { mes = n; mexeu = true; pelaMetade = false; pintar(); if (dia && !D.aniversarioRuim(valor())) fechar(); }); }));
+      const total = mes ? DIAS_DO_MES[Number(mes) - 1] || 31 : 31;
+      gradeDia.replaceChildren(...Array.from({ length: total }, (_, i) => { const n = String(i + 1).padStart(2, '0'); return celula(String(i + 1), n === dia, 'Dia ' + (i + 1), () => { dia = n; mexeu = true; pelaMetade = false; pintar(); if (mes) fechar(); }); }));
+    }
+    const fechar = () => { abrir(false); input.focus(); input.dispatchEvent(new Event('change', { bubbles: true })); };
+    // Máscara DD/MM: só números; a barra entra sozinha depois do dia.
+    input.addEventListener('input', () => {
+      const d = input.value.split('').filter((c) => c >= '0' && c <= '9').join('').slice(0, 4);
+      input.value = d.length > 2 ? d.slice(0, 2) + '/' + d.slice(2) : d;
+      // Com os 4 dígitos, vale; pela metade, fica incompleto (a validação recusa) sem trocar o que a pessoa vê.
+      dia = d.length >= 2 ? d.slice(0, 2) : ''; mes = d.length === 4 ? d.slice(2) : '';
+      mexeu = true; pelaMetade = d.length > 0 && d.length < 4;
+      pintar(false);
+    });
+    input.addEventListener('click', () => abrir(true));
+    input.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown') { e.preventDefault(); abrir(true); } });
+    botaoPainel.addEventListener('click', () => abrir(painel.hidden));
+    pintar();
+    return { no, valor, input };
   }
   const aplicarMascara = (input, fn) => { input.addEventListener('input', () => { input.value = fn(input.value); }); return input; };
   function interruptor(rotulo, marcado, dica) {
@@ -577,7 +615,7 @@
         /* ----- Etapa 2: vendedor ou prestador de serviço (é o contato do fornecedor; o WhatsApp dele recebe a cotação) ----- */
         const s2 = el('fieldset', 'compras-fieldset');
         const vNome = texto(f?.contatoNome);
-        // Aniversário: dia e mês, sem ano (dois seletores). A data completa antiga fica no dado.
+        // Aniversário: dia e mês, sem ano (campo DD/MM com painel). A data completa antiga fica no dado.
         const vAniv = seletoresAniversario(D.aniversarioVendedor(f));
         const whats = telefone(f?.whatsapp);
         const mail = email(f?.email);

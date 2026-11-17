@@ -40,9 +40,9 @@
     const enderecoLinhas = [['CEP', e.cep], ['Rua / logradouro', e.logradouro], ['Número', e.numero], ['Complemento', e.complemento], ['Bairro', e.bairro], ['Cidade', e.cidade], ['UF', e.uf]];
     const contato = (x, extra = []) => [['Nome', x && x.nome], ['WhatsApp', x && x.whatsapp], ['E-mail', x && x.email], ...extra];
     let secoes;
-    if (!pj && !completo) secoes = [['Dados do cliente', [['Nome', c.nome], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Data de nascimento', dataBR(c.nascimento)]]], ['Endereço', enderecoLinhas]];
+    if (!pj && !completo) secoes = [['Dados do cliente', [['Nome', c.nome], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Data de aniversário', D.aniversarioTexto(D.aniversarioCliente(c))]]], ['Endereço', enderecoLinhas]];
     else if (!pj) secoes = [
-      ['Dados pessoais', [['Nome completo', c.nome], ['CPF', c.cpf], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Data de nascimento', dataBR(c.nascimento)]]],
+      ['Dados pessoais', [['Nome completo', c.nome], ['CPF', c.cpf], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Data de aniversário', D.aniversarioTexto(D.aniversarioCliente(c))]]],
       ['Endereço', enderecoLinhas],
       ['Informações complementares', [['Sorteio', 'Em definição']]],
     ];
@@ -83,7 +83,8 @@
         /* Campos (criados uma vez; mudam de lugar conforme a modalidade, então nada digitado se perde) */
         const nome = texto(v.nome);
         const cpf = mascara(entrada('text', v.cpf || '', { inputMode: 'numeric', placeholder: '000.000.000-00', maxLength: 14 }), R().cpfMask);
-        const nasc = entrada('date', v.nascimento || '');
+        // Pessoa física: data de aniversário (dia e mês), não mais a data de nascimento completa (pedido do Rodrigo, 17/11/2026).
+        const anivPF = CAD().seletoresAniversario(D.aniversarioCliente(v), { rotulo: 'Data de aniversário *' });
         const whats = tel(v.whatsapp); const mail = email(v.email);
         const cnpj = mascara(entrada('text', v.cnpj || '', { inputMode: 'numeric', placeholder: '00.000.000/0000-00', maxLength: 18 }), R().cnpjMask);
         const razao = texto(v.razaoSocial, { maxLength: 160 }); const fantasia = texto(v.nomeFantasia);
@@ -94,7 +95,7 @@
         const contatoNome = texto(v.contatoNome); const aniv = CAD().seletoresAniversario(v.contatoAniversario || '');
         const situacao = U.quadroSituacao('Situação do cliente', v.situacao ? v.situacao === 'ativo' : true, { dica: 'Cliente inativo continua cadastrado.' });
         const F = {
-          nome: campo('Nome completo *', nome), cpf: campo('CPF *', cpf), nasc: campo('Data de nascimento *', nasc), whats: campo('WhatsApp *', whats), mail: campo('E-mail', mail),
+          nome: campo('Nome completo *', nome), cpf: campo('CPF *', cpf), nasc: anivPF.no, whats: campo('WhatsApp *', whats), mail: campo('E-mail', mail),
           cnpj: campo('CNPJ *', cnpj), razao: campo('Razão Social *', razao), fantasia: campo('Nome Fantasia', fantasia), regime: campo('Regime tributário', regime), contatoNome: campo('Nome do contato', contatoNome),
         };
         const avisoCnpj = el('p', 'profiles-note compras-largo'); avisoCnpj.setAttribute('role', 'status');
@@ -268,7 +269,7 @@
         const nav = el('div', 'compras-form-rodape compras-etapas-nav compras-largo');
         let barra = null; let passos = [];
 
-        const temDadosPF = () => [nome, cpf, nasc].some((i) => i.value.trim());
+        const temDadosPF = () => [nome, cpf].some((i) => i.value.trim()) || Boolean(anivPF.valor());
         const temDadosPJ = () => [cnpj, razao, fantasia, contatoNome].some((i) => i.value.trim()) || fin.ler().nome || rep.ler().nome;
         const temDadosCompleto = () => (tipo === 'fisica' ? [cpf, cep, rua, numero, bairro, cidade].some((i) => i.value.trim()) : [regime, cep, rua, contatoNome].some((i) => i.value.trim()) || mensal.ativo || fin.ler().nome || rep.ler().nome);
         /** Trocar de tipo ou de modalidade nunca apaga: o que já foi digitado fica guardado. Pede confirmação quando há risco de a pessoa achar que perdeu. */
@@ -306,7 +307,7 @@
         function ler() {
           const base = { tipoPessoa: tipo, cadastro };
           const endereco = cadastro === 'simples' && !endSw.ativo ? (c && c.endereco ? c.endereco : undefined) : { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value };
-          if (tipo === 'fisica') return { ...base, nome: nome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim(), nascimento: nasc.value, endereco, ...(cadastro === 'completo' ? { cpf: cpf.value.trim() } : {}) };
+          if (tipo === 'fisica') return { ...base, nome: nome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim(), aniversario: anivPF.valor(), nascimento: v.nascimento && v.nascimento.slice(5) === anivPF.valor() ? v.nascimento : undefined, endereco, ...(cadastro === 'completo' ? { cpf: cpf.value.trim() } : {}) };
           if (cadastro === 'simples') return { ...base, cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim(), endereco };
           fin.pintar(); rep.pintar();
           return { ...base, cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), regimeTributario: regime.value, endereco, whatsapp: whats.value.trim(), email: mail.value.trim(),
@@ -346,7 +347,7 @@
         const nomes0 = () => D.etapasCliente(tipo, cadastro).map((label) => ({ label }));
         form.append(...(opcoes.externo ? [] : [controles]), barraBox, corpo, erroEtapa, nav);
         desenhar();
-        return { ler, registro, conferir, ir, datas: [nasc, cVencData, cInicio, cFim] };
+        return { ler, registro, conferir, ir, datas: [cVencData, cInicio, cFim] };
       },
       salvar: (ctx) => {
         if (opcoes.previa) return 'Isto é só uma prévia do formulário: nada é salvo.';
