@@ -94,6 +94,7 @@ await p.locator('#compras-produtos .compras-secao-cab button', { hasText: 'Inati
 await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'INATIVO FICTICIO' }).waitFor();
 ok(await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)').count() === 1, 'Inativos: só o do arquivo');
 await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'INATIVO FICTICIO' }).click();
+await dlg(p).locator('.stepper-node').nth(1).click(); // etapa 2: grupo de mercadorias
 await dlg(p).getByLabel('Grupo de mercadorias', { exact: true }).selectOption('g15');
 await dlg(p).locator('.people-save-control').click();
 await fechado(p);
@@ -131,6 +132,7 @@ ok(await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalh
 /* ---------- 3) Formulário: escolher grupo e local tira o alerta ---------- */
 await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'SEM GRUPO FICTICIO' }).click();
 ok((await dlg(p).locator('.compras-alerta-vinculo').textContent()).includes('grupo de mercadorias'), 'Formulário mostra o alerta de vínculo');
+await dlg(p).locator('.stepper-node').nth(1).click(); // etapa 2: grupo de mercadorias
 await dlg(p).getByLabel('Grupo de mercadorias', { exact: true }).selectOption('g10');
 await dlg(p).getByLabel('Subgrupo', { exact: true }).selectOption('g10s0');
 await dlg(p).locator('.people-save-control').click();
