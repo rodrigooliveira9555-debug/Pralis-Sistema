@@ -4,7 +4,8 @@
  * fantasia, regime tributário e endereço) e os responsáveis pela empresa. Tocar no cartão abre direto a ficha:
  * com dados já gravados ela abre só para leitura, com o botão Editar; Editar libera os campos e mostra o Salvar.
  * Responsáveis: um bloco por pessoa ("Dados do responsável"; escolhido o cargo, o título leva o cargo), com o botão
- * de acrescentar. Cargo: Proprietário, Sócio-proprietário, Diretor não sócio ou Procurador (lista própria da empresa;
+ * de acrescentar; cada um guarda os dados que um contrato pede (nome completo, CPF, RG, nacionalidade, estado civil,
+ * profissão e endereço). Cargo: Proprietário, Sócio-proprietário, Diretor não sócio ou Procurador (lista própria da empresa;
  * fornecedor e cliente seguem com a lista deles).
  * Fica em dados.empresa, dentro do documento do Compras (cicluz-compras-v1): campo novo e opcional, sem migração.
  */
@@ -22,12 +23,14 @@
   const cheio = (v) => String(v || '').trim();
   const CARGOS_EMPRESA = [['proprietario', 'Proprietário'], ['socio-proprietario', 'Sócio-proprietário'], ['diretor-nao-socio', 'Diretor não sócio'], ['procurador', 'Procurador']];
   const nomeDoCargo = (id) => (CARGOS_EMPRESA.find(([x]) => x === id) || [])[1] || '';
+  const ESTADOS_CIVIS = [['solteiro', 'Solteiro(a)'], ['casado', 'Casado(a)'], ['uniao-estavel', 'União estável'], ['divorciado', 'Divorciado(a)'], ['separado', 'Separado(a)'], ['viuvo', 'Viúvo(a)']];
+  const RESPONSAVEL_VAZIO = () => ({ id: S.novoId('resp'), cargo: '', nome: '', cpf: '', rg: '', rgOrgao: '', nacionalidade: '', estadoCivil: '', profissao: '', whatsapp: '', email: '', endereco: { cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '' } });
   const tituloDoResponsavel = (cargo) => 'Dados do responsável' + (nomeDoCargo(cargo) ? ' — ' + nomeDoCargo(cargo) : '');
 
   /** Responsáveis gravados; o primeiro formato (um responsável só, em "responsavel") vira o primeiro da lista. */
   function responsaveisDe(v) {
     const lista = Array.isArray(v.responsaveis) ? v.responsaveis : v.responsavel ? [v.responsavel] : [];
-    return lista.map((r) => ({ id: r.id || S.novoId('resp'), nome: r.nome || '', whatsapp: r.whatsapp || '', email: r.email || '', cargo: nomeDoCargo(r.cargo) ? r.cargo : '' }));
+    return lista.map((r) => ({ ...RESPONSAVEL_VAZIO(), ...r, id: r.id || S.novoId('resp'), cargo: nomeDoCargo(r.cargo) ? r.cargo : '', endereco: { ...RESPONSAVEL_VAZIO().endereco, ...(r.endereco || {}) } }));
   }
 
   /** O que impede salvar ('' quando está em ordem): empresa e endereço obrigatórios, menos o complemento; responsáveis opcionais. */
@@ -52,6 +55,10 @@
       const mail = cheio(r.email);
       if (mail && (mail.includes(' ') || mail.split('@').length !== 2 || !mail.split('@')[0] || !mail.split('@')[1].includes('.'))) return 'E-mail do ' + quem + ' inválido.';
       if (r.cargo && !nomeDoCargo(r.cargo)) return 'Cargo do ' + quem + ' inválido.';
+      if (cheio(r.cpf) && !regras().cpfValid(r.cpf)) return 'CPF do ' + quem + ' inválido.';
+      if (r.estadoCivil && !ESTADOS_CIVIS.some(([id]) => id === r.estadoCivil)) return 'Estado civil do ' + quem + ' inválido.';
+      const cepR = D.digitos(r.endereco && r.endereco.cep);
+      if (cepR && cepR.length !== 8) return 'CEP do ' + quem + ' deve ter 8 dígitos.';
     }
     return '';
   }
@@ -76,6 +83,7 @@
         const completar = (pares) => pares.forEach(([alvo, valor]) => { if (valor && !alvo.value.trim()) alvo.value = valor; });
         const falha = { 'nao-encontrado': 'não encontrado', indisponivel: 'consulta indisponível agora' };
         let cepFeito = D.digitos(cep.value); let cnpjFeito = D.digitos(cnpj.value);
+        const cnpjGravado = D.digitos(v.cnpj);
         cep.addEventListener('input', async () => {
           const n = D.digitos(cep.value); if (n.length !== 8 || n === cepFeito) return; cepFeito = n;
           avisoCep.textContent = 'Buscando o endereço do CEP…';
@@ -90,9 +98,14 @@
           const r = await C().cnpj(n); if (D.digitos(cnpj.value) !== n) return;
           if (r.erro) { avisoCnpj.textContent = 'CNPJ ' + falha[r.erro] + (r.motivo ? ' (' + r.motivo + ')' : '') + ': preencha os dados à mão.'; return; }
           const x = r.dados; const en = x.endereco || {};
-          completar([[razao, x.razaoSocial], [fantasia, x.nomeFantasia], [cep, en.cep], [rua, en.logradouro], [numero, en.numero], [complemento, en.complemento], [bairro, en.bairro], [cidade, en.cidade], [uf, en.uf]]);
+          const pares = [[razao, x.razaoSocial], [fantasia, x.nomeFantasia], [cep, en.cep], [rua, en.logradouro], [numero, en.numero], [complemento, en.complemento], [bairro, en.bairro], [cidade, en.cidade], [uf, en.uf]];
+          // CNPJ diferente do que estava gravado é outra empresa: os dados dela substituem os antigos (pedido do Rodrigo,
+          // 17/11/2026). Na primeira vez, ou repetindo o mesmo CNPJ, só o que está vazio é preenchido.
+          const trocou = Boolean(cnpjGravado) && n !== cnpjGravado;
+          if (trocou) pares.forEach(([alvo, valor]) => { alvo.value = valor || ''; });
+          else completar(pares);
           cepFeito = D.digitos(cep.value);
-          avisoCnpj.textContent = 'Dados do CNPJ conferidos; só os campos vazios foram preenchidos. Confira antes de salvar.';
+          avisoCnpj.textContent = trocou ? 'CNPJ novo: razão social, nome fantasia e endereço foram trocados pelos dados dele. Confira o regime tributário e salve.' : 'Dados do CNPJ conferidos; só os campos vazios foram preenchidos. Confira antes de salvar.';
         });
         const empresa = el('fieldset', 'compras-fieldset');
         empresa.append(el('legend', null, 'Dados da empresa'), campo('CNPJ *', cnpj), avisoCnpj, campo('Razão Social *', razao), campo('Nome Fantasia *', fantasia), campo('Regime tributário *', regime));
@@ -101,10 +114,10 @@
 
         /* Responsáveis: um bloco por pessoa; o título acompanha o cargo escolhido; o botão acrescenta mais um. */
         const responsaveis = responsaveisDe(v);
-        if (!responsaveis.length) responsaveis.push({ id: S.novoId('resp'), nome: '', whatsapp: '', email: '', cargo: '' });
+        if (!responsaveis.length) responsaveis.push(RESPONSAVEL_VAZIO());
         const CAD = window.CicluzComprasCadastros;
         const caixaResp = el('div', 'compras-etapa compras-largo');
-        const adicionar = botao('Adicionar responsável', () => { responsaveis.push({ id: S.novoId('resp'), nome: '', whatsapp: '', email: '', cargo: '' }); desenharResponsaveis(); pintarModo(); }, 'btn');
+        const adicionar = botao('Adicionar responsável', () => { responsaveis.push(RESPONSAVEL_VAZIO()); desenharResponsaveis(); pintarModo(); }, 'btn');
         const linhaAdicionar = el('div', 'compras-form-rodape compras-largo'); linhaAdicionar.append(adicionar);
         function desenharResponsaveis() {
           caixaResp.replaceChildren(...responsaveis.map((r, i) => {
@@ -119,7 +132,36 @@
             nome.addEventListener('input', () => { r.nome = nome.value; });
             whats.addEventListener('input', () => { r.whatsapp = whats.value; });
             mail.addEventListener('input', () => { r.email = mail.value; });
-            bloco.append(titulo, campo('Cargo na empresa', cargo), campo('Nome do responsável', nome), campo('WhatsApp do responsável', whats), campo('E-mail do responsável', mail));
+            // Dados que um contrato pede para qualificar quem assina: nome completo, nacionalidade, estado civil,
+            // profissão, RG, CPF e endereço (pedido do Rodrigo, 17/11/2026). Tudo opcional; o que vier preenchido é conferido.
+            const liga = (input, chave, alvo = r) => { input.addEventListener('input', () => { alvo[chave] = input.value; }); input.addEventListener('change', () => { alvo[chave] = input.value; }); return input; };
+            const cpf = liga(mascara(entrada('text', r.cpf, { inputMode: 'numeric', placeholder: '000.000.000-00', maxLength: 14 }), regras().cpfMask), 'cpf');
+            const rg = liga(entrada('text', r.rg, { maxLength: 20 }), 'rg'); rg.dataset.textoLivre = '1';
+            const rgOrgao = liga(entrada('text', r.rgOrgao, { maxLength: 20, placeholder: 'Ex: SSP/MG...' }), 'rgOrgao'); rgOrgao.dataset.textoLivre = '1';
+            const nacionalidade = liga(texto(r.nacionalidade, { maxLength: 40, placeholder: 'Ex: Brasileira...' }), 'nacionalidade');
+            const estadoCivil = liga(seletor(ESTADOS_CIVIS, r.estadoCivil, 'Selecione'), 'estadoCivil');
+            const profissao = liga(texto(r.profissao, { maxLength: 60, placeholder: 'Ex: Empresário...' }), 'profissao');
+            const en = r.endereco;
+            const rCep = liga(mascara(entrada('text', en.cep, { inputMode: 'numeric', placeholder: '00000-000', maxLength: 9 }), C().cepMask), 'cep', en);
+            const rRua = liga(texto(en.logradouro, { maxLength: 160 }), 'logradouro', en); const rNumero = liga(texto(en.numero, { maxLength: 20 }), 'numero', en);
+            const rCompl = liga(texto(en.complemento, { maxLength: 80 }), 'complemento', en); const rBairro = liga(texto(en.bairro, { maxLength: 80 }), 'bairro', en);
+            const rCidade = liga(texto(en.cidade, { maxLength: 80 }), 'cidade', en); const rUf = liga(seletor(C().UFS, en.uf, 'UF'), 'uf', en);
+            const avisoCepR = el('p', 'profiles-note compras-largo'); avisoCepR.setAttribute('role', 'status');
+            let cepRFeito = D.digitos(en.cep);
+            rCep.addEventListener('input', async () => {
+              const nn = D.digitos(rCep.value); if (nn.length !== 8 || nn === cepRFeito) return; cepRFeito = nn;
+              avisoCepR.textContent = 'Buscando o endereço do CEP…';
+              const res = await C().cep(nn); if (D.digitos(rCep.value) !== nn) return;
+              if (res.erro) { avisoCepR.textContent = 'CEP ' + falha[res.erro] + ': preencha o endereço à mão.'; return; }
+              [[rRua, 'logradouro'], [rBairro, 'bairro'], [rCidade, 'cidade'], [rUf, 'uf']].forEach(([alvo, chave]) => { if (res.dados[chave] && !alvo.value.trim()) { alvo.value = res.dados[chave]; en[chave] = res.dados[chave]; } });
+              avisoCepR.textContent = 'Endereço do CEP conferido. Confira e informe o número.';
+            });
+            const sub = (t) => el('span', 'compras-rotulo compras-largo compras-empresa-sub', t);
+            bloco.append(titulo, campo('Cargo na empresa', cargo), campo('Nome completo do responsável', nome),
+              campo('CPF do responsável', cpf), campo('RG do responsável', rg), campo('Órgão emissor do RG', rgOrgao),
+              campo('Nacionalidade', nacionalidade), campo('Estado civil', estadoCivil), campo('Profissão', profissao),
+              campo('WhatsApp do responsável', whats), campo('E-mail do responsável', mail),
+              sub('Endereço do responsável'), campo('CEP do responsável', rCep), campo('Rua / logradouro', rRua), campo('Número', rNumero), campo('Complemento', rCompl), campo('Bairro', rBairro), campo('Cidade', rCidade), campo('UF', rUf), avisoCepR);
             if (responsaveis.length > 1) {
               const tirar = botao('Remover', () => { responsaveis.splice(i, 1); desenharResponsaveis(); pintarModo(); }, 'btn secondary perigo-texto');
               const pe = el('div', 'compras-form-rodape compras-largo compras-empresa-remover'); pe.append(tirar);
@@ -150,7 +192,11 @@
             cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), regimeTributario: regime.value,
             endereco: { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value },
             // Bloco em branco não é gravado.
-            responsaveis: responsaveis.map((r) => ({ id: r.id, nome: cheio(r.nome), whatsapp: cheio(r.whatsapp), email: cheio(r.email).toLocaleLowerCase('pt-BR'), cargo: r.cargo || '' })).filter((r) => r.nome || r.whatsapp || r.email || r.cargo),
+            responsaveis: responsaveis.map((r) => ({
+              id: r.id, cargo: r.cargo || '', nome: cheio(r.nome), cpf: cheio(r.cpf), rg: cheio(r.rg), rgOrgao: cheio(r.rgOrgao), nacionalidade: cheio(r.nacionalidade), estadoCivil: r.estadoCivil || '', profissao: cheio(r.profissao),
+              whatsapp: cheio(r.whatsapp), email: cheio(r.email).toLocaleLowerCase('pt-BR'),
+              endereco: Object.fromEntries(Object.entries(r.endereco || {}).map(([k, val]) => [k, cheio(val)])),
+            })).filter((r) => r.nome || r.whatsapp || r.email || r.cargo || r.cpf || r.rg),
           }),
         };
       },
