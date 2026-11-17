@@ -54,10 +54,10 @@ const valorDaPrevia = (p, rotulo) => dlg(p).locator('.compras-importacao-linha',
 
 /* ---------- 1) Importar pela tela ---------- */
 const p = await abrirPagina(1024);
-ok(await p.locator('#compras-produtos button', { hasText: 'Importar do app de produtos' }).isVisible(), 'Botão de importar visível para quem administra');
+ok(await p.locator('#compras-produtos button[aria-label="Importar do app de produtos"]').isVisible(), 'Botão de importar visível para quem administra');
 const antes = await produtos(p);
 ok(antes.some((x) => x.id === 'p-coca2l'), 'Antes: produtos de exemplo do S2');
-await p.locator('#compras-produtos button', { hasText: 'Importar do app de produtos' }).click();
+await p.locator('#compras-produtos button[aria-label="Importar do app de produtos"]').click();
 ok(await dlg(p).locator('h2').textContent() === 'Importar do app de produtos', 'Abre o diálogo de importação');
 // Confirmar sem arquivo não grava
 await dlg(p).locator('.people-save-control').click();
@@ -88,25 +88,25 @@ ok(depois.find((x) => x.codigo === '13003').localId === 's-pan', 'Local casado p
 const arq = await p.evaluate(async () => (await CicluzComprasDados.arquivo()).map((x) => [x.id, x.status, x.liberadoCompra]));
 ok(JSON.stringify(arq) === JSON.stringify([['pi-13500', 'inativo', false]]), 'Inativo foi para o arquivo compactado, não liberado: ' + JSON.stringify(arq));
 ok(await p.evaluate(() => JSON.parse(localStorage.getItem('cicluz-produtos-arquivo-v1')).formato === 'gzip-base64'), 'Arquivo gravado compactado na chave própria');
-ok((await p.locator('#compras-produtos .compras-linha-info').textContent()).includes('1 inativo(s) do app ficam arquivados'), 'A lista avisa quantos inativos estão arquivados');
-// Desmarcar "Só ativos" mostra o inativo do arquivo; editar e salvar o traz para o Compras
-await p.locator('#compras-produtos label', { hasText: 'Só ativos' }).click();
-await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'INATIVO FICTICIO' }).waitFor();
-ok(await p.locator('#compras-produtos .compras-tabela tbody tr').count() === 4, 'Sem "Só ativos": 3 ativos + 1 do arquivo');
-await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'INATIVO FICTICIO' }).click();
+ok((await p.locator('#compras-produtos .compras-secao-cab button', { hasText: 'Inativos' }).getAttribute('title')).includes('1 arquivados do app'), 'O botão Inativos avisa quantos estão arquivados');
+// O botão "Inativos" mostra o inativo do arquivo; editar e salvar o traz para o Compras
+await p.locator('#compras-produtos .compras-secao-cab button', { hasText: 'Inativos' }).click();
+await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'INATIVO FICTICIO' }).waitFor();
+ok(await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)').count() === 1, 'Inativos: só o do arquivo');
+await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'INATIVO FICTICIO' }).click();
 await dlg(p).getByLabel('Grupo de mercadorias', { exact: true }).selectOption('g15');
 await dlg(p).locator('.people-save-control').click();
 await fechado(p);
 await p.waitForFunction(async () => (await CicluzComprasDados.arquivo()).length === 0);
 depois = await produtos(p);
 ok(depois.some((x) => x.id === 'pi-13500') && depois.length === 4, 'Editado: passou para o Compras e saiu do arquivo');
-ok(await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'INATIVO FICTICIO' }).count() === 1, 'Aparece uma vez só na lista');
-await p.locator('#compras-produtos label', { hasText: 'Só ativos' }).click();
+ok(await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'INATIVO FICTICIO' }).count() === 1, 'Aparece uma vez só na lista');
+await p.locator('#compras-produtos .compras-secao-cab button', { hasText: /^Ativos$/ }).click();
 
 /* ---------- 1b) Busca: digitar letra por letra sem o campo fechar (como no app de produtos) ---------- */
-const campoBusca = p.locator('#compras-produtos .compras-busca');
-if (await campoBusca.isHidden()) await p.locator('#compras-produtos .local-search-toggle').click();
-const linhasVisiveis = () => p.locator('#compras-produtos .compras-tabela tbody tr').allTextContents();
+const campoBusca = p.locator('.people-bottom-header .shared-header-search');
+if (await campoBusca.isHidden()) await p.locator('.view.show .people-search-toggle').click();
+const linhasVisiveis = () => p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)').allTextContents();
 const buscar = async (texto) => {
   await campoBusca.fill('');
   await campoBusca.pressSequentially(texto, { delay: 120 });
@@ -126,17 +126,10 @@ await buscar('');
 ok((await linhasVisiveis()).length === 3, 'Busca vazia volta a lista inteira');
 
 /* ---------- 2) Alerta e filtro na lista ---------- */
-const chip = (rot) => p.locator('#compras-produtos .compras-chip', { hasText: rot });
-ok(await chip('Sem vínculo (2)').count() === 1 && await chip('Sem grupo (1)').count() === 1 && await chip('Sem local (1)').count() === 1, 'Chips de vínculo com a contagem');
-await chip('Sem vínculo (2)').click();
-let linhas = await p.locator('#compras-produtos .compras-tabela tbody tr').count();
-ok(linhas === 2, 'Filtro "Sem vínculo" mostra só os 2');
-ok(await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'SEM GRUPO FICTICIO' }).locator('.compras-situacao', { hasText: 'Sem grupo' }).count() === 1, 'Linha mostra o alerta "Sem grupo"');
-await chip('Sem grupo (1)').click();
-ok(await p.locator('#compras-produtos .compras-tabela tbody tr').count() === 1, 'Filtro "Sem grupo" mostra 1');
+ok(await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'SEM GRUPO FICTICIO' }).locator('.compras-situacao', { hasText: 'Sem grupo' }).count() === 1, 'Linha mostra o alerta "Sem grupo"');
 
 /* ---------- 3) Formulário: escolher grupo e local tira o alerta ---------- */
-await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'SEM GRUPO FICTICIO' }).click();
+await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'SEM GRUPO FICTICIO' }).click();
 ok((await dlg(p).locator('.compras-alerta-vinculo').textContent()).includes('grupo de mercadorias'), 'Formulário mostra o alerta de vínculo');
 await dlg(p).getByLabel('Grupo de mercadorias', { exact: true }).selectOption('g10');
 await dlg(p).getByLabel('Subgrupo', { exact: true }).selectOption('g10s0');
@@ -145,9 +138,9 @@ await fechado(p);
 depois = await produtos(p);
 const semGrupo = depois.find((x) => x.codigo === '13003');
 ok(semGrupo.grupoId === 'g10' && semGrupo.manual && semGrupo.manual.grupo === true, 'Grupo escolhido à mão fica marcado como manual');
-await p.locator('#compras-produtos button', { hasText: 'Limpar' }).click();
-await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'PAO FICTICIO' }).click();
+await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'PAO FICTICIO' }).click();
 ok(await dlg(p).locator('.compras-alerta-vinculo').count() === 1, 'Pão sem local: alerta no formulário');
+await dlg(p).locator('.stepper-node').nth(2).click(); // etapa 3: Cadastro específico
 const opcoes = await dlg(p).getByLabel('Setor de estoque', { exact: true }).locator('option').allTextContents();
 ok(opcoes.includes('LJ › VITRINES') && opcoes.includes('PROD. › PANIFICAÇÃO'), 'Setor de estoque lista a árvore de locais com o caminho');
 await dlg(p).getByLabel('Setor de estoque', { exact: true }).selectOption({ label: 'LJ › VITRINES' });
@@ -155,8 +148,8 @@ await dlg(p).locator('.people-save-control').click();
 await fechado(p);
 const pao = (await produtos(p)).find((x) => x.codigo === '13002');
 ok(pao.localId === 's-vit' && pao.setor === 'VITRINES' && pao.manual.local === true, 'Local escolhido: id do nó, nome e marca de manual');
-ok(await chip('Sem vínculo (0)').count() === 1, 'Sem vínculo zerou');
-await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'PAO FICTICIO' }).click();
+ok(await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho) .c-nome .compras-situacao').count() === 0, 'Sem vínculo zerou');
+await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'PAO FICTICIO' }).click();
 ok(await dlg(p).locator('.compras-alerta-vinculo').count() === 0, 'Alerta some do formulário');
 await dlg(p).locator('.people-close-control').click();
 await fechado(p);
@@ -168,8 +161,8 @@ await p.evaluate(() => {
   return d && d.localId;
 });
 await p.evaluate(() => CicluzCompras.abrir('produtos'));
-ok(await chip('Sem local (3)').count() === 1, 'Árvore refeita: os nós antigos somem e o alerta volta nos 3');
-await p.locator('#compras-produtos button', { hasText: 'Revincular grupo e local' }).click();
+ok(await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho) .c-nome .compras-situacao').count() === 3, 'Árvore refeita: os nós antigos somem e o alerta volta nos 3');
+await p.locator('#compras-produtos button[aria-label="Revincular grupo e local"]').click();
 await dlg(p).locator('.people-save-control').click();
 await fechado(p);
 depois = await produtos(p);
@@ -177,7 +170,7 @@ ok(depois.find((x) => x.codigo === '13001').localId === 's-vit2', 'Revincular ca
 ok(depois.find((x) => x.codigo === '13002').localId === 's-vit', 'Vínculo feito à mão não muda');
 
 /* ---------- 5) Reimportar não duplica ---------- */
-await p.locator('#compras-produtos button', { hasText: 'Importar do app de produtos' }).click();
+await p.locator('#compras-produtos button[aria-label="Importar do app de produtos"]').click();
 await dlg(p).getByLabel('Arquivo do backup (.xlsx)', { exact: true }).setInputFiles(ARQUIVO);
 await dlg(p).locator('.compras-importacao-linha', { hasText: 'Atualizam' }).waitFor({ timeout: 15000 });
 ok(await valorDaPrevia(p, 'Atualizam') === '4' && await valorDaPrevia(p, 'Entram (novos)') === '0', 'Reimportar: 4 atualizam, 0 novos');
@@ -196,7 +189,7 @@ let combinacoes = 0;
 for (const largura of [320, 390, 1024]) {
   const q = await abrirPagina(largura);
   await q.evaluate(() => CicluzProdutoImportacaoTela);
-  await q.locator('#compras-produtos button', { hasText: 'Importar do app de produtos' }).click();
+  await q.locator('#compras-produtos button[aria-label="Importar do app de produtos"]').click();
   await dlg(q).getByLabel('Arquivo do backup (.xlsx)', { exact: true }).setInputFiles(ARQUIVO);
   await dlg(q).locator('.compras-importacao-linha', { hasText: 'Entram (novos)' }).waitFor({ timeout: 15000 });
   for (const escuro of [false, true]) {

@@ -44,6 +44,8 @@
   const AREAS_VENDA = [['caixa', 'Caixa'], ['vitrine', 'Vitrine'], ['copa', 'Copa'], ['chapa', 'Chapa'], ['mesas', 'Mesas'], ['vasca_paes', 'Vasca de pães'], ['vitrine_paes', 'Vitrine de pães'], ['paes_empacotados', 'Pães empacotados'], ['mesa_paes', 'Mesa de pães'], ['frios', 'Frios'], ['bebidas', 'Bebidas'], ['laticinios', 'Laticínios'], ['mercearia', 'Mercearia'], ['estoque_bebidas', 'Estoque de bebidas'], ['biscoitos', 'Biscoitos'], ['dml_limpeza', 'DML / limpeza']];
   const MEDIDAS_BASE = ['UN', 'KG', 'G', 'LT', 'ML'];
   const UNIDADES_TRANSF = ['UN', 'G', 'ML'];
+  // Nomes das etapas definidos pelo Rodrigo (17/11/2026).
+  const ETAPAS = ['Cadastro geral', 'Cadastro produção/transformação', 'Cadastro específico', 'Cadastro promoção', 'Cadastro fiscal'];
 
   /** Campo com rótulo, dica opcional (só com ajuda ligada) e nota fixa opcional. */
   function campoP(rotulo, no, dica, nota, nomeCampo) {
@@ -112,17 +114,21 @@
         }
         const alertas = el('div', 'compras-alertas');
         form.append(alertas);
-        const sec = (titulo, sub) => {
+        // Cadastro em 5 etapas (pedido do Rodrigo, 17/11/2026), com a barra de etapas única do sistema. Só o lugar dos
+        // quadros mudou: campos, regras e o que é salvo são os mesmos.
+        const etapasNo = ETAPAS.map(() => el('div', 'compras-etapa'));
+        const [eGeral, eTransf, eLoja, ePromo, eFiscal] = etapasNo;
+        const sec = (titulo, sub, etapa) => {
           const s = el('fieldset', 'compras-fieldset');
           const lg = el('legend', null, titulo);
           s.append(lg);
           if (sub) s.append(el('p', 'compras-fieldset-sub compras-largo', sub));
-          form.append(s);
+          etapa.append(s);
           return s;
         };
 
         /* ===== Produto (Identificação) ===== */
-        const s1 = sec('Produto', 'Identificação e apresentação no catálogo');
+        const s1 = sec('Produto', 'Identificação e apresentação no catálogo', eGeral);
         const status = seletor([['ativo', 'Ativo'], ['inativo', 'Inativo']], p?.status || 'ativo');
         const ajuda = interruptor('Habilitar ajuda', p?.habilitarAjuda);
         const liberado = interruptor('Liberado para compra', p ? p.liberadoCompra : true, 'Só produto liberado aparece no agendamento e na solicitação de compra.');
@@ -164,7 +170,7 @@
         s1.append(campoDescricao);
 
         /* Como se compra */
-        const s1b = sec('Como se compra', 'Embalagem e unidade de compra');
+        const s1b = sec('Como se compra', 'Embalagem e unidade de compra', eGeral);
         const emb = seletor(unidades.concat(p?.embalagem && !unidades.includes(p.embalagem) ? [p.embalagem] : []), p?.embalagem || '', 'Selecione');
         const cde = seletor(['C/', 'DE'], p?.cDe || 'DE');
         const qtdEmb = entrada('number', p?.qtdEmbalagem ?? 1, { min: 1, step: 1 });
@@ -179,7 +185,7 @@
         s1b.append(campoP('Embalagem', emb, DICAS.embalagem), campoP('C/ ou DE', cde, DICAS.cDe), campoP('Qt. embalagem', qtdEmb, DICAS.qtd, '', 'qtdEmbalagem'), campoP('Medida de compra', medCompra, DICAS.medidaCompra), campoP('Quantidade da embalagem', aprox, DICAS.aproximado), campoComo, avisoComo, U.nota('As siglas vêm do cadastro de Unidades de medida (Compras).'));
 
         /* ===== Revenda ou transformação ===== */
-        const s2 = sec('Revenda ou transformação', 'Classificação e operação do produto');
+        const s2 = sec('Revenda ou transformação', 'Classificação e operação do produto', eGeral);
         const tipo = seletor([['revenda', 'Revenda'], ['transformacao', 'Transformação']], p?.tipo || 'revenda');
         const grupo = seletor(grupos.filter((g) => g.ativo || g.id === p?.grupoId).map((g) => [g.id, g.nome]), p?.grupoId || '', 'Selecione o grupo');
         const sub = el('select');
@@ -191,7 +197,7 @@
         };
         montarSub(true);
         s2.append(campoP('Tipo', tipo), campoP('Grupo de mercadorias *', grupo, DICAS.grupo, 'Vem do cadastro MER - Grupos de Mercadorias.', 'grupoId'), campoP('Subgrupo', sub, null, 'Quando o subgrupo tem regra própria, ela vale no lugar da do grupo.'));
-        s2.append(el('p', 'compras-fieldset-sub compras-largo', 'Desta loja — estoque, pontos de venda e preço'));
+        const sLoja = sec('Desta loja', 'Estoque, pontos de venda e preço', eLoja);
         // Setor de estoque = nó da árvore de locais (vínculo pelo id). Texto antigo sem nó continua como opção, com o alerta.
         const textosSemNo = locais.concat(p?.setorEstoque && !locais.includes(p.setorEstoque) ? [p.setorEstoque] : []).filter((t) => !nosLocais.some((n) => n.nome === t));
         const valorSetor = p?.localId && nosLocais.some((n) => n.id === p.localId) ? p.localId : (p?.setorEstoque ? 'txt:' + p.setorEstoque : '');
@@ -213,7 +219,7 @@
         const calculado = entrada('text', '', { readOnly: true });
         const saldo = entrada('text', p ? D.numero(p.saldo) + ' ' + (p.unidade || '') : '0', { readOnly: true });
         const campoMargem = campoP('Margem (%)', margem, null, '', 'margem'); campoMargem.append(notaMargem);
-        s2.append(
+        sLoja.append(
           campoP('Setor de estoque', setor, DICAS.setorEstoque, 'Escolhido na árvore Área / Setor / Local do S2.'),
           campoP('Área', area),
           campoP('Estoque mín.', min, DICAS.estoqueMin, '', 'estoqueMin'),
@@ -240,11 +246,13 @@
         const gradeTransf = el('div', 'compras-grade-2');
         gradeTransf.append(campoP('Precisão', precisao, DICAS.precisao), campoP('Quantidade', qtdTransf, DICAS.qtdTransf), campoP('Unidade', unidTransf, DICAS.unidTransf), campoP('Produto receituário', receituario, DICAS.receituario), campoP('Ref. receituário', refRec, DICAS.refReceituario));
         const cv = campoP('Validação de quantidade (automática)', validacaoQtd); cv.classList.add('compras-largo'); gradeTransf.append(cv);
-        caixaTransf.append(el('h4', null, 'Transformação · Quantidade, unidade e receituário'), gradeTransf);
-        s2.append(caixaTransf);
+        caixaTransf.append(gradeTransf);
+        const sTransf = sec('Transformação', 'Quantidade, unidade e receituário', eTransf);
+        const notaTransf = el('p', 'profiles-note compras-largo', 'Este produto está como Revenda. A transformação só é preenchida quando o Tipo, na etapa 1, é Transformação.');
+        sTransf.append(notaTransf, caixaTransf);
 
         /* ===== Fiscal ===== */
-        const s3 = sec('Fiscal', 'Classificação puxada pelo grupo de mercadorias');
+        const s3 = sec('Fiscal', 'Classificação puxada pelo grupo de mercadorias', eFiscal);
         const fiscalTopo = el('div', 'compras-largo compras-fiscal-topo');
         const fiscalAtual = { ...(p?.fiscal || {}) };
         const fNcm = entrada('text', fiscalAtual.ncm || '', { inputMode: 'numeric', maxLength: 8 });
@@ -262,7 +270,9 @@
           campoP('IBS %', leitura.aliquotaIbs), campoP('CBS %', leitura.aliquotaCbs), todos);
 
         /* ===== Promoção (só revenda) ===== */
-        const s4 = sec('Promoção', 'Condições e período de oferta');
+        const s4 = sec('Promoção', 'Condições e período de oferta', ePromo);
+        const notaPromo = el('p', 'profiles-note', 'Promoção vale só para produto de Revenda. Este produto está como Transformação (etapa 1).');
+        ePromo.append(notaPromo);
         const listaPromo = el('div', 'compras-largo compras-promocoes');
         const precoPromo = el('p', 'compras-texto-auto compras-largo');
         const addPromo = botao('+ Adicionar promoção', () => { promocoes.push({ tipo: 'valor', valor: null, descontoFracao: null, horaInicio: '', horaFim: '', dias: [true, true, true, true, true, true, true], validaAte: '' }); desenharPromos(); atualizar(); });
@@ -303,7 +313,7 @@
         desenharPromos();
 
         /* ===== Conversões de unidade ===== */
-        const s5 = sec('Conversões de unidade');
+        const s5 = sec('Conversões de unidade', null, eGeral);
         const listaConv = el('div', 'compras-largo compras-conversoes');
         s5.append(listaConv, botao('+ Adicionar conversão', () => { conversoes.push({ unidade: '', quantidade: 1, unidadesIndividuais: 1 }); desenharConv(); }));
         function desenharConv() {
@@ -326,7 +336,7 @@
         if (!novo) {
           const rod = el('div', 'compras-form-rodape');
           rod.append(botao('Histórico de nomes', () => X.historicoDeNomes(p)));
-          form.append(rod);
+          eGeral.append(rod);
         }
 
         /* ===== Prévias ao vivo ===== */
@@ -390,6 +400,8 @@
           const ehTransf = tipo.value === 'transformacao';
           caixaTransf.style.display = ehTransf ? '' : 'none';
           s4.style.display = ehTransf ? 'none' : '';
+          notaPromo.style.display = ehTransf ? '' : 'none';
+          notaTransf.style.display = ehTransf ? 'none' : '';
           validacaoQtd.value = R.montarValidacaoQtd(descricao.value, precisao.value, qtdTransf.value, unidTransf.value);
           const comPromo = R.calcularPrecoVendaComPromocao({ precoVenda: preco, promocoes: promocoes });
           precoPromo.textContent = promocoes.length ? 'Preço agora: ' + D.moeda(comPromo) + (comPromo < preco ? ' (com promoção)' : ' (sem promoção valendo agora)') : '';
@@ -411,10 +423,32 @@
         atualizarFiscal();
         avisarEanRepetido();
 
+        /* ===== Etapas: barra no topo, Voltar/Avançar/Salvar embaixo (mesmo rodapé do cadastro de fornecedor) ===== */
+        let atual = 0;
+        const voltar = botao('Voltar', () => ir(atual - 1), 'btn secondary footer-cancel-accent form-back-action');
+        voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
+        const avancar = botao('Avançar', () => ir(atual + 1), 'btn form-next-action');
+        const salvarFim = el('button', 'btn', 'Salvar');
+        salvarFim.type = 'submit';
+        const nav = el('div', 'compras-form-rodape compras-etapas-nav');
+        const barra = window.CicluzStepper.create({ steps: ETAPAS.map((label) => ({ label })), current: 0, label: 'Etapas do cadastro do produto', onSelect: (i) => ir(i) });
+        function ir(i) {
+          atual = Math.max(0, Math.min(etapasNo.length - 1, i));
+          etapasNo.forEach((q, k) => { q.style.display = k === atual ? '' : 'none'; });
+          barra.set(atual);
+          // Voltar a partir da 2ª etapa, Avançar até a penúltima; Salvar em todas na edição e só na última no cadastro novo.
+          const ultima = atual === etapasNo.length - 1;
+          nav.replaceChildren(...[atual > 0 && voltar, !ultima && avancar, (!novo || ultima) && salvarFim].filter(Boolean));
+          if (form.isConnected) barra.el.scrollIntoView({ block: 'start' });
+        }
+        form.append(barra.el, ...etapasNo, nav);
+        ir(0);
+
         return {
           alertas, status, ajuda, liberado, foto, ean, marca, nome, gramatura, medida, balanca, validade, emb, cde, qtdEmb, medCompra, aprox,
           tipo, grupo, sub, setor, area, min, max, local1, local2, setor1, setor2, areaVenda, custo, margem, auto, pontual,
           precisao, qtdTransf, unidTransf, receituario, refRec, fNcm, fCest, fCat, descricaoAtual, precoCalculado, atualizarFiscal, form,
+          irParaEtapaDe: (no) => { const k = etapasNo.indexOf(no.closest('.compras-etapa')); if (k >= 0 && k !== atual) ir(k); },
         };
       },
       salvar: (c) => salvar(c),
@@ -423,7 +457,7 @@
     function mostrarErro(c, msg, campo) {
       c.alertas.replaceChildren(Object.assign(el('p', 'compras-alerta tom-negativo'), { textContent: msg }));
       const alvo = campo && c.form.querySelector('[data-campo="' + campo + '"] :is(input,select)');
-      if (alvo) { alvo.focus(); alvo.scrollIntoView({ block: 'center' }); }
+      if (alvo) { c.irParaEtapaDe(alvo); alvo.focus(); alvo.scrollIntoView({ block: 'center' }); }
       return msg;
     }
 
