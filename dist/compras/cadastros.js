@@ -150,6 +150,7 @@
     const escrito = () => (dia && mes && MESES_CURTOS[Number(mes) - 1] ? dia + '/' + MESES_CURTOS[Number(mes) - 1] : dia || mes ? (dia || '') + (mes ? '/' + mes : '') : '');
     const input = entrada('text', dia && mes ? escrito() : '', { inputMode: 'numeric', placeholder: 'DD/MM', maxLength: 6, autocomplete: 'off' });
     input.setAttribute('aria-label', nomeCampo);
+    input.dataset.textoLivre = '1'; // "25/jan" não é nome: fica fora das maiúsculas automáticas
     const botaoPainel = el('button', 'shortcut-circle compras-redondo');
     botaoPainel.type = 'button'; botaoPainel.title = 'Escolher o dia e o mês'; botaoPainel.setAttribute('aria-label', nomeCampo + ': escolher o dia e o mês');
     botaoPainel.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/></svg>';
@@ -564,7 +565,8 @@
         }
         pintarTipo();
 
-        /* Buscas (consultas-publicas.js): nunca trocam o que a pessoa digitou; se o serviço falhar, avisam discretamente
+        /* Buscas (consultas-publicas.js): na primeira consulta só preenchem o que está livre; com um CEP ou CNPJ DIFERENTE do
+           que estava no campo, trocam os dados antigos pelos novos (regra do Rodrigo, 17/11/2026). Se o serviço falhar, avisam discretamente
            e o cadastro segue à mão. Cada número é consultado uma vez. Um campo é "livre" para a consulta quando está
            vazio ou quando ainda tem exatamente o valor que uma consulta anterior pôs (a pessoa não mexeu): assim, ao
            trocar o CEP ou o CNPJ, o resultado novo substitui o da consulta anterior em bloco (não sobra a UF antiga). */
@@ -587,6 +589,8 @@
         async function buscarCep() {
           const n = D.digitos(cep.value);
           if (n.length !== 8 || n === cepConsultado) return;
+          // CEP diferente do que estava: o endereço novo substitui o antigo, mesmo o que veio gravado ou foi digitado.
+          if (cepConsultado) [rua, bairro, cidade, uf].forEach((c) => daConsulta.set(c, c.value));
           cepConsultado = n;
           avisoCep.textContent = 'Buscando o endereço do CEP…';
           const r = await C.cep(n);
@@ -602,6 +606,8 @@
         async function buscarCnpj() {
           const n = D.digitos(cnpj.value);
           if (n.length !== 14 || n === cnpjConsultado || !R().cnpjValid(n)) return;
+          // CNPJ diferente do que estava é outra empresa: os dados dela substituem os antigos.
+          if (cnpjConsultado) [razao, nome, cep, rua, numero, complemento, bairro, cidade, uf].forEach((c) => daConsulta.set(c, c.value));
           cnpjConsultado = n;
           avisoCnpj.textContent = 'Buscando os dados da empresa pelo CNPJ…';
           const r = await C.cnpj(n);
