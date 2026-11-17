@@ -47,7 +47,8 @@
   /** Responsáveis gravados; o primeiro formato (um responsável só, em "responsavel") vira o primeiro da lista. */
   function responsaveisDe(v) {
     const lista = Array.isArray(v.responsaveis) ? v.responsaveis : v.responsavel ? [v.responsavel] : [];
-    return lista.map((r) => ({ ...RESPONSAVEL_VAZIO(), ...r, id: r.id || S.novoId('resp'), cargo: nomeDoCargo(r.cargo) ? r.cargo : '', endereco: { ...RESPONSAVEL_VAZIO().endereco, ...(r.endereco || {}) } }));
+    const nomeArrumado = (v0) => (typeof window.formatSystemName === 'function' ? window.formatSystemName(cheio(v0)) : cheio(v0));
+    return lista.map((r) => ({ ...RESPONSAVEL_VAZIO(), ...r, nome: nomeArrumado(r.nome), id: r.id || S.novoId('resp'), cargo: nomeDoCargo(r.cargo) ? r.cargo : '', endereco: { ...RESPONSAVEL_VAZIO().endereco, ...(r.endereco || {}) } }));
   }
 
   /** O que impede salvar ('' quando está em ordem): empresa e endereço obrigatórios, menos o complemento; responsáveis opcionais. */
