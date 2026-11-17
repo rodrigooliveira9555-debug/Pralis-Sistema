@@ -27,6 +27,13 @@
   /** Unidade de medida do patrimônio e da capacidade de produção (um só conjunto, dois campos diferentes). */
   const UNIDADES_MEDIDA = [['UN', 'UN - Unidade'], ['KG', 'KG - Quilo'], ['LT', 'LT - Litro'], ['MT', 'MT - Metro']];
   const UNIDADES_DIMENSAO = [['m', 'm'], ['cm', 'cm']];
+  const UNIDADES_PESO = [['kg', 'kg'], ['g', 'g']];
+  /**
+   * Voltagens oferecidas (19/11/2026). Os exemplos da reunião (110 V, 220 V, 220 V bifásico, 220 V trifásico, 380 V) mais 127 V e Bivolt,
+   * comuns em equipamentos. A lista é de escolha: o que já estava digitado em cadastro antigo continua aparecendo como "(cadastro anterior)".
+   * Não se presume que toda combinação de tensão e fases valha para todo equipamento: **a lista deve ser validada com o responsável técnico**.
+   */
+  const VOLTAGENS = ['110 V', '127 V', '220 V', '220 V bifásico', '220 V trifásico', '380 V', 'Bivolt (110/220 V)'];
   const TIPOS_ENERGIA = [['gas', 'Gás'], ['eletrica', 'Elétrica'], ['solar', 'Solar']];
   const UNIDADES_GAS = [['kg/h', 'kg/h'], ['m3/h', 'm³/h']];
   /** Materiais oferecidos na especificação técnica (escolha múltipla; "Outro material" aceita texto livre). */
@@ -74,7 +81,7 @@
    * Consumo energético e Potência passaram a ter campos próprios (altura/largura/profundidade, materiais, tipo de energia).
    * O que já estava salvo continua no cadastro e aparece na ficha; só não é mais editado aqui.
    */
-  const TECNICAS_OCULTAS = ['modeloTecnico', 'capacidade', 'dimensoes', 'material', 'consumo', 'potencia'];
+  const TECNICAS_OCULTAS = ['modeloTecnico', 'capacidade', 'dimensoes', 'material', 'consumo', 'potencia', 'serieTecnica', 'peso'];
   const POR_CATEGORIA = {
     informatica: ['serieTecnica', 'anoFabricacao', 'voltagem', 'potencia', 'consumo', 'cor', 'peso', 'dimensoes'],
     eletronico: ['serieTecnica', 'anoFabricacao', 'voltagem', 'potencia', 'consumo', 'cor', 'peso', 'dimensoes'],
@@ -186,6 +193,8 @@
     // Dados do cadastro de 18/11/2026 (todos opcionais; cadastro antigo abre e salva igual).
     o.usadoNaProducao = Boolean(o.usadoNaProducao); o.informarEspecificacao = Boolean(o.informarEspecificacao);
     o.utensiliosIds = [...new Set(lista(o.utensiliosIds).filter(Boolean))];
+    // Responsáveis (19/11/2026): colaboradores vinculados ao local, por id; o campo antigo "responsavel" continua sendo o primeiro.
+    o.responsaveis = lista(o.responsaveis).filter((r) => r && (r.colaboradorId || txt(r.nome))).map((r) => ({ colaboradorId: r.colaboradorId || '', nome: txt(r.nome), cargo: txt(r.cargo) }));
     o.materiais = lista(o.materiais).map(txt).filter((m, i, a) => m && a.findIndex((x) => x.toLowerCase() === m.toLowerCase()) === i);
     o.conjunto = Boolean(o.conjunto); o.composto = Boolean(o.composto);
     o.vinculados = [...new Set(lista(o.vinculados).filter(Boolean))];
@@ -216,6 +225,20 @@
         if (u === o.id) return 'Um patrimônio não pode usar a si mesmo como utensílio.';
         if (!bens.some((x) => x.id === u)) return 'Um utensílio selecionado não existe mais.';
       }
+      // Especificação técnica (fica na etapa 1 desde 19/11/2026)
+      const t = o.tecnicas || {};
+      const dm = o.dimensoesFisicas;
+      if (dm) {
+        if (dm.unidade && !naLista(UNIDADES_DIMENSAO, dm.unidade)) return 'Unidade das dimensões inválida.';
+        for (const [k, rot] of [['altura', 'A altura'], ['largura', 'A largura'], ['profundidade', 'A profundidade'], ['peso', 'O peso']]) if (dm[k] != null && !(typeof dm[k] === 'number' && dm[k] > 0)) return rot + ' deve ser um número maior que zero.';
+        if (dm.pesoUnidade && !naLista(UNIDADES_PESO, dm.pesoUnidade)) return 'Unidade do peso inválida.';
+      }
+      if (lista(o.materiais).some((m) => m.length > 80)) return 'O nome de cada material deve ter no máximo 80 caracteres.';
+      if (o.energia && !['nenhuma', 'gas', 'eletrica', 'solar'].includes(o.energia)) return 'Tipo de energia inválido.';
+      const g = o.consumoGas;
+      if (g && g.valor != null) { if (!(typeof g.valor === 'number' && g.valor > 0)) return 'O consumo de gás por hora deve ser um número maior que zero.'; if (!naLista(UNIDADES_GAS, g.unidade)) return 'Escolha a unidade do consumo de gás (kg/h ou m³/h).'; }
+      if (o.potenciaW != null && !(typeof o.potenciaW === 'number' && o.potenciaW > 0)) return 'A potência elétrica deve ser um número maior que zero.';
+      if (t.anoFabricacao && !(Number.isInteger(Number(t.anoFabricacao)) && +t.anoFabricacao >= 1800 && +t.anoFabricacao <= +hoje.slice(0, 4) + 1)) return 'Ano de fabricação inválido.';
       const np = txt(o.numeroPatrimonio);
       if (np && bens.some((x) => x.id !== o.id && txt(x.numeroPatrimonio).toLowerCase() === np.toLowerCase())) return 'Já existe um bem com o número de patrimônio ' + np + '.';
       if (dinheiroRuim(o.valor)) return 'O valor do patrimônio não pode ser negativo.';
@@ -249,6 +272,11 @@
       const l = o.localizacao || {};
       if (txt(l.cnpj) && !cnpjValid(l.cnpj)) return 'O CNPJ da empresa proprietária é inválido.';
       const r = o.responsavel || {};
+      const idsResp = new Set();
+      for (const x of o.responsaveis || []) {
+        if (!txt(x.nome)) return 'Há um responsável sem nome.';
+        if (x.colaboradorId) { if (idsResp.has(x.colaboradorId)) return 'O responsável ' + x.nome + ' está repetido.'; idsResp.add(x.colaboradorId); }
+      }
       if (r.tipo && !naLista(TIPOS_RESPONSABILIDADE, r.tipo)) return 'Tipo de responsabilidade inválido.';
       if (r.dataAtribuicao && !dataValida(r.dataAtribuicao)) return 'Data de atribuição do responsável inválida.';
       let anterior = '';
@@ -262,18 +290,6 @@
       return '';
     };
     const etapa4 = () => {
-      const t = o.tecnicas || {};
-      const dm = o.dimensoesFisicas;
-      if (dm) {
-        if (dm.unidade && !naLista(UNIDADES_DIMENSAO, dm.unidade)) return 'Unidade das dimensões inválida.';
-        for (const [k, rot] of [['altura', 'A altura'], ['largura', 'A largura'], ['profundidade', 'A profundidade']]) if (dm[k] != null && !(typeof dm[k] === 'number' && dm[k] > 0)) return rot + ' deve ser um número maior que zero.';
-      }
-      if (lista(o.materiais).some((m) => m.length > 80)) return 'O nome de cada material deve ter no máximo 80 caracteres.';
-      if (o.energia && !['nenhuma', 'gas', 'eletrica', 'solar'].includes(o.energia)) return 'Tipo de energia inválido.';
-      const g = o.consumoGas;
-      if (g && g.valor != null) { if (!(typeof g.valor === 'number' && g.valor > 0)) return 'O consumo de gás por hora deve ser um número maior que zero.'; if (!naLista(UNIDADES_GAS, g.unidade)) return 'Escolha a unidade do consumo de gás (kg/h ou m³/h).'; }
-      if (o.potenciaW != null && !(typeof o.potenciaW === 'number' && o.potenciaW > 0)) return 'A potência elétrica deve ser um número maior que zero.';
-      if (t.anoFabricacao && !(Number.isInteger(Number(t.anoFabricacao)) && +t.anoFabricacao >= 1800 && +t.anoFabricacao <= +hoje.slice(0, 4) + 1)) return 'Ano de fabricação inválido.';
       const ids = new Set();
       for (const p of o.pecas) {
         if (!txt(p.nome)) return 'Informe o nome de cada peça (ou remova a linha).';
@@ -348,10 +364,10 @@
     return [...chaves].filter((k) => !IGNORAR.has(k) && JSON.stringify((antes || {})[k] ?? null) !== JSON.stringify((depois || {})[k] ?? null)).sort();
   }
 
-  const etapas = () => ['Cadastro e identificação', 'Imagens e documentação', 'Localização e responsabilidade', 'Composição e especificação técnica', 'Aquisição, financeiro e depreciação', 'Manutenção, controle e revisão'];
+  const etapas = () => ['Cadastro e identificação', 'Imagens e documentação', 'Localização e responsabilidade', 'Composição e componentes', 'Aquisição, financeiro e depreciação', 'Manutenção, controle e revisão'];
 
   return {
-    CATEGORIAS_PATRIMONIO, CATEGORIAS_PRODUCAO, CATEGORIAS_UTENSILIO, UNIDADES_MEDIDA, UNIDADES_DIMENSAO, TIPOS_ENERGIA, UNIDADES_GAS, MATERIAIS, TECNICAS_OCULTAS,
+    CATEGORIAS_PATRIMONIO, CATEGORIAS_PRODUCAO, CATEGORIAS_UTENSILIO, UNIDADES_MEDIDA, UNIDADES_DIMENSAO, UNIDADES_PESO, VOLTAGENS, TIPOS_ENERGIA, UNIDADES_GAS, MATERIAIS, TECNICAS_OCULTAS,
     CATEGORIAS_NOVAS, TIPOS_BEM, NATUREZAS, SITUACOES, CONSERVACAO, TIPOS_IMAGEM, TIPOS_DOCUMENTO, TIPOS_RESPONSABILIDADE, TIPOS_MOVIMENTACAO, TIPOS_AQUISICAO, METODOS_DEPRECIACAO,
     TIPOS_MANUTENCAO, SITUACOES_MANUTENCAO, SITUACOES_PECA, MOTIVOS_BAIXA, RESULTADOS_INSPECAO, TIPOS_ARQUIVO_IMAGEM, TIPOS_ARQUIVO_DOCUMENTO, LIMITES, TECNICAS,
     camposTecnicos, totalPeca, totaisComponentes, valorTotalAquisicao, prazoRestante, proximoNumero, criaCiclo, valorDoConjunto, normalizar, validar, mudancas, etapas, dataValida, r2,

@@ -162,7 +162,6 @@
         let conserv = v.conservacao || '';
         const chipsCons = U.chips([['', 'Não informado'], ...PD.CONSERVACAO], conserv, (x) => { conserv = x; });
         const dataCad = dt(v.dataCadastro || (novo ? hoje : ''));
-        const codInterno = livre(texto(v.codigoInterno, { maxLength: 60 }));
         const opcUnidade = [...PD.UNIDADES_MEDIDA];
         if (v.unidade && !opcUnidade.some(([k]) => k === v.unidade)) opcUnidade.push([v.unidade, v.unidade + ' (cadastro anterior)']);
         const unidade = seletor(opcUnidade, v.unidade || '', 'Unidade'); const quantidade = entrada('number', v.quantidade != null ? v.quantidade : '', { min: 1, step: 1, inputMode: 'numeric', placeholder: 'Ex.: 1' });
@@ -207,14 +206,13 @@
         const tec0 = v.tecnicas || {};
         const temDadosEspec = Boolean(Object.keys(tec0).length || v.dimensoesFisicas || (v.materiais || []).length || (v.energia && v.energia !== 'nenhuma'));
         const espec = U.quadroSituacao('Informar especificação técnica?', v.informarEspecificacao != null ? Boolean(v.informarEspecificacao) : temDadosEspec, { textos: ['Sim', 'Não'], aoMudar: () => pintarEspec() });
-        const notaEspec1 = el('p', 'profiles-note compras-largo'); notaEspec1.setAttribute('aria-live', 'polite');
-        const secEspec1 = secao('Especificação técnica', espec, notaEspec1);
+        const secEspec1 = secao('Especificação técnica', espec);
         const e1 = el('div', 'compras-etapa');
         e1.append(secao('Identificação', campo('Categoria *', categoria), campo('Nome simplificado *', nome), campo('Nome técnico', nomeTec), campo('Marca', marca), campo('Modelo', modelo), campo('Número de série', serie),
           (() => { const l = el('label', 'compras-campo'); const ln = el('div', 'patrimonio-linha-campo'); numero.setAttribute('aria-label', 'Número de patrimônio'); ln.append(numero, gerar); l.append(el('span', 'compras-rotulo', 'Número de patrimônio'), ln, el('small', 'profiles-note', 'Único entre os bens; deixe em branco ou gere o próximo.')); return l; })(), campo('Valor do Patrimônio (R$)', valor.no), campo('Descrição detalhada', descricao), audio.no),
-        secao('Classificação', campo('Tipo de bem', tipoBem), campo('Natureza', natureza), rotSit, sitNota, rotCons, campo('Data de cadastro', dataCad), campo('Código interno complementar', codInterno)),
+        secao('Classificação', campo('Tipo de bem', tipoBem), campo('Natureza', natureza), rotSit, sitNota, rotCons, campo('Data de cadastro', dataCad)),
         secao('Quantidade', campo('Unidade de medida', unidade), campo('Quantidade de unidades', quantidade), conjunto),
-        secProducao, secEspec1);
+        secEspec1, secProducao);
         // Tipo de bem sugerido pela categoria, enquanto a pessoa não escolher.
         let tipoTocado = Boolean(v.tipoBem);
         tipoBem.addEventListener('change', () => { tipoTocado = true; });
@@ -309,16 +307,54 @@
 
         /* ---------- Etapa 3 ---------- */
         const sessaoEmpresa = window.CicluzSessao && window.CicluzSessao.perfil && window.CicluzSessao.perfil.empresa ? window.CicluzSessao.perfil.empresa.nome : '';
-        const empresa = texto(loc.empresa != null ? loc.empresa : novo ? sessaoEmpresa : '', { maxLength: 160 });
-        const cnpj = entrada('text', loc.cnpj || '', { inputMode: 'numeric', placeholder: '00.000.000/0000-00', maxLength: 18 }); cnpj.addEventListener('input', () => { cnpj.value = R().cnpjMask(cnpj.value); });
+        // Empresa (19/11/2026): a empresa do contexto atual; o CNPJ vem do cadastro de empresas que já existe (mesma empresa, pelo nome), se houver.
+        const cnpjDoCadastro = (() => {
+          try { const P = window.CicluzPeople; const lista = P && P.get ? P.get().companies : []; const n = U.dobrar(sessaoEmpresa); const c = n ? (lista || []).find((x) => U.dobrar(x.name) === n) : null; return c && c.cnpj ? R().cnpjMask(c.cnpj) : ''; } catch (e) { return ''; }
+        })();
+        const empresa = texto(loc.empresa ? loc.empresa : sessaoEmpresa, { maxLength: 160 });
+        const cnpj = entrada('text', loc.cnpj || cnpjDoCadastro, { inputMode: 'numeric', placeholder: '00.000.000/0000-00', maxLength: 18 }); cnpj.addEventListener('input', () => { cnpj.value = R().cnpjMask(cnpj.value); });
         const unidadeLoc = texto(loc.unidade); const estab = texto(loc.estabelecimento); const departamento = texto(loc.departamento); const ambiente = texto(loc.ambiente); const sala = texto(loc.sala, { maxLength: 60 }); const andar = texto(loc.andar, { maxLength: 40 });
         const localizacaoDet = livre(texto(loc.detalhe, { maxLength: 200, placeholder: 'Ex.: ao lado do balcão de atendimento' }));
-        const local = seletor(S.locais().map((l) => [l.id, l.caminho]), v.localId || '', 'Sem local da árvore');
+        const local = seletor(S.locais().map((l) => [l.id, l.caminho]), v.localId || '', 'Selecione o local');
         const gente = window.CicluzPeople && window.CicluzPeople.selectable ? window.CicluzPeople.selectable() : [];
-        const colab = seletor(gente.map((p) => [p.id, p.name + (p.active ? '' : ' (inativo)')]), resp.colaboradorId || '', gente.length ? 'Sem colaborador' : 'Nenhum colaborador cadastrado');
         const respNome = texto(resp.nome, { placeholder: 'Se não for colaborador, digite o nome' }); const respCargo = texto(resp.cargo, { maxLength: 80 }); const respDep = texto(resp.departamento);
         const respData = dt(resp.dataAtribuicao || ''); const respTipo = seletor(PD.TIPOS_RESPONSABILIDADE, resp.tipo || '', 'Tipo de responsabilidade');
-        colab.addEventListener('change', () => { const p = gente.find((x) => x.id === colab.value); if (p) { respNome.value = p.name; if (!respCargo.value) respCargo.value = p.jobName || ''; } });
+        /* Responsáveis (19/11/2026): os colaboradores ATIVOS vinculados ao local escolhido (áreas e setores do cadastro de pessoas; o vínculo
+           vale para o local e para o que está dentro dele). Pode haver vários; nenhum é escolhido ao acaso e sem vínculo a tela avisa.
+           Um colaborador de fora do local só entra se a pessoa o adicionar. O texto "Responsável atual" só é digitado quando não há colaborador. */
+        const sel0 = Array.isArray(v.responsaveis) && v.responsaveis.length ? v.responsaveis : (resp.colaboradorId ? [{ colaboradorId: resp.colaboradorId, nome: resp.nome || '', cargo: resp.cargo || '' }] : []);
+        const respSel = new Map(sel0.map((r) => [r.colaboradorId, { ...r }])); let respTocado = sel0.length > 0;
+        const vinculadosAoLocal = (localId) => {
+          try {
+            const P = window.CicluzPeople; const O = window.CicluzOrg; if (!P || !P.get || !localId) return [];
+            const unidades = new Set([localId]); const pilha = [localId];
+            while (pilha.length) { const x = pilha.pop(); ((O && O.childrenOf && O.childrenOf(x)) || []).forEach((c) => { if (!unidades.has(c.id)) { unidades.add(c.id); pilha.push(c.id); } }); }
+            return P.get().people.filter((p) => p.status === 'ATIVO' && (p.orgUnitIds || []).some((id) => unidades.has(id))).map((p) => ({ id: p.id, name: p.name, jobName: p.jobName || '' })).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+          } catch (e) { return []; }
+        };
+        const boxResp = el('div', 'compras-campo compras-largo patrimonio-responsaveis'); const listaResp = el('div', 'patrimonio-resp-lista'); const msgResp = el('p', 'profiles-note'); msgResp.setAttribute('role', 'status');
+        const outroColab = seletor(gente.map((p) => [p.id, p.name + (p.active ? '' : ' (inativo)')]), '', gente.length ? 'Adicionar outro colaborador' : 'Nenhum colaborador cadastrado'); outroColab.setAttribute('aria-label', 'Adicionar outro colaborador');
+        function sincronizarResp() {
+          const todos = [...respSel.values()];
+          if (todos.length) { respNome.value = todos.map((x) => x.nome).join(', '); respNome.readOnly = true; if (!respCargo.value && todos[0].cargo) respCargo.value = todos[0].cargo; } else respNome.readOnly = false;
+        }
+        function pintarResp() {
+          const ligados = vinculadosAoLocal(local.value); const ids = new Set(ligados.map((p) => p.id));
+          if (!respTocado && ligados.length) ligados.forEach((p) => respSel.set(p.id, { colaboradorId: p.id, nome: p.name, cargo: p.jobName }));
+          const linhas = [...ligados.map((p) => ({ ...p, fora: false })), ...[...respSel.values()].filter((r) => !ids.has(r.colaboradorId)).map((r) => ({ id: r.colaboradorId, name: r.nome, jobName: r.cargo, fora: true }))];
+          listaResp.replaceChildren(...linhas.map((p) => {
+            const l = el('label', 'compras-interruptor'); const c = entrada('checkbox'); c.checked = respSel.has(p.id); c.setAttribute('aria-label', 'Responsável: ' + p.name);
+            c.onchange = () => { respTocado = true; if (c.checked) respSel.set(p.id, { colaboradorId: p.id, nome: p.name, cargo: p.jobName || '' }); else respSel.delete(p.id); pintarResp(); };
+            l.append(c, el('span', null, p.name + (p.jobName ? ' — ' + p.jobName : '') + (p.fora ? ' (fora deste local)' : ''))); return l;
+          }));
+          msgResp.textContent = !local.value ? 'Escolha o local para ver os colaboradores vinculados a ele.'
+            : ligados.length ? ligados.length + (ligados.length === 1 ? ' colaborador vinculado a este local.' : ' colaboradores vinculados a este local.')
+              : 'Nenhum colaborador está vinculado a este local. Vincule em Gestão de Pessoas (áreas e setores do colaborador) ou adicione um colaborador abaixo.';
+          sincronizarResp();
+        }
+        local.addEventListener('change', () => { if (!respTocado) respSel.clear(); pintarResp(); });
+        outroColab.addEventListener('change', () => { const p = gente.find((x) => x.id === outroColab.value); if (p) { respTocado = true; respSel.set(p.id, { colaboradorId: p.id, nome: p.name, cargo: p.jobName || '' }); } outroColab.value = ''; pintarResp(); });
+        boxResp.append(el('span', 'compras-rotulo', 'Responsáveis pelo patrimônio (colaboradores do local)'), listaResp, msgResp, outroColab);
         let movs = (v.movimentacoes || []).map((m) => ({ ...m })); const movsNovos = new Set();
         const tabMovs = el('div', 'patrimonio-tabela-box');
         function resumoLocal() { return [empresa.value.trim(), unidadeLoc.value.trim(), local.value ? S.nomeLocal(local.value) : '', ambiente.value.trim(), sala.value.trim()].filter(Boolean).join(' · '); }
@@ -351,10 +387,10 @@
           });
         }
         const e3 = el('div', 'compras-etapa');
-        e3.append(secao('Localização', campo('Empresa proprietária', empresa), campo('CNPJ da empresa', cnpj), campo('Unidade ou filial', unidadeLoc), campo('Estabelecimento', estab),
-          campo('Setor / local (Área › Setor › Local)', local, S.locais().length ? 'Da árvore de DES - Cadastros Geral Colaboradores.' : 'Cadastre a árvore em Saídas · Despesas → Cadastros Geral Colaboradores.'),
+        e3.append(secao('Localização', campo('Empresa proprietária', empresa, 'Preenchida com a empresa atual.'), campo('CNPJ da empresa', cnpj, cnpjDoCadastro || loc.cnpj ? 'Do cadastro de empresas.' : 'CNPJ não encontrado no cadastro de empresas: informe uma vez.'), campo('Unidade ou filial', unidadeLoc), campo('Estabelecimento', estab),
+          campo('Local do patrimônio (Área › Setor › Local)', local, S.locais().length ? 'Da árvore de DES - Cadastros Geral Colaboradores.' : 'Cadastre a árvore em Saídas · Despesas → Cadastros Geral Colaboradores.'),
           campo('Departamento', departamento), campo('Ambiente', ambiente), campo('Sala', sala), campo('Andar', andar), campo('Localização detalhada', localizacaoDet)),
-        secao('Responsável pelo patrimônio', campo('Colaborador', colab), campo('Responsável atual', respNome), campo('Cargo ou função', respCargo), campo('Departamento do responsável', respDep), campo('Data de atribuição', respData), campo('Tipo de responsabilidade', respTipo)),
+        secao('Responsável pelo patrimônio', boxResp, campo('Responsável atual', respNome), campo('Cargo ou função', respCargo), campo('Departamento do responsável', respDep), campo('Data de atribuição', respData), campo('Tipo de responsabilidade', respTipo)),
         secao('Movimentações', el('div', 'compras-form-rodape compras-largo patrimonio-barra-mov'), tabMovs));
         e3.querySelector('.patrimonio-barra-mov').append(botao('Registrar movimentação', janelaMov, 'btn secondary'));
 
@@ -363,49 +399,50 @@
         const nd = (x) => (x == null ? '' : String(x).replace('.', ','));
         const dimAlt = entrada('text', nd(dm0.altura), { inputMode: 'decimal', placeholder: 'Ex.: 1,80' }); const dimLarg = entrada('text', nd(dm0.largura), { inputMode: 'decimal', placeholder: 'Ex.: 0,90' }); const dimProf = entrada('text', nd(dm0.profundidade), { inputMode: 'decimal', placeholder: 'Ex.: 0,75' });
         const dimUn = seletor(PD.UNIDADES_DIMENSAO, dm0.unidade || 'm'); dimUn.setAttribute('aria-label', 'Unidade das dimensões');
-        /** Materiais: escolha múltipla com pesquisa, remoção e "Outro material" (texto livre, só neste cadastro; nada global é criado). */
-        function seletorMateriais(inicial) {
-          let sel = [...inicial]; let outroAberto = false;
-          const no = el('div', 'compras-campo compras-largo patrimonio-materiais');
-          const chosen = el('div', 'compras-chips patrimonio-materiais-sel'); const busca = livre(texto('', { placeholder: 'Pesquisar material', maxLength: 60 })); busca.setAttribute('aria-label', 'Pesquisar material');
-          const grupos = el('div', 'patrimonio-materiais-lista'); const outroBox = el('div', 'compras-form-rodape'); const outro = livre(texto('', { placeholder: 'Nome do material', maxLength: 80 })); outro.setAttribute('aria-label', 'Outro material');
-          const tem = (m) => sel.some((x) => x.toLowerCase() === m.toLowerCase());
-          const alternar = (m) => { sel = tem(m) ? sel.filter((x) => x.toLowerCase() !== m.toLowerCase()) : [...sel, m]; desenhar(); };
-          const addOutro = () => { const m = outro.value.trim(); if (!m) return; if (!tem(m)) sel = [...sel, m]; outro.value = ''; desenhar(); };
-          outroBox.append(outro, botao('Adicionar material', addOutro, 'btn secondary'));
-          outro.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addOutro(); } });
-          busca.addEventListener('input', () => desenhar());
-          function desenhar() {
-            chosen.replaceChildren(...(sel.length ? sel.map((m) => { const b2 = botao(m + ' ×', () => alternar(m), 'compras-chip ativo'); b2.setAttribute('aria-label', 'Remover material ' + m); return b2; }) : [el('small', 'profiles-note', 'Nenhum material selecionado.')]));
-            const q = U.dobrar(busca.value); const blocos = [];
-            PD.MATERIAIS.forEach(([titulo, itens]) => {
-              const f = itens.filter((m) => !q || U.dobrar(m).includes(q)); if (!f.length) return;
-              const g = el('div', 'patrimonio-materiais-grupo'); g.append(el('small', 'profiles-note', titulo));
-              const linha = el('div', 'compras-chips'); f.forEach((m) => { const b2 = botao(m, () => alternar(m), 'compras-chip' + (tem(m) ? ' ativo' : '')); b2.setAttribute('aria-pressed', String(tem(m))); linha.append(b2); });
-              g.append(linha); blocos.push(g);
-            });
-            const bo = botao('Outro material', () => { outroAberto = !outroAberto; desenhar(); }, 'compras-chip' + (outroAberto ? ' ativo' : '')); bo.setAttribute('aria-pressed', String(outroAberto));
-            const go = el('div', 'patrimonio-materiais-grupo'); const lo = el('div', 'compras-chips'); lo.append(bo); go.append(lo); blocos.push(go);
-            if (!blocos.length) blocos.push(el('small', 'profiles-note', 'Nenhum material encontrado.'));
-            grupos.replaceChildren(...blocos); outroBox.style.display = outroAberto ? '' : 'none';
-          }
-          no.append(el('span', 'compras-rotulo', 'Material'), chosen, busca, grupos, outroBox); desenhar();
-          return { no, valor: () => [...sel] };
+        const pesoVal = entrada('text', nd(dm0.peso), { inputMode: 'decimal', placeholder: 'Ex.: 85' }); const pesoUn = seletor(PD.UNIDADES_PESO, dm0.pesoUnidade || 'kg'); pesoUn.setAttribute('aria-label', 'Unidade do peso');
+        /** Tipo de material: uma lista de seleção agrupada por família, mais "Outro material" (texto livre, só neste cadastro). Materiais extras de cadastros antigos ficam guardados e aparecem como etiquetas que se podem remover. */
+        function seletorMaterial(inicial) {
+          const todos = PD.MATERIAIS.flatMap(([, l]) => l); const achar = (m) => todos.find((x) => x.toLowerCase() === String(m).toLowerCase());
+          const no = el('div', 'compras-campo patrimonio-materiais'); const sel = el('select'); sel.setAttribute('aria-label', 'Tipo de material');
+          sel.append(new Option('Selecione o material', ''));
+          PD.MATERIAIS.forEach(([t, itens]) => { const g = el('optgroup'); g.label = t; itens.forEach((m) => g.append(new Option(m, m))); sel.append(g); });
+          sel.append(new Option('Outro material', '__outro__'));
+          const outro = livre(texto('', { placeholder: 'Nome do material', maxLength: 80 })); outro.setAttribute('aria-label', 'Outro material');
+          const principal = inicial[0] || ''; let extras = inicial.slice(1); const etiquetas = el('div', 'compras-chips');
+          if (principal) { if (achar(principal)) sel.value = achar(principal); else { sel.value = '__outro__'; outro.value = principal; } }
+          const pintar = () => {
+            outro.style.display = sel.value === '__outro__' ? '' : 'none';
+            etiquetas.replaceChildren(...extras.map((m) => { const b2 = botao(m + ' ×', () => { extras = extras.filter((x) => x !== m); pintar(); }, 'compras-chip ativo'); b2.setAttribute('aria-label', 'Remover material ' + m); return b2; }));
+            etiquetas.style.display = extras.length ? '' : 'none';
+          };
+          sel.addEventListener('change', pintar);
+          no.append(el('span', 'compras-rotulo', 'Tipo de material'), sel, outro, etiquetas, el('small', 'profiles-note', 'Escolha o material principal. "Outro material" aceita um texto livre.')); pintar();
+          return { no, valor: () => { const p = sel.value === '__outro__' ? outro.value.trim() : sel.value; return [p, ...extras].filter((m, i, a) => m && a.findIndex((x) => x.toLowerCase() === m.toLowerCase()) === i); } };
         }
-        const materiais = seletorMateriais(v.materiais || []);
+        const materiais = seletorMaterial(v.materiais || []);
         // Tipo de energia e consumo (só o campo que corresponde ao tipo); sem cálculo de custo, geração ou consumo.
         const g0 = v.consumoGas || (v.energia === 'gas' && v.consumoHora ? { valor: v.consumoHora, unidade: 'kg/h' } : null);
         const energia = seletor([['nenhuma', 'Não utiliza energia'], ...PD.TIPOS_ENERGIA], v.energia || 'nenhuma'); energia.setAttribute('aria-label', 'Tipo de Energia');
         const gasValor = entrada('text', g0 ? nd(g0.valor) : '', { inputMode: 'decimal', placeholder: 'Ex.: 1,5' }); const gasUn = seletor(PD.UNIDADES_GAS, (g0 && g0.unidade) || '', 'Unidade'); gasUn.setAttribute('aria-label', 'Unidade do consumo de gás');
         const potW = entrada('text', nd(v.potenciaW), { inputMode: 'decimal', placeholder: 'Ex.: 2000' });
-        const boxGas = el('div', 'patrimonio-condicional compras-largo'); boxGas.append(campo('Consumo de Gás por Hora', gasValor), campo('Unidade do consumo de gás', gasUn));
+        const boxGas = el('div', 'patrimonio-condicional compras-largo'); // Consumo de gás por hora: um campo só, com a unidade junto do valor (sem conversão e sem presumir kg). A unidade a adotar ainda precisa de validação técnica.
+        gasValor.setAttribute('aria-label', 'Consumo de gás por hora'); const linhaGas = el('div', 'patrimonio-linha-campo'); linhaGas.append(gasValor, gasUn);
+        boxGas.append(campo('Consumo de gás por hora', linhaGas, 'A unidade fica junto do valor; o sistema não converte entre unidades.')); linhaGas.removeAttribute('aria-label');
         const boxEle = el('div', 'patrimonio-condicional compras-largo'); boxEle.append(campo('Potência Elétrica (W)', potW, 'Potência em watts (W). Não é o consumo em kWh e não gera custo.'));
         const boxSol = el('div', 'patrimonio-condicional compras-largo'); boxSol.append(el('p', 'profiles-note', 'Energia solar selecionada. O sistema não calcula geração nem consumo solar.'));
         function pintarEnergia() { mostrar(boxGas, energia.value === 'gas'); mostrar(boxEle, energia.value === 'eletrica'); mostrar(boxSol, energia.value === 'solar'); }
-        energia.addEventListener('change', pintarEnergia);
-        const camposTec = {}; const tecBox = el('div', 'patrimonio-tecnicas');
-        PD.TECNICAS.forEach(([k, rot]) => { const longo = ['especificacoes', 'observacoes'].includes(k); const i = longo ? area(tec[k], 2) : texto(tec[k], { maxLength: 120 }); const c = campo(rot, i); if (longo) c.classList.add('compras-largo'); camposTec[k] = c; tecBox.append(c); camposTec[k].entrada = i; });
-        function pintarTecnicas() { const ok = PD.camposTecnicos(categoria.value).filter((k) => !PD.TECNICAS_OCULTAS.includes(k)); PD.TECNICAS.forEach(([k]) => mostrar(camposTec[k], ok.includes(k))); mostrar(prod, PD.CATEGORIAS_UTENSILIO.includes(categoria.value) || Boolean(v.medidas)); notaTec.textContent = categoria.value ? 'Outros dados técnicos de ' + (nomeDe(D.CATEGORIAS, categoria.value) || 'a categoria') + '.' : 'Escolha a categoria na etapa 1 para ver os dados técnicos que se aplicam.'; }
+        energia.addEventListener('change', () => { pintarEnergia(); pintarTecnicas(); });
+        const camposTec = {};
+        PD.TECNICAS.forEach(([k, rot]) => {
+          const longo = ['especificacoes', 'observacoes'].includes(k);
+          let i;
+          if (k === 'voltagem') { // lista de escolha; o texto que já existia em cadastro antigo continua como opção "(cadastro anterior)"
+            const op = PD.VOLTAGENS.map((x) => [x, x]); if (tec.voltagem && !PD.VOLTAGENS.includes(tec.voltagem)) op.push([tec.voltagem, tec.voltagem + ' (cadastro anterior)']);
+            i = seletor(op, tec.voltagem || '', 'Selecione a voltagem');
+          } else i = longo ? area(tec[k], 2) : texto(tec[k], { maxLength: 120 });
+          const c = campo(rot, i); if (longo) c.classList.add('compras-largo'); camposTec[k] = c; camposTec[k].entrada = i;
+        });
+        function pintarTecnicas() { const ok = PD.camposTecnicos(categoria.value).filter((k) => !PD.TECNICAS_OCULTAS.includes(k)); PD.TECNICAS.forEach(([k]) => mostrar(camposTec[k], ok.includes(k))); mostrar(camposTec.voltagem, ok.includes('voltagem') || energia.value !== 'nenhuma'); mostrar(prod, PD.CATEGORIAS_UTENSILIO.includes(categoria.value) || Boolean(v.medidas)); notaTec.textContent = categoria.value ? 'Outros dados técnicos de ' + (nomeDe(D.CATEGORIAS, categoria.value) || 'a categoria') + '.' : 'Escolha a categoria na etapa 1 para ver os dados técnicos que se aplicam.'; }
         const notaTec = el('p', 'profiles-note compras-largo');
         // Medidas úteis do utensílio para a Produção (formas, assadeiras): campos de hoje, sem mudança. A capacidade passou para a etapa 1.
         const larg = entrada('text', v.medidas ? String(v.medidas.largura).replace('.', ',') : '', { inputMode: 'decimal', placeholder: 'cm' }); const comp = entrada('text', v.medidas ? String(v.medidas.comprimento).replace('.', ',') : '', { inputMode: 'decimal', placeholder: 'cm' });
@@ -468,14 +505,16 @@
         boxVinc.firstChild.append(selVinc, addVinc);
         function pintarComposto() { mostrar(boxVinc, composto.ativo); }
         const e4 = el('div', 'compras-etapa');
-        const avisoEspec = el('p', 'profiles-note compras-largo', 'Para informar altura, largura, profundidade, materiais e energia, ative "Informar especificação técnica?" na etapa 1.');
-        const secEspec = secao('Especificação Técnica', campo('Altura', dimAlt), campo('Largura', dimLarg), campo('Profundidade', dimProf), campo('Unidade das dimensões', dimUn), materiais.no,
-          campo('Tipo de Energia', energia), boxGas, boxEle, boxSol, notaTec, tecBox);
-        function pintarEspec() {
-          mostrar(secEspec, espec.ativo); mostrar(avisoEspec, !espec.ativo);
-          notaEspec1.textContent = espec.ativo ? 'Os campos da especificação técnica (dimensões, materiais, energia) estão na etapa 4.' : '';
-        }
-        e4.append(avisoEspec, secEspec, prod, secFicha,
+        // Especificação técnica (19/11/2026): fica na etapa 1, dentro do bloco ligado por "Informar especificação técnica?", em grupos de preenchimento.
+        const sub = (t, ...nos) => { const f = el('fieldset', 'compras-fieldset patrimonio-sub'); f.append(el('legend', null, t), ...nos); return f; };
+        const boxEspec = el('div', 'compras-largo patrimonio-espec');
+        boxEspec.append(sub('Identificação técnica', camposTec.fabricante, camposTec.anoFabricacao),
+          sub('Energia e consumo', camposTec.voltagem, campo('Tipo de Energia', energia), boxGas, boxEle, boxSol),
+          sub('Dimensões e características físicas', campo('Altura', dimAlt), campo('Largura', dimLarg), campo('Profundidade', dimProf), campo('Unidade das dimensões', dimUn), campo('Peso', pesoVal), campo('Unidade do peso', pesoUn), materiais.no),
+          sub('Outras informações técnicas', notaTec, camposTec.frequencia, camposTec.cor, camposTec.especificacoes, camposTec.observacoes), secFicha);
+        secEspec1.append(boxEspec);
+        function pintarEspec() { mostrar(boxEspec, espec.ativo); }
+        e4.append(prod,
           secao('Peças e componentes', indic, el('div', 'compras-form-rodape compras-largo patrimonio-barra-pecas'), tabPecas), secao('Patrimônio composto', composto, boxVinc));
         e4.querySelector('.patrimonio-barra-pecas').append(botao('Adicionar peça', () => janelaPeca(null, (n) => { pecas.push({ ...n, id: S.novoId('peca') }); desenharPecas(); }), 'btn secondary'));
 
@@ -508,8 +547,11 @@
         e5.append(secao('Aquisição', campo('Tipo de aquisição', tipoAq), campo('Data de aquisição', dAq), campo('Data de recebimento', dRec), campo('Data de entrada em operação', dOp), campo('Fornecedor', fornecedor, 'Do cadastro de fornecedores (vínculo pelo id).'),
           campo('Número da nota fiscal', nf), campo('Série da nota fiscal', serieNf), campo('Valor de aquisição (R$)', vAq.no), campo('Frete (R$)', frete.no), campo('Instalação (R$)', instal.no), campo('Custos adicionais (R$)', custos.no), campo('Descontos (R$)', descontos.no),
           campo('Valor total de aquisição (R$)', totalAq, 'Aquisição + frete + instalação + custos − descontos. Só informativo.'), campo('Moeda', moeda)),
-        secao('Informações contábeis', campo('Grupo patrimonial', grupoPat), campo('Conta contábil', conta), campo('Centro de custo', centroCusto), campo('Valor residual estimado (R$)', residual.no), campo('Vida útil estimada (meses)', vida), campo('Data de início de depreciação', iniDep),
-          campo('Método de depreciação', metodo, 'Não todo patrimônio é depreciável. O sistema não gera lançamento contábil nem calcula depreciação oficial.'), campo('Valor contábil informado (R$)', vContabil.no), campo('Observações contábeis', obsCont)),
+        // Depreciação (19/11/2026): só o essencial nesta versão. "Grupo patrimonial" (já é a Categoria) e "Valor contábil informado" (já há o valor do patrimônio e o de aquisição) saíram da tela;
+        // o que já estava gravado neles continua guardado. Nenhum cálculo, taxa ou lançamento: os critérios contábeis ainda serão definidos.
+        secao('Depreciação', U.nota('Estrutura simplificada nesta versão: critérios e cálculos contábeis serão definidos depois. O sistema não calcula depreciação nem gera lançamento.'),
+          campo('Método de depreciação', metodo, 'Nem todo patrimônio é depreciável.'), campo('Vida útil estimada (meses)', vida), campo('Data de início de depreciação', iniDep), campo('Valor residual estimado (R$)', residual.no),
+          campo('Conta contábil', conta), campo('Centro de custo', centroCusto), campo('Observações contábeis', obsCont)),
         secao('Garantia', garPossui, gBox), secao('Seguro', segPossui, sBox));
 
         /* ---------- Etapa 6 ---------- */
@@ -571,20 +613,20 @@
         function ler() {
           const cap = num(capValor); const l = num(larg); const co = num(comp);
           const prodCat = PD.CATEGORIAS_PRODUCAO.includes(categoria.value); const en = energia.value; const gv = num(gasValor); const pw = num(potW);
-          const al = num(dimAlt); const la = num(dimLarg); const pr = num(dimProf);
+          const al = num(dimAlt); const la = num(dimLarg); const pr = num(dimProf); const pe = num(pesoVal);
           const tecnicas = {}; PD.TECNICAS.forEach(([k]) => { const x = camposTec[k].entrada.value.trim(); if (x) tecnicas[k] = x; });
           const garDoc = gDoc.value; const inspDoc = iDoc.value;
           const dados = {
             id: b ? b.id : undefined, nome: nome.value, categoria: categoria.value, marca: marca.value.trim(), modelo: modelo.value.trim(), numeroSerie: serie.value.trim(), numeroPatrimonio: numero.value.trim(), valor: valor.valor(), localId: local.value,
-            nomeTecnico: nomeTec.value, descricao: descricao.value, tipoBem: tipoBem.value, natureza: natureza.value, situacaoPatrimonial: situacaoP, conservacao: conserv, dataCadastro: dataCad.value, codigoInterno: codInterno.value,
+            nomeTecnico: nomeTec.value, descricao: descricao.value, tipoBem: tipoBem.value, natureza: natureza.value, situacaoPatrimonial: situacaoP, conservacao: conserv, dataCadastro: dataCad.value, codigoInterno: v.codigoInterno || '', // o campo saiu da tela (19/11/2026); o valor que já existia fica guardado
             unidade: unidade.value, quantidade: inteiro(quantidade), conjunto: conjunto.ativo, observacoes: v.observacoes || '', // as observações antigas ficam guardadas; a descrição detalhada e o áudio as substituem
             usadoNaProducao: prodCat ? usoProd.ativo : Boolean(v.usadoNaProducao), utensiliosIds: prodCat ? (usoProd.ativo && usaUt.ativo ? utensilios : []) : (v.utensiliosIds || []),
             informarEspecificacao: espec.ativo, materiais: materiais.valor(), fichaTecnica: ficha,
-            dimensoesFisicas: al != null || la != null || pr != null ? { altura: al, largura: la, profundidade: pr, unidade: dimUn.value } : null,
+            dimensoesFisicas: al != null || la != null || pr != null || pe != null ? { altura: al, largura: la, profundidade: pr, unidade: dimUn.value, peso: pe, pesoUnidade: pesoUn.value } : null,
             imagens, documentos,
             localizacao: { empresa: empresa.value.trim(), cnpj: cnpj.value.trim(), unidade: unidadeLoc.value.trim(), estabelecimento: estab.value.trim(), departamento: departamento.value.trim(), ambiente: ambiente.value.trim(), sala: sala.value.trim(), andar: andar.value.trim(), detalhe: localizacaoDet.value.trim() },
-            responsavel: { colaboradorId: colab.value, nome: respNome.value.trim(), cargo: respCargo.value.trim(), departamento: respDep.value.trim(), dataAtribuicao: respData.value, tipo: respTipo.value },
-            movimentacoes: movs,
+            responsavel: { colaboradorId: respSel.size ? [...respSel.values()][0].colaboradorId : '', nome: respNome.value.trim(), cargo: respCargo.value.trim(), departamento: respDep.value.trim(), dataAtribuicao: respData.value, tipo: respTipo.value },
+            movimentacoes: movs, responsaveis: [...respSel.values()],
             tecnicas, capacidade: prodCat ? (usoProd.ativo && cap != null ? { valor: cap, unidade: capUn.value } : null) : (v.capacidade || null), medidas: l != null || co != null ? { largura: l, comprimento: co } : null,
             energia: en, consumoGas: en === 'gas' && gv != null ? { valor: gv, unidade: gasUn.value } : null, potenciaW: en === 'eletrica' ? pw : null,
             consumoHora: en === 'gas' ? (gv != null && gasUn.value === 'kg/h' ? gv : null) : en === 'eletrica' ? (v.consumoHora != null ? v.consumoHora : null) : null,
@@ -642,7 +684,7 @@
           nav.replaceChildren(...(ultima ? [voltar, salvarFim] : atual === 0 ? [cancelar, avancar] : [cancelar, voltar, avancar]));
         }
         form.append(barra.el, ...quadros, erroEtapa, nav);
-        desenharImagens(); desenharDocs(); desenharMovs(); desenharPecas(); desenharMan(); desenharVinc(); pintarComposto(); pintarTecnicas(); pintarEnergia(); pintarEspec(); desenharUt(); desenharFicha(); pintarProducao(); pintarGarSeg(); pintarMan(); pintarInsp(); pintarSelectsDoc();
+        desenharImagens(); desenharDocs(); desenharMovs(); desenharPecas(); desenharMan(); desenharVinc(); pintarComposto(); pintarTecnicas(); pintarEnergia(); pintarEspec(); pintarResp(); desenharUt(); desenharFicha(); pintarProducao(); pintarGarSeg(); pintarMan(); pintarInsp(); pintarSelectsDoc();
         gDoc.value = docAtual.garantia && documentos.some((d) => d.id === docAtual.garantia) ? docAtual.garantia : ''; iDoc.value = docAtual.inspecao && documentos.some((d) => d.id === docAtual.inspecao) ? docAtual.inspecao : '';
         ir(0);
         return { ler, conferir, ir, datas, audio, b };
