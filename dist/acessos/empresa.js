@@ -8,7 +8,8 @@
  * de acrescentar; cada um guarda os dados que um contrato pede (nome completo, CPF, RG, nacionalidade, estado civil,
  * profissão e endereço). Cargo: Proprietário, Sócio-proprietário, Diretor não sócio ou Procurador (lista própria da empresa;
  * fornecedor e cliente seguem com a lista deles).
- * Fica em dados.empresa, dentro do documento do Compras (cicluz-compras-v1): campo novo e opcional, sem migração.
+ * Várias empresas: a tela lista as empresas (a Matriz primeiro) e cada uma tem a sua ficha e os seus responsáveis.
+ * Ficam em dados.empresas, dentro do documento do Compras (cicluz-compras-v1): campo novo e opcional.
  */
 (function () {
   'use strict';
@@ -28,6 +29,20 @@
   const RESPONSAVEL_VAZIO = () => ({ id: S.novoId('resp'), cargo: '', nome: '', cpf: '', rg: '', rgOrgao: '', nacionalidade: '', estadoCivil: '', profissao: '', whatsapp: '', email: '', endereco: { cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '' } });
   const tituloDoResponsavel = (cargo) => 'Dados do responsável legal da empresa' + (nomeDoCargo(cargo) ? ' — ' + nomeDoCargo(cargo) : '');
 
+  /*
+   * Várias empresas (pedido do Rodrigo, 17/11/2026): a primeira cadastrada é a Matriz; cada empresa seguinte começa
+   * pelo tipo de vínculo com ela. Ficam em dados.empresas (lista); a ficha única anterior (dados.empresa) é lida como a
+   * Matriz e passa para a lista na primeira gravação.
+   *   Filial                  → mesmo CNPJ raiz da matriz (muda o final, /0002…); é a mesma pessoa jurídica.
+   *   Empresa do mesmo grupo  → outro CNPJ, com os mesmos donos.
+   *   Franquia                → outro dono, que usa a marca por contrato.
+   *   Loja parceira           → empresa independente que trabalha junto.
+   */
+  const VINCULOS = [['matriz', 'Matriz'], ['filial', 'Filial'], ['grupo', 'Empresa do mesmo grupo'], ['franquia', 'Franquia'], ['parceira', 'Loja parceira']];
+  const nomeDoVinculo = (id) => (VINCULOS.find(([x]) => x === id) || [])[1] || '';
+  const empresasEm = (d) => (Array.isArray(d.empresas) ? d.empresas : d.empresa && cheio(d.empresa.cnpj) ? [{ id: 'emp-matriz', vinculo: 'matriz', ...d.empresa }] : []);
+  const todas = () => empresasEm(S.dados);
+
   /** Responsáveis gravados; o primeiro formato (um responsável só, em "responsavel") vira o primeiro da lista. */
   function responsaveisDe(v) {
     const lista = Array.isArray(v.responsaveis) ? v.responsaveis : v.responsavel ? [v.responsavel] : [];
@@ -41,6 +56,7 @@
   const validarEmpresa = (x) => validarEmpresaEtapas(x).find(Boolean) || '';
   function validarDadosDaEmpresa(x) {
     const e = x.endereco || {};
+    if (!nomeDoVinculo(x.vinculo)) return 'Selecione o tipo de vínculo.';
     if (!regras().cnpjValid(x.cnpj)) return 'Informe um CNPJ válido (14 dígitos).';
     if (!cheio(x.razaoSocial)) return 'Informe a razão social.';
     if (!cheio(x.nomeFantasia)) return 'Informe o nome fantasia.';
@@ -55,6 +71,7 @@
   }
   /** Responsáveis: opcionais; o que vier preenchido precisa estar no formato. */
   function validarResponsaveis(x) {
+    if (x.responsaveisDaMatriz) return '';
     const lista = x.responsaveis || [];
     for (let i = 0; i < lista.length; i++) {
       const r = lista[i]; const quem = 'responsável ' + (i + 1);
@@ -71,12 +88,16 @@
     return '';
   }
 
-  function abrir() {
-    const v = S.dados.empresa || {}; const e = v.endereco || {};
-    const jaTemDados = Boolean(cheio(v.cnpj));
+  /** Ficha de uma empresa. emp: a empresa gravada (ou nada, para cadastrar). aoSalvar() é chamado depois de gravar. */
+  function abrirFicha(emp, aoSalvar) {
+    const v = emp || {}; const e = v.endereco || {};
+    const gravadas = todas();
+    // A primeira empresa é sempre a Matriz; as outras escolhem o vínculo.
+    const matriz = emp ? emp.vinculo === 'matriz' : !gravadas.length;
+    const jaTemDados = Boolean(emp);
     let editando = !jaTemDados;
     const dlg = U.dialogo({
-      titulo: 'Dados da Empresa', cor: A.COR, corTexto: A.COR_TEXTO, largo: true, classe: 'compras-form-padrao', rotuloSalvar: 'Salvar',
+      titulo: emp ? 'Dados da Empresa' : matriz ? 'Cadastro empresa' : 'Cadastro empresa — ' + 'nova unidade', cor: A.COR, corTexto: A.COR_TEXTO, largo: true, classe: 'compras-form-padrao', rotuloSalvar: 'Salvar',
       montar: (form, d) => {
         const texto = (valor, extra = {}) => entrada('text', valor || '', { maxLength: 120, ...extra });
         const cnpj = mascara(entrada('text', v.cnpj || '', { inputMode: 'numeric', placeholder: '00.000.000/0000-00', maxLength: 18 }), regras().cnpjMask);
@@ -116,7 +137,12 @@
           avisoCnpj.textContent = trocou ? 'CNPJ novo: razão social, nome fantasia e endereço foram trocados pelos dados dele. Confira o regime tributário e salve.' : 'Dados do CNPJ conferidos; só os campos vazios foram preenchidos. Confira antes de salvar.';
         });
         const empresa = el('fieldset', 'compras-fieldset');
-        empresa.append(el('legend', null, 'Dados da empresa'), campo('CNPJ *', cnpj), avisoCnpj, campo('Razão Social *', razao), campo('Nome Fantasia *', fantasia), campo('Regime tributário *', regime));
+        // Primeira pergunta das empresas que não são a Matriz: o tipo de vínculo.
+        const vinculo = seletor(VINCULOS.filter(([id]) => id !== 'matriz'), matriz ? '' : (v.vinculo || ''), 'Selecione');
+        const vinculoCampo = campo('Tipo de vínculo com a matriz *', vinculo, 'Filial: mesmo CNPJ raiz. Mesmo grupo: mesmos donos, outro CNPJ. Franquia: outro dono, usa a marca. Loja parceira: empresa independente.');
+        vinculoCampo.classList.add('compras-largo');
+        const matrizNota = el('p', 'profiles-note compras-largo', 'Esta é a Matriz: a primeira empresa cadastrada.');
+        empresa.append(el('legend', null, 'Dados da empresa'), matriz ? matrizNota : vinculoCampo, campo('CNPJ *', cnpj), avisoCnpj, campo('Razão Social *', razao), campo('Nome Fantasia *', fantasia), campo('Regime tributário *', regime));
         const endereco = el('fieldset', 'compras-fieldset');
         endereco.append(el('legend', null, 'Endereço'), campo('CEP *', cep), campo('Rua / logradouro *', rua), campo('Número *', numero), campo('Complemento', complemento), campo('Bairro *', bairro), campo('Cidade *', cidade), campo('UF *', uf), avisoCep);
 
@@ -187,7 +213,11 @@
            Leitura × edição: com dados gravados, a ficha abre na Revisão, travada; "Editar" (ou o lápis de um bloco) libera
            os campos. Sem dados, já abre na etapa 1 para preencher; Avançar confere a etapa. */
         const etapa1 = el('div', 'compras-etapa compras-largo'); etapa1.append(empresa, endereco);
-        const etapa2 = el('div', 'compras-etapa compras-largo'); etapa2.append(caixaResp, linhaAdicionar);
+        // Responsáveis legais são de cada empresa. A que não é Matriz pode usar os da Matriz (o caso da Filial, que é a mesma pessoa jurídica).
+        const mesmos = U.quadroSituacao('Mesmos responsáveis legais da matriz', !matriz && Boolean(emp ? emp.responsaveisDaMatriz : false), { textos: ['Sim', 'Não'], dica: 'Sim: esta empresa usa os responsáveis legais cadastrados na Matriz. Não: informe os responsáveis dela abaixo.', aoMudar: () => pintarModo() });
+        mesmos.classList.add('compras-largo');
+        vinculo.addEventListener('change', () => { if (!emp && vinculo.value === 'filial') mesmos.ativo = true; pintarModo(); });
+        const etapa2 = el('div', 'compras-etapa compras-largo'); etapa2.append(...(matriz ? [] : [mesmos]), caixaResp, linhaAdicionar);
         const etapa3 = el('div', 'compras-etapa compras-largo');
         const quadros = [etapa1, etapa2, etapa3];
         let atual = jaTemDados ? 2 : 0;
@@ -209,12 +239,13 @@
         function pintarRevisao() {
           const x = ler(); const en = x.endereco;
           const blocos = [
-            ['Dados da empresa', 0, [['CNPJ', x.cnpj], ['Razão Social', x.razaoSocial], ['Nome Fantasia', x.nomeFantasia], ['Regime tributário', nomeDe(D.REGIMES_TRIBUTARIOS, x.regimeTributario)]]],
+            ['Dados da empresa', 0, [['Tipo de vínculo', nomeDoVinculo(x.vinculo)], ['CNPJ', x.cnpj], ['Razão Social', x.razaoSocial], ['Nome Fantasia', x.nomeFantasia], ['Regime tributário', nomeDe(D.REGIMES_TRIBUTARIOS, x.regimeTributario)]]],
             ['Endereço', 0, [['CEP', en.cep], ['Rua / logradouro', en.logradouro], ['Número', en.numero], ['Complemento', en.complemento], ['Bairro', en.bairro], ['Cidade', en.cidade], ['UF', en.uf]]],
             ...x.responsaveis.map((r) => [tituloDoResponsavel(r.cargo), 1, [['Nome completo', r.nome], ['CPF', r.cpf], ['RG', r.rg + (r.rg && r.rgOrgao ? ' · ' + r.rgOrgao : '')], ['Nacionalidade', r.nacionalidade], ['Estado civil', nomeDe(ESTADOS_CIVIS, r.estadoCivil)], ['Profissão', r.profissao], ['WhatsApp', r.whatsapp], ['E-mail', r.email],
               ['Endereço', [r.endereco.logradouro, r.endereco.numero, r.endereco.complemento, r.endereco.bairro, r.endereco.cidade, r.endereco.uf, r.endereco.cep].filter(Boolean).join(', ')]]]),
           ];
-          if (!x.responsaveis.length) blocos.push(['Dados dos responsáveis legais', 1, [['Responsáveis', 'Nenhum responsável informado']]]);
+          if (x.responsaveisDaMatriz) blocos.push(['Dados dos responsáveis legais', 1, [['Responsáveis', 'Os mesmos da Matriz']]]);
+          else if (!x.responsaveis.length) blocos.push(['Dados dos responsáveis legais', 1, [['Responsáveis', 'Nenhum responsável informado']]]);
           etapa3.replaceChildren(...blocos.map(([titulo, etapa, linhas]) => {
             const fs0 = el('fieldset', 'compras-fieldset'); fs0.append(el('legend', null, titulo));
             // O lápis leva à etapa do bloco, já liberando a edição.
@@ -227,7 +258,10 @@
         }
         function pintarModo() {
           [empresa, endereco, ...caixaResp.querySelectorAll(':scope > fieldset')].forEach((q) => { q.disabled = !editando; });
-          adicionar.disabled = !editando; linhaAdicionar.style.display = editando ? '' : 'none';
+          const daMatriz = !matriz && mesmos.ativo;
+          mesmos.querySelector('.account-status-switch').disabled = !editando;
+          caixaResp.style.display = daMatriz ? 'none' : '';
+          adicionar.disabled = !editando; linhaAdicionar.style.display = editando && !daMatriz ? '' : 'none';
           caixaResp.querySelectorAll('.compras-empresa-remover').forEach((x) => { x.style.display = editando ? '' : 'none'; });
           notaModo.textContent = editando ? '' : 'Dados gravados. Toque em Editar, ou no lápis de um bloco, para alterar.';
           const ultima = atual === quadros.length - 1;
@@ -245,6 +279,7 @@
           U.subirAoTopo(barra.el, form);
         }
         const ler = () => ({
+          vinculo: matriz ? 'matriz' : vinculo.value, responsaveisDaMatriz: !matriz && mesmos.ativo,
           cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), regimeTributario: regime.value,
           endereco: { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value },
           // Bloco em branco não é gravado.
@@ -252,7 +287,7 @@
             id: r.id, cargo: r.cargo || '', nome: cheio(r.nome), cpf: cheio(r.cpf), rg: cheio(r.rg), rgOrgao: cheio(r.rgOrgao), nacionalidade: cheio(r.nacionalidade), estadoCivil: r.estadoCivil || '', profissao: cheio(r.profissao),
             whatsapp: cheio(r.whatsapp), email: cheio(r.email).toLocaleLowerCase('pt-BR'),
             endereco: Object.fromEntries(Object.entries(r.endereco || {}).map(([k, val]) => [k, cheio(val)])),
-          })).filter((r) => r.nome || r.whatsapp || r.email || r.cargo || r.cpf || r.rg),
+          })).filter((r) => (matriz || !mesmos.ativo) && (r.nome || r.whatsapp || r.email || r.cargo || r.cpf || r.rg)),
         });
         form.append(barra.el, notaModo, ...quadros, erroEtapa, nav);
         ir(atual);
@@ -263,20 +298,51 @@
         const novo = ctx.ler();
         const falta = validarEmpresa(novo);
         if (falta) { const k = ctx.etapaComErro(); if (k >= 0) ctx.ir(k); return falta; } // leva à etapa onde está o problema
+        if (gravadas.some((x) => x.id !== (emp && emp.id) && D.digitos(x.cnpj) === D.digitos(novo.cnpj))) { ctx.ir(0); return 'Já existe uma empresa cadastrada com este CNPJ.'; }
         const ok = S.transacao((d) => {
-          const { responsavel, ...resto } = d.empresa || {}; // o formato de um responsável só deixa de existir: a lista o substitui
-          d.empresa = { ...resto, ...novo, atualizadoEm: S.agoraIso() };
+          const lista = empresasEm(d).map((x) => ({ ...x }));
+          const { responsavel, ...anterior } = emp || {}; // o formato de um responsável só deixa de existir: a lista o substitui
+          const registro = { ...anterior, ...novo, id: emp ? emp.id : S.novoId('emp'), atualizadoEm: S.agoraIso() };
+          const i = lista.findIndex((x) => x.id === registro.id);
+          if (i >= 0) lista[i] = registro; else lista.push(registro);
+          d.empresas = lista;
+          delete d.empresa; // a ficha única de antes passou para a lista, como Matriz
         });
         if (!ok) return 'Não foi possível salvar. Tente de novo.';
         U.avisar('Dados da empresa salvos.');
+        if (aoSalvar) aoSalvar();
         return undefined;
       },
     });
-    // A janela é aberta por cima do menu, sem trocar de tela: o cabeçalho recebe aqui o ícone do cartão (o da pessoa jurídica).
-    setTimeout(() => { const i = dlg.querySelector('.head .sector-icon'); if (i) i.innerHTML = U.svg(U.ICONES.fornecedor); }, 160);
     return dlg;
   }
 
+  /* Tela "Dados da Empresa": a lista das empresas (a Matriz primeiro), com o botão de cadastrar outra. Tocar numa abre a ficha. */
+  let tela = null;
+  function render() {
+    const lista = todas();
+    const ponta = U.pontaDaLista(lista.length, lista.length + (lista.length === 1 ? ' empresa cadastrada' : ' empresas cadastradas'));
+    const sec = U.secao('Empresas', undefined, ponta);
+    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo(lista.length ? 'Nova Empresa' : 'Cadastrar Matriz', lista.length ? 'Cadastrar outra empresa (filial, mesmo grupo, franquia ou loja parceira)' : 'Cadastrar a primeira empresa, a Matriz', () => abrirFicha(null, render)));
+    const linhas = el('div', 'compras-lista');
+    if (!lista.length) linhas.append(U.vazio('Nenhuma empresa cadastrada.', 'Comece pela Matriz, a empresa principal.'));
+    lista.forEach((x) => {
+      const quantos = x.responsaveisDaMatriz ? 'responsáveis da Matriz' : (x.responsaveis || []).length + ((x.responsaveis || []).length === 1 ? ' responsável legal' : ' responsáveis legais');
+      linhas.append(U.linhaLista({
+        icone: 'fornecedor', titulo: x.nomeFantasia || x.razaoSocial || 'Empresa sem nome',
+        detalhe: [nomeDoVinculo(x.vinculo) || 'Sem vínculo', x.cnpj, x.razaoSocial, quantos].filter(Boolean).join(' · '),
+        aoClicar: () => abrirFicha(x, render),
+      }));
+    });
+    sec.append(linhas);
+    tela.body.replaceChildren(U.nota('A primeira empresa é a Matriz. As outras entram com o tipo de vínculo e têm os próprios responsáveis legais, ou usam os da Matriz.'), sec);
+  }
+  function abrir() {
+    if (!tela) tela = A.criarTela({ id: 'acessos-empresa', titulo: 'Dados da Empresa', tela: 'empresa' });
+    tela.ativar();
+    render();
+  }
+
   A.registrar('empresa', abrir);
-  window.CicluzEmpresa = { abrir, validarEmpresa, validarEmpresaEtapas, ETAPAS, CARGOS_EMPRESA, dados: () => S.dados.empresa || null };
+  window.CicluzEmpresa = { abrir, abrirFicha, validarEmpresa, validarEmpresaEtapas, ETAPAS, VINCULOS, CARGOS_EMPRESA, todas, dados: () => todas()[0] || null };
 })();
