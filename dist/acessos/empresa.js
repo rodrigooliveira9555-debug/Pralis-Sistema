@@ -177,7 +177,7 @@
             // profissão, RG, CPF e endereço (pedido do Rodrigo, 17/11/2026). Tudo opcional; o que vier preenchido é conferido.
             const liga = (input, chave, alvo = r) => { input.addEventListener('input', () => { alvo[chave] = input.value; }); input.addEventListener('change', () => { alvo[chave] = input.value; }); return input; };
             const cpf = liga(mascara(entrada('text', r.cpf, { inputMode: 'numeric', placeholder: '000.000.000-00', maxLength: 14 }), regras().cpfMask), 'cpf');
-            const rg = liga(entrada('text', r.rg, { maxLength: 20 }), 'rg'); rg.dataset.textoLivre = '1';
+            const rg = liga(entrada('text', r.rg, { maxLength: 20, placeholder: 'Ex: MG-00.000.000...' }), 'rg'); rg.dataset.textoLivre = '1';
             const rgOrgao = liga(entrada('text', r.rgOrgao, { maxLength: 20, placeholder: 'Ex: SSP/MG...' }), 'rgOrgao'); rgOrgao.dataset.textoLivre = '1';
             const nacionalidade = liga(texto(r.nacionalidade, { maxLength: 40, placeholder: 'Ex: Brasileira...' }), 'nacionalidade');
             const estadoCivil = liga(seletor(ESTADOS_CIVIS, r.estadoCivil, 'Selecione'), 'estadoCivil');

@@ -44,6 +44,17 @@
   [/\(r\$\)|^valor|^pre[cç]o|^custo|sal[aá]rio/i,'R$ 0,00'],
   [/chave pix/i,'CPF, CNPJ, e-mail ou celular'],[/ag[eê]ncia/i,'0000'],[/^conta( \*)?$|conta corrente/i,'00000-0'],
  ];
+ /* Exemplo que a tela já trazia escrito de outro jeito entra no mesmo padrão (ajuste do Rodrigo, 17/11/2026): "Ex.: X" vira "Ex: X...", telefone de exemplo vira "(00) 00000-0000", e-mail de exemplo vira "Ex: nome@email.com..." e nome de pessoa vira "Ex: Nome e sobrenome...". Texto que explica o campo (ex.: "Preenchido pela empresa selecionada") não é exemplo e fica como está. */
+ function standardExample(label,input){
+  const p=input.placeholder.trim();
+  if(p.startsWith('Ex: ')&&p.endsWith('...'))return '';
+  if(p.includes('@'))return ex('nome@email.com');
+  if(/^\(\d{2}\)\s?\d{4,5}-\d{4}$/.test(p))return '(00) 00000-0000';
+  const m=/^ex\.?:\s*(.+?)[.…]*$/i.exec(p);if(m)return ex(m[1]);
+  const own=label.querySelector('.compras-rotulo')||[...label.childNodes].find(n=>n.nodeType===3&&n.textContent.trim())||label.querySelector('span');
+  if(/^nome/i.test(p)&&PERSON.test((own?own.textContent:'').trim()))return ex('Nome e sobrenome');
+  return '';
+ }
  function sync(){
   document.querySelectorAll('button.standard-form-action,.view button,dialog button,.modal button,.btn').forEach(button=>{
    if(button.closest('.head,.location-dialog-header,.organogram-editor-header,.people-bottom-header'))return;
@@ -79,7 +90,7 @@
   });
   document.querySelectorAll('.view label,dialog label,.modal label,.account-field-group,.job-identity,.account-identity,.location-identity').forEach(block=>{
    const inputs=[...block.querySelectorAll('input,select,textarea')].filter(el=>!el.dataset.datePicker&&!['hidden','checkbox','radio'].includes(el.type));
-   if(block.tagName==='LABEL'&&inputs.length===1&&inputs[0].tagName==='INPUT'&&!inputs[0].placeholder&&!inputs[0].readOnly){const hint=exampleFor(block,inputs[0]);if(hint)inputs[0].placeholder=hint}
+   if(block.tagName==='LABEL'&&inputs.length===1&&inputs[0].tagName==='INPUT'&&!inputs[0].readOnly){const campo=inputs[0];if(!campo.placeholder){const hint=exampleFor(block,campo);if(hint)campo.placeholder=hint}else if(campo.dataset.exemploVisto!==campo.placeholder){const novo=standardExample(block,campo);if(novo)campo.placeholder=novo;campo.dataset.exemploVisto=campo.placeholder}}
    const simple=!block.classList.contains('salary-row')&&inputs.length===1&&!block.querySelector('.identity-pick,.location-sigla-field,.icon-library,.account-icon-options,.extra-library');
    if(block.classList.contains('single-field-block')!==simple)block.classList.toggle('single-field-block',simple);
   });
