@@ -212,6 +212,49 @@
     } else base = 'Repetição não reconhecida';
     return base + desde + ate + '.';
   }
+  /**
+   * Compromissos da Agenda que representam uma promoção agendada (pedido do Rodrigo, 17/11/2026): só com
+   * "agendada" ligado e data de início. Devolve [{ data, hora, horaFim, repeticao }] no formato da Agenda
+   * (agenda/dominio.js: dia da semana 0 = domingo). Normalmente um compromisso; a repetição mensal com vários dias
+   * do mês (ou a anual com vários meses) vira um compromisso por dia (ou por mês), porque a Agenda repete um dia só.
+   * A data é a primeira vez que a promoção vale de hoje em diante; promoção já encerrada não gera compromisso.
+   */
+  function compromissosDaPromocao(promo, hoje = new Date()) {
+    const ini = dataLocal(promo.dataInicio);
+    if (!promo.agendada || !ini) return [];
+    const r = promo.repeticao || { tipo: 'semanal', intervalo: 1 };
+    const n = intervaloDe(r);
+    const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const hora = promo.horaInicio || '';
+    const horaFim = hora && promo.horaFim && promo.horaFim > hora ? promo.horaFim : '';
+    const fim = promo.validaAte ? { tipo: 'data', data: promo.validaAte, vezes: 0 } : { tipo: 'nunca', data: '', vezes: 0 };
+    const de = diaCorrido(hoje) > diaCorrido(ini) ? new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()) : ini;
+    const primeira = (filtro) => {
+      const d = new Date(de);
+      for (let i = 0; i < 1500; i++) { if (promocaoOcorreNoDia(promo, d) && (!filtro || filtro(d))) return iso(d); d.setDate(d.getDate() + 1); }
+      return '';
+    };
+    const um = (data, repeticao) => (data ? [{ data, hora, horaFim, repeticao: { ...repeticao, fim } }] : []);
+    const pers = (unidade, extra = {}) => ({ tipo: 'personalizada', unidade, intervalo: n, ...extra });
+    if (r.tipo === 'nunca') return [{ data: promo.dataInicio, hora, horaFim, repeticao: null }];
+    if (r.tipo === 'diaria') return um(primeira(), n === 1 ? { tipo: 'dia' } : pers('dia'));
+    if (r.tipo === 'semanal') {
+      const dias = diasDe(promo);
+      const so = (lista) => dias.every((m, i) => Boolean(m) === lista.includes(i));
+      const diasSemana = [0, 1, 2, 3, 4, 5, 6].filter((i) => dias[i]).map((i) => (i + 1) % 7).sort((a, b) => a - b);
+      return um(primeira(), n === 1 && so([0, 1, 2, 3, 4]) ? { tipo: 'dias-uteis' } : n === 1 && so([5, 6]) ? { tipo: 'fins-de-semana' } : pers('semana', { diasSemana }));
+    }
+    if (r.tipo === 'mensal') {
+      const diasMes = Array.isArray(r.diasMes) && r.diasMes.length ? [...r.diasMes].sort((a, b) => a - b) : [ini.getDate()];
+      const repete = n === 1 ? { tipo: 'mes' } : n === 3 ? { tipo: 'trimestre' } : n === 6 ? { tipo: 'semestre' } : pers('mes');
+      return diasMes.flatMap((dm) => um(primeira((d) => d.getDate() === dm), repete));
+    }
+    if (r.tipo === 'anual') {
+      const meses = Array.isArray(r.meses) && r.meses.length ? [...r.meses].sort((a, b) => a - b) : [ini.getMonth() + 1];
+      return meses.flatMap((m) => um(primeira((d) => d.getMonth() + 1 === m), n === 1 ? { tipo: 'ano' } : pers('ano')));
+    }
+    return [];
+  }
   function promocaoAtiva(promo, agora) {
     if (!promocaoOcorreNoDia(promo, agora)) return false;
     const agoraMin = agora.getHours() * 60 + agora.getMinutes();
@@ -347,7 +390,7 @@
     arredondar, montarDescricao, montarValidacaoQtd, montarComoSeCompra, normalizarTextosProduto,
     proximoCodigoInterno, codigoBarrasNaCriacao,
     semelhanca, checarDuplicidade, SEMELHANCA_MINIMA,
-    calcularPrecoVenda, DIAS_PROMO, TIPOS_REPETICAO, promocaoOcorreNoDia, resumoRepeticaoPromocao, calcularPrecoVendaComPromocao, promocaoDentroDaValidade, promocoesSeSobrepoem, validarPromocoesDoProduto,
+    calcularPrecoVenda, DIAS_PROMO, TIPOS_REPETICAO, promocaoOcorreNoDia, resumoRepeticaoPromocao, compromissosDaPromocao, calcularPrecoVendaComPromocao, promocaoDentroDaValidade, promocoesSeSobrepoem, validarPromocoesDoProduto,
     validarEstoquePorEmbalagem, TECLA_BALANCA_FIXA, validarBalanca, pendenciasDeCompra,
     ORDENACOES, ordenarProdutos, paginar, fraseInativacao,
   };

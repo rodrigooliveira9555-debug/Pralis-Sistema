@@ -94,6 +94,7 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   await etapa(p, 4);
   const s4 = sec(p, 'Promoção');
   await s4.getByRole('button', { name: '+ Adicionar promoção' }).click();
+  await s4.locator('.compras-promo .account-status-switch').click(); // Agendar promoção: abre data, horário, repetição e dias
   await s4.getByLabel('Tipo', { exact: true }).selectOption('desconto');
   await s4.getByLabel('Desconto %', { exact: true }).fill('10');
   await s4.getByLabel('Início', { exact: true }).fill('08:00');

@@ -88,6 +88,56 @@
   }
   // O atalho que a pessoa escolheu nesta visita (ex.: "Personalizada" ou "Semanalmente"), enquanto ainda combinar com os dados.
   const repeticaoEscolhida = new WeakMap();
+  // O agendamento que estava preenchido quando a pessoa desligou "Agendar promoção" (volta se religar na mesma visita).
+  const agendamentoGuardado = new WeakMap();
+
+  /**
+   * Promoção agendada entra na Agenda (pedido do Rodrigo, 17/11/2026). Depois de salvar o produto, cada promoção
+   * agendada e com data de início tem os seus compromissos criados ou atualizados na lista "Promoções" da Agenda; o
+   * vínculo é pelo id do compromisso, guardado na promoção (agendaItemIds). Promoção removida, desligada, encerrada ou
+   * de produto inativo tem os compromissos apagados. Devolve quantos compromissos ficaram e as falhas, se houver.
+   */
+  function sincronizarAgenda(produto, promocoesAntes) {
+    const A = window.CicluzAgendaDados;
+    if (!A) return { total: 0, falhas: [] };
+    const sobram = new Set((promocoesAntes || []).flatMap((pr) => pr.agendaItemIds || []));
+    const falhas = [];
+    let listaId = '';
+    const listaPromocoes = () => {
+      if (listaId) return listaId;
+      const ja = A.dados.listas.find((l) => l.nome.toLocaleLowerCase('pt-BR') === 'promoções');
+      const r = ja ? { ok: true, id: ja.id } : A.salvarLista('', { nome: 'Promoções', cor: '#16a34a' });
+      listaId = r.ok ? r.id : '';
+      return listaId;
+    };
+    const nomeProduto = produto.nomeCatalogo || produto.descricao;
+    const idsPorPromocao = (produto.promocoes || []).map((pr) => {
+      const quer = produto.status === 'ativo' ? R.compromissosDaPromocao(pr) : [];
+      const tem = (pr.agendaItemIds || []).filter((id) => A.item(id));
+      tem.forEach((id) => sobram.delete(id));
+      const oferta = pr.tipo === 'desconto' ? 'desconto de ' + D.numero((pr.descontoFracao || 0) * 100, 2) + '%' : 'por ' + D.moeda(pr.valor || 0);
+      const ids = [];
+      quer.forEach((c, k) => {
+        const atual = tem[k] ? A.item(tem[k]) : null;
+        const r = A.salvarItem(atual ? atual.id : '', {
+          ...(atual || { etiquetas: ['promoção'], alerta: null, prioridade: 'normal' }),
+          listaId: atual ? atual.listaId : listaPromocoes(),
+          titulo: ('Promoção: ' + nomeProduto + ' ' + oferta).slice(0, 200),
+          notas: R.resumoRepeticaoPromocao(pr) + ' Criado pelo cadastro do produto (MER - Produtos, código ' + (produto.codigoInterno || 'sem código') + '). Para mudar, altere a promoção no produto.',
+          data: c.data, hora: c.hora, horaFim: c.horaFim, repeticao: c.repeticao,
+        });
+        if (r.ok) ids.push(r.id); else falhas.push(r.erro);
+      });
+      tem.slice(quer.length).forEach((id) => A.excluirItem(id));
+      return ids;
+    });
+    sobram.forEach((id) => { if (A.item(id)) A.excluirItem(id); });
+    S.transacao((d) => {
+      const alvo = d.produtos.find((x) => x.id === produto.id);
+      if (alvo) (alvo.promocoes || []).forEach((pr, i) => { if (idsPorPromocao[i] && idsPorPromocao[i].length) pr.agendaItemIds = idsPorPromocao[i]; else delete pr.agendaItemIds; });
+    });
+    return { total: idsPorPromocao.reduce((n, ids) => n + ids.length, 0), falhas };
+  }
   function repeticaoMostrada(pr) {
     const e = repeticaoEscolhida.get(pr); const r = pr.repeticao;
     if (e === 'personalizada' && r.tipo !== 'nunca') return e;
@@ -335,7 +385,7 @@
         ePromo.append(notaPromo);
         const listaPromo = el('div', 'compras-largo compras-promocoes');
         const precoPromo = el('p', 'compras-texto-auto compras-largo');
-        const addPromo = botao('+ Adicionar promoção', () => { promocoes.push({ tipo: 'valor', valor: null, descontoFracao: null, dataInicio: '', horaInicio: '', horaFim: '', dias: [true, true, true, true, true, true, true], validaAte: '', repeticao: { tipo: 'semanal', intervalo: 1 } }); desenharPromos(); atualizar(); });
+        const addPromo = botao('+ Adicionar promoção', () => { promocoes.push({ tipo: 'valor', valor: null, descontoFracao: null, agendada: false, dataInicio: '', horaInicio: '', horaFim: '', dias: [true, true, true, true, true, true, true], validaAte: '', repeticao: { tipo: 'diaria', intervalo: 1 } }); desenharPromos(); atualizar(); });
         s4.append(listaPromo, addPromo, precoPromo);
         function desenharPromos() {
           listaPromo.replaceChildren();
@@ -345,6 +395,8 @@
             // Promoção antiga (sem repetição) abre como semanal nos dias marcados: é a mesma regra de antes.
             if (!pr.repeticao) pr.repeticao = { tipo: 'semanal', intervalo: 1 };
             const rp = pr.repeticao;
+            // "Agendar promoção": promoção que ainda não tem a marca abre ligada quando já tem dia, horário ou prazo próprios.
+            if (typeof pr.agendada !== 'boolean') pr.agendada = Boolean(pr.dataInicio || pr.validaAte || pr.horaInicio || pr.horaFim || !(rp.tipo === 'diaria' || rp.tipo === 'semanal') || (Number(rp.intervalo) || 1) !== 1 || !pr.dias.every(Boolean));
             const card = el('div', 'compras-bloco compras-promo');
             const cab = el('div', 'compras-linha-info');
             cab.append(el('b', null, 'Promoção ' + (i + 1)), botao('Remover', () => { promocoes.splice(i, 1); desenharPromos(); atualizar(); }, 'btn secondary perigo-texto'));
@@ -390,6 +442,22 @@
               const meses = Array.isArray(rp.meses) ? rp.meses : [];
               gradeAno.replaceChildren(...MESES_CURTOS.map((m, k) => celula(m, meses.includes(k + 1), m, () => { rp.meses = alternar(meses, k + 1); pintar(); atualizar(); })));
             };
+            // Interruptor "Agendar promoção" (pedido do Rodrigo, 17/11/2026): desligado, a promoção vale todos os dias, o dia
+            // todo, e os campos de quando somem; ligado, abre data de início, horário, repetição e término. O que foi
+            // preenchido volta se a pessoa religar na mesma visita.
+            const agendar = U.quadroSituacao('Agendar promoção', pr.agendada, {
+              textos: ['Sim', 'Não'], dica: 'Ligado: escolha quando a promoção vale. Com a data de início, ela entra na Agenda ao salvar o produto.',
+              aoMudar: (sim) => {
+                if (sim) Object.assign(pr, agendamentoGuardado.get(pr) || { repeticao: { tipo: 'semanal', intervalo: 1 } });
+                else {
+                  agendamentoGuardado.set(pr, structuredClone({ dataInicio: pr.dataInicio || '', horaInicio: pr.horaInicio || '', horaFim: pr.horaFim || '', validaAte: pr.validaAte || '', dias: pr.dias, repeticao: pr.repeticao }));
+                  Object.assign(pr, { dataInicio: '', horaInicio: '', horaFim: '', validaAte: '', dias: [true, true, true, true, true, true, true], repeticao: { tipo: 'diaria', intervalo: 1 } });
+                }
+                pr.agendada = sim;
+                desenharPromos(); atualizar();
+              },
+            });
+            const notaAgenda = el('p', 'profiles-note compras-largo'); notaAgenda.setAttribute('role', 'status');
             const bloco = (rotulo, no, nota) => { const b = el('div', 'compras-campo compras-largo'); b.append(el('span', 'compras-rotulo', rotulo), no); if (nota) b.append(el('small', 'profiles-note', nota)); return b; };
             const lDias = bloco('Dias da semana', dias);
             const lMes = bloco('Dias do mês', gradeMes, 'Sem nenhum dia marcado, vale o dia da data de início.');
@@ -406,6 +474,7 @@
               cV.style.display = pr.tipo === 'valor' ? '' : 'none'; cD.style.display = pr.tipo === 'desconto' ? '' : 'none';
               marca();
               resumo.textContent = R.resumoRepeticaoPromocao(pr);
+              notaAgenda.textContent = !pr.dataInicio ? 'Informe a data de início para esta promoção aparecer na Agenda.' : R.compromissosDaPromocao(pr).length ? 'Ao salvar o produto, esta promoção entra na Agenda (lista Promoções).' : 'Esta promoção já terminou: não entra na Agenda.';
             }
             const sync = () => {
               pr.tipo = t.value; pr.valor = pr.tipo === 'valor' ? num(v.value) : null;
@@ -420,11 +489,15 @@
             freq.addEventListener('change', () => { rp.tipo = freq.value; pintar(); atualizar(); });
             cada.addEventListener('input', () => { const q = Math.trunc(Number(cada.value)); rp.intervalo = q >= 1 ? Math.min(q, 99) : 1; pintar(); atualizar(); });
             const grade = el('div', 'compras-grade-2');
-            grade.append(campoP('Tipo', t), cV, cD,
-              campoP('Data de início', di, null, 'Vazio = já está valendo.'), campoP('Início', hi), campoP('Término', hf),
+            grade.append(campoP('Tipo', t), cV, cD);
+            const gradeQuando = el('div', 'compras-grade-2');
+            gradeQuando.append(campoP('Data de início', di, null, 'Vazio = já está valendo.'), campoP('Início', hi), campoP('Término', hf),
               campoP('Repetição', repete), cFreq, cCada,
               campoP('Terminar repetição', va, null, 'Vazio = nunca termina.'));
-            card.append(cab, grade, resumo, lDias, lMes, lAno);
+            const quando = el('div', 'compras-promo-quando');
+            quando.append(gradeQuando, resumo, lDias, lMes, lAno, notaAgenda);
+            ver(quando, pr.agendada);
+            card.append(cab, grade, agendar, quando);
             listaPromo.append(card);
             pintar();
           });
@@ -580,7 +653,7 @@
             });
             if (k === 3 && tipo.value !== 'transformacao') {
               por('Promoções', promocoes.length ? String(promocoes.length) : 'Sem promoção');
-              promocoes.forEach((pr, j) => por('Promoção ' + (j + 1) + ' · quando vale', R.resumoRepeticaoPromocao(pr)));
+              promocoes.forEach((pr, j) => por('Promoção ' + (j + 1) + ' · quando vale', pr.agendada ? R.resumoRepeticaoPromocao(pr) : 'Sem agendamento: vale todos os dias, o dia todo.'));
             }
             const editar = botao('Editar', () => ir(k), 'btn secondary');
             const pe = el('div', 'compras-form-rodape compras-largo');
@@ -718,7 +791,8 @@
       });
       if (!ok) return mostrarErro(c, 'Não foi possível salvar neste navegador. A foto pode ser grande demais para o armazenamento.');
       if (veioDoArquivo) S.tirarDoArquivo(p.id).then((foi) => { if (!foi) U.avisar('O produto foi salvo, mas não saiu do arquivo de inativos. Aparece uma vez só na lista.'); if (aoSalvar) aoSalvar(gravado); });
-      U.avisar('Produto salvo.');
+      const agenda = sincronizarAgenda(gravado, p ? p.promocoes : []);
+      U.avisar('Produto salvo.' + (agenda.total ? ' ' + agenda.total + (agenda.total === 1 ? ' promoção na Agenda.' : ' compromissos de promoção na Agenda.') : '') + (agenda.falhas.length ? ' A Agenda não aceitou: ' + agenda.falhas[0] : ''));
       if (aoSalvar) aoSalvar(gravado);
       return undefined;
     }

@@ -102,6 +102,18 @@ ok(() => assert.equal(R.promocoesSeSobrepoem({ ...promoBase, repeticao: { tipo: 
 ok(() => assert.equal(R.promocoesSeSobrepoem({ ...promoBase, repeticao: { tipo: 'mensal', intervalo: 1, diasMes: [10] } }, { ...promoBase, repeticao: { tipo: 'diaria', intervalo: 1 } }, diaEm(2026, 11, 17)), true));
 ok(() => assert.equal(R.resumoRepeticaoPromocao({ ...promoBase, repeticao: { tipo: 'mensal', intervalo: 1, diasMes: [17, 5] } }), 'Vale todo mês, nos dias 5, 17.'));
 ok(() => assert.equal(R.resumoRepeticaoPromocao(quinzenal), 'Vale a cada 2 semanas: terça-feira, contando de 17/11/26.'));
+// Promoção agendada → compromissos da Agenda (dia da semana da Agenda: 0 = domingo)
+const hoje17 = diaEm(2026, 11, 17);
+ok(() => assert.deepEqual(R.compromissosDaPromocao({ ...quinzenal, agendada: false }, hoje17), []));
+ok(() => assert.deepEqual(R.compromissosDaPromocao({ ...promoBase, agendada: true, repeticao: { tipo: 'diaria', intervalo: 1 } }, hoje17), []));
+ok(() => assert.deepEqual(R.compromissosDaPromocao({ ...quinzenal, agendada: true, horaInicio: '08:00', horaFim: '10:00' }, hoje17), [{ data: '2026-11-17', hora: '08:00', horaFim: '10:00', repeticao: { tipo: 'personalizada', unidade: 'semana', intervalo: 2, diasSemana: [2], fim: { tipo: 'nunca', data: '', vezes: 0 } } }]));
+ok(() => assert.deepEqual(R.compromissosDaPromocao({ ...promoBase, agendada: true, dataInicio: '2026-11-17', repeticao: { tipo: 'nunca', intervalo: 1 } }, hoje17), [{ data: '2026-11-17', hora: '', horaFim: '', repeticao: null }]));
+// semanal de segunda a sexta com início num sábado: o primeiro compromisso cai na segunda
+ok(() => assert.deepEqual(R.compromissosDaPromocao({ ...promoBase, agendada: true, dias: [true, true, true, true, true, false, false], dataInicio: '2026-11-21', validaAte: '2026-12-31', repeticao: { tipo: 'semanal', intervalo: 1 } }, hoje17), [{ data: '2026-11-23', hora: '', horaFim: '', repeticao: { tipo: 'dias-uteis', fim: { tipo: 'data', data: '2026-12-31', vezes: 0 } } }]));
+// mensal em dois dias: um compromisso por dia do mês; data já passada conta de hoje em diante
+ok(() => assert.deepEqual(R.compromissosDaPromocao({ ...promoBase, agendada: true, dataInicio: '2026-10-01', repeticao: { tipo: 'mensal', intervalo: 1, diasMes: [5, 20] } }, hoje17).map((c) => c.data + ' ' + c.repeticao.tipo), ['2026-12-05 mes', '2026-11-20 mes']));
+// promoção encerrada não gera compromisso
+ok(() => assert.deepEqual(R.compromissosDaPromocao({ ...promoBase, agendada: true, dataInicio: '2026-10-01', validaAte: '2026-11-01', repeticao: { tipo: 'diaria', intervalo: 1 } }, hoje17), []));
 
 // Estoque por embalagem e balança
 ok(() => assert.match(R.validarEstoquePorEmbalagem({ quantidadeCaixa: 10, estoqueMin: 5, estoqueMax: 20 })[0].mensagem, /menor que a Qt. embalagem/));
