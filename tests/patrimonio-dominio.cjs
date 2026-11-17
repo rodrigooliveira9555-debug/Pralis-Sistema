@@ -84,7 +84,7 @@ ok(() => { // etapa 4: peças, quantidades, totais, técnicas por categoria e v�
   assert.equal(P.totalPeca({ valor: null, quantidade: 3 }), null);
   const t = P.totaisComponentes([{ quantidade: 2, valor: 10 }, { quantidade: 5, valor: 1, situacao: 'substituido' }, { quantidade: 1, situacao: 'baixado' }, { nome: 'sem qtd' }]);
   assert.deepEqual(t, { tipos: 4, unidades: 9, ativos: 2, substituidos: 1, valor: 25 }); // tipos ≠ unidades físicas
-  assert.match(v(base({ tecnicas: { anoFabricacao: '1700' } }))[3], /Ano de fabricação/);
+  assert.match(v(base({ tecnicas: { anoFabricacao: '1700' } }))[0], /Ano de fabricação/);
   assert.deepEqual(v(base({ tecnicas: { anoFabricacao: '2024' } })), D0);
   assert.ok(P.camposTecnicos('imovel').includes('dimensoes') && !P.camposTecnicos('imovel').includes('voltagem'));
   assert.ok(P.camposTecnicos('informatica').includes('voltagem') && !P.camposTecnicos('informatica').includes('capacidade'));
@@ -162,15 +162,30 @@ ok(() => { // cadastro de 18/11/2026: unidades, materiais, produção, utensíli
   assert.match(v(base({ id: 'e1', categoria: 'MAC', utensiliosIds: ['e1'] }), { bens })[0], /si mesmo/);
   assert.match(v(base({ categoria: 'MAC', capacidade: { valor: 0, unidade: 'KG' } }))[0], /capacidade de produção/);
   assert.deepEqual(v(base({ dimensoesFisicas: { altura: 1.8, largura: 0.9, profundidade: 0.75, unidade: 'm' } })), D0);
-  assert.match(v(base({ dimensoesFisicas: { altura: 0, largura: null, profundidade: null, unidade: 'm' } }))[3], /altura/);
-  assert.match(v(base({ dimensoesFisicas: { altura: 1, unidade: 'km' } }))[3], /Unidade das dimensões/);
-  assert.match(v(base({ energia: 'nuclear' }))[3], /Tipo de energia/);
+  assert.match(v(base({ dimensoesFisicas: { altura: 0, largura: null, profundidade: null, unidade: 'm' } }))[0], /altura/);
+  assert.match(v(base({ dimensoesFisicas: { altura: 1, unidade: 'km' } }))[0], /Unidade das dimensões/);
+  assert.match(v(base({ energia: 'nuclear' }))[0], /Tipo de energia/);
   assert.deepEqual(v(base({ energia: 'gas', consumoGas: { valor: 1.5, unidade: 'kg/h' } })), D0);
-  assert.match(v(base({ energia: 'gas', consumoGas: { valor: 1.5, unidade: '' } }))[3], /unidade do consumo de gás/);
-  assert.match(v(base({ energia: 'gas', consumoGas: { valor: -1, unidade: 'kg/h' } }))[3], /consumo de gás/);
+  assert.match(v(base({ energia: 'gas', consumoGas: { valor: 1.5, unidade: '' } }))[0], /unidade do consumo de gás/);
+  assert.match(v(base({ energia: 'gas', consumoGas: { valor: -1, unidade: 'kg/h' } }))[0], /consumo de gás/);
   assert.deepEqual(v(base({ energia: 'eletrica', potenciaW: 2000 })), D0);
-  assert.match(v(base({ energia: 'eletrica', potenciaW: 0 }))[3], /potência elétrica/);
+  assert.match(v(base({ energia: 'eletrica', potenciaW: 0 }))[0], /potência elétrica/);
   assert.deepEqual(v(base({ energia: 'solar' })), D0);
-  assert.match(P.etapas()[3], /especificação técnica/i);
+  assert.equal(P.etapas()[3], 'Composição e componentes'); // a especificação técnica passou para a etapa 1
+});
+ok(() => { // ajustes de 19/11/2026: voltagem, peso, responsáveis
+  assert.deepEqual(P.VOLTAGENS.slice(0, 4), ['110 V', '127 V', '220 V', '220 V bifásico']);
+  for (const x of ['110 V', '220 V', '220 V bifásico', '220 V trifásico', '380 V']) assert.ok(P.VOLTAGENS.includes(x), x);
+  assert.deepEqual(P.UNIDADES_PESO.map(([k]) => k), ['kg', 'g']);
+  assert.ok(P.TECNICAS_OCULTAS.includes('serieTecnica') && P.TECNICAS_OCULTAS.includes('peso') && !P.TECNICAS_OCULTAS.includes('voltagem') && !P.TECNICAS_OCULTAS.includes('fabricante'));
+  assert.deepEqual(v(base({ dimensoesFisicas: { altura: 1.8, largura: 0.9, profundidade: 0.75, unidade: 'm', peso: 85, pesoUnidade: 'kg' } })), D0);
+  assert.match(v(base({ dimensoesFisicas: { peso: 0, pesoUnidade: 'kg' } }))[0], /peso/i);
+  assert.match(v(base({ dimensoesFisicas: { peso: 5, pesoUnidade: 'lb' } }))[0], /Unidade do peso/);
+  const r = P.normalizar({ nome: 'X', categoria: 'MAC', responsaveis: [{ colaboradorId: 'p1', nome: ' Ana ' }, { colaboradorId: '', nome: '' }, null] });
+  assert.deepEqual(r.responsaveis, [{ colaboradorId: 'p1', nome: 'Ana', cargo: '' }]);
+  assert.deepEqual(v(base({ responsaveis: [{ colaboradorId: 'p1', nome: 'Ana' }, { colaboradorId: 'p2', nome: 'Beto' }] })), D0);
+  assert.match(v(base({ responsaveis: [{ colaboradorId: 'p1', nome: 'Ana' }, { colaboradorId: 'p1', nome: 'Ana' }] }))[2], /repetido/);
+  assert.match(v(base({ responsaveis: [{ colaboradorId: 'p1', nome: '' }] }))[2], /sem nome/);
+  assert.deepEqual(P.normalizar({ nome: 'X' }).responsaveis, []); // cadastro antigo abre igual
 });
 console.log('patrimonio-dominio: ' + n + ' grupos de verificação ok');
