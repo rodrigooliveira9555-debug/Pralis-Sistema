@@ -91,22 +91,22 @@ ok(await p.evaluate(() => JSON.parse(localStorage.getItem('cicluz-produtos-arqui
 ok((await p.locator('#compras-produtos .compras-linha-info').textContent()).includes('1 inativo(s) do app ficam arquivados'), 'A lista avisa quantos inativos estão arquivados');
 // Desmarcar "Só ativos" mostra o inativo do arquivo; editar e salvar o traz para o Compras
 await p.locator('#compras-produtos label', { hasText: 'Só ativos' }).click();
-await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'INATIVO FICTICIO' }).waitFor();
-ok(await p.locator('#compras-produtos .compras-tabela tbody tr').count() === 4, 'Sem "Só ativos": 3 ativos + 1 do arquivo');
-await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'INATIVO FICTICIO' }).click();
+await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'INATIVO FICTICIO' }).waitFor();
+ok(await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)').count() === 4, 'Sem "Só ativos": 3 ativos + 1 do arquivo');
+await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'INATIVO FICTICIO' }).click();
 await dlg(p).getByLabel('Grupo de mercadorias', { exact: true }).selectOption('g15');
 await dlg(p).locator('.people-save-control').click();
 await fechado(p);
 await p.waitForFunction(async () => (await CicluzComprasDados.arquivo()).length === 0);
 depois = await produtos(p);
 ok(depois.some((x) => x.id === 'pi-13500') && depois.length === 4, 'Editado: passou para o Compras e saiu do arquivo');
-ok(await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'INATIVO FICTICIO' }).count() === 1, 'Aparece uma vez só na lista');
+ok(await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'INATIVO FICTICIO' }).count() === 1, 'Aparece uma vez só na lista');
 await p.locator('#compras-produtos label', { hasText: 'Só ativos' }).click();
 
 /* ---------- 1b) Busca: digitar letra por letra sem o campo fechar (como no app de produtos) ---------- */
 const campoBusca = p.locator('#compras-produtos .compras-busca');
 if (await campoBusca.isHidden()) await p.locator('#compras-produtos .local-search-toggle').click();
-const linhasVisiveis = () => p.locator('#compras-produtos .compras-tabela tbody tr').allTextContents();
+const linhasVisiveis = () => p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)').allTextContents();
 const buscar = async (texto) => {
   await campoBusca.fill('');
   await campoBusca.pressSequentially(texto, { delay: 120 });
@@ -129,14 +129,14 @@ ok((await linhasVisiveis()).length === 3, 'Busca vazia volta a lista inteira');
 const chip = (rot) => p.locator('#compras-produtos .compras-chip', { hasText: rot });
 ok(await chip('Sem vínculo (2)').count() === 1 && await chip('Sem grupo (1)').count() === 1 && await chip('Sem local (1)').count() === 1, 'Chips de vínculo com a contagem');
 await chip('Sem vínculo (2)').click();
-let linhas = await p.locator('#compras-produtos .compras-tabela tbody tr').count();
+let linhas = await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)').count();
 ok(linhas === 2, 'Filtro "Sem vínculo" mostra só os 2');
-ok(await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'SEM GRUPO FICTICIO' }).locator('.compras-situacao', { hasText: 'Sem grupo' }).count() === 1, 'Linha mostra o alerta "Sem grupo"');
+ok(await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'SEM GRUPO FICTICIO' }).locator('.compras-situacao', { hasText: 'Sem grupo' }).count() === 1, 'Linha mostra o alerta "Sem grupo"');
 await chip('Sem grupo (1)').click();
-ok(await p.locator('#compras-produtos .compras-tabela tbody tr').count() === 1, 'Filtro "Sem grupo" mostra 1');
+ok(await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)').count() === 1, 'Filtro "Sem grupo" mostra 1');
 
 /* ---------- 3) Formulário: escolher grupo e local tira o alerta ---------- */
-await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'SEM GRUPO FICTICIO' }).click();
+await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'SEM GRUPO FICTICIO' }).click();
 ok((await dlg(p).locator('.compras-alerta-vinculo').textContent()).includes('grupo de mercadorias'), 'Formulário mostra o alerta de vínculo');
 await dlg(p).getByLabel('Grupo de mercadorias', { exact: true }).selectOption('g10');
 await dlg(p).getByLabel('Subgrupo', { exact: true }).selectOption('g10s0');
@@ -146,8 +146,9 @@ depois = await produtos(p);
 const semGrupo = depois.find((x) => x.codigo === '13003');
 ok(semGrupo.grupoId === 'g10' && semGrupo.manual && semGrupo.manual.grupo === true, 'Grupo escolhido à mão fica marcado como manual');
 await p.locator('#compras-produtos button', { hasText: 'Limpar' }).click();
-await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'PAO FICTICIO' }).click();
+await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'PAO FICTICIO' }).click();
 ok(await dlg(p).locator('.compras-alerta-vinculo').count() === 1, 'Pão sem local: alerta no formulário');
+await dlg(p).locator('.stepper-node').nth(2).click(); // etapa 3: Cadastro específico
 const opcoes = await dlg(p).getByLabel('Setor de estoque', { exact: true }).locator('option').allTextContents();
 ok(opcoes.includes('LJ › VITRINES') && opcoes.includes('PROD. › PANIFICAÇÃO'), 'Setor de estoque lista a árvore de locais com o caminho');
 await dlg(p).getByLabel('Setor de estoque', { exact: true }).selectOption({ label: 'LJ › VITRINES' });
@@ -156,7 +157,7 @@ await fechado(p);
 const pao = (await produtos(p)).find((x) => x.codigo === '13002');
 ok(pao.localId === 's-vit' && pao.setor === 'VITRINES' && pao.manual.local === true, 'Local escolhido: id do nó, nome e marca de manual');
 ok(await chip('Sem vínculo (0)').count() === 1, 'Sem vínculo zerou');
-await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'PAO FICTICIO' }).click();
+await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'PAO FICTICIO' }).click();
 ok(await dlg(p).locator('.compras-alerta-vinculo').count() === 0, 'Alerta some do formulário');
 await dlg(p).locator('.people-close-control').click();
 await fechado(p);

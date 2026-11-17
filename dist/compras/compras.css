@@ -394,7 +394,8 @@ body.dark-theme .compras-fiscal-todos summary { color: #a7e8bd; }
 .compras-card-topo > .compras-produto-celula { flex: 1; min-width: 0; }
 .compras-card-foto-botao { padding: 0; border: 0; background: none; cursor: zoom-in; flex: 0 0 56px; }
 .compras-card-foto { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; display: block; }
-.compras-form-produto > .compras-fieldset, .compras-form-produto > .compras-alertas, .compras-form-produto > .compras-form-rodape { grid-column: 1 / -1; }
+.compras-form-produto > .compras-etapa, .compras-form-produto > .stepper-wrap, .compras-form-produto > .compras-alertas, .compras-form-produto > .compras-alerta, .compras-form-produto > .compras-form-rodape { grid-column: 1 / -1; }
+.compras-form-produto .stepper-wrap { margin: 4px 0 8px; }
 .compras-form-produto .compras-fieldset { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); align-items: start; }
 @media (min-width: 601px) { .compras-form-produto [data-campo="codigoBarras"] { grid-column: span 2; } }
 /* Linha de ações substituída pelo rodapé fixo: fora da vista, mas presente para o ✓ repassar o clique. */
@@ -546,3 +547,31 @@ body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-sea
 .compras-modelo-campo{grid-template-columns:minmax(0,1fr) minmax(120px,160px) auto auto;align-items:center}
 @media (max-width:560px){.compras-modelo-campo{grid-template-columns:minmax(0,1fr)}}
 .compras-clausula{margin:0}
+
+/* ---------- MER - Produtos (17/11/2026): mesma grade de linhas de Fornecedores. Seleção, ícone e nome fixos à esquerda;
+   as outras colunas ocultam pela setinha do título (classe oculta-<chave> na lista). ---------- */
+.compras-linha.grade-produto{grid-template-columns:64px var(--w-nome,minmax(230px,1fr)) var(--w-tipo,116px) var(--w-estoque,96px) var(--w-minmax,96px) var(--w-preco,104px) var(--w-compra,300px) 72px 24px;width:max-content;min-width:100%;background:var(--theme-card,#fff)}
+.compras-linha.grade-produto>*{grid-row:1}
+.compras-linha.grade-produto>.compras-linha-icones{grid-column:1;position:sticky;left:0;z-index:2;align-self:stretch;align-items:center;background:inherit;padding-left:12px;margin-left:-12px}
+.compras-linha.grade-produto>.c-nome{grid-column:2;position:sticky;left:76px;z-index:1;align-self:stretch;display:flex;align-items:center;background:inherit;box-shadow:1px 0 0 var(--layout-line,#dedee3);padding-right:8px}
+.compras-linha.grade-produto>.c-tipo{grid-column:3}
+.compras-linha.grade-produto>.c-estoque{grid-column:4}
+.compras-linha.grade-produto>.c-minmax{grid-column:5}
+.compras-linha.grade-produto>.c-preco{grid-column:6}
+.compras-linha.grade-produto>.c-compra{grid-column:7}
+.compras-linha.grade-produto>.c-estoque,.compras-linha.grade-produto>.c-minmax,.compras-linha.grade-produto>.c-preco{justify-content:flex-end;text-align:right;font-variant-numeric:tabular-nums}
+.compras-linha.grade-produto>.account-list-state,.compras-linha.grade-produto>.c-estado{grid-column:8}
+.compras-linha.grade-produto>.account-action-toggle{grid-column:9;position:sticky;right:0;z-index:2;align-self:stretch;height:auto;background:inherit}
+.compras-linha.grade-produto>.account-row-actions:not([hidden]){grid-column:8;grid-row:1;justify-self:end;position:sticky;right:32px;z-index:2;background:inherit}
+.compras-linha.grade-produto:has(>.account-row-actions:not([hidden]))>.account-list-state{visibility:hidden}
+.compras-linha.grade-produto.inativo>.compras-celula{opacity:.55}
+.oculta-tipo .grade-produto:not(.compras-linha-cabecalho)>.c-tipo,.oculta-tipo .compras-linha-cabecalho.grade-produto>.c-tipo>.compras-coluna-titulo{display:none}
+.oculta-estoque{--w-estoque:24px}
+.oculta-estoque .grade-produto:not(.compras-linha-cabecalho)>.c-estoque,.oculta-estoque .compras-linha-cabecalho.grade-produto>.c-estoque>.compras-coluna-titulo{display:none}
+.oculta-minmax{--w-minmax:24px}
+.oculta-minmax .grade-produto:not(.compras-linha-cabecalho)>.c-minmax,.oculta-minmax .compras-linha-cabecalho.grade-produto>.c-minmax>.compras-coluna-titulo{display:none}
+.oculta-preco{--w-preco:24px}
+.oculta-preco .grade-produto:not(.compras-linha-cabecalho)>.c-preco,.oculta-preco .compras-linha-cabecalho.grade-produto>.c-preco>.compras-coluna-titulo{display:none}
+.oculta-compra{--w-compra:24px}
+.oculta-compra .grade-produto:not(.compras-linha-cabecalho)>.c-compra,.oculta-compra .compras-linha-cabecalho.grade-produto>.c-compra>.compras-coluna-titulo{display:none}
+@container lista-grade (max-width:519px){.compras-linha.grade-produto{--w-nome:150px}}

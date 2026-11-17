@@ -1,5 +1,11 @@
 # CICLUZ — referência de interface
 
+## MER - Produtos — cadastro em 5 etapas e lista em linhas (17/11/2026)
+Pedido do Rodrigo. Só o layout mudou; campos, regras e o que é salvo são os mesmos.
+- **Cadastro em etapas** (`CicluzStepper`, o mesmo do fornecedor e do Cadastro Completo; rodapé Voltar / Avançar / Salvar): **1 Cadastro geral** (Produto, Como se compra, Revenda ou transformação — tipo, grupo e subgrupo —, Conversões de unidade e, na edição, Histórico de nomes) · **2 Cadastro produção/transformação** (só o quadro Transformação) · **3 Cadastro específico** (quadro "Desta loja": estoque, pontos de venda e preço) · **4 Cadastro promoção** (só Promoção) · **5 Cadastro fiscal** (só Fiscal). Qualquer etapa abre pelo toque na barra. Erro ao salvar leva à etapa do campo. Quando a etapa não vale para o tipo (Transformação em produto de Revenda; Promoção em produto de Transformação), ela mostra uma nota em vez de sumir.
+- **A distribuição dos campos entre as etapas 1 e 3 é interpretação** dos nomes do sistema original ("Cadastro geral e Vendas", "TNP - Cadastro"), que não existiam nesta tela: o Rodrigo ainda precisa confirmar.
+- **Lista** no modelo de Fornecedores e Tipos de Ocorrência (`U.cabecalhoColunas` + `U.linhaLista`, grade `grade-produto`): cabeçalho branco com o botão retangular **Novo Produto +**, a quantidade no círculo e a bolinha **‹ ›**; seleção, ícone e nome fixos; Tipo, Estoque, Mín · Máx, Preço e Compra ocultam pela setinha (preferência do aparelho em `cicluz-produtos-colunas`); a seta do fim da linha revela Editar e **Inativar** (produto nunca é apagado; mesma confirmação por frase do lote). Até 600 px a lista continua em cards.
+
 ## Busca das telas do Compras não fecha a cada letra (09/11/2026)
 Relato do Zé: em MER - Produtos, cada letra digitada fechava a busca. Causa: a tela se redesenha a cada filtro, o campo era recriado e o `layout-review.js` o embrulhava de novo na lupa, fechado. Regra: busca de tela que se redesenha usa **`U.buscaFixa(chave, …)`** (`compras/ui.js`): o mesmo campo sobrevive ao redesenho, continua aberto e com o cursor, e a lista é refeita 180 ms depois da última tecla. Vale para MER - Produtos (nome, código interno, código de barras e marca), Fornecedores, Catálogo e Preço-Base (3 abas), Cotação e Estoque. O refoco antigo (`setTimeout(… .compras-busca …focus())`) foi apagado nas 5 telas.
 

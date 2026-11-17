@@ -1,6 +1,6 @@
 /*
  * Produtos — lista (S1: pages/produtos/index.vue, ProdutoFiltros, ProdutoCard, ProdutoListaLinha,
- * ProdutoInativarLote). Busca, "Só ativos", "Só os que já vendi", filtros, 6 ordenações do S1 + menor
+ * ProdutoInativarLote). Lista em linhas com colunas ocultáveis (modelo de Fornecedores). Busca, "Só ativos", "Só os que já vendi", filtros, 6 ordenações do S1 + menor
  * estoque (S2), paginação de 12, cards ou lista, foto ampliada e inativação em lote com frase.
  * Fica em Saídas · Mercadorias → Cadastros Geral → MER - Produtos.
  */
@@ -34,6 +34,7 @@
   function abrir() {
     if (!tela) {
       tela = U.criarTela({ id: 'compras-produtos', titulo: 'MER - Produtos', caminho: 'Saídas · Mercadorias / Cadastros Geral / MER - Produtos', icone: 'produto', voltar: voltarCadastros });
+      // É esta ação que o "+" fixo do rodapé aciona (a mesma do botão "Novo Produto" do cabeçalho da lista).
       U.atalho(tela, 'Novo produto', 'M12 5v14M5 12h14', () => PF.editarProduto(null, render), { criar: true });
     }
     tela.ativar();
@@ -125,14 +126,19 @@
     const lote = barraDoLote(pag.itens);
     // No celular (até 600 px) a lista vira cards, como no S1.
     const emCards = filtro.modo === 'cards' || window.matchMedia('(max-width: 600px)').matches;
-    const corpo = emCards ? cards(pag.itens, b) : tabela(pag.itens, b);
+    // Cabeçalho branco da lista, igual ao de Fornecedores e Tipos de Ocorrência: botão retangular "Novo Produto" com o "+",
+    // e na outra ponta a quantidade num círculo e a bolinha "‹ ›" de ocultar ou mostrar todas as colunas.
+    const ponta = U.pontaDaLista(todos.length, todos.length + (todos.length === 1 ? ' produto na lista' : ' produtos na lista'));
+    const sec = U.secao('Produtos', undefined, ponta);
+    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Novo Produto', 'Cadastrar produto', () => PF.editarProduto(null, render)));
+    sec.append(emCards ? cards(pag.itens, b) : linhas(pag.itens, b, ponta));
     const paginacao = el('div', 'compras-paginacao');
     if (pag.paginas > 1) {
       paginacao.append(botao('‹ Anterior', () => { filtro.pagina--; render(); }), el('span', null, 'Página ' + pag.pagina + ' de ' + pag.paginas), botao('Próxima ›', () => { filtro.pagina++; render(); }));
       paginacao.querySelectorAll('button')[0].disabled = pag.pagina <= 1;
       paginacao.querySelectorAll('button')[1].disabled = pag.pagina >= pag.paginas;
     }
-    tela.body.replaceChildren(controles, linha, info, lote, corpo, paginacao);
+    tela.body.replaceChildren(controles, linha, info, lote, sec, paginacao);
   }
 
   function selecao(p) {
@@ -157,16 +163,49 @@
   };
   const precoAtual = (p) => R.calcularPrecoVendaComPromocao({ precoVenda: p.precoVenda || 0, promocoes: p.promocoes || [] });
 
-  function tabela(lista, b) {
-    return U.tabela([
-      ['', (p) => selecao(p), 'centro'],
-      ['Produto', (p) => { const s = el('span', 'compras-produto-celula'); s.append(el('b', null, p.nomeCatalogo || p.descricao), U.bolinhasDe(p.id, b), el('small', null, [p.codigoInterno || 'Sem código', p.marca || 'Sem marca', S.nomeGrupo(p.grupoId, p.subgrupoId)].join(' · '))); const a = alertaVinculo(p); if (a) s.append(a); return s; }],
-      ['Tipo', (p) => (p.tipo === 'revenda' ? 'Revenda' : 'Transformação')],
-      ['Estoque', (p) => D.numero(p.saldo) + ' ' + (p.unidade || ''), 'num'],
-      ['Mín · Máx', (p) => (p.estoqueMin == null ? '—' : D.numero(p.estoqueMin)) + ' · ' + (p.estoqueMax == null ? '—' : D.numero(p.estoqueMax)), 'num'],
-      ['Preço', (p) => (p.precoVenda ? D.moeda(precoAtual(p)) : 'Sem preço'), 'num'],
-      ['Compra', situacaoCompra],
-    ], lista, { aoClicar: (p) => PF.editarProduto(p, render), vazioTexto: 'Nenhum produto com esses filtros.', classeLinha: (p) => (p.status !== 'ativo' ? 'inativo' : '') });
+  /**
+   * Lista em linhas finas, no mesmo modelo de Fornecedores e Tipos de Ocorrência (pedido do Rodrigo, 17/11/2026): a
+   * caixa de seleção, o ícone e o nome ficam fixos; cada outra coluna tem a setinha que a oculta ou mostra (preferência
+   * do aparelho); o que não couber rola para o lado. Tocar na linha edita; a seta do fim revela Editar e Inativar
+   * (produto nunca é apagado).
+   */
+  function linhas(lista, b, ponta) {
+    const box = el('div', 'compras-lista compras-lista-grade');
+    U.arrastarParaRolar(box);
+    if (!lista.length) { box.append(U.vazio('Nenhum produto com esses filtros.')); return box; }
+    const cabecalho = U.cabecalhoColunas('grade-produto', [
+      { chave: 'nome', rotulo: 'Produto' }, { chave: 'tipo', rotulo: 'Tipo', ocultavel: true }, { chave: 'estoque', rotulo: 'Estoque', ocultavel: true },
+      { chave: 'minmax', rotulo: 'Mín · Máx', ocultavel: true }, { chave: 'preco', rotulo: 'Preço', ocultavel: true },
+      { chave: 'compra', rotulo: 'Compra', ocultavel: true }, { chave: 'estado', rotulo: 'Situação' },
+    ], { lista: box, preferencia: 'cicluz-produtos-colunas' });
+    box.append(cabecalho);
+    ponta.append(cabecalho.botaoGeral);
+    lista.forEach((p) => {
+      const rotulo = p.nomeCatalogo || p.descricao;
+      const nome = el('span', 'compras-produto-celula');
+      nome.append(el('b', null, rotulo), U.bolinhasDe(p.id, b), el('small', null, [p.codigoInterno || 'Sem código', p.marca || 'Sem marca', S.nomeGrupo(p.grupoId, p.subgrupoId)].join(' · ')));
+      const a = alertaVinculo(p); if (a) nome.append(a);
+      const r = U.linhaLista({
+        icones: [{ icone: 'produto', rotulo: p.tipo === 'revenda' ? 'Revenda' : 'Transformação' }], grade: 'grade-produto',
+        colunas: [
+          { chave: 'nome', conteudo: nome },
+          { chave: 'tipo', conteudo: p.tipo === 'revenda' ? 'Revenda' : 'Transformação' },
+          { chave: 'estoque', conteudo: D.numero(p.saldo) + ' ' + (p.unidade || '') },
+          { chave: 'minmax', conteudo: (p.estoqueMin == null ? '—' : D.numero(p.estoqueMin)) + ' · ' + (p.estoqueMax == null ? '—' : D.numero(p.estoqueMax)) },
+          { chave: 'preco', conteudo: p.precoVenda ? D.moeda(precoAtual(p)) : 'Sem preço' },
+          { chave: 'compra', conteudo: situacaoCompra(p) },
+        ],
+        estado: p.status === 'ativo' ? 'Ativo' : 'Inativo',
+        acoes: { rotulo, lista: box, aoEditar: () => PF.editarProduto(p, render), aoExcluir: () => (p.status === 'ativo' ? inativar([p.id]) : U.avisar('Este produto já está inativo.')) },
+      });
+      if (p.status !== 'ativo') r.classList.add('inativo');
+      r.querySelector('.compras-linha-icones').prepend(selecao(p));
+      // Produto nunca é apagado: a lixeira da linha inativa (mesma confirmação da inativação em lote).
+      const lixeira = r.querySelector('.account-row-actions > button');
+      if (lixeira) { lixeira.title = 'Inativar'; lixeira.setAttribute('aria-label', 'Inativar ' + rotulo); }
+      box.append(r);
+    });
+    return box;
   }
 
   function cards(lista, b) {
@@ -212,11 +251,10 @@
     box.append(el('b', null, selecionados.size + ' produto(s) selecionado(s)'),
       botao('Selecionar página atual', () => { pagina.forEach((p) => selecionados.add(p.id)); render(); }),
       botao('Limpar seleção', () => { selecionados.clear(); render(); }),
-      botao('Inativar selecionados', inativarSelecionados, 'btn perigo'));
+      botao('Inativar selecionados', () => inativar([...selecionados]), 'btn perigo'));
     return box;
   }
-  function inativarSelecionados() {
-    const ids = [...selecionados];
+  function inativar(ids) {
     const frase = R.fraseInativacao(ids.length);
     U.dialogo({
       titulo: 'Inativar ' + ids.length + ' produto(s)',
@@ -231,7 +269,7 @@
         let alterados = 0;
         const ok = S.transacao((d) => d.produtos.forEach((p) => { if (ids.includes(p.id) && p.status !== 'inativo') { p.status = 'inativo'; p.liberadoCompra = false; alterados++; } }));
         if (!ok) return 'Não foi possível salvar.';
-        selecionados.clear();
+        ids.forEach((id) => selecionados.delete(id));
         U.avisar(alterados + ' produto(s) inativado(s).');
         render();
       },
