@@ -227,7 +227,7 @@
   }
   const emailValido = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
   /** Regime tributário do fornecedor pessoa jurídica: só guarda a opção escolhida, não entra em cálculo nenhum. */
-  const REGIMES_TRIBUTARIOS = [['mei', 'MEI'], ['simples', 'Simples Nacional'], ['presumido', 'Lucro Presumido'], ['real', 'Lucro Real'], ['nao-informado', 'Não informado']];
+  const REGIMES_TRIBUTARIOS = [['mei', 'MEI'], ['simples', 'Simples Nacional'], ['presumido', 'Lucro Presumido'], ['real', 'Lucro Real'], ['imune-isenta', 'Imune / Isenta'], ['nao-informado', 'Não informado']];
   /** O que o representante é na empresa (lista fixa, escolha única; campo opcional). */
   const CARGOS_REPRESENTANTE = [['proprietario', 'Proprietário'], ['socio-proprietario', 'Sócio-proprietário'], ['diretor-geral', 'Diretor geral'], ['diretor-comercial', 'Diretor comercial'],
     ['gerente-geral', 'Gerente geral'], ['gerente-comercial', 'Gerente comercial'], ['supervisor-geral', 'Supervisor geral'], ['supervisor-comercial', 'Supervisor comercial'],
