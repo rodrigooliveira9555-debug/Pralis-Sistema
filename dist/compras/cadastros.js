@@ -156,7 +156,8 @@
     const caixa = el('div', 'compras-aniv-campo'); caixa.append(input, botaoPainel);
     const painel = el('div', 'compras-escolha-painel compras-aniv-painel'); painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', nomeCampo + ': dia e mês');
     const gradeMes = el('div', 'compras-grade-escolha em-4'); const gradeDia = el('div', 'compras-grade-escolha em-7');
-    painel.append(el('span', 'compras-rotulo', 'Mês'), gradeMes, el('span', 'compras-rotulo', 'Dia'), gradeDia);
+    // Ordem do campo: primeiro o dia, depois o mês (pedido do Rodrigo, 17/11/2026).
+    painel.append(el('span', 'compras-rotulo', 'Dia'), gradeDia, el('span', 'compras-rotulo', 'Mês'), gradeMes);
     const abrir = U.flutuante(caixa, painel);
     const resumo = el('small', 'profiles-note'); resumo.setAttribute('aria-live', 'polite');
     const no = el('div', 'compras-campo compras-aniv');
