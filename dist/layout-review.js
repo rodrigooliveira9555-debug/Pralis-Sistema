@@ -18,15 +18,17 @@
   const lower=text.toLowerCase();if(lower.includes('foto')||lower.includes('câmera'))return 'camera';
   return Object.keys(WORDS).find(k=>WORDS[k].split(' ').includes(word))||'right';
  }
- /* Exemplo dentro do campo vazio (pedido do Rodrigo, 17/11/2026), em todo o sistema e num lugar só: nome de pessoa mostra "Nome e sobrenome" e e-mail mostra "nome@gmail.com". Só entra em campo que ainda não tem exemplo próprio (WhatsApp, CPF, CEP, datas e DD/MM já têm o seu). Nome de empresa, produto, grupo, lista etc. não é nome de pessoa e fica sem exemplo. */
+ /* Exemplo dentro do campo vazio (pedido do Rodrigo, 17/11/2026), em todo o sistema e num lugar só: nome de pessoa mostra "Ex: Nome e sobrenome..." e e-mail mostra "Ex: nome@email.com..." (neutro, sem nome de provedor). Só entra em campo que ainda não tem exemplo próprio (WhatsApp, CPF, CEP, datas e DD/MM já têm o seu). Nome de empresa, produto, grupo, lista etc. não é nome de pessoa e fica sem exemplo. */
  const PERSON=/^nome (completo|e sobrenome|d[oa]s? (respons[aá]vel|contato|vendedora?|prestadora?|representante|financeiro|colaboradora?|funcion[aá]ri[oa]|cliente|signat[aá]rio|dependente|m[eé]dic[oa]|m[aã]e|pai|titular|candidat[oa]|entrevistador|gestor|benefici[aá]ri[oa]))/i;
+ /* Exemplo de texto vem com "Ex: " antes e "..." depois, para ficar claro que é só um exemplo (ajuste do Rodrigo, 17/11/2026). Máscara de formato (telefone, CNPJ, CPF, CEP, valor, percentual) fica sem, porque mostra o formato, não um exemplo. */
+ const ex=t=>'Ex: '+t+'...';
  function exampleFor(label,input){
   const own=label.querySelector('.compras-rotulo')||[...label.childNodes].find(n=>n.nodeType===3&&n.textContent.trim())||label.querySelector('span');
   const text=(own?own.textContent:'').trim();
-  if(input.type==='email'||/e-?mail/i.test(text))return /celular|telefone|whatsapp/i.test(text)?'':'nome@gmail.com';
+  if(input.type==='email'||/e-?mail/i.test(text))return /celular|telefone|whatsapp/i.test(text)?'':ex('nome@email.com');
   if(input.type==='tel')return '(00) 00000-0000';
   if(input.type!=='text'&&input.type!=='')return '';
-  if(PERSON.test(text))return 'Nome e sobrenome';
+  if(PERSON.test(text))return ex('Nome e sobrenome');
   const found=EXAMPLES.find(([re])=>re.test(text));
   return found?found[1]:'';
  }
@@ -34,10 +36,10 @@
  const EXAMPLES=[
   [/cnpj/i,'00.000.000/0000-00'],[/cpf/i,'000.000.000-00'],[/\bcep\b/i,'00000-000'],
   [/whatsapp|telefone|celular/i,'(00) 00000-0000'],
-  [/raz[aã]o social/i,'Empresa Exemplo Ltda'],[/nome fantasia/i,'Nome da empresa'],
-  [/^(rua|logradouro|endere[cç]o)/i,'Rua das Flores'],[/^n[uú]mero( \*)?$/i,'123'],[/^complemento/i,'Apto 101'],[/^bairro/i,'Centro'],[/^(cidade|munic[ií]pio)/i,'Nome da cidade'],
-  [/c[oó]digo de barras/i,'7890000000000'],[/^marca/i,'Nome da marca'],
-  [/\bsite\b|\burl\b|\blink\b/i,'https://www.exemplo.com.br'],
+  [/raz[aã]o social/i,ex('Empresa Exemplo Ltda')],[/nome fantasia/i,ex('Nome da empresa')],
+  [/^(rua|logradouro|endere[cç]o)/i,ex('Rua das Flores')],[/^n[uú]mero( \*)?$/i,ex('123')],[/^complemento/i,ex('Apto 101')],[/^bairro/i,ex('Centro')],[/^(cidade|munic[ií]pio)/i,ex('Nome da cidade')],
+  [/c[oó]digo de barras/i,'7890000000000'],[/^marca/i,ex('Nome da marca')],
+  [/\bsite\b|\burl\b|\blink\b/i,ex('https://www.exemplo.com.br')],
   [/\(%\)|percentual|al[ií]quota|margem|desconto %/i,'0,00'],
   [/\(r\$\)|^valor|^pre[cç]o|^custo|sal[aá]rio/i,'R$ 0,00'],
   [/chave pix/i,'CPF, CNPJ, e-mail ou celular'],[/ag[eê]ncia/i,'0000'],[/^conta( \*)?$|conta corrente/i,'00000-0'],

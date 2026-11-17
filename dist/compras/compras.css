@@ -603,3 +603,11 @@ body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-sea
 /* Painel no cinza do fundo das telas; cada opção é um quadro branco, separado; a escolhida fica cheia na cor do menu. */
 .compras-aniv-painel .compras-grade-escolha{max-width:none;gap:6px;border:0;border-radius:0;background:transparent;overflow:visible}
 .compras-aniv-painel .compras-grade-escolha .compras-grade-celula{min-height:36px;border:1px solid var(--layout-line,#dedee3);border-radius:8px;box-shadow:none}
+/* Campo obrigatório vazio (17/11/2026): só a moldura do campo fica na cor do menu (o nome do campo não muda) e, embaixo, a linha de aviso com o ícone de exclamação. Aparece só quando Avançar ou Salvar não passa.
+   O texto usa a cor de texto do menu (--panel-text), que tem contraste sobre o branco; o contorno e o ícone, a cor do menu. */
+/* A moldura dos campos vem das variáveis --layout-line e --ui-border-base (regras gerais de campo): aqui elas apontam para a cor do menu, só neste campo. O id dentro do :is() não existe na tela: só dá peso ao seletor, como nas regras gerais, para a cor valer também com o cursor no campo. */
+:is(dialog,.view,#compras-campo-pendente) .compras-campo.campo-pendente :is(input:not([type=hidden]),select,textarea){--layout-line:var(--menu-accent);--ui-border-base:var(--menu-accent);--ui-control-accent:var(--menu-accent);--navigation-ink:var(--menu-accent)}
+.compras-campo>.campo-aviso{display:flex;align-items:center;gap:6px;margin:4px 0 0;font:500 var(--ui-note,11px)/16px var(--ui-font)}
+.compras-campo>.campo-aviso>span{color:var(--panel-text,inherit)}
+.compras-campo>.campo-aviso svg{flex:none;width:16px;height:16px;fill:none;stroke:var(--menu-accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)}

@@ -504,7 +504,7 @@
       salvando = true;
       let msg;
       try { msg = await salvar(ctx); } catch (err) { console.warn(err); msg = 'Não foi possível salvar. Tente de novo.'; } finally { salvando = false; }
-      if (msg) { erro.textContent = msg; return; }
+      if (msg) { erro.textContent = msg; sinalizarObrigatorios(form); return; }
       d.close();
     };
     d.append(form);
@@ -516,6 +516,51 @@
     // O rodapé é montado pelo shell logo depois de abrir: o ✓ ganha o nome da ação como dica.
     if (salvar) setTimeout(() => { const ok = d.querySelector('.people-save-control'); if (ok) { ok.title = rotuloSalvar; ok.setAttribute('aria-label', rotuloSalvar); } }, 120);
     return d;
+  }
+
+  /**
+   * Sinaliza os campos obrigatórios vazios (pedido do Rodrigo, 17/11/2026): quando Avançar ou Salvar não passa, cada
+   * campo obrigatório vazio que está à vista dentro de "raiz" ganha o contorno na cor do menu e, embaixo, uma linha com
+   * o ícone de exclamação ("Preencha este campo." / "Selecione uma opção."). Todos de uma vez; a tela rola até o
+   * primeiro; o aviso de cada campo some quando ele é preenchido. O nome do campo não muda de cor: só a moldura. Obrigatório é o campo cujo
+   * rótulo termina em " *". Devolve quantos campos foram sinalizados.
+   */
+  const ICONE_AVISO = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>';
+  function limparSinal(campo) {
+    campo.classList.remove('campo-pendente');
+    campo.querySelectorAll(':scope > .campo-aviso').forEach((a) => a.remove());
+  }
+  function sinalizarObrigatorios(raiz) {
+    if (!raiz) return 0;
+    raiz.querySelectorAll('.campo-pendente').forEach(limparSinal);
+    const pendentes = [];
+    raiz.querySelectorAll('.compras-campo').forEach((campo) => {
+      const rotulo = campo.querySelector(':scope > .compras-rotulo');
+      if (!rotulo || !rotulo.textContent.trim().endsWith('*') || campo.offsetParent === null) return;
+      const entradas = [...campo.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=file]), select, textarea')];
+      if (!entradas.length || entradas.some((i) => String(i.value || '').trim())) return;
+      const alvo = entradas.find((i) => i.offsetParent !== null) || entradas[0];
+      const aviso = el('small', 'campo-aviso');
+      aviso.setAttribute('role', 'alert');
+      aviso.innerHTML = ICONE_AVISO;
+      aviso.append(el('span', null, alvo.tagName === 'SELECT' ? 'Selecione uma opção.' : 'Preencha este campo.'));
+      campo.classList.add('campo-pendente');
+      campo.append(aviso);
+      const aoMexer = () => { if (entradas.some((i) => String(i.value || '').trim())) { limparSinal(campo); entradas.forEach((i) => { i.removeEventListener('input', aoMexer); i.removeEventListener('change', aoMexer); }); } };
+      entradas.forEach((i) => { i.addEventListener('input', aoMexer); i.addEventListener('change', aoMexer); });
+      pendentes.push(alvo);
+    });
+    // Só rola até o primeiro: com o cursor dentro, o campo mostraria a moldura de foco (cinza) em vez da cor do aviso.
+    if (pendentes[0]) pendentes[0].scrollIntoView({ block: 'center' });
+    // Campo preenchido sem digitação (busca do CNPJ ou do CEP) não dispara evento: enquanto houver aviso à vista, confere
+    // a cada meio segundo e tira o aviso do que já foi preenchido; para sozinho quando não sobra nenhum.
+    clearInterval(raiz.vigiaObrigatorios);
+    raiz.vigiaObrigatorios = setInterval(() => {
+      const comAviso = [...raiz.querySelectorAll('.campo-pendente')];
+      if (!raiz.isConnected || !comAviso.length) { clearInterval(raiz.vigiaObrigatorios); return; }
+      comAviso.forEach((campo) => { if ([...campo.querySelectorAll('input:not([type=hidden]), select, textarea')].some((i) => String(i.value || '').trim())) limparSinal(campo); });
+    }, 500);
+    return pendentes.length;
   }
 
   /** Confirmação local (sem janela nativa), como pede o padrão do S2. */
@@ -656,6 +701,6 @@
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, quadroSituacao, cartoesEscolha, flutuante,
+    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, quadroSituacao, cartoesEscolha, flutuante,
   };
 })();
