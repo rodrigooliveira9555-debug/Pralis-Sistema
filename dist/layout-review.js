@@ -37,7 +37,7 @@
   [/cnpj/i,'00.000.000/0000-00'],[/cpf/i,'000.000.000-00'],[/\bcep\b/i,'00000-000'],
   [/whatsapp|telefone|celular/i,'(00) 00000-0000'],
   [/raz[aã]o social/i,ex('Empresa Exemplo Ltda')],[/nome fantasia/i,ex('Nome da empresa')],
-  [/^(rua|logradouro|endere[cç]o)/i,ex('Rua das Flores')],[/^n[uú]mero( \*)?$/i,ex('123')],[/^complemento/i,ex('Apto 101')],[/^bairro/i,ex('Centro')],[/^(cidade|munic[ií]pio)/i,ex('Nome da cidade')],
+  [/^(rua|logradouro|endere[cç]o)/i,ex('Rua das Flores')],[/^n[uú]mero( \*)?$/i,ex('123')],[/^complemento/i,ex('Casa, apartamento, loja, sítio')],[/^bairro/i,ex('Centro')],[/^(cidade|munic[ií]pio)/i,ex('Nome da cidade')],
   [/c[oó]digo de barras/i,'7890000000000'],[/^marca/i,ex('Nome da marca')],
   [/\bsite\b|\burl\b|\blink\b/i,ex('https://www.exemplo.com.br')],
   [/\(%\)|percentual|al[ií]quota|margem|desconto %/i,'0,00'],
