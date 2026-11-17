@@ -44,8 +44,8 @@
         ['Dados cadastrais', [['CNPJ', c.cnpj], ['Razão Social', c.razaoSocial], ['Nome Fantasia', c.nomeFantasia], ['Regime tributário', nomeDe(D.REGIMES_TRIBUTARIOS, c.regimeTributario)], ['Situação', c.situacao === 'inativo' ? 'Inativo' : 'Ativo']]],
         ['Endereço', enderecoLinhas],
         ['Contato', [['Nome', c.contatoNome], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Aniversário', D.aniversarioTexto(c.contatoAniversario)]]],
-        ['Dados financeiros', contato(c.financeiro, c.contrato && c.contrato.tem ? CAD().linhasContrato(c.contrato) : [])],
-        ['Dados do representante', contato(c.representante, [['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
+        ['Informações de Pagamento', contato(c.financeiro, c.contrato ? CAD().linhasContrato(c.contrato) : [])],
+        ['Dados do Responsável', contato(c.representante, [['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
       ];
     }
     return secoes.map(([t, l]) => [t, l.filter(([, v]) => v)]).filter(([, l]) => l.length);
@@ -115,8 +115,8 @@
         });
 
         /* Contato do financeiro e do representante: "O mesmo da etapa anterior" no quadro Sim / Não (como em Fornecedores) */
-        function contatoBloco(dados, sufixo, anterior) {
-          const s = el('fieldset', 'compras-fieldset'); s.append(el('legend', null, 'Dados do ' + sufixo));
+        function contatoBloco(dados, sufixo, anterior, titulo) {
+          const s = el('fieldset', 'compras-fieldset'); s.append(el('legend', null, titulo));
           const mesmo = U.quadroSituacao('O mesmo da etapa anterior', Boolean(dados && dados.mesmo), { textos: ['Sim', 'Não'], dica: 'Preenche o nome, o WhatsApp e o e-mail com os da etapa anterior.', aoMudar: () => pintar() });
           mesmo.classList.add('compras-largo');
           mesmo.querySelector('.account-status-switch').setAttribute('aria-label', 'O mesmo da etapa anterior (' + sufixo + ')');
@@ -129,15 +129,17 @@
           s.append(mesmo, campo('Nome do ' + sufixo, n), campo('WhatsApp do ' + sufixo, w), campo('E-mail do ' + sufixo, m));
           return { no: s, mesmo, nome: n, whatsapp: w, email: m, pintar, ler: () => ({ mesmo: mesmo.ativo, nome: n.value.trim(), whatsapp: w.value.trim(), email: m.value.trim() }) };
         }
-        const fin = contatoBloco(v.financeiro, 'financeiro', () => ({ nome: contatoNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() }));
-        const rep = contatoBloco(v.representante, 'representante', () => fin.ler());
+        const fin = contatoBloco(v.financeiro, 'financeiro', () => ({ nome: contatoNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() }), 'Dados do financeiro');
+        const rep = contatoBloco(v.representante, 'representante', () => fin.ler(), 'Dados do Responsável');
         const repCargo = seletor(D.CARGOS_REPRESENTANTE, (v.representante && v.representante.cargo) || '', 'Selecione');
         rep.no.append(campo('Cargo na empresa', repCargo));
 
-        /* Dados financeiros: contrato com forma de pagamento, recorrência, valor e referência ao salário mínimo (mesmos componentes de Fornecedores) */
+        /* Informações de Pagamento (sempre à vista): forma de pagamento, recorrência, valor e referência ao salário mínimo (mesmos componentes de Fornecedores) */
         const ct = v.contrato || {};
-        const temContrato = U.quadroSituacao('Tem contrato?', Boolean(ct.tem), { textos: ['Sim', 'Não'], dica: 'Contrato com este cliente.', aoMudar: () => pintarContrato() });
-        const cDados = el('fieldset', 'compras-fieldset'); cDados.append(el('legend', null, 'Dados financeiros'));
+        const mensal = U.quadroSituacao('É cliente mensal?', Boolean(ct.clienteMensal), { textos: ['Sim', 'Não'], dica: 'Cliente mensal: período do dia 1 ao último dia do mês, boleto e vencimento todo dia 10.', aoMudar: () => pintarContrato() });
+        mensal.classList.add('compras-largo');
+        mensal.querySelector('.account-status-switch').setAttribute('aria-label', 'É cliente mensal?');
+        const cDados = el('fieldset', 'compras-fieldset'); cDados.append(el('legend', null, 'Informações de Pagamento'));
         const formas = [...D.FORMAS_PAGAMENTO_FORNECEDOR];
         const formaAntiga = ct.formaPagamento && !formas.some(([id]) => id === ct.formaPagamento) ? D.FORMAS_PAGAMENTO_CONTRATO.find(([id]) => id === ct.formaPagamento) : null;
         if (formaAntiga) formas.push([formaAntiga[0], formaAntiga[1] + ' (cadastro anterior)']);
@@ -146,7 +148,7 @@
         const vencCampo = campo('Data de vencimento do boleto', cVencData);
         const diaPagto = el('div', 'compras-campo');
         diaPagto.append(el('span', 'compras-rotulo', 'Dia de pagamento'), el('strong', null, 'Toda sexta-feira'), el('small', 'profiles-note', 'Só informativo: o sistema não faz o pagamento nem marca como pago.'));
-        const rec = window.CicluzComprasRecorrencia.criar({ valor: ct.recorrencia || '', personalizada: ct.recorrenciaPersonalizada || null, cores: cores(), aoMudar: () => pintarValor() });
+        const rec = window.CicluzComprasRecorrencia.criar({ valor: ct.recorrencia || '', personalizada: ct.recorrenciaPersonalizada || null, terminoMensal: ct.terminoMensal || null, opcoes: D.RECORRENCIAS_CLIENTE, cores: cores(), aoMudar: () => pintarValor() });
         const cValor = entrada('text', Number.isInteger(ct.valorCentavos) ? R().moneyMask(String(ct.valorCentavos)) : '', { inputMode: 'numeric', placeholder: 'R$ 0,00', maxLength: 24 });
         const valorCampo = campo('Valor (R$)', cValor);
         const valorResumo = el('small', 'profiles-note compras-valor-resumo'); valorResumo.setAttribute('aria-live', 'polite'); valorCampo.append(valorResumo);
@@ -167,13 +169,26 @@
         const percentualCampo = campo('Percentual do reajuste (%) *', cPercentual);
         const cObs = el('textarea'); cObs.rows = 3; cObs.maxLength = 2000; cObs.value = ct.observacoes || '';
         const obsCampo = campo('Observações do contrato', cObs); obsCampo.classList.add('compras-largo');
-        cDados.append(campo('Forma de pagamento', cForma), vencCampo, diaPagto, rec.no, valorCampo, smBox, campo('Início da vigência', cInicio), campo('Término da vigência', cFim),
+        // Cliente mensal: o período, a forma e o vencimento são fixos e só aparecem como informação (nenhum boleto é gerado).
+        const mensalInfo = el('dl', 'profiles-info compras-largo'); mensalInfo.setAttribute('aria-live', 'polite');
+        const hoje = new Date(); const per = D.periodoMensal(hoje.getFullYear(), hoje.getMonth() + 1);
+        const br = (iso) => iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4);
+        mensalInfo.append(el('dt', null, 'Período de Referência'), el('dd', null, 'Dia 1 até o último dia do mês (' + br(per.inicio) + ' até ' + br(per.fim) + ')'),
+          el('dt', null, 'Forma de Pagamento'), el('dd', null, 'Boleto'), el('dt', null, 'Vencimento'), el('dd', null, 'Vencimento mensal: Todo dia ' + D.CLIENTE_MENSAL.vencimentoDia));
+        let formaManual = ct.clienteMensal ? '' : (ct.formaPagamento || '');
+        let eraMensal = false;
+        cDados.append(mensal, mensalInfo, campo('Forma de pagamento', cForma), vencCampo, diaPagto, rec.no, valorCampo, smBox, campo('Início da vigência', cInicio), campo('Término da vigência', cFim),
           campo('Reajuste', cReajuste, 'Só o índice combinado; o sistema não calcula o reajuste.'), percentualCampo, obsCampo);
         function pintarContrato() {
-          mostrar(cDados, temContrato.ativo);
-          mostrar(vencCampo, cForma.value !== 'dinheiro' && cForma.value !== '');
+          const m = mensal.ativo;
+          if (m && !eraMensal) { if (cForma.value !== 'boleto') formaManual = cForma.value; cForma.value = D.CLIENTE_MENSAL.formaPagamento; }
+          if (!m && eraMensal && formaManual) cForma.value = formaManual;
+          if (!m) formaManual = cForma.value;
+          eraMensal = m; cForma.disabled = m;
+          mostrar(mensalInfo, m);
+          mostrar(vencCampo, !m && cForma.value !== 'dinheiro' && cForma.value !== '');
           vencCampo.querySelector('.compras-rotulo').textContent = cForma.value === 'boleto' ? 'Data de vencimento do boleto' : 'Data de vencimento';
-          mostrar(diaPagto, cForma.value === 'dinheiro');
+          mostrar(diaPagto, !m && cForma.value === 'dinheiro');
           mostrar(smPctCampo, smQuadro.ativo);
           mostrar(percentualCampo, cReajuste.value === 'percentual');
         }
@@ -182,8 +197,8 @@
         const lerContrato = () => {
           const pct = numeroOuNada(cPercentual); const pctMin = numeroOuNada(smPct);
           return {
-            tem: temContrato.ativo, formaPagamento: cForma.value,
-            vencimentoData: cForma.value === 'dinheiro' ? '' : cVencData.value, vencimentoDia: ct.vencimentoDia != null ? ct.vencimentoDia : null,
+            tem: true, clienteMensal: mensal.ativo, formaPagamento: cForma.value,
+            vencimentoData: cForma.value === 'dinheiro' ? '' : cVencData.value, vencimentoDia: mensal.ativo ? D.CLIENTE_MENSAL.vencimentoDia : (ct.clienteMensal ? null : (ct.vencimentoDia != null ? ct.vencimentoDia : null)),
             diaPagamento: cForma.value === 'dinheiro' ? 'sexta' : '', ...rec.ler(), valorCentavos: valorCentavos(),
             salarioMinimo: { ativo: smQuadro.ativo, percentual: pctMin == null ? null : Number.isNaN(pctMin) ? NaN : Math.round(pctMin * 100) / 100 },
             inicio: cInicio.value, fim: cFim.value, reajuste: cReajuste.value,
@@ -212,7 +227,7 @@
 
         const temDadosPF = () => [nome, cpf, nasc].some((i) => i.value.trim());
         const temDadosPJ = () => [cnpj, razao, fantasia, contatoNome].some((i) => i.value.trim()) || fin.ler().nome || rep.ler().nome;
-        const temDadosCompleto = () => (tipo === 'fisica' ? [cpf, cep, rua, numero, bairro, cidade].some((i) => i.value.trim()) : [regime, cep, rua, contatoNome].some((i) => i.value.trim()) || temContrato.ativo || fin.ler().nome || rep.ler().nome);
+        const temDadosCompleto = () => (tipo === 'fisica' ? [cpf, cep, rua, numero, bairro, cidade].some((i) => i.value.trim()) : [regime, cep, rua, contatoNome].some((i) => i.value.trim()) || mensal.ativo || fin.ler().nome || rep.ler().nome);
         /** Trocar de tipo ou de modalidade nunca apaga: o que já foi digitado fica guardado. Pede confirmação quando há risco de a pessoa achar que perdeu. */
         function pedirTroca(qual, ligado) {
           const novoTipo = qual === 'tipo' ? (ligado ? 'juridica' : 'fisica') : tipo; const novoCad = qual === 'cadastro' ? (ligado ? 'completo' : 'simples') : cadastro;
@@ -241,7 +256,7 @@
           }
           if (cadastro === 'simples') return [bloco(F.cnpj, avisoCnpj, F.razao, F.fantasia, F.whats, F.mail)];
           const contato = el('fieldset', 'compras-fieldset'); contato.append(el('legend', null, 'Dados do contato'), F.contatoNome, F.whats, F.mail, aniv.no);
-          return [bloco(situacao, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime, sEnd), bloco(contato), bloco(fin.no, temContrato, cDados), bloco(rep.no), bloco(revisao)];
+          return [bloco(situacao, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime, sEnd), bloco(contato), bloco(fin.no, cDados), bloco(rep.no), bloco(revisao)];
         }
         /** Cadastro lido do formulário: só o tipo e a modalidade em uso (o resto do registro fica como está). */
         function ler() {

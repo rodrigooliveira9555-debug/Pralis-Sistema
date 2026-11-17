@@ -101,7 +101,7 @@
    * O campo: botão compacto com a opção marcada (abre a lista de opções com ✓), e, em Personalizado, o resumo da
    * configuração com o lápis para reabrir o painel. valor/personalizada: o que está gravado. aoMudar() avisa a tela.
    */
-  function criar({ valor, personalizada, cores, aoMudar, opcoes = D.RECORRENCIAS_CONTRATO }) {
+  function criar({ valor, personalizada, cores, aoMudar, opcoes = D.RECORRENCIAS_CONTRATO, terminoMensal }) {
     let atual = valor || ''; let pers = personalizada || null;
     const no = el('div', 'compras-campo compras-largo compras-recorr');
     const gatilho = el('button', 'compras-escolha-gatilho'); gatilho.type = 'button';
@@ -115,7 +115,26 @@
     const lapis = el('button', 'shortcut-circle compras-redondo'); lapis.type = 'button'; lapis.title = 'Editar recorrência personalizada'; lapis.setAttribute('aria-label', 'Editar recorrência personalizada');
     lapis.innerHTML = SVG(LAPIS);
     linhaPers.append(resumoPers, lapis);
+    // "Compra Mensal" (só nas listas que a oferecem): o término usa as mesmas opções do painel Personalizado.
+    const t0 = terminoMensal || { tipo: 'nunca' };
+    const blocoFim = el('div', 'compras-campo compras-largo');
+    const termina = seletor([['nunca', 'Nunca'], ['data', 'Em uma data'], ['ocorrencias', 'Após X ocorrências']], t0.tipo || 'nunca');
+    termina.setAttribute('aria-label', 'Termina (compra mensal)');
+    const dataFim = entrada('date', t0.data || ''); dataFim.setAttribute('aria-label', 'Data de término (compra mensal)');
+    const vezes = entrada('text', t0.ocorrencias != null ? String(t0.ocorrencias) : '', { inputMode: 'numeric', maxLength: 4, placeholder: 'Quantidade' });
+    vezes.setAttribute('aria-label', 'Quantidade de ocorrências (compra mensal)');
+    const dataBox = el('div'); dataBox.append(dataFim);
+    const linhaFim = el('div', 'compras-recorr-linha'); linhaFim.append(termina, dataBox, vezes);
+    blocoFim.append(el('span', 'compras-rotulo', 'Termina'), linhaFim);
+    const pintarFim = () => {
+      blocoFim.style.display = atual === 'compra-mensal' ? '' : 'none';
+      dataBox.style.display = termina.value === 'data' ? '' : 'none'; vezes.style.display = termina.value === 'ocorrencias' ? '' : 'none';
+    };
+    const lerFim = () => { const t = { tipo: termina.value }; if (t.tipo === 'data') t.data = dataFim.value; if (t.tipo === 'ocorrencias') t.ocorrencias = vezes.value ? Number(vezes.value) : null; return t; };
+    vezes.addEventListener('input', () => { vezes.value = vezes.value.replace(/\D/g, ''); if (aoMudar) aoMudar(); });
+    termina.addEventListener('change', () => { pintarFim(); if (aoMudar) aoMudar(); });
     const pintar = () => {
+      pintarFim();
       // Valor antigo que não está na lista continua aparecendo (não some sem a pessoa mexer).
       texto.textContent = atual ? (nomeDe(opcoes, atual) || atual) : 'Selecionar';
       texto.classList.toggle('vazio', !atual);
@@ -145,9 +164,9 @@
     }
     gatilho.addEventListener('click', () => abrir(painel.hidden));
     lapis.onclick = () => abrirPainelPers('personalizado');
-    no.append(el('span', 'compras-rotulo', 'Tipo de recorrência'), gatilho, painel, linhaPers);
+    no.append(el('span', 'compras-rotulo', 'Tipo de recorrência'), gatilho, painel, linhaPers, blocoFim);
     pintar();
-    return { no, ler: () => ({ recorrencia: atual, recorrenciaPersonalizada: atual === 'personalizado' ? pers : (pers || null) }), atual: () => atual };
+    return { no, ler: () => ({ recorrencia: atual, recorrenciaPersonalizada: atual === 'personalizado' ? pers : (pers || null), ...(opcoes.some(([id]) => id === 'compra-mensal') ? { terminoMensal: atual === 'compra-mensal' ? lerFim() : null } : {}) }), atual: () => atual, dataTermino: dataFim };
   }
 
   window.CicluzComprasRecorrencia = { criar, abrirPersonalizada };

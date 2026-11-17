@@ -31,11 +31,13 @@
   /** Linhas [rótulo, valor] do contrato, só as preenchidas. */
   function linhasContrato(c) {
     const sm = c.salarioMinimo;
-    const rec = c.recorrencia === 'personalizado' ? 'Personalizado — ' + (D.resumoRecorrenciaPersonalizada(c.recorrenciaPersonalizada) || 'a configurar') : nomeDe(D.RECORRENCIAS_CONTRATO, c.recorrencia);
+    const rec = c.recorrencia === 'personalizado' ? 'Personalizado — ' + (D.resumoRecorrenciaPersonalizada(c.recorrenciaPersonalizada) || 'a configurar')
+      : c.recorrencia === 'compra-mensal' ? 'Compra Mensal' + (D.resumoTermino(c.terminoMensal) ? ', ' + D.resumoTermino(c.terminoMensal) : '') : nomeDe(D.RECORRENCIAS_CLIENTE, c.recorrencia);
     const dinheiro = c.formaPagamento === 'dinheiro';
     return [
+      ['Cliente mensal', c.clienteMensal ? 'Sim — período do dia 1 ao último dia do mês' : ''],
       ['Forma de pagamento', nomeDe(D.FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)],
-      dinheiro ? ['Dia de pagamento', 'Toda sexta-feira'] : ['Vencimento', dataBR(c.vencimentoData) || (Number.isInteger(c.vencimentoDia) ? 'Todo dia ' + c.vencimentoDia : '')],
+      c.clienteMensal ? ['Vencimento', 'Todo dia ' + D.CLIENTE_MENSAL.vencimentoDia] : dinheiro ? ['Dia de pagamento', 'Toda sexta-feira'] : ['Vencimento', dataBR(c.vencimentoData) || (Number.isInteger(c.vencimentoDia) ? 'Todo dia ' + c.vencimentoDia : '')],
       ['Recorrência', rec],
       ['Valor', Number.isInteger(c.valorCentavos) ? D.resumoValorRecorrencia(c.valorCentavos, c.recorrencia).replace(/\.$/, '') : ''],
       ['Referência do salário mínimo', sm && sm.ativo && typeof sm.percentual === 'number' && !Number.isNaN(sm.percentual) ? String(sm.percentual).replace('.', ',') + '% do salário mínimo' : ''],

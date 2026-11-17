@@ -407,7 +407,20 @@ ok(() => {
   assert.deepEqual(d.etapasCliente('fisica', 'simples'), []);
   assert.deepEqual(d.etapasCliente('juridica', 'simples'), []);
   assert.deepEqual(d.etapasCliente('fisica', 'completo'), ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão']);
-  assert.deepEqual(d.etapasCliente('juridica', 'completo'), ['Dados da empresa', 'Dados do contato', 'Dados do financeiro', 'Dados do representante', 'Revisão']);
+  assert.deepEqual(d.etapasCliente('juridica', 'completo'), ['Dados da empresa', 'Dados do contato', 'Informações de Pagamento', 'Dados do Responsável', 'Revisão']);
+  // Cliente mensal e Compra Mensal (18/11/2026)
+  assert.deepEqual(d.periodoMensal(2026, 11), { inicio: '2026-11-01', fim: '2026-11-30' });
+  assert.deepEqual(d.periodoMensal(2026, 2), { inicio: '2026-02-01', fim: '2026-02-28' });
+  assert.deepEqual(d.periodoMensal(2028, 2), { inicio: '2028-02-01', fim: '2028-02-29' });
+  assert.deepEqual(d.periodoMensal(2026, 12), { inicio: '2026-12-01', fim: '2026-12-31' });
+  assert.deepEqual(d.CLIENTE_MENSAL, { formaPagamento: 'boleto', vencimentoDia: 10 });
+  assert.ok(d.RECORRENCIAS_CLIENTE.some(([id]) => id === 'compra-mensal') && !d.RECORRENCIAS_CONTRATO.some(([id]) => id === 'compra-mensal'));
+  assert.equal(d.validarContratoFinanceiro({ tem: true, recorrencia: 'compra-mensal', terminoMensal: { tipo: 'nunca' } }), '');
+  assert.match(d.validarContratoFinanceiro({ tem: true, recorrencia: 'compra-mensal', terminoMensal: { tipo: 'data', data: '' } }), /data de término/);
+  assert.match(d.validarContratoFinanceiro({ tem: true, recorrencia: 'compra-mensal' }), /termina/);
+  assert.equal(d.validarContratoFinanceiro({ tem: true, clienteMensal: true, formaPagamento: 'boleto', vencimentoDia: 10 }), '');
+  assert.match(d.validarContratoFinanceiro({ tem: true, clienteMensal: true, formaPagamento: 'dinheiro' }), /boleto/);
+  assert.equal(d.resumoTermino({ tipo: 'ocorrencias', ocorrencias: 3 }), 'por 3 ocorrências');
   assert.equal(d.nomeCliente({ tipoPessoa: 'fisica', nome: ' Ana Teste ' }), 'Ana Teste');
   assert.equal(d.nomeCliente({ tipoPessoa: 'juridica', razaoSocial: 'Empresa Ltda', nomeFantasia: 'Fantasia' }), 'Fantasia');
   assert.equal(d.nomeCliente({ tipoPessoa: 'juridica', razaoSocial: 'Empresa Ltda' }), 'Empresa Ltda');

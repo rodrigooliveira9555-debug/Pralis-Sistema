@@ -338,6 +338,30 @@
   /** O que o cadastro oferece hoje (a lista acima segue valendo para o que já foi gravado: PIX e transferência não se perdem). */
   const FORMAS_PAGAMENTO_FORNECEDOR = [['boleto', 'Boleto'], ['dinheiro', 'Dinheiro']];
   const RECORRENCIAS_CONTRATO = [['visita', 'Por visita'], ['solicitacao', 'Por solicitação'], ['hora', 'Por hora'], ['dia', 'Por dia'], ['mes', 'Por mês'], ['ano', 'Por ano'], ['personalizado', 'Personalizado']];
+  /**
+   * Tipo de recorrência do CLIENTE (18/11/2026): as mesmas do fornecedor mais "Compra Mensal" (antes de Personalizado), com o término mensal
+   * em c.terminoMensal ({ tipo: nunca | data | ocorrencias }). Só descreve; não gera cobrança, boleto nem lançamento.
+   */
+  const RECORRENCIAS_CLIENTE = [...RECORRENCIAS_CONTRATO.slice(0, -1), ['compra-mensal', 'Compra Mensal'], RECORRENCIAS_CONTRATO[RECORRENCIAS_CONTRATO.length - 1]];
+  /** Cliente mensal (18/11/2026): boleto, vencimento todo dia 10 e período do dia 1 ao último dia do mês. Regra fixa, só informativa. */
+  const CLIENTE_MENSAL = { formaPagamento: 'boleto', vencimentoDia: 10 };
+  /** Período de referência de um mês (mes de 1 a 12): do dia 1 ao último dia, com fevereiro certo em ano bissexto. */
+  function periodoMensal(ano, mes) {
+    const ultimo = new Date(ano, mes, 0).getDate(); const p = (n) => String(n).padStart(2, '0');
+    return { inicio: ano + '-' + p(mes) + '-01', fim: ano + '-' + p(mes) + '-' + p(ultimo) };
+  }
+  /** Término da recorrência (personalizada ou Compra Mensal): '' quando em ordem. */
+  function validarTermino(t) {
+    if (!t || !['nunca', 'data', 'ocorrencias'].includes(t.tipo)) return 'Escolha quando a recorrência termina.';
+    if (t.tipo === 'data' && !/^\d{4}-\d{2}-\d{2}$/.test(t.data || '')) return 'Informe a data de término.';
+    if (t.tipo === 'ocorrencias' && !(Number.isInteger(t.ocorrencias) && t.ocorrencias >= 1 && t.ocorrencias <= 9999)) return 'Informe a quantidade de ocorrências (número inteiro a partir de 1).';
+    return '';
+  }
+  /** Frase do término, ex.: "até 31/12/2027" (vazio quando incompleto). */
+  function resumoTermino(t) {
+    if (!t || validarTermino(t)) return '';
+    return t.tipo === 'nunca' ? 'sem data de término' : t.tipo === 'data' ? 'até ' + t.data.slice(8, 10) + '/' + t.data.slice(5, 7) + '/' + t.data.slice(0, 4) : 'por ' + t.ocorrencias + (t.ocorrencias === 1 ? ' ocorrência' : ' ocorrências');
+  }
   const UNIDADES_REPETICAO = [['hora', 'Hora'], ['dia', 'Dia'], ['semana', 'Semana'], ['mes', 'Mês'], ['ano', 'Ano']];
   const POSICOES_MES = [['1', 'Primeira'], ['2', 'Segunda'], ['3', 'Terceira'], ['4', 'Quarta'], ['ultima', 'Última']];
   const DIAS_SEMANA_LONGOS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
@@ -366,11 +390,7 @@
         if (!(Number.isInteger(m.diaSemana) && m.diaSemana >= 0 && m.diaSemana <= 6)) return 'Escolha o dia da semana.';
       }
     }
-    const t = p.termina;
-    if (!t || !['nunca', 'data', 'ocorrencias'].includes(t.tipo)) return 'Escolha quando a recorrência termina.';
-    if (t.tipo === 'data' && !/^\d{4}-\d{2}-\d{2}$/.test(t.data || '')) return 'Informe a data de término.';
-    if (t.tipo === 'ocorrencias' && !(Number.isInteger(t.ocorrencias) && t.ocorrencias >= 1 && t.ocorrencias <= 9999)) return 'Informe a quantidade de ocorrências (número inteiro a partir de 1).';
-    return '';
+    return validarTermino(p.termina);
   }
   /** Frase da recorrência personalizada, ex.: "Repete a cada 2 semanas, às segundas e sextas-feiras, sem data de término." */
   function resumoRecorrenciaPersonalizada(p) {
@@ -404,7 +424,7 @@
     const fim = t.tipo === 'nunca' ? 'sem data de término' : t.tipo === 'data' ? 'até ' + t.data.slice(8, 10) + '/' + t.data.slice(5, 7) + '/' + t.data.slice(0, 4) : 'por ' + t.ocorrencias + (t.ocorrencias === 1 ? ' ocorrência' : ' ocorrências');
     return 'Repete ' + txt + ', ' + fim + '.';
   }
-  const POR_RECORRENCIA = { visita: 'por visita', solicitacao: 'por solicitação', hora: 'por hora', dia: 'por dia', mes: 'por mês', ano: 'por ano', personalizado: 'conforme recorrência personalizada' };
+  const POR_RECORRENCIA = { visita: 'por visita', solicitacao: 'por solicitação', hora: 'por hora', dia: 'por dia', mes: 'por mês', ano: 'por ano', personalizado: 'conforme recorrência personalizada', 'compra-mensal': 'por compra mensal' };
   /** Frase informativa sob o campo Valor, ex.: "R$ 150,00 por visita." Só texto: não calcula total nem cria pagamento. */
   function resumoValorRecorrencia(centavos, recorrencia) {
     if (!Number.isInteger(centavos) || centavos < 0) return '';
@@ -440,7 +460,9 @@
     if (!c.tem) return '';
     const naLista = (lista, v) => !v || lista.some(([id]) => id === v);
     if (!naLista(FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)) return 'Forma de pagamento do contrato inválida.';
-    if (!naLista(RECORRENCIAS_CONTRATO, c.recorrencia)) return 'Recorrência do contrato inválida.';
+    if (!naLista(RECORRENCIAS_CLIENTE, c.recorrencia)) return 'Recorrência do contrato inválida.';
+    if (c.recorrencia === 'compra-mensal') { const m = validarTermino(c.terminoMensal); if (m) return m; }
+    if (c.clienteMensal && c.formaPagamento !== CLIENTE_MENSAL.formaPagamento) return 'Cliente mensal paga por boleto.';
     if (c.recorrencia === 'personalizado') { const m = validarRecorrenciaPersonalizada(c.recorrenciaPersonalizada); if (m) return m; }
     if (c.diaPagamento != null && c.diaPagamento !== '' && c.diaPagamento !== 'sexta') return 'Dia de pagamento inválido.';
     const sm = c.salarioMinimo;
@@ -544,7 +566,7 @@
   function etapasCliente(tipoPessoa, cadastro) {
     if (cadastro !== 'completo') return [];
     return tipoPessoa === 'juridica'
-      ? ['Dados da empresa', 'Dados do contato', 'Dados do financeiro', 'Dados do representante', 'Revisão']
+      ? ['Dados da empresa', 'Dados do contato', 'Informações de Pagamento', 'Dados do Responsável', 'Revisão']
       : ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão'];
   }
   const dataIsoValida = (v) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); if (!m) return false; const d = new Date(+m[1], +m[2] - 1, +m[3]); return d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3]; };
@@ -788,7 +810,7 @@
     CATEGORIAS_FORNECEDOR, categoriaFornecedor, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, documentoAntigoFornecedor, validarFornecedor,
     validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, aniversarioVendedor, migrarVendedorFornecedor,
     FUNCOES_PRESTADOR_INICIAIS, idFuncaoPrestador, funcaoPrestadorIgual, validarFuncaoPrestador, migrarPrestadoresFornecedor,
-    FORMAS_PAGAMENTO_CONTRATO, FORMAS_PAGAMENTO_FORNECEDOR, RECORRENCIAS_CONTRATO, UNIDADES_REPETICAO, POSICOES_MES, DIAS_SEMANA_LONGOS, REAJUSTES_CONTRATO, migrarContratoFinanceiro,
+    FORMAS_PAGAMENTO_CONTRATO, FORMAS_PAGAMENTO_FORNECEDOR, RECORRENCIAS_CONTRATO, RECORRENCIAS_CLIENTE, CLIENTE_MENSAL, periodoMensal, validarTermino, resumoTermino, UNIDADES_REPETICAO, POSICOES_MES, DIAS_SEMANA_LONGOS, REAJUSTES_CONTRATO, migrarContratoFinanceiro,
     validarContratoFinanceiro, TIPOS_PESSOA_CLIENTE, TIPOS_CADASTRO_CLIENTE, nomeCliente, etapasCliente, validarClienteEtapas, validarCliente,
     validarRecorrenciaPersonalizada, resumoRecorrenciaPersonalizada, resumoValorRecorrencia, aniversarioPartes, aniversarioRuim, aniversarioTexto,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
