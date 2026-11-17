@@ -599,6 +599,7 @@ body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-sea
 /* Data de aniversário (17/11/2026): campo DD/MM com o botão do calendário ao lado; o painel traz a grade dos meses e a dos dias. */
 .compras-aniv-campo{display:flex;align-items:center;gap:8px}
 .compras-aniv-campo>input{flex:1;min-width:0}
-.compras-aniv-painel{width:min(320px,calc(100vw - 24px));gap:6px;padding:10px}
-.compras-aniv-painel .compras-grade-escolha{max-width:none}
-.compras-aniv-painel .compras-grade-escolha .compras-grade-celula{min-height:36px}
+.compras-aniv-painel{width:min(320px,calc(100vw - 24px));gap:6px;padding:12px;background:var(--layout-gap,#f5f5f7)}
+/* Painel no cinza do fundo das telas; cada opção é um quadro branco, separado; a escolhida fica cheia na cor do menu. */
+.compras-aniv-painel .compras-grade-escolha{max-width:none;gap:6px;border:0;border-radius:0;background:transparent;overflow:visible}
+.compras-aniv-painel .compras-grade-escolha .compras-grade-celula{min-height:36px;border:1px solid var(--layout-line,#dedee3);border-radius:8px;box-shadow:none}

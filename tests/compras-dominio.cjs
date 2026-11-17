@@ -222,8 +222,8 @@ ok(() => {
   assert.match(v({ vendedorAniversario: '13-01' }), /mês/);
   assert.match(v({ vendedorAniversario: '08-' }), /incompleto/);
   assert.match(v({ vendedorAniversario: '-15' }), /incompleto/);
-  assert.equal(d.aniversarioTexto('08-15'), '15/08');
-  assert.equal(d.aniversarioTexto('1990-03-15'), '15/03');
+  assert.equal(d.aniversarioTexto('08-15'), '15/ago');
+  assert.equal(d.aniversarioTexto('1990-03-15'), '15/mar');
   assert.equal(d.aniversarioTexto('1990-03'), ''); // só mês: não inventa o dia
   assert.deepEqual(d.aniversarioPartes('1990-03'), { mes: '03', dia: '', legado: true });
   assert.deepEqual(d.aniversarioPartes('02-29'), { mes: '02', dia: '29', legado: false });

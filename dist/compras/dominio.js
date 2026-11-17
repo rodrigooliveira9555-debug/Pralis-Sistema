@@ -278,10 +278,11 @@
     const n = String(c.nascimento || '');
     return n.length === 10 && n[4] === '-' && n[7] === '-' && !aniversarioRuim(n.slice(5)) ? n.slice(5) : '';
   }
-  /** Aniversário no formato DD/MM, ou '' quando falta o dia ou o mês. */
+  const MESES_ABREVIADOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  /** Aniversário como "25/jan" (dia e mês abreviado; pedido do Rodrigo, 17/11/2026), ou '' quando falta o dia ou o mês. */
   function aniversarioTexto(v) {
     const p = aniversarioPartes(v);
-    return p.dia && p.mes ? p.dia + '/' + p.mes : '';
+    return p.dia && p.mes && MESES_ABREVIADOS[Number(p.mes) - 1] ? p.dia + '/' + MESES_ABREVIADOS[Number(p.mes) - 1] : '';
   }
   /** Quem é o contato da 2ª etapa, pela categoria: prestador (Serviço) ou vendedor (Produto, e enquanto nada foi escolhido). */
   function quemVendeFornecedor(categorias) {
@@ -972,7 +973,7 @@
     FUNCOES_PRESTADOR_INICIAIS, idFuncaoPrestador, funcaoPrestadorIgual, validarFuncaoPrestador, migrarPrestadoresFornecedor,
     FORMAS_PAGAMENTO_CONTRATO, FORMAS_PAGAMENTO_FORNECEDOR, RECORRENCIAS_CONTRATO, RECORRENCIAS_CLIENTE, CLIENTE_MENSAL, periodoMensal, validarTermino, resumoTermino, UNIDADES_REPETICAO, POSICOES_MES, DIAS_SEMANA_LONGOS, REAJUSTES_CONTRATO, migrarContratoFinanceiro,
     validarContratoFinanceiro, TIPOS_PESSOA_CLIENTE, TIPOS_CADASTRO_CLIENTE, nomeCliente, etapasCliente, validarClienteEtapas, validarCliente,
-    validarRecorrenciaPersonalizada, resumoRecorrenciaPersonalizada, resumoValorRecorrencia, aniversarioPartes, aniversarioRuim, aniversarioTexto, aniversarioCliente,
+    validarRecorrenciaPersonalizada, resumoRecorrenciaPersonalizada, resumoValorRecorrencia, aniversarioPartes, aniversarioRuim, aniversarioTexto, aniversarioCliente, MESES_ABREVIADOS,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,
     aplicarRecebimento, SITUACOES_PEDIDO,

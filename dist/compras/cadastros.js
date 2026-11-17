@@ -134,19 +134,21 @@
   /**
    * Data de aniversário: dia e mês, sem ano, num campo só (pedido do Rodrigo, 17/11/2026; substitui os dois seletores de
    * 16/11). O campo tem a máscara DD/MM para digitar e, ao tocar nele ou no botão do calendário, abre um painel com os
-   * meses e os dias: escolhe-se o mês e o dia e o painel fecha. valor() devolve "MM-DD", '' quando nada foi escolhido, ou
+   * meses e os dias (painel cinza, opções brancas, a escolhida na cor do menu): escolhe-se o mês e o dia e o painel fecha.
+   * O campo mostra "25/jan". valor() devolve "MM-DD", '' quando nada foi escolhido, ou
    * o formato antigo (AAAA-MM) intacto enquanto a pessoa não mexer; escolha pela metade segue incompleta para a
    * validação recusar. rotulo: o nome do campo (um " *" no fim marca obrigatório).
    */
   const MESES_LONGOS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-  const MESES_CURTOS = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
+  const MESES_CURTOS = D.MESES_ABREVIADOS;
   const DIAS_DO_MES = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   function seletoresAniversario(valorInicial, { rotulo = 'Aniversário' } = {}) {
     const p = D.aniversarioPartes(valorInicial);
     let dia = p.dia; let mes = p.mes; let mexeu = false;
     const nomeCampo = rotulo.endsWith(' *') ? rotulo.slice(0, -2) : rotulo;
-    const escrito = () => (dia || mes ? (dia || '') + (mes ? '/' + mes : '') : '');
-    const input = entrada('text', dia && mes ? dia + '/' + mes : '', { inputMode: 'numeric', placeholder: 'DD/MM', maxLength: 5, autocomplete: 'off' });
+    // O campo mostra o dia e o mês abreviado ("25/jan"); enquanto a pessoa digita os números, mostra os números.
+    const escrito = () => (dia && mes && MESES_CURTOS[Number(mes) - 1] ? dia + '/' + MESES_CURTOS[Number(mes) - 1] : dia || mes ? (dia || '') + (mes ? '/' + mes : '') : '');
+    const input = entrada('text', dia && mes ? escrito() : '', { inputMode: 'numeric', placeholder: 'DD/MM', maxLength: 6, autocomplete: 'off' });
     input.setAttribute('aria-label', nomeCampo);
     const botaoPainel = el('button', 'shortcut-circle compras-redondo');
     botaoPainel.type = 'button'; botaoPainel.title = 'Escolher o dia e o mês'; botaoPainel.setAttribute('aria-label', nomeCampo + ': escolher o dia e o mês');
@@ -173,7 +175,7 @@
       return b;
     };
     function pintar(escreve = true) {
-      if (escreve) input.value = dia && mes ? dia + '/' + mes : escrito();
+      if (escreve) input.value = escrito();
       const v = valor();
       resumo.textContent = D.aniversarioRuim(v) || (dia && mes ? Number(dia) + ' de ' + MESES_LONGOS[Number(mes) - 1].toLowerCase() : '');
       gradeMes.replaceChildren(...MESES_CURTOS.map((m, i) => { const n = String(i + 1).padStart(2, '0'); return celula(m, n === mes, MESES_LONGOS[i], () => { mes = n; mexeu = true; pelaMetade = false; pintar(); if (dia && !D.aniversarioRuim(valor())) fechar(); }); }));
@@ -188,7 +190,8 @@
       // Com os 4 dígitos, vale; pela metade, fica incompleto (a validação recusa) sem trocar o que a pessoa vê.
       dia = d.length >= 2 ? d.slice(0, 2) : ''; mes = d.length === 4 ? d.slice(2) : '';
       mexeu = true; pelaMetade = d.length > 0 && d.length < 4;
-      pintar(false);
+      // Completo e com mês que existe: troca os números do mês pela abreviação.
+      pintar(d.length === 4 && Boolean(MESES_CURTOS[Number(mes) - 1]));
     });
     input.addEventListener('click', () => abrir(true));
     input.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown') { e.preventDefault(); abrir(true); } });
