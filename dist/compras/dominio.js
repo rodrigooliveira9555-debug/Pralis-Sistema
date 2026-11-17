@@ -281,7 +281,8 @@
   /** Etapas do cadastro (decisão do Rodrigo, 15/11/2026), nomes padronizados "Dados do …". A 2ª depende da categoria. */
   function etapasFornecedor(categorias) {
     const c = Array.isArray(categorias) ? categorias : [];
-    return ['Dados da empresa', 'Dados do ' + quemVendeFornecedor(c), 'Dados do financeiro', 'Dados do representante', 'Vínculos', 'Contrato'];
+    // Nomes de 18/11/2026: a 2ª depende da categoria; a 3ª e a 4ª dizem quem é a pessoa (não confundir com as condições de pagamento).
+    return ['Dados da empresa', quemVendeFornecedor(c) === 'prestador' ? 'Dados do Prestador de Serviço' : 'Dados do Vendedor', 'Dados do Responsável Financeiro', 'Dados do Responsável Legal', 'Vínculos', 'Contrato'];
   }
   /**
    * Migração (marca d.migracoes.vendedorFornecedor): no cadastro em etapas o contato do fornecedor é o vendedor ou
@@ -545,8 +546,153 @@
     // Contrato (quadro "Tem contrato?" dos dados do financeiro): só é conferido quando tem. Tudo opcional, menos o
     // percentual quando o reajuste é "Percentual fixo". O valor e o índice são só informados: sem fórmula.
     const contrato = () => validarContratoFinanceiro(f.contrato);
-    // O contrato é conferido na etapa do financeiro (3ª); a 6ª (o documento do contrato) não tem campo a conferir.
-    return [basico(), vendedor(), contato(f.financeiro, 'financeiro') || contrato(), representante(), vinculos(), ''];
+    // O contrato (condições) é conferido na etapa do responsável financeiro (3ª); a 6ª confere as atividades, o modelo e os campos adicionais.
+    return [basico(), vendedor(), contato(f.financeiro, 'financeiro') || contrato(), representante(), vinculos(), validarContratoDocumento(f.contrato)];
+  }
+  /* ---------- Contratos: atividades, modelos e documento (18/11/2026) ----------
+   * Atividades e responsabilidades INCLUÍDAS e NÃO INCLUÍDAS no contrato são listas de itens { id, texto, ref? } (ref = id do grupo ou
+   * subgrupo de despesa de onde o item foi escolhido, no formato "grupo" ou "grupo|subgrupo"). Um item não repete na lista nem
+   * está nas duas. Modelo de contrato: coleção d.modelosContrato; o contrato do fornecedor guarda uma CÓPIA do que veio do modelo
+   * (cláusulas, atividades, campos adicionais e a versão), então mudar o modelo depois nunca altera contratos antigos.
+   * Nada aqui escreve cláusula jurídica: só entra o texto que alguém cadastrou. */
+  const chaveTexto = (t) => semAcento(String(t == null ? '' : t)).replace(/\s+/g, ' ');
+  const TIPOS_CAMPO_ADICIONAL = [['texto', 'Texto'], ['data', 'Data'], ['numero', 'Número'], ['moeda', 'Valor em reais']];
+  const RENOVACOES_CONTRATO = [['', 'Não informada'], ['nenhuma', 'Sem renovação'], ['automatica', 'Renovação automática'], ['manual', 'Renovação manual, a combinar']];
+  const LIMITES_CONTRATO = { atividades: 60, clausulas: 60, campos: 20, texto: 200, clausulaTitulo: 120, clausulaTexto: 4000, nomeModelo: 80 };
+  /** Confere uma lista de atividades. contexto serve só para a mensagem. '' quando em ordem. */
+  function validarListaAtividades(lista, contexto) {
+    if (lista == null) return '';
+    if (!Array.isArray(lista)) return 'Atividades ' + contexto + ': formato inválido.';
+    if (lista.length > LIMITES_CONTRATO.atividades) return 'No máximo ' + LIMITES_CONTRATO.atividades + ' atividades ' + contexto + '.';
+    const vistos = new Set();
+    for (const i of lista) {
+      const t = String((i && i.texto) == null ? '' : i.texto).trim();
+      if (!t) return 'Há uma atividade ' + contexto + ' sem texto.';
+      if (t.length > LIMITES_CONTRATO.texto) return 'Uma atividade ' + contexto + ' passa de ' + LIMITES_CONTRATO.texto + ' caracteres.';
+      const k = chaveTexto(t);
+      if (vistos.has(k)) return 'A atividade "' + t + '" está repetida ' + contexto + '.';
+      vistos.add(k);
+    }
+    return '';
+  }
+  /** Incluídas e não incluídas juntas: cada uma em ordem e nenhuma atividade nas duas. */
+  function validarAtividadesContrato(incluidas, excluidas) {
+    const a = validarListaAtividades(incluidas, 'incluídas no contrato'); if (a) return a;
+    const b = validarListaAtividades(excluidas, 'não incluídas no contrato'); if (b) return b;
+    const inc = new Map((incluidas || []).map((i) => [chaveTexto(i.texto), i])); const refs = new Set((incluidas || []).map((i) => i.ref).filter(Boolean));
+    for (const e of excluidas || []) {
+      if (inc.has(chaveTexto(e.texto)) || (e.ref && refs.has(e.ref))) return 'A atividade "' + String(e.texto).trim() + '" não pode estar nas incluídas e nas não incluídas ao mesmo tempo.';
+    }
+    return '';
+  }
+  /**
+   * Tenta pôr um texto numa lista de atividades. Devolve { item } ou { erro }. outra = a lista oposta; ignorarId = o item
+   * que está sendo editado (não conta como repetido). ref é opcional (escolha pela lista de grupos de despesa).
+   */
+  function novaAtividade(lista, outra, texto, { ref = '', ignorarId = '', id = '' } = {}) {
+    const t = String(texto == null ? '' : texto).replace(/\s+/g, ' ').trim();
+    if (!t) return { erro: 'Escreva a atividade.' };
+    if (t.length > LIMITES_CONTRATO.texto) return { erro: 'A atividade passa de ' + LIMITES_CONTRATO.texto + ' caracteres.' };
+    const k = chaveTexto(t);
+    if ((lista || []).some((i) => i.id !== ignorarId && (chaveTexto(i.texto) === k || (ref && i.ref === ref)))) return { erro: 'Esta atividade já está na lista.' };
+    if ((outra || []).some((i) => chaveTexto(i.texto) === k || (ref && i.ref === ref))) return { erro: 'Esta atividade já está na outra lista (incluídas e não incluídas não se misturam).' };
+    if (!ignorarId && (lista || []).length >= LIMITES_CONTRATO.atividades) return { erro: 'No máximo ' + LIMITES_CONTRATO.atividades + ' atividades por lista.' };
+    return { item: { id: id || ignorarId || 'at-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36), texto: t, ...(ref ? { ref } : {}) } };
+  }
+  /** Modelo de contrato (d.modelosContrato). modelos = os já cadastrados (para o nome não repetir). '' quando em ordem. */
+  function validarModeloContrato(m, { modelos = [] } = {}) {
+    if (!m || typeof m !== 'object') return 'Modelo inválido.';
+    const nome = String(m.nome || '').trim();
+    if (!nome) return 'Informe o nome do tipo de contrato.';
+    if (nome.length > LIMITES_CONTRATO.nomeModelo) return 'O nome do tipo de contrato passa de ' + LIMITES_CONTRATO.nomeModelo + ' caracteres.';
+    if (modelos.some((x) => x.id !== m.id && chaveTexto(x.nome) === chaveTexto(nome))) return 'Já existe um tipo de contrato com este nome.';
+    if (String(m.descricao || '').length > 1000) return 'A descrição passa de 1000 caracteres.';
+    const cl = Array.isArray(m.clausulas) ? m.clausulas : [];
+    if (cl.length > LIMITES_CONTRATO.clausulas) return 'No máximo ' + LIMITES_CONTRATO.clausulas + ' cláusulas.';
+    for (const c of cl) {
+      if (!String((c && c.texto) || '').trim()) return 'Há uma cláusula sem texto (escreva o texto ou remova a cláusula).';
+      if (String(c.titulo || '').length > LIMITES_CONTRATO.clausulaTitulo) return 'O título de uma cláusula passa de ' + LIMITES_CONTRATO.clausulaTitulo + ' caracteres.';
+      if (String(c.texto).length > LIMITES_CONTRATO.clausulaTexto) return 'O texto de uma cláusula passa de ' + LIMITES_CONTRATO.clausulaTexto + ' caracteres.';
+    }
+    const at = validarAtividadesContrato(m.incluidas, m.excluidas); if (at) return at;
+    if (m.valorCentavos != null && (!Number.isInteger(m.valorCentavos) || m.valorCentavos < 0)) return 'Valor do modelo inválido.';
+    if (m.recorrencia && !RECORRENCIAS_CONTRATO.some(([id]) => id === m.recorrencia)) return 'Recorrência do modelo inválida.';
+    if (m.vigenciaMeses != null && !(Number.isInteger(m.vigenciaMeses) && m.vigenciaMeses >= 1 && m.vigenciaMeses <= 600)) return 'A vigência do modelo deve ser um número inteiro de meses, de 1 a 600.';
+    if (m.renovacao && !RENOVACOES_CONTRATO.some(([id]) => id === m.renovacao)) return 'Regra de renovação inválida.';
+    const campos = Array.isArray(m.camposAdicionais) ? m.camposAdicionais : [];
+    if (campos.length > LIMITES_CONTRATO.campos) return 'No máximo ' + LIMITES_CONTRATO.campos + ' campos adicionais.';
+    const rot = new Set();
+    for (const c of campos) {
+      const r = String((c && c.rotulo) || '').trim();
+      if (!r) return 'Há um campo adicional sem nome.';
+      if (r.length > 60) return 'O nome de um campo adicional passa de 60 caracteres.';
+      if (!TIPOS_CAMPO_ADICIONAL.some(([id]) => id === c.tipo)) return 'Tipo inválido no campo adicional "' + r + '".';
+      if (rot.has(chaveTexto(r))) return 'O campo adicional "' + r + '" está repetido.';
+      rot.add(chaveTexto(r));
+    }
+    return '';
+  }
+  /** Soma meses a uma data ISO (dia 31 vira o último dia do mês quando preciso). */
+  function somarMesesIso(iso, n) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if (!m) return '';
+    const ano = +m[1]; const mes = +m[2] - 1 + n; const alvo = new Date(ano, mes, 1); const ultimo = new Date(alvo.getFullYear(), alvo.getMonth() + 1, 0).getDate();
+    return isoData(new Date(alvo.getFullYear(), alvo.getMonth(), Math.min(+m[3], ultimo)));
+  }
+  /**
+   * Aplica um modelo ao contrato do fornecedor SEM sobrescrever o que já foi preenchido. ct = o contrato como está no formulário.
+   * Devolve { patch, notas }: patch traz só o que muda; notas diz, em português, o que foi preenchido e o que foi mantido.
+   * Cláusulas e campos adicionais passam a ser os do modelo (cópia com a versão); atividades do modelo entram junto das que já
+   * existem, sem repetir e sem contradizer a outra lista.
+   */
+  function aplicarModeloAoContrato(ct, m) {
+    const c = ct || {}; const notas = []; const patch = { modeloId: m.id, modeloNome: m.nome, modeloVersao: m.versao || 1 };
+    patch.clausulas = (m.clausulas || []).map((x) => ({ titulo: String(x.titulo || '').trim(), texto: String(x.texto || '').trim() }));
+    patch.camposAdicionaisDef = (m.camposAdicionais || []).map((x) => ({ id: x.id, rotulo: String(x.rotulo).trim(), tipo: x.tipo, obrigatorio: Boolean(x.obrigatorio) }));
+    let inc = [...(c.atividadesIncluidas || [])]; let exc = [...(c.atividadesExcluidas || [])]; let novas = 0; let ignoradas = 0;
+    for (const i of m.incluidas || []) { const r = novaAtividade(inc, exc, i.texto, { ref: i.ref || '' }); if (r.item) { inc.push(r.item); novas++; } else ignoradas++; }
+    for (const i of m.excluidas || []) { const r = novaAtividade(exc, inc, i.texto, { ref: i.ref || '' }); if (r.item) { exc.push(r.item); novas++; } else ignoradas++; }
+    patch.atividadesIncluidas = inc; patch.atividadesExcluidas = exc;
+    notas.push(patch.clausulas.length + (patch.clausulas.length === 1 ? ' cláusula carregada' : ' cláusulas carregadas') + ' do modelo "' + m.nome + '" (versão ' + patch.modeloVersao + ').');
+    if (novas) notas.push(novas + (novas === 1 ? ' atividade acrescentada.' : ' atividades acrescentadas.'));
+    if (ignoradas) notas.push(ignoradas + (ignoradas === 1 ? ' atividade do modelo não entrou' : ' atividades do modelo não entraram') + ' (já existiam ou estavam na outra lista).');
+    const cheio = (v) => v != null && v !== '';
+    if (m.valorCentavos != null) { if (cheio(c.valorCentavos)) notas.push('Valor mantido: já estava preenchido.'); else { patch.valorCentavos = m.valorCentavos; notas.push('Valor preenchido pelo modelo.'); } }
+    if (m.recorrencia) { if (cheio(c.recorrencia)) notas.push('Recorrência mantida: já estava preenchida.'); else { patch.recorrencia = m.recorrencia; notas.push('Recorrência preenchida pelo modelo.'); } }
+    if (m.vigenciaMeses) {
+      if (cheio(c.fim)) notas.push('Término da vigência mantido: já estava preenchido.');
+      else if (cheio(c.inicio)) { patch.fim = somarMesesIso(c.inicio, m.vigenciaMeses); notas.push('Término da vigência calculado pelo modelo (' + m.vigenciaMeses + ' meses a partir do início).'); }
+      else notas.push('Vigência do modelo: ' + m.vigenciaMeses + ' meses. Informe o início da vigência para calcular o término.');
+    }
+    if (m.renovacao) { if (cheio(c.renovacao)) notas.push('Renovação mantida: já estava preenchida.'); else { patch.renovacao = m.renovacao; notas.push('Renovação preenchida pelo modelo.'); } }
+    return { patch, notas };
+  }
+  /** Valores dos campos adicionais do contrato do fornecedor (modelo + valores digitados): '' quando em ordem. */
+  function validarContratoDocumento(c) {
+    if (!c || typeof c !== 'object') return '';
+    const at = validarAtividadesContrato(c.atividadesIncluidas, c.atividadesExcluidas); if (at) return at;
+    const defs = Array.isArray(c.camposAdicionaisDef) ? c.camposAdicionaisDef : []; const vals = c.camposAdicionais && typeof c.camposAdicionais === 'object' ? c.camposAdicionais : {};
+    for (const d of defs) {
+      const v = vals[d.id]; if (v == null || v === '') continue;
+      if (d.tipo === 'data' && !/^\d{4}-\d{2}-\d{2}$/.test(String(v))) return 'Confira a data do campo "' + d.rotulo + '": use DD/MM/AA.';
+      if (d.tipo === 'numero' && !Number.isFinite(Number(String(v).replace(',', '.')))) return 'O campo "' + d.rotulo + '" deve ser um número.';
+      if (d.tipo === 'moeda' && !(Number.isInteger(v) && v >= 0)) return 'O campo "' + d.rotulo + '" deve ser um valor em reais.';
+      if (d.tipo === 'texto' && String(v).length > 500) return 'O campo "' + d.rotulo + '" passa de 500 caracteres.';
+    }
+    return '';
+  }
+  /** O que falta para o contrato poder ser impresso ou enviado como documento definitivo. [] = completo. */
+  function faltasDoContrato(f) {
+    const c = (f && f.contrato) || {}; const faltas = [];
+    if (!c.tem) return ['Marque "Tem contrato?" nos dados do responsável financeiro.'];
+    if (!String((f && (f.razaoSocial || f.nome)) || '').trim()) faltas.push('nome ou razão social do fornecedor');
+    if (!digitos(f && f.documento)) faltas.push('CNPJ ou CPF do fornecedor');
+    if (!c.modeloId) faltas.push('tipo de contrato (modelo)');
+    if (!(c.clausulas || []).length) faltas.push('ao menos uma cláusula (vem do tipo de contrato)');
+    if (!(c.atividadesIncluidas || []).length) faltas.push('ao menos uma atividade incluída no contrato');
+    if (!c.inicio) faltas.push('início da vigência');
+    const vals = c.camposAdicionais || {};
+    for (const d of c.camposAdicionaisDef || []) if (d.obrigatorio && (vals[d.id] == null || vals[d.id] === '')) faltas.push('campo "' + d.rotulo + '"');
+    return faltas;
   }
   /** Primeiro impedimento do cadastro inteiro, ou ''. */
   const validarFornecedor = (f, regras, ctx) => validarFornecedorEtapas(f, regras, ctx).find(Boolean) || '';
@@ -808,6 +954,8 @@
     topoDoRanking,
     digitos, motivoNaoConvidavel, podeConvidar,
     CATEGORIAS_FORNECEDOR, categoriaFornecedor, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, documentoAntigoFornecedor, validarFornecedor,
+    chaveTexto, TIPOS_CAMPO_ADICIONAL, RENOVACOES_CONTRATO, LIMITES_CONTRATO, validarListaAtividades, validarAtividadesContrato, novaAtividade, validarModeloContrato,
+    somarMesesIso, aplicarModeloAoContrato, validarContratoDocumento, faltasDoContrato,
     validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, aniversarioVendedor, migrarVendedorFornecedor,
     FUNCOES_PRESTADOR_INICIAIS, idFuncaoPrestador, funcaoPrestadorIgual, validarFuncaoPrestador, migrarPrestadoresFornecedor,
     FORMAS_PAGAMENTO_CONTRATO, FORMAS_PAGAMENTO_FORNECEDOR, RECORRENCIAS_CONTRATO, RECORRENCIAS_CLIENTE, CLIENTE_MENSAL, periodoMensal, validarTermino, resumoTermino, UNIDADES_REPETICAO, POSICOES_MES, DIAS_SEMANA_LONGOS, REAJUSTES_CONTRATO, migrarContratoFinanceiro,

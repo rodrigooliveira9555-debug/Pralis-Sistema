@@ -99,6 +99,10 @@
         };
         const avisoCnpj = el('p', 'profiles-note compras-largo'); avisoCnpj.setAttribute('role', 'status');
         const avisoCep = el('p', 'profiles-note compras-largo'); avisoCep.setAttribute('role', 'status');
+        const e0 = Object.values(e).some((x) => String(x || '').trim());
+        // "Preencher endereço" (só nos cadastros simples): desligado, o endereço some e não é exigido; ligado, aparece o que já foi digitado.
+        const endSw = U.quadroSituacao('Preencher endereço', e0, { textos: ['Sim', 'Não'], dica: 'Endereço é opcional neste cadastro.', aoMudar: () => pintarEndereco() });
+        endSw.classList.add('compras-largo'); endSw.querySelector('.account-status-switch').setAttribute('aria-label', 'Preencher endereço');
         const sEnd = el('fieldset', 'compras-fieldset');
         sEnd.append(el('legend', null, 'Endereço'), campo('CEP', cep), campo('Rua / logradouro', rua), campo('Número', numero), campo('Complemento', complemento), campo('Bairro', bairro), campo('Cidade', cidade), campo('UF', uf), avisoCep);
         // Buscas já existentes (consultas-publicas.js): só preenchem o que está vazio e nunca trocam o que a pessoa digitou.
@@ -109,7 +113,7 @@
           const n = D.digitos(cep.value); if (n.length !== 8 || n === cepFeito) return; cepFeito = n;
           avisoCep.textContent = 'Buscando o endereço do CEP…';
           const r = await C.cep(n); if (D.digitos(cep.value) !== n) return;
-          if (r.erro) { avisoCep.textContent = 'CEP ' + falha[r.erro] + ': preencha o endereço à mão.'; return; }
+          if (r.erro) { avisoCep.textContent = 'CEP ' + falha[r.erro] + (r.motivo ? ' (' + r.motivo + ')' : '') + ': preencha o endereço à mão.'; return; }
           completar([[rua, r.dados.logradouro], [bairro, r.dados.bairro], [cidade, r.dados.cidade], [uf, r.dados.uf]]);
           avisoCep.textContent = 'Endereço do CEP conferido. Confira e informe o número.';
         });
@@ -117,7 +121,7 @@
           const n = D.digitos(cnpj.value); if (n.length !== 14 || n === cnpjFeito || !R().cnpjValid(n)) return; cnpjFeito = n;
           avisoCnpj.textContent = 'Buscando os dados da empresa pelo CNPJ…';
           const r = await C.cnpj(n); if (D.digitos(cnpj.value) !== n) return;
-          if (r.erro) { avisoCnpj.textContent = 'CNPJ ' + falha[r.erro] + ': preencha os dados à mão.'; return; }
+          if (r.erro) { avisoCnpj.textContent = 'CNPJ ' + falha[r.erro] + (r.motivo ? ' (' + r.motivo + ')' : '') + ': preencha os dados à mão.'; return; }
           const x = r.dados; const en = x.endereco || {};
           completar([[razao, x.razaoSocial], [fantasia, x.nomeFantasia], [cep, en.cep], [rua, en.logradouro], [numero, en.numero], [complemento, en.complemento], [bairro, en.bairro], [cidade, en.cidade], [uf, en.uf]]);
           cepFeito = D.digitos(cep.value);
@@ -248,7 +252,8 @@
         });
         function pintarTopo() {
           topo.forEach((t) => {
-            const on = t.id === tipo; t.box.dataset.marcado = String(on); t.cab.setAttribute('aria-checked', String(on)); t.seg.hidden = !on;
+            // Novo Cliente (manual), prévia e link: só Pessoa Física / Pessoa Jurídica; o Simples | Completo fica só para quem edita um cadastro que já existe.
+            const on = t.id === tipo; t.box.dataset.marcado = String(on); t.cab.setAttribute('aria-checked', String(on)); t.seg.hidden = !on || !c;
             t.segBtns.forEach(([cid, b]) => { b.setAttribute('aria-checked', String(on && cid === cadastro)); });
           });
         }
@@ -287,19 +292,20 @@
         /* Páginas de cada modalidade (os mesmos campos mudam de lugar) */
         const bloco = (...nos) => nos;
         function paginas() {
-          if (tipo === 'fisica' && cadastro === 'simples') return [bloco(F.nome, F.whats, F.mail, F.nasc, sEnd)];
+          if (tipo === 'fisica' && cadastro === 'simples') return [bloco(F.nome, F.whats, F.mail, F.nasc, endSw, sEnd)];
           if (tipo === 'fisica') {
             const comp = el('fieldset', 'compras-fieldset'); comp.append(el('legend', null, 'Sorteio'), el('p', 'profiles-note', 'Sorteio — Em definição'), el('small', 'profiles-note', 'Funcionalidade futura: por enquanto não há número, participação, prêmio nem regra de sorteio.'));
             return [bloco(F.nome, F.cpf, F.whats, F.mail, F.nasc), bloco(sEnd), bloco(comp), bloco(revisao)];
           }
-          if (cadastro === 'simples') return [bloco(F.cnpj, avisoCnpj, F.razao, F.fantasia, F.whats, F.mail, sEnd)];
+          if (cadastro === 'simples') return [bloco(F.cnpj, avisoCnpj, F.razao, F.fantasia, F.whats, F.mail, endSw, sEnd)];
           const contato = el('fieldset', 'compras-fieldset'); contato.append(el('legend', null, 'Dados do contato'), F.contatoNome, F.whats, F.mail, aniv.no);
           return [bloco(...(opcoes.externo ? [] : [situacao]), F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime, sEnd), bloco(contato), bloco(fin.no, cDados), bloco(rep.no), bloco(revisao)];
         }
         /** Cadastro lido do formulário: só o tipo e a modalidade em uso (o resto do registro fica como está). */
+        function pintarEndereco() { mostrar(sEnd, cadastro === 'completo' || endSw.ativo); }
         function ler() {
           const base = { tipoPessoa: tipo, cadastro };
-          const endereco = { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value };
+          const endereco = cadastro === 'simples' && !endSw.ativo ? (c && c.endereco ? c.endereco : undefined) : { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value };
           if (tipo === 'fisica') return { ...base, nome: nome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim(), nascimento: nasc.value, endereco, ...(cadastro === 'completo' ? { cpf: cpf.value.trim() } : {}) };
           if (cadastro === 'simples') return { ...base, cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim(), endereco };
           fin.pintar(); rep.pintar();
@@ -315,7 +321,7 @@
         const cancelar = botao('Cancelar', () => dlg.close(), 'btn secondary footer-cancel-accent');
         const salvarFim = el('button', 'btn', 'Salvar Cliente'); salvarFim.type = 'submit';
         function desenhar() {
-          tipoSw.ativo = tipo === 'juridica'; cadSw.ativo = cadastro === 'completo';
+          tipoSw.ativo = tipo === 'juridica'; cadSw.ativo = cadastro === 'completo'; pintarEndereco();
           const rotE = tipo === 'fisica' ? 'E-mail *' : 'E-mail';
           F.mail.querySelector('.compras-rotulo').textContent = rotE; mail.setAttribute('aria-label', rotE);
           const pags = paginas();

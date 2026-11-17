@@ -166,7 +166,9 @@
     lapis.onclick = () => abrirPainelPers('personalizado');
     no.append(el('span', 'compras-rotulo', 'Tipo de recorrência'), gatilho, painel, linhaPers, blocoFim);
     pintar();
-    return { no, ler: () => ({ recorrencia: atual, recorrenciaPersonalizada: atual === 'personalizado' ? pers : (pers || null), ...(opcoes.some(([id]) => id === 'compra-mensal') ? { terminoMensal: atual === 'compra-mensal' ? lerFim() : null } : {}) }), atual: () => atual, dataTermino: dataFim };
+    return { no, ler: () => ({ recorrencia: atual, recorrenciaPersonalizada: atual === 'personalizado' ? pers : (pers || null), ...(opcoes.some(([id]) => id === 'compra-mensal') ? { terminoMensal: atual === 'compra-mensal' ? lerFim() : null } : {}) }), atual: () => atual, dataTermino: dataFim,
+      /** Escolhe uma recorrência da lista por código (usado quando um modelo de contrato preenche o campo vazio). */
+      definir: (id) => { if (opcoes.some(([x]) => x === id)) { atual = id; pintar(); if (aoMudar) aoMudar(); } } };
   }
 
   window.CicluzComprasRecorrencia = { criar, abrirPersonalizada };

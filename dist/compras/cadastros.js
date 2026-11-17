@@ -36,6 +36,7 @@
     const dinheiro = c.formaPagamento === 'dinheiro';
     return [
       ['Cliente mensal', c.clienteMensal ? 'Sim — período do dia 1 ao último dia do mês' : ''],
+      ['Tipo de contrato', c.modeloNome ? c.modeloNome + (c.modeloVersao ? ' (versão ' + c.modeloVersao + ')' : '') : ''],
       ['Forma de pagamento', nomeDe(D.FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)],
       c.clienteMensal ? ['Vencimento', 'Todo dia ' + D.CLIENTE_MENSAL.vencimentoDia] : dinheiro ? ['Dia de pagamento', 'Toda sexta-feira'] : ['Vencimento', dataBR(c.vencimentoData) || (Number.isInteger(c.vencimentoDia) ? 'Todo dia ' + c.vencimentoDia : '')],
       ['Recorrência', rec],
@@ -320,7 +321,7 @@
     const ativos = S.dados.fornecedores.filter((f) => f.situacao === 'ativo').length;
     const ponta = U.pontaDaLista(ativos, ativos + (ativos === 1 ? ' fornecedor ativo' : ' fornecedores ativos'));
     const sec = U.secao('Fornecedores', undefined, ponta);
-    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Fornecedores', 'Cadastrar fornecedor', () => editarFornecedor()), botaoEnviarConvite());
+    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Novo Fornecedor', 'Cadastrar fornecedor', () => editarFornecedor()), botaoEnviarConvite(), ...(window.CicluzContratos ? [U.botaoTitulo('Contratos', 'Tipos de contrato (modelos)', () => window.CicluzContratos.abrirModelos({ cores: coresF() }), U.ICONES.contrato || undefined)] : []));
     sec.append(linhas);
     if (!lista.length) linhas.append(U.vazio(buscaF[origemF] ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado.'));
     if (lista.length) {
@@ -548,7 +549,7 @@
           avisoCep.textContent = 'Buscando o endereço do CEP…';
           const r = await C.cep(n);
           if (D.digitos(cep.value) !== n) return;
-          if (r.erro) { avisoCep.textContent = 'CEP ' + FALHA[r.erro] + ': preencha o endereço à mão.'; return; }
+          if (r.erro) { avisoCep.textContent = 'CEP ' + FALHA[r.erro] + (r.motivo ? ' (' + r.motivo + ')' : '') + ': preencha o endereço à mão.'; return; }
           const e = r.dados;
           // Rua, bairro, cidade e UF vão juntos; número e complemento não vêm do CEP e só são esvaziados se eram da consulta anterior.
           const r2 = completar([[rua, e.logradouro, 'rua'], [bairro, e.bairro, 'bairro'], [cidade, e.cidade, 'cidade'], [uf, e.uf, 'UF'], [numero, '', 'número'], [complemento, '', 'complemento']]);
@@ -563,7 +564,7 @@
           avisoCnpj.textContent = 'Buscando os dados da empresa pelo CNPJ…';
           const r = await C.cnpj(n);
           if (D.digitos(cnpj.value) !== n) return;
-          if (r.erro) { avisoCnpj.textContent = 'CNPJ ' + FALHA[r.erro] + ': preencha os dados à mão.'; return; }
+          if (r.erro) { avisoCnpj.textContent = 'CNPJ ' + FALHA[r.erro] + (r.motivo ? ' (' + r.motivo + ')' : '') + ': preencha os dados à mão.'; return; }
           const x = r.dados;
           const e = x.endereco;
           const r2 = completar([[razao, x.razaoSocial, 'razão social'], [nome, x.nomeFantasia, 'nome fantasia'], [cep, e.cep, 'CEP'], [rua, e.logradouro, 'rua'],
@@ -689,7 +690,7 @@
         const pintarVendedor = () => {
           const quem = D.quemVendeFornecedor(marcadas());
           const servico = ehServico();
-          tituloS2.textContent = servico ? 'Prestador 1' : 'Dados do ' + quem;
+          tituloS2.textContent = servico ? 'Prestador 1' : 'Dados do Vendedor';
           camposS2.forEach(([no, input, antes, depois]) => {
             no.querySelector('.compras-rotulo').textContent = antes + quem + depois;
             input.setAttribute('aria-label', antes + quem + depois);
@@ -700,9 +701,9 @@
         /* ----- Etapas 3 e 4: contato com a opção "O mesmo da etapa anterior" em primeiro lugar. Marcada, os campos
            continuam à vista, preenchidos com a etapa anterior e só para leitura; a cópia acompanha a etapa anterior
            enquanto a opção estiver marcada. Desmarcada, o que foi copiado fica e volta a ser editável. ----- */
-        function etapaContato(dados, sufixo, anterior) {
+        function etapaContato(dados, sufixo, anterior, titulo) {
           const s = el('fieldset', 'compras-fieldset');
-          s.append(el('legend', null, 'Dados do ' + sufixo));
+          s.append(el('legend', null, titulo || 'Dados do ' + sufixo));
           // Mesmo quadro da "Situação do fornecedor" (16/11/2026): interruptor com Sim / Não ao lado.
           const mesmo = U.quadroSituacao('O mesmo da etapa anterior', Boolean(dados?.mesmo), { textos: ['Sim', 'Não'], dica: 'Preenche o nome, o WhatsApp e o e-mail com os da etapa anterior.', aoMudar: () => pintar() });
           mesmo.classList.add('compras-largo');
@@ -720,8 +721,8 @@
           return { no: s, mesmo, nome: n, whatsapp: w, email: m, pintar };
         }
         const valores = (c) => ({ nome: c.nome.value.trim(), whatsapp: c.whatsapp.value.trim(), email: c.email.value.trim() });
-        const fin = etapaContato(f?.financeiro, 'financeiro', () => ({ nome: vNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() }));
-        const rep = etapaContato(f?.representante, 'representante', () => valores(fin));
+        const fin = etapaContato(f?.financeiro, 'financeiro', () => ({ nome: vNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() }), 'Dados do Responsável Financeiro');
+        const rep = etapaContato(f?.representante, 'representante', () => valores(fin), 'Dados do Responsável Legal');
         // A cópia segue a ordem das etapas: primeiro o financeiro (copia o vendedor), depois o representante (copia o financeiro).
         const pintarCopias = () => { fin.pintar(); rep.pintar(); };
         // Cargo na empresa: não é copiado; com "O mesmo da etapa anterior" marcado, é o único campo a preencher na etapa.
@@ -915,9 +916,18 @@
         pintarValor();
         // Número digitado: null quando vazio, NaN quando não é número (para a validação recusar em vez de virar vazio).
         const numeroOuNada = (input) => { const t = String(input.value).trim(); if (!t) return null; const n = D.lerNumero(t); return n == null ? NaN : n; };
+        // Etapa 6 (18/11/2026): tipo de contrato (cópia do modelo), cláusulas, atividades incluídas e não incluídas e campos adicionais.
+        const ct6 = {
+          modeloId: ct.modeloId || '', modeloNome: ct.modeloNome || '', modeloVersao: ct.modeloVersao || null, clausulas: (ct.clausulas || []).map((x) => ({ ...x })),
+          incl: (ct.atividadesIncluidas || []).map((x) => ({ ...x })), excl: (ct.atividadesExcluidas || []).map((x) => ({ ...x })),
+          camposDef: (ct.camposAdicionaisDef || []).map((x) => ({ ...x })), campos: { ...(ct.camposAdicionais || {}) }, renovacao: ct.renovacao || '',
+        };
+        const datasExtras = [];
         const lerContrato = () => {
           const pct = numeroOuNada(cPercentual); const pctMinimo = numeroOuNada(smPct);
           return {
+            modeloId: ct6.modeloId, modeloNome: ct6.modeloNome, modeloVersao: ct6.modeloVersao, clausulas: ct6.clausulas, atividadesIncluidas: ct6.incl, atividadesExcluidas: ct6.excl,
+            camposAdicionaisDef: ct6.camposDef, camposAdicionais: ct6.campos, renovacao: ct6.renovacao,
             tem: temContrato.ativo, formaPagamento: cForma.value,
             // Vencimento: só em dinheiro some (o pagamento é toda sexta-feira, informativo). O dia do mês antigo fica guardado como estava.
             vencimentoData: cForma.value === 'dinheiro' ? '' : cVencData.value, vencimentoDia: ct.vencimentoDia != null ? ct.vencimentoDia : null,
@@ -962,7 +972,64 @@
             avisoDoc.textContent = 'Este fornecedor não tem documento disponível.';
           }, 'btn secondary'),
         );
-        s6.append(resumoContrato, el('span', 'compras-rotulo compras-largo', 'Documentos'), acoesDoc, avisoDoc);
+        // Conteúdo do contrato (só aparece com "Tem contrato?" = Sim).
+        const boxContrato = el('div', 'compras-largo compras-contrato-corpo'); const semContratoNota = el('p', 'profiles-note compras-largo', 'Este fornecedor está sem contrato: marque "Tem contrato?" nos dados do responsável financeiro para preencher esta etapa.');
+        const notasModelo = el('p', 'profiles-note'); notasModelo.setAttribute('role', 'status');
+        const selModelo = seletor([], '', 'Selecione o tipo de contrato'); selModelo.setAttribute('aria-label', 'Tipo de contrato');
+        const modelosAtivos = () => (window.CicluzContratos ? window.CicluzContratos.modelos() : []).filter((m) => m.ativo !== false || m.id === ct6.modeloId);
+        const pintarModelos = () => {
+          selModelo.replaceChildren(new Option(modelosAtivos().length ? 'Selecione o tipo de contrato' : 'Nenhum tipo de contrato cadastrado', ''), ...modelosAtivos().sort((a, b2) => a.nome.localeCompare(b2.nome, 'pt-BR')).map((m) => new Option(m.nome + (m.ativo === false ? ' (inativo)' : ''), m.id)));
+          if (ct6.modeloId && !modelosAtivos().some((m) => m.id === ct6.modeloId)) selModelo.append(new Option(ct6.modeloNome + ' (modelo removido)', ct6.modeloId));
+          selModelo.value = ct6.modeloId;
+        };
+        const boxClausulas = el('div', 'compras-largo'); const boxCampos = el('div', 'compras-largo compras-campos-adicionais');
+        const desenharClausulas = () => {
+          boxClausulas.replaceChildren(...(ct6.clausulas.length ? [el('span', 'compras-rotulo', 'Cláusulas do tipo de contrato (cópia da versão ' + (ct6.modeloVersao || '—') + ')'),
+            ...ct6.clausulas.map((x, k) => { const p = el('p', 'profiles-note compras-clausula'); p.append(el('b', null, (k + 1) + '. ' + (x.titulo ? x.titulo + ': ' : '')), document.createTextNode(x.texto)); return p; })] : []));
+        };
+        const desenharCampos = () => {
+          datasExtras.length = 0;
+          boxCampos.replaceChildren(...(ct6.camposDef.length ? [el('span', 'compras-rotulo', 'Informações adicionais do contrato'), ...ct6.camposDef.map((d2) => {
+            const v = ct6.campos[d2.id]; let inp;
+            if (d2.tipo === 'data') { inp = entrada('date', v || ''); datasExtras.push(inp); const sync = () => { ct6.campos[d2.id] = inp.value; }; inp.addEventListener('input', sync); inp.addEventListener('change', sync); }
+            else if (d2.tipo === 'moeda') { inp = entrada('text', Number.isInteger(v) ? R().moneyMask(String(v)) : '', { inputMode: 'numeric', placeholder: 'R$ 0,00', maxLength: 24 }); inp.addEventListener('input', () => { inp.value = R().moneyMask(inp.value); const n = D.digitos(inp.value).replace(/^0+(?=\d)/, ''); ct6.campos[d2.id] = n ? parseInt(n, 10) : ''; }); }
+            else { inp = entrada('text', v == null ? '' : String(v), { inputMode: d2.tipo === 'numero' ? 'decimal' : 'text', maxLength: 500 }); inp.dataset.textoLivre = '1'; inp.addEventListener('input', () => { ct6.campos[d2.id] = inp.value; }); }
+            return campo(d2.rotulo + (d2.obrigatorio ? ' *' : ''), inp);
+          })] : []));
+        };
+        const aplicarModelo = (m) => {
+          const { patch, notas } = D.aplicarModeloAoContrato(lerContrato(), m);
+          ct6.modeloId = patch.modeloId; ct6.modeloNome = patch.modeloNome; ct6.modeloVersao = patch.modeloVersao; ct6.clausulas = patch.clausulas;
+          ct6.incl = patch.atividadesIncluidas; ct6.excl = patch.atividadesExcluidas; ct6.camposDef = patch.camposAdicionaisDef;
+          const novos = {}; patch.camposAdicionaisDef.forEach((d2) => { if (ct6.campos[d2.id] != null) novos[d2.id] = ct6.campos[d2.id]; }); ct6.campos = novos;
+          if ('renovacao' in patch) ct6.renovacao = patch.renovacao;
+          if ('valorCentavos' in patch) { cValor.value = R().moneyMask(String(patch.valorCentavos)); pintarValor(); }
+          if ('recorrencia' in patch) rec.definir(patch.recorrencia);
+          if ('fim' in patch) { cFim.value = patch.fim; cFim.dispatchEvent(new Event('change', { bubbles: true })); }
+          notasModelo.textContent = notas.join(' ');
+          desenharClausulas(); desenharCampos(); listaInc.desenhar(); listaExc.desenhar(); pintarModelos(); pintarResumoContrato();
+        };
+        selModelo.onchange = () => {
+          const m = modelosAtivos().find((x) => x.id === selModelo.value); if (!m) { selModelo.value = ct6.modeloId; return; }
+          if (!ct6.modeloId || ct6.modeloId === m.id) { aplicarModelo(m); return; }
+          let ok = false;
+          U.dialogo({ titulo: 'Trocar o tipo de contrato?', ...coresF(), rotuloSalvar: 'Trocar',
+            montar: (f2) => { f2.append(el('p', null, 'As cláusulas e os campos adicionais do tipo atual (' + ct6.modeloNome + ') serão trocados pelos de "' + m.nome + '". As atividades que você já tem ficam, e o que já estava preenchido é mantido.')); },
+            salvar: () => { ok = true; aplicarModelo(m); },
+            aoFechar: () => { if (!ok) selModelo.value = ct6.modeloId; } });
+        };
+        const abrirModelosBtn = U.botaoTitulo('Tipos de contrato', 'Cadastrar e editar os tipos (modelos) de contrato', () => window.CicluzContratos.abrirModelos({ cores: coresF, aoFechar: () => { pintarModelos(); } }), U.ICONES.contrato || undefined);
+        const linhaModelo = el('div', 'compras-form-rodape compras-largo'); linhaModelo.append(selModelo, abrirModelosBtn);
+        const listaInc = window.CicluzContratos.listaAtividades({ tipo: 'incluidas', cores: coresF, api: { itens: () => ct6.incl, trocar: (v) => { ct6.incl = v; }, outra: () => ct6.excl, mudou: () => pintarResumoContrato() } });
+        const listaExc = window.CicluzContratos.listaAtividades({ tipo: 'excluidas', cores: coresF, api: { itens: () => ct6.excl, trocar: (v) => { ct6.excl = v; }, outra: () => ct6.incl, mudou: () => pintarResumoContrato() } });
+        const duasListas = el('div', 'compras-atividades-duas compras-largo'); duasListas.append(listaInc, listaExc);
+        const avisoContrato = el('p', 'profiles-error compras-largo'); avisoContrato.setAttribute('role', 'alert');
+        const acoesContrato = window.CicluzContratos.botoesDocumento({ lerFornecedor: () => ler(), cores: coresF, aviso: avisoContrato });
+        boxContrato.append(campo('Tipo de contrato', linhaModelo), notasModelo, boxClausulas, duasListas, boxCampos,
+          el('span', 'compras-rotulo compras-largo', 'Documento do contrato'), acoesContrato, avisoContrato);
+        pintarModelos(); desenharClausulas(); desenharCampos();
+        s6.append(resumoContrato, semContratoNota, boxContrato, el('span', 'compras-rotulo compras-largo', 'Ficha do fornecedor'), acoesDoc, avisoDoc);
+        s6.pintarTem = () => { mostrar(boxContrato, temContrato.ativo); mostrar(semContratoNota, !temContrato.ativo); };
 
                 const quadros = [etapa1, etapa2, etapa3, rep.no, s5, s6];
         const marcadas = () => catOpcoes.marcados();
@@ -995,7 +1062,7 @@
           atual = Math.max(0, Math.min(quadros.length - 1, i));
           pintarCopias();
           pintarVinculos();
-          pintarResumoContrato();
+          pintarResumoContrato(); s6.pintarTem(); pintarModelos();
           quadros.forEach((q, k) => mostrar(q, k === atual));
           barra.update(etapas(), atual);
           erroEtapa.textContent = '';
@@ -1044,7 +1111,7 @@
         form.append(barra.el, ...quadros, erroEtapa, nav);
         ir(0);
         // Produtos marcados agora (categoria Produto): viram vínculo no mesmo catálogo do Compras ao salvar.
-        return { ler, ir, datasContrato: [cVencData, cInicio, cFim], novosProdutos: () => (marcadas().join() === 'produto' ? [...novosProdutos] : []) };
+        return { ler, ir, get datasContrato() { return [cVencData, cInicio, cFim, ...datasExtras]; }, novosProdutos: () => (marcadas().join() === 'produto' ? [...novosProdutos] : []) };
       },
       salvar: (c) => {
         if (c.datasContrato.some((d2) => !d2.checkValidity())) { c.ir(2); return 'Confira as datas do contrato: use DD/MM/AA.'; }

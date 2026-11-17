@@ -510,3 +510,39 @@ body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-sea
 .compras-segmentado>button{min-height:34px;margin:0;padding:0 12px;border:0;border-radius:999px;background:transparent;color:inherit;font:600 14px/20px var(--ui-font);cursor:pointer}
 .compras-segmentado>button[aria-checked=true]{background:var(--cartao-cor);color:var(--menu-ink,#1b1b1f)}
 .compras-segmentado>button:focus-visible{outline:2px solid var(--cartao-cor);outline-offset:2px}
+
+/* Contratos (18/11/2026): atividades incluídas e não incluídas, seleção hierárquica e tipos de contrato */
+.compras-atividades-duas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.compras-atividades-duas{grid-template-columns:minmax(0,1fr)}}
+.compras-atividades{display:grid;gap:8px;align-content:start;padding:12px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff)}
+.compras-atividades.incluidas{border-left:4px solid var(--menu-accent)}
+.compras-atividades.excluidas{border-left:4px dashed var(--layout-line,#9a9aa2)}
+.compras-atividades-cab{display:flex;align-items:center;gap:8px}
+.compras-atividades-cab h4{margin:0;font:600 14px/18px var(--ui-font)}
+.compras-atividades-icone,.compras-atividade-marca{display:inline-grid;place-items:center;flex:none;width:22px;height:22px}
+.compras-atividades-icone svg,.compras-atividade-marca svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.compras-atividades-lista{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.compras-atividade-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--layout-line,#dedee3);border-radius:10px}
+.compras-atividade-texto{flex:1;min-width:0;overflow-wrap:anywhere}
+.compras-atividade-acoes{display:inline-flex;gap:6px;flex:none}
+.compras-atividade-vazia{border:0;padding:4px 0}
+.compras-hier{display:grid;gap:6px}
+.compras-hier-grupo{display:grid;gap:4px}
+.compras-hier-linha{display:flex;align-items:center;gap:8px;min-height:40px;padding:4px 8px;border:1px solid var(--layout-line,#dedee3);border-radius:10px;background:var(--theme-card,#fff)}
+.compras-hier-linha.filho{margin-left:28px}
+.compras-hier-linha input[type=checkbox]{flex:none;width:20px;height:20px;margin:0;accent-color:var(--menu-accent)}
+.compras-hier-icone{display:inline-grid;place-items:center;flex:none;width:28px;height:28px;border-radius:8px;background:color-mix(in srgb,var(--menu-accent) 14%,var(--theme-card,#fff))}
+.compras-hier-icone svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.compras-hier-nome{flex:1;min-width:0;overflow-wrap:anywhere}
+.compras-hier-seta{display:inline-grid;place-items:center;flex:none;width:26px;height:26px;padding:0;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}
+.compras-hier-seta svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+.compras-hier-seta.aberto svg{transform:rotate(90deg)}
+.compras-hier-seta:disabled{opacity:.3;cursor:default}
+.compras-hier-conta{flex:none}
+.compras-modelos-lista{display:grid;gap:8px}
+.compras-modelo-linha{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff)}
+.compras-modelo-texto{display:grid;gap:2px;min-width:0}
+.compras-modelo-clausula,.compras-modelo-campo{display:grid;gap:6px;align-items:start;padding:8px;border:1px solid var(--layout-line,#dedee3);border-radius:10px;margin-bottom:8px}
+.compras-modelo-campo{grid-template-columns:minmax(0,1fr) minmax(120px,160px) auto auto;align-items:center}
+@media (max-width:560px){.compras-modelo-campo{grid-template-columns:minmax(0,1fr)}}
+.compras-clausula{margin:0}

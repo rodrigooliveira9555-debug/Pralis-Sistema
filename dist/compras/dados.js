@@ -13,7 +13,7 @@
     'conferenciaAgendas', 'conferencias',
   ];
   /* Coleções acrescentadas depois: dado antigo sem elas continua válido (recebe lista vazia ou a carga inicial). */
-  const COLECOES_NOVAS = ['unidades', 'historicoNomes', 'clientes'];
+  const COLECOES_NOVAS = ['unidades', 'historicoNomes', 'clientes', 'modelosContrato'];
   const UNIDADES_INICIAIS = [['UN', 'Unidade'], ['KG', 'Quilo'], ['CX', 'Caixa'], ['FD', 'Fardo'], ['PC', 'Peça'], ['SC', 'Saco'], ['MI', 'Milheiro'], ['LT', 'Litro'], ['DZ', 'Dúzia'], ['G', 'Grama'], ['ML', 'Mililitro']];
 
   const novoId = (prefixo) => prefixo + '-' + (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));

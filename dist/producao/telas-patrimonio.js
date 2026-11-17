@@ -254,7 +254,7 @@
     const ativos = bens.filter((b) => b.ativo !== false).length;
     const ponta = U.pontaDaLista(ativos, ativos + (ativos === 1 ? ' patrimônio ativo' : ' patrimônios ativos'));
     const sec = U.secao('Patrimônios', undefined, ponta);
-    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Patrimônios', 'Cadastrar patrimônio', () => window.CicluzProducaoPatrimonioForm.abrir()), ...(window.CicluzConviteLink ? [window.CicluzConviteLink.botao({ cores: { cor: M.COR_RET, corTexto: M.COR_RET_TEXTO }, modelos: [{ id: 'patrimonio', titulo: 'Cadastro de patrimônio', detalhe: 'Formulário completo de patrimônio, com as seis etapas (identificação, imagens e documentos, localização, composição e especificação técnica, aquisição e manutenção).' }], visualizar: () => window.CicluzProducaoPatrimonioForm.abrir(null, { previa: true }) })] : []));
+    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Novo Patrimônio', 'Cadastrar patrimônio', () => window.CicluzProducaoPatrimonioForm.abrir()), ...(window.CicluzConviteLink ? [window.CicluzConviteLink.botao({ cores: { cor: M.COR_RET, corTexto: M.COR_RET_TEXTO }, modelos: [{ id: 'patrimonio', titulo: 'Cadastro de patrimônio', detalhe: 'Formulário completo de patrimônio, com as seis etapas (identificação, imagens e documentos, localização, composição e especificação técnica, aquisição e manutenção).' }], visualizar: () => window.CicluzProducaoPatrimonioForm.abrir(null, { previa: true }) })] : []));
     const linhas = el('div', 'compras-lista compras-lista-grade'); U.arrastarParaRolar(linhas);
     sec.append(linhas);
     function desenha() {

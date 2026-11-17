@@ -42,10 +42,11 @@
     try {
       const r = await fetch(BASE + caminho, { signal: controle.signal, headers: { Accept: 'application/json' }, credentials: 'omit', referrerPolicy: 'no-referrer' });
       if (r.status === 404) return { erro: 'nao-encontrado' };
-      if (!r.ok) return { erro: 'indisponivel' };
+      // O motivo real aparece na mensagem (o serviço respondeu com erro, limite de consultas, tempo esgotado ou sem conexão).
+      if (!r.ok) return { erro: 'indisponivel', motivo: r.status === 429 ? 'limite de consultas do serviço' : 'o serviço respondeu com erro ' + r.status };
       return { dados: await r.json() };
     } catch (e) {
-      return { erro: 'indisponivel' };
+      return { erro: 'indisponivel', motivo: e && e.name === 'AbortError' ? 'tempo esgotado' : 'sem conexão com o serviço' };
     } finally {
       clearTimeout(relogio);
     }

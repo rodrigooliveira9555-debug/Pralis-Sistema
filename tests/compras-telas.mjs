@@ -93,9 +93,9 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   const cartaoF = (d, nome) => d.locator('.compras-cartao-escolha', { hasText: nome });
   ok(await df.locator('.compras-cartao-escolha').count() === 2 && await cartaoF(df, 'Produto').getAttribute('aria-checked') === 'false' && await df.locator('[role=radiogroup] [role=radio]').count() === 2 && await df.locator('input[type=checkbox][aria-label=Produto]').count() === 0, 'Categoria em dois cartões, sem as caixinhas antigas');
   await cartaoF(df, 'Serviço').click();
-  ok(await cartaoF(df, 'Serviço').getAttribute('aria-checked') === 'true' && (await df.locator('.stepper-item').nth(1).textContent()).includes('Dados do prestador'), 'Serviço marcado: a 2ª etapa vira Dados do prestador');
+  ok(await cartaoF(df, 'Serviço').getAttribute('aria-checked') === 'true' && (await df.locator('.stepper-item').nth(1).textContent()).includes('Dados do Prestador de Serviço'), 'Serviço marcado: a 2ª etapa vira Dados do prestador');
   await cartaoF(df, 'Produto').click();
-  ok(await cartaoF(df, 'Produto').getAttribute('aria-checked') === 'true' && await cartaoF(df, 'Serviço').getAttribute('aria-checked') === 'false' && (await df.locator('.stepper-item').nth(1).textContent()).includes('Dados do vendedor'), 'Marcar Produto desmarca Serviço (escolha única) e a 2ª etapa volta a Dados do vendedor');
+  ok(await cartaoF(df, 'Produto').getAttribute('aria-checked') === 'true' && await cartaoF(df, 'Serviço').getAttribute('aria-checked') === 'false' && (await df.locator('.stepper-item').nth(1).textContent()).includes('Dados do Vendedor'), 'Marcar Produto desmarca Serviço (escolha única) e a 2ª etapa volta a Dados do vendedor');
   ok(await df.getByLabel('CNPJ *', { exact: true }).isVisible() && await df.getByLabel('Razão social', { exact: true }).isVisible() && await df.getByLabel('Regime tributário', { exact: true }).isVisible() && await df.locator('fieldset').first().getByLabel('Regime tributário', { exact: true }).count() === 1, 'Pessoa jurídica: razão social, nome fantasia, CNPJ e regime tributário');
   await df.getByLabel('Razão social', { exact: true }).fill('Fornecedor CNPJ Teste Comércio Ltda');
   await df.getByLabel('Nome fantasia', { exact: true }).fill('Fornecedor CNPJ Teste');

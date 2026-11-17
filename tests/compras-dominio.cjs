@@ -237,7 +237,7 @@ ok(() => {
   assert.match(v({ representante: { cargo: 'chefe' } }), /Cargo do representante/);
   assert.deepEqual(d.CARGOS_REPRESENTANTE.map(([, nome]) => nome), ['Proprietário', 'Sócio-proprietário', 'Diretor geral', 'Diretor comercial', 'Gerente geral', 'Gerente comercial',
     'Supervisor geral', 'Supervisor comercial', 'Representante comercial', 'Administrador', 'Financeiro', 'Procurador', 'Outro']);
-  assert.deepEqual(d.etapasFornecedor([]), ['Dados da empresa', 'Dados do vendedor', 'Dados do financeiro', 'Dados do representante', 'Vínculos', 'Contrato']);
+  assert.deepEqual(d.etapasFornecedor([]), ['Dados da empresa', 'Dados do Vendedor', 'Dados do Responsável Financeiro', 'Dados do Responsável Legal', 'Vínculos', 'Contrato']);
   // Contrato (quadro "Tem contrato?" do financeiro): só é conferido quando tem; valor e índice só informados.
   const vc = (contrato) => d.validarFornecedorEtapas({ ...pj, contrato: { tem: true, ...contrato } }, regras, ctx);
   assert.deepEqual(vc({ formaPagamento: 'boleto', recorrencia: 'mes', vencimentoDia: 10, valorCentavos: 150000, inicio: '2026-01-01', fim: '2026-12-31', reajuste: 'ipca', observacoes: 'Mensal' }), ['', '', '', '', '', '']);
@@ -372,9 +372,9 @@ ok(() => {
   const etapas = d.validarFornecedorEtapas({ ...pj, categorias: [], whatsapp: '', financeiro: { email: 'x@' }, representante: { whatsapp: '1' } }, regras, ctx);
   assert.deepEqual(etapas.map(Boolean), [true, true, true, true, false, false]);
   assert.deepEqual(d.validarFornecedorEtapas(pj, regras, ctx), ['', '', '', '', '', '']);
-  assert.deepEqual(d.etapasFornecedor(['produto']).slice(1, 2), ['Dados do vendedor']);
-  assert.deepEqual(d.etapasFornecedor(['servico']).slice(1, 2), ['Dados do prestador']);
-  assert.deepEqual(d.etapasFornecedor(['produto', 'servico']).slice(1, 2), ['Dados do vendedor']);
+  assert.deepEqual(d.etapasFornecedor(['produto']).slice(1, 2), ['Dados do Vendedor']);
+  assert.deepEqual(d.etapasFornecedor(['servico']).slice(1, 2), ['Dados do Prestador de Serviço']);
+  assert.deepEqual(d.etapasFornecedor(['produto', 'servico']).slice(1, 2), ['Dados do Vendedor']);
   assert.equal(d.etapasFornecedor([]).length, 6);
   assert.equal(d.etapasFornecedor([])[0], 'Dados da empresa');
   // Endereço é opcional; o que vier precisa estar no formato.
@@ -431,6 +431,47 @@ ok(() => {
   const pjS = { tipoPessoa: 'juridica', cadastro: 'simples', cnpj: '11.222.333/0001-81', razaoSocial: 'X', whatsapp: '(31) 98888-0000' };
   assert.equal(d.validarCliente({ ...pjS, endereco: { cep: '30130010' } }, rg), '');
   assert.match(d.validarCliente({ ...pjS, endereco: { cep: '1234' } }, rg), /CEP deve ter 8/);
+  // Contratos: atividades incluídas e não incluídas, modelos e documento (18/11/2026)
+  assert.equal(d.novaAtividade([], [], '  Limpeza   das áreas ').item.texto, 'Limpeza das áreas');
+  assert.match(d.novaAtividade([], [], '   ').erro, /Escreva/);
+  assert.match(d.novaAtividade([{ id: 'a', texto: 'Limpeza' }], [], 'limpeza').erro, /já está na lista/);
+  assert.match(d.novaAtividade([], [{ id: 'b', texto: 'Pintura' }], 'PINTURA').erro, /outra lista/);
+  assert.equal(d.novaAtividade([{ id: 'a', texto: 'Limpeza' }], [], 'Limpeza geral', { ignorarId: 'a' }).item.id, 'a'); // editar o próprio item
+  assert.match(d.novaAtividade([{ id: 'a', texto: 'X', ref: 'g1' }], [], 'Y', { ref: 'g1' }).erro, /já está/);
+  assert.equal(d.validarAtividadesContrato([{ id: '1', texto: 'A' }], [{ id: '2', texto: 'B' }]), '');
+  assert.match(d.validarAtividadesContrato([{ id: '1', texto: 'A' }], [{ id: '2', texto: 'a' }]), /nas incluídas e nas não incluídas/);
+  assert.match(d.validarAtividadesContrato([{ id: '1', texto: 'A' }, { id: '2', texto: 'a' }], []), /repetida/);
+  assert.match(d.validarAtividadesContrato([{ id: '1', texto: '' }], []), /sem texto/);
+  const mod = { id: 'm1', nome: 'Prestação de serviços', versao: 3, clausulas: [{ titulo: 'Objeto', texto: 'Texto cadastrado.' }], incluidas: [{ id: 'i1', texto: 'Limpeza' }], excluidas: [{ id: 'e1', texto: 'Pintura' }], valorCentavos: 150000, recorrencia: 'mes', vigenciaMeses: 12, renovacao: 'automatica', camposAdicionais: [{ id: 'c1', rotulo: 'Local', tipo: 'texto', obrigatorio: true }] };
+  assert.equal(d.validarModeloContrato(mod), '');
+  assert.match(d.validarModeloContrato({ ...mod, nome: ' ' }), /nome do tipo/);
+  assert.match(d.validarModeloContrato({ ...mod, id: 'm2' }, { modelos: [mod] }), /Já existe/);
+  assert.equal(d.validarModeloContrato(mod, { modelos: [mod] }), ''); // o próprio modelo não conta como repetido
+  assert.match(d.validarModeloContrato({ ...mod, clausulas: [{ titulo: 'x', texto: '' }] }), /cláusula sem texto/);
+  assert.match(d.validarModeloContrato({ ...mod, camposAdicionais: [{ id: 'c1', rotulo: 'A', tipo: 'script' }] }), /Tipo inválido/);
+  assert.match(d.validarModeloContrato({ ...mod, camposAdicionais: [{ id: 'c1', rotulo: 'A', tipo: 'texto' }, { id: 'c2', rotulo: 'a', tipo: 'data' }] }), /repetido/);
+  assert.match(d.validarModeloContrato({ ...mod, vigenciaMeses: 0 }), /vigência/);
+  assert.match(d.validarModeloContrato({ ...mod, incluidas: [{ id: 'i', texto: 'A' }], excluidas: [{ id: 'e', texto: 'A' }] }), /ao mesmo tempo/);
+  // aplicar o modelo: só preenche o vazio, nunca sobrescreve
+  const r1 = d.aplicarModeloAoContrato({ tem: true, inicio: '2026-01-31' }, mod);
+  assert.equal(r1.patch.valorCentavos, 150000); assert.equal(r1.patch.recorrencia, 'mes'); assert.equal(r1.patch.fim, '2027-01-31'); assert.equal(r1.patch.renovacao, 'automatica');
+  assert.equal(r1.patch.modeloVersao, 3); assert.equal(r1.patch.clausulas.length, 1); assert.equal(r1.patch.atividadesIncluidas.length, 1); assert.equal(r1.patch.atividadesExcluidas.length, 1);
+  const r2 = d.aplicarModeloAoContrato({ tem: true, valorCentavos: 99900, recorrencia: 'dia', fim: '2026-12-31', renovacao: 'manual', inicio: '2026-01-01', atividadesIncluidas: [{ id: 'x', texto: 'Limpeza' }], atividadesExcluidas: [{ id: 'y', texto: 'Limpeza extra' }] }, mod);
+  assert.ok(!('valorCentavos' in r2.patch) && !('recorrencia' in r2.patch) && !('fim' in r2.patch) && !('renovacao' in r2.patch)); // nada sobrescrito
+  assert.equal(r2.patch.atividadesIncluidas.length, 1); assert.ok(r2.notas.some((n) => /mantido|mantida/.test(n)));
+  const r3 = d.aplicarModeloAoContrato({ tem: true, atividadesExcluidas: [{ id: 'y', texto: 'Limpeza' }] }, mod); // "Limpeza" já está nas não incluídas
+  assert.equal(r3.patch.atividadesIncluidas.length, 0); assert.ok(r3.notas.some((n) => /não entrou|não entraram/.test(n)));
+  assert.equal(d.somarMesesIso('2026-01-31', 1), '2026-02-28'); assert.equal(d.somarMesesIso('', 1), '');
+  // contrato do fornecedor: documento só quando completo
+  const forn = { razaoSocial: 'Empresa Teste Ltda', documento: '11.222.333/0001-81', contrato: { tem: true, modeloId: 'm1', clausulas: [{ titulo: '', texto: 'T' }], atividadesIncluidas: [{ id: 'a', texto: 'Limpeza' }], inicio: '2026-11-01', camposAdicionaisDef: [{ id: 'c1', rotulo: 'Local', tipo: 'texto', obrigatorio: true }], camposAdicionais: {} } };
+  assert.deepEqual(d.faltasDoContrato(forn), ['campo "Local"']);
+  forn.contrato.camposAdicionais = { c1: 'Loja Centro' }; assert.deepEqual(d.faltasDoContrato(forn), []);
+  assert.deepEqual(d.faltasDoContrato({ ...forn, contrato: { tem: false } }).length, 1);
+  assert.ok(d.faltasDoContrato({ ...forn, contrato: { tem: true } }).length >= 4);
+  assert.equal(d.validarContratoDocumento(forn.contrato), '');
+  assert.match(d.validarContratoDocumento({ ...forn.contrato, camposAdicionaisDef: [{ id: 'c2', rotulo: 'Quando', tipo: 'data' }], camposAdicionais: { c2: 'amanhã' } }), /data/);
+  assert.match(d.validarContratoDocumento({ atividadesIncluidas: [{ id: '1', texto: 'A' }], atividadesExcluidas: [{ id: '2', texto: 'A' }] }), /ao mesmo tempo/);
+  assert.equal(d.validarFornecedorEtapas({ ...forn, categorias: ['servico'], contrato: { ...forn.contrato, atividadesExcluidas: [{ id: '2', texto: 'Limpeza' }] } }, { cnpjValid: () => true, cpfValid: () => true })[5].length > 0, true);
   assert.equal(d.nomeCliente({ tipoPessoa: 'fisica', nome: ' Ana Teste ' }), 'Ana Teste');
   assert.equal(d.nomeCliente({ tipoPessoa: 'juridica', razaoSocial: 'Empresa Ltda', nomeFantasia: 'Fantasia' }), 'Fantasia');
   assert.equal(d.nomeCliente({ tipoPessoa: 'juridica', razaoSocial: 'Empresa Ltda' }), 'Empresa Ltda');
