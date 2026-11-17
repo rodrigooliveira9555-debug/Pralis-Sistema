@@ -407,7 +407,7 @@ ok(() => {
   assert.deepEqual(d.etapasCliente('fisica', 'simples'), []);
   assert.deepEqual(d.etapasCliente('juridica', 'simples'), []);
   assert.deepEqual(d.etapasCliente('fisica', 'completo'), ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão']);
-  assert.deepEqual(d.etapasCliente('juridica', 'completo'), ['Dados da empresa', 'Dados do responsável financeiro', 'Dados do responsável geral', 'Revisão']);
+  assert.deepEqual(d.etapasCliente('juridica', 'completo'), ['Dados da empresa', 'Dados do responsável financeiro da empresa', 'Dados do responsável geral da empresa', 'Revisão dos dados da empresa']);
   // Cliente mensal e Compra Mensal (18/11/2026)
   assert.deepEqual(d.periodoMensal(2026, 11), { inicio: '2026-11-01', fim: '2026-11-30' });
   assert.deepEqual(d.periodoMensal(2026, 2), { inicio: '2026-02-01', fim: '2026-02-28' });
@@ -519,9 +519,14 @@ ok(() => {
   const pjc = { ...pjs, cadastro: 'completo', regimeTributario: 'simples', contatoAniversario: '02-29', financeiro: { nome: 'Fin', whatsapp: '(31) 99999-0000', email: 'fin@exemplo.test' }, representante: { nome: 'Rep', cargo: 'diretor-geral' },
     contrato: { tem: true, formaPagamento: 'boleto', recorrencia: 'mes', valorCentavos: 250000, salarioMinimo: { ativo: true, percentual: 150 } } };
   // 17/11/2026: PJ em etapas tem 4 etapas (contato + financeiro juntos) e a 1ª exige tudo, menos o complemento.
-  const pjOk = { ...pjc, nomeFantasia: 'Fantasia Teste', endereco: { cep: '30130-000', logradouro: 'Rua Teste', numero: '10', bairro: 'Centro', cidade: 'Cidade Teste', uf: 'MG' } };
+  const pjOk = { ...pjc, contatoNome: 'Responsavel Teste', email: 'financeiro@exemplo.test', nomeFantasia: 'Fantasia Teste', endereco: { cep: '30130-000', logradouro: 'Rua Teste', numero: '10', bairro: 'Centro', cidade: 'Cidade Teste', uf: 'MG' } };
   assert.deepEqual(e(pjOk), ['', '', '', '']);
   assert.match(e({ ...pjOk, nomeFantasia: '' })[0], /nome fantasia/);
+  // quadro "Dados do responsável": nome, WhatsApp, e-mail e aniversário obrigatórios
+  assert.match(e({ ...pjOk, contatoNome: '' })[1], /nome do responsável/);
+  assert.match(e({ ...pjOk, email: '' })[1], /Informe o e-mail/);
+  assert.match(e({ ...pjOk, whatsapp: '' })[1], /WhatsApp/);
+  assert.match(e({ ...pjOk, contatoAniversario: '' })[1], /aniversário do responsável/);
   assert.match(e({ ...pjOk, regimeTributario: '' })[0], /regime tributário/);
   assert.match(e({ ...pjOk, endereco: { ...pjOk.endereco, numero: '' } })[0], /número do endereço/);
   assert.match(e({ ...pjOk, endereco: { ...pjOk.endereco, uf: '' } })[0], /UF/);

@@ -682,6 +682,8 @@
           barra.update(nomesEtapas(), atual); erroEtapa.textContent = '';
           const ultima = atual === quadros.length - 1;
           nav.replaceChildren(...(ultima ? [voltar, salvarFim] : atual === 0 ? [cancelar, avancar] : [cancelar, voltar, avancar]));
+          // Troca de etapa recomeça do alto (regra de 17/11/2026).
+          if (form.isConnected && barra.el.isConnected) barra.el.scrollIntoView({ block: 'start' });
         }
         form.append(barra.el, ...quadros, erroEtapa, nav);
         desenharImagens(); desenharDocs(); desenharMovs(); desenharPecas(); desenharMan(); desenharVinc(); pintarComposto(); pintarTecnicas(); pintarEnergia(); pintarEspec(); pintarResp(); desenharUt(); desenharFicha(); pintarProducao(); pintarGarSeg(); pintarMan(); pintarInsp(); pintarSelectsDoc();

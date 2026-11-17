@@ -563,6 +563,22 @@
     return pendentes.length;
   }
 
+  /**
+   * Troca de etapa sempre recomeça do alto (pedido do Rodrigo, 17/11/2026): leva a barra de etapas para o topo da área
+   * que rola, para a etapa seguinte começar logo abaixo do cabeçalho. Não faz nada enquanto o formulário está sendo montado.
+   */
+  function subirAoTopo(no, form) {
+    if (no && (!form || form.isConnected) && no.isConnected) no.scrollIntoView({ block: 'start' });
+  }
+  /** Botão redondo do lápis no canto de um bloco da Revisão (padrão dos botões redondos, na cor do menu): leva à etapa do bloco. */
+  function botaoEditarBloco(titulo, acao) {
+    const b = el('button', 'shortcut-circle compras-redondo compras-revisao-editar');
+    b.type = 'button'; b.title = 'Editar ' + titulo; b.setAttribute('aria-label', 'Editar ' + titulo);
+    b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4-.8L19 8l-3-3L5 16zM14.5 6.5l3 3"/></svg>';
+    b.onclick = acao;
+    return b;
+  }
+
   /** Confirmação local (sem janela nativa), como pede o padrão do S2. */
   function confirmar(titulo, texto, rotulo, acao, { cor = COR, corTexto = COR_TEXTO, classe = '' } = {}) {
     dialogo({
@@ -701,6 +717,6 @@
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, quadroSituacao, cartoesEscolha, flutuante,
+    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, quadroSituacao, cartoesEscolha, flutuante,
   };
 })();

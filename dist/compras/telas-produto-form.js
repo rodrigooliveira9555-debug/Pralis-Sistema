@@ -655,10 +655,7 @@
               por('Promoções', promocoes.length ? String(promocoes.length) : 'Sem promoção');
               promocoes.forEach((pr, j) => por('Promoção ' + (j + 1) + ' · quando vale', pr.agendada ? R.resumoRepeticaoPromocao(pr) : 'Sem agendamento: vale todos os dias, o dia todo.'));
             }
-            const editar = botao('Editar', () => ir(k), 'btn secondary');
-            const pe = el('div', 'compras-form-rodape compras-largo');
-            pe.append(editar);
-            quadro.append(linhas, pe);
+            quadro.append(U.botaoEditarBloco(ETAPAS[k], () => ir(k)), linhas);
             eRevisao.append(quadro);
           });
         }
@@ -670,7 +667,7 @@
           // Voltar a partir da 2ª etapa, Avançar até a penúltima; Salvar em todas na edição e só na última no cadastro novo.
           const ultima = atual === etapasNo.length - 1;
           nav.replaceChildren(...[atual > 0 && voltar, !ultima && avancar, (!novo || ultima) && salvarFim].filter(Boolean));
-          if (form.isConnected) barra.el.scrollIntoView({ block: 'start' });
+          U.subirAoTopo(barra.el, form);
         }
         form.append(barra.el, ...etapasNo, nav);
         ir(0);

@@ -1113,7 +1113,8 @@
           const ultima = atual === quadros.length - 1;
           nav.replaceChildren(...[atual > 0 && voltar, !ultima && avancar, (f || ultima) && salvarFim].filter(Boolean));
           const foco = quadros[atual].querySelector('input:not([type=checkbox]):not([readonly]),select');
-          if (foco && form.isConnected) foco.focus();
+          if (foco && form.isConnected) foco.focus({ preventScroll: true });
+          U.subirAoTopo(barra.el, form);
         }
         pintarVendedor();
         aplicarTema();

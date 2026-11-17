@@ -51,19 +51,22 @@
       secoes = [
         ['Dados cadastrais', [['CNPJ', c.cnpj], ['Razão Social', c.razaoSocial], ['Nome Fantasia', c.nomeFantasia], ['Regime tributário', nomeDe(D.REGIMES_TRIBUTARIOS, c.regimeTributario)], ['Situação', c.situacao === 'inativo' ? 'Inativo' : 'Ativo']]],
         ['Endereço', enderecoLinhas],
-        ['Dados do responsável financeiro', [['Nome', c.contatoNome], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Aniversário', D.aniversarioTexto(c.contatoAniversario)], ...(c.contrato ? CAD().linhasContrato(c.contrato) : [])]],
+        ['Dados do responsável financeiro da empresa', [['Nome', c.contatoNome], ['WhatsApp', c.whatsapp], ['E-mail (financeiro e/ou fiscal)', c.email], ['Aniversário', D.aniversarioTexto(c.contatoAniversario)], ['Cliente mensal', c.contrato && c.contrato.clienteMensal ? 'Sim' : 'Não']]],
         // Cadastro anterior a 17/11/2026 com um financeiro diferente do contato: continua à vista, para não sumir.
         ...(c.financeiro && c.financeiro.mesmo === false && (c.financeiro.nome || c.financeiro.whatsapp || c.financeiro.email) ? [['Financeiro (cadastro anterior)', contato(c.financeiro)]] : []),
-        ['Dados do responsável geral', contato(c.representante, [['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
+        ['Dados do responsável geral da empresa', contato(c.representante, [['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
       ];
     }
     return secoes.map(([t, l]) => [t, l.filter(([, v]) => v)]).filter(([, l]) => l.length);
   }
   const rotuloModalidade = (c) => nomeDe(D.TIPOS_PESSOA_CLIENTE, c.tipoPessoa) + ' · ' + nomeDe(D.TIPOS_CADASTRO_CLIENTE, c.cadastro);
-  const dlDe = (secoes) => {
+  // aoEditar(titulo): devolve a função que leva à etapa daquele bloco (ou nada). Com ela, o bloco ganha o botão redondo do lápis.
+  const dlDe = (secoes, aoEditar) => {
     const box = el('div', 'compras-largo');
     secoes.forEach(([t, linhas]) => {
       const fs = el('fieldset', 'compras-fieldset'); fs.append(el('legend', null, t));
+      const editar = aoEditar && aoEditar(t);
+      if (editar) fs.append(U.botaoEditarBloco(t, editar));
       const dl = el('dl', 'profiles-info');
       linhas.forEach(([k, v]) => dl.append(el('dt', null, k), el('dd', null, String(v))));
       fs.append(dl); box.append(fs);
@@ -93,12 +96,13 @@
         const cep = mascara(entrada('text', e.cep || '', { inputMode: 'numeric', placeholder: '00000-000', maxLength: 9 }), C.cepMask);
         const rua = texto(e.logradouro, { maxLength: 160 }); const numero = texto(e.numero, { maxLength: 20 }); const complemento = texto(e.complemento, { maxLength: 80 });
         const bairro = texto(e.bairro, { maxLength: 80 }); const cidade = texto(e.cidade, { maxLength: 80 }); const uf = seletor(C.UFS, e.uf || '', 'UF');
-        const contatoNome = texto(v.contatoNome); const aniv = CAD().seletoresAniversario(v.contatoAniversario || '');
+        const contatoNome = texto(v.contatoNome); const aniv = CAD().seletoresAniversario(v.contatoAniversario || '', { rotulo: 'Aniversário *' });
         const situacao = U.quadroSituacao('Situação do cliente', v.situacao ? v.situacao === 'ativo' : true, { dica: 'Cliente inativo continua cadastrado.' });
         const F = {
           nome: campo('Nome completo *', nome), cpf: campo('CPF *', cpf), nasc: anivPF.no, whats: campo('WhatsApp *', whats), mail: campo('E-mail', mail),
-          cnpj: campo('CNPJ *', cnpj), razao: campo('Razão Social *', razao), fantasia: campo('Nome Fantasia', fantasia), regime: campo('Regime tributário', regime), contatoNome: campo('Nome do responsável', contatoNome),
+          cnpj: campo('CNPJ *', cnpj), razao: campo('Razão Social *', razao), fantasia: campo('Nome Fantasia', fantasia), regime: campo('Regime tributário', regime), contatoNome: campo('Nome do responsável *', contatoNome),
         };
+        const ajudaMail = el('small', 'profiles-note', 'Usamos este e-mail para enviar notas e cobranças.'); F.mail.append(ajudaMail);
         const avisoCnpj = el('p', 'profiles-note compras-largo'); avisoCnpj.setAttribute('role', 'status');
         const avisoCep = el('p', 'profiles-note compras-largo'); avisoCep.setAttribute('role', 'status');
         const e0 = Object.values(e).some((x) => String(x || '').trim());
@@ -150,82 +154,23 @@
         const contatoAtual = () => ({ nome: contatoNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() });
         const finAntigo = v.financeiro && v.financeiro.mesmo === false && (v.financeiro.nome || v.financeiro.whatsapp || v.financeiro.email) ? v.financeiro : null;
         const fin = { ler: () => finAntigo || { mesmo: true, ...contatoAtual() }, pintar: () => {} };
-        const rep = contatoBloco(v.representante, 'responsável geral', () => contatoAtual(), 'Dados do responsável geral');
+        const rep = contatoBloco(v.representante, 'responsável geral', () => contatoAtual(), 'Dados do responsável geral da empresa');
         const repCargo = seletor(D.CARGOS_REPRESENTANTE, (v.representante && v.representante.cargo) || '', 'Selecione');
         rep.no.append(campo('Cargo na empresa', repCargo));
 
         /* Informações de Pagamento (sempre à vista): forma de pagamento, recorrência, valor e referência ao salário mínimo (mesmos componentes de Fornecedores) */
         const ct = v.contrato || {};
-        const mensal = U.quadroSituacao('É cliente mensal?', Boolean(ct.clienteMensal), { textos: ['Sim', 'Não'], dica: 'Cliente mensal: período do dia 1 ao último dia do mês, boleto e vencimento todo dia 10.', aoMudar: () => pintarContrato() });
+        const mensal = U.quadroSituacao('É cliente mensal?', Boolean(ct.clienteMensal), { textos: ['Sim', 'Não'], dica: 'Cliente mensal: período do dia 1 ao último dia do mês, boleto e vencimento todo dia 10.' });
         mensal.classList.add('compras-largo');
         mensal.querySelector('.account-status-switch').setAttribute('aria-label', 'É cliente mensal?');
-        const cDados = el('fieldset', 'compras-fieldset'); cDados.append(el('legend', null, 'Informações de Pagamento'));
-        const formas = [...D.FORMAS_PAGAMENTO_FORNECEDOR];
-        const formaAntiga = ct.formaPagamento && !formas.some(([id]) => id === ct.formaPagamento) ? D.FORMAS_PAGAMENTO_CONTRATO.find(([id]) => id === ct.formaPagamento) : null;
-        if (formaAntiga) formas.push([formaAntiga[0], formaAntiga[1] + ' (cadastro anterior)']);
-        const cForma = seletor(formas, ct.formaPagamento || '', 'Selecione');
-        const cVencData = entrada('date', ct.vencimentoData || '');
-        const vencCampo = campo('Data de vencimento do boleto', cVencData);
-        const diaPagto = el('div', 'compras-campo');
-        diaPagto.append(el('span', 'compras-rotulo', 'Dia de pagamento'), el('strong', null, 'Toda sexta-feira'), el('small', 'profiles-note', 'Só informativo: o sistema não faz o pagamento nem marca como pago.'));
-        const rec = window.CicluzComprasRecorrencia.criar({ valor: ct.recorrencia || '', personalizada: ct.recorrenciaPersonalizada || null, terminoMensal: ct.terminoMensal || null, opcoes: D.RECORRENCIAS_CLIENTE, cores: cores(), aoMudar: () => pintarValor() });
-        const cValor = entrada('text', Number.isInteger(ct.valorCentavos) ? R().moneyMask(String(ct.valorCentavos)) : '', { inputMode: 'numeric', placeholder: 'R$ 0,00', maxLength: 24 });
-        const valorCampo = campo('Valor (R$)', cValor);
-        const valorResumo = el('small', 'profiles-note compras-valor-resumo'); valorResumo.setAttribute('aria-live', 'polite'); valorCampo.append(valorResumo);
-        const valorCentavos = () => { const n = D.digitos(cValor.value).replace(/^0+(?=\d)/, ''); return n ? parseInt(n, 10) : null; };
-        function pintarValor() { const cv = valorCentavos(); valorResumo.textContent = cv == null ? '' : D.resumoValorRecorrencia(cv, rec.atual()); }
-        cValor.addEventListener('input', () => { cValor.value = R().moneyMask(cValor.value); pintarValor(); });
-        const sm0 = ct.salarioMinimo || {};
-        const smQuadro = U.quadroSituacao('Referência do salário mínimo', Boolean(sm0.ativo), { aoMudar: () => pintarContrato() });
-        const smPct = entrada('text', typeof sm0.percentual === 'number' ? String(sm0.percentual).replace('.', ',') : '', { inputMode: 'decimal', placeholder: 'Ex.: 50', maxLength: 8 });
-        const smPctCampo = campo('Percentual do salário mínimo (%)', smPct);
-        smPct.setAttribute('aria-label', 'Percentual sobre o mínimo (%)'); // "salário" no nome faria o field-validation.js tratar como dinheiro
-        smPct.addEventListener('input', () => { smPct.value = smPct.value.replace(/[^\d,]/g, '').replace(/,(?=.*,)/g, ''); });
-        const smBox = el('div', 'compras-largo compras-sm');
-        smBox.append(smQuadro, smPctCampo, el('small', 'profiles-note', 'Só informação cadastral: o sistema não consulta o salário mínimo, não calcula reajuste e não troca o valor informado.'));
-        const cInicio = entrada('date', ct.inicio || ''); const cFim = entrada('date', ct.fim || '');
-        const cReajuste = seletor(D.REAJUSTES_CONTRATO, ct.reajuste || '', 'Selecione');
-        const cPercentual = entrada('text', ct.reajustePercentual != null ? String(ct.reajustePercentual).replace('.', ',') : '', { inputMode: 'decimal', placeholder: '0,00', maxLength: 6 });
-        const percentualCampo = campo('Percentual do reajuste (%) *', cPercentual);
-        const cObs = el('textarea'); cObs.rows = 3; cObs.maxLength = 2000; cObs.value = ct.observacoes || '';
-        const obsCampo = campo('Observações do contrato', cObs); obsCampo.classList.add('compras-largo');
-        // Cliente mensal: o período, a forma e o vencimento são fixos e só aparecem como informação (nenhum boleto é gerado).
-        const mensalInfo = el('dl', 'profiles-info compras-largo'); mensalInfo.setAttribute('aria-live', 'polite');
-        const hoje = new Date(); const per = D.periodoMensal(hoje.getFullYear(), hoje.getMonth() + 1);
-        const br = (iso) => iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4);
-        mensalInfo.append(el('dt', null, 'Período de Referência'), el('dd', null, 'Dia 1 até o último dia do mês (' + br(per.inicio) + ' até ' + br(per.fim) + ')'),
-          el('dt', null, 'Forma de Pagamento'), el('dd', null, 'Boleto'), el('dt', null, 'Vencimento'), el('dd', null, 'Vencimento mensal: Todo dia ' + D.CLIENTE_MENSAL.vencimentoDia));
-        let formaManual = ct.clienteMensal ? '' : (ct.formaPagamento || '');
-        let eraMensal = false;
-        cDados.append(mensal, mensalInfo, campo('Forma de pagamento', cForma), vencCampo, diaPagto, rec.no, valorCampo, smBox, campo('Início da vigência', cInicio), campo('Término da vigência', cFim),
-          campo('Reajuste', cReajuste, 'Só o índice combinado; o sistema não calcula o reajuste.'), percentualCampo, obsCampo);
-        function pintarContrato() {
-          const m = mensal.ativo;
-          if (m && !eraMensal) { if (cForma.value !== 'boleto') formaManual = cForma.value; cForma.value = D.CLIENTE_MENSAL.formaPagamento; }
-          if (!m && eraMensal && formaManual) cForma.value = formaManual;
-          if (!m) formaManual = cForma.value;
-          eraMensal = m; cForma.disabled = m;
-          mostrar(mensalInfo, m);
-          mostrar(vencCampo, !m && cForma.value !== 'dinheiro' && cForma.value !== '');
-          vencCampo.querySelector('.compras-rotulo').textContent = cForma.value === 'boleto' ? 'Data de vencimento do boleto' : 'Data de vencimento';
-          mostrar(diaPagto, !m && cForma.value === 'dinheiro');
-          mostrar(smPctCampo, smQuadro.ativo);
-          mostrar(percentualCampo, cReajuste.value === 'percentual');
-        }
-        cForma.onchange = pintarContrato; cReajuste.onchange = pintarContrato;
-        const numeroOuNada = (input) => { const t = String(input.value).trim(); if (!t) return null; const n = D.lerNumero(t); return n == null ? NaN : n; };
-        const lerContrato = () => {
-          const pct = numeroOuNada(cPercentual); const pctMin = numeroOuNada(smPct);
-          return {
-            tem: true, clienteMensal: mensal.ativo, formaPagamento: cForma.value,
-            vencimentoData: cForma.value === 'dinheiro' ? '' : cVencData.value, vencimentoDia: mensal.ativo ? D.CLIENTE_MENSAL.vencimentoDia : (ct.clienteMensal ? null : (ct.vencimentoDia != null ? ct.vencimentoDia : null)),
-            diaPagamento: cForma.value === 'dinheiro' ? 'sexta' : '', ...rec.ler(), valorCentavos: valorCentavos(),
-            salarioMinimo: { ativo: smQuadro.ativo, percentual: pctMin == null ? null : Number.isNaN(pctMin) ? NaN : Math.round(pctMin * 100) / 100 },
-            inicio: cInicio.value, fim: cFim.value, reajuste: cReajuste.value,
-            reajustePercentual: cReajuste.value === 'percentual' ? (pct == null ? null : Math.round(pct * 100) / 100) : null, observacoes: cObs.value.trim(),
-          };
-        };
-        pintarContrato(); pintarValor();
+        // Informações de cobrança (17/11/2026, Rodrigo): só a pergunta "É cliente mensal?". Forma de pagamento, recorrência,
+        // valor, salário mínimo, vigência, reajuste e observações saíram da tela; o que já estava gravado em contrato fica
+        // guardado como está. Ligar "cliente mensal" grava boleto e vencimento no dia 10, a regra de antes.
+        const cDados = el('fieldset', 'compras-fieldset'); cDados.append(el('legend', null, 'Informações de cobrança'), mensal);
+        const lerContrato = () => ({
+          ...ct, tem: true, clienteMensal: mensal.ativo,
+          ...(mensal.ativo ? { formaPagamento: D.CLIENTE_MENSAL.formaPagamento, vencimentoDia: D.CLIENTE_MENSAL.vencimentoDia } : ct.clienteMensal ? { formaPagamento: '', vencimentoDia: null } : {}),
+        });
 
         /* Revisão (última etapa do completo) */
         const revisao = el('div', 'compras-largo');
@@ -342,8 +287,11 @@
         const salvarFim = el('button', 'btn', 'Salvar Cliente'); salvarFim.type = 'submit';
         function desenhar() {
           tipoSw.ativo = tipo === 'juridica'; cadSw.ativo = cadastro === 'completo'; pintarEndereco();
-          const rotE = tipo === 'fisica' ? 'E-mail *' : 'E-mail';
+          // Pessoa jurídica em etapas: o e-mail do responsável é o que recebe notas e cobranças, e é obrigatório (17/11/2026, Rodrigo).
+          const pjEtapas = tipo === 'juridica' && cadastro === 'completo';
+          const rotE = pjEtapas ? 'E-mail (financeiro e/ou fiscal) *' : tipo === 'fisica' ? 'E-mail *' : 'E-mail';
           F.mail.querySelector('.compras-rotulo').textContent = rotE; mail.setAttribute('aria-label', rotE);
+          mostrar(ajudaMail, pjEtapas);
           const pags = paginas();
           passos = pags.map((nos) => { const d = el('div', 'compras-etapa'); d.append(...nos); return d; });
           corpo.replaceChildren(...passos);
@@ -360,13 +308,18 @@
           if (barra) barra.update(nomes0(), passo);
           erroEtapa.textContent = '';
           const ultima = passo === passos.length - 1; const etapas = passos.length > 1;
-          if (etapas && ultima) { revisao.replaceChildren(el('p', 'profiles-note', 'Confira os dados antes de salvar. Para corrigir, use Voltar ou toque numa etapa.'), dlDe(secoesCliente(registro()))); }
+          if (etapas && ultima) {
+            // Cada bloco da revisão leva à etapa de onde os dados vieram.
+            const etapaDoBloco = { 'Dados cadastrais': 0, 'Dados pessoais': 0, 'Endereço': tipo === 'juridica' ? 0 : 1, 'Informações complementares': 2, 'Dados do responsável financeiro da empresa': 1, 'Dados do responsável geral da empresa': 2 };
+            revisao.replaceChildren(el('p', 'profiles-note', 'Confira os dados antes de salvar. Para corrigir, toque no lápis do bloco.'), dlDe(secoesCliente(registro()), (t) => (t in etapaDoBloco ? () => ir(etapaDoBloco[t]) : null)));
+          }
+          U.subirAoTopo(barraBox, form);
           nav.replaceChildren(...(etapas ? [passo > 0 && voltar, !ultima && avancar, (c || ultima) && salvarFim] : [cancelar, salvarFim]).filter(Boolean));
         }
         const nomes0 = () => D.etapasCliente(tipo, cadastro).map((label) => ({ label }));
         form.append(...(opcoes.externo ? [] : [controles]), barraBox, corpo, erroEtapa, nav);
         desenhar();
-        return { ler, registro, conferir, ir, datas: [cVencData, cInicio, cFim] };
+        return { ler, registro, conferir, ir, datas: [] };
       },
       salvar: (ctx) => {
         if (opcoes.previa) return 'Isto é só uma prévia do formulário: nada é salvo.';
