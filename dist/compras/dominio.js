@@ -723,7 +723,8 @@
   function etapasCliente(tipoPessoa, cadastro) {
     if (cadastro !== 'completo') return [];
     return tipoPessoa === 'juridica'
-      ? ['Dados da empresa', 'Dados do contato', 'Informações de Pagamento', 'Dados do Responsável', 'Revisão']
+      // 17/11/2026 (Rodrigo): o contato e o financeiro são uma etapa só; depois, o responsável geral.
+      ? ['Dados da empresa', 'Dados do responsável financeiro', 'Dados do responsável geral', 'Revisão']
       : ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão'];
   }
   const dataIsoValida = (v) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); if (!m) return false; const d = new Date(+m[1], +m[2] - 1, +m[3]); return d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3]; };
@@ -777,12 +778,27 @@
       if (c.regimeTributario && !REGIMES_TRIBUTARIOS.some(([id]) => id === c.regimeTributario)) return 'Regime tributário inválido.';
       return enderecoRuim();
     };
+    // Pessoa jurídica em etapas (17/11/2026, Rodrigo): na 1ª etapa todos os campos são obrigatórios, menos o complemento.
+    const empresaCompleta = () => {
+      const e = c.endereco || {};
+      const cheio = (x) => String(x || '').trim();
+      if (!cheio(c.nomeFantasia)) return 'Informe o nome fantasia.';
+      if (!c.regimeTributario) return 'Selecione o regime tributário.';
+      if (!cheio(e.cep)) return 'Informe o CEP.';
+      if (!cheio(e.logradouro)) return 'Informe a rua ou o logradouro.';
+      if (!cheio(e.numero)) return 'Informe o número do endereço.';
+      if (!cheio(e.bairro)) return 'Informe o bairro.';
+      if (!cheio(e.cidade)) return 'Informe a cidade.';
+      if (!e.uf) return 'Selecione a UF.';
+      return '';
+    };
+    // Financeiro separado do contato só existe em cadastro anterior a 17/11/2026 (mesmo: false); o novo é o próprio contato.
+    const financeiroAntigo = () => (c.financeiro && c.financeiro.mesmo === false ? contatoRuim(c.financeiro, 'financeiro') : '');
     if (!completo) return [pj ? empresa() || whatsEmail(false) : pessoa() || enderecoRuim()];
     if (!pj) return [pessoa(), enderecoRuim(), '', ''];
     return [
-      empresa(),
-      whatsEmail(false) || (aniversarioRuim(c.contatoAniversario) ? 'Aniversário do contato inválido: escolha o dia e o mês.' : ''),
-      contatoRuim(c.financeiro, 'financeiro') || validarContratoFinanceiro(c.contrato),
+      empresa() || empresaCompleta(),
+      whatsEmail(false) || (aniversarioRuim(c.contatoAniversario) ? 'Aniversário do responsável inválido: escolha o dia e o mês.' : '') || financeiroAntigo() || validarContratoFinanceiro(c.contrato),
       (() => { const cargo = c.representante && c.representante.cargo; return cargo && !CARGOS_REPRESENTANTE.some(([id]) => id === cargo) ? 'Cargo do representante inválido.' : contatoRuim(c.representante, 'representante'); })(),
       '',
     ];

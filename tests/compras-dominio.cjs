@@ -407,7 +407,7 @@ ok(() => {
   assert.deepEqual(d.etapasCliente('fisica', 'simples'), []);
   assert.deepEqual(d.etapasCliente('juridica', 'simples'), []);
   assert.deepEqual(d.etapasCliente('fisica', 'completo'), ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão']);
-  assert.deepEqual(d.etapasCliente('juridica', 'completo'), ['Dados da empresa', 'Dados do contato', 'Informações de Pagamento', 'Dados do Responsável', 'Revisão']);
+  assert.deepEqual(d.etapasCliente('juridica', 'completo'), ['Dados da empresa', 'Dados do responsável financeiro', 'Dados do responsável geral', 'Revisão']);
   // Cliente mensal e Compra Mensal (18/11/2026)
   assert.deepEqual(d.periodoMensal(2026, 11), { inicio: '2026-11-01', fim: '2026-11-30' });
   assert.deepEqual(d.periodoMensal(2026, 2), { inicio: '2026-02-01', fim: '2026-02-28' });
@@ -518,15 +518,22 @@ ok(() => {
   // PJ completo: cinco etapas (base de Fornecedores): empresa, contato, financeiro, representante, revisão.
   const pjc = { ...pjs, cadastro: 'completo', regimeTributario: 'simples', contatoAniversario: '02-29', financeiro: { nome: 'Fin', whatsapp: '(31) 99999-0000', email: 'fin@exemplo.test' }, representante: { nome: 'Rep', cargo: 'diretor-geral' },
     contrato: { tem: true, formaPagamento: 'boleto', recorrencia: 'mes', valorCentavos: 250000, salarioMinimo: { ativo: true, percentual: 150 } } };
-  assert.deepEqual(e(pjc), ['', '', '', '', '']);
-  assert.match(e({ ...pjc, regimeTributario: 'xx' })[0], /Regime/);
-  assert.match(e({ ...pjc, contatoAniversario: '02-30' })[1], /Aniversário do contato/);
-  assert.match(e({ ...pjc, financeiro: { whatsapp: '1' } })[2], /WhatsApp do financeiro/);
-  assert.match(e({ ...pjc, contrato: { tem: true, recorrencia: 'personalizado' } })[2], /recorrência personalizada/i);
-  assert.match(e({ ...pjc, contrato: { tem: true, salarioMinimo: { ativo: true, percentual: 0 } } })[2], /percentual do salário mínimo/);
-  assert.deepEqual(e({ ...pjc, contrato: { tem: false, valorCentavos: -1 } }), ['', '', '', '', '']); // sem contrato, nada é conferido
-  assert.match(e({ ...pjc, representante: { cargo: 'chefe' } })[3], /Cargo do representante/);
-  assert.match(e({ ...pjc, representante: { whatsapp: '1' } })[3], /WhatsApp do representante/);
+  // 17/11/2026: PJ em etapas tem 4 etapas (contato + financeiro juntos) e a 1ª exige tudo, menos o complemento.
+  const pjOk = { ...pjc, nomeFantasia: 'Fantasia Teste', endereco: { cep: '30130-000', logradouro: 'Rua Teste', numero: '10', bairro: 'Centro', cidade: 'Cidade Teste', uf: 'MG' } };
+  assert.deepEqual(e(pjOk), ['', '', '', '']);
+  assert.match(e({ ...pjOk, nomeFantasia: '' })[0], /nome fantasia/);
+  assert.match(e({ ...pjOk, regimeTributario: '' })[0], /regime tributário/);
+  assert.match(e({ ...pjOk, endereco: { ...pjOk.endereco, numero: '' } })[0], /número do endereço/);
+  assert.match(e({ ...pjOk, endereco: { ...pjOk.endereco, uf: '' } })[0], /UF/);
+  assert.equal(e({ ...pjOk, endereco: { ...pjOk.endereco, complemento: '' } })[0], '');
+  assert.match(e({ ...pjOk, regimeTributario: 'xx' })[0], /Regime/);
+  assert.match(e({ ...pjOk, contatoAniversario: '02-30' })[1], /Aniversário do responsável/);
+  assert.match(e({ ...pjOk, financeiro: { mesmo: false, whatsapp: '1' } })[1], /WhatsApp do financeiro/);
+  assert.match(e({ ...pjOk, contrato: { tem: true, recorrencia: 'personalizado' } })[1], /recorrência personalizada/i);
+  assert.match(e({ ...pjOk, contrato: { tem: true, salarioMinimo: { ativo: true, percentual: 0 } } })[1], /percentual do salário mínimo/);
+  assert.deepEqual(e({ ...pjOk, contrato: { tem: false, valorCentavos: -1 } }), ['', '', '', '']); // sem contrato, nada é conferido
+  assert.match(e({ ...pjOk, representante: { cargo: 'chefe' } })[2], /Cargo do representante/);
+  assert.match(e({ ...pjOk, representante: { whatsapp: '1' } })[2], /WhatsApp do representante/);
   assert.equal(d.validarCliente(pjs, regras, ctx), '');
   assert.match(d.validarCliente({ ...pjs, razaoSocial: '' }, regras, ctx), /razão social/);
   // A regra do contrato é a mesma do fornecedor (extraída para uma função só).

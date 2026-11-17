@@ -51,9 +51,10 @@
       secoes = [
         ['Dados cadastrais', [['CNPJ', c.cnpj], ['Razão Social', c.razaoSocial], ['Nome Fantasia', c.nomeFantasia], ['Regime tributário', nomeDe(D.REGIMES_TRIBUTARIOS, c.regimeTributario)], ['Situação', c.situacao === 'inativo' ? 'Inativo' : 'Ativo']]],
         ['Endereço', enderecoLinhas],
-        ['Contato', [['Nome', c.contatoNome], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Aniversário', D.aniversarioTexto(c.contatoAniversario)]]],
-        ['Informações de Pagamento', contato(c.financeiro, c.contrato ? CAD().linhasContrato(c.contrato) : [])],
-        ['Dados do Responsável', contato(c.representante, [['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
+        ['Dados do responsável financeiro', [['Nome', c.contatoNome], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Aniversário', D.aniversarioTexto(c.contatoAniversario)], ...(c.contrato ? CAD().linhasContrato(c.contrato) : [])]],
+        // Cadastro anterior a 17/11/2026 com um financeiro diferente do contato: continua à vista, para não sumir.
+        ...(c.financeiro && c.financeiro.mesmo === false && (c.financeiro.nome || c.financeiro.whatsapp || c.financeiro.email) ? [['Financeiro (cadastro anterior)', contato(c.financeiro)]] : []),
+        ['Dados do responsável geral', contato(c.representante, [['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
       ];
     }
     return secoes.map(([t, l]) => [t, l.filter(([, v]) => v)]).filter(([, l]) => l.length);
@@ -96,7 +97,7 @@
         const situacao = U.quadroSituacao('Situação do cliente', v.situacao ? v.situacao === 'ativo' : true, { dica: 'Cliente inativo continua cadastrado.' });
         const F = {
           nome: campo('Nome completo *', nome), cpf: campo('CPF *', cpf), nasc: anivPF.no, whats: campo('WhatsApp *', whats), mail: campo('E-mail', mail),
-          cnpj: campo('CNPJ *', cnpj), razao: campo('Razão Social *', razao), fantasia: campo('Nome Fantasia', fantasia), regime: campo('Regime tributário', regime), contatoNome: campo('Nome do contato', contatoNome),
+          cnpj: campo('CNPJ *', cnpj), razao: campo('Razão Social *', razao), fantasia: campo('Nome Fantasia', fantasia), regime: campo('Regime tributário', regime), contatoNome: campo('Nome do responsável', contatoNome),
         };
         const avisoCnpj = el('p', 'profiles-note compras-largo'); avisoCnpj.setAttribute('role', 'status');
         const avisoCep = el('p', 'profiles-note compras-largo'); avisoCep.setAttribute('role', 'status');
@@ -144,8 +145,12 @@
           s.append(mesmo, campo('Nome do ' + sufixo, n), campo('WhatsApp do ' + sufixo, w), campo('E-mail do ' + sufixo, m));
           return { no: s, mesmo, nome: n, whatsapp: w, email: m, pintar, ler: () => ({ mesmo: mesmo.ativo, nome: n.value.trim(), whatsapp: w.value.trim(), email: m.value.trim() }) };
         }
-        const fin = contatoBloco(v.financeiro, 'financeiro', () => ({ nome: contatoNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() }), 'Dados do financeiro');
-        const rep = contatoBloco(v.representante, 'representante', () => fin.ler(), 'Dados do Responsável');
+        // O responsável financeiro é o próprio contato da etapa 2. Só o cadastro antigo com um financeiro diferente
+        // (mesmo: false) guarda outra pessoa; ela continua no registro, sem ser sobrescrita.
+        const contatoAtual = () => ({ nome: contatoNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() });
+        const finAntigo = v.financeiro && v.financeiro.mesmo === false && (v.financeiro.nome || v.financeiro.whatsapp || v.financeiro.email) ? v.financeiro : null;
+        const fin = { ler: () => finAntigo || { mesmo: true, ...contatoAtual() }, pintar: () => {} };
+        const rep = contatoBloco(v.representante, 'responsável geral', () => contatoAtual(), 'Dados do responsável geral');
         const repCargo = seletor(D.CARGOS_REPRESENTANTE, (v.representante && v.representante.cargo) || '', 'Selecione');
         rep.no.append(campo('Cargo na empresa', repCargo));
 
@@ -273,8 +278,8 @@
         let barra = null; let passos = [];
 
         const temDadosPF = () => [nome, cpf].some((i) => i.value.trim()) || Boolean(anivPF.valor());
-        const temDadosPJ = () => [cnpj, razao, fantasia, contatoNome].some((i) => i.value.trim()) || fin.ler().nome || rep.ler().nome;
-        const temDadosCompleto = () => (tipo === 'fisica' ? [cpf, cep, rua, numero, bairro, cidade].some((i) => i.value.trim()) : [regime, cep, rua, contatoNome].some((i) => i.value.trim()) || mensal.ativo || fin.ler().nome || rep.ler().nome);
+        const temDadosPJ = () => [cnpj, razao, fantasia, contatoNome].some((i) => i.value.trim()) || rep.ler().nome;
+        const temDadosCompleto = () => (tipo === 'fisica' ? [cpf, cep, rua, numero, bairro, cidade].some((i) => i.value.trim()) : [regime, cep, rua, contatoNome].some((i) => i.value.trim()) || mensal.ativo || rep.ler().nome);
         /** Trocar de tipo ou de modalidade nunca apaga: o que já foi digitado fica guardado. Pede confirmação quando há risco de a pessoa achar que perdeu. */
         function pedirTroca(qual, ligado) {
           const novoTipo = qual === 'tipo' ? (ligado ? 'juridica' : 'fisica') : tipo; const novoCad = qual === 'cadastro' ? (ligado ? 'completo' : 'simples') : cadastro;
@@ -295,15 +300,24 @@
 
         /* Páginas de cada modalidade (os mesmos campos mudam de lugar) */
         const bloco = (...nos) => nos;
+        // Pessoa jurídica em etapas: na 1ª etapa tudo é obrigatório, menos o complemento; o " *" entra e sai do rótulo com a modalidade.
+        const obrigatorioNaPJ = [F.fantasia, F.regime, ...[cep, rua, numero, bairro, cidade, uf].map((i) => i.closest('label'))];
+        function marcarObrigatorios() {
+          const sim = tipo === 'juridica' && cadastro === 'completo';
+          obrigatorioNaPJ.forEach((l) => { const r = l && l.querySelector('.compras-rotulo'); if (!r) return; const base = r.textContent.endsWith(' *') ? r.textContent.slice(0, -2) : r.textContent; r.textContent = sim ? base + ' *' : base; });
+        }
         function paginas() {
+          marcarObrigatorios();
           if (tipo === 'fisica' && cadastro === 'simples') return [bloco(F.nome, F.whats, F.mail, F.nasc, endSw, sEnd)];
           if (tipo === 'fisica') {
             const comp = el('fieldset', 'compras-fieldset'); comp.append(el('legend', null, 'Sorteio'), el('p', 'profiles-note', 'Sorteio — Em definição'), el('small', 'profiles-note', 'Funcionalidade futura: por enquanto não há número, participação, prêmio nem regra de sorteio.'));
             return [bloco(F.nome, F.cpf, F.whats, F.mail, F.nasc), bloco(sEnd), bloco(comp), bloco(revisao)];
           }
           if (cadastro === 'simples') return [bloco(F.cnpj, avisoCnpj, F.razao, F.fantasia, F.whats, F.mail, endSw, sEnd)];
-          const contato = el('fieldset', 'compras-fieldset'); contato.append(el('legend', null, 'Dados do contato'), F.contatoNome, F.whats, F.mail, aniv.no);
-          return [bloco(...(opcoes.externo ? [] : [situacao]), F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime, sEnd), bloco(contato), bloco(fin.no, cDados), bloco(rep.no), bloco(revisao)];
+          // 17/11/2026 (Rodrigo): o contato e o financeiro viram uma etapa só, "Dados do responsável financeiro": o quadro
+          // "Dados do responsável" em cima e as Informações de Pagamento embaixo; não existe mais um contato do financeiro à parte.
+          const contato = el('fieldset', 'compras-fieldset'); contato.append(el('legend', null, 'Dados do responsável'), F.contatoNome, F.whats, F.mail, aniv.no);
+          return [bloco(...(opcoes.externo ? [] : [situacao]), F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime, sEnd), bloco(contato, cDados), bloco(rep.no), bloco(revisao)];
         }
         /** Cadastro lido do formulário: só o tipo e a modalidade em uso (o resto do registro fica como está). */
         function pintarEndereco() { mostrar(sEnd, cadastro === 'completo' || endSw.ativo); }
