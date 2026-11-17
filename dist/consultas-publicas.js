@@ -10,7 +10,9 @@
   const BASE = 'https://brasilapi.com.br/api';
   const TEMPO_LIMITE_MS = 8000;
   const digitos = (v) => String(v || '').replace(/\D/g, '');
-  const texto = (v) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+  // Texto no padrão de nomes do sistema (formatSystemName, quando a tela carregou a regra): a Receita e os Correios
+  // devolvem tudo em maiúsculas; o cadastro guarda "Padaria Exemplo Ltda", "Rua das Flores".
+  const texto = (v) => { const t = String(v == null ? '' : v).replace(/\s+/g, ' ').trim(); return typeof root.formatSystemName === 'function' ? root.formatSystemName(t) : t; };
   const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
   const uf = (v) => { const u = texto(v).toUpperCase(); return UFS.includes(u) ? u : ''; };
   const cepMask = (v) => { const d = digitos(v).slice(0, 8); return d.length > 5 ? d.slice(0, 5) + '-' + d.slice(5) : d; };
