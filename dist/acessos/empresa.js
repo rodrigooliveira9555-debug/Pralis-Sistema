@@ -114,19 +114,22 @@
         const completar = (pares) => pares.forEach(([alvo, valor]) => { if (valor && !alvo.value.trim()) alvo.value = valor; });
         const falha = { 'nao-encontrado': 'não encontrado', indisponivel: 'consulta indisponível agora' };
         let cepFeito = D.digitos(cep.value); let cnpjFeito = D.digitos(cnpj.value);
-        cep.addEventListener('input', async () => {
-          const n = D.digitos(cep.value); if (n.length !== 8 || n === cepFeito) return;
-          const trocouCep = Boolean(cepFeito); cepFeito = n; // CEP diferente do que estava: o endereço novo substitui o antigo
+        const aoEnter = (buscar) => (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); ev.stopPropagation(); buscar(true); } };
+        const buscarCep = async (forcar) => {
+          const n = D.digitos(cep.value); if (n.length !== 8 || (n === cepFeito && !forcar)) return;
+          const trocouCep = Boolean(cepFeito) || Boolean(forcar); cepFeito = n; // CEP diferente do que estava: o endereço novo substitui o antigo
           avisoCep.textContent = 'Buscando o endereço do CEP…';
           const r = await C().cep(n); if (D.digitos(cep.value) !== n) return;
           if (r.erro) { avisoCep.textContent = 'CEP ' + falha[r.erro] + (r.motivo ? ' (' + r.motivo + ')' : '') + ': preencha o endereço à mão.'; return; }
           const paresCep = [[rua, r.dados.logradouro], [bairro, r.dados.bairro], [cidade, r.dados.cidade], [uf, r.dados.uf]];
           if (trocouCep) paresCep.forEach(([alvo, valor]) => { alvo.value = valor || ''; }); else completar(paresCep);
           avisoCep.textContent = trocouCep ? 'CEP novo: rua, bairro, cidade e UF foram trocados. Confira o número e o complemento.' : 'Endereço do CEP conferido. Confira e informe o número.';
-        });
-        cnpj.addEventListener('input', async () => {
-          const n = D.digitos(cnpj.value); if (n.length !== 14 || n === cnpjFeito || !regras().cnpjValid(n)) return;
-          const cnpjAnterior = cnpjFeito; cnpjFeito = n;
+        };
+        // Enter no campo busca na hora e troca os dados (pedido do Rodrigo, 17/11/2026), sem salvar o formulário.
+        cep.addEventListener('input', () => buscarCep(false)); cep.addEventListener('keydown', aoEnter(buscarCep));
+        const buscarCnpj = async (forcar) => {
+          const n = D.digitos(cnpj.value); if (n.length !== 14 || (n === cnpjFeito && !forcar) || !regras().cnpjValid(n)) return;
+          const cnpjAnterior = forcar ? n : cnpjFeito; cnpjFeito = n;
           avisoCnpj.textContent = 'Buscando os dados da empresa pelo CNPJ…';
           const r = await C().cnpj(n); if (D.digitos(cnpj.value) !== n) return;
           if (r.erro) { avisoCnpj.textContent = 'CNPJ ' + falha[r.erro] + (r.motivo ? ' (' + r.motivo + ')' : '') + ': preencha os dados à mão.'; return; }
@@ -139,7 +142,8 @@
           else completar(pares);
           cepFeito = D.digitos(cep.value);
           avisoCnpj.textContent = trocou ? 'CNPJ novo: razão social, nome fantasia e endereço foram trocados pelos dados dele. Confira o regime tributário e salve.' : 'Dados do CNPJ conferidos; só os campos vazios foram preenchidos. Confira antes de salvar.';
-        });
+        };
+        cnpj.addEventListener('input', () => buscarCnpj(false)); cnpj.addEventListener('keydown', aoEnter(buscarCnpj));
         const empresa = el('fieldset', 'compras-fieldset');
         // Primeira pergunta das empresas que não são a Matriz: o tipo de vínculo.
         const vinculo = seletor(VINCULOS.filter(([id]) => id !== 'matriz'), matriz ? '' : (v.vinculo || ''), 'Selecione');
@@ -192,15 +196,16 @@
             const rCidade = liga(texto(en.cidade, { maxLength: 80 }), 'cidade', en); const rUf = liga(seletor(C().UFS, en.uf, 'UF'), 'uf', en);
             const avisoCepR = el('p', 'profiles-note compras-largo'); avisoCepR.setAttribute('role', 'status');
             let cepRFeito = D.digitos(en.cep);
-            rCep.addEventListener('input', async () => {
-              const nn = D.digitos(rCep.value); if (nn.length !== 8 || nn === cepRFeito) return;
-              const trocouCepR = Boolean(cepRFeito); cepRFeito = nn; // CEP diferente: o endereço novo substitui o antigo
+            const buscarCepR = async (forcar) => {
+              const nn = D.digitos(rCep.value); if (nn.length !== 8 || (nn === cepRFeito && !forcar)) return;
+              const trocouCepR = Boolean(cepRFeito) || Boolean(forcar); cepRFeito = nn; // CEP diferente: o endereço novo substitui o antigo
               avisoCepR.textContent = 'Buscando o endereço do CEP…';
               const res = await C().cep(nn); if (D.digitos(rCep.value) !== nn) return;
               if (res.erro) { avisoCepR.textContent = 'CEP ' + falha[res.erro] + ': preencha o endereço à mão.'; return; }
               [[rRua, 'logradouro'], [rBairro, 'bairro'], [rCidade, 'cidade'], [rUf, 'uf']].forEach(([alvo, chave]) => { if (trocouCepR || (res.dados[chave] && !alvo.value.trim())) { alvo.value = res.dados[chave] || ''; en[chave] = alvo.value; } });
               avisoCepR.textContent = trocouCepR ? 'CEP novo: rua, bairro, cidade e UF foram trocados. Confira o número e o complemento.' : 'Endereço do CEP conferido. Confira e informe o número.';
-            });
+            };
+            rCep.addEventListener('input', () => buscarCepR(false)); rCep.addEventListener('keydown', aoEnter(buscarCepR));
             // Dois quadros com borda dentro do bloco (pedido do Rodrigo, 17/11/2026): os dados pessoais e o endereço.
             const quadro = (legenda, ...nos) => { const q = el('fieldset', 'compras-fieldset compras-largo'); q.append(el('legend', null, legenda), ...nos); return q; };
             bloco.append(titulo,

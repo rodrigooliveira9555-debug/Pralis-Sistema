@@ -586,11 +586,11 @@
         const resumo = (r) => (r.limpos.length ? ' Esvaziado, por ser da consulta anterior: ' + r.limpos.join(', ') + '.' : '');
         const FALHA = { 'nao-encontrado': 'não encontrado', indisponivel: 'consulta indisponível agora' };
         let cepConsultado = D.digitos(cep.value);
-        async function buscarCep() {
+        async function buscarCep(forcar) {
           const n = D.digitos(cep.value);
-          if (n.length !== 8 || n === cepConsultado) return;
-          // CEP diferente do que estava: o endereço novo substitui o antigo, mesmo o que veio gravado ou foi digitado.
-          if (cepConsultado) [rua, bairro, cidade, uf].forEach((c) => daConsulta.set(c, c.value));
+          if (n.length !== 8 || (n === cepConsultado && forcar !== true)) return;
+          // CEP diferente do que estava (ou Enter no campo): o endereço novo substitui o antigo, mesmo o que veio gravado ou foi digitado.
+          if (cepConsultado || forcar === true) [rua, bairro, cidade, uf].forEach((c) => daConsulta.set(c, c.value));
           cepConsultado = n;
           avisoCep.textContent = 'Buscando o endereço do CEP…';
           const r = await C.cep(n);
@@ -601,13 +601,15 @@
           const r2 = completar([[rua, e.logradouro, 'rua'], [bairro, e.bairro, 'bairro'], [cidade, e.cidade, 'cidade'], [uf, e.uf, 'UF'], [numero, '', 'número'], [complemento, '', 'complemento']]);
           avisoCep.textContent = (r2.feitos.length ? 'Preenchido pelo CEP: ' + r2.feitos.join(', ') + '. Confira e informe o número.' : 'Endereço do CEP conferido; nada foi trocado.') + resumo(r2);
         }
-        cep.addEventListener('input', buscarCep);
+        // Enter no campo busca na hora e troca os dados (pedido do Rodrigo, 17/11/2026), sem salvar o formulário.
+        const aoEnter = (buscar) => (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); ev.stopPropagation(); buscar(true); } };
+        cep.addEventListener('input', () => buscarCep(false)); cep.addEventListener('keydown', aoEnter(buscarCep));
         let cnpjConsultado = D.digitos(cnpj.value);
-        async function buscarCnpj() {
+        async function buscarCnpj(forcar) {
           const n = D.digitos(cnpj.value);
-          if (n.length !== 14 || n === cnpjConsultado || !R().cnpjValid(n)) return;
-          // CNPJ diferente do que estava é outra empresa: os dados dela substituem os antigos.
-          if (cnpjConsultado) [razao, nome, cep, rua, numero, complemento, bairro, cidade, uf].forEach((c) => daConsulta.set(c, c.value));
+          if (n.length !== 14 || (n === cnpjConsultado && forcar !== true) || !R().cnpjValid(n)) return;
+          // CNPJ diferente do que estava (ou Enter no campo) traz os dados da empresa e substitui os antigos.
+          if (cnpjConsultado || forcar === true) [razao, nome, cep, rua, numero, complemento, bairro, cidade, uf].forEach((c) => daConsulta.set(c, c.value));
           cnpjConsultado = n;
           avisoCnpj.textContent = 'Buscando os dados da empresa pelo CNPJ…';
           const r = await C.cnpj(n);
@@ -620,7 +622,7 @@
           cepConsultado = D.digitos(cep.value);
           avisoCnpj.textContent = (r2.feitos.length ? 'Preenchido pela consulta do CNPJ: ' + r2.feitos.join(', ') + '. Confira antes de salvar.' : 'Dados do CNPJ conferidos; nada foi trocado.') + resumo(r2);
         }
-        cnpj.addEventListener('input', buscarCnpj);
+        cnpj.addEventListener('input', () => buscarCnpj(false)); cnpj.addEventListener('keydown', aoEnter(buscarCnpj));
 
         /* ----- Etapa 2: vendedor ou prestador de serviço (é o contato do fornecedor; o WhatsApp dele recebe a cotação) ----- */
         const s2 = el('fieldset', 'compras-fieldset');

@@ -200,6 +200,48 @@
   /** Vínculos do fornecedor com produtos no documento do Compras: catálogo, histórico de compras, cotação e pedido. */
   const vinculosComProdutos = (d, fornecedorId) => contarVinculos({ ...d, fornecedores: null }, 'fornecedorId', fornecedorId);
   /**
+   * Migração (marca d.migracoes.nomesPadrao; ordem do Rodrigo, 17/11/2026): os nomes e endereços JÁ GRAVADOS em
+   * fornecedores, clientes e empresas entram no padrão de nomes do sistema (inicial maiúscula em cada palavra, "de/da/do/e"
+   * em minúsculas) e os e-mails ficam em minúsculas. Roda uma vez por documento. Nada se perde: cada valor trocado fica
+   * guardado em d.migracoes.nomesPadrao.antes como [onde, campo, valor antigo], para poder ser desfeito.
+   * formatar: a regra central de nomes (formatSystemName), passada por quem chama; sem ela, não faz nada e não marca.
+   * Produtos ficam de fora (seguem a regra própria, em maiúsculas).
+   */
+  function migrarNomesPadrao(d, formatar, agora) {
+    if (typeof formatar !== 'function' || (d.migracoes && d.migracoes.nomesPadrao)) return d;
+    const antes = [];
+    const troca = (obj, campo, onde, novoDe) => {
+      if (!obj || typeof obj[campo] !== 'string' || !obj[campo].trim()) return;
+      const novo = novoDe(obj[campo].trim());
+      if (novo !== obj[campo]) { antes.push([onde, campo, obj[campo]]); obj[campo] = novo; }
+    };
+    const nome = (obj, campo, onde) => troca(obj, campo, onde, formatar);
+    const mail = (obj, campo, onde) => troca(obj, campo, onde, (v) => v.toLocaleLowerCase('pt-BR'));
+    const endereco = (e, onde) => ['logradouro', 'complemento', 'bairro', 'cidade'].forEach((c) => nome(e, c, onde + '.endereco'));
+    const contato = (c, onde) => { nome(c, 'nome', onde); mail(c, 'email', onde); };
+    for (const f of d.fornecedores || []) {
+      const o = 'fornecedor:' + f.id;
+      ['nome', 'razaoSocial', 'contatoNome'].forEach((c) => nome(f, c, o));
+      mail(f, 'email', o); endereco(f.endereco, o);
+      contato(f.financeiro, o + '.financeiro'); contato(f.representante, o + '.representante');
+      (f.prestadores || []).forEach((p) => contato(p, o + '.prestador:' + p.id));
+    }
+    for (const c of d.clientes || []) {
+      const o = 'cliente:' + c.id;
+      ['nome', 'razaoSocial', 'nomeFantasia', 'contatoNome'].forEach((k) => nome(c, k, o));
+      mail(c, 'email', o); endereco(c.endereco, o);
+      contato(c.financeiro, o + '.financeiro'); contato(c.representante, o + '.representante');
+    }
+    for (const e of (Array.isArray(d.empresas) ? d.empresas : d.empresa ? [d.empresa] : [])) {
+      const o = 'empresa:' + (e.id || 'matriz');
+      ['razaoSocial', 'nomeFantasia'].forEach((k) => nome(e, k, o));
+      endereco(e.endereco, o);
+      (e.responsaveis || []).forEach((r) => { const or = o + '.responsavel:' + r.id; ['nome', 'nacionalidade', 'profissao'].forEach((k) => nome(r, k, or)); mail(r, 'email', or); endereco(r.endereco, or); });
+    }
+    d.migracoes = { ...(d.migracoes || {}), nomesPadrao: { em: agora || new Date().toISOString(), antes } };
+    return d;
+  }
+  /**
    * Migração (marca d.migracoes.categoriaProdutoFornecedor; decisão do Rodrigo, 15/11/2026): o fornecedor que já
    * existia, está ligado a produtos (catálogo, histórico, cotação ou pedido) e ainda não tem categoria passa a ser
    * Produto. Quem já tem categoria marcada não é tocado; quem não tem vínculo com produto continua sem categoria.
@@ -985,7 +1027,7 @@
     REPETICOES, DIAS_SEMANA, MESES, ocorrencias, resumoRegra,
     topoDoRanking,
     digitos, motivoNaoConvidavel, podeConvidar,
-    CATEGORIAS_FORNECEDOR, categoriaFornecedor, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, documentoAntigoFornecedor, validarFornecedor,
+    CATEGORIAS_FORNECEDOR, categoriaFornecedor, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarNomesPadrao, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, documentoAntigoFornecedor, validarFornecedor,
     chaveTexto, TIPOS_CAMPO_ADICIONAL, RENOVACOES_CONTRATO, LIMITES_CONTRATO, validarListaAtividades, validarAtividadesContrato, novaAtividade, validarModeloContrato,
     somarMesesIso, aplicarModeloAoContrato, validarContratoDocumento, faltasDoContrato,
     validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, aniversarioVendedor, migrarVendedorFornecedor,

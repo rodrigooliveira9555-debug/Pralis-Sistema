@@ -328,6 +328,31 @@ ok(() => {
   // Migração: quem já tinha início, fim, valor ou observações passa a ter contrato; vazio fica sem; uma vez só.
   const docC = { fornecedores: [{ id: 'a', contrato: { inicio: '2026-01-01', fim: '', valorCentavos: null, observacoes: '' } }, { id: 'b', contrato: { inicio: '', fim: '', valorCentavos: null, observacoes: '' } },
     { id: 'c', contrato: { inicio: '', fim: '', valorCentavos: 0, observacoes: '' } }, { id: 'd' }, { id: 'e', contrato: { tem: false, inicio: '2026-01-01' } }] };
+  // Padrão de nomes nos cadastros já gravados (17/11/2026): arruma nomes, endereços e e-mails uma vez e guarda o valor antigo.
+  {
+    const fmt = (v) => v.toLowerCase().split(' ').map((w, k) => (k > 0 && ['de', 'da', 'do', 'e'].includes(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))).join(' ');
+    const docN = { fornecedores: [{ id: 'f1', nome: 'PADARIA TESTE', razaoSocial: 'padaria teste ltda', email: 'Contato@Exemplo.TEST', endereco: { logradouro: 'RUA DAS FLORES', numero: '10' }, financeiro: { nome: 'maria da silva', email: 'FIN@exemplo.test' }, prestadores: [{ id: 'p1', nome: 'jose de souza' }] }],
+      clientes: [{ id: 'c1', nome: 'ana DE jesus', email: 'Ana@Exemplo.test' }, { id: 'c2', nome: 'Ja Certo' }],
+      empresas: [{ id: 'e1', vinculo: 'matriz', nomeFantasia: 'loja teste', responsaveis: [{ id: 'r1', nome: 'joao e maria', profissao: 'EMPRESARIO' }] }] };
+    d.migrarNomesPadrao(docN, fmt, '2026-11-17T00:00:00.000Z');
+    assert.equal(docN.fornecedores[0].nome, 'Padaria Teste');
+    assert.equal(docN.fornecedores[0].email, 'contato@exemplo.test');
+    assert.equal(docN.fornecedores[0].endereco.logradouro, 'Rua das Flores'.replace('das', 'Das')); // o formatador do teste só conhece de/da/do/e
+    assert.equal(docN.fornecedores[0].endereco.numero, '10');
+    assert.equal(docN.fornecedores[0].financeiro.nome, 'Maria da Silva');
+    assert.equal(docN.fornecedores[0].prestadores[0].nome, 'Jose de Souza');
+    assert.equal(docN.clientes[0].nome, 'Ana de Jesus');
+    assert.equal(docN.clientes[1].nome, 'Ja Certo');
+    assert.equal(docN.empresas[0].responsaveis[0].nome, 'Joao e Maria');
+    const marca = docN.migracoes.nomesPadrao;
+    assert.equal(marca.em, '2026-11-17T00:00:00.000Z');
+    assert.ok(marca.antes.some(([onde, campo, valor]) => onde === 'cliente:c1' && campo === 'nome' && valor === 'ana DE jesus')); // o valor antigo fica guardado
+    assert.ok(!marca.antes.some(([onde]) => onde === 'cliente:c2')); // o que já estava certo não entra
+    docN.clientes[0].nome = 'mudou depois'; d.migrarNomesPadrao(docN, fmt);
+    assert.equal(docN.clientes[0].nome, 'mudou depois'); // roda uma vez só
+    const semRegra = { clientes: [{ id: 'c9', nome: 'sem regra' }] }; d.migrarNomesPadrao(semRegra, undefined);
+    assert.ok(!semRegra.migracoes && semRegra.clientes[0].nome === 'sem regra'); // sem a regra central, não mexe e não marca
+  }
   d.migrarContratoFinanceiro(docC);
   assert.deepEqual(docC.fornecedores.map((x) => x.contrato && x.contrato.tem), [true, false, true, undefined, false]);
   assert.equal(docC.fornecedores[0].contrato.inicio, '2026-01-01');
