@@ -26,9 +26,11 @@
   // Lista NIVELPROFISSIONAL da planilha. Decisão do Zé (05/11): a etapa guarda o cargo (cadastro de Cargos) e o nível.
   const NIVEIS = [['ajudante', 'Ajudante'], ['iniciante', 'Profissional iniciante'], ['intermediario', 'Profissional intermediário'], ['avancado', 'Profissional avançado'], ['especialista', 'Especialista']];
   // As 4 categorias decididas pelo Rodrigo [06:50]; em 17/11/2026 ganharam ao lado as do patrimônio completo (só acréscimo: os códigos de hoje não mudam).
-  const NOVAS = (typeof module === 'object' && module.exports ? require('./patrimonio-dominio.js') : (typeof self !== 'undefined' ? self : this).CicluzPatrimonioDominio || { CATEGORIAS_NOVAS: [] }).CATEGORIAS_NOVAS;
-  const CATEGORIAS = [['utensilio', 'Utensílio'], ['maquina', 'Máquina'], ['equipamento', 'Equipamento'], ['mobiliario', 'Mobiliário'], ...NOVAS];
-  const ENERGIAS = [['nenhuma', 'Não consome'], ['eletrica', 'Energia elétrica'], ['gas', 'Gás']];
+  const PAT = (typeof module === 'object' && module.exports ? require('./patrimonio-dominio.js') : (typeof self !== 'undefined' ? self : this).CicluzPatrimonioDominio || { CATEGORIAS_NOVAS: [], CATEGORIAS_PATRIMONIO: [] });
+  const NOVAS = PAT.CATEGORIAS_NOVAS;
+  // As cinco categorias do cadastro de patrimônios (18/11/2026) vêm primeiro; as antigas ficam para o que já foi cadastrado.
+  const CATEGORIAS = [...PAT.CATEGORIAS_PATRIMONIO, ['utensilio', 'Utensílio'], ['maquina', 'Máquina'], ['equipamento', 'Equipamento'], ['mobiliario', 'Mobiliário'], ...NOVAS];
+  const ENERGIAS = [['nenhuma', 'Não consome'], ['eletrica', 'Energia elétrica'], ['gas', 'Gás'], ['solar', 'Energia solar']];
   const UNIDADE_CONSUMO = { eletrica: 'kWh por hora', gas: 'kg de gás por hora' };
   const EXATIDOES = [['exato', 'Exato'], ['aproximado', 'Aproximado']];
   const ACOMPANHAMENTOS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
@@ -274,7 +276,7 @@
       e.recursos.forEach((r) => {
         if (r.tempoEquipe > 0) { const m = f.custoMinuto(r); if (m == null) faltas.add('salário do cargo ou horas por mês'); else maoDeObra += r.tempoEquipe * m; }
         const bem = r.bem;
-        if (bem && bem.energia && bem.energia !== 'nenhuma' && r.tempo > 0) {
+        if (bem && bem.energia && bem.energia !== 'nenhuma' && bem.energia !== 'solar' && r.tempo > 0) {
           const preco = f.precoEnergia(bem.energia);
           if (preco == null) faltas.add(bem.energia === 'gas' ? 'preço do gás' : 'preço do kWh');
           else energia += (r.tempo / 60) * (Number(bem.consumoHora) || 0) * preco;

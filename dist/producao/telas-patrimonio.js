@@ -58,7 +58,7 @@
   /* ============================== Texto da ficha (a mesma base da tela e da impressão) ============================== */
   const sim = (x) => (x ? 'Sim' : '');
   function secoesTexto(b) {
-    const n = PD.normalizar(b); const f = n.financeiro || {}; const c = n.contabil || {}; const g = n.garantia || {}; const s = n.seguro || {}; const l = n.localizacao || {}; const r = n.responsavel || {}; const t = n.tecnicas || {}; const m = n.manutencao || {}; const i = n.inspecao || {};
+    const n = PD.normalizar(b); const f = n.financeiro || {}; const c = n.contabil || {}; const g = n.garantia || {}; const s = n.seguro || {}; const l = n.localizacao || {}; const r = n.responsavel || {}; const t = n.tecnicas || {}; const m = n.manutencao || {}; const i = n.inspecao || {}; const dm = n.dimensoesFisicas;
     const doc = (id) => { const d = (n.documentos || []).find((x) => x.id === id); return d ? d.name : ''; };
     const prazo = (a, z) => { const p = PD.prazoRestante(a, z, S.hojeIso()); return p ? p.texto : ''; };
     const tec = PD.TECNICAS.filter(([k]) => t[k]).map(([k, rot]) => [rot, t[k]]);
@@ -67,9 +67,16 @@
         ['Valor do patrimônio', dinheiro(n.valor)], ['Descrição', n.descricao], ['Tipo de bem', nomeDe(PD.TIPOS_BEM, n.tipoBem)], ['Natureza', nomeDe(PD.NATUREZAS, n.natureza)], ['Situação patrimonial', nomeDe(PD.SITUACOES, situacaoDe(n))],
         ['Estado de conservação', nomeDe(PD.CONSERVACAO, n.conservacao)], ['Data de cadastro', dataBR(n.dataCadastro)], ['Código interno', n.codigoInterno], ['Quantidade', n.quantidade != null ? n.quantidade + (n.unidade ? ' ' + n.unidade : '') : ''],
         ['Individual ou conjunto', n.conjunto ? 'Conjunto' : ''], ['Observações', n.observacoes]]],
-      ['Dados técnicos', [...tec, ['Capacidade (produção)', n.capacidade ? CD.numero(n.capacidade.valor) + ' ' + String(n.capacidade.unidade).toLowerCase() : ''],
-        ['Medidas (produção)', n.medidas ? CD.numero(n.medidas.largura) + ' × ' + CD.numero(n.medidas.comprimento) + ' cm' : ''],
-        ['Energia', n.energia && n.energia !== 'nenhuma' ? nomeDe(D.ENERGIAS, n.energia) + ' ' + CD.numero(n.consumoHora) + ' ' + D.UNIDADE_CONSUMO[n.energia] : '']]],
+      ['Especificação técnica', [...tec,
+        ['Dimensões', dm ? [dm.altura != null ? 'altura ' + CD.numero(dm.altura) : '', dm.largura != null ? 'largura ' + CD.numero(dm.largura) : '', dm.profundidade != null ? 'profundidade ' + CD.numero(dm.profundidade) : ''].filter(Boolean).join(' · ') + ' ' + (dm.unidade || 'm') : ''],
+        ['Materiais', (n.materiais || []).join(', ')],
+        ['Tipo de energia', n.energia && n.energia !== 'nenhuma' ? nomeDe(D.ENERGIAS, n.energia) : ''],
+        ['Consumo de gás por hora', n.consumoGas && n.consumoGas.valor != null ? CD.numero(n.consumoGas.valor) + ' ' + (n.consumoGas.unidade === 'm3/h' ? 'm³/h' : n.consumoGas.unidade) : n.energia === 'gas' && n.consumoHora ? CD.numero(n.consumoHora) + ' kg/h' : ''],
+        ['Potência elétrica', n.potenciaW != null ? CD.numero(n.potenciaW) + ' W' : n.energia === 'eletrica' && n.consumoHora ? CD.numero(n.consumoHora) + ' kWh por hora (cadastro anterior)' : ''],
+        ['Ficha técnica do equipamento', n.fichaTecnica ? n.fichaTecnica.name : '']]],
+      ['Produção', [['Utilizado na produção', n.usadoNaProducao ? 'Sim' : ''], ['Capacidade de produção', n.capacidade ? CD.numero(n.capacidade.valor) + ' ' + String(n.capacidade.unidade) : ''],
+        ['Utensílios utilizados', (n.utensiliosIds || []).map((id) => S.nomeBem(id)).join(', ')],
+        ['Medidas (utensílio)', n.medidas ? CD.numero(n.medidas.largura) + ' × ' + CD.numero(n.medidas.comprimento) + ' cm' : '']]],
       ['Localização', [['Empresa proprietária', l.empresa], ['CNPJ', l.cnpj], ['Unidade ou filial', l.unidade], ['Estabelecimento', l.estabelecimento], ['Setor / local', n.localId ? S.nomeLocal(n.localId) : ''], ['Departamento', l.departamento],
         ['Ambiente', l.ambiente], ['Sala', l.sala], ['Andar', l.andar], ['Localização detalhada', l.detalhe]]],
       ['Responsável', [['Responsável atual', r.nome], ['Cargo ou função', r.cargo], ['Departamento', r.departamento], ['Data de atribuição', dataBR(r.dataAtribuicao)], ['Tipo de responsabilidade', nomeDe(PD.TIPOS_RESPONSABILIDADE, r.tipo)]]],
@@ -198,9 +205,9 @@
           tb.append(th, corpo); box.append(tb); fs.append(box); form.append(fs);
         }
         /* Documentos e imagens */
-        if (n.documentos.length || n.imagens.length) {
+        if (n.documentos.length || n.imagens.length || n.fichaTecnica) {
           const fs = el('fieldset', 'compras-fieldset compras-largo'); fs.append(el('legend', null, 'Imagens e documentos'));
-          [...n.imagens.map((x) => ({ ...x, rot: 'Imagem' + (x.tipo ? ' (' + nomeDe(PD.TIPOS_IMAGEM, x.tipo).toLowerCase() + ')' : '') })), ...n.documentos.map((x) => ({ ...x, rot: nomeDe(PD.TIPOS_DOCUMENTO, x.tipo) || 'Documento' }))].forEach((x) => {
+          [...n.imagens.map((x) => ({ ...x, rot: 'Imagem' + (x.tipo ? ' (' + nomeDe(PD.TIPOS_IMAGEM, x.tipo).toLowerCase() + ')' : '') })), ...(n.fichaTecnica ? [{ ...n.fichaTecnica, rot: 'Ficha técnica do equipamento' }] : []), ...n.documentos.map((x) => ({ ...x, rot: nomeDe(PD.TIPOS_DOCUMENTO, x.tipo) || 'Documento' }))].forEach((x) => {
             const lin = el('div', 'patrimonio-doc'); lin.append(el('b', null, x.name), el('span', null, [x.rot, dataBR(x.data), x.descricao].filter(Boolean).join(' · ')));
             const ac = el('div', 'patrimonio-acoes'); ac.append(bolinha('Visualizar ' + x.name, ICO.ver, () => arquivos().view(x.rot + ' — ' + b.nome, x, false)), bolinha('Baixar ' + x.name, ICO.baixar, () => baixarArquivo(x))); lin.append(ac); fs.append(lin);
           });

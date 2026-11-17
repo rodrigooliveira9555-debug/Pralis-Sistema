@@ -7,10 +7,14 @@ const base = (x = {}) => P.normalizar({ id: 'b1', nome: 'Notebook Dell', categor
 const v = (b, ctx = {}) => P.validar(b, { bens: [], cnpjValid: regras.cnpjValid, hoje: '2026-11-17', ...ctx });
 const D0 = ['', '', '', '', '', ''];
 
-ok(() => { // categorias: as 4 de hoje ficam e as novas entram ao lado, sem repetir
+ok(() => { // categorias: as 5 do cadastro vêm primeiro; as antigas ficam para o que já foi cadastrado, sem repetir
   const D = require('../dist/producao/dominio.js');
-  assert.deepEqual(D.CATEGORIAS.slice(0, 4), [['utensilio', 'Utensílio'], ['maquina', 'Máquina'], ['equipamento', 'Equipamento'], ['mobiliario', 'Mobiliário']]);
-  assert.equal(D.CATEGORIAS.length, 4 + P.CATEGORIAS_NOVAS.length);
+  assert.deepEqual(P.CATEGORIAS_PATRIMONIO.map(([k]) => k), ['CIS', 'UTS', 'MAC', 'MOB', 'VE']);
+  assert.deepEqual(P.CATEGORIAS_PATRIMONIO.map(([, t]) => t), ['CIS - Estrutura Física', 'UTS - Utensílios e Ferramentas', 'MAC - Máquinas e Equipamentos', 'MOB - Mobiliários / Balcões', 'VE - Veículos']);
+  assert.deepEqual(D.CATEGORIAS.slice(0, 5), P.CATEGORIAS_PATRIMONIO);
+  assert.deepEqual(D.CATEGORIAS.slice(5, 9), [['utensilio', 'Utensílio'], ['maquina', 'Máquina'], ['equipamento', 'Equipamento'], ['mobiliario', 'Mobiliário']]);
+  assert.equal(D.CATEGORIAS.length, 5 + 4 + P.CATEGORIAS_NOVAS.length);
+  assert.ok(D.ENERGIAS.some(([k]) => k === 'solar'));
   assert.equal(new Set(D.CATEGORIAS.map(([k]) => k)).size, D.CATEGORIAS.length);
   assert.equal(P.etapas().length, 6);
 });
@@ -142,5 +146,31 @@ ok(() => { // histórico de alterações
   assert.deepEqual(P.mudancas({ id: 'a', nome: 'X', valor: 1, historico: [1] }, { id: 'a', nome: 'Y', valor: 1, historico: [2], atualizadoEm: 'z' }), ['nome']);
   assert.deepEqual(P.mudancas({ a: { b: 1 } }, { a: { b: 1 } }), []);
   assert.deepEqual(P.mudancas({}, { novo: 'x' }), ['novo']);
+});
+ok(() => { // cadastro de 18/11/2026: unidades, materiais, produção, utensílios e especificação técnica
+  assert.deepEqual(P.UNIDADES_MEDIDA.map(([k]) => k), ['UN', 'KG', 'LT', 'MT']);
+  assert.deepEqual(P.UNIDADES_MEDIDA.map(([, t]) => t), ['UN - Unidade', 'KG - Quilo', 'LT - Litro', 'MT - Metro']);
+  const todos = P.MATERIAIS.flatMap(([, l]) => l); assert.equal(todos.length, 8 + 7 + 5 + 11); assert.equal(new Set(todos).size, todos.length);
+  assert.ok(P.CATEGORIAS_PRODUCAO.includes('MAC') && P.CATEGORIAS_PRODUCAO.includes('MOB') && !P.CATEGORIAS_PRODUCAO.includes('UTS') && !P.CATEGORIAS_PRODUCAO.includes('CIS') && !P.CATEGORIAS_PRODUCAO.includes('VE'));
+  assert.deepEqual(P.TECNICAS_OCULTAS.slice(0, 2), ['modeloTecnico', 'capacidade']);
+  assert.ok(!P.camposTecnicos('MAC').includes('inexistente') && P.camposTecnicos('MAC').includes('serieTecnica') && !P.camposTecnicos('MOB').includes('serieTecnica'));
+  const o = P.normalizar({ nome: 'X', categoria: 'MAC', materiais: ['Aço inox 304', 'aço inox 304', ' ', 'Fibra'], utensiliosIds: ['a', 'a', 'b', ''], usadoNaProducao: 1 });
+  assert.deepEqual(o.materiais, ['Aço inox 304', 'Fibra']); assert.deepEqual(o.utensiliosIds, ['a', 'b']); assert.equal(o.usadoNaProducao, true); assert.equal(o.informarEspecificacao, false);
+  const bens = [{ id: 'u1' }, { id: 'e1' }];
+  assert.deepEqual(v(base({ categoria: 'MAC', utensiliosIds: ['u1'], capacidade: { valor: 50, unidade: 'KG' } }), { bens }), D0);
+  assert.match(v(base({ categoria: 'MAC', utensiliosIds: ['zz'] }), { bens })[0], /utensílio selecionado não existe/);
+  assert.match(v(base({ id: 'e1', categoria: 'MAC', utensiliosIds: ['e1'] }), { bens })[0], /si mesmo/);
+  assert.match(v(base({ categoria: 'MAC', capacidade: { valor: 0, unidade: 'KG' } }))[0], /capacidade de produção/);
+  assert.deepEqual(v(base({ dimensoesFisicas: { altura: 1.8, largura: 0.9, profundidade: 0.75, unidade: 'm' } })), D0);
+  assert.match(v(base({ dimensoesFisicas: { altura: 0, largura: null, profundidade: null, unidade: 'm' } }))[3], /altura/);
+  assert.match(v(base({ dimensoesFisicas: { altura: 1, unidade: 'km' } }))[3], /Unidade das dimensões/);
+  assert.match(v(base({ energia: 'nuclear' }))[3], /Tipo de energia/);
+  assert.deepEqual(v(base({ energia: 'gas', consumoGas: { valor: 1.5, unidade: 'kg/h' } })), D0);
+  assert.match(v(base({ energia: 'gas', consumoGas: { valor: 1.5, unidade: '' } }))[3], /unidade do consumo de gás/);
+  assert.match(v(base({ energia: 'gas', consumoGas: { valor: -1, unidade: 'kg/h' } }))[3], /consumo de gás/);
+  assert.deepEqual(v(base({ energia: 'eletrica', potenciaW: 2000 })), D0);
+  assert.match(v(base({ energia: 'eletrica', potenciaW: 0 }))[3], /potência elétrica/);
+  assert.deepEqual(v(base({ energia: 'solar' })), D0);
+  assert.match(P.etapas()[3], /especificação técnica/i);
 });
 console.log('patrimonio-dominio: ' + n + ' grupos de verificação ok');

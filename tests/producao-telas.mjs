@@ -89,18 +89,22 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   // Navega pelas etapas pelos botões Avançar/Voltar do próprio formulário
   const avancar = async () => { await d.locator('.compras-etapas-nav button.form-next-action').click(); };
   await d.getByLabel('Nome simplificado *', { exact: true }).fill('Masseira 40 kg');
-  await d.getByLabel('Categoria *', { exact: true }).selectOption('maquina');
+  await d.getByLabel('Categoria *', { exact: true }).selectOption('MAC');
+  await d.locator('.account-status:has-text("utilizado na produção") .account-status-switch').click();
+  await d.getByLabel('Quantidade da capacidade', { exact: true }).fill('40');
+  await d.getByLabel('Unidade de medida da capacidade', { exact: true }).selectOption('KG');
+  await d.locator('.account-status:has-text("Informar especificação técnica?") .account-status-switch').click();
   await avancar(); await avancar(); await avancar();
-  await d.getByLabel('Capacidade', { exact: true }).fill('40');
-  await d.getByLabel('Energia', { exact: true }).selectOption('eletrica');
-  await salvar(p);
-  ok((await erroDialogo(p)).includes('consumo'), 'Energia elétrica exige consumo por hora');
-  await d.locator('input[aria-label="Consumo por hora"]').fill('3,5');
+  await d.getByLabel('Tipo de Energia', { exact: true }).selectOption('gas');
+  await d.getByLabel('Consumo de Gás por Hora', { exact: true }).fill('3,5');
+  await avancar();
+  ok((await erroDialogo(p)).includes('unidade do consumo de gás'), 'Gás exige a unidade do consumo (sem presumir)');
+  await d.getByLabel('Unidade do consumo de gás', { exact: true }).selectOption('kg/h');
   await salvar(p); await fechado(p);
   await mais(p);
   d = dialogo(p);
   await d.getByLabel('Nome simplificado *', { exact: true }).fill('Assadeira 58x68 (6 tiras)');
-  await d.getByLabel('Categoria *', { exact: true }).selectOption('utensilio');
+  await d.getByLabel('Categoria *', { exact: true }).selectOption('UTS');
   await avancar(); await avancar(); await avancar();
   await d.getByLabel('Largura (cm)', { exact: true }).fill('58');
   await d.getByLabel('Comprimento (cm)', { exact: true }).fill('68');
@@ -120,7 +124,7 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   };
   d = await abrirEdicao('MASSEIRA');
   ok(await d.locator('.compras-etapa').first().locator('.compras-campo').first().locator('.compras-rotulo').textContent() === 'Categoria *', 'Categoria é o primeiro campo do bem');
-  ok((await d.locator('.compras-etapa:visible .compras-fieldset legend').allTextContents()).join('|') === 'Identificação|Classificação|Quantidade|Observações gerais', 'Blocos da primeira etapa do bem');
+  ok((await d.locator('.compras-etapa:visible .compras-fieldset legend').allTextContents()).join('|') === 'Identificação|Classificação|Quantidade|Produção|Especificação técnica', 'Blocos da primeira etapa do bem');
   await d.locator('.stepper-item:nth-child(4) .stepper-node').click();
   const abrirPeca = async () => { await d.locator('button', { hasText: 'Adicionar peça' }).click(); return p.locator('dialog[open]:has(h2:has-text("Nova peça"))'); };
   let pc = await abrirPeca();

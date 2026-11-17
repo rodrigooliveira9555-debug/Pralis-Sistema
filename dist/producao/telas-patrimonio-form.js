@@ -126,10 +126,14 @@
   }
 
   /* ================================================================ Formulário ================================================================ */
-  function abrirFormulario(b) {
+  /**
+   * opcoes (cadastro aberto de dentro de outro): { categoria } fixa a categoria (ex.: UTS ao cadastrar um utensílio a partir de um equipamento)
+   * e { aoSalvar(id) } avisa quem abriu com o id do bem recém-salvo.
+   */
+  function abrirFormulario(b, opcoes = {}) {
     const novo = !b;
     U.dialogo({
-      titulo: novo ? 'Novo patrimônio' : 'Editar patrimônio', ...cores, largo: true, classe: 'compras-form-padrao patrimonio-form', rotuloSalvar: 'Salvar Patrimônio',
+      titulo: opcoes.categoria ? 'Novo utensílio' : novo ? 'Novo patrimônio' : 'Editar patrimônio', ...cores, largo: true, classe: 'compras-form-padrao patrimonio-form', rotuloSalvar: 'Salvar Patrimônio',
       montar: (form, dlg) => {
         const v = b || {}; const hoje = S.hojeIso();
         const fin = v.financeiro || {}; const cont = v.contabil || {}; const gar = v.garantia || {}; const seg = v.seguro || {}; const loc = v.localizacao || {}; const resp = v.responsavel || {};
@@ -138,7 +142,11 @@
         const dt = (valor) => { const i = entrada('date', valor || ''); datas.push(i); return i; };
 
         /* ---------- Etapa 1 ---------- */
-        const categoria = seletor(D.CATEGORIAS, v.categoria || '', 'Selecione');
+        // Só as cinco categorias do cadastro; a categoria antiga de um bem já cadastrado continua aparecendo nele (sem conversão).
+        const opcCategoria = [...PD.CATEGORIAS_PATRIMONIO];
+        if (v.categoria && !opcCategoria.some(([k]) => k === v.categoria)) opcCategoria.push([v.categoria, (nomeDe(D.CATEGORIAS, v.categoria) || v.categoria) + ' (cadastro anterior)']);
+        const categoria = seletor(opcCategoria, v.categoria || opcoes.categoria || '', 'Selecione');
+        if (opcoes.categoria) categoria.disabled = true;
         const nome = texto(v.nome, { maxLength: 120, placeholder: 'Ex.: Notebook, Forno industrial, Geladeira' });
         const nomeTec = texto(v.nomeTecnico, { maxLength: 200, placeholder: 'Ex.: Notebook Dell Latitude 5440' });
         const marca = texto(v.marca); const modelo = texto(v.modelo); const serie = livre(texto(v.numeroSerie, { maxLength: 80 }));
@@ -154,23 +162,62 @@
         const chipsCons = U.chips([['', 'Não informado'], ...PD.CONSERVACAO], conserv, (x) => { conserv = x; });
         const dataCad = dt(v.dataCadastro || (novo ? hoje : ''));
         const codInterno = livre(texto(v.codigoInterno, { maxLength: 60 }));
-        const unidade = seletor(S.unidades().map((u) => [u, u]), v.unidade || '', 'Unidade'); const quantidade = entrada('number', v.quantidade != null ? v.quantidade : '', { min: 1, step: 1, inputMode: 'numeric', placeholder: 'Ex.: 1' });
+        const opcUnidade = [...PD.UNIDADES_MEDIDA];
+        if (v.unidade && !opcUnidade.some(([k]) => k === v.unidade)) opcUnidade.push([v.unidade, v.unidade + ' (cadastro anterior)']);
+        const unidade = seletor(opcUnidade, v.unidade || '', 'Unidade'); const quantidade = entrada('number', v.quantidade != null ? v.quantidade : '', { min: 1, step: 1, inputMode: 'numeric', placeholder: 'Ex.: 1' });
         const conjunto = U.quadroSituacao('Individual ou conjunto', Boolean(v.conjunto), { textos: ['Conjunto', 'Individual'], dica: 'Conjunto: um cadastro que representa várias unidades iguais.' });
-        const obsGerais = area(v.observacoes, 3);
         const audio = window.CicluzAudioNota.criar({ rotulo: '', classe: 'compras-largo', aoSalvar: 'o bem' }); audio.definir(v.audio || null);
         const rotSit = el('div', 'compras-campo compras-largo'); rotSit.append(el('span', 'compras-rotulo', 'Situação patrimonial'), chipsSit);
         const rotCons = el('div', 'compras-campo compras-largo'); rotCons.append(el('span', 'compras-rotulo', 'Estado de conservação'), chipsCons);
         const sitNota = el('p', 'profiles-note compras-largo', 'Situação não é exclusão: o cadastro e o histórico continuam. Para dar baixa, use o botão Baixar da lista ou da ficha.');
+        // Produção (só MAC, MOB e as categorias antigas equivalentes): capacidade, unidade e utensílios usados.
+        const usoProd = U.quadroSituacao('Este equipamento ou mobiliário é utilizado na produção?', v.usadoNaProducao != null ? Boolean(v.usadoNaProducao) : Boolean(v.capacidade), { textos: ['Sim', 'Não'], aoMudar: () => pintarProducao() });
+        const opcCap = [...PD.UNIDADES_MEDIDA];
+        if (v.capacidade && v.capacidade.unidade && !opcCap.some(([k]) => k === v.capacidade.unidade)) opcCap.push([v.capacidade.unidade, v.capacidade.unidade + ' (cadastro anterior)']);
+        const capValor = entrada('text', v.capacidade ? String(v.capacidade.valor).replace('.', ',') : '', { inputMode: 'decimal', placeholder: 'Ex.: 50' });
+        const capUn = seletor(opcCap, (v.capacidade && v.capacidade.unidade) || '', 'Unidade');
+        const capResumo = el('p', 'profiles-note compras-largo'); capResumo.setAttribute('aria-live', 'polite');
+        const usaUt = U.quadroSituacao('Este equipamento utiliza algum utensílio?', Boolean((v.utensiliosIds || []).length), { textos: ['Sim', 'Não'], aoMudar: () => pintarProducao() });
+        let utensilios = [...(v.utensiliosIds || [])];
+        const bensTodos = () => S.patrimonio.dados.bens;
+        const rotuloBem = (x) => x.nome + (x.numeroPatrimonio ? ' · ' + x.numeroPatrimonio : '');
+        const disponiveisUt = () => bensTodos().filter((x) => PD.CATEGORIAS_UTENSILIO.includes(x.categoria) && (!b || x.id !== b.id) && !utensilios.includes(x.id) && x.situacaoPatrimonial !== 'baixado' && x.ativo !== false).sort((a, c) => a.nome.localeCompare(c.nome, 'pt-BR'));
+        const selUt = el('select'); selUt.setAttribute('aria-label', 'Selecionar utensílios utilizados'); const listaUt = el('div', 'patrimonio-vinculados'); const msgUt = el('p', 'profiles-error');
+        function desenharUt() {
+          const d = disponiveisUt();
+          selUt.replaceChildren(new Option(d.length ? 'Selecione o utensílio' : 'Nenhum utensílio disponível', ''), ...d.map((x) => new Option(rotuloBem(x), x.id)));
+          listaUt.replaceChildren(...utensilios.map((id) => { const x = bensTodos().find((y) => y.id === id); const lin = el('div', 'patrimonio-vinculo'); lin.append(el('span', null, x ? rotuloBem(x) : 'Utensílio não encontrado'), bolinha('Remover utensílio ' + (x ? x.nome : ''), ICO.lixo, () => { utensilios = utensilios.filter((y) => y !== id); desenharUt(); })); return lin; }));
+        }
+        const addUt = botao('Adicionar utensílio', () => { msgUt.textContent = ''; const id = selUt.value; if (!id || utensilios.includes(id)) return; utensilios.push(id); desenharUt(); }, 'btn secondary');
+        const novoUt = botao('+ Cadastrar Utensílio', () => abrirFormulario(null, { categoria: 'UTS', aoSalvar: (id) => { if (!utensilios.includes(id)) utensilios.push(id); desenharUt(); } }), 'btn secondary');
+        const barraUt = el('div', 'compras-form-rodape'); barraUt.append(selUt, addUt);
+        const boxUt = el('div', 'compras-largo patrimonio-condicional'); boxUt.append(el('span', 'compras-rotulo', 'Selecionar utensílios utilizados'), barraUt, listaUt, msgUt, novoUt,
+          el('small', 'profiles-note', 'A lista vem de UTS - Utensílios e Ferramentas. O utensílio cadastrado aqui fica salvo na hora, completo, com a categoria UTS; o equipamento só é salvo ao final.'));
+        const boxProd = el('div', 'patrimonio-condicional compras-largo'); boxProd.append(campo('Quantidade da capacidade', capValor), campo('Unidade de medida da capacidade', capUn), capResumo, usaUt, boxUt);
+        capUn.setAttribute('aria-label', 'Unidade de medida da capacidade'); capValor.setAttribute('aria-label', 'Quantidade da capacidade');
+        function pintarCap() { const n = num(capValor); capResumo.textContent = n != null && n > 0 && capUn.value ? 'Capacidade de produção: ' + CD.numero(n) + ' ' + capUn.value : ''; }
+        [capValor, capUn].forEach((x) => { x.addEventListener('input', pintarCap); x.addEventListener('change', pintarCap); });
+        const secProducao = secao('Produção', usoProd, boxProd);
+        function pintarProducao() {
+          const ehProd = PD.CATEGORIAS_PRODUCAO.includes(categoria.value);
+          mostrar(secProducao, ehProd); mostrar(boxProd, ehProd && usoProd.ativo); mostrar(boxUt, usaUt.ativo); pintarCap();
+        }
+        // Especificação técnica: o controle fica aqui; os campos ficam na etapa 4 (uma só vez).
+        const tec0 = v.tecnicas || {};
+        const temDadosEspec = Boolean(Object.keys(tec0).length || v.dimensoesFisicas || (v.materiais || []).length || (v.energia && v.energia !== 'nenhuma'));
+        const espec = U.quadroSituacao('Informar especificação técnica?', v.informarEspecificacao != null ? Boolean(v.informarEspecificacao) : temDadosEspec, { textos: ['Sim', 'Não'], aoMudar: () => pintarEspec() });
+        const notaEspec1 = el('p', 'profiles-note compras-largo'); notaEspec1.setAttribute('aria-live', 'polite');
+        const secEspec1 = secao('Especificação técnica', espec, notaEspec1);
         const e1 = el('div', 'compras-etapa');
         e1.append(secao('Identificação', campo('Categoria *', categoria), campo('Nome simplificado *', nome), campo('Nome técnico', nomeTec), campo('Marca', marca), campo('Modelo', modelo), campo('Número de série', serie),
-          (() => { const l = el('label', 'compras-campo'); const ln = el('div', 'patrimonio-linha-campo'); numero.setAttribute('aria-label', 'Número de patrimônio'); ln.append(numero, gerar); l.append(el('span', 'compras-rotulo', 'Número de patrimônio'), ln, el('small', 'profiles-note', 'Único entre os bens; deixe em branco ou gere o próximo.')); return l; })(), campo('Valor do Patrimônio (R$)', valor.no), campo('Descrição detalhada', descricao)),
+          (() => { const l = el('label', 'compras-campo'); const ln = el('div', 'patrimonio-linha-campo'); numero.setAttribute('aria-label', 'Número de patrimônio'); ln.append(numero, gerar); l.append(el('span', 'compras-rotulo', 'Número de patrimônio'), ln, el('small', 'profiles-note', 'Único entre os bens; deixe em branco ou gere o próximo.')); return l; })(), campo('Valor do Patrimônio (R$)', valor.no), campo('Descrição detalhada', descricao), audio.no),
         secao('Classificação', campo('Tipo de bem', tipoBem), campo('Natureza', natureza), rotSit, sitNota, rotCons, campo('Data de cadastro', dataCad), campo('Código interno complementar', codInterno)),
         secao('Quantidade', campo('Unidade de medida', unidade), campo('Quantidade de unidades', quantidade), conjunto),
-        secao('Observações gerais', campo('Observações', obsGerais), audio.no));
+        secProducao, secEspec1);
         // Tipo de bem sugerido pela categoria, enquanto a pessoa não escolher.
         let tipoTocado = Boolean(v.tipoBem);
         tipoBem.addEventListener('change', () => { tipoTocado = true; });
-        categoria.addEventListener('change', () => { if (!tipoTocado) tipoBem.value = ['imovel', 'instalacao'].includes(categoria.value) ? 'imovel' : categoria.value ? 'movel' : ''; pintarTecnicas(); });
+        categoria.addEventListener('change', () => { if (!tipoTocado) tipoBem.value = ['imovel', 'instalacao', 'CIS'].includes(categoria.value) ? 'imovel' : categoria.value ? 'movel' : ''; pintarTecnicas(); pintarProducao(); });
 
         /* ---------- Etapa 2 ---------- */
         let imagens = (v.imagens || []).map((i) => ({ ...i })); let documentos = (v.documentos || []).map((d) => ({ ...d }));
@@ -222,6 +269,14 @@
           }));
           galeria.append(...(imagens.length ? [] : [el('p', 'profiles-note', 'Sem imagem, a lista mostra o ícone da categoria.')]));
         }
+        const escanearDoc = botao('Escanear Documento', () => window.CicluzScanner.abrir({
+          titulo: 'Escanear documento', nomeBase: 'Documento digitalizado', ...{ cores },
+          aoConcluir: async (arq) => {
+            if (documentos.length >= PD.LIMITES.documentos) return 'No máximo ' + PD.LIMITES.documentos + ' documentos por patrimônio.';
+            const r = await guardarArquivo(arq); if (r.erro) return r.erro;
+            documentos.push({ ...r.meta, tipo: '', data: '', descricao: '' }); desenharDocs(); pintarSelectsDoc(); return undefined;
+          },
+        }), 'btn secondary');
         const docsBotao = botao('Anexar documento', () => docIn.click(), 'btn secondary'); const fotoBotao = botao('Adicionar imagens', () => fotoIn.click(), 'btn secondary'); const camBotao = botao('Tirar foto', () => cameraIn.click(), 'btn secondary');
         docIn.onchange = async () => {
           const l = [...docIn.files]; docIn.value = ''; msgArq.textContent = '';
@@ -249,7 +304,7 @@
         const e2 = el('div', 'compras-etapa');
         e2.append(secao('Galeria de imagens', el('div', 'compras-form-rodape compras-largo patrimonio-barra'), contaImg, galeria, fotoIn, cameraIn, trocaIn, el('small', 'profiles-note', 'JPEG, PNG ou WebP, até 10 MB. A principal aparece na lista e na ficha. Os arquivos ficam neste aparelho.')),
           secao('Documentos', el('div', 'compras-form-rodape compras-largo patrimonio-barra-docs'), listaDocs, docIn), msgArq);
-        e2.querySelector('.patrimonio-barra').append(fotoBotao, camBotao); e2.querySelector('.patrimonio-barra-docs').append(docsBotao);
+        e2.querySelector('.patrimonio-barra').append(fotoBotao, camBotao); e2.querySelector('.patrimonio-barra-docs').append(docsBotao); if (window.CicluzScanner) e2.querySelector('.patrimonio-barra-docs').append(escanearDoc);
 
         /* ---------- Etapa 3 ---------- */
         const sessaoEmpresa = window.CicluzSessao && window.CicluzSessao.perfil && window.CicluzSessao.perfil.empresa ? window.CicluzSessao.perfil.empresa.nome : '';
@@ -303,20 +358,75 @@
         e3.querySelector('.patrimonio-barra-mov').append(botao('Registrar movimentação', janelaMov, 'btn secondary'));
 
         /* ---------- Etapa 4 ---------- */
+        const dm0 = v.dimensoesFisicas || {};
+        const nd = (x) => (x == null ? '' : String(x).replace('.', ','));
+        const dimAlt = entrada('text', nd(dm0.altura), { inputMode: 'decimal', placeholder: 'Ex.: 1,80' }); const dimLarg = entrada('text', nd(dm0.largura), { inputMode: 'decimal', placeholder: 'Ex.: 0,90' }); const dimProf = entrada('text', nd(dm0.profundidade), { inputMode: 'decimal', placeholder: 'Ex.: 0,75' });
+        const dimUn = seletor(PD.UNIDADES_DIMENSAO, dm0.unidade || 'm'); dimUn.setAttribute('aria-label', 'Unidade das dimensões');
+        /** Materiais: escolha múltipla com pesquisa, remoção e "Outro material" (texto livre, só neste cadastro; nada global é criado). */
+        function seletorMateriais(inicial) {
+          let sel = [...inicial]; let outroAberto = false;
+          const no = el('div', 'compras-campo compras-largo patrimonio-materiais');
+          const chosen = el('div', 'compras-chips patrimonio-materiais-sel'); const busca = livre(texto('', { placeholder: 'Pesquisar material', maxLength: 60 })); busca.setAttribute('aria-label', 'Pesquisar material');
+          const grupos = el('div', 'patrimonio-materiais-lista'); const outroBox = el('div', 'compras-form-rodape'); const outro = livre(texto('', { placeholder: 'Nome do material', maxLength: 80 })); outro.setAttribute('aria-label', 'Outro material');
+          const tem = (m) => sel.some((x) => x.toLowerCase() === m.toLowerCase());
+          const alternar = (m) => { sel = tem(m) ? sel.filter((x) => x.toLowerCase() !== m.toLowerCase()) : [...sel, m]; desenhar(); };
+          const addOutro = () => { const m = outro.value.trim(); if (!m) return; if (!tem(m)) sel = [...sel, m]; outro.value = ''; desenhar(); };
+          outroBox.append(outro, botao('Adicionar material', addOutro, 'btn secondary'));
+          outro.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addOutro(); } });
+          busca.addEventListener('input', () => desenhar());
+          function desenhar() {
+            chosen.replaceChildren(...(sel.length ? sel.map((m) => { const b2 = botao(m + ' ×', () => alternar(m), 'compras-chip ativo'); b2.setAttribute('aria-label', 'Remover material ' + m); return b2; }) : [el('small', 'profiles-note', 'Nenhum material selecionado.')]));
+            const q = U.dobrar(busca.value); const blocos = [];
+            PD.MATERIAIS.forEach(([titulo, itens]) => {
+              const f = itens.filter((m) => !q || U.dobrar(m).includes(q)); if (!f.length) return;
+              const g = el('div', 'patrimonio-materiais-grupo'); g.append(el('small', 'profiles-note', titulo));
+              const linha = el('div', 'compras-chips'); f.forEach((m) => { const b2 = botao(m, () => alternar(m), 'compras-chip' + (tem(m) ? ' ativo' : '')); b2.setAttribute('aria-pressed', String(tem(m))); linha.append(b2); });
+              g.append(linha); blocos.push(g);
+            });
+            const bo = botao('Outro material', () => { outroAberto = !outroAberto; desenhar(); }, 'compras-chip' + (outroAberto ? ' ativo' : '')); bo.setAttribute('aria-pressed', String(outroAberto));
+            const go = el('div', 'patrimonio-materiais-grupo'); const lo = el('div', 'compras-chips'); lo.append(bo); go.append(lo); blocos.push(go);
+            if (!blocos.length) blocos.push(el('small', 'profiles-note', 'Nenhum material encontrado.'));
+            grupos.replaceChildren(...blocos); outroBox.style.display = outroAberto ? '' : 'none';
+          }
+          no.append(el('span', 'compras-rotulo', 'Material'), chosen, busca, grupos, outroBox); desenhar();
+          return { no, valor: () => [...sel] };
+        }
+        const materiais = seletorMateriais(v.materiais || []);
+        // Tipo de energia e consumo (só o campo que corresponde ao tipo); sem cálculo de custo, geração ou consumo.
+        const g0 = v.consumoGas || (v.energia === 'gas' && v.consumoHora ? { valor: v.consumoHora, unidade: 'kg/h' } : null);
+        const energia = seletor([['nenhuma', 'Não utiliza energia'], ...PD.TIPOS_ENERGIA], v.energia || 'nenhuma'); energia.setAttribute('aria-label', 'Tipo de Energia');
+        const gasValor = entrada('text', g0 ? nd(g0.valor) : '', { inputMode: 'decimal', placeholder: 'Ex.: 1,5' }); const gasUn = seletor(PD.UNIDADES_GAS, (g0 && g0.unidade) || '', 'Unidade'); gasUn.setAttribute('aria-label', 'Unidade do consumo de gás');
+        const potW = entrada('text', nd(v.potenciaW), { inputMode: 'decimal', placeholder: 'Ex.: 2000' });
+        const boxGas = el('div', 'patrimonio-condicional compras-largo'); boxGas.append(campo('Consumo de Gás por Hora', gasValor), campo('Unidade do consumo de gás', gasUn));
+        const boxEle = el('div', 'patrimonio-condicional compras-largo'); boxEle.append(campo('Potência Elétrica (W)', potW, 'Potência em watts (W). Não é o consumo em kWh e não gera custo.'));
+        const boxSol = el('div', 'patrimonio-condicional compras-largo'); boxSol.append(el('p', 'profiles-note', 'Energia solar selecionada. O sistema não calcula geração nem consumo solar.'));
+        function pintarEnergia() { mostrar(boxGas, energia.value === 'gas'); mostrar(boxEle, energia.value === 'eletrica'); mostrar(boxSol, energia.value === 'solar'); }
+        energia.addEventListener('change', pintarEnergia);
         const camposTec = {}; const tecBox = el('div', 'patrimonio-tecnicas');
         PD.TECNICAS.forEach(([k, rot]) => { const longo = ['especificacoes', 'observacoes'].includes(k); const i = longo ? area(tec[k], 2) : texto(tec[k], { maxLength: 120 }); const c = campo(rot, i); if (longo) c.classList.add('compras-largo'); camposTec[k] = c; tecBox.append(c); camposTec[k].entrada = i; });
-        function pintarTecnicas() { const ok = PD.camposTecnicos(categoria.value); PD.TECNICAS.forEach(([k]) => mostrar(camposTec[k], ok.includes(k))); notaTec.textContent = categoria.value ? 'Mostra só o que faz sentido para ' + (nomeDe(D.CATEGORIAS, categoria.value) || 'a categoria') + '.' : 'Escolha a categoria na etapa 1 para ver as características que se aplicam.'; }
+        function pintarTecnicas() { const ok = PD.camposTecnicos(categoria.value).filter((k) => !PD.TECNICAS_OCULTAS.includes(k)); PD.TECNICAS.forEach(([k]) => mostrar(camposTec[k], ok.includes(k))); mostrar(prod, PD.CATEGORIAS_UTENSILIO.includes(categoria.value) || Boolean(v.medidas)); notaTec.textContent = categoria.value ? 'Outros dados técnicos de ' + (nomeDe(D.CATEGORIAS, categoria.value) || 'a categoria') + '.' : 'Escolha a categoria na etapa 1 para ver os dados técnicos que se aplicam.'; }
         const notaTec = el('p', 'profiles-note compras-largo');
-        // Produção (campos de hoje, sem mudança)
-        const UNIDADES_CAPACIDADE = [['KG', 'kg'], ['G', 'g'], ['UN', 'unidades'], ['LT', 'litros']];
-        const capValor = entrada('text', v.capacidade ? String(v.capacidade.valor).replace('.', ',') : '', { inputMode: 'decimal', placeholder: 'Ex.: 40' });
-        const capUn = seletor(UNIDADES_CAPACIDADE, v.capacidade?.unidade || 'KG');
+        // Medidas úteis do utensílio para a Produção (formas, assadeiras): campos de hoje, sem mudança. A capacidade passou para a etapa 1.
         const larg = entrada('text', v.medidas ? String(v.medidas.largura).replace('.', ',') : '', { inputMode: 'decimal', placeholder: 'cm' }); const comp = entrada('text', v.medidas ? String(v.medidas.comprimento).replace('.', ',') : '', { inputMode: 'decimal', placeholder: 'cm' });
-        const energia = seletor(D.ENERGIAS, v.energia || 'nenhuma'); const consumo = entrada('text', v.consumoHora != null ? String(v.consumoHora).replace('.', ',') : '', { inputMode: 'decimal' }); const consumoCampo = campo('Consumo por hora', consumo);
-        const mostraConsumo = () => { mostrar(consumoCampo, energia.value !== 'nenhuma'); consumoCampo.querySelector('.compras-rotulo').textContent = 'Consumo (' + (D.UNIDADE_CONSUMO[energia.value] || '') + ')'; };
-        energia.onchange = mostraConsumo; mostraConsumo();
-        const prod = secao('Para a produção', campo('Capacidade', capValor, 'Quanto cabe por vez (ex.: masseira 40 kg). Passou disso, a ficha repete o processo.'), campo('Unidade da capacidade', capUn), campo('Largura (cm)', larg), campo('Comprimento (cm)', comp), campo('Energia', energia), consumoCampo,
-          U.nota('O consumo fica guardado para o custo de energia, que entra depois de as fórmulas de custo serem aprovadas.'));
+        const prod = secao('Medidas para a produção', campo('Largura (cm)', larg), campo('Comprimento (cm)', comp), U.nota('Medidas úteis do utensílio (forma, assadeira) usadas pela Produção.'));
+        // Ficha técnica do equipamento: um documento (PDF ou imagem) anexado ou digitalizado; Substituir troca, Remover tira antes de salvar.
+        let ficha = v.fichaTecnica && v.fichaTecnica.id ? { ...v.fichaTecnica } : null;
+        const fichaIn = entradaArquivo(PD.TIPOS_ARQUIVO_DOCUMENTO.join(','), false, false); const fichaBox = el('div', 'patrimonio-ficha-tec'); const fichaMsg = el('p', 'profiles-error'); fichaMsg.setAttribute('role', 'alert');
+        fichaIn.onchange = async () => {
+          const arq = fichaIn.files[0]; fichaIn.value = ''; fichaMsg.textContent = ''; if (!arq) return;
+          if (!PD.TIPOS_ARQUIVO_DOCUMENTO.includes(arq.type)) { fichaMsg.textContent = arq.name + ': use PDF, JPEG, PNG ou WebP.'; return; }
+          const r = await guardarArquivo(arq); if (r.erro) { fichaMsg.textContent = r.erro; return; }
+          ficha = r.meta; desenharFicha();
+        };
+        function desenharFicha() {
+          const linha = el('div', 'patrimonio-doc'); const acoes = el('div', 'patrimonio-acoes');
+          if (ficha) acoes.append(bolinha('Visualizar ficha técnica', ICO.ver, () => verArquivo('Ficha técnica — ' + (nome.value.trim() || 'equipamento'), ficha)), bolinha('Baixar ficha técnica', ICO.baixar, () => baixarArquivo(ficha)), bolinha('Remover ficha técnica', ICO.lixo, () => { ficha = null; desenharFicha(); }));
+          const botoes = el('div', 'compras-form-rodape patrimonio-barra-docs'); botoes.append(botao(ficha ? 'Substituir documento' : 'Anexar documento', () => fichaIn.click(), 'btn secondary'));
+          if (window.CicluzScanner) botoes.append(botao('Escanear Ficha Técnica', () => window.CicluzScanner.abrir({ titulo: 'Escanear ficha técnica', nomeBase: 'Ficha técnica', cores, aoConcluir: async (arq) => { const r = await guardarArquivo(arq); if (r.erro) return r.erro; ficha = r.meta; desenharFicha(); return undefined; } }), 'btn secondary'));
+          linha.append(ficha ? el('b', null, ficha.name || 'ficha técnica') : el('span', 'profiles-note', 'Nenhuma ficha técnica anexada.'), acoes);
+          fichaBox.replaceChildren(linha, botoes, fichaMsg, fichaIn);
+        }
+        const secFicha = secao('Ficha Técnica do Equipamento', fichaBox);
         // Peças e componentes
         let pecas = (v.pecas || []).map((p) => ({ ...p, id: p.id || S.novoId('peca') }));
         const indic = el('div', 'patrimonio-indicadores'); const tabPecas = el('div', 'patrimonio-tabela-box');
@@ -357,7 +467,14 @@
         boxVinc.firstChild.append(selVinc, addVinc);
         function pintarComposto() { mostrar(boxVinc, composto.ativo); }
         const e4 = el('div', 'compras-etapa');
-        e4.append(secao('Características técnicas', notaTec, tecBox), prod,
+        const avisoEspec = el('p', 'profiles-note compras-largo', 'Para informar altura, largura, profundidade, materiais e energia, ative "Informar especificação técnica?" na etapa 1.');
+        const secEspec = secao('Especificação Técnica', campo('Altura', dimAlt), campo('Largura', dimLarg), campo('Profundidade', dimProf), campo('Unidade das dimensões', dimUn), materiais.no,
+          campo('Tipo de Energia', energia), boxGas, boxEle, boxSol, notaTec, tecBox);
+        function pintarEspec() {
+          mostrar(secEspec, espec.ativo); mostrar(avisoEspec, !espec.ativo);
+          notaEspec1.textContent = espec.ativo ? 'Os campos da especificação técnica (dimensões, materiais, energia) estão na etapa 4.' : '';
+        }
+        e4.append(avisoEspec, secEspec, prod, secFicha,
           secao('Peças e componentes', indic, el('div', 'compras-form-rodape compras-largo patrimonio-barra-pecas'), tabPecas), secao('Patrimônio composto', composto, boxVinc));
         e4.querySelector('.patrimonio-barra-pecas').append(botao('Adicionar peça', () => janelaPeca(null, (n) => { pecas.push({ ...n, id: S.novoId('peca') }); desenharPecas(); }), 'btn secondary'));
 
@@ -452,17 +569,24 @@
         /* ---------- Leitura, revisão e navegação ---------- */
         function ler() {
           const cap = num(capValor); const l = num(larg); const co = num(comp);
+          const prodCat = PD.CATEGORIAS_PRODUCAO.includes(categoria.value); const en = energia.value; const gv = num(gasValor); const pw = num(potW);
+          const al = num(dimAlt); const la = num(dimLarg); const pr = num(dimProf);
           const tecnicas = {}; PD.TECNICAS.forEach(([k]) => { const x = camposTec[k].entrada.value.trim(); if (x) tecnicas[k] = x; });
           const garDoc = gDoc.value; const inspDoc = iDoc.value;
           const dados = {
             id: b ? b.id : undefined, nome: nome.value, categoria: categoria.value, marca: marca.value.trim(), modelo: modelo.value.trim(), numeroSerie: serie.value.trim(), numeroPatrimonio: numero.value.trim(), valor: valor.valor(), localId: local.value,
             nomeTecnico: nomeTec.value, descricao: descricao.value, tipoBem: tipoBem.value, natureza: natureza.value, situacaoPatrimonial: situacaoP, conservacao: conserv, dataCadastro: dataCad.value, codigoInterno: codInterno.value,
-            unidade: unidade.value, quantidade: inteiro(quantidade), conjunto: conjunto.ativo, observacoes: obsGerais.value,
+            unidade: unidade.value, quantidade: inteiro(quantidade), conjunto: conjunto.ativo, observacoes: v.observacoes || '', // as observações antigas ficam guardadas; a descrição detalhada e o áudio as substituem
+            usadoNaProducao: prodCat ? usoProd.ativo : Boolean(v.usadoNaProducao), utensiliosIds: prodCat ? (usoProd.ativo && usaUt.ativo ? utensilios : []) : (v.utensiliosIds || []),
+            informarEspecificacao: espec.ativo, materiais: materiais.valor(), fichaTecnica: ficha,
+            dimensoesFisicas: al != null || la != null || pr != null ? { altura: al, largura: la, profundidade: pr, unidade: dimUn.value } : null,
             imagens, documentos,
             localizacao: { empresa: empresa.value.trim(), cnpj: cnpj.value.trim(), unidade: unidadeLoc.value.trim(), estabelecimento: estab.value.trim(), departamento: departamento.value.trim(), ambiente: ambiente.value.trim(), sala: sala.value.trim(), andar: andar.value.trim(), detalhe: localizacaoDet.value.trim() },
             responsavel: { colaboradorId: colab.value, nome: respNome.value.trim(), cargo: respCargo.value.trim(), departamento: respDep.value.trim(), dataAtribuicao: respData.value, tipo: respTipo.value },
             movimentacoes: movs,
-            tecnicas, capacidade: cap != null ? { valor: cap, unidade: capUn.value } : null, medidas: l != null || co != null ? { largura: l, comprimento: co } : null, energia: energia.value, consumoHora: num(consumo),
+            tecnicas, capacidade: prodCat ? (usoProd.ativo && cap != null ? { valor: cap, unidade: capUn.value } : null) : (v.capacidade || null), medidas: l != null || co != null ? { largura: l, comprimento: co } : null,
+            energia: en, consumoGas: en === 'gas' && gv != null ? { valor: gv, unidade: gasUn.value } : null, potenciaW: en === 'eletrica' ? pw : null,
+            consumoHora: en === 'gas' ? (gv != null && gasUn.value === 'kg/h' ? gv : null) : en === 'eletrica' ? (v.consumoHora != null ? v.consumoHora : null) : null,
             pecas, composto: composto.ativo, vinculados: composto.ativo ? vinculados : [],
             financeiro: { tipoAquisicao: tipoAq.value, dataAquisicao: dAq.value, dataRecebimento: dRec.value, dataOperacao: dOp.value, fornecedorId: fornecedor.value, nf: nf.value.trim(), serieNf: serieNf.value.trim(),
               valorAquisicao: vAq.valor(), frete: frete.valor(), instalacao: instal.valor(), custosAdicionais: custos.valor(), descontos: descontos.valor(), valorTotal: PD.valorTotalAquisicao({ valorAquisicao: vAq.valor(), frete: frete.valor(), instalacao: instal.valor(), custosAdicionais: custos.valor(), descontos: descontos.valor() }), moeda: 'BRL' },
@@ -486,7 +610,7 @@
             [1, 'Cadastro', [['Identificação', d.nome], ['Nome técnico', d.nomeTecnico], ['Categoria', nomeDe(D.CATEGORIAS, d.categoria)], ['Marca', d.marca], ['Modelo', d.modelo], ['Número de série', d.numeroSerie], ['Número de patrimônio', d.numeroPatrimonio], ['Valor', d.valor != null ? dinheiro(d.valor) : '']]],
             [2, 'Imagens e documentos', [['Imagem principal', principal ? principal.name : ''], ['Imagens', d.imagens.length ? String(d.imagens.length) : ''], ['Documentos anexados', d.documentos.length ? String(d.documentos.length) : '']]],
             [3, 'Localização', [['Empresa', d.localizacao.empresa], ['Unidade', d.localizacao.unidade], ['Setor / local', d.localId ? S.nomeLocal(d.localId) : d.localizacao.departamento], ['Responsável', d.responsavel.nome]]],
-            [4, 'Composição', [['Características técnicas', Object.keys(d.tecnicas).length ? Object.keys(d.tecnicas).length + ' informada(s)' : ''], ['Peças (tipos)', t.tipos ? String(t.tipos) : ''], ['Unidades de peças', t.unidades && t.tipos ? String(t.unidades) : ''], ['Patrimônios vinculados', d.vinculados.length ? String(d.vinculados.length) : '']]],
+            [4, 'Composição', [['Especificação técnica', d.informarEspecificacao ? 'Informada' : ''], ['Utilizado na produção', d.usadoNaProducao ? 'Sim' + (d.capacidade ? ' — capacidade ' + CD.numero(d.capacidade.valor) + ' ' + d.capacidade.unidade : '') : ''], ['Utensílios utilizados', d.utensiliosIds.length ? String(d.utensiliosIds.length) : ''], ['Materiais', d.materiais.join(', ')], ['Ficha técnica', d.fichaTecnica ? d.fichaTecnica.name : ''], ['Peças (tipos)', t.tipos ? String(t.tipos) : ''], ['Unidades de peças', t.unidades && t.tipos ? String(t.unidades) : ''], ['Patrimônios vinculados', d.vinculados.length ? String(d.vinculados.length) : '']]],
             [5, 'Financeiro', [['Aquisição', nomeDe(PD.TIPOS_AQUISICAO, d.financeiro.tipoAquisicao)], ['Valor total de aquisição', d.financeiro.valorTotal ? dinheiro(d.financeiro.valorTotal) : ''], ['Fornecedor', nomeFornecedor(d.financeiro.fornecedorId)], ['Garantia', d.garantia.possui ? (d.garantia.fim ? 'até ' + dataBR(d.garantia.fim) : 'sim') : ''], ['Informações contábeis', d.contabil.metodo ? nomeDe(PD.METODOS_DEPRECIACAO, d.contabil.metodo) : '']]],
             [6, 'Controle', [['Manutenção periódica', d.manutencao.exige ? (d.revisao && d.revisao.proxima ? 'próxima em ' + dataBR(d.revisao.proxima) : 'sim') : ''], ['Manutenções no histórico', d.manutencoes.length ? String(d.manutencoes.length) : ''], ['Inspeções', d.inspecao.necessita ? 'periódica' : ''], ['Situação patrimonial', nomeDe(PD.SITUACOES, d.situacaoPatrimonial)]]],
           ];
@@ -517,7 +641,7 @@
           nav.replaceChildren(...(ultima ? [voltar, salvarFim] : atual === 0 ? [cancelar, avancar] : [cancelar, voltar, avancar]));
         }
         form.append(barra.el, ...quadros, erroEtapa, nav);
-        desenharImagens(); desenharDocs(); desenharMovs(); desenharPecas(); desenharMan(); desenharVinc(); pintarComposto(); pintarTecnicas(); pintarGarSeg(); pintarMan(); pintarInsp(); pintarSelectsDoc();
+        desenharImagens(); desenharDocs(); desenharMovs(); desenharPecas(); desenharMan(); desenharVinc(); pintarComposto(); pintarTecnicas(); pintarEnergia(); pintarEspec(); desenharUt(); desenharFicha(); pintarProducao(); pintarGarSeg(); pintarMan(); pintarInsp(); pintarSelectsDoc();
         gDoc.value = docAtual.garantia && documentos.some((d) => d.id === docAtual.garantia) ? docAtual.garantia : ''; iDoc.value = docAtual.inspecao && documentos.some((d) => d.id === docAtual.inspecao) ? docAtual.inspecao : '';
         ir(0);
         return { ler, conferir, ir, datas, audio, b };
@@ -532,10 +656,11 @@
         const som = await c.audio.guardar(); if (som.error) return som.error;
         dados.audio = som.meta;
         const r = SV.salvarBem(dados); if (r.erro) return r.erro;
-        U.avisar('Patrimônio salvo.');
+        U.avisar(opcoes.categoria ? 'Utensílio salvo.' : 'Patrimônio salvo.');
+        if (opcoes.aoSalvar) opcoes.aoSalvar(r.id);
         return null;
       },
     });
   }
-  window.CicluzProducaoPatrimonioForm = { abrir: abrirFormulario };
+  window.CicluzProducaoPatrimonioForm = { abrir: (b, opcoes) => abrirFormulario(b, opcoes) };
 })();

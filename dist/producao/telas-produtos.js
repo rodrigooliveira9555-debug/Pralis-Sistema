@@ -102,7 +102,7 @@
         const f = c?.formato || {};
         // Utensílios primeiro (assadeira, lata, tira); os outros bens continuam disponíveis.
         const bens = S.patrimonio.dados.bens.filter((x) => x.ativo !== false || x.id === f.utensilioId)
-          .sort((a, b) => ((b.categoria === 'utensilio') - (a.categoria === 'utensilio')) || a.nome.localeCompare(b.nome, 'pt-BR'));
+          .sort((a, b) => ((['utensilio', 'UTS'].includes(b.categoria)) - (['utensilio', 'UTS'].includes(a.categoria))) || a.nome.localeCompare(b.nome, 'pt-BR'));
         const utensilio = seletor(bens.map((x) => [x.id, x.nome + (x.medidas ? ' (' + CD.numero(x.medidas.largura) + '×' + CD.numero(x.medidas.comprimento) + ')' : '')]), f.utensilioId || '', bens.length ? 'Selecione' : 'Cadastre em RET - Patrimônios');
         const colunas = entrada('number', f.colunas || '', { min: 1, step: 1, inputMode: 'numeric' });
         const linhas = entrada('number', f.linhas || '', { min: 1, step: 1, inputMode: 'numeric' });

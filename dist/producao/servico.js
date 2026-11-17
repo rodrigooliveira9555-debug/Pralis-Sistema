@@ -32,7 +32,7 @@
     if (b.capacidade && !(b.capacidade.valor > 0)) return 'A capacidade deve ser maior que zero (ou deixe em branco).';
     if (b.capacidade && !b.capacidade.unidade) return 'Escolha a unidade da capacidade.';
     if (b.medidas && (!(b.medidas.largura > 0) || !(b.medidas.comprimento > 0))) return 'Preencha largura e comprimento, ou deixe os dois em branco.';
-    if (b.energia && b.energia !== 'nenhuma' && !(b.consumoHora > 0)) return 'Informe o consumo por hora do equipamento.';
+    if (b.consumoHora != null && !(b.consumoHora > 0)) return 'O consumo por hora deve ser maior que zero (ou deixe em branco).';
     const np = texto(b.numeroPatrimonio);
     if (np && B.dados.bens.some((x) => x.id !== b.id && texto(x.numeroPatrimonio) === np)) return 'Já existe um bem com o número de patrimônio ' + np + '.';
     for (const p of b.pecas) {
@@ -65,7 +65,8 @@
    */
   function prepararBem(entrada) {
     const b = { ...entrada, nome: texto(entrada.nome).toLocaleUpperCase('pt-BR') };
-    if (b.energia === 'nenhuma' || !b.energia) { b.energia = 'nenhuma'; b.consumoHora = null; }
+    if (b.energia === 'nenhuma' || !b.energia) { b.energia = 'nenhuma'; b.consumoHora = null; b.consumoGas = null; b.potenciaW = null; }
+    if (b.energia === 'solar') b.consumoHora = null; // sem cálculo de geração nem de consumo solar
     b.pecas = (Array.isArray(entrada.pecas) ? entrada.pecas : [])
       .map((p) => {
         const ultimaTroca = texto(p.ultimaTroca);
