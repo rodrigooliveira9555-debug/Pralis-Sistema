@@ -26,7 +26,7 @@
   const nomeDoCargo = (id) => (CARGOS_EMPRESA.find(([x]) => x === id) || [])[1] || '';
   const ESTADOS_CIVIS = [['solteiro', 'Solteiro(a)'], ['casado', 'Casado(a)'], ['uniao-estavel', 'União estável'], ['divorciado', 'Divorciado(a)'], ['separado', 'Separado(a)'], ['viuvo', 'Viúvo(a)']];
   const RESPONSAVEL_VAZIO = () => ({ id: S.novoId('resp'), cargo: '', nome: '', cpf: '', rg: '', rgOrgao: '', nacionalidade: '', estadoCivil: '', profissao: '', whatsapp: '', email: '', endereco: { cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '' } });
-  const tituloDoResponsavel = (cargo) => 'Dados do responsável legal' + (nomeDoCargo(cargo) ? ' — ' + nomeDoCargo(cargo) : '');
+  const tituloDoResponsavel = (cargo) => 'Dados do responsável legal da empresa' + (nomeDoCargo(cargo) ? ' — ' + nomeDoCargo(cargo) : '');
 
   /** Responsáveis gravados; o primeiro formato (um responsável só, em "responsavel") vira o primeiro da lista. */
   function responsaveisDe(v) {
@@ -164,12 +164,14 @@
               [[rRua, 'logradouro'], [rBairro, 'bairro'], [rCidade, 'cidade'], [rUf, 'uf']].forEach(([alvo, chave]) => { if (res.dados[chave] && !alvo.value.trim()) { alvo.value = res.dados[chave]; en[chave] = res.dados[chave]; } });
               avisoCepR.textContent = 'Endereço do CEP conferido. Confira e informe o número.';
             });
-            const sub = (t) => el('span', 'compras-rotulo compras-largo compras-empresa-sub', t);
-            bloco.append(titulo, campo('Cargo na empresa', cargo), campo('Nome completo do responsável', nome),
-              campo('CPF do responsável', cpf), campo('RG do responsável', rg), campo('Órgão emissor do RG', rgOrgao),
-              campo('Nacionalidade', nacionalidade), campo('Estado civil', estadoCivil), campo('Profissão', profissao),
-              campo('WhatsApp do responsável', whats), campo('E-mail do responsável', mail),
-              sub('Endereço do responsável'), campo('CEP do responsável', rCep), campo('Rua / logradouro', rRua), campo('Número', rNumero), campo('Complemento', rCompl), campo('Bairro', rBairro), campo('Cidade', rCidade), campo('UF', rUf), avisoCepR);
+            // Dois quadros com borda dentro do bloco (pedido do Rodrigo, 17/11/2026): os dados pessoais e o endereço.
+            const quadro = (legenda, ...nos) => { const q = el('fieldset', 'compras-fieldset compras-largo'); q.append(el('legend', null, legenda), ...nos); return q; };
+            bloco.append(titulo,
+              quadro('Dados pessoais', campo('Cargo na empresa', cargo), campo('Nome completo do responsável', nome),
+                campo('CPF do responsável', cpf), campo('RG do responsável', rg), campo('Órgão emissor do RG', rgOrgao),
+                campo('Nacionalidade', nacionalidade), campo('Estado civil', estadoCivil), campo('Profissão', profissao),
+                campo('WhatsApp do responsável', whats), campo('E-mail do responsável', mail)),
+              quadro('Endereço do responsável legal', campo('CEP do responsável', rCep), campo('Rua / logradouro', rRua), campo('Número', rNumero), campo('Complemento', rCompl), campo('Bairro', rBairro), campo('Cidade', rCidade), campo('UF', rUf), avisoCepR));
             if (responsaveis.length > 1) {
               const tirar = botao('Remover', () => { responsaveis.splice(i, 1); desenharResponsaveis(); pintarModo(); }, 'btn secondary perigo-texto');
               const pe = el('div', 'compras-form-rodape compras-largo compras-empresa-remover'); pe.append(tirar);
@@ -224,7 +226,7 @@
           }));
         }
         function pintarModo() {
-          [empresa, endereco, ...caixaResp.querySelectorAll('fieldset')].forEach((q) => { q.disabled = !editando; });
+          [empresa, endereco, ...caixaResp.querySelectorAll(':scope > fieldset')].forEach((q) => { q.disabled = !editando; });
           adicionar.disabled = !editando; linhaAdicionar.style.display = editando ? '' : 'none';
           caixaResp.querySelectorAll('.compras-empresa-remover').forEach((x) => { x.style.display = editando ? '' : 'none'; });
           notaModo.textContent = editando ? '' : 'Dados gravados. Toque em Editar, ou no lápis de um bloco, para alterar.';
