@@ -686,3 +686,9 @@ button.stepper-node:focus-visible{outline:2px solid var(--stepper-accent);outlin
 .folhas-map select{min-width:200px;max-width:100%}
 .folhas-import-sum{display:grid;gap:8px}
 .folhas-import-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+/* Quadro com borda em todo bloco de campos (17/11/2026, Rodrigo): o mesmo desenho do quadro dos cadastros novos (.compras-fieldset) — borda fina, cantos de 12 px, respiro interno. Com data-quadro, o título fica sobre a borda, como uma legenda. Bloco dentro de bloco não repete a borda. */
+.form-fields{border:1px solid var(--layout-line,#dedee3);border-radius:12px;padding:14px;box-sizing:border-box;min-width:0}
+.form-fields .form-fields{border:0;border-radius:0;padding:0}
+.form-fields[data-quadro]{position:relative;margin-top:22px;padding-top:18px}
+.form-fields[data-quadro]::before{content:attr(data-quadro);position:absolute;top:-10px;left:12px;padding:0 6px;background:var(--layout-gap,#f5f5f7);color:inherit;font:600 13px/18px var(--ui-font,inherit)}
+dialog .form-fields[data-quadro]::before,.modal .form-fields[data-quadro]::before{background:var(--layout-gap,#f5f5f7)}

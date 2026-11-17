@@ -255,16 +255,18 @@
           marcarObrigatorios();
           // A "Situação do cliente" (ativo/inativo) aparece em toda modalidade do cadastro feito aqui dentro; no link de cadastro, não.
           const sit = opcoes.externo ? [] : [situacao];
-          if (tipo === 'fisica' && cadastro === 'simples') return [bloco(...sit, F.nome, F.whats, F.mail, F.nasc, endSw, sEnd)];
+          // Cada assunto dentro de um quadro com borda e título (pedido do Rodrigo, 17/11/2026): nenhum campo fica solto.
+          const quadro = (legenda, ...nos) => { const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, legenda), ...nos); return q; };
+          if (tipo === 'fisica' && cadastro === 'simples') return [bloco(...sit, quadro('Dados pessoais', F.nome, F.whats, F.mail, F.nasc), endSw, sEnd)];
           if (tipo === 'fisica') {
             const comp = el('fieldset', 'compras-fieldset'); comp.append(el('legend', null, 'Sorteio'), el('p', 'profiles-note', 'Sorteio — Em definição'), el('small', 'profiles-note', 'Funcionalidade futura: por enquanto não há número, participação, prêmio nem regra de sorteio.'));
-            return [bloco(...sit, F.nome, F.cpf, F.whats, F.mail, F.nasc), bloco(sEnd), bloco(comp), bloco(revisao)];
+            return [bloco(...sit, quadro('Dados pessoais', F.nome, F.cpf, F.whats, F.mail, F.nasc)), bloco(sEnd), bloco(comp), bloco(revisao)];
           }
-          if (cadastro === 'simples') return [bloco(...sit, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.whats, F.mail, endSw, sEnd)];
+          if (cadastro === 'simples') return [bloco(...sit, quadro('Dados da empresa', F.cnpj, avisoCnpj, F.razao, F.fantasia, F.whats, F.mail), endSw, sEnd)];
           // 17/11/2026 (Rodrigo): o contato e o financeiro viram uma etapa só, "Dados do responsável financeiro": o quadro
           // "Dados do responsável" em cima e as Informações de Pagamento embaixo; não existe mais um contato do financeiro à parte.
           const contato = el('fieldset', 'compras-fieldset'); contato.append(el('legend', null, 'Dados do responsável'), F.contatoNome, F.whats, F.mail, aniv.no);
-          return [bloco(...sit, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime, sEnd), bloco(contato, cDados), bloco(rep.no), bloco(revisao)];
+          return [bloco(...sit, quadro('Dados da empresa', F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime), sEnd), bloco(contato, cDados), bloco(rep.no), bloco(revisao)];
         }
         /** Cadastro lido do formulário: só o tipo e a modalidade em uso (o resto do registro fica como está). */
         function pintarEndereco() { mostrar(sEnd, cadastro === 'completo' || endSw.ativo); }
