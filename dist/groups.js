@@ -1639,7 +1639,7 @@ function showFinancialGroup(key,originIcon,editId){
  function edit(item,parent,initial=''){
  setViewOriginColor(view,itemColor(item||parent));
  box.replaceChildren();view.querySelectorAll('.financial-expand-all,.view-alphabetize,.location-tool').forEach(b=>b.remove());setSectorBack(list);document.getElementById('sector-title').textContent=cfg.flat?'Cadastro de '+cfg.singular:parent?'Cadastro do subgrupo':'Cadastro do grupo';
- const form=document.createElement('form');form.className='form-fields account-editor';
+ const form=document.createElement('form');form.className='form-fields account-editor';form.dataset.quadro=cfg.flat?'Dados de '+cfg.singular:parent?'Dados do subgrupo':'Dados do grupo';
  const field=(text,control)=>{const label=document.createElement('label');label.textContent=text;control.style.width='100%';label.append(control);form.append(label);return control};
  const name=field(cfg.flat?(key==='tipos-venda'?'Nome do Tipo de Venda':key==='bandeiras'?'Nome da Bandeira':'Nome da Operadora'):parent?'Nome do subgrupo':'Nome do grupo',document.createElement('input'));name.required=true;name.maxLength=120;name.value=formatName(item?.name||initial);
  const doc=field('Referência documental',document.createElement('select'));for(const value of ['','DOC/F','DOC/NF','DOC/F/NF'])doc.add(new Option(value||'Selecione',value));doc.value=item?.document||'';

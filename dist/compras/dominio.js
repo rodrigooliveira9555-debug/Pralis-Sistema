@@ -200,6 +200,48 @@
   /** Vínculos do fornecedor com produtos no documento do Compras: catálogo, histórico de compras, cotação e pedido. */
   const vinculosComProdutos = (d, fornecedorId) => contarVinculos({ ...d, fornecedores: null }, 'fornecedorId', fornecedorId);
   /**
+   * Migração (marca d.migracoes.nomesPadrao; ordem do Rodrigo, 17/11/2026): os nomes e endereços JÁ GRAVADOS em
+   * fornecedores, clientes e empresas entram no padrão de nomes do sistema (inicial maiúscula em cada palavra, "de/da/do/e"
+   * em minúsculas) e os e-mails ficam em minúsculas. Roda uma vez por documento. Nada se perde: cada valor trocado fica
+   * guardado em d.migracoes.nomesPadrao.antes como [onde, campo, valor antigo], para poder ser desfeito.
+   * formatar: a regra central de nomes (formatSystemName), passada por quem chama; sem ela, não faz nada e não marca.
+   * Produtos ficam de fora (seguem a regra própria, em maiúsculas).
+   */
+  function migrarNomesPadrao(d, formatar, agora) {
+    if (typeof formatar !== 'function' || (d.migracoes && d.migracoes.nomesPadrao)) return d;
+    const antes = [];
+    const troca = (obj, campo, onde, novoDe) => {
+      if (!obj || typeof obj[campo] !== 'string' || !obj[campo].trim()) return;
+      const novo = novoDe(obj[campo].trim());
+      if (novo !== obj[campo]) { antes.push([onde, campo, obj[campo]]); obj[campo] = novo; }
+    };
+    const nome = (obj, campo, onde) => troca(obj, campo, onde, formatar);
+    const mail = (obj, campo, onde) => troca(obj, campo, onde, (v) => v.toLocaleLowerCase('pt-BR'));
+    const endereco = (e, onde) => ['logradouro', 'complemento', 'bairro', 'cidade'].forEach((c) => nome(e, c, onde + '.endereco'));
+    const contato = (c, onde) => { nome(c, 'nome', onde); mail(c, 'email', onde); };
+    for (const f of d.fornecedores || []) {
+      const o = 'fornecedor:' + f.id;
+      ['nome', 'razaoSocial', 'contatoNome'].forEach((c) => nome(f, c, o));
+      mail(f, 'email', o); endereco(f.endereco, o);
+      contato(f.financeiro, o + '.financeiro'); contato(f.representante, o + '.representante');
+      (f.prestadores || []).forEach((p) => contato(p, o + '.prestador:' + p.id));
+    }
+    for (const c of d.clientes || []) {
+      const o = 'cliente:' + c.id;
+      ['nome', 'razaoSocial', 'nomeFantasia', 'contatoNome'].forEach((k) => nome(c, k, o));
+      mail(c, 'email', o); endereco(c.endereco, o);
+      contato(c.financeiro, o + '.financeiro'); contato(c.representante, o + '.representante');
+    }
+    for (const e of (Array.isArray(d.empresas) ? d.empresas : d.empresa ? [d.empresa] : [])) {
+      const o = 'empresa:' + (e.id || 'matriz');
+      ['razaoSocial', 'nomeFantasia'].forEach((k) => nome(e, k, o));
+      endereco(e.endereco, o);
+      (e.responsaveis || []).forEach((r) => { const or = o + '.responsavel:' + r.id; ['nome', 'nacionalidade', 'profissao'].forEach((k) => nome(r, k, or)); mail(r, 'email', or); endereco(r.endereco, or); });
+    }
+    d.migracoes = { ...(d.migracoes || {}), nomesPadrao: { em: agora || new Date().toISOString(), antes } };
+    return d;
+  }
+  /**
    * Migração (marca d.migracoes.categoriaProdutoFornecedor; decisão do Rodrigo, 15/11/2026): o fornecedor que já
    * existia, está ligado a produtos (catálogo, histórico, cotação ou pedido) e ainda não tem categoria passa a ser
    * Produto. Quem já tem categoria marcada não é tocado; quem não tem vínculo com produto continua sem categoria.
@@ -227,7 +269,7 @@
   }
   const emailValido = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
   /** Regime tributário do fornecedor pessoa jurídica: só guarda a opção escolhida, não entra em cálculo nenhum. */
-  const REGIMES_TRIBUTARIOS = [['mei', 'MEI'], ['simples', 'Simples Nacional'], ['presumido', 'Lucro Presumido'], ['real', 'Lucro Real'], ['nao-informado', 'Não informado']];
+  const REGIMES_TRIBUTARIOS = [['mei', 'MEI'], ['simples', 'Simples Nacional'], ['presumido', 'Lucro Presumido'], ['real', 'Lucro Real'], ['imune-isenta', 'Imune / Isenta'], ['nao-informado', 'Não informado']];
   /** O que o representante é na empresa (lista fixa, escolha única; campo opcional). */
   const CARGOS_REPRESENTANTE = [['proprietario', 'Proprietário'], ['socio-proprietario', 'Sócio-proprietário'], ['diretor-geral', 'Diretor geral'], ['diretor-comercial', 'Diretor comercial'],
     ['gerente-geral', 'Gerente geral'], ['gerente-comercial', 'Gerente comercial'], ['supervisor-geral', 'Supervisor geral'], ['supervisor-comercial', 'Supervisor comercial'],
@@ -268,10 +310,21 @@
     if (dia < 1 || dia > diasNoMes(2000, mes - 1)) return 'Aniversário inválido: esse mês não tem dia ' + dia + '.';
     return '';
   }
-  /** Aniversário no formato DD/MM, ou '' quando falta o dia ou o mês. */
+  /**
+   * Data de aniversário do cliente pessoa física ("MM-DD"; decisão do Rodrigo, 17/11/2026: só dia e mês, não mais a
+   * data de nascimento). Quem tem só a data de nascimento antiga mostra o dia e o mês dela; nada é migrado em massa.
+   */
+  function aniversarioCliente(c) {
+    if (!c) return '';
+    if (typeof c.aniversario === 'string' && c.aniversario) return c.aniversario;
+    const n = String(c.nascimento || '');
+    return n.length === 10 && n[4] === '-' && n[7] === '-' && !aniversarioRuim(n.slice(5)) ? n.slice(5) : '';
+  }
+  const MESES_ABREVIADOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  /** Aniversário como "25/jan" (dia e mês abreviado; pedido do Rodrigo, 17/11/2026), ou '' quando falta o dia ou o mês. */
   function aniversarioTexto(v) {
     const p = aniversarioPartes(v);
-    return p.dia && p.mes ? p.dia + '/' + p.mes : '';
+    return p.dia && p.mes && MESES_ABREVIADOS[Number(p.mes) - 1] ? p.dia + '/' + MESES_ABREVIADOS[Number(p.mes) - 1] : '';
   }
   /** Quem é o contato da 2ª etapa, pela categoria: prestador (Serviço) ou vendedor (Produto, e enquanto nada foi escolhido). */
   function quemVendeFornecedor(categorias) {
@@ -701,7 +754,7 @@
    * Quatro modalidades: Pessoa Física ou Jurídica × Cadastro Simples (uma página) ou Completo (etapas). O mesmo registro
    * muda de Simples para Completo sem duplicar: os campos de cada tipo ficam guardados no registro, e salvar só mexe nos
    * do tipo e da modalidade em uso. Só informação cadastral: nada aqui gera cobrança, pagamento ou sorteio. */
-  const TIPOS_PESSOA_CLIENTE = [['fisica', 'Pessoa Física'], ['juridica', 'Pessoa Jurídica']];
+  const TIPOS_PESSOA_CLIENTE = [['fisica', 'PF - Pessoa Física'], ['juridica', 'PJ - Pessoa Jurídica']];
   const TIPOS_CADASTRO_CLIENTE = [['simples', 'Simples'], ['completo', 'Completo']];
   /** Nome para listas e buscas: a pessoa, ou o nome fantasia (ou a razão social) da empresa. */
   function nomeCliente(c) {
@@ -712,8 +765,9 @@
   function etapasCliente(tipoPessoa, cadastro) {
     if (cadastro !== 'completo') return [];
     return tipoPessoa === 'juridica'
-      ? ['Dados da empresa', 'Dados do contato', 'Informações de Pagamento', 'Dados do Responsável', 'Revisão']
-      : ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão'];
+      // 17/11/2026 (Rodrigo): o contato e o financeiro são uma etapa só; depois, o responsável legal.
+      ? ['Dados da empresa', 'Dados do responsável financeiro da empresa', 'Dados do responsável legal da empresa', 'Revisão dos dados da empresa']
+      : ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão dos dados'];
   }
   const dataIsoValida = (v) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); if (!m) return false; const d = new Date(+m[1], +m[2] - 1, +m[3]); return d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3]; };
   /**
@@ -752,8 +806,10 @@
       }
       const r = whatsEmail(true);
       if (r) return r;
-      if (!c.nascimento) return 'Informe a data de nascimento.';
-      if (!dataIsoValida(c.nascimento) || c.nascimento < '1900-01-01' || c.nascimento > isoData(new Date())) return 'Data de nascimento inválida: use DD/MM/AA, sem data futura.';
+      // Data de aniversário (dia e mês, "MM-DD"), obrigatória como era a de nascimento; cliente antigo vale pelo dia e mês do nascimento.
+      const aniv = aniversarioCliente(c);
+      if (!aniv) return 'Informe a data de aniversário.';
+      if (aniversarioRuim(aniv) || aniv.length !== 5) return 'Data de aniversário inválida: escolha o dia e o mês.';
       if (!completo && outros.some((x) => x.tipoPessoa !== 'juridica' && semAcento(x.nome) === semAcento(c.nome) && digitos(x.whatsapp) === digitos(c.whatsapp))) return 'Já existe um cliente com este nome e WhatsApp.';
       return '';
     };
@@ -764,12 +820,30 @@
       if (c.regimeTributario && !REGIMES_TRIBUTARIOS.some(([id]) => id === c.regimeTributario)) return 'Regime tributário inválido.';
       return enderecoRuim();
     };
+    // Pessoa jurídica em etapas (17/11/2026, Rodrigo): na 1ª etapa todos os campos são obrigatórios, menos o complemento.
+    const empresaCompleta = () => {
+      const e = c.endereco || {};
+      const cheio = (x) => String(x || '').trim();
+      if (!cheio(c.nomeFantasia)) return 'Informe o nome fantasia.';
+      if (!c.regimeTributario) return 'Selecione o regime tributário.';
+      if (!cheio(e.cep)) return 'Informe o CEP.';
+      if (!cheio(e.logradouro)) return 'Informe a rua ou o logradouro.';
+      if (!cheio(e.numero)) return 'Informe o número do endereço.';
+      if (!cheio(e.bairro)) return 'Informe o bairro.';
+      if (!cheio(e.cidade)) return 'Informe a cidade.';
+      if (!e.uf) return 'Selecione a UF.';
+      return '';
+    };
+    // Financeiro separado do contato só existe em cadastro anterior a 17/11/2026 (mesmo: false); o novo é o próprio contato.
+    const financeiroAntigo = () => (c.financeiro && c.financeiro.mesmo === false ? contatoRuim(c.financeiro, 'financeiro') : '');
     if (!completo) return [pj ? empresa() || whatsEmail(false) : pessoa() || enderecoRuim()];
     if (!pj) return [pessoa(), enderecoRuim(), '', ''];
     return [
-      empresa(),
-      whatsEmail(false) || (aniversarioRuim(c.contatoAniversario) ? 'Aniversário do contato inválido: escolha o dia e o mês.' : ''),
-      contatoRuim(c.financeiro, 'financeiro') || validarContratoFinanceiro(c.contrato),
+      empresa() || empresaCompleta(),
+      // 17/11/2026 (Rodrigo): no quadro "Dados do responsável" tudo é obrigatório — nome, WhatsApp, e-mail e aniversário.
+      (!String(c.contatoNome || '').trim() ? 'Informe o nome do responsável.' : '') || whatsEmail(true)
+        || (!c.contatoAniversario ? 'Informe o aniversário do responsável.' : aniversarioRuim(c.contatoAniversario) || String(c.contatoAniversario).length !== 5 ? 'Aniversário do responsável inválido: escolha o dia e o mês.' : '')
+        || financeiroAntigo() || validarContratoFinanceiro(c.contrato),
       (() => { const cargo = c.representante && c.representante.cargo; return cargo && !CARGOS_REPRESENTANTE.some(([id]) => id === cargo) ? 'Cargo do representante inválido.' : contatoRuim(c.representante, 'representante'); })(),
       '',
     ];
@@ -953,14 +1027,14 @@
     REPETICOES, DIAS_SEMANA, MESES, ocorrencias, resumoRegra,
     topoDoRanking,
     digitos, motivoNaoConvidavel, podeConvidar,
-    CATEGORIAS_FORNECEDOR, categoriaFornecedor, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, documentoAntigoFornecedor, validarFornecedor,
+    CATEGORIAS_FORNECEDOR, categoriaFornecedor, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarNomesPadrao, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, documentoAntigoFornecedor, validarFornecedor,
     chaveTexto, TIPOS_CAMPO_ADICIONAL, RENOVACOES_CONTRATO, LIMITES_CONTRATO, validarListaAtividades, validarAtividadesContrato, novaAtividade, validarModeloContrato,
     somarMesesIso, aplicarModeloAoContrato, validarContratoDocumento, faltasDoContrato,
     validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, aniversarioVendedor, migrarVendedorFornecedor,
     FUNCOES_PRESTADOR_INICIAIS, idFuncaoPrestador, funcaoPrestadorIgual, validarFuncaoPrestador, migrarPrestadoresFornecedor,
     FORMAS_PAGAMENTO_CONTRATO, FORMAS_PAGAMENTO_FORNECEDOR, RECORRENCIAS_CONTRATO, RECORRENCIAS_CLIENTE, CLIENTE_MENSAL, periodoMensal, validarTermino, resumoTermino, UNIDADES_REPETICAO, POSICOES_MES, DIAS_SEMANA_LONGOS, REAJUSTES_CONTRATO, migrarContratoFinanceiro,
     validarContratoFinanceiro, TIPOS_PESSOA_CLIENTE, TIPOS_CADASTRO_CLIENTE, nomeCliente, etapasCliente, validarClienteEtapas, validarCliente,
-    validarRecorrenciaPersonalizada, resumoRecorrenciaPersonalizada, resumoValorRecorrencia, aniversarioPartes, aniversarioRuim, aniversarioTexto,
+    validarRecorrenciaPersonalizada, resumoRecorrenciaPersonalizada, resumoValorRecorrencia, aniversarioPartes, aniversarioRuim, aniversarioTexto, aniversarioCliente, MESES_ABREVIADOS,
     avaliarItem, limitesDaMargem, quantidadeDentroDaMargem, MOTIVOS, novaReferencia, COLUNAS_MATRIZ, contarMatriz,
     situacaoEstoque, SITUACOES_ESTOQUE, sugestaoReposicao, pendenciasDeTeto,
     aplicarRecebimento, SITUACOES_PEDIDO,

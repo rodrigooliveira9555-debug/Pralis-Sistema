@@ -14,7 +14,7 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head:not(.header-identity-collapsed)>.shortcut-actions{grid-column:1/-1!important;grid-row:2!important;display:flex!important;align-items:center;justify-content:flex-end;gap:5px;width:100%;flex-wrap:wrap}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head:not(.header-identity-collapsed)>.fixed-header-tools{grid-row:3!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head+.content{position:relative;z-index:5;background:var(--layout-gap)!important;color:var(--layout-ink)!important;margin-top:-12px;border-radius:20px 20px 0 0;padding:14px!important}
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.card,.process,.record,.dep-card,.job-item,.salary-row,.account-editor,.location-row){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.card,.process,.record,.job-item,.salary-row,.account-editor,.location-row){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(input,select,textarea):where(:not(.compras-selecao-bolinha)):where(:not([type=checkbox])){background-color:var(--theme-field,#fff)!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .record-grid[data-navigation-menu=true]{display:flex!important;flex-direction:column;gap:0!important;border:1px solid var(--layout-line);border-radius:14px;overflow:hidden;background:var(--theme-card,#fff)}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .record-grid[data-navigation-menu=true]>.record{margin:0!important;padding:10px 12px!important;min-height:48px!important;border:0!important;border-bottom:1px solid var(--layout-line)!important;border-radius:0!important;box-shadow:none!important;transform:none!important}
@@ -34,7 +34,7 @@ body #people .dashboard-intro{background:var(--menu-accent,var(--panel-color,#7c
 
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-list-state,.financial-count,.job-item small,.salary-row small){color:var(--layout-ink)!important}
 /* Information blocks remain white in either theme; gray is only the shared spacing surface. */
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.job-identity,.account-identity,.icon-live-preview,.doc-capture,.form-note,.identity-advanced,.dep-card,.location-tree,.operator-fees){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.job-identity,.account-identity,.icon-live-preview,.doc-capture,.form-note,.identity-advanced,.location-tree,.operator-fees){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.job-identity,.account-identity,.icon-live-preview,.doc-capture,.dep-card) :is(label,p,small,strong,b,summary){color:var(--layout-ink)!important}
 /* Nested information sections and tables keep the common neutral surface. */
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.location-identity,.location-preview-card,.job-preview,.salary-item,.next-card,.process,.card,.panel){border-color:var(--layout-line)!important}
@@ -201,8 +201,9 @@ body :is(.view,dialog,.modal) :is(.footer-save-accent,.footer-cancel-accent){dis
 
 
 body :is(.view,dialog,.modal) .footer-action-pair{display:flex!important;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px}
-body .footer-action-pair>.footer-cancel-accent{order:0!important}
-body .footer-action-pair>.footer-save-accent{order:1!important}
+/* A barra de ações dos cadastros em etapas (.compras-etapas-nav) tem ordem própria (compras.css): Voltar · Cancelar · Salvar · Avançar. */
+body .footer-action-pair:not(.compras-etapas-nav)>.footer-cancel-accent{order:0!important}
+body .footer-action-pair:not(.compras-etapas-nav)>.footer-save-accent{order:1!important}
 
 /* Operator fees: continuous rows and responsive fields for the expanded editor. */
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees > .operator-fee-brand {

@@ -132,31 +132,74 @@
     });
   }
   /**
-   * Aniversário por dois seletores, Dia e Mês, sem ano (16/11/2026). valor() devolve "MM-DD", '' quando nada foi escolhido,
-   * ou o formato antigo (AAAA-MM) intacto enquanto a pessoa não mexer; escolha pela metade segue incompleta para a validação recusar.
+   * Data de aniversário: dia e mês, sem ano, num campo só (pedido do Rodrigo, 17/11/2026; substitui os dois seletores de
+   * 16/11). O campo tem a máscara DD/MM para digitar e, ao tocar nele ou no botão do calendário, abre um painel com os
+   * meses e os dias (painel cinza, opções brancas, a escolhida na cor do menu): escolhe-se o mês e o dia e o painel fecha.
+   * O campo mostra "25/jan". valor() devolve "MM-DD", '' quando nada foi escolhido, ou
+   * o formato antigo (AAAA-MM) intacto enquanto a pessoa não mexer; escolha pela metade segue incompleta para a
+   * validação recusar. rotulo: o nome do campo (um " *" no fim marca obrigatório).
    */
   const MESES_LONGOS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-  function seletoresAniversario(valorInicial) {
+  const MESES_CURTOS = D.MESES_ABREVIADOS;
+  const DIAS_DO_MES = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  function seletoresAniversario(valorInicial, { rotulo = 'Aniversário' } = {}) {
     const p = D.aniversarioPartes(valorInicial);
-    const dia = seletor(Array.from({ length: 31 }, (_, i) => [String(i + 1).padStart(2, '0'), String(i + 1)]), p.dia, 'Selecionar dia');
-    const mes = seletor(MESES_LONGOS.map((n, i) => [String(i + 1).padStart(2, '0'), n]), p.mes, 'Selecionar mês');
-    dia.setAttribute('aria-label', 'Aniversário: dia'); mes.setAttribute('aria-label', 'Aniversário: mês');
-    const no = el('div', 'compras-campo compras-largo compras-aniv');
-    const linha = el('div', 'compras-recorr-linha');
-    const rotuloDia = el('label', 'compras-campo'); rotuloDia.append(el('span', 'compras-rotulo', 'Dia'), dia);
-    const rotuloMes = el('label', 'compras-campo'); rotuloMes.append(el('span', 'compras-rotulo', 'Mês'), mes);
-    linha.append(rotuloDia, rotuloMes);
+    let dia = p.dia; let mes = p.mes; let mexeu = false;
+    const nomeCampo = rotulo.endsWith(' *') ? rotulo.slice(0, -2) : rotulo;
+    // O campo mostra o dia e o mês abreviado ("25/jan"); enquanto a pessoa digita os números, mostra os números.
+    const escrito = () => (dia && mes && MESES_CURTOS[Number(mes) - 1] ? dia + '/' + MESES_CURTOS[Number(mes) - 1] : dia || mes ? (dia || '') + (mes ? '/' + mes : '') : '');
+    const input = entrada('text', dia && mes ? escrito() : '', { inputMode: 'numeric', placeholder: 'DD/MM', maxLength: 6, autocomplete: 'off' });
+    input.setAttribute('aria-label', nomeCampo);
+    input.dataset.textoLivre = '1'; // "25/jan" não é nome: fica fora das maiúsculas automáticas
+    const botaoPainel = el('button', 'shortcut-circle compras-redondo');
+    botaoPainel.type = 'button'; botaoPainel.title = 'Escolher o dia e o mês'; botaoPainel.setAttribute('aria-label', nomeCampo + ': escolher o dia e o mês');
+    botaoPainel.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/></svg>';
+    const caixa = el('div', 'compras-aniv-campo'); caixa.append(input, botaoPainel);
+    const painel = el('div', 'compras-escolha-painel compras-aniv-painel'); painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', nomeCampo + ': dia e mês');
+    const gradeMes = el('div', 'compras-grade-escolha em-4'); const gradeDia = el('div', 'compras-grade-escolha em-7');
+    // Ordem do campo: primeiro o dia, depois o mês (pedido do Rodrigo, 17/11/2026).
+    painel.append(el('span', 'compras-rotulo', 'Dia'), gradeDia, el('span', 'compras-rotulo', 'Mês'), gradeMes);
+    const abrir = U.flutuante(caixa, painel);
     const resumo = el('small', 'profiles-note'); resumo.setAttribute('aria-live', 'polite');
-    no.append(el('span', 'compras-rotulo', 'Aniversário'), linha, resumo);
+    const no = el('div', 'compras-campo compras-aniv');
+    no.append(el('span', 'compras-rotulo', rotulo), caixa, painel, resumo);
+    let pelaMetade = false; // digitou só parte de DD/MM
     const valor = () => {
-      if (dia.value && mes.value) return mes.value + '-' + dia.value;
-      if (!dia.value && !mes.value) return '';
-      if (p.legado && !dia.value && mes.value === p.mes) return String(valorInicial);
-      return mes.value + '-' + dia.value;
+      if (dia && mes) return mes + '-' + dia;
+      if (pelaMetade) return '-' + dia;
+      if (!dia && !mes) return '';
+      if (p.legado && !mexeu) return String(valorInicial);
+      return mes + '-' + dia;
     };
-    const pintar = () => { const v = valor(); resumo.textContent = D.aniversarioRuim(v) || (D.aniversarioTexto(v) ? 'Aniversário: ' + D.aniversarioTexto(v) : ''); };
-    dia.addEventListener('change', pintar); mes.addEventListener('change', pintar); pintar();
-    return { no, valor };
+    const celula = (texto, marcado, nome, aoTocar) => {
+      const b = el('button', 'compras-grade-celula', texto);
+      b.type = 'button'; b.setAttribute('aria-pressed', String(marcado)); b.setAttribute('aria-label', nome); b.onclick = aoTocar;
+      return b;
+    };
+    function pintar(escreve = true) {
+      if (escreve) input.value = escrito();
+      const v = valor();
+      resumo.textContent = D.aniversarioRuim(v) || (dia && mes ? Number(dia) + ' de ' + MESES_LONGOS[Number(mes) - 1].toLowerCase() : '');
+      gradeMes.replaceChildren(...MESES_CURTOS.map((m, i) => { const n = String(i + 1).padStart(2, '0'); return celula(m, n === mes, MESES_LONGOS[i], () => { mes = n; mexeu = true; pelaMetade = false; pintar(); if (dia && !D.aniversarioRuim(valor())) fechar(); }); }));
+      const total = mes ? DIAS_DO_MES[Number(mes) - 1] || 31 : 31;
+      gradeDia.replaceChildren(...Array.from({ length: total }, (_, i) => { const n = String(i + 1).padStart(2, '0'); return celula(String(i + 1), n === dia, 'Dia ' + (i + 1), () => { dia = n; mexeu = true; pelaMetade = false; pintar(); if (mes) fechar(); }); }));
+    }
+    const fechar = () => { abrir(false); input.focus(); input.dispatchEvent(new Event('change', { bubbles: true })); };
+    // Máscara DD/MM: só números; a barra entra sozinha depois do dia.
+    input.addEventListener('input', () => {
+      const d = input.value.split('').filter((c) => c >= '0' && c <= '9').join('').slice(0, 4);
+      input.value = d.length > 2 ? d.slice(0, 2) + '/' + d.slice(2) : d;
+      // Com os 4 dígitos, vale; pela metade, fica incompleto (a validação recusa) sem trocar o que a pessoa vê.
+      dia = d.length >= 2 ? d.slice(0, 2) : ''; mes = d.length === 4 ? d.slice(2) : '';
+      mexeu = true; pelaMetade = d.length > 0 && d.length < 4;
+      // Completo e com mês que existe: troca os números do mês pela abreviação.
+      pintar(d.length === 4 && Boolean(MESES_CURTOS[Number(mes) - 1]));
+    });
+    input.addEventListener('click', () => abrir(true));
+    input.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown') { e.preventDefault(); abrir(true); } });
+    botaoPainel.addEventListener('click', () => abrir(painel.hidden));
+    pintar();
+    return { no, valor, input };
   }
   const aplicarMascara = (input, fn) => { input.addEventListener('input', () => { input.value = fn(input.value); }); return input; };
   function interruptor(rotulo, marcado, dica) {
@@ -205,71 +248,29 @@
     return [{ ...mer, cor: 'var(--navigation-ink, #a2a0aa)', rotulo: 'Sem categoria' }];
   }
   /* ---------- Enviar link para cadastro (P-29): a parte visível existe; o envio está desligado ---------- */
-  const PRAZOS_CONVITE = [['1', '1 dia útil'], ['3', '3 dias úteis'], ['5', '5 dias úteis'], ['7', '7 dias úteis'], ['data', 'Escolher data e hora']];
-  const CANAIS_CONVITE = [['whatsapp', 'WhatsApp'], ['email', 'E-mail'], ['sms', 'SMS']];
-  /* Prazo padrão dos convites: preferência do sistema neste aparelho (não é dado de fornecedor). Vem preenchido com o
-     último prazo em dias úteis escolhido (3 enquanto ninguém trocar); "data e hora" vale só para aquele envio. */
-  const CHAVE_PRAZO_CONVITE = 'cicluz-fornecedores-prazo-convite';
-  const prazoPadraoConvite = () => {
-    try { const v = localStorage.getItem(CHAVE_PRAZO_CONVITE); if (PRAZOS_CONVITE.some(([id]) => id === v && id !== 'data')) return v; } catch (e) { /* sem preferência salva */ }
-    return '3';
-  };
-  const guardarPrazoConvite = (v) => { if (v === 'data') return; try { localStorage.setItem(CHAVE_PRAZO_CONVITE, v); } catch (e) { /* vale só nesta visita */ } };
   /**
-   * ÚNICO ponto para ligar o envio quando a P-29 (parte do servidor) for decidida: recebe o canal e o prazo e deve
+   * ÚNICO ponto para ligar o envio quando a P-29 (parte do servidor) for decidida: recebe o canal, o prazo e a mensagem e deve
    * devolver { url } para abrir (wa.me, mailto:, sms:) com a mensagem e o link do convite. Hoje devolve null, porque
    * o link ainda não tem para onde levar: nada de link falso nem de abrir o WhatsApp com endereço que não existe.
    */
-  function conviteCadastro(canal, prazo) { // eslint-disable-line no-unused-vars
+  function conviteCadastro(canal, prazo, mensagem) { // eslint-disable-line no-unused-vars
     return null;
   }
-  /**
-   * Botão retangular "Enviar" (aviãozinho) do cabeçalho da lista e o painel que ele abre: uma coluna branca estreita
-   * com a seta de fechar e as bolinhas dos canais (WhatsApp, e-mail, SMS), e ao lado o Prazo de resposta (padrão
-   * 3 dias úteis, ou data e hora). O painel fica por cima da tela (fixo), alinhado ao botão.
-   */
+  /** "Enviar" de Fornecedores: o botão comum (U.botaoEnviar) com o Prazo de resposta (padrão 3 dias úteis, ou data e hora). */
   function botaoEnviarConvite() {
-    const caixa = el('span', 'compras-enviar');
-    const painel = el('div', 'compras-enviar-painel');
-    painel.hidden = true;
-    painel.setAttribute('role', 'dialog');
-    painel.setAttribute('aria-label', 'Enviar link para cadastro');
-    const b = U.botaoTitulo('Enviar', 'Enviar link para cadastro', () => abrir(painel.hidden), U.ICONES.send);
-    const bolinha = (rotulo, desenho, acao, classe = '') => {
-      const x = el('button', 'shortcut-circle compras-redondo ' + classe);
-      x.type = 'button'; x.title = rotulo; x.setAttribute('aria-label', rotulo);
-      x.innerHTML = U.svg(desenho);
-      x.onclick = acao;
-      return x;
-    };
-    const canais = el('div', 'compras-enviar-canais');
-    canais.setAttribute('role', 'group');
-    canais.setAttribute('aria-label', 'Tipo de envio');
-    const fechar = bolinha('Fechar', U.ICONES.voltar, () => { abrir(false); b.focus(); }, 'compras-enviar-fechar');
     const aviso = el('p', 'profiles-note');
     aviso.setAttribute('role', 'status');
-    const prazo = seletor(PRAZOS_CONVITE, prazoPadraoConvite());
-    const data = entrada('date', '');
-    const hora = entrada('time', '');
-    const dataCampo = campo('Responder até (data)', data);
-    const horaCampo = campo('Hora', hora);
-    const pintarPrazo = () => { const livre = prazo.value === 'data'; dataCampo.style.display = livre ? '' : 'none'; horaCampo.style.display = livre ? '' : 'none'; };
-    prazo.onchange = () => { pintarPrazo(); guardarPrazoConvite(prazo.value); };
-    const lerPrazo = () => (prazo.value === 'data' ? { tipo: 'data', data: data.value, hora: hora.value } : { tipo: 'dias-uteis', dias: Number(prazo.value) });
-    canais.append(fechar, ...CANAIS_CONVITE.map(([id, nomeCanal]) => bolinha('Enviar por ' + nomeCanal, U.ICONES[id], () => {
-      const convite = conviteCadastro(id, lerPrazo());
-      if (!convite) { aviso.textContent = 'O link de cadastro ainda não está ativo. Falta a liberação da parte do servidor.'; return; }
-      window.open(convite.url, '_blank', 'noopener');
-    })));
-    const lado = el('div', 'compras-enviar-prazo');
-    const tipo = el('div', 'compras-campo');
-    tipo.append(el('span', 'compras-rotulo', 'Tipo de envio'), el('small', 'profiles-note', 'Toque em WhatsApp, e-mail ou SMS, nos ícones ao lado.'));
-    lado.append(campo('Prazo de resposta', prazo), dataCampo, horaCampo, tipo, aviso);
-    pintarPrazo();
-    painel.append(canais, lado);
-    const abrir = U.flutuante(b, painel, { foco: fechar });
-    caixa.append(b, painel);
-    return caixa;
+    const prazo = U.prazoResposta();
+    // A Mensagem aparece como em Clientes e Patrimônios (18/11/2026, Rodrigo); ela só segue quando o envio for ligado (P-29).
+    const mensagem = U.mensagemEnvio();
+    return U.botaoEnviar({
+      dica: 'Enviar link para cadastro', campos: [...prazo.campos, mensagem.campo], depois: [aviso],
+      aoCanal: (id) => {
+        const convite = conviteCadastro(id, prazo.ler(), mensagem.texto());
+        if (!convite) { aviso.textContent = 'O link de cadastro ainda não está ativo. Falta a liberação da parte do servidor.'; return; }
+        window.open(convite.url, '_blank', 'noopener');
+      },
+    });
   }
   const telasF = {};
   let origemF = 'mer';
@@ -522,7 +523,8 @@
         }
         pintarTipo();
 
-        /* Buscas (consultas-publicas.js): nunca trocam o que a pessoa digitou; se o serviço falhar, avisam discretamente
+        /* Buscas (consultas-publicas.js): na primeira consulta só preenchem o que está livre; com um CEP ou CNPJ DIFERENTE do
+           que estava no campo, trocam os dados antigos pelos novos (regra do Rodrigo, 17/11/2026). Se o serviço falhar, avisam discretamente
            e o cadastro segue à mão. Cada número é consultado uma vez. Um campo é "livre" para a consulta quando está
            vazio ou quando ainda tem exatamente o valor que uma consulta anterior pôs (a pessoa não mexeu): assim, ao
            trocar o CEP ou o CNPJ, o resultado novo substitui o da consulta anterior em bloco (não sobra a UF antiga). */
@@ -542,9 +544,11 @@
         const resumo = (r) => (r.limpos.length ? ' Esvaziado, por ser da consulta anterior: ' + r.limpos.join(', ') + '.' : '');
         const FALHA = { 'nao-encontrado': 'não encontrado', indisponivel: 'consulta indisponível agora' };
         let cepConsultado = D.digitos(cep.value);
-        async function buscarCep() {
+        async function buscarCep(forcar) {
           const n = D.digitos(cep.value);
-          if (n.length !== 8 || n === cepConsultado) return;
+          if (n.length !== 8 || (n === cepConsultado && forcar !== true)) return;
+          // CEP diferente do que estava (ou Enter no campo): o endereço novo substitui o antigo, mesmo o que veio gravado ou foi digitado.
+          if (cepConsultado || forcar === true) [rua, bairro, cidade, uf].forEach((c) => daConsulta.set(c, c.value));
           cepConsultado = n;
           avisoCep.textContent = 'Buscando o endereço do CEP…';
           const r = await C.cep(n);
@@ -555,11 +559,15 @@
           const r2 = completar([[rua, e.logradouro, 'rua'], [bairro, e.bairro, 'bairro'], [cidade, e.cidade, 'cidade'], [uf, e.uf, 'UF'], [numero, '', 'número'], [complemento, '', 'complemento']]);
           avisoCep.textContent = (r2.feitos.length ? 'Preenchido pelo CEP: ' + r2.feitos.join(', ') + '. Confira e informe o número.' : 'Endereço do CEP conferido; nada foi trocado.') + resumo(r2);
         }
-        cep.addEventListener('input', buscarCep);
+        // Enter no campo busca na hora e troca os dados (pedido do Rodrigo, 17/11/2026), sem salvar o formulário.
+        const aoEnter = (buscar) => (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); ev.stopPropagation(); buscar(true); } };
+        cep.addEventListener('input', () => buscarCep(false)); cep.addEventListener('keydown', aoEnter(buscarCep));
         let cnpjConsultado = D.digitos(cnpj.value);
-        async function buscarCnpj() {
+        async function buscarCnpj(forcar) {
           const n = D.digitos(cnpj.value);
-          if (n.length !== 14 || n === cnpjConsultado || !R().cnpjValid(n)) return;
+          if (n.length !== 14 || (n === cnpjConsultado && forcar !== true) || !R().cnpjValid(n)) return;
+          // CNPJ diferente do que estava (ou Enter no campo) traz os dados da empresa e substitui os antigos.
+          if (cnpjConsultado || forcar === true) [razao, nome, cep, rua, numero, complemento, bairro, cidade, uf].forEach((c) => daConsulta.set(c, c.value));
           cnpjConsultado = n;
           avisoCnpj.textContent = 'Buscando os dados da empresa pelo CNPJ…';
           const r = await C.cnpj(n);
@@ -572,12 +580,12 @@
           cepConsultado = D.digitos(cep.value);
           avisoCnpj.textContent = (r2.feitos.length ? 'Preenchido pela consulta do CNPJ: ' + r2.feitos.join(', ') + '. Confira antes de salvar.' : 'Dados do CNPJ conferidos; nada foi trocado.') + resumo(r2);
         }
-        cnpj.addEventListener('input', buscarCnpj);
+        cnpj.addEventListener('input', () => buscarCnpj(false)); cnpj.addEventListener('keydown', aoEnter(buscarCnpj));
 
         /* ----- Etapa 2: vendedor ou prestador de serviço (é o contato do fornecedor; o WhatsApp dele recebe a cotação) ----- */
         const s2 = el('fieldset', 'compras-fieldset');
         const vNome = texto(f?.contatoNome);
-        // Aniversário: dia e mês, sem ano (dois seletores). A data completa antiga fica no dado.
+        // Aniversário: dia e mês, sem ano (campo DD/MM com painel). A data completa antiga fica no dado.
         const vAniv = seletoresAniversario(D.aniversarioVendedor(f));
         const whats = telefone(f?.whatsapp);
         const mail = email(f?.email);
@@ -903,7 +911,7 @@
         cDados.append(campo('Forma de pagamento', cForma), vencDataCampo, diaPagtoCampo, rec.no, valorCampo, smBox, campo('Início da vigência', cInicio), campo('Término da vigência', cFim),
           campo('Reajuste', cReajuste, 'Só o índice combinado; o sistema não calcula o reajuste.'), percentualCampo, obsCampo);
         const pintarContrato = () => {
-          mostrar(cDados, temContrato.ativo);
+          cDados.classList.toggle('compras-so-pergunta', !temContrato.ativo); // desligado, o quadro mostra só a pergunta
           mostrar(vencDataCampo, cForma.value !== 'dinheiro' && cForma.value !== '');
           vencDataCampo.querySelector('.compras-rotulo').textContent = cForma.value === 'boleto' ? 'Data de vencimento do boleto' : 'Data de vencimento';
           mostrar(diaPagtoCampo, cForma.value === 'dinheiro');
@@ -941,7 +949,8 @@
           };
         };
         const etapa3 = el('div', 'compras-etapa');
-        etapa3.append(fin.no, temContrato, cDados);
+        temContrato.classList.add('compras-largo'); cDados.querySelector('legend').after(temContrato); // a pergunta abre o quadro "Dados do contrato"
+        etapa3.append(fin.no, cDados);
 
         /* ----- Etapa 6: contrato (o documento). Mostra o que foi combinado no financeiro; o modelo de contrato e a
            assinatura ainda não existem (aguardam decisão). ----- */
@@ -1049,13 +1058,13 @@
         voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
         const avancar = botao('Avançar', () => {
           const falta = D.validarFornecedorEtapas(ler(), R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador })[atual];
-          if (falta) { erroEtapa.textContent = falta; U.marcarObrigatorios(quadros[atual]); return; }
+          if (falta) { erroEtapa.textContent = falta; U.sinalizarObrigatorios(quadros[atual]); return; }
           ir(atual + 1);
         }, 'btn form-next-action');
         const salvarFim = el('button', 'btn', 'Salvar');
         salvarFim.type = 'submit';
+        const cancelar = botao('Cancelar', () => dlg.close(), 'btn secondary footer-cancel-accent');
         const nav = el('div', 'compras-form-rodape compras-etapas-nav');
-        nav.append(voltar, avancar, salvarFim);
         // No cadastro novo só se volta pela barra (para a frente, pelo Avançar, que confere a etapa); na edição, qualquer etapa.
         const barra = window.CicluzStepper.create({ steps: etapas(), current: 0, label: 'Etapas do cadastro do fornecedor', onSelect: (i) => { if (f || i <= atual) ir(i); } });
         function ir(i) {
@@ -1069,9 +1078,10 @@
           // Os botões entram e saem da barra (o formato padrão dos botões de rodapé força a exibição mesmo com hidden):
           // Voltar a partir da 2ª etapa, Avançar até a penúltima; Salvar em todas na edição e só na última no cadastro novo.
           const ultima = atual === quadros.length - 1;
-          nav.replaceChildren(...[atual > 0 && voltar, !ultima && avancar, (f || ultima) && salvarFim].filter(Boolean));
+          nav.replaceChildren(...[atual > 0 && voltar, cancelar, (f || ultima) && salvarFim, !ultima && avancar].filter(Boolean));
           const foco = quadros[atual].querySelector('input:not([type=checkbox]):not([readonly]),select');
-          if (foco && form.isConnected) foco.focus();
+          if (foco && form.isConnected) foco.focus({ preventScroll: true });
+          U.subirAoTopo(barra.el, form);
         }
         pintarVendedor();
         aplicarTema();

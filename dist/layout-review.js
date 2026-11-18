@@ -18,6 +18,43 @@
   const lower=text.toLowerCase();if(lower.includes('foto')||lower.includes('câmera'))return 'camera';
   return Object.keys(WORDS).find(k=>WORDS[k].split(' ').includes(word))||'right';
  }
+ /* Exemplo dentro do campo vazio (pedido do Rodrigo, 17/11/2026), em todo o sistema e num lugar só: nome de pessoa mostra "Ex: Nome e sobrenome..." e e-mail mostra "Ex: nome@email.com..." (neutro, sem nome de provedor). Só entra em campo que ainda não tem exemplo próprio (WhatsApp, CPF, CEP, datas e DD/MM já têm o seu). Nome de empresa, produto, grupo, lista etc. não é nome de pessoa e fica sem exemplo. */
+ const PERSON=/^nome (completo|e sobrenome|d[oa]s? (respons[aá]vel|contato|vendedora?|prestadora?|representante|financeiro|colaboradora?|funcion[aá]ri[oa]|cliente|signat[aá]rio|dependente|m[eé]dic[oa]|m[aã]e|pai|titular|candidat[oa]|entrevistador|gestor|benefici[aá]ri[oa]))/i;
+ /* Exemplo de texto vem com "Ex: " antes e "..." depois, para ficar claro que é só um exemplo (ajuste do Rodrigo, 17/11/2026). Máscara de formato (telefone, CNPJ, CPF, CEP, valor, percentual) fica sem, porque mostra o formato, não um exemplo. */
+ const ex=t=>'Ex: '+t+'...';
+ function exampleFor(label,input){
+  const own=label.querySelector('.compras-rotulo')||[...label.childNodes].find(n=>n.nodeType===3&&n.textContent.trim())||label.querySelector('span');
+  const text=(own?own.textContent:'').trim();
+  if(input.type==='email'||/e-?mail/i.test(text))return /celular|telefone|whatsapp/i.test(text)?'':ex('nome@email.com');
+  if(input.type==='tel')return '(00) 00000-0000';
+  if(input.type!=='text'&&input.type!=='')return '';
+  if(PERSON.test(text))return ex('Nome e sobrenome');
+  const found=EXAMPLES.find(([re])=>re.test(text));
+  return found?found[1]:'';
+ }
+ /* Demais campos de texto: o exemplo vem do nome do campo; a primeira linha que casar vale. Campo que não está aqui (observação, descrição livre, nome de grupo, de lista, de produto…) fica sem exemplo, para não sugerir um formato que não existe. */
+ const EXAMPLES=[
+  [/cnpj/i,'00.000.000/0000-00'],[/cpf/i,'000.000.000-00'],[/\bcep\b/i,'00000-000'],
+  [/whatsapp|telefone|celular/i,'(00) 00000-0000'],
+  [/raz[aã]o social/i,ex('Empresa Exemplo Ltda')],[/nome fantasia/i,ex('Nome da empresa')],
+  [/^(rua|logradouro|endere[cç]o)/i,ex('Rua das Flores')],[/^n[uú]mero( \*)?$/i,ex('123')],[/^complemento/i,ex('Casa, apartamento, loja, sítio')],[/^bairro/i,ex('Centro')],[/^(cidade|munic[ií]pio)/i,ex('Nome da cidade')],
+  [/c[oó]digo de barras/i,'7890000000000'],[/^marca/i,ex('Nome da marca')],
+  [/\bsite\b|\burl\b|\blink\b/i,ex('https://www.exemplo.com.br')],
+  [/\(%\)|percentual|al[ií]quota|margem|desconto %/i,'0,00'],
+  [/\(r\$\)|^valor|^pre[cç]o|^custo|sal[aá]rio/i,'R$ 0,00'],
+  [/chave pix/i,'CPF, CNPJ, e-mail ou celular'],[/ag[eê]ncia/i,'0000'],[/^conta( \*)?$|conta corrente/i,'00000-0'],
+ ];
+ /* Exemplo que a tela já trazia escrito de outro jeito entra no mesmo padrão (ajuste do Rodrigo, 17/11/2026): "Ex.: X" vira "Ex: X...", telefone de exemplo vira "(00) 00000-0000", e-mail de exemplo vira "Ex: nome@email.com..." e nome de pessoa vira "Ex: Nome e sobrenome...". Texto que explica o campo (ex.: "Preenchido pela empresa selecionada") não é exemplo e fica como está. */
+ function standardExample(label,input){
+  const p=input.placeholder.trim();
+  if(p.startsWith('Ex: ')&&p.endsWith('...'))return '';
+  if(p.includes('@'))return ex('nome@email.com');
+  if(/^\(\d{2}\)\s?\d{4,5}-\d{4}$/.test(p))return '(00) 00000-0000';
+  const m=/^ex\.?:\s*(.+?)[.…]*$/i.exec(p);if(m)return ex(m[1]);
+  const own=label.querySelector('.compras-rotulo')||[...label.childNodes].find(n=>n.nodeType===3&&n.textContent.trim())||label.querySelector('span');
+  if(/^nome/i.test(p)&&PERSON.test((own?own.textContent:'').trim()))return ex('Nome e sobrenome');
+  return '';
+ }
  function sync(){
   document.querySelectorAll('button.standard-form-action,.view button,dialog button,.modal button,.btn').forEach(button=>{
    if(button.closest('.head,.location-dialog-header,.organogram-editor-header,.people-bottom-header'))return;
@@ -53,6 +90,7 @@
   });
   document.querySelectorAll('.view label,dialog label,.modal label,.account-field-group,.job-identity,.account-identity,.location-identity').forEach(block=>{
    const inputs=[...block.querySelectorAll('input,select,textarea')].filter(el=>!el.dataset.datePicker&&!['hidden','checkbox','radio'].includes(el.type));
+   if(block.tagName==='LABEL'&&inputs.length===1&&inputs[0].tagName==='INPUT'&&!inputs[0].readOnly){const campo=inputs[0];if(!campo.placeholder){const hint=exampleFor(block,campo);if(hint)campo.placeholder=hint}else if(campo.dataset.exemploVisto!==campo.placeholder){const novo=standardExample(block,campo);if(novo)campo.placeholder=novo;campo.dataset.exemploVisto=campo.placeholder}}
    const simple=!block.classList.contains('salary-row')&&inputs.length===1&&!block.querySelector('.identity-pick,.location-sigla-field,.icon-library,.account-icon-options,.extra-library');
    if(block.classList.contains('single-field-block')!==simple)block.classList.toggle('single-field-block',simple);
   });

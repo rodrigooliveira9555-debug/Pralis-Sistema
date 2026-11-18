@@ -367,7 +367,9 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,dialog).shell-dialog.app
 .docs-sub-card>*{grid-area:auto}
 body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog form{display:grid;grid-template-columns:minmax(0,1fr)}body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog form>*{grid-column:1/-1;min-width:0}
 @media(max-width:600px){.docs-table th:nth-child(2),.docs-table td:nth-child(2){display:none}.docs-status-cell>span:last-child{display:none}.docs-table td.uniforms-row-actions{white-space:nowrap}}
-.card-inherited-icon .sigla-text{font:700 11px/1 var(--ui-font,inherit);letter-spacing:0}
+/* Sigla de três letras como ícone (VND, DES, MER, RET, CNT) — regra única (17/11/2026, Rodrigo): em qualquer lugar (cartão do menu, cabeçalho, linha de grupo, escolha de ícone no cadastro do grupo, amostra) a sigla tem 11 px em negrito, numa linha só, centrada na caixa. */
+.sigla-text{font:700 11px/1 var(--ui-font,inherit);letter-spacing:0;white-space:nowrap}
+:is(span,button):has(> .sigla-text){display:inline-flex;align-items:center;justify-content:center}
 .titulo-aviso{display:inline-block;width:1.1em;height:1.1em;margin-left:6px;vertical-align:-.2em;color:#d97706}
 .titulo-aviso svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .card-inherited-icon.revisar svg{color:#ffd60a}
@@ -475,7 +477,7 @@ body .btn.acao-com-circulo[hidden]{display:none}
 a.btn.link-externo{width:fit-content;text-decoration:none}
 .people-doc-scan{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin:0 0 12px}
 .people-doc-scan .profiles-note{flex:1 1 100%;margin:0}
-.doc-capture{display:grid;gap:12px;border:1px dashed color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 35%,white);border-radius:14px;padding:16px;margin:14px 0 20px}
+.doc-capture{display:grid;gap:12px;border:1px dashed color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 35%,white);border-radius:14px;padding:16px;margin:12px 0}
 .dep-card .doc-capture{margin-top:12px}
 .doc-capture-head{display:flex;align-items:center;gap:12px;min-width:0}
 .doc-capture-head>div{min-width:0}
@@ -693,3 +695,23 @@ body input[type=checkbox]:not(.compras-selecao-bolinha):checked{background-color
 body input[type=checkbox]:not(.compras-selecao-bolinha):indeterminate{background-color:var(--field-accent,var(--menu-accent,var(--panel-color,#7c3aed)));background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.4' stroke-linecap='round'%3E%3Cpath d='M6 12h12'/%3E%3C/svg%3E")}
 body input[type=checkbox]:not(.compras-selecao-bolinha):disabled{opacity:.5;cursor:not-allowed}
 body input[type=checkbox]:not(.compras-selecao-bolinha):focus-visible{outline:2px solid var(--field-accent,var(--menu-accent,var(--panel-color,#7c3aed)));outline-offset:2px}
+/* Quadro com borda em todo bloco de campos (17/11/2026, Rodrigo): o mesmo desenho do quadro dos cadastros novos (.compras-fieldset) — borda fina, cantos de 12 px, respiro interno. Com data-quadro, o título fica sobre a borda, como uma legenda. Bloco dentro de bloco não repete a borda. */
+.form-fields{border:1px solid var(--layout-line,#dedee3);border-radius:12px;padding:14px;box-sizing:border-box;min-width:0}
+.form-fields .form-fields{border:0;border-radius:0;padding:0}
+/* Espaço entre quadros (18/11/2026, Rodrigo): 12 px em todo o sistema, o mesmo dos cadastros em etapas (.compras-etapa). */
+.form-fields[data-quadro]{position:relative;margin-top:12px;padding-top:18px}
+.form-fields[data-quadro]::before{content:attr(data-quadro);position:absolute;top:-10px;left:12px;padding:0 6px;background:var(--layout-gap,#f5f5f7);color:inherit;font:600 13px/18px var(--ui-font,inherit)}
+dialog .form-fields[data-quadro]::before,.modal .form-fields[data-quadro]::before{background:var(--layout-gap,#f5f5f7)}
+/* Ações da página fora do quadro (18/11/2026, Rodrigo): nas telas antigas a linha Cancelar/Salvar (ou Voltar/Avançar) é o último filho do próprio quadro de campos. Ela age na página inteira, então sai do quadro: a linha cobre o fim da borda do quadro com o fundo da página e desenha o fecho do quadro logo acima dos botões. Mesmo desenho da barra de ações dos cadastros em etapas (.compras-etapas-nav). O #id-inexistente só dá peso à regra: a do celular (mobile-forms.css) limita a largura dos filhos do quadro com peso de id. */
+:is(.form-fields,#id-inexistente):not(.form-fields .form-fields)>:is(.actions,.form-actions):last-child{position:relative;margin:0 -15px -15px;padding:24px 0 0;width:calc(100% + 30px);max-width:none;box-sizing:border-box;background:var(--layout-gap,#f5f5f7)}
+.form-fields:not(.form-fields .form-fields)>:is(.actions,.form-actions):last-child::before{content:"";position:absolute;inset:0 0 auto 0;height:12px;box-sizing:border-box;border:1px solid var(--layout-line,#dedee3);border-top:0;border-radius:0 0 12px 12px;pointer-events:none}
+/* Quadro do dependente (Cadastro Completo) no padrão dos quadros (18/11/2026, Rodrigo): borda fina sobre o fundo da página, campos brancos dentro; o bloco de campos interno não repete borda nem fundo. As caixas de marcar ("Informado para") ficam à esquerda do texto, uma por linha. */
+.dep-card{background:transparent;border-color:var(--layout-line,#dedee3);padding:14px}
+.dep-card .form-fields{border:0;border-radius:0;padding:0;background:transparent}
+.dep-card label:has(>input[type=checkbox]){flex-direction:row;align-items:center;gap:8px;font-weight:500;margin:6px 0}
+.dep-card label>input[type=checkbox]{flex:none}
+/* Título na moldura também nos quadros antigos (18/11/2026, Rodrigo): quando o quadro começa por um título (h3 .uniforms-heading), ele sobe para a borda, igual ao data-quadro e à legenda dos cadastros em etapas. */
+.form-fields:has(>.uniforms-heading:first-child){position:relative;margin-top:12px;padding-top:18px}
+.form-fields>.uniforms-heading:first-child{position:absolute;top:-10px;left:12px;margin:0;padding:0 6px;background:var(--layout-gap,#f5f5f7);font:600 13px/18px var(--ui-font,inherit)}
+/* Cadastro de grupo e de conta: os campos têm 8 px entre si; os 6 px a mais deixam 14 px entre o último campo e o fecho do quadro, o mesmo respiro das laterais. */
+:is(.account-editor,#id-inexistente).form-fields:not(.form-fields .form-fields)>.actions:last-child{margin-top:6px}

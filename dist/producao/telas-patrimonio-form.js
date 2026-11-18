@@ -672,8 +672,8 @@
         const barra = window.CicluzStepper.create({ steps: nomesEtapas(), current: 0, label: 'Etapas do cadastro do patrimônio', onSelect: (i) => { if (!novo || i <= atual) ir(i); } });
         const cancelar = botao('Cancelar', () => dlg.close(), 'btn secondary footer-cancel-accent');
         const voltar = botao('Voltar', () => ir(atual - 1), 'btn secondary footer-cancel-accent form-back-action'); voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
-        const avancar = botao('Avançar', () => { const falta = conferir()[atual]; if (falta) { erroEtapa.textContent = falta; U.marcarObrigatorios(quadros[atual]); return; } ir(atual + 1); }, 'btn form-next-action');
-        const salvarFim = el('button', 'btn', 'Salvar Patrimônio'); salvarFim.type = 'submit';
+        const avancar = botao('Avançar', () => { const falta = conferir()[atual]; if (falta) { erroEtapa.textContent = falta; U.sinalizarObrigatorios(quadros[atual]); return; } ir(atual + 1); }, 'btn form-next-action');
+        const salvarFim = el('button', 'btn', 'Salvar'); salvarFim.type = 'submit';
         const nav = el('div', 'compras-form-rodape compras-etapas-nav');
         function ir(i) {
           atual = Math.max(0, Math.min(quadros.length - 1, i));
@@ -681,7 +681,9 @@
           if (atual === 5) pintarRevisao();
           barra.update(nomesEtapas(), atual); erroEtapa.textContent = '';
           const ultima = atual === quadros.length - 1;
-          nav.replaceChildren(...(ultima ? [voltar, salvarFim] : atual === 0 ? [cancelar, avancar] : [cancelar, voltar, avancar]));
+          nav.replaceChildren(...[atual > 0 && voltar, cancelar, ultima && salvarFim, !ultima && avancar].filter(Boolean));
+          // Troca de etapa recomeça do alto (regra de 17/11/2026).
+          if (form.isConnected && barra.el.isConnected) barra.el.scrollIntoView({ block: 'start' });
         }
         form.append(barra.el, ...quadros, erroEtapa, nav);
         desenharImagens(); desenharDocs(); desenharMovs(); desenharPecas(); desenharMan(); desenharVinc(); pintarComposto(); pintarTecnicas(); pintarEnergia(); pintarEspec(); pintarResp(); desenharUt(); desenharFicha(); pintarProducao(); pintarGarSeg(); pintarMan(); pintarInsp(); pintarSelectsDoc();

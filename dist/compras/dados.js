@@ -172,6 +172,8 @@
     window.CicluzComprasDominio.migrarPrestadoresFornecedor(d);
     // Contrato: início, fim, valor e observações passam a ser do quadro "Tem contrato?" do financeiro (uma vez).
     window.CicluzComprasDominio.migrarContratoFinanceiro(d);
+    // Nomes, endereços e e-mails já gravados entram no padrão do sistema (uma vez; o valor antigo de cada troca fica guardado na marca).
+    window.CicluzComprasDominio.migrarNomesPadrao(d, window.formatSystemName);
     return d;
   }
 

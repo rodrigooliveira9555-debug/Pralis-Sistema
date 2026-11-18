@@ -37,6 +37,8 @@ async function esperarFechar(p) {
   }
 }
 const sec = (p, legenda) => dlg(p).locator('fieldset', { has: p.locator('legend', { hasText: legenda }) });
+// O cadastro tem 5 etapas; a barra de etapas leva direto à etapa pedida (1 a 5).
+const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
 
 /* ---------- 1) Criar produto com os campos novos, salvar, reabrir e conferir ---------- */
 {
@@ -65,35 +67,42 @@ const sec = (p, legenda) => dlg(p).locator('fieldset', { has: p.locator('legend'
   await s1b.getByLabel('Quantidade da embalagem', { exact: true }).selectOption('sim');
   ok((await s1b.getByLabel('Como se compra (automático)', { exact: true }).inputValue()) === 'BISCOITO INTEGRAL 200 G - CAIXA COM BISCOITO INTEGRAL 200 G APROXIMADAMENTE 12UN', 'Como se compra no formato do S1');
   const s2 = sec(p, 'Revenda ou transformação');
+  await etapa(p, 2);
   await s2.getByLabel('Grupo de mercadorias', { exact: true }).selectOption({ label: 'MERCEARIA' });
-  ok((await s2.getByLabel('Margem (%)', { exact: true }).inputValue()) === '25', 'Trocar o grupo copia a margem padrão do grupo');
-  await s2.getByLabel('Setor de estoque', { exact: true }).selectOption({ index: 1 });
-  await s2.getByLabel('Área', { exact: true }).selectOption({ index: 1 });
-  await s2.getByLabel('Estoque mín.', { exact: true }).fill('12');
-  await s2.getByLabel('Estoque máx.', { exact: true }).fill('48');
-  await s2.getByLabel('Local de venda primário', { exact: true }).fill('balcão');
-  await s2.getByLabel('Local de venda secundário', { exact: true }).fill('caixa');
-  await s2.getByLabel('Setor de venda primário', { exact: true }).fill('mercearia');
-  await s2.getByLabel('Setor de venda secundário', { exact: true }).fill('caixa');
-  await s2.getByLabel('Área da loja (Relatório Gerentes)', { exact: true }).selectOption('biscoitos');
-  await s2.getByLabel('Custo', { exact: true }).fill('24,00');
-  await s2.getByLabel('Margem (%)', { exact: true }).fill('50');
-  await s2.getByLabel('Margem (%)', { exact: true }).dispatchEvent('input');
-  ok((await s2.getByLabel('V. Venda (calculado)', { exact: true }).inputValue()).includes('3,00'), 'Preço "auto" = custo ÷ embalagem × (1 + margem)');
+  const sLoja = sec(p, 'Desta loja');
+  await etapa(p, 3);
+  ok((await sLoja.getByLabel('Margem (%)', { exact: true }).inputValue()) === '25', 'Trocar o grupo copia a margem padrão do grupo');
+  await sLoja.getByLabel('Setor de estoque', { exact: true }).selectOption({ index: 1 });
+  await sLoja.getByLabel('Área', { exact: true }).selectOption({ index: 1 });
+  await sLoja.getByLabel('Estoque mín.', { exact: true }).fill('12');
+  await sLoja.getByLabel('Estoque máx.', { exact: true }).fill('48');
+  await sLoja.getByLabel('Local de venda primário', { exact: true }).fill('balcão');
+  await sLoja.getByLabel('Local de venda secundário', { exact: true }).fill('caixa');
+  await sLoja.getByLabel('Setor de venda primário', { exact: true }).fill('mercearia');
+  await sLoja.getByLabel('Setor de venda secundário', { exact: true }).fill('caixa');
+  await sLoja.getByLabel('Área da loja (Relatório Gerentes)', { exact: true }).selectOption('biscoitos');
+  await sLoja.getByLabel('Custo', { exact: true }).fill('24,00');
+  await sLoja.getByLabel('Margem (%)', { exact: true }).fill('50');
+  await sLoja.getByLabel('Margem (%)', { exact: true }).dispatchEvent('input');
+  ok((await sLoja.getByLabel('V. Venda (calculado)', { exact: true }).inputValue()).includes('3,00'), 'Preço "auto" = custo ÷ embalagem × (1 + margem)');
   ok(await d.getByText('Curva ABC').count() === 0 && await d.getByText('Produto vendido por peso').count() === 0 && await d.getByText('Tolerância na separação').count() === 0, 'Curva ABC, vendido por peso e tolerância não ficam no cadastro (decisão do Zé)');
+  await etapa(p, 5);
   const s3 = sec(p, 'Fiscal');
   await s3.getByLabel('Código CEST', { exact: true }).fill('1234567');
   await s3.getByLabel('Categoria', { exact: true }).fill('biscoitos');
   ok(await s3.locator('.compras-situacao').first().isVisible(), 'Fiscal mostra o estado da classificação');
+  await etapa(p, 4);
   const s4 = sec(p, 'Promoção');
   await s4.getByRole('button', { name: '+ Adicionar promoção' }).click();
+  await s4.locator('.compras-promo .account-status-switch').click(); // Agendar promoção: abre data, horário, repetição e dias
   await s4.getByLabel('Tipo', { exact: true }).selectOption('desconto');
   await s4.getByLabel('Desconto %', { exact: true }).fill('10');
   await s4.getByLabel('Início', { exact: true }).fill('08:00');
   await s4.getByLabel('Término', { exact: true }).fill('10:00');
   // date-fields.js do S2 mostra um campo DD/MM/AA no lugar do original (que guarda ISO).
-  await s4.getByLabel('Válida até', { exact: true }).filter({ visible: true }).fill('31/12/26');
+  await s4.getByLabel('Terminar repetição', { exact: true }).filter({ visible: true }).fill('31/12/26');
   await s4.getByRole('button', { name: 'Promoção 1: Dom' }).click();
+  await etapa(p, 1);
   const s5 = sec(p, 'Conversões de unidade');
   await s5.getByRole('button', { name: '+ Adicionar conversão' }).click();
   await s5.getByLabel('Unidade', { exact: true }).selectOption('CX');
@@ -150,6 +159,7 @@ const sec = (p, legenda) => dlg(p).locator('fieldset', { has: p.locator('legend'
   await sec(p, 'Produto').getByLabel('Código de barras', { exact: true }).fill('');
   await sec(p, 'Produto').getByLabel('Nome do produto', { exact: true }).fill('Biscoito Integral Aveia');
   await sec(p, 'Produto').getByLabel('Medida base', { exact: true }).selectOption('G');
+  await etapa(p, 2);
   await sec(p, 'Revenda ou transformação').getByLabel('Grupo de mercadorias', { exact: true }).selectOption({ label: 'MERCEARIA' });
   await salvarDialogo(p);
   ok(await d3.locator('.compras-duplicidade').isVisible(), 'Nome igual pede confirmação');
@@ -162,29 +172,17 @@ const sec = (p, legenda) => dlg(p).locator('fieldset', { has: p.locator('legend'
   await p.locator('.view.show .people-add-control').click();
   await sec(p, 'Produto').getByLabel('Nome do produto', { exact: true }).fill('Produto Validação');
   await sec(p, 'Como se compra').getByLabel('Qt. embalagem', { exact: true }).fill('10');
+  await etapa(p, 2);
   await sec(p, 'Revenda ou transformação').getByLabel('Grupo de mercadorias', { exact: true }).selectOption({ label: 'MERCEARIA' });
-  await sec(p, 'Revenda ou transformação').getByLabel('Estoque mín.', { exact: true }).fill('15');
+  await etapa(p, 3);
+  await sec(p, 'Desta loja').getByLabel('Estoque mín.', { exact: true }).fill('15');
   await salvarDialogo(p);
   ok(await dlg(p).getByText('Estoque mínimo deve ser múltiplo da Qt. embalagem (10)').first().isVisible(), 'Mínimo precisa ser múltiplo da embalagem');
   await dlg(p).locator('.people-close-control').click();
 
-  /* ---------- 4) Filtros, ordenações, paginação e lote ---------- */
-  const primeira = () => p.locator('#compras-produtos tbody tr').first().innerText();
-  await p.locator('#compras-produtos select[aria-label="Ordenar"]').selectOption('az');
-  ok((await primeira()).includes('AÇÚCAR'), 'Ordenação A–Z');
-  await p.locator('#compras-produtos select[aria-label="Ordenar"]').selectOption('codigo_desc');
-  ok((await primeira()).includes('13131'), 'Ordenação por código decrescente');
-  await p.locator('#compras-produtos select[aria-label="Ordenar"]').selectOption('recentes');
-  ok((await primeira()).includes('BISCOITO'), 'Ordenação mais recentes');
+  /* ---------- 4) Paginação e lote (a tela não tem mais filtros nem ordenação: busca pela lupa do rodapé) ---------- */
+  ok((await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)').first().innerText()).includes('BISCOITO'), 'Lista começa pelos mais recentes');
   ok(await p.getByText(/Página 1 de 2/).isVisible(), 'Paginação de 12 por página');
-  const total = async () => Number((await p.locator('#compras-produtos .compras-linha-info .profiles-note').innerText()).match(/^(\d+)/)[1]);
-  const antes = await total();
-  await p.locator('#compras-produtos label', { hasText: 'Só os que já vendi' }).locator('input').check();
-  ok((await total()) === 13 && antes === 20, '"Só os que já vendi" filtra (20 ativos → 13 com venda)');
-  await p.locator('#compras-produtos label', { hasText: 'Só os que já vendi' }).locator('input').uncheck();
-  await p.locator('#compras-produtos .compras-grupo-chips', { hasText: 'Tipo' }).getByRole('button', { name: 'Transformação' }).click();
-  ok((await p.locator('#compras-produtos tbody tr').count()) === 3, 'Filtro Transformação');
-  await p.getByRole('button', { name: 'Limpar' }).click();
   await p.getByRole('checkbox', { name: 'Selecionar BISCOITO INTEGRAL AVEIA' }).first().check();
   await p.getByRole('checkbox', { name: 'Selecionar BISCOITO INTEGRAL AVEIA' }).last().check();
   await p.getByRole('button', { name: 'Inativar selecionados' }).click();
@@ -199,8 +197,9 @@ const sec = (p, legenda) => dlg(p).locator('fieldset', { has: p.locator('legend'
   ok(inat.every(([s, l]) => s === 'inativo' && l === false), 'Inativar em lote (e desliga a liberação, como no S2)');
 
   /* ---------- 5) Cards e foto ampliada ---------- */
-  await p.locator('#compras-produtos .compras-chips').getByRole('button', { name: 'Cards' }).click();
-  await p.locator('#compras-produtos label', { hasText: 'Só ativos' }).locator('input').uncheck();
+  // Cards só no celular (até 600 px); os inativados aparecem pelo botão "Inativos" do cabeçalho da lista.
+  await p.setViewportSize({ width: 390, height: 900 });
+  await p.locator('#compras-produtos .compras-secao-cab button', { hasText: 'Inativos' }).click();
   await p.getByRole('button', { name: /Ampliar foto de BISCOITO/ }).first().click();
   ok(await dlg(p).locator('img.compras-foto-ampliada').isVisible(), 'Foto ampliada abre a partir do card');
   await p.close();
