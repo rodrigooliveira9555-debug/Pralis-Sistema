@@ -502,7 +502,9 @@
     d.style.setProperty('--panel-text', corTexto);
     const h = el('h2', null, titulo);
     d.append(h);
-    if (subtitulo) d.append(el('p', 'compras-dialog-sub', subtitulo));
+    // Padrão das telas de edição: o título sempre vem com o caminho de navegação logo abaixo (como no Cadastro da conta).
+    const caminho = subtitulo || (document.getElementById('crumb') || {}).textContent || '';
+    if (caminho) d.append(el('p', 'compras-dialog-sub', caminho));
     const form = el('form', 'account-editor compras-form');
     const erro = el('p', 'profiles-error');
     erro.setAttribute('role', 'alert');

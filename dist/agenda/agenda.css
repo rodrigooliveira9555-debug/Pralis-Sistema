@@ -154,7 +154,7 @@ body.dark-theme .agenda-nova-dica { color: #c4b0f7; }
 .agenda-dialog textarea { width: 100%; box-sizing: border-box; resize: vertical; }
 .agenda-subtarefas-lista { display: grid; gap: 6px; }
 .agenda-subtarefa-edicao { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; }
-.agenda-subtarefa-edicao input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--menu-accent); }
+
 .agenda-subtarefas-editor > .btn { justify-self: start; }
 .agenda-form-rodape { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding-top: 4px; }
 .agenda-form-rodape .profiles-note { margin: 0; }
