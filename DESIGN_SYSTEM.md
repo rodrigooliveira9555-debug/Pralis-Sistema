@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Fornecedor: "Preencher endereço" (18/11/2026)
+Igual ao cadastro de cliente (pedido do Rodrigo): no fornecedor **pessoa jurídica** o quadro "Endereço" abre só com o interruptor "Preencher endereço" (Sim/Não); ligado, mostra os campos. Já vem ligado quando há endereço gravado, e liga sozinho quando a consulta do CNPJ traz o endereço. Desligado, o endereço gravado fica como está. No fornecedor **pessoa física** o endereço completo é obrigatório (decisão anterior do Rodrigo), então a pergunta não aparece e os campos ficam sempre à vista.
+
 ## Funções do prestador: acrescentar, editar e excluir (18/11/2026)
 No quadro "Funções" do cadastro de fornecedor (categoria Serviço) há dois botões retangulares no padrão do sistema: **"Acrescentar opção"** (era um botão de borda tracejada; a classe `compras-chip-mais` foi apagada) e **"Gerenciar funções"**. Gerenciar abre a lista das funções no padrão das outras listas: tocar na linha edita; a seta revela Editar e Excluir. Editar muda o nome e a situação (Ativa/Inativa). **Excluir:** função em uso por algum fornecedor gravado não é excluída — a janela oferece deixá-la inativa (sai das opções; quem já usa continua com ela); função sem uso é excluída depois da confirmação. O vínculo continua por id (`d.funcoesPrestador`).
 

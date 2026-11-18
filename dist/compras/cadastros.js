@@ -497,6 +497,14 @@
         /* Endereço: CEP primeiro (puxa rua, bairro, cidade e UF); número e complemento são digitados. */
         const sEnd = el('fieldset', 'compras-fieldset');
         sEnd.append(el('legend', null, 'Endereço'));
+        // "Preencher endereço" (18/11/2026, Rodrigo), igual ao cadastro de cliente: na pessoa jurídica o endereço é opcional, então o
+        // quadro abre só com a pergunta e mostra os campos quando ela é ligada (já vem ligada se houver endereço gravado). Na pessoa
+        // física o endereço completo é obrigatório (decisão do Rodrigo), então a pergunta não aparece e os campos ficam sempre à vista.
+        const endSw = U.quadroSituacao('Preencher endereço', Object.values(f?.endereco || {}).some((x) => String(x || '').trim()), { textos: ['Sim', 'Não'], dica: 'Endereço é opcional neste cadastro.', aoMudar: () => pintarEndereco() });
+        endSw.classList.add('compras-largo'); endSw.querySelector('.account-status-switch').setAttribute('aria-label', 'Preencher endereço');
+        sEnd.append(endSw);
+        const comEndereco = () => ehPF() || endSw.ativo;
+        function pintarEndereco() { mostrar(endSw, !ehPF()); sEnd.classList.toggle('compras-so-pergunta', !comEndereco()); }
         const C = window.CicluzConsultas;
         const cep = aplicarMascara(entrada('text', f?.endereco?.cep || '', { inputMode: 'numeric', placeholder: '00000-000', maxLength: 9 }), C.cepMask);
         const rua = texto(f?.endereco?.logradouro, { maxLength: 160 });
@@ -523,6 +531,7 @@
           s1.querySelector('legend').textContent = pf ? 'Dados do vendedor' : 'Dados da empresa'; // o nome certo (vendedor ou prestador) vem de pintarVendedor, pela categoria
           if (pf) cpfCampo.before(nomeCampo); else regimeCampo.before(nomeCampo);
           nome.placeholder = pf ? 'Ex: Nome e sobrenome...' : 'Ex: Nome da empresa...';
+          pintarEndereco();
           aoMudarTipo();
         }
         pintarTipo();
@@ -582,6 +591,8 @@
           const r2 = completar([[razao, x.razaoSocial, 'razão social'], [nome, x.nomeFantasia, 'nome fantasia'], [cep, e.cep, 'CEP'], [rua, e.logradouro, 'rua'],
             [numero, e.numero, 'número'], [complemento, e.complemento, 'complemento'], [bairro, e.bairro, 'bairro'], [cidade, e.cidade, 'cidade'], [uf, e.uf, 'UF']]);
           cepConsultado = D.digitos(cep.value);
+          // A consulta do CNPJ trouxe endereço: o quadro abre sozinho, para a pessoa ver e conferir o que veio.
+          if (!endSw.ativo && [cep, rua, bairro, cidade].some((i) => i.value.trim())) { endSw.ativo = true; pintarEndereco(); }
           avisoCnpj.textContent = (r2.feitos.length ? 'Preenchido pela consulta do CNPJ: ' + r2.feitos.join(', ') + '. Confira antes de salvar.' : 'Dados do CNPJ conferidos; nada foi trocado.') + resumo(r2);
         }
         cnpj.addEventListener('input', () => buscarCnpj(false)); cnpj.addEventListener('keydown', aoEnter(buscarCnpj));
@@ -1189,7 +1200,7 @@
             nome: ehPF() ? nome.value.trim() : nome.value.trim() || razaoSocial, razaoSocial: ehPF() ? '' : razaoSocial,
             documento: ehPF() ? cpf.value.trim() : cnpj.value.trim(),
             regimeTributario: ehPF() ? '' : regime.value,
-            endereco: { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value },
+            endereco: !comEndereco() ? (f?.endereco || { cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '' }) : { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value },
             contatoNome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email,
             // Texto incompleto segue como está para a validação recusar (não vira vazio em silêncio).
             vendedorAniversario: vAniv.valor(), contatoMesmo: ehPF(),
