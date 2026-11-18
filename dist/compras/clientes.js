@@ -62,7 +62,8 @@
   const rotuloModalidade = (c) => nomeDe(D.TIPOS_PESSOA_CLIENTE, c.tipoPessoa);
   // aoEditar(titulo): devolve a função que leva à etapa daquele bloco (ou nada). Com ela, o bloco ganha o botão "Editar".
   const dlDe = (secoes, aoEditar) => {
-    const box = el('div', 'compras-largo');
+    // compras-etapa: o mesmo espaço entre quadros das outras etapas (12 px).
+    const box = el('div', 'compras-largo compras-etapa');
     secoes.forEach(([t, linhas]) => {
       const fs = el('fieldset', 'compras-fieldset'); fs.append(el('legend', null, t));
       const editar = aoEditar && aoEditar(t);
@@ -320,8 +321,8 @@
           const nomes = D.etapasCliente(tipo, cadastro);
           if (nomes.length) {
             barra = window.CicluzStepper.create({ steps: nomes.map((label) => ({ label })), current: 0, label: 'Etapas do cadastro do cliente', onSelect: (i) => { if (c || i <= passo) ir(i); } });
-            barraBox.replaceChildren(barra.el);
-          } else { barra = null; barraBox.replaceChildren(); }
+            barraBox.replaceChildren(barra.el); mostrar(barraBox, true);
+          } else { barra = null; barraBox.replaceChildren(); mostrar(barraBox, false); } // sem barra, a caixa vazia não ocupa espaço entre os quadros
           ir(0);
         }
         function ir(i) {

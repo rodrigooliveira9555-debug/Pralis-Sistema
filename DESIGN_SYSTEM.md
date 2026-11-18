@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Espaço entre quadros: 12 px em todo o sistema (18/11/2026)
+Regra do Rodrigo: a distância entre um quadro e o seguinte é sempre **12 px**, a mesma dos cadastros em etapas (`.compras-etapa`). Acertos feitos: a revisão do cliente (os blocos estavam colados, 0 px) e o cliente pessoa física (24 px, por causa da caixa vazia da barra de etapas) em `compras/clientes.js`; nas telas antigas, `.form-fields[data-quadro]` passou de 22 para 12 px e o bloco de documento (`.doc-capture`) de 14/20 para 12 px, em `ui-foundation.css`. Dentro do quadro, o espaçamento dos campos não mudou.
+
 ## Cliente: "responsável legal" e cadastro antigo no formato atual (18/11/2026)
 No cliente pessoa jurídica, a terceira etapa e o quadro chamam-se **"Dados do responsável legal da empresa"** (supera "responsável geral" em tudo o que está anotado abaixo); os campos são "Nome/WhatsApp/E-mail/Aniversário do responsável legal". **Cadastro antigo ao editar:** cliente pessoa jurídica abre sempre no formato atual, em quatro etapas, mesmo o que foi gravado como "Simples", para os campos novos aparecerem; o registro só muda quando a pessoa salva (não há conversão em massa). Pessoa física continua abrindo na modalidade em que foi gravada. **O seletor "Simples | Completo" saiu do cadastro de cliente** (novo e edição): no alto fica só o Tipo de cliente (PF / PJ). A coluna "Tipo de cadastro" também saiu da lista de clientes (ficam Cliente, Tipo de cliente, WhatsApp, E-mail e Situação), e a visualização do cliente mostra só o tipo de pessoa.
 
