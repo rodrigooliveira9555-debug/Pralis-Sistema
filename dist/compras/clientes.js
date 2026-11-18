@@ -60,7 +60,7 @@
     return secoes.map(([t, l]) => [t, l.filter(([, v]) => v)]).filter(([, l]) => l.length);
   }
   const rotuloModalidade = (c) => nomeDe(D.TIPOS_PESSOA_CLIENTE, c.tipoPessoa) + ' · ' + nomeDe(D.TIPOS_CADASTRO_CLIENTE, c.cadastro);
-  // aoEditar(titulo): devolve a função que leva à etapa daquele bloco (ou nada). Com ela, o bloco ganha o botão redondo do lápis.
+  // aoEditar(titulo): devolve a função que leva à etapa daquele bloco (ou nada). Com ela, o bloco ganha o botão "Editar".
   const dlDe = (secoes, aoEditar) => {
     const box = el('div', 'compras-largo');
     secoes.forEach(([t, linhas]) => {
@@ -321,7 +321,7 @@
           if (etapas && ultima) {
             // Cada bloco da revisão leva à etapa de onde os dados vieram.
             const etapaDoBloco = { 'Dados cadastrais': 0, 'Dados pessoais': 0, 'Endereço': tipo === 'juridica' ? 0 : 1, 'Informações complementares': 2, 'Dados do responsável financeiro da empresa': 1, 'Dados do responsável geral da empresa': 2 };
-            revisao.replaceChildren(el('p', 'profiles-note', 'Confira os dados antes de salvar. Para corrigir, toque no lápis do bloco.'), dlDe(secoesCliente(registro()), (t) => (t in etapaDoBloco ? () => ir(etapaDoBloco[t]) : null)));
+            revisao.replaceChildren(el('p', 'profiles-note', 'Confira os dados antes de salvar. Para corrigir, toque em Editar no bloco.'), dlDe(secoesCliente(registro()), (t) => (t in etapaDoBloco ? () => ir(etapaDoBloco[t]) : null)));
           }
           U.subirAoTopo(barraBox, form);
           nav.replaceChildren(...(etapas ? [passo > 0 && voltar, !ultima && avancar, (c || ultima) && salvarFim] : [cancelar, salvarFim]).filter(Boolean));

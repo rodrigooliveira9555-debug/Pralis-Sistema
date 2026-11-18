@@ -570,11 +570,10 @@
   function subirAoTopo(no, form) {
     if (no && (!form || form.isConnected) && no.isConnected) no.scrollIntoView({ block: 'start' });
   }
-  /** Botão redondo do lápis no canto de um bloco da Revisão (padrão dos botões redondos, na cor do menu): leva à etapa do bloco. */
+  /** Botão retangular "Editar" embaixo de um bloco da Revisão (o botão padrão do sistema): leva à etapa do bloco. */
   function botaoEditarBloco(titulo, acao) {
-    const b = el('button', 'shortcut-circle compras-redondo compras-revisao-editar');
-    b.type = 'button'; b.title = 'Editar ' + titulo; b.setAttribute('aria-label', 'Editar ' + titulo);
-    b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4-.8L19 8l-3-3L5 16zM14.5 6.5l3 3"/></svg>';
+    const b = el('button', 'btn compras-revisao-editar', 'Editar');
+    b.type = 'button'; b.setAttribute('aria-label', 'Editar ' + titulo);
     b.onclick = acao;
     return b;
   }

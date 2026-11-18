@@ -3,7 +3,7 @@
  * Um cadastro só, o da própria empresa: os campos da 1ª etapa do cliente pessoa jurídica (CNPJ, razão social, nome
  * fantasia, regime tributário e endereço) e os responsáveis legais. Três etapas com a barra do sistema: Dados da
  * empresa · Dados dos responsáveis legais · Revisão. Tocar no cartão abre direto a ficha: com dados já gravados ela
- * abre na Revisão, só para leitura; Editar (ou o lápis de um bloco) libera os campos e mostra o Salvar.
+ * abre na Revisão, só para leitura; Editar (o geral ou o de um bloco) libera os campos e mostra o Salvar.
  * Responsáveis: um bloco por pessoa ("Dados do responsável"; escolhido o cargo, o título leva o cargo), com o botão
  * de acrescentar; cada um guarda os dados que um contrato pede (nome completo, CPF, RG, nacionalidade, estado civil,
  * profissão e endereço). Cargo: Proprietário, Sócio-proprietário, Diretor não sócio ou Procurador (lista própria da empresa;
@@ -367,7 +367,7 @@
 
         /* Três etapas com a barra do sistema (pedido do Rodrigo, 17/11/2026), como o cliente pessoa jurídica:
            1 Dados da empresa (empresa e endereço) · 2 Dados dos responsáveis legais · 3 Revisão.
-           Leitura × edição: com dados gravados, a ficha abre na Revisão, travada; "Editar" (ou o lápis de um bloco) libera
+           Leitura × edição: com dados gravados, a ficha abre na Revisão, travada; "Editar" (o geral ou o de um bloco) libera
            os campos. Sem dados, já abre na etapa 1 para preencher; Avançar confere a etapa. */
         const situacao = U.quadroSituacao('Situação da empresa', v.situacao ? v.situacao === 'ativo' : true, { feminino: true, dica: 'Empresa inativa continua cadastrada.' });
         situacao.classList.add('compras-largo');
@@ -407,7 +407,7 @@ if (x.responsaveisDaMatriz) { if (!daMatrizCopia.length) blocos.push(['Dados dos
           else if (!x.responsaveis.length) blocos.push(['Dados dos responsáveis legais', 1, [['Responsáveis', 'Nenhum responsável informado']]]);
           etapa3.replaceChildren(...blocos.map(([titulo, etapa, linhas]) => {
             const fs0 = el('fieldset', 'compras-fieldset'); fs0.append(el('legend', null, titulo));
-            // O lápis leva à etapa do bloco, já liberando a edição.
+            // O Editar do bloco leva à etapa dele, já liberando a edição.
             fs0.append(U.botaoEditarBloco(titulo, () => { editando = true; ir(etapa); }));
             const dl = el('dl', 'profiles-info');
             linhas.filter(([, valor]) => valor).forEach(([k, valor]) => dl.append(el('dt', null, k), el('dd', null, String(valor))));
@@ -423,7 +423,7 @@ if (x.responsaveisDaMatriz) { if (!daMatrizCopia.length) blocos.push(['Dados dos
           caixaResp.querySelectorAll(':scope > fieldset').forEach((q) => { q.disabled = !editando || daMatriz; });
           adicionar.disabled = !editando; linhaAdicionar.style.display = editando && !daMatriz ? '' : 'none';
           caixaResp.querySelectorAll('.compras-empresa-remover').forEach((x) => { x.style.display = editando ? '' : 'none'; });
-          notaModo.textContent = editando ? '' : 'Dados gravados. Toque em Editar, ou no lápis de um bloco, para alterar.';
+          notaModo.textContent = editando ? '' : 'Dados gravados. Toque em Editar para alterar.';
           const ultima = atual === quadros.length - 1;
           // Lendo: só o Editar. Editando: Voltar a partir da 2ª etapa, Avançar até a penúltima; Salvar em todas quando a
           // ficha já existia e só na Revisão na ficha nova.
