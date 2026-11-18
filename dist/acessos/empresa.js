@@ -542,5 +542,15 @@ if (x.responsaveisDaMatriz) { if (!daMatrizCopia.length) blocos.push(['Dados dos
   }
 
   A.registrar('empresa', abrir);
+
+  /* Estrutura de Dados da Empresa (18/11/2026, Rodrigo): por enquanto só o cartão no menu. O conteúdo ainda vai ser definido por ele;
+     a tela diz isso e não grava nada. */
+  let telaEstrutura = null;
+  function abrirEstrutura() {
+    if (!telaEstrutura) telaEstrutura = A.criarTela({ id: 'acessos-empresa-estrutura', titulo: 'Estrutura de Dados da Empresa', tela: 'empresa-estrutura' });
+    telaEstrutura.ativar();
+    telaEstrutura.body.replaceChildren(U.vazio('Em definição.', 'O conteúdo desta tela ainda vai ser definido. Nada é gravado aqui por enquanto.'));
+  }
+  A.registrar('empresa-estrutura', abrirEstrutura);
   window.CicluzEmpresa = { abrir, abrirFicha, validarEmpresa, validarEmpresaEtapas, impedimentoDeExcluir, ETAPAS, VINCULOS, CARGOS_EMPRESA, MOTIVOS_REPRESENTACAO, VINCULOS_REPRESENTANTE, idadeEm, formaDaRepresentacao, todas, dados: () => todas()[0] || null };
 })();
