@@ -137,6 +137,7 @@
 
   function selecao(p) {
     const c = entrada('checkbox');
+    c.className = 'compras-selecao-bolinha';
     c.checked = selecionados.has(p.id);
     c.setAttribute('aria-label', 'Selecionar ' + (p.nomeCatalogo || p.descricao));
     c.onclick = (e) => e.stopPropagation();

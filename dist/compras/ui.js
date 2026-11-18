@@ -133,6 +133,23 @@
     if (dica) l.append(el('small', 'profiles-note', dica));
     return l;
   }
+  /**
+   * Validação visual global: depois de uma tentativa de avançar/salvar que falhou, todo campo marcado com asterisco
+   * (" *" no rótulo) que continua vazio recebe a borda na cor do módulo (aria-invalid, regra em ui-foundation.css).
+   * Só apresenta o erro: não decide o que é obrigatório. A marca sai assim que o campo é preenchido.
+   */
+  function marcarObrigatorios(escopo) {
+    if (!escopo) return;
+    escopo.querySelectorAll('label.compras-campo').forEach((l) => {
+      const r = l.querySelector('.compras-rotulo'); if (!r || !/\*\s*$/.test(r.textContent)) return;
+      const c = l.querySelector('input:not([type=checkbox]):not([type=radio]):not([type=hidden]),select,textarea'); if (!c || c.disabled || c.readOnly) return;
+      const vazio = !String(c.value || '').trim();
+      if (vazio && c.getClientRects().length) {
+        c.setAttribute('aria-invalid', 'true');
+        if (!c.dataset.marcaObrigatorio) { c.dataset.marcaObrigatorio = '1'; const sai = () => { if (String(c.value || '').trim()) c.removeAttribute('aria-invalid'); }; c.addEventListener('input', sai); c.addEventListener('change', sai); }
+      } else c.removeAttribute('aria-invalid');
+    });
+  }
   function entrada(tipo = 'text', valor = '', extra = {}) {
     const i = el('input');
     i.type = tipo;
@@ -477,7 +494,9 @@
     d.style.setProperty('--panel-text', corTexto);
     const h = el('h2', null, titulo);
     d.append(h);
-    if (subtitulo) d.append(el('p', 'compras-dialog-sub', subtitulo));
+    // Padrão das telas de edição: o título sempre vem com o caminho de navegação logo abaixo (como no Cadastro da conta).
+    const caminho = subtitulo || (document.getElementById('crumb') || {}).textContent || '';
+    if (caminho) d.append(el('p', 'compras-dialog-sub', caminho));
     const form = el('form', 'account-editor compras-form');
     const erro = el('p', 'profiles-error');
     erro.setAttribute('role', 'alert');
@@ -504,7 +523,7 @@
       salvando = true;
       let msg;
       try { msg = await salvar(ctx); } catch (err) { console.warn(err); msg = 'Não foi possível salvar. Tente de novo.'; } finally { salvando = false; }
-      if (msg) { erro.textContent = msg; return; }
+      if (msg) { erro.textContent = msg; marcarObrigatorios(form); return; }
       d.close();
     };
     d.append(form);
@@ -655,7 +674,7 @@
 
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
-    criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
+    criarTela, atalho, secao, vazio, situacao, nota, campo, marcarObrigatorios, entrada, seletor, chips, busca, buscaFixa,
     tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, quadroSituacao, cartoesEscolha, flutuante,
   };
 })();

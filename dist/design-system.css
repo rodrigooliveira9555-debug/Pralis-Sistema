@@ -150,7 +150,7 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 .location-tree .location-row .account-row-actions{flex-wrap:wrap}
 @media(max-width:480px){.location-tree>.location-area-frame{padding:3px 5px}.location-tree .location-children{margin-left:12px;padding-left:9px}.location-tree .location-children>.location-node>.location-row::before{left:-10px;width:8px}.location-tree .location-row{gap:5px}.location-tree .location-row:has(.account-row-actions:not([hidden])){flex-wrap:wrap}.location-tree .location-row .account-row-actions{flex-basis:100%;justify-content:flex-end}}
 
-.location-tree .location-row .location-inline-add{display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;width:32px;height:32px;border:1px solid color-mix(in srgb,var(--branch-color) 45%,white);border-radius:50%;color:var(--branch-color);font-size:22px;line-height:1;background:white;padding:0}.location-tree .location-inline-add:hover{background:color-mix(in srgb,var(--branch-color) 8%,white)}
+.location-tree .location-row .location-inline-add{display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;width:32px;height:32px;border:1px solid color-mix(in srgb,var(--branch-color) 45%,var(--theme-card,#fff));border-radius:50%;color:var(--branch-color);font-size:22px;line-height:1;background:var(--theme-card,#fff);padding:0}.location-tree .location-inline-add:hover{background:color-mix(in srgb,var(--branch-color) 8%,var(--theme-card,#fff))}
 
 /* Keep closed action panels out of row sizing; compact location heights. */
 #sector-view .location-tree .account-row-actions[hidden]{display:none!important}
@@ -179,8 +179,8 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 #sector-view .location-tree .location-children{border-left-color:color-mix(in srgb,var(--menu-accent,#7c3aed) 28%,white)}
 #sector-view .location-tree .location-children>.location-node>.location-row::before{background:color-mix(in srgb,var(--menu-accent,#7c3aed) 28%,white)}
 #sector-view .location-tree .location-row .location-expand,#sector-view .location-tree .location-row .account-action-toggle{color:var(--node-color)!important}
-#sector-view .location-tree .location-row .location-inline-add{color:var(--node-color);border-color:color-mix(in srgb,var(--node-color) 45%,white)}
-#sector-view .location-tree .location-row .location-inline-add:hover{background:color-mix(in srgb,var(--node-color) 8%,white)}
+#sector-view .location-tree .location-row .location-inline-add{color:var(--node-color);border-color:color-mix(in srgb,var(--node-color) 45%,var(--theme-card,#fff))}
+#sector-view .location-tree .location-row .location-inline-add:hover{background:color-mix(in srgb,var(--node-color) 8%,var(--theme-card,#fff))}
 
 #sector-view .location-tree .location-row .account-row-actions button:not(:first-child){background:var(--node-color);color:#fff}
 .shared-color-history{display:block;margin:10px 0;font:12px Montserrat,system-ui,sans-serif}.shared-color-history>span{display:block;margin-bottom:8px}.shared-color-history>div{display:flex;flex-wrap:wrap;gap:7px}.shared-color-history button{width:24px;height:24px;min-width:24px;padding:0;border:1px solid #0003;border-radius:50%;cursor:pointer}.shared-color-history small{color:#777;font-size:11px}

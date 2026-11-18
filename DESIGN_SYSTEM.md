@@ -928,3 +928,15 @@ Edição em painel próprio, regras disciplinares e padronização dos botões (
 
 ## Cadastro de patrimônios — especificação técnica na etapa 1
 A especificação técnica ("Informar especificação técnica?") fica na etapa 1, em grupos: Identificação técnica, Energia e consumo (voltagem em lista), Dimensões e características físicas (com peso e material em lista) e Ficha Técnica do Equipamento. Produção é seção própria. Etapa 3 traz a empresa automaticamente e os responsáveis dos colaboradores vinculados ao local (sem lista de locais paralela). Depreciação simplificada, sem cálculo novo. Lista de voltagens e unidade do gás aguardam validação técnica.
+
+## Padronização global — Voltar/Avançar e validação visual
+- Cadastros em etapas (`.compras-etapas-nav`): Voltar sempre à esquerda; Avançar e Salvar à direita. Regra única em `compras/compras.css`; não posicionar esses botões em outro lugar.
+- Campo obrigatório: rótulo com " *" (asterisco ao fim). Ao falhar o Avançar/Salvar, `CicluzComprasUI.marcarObrigatorios(escopo)` marca `aria-invalid` nos campos com asterisco ainda vazios; a borda usa `var(--menu-accent)` (cor do módulo), definida em `ui-foundation.css`. A mensagem de erro textual continua obrigatória (não depender só da cor).
+- Campos de dialog com `.single-field-block` excluem `[aria-invalid=true]` da borda neutra (`unified-layout.css`); não criar `!important` novo para a borda de erro.
+- Medidas de referência verificadas em 109 telas: botão `.btn` 40 px, campo 42 px.
+
+## Tabelas de entrada de Gestão de Pessoas e edição
+- Simples Colaborador, Completo Colaborador e Cargos C/Salários abrem numa tabela no padrão de VND - Clientes, feita por `gp-entrada.js` (blocos de `CicluzComprasUI`). Colunas próprias de cada tela; formulário e regras não mudam. Novo/linha abre o formulário existente; Voltar leva à tabela e, da tabela, ao menu. Entradas externas (exame, link do candidato) abrem direto o formulário.
+- Grade de colunas por tela em `compras/compras.css` (`grade-colab-s`, `grade-colab-c`, `grade-cargo`). Para uma nova tabela: nova grade + chaves ocultáveis `oculta-<chave>`; não criar tabela própria.
+- Cargos: a linha mantém a classe `job-item` (ordem por arrastar e busca do rodapé dependem dela).
+- Edição: cabeçalho com título e caminho; situação com o interruptor `account-status` (nunca checkbox); Cancelar à esquerda e Salvar à direita. `U.dialogo` mostra o caminho de navegação sob o título.

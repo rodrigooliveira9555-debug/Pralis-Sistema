@@ -317,7 +317,7 @@
 
         const voltar = botao('Voltar', () => ir(passo - 1), 'btn secondary footer-cancel-accent form-back-action');
         voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
-        const avancar = botao('Avançar', () => { const falta = conferir()[passo]; if (falta) { erroEtapa.textContent = falta; return; } ir(passo + 1); }, 'btn form-next-action');
+        const avancar = botao('Avançar', () => { const falta = conferir()[passo]; if (falta) { erroEtapa.textContent = falta; U.marcarObrigatorios(passos[passo]); return; } ir(passo + 1); }, 'btn form-next-action');
         const cancelar = botao('Cancelar', () => dlg.close(), 'btn secondary footer-cancel-accent');
         const salvarFim = el('button', 'btn', 'Salvar Cliente'); salvarFim.type = 'submit';
         function desenhar() {

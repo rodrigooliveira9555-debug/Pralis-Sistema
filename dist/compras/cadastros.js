@@ -1049,7 +1049,7 @@
         voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
         const avancar = botao('Avançar', () => {
           const falta = D.validarFornecedorEtapas(ler(), R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador })[atual];
-          if (falta) { erroEtapa.textContent = falta; return; }
+          if (falta) { erroEtapa.textContent = falta; U.marcarObrigatorios(quadros[atual]); return; }
           ir(atual + 1);
         }, 'btn form-next-action');
         const salvarFim = el('button', 'btn', 'Salvar');
