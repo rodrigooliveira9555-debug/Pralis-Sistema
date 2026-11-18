@@ -54,7 +54,7 @@
         ['Dados do responsável financeiro da empresa', [['Nome', c.contatoNome], ['WhatsApp', c.whatsapp], ['E-mail (financeiro e/ou fiscal)', c.email], ['Aniversário', D.aniversarioTexto(c.contatoAniversario)], ['Cargo na empresa', 'Financeiro'], ['Cliente mensal', c.contrato && c.contrato.clienteMensal ? 'Sim' : 'Não'], ...(c.contrato && c.contrato.clienteMensal ? [['Fechamento', 'Do dia 1º ao último dia do mês'], ['Forma de pagamento', 'Boleto'], ['Vencimento', 'Todo dia ' + D.CLIENTE_MENSAL.vencimentoDia]] : [])]],
         // Cadastro anterior a 17/11/2026 com um financeiro diferente do contato: continua à vista, para não sumir.
         ...(c.financeiro && c.financeiro.mesmo === false && (c.financeiro.nome || c.financeiro.whatsapp || c.financeiro.email) ? [['Financeiro (cadastro anterior)', contato(c.financeiro)]] : []),
-        ['Dados do responsável geral da empresa', contato(c.representante, [['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
+        ['Dados do responsável geral da empresa', contato(c.representante, [['Aniversário', D.aniversarioTexto(c.representante && c.representante.aniversario)], ['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
       ];
     }
     return secoes.map(([t, l]) => [t, l.filter(([, v]) => v)]).filter(([, l]) => l.length);
@@ -143,7 +143,7 @@
         cnpj.addEventListener('input', () => buscarCnpj(false)); cnpj.addEventListener('keydown', aoEnter(buscarCnpj));
 
         /* Contato do financeiro e do representante: "O mesmo da etapa anterior" no quadro Sim / Não (como em Fornecedores) */
-        function contatoBloco(dados, sufixo, anterior, titulo) {
+        function contatoBloco(dados, sufixo, anterior, titulo, aoPintar) {
           const s = el('fieldset', 'compras-fieldset'); s.append(el('legend', null, titulo));
           const mesmo = U.quadroSituacao('O mesmo da etapa anterior', Boolean(dados && dados.mesmo), { textos: ['Sim', 'Não'], dica: 'Preenche o nome, o WhatsApp e o e-mail com os da etapa anterior.', aoMudar: () => pintar() });
           mesmo.classList.add('compras-largo');
@@ -153,6 +153,7 @@
             const copia = mesmo.ativo;
             if (copia) { const a = anterior(); n.value = a.nome; w.value = a.whatsapp; m.value = a.email; }
             [n, w, m].forEach((i) => { i.readOnly = copia; });
+            if (aoPintar) aoPintar(copia);
           };
           s.append(mesmo, campo('Nome do ' + sufixo, n), campo('WhatsApp do ' + sufixo, w), campo('E-mail do ' + sufixo, m));
           return { no: s, mesmo, nome: n, whatsapp: w, email: m, pintar, ler: () => ({ mesmo: mesmo.ativo, nome: n.value.trim(), whatsapp: w.value.trim(), email: m.value.trim() }) };
@@ -162,7 +163,18 @@
         const contatoAtual = () => ({ nome: contatoNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() });
         const finAntigo = v.financeiro && v.financeiro.mesmo === false && (v.financeiro.nome || v.financeiro.whatsapp || v.financeiro.email) ? v.financeiro : null;
         const fin = { ler: () => finAntigo || { mesmo: true, ...contatoAtual() }, pintar: () => {} };
-        const rep = contatoBloco(v.representante, 'responsável geral', () => contatoAtual(), 'Dados do responsável geral da empresa');
+        // Aniversário do responsável geral (18/11/2026, Rodrigo): dia e mês, no mesmo campo do responsável financeiro. Com
+        // "O mesmo da etapa anterior" ligado, mostra o da etapa anterior, travado, e é esse que vai para o cadastro.
+        const repAniv = CAD().seletoresAniversario((v.representante && v.representante.aniversario) || '', { rotulo: 'Aniversário do responsável geral' });
+        let repAnivProprio = repAniv.input.value;
+        const pintarRepAniv = (copia) => {
+          if (copia && !repAniv.input.readOnly) repAnivProprio = repAniv.input.value;
+          repAniv.input.value = copia ? aniv.input.value : repAnivProprio;
+          repAniv.input.readOnly = copia;
+          repAniv.no.querySelectorAll('button').forEach((b) => { b.disabled = copia; });
+        };
+        const rep = contatoBloco(v.representante, 'responsável geral', () => contatoAtual(), 'Dados do responsável geral da empresa', pintarRepAniv);
+        rep.no.append(repAniv.no);
         const repCargo = seletor(D.CARGOS_REPRESENTANTE, (v.representante && v.representante.cargo) || '', 'Selecione');
         rep.no.append(campo('Cargo na empresa', repCargo));
 
@@ -293,7 +305,7 @@
           if (cadastro === 'simples') return { ...base, cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim(), endereco };
           fin.pintar(); rep.pintar();
           return { ...base, cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), regimeTributario: regime.value, endereco, whatsapp: whats.value.trim(), email: mail.value.trim(),
-            contatoNome: contatoNome.value.trim(), contatoAniversario: aniv.valor(), financeiro: fin.ler(), representante: { ...rep.ler(), cargo: repCargo.value }, contrato: lerContrato() };
+            contatoNome: contatoNome.value.trim(), contatoAniversario: aniv.valor(), financeiro: fin.ler(), representante: { ...rep.ler(), cargo: repCargo.value, aniversario: rep.mesmo.ativo ? aniv.valor() : repAniv.valor() }, contrato: lerContrato() };
         }
         const registro = () => ({ ...(c || {}), ...ler(), id: c ? c.id : undefined });
         const conferir = () => D.validarClienteEtapas(registro(), R(), { clientes: clientes() });
