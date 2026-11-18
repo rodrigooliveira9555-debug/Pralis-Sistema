@@ -13,7 +13,7 @@
   if (!U) return;
   const { el, botao, campo, seletor } = U;
   const PARAM = 'cadastro-teste';
-  const MENSAGEM = 'Olá! Segue o link para preenchimento do seu cadastro. Por favor, confira as informações antes de enviar.';
+  const MENSAGEM = U.MENSAGEM_ENVIO;
   const AVISO = 'Link de teste (simulação): só funciona neste navegador, porque ainda não há servidor. O cadastro enviado por ele fica salvo aqui como "Recebido", inativo, aguardando conferência.';
 
   /** Único ponto para trocar pelo convite real quando o servidor existir: recebe o id do modelo e devolve { url }. */
@@ -74,8 +74,8 @@
     // Prazo de resposta e Mensagem (18/11/2026, Rodrigo): o mesmo prazo do Enviar de Fornecedores; a mensagem vem escrita e pode ser
     // ajustada antes de enviar. O que vai para o canal é a mensagem, o prazo por extenso e o link.
     const prazo = U.prazoResposta();
-    const mensagem = el('textarea'); mensagem.rows = 4; mensagem.maxLength = 400; mensagem.value = MENSAGEM; mensagem.setAttribute('aria-label', 'Mensagem');
-    const textoDoEnvio = () => [mensagem.value.trim() || MENSAGEM, prazo.frase()].filter(Boolean).join('\n');
+    const mensagem = U.mensagemEnvio();
+    const textoDoEnvio = () => [mensagem.texto(), prazo.frase()].filter(Boolean).join('\n');
     async function copiar() {
       const { url } = gerarLink(modelo());
       try { await navigator.clipboard.writeText(url); aviso.textContent = 'Link copiado.'; } catch (e) { aviso.textContent = 'Não foi possível copiar sozinho. Use um dos canais ao lado.'; }
@@ -83,7 +83,7 @@
     const acoes = el('div', 'compras-enviar-acoes');
     acoes.append(botao('Copiar link', copiar, 'btn secondary'), botao('Visualizar formulário', () => visualizar(modelo()), 'btn secondary'));
     return U.botaoEnviar({
-      dica: 'Enviar link de cadastro', campos: [...(escolha ? [campo(rotuloModelo, escolha)] : []), ...prazo.campos, campo('Mensagem', mensagem)], depois: [acoes, aviso, el('small', 'profiles-note', AVISO)],
+      dica: 'Enviar link de cadastro', campos: [...(escolha ? [campo(rotuloModelo, escolha)] : []), ...prazo.campos, mensagem.campo], depois: [acoes, aviso, el('small', 'profiles-note', AVISO)],
       aoCanal: (canal) => { window.open(enderecoDoCanal(canal, gerarLink(modelo()).url, textoDoEnvio()), '_blank', 'noopener'); aviso.textContent = 'Link gerado.'; },
     });
   }

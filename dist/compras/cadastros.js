@@ -249,11 +249,11 @@
   }
   /* ---------- Enviar link para cadastro (P-29): a parte visível existe; o envio está desligado ---------- */
   /**
-   * ÚNICO ponto para ligar o envio quando a P-29 (parte do servidor) for decidida: recebe o canal e o prazo e deve
+   * ÚNICO ponto para ligar o envio quando a P-29 (parte do servidor) for decidida: recebe o canal, o prazo e a mensagem e deve
    * devolver { url } para abrir (wa.me, mailto:, sms:) com a mensagem e o link do convite. Hoje devolve null, porque
    * o link ainda não tem para onde levar: nada de link falso nem de abrir o WhatsApp com endereço que não existe.
    */
-  function conviteCadastro(canal, prazo) { // eslint-disable-line no-unused-vars
+  function conviteCadastro(canal, prazo, mensagem) { // eslint-disable-line no-unused-vars
     return null;
   }
   /** "Enviar" de Fornecedores: o botão comum (U.botaoEnviar) com o Prazo de resposta (padrão 3 dias úteis, ou data e hora). */
@@ -261,10 +261,12 @@
     const aviso = el('p', 'profiles-note');
     aviso.setAttribute('role', 'status');
     const prazo = U.prazoResposta();
+    // A Mensagem aparece como em Clientes e Patrimônios (18/11/2026, Rodrigo); ela só segue quando o envio for ligado (P-29).
+    const mensagem = U.mensagemEnvio();
     return U.botaoEnviar({
-      dica: 'Enviar link para cadastro', campos: prazo.campos, depois: [aviso],
+      dica: 'Enviar link para cadastro', campos: [...prazo.campos, mensagem.campo], depois: [aviso],
       aoCanal: (id) => {
-        const convite = conviteCadastro(id, prazo.ler());
+        const convite = conviteCadastro(id, prazo.ler(), mensagem.texto());
         if (!convite) { aviso.textContent = 'O link de cadastro ainda não está ativo. Falta a liberação da parte do servidor.'; return; }
         window.open(convite.url, '_blank', 'noopener');
       },

@@ -726,6 +726,12 @@
      para aquele envio. A chave é a que Fornecedores já usava, para a preferência gravada continuar valendo. */
   const PRAZOS_RESPOSTA = [['1', '1 dia útil'], ['3', '3 dias úteis'], ['5', '5 dias úteis'], ['7', '7 dias úteis'], ['data', 'Escolher data e hora']];
   const CHAVE_PRAZO_RESPOSTA = 'cicluz-fornecedores-prazo-convite';
+  /** Mensagem do Enviar: vem escrita e pode ser ajustada antes de enviar. Devolve { campo, texto() } (texto vazio volta ao padrão). */
+  const MENSAGEM_ENVIO = 'Olá! Segue o link para preenchimento do seu cadastro. Por favor, confira as informações antes de enviar.';
+  function mensagemEnvio(padrao = MENSAGEM_ENVIO) {
+    const caixa = el('textarea'); caixa.rows = 4; caixa.maxLength = 400; caixa.value = padrao; caixa.setAttribute('aria-label', 'Mensagem');
+    return { campo: campo('Mensagem', caixa), texto: () => caixa.value.trim() || padrao };
+  }
   /** Campos do prazo. Devolve { campos, ler(), frase() }: ler() dá { tipo, dias } ou { tipo, data, hora }; frase() é o prazo por extenso, para a mensagem. */
   function prazoResposta() {
     let padrao = '3';
@@ -770,6 +776,6 @@
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta,
+    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();
