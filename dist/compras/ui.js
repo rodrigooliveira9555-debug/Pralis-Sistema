@@ -596,6 +596,65 @@
   function subirAoTopo(no, form) {
     if (no && (!form || form.isConnected) && no.isConnected) no.scrollIntoView({ block: 'start' });
   }
+  /**
+   * Lê o que está preenchido e à vista numa etapa, para a Revisão: devolve [[rótulo, valor]…] na ordem da tela. Entende os
+   * campos (.compras-campo), o quadro com interruptor (Situação, "Tem contrato?"…) e os cartões de escolha. Campo escondido
+   * (display none, hidden ou quadro desligado) e campo vazio ficam de fora. A etapa pode estar oculta na hora da leitura.
+   */
+  function linhasDaEtapa(etapa) {
+    const oculto = (no) => {
+      for (let x = no; x && x !== etapa; x = x.parentElement) {
+        if (x.hidden || (x.style && x.style.display === 'none')) return true;
+        if (x.parentElement && x.parentElement.classList.contains('compras-so-pergunta') && x.tagName !== 'LEGEND' && !x.classList.contains('compras-situacao-quadro')) return true;
+      }
+      return false;
+    };
+    const limpo = (t) => { const s = String(t || '').trim(); return s.endsWith(' *') ? s.slice(0, -2) : s; };
+    const linhas = [];
+    etapa.querySelectorAll('.compras-cartoes, .account-status, .compras-campo, label.compras-interruptor').forEach((no) => {
+      if (oculto(no)) return;
+      if (no.classList.contains('compras-cartoes')) {
+        const caixa = no.closest('.account-status');
+        const rotulo = limpo(no.getAttribute('aria-label') || (caixa && caixa.querySelector(':scope > span') || {}).textContent);
+        const marcados = [...no.querySelectorAll('[aria-pressed="true"], [aria-checked="true"]')].map((b) => (b.querySelector('strong') || b).textContent.trim());
+        if (rotulo && marcados.length) linhas.push([rotulo, marcados.join(', ')]);
+        return;
+      }
+      if (no.classList.contains('account-status')) {
+        const chave = no.querySelector(':scope > .account-status-row > .account-status-switch, :scope .account-status-switch');
+        if (!chave || no.querySelector('.compras-cartoes')) return;
+        const texto = [...chave.parentElement.children].find((x) => x !== chave);
+        linhas.push([limpo((no.querySelector(':scope > span') || {}).textContent), texto ? texto.textContent.trim() : chave.getAttribute('aria-checked') === 'true' ? 'Sim' : 'Não']);
+        return;
+      }
+      if (no.parentElement.closest('.compras-campo')) return; // campo dentro de campo: já lido pelo de fora
+      const entrada1 = no.querySelector('input:not([type=hidden]):not([type=file]), select, textarea');
+      if (!entrada1) return;
+      const rotulo = limpo((no.querySelector('.compras-rotulo') || no.querySelector('span') || {}).textContent);
+      let valor;
+      if (entrada1.type === 'checkbox') valor = entrada1.checked ? 'Sim' : '';
+      else if (entrada1.tagName === 'SELECT') valor = entrada1.selectedOptions[0] && entrada1.value !== '' ? entrada1.selectedOptions[0].textContent : '';
+      else valor = entrada1.value.trim();
+      if (rotulo && valor) linhas.push([rotulo, valor]);
+    });
+    return linhas;
+  }
+  /**
+   * Monta a Revisão de um cadastro em etapas (padrão único): um quadro por etapa, com os dados no quadro branco e o "Editar"
+   * do bloco embaixo. etapas: nós das etapas; nomes: títulos; ir(k): leva à etapa k. Devolve os quadros.
+   */
+  function revisaoDasEtapas(etapas, nomes, ir) {
+    return etapas.map((etapa, k) => {
+      const quadro = el('fieldset', 'compras-fieldset compras-revisao');
+      quadro.append(el('legend', null, (k + 1) + ' · ' + nomes[k]));
+      const dl = el('dl', 'profiles-info compras-largo');
+      const linhas = linhasDaEtapa(etapa);
+      if (linhas.length) linhas.forEach(([r, v]) => dl.append(el('dt', null, r), el('dd', null, v)));
+      else dl.append(el('dt', null, 'Sem dados preenchidos nesta etapa'), el('dd', null, '—'));
+      quadro.append(botaoEditarBloco(nomes[k], () => ir(k)), dl);
+      return quadro;
+    });
+  }
   /** Botão retangular "Editar" embaixo de um bloco da Revisão (o botão padrão do sistema): leva à etapa do bloco. */
   function botaoEditarBloco(titulo, acao) {
     const b = el('button', 'btn compras-revisao-editar', 'Editar');
@@ -802,6 +861,6 @@
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();

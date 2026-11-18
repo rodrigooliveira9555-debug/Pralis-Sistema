@@ -334,8 +334,9 @@
   /** Etapas do cadastro (decisão do Rodrigo, 15/11/2026), nomes padronizados "Dados do …". A 2ª depende da categoria. */
   function etapasFornecedor(categorias) {
     const c = Array.isArray(categorias) ? categorias : [];
-    // Nomes de 18/11/2026: a 2ª depende da categoria; a 3ª e a 4ª dizem quem é a pessoa (não confundir com as condições de pagamento).
-    return ['Dados da empresa', quemVendeFornecedor(c) === 'prestador' ? 'Dados do Prestador de Serviço' : 'Dados do Vendedor', 'Dados do Responsável Financeiro', 'Dados do Responsável Legal', 'Vínculos', 'Contrato'];
+    // Nomes de 18/11/2026 (Rodrigo): a 2ª depende da categoria; a 3ª e a 4ª dizem quem é a pessoa (não confundir com as condições de
+    // pagamento); a 7ª é a Revisão, como nos outros cadastros em etapas (só leitura, com "Editar" por bloco e o Salvar no fim).
+    return ['Dados da empresa', quemVendeFornecedor(c) === 'prestador' ? 'Dados do prestador de serviço da empresa' : 'Dados do vendedor da empresa', 'Dados do responsável financeiro da empresa', 'Dados do responsável legal da empresa', 'Vínculos', 'Contrato', 'Revisão dos dados'];
   }
   /**
    * Migração (marca d.migracoes.vendedorFornecedor): no cadastro em etapas o contato do fornecedor é o vendedor ou

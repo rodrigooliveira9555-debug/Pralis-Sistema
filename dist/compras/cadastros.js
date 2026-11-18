@@ -698,7 +698,7 @@
         const pintarVendedor = () => {
           const quem = D.quemVendeFornecedor(marcadas());
           const servico = ehServico();
-          tituloS2.textContent = servico ? 'Prestador 1' : 'Dados do Vendedor';
+          tituloS2.textContent = servico ? 'Prestador 1' : 'Dados do vendedor da empresa';
           camposS2.forEach(([no, input, antes, depois]) => {
             no.querySelector('.compras-rotulo').textContent = antes + quem + depois;
             input.setAttribute('aria-label', antes + quem + depois);
@@ -729,8 +729,8 @@
           return { no: s, mesmo, nome: n, whatsapp: w, email: m, pintar };
         }
         const valores = (c) => ({ nome: c.nome.value.trim(), whatsapp: c.whatsapp.value.trim(), email: c.email.value.trim() });
-        const fin = etapaContato(f?.financeiro, 'financeiro', () => ({ nome: vNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() }), 'Dados do Responsável Financeiro');
-        const rep = etapaContato(f?.representante, 'representante', () => valores(fin), 'Dados do Responsável Legal');
+        const fin = etapaContato(f?.financeiro, 'financeiro', () => ({ nome: vNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() }), 'Dados do responsável financeiro da empresa');
+        const rep = etapaContato(f?.representante, 'representante', () => valores(fin), 'Dados do responsável legal da empresa');
         // A cópia segue a ordem das etapas: primeiro o financeiro (copia o vendedor), depois o representante (copia o financeiro).
         const pintarCopias = () => { fin.pintar(); rep.pintar(); };
         // Cargo na empresa: não é copiado; com "O mesmo da etapa anterior" marcado, é o único campo a preencher na etapa.
@@ -1040,7 +1040,10 @@
         s6.append(resumoContrato, semContratoNota, boxContrato, el('span', 'compras-rotulo compras-largo', 'Ficha do fornecedor'), acoesDoc, avisoDoc);
         s6.pintarTem = () => { mostrar(boxContrato, temContrato.ativo); mostrar(semContratoNota, !temContrato.ativo); };
 
-                const quadros = [etapa1, etapa2, etapa3, rep.no, s5, s6];
+        // 7ª etapa · Revisão dos dados (18/11/2026, Rodrigo): o mesmo fluxo dos outros cadastros — um bloco por etapa, só para leitura,
+        // com "Editar" em cada bloco e o Salvar no fim. Os dados são lidos das próprias etapas na hora de abrir a Revisão.
+        const eRevisao = el('div', 'compras-etapa');
+        const quadros = [etapa1, etapa2, etapa3, rep.no, s5, s6, eRevisao];
         const marcadas = () => catOpcoes.marcados();
         const etapas = () => D.etapasFornecedor(marcadas()).map((label) => ({ label }));
         // Troca a cor na hora, sem recarregar nem mexer nos dados: as mesmas variáveis que a janela recebeu ao abrir.
@@ -1057,7 +1060,7 @@
         const voltar = botao('Voltar', () => ir(atual - 1), 'btn secondary footer-cancel-accent form-back-action');
         voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
         const avancar = botao('Avançar', () => {
-          const falta = D.validarFornecedorEtapas(ler(), R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador })[atual];
+          const falta = D.validarFornecedorEtapas(ler(), R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador })[atual] || '';
           if (falta) { erroEtapa.textContent = falta; U.sinalizarObrigatorios(quadros[atual]); return; }
           ir(atual + 1);
         }, 'btn form-next-action');
@@ -1072,6 +1075,7 @@
           pintarCopias();
           pintarVinculos();
           pintarResumoContrato(); s6.pintarTem(); pintarModelos();
+          if (atual === quadros.length - 1) eRevisao.replaceChildren(el('p', 'profiles-note', 'Confira os dados antes de salvar. Para corrigir, toque em Editar no bloco.'), ...U.revisaoDasEtapas(quadros.slice(0, -1), etapas().map((x) => x.label), ir));
           quadros.forEach((q, k) => mostrar(q, k === atual));
           barra.update(etapas(), atual);
           erroEtapa.textContent = '';
