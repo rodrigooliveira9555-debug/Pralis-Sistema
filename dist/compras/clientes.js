@@ -43,7 +43,8 @@
     if (!k.temDocumento) return [['Tem contrato', 'Não']];
     const p = window.CicluzContratos ? window.CicluzContratos.partesDoContrato(c, 'cliente') : { contratado: {} };
     const n = (lista) => (lista && lista.length ? lista.length + (lista.length === 1 ? ' item' : ' itens') : '');
-    return [['Tem contrato', 'Sim'], ['Empresa contratada', p.contratado.nome], ['Valor', Number.isInteger(k.valorCentavos) ? D.moeda(k.valorCentavos / 100) : ''],
+    const o = k.objeto || {}; const itensObjeto = [[o.produtoIds, 'produto', 'produtos'], [o.despesaIds, 'despesa', 'despesas'], [o.patrimonioIds, 'patrimônio', 'patrimônios']].filter(([l]) => l && l.length).map(([l, um, varios]) => l.length + ' ' + (l.length === 1 ? um : varios)).join(', ');
+    return [['Tem contrato', 'Sim'], ['Empresa contratada', p.contratado.nome], ['Objeto do contrato', itensObjeto], ['Valor', Number.isInteger(k.valorCentavos) ? D.moeda(k.valorCentavos / 100) : ''],
       ['Forma de pagamento', nomeDe(D.FORMAS_PAGAMENTO_CONTRATO, k.formaPagamento)], ['Início da vigência', k.inicio ? window.CicluzDateFields.display(k.inicio) : ''], ['Término da vigência', k.fim ? window.CicluzDateFields.display(k.fim) : ''],
       ['Reajuste', nomeDe(D.REAJUSTES_CONTRATO, k.reajuste)], ['O que está incluso', n(k.atividadesIncluidas)], ['O que não está incluso', n(k.atividadesExcluidas)], ['Condições de rescisão', k.rescisao ? 'Preenchidas' : ''], ['Tipo de contrato', k.modeloNome]];
   }

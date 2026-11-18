@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Contrato: bloco "3 · Objeto do contrato" (18/11/2026)
+Pedido do Rodrigo: vincular ao contrato um produto, uma despesa ou um patrimônio. Bloco novo na etapa Contrato (fornecedor e cliente, peça única `etapaContrato`), entre o Contratado e o Valor; os blocos seguintes foram renumerados (4 Valor … 9 Assinaturas). Três listas, cada uma com o botão de escolher e os itens escolhidos em chips com "×": **Produtos** (MER - Produtos), **Despesas** (DES - Grupos de Despesas, grupos e subgrupos) e **Patrimônios** (RET - Patrimônios, sem os baixados). Pode ter um ou vários, de mais de um tipo; é opcional. Só vínculo por id (`contrato.objeto = { produtoIds, despesaIds, patrimonioIds }`, campo novo e opcional, sem migração): nada é digitado, nada é calculado e os cadastros de origem não mudam. No documento vira a seção "Objeto do contrato". A janela de escolha é a peça central `U.seletorDeItens` (a mesma dos Vínculos do fornecedor).
+
 ## Cadastro já gravado abre na Revisão dos dados (18/11/2026)
 Pedido do Rodrigo: "igual no Empresas". Ao abrir um **cliente** ou um **fornecedor** já cadastrado (pela linha, pelos dois toques ou pelo Editar da seta), o cadastro em etapas abre direto na última etapa, **Revisão dos dados**, com o Editar em cada bloco e o Salvar no fim. Cadastro novo começa na 1ª etapa. Cliente de uma página só (pessoa física simples) abre no formulário, porque não tem Revisão. **Supera** o "dois toques abrem na primeira etapa" da seção abaixo.
 

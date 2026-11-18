@@ -732,10 +732,17 @@
     if (m.renovacao) { if (cheio(c.renovacao)) notas.push('Renovação mantida: já estava preenchida.'); else { patch.renovacao = m.renovacao; notas.push('Renovação preenchida pelo modelo.'); } }
     return { patch, notas };
   }
-  /** Valores dos campos adicionais do contrato do fornecedor (modelo + valores digitados): '' quando em ordem. */
+  /** As três listas do objeto do contrato (o que está sendo contratado), cada uma com ids do cadastro correspondente. */
+  const CHAVES_OBJETO_CONTRATO = ['produtoIds', 'despesaIds', 'patrimonioIds'];
+  /** Atividades, objeto e campos adicionais do contrato (modelo + valores digitados): '' quando em ordem. */
   function validarContratoDocumento(c) {
     if (!c || typeof c !== 'object') return '';
     const at = validarAtividadesContrato(c.atividadesIncluidas, c.atividadesExcluidas); if (at) return at;
+    // Objeto do contrato (18/11/2026): só vínculos por id com os cadastros de produtos, grupos de despesa e patrimônios. Opcional.
+    if (c.objeto != null) {
+      if (typeof c.objeto !== 'object' || Array.isArray(c.objeto)) return 'Objeto do contrato inválido.';
+      for (const k of CHAVES_OBJETO_CONTRATO) { const v = c.objeto[k]; if (v != null && (!Array.isArray(v) || v.some((id) => !id || typeof id !== 'string') || new Set(v).size !== v.length)) return 'Objeto do contrato inválido.'; }
+    }
     const defs = Array.isArray(c.camposAdicionaisDef) ? c.camposAdicionaisDef : []; const vals = c.camposAdicionais && typeof c.camposAdicionais === 'object' ? c.camposAdicionais : {};
     for (const d of defs) {
       const v = vals[d.id]; if (v == null || v === '') continue;
@@ -1057,7 +1064,7 @@
     digitos, motivoNaoConvidavel, podeConvidar,
     CATEGORIAS_FORNECEDOR, categoriaFornecedor, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarNomesPadrao, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, documentoAntigoFornecedor, validarFornecedor,
     chaveTexto, TIPOS_CAMPO_ADICIONAL, RENOVACOES_CONTRATO, LIMITES_CONTRATO, validarListaAtividades, validarAtividadesContrato, novaAtividade, validarModeloContrato,
-    somarMesesIso, aplicarModeloAoContrato, validarContratoDocumento, faltasDoContrato, papelContrato,
+    somarMesesIso, aplicarModeloAoContrato, validarContratoDocumento, faltasDoContrato, papelContrato, CHAVES_OBJETO_CONTRATO,
     validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, aniversarioVendedor, migrarVendedorFornecedor,
     FUNCOES_PRESTADOR_INICIAIS, idFuncaoPrestador, funcaoPrestadorIgual, validarFuncaoPrestador, migrarPrestadoresFornecedor,
     FORMAS_PAGAMENTO_CONTRATO, FORMAS_PAGAMENTO_FORNECEDOR, RECORRENCIAS_CONTRATO, RECORRENCIAS_CLIENTE, CLIENTE_MENSAL, periodoMensal, validarTermino, resumoTermino, UNIDADES_REPETICAO, POSICOES_MES, DIAS_SEMANA_LONGOS, REAJUSTES_CONTRATO, migrarContratoFinanceiro,

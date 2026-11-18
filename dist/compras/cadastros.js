@@ -202,15 +202,7 @@
     return { no, valor, input };
   }
   const aplicarMascara = (input, fn) => { input.addEventListener('input', () => { input.value = fn(input.value); }); return input; };
-  function interruptor(rotulo, marcado, dica) {
-    const l = el('label', 'compras-interruptor');
-    const c = entrada('checkbox');
-    c.checked = Boolean(marcado);
-    l.append(c, el('span', null, rotulo));
-    if (dica) l.append(el('small', 'profiles-note', dica));
-    l.input = c;
-    return l;
-  }
+  const interruptor = U.interruptor; // peça central (ui.js)
 
   /* =====================================================================
    * Fornecedores — cadastro único (decisão do Rodrigo, 15/11/2026). As linhas DES - Fornecedores
@@ -840,44 +832,8 @@
         const jaVinculados = doFornecedor('aprovado');
         const sugeridos = doFornecedor('pendente');
         const novosProdutos = new Set();
-        /** Janela de escolha: busca, lista de caixas de marcar (com níveis) e confirmar. itens: [{ id, rotulo, busca, nivel, travado, dica }]. */
-        function abrirSeletor({ titulo, rotuloBusca, itens, marcados, aoConfirmar, limite = 80 }) {
-          const escolha = new Set(marcados);
-          const LIMITE = limite;
-          U.dialogo({
-            titulo, ...coresF(), rotuloSalvar: 'Confirmar',
-            montar: (fm) => {
-              const busca = texto('', { placeholder: rotuloBusca, maxLength: 80, autocomplete: 'off' });
-              busca.setAttribute('aria-label', rotuloBusca);
-              busca.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
-              const resumo = el('p', 'profiles-note');
-              resumo.setAttribute('role', 'status');
-              const lista = el('div', 'compras-vinculos-lista');
-              const desenhar = () => {
-                const termo = U.dobrar(busca.value.trim());
-                const achados = itens.filter((i) => !termo || U.dobrar(i.busca || i.rotulo).includes(termo));
-                lista.replaceChildren(...achados.slice(0, LIMITE).map((i) => {
-                  const l = interruptor(i.rotulo, Boolean(i.travado) || escolha.has(i.id), i.dica || '');
-                  if (i.nivel) l.classList.add('compras-vinculo-nivel');
-                  l.input.disabled = Boolean(i.travado);
-                  l.input.onchange = () => { if (l.input.checked) escolha.add(i.id); else escolha.delete(i.id); contar(achados.length); };
-                  return l;
-                }));
-                if (!achados.length) lista.append(el('p', 'profiles-note', termo ? 'Nada encontrado.' : 'Nada cadastrado.'));
-                contar(achados.length);
-              };
-              const contar = (achados) => {
-                resumo.textContent = (escolha.size === 1 ? '1 marcado' : escolha.size + ' marcados') + '.' + (achados > LIMITE ? ' Mostrando ' + LIMITE + ' de ' + achados + ': use a busca.' : '');
-              };
-              busca.addEventListener('input', desenhar);
-              const box = el('div', 'compras-campo compras-largo');
-              box.append(busca, resumo, lista);
-              fm.append(box);
-              desenhar();
-            },
-            salvar: () => { aoConfirmar(escolha); },
-          });
-        }
+        /** Janela de escolha: a peça central U.seletorDeItens, na cor do cadastro. */
+        const abrirSeletor = (o) => U.seletorDeItens({ ...o, ...coresF() });
         /** Chip do que foi escolhido: com "×" para remover, ou travado (sem ação). */
         const chipEscolhido = (rotulo, aoRemover) => {
           if (!aoRemover) return el('span', 'compras-chip ativo', rotulo);

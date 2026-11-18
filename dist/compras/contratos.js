@@ -261,7 +261,7 @@
   const tituloDoContrato = (f, papel) => (papel !== 'cliente' && (f.categorias || []).includes('servico') ? 'Contrato de prestação de serviços' : 'Contrato de fornecimento');
   /**
    * Contrato padrão em blocos (18/11/2026, Rodrigo): o documento é montado na ordem dos blocos da etapa Contrato — contratante,
-   * contratado, valor e pagamento, vigência e vencimento, reajuste, o que está incluso, o que não está, condições de rescisão e,
+   * contratado, objeto do contrato (produtos, despesas e patrimônios vinculados), valor e pagamento, vigência e vencimento, reajuste, o que está incluso, o que não está, condições de rescisão e,
    * por fim, as camadas opcionais (cláusulas do tipo de contrato, informações adicionais, observações). Só entra o que está
    * preenchido; os blocos são numerados na ordem em que aparecem. Seção = [título, [[rótulo, texto]] | { itens } | { texto }].
    * Nada jurídico é acrescentado pelo sistema: o texto da rescisão é o que a pessoa escreveu.
@@ -277,6 +277,7 @@
     const secoes = [
       ['Contratante', pessoa(p.contratante, p.contratante.pf ? 'Nome completo' : 'Razão social', p.contratante.pf ? 'CPF' : 'CNPJ')],
       ['Contratado', pessoa(p.contratado, p.contratado.pf ? 'Nome completo' : 'Razão social', p.contratado.pf ? 'CPF' : 'CNPJ')],
+      ['Objeto do contrato', [['Produtos', ((c.objeto || {}).produtoIds || []).map(nomeDoObjeto.produto).join('; ')], ['Despesas', ((c.objeto || {}).despesaIds || []).map(nomeDoObjeto.despesa).join('; ')], ['Patrimônios', ((c.objeto || {}).patrimonioIds || []).map(nomeDoObjeto.patrimonio).join('; ')]]],
       ['Valor e pagamento', [['Valor', Number.isInteger(c.valorCentavos) ? D.moeda(c.valorCentavos / 100) : ''], ['Recorrência', rec], ['Forma de pagamento', nomeDe(D.FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)]]],
       ['Vigência e vencimento', [['Início da vigência', dataBR(c.inicio)], ['Término da vigência', dataBR(c.fim)], ['Renovação', nomeDe(D.RENOVACOES_CONTRATO, c.renovacao)], ['Vencimento', vencimento]]],
       ['Reajuste', [['Reajuste', reajuste]]],
@@ -291,6 +292,13 @@
       .filter(([, l]) => (Array.isArray(l) ? l.length : l.itens ? l.itens.length : Boolean(l.texto)))
       .map(([t, l], k) => [(k + 1) + '. ' + t, l]);
   }
+  /** Nome de cada item do objeto do contrato, lido do cadastro de origem na hora (o vínculo é por id). */
+  const bensCadastrados = () => { const p = window.CicluzProducaoDados; return (p && p.patrimonio && p.patrimonio.dados && p.patrimonio.dados.bens) || []; };
+  const nomeDoObjeto = {
+    produto: (id) => (S.produto(id) || {}).descricao || 'Produto removido',
+    despesa: (id) => nomeDoGrupo(id) || 'Grupo de despesa removido',
+    patrimonio: (id) => (bensCadastrados().find((b) => b.id === id) || {}).nome || 'Patrimônio removido',
+  };
   /** Se faltar dado, devolve true depois de mostrar a lista do que falta (nenhum documento é gerado). */
   function incompleto(f, aviso, papel) {
     const faltas = D.faltasDoContrato(f, papel);
@@ -361,7 +369,7 @@
    * Monta a etapa Contrato, a mesma nos dois cadastros (18/11/2026, Rodrigo: "no contrato do cliente, trazer o modelo criado no
    * cadastro de fornecedor"). Os blocos seguem a ordem em que o documento é montado: 1 Contratante · 2 Contratado · 3 Valor,
    * vencimento e reajuste · 4 O que está incluso · 5 O que não está incluso · 6 Condições de rescisão · 7 Tipo de contrato e
-   * cláusulas (opcional) · 8 Assinaturas e documento.
+   * cláusulas (opcional) · 8 Assinaturas e documento. Entre o Contratado e o Valor entra o Objeto do contrato (os números abaixo já contam com ele).
    * papel: 'fornecedor' (a sua empresa contrata o fornecedor) ou 'cliente' (o cliente contrata a sua empresa).
    * lerRegistro(): o cadastro lido do formulário. mensal(): só no cliente, diz se "É cliente mensal?" está ligado.
    * Devolve { nos, ler, datas, pintar, bloco }. Tudo só informado: sem fórmula, sem lançamento e sem cálculo de reajuste.
@@ -451,6 +459,8 @@
         camposAdicionaisDef: ct6.camposDef, camposAdicionais: ct6.campos, renovacao: ct6.renovacao,
         // Blocos novos do contrato padrão (campos opcionais): a empresa contratante (vínculo por id) e o texto da rescisão.
         [P.empresa]: selContratante.value, rescisao: cRescisao.value.trim(),
+        // Objeto do contrato: ids dos cadastros de produtos, grupos de despesa e patrimônios (campo novo e opcional).
+        objeto: { produtoIds: [...objeto.produto], despesaIds: [...objeto.despesa], patrimonioIds: [...objeto.patrimonio] },
         [P.tem]: temContrato.ativo, formaPagamento: cForma.value,
         // Vencimento: só em dinheiro some (o pagamento é toda sexta-feira, informativo). O dia do mês antigo fica guardado como estava.
         vencimentoData: sexta() ? '' : cVencData.value, vencimentoDia: ct.vencimentoDia != null ? ct.vencimentoDia : null,
@@ -543,8 +553,37 @@
     pintarModelos(); desenharClausulas(); desenharCampos();
     const campoRescisao = campo('Condições de rescisão', cRescisao); campoRescisao.classList.add('compras-largo');
     const campoEmpresa = campo(cliente ? 'Empresa contratada' : 'Empresa contratante', selContratante);
-    cDados.querySelector('legend').textContent = '3 · Valor, vencimento e reajuste';
+    cDados.querySelector('legend').textContent = '4 · Valor, vencimento e reajuste';
     cDados.querySelector('legend').after(el('p', 'profiles-note compras-largo', 'Quanto é, como e quando se paga, por quanto tempo vale e como o valor é reajustado.'));
+    /* Bloco 3 · Objeto do contrato (18/11/2026, Rodrigo): o que está sendo contratado — produtos, despesas e/ou patrimônios, escolhidos
+       dos cadastros que já existem (MER - Produtos, DES - Grupos de Despesas, RET - Patrimônios). Só vínculo por id: nada é digitado,
+       nada é calculado e os cadastros de origem não são alterados. Pode ter um ou vários, de mais de um tipo. */
+    const obj0 = ct.objeto && typeof ct.objeto === 'object' ? ct.objeto : {};
+    const objeto = { produto: new Set(obj0.produtoIds || []), despesa: new Set(obj0.despesaIds || []), patrimonio: new Set(obj0.patrimonioIds || []) };
+    const caixaObjeto = (tipo, rotulo, rotuloBotao, dica, vazio, plural, escolher) => {
+      const box = el('div', 'compras-campo compras-largo'); const chipsBox = el('div', 'compras-chips'); const resumo = el('p', 'profiles-note'); resumo.setAttribute('role', 'status');
+      const desenhar = () => {
+        const ids = [...objeto[tipo]];
+        chipsBox.replaceChildren(...ids.map((id) => { const nome = nomeDoObjeto[tipo](id); const c = botao(nome + ' ×', () => { objeto[tipo].delete(id); desenhar(); }, 'compras-chip ativo'); c.setAttribute('aria-label', 'Remover ' + nome); return c; }));
+        resumo.textContent = ids.length ? plural(ids.length) : vazio;
+      };
+      const trocar = (escolha) => { objeto[tipo].clear(); escolha.forEach((id) => objeto[tipo].add(id)); desenhar(); };
+      const linha = el('div', 'compras-form-rodape'); linha.append(U.botaoTitulo(rotuloBotao, dica, () => escolher(trocar)));
+      box.append(el('span', 'compras-rotulo', rotulo), linha, resumo, chipsBox); desenhar();
+      return box;
+    };
+    const n = (q, um, varios) => (q === 1 ? '1 ' + um : q + ' ' + varios) + (q === 1 ? ' vinculado.' : ' vinculados.');
+    const objProdutos = caixaObjeto('produto', 'Produtos do contrato', 'Produtos', 'Escolher os produtos deste contrato', 'Nenhum produto vinculado.', (q) => n(q, 'produto', 'produtos'), (trocar) => U.seletorDeItens({
+      titulo: 'Produtos do contrato', rotuloBusca: 'Buscar produto', ...cc(cores), marcados: objeto.produto, aoConfirmar: trocar,
+      itens: ((S.dados && S.dados.produtos) || []).filter((p) => p.status === 'ativo' || objeto.produto.has(p.id)).sort((a, b) => String(a.descricao).localeCompare(String(b.descricao), 'pt-BR')).map((p) => ({ id: p.id, rotulo: p.descricao + (p.status === 'ativo' ? '' : ' (inativo)') })),
+    }));
+    const objDespesas = caixaObjeto('despesa', 'Despesas do contrato', 'Grupo de despesas', 'Escolher os grupos e subgrupos de despesa deste contrato', 'Nenhuma despesa vinculada.', (q) => (q === 1 ? '1 grupo ou subgrupo vinculado.' : q + ' grupos ou subgrupos vinculados.'), (trocar) => seletorHierarquico({
+      titulo: 'Despesas do contrato: grupos de despesa', cores, marcados: objeto.despesa, aoConfirmar: trocar,
+    }));
+    const objPatrimonios = caixaObjeto('patrimonio', 'Patrimônios do contrato', 'Patrimônios', 'Escolher os patrimônios deste contrato', 'Nenhum patrimônio vinculado.', (q) => n(q, 'patrimônio', 'patrimônios'), (trocar) => U.seletorDeItens({
+      titulo: 'Patrimônios do contrato', rotuloBusca: 'Buscar patrimônio', ...cc(cores), marcados: objeto.patrimonio, aoConfirmar: trocar,
+      itens: bensCadastrados().filter((b) => !b.baixa || objeto.patrimonio.has(b.id)).sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR')).map((b) => ({ id: b.id, rotulo: b.nome + (b.baixa ? ' (baixado)' : '') })),
+    }));
     const quadroTem = blocoContrato('Contrato', 'Marque Sim para montar o contrato deste ' + (cliente ? 'cliente' : 'fornecedor') + '. Ele é montado em blocos, de cima para baixo, com o que você preencher em cada um.', temContrato);
     const daEmpresa = 'Os dados vêm de Configurações → Empresa → Dados da Empresa.'; const doCadastro = 'Os dados vêm das etapas anteriores deste cadastro.';
     const blocosDoContrato = [
@@ -552,12 +591,13 @@
         : blocoContrato('1 · Contratante', 'Quem contrata: a sua empresa. ' + daEmpresa, campoEmpresa, semEmpresaNota, resumoContratante),
       cliente ? blocoContrato('2 · Contratado', 'Quem é contratado: a sua empresa. ' + daEmpresa, campoEmpresa, semEmpresaNota, resumoContratado)
         : blocoContrato('2 · Contratado', 'Quem é contratado: este fornecedor. ' + doCadastro, resumoContratado),
+      blocoContrato('3 · Objeto do contrato', 'O que está sendo contratado: produtos, despesas e/ou patrimônios, escolhidos dos cadastros que já existem. Pode ter um ou vários.', objProdutos, objDespesas, objPatrimonios),
       cDados,
-      blocoContrato('4 · O que está incluso', 'As atividades e responsabilidades que fazem parte do contrato.', listaInc),
-      blocoContrato('5 · O que não está incluso', 'O que fica de fora, para não haver dúvida depois.', listaExc),
-      blocoContrato('6 · Condições de rescisão', 'Como o contrato pode ser encerrado e com quanto tempo de aviso.', campoRescisao, linhaRescisao, avisoRescisao),
-      blocoContrato('7 · Tipo de contrato e cláusulas', 'Opcional: um tipo de contrato traz cláusulas e campos prontos, que se somam aos blocos acima.', campo('Tipo de contrato', linhaModelo), notasModelo, boxClausulas, boxCampos),
-      blocoContrato('8 · Assinaturas e documento', 'Confira quem assina por cada parte e gere o documento. A assinatura é feita no papel impresso.', resumoAssinaturas, acoesContrato, avisoContrato),
+      blocoContrato('5 · O que está incluso', 'As atividades e responsabilidades que fazem parte do contrato.', listaInc),
+      blocoContrato('6 · O que não está incluso', 'O que fica de fora, para não haver dúvida depois.', listaExc),
+      blocoContrato('7 · Condições de rescisão', 'Como o contrato pode ser encerrado e com quanto tempo de aviso.', campoRescisao, linhaRescisao, avisoRescisao),
+      blocoContrato('8 · Tipo de contrato e cláusulas', 'Opcional: um tipo de contrato traz cláusulas e campos prontos, que se somam aos blocos acima.', campo('Tipo de contrato', linhaModelo), notasModelo, boxClausulas, boxCampos),
+      blocoContrato('9 · Assinaturas e documento', 'Confira quem assina por cada parte e gere o documento. A assinatura é feita no papel impresso.', resumoAssinaturas, acoesContrato, avisoContrato),
     ];
     pintarBlocosContrato = () => blocosDoContrato.forEach((b) => mostrar(b, temContrato.ativo));
     pintarBlocosContrato();

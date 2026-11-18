@@ -397,6 +397,56 @@
    * nó ou lista de nós; célula sem conteúdo fica vazia. Na tela estreita as células empilham sob o nome.
    * estado: texto pequeno à direita, antes da seta (ex.: "Ativo"), como nos cadastros de grupos.
    */
+  /** Caixa de marcar com rótulo (e dica opcional). O input fica em .input. */
+  function interruptor(rotulo, marcado, dica) {
+    const l = el('label', 'compras-interruptor');
+    const c = entrada('checkbox');
+    c.checked = Boolean(marcado);
+    l.append(c, el('span', null, rotulo));
+    if (dica) l.append(el('small', 'profiles-note', dica));
+    l.input = c;
+    return l;
+  }
+  /**
+   * Janela de escolha (peça única: vínculos do fornecedor e objeto do contrato): busca, lista de caixas de marcar (com níveis) e
+   * Confirmar. itens: [{ id, rotulo, busca, nivel, travado, dica }]. marcados: Set de ids. aoConfirmar(Set).
+   */
+  function seletorDeItens({ titulo, rotuloBusca, itens, marcados, aoConfirmar, limite = 80, cor, corTexto }) {
+    const escolha = new Set(marcados);
+    dialogo({
+      titulo, ...(cor ? { cor, corTexto } : {}), rotuloSalvar: 'Confirmar',
+      montar: (fm) => {
+        const campoBusca = entrada('text', '', { placeholder: rotuloBusca, maxLength: 80, autocomplete: 'off' });
+        campoBusca.setAttribute('aria-label', rotuloBusca);
+        campoBusca.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
+        const resumo = el('p', 'profiles-note');
+        resumo.setAttribute('role', 'status');
+        const lista = el('div', 'compras-vinculos-lista');
+        const contar = (achados) => {
+          resumo.textContent = (escolha.size === 1 ? '1 marcado' : escolha.size + ' marcados') + '.' + (achados > limite ? ' Mostrando ' + limite + ' de ' + achados + ': use a busca.' : '');
+        };
+        const desenhar = () => {
+          const termo = dobrar(campoBusca.value.trim());
+          const achados = itens.filter((i) => !termo || dobrar(i.busca || i.rotulo).includes(termo));
+          lista.replaceChildren(...achados.slice(0, limite).map((i) => {
+            const l = interruptor(i.rotulo, Boolean(i.travado) || escolha.has(i.id), i.dica || '');
+            if (i.nivel) l.classList.add('compras-vinculo-nivel');
+            l.input.disabled = Boolean(i.travado);
+            l.input.onchange = () => { if (l.input.checked) escolha.add(i.id); else escolha.delete(i.id); contar(achados.length); };
+            return l;
+          }));
+          if (!achados.length) lista.append(el('p', 'profiles-note', termo ? 'Nada encontrado.' : 'Nada cadastrado.'));
+          contar(achados.length);
+        };
+        campoBusca.addEventListener('input', desenhar);
+        const box = el('div', 'compras-campo compras-largo');
+        box.append(campoBusca, resumo, lista);
+        fm.append(box);
+        desenhar();
+      },
+      salvar: () => { aoConfirmar(escolha); },
+    });
+  }
   /**
    * Um toque faz uma coisa; dois toques seguidos, outra (18/11/2026, Rodrigo: na lista, um toque mostra os dados e dois toques abrem
    * o cadastro para editar). O toque único espera um instante pelo segundo, para não abrir uma janela e logo outra por cima.
@@ -870,6 +920,6 @@
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, umOuDoisToques, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();
