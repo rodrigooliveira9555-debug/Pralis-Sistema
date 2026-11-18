@@ -650,32 +650,28 @@
           return q;
         }
         const funcoes1 = quadroFuncoes(f?.prestadores?.[0]?.funcoes, 1);
-        // Pessoa Física (vale para Produto e para Serviço): a própria pessoa é o contato. Mesmo quadro Sim/Não da Situação; copia só o Nome completo.
-        const mesmoPF = U.quadroSituacao('O mesmo da etapa anterior', Boolean(f && f.contatoMesmo), { textos: ['Sim', 'Não'], dica: 'Preenche o nome com o Nome completo da etapa anterior.',
-          aoMudar: (ligado) => { if (ligado) pedirCopiaNome(); else vNome.readOnly = false; } });
-        mesmoPF.classList.add('compras-largo');
-        mesmoPF.querySelector('.account-status-switch').setAttribute('aria-label', 'O mesmo da etapa anterior (Pessoa Física)');
-        function copiarNome() { if (mesmoPF.ativo && ehPF()) { vNome.value = nome.value.trim(); vNome.readOnly = true; } else vNome.readOnly = false; }
-        function pedirCopiaNome() {
-          const atual = vNome.value.trim();
-          if (!atual || atual === nome.value.trim()) { copiarNome(); return; }
-          let confirmado = false;
-          U.dialogo({ titulo: 'Substituir o nome?', ...coresF(), rotuloSalvar: 'Substituir',
-            montar: (f2) => { f2.append(el('p', null, 'O nome desta etapa ("' + atual + '") é diferente do Nome completo da etapa anterior. Substituir pelo Nome completo?')); },
-            salvar: () => { confirmado = true; copiarNome(); },
-            aoFechar: () => { if (!confirmado) mesmoPF.ativo = false; } });
-        }
-        nome.addEventListener('input', copiarNome);
+        // Pessoa física (18/11/2026, Rodrigo): a própria pessoa é o vendedor ou prestador, e a etapa "Dados do vendedor" não existe para
+        // ela. O nome do contato acompanha sempre o Nome completo (o campo "Nome do vendedor" fica fora da tela, só espelhando).
+        const sincNomePF = () => { if (ehPF()) vNome.value = nome.value.trim(); };
+        nome.addEventListener('input', sincNomePF);
         // Pessoa física no padrão do cliente (18/11/2026, Rodrigo): WhatsApp, e-mail e data de aniversário sobem para o quadro
         // "Dados pessoais" da 1ª etapa. São os MESMOS campos (e o mesmo dado: whatsapp, email, vendedorAniversario) da 2ª etapa da
         // pessoa jurídica; só mudam de lugar, então nada do que foi digitado se perde ao trocar o tipo.
         function moverContatoPF() {
           const [, zap, correio] = camposS2.map((x) => x[0]);
-          if (ehPF()) s1.append(zap, correio, vAniv.no); else camposS2[0][0].after(zap, vAniv.no, correio);
+          if (ehPF()) s1.append(zap, correio, vAniv.no, funcoes1.no); else { camposS2[0][0].after(zap, vAniv.no, correio); s2.append(funcoes1.no); }
+          // Categoria Serviço: as funções e os outros prestadores acompanham a etapa da pessoa.
+          (ehPF() ? etapa1 : etapa2).append(listaExtras, adicionarLinha);
           const rAniv = vAniv.no.querySelector('.compras-rotulo'); if (rAniv) rAniv.textContent = ehPF() ? 'Data de aniversário' : 'Aniversário';
         }
-        aoMudarTipo = () => { mostrar(mesmoPF, ehPF()); copiarNome(); moverContatoPF(); pintarVendedor(); };
-        s2.append(tituloS2, mesmoPF, camposS2[0][0], camposS2[1][0], vAniv.no, camposS2[2][0], funcoes1.no);
+        aoMudarTipo = () => {
+          sincNomePF(); moverContatoPF(); pintarVendedor();
+          // Os quadros do financeiro e do responsável legal levam o nome da etapa (sem "da empresa" na pessoa física).
+          const nomes = D.etapasFornecedor(marcadas(), ehPF() ? 'fisica' : 'juridica'); const k = ehPF() ? 1 : 2;
+          fin.no.querySelector('legend').textContent = nomes[k]; rep.no.querySelector('legend').textContent = nomes[k + 1];
+          if (barra) { atual = 0; barra.update(etapas(), 0); }
+        };
+        s2.append(tituloS2, camposS2[0][0], camposS2[1][0], vAniv.no, camposS2[2][0], funcoes1.no);
 
         /* Prestadores 2, 3…: só na categoria Serviço. Cada quadro pode ser removido. */
         const idPrestador1 = f?.prestadores?.[0]?.id || S.novoId('pr');
@@ -743,7 +739,7 @@
           return { no: s, mesmo, nome: n, whatsapp: w, email: m, pintar };
         }
         const valores = (c) => ({ nome: c.nome.value.trim(), whatsapp: c.whatsapp.value.trim(), email: c.email.value.trim() });
-        const fin = etapaContato(f?.financeiro, 'financeiro', () => ({ nome: vNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() }), 'Dados do responsável financeiro da empresa');
+        const fin = etapaContato(f?.financeiro, 'financeiro', () => ({ nome: (ehPF() ? nome : vNome).value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() }), 'Dados do responsável financeiro da empresa');
         const rep = etapaContato(f?.representante, 'representante', () => valores(fin), 'Dados do responsável legal da empresa');
         // A cópia segue a ordem das etapas: primeiro o financeiro (copia o vendedor), depois o representante (copia o financeiro).
         const pintarCopias = () => { fin.pintar(); rep.pintar(); };
@@ -1059,7 +1055,12 @@
         const eRevisao = el('div', 'compras-etapa');
         const quadros = [etapa1, etapa2, etapa3, rep.no, s5, s6, eRevisao];
         const marcadas = () => catOpcoes.marcados();
-        const etapas = () => D.etapasFornecedor(marcadas()).map((label) => ({ label }));
+        // Sequência em uso: a pessoa física não tem a etapa do vendedor à parte (posição 1 de quadros); "atual" é a posição nesta sequência.
+        const seq = () => (ehPF() ? [0, 2, 3, 4, 5, 6] : [0, 1, 2, 3, 4, 5, 6]);
+        const etapas = () => D.etapasFornecedor(marcadas(), ehPF() ? 'fisica' : 'juridica').map((label) => ({ label }));
+        // O que falta em cada posição da sequência: na pessoa física, a conferência da 2ª etapa (prestadores) soma-se à 1ª.
+        const faltasDaSequencia = () => { const t = D.validarFornecedorEtapas(ler(), R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador }); return seq().map((q) => t[q] || (ehPF() && q === 0 ? t[1] : '') || ''); };
+        let barra = null;
         // Troca a cor na hora, sem recarregar nem mexer nos dados: as mesmas variáveis que a janela recebeu ao abrir.
         function aplicarTema() {
           const m = marcadas(); temaForm = m.length === 1 ? m[0] : null;
@@ -1067,6 +1068,7 @@
           dlg.style.setProperty('--menu-accent', c.cor); dlg.style.setProperty('--dialog-accent', c.cor); dlg.style.setProperty('--panel-text', c.corTexto);
         }
         let atual = 0;
+        const quadroAtual = () => quadros[seq()[atual]];
         const erroEtapa = el('p', 'profiles-error');
         erroEtapa.setAttribute('role', 'alert');
         // Rodapé do formulário no padrão: Voltar sem cor (contorno, como o Cancelar), Avançar e Salvar na cor do menu,
@@ -1074,8 +1076,8 @@
         const voltar = botao('Voltar', () => ir(atual - 1), 'btn secondary footer-cancel-accent form-back-action');
         voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
         const avancar = botao('Avançar', () => {
-          const falta = D.validarFornecedorEtapas(ler(), R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador })[atual] || '';
-          if (falta) { erroEtapa.textContent = falta; U.sinalizarObrigatorios(quadros[atual]); return; }
+          const falta = faltasDaSequencia()[atual];
+          if (falta) { erroEtapa.textContent = falta; U.sinalizarObrigatorios(quadroAtual()); return; }
           ir(atual + 1);
         }, 'btn form-next-action');
         const salvarFim = el('button', 'btn', 'Salvar');
@@ -1083,21 +1085,22 @@
         const cancelar = botao('Cancelar', () => dlg.close(), 'btn secondary footer-cancel-accent');
         const nav = el('div', 'compras-form-rodape compras-etapas-nav');
         // No cadastro novo só se volta pela barra (para a frente, pelo Avançar, que confere a etapa); na edição, qualquer etapa.
-        const barra = window.CicluzStepper.create({ steps: etapas(), current: 0, label: 'Etapas do cadastro do fornecedor', onSelect: (i) => { if (f || i <= atual) ir(i); } });
+        barra = window.CicluzStepper.create({ steps: etapas(), current: 0, label: 'Etapas do cadastro do fornecedor', onSelect: (i) => { if (f || i <= atual) ir(i); } });
         function ir(i) {
-          atual = Math.max(0, Math.min(quadros.length - 1, i));
+          const ordem = seq();
+          atual = Math.max(0, Math.min(ordem.length - 1, i));
           pintarCopias();
           pintarVinculos();
           pintarResumoContrato(); s6.pintarTem(); pintarModelos();
-          if (atual === quadros.length - 1) eRevisao.replaceChildren(el('p', 'profiles-note', 'Confira os dados antes de salvar. Para corrigir, toque em Editar no bloco.'), ...U.revisaoDasEtapas(quadros.slice(0, -1), etapas().map((x) => x.label), ir));
-          quadros.forEach((q, k) => mostrar(q, k === atual));
+          const ultima = atual === ordem.length - 1;
+          if (ultima) eRevisao.replaceChildren(el('p', 'profiles-note', 'Confira os dados antes de salvar. Para corrigir, toque em Editar no bloco.'), ...U.revisaoDasEtapas(ordem.slice(0, -1).map((q) => quadros[q]), etapas().map((x) => x.label), ir));
+          quadros.forEach((q, k) => mostrar(q, k === ordem[atual]));
           barra.update(etapas(), atual);
           erroEtapa.textContent = '';
           // Os botões entram e saem da barra (o formato padrão dos botões de rodapé força a exibição mesmo com hidden):
           // Voltar a partir da 2ª etapa, Avançar até a penúltima; Salvar em todas na edição e só na última no cadastro novo.
-          const ultima = atual === quadros.length - 1;
           nav.replaceChildren(...[atual > 0 && voltar, cancelar, (f || ultima) && salvarFim, !ultima && avancar].filter(Boolean));
-          const foco = quadros[atual].querySelector('input:not([type=checkbox]):not([readonly]),select');
+          const foco = quadroAtual().querySelector('input:not([type=checkbox]):not([readonly]),select');
           if (foco && form.isConnected) foco.focus({ preventScroll: true });
           U.subirAoTopo(barra.el, form);
         }
@@ -1108,6 +1111,7 @@
         /** Lê o formulário no formato salvo. "O mesmo da etapa anterior" copia os dados da etapa de antes. */
         function ler() {
           const razaoSocial = razao.value.trim();
+          sincNomePF();
           pintarCopias();
           const vendedor = { nome: vNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() };
           const contato = (c) => ({ mesmo: c.mesmo.ativo, ...valores(c) });
@@ -1122,7 +1126,7 @@
             endereco: { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value },
             contatoNome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email,
             // Texto incompleto segue como está para a validação recusar (não vira vazio em silêncio).
-            vendedorAniversario: vAniv.valor(), contatoMesmo: ehPF() && mesmoPF.ativo,
+            vendedorAniversario: vAniv.valor(), contatoMesmo: ehPF(),
             // Serviço: a lista de prestadores; o 1º espelha o contato acima (é dele que a lista e a cotação leem).
             // Produto: a chave não vai, para não apagar prestadores gravados se a categoria for trocada por engano.
             contrato: lerContrato(),
@@ -1139,14 +1143,16 @@
         form.append(barra.el, ...quadros, erroEtapa, nav);
         ir(0);
         // Produtos marcados agora (categoria Produto): viram vínculo no mesmo catálogo do Compras ao salvar.
-        return { ler, ir, get datasContrato() { return [cVencData, cInicio, cFim, ...datasExtras]; }, novosProdutos: () => (marcadas().join() === 'produto' ? [...novosProdutos] : []) };
+        // irQuadro(q): leva à posição da sequência em que está o quadro q (na pessoa física, o quadro do vendedor é o primeiro).
+        const irQuadro = (q) => { const p = seq().indexOf(q); ir(p >= 0 ? p : 0); };
+        return { ler, ir, irQuadro, get datasContrato() { return [cVencData, cInicio, cFim, ...datasExtras]; }, novosProdutos: () => (marcadas().join() === 'produto' ? [...novosProdutos] : []) };
       },
       salvar: (c) => {
-        if (c.datasContrato.some((d2) => !d2.checkValidity())) { c.ir(2); return 'Confira as datas do contrato: use DD/MM/AA.'; }
+        if (c.datasContrato.some((d2) => !d2.checkValidity())) { c.irQuadro(2); return 'Confira as datas do contrato: use DD/MM/AA.'; }
         const campos = c.ler();
         const faltas = D.validarFornecedorEtapas(campos, R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador });
         const etapaComFalta = faltas.findIndex(Boolean);
-        if (etapaComFalta >= 0) { c.ir(etapaComFalta); return faltas[etapaComFalta]; }
+        if (etapaComFalta >= 0) { c.irQuadro(etapaComFalta); return faltas[etapaComFalta]; }
         delete campos.id;
         const idFornecedor = f ? f.id : S.novoId('f');
         const ok = S.transacao((d) => {

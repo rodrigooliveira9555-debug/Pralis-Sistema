@@ -332,8 +332,12 @@
     return c.length === 1 && c[0] === 'servico' ? 'prestador' : 'vendedor';
   }
   /** Etapas do cadastro (decisão do Rodrigo, 15/11/2026), nomes padronizados "Dados do …". A 2ª depende da categoria. */
-  function etapasFornecedor(categorias) {
+  function etapasFornecedor(categorias, tipoPessoa) {
     const c = Array.isArray(categorias) ? categorias : [];
+    const prestador = quemVendeFornecedor(c) === 'prestador';
+    // Pessoa física (18/11/2026, Rodrigo): não existe a etapa da empresa; a primeira já é a da pessoa (vendedor ou prestador de
+    // serviço), com os campos do cadastro de cliente pessoa física. As demais seguem iguais.
+    if (tipoPessoa === 'fisica') return [prestador ? 'Dados do prestador de serviço' : 'Dados do vendedor', 'Dados do responsável financeiro', 'Dados do responsável legal', 'Vínculos', 'Contrato', 'Revisão dos dados'];
     // Nomes de 18/11/2026 (Rodrigo): a 2ª depende da categoria; a 3ª e a 4ª dizem quem é a pessoa (não confundir com as condições de
     // pagamento); a 7ª é a Revisão, como nos outros cadastros em etapas (só leitura, com "Editar" por bloco e o Salvar no fim).
     return ['Dados da empresa', quemVendeFornecedor(c) === 'prestador' ? 'Dados do prestador de serviço da empresa' : 'Dados do vendedor da empresa', 'Dados do responsável financeiro da empresa', 'Dados do responsável legal da empresa', 'Vínculos', 'Contrato', 'Revisão dos dados'];

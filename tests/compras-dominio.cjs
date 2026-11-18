@@ -410,6 +410,10 @@ ok(() => {
   assert.deepEqual(d.etapasFornecedor(['servico']).slice(1, 2), ['Dados do prestador de serviço da empresa']);
   assert.deepEqual(d.etapasFornecedor(['produto', 'servico']).slice(1, 2), ['Dados do vendedor da empresa']);
   assert.equal(d.etapasFornecedor([]).length, 7);
+  // Pessoa física: sem a etapa da empresa; a primeira é a da própria pessoa.
+  assert.deepEqual(d.etapasFornecedor(['servico'], 'fisica'), ['Dados do prestador de serviço', 'Dados do responsável financeiro', 'Dados do responsável legal', 'Vínculos', 'Contrato', 'Revisão dos dados']);
+  assert.equal(d.etapasFornecedor(['produto'], 'fisica')[0], 'Dados do vendedor');
+  assert.equal(d.etapasFornecedor(['produto'], 'juridica').length, 7);
   assert.equal(d.etapasFornecedor([])[0], 'Dados da empresa');
   // Endereço é opcional; o que vier precisa estar no formato.
   assert.equal(v({ endereco: { cep: '01001-000', logradouro: 'Rua Teste', numero: '10', complemento: '', bairro: 'Centro', cidade: 'Cidade Teste', uf: 'SP' } }), '');
