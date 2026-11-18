@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Título na moldura de todo quadro e respiro no fim (18/11/2026)
+Regra do Rodrigo: **todo quadro de campos traz o nome do que enquadra sobre a borda.** Nas telas antigas: (a) quadro que começa por um título (`h3.uniforms-heading`: "Novo lançamento", "Nova ocorrência", "Cadastro escala"…) tem esse título levado para a borda por uma regra única em `ui-foundation.css`, sem mexer na tela; (b) quadro sem título ganhou `data-quadro`: "Dados do grupo" / "Dados do subgrupo" / "Dados de <tipo>" (`groups.js`), "Dados da conta" (`index.html`), "Competência" (folhas, férias, rescisão — `folhas-conplus.js`), "Colaborador" e "Feriados" (Escala Individual — `schedules.js`). **Respiro no fim do quadro:** entre o último campo e o fecho do quadro ficam 12 a 14 px, o mesmo das laterais (antes a linha de ações somava 14 px a mais); do fecho aos botões, 24 px.
+
 ## Espaço entre quadros: 12 px em todo o sistema (18/11/2026)
 Regra do Rodrigo: a distância entre um quadro e o seguinte é sempre **12 px**, a mesma dos cadastros em etapas (`.compras-etapa`). Acertos feitos: a revisão do cliente (os blocos estavam colados, 0 px) e o cliente pessoa física (24 px, por causa da caixa vazia da barra de etapas) em `compras/clientes.js`; nas telas antigas, `.form-fields[data-quadro]` passou de 22 para 12 px e o bloco de documento (`.doc-capture`) de 14/20 para 12 px, em `ui-foundation.css`. Dentro do quadro, o espaçamento dos campos não mudou.
 

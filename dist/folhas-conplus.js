@@ -72,7 +72,7 @@ function makeScreen(key){const T=TIPOS[key];
  const note=el('div','form-note');
  let docs=[],comp='';
  async function list(){detail=false;body.replaceChildren(note);docs=await fonte.listar(key);note.textContent=window.CicluzFolhasCsv?.has(key)?noteCsv:noteDemo;{const tools=window.CicluzFolhasCsv?.toolbar(key,()=>list());if(tools)body.append(tools)}
-  const f=el('div','form-fields uniforms-form'),cs=el('select');cs.setAttribute('aria-label','Competência');cs.add(new Option('Todas as competências',''));
+  const f=el('div','form-fields uniforms-form'),cs=el('select');f.dataset.quadro='Competência';cs.setAttribute('aria-label','Competência');cs.add(new Option('Todas as competências',''));
   for(const c of [...new Set(docs.map(T.competencia))].sort((a,b)=>b.slice(3).localeCompare(a.slice(3))||b.localeCompare(a)))cs.add(new Option(c,c));cs.value=comp;
   const l2=el('label',null,'Competência');l2.append(cs);f.append(l2);
   const out=el('div');body.append(f,out);
