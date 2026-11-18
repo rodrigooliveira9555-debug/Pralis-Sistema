@@ -45,7 +45,7 @@
   const MEDIDAS_BASE = ['UN', 'KG', 'G', 'LT', 'ML'];
   const UNIDADES_TRANSF = ['UN', 'G', 'ML'];
   // Nomes das etapas definidos pelo Rodrigo (17/11/2026).
-  const ETAPAS = ['Cadastro geral', 'Cadastro produção/​transformação', 'Cadastro específico', 'Cadastro promoção', 'Cadastro fiscal', 'Revisão'];
+  const ETAPAS = ['Cadastro geral', 'Cadastro produção/​transformação', 'Cadastro específico', 'Cadastro promoção', 'Cadastro fiscal', 'Revisão dos dados'];
   // Dias da promoção na ordem da lista (domingo primeiro, como no calendário); o número é a posição em promocao.dias.
   const DIAS_LISTA = [[6, 'Domingo'], [0, 'Segunda-feira'], [1, 'Terça-feira'], [2, 'Quarta-feira'], [3, 'Quinta-feira'], [4, 'Sexta-feira'], [5, 'Sábado']];
   const VISTO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 7"/></svg>';

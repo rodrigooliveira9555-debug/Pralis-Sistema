@@ -382,7 +382,6 @@
         let atual = jaTemDados ? 2 : 0;
         const erroEtapa = el('p', 'profiles-error compras-largo'); erroEtapa.setAttribute('role', 'alert');
         const notaModo = el('p', 'profiles-note compras-largo'); notaModo.setAttribute('role', 'status');
-        const editar = botao('Editar', () => { editando = true; ir(0); }, 'btn');
         const voltar = botao('Voltar', () => ir(atual - 1), 'btn secondary footer-cancel-accent form-back-action');
         voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
         const avancar = botao('Avançar', () => {
@@ -424,11 +423,11 @@ if (x.responsaveisDaMatriz) { if (!daMatrizCopia.length) blocos.push(['Dados dos
           caixaResp.querySelectorAll(':scope > fieldset').forEach((q) => { q.disabled = !editando || daMatriz; });
           adicionar.disabled = !editando; linhaAdicionar.style.display = editando && !daMatriz ? '' : 'none';
           caixaResp.querySelectorAll('.compras-empresa-remover').forEach((x) => { x.style.display = editando ? '' : 'none'; });
-          notaModo.textContent = editando ? '' : 'Dados gravados. Toque em Editar para alterar.';
+          notaModo.textContent = editando ? '' : 'Dados gravados. Toque em Editar, no bloco que quer alterar.';
           const ultima = atual === quadros.length - 1;
-          // Lendo: só o Editar. Editando: Voltar a partir da 2ª etapa, Avançar até a penúltima; Salvar em todas quando a
+          // Lendo: só o Salvar, que conclui e fecha (o Editar fica em cada bloco da Revisão — 18/11/2026, Rodrigo). Editando: Voltar a partir da 2ª etapa, Avançar até a penúltima; Salvar em todas quando a
           // ficha já existia e só na Revisão na ficha nova.
-          nav.replaceChildren(...(editando ? [atual > 0 && voltar, cancelar, (jaTemDados || ultima) && salvarFim, !ultima && avancar].filter(Boolean) : [editar]));
+          nav.replaceChildren(...(editando ? [atual > 0 && voltar, cancelar, (jaTemDados || ultima) && salvarFim, !ultima && avancar].filter(Boolean) : [salvarFim]));
         }
         function ir(i) {
           atual = Math.max(0, Math.min(quadros.length - 1, i));
@@ -461,7 +460,7 @@ if (x.responsaveisDaMatriz) { if (!daMatrizCopia.length) blocos.push(['Dados dos
         return { ler, ir, etapaComErro: () => validarEmpresaEtapas(ler()).findIndex(Boolean) };
       },
       salvar: (ctx) => {
-        if (!editando) return 'Toque em Editar para alterar os dados.';
+        if (!editando) return ''; // nada foi alterado: o Salvar só conclui e fecha a ficha
         const novo = ctx.ler();
         const falta = validarEmpresa(novo);
         if (falta) { const k = ctx.etapaComErro(); if (k >= 0) ctx.ir(k); return falta; } // leva à etapa onde está o problema

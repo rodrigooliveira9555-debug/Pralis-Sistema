@@ -51,7 +51,7 @@
       secoes = [
         ['Dados cadastrais', [['CNPJ', c.cnpj], ['Razão Social', c.razaoSocial], ['Nome Fantasia', c.nomeFantasia], ['Regime tributário', nomeDe(D.REGIMES_TRIBUTARIOS, c.regimeTributario)], ['Situação', c.situacao === 'inativo' ? 'Inativo' : 'Ativo']]],
         ['Endereço', enderecoLinhas],
-        ['Dados do responsável financeiro da empresa', [['Nome', c.contatoNome], ['WhatsApp', c.whatsapp], ['E-mail (financeiro e/ou fiscal)', c.email], ['Aniversário', D.aniversarioTexto(c.contatoAniversario)], ['Cliente mensal', c.contrato && c.contrato.clienteMensal ? 'Sim' : 'Não']]],
+        ['Dados do responsável financeiro da empresa', [['Nome', c.contatoNome], ['WhatsApp', c.whatsapp], ['E-mail (financeiro e/ou fiscal)', c.email], ['Aniversário', D.aniversarioTexto(c.contatoAniversario)], ['Cargo na empresa', 'Financeiro'], ['Cliente mensal', c.contrato && c.contrato.clienteMensal ? 'Sim' : 'Não'], ...(c.contrato && c.contrato.clienteMensal ? [['Fechamento', 'Do dia 1º ao último dia do mês'], ['Forma de pagamento', 'Boleto'], ['Vencimento', 'Todo dia ' + D.CLIENTE_MENSAL.vencimentoDia]] : [])]],
         // Cadastro anterior a 17/11/2026 com um financeiro diferente do contato: continua à vista, para não sumir.
         ...(c.financeiro && c.financeiro.mesmo === false && (c.financeiro.nome || c.financeiro.whatsapp || c.financeiro.email) ? [['Financeiro (cadastro anterior)', contato(c.financeiro)]] : []),
         ['Dados do responsável geral da empresa', contato(c.representante, [['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
@@ -168,13 +168,21 @@
 
         /* Informações de Pagamento (sempre à vista): forma de pagamento, recorrência, valor e referência ao salário mínimo (mesmos componentes de Fornecedores) */
         const ct = v.contrato || {};
-        const mensal = U.quadroSituacao('É cliente mensal?', Boolean(ct.clienteMensal), { textos: ['Sim', 'Não'], dica: 'Cliente mensal: período do dia 1 ao último dia do mês, boleto e vencimento todo dia 10.' });
+        const fixo = (rotulo, valor) => campo(rotulo, entrada('text', valor, { readOnly: true }));
+        // Cliente mensal (18/11/2026, Rodrigo): ao marcar Sim, os três campos aparecem já preenchidos com a regra do cliente mensal, só para leitura.
+        const camposMensal = [
+          fixo('Fechamento', 'Do dia 1º ao último dia do mês'),
+          fixo('Forma de pagamento', (D.FORMAS_PAGAMENTO_CONTRATO.find(([id]) => id === D.CLIENTE_MENSAL.formaPagamento) || [])[1] || ''),
+          fixo('Vencimento', 'Todo dia ' + D.CLIENTE_MENSAL.vencimentoDia),
+        ];
+        const pintarMensal = () => camposMensal.forEach((no) => mostrar(no, mensal.ativo));
+        const mensal = U.quadroSituacao('É cliente mensal?', Boolean(ct.clienteMensal), { textos: ['Sim', 'Não'], dica: 'Ao marcar Sim, o fechamento, a forma de pagamento e o vencimento já vêm preenchidos.', aoMudar: () => pintarMensal() });
         mensal.classList.add('compras-largo');
         mensal.querySelector('.account-status-switch').setAttribute('aria-label', 'É cliente mensal?');
         // Informações de cobrança (17/11/2026, Rodrigo): só a pergunta "É cliente mensal?". Forma de pagamento, recorrência,
         // valor, salário mínimo, vigência, reajuste e observações saíram da tela; o que já estava gravado em contrato fica
         // guardado como está. Ligar "cliente mensal" grava boleto e vencimento no dia 10, a regra de antes.
-        const cDados = el('fieldset', 'compras-fieldset'); cDados.append(el('legend', null, 'Informações de cobrança'), mensal);
+        const cDados = el('fieldset', 'compras-fieldset'); cDados.append(el('legend', null, 'Informações de cobrança'), mensal, ...camposMensal); pintarMensal();
         const lerContrato = () => ({
           ...ct, tem: true, clienteMensal: mensal.ativo,
           ...(mensal.ativo ? { formaPagamento: D.CLIENTE_MENSAL.formaPagamento, vencimentoDia: D.CLIENTE_MENSAL.vencimentoDia } : ct.clienteMensal ? { formaPagamento: '', vencimentoDia: null } : {}),
@@ -273,7 +281,7 @@
           if (cadastro === 'simples') return [bloco(...sit, quadro('Dados da empresa', F.cnpj, avisoCnpj, F.razao, F.fantasia, F.whats, F.mail), endSw, sEnd)];
           // 17/11/2026 (Rodrigo): o contato e o financeiro viram uma etapa só, "Dados do responsável financeiro": o quadro
           // "Dados do responsável" em cima e as Informações de Pagamento embaixo; não existe mais um contato do financeiro à parte.
-          const contato = el('fieldset', 'compras-fieldset'); contato.append(el('legend', null, 'Dados do responsável'), F.contatoNome, F.whats, F.mail, aniv.no);
+          const contato = el('fieldset', 'compras-fieldset'); contato.append(el('legend', null, 'Dados do responsável'), F.contatoNome, F.whats, F.mail, aniv.no, fixo('Cargo na empresa', 'Financeiro'));
           return [bloco(...sit, quadro('Dados da empresa', F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime), sEnd), bloco(contato, cDados), bloco(rep.no), bloco(revisao)];
         }
         /** Cadastro lido do formulário: só o tipo e a modalidade em uso (o resto do registro fica como está). */
@@ -294,7 +302,7 @@
         voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
         const avancar = botao('Avançar', () => { const falta = conferir()[passo]; if (falta) { erroEtapa.textContent = falta; U.sinalizarObrigatorios(passos[passo]); return; } ir(passo + 1); }, 'btn form-next-action');
         const cancelar = botao('Cancelar', () => dlg.close(), 'btn secondary footer-cancel-accent');
-        const salvarFim = el('button', 'btn', 'Salvar Cliente'); salvarFim.type = 'submit';
+        const salvarFim = el('button', 'btn', 'Salvar'); salvarFim.type = 'submit';
         function desenhar() {
           tipoSw.ativo = tipo === 'juridica'; cadSw.ativo = cadastro === 'completo'; pintarEndereco();
           // Pessoa jurídica em etapas: o e-mail do responsável é o que recebe notas e cobranças, e é obrigatório (17/11/2026, Rodrigo).

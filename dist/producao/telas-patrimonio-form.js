@@ -673,7 +673,7 @@
         const cancelar = botao('Cancelar', () => dlg.close(), 'btn secondary footer-cancel-accent');
         const voltar = botao('Voltar', () => ir(atual - 1), 'btn secondary footer-cancel-accent form-back-action'); voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
         const avancar = botao('Avançar', () => { const falta = conferir()[atual]; if (falta) { erroEtapa.textContent = falta; return; } ir(atual + 1); }, 'btn form-next-action');
-        const salvarFim = el('button', 'btn', 'Salvar Patrimônio'); salvarFim.type = 'submit';
+        const salvarFim = el('button', 'btn', 'Salvar'); salvarFim.type = 'submit';
         const nav = el('div', 'compras-form-rodape compras-etapas-nav');
         function ir(i) {
           atual = Math.max(0, Math.min(quadros.length - 1, i));

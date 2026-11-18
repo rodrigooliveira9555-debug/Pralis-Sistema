@@ -767,7 +767,7 @@
     return tipoPessoa === 'juridica'
       // 17/11/2026 (Rodrigo): o contato e o financeiro são uma etapa só; depois, o responsável geral.
       ? ['Dados da empresa', 'Dados do responsável financeiro da empresa', 'Dados do responsável geral da empresa', 'Revisão dos dados da empresa']
-      : ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão'];
+      : ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão dos dados'];
   }
   const dataIsoValida = (v) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); if (!m) return false; const d = new Date(+m[1], +m[2] - 1, +m[3]); return d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3]; };
   /**
