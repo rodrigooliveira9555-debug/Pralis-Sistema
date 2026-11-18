@@ -397,6 +397,15 @@
    * nó ou lista de nós; célula sem conteúdo fica vazia. Na tela estreita as células empilham sob o nome.
    * estado: texto pequeno à direita, antes da seta (ex.: "Ativo"), como nos cadastros de grupos.
    */
+  /**
+   * Um toque faz uma coisa; dois toques seguidos, outra (18/11/2026, Rodrigo: na lista, um toque mostra os dados e dois toques abrem
+   * o cadastro para editar). O toque único espera um instante pelo segundo, para não abrir uma janela e logo outra por cima.
+   * Serve para mouse e para o dedo (não depende do evento de duplo clique do navegador).
+   */
+  function umOuDoisToques(um, dois, espera = 300) {
+    let t = null;
+    return () => { if (t) { clearTimeout(t); t = null; dois(); return; } t = setTimeout(() => { t = null; um(); }, espera); };
+  }
   function linhaLista({ icone, icones, titulo, detalhe, colunas, grade, estado, direita, aoClicar, acoes }) {
     const r = el(aoClicar && !acoes ? 'button' : 'div', 'compras-linha');
     if (aoClicar && !acoes) { r.type = 'button'; r.onclick = aoClicar; }
@@ -861,6 +870,6 @@
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, umOuDoisToques, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();

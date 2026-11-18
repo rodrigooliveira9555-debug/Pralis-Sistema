@@ -439,7 +439,7 @@
       linhas.append(cab); ponta.append(cab.botaoGeral);
       lista.forEach((c) => linhas.append(linhaCliente(c, linhas)));
     }
-    tela.body.replaceChildren(caixa, U.nota(todos.length + ' cliente(s). Cliente não é excluído: use a seta da linha para editar ou desativar.'), sec);
+    tela.body.replaceChildren(caixa, U.nota(todos.length + ' cliente(s). Um toque na linha mostra os dados; dois toques abrem o cadastro para editar. Cliente não é excluído: use a seta da linha para desativar.'), sec);
   }
   function linhaCliente(c, linhas) {
     const nomeC = D.nomeCliente(c) || '(sem nome)'; const inativo = c.situacao === 'inativo';
@@ -451,13 +451,14 @@
       acoes: { rotulo: nomeC, lista: linhas, aoEditar: () => editarCliente(c), aoExcluir: () => alternarSituacao(c) },
     });
     if (inativo) row.classList.add('inativo');
-    // Tocar na linha mostra os dados; a seta revela o lápis (editar) e o botão de ativar/desativar no lugar da lixeira.
+    // Tocar na linha mostra os dados; tocar duas vezes abre o cadastro para editar, na primeira etapa; a seta revela o lápis (editar) e o botão de ativar/desativar no lugar da lixeira.
     const arrow = row.querySelector('.account-action-toggle'); const drawer = row.querySelector('.account-row-actions');
     const off = [...drawer.children].find((b) => /^Excluir/.test(b.getAttribute('aria-label') || ''));
     const rotuloOff = (inativo ? 'Ativar ' : 'Desativar ') + nomeC;
     off.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + (inativo ? 'm5 12 4 4L19 6' : 'M5.6 5.6l12.8 12.8M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z') + '"/></svg>';
     off.title = rotuloOff; off.setAttribute('aria-label', rotuloOff);
-    row.onclick = (e) => { if (e.target.closest('button')) return; if (!drawer.hidden) { drawer.hidden = true; arrow.setAttribute('aria-expanded', 'false'); return; } visualizar(c); };
+    const toque = U.umOuDoisToques(() => visualizar(c), () => editarCliente(c));
+    row.onclick = (e) => { if (e.target.closest('button')) return; if (!drawer.hidden) { drawer.hidden = true; arrow.setAttribute('aria-expanded', 'false'); return; } toque(); };
     row.onkeydown = (e) => { if (e.target === row && e.key === 'Enter') { e.preventDefault(); visualizar(c); } };
     row.setAttribute('aria-label', 'Visualizar ' + nomeC);
     return row;

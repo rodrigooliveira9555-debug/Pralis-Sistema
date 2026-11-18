@@ -290,11 +290,12 @@
       acoes: { rotulo: b.nome, lista: linhas, aoEditar: () => window.CicluzProducaoPatrimonioForm.abrir(b), aoExcluir: () => baixa(b) },
     });
     if (b.ativo === false) row.classList.add('inativo');
-    /* Tocar na linha mostra a ficha; a seta revela o lápis (editar) e Baixar (no lugar da lixeira: um bem cadastrado não se apaga). */
+    /* Tocar na linha mostra a ficha; tocar duas vezes abre o cadastro para editar (como na lista de clientes); a seta revela o lápis (editar) e Baixar (no lugar da lixeira: um bem cadastrado não se apaga). */
     const arrow = row.querySelector('.account-action-toggle'); const drawer = row.querySelector('.account-row-actions');
     const off = [...drawer.children].find((x) => /^Excluir/.test(x.getAttribute('aria-label') || ''));
     if (b.baixa) off.remove(); else { off.innerHTML = SVG(ICO.arquivar); off.title = 'Baixar ' + b.nome; off.setAttribute('aria-label', 'Baixar ' + b.nome); }
-    row.onclick = (e) => { if (e.target.closest('button')) return; if (!drawer.hidden) { drawer.hidden = true; arrow.setAttribute('aria-expanded', 'false'); return; } ficha(b); };
+    const toque = U.umOuDoisToques(() => ficha(b), () => window.CicluzProducaoPatrimonioForm.abrir(b));
+    row.onclick = (e) => { if (e.target.closest('button')) return; if (!drawer.hidden) { drawer.hidden = true; arrow.setAttribute('aria-expanded', 'false'); return; } toque(); };
     row.onkeydown = (e) => { if (e.target === row && e.key === 'Enter') { e.preventDefault(); ficha(b); } };
     row.setAttribute('aria-label', 'Ver ficha de ' + b.nome);
     return row;
