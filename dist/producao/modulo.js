@@ -19,6 +19,7 @@
     cifrao: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
     relatorio: '<path d="M4 20V4M4 20h16M8 16v-5M12 16V8M16 16v-3M20 16V6"/>',
     entrega: '<path d="M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a2 2 0 1 0 0-.01M17 19a2 2 0 1 0 0-.01M6 11l2 2 3-3"/>',
+    nutricao: '<path d="M12 7c-2-2.5-6-2-7 1.5-1 3.5 1 8.5 4 10.5 1.2.7 2 .2 3-.3 1 .5 1.8 1 3 .3 3-2 5-7 4-10.5C18 5 14 4.5 12 7ZM12 7c0-2 1-3.5 3-4"/>',
   });
   // Cor de origem: Produção fica em Mercadorias (verde, como o Compras); Patrimônio é RET (azul).
   const COR = U.COR;
@@ -43,6 +44,7 @@
     ['produtos', 'MER - Produtos da Produção', 'Como se pede: utensílio, fornada, mínimo e máximo', 'forno'],
     ['fichas', 'MER - Ficha Técnica de Produtos', 'Etapas, ingredientes, equipamentos e tempos', 'ficha'],
     ['custos', 'MER - Parâmetros de Custo', 'Horas por mês, encargos, preço do kWh e do gás', 'cifrao'],
+    ['ingredientes', 'MER - Ingredientes Ficha Técnica / Tabela TACO', 'Ingredientes ligados à tabela de nutrição pelo código', 'nutricao'],
   ];
   const icone = (target) => {
     const nome = target.replace(/^producao:/, '');

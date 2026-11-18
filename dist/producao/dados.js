@@ -52,7 +52,10 @@
     return { KEY, get dados() { return dados; }, get erroLeitura() { return erroLeitura; }, transacao };
   }
 
-  const producao = criarArmazem('cicluz-producao-v1', ['produtos', 'fichas', 'agendas', 'ocorrencias', 'pedidos', 'ordens'], 'cicluz-producao-mudou');
+  // "ingredientes" (18/11/2026): coleção nova e opcional; documento antigo sem ela ganha a lista vazia ao abrir, sem migração.
+  const producao = criarArmazem('cicluz-producao-v1', ['produtos', 'fichas', 'agendas', 'ocorrencias', 'pedidos', 'ordens', 'ingredientes'], 'cicluz-producao-mudou');
+  // Tabela TACO importada pelo usuário (vazia = vale a oficial que vem no sistema, em producao/taco-dados.js).
+  const taco = criarArmazem('cicluz-taco-v1', ['linhas', 'colunas'], 'cicluz-taco-mudou');
   const patrimonio = criarArmazem('cicluz-patrimonio-v1', ['bens'], 'cicluz-patrimonio-mudou');
 
   /* ---------- Integrações (só leitura) ---------- */
@@ -133,7 +136,7 @@
   const hojeIso = () => C().hojeIso();
 
   window.CicluzProducaoDados = {
-    producao, patrimonio, criarArmazem,
+    producao, patrimonio, taco, criarArmazem,
     locais, local, nomeLocal, produtos, produto, nomeProduto, unidades,
     fornecedores, nomeFornecedor, gruposDespesa, nomeGrupoDespesa,
     bem, nomeBem, cargos, cargo, nomeCargo, parametros, config, ficha, fichasDo, fichaPadrao, produzidos,
