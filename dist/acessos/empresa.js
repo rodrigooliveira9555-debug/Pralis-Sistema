@@ -81,7 +81,7 @@
   }
 
   /** O que impede salvar ('' quando está em ordem): empresa e endereço obrigatórios, menos o complemento; responsáveis opcionais. */
-  const ETAPAS = ['Dados da empresa', 'Dados dos responsáveis legais', 'Revisão'];
+  const ETAPAS = ['Dados da empresa', 'Dados dos responsáveis legais da empresa', 'Revisão dos dados'];
   /** Uma mensagem por etapa ('' quando em ordem): [empresa e endereço, responsáveis, revisão]. */
   const validarEmpresaEtapas = (x) => [validarDadosDaEmpresa(x), validarResponsaveis(x), ''];
   const validarEmpresa = (x) => validarEmpresaEtapas(x).find(Boolean) || '';

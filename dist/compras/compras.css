@@ -611,6 +611,6 @@ body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-sea
 .compras-campo>.campo-aviso>span{color:var(--panel-text,inherit)}
 .compras-campo>.campo-aviso svg{flex:none;width:16px;height:16px;fill:none;stroke:var(--menu-accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)}
-/* Revisão (17/11/2026): o botão redondo do lápis fica no canto direito do bloco e leva à etapa dele. */
-.compras-fieldset:has(> .compras-revisao-editar){position:relative}
-.compras-fieldset > .compras-revisao-editar{position:absolute;top:10px;right:12px}
+/* Revisão (17/11/2026): o botão redondo do lápis leva à etapa do bloco. */
+/* Ajuste do Rodrigo (17/11/2026): o lápis fica embaixo do quadro de dados, dentro do retângulo do bloco, e não mais no canto de cima. */
+.compras-fieldset > .compras-revisao-editar{order:99;grid-column:1 / -1;justify-self:start}

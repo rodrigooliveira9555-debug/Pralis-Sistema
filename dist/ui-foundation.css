@@ -692,3 +692,6 @@ button.stepper-node:focus-visible{outline:2px solid var(--stepper-accent);outlin
 .form-fields[data-quadro]{position:relative;margin-top:22px;padding-top:18px}
 .form-fields[data-quadro]::before{content:attr(data-quadro);position:absolute;top:-10px;left:12px;padding:0 6px;background:var(--layout-gap,#f5f5f7);color:inherit;font:600 13px/18px var(--ui-font,inherit)}
 dialog .form-fields[data-quadro]::before,.modal .form-fields[data-quadro]::before{background:var(--layout-gap,#f5f5f7)}
+/* Ícone de sigla (VND, DES…) no cabeçalho da tela ou da janela (17/11/2026, Rodrigo): o mesmo tamanho que tem no cartão do menu (11 px, negrito), centrado na caixa do ícone; sem isso herdava o tamanho do desenho e passava da caixa. */
+.head :is(.sector-icon,.origin-icon,.config-inherit-icon){display:inline-flex;align-items:center;justify-content:center}
+.head :is(.sector-icon,.origin-icon,.config-inherit-icon) .sigla-text{font:700 11px/1 var(--ui-font,inherit);letter-spacing:0;white-space:nowrap}
