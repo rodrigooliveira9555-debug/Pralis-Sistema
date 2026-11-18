@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Funções do prestador: acrescentar, editar e excluir (18/11/2026)
+No quadro "Funções" do cadastro de fornecedor (categoria Serviço) há dois botões retangulares no padrão do sistema: **"Acrescentar opção"** (era um botão de borda tracejada; a classe `compras-chip-mais` foi apagada) e **"Gerenciar funções"**. Gerenciar abre a lista das funções no padrão das outras listas: tocar na linha edita; a seta revela Editar e Excluir. Editar muda o nome e a situação (Ativa/Inativa). **Excluir:** função em uso por algum fornecedor gravado não é excluída — a janela oferece deixá-la inativa (sai das opções; quem já usa continua com ela); função sem uso é excluída depois da confirmação. O vínculo continua por id (`d.funcoesPrestador`).
+
 ## Fornecedor: nomes das etapas simplificados (18/11/2026)
 Decisão do Rodrigo, que supera os nomes com "da empresa" anotados na seção do fornecedor mais abaixo: **Dados da empresa** (só na pessoa jurídica) **· Dados do vendedor** (Produto) ou **Dados do prestador de serviço** (Serviço) **· Dados do responsável financeiro · Dados do responsável legal · Vínculos · Contrato · Revisão dos dados**. São os mesmos nomes na pessoa física e na jurídica; a única diferença é a etapa "Dados da empresa" na frente. Os quadros levam o nome da etapa.
 

@@ -183,7 +183,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   // Serviço: Prestador 1 com funções (seleção múltipla), "Acrescentar opção" na janelinha e um segundo prestador.
   ok((await dp.locator('fieldset legend', { hasText: 'Prestador 1' }).count()) === 1 && await dp.locator('.compras-chip', { hasText: 'Pintor' }).first().isVisible(), 'Serviço: a etapa 2 é o Prestador 1, com as funções');
   await dp.locator('.compras-chip', { hasText: 'Pintor' }).first().click();
-  await dp.locator('.compras-chip-mais').first().click();
+  await dp.getByRole('button', { name: 'Acrescentar função' }).first().click();
   await dp.getByLabel('Nova função', { exact: true }).first().fill('Vidraceiro Teste');
   await dp.getByLabel('Nova função', { exact: true }).first().press('Enter');
   ok(await p.evaluate(() => CicluzComprasDados.dados.funcoesPrestador.some((x) => x.nome === 'Vidraceiro Teste')) && await dp.locator('.compras-chip[aria-pressed=true]', { hasText: 'Vidraceiro Teste' }).count() === 1 && await dp.isVisible(), 'Acrescentar opção cria a função, já marcada, sem fechar o cadastro');

@@ -601,6 +601,68 @@
            opção" abre a janelinha flutuante (a mesma do Prazo de resposta do Enviar) com o nome e Salvar; a função
            nova entra na lista de todos os fornecedores. */
         const quadrosFuncoes = [];
+        /**
+         * Gerenciar funções (18/11/2026, Rodrigo): a lista das funções do cadastro, no padrão das outras listas — tocar na linha
+         * edita o nome; a seta revela Editar e Excluir. Função em uso por algum fornecedor gravado não é excluída (o prestador
+         * ficaria sem ela): passa a inativa e sai das opções. Sem uso, é excluída depois da confirmação.
+         */
+        function gerenciarFuncoes() {
+          const emUsoPor = (id) => S.dados.fornecedores.filter((x) => (x.prestadores || []).some((p) => (p.funcoes || []).includes(id))).length;
+          const repintar = () => quadrosFuncoes.forEach((q) => q.desenhar());
+          U.dialogo({
+            titulo: 'Funções do prestador', ...coresF(), quadro: 'Funções',
+            montar: (f2) => {
+              const linhas = el('div', 'compras-lista compras-largo');
+              const desenhaLista = () => {
+                const lista = S.dados.funcoesPrestador.slice().sort((a, b2) => (a.ativa === b2.ativa ? a.nome.localeCompare(b2.nome, 'pt-BR') : a.ativa === false ? 1 : -1));
+                linhas.replaceChildren(...(lista.length ? lista.map((x) => {
+                  const uso = emUsoPor(x.id);
+                  const linha = U.linhaLista({
+                    icone: 'lista', titulo: x.nome, detalhe: uso ? 'Em uso por ' + uso + (uso === 1 ? ' fornecedor' : ' fornecedores') : 'Sem uso', estado: x.ativa === false ? 'Inativa' : 'Ativa',
+                    acoes: { rotulo: x.nome, lista: linhas, aoEditar: () => editarFuncao(x), aoExcluir: () => excluirFuncao(x) },
+                  });
+                  if (x.ativa === false) linha.classList.add('inativo');
+                  return linha;
+                }) : [U.vazio('Nenhuma função cadastrada.', 'Use "Acrescentar opção" para criar.')]));
+              };
+              function editarFuncao(x) {
+                U.dialogo({
+                  titulo: 'Editar função', ...coresF(), quadro: 'Dados da função',
+                  montar: (f3) => {
+                    const nomeF = texto(x.nome, { maxLength: 60 });
+                    const sit = U.quadroSituacao('Situação da função', x.ativa !== false, { feminino: true, dica: 'Função inativa sai das opções. Nada é apagado.' });
+                    sit.classList.add('compras-largo');
+                    f3.append(sit, campo('Nome da função *', nomeF));
+                    return { nomeF, sit };
+                  },
+                  salvar: (c3) => {
+                    const falta = D.validarFuncaoPrestador(c3.nomeF.value, S.dados.funcoesPrestador.filter((o) => o.id !== x.id));
+                    if (falta) return falta;
+                    if (!S.transacao((d) => { Object.assign(d.funcoesPrestador.find((o) => o.id === x.id), { nome: c3.nomeF.value.trim(), ativa: c3.sit.ativo }); })) return 'Não foi possível salvar neste navegador.';
+                    U.avisar('Função salva.'); desenhaLista(); repintar();
+                  },
+                });
+              }
+              function excluirFuncao(x) {
+                const uso = emUsoPor(x.id);
+                if (uso) {
+                  U.confirmar('Função em uso', '"' + x.nome + '" está em uso por ' + uso + (uso === 1 ? ' fornecedor' : ' fornecedores') + ' e não pode ser excluída. Deixar inativa? Ela sai das opções, e quem já usa continua com ela.', 'Deixar inativa', () => {
+                    if (!S.transacao((d) => { d.funcoesPrestador.find((o) => o.id === x.id).ativa = false; })) return 'Não foi possível salvar neste navegador.';
+                    U.avisar('Função inativa.'); desenhaLista(); repintar();
+                  }, coresF());
+                  return;
+                }
+                U.confirmar('Excluir função?', '"' + x.nome + '" não está em uso e será excluída. Não dá para desfazer.', 'Excluir', () => {
+                  if (!S.transacao((d) => { d.funcoesPrestador = d.funcoesPrestador.filter((o) => o.id !== x.id); })) return 'Não foi possível excluir neste navegador.';
+                  quadrosFuncoes.forEach((q) => q.tirar(x.id)); // se estava marcada neste cadastro aberto, sai da seleção
+                  U.avisar('Função excluída.'); desenhaLista(); repintar();
+                }, coresF());
+              }
+              f2.append(U.nota('Tocar na linha edita o nome; a seta à direita mostra Editar e Excluir.'), linhas);
+              desenhaLista();
+            },
+          });
+        }
         function quadroFuncoes(marcadasAntes, numero) {
           const escolhidas = new Set(marcadasAntes || []);
           const box = el('div', 'compras-campo compras-largo');
@@ -639,13 +701,13 @@
           nomeNovo.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); salvarNovo(); } });
           caixa.append(campo('Nova função', nomeNovo), erroNovo, botao('Salvar', salvarNovo, 'btn'));
           painel.append(caixa);
-          const mais = botao('+ Acrescentar opção', () => abrirNovo(painel.hidden), 'compras-chip compras-chip-mais');
+          const mais = U.botaoTitulo('Acrescentar opção', 'Acrescentar função', () => abrirNovo(painel.hidden)); // botão retangular padrão, como o "Adicionar prestador"
           const abrirNovo = U.flutuante(mais, painel, { foco: nomeNovo });
           const linha = el('div', 'compras-form-rodape');
-          linha.append(mais);
+          linha.append(mais, U.botaoTitulo('Gerenciar funções', 'Editar ou excluir funções', () => gerenciarFuncoes(), U.ICONES.lista));
           box.append(el('span', 'compras-rotulo', 'Funções (pode marcar várias)'), chips, linha, painel);
           desenhar();
-          const q = { no: box, desenhar, valores: () => [...escolhidas] };
+          const q = { no: box, desenhar, valores: () => [...escolhidas], tirar: (id) => { escolhidas.delete(id); } };
           quadrosFuncoes.push(q);
           return q;
         }

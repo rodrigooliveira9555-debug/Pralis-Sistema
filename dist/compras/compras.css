@@ -279,7 +279,6 @@ body.dark-theme .compras-trilha li { background: #34333b; color: #d4d4d8; }
 .compras-vinculos-lista > .compras-vinculo-nivel { margin-left: 28px; }
 span.compras-chip { cursor: default; }
 /* "+ Acrescentar opção": chip tracejado, para não parecer uma opção da lista. */
-.compras-chip-mais { border-style: dashed; }
 /* Seleção por cartões (U.cartoesEscolha): cartão = botão inteiro; lado a lado quando cabe, empilhado no celular.
    Marcado: borda de 2 px e fundo bem claro na cor da opção, círculo cheio com o "certo". */
 .compras-cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; min-width: 0; }
