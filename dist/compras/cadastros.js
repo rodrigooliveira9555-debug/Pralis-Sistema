@@ -997,8 +997,10 @@
         obsCampo.classList.add('compras-largo');
         cDados.append(campo('Forma de pagamento', cForma), vencDataCampo, diaPagtoCampo, rec.no, valorCampo, smBox, campo('Início da vigência', cInicio), campo('Término da vigência', cFim),
           campo('Reajuste', cReajuste, 'Só o índice combinado; o sistema não calcula o reajuste.'), percentualCampo, obsCampo);
+        // Mostra ou esconde os blocos do contrato conforme "Tem contrato?" (a função de verdade é ligada quando a etapa Contrato é montada).
+        let pintarBlocosContrato = () => {};
         const pintarContrato = () => {
-          cDados.classList.toggle('compras-so-pergunta', !temContrato.ativo); // desligado, o quadro mostra só a pergunta
+          pintarBlocosContrato();
           mostrar(vencDataCampo, cForma.value !== 'dinheiro' && cForma.value !== '');
           vencDataCampo.querySelector('.compras-rotulo').textContent = cForma.value === 'boleto' ? 'Data de vencimento do boleto' : 'Data de vencimento';
           mostrar(diaPagtoCampo, cForma.value === 'dinheiro');
@@ -1023,6 +1025,8 @@
           return {
             modeloId: ct6.modeloId, modeloNome: ct6.modeloNome, modeloVersao: ct6.modeloVersao, clausulas: ct6.clausulas, atividadesIncluidas: ct6.incl, atividadesExcluidas: ct6.excl,
             camposAdicionaisDef: ct6.camposDef, camposAdicionais: ct6.campos, renovacao: ct6.renovacao,
+            // Blocos novos do contrato padrão (campos opcionais): a empresa contratante (vínculo por id) e o texto da rescisão.
+            contratanteEmpresaId: selContratante.value, rescisao: cRescisao.value.trim(),
             tem: temContrato.ativo, formaPagamento: cForma.value,
             // Vencimento: só em dinheiro some (o pagamento é toda sexta-feira, informativo). O dia do mês antigo fica guardado como estava.
             vencimentoData: cForma.value === 'dinheiro' ? '' : cVencData.value, vencimentoDia: ct.vencimentoDia != null ? ct.vencimentoDia : null,
@@ -1036,20 +1040,39 @@
           };
         };
         const etapa3 = el('div', 'compras-etapa');
-        temContrato.classList.add('compras-largo'); cDados.querySelector('legend').after(temContrato); // a pergunta abre o quadro "Dados do contrato"
-        etapa3.append(fin.no, cDados);
+        temContrato.classList.add('compras-largo');
+        etapa3.append(fin.no); // o contrato inteiro (valor, vencimento, reajuste…) mora na etapa Contrato
 
-        /* ----- Etapa 6: contrato (o documento). Mostra o que foi combinado no financeiro; o modelo de contrato e a
-           assinatura ainda não existem (aguardam decisão). ----- */
-        const s6 = el('fieldset', 'compras-fieldset');
-        s6.append(el('legend', null, 'Contrato'));
-        const resumoContrato = el('div', 'compras-campo compras-largo');
-        const pintarResumoContrato = () => {
-          const c = lerContrato();
-          const linhas = !c.tem ? [] : linhasContrato(c);
-          resumoContrato.replaceChildren(el('span', 'compras-rotulo', 'Combinado nos dados do financeiro'),
-            ...(linhas.length ? linhas.map(([k, v]) => el('p', 'profiles-note', k + ': ' + v)) : [el('p', 'profiles-note', c.tem ? 'Contrato marcado, ainda sem dados preenchidos.' : 'Este fornecedor está sem contrato (etapa Dados do financeiro).')]));
+        /* ----- Etapa 6 · Contrato padrão em blocos (18/11/2026, Rodrigo). Cada bloco é uma parte do contrato, na ordem em que o
+           documento é montado: 1 Contratante · 2 Contratado · 3 Valor, vencimento e reajuste · 4 O que está incluso · 5 O que não
+           está incluso · 6 Condições de rescisão · 7 Tipo de contrato e cláusulas (opcional) · 8 Assinaturas e documento. ----- */
+        const s6 = el('div', 'compras-etapa');
+        const blocoContrato = (titulo, explicacao, ...nos) => { const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, titulo), el('p', 'profiles-note compras-largo', explicacao), ...nos); return q; };
+        const empresasContratantes = () => (window.CicluzEmpresa && window.CicluzEmpresa.todas ? window.CicluzEmpresa.todas() : []);
+        const selContratante = seletor(empresasContratantes().map((e) => [e.id, (e.razaoSocial || e.nomeFantasia || '(empresa sem nome)') + (e.vinculo === 'matriz' ? ' (Matriz)' : '')]),
+          empresasContratantes().some((e) => e.id === ct.contratanteEmpresaId) ? ct.contratanteEmpresaId : (empresasContratantes()[0] || {}).id || '', 'Selecione a empresa');
+        const resumoContratante = el('dl', 'profiles-info compras-largo'); const resumoContratado = el('dl', 'profiles-info compras-largo'); const resumoAssinaturas = el('dl', 'profiles-info compras-largo');
+        const semEmpresaNota = el('p', 'profiles-note compras-largo', 'Nenhuma empresa cadastrada. Cadastre em Configurações → Empresa → Dados da Empresa para ela aparecer aqui.');
+        const pintarPartes = () => {
+          const p = window.CicluzContratos.partesDoContrato(ler());
+          const linhas = (dl, x, pares) => dl.replaceChildren(...pares.filter(([, v]) => v).flatMap(([k, v]) => [el('dt', null, k), el('dd', null, v)]), ...(pares.some(([, v]) => v) ? [] : [el('dt', null, 'Sem dados'), el('dd', null, '—')]));
+          const quem = (x) => [x.representante, x.cargo].filter(Boolean).join(' — ');
+          linhas(resumoContratante, p.contratante, [['Razão social', p.contratante.nome], ['Nome fantasia', p.contratante.fantasia], ['CNPJ', p.contratante.documento], ['Endereço', p.contratante.endereco], ['Representante legal', quem(p.contratante)]]);
+          linhas(resumoContratado, p.contratado, [[p.contratado.pf ? 'Nome completo' : 'Razão social', p.contratado.nome], ['Nome fantasia', p.contratado.fantasia], [p.contratado.pf ? 'CPF' : 'CNPJ', p.contratado.documento], ['Endereço', p.contratado.endereco], ['Representante legal', quem(p.contratado)]]);
+          linhas(resumoAssinaturas, null, [['Assina pelo contratante', [p.contratante.nome, quem(p.contratante)].filter(Boolean).join(' · ')], ['Assina pelo contratado', [p.contratado.nome, quem(p.contratado)].filter(Boolean).join(' · ')]]);
+          mostrar(semEmpresaNota, !empresasContratantes().length);
         };
+        const pintarResumoContrato = () => pintarPartes();
+        selContratante.onchange = pintarPartes;
+        // Condições de rescisão: texto livre. O "texto sugerido" é só um ponto de partida, com o prazo em branco para a pessoa preencher.
+        const RESCISAO_SUGERIDA = 'Qualquer das partes pode encerrar este contrato, sem multa, mediante aviso por escrito à outra parte com antecedência mínima de ____ dias. O contrato também pode ser encerrado de imediato, por qualquer das partes, se a outra descumprir o que foi combinado e não corrigir a falha depois de avisada por escrito. Os valores devidos até a data do encerramento continuam devidos.';
+        const cRescisao = el('textarea'); cRescisao.rows = 5; cRescisao.maxLength = 2000; cRescisao.value = ct.rescisao || ''; cRescisao.dataset.textoLivre = '1'; cRescisao.setAttribute('aria-label', 'Condições de rescisão');
+        const avisoRescisao = el('p', 'profiles-note compras-largo'); avisoRescisao.setAttribute('role', 'status');
+        const linhaRescisao = el('div', 'compras-form-rodape compras-largo');
+        linhaRescisao.append(botao('Usar texto sugerido', () => {
+          if (cRescisao.value.trim()) { avisoRescisao.textContent = 'Já existe um texto: apague-o antes, se quiser usar o sugerido.'; return; }
+          cRescisao.value = RESCISAO_SUGERIDA; avisoRescisao.textContent = 'Texto sugerido inserido: preencha o prazo e revise com quem cuida da parte jurídica da empresa.';
+        }, 'btn secondary'));
         // Documentos (16/11/2026): imprimir a ficha, enviar e visualizar o documento do fornecedor. Nada é gerado ou enviado sozinho.
         const avisoDoc = el('p', 'profiles-note compras-largo');
         avisoDoc.setAttribute('role', 'status');
@@ -1068,8 +1091,6 @@
             avisoDoc.textContent = 'Este fornecedor não tem documento disponível.';
           }, 'btn secondary'),
         );
-        // Conteúdo do contrato (só aparece com "Tem contrato?" = Sim).
-        const boxContrato = el('div', 'compras-largo compras-contrato-corpo'); const semContratoNota = el('p', 'profiles-note compras-largo', 'Este fornecedor está sem contrato: marque "Tem contrato?" nos dados do responsável financeiro para preencher esta etapa.');
         const notasModelo = el('p', 'profiles-note'); notasModelo.setAttribute('role', 'status');
         const selModelo = seletor([], '', 'Selecione o tipo de contrato'); selModelo.setAttribute('aria-label', 'Tipo de contrato');
         const modelosAtivos = () => (window.CicluzContratos ? window.CicluzContratos.modelos() : []).filter((m) => m.ativo !== false || m.id === ct6.modeloId);
@@ -1118,14 +1139,29 @@
         const linhaModelo = el('div', 'compras-form-rodape compras-largo'); linhaModelo.append(selModelo, abrirModelosBtn);
         const listaInc = window.CicluzContratos.listaAtividades({ tipo: 'incluidas', cores: coresF, api: { itens: () => ct6.incl, trocar: (v) => { ct6.incl = v; }, outra: () => ct6.excl, mudou: () => pintarResumoContrato() } });
         const listaExc = window.CicluzContratos.listaAtividades({ tipo: 'excluidas', cores: coresF, api: { itens: () => ct6.excl, trocar: (v) => { ct6.excl = v; }, outra: () => ct6.incl, mudou: () => pintarResumoContrato() } });
-        const duasListas = el('div', 'compras-atividades-duas compras-largo'); duasListas.append(listaInc, listaExc);
+        listaInc.classList.add('compras-largo'); listaExc.classList.add('compras-largo');
         const avisoContrato = el('p', 'profiles-error compras-largo'); avisoContrato.setAttribute('role', 'alert');
         const acoesContrato = window.CicluzContratos.botoesDocumento({ lerFornecedor: () => ler(), cores: coresF, aviso: avisoContrato });
-        boxContrato.append(campo('Tipo de contrato', linhaModelo), notasModelo, boxClausulas, duasListas, boxCampos,
-          el('span', 'compras-rotulo compras-largo', 'Documento do contrato'), acoesContrato, avisoContrato);
         pintarModelos(); desenharClausulas(); desenharCampos();
-        s6.append(resumoContrato, semContratoNota, boxContrato, el('span', 'compras-rotulo compras-largo', 'Ficha do fornecedor'), acoesDoc, avisoDoc);
-        s6.pintarTem = () => { mostrar(boxContrato, temContrato.ativo); mostrar(semContratoNota, !temContrato.ativo); };
+        const campoRescisao = campo('Condições de rescisão', cRescisao); campoRescisao.classList.add('compras-largo');
+        const campoContratante = campo('Empresa contratante', selContratante);
+        cDados.querySelector('legend').textContent = '3 · Valor, vencimento e reajuste';
+        cDados.querySelector('legend').after(el('p', 'profiles-note compras-largo', 'Quanto é, como e quando se paga, por quanto tempo vale e como o valor é reajustado.'));
+        const quadroTem = blocoContrato('Contrato', 'Marque Sim para montar o contrato deste fornecedor. Ele é montado em blocos, de cima para baixo, com o que você preencher em cada um.', temContrato);
+        const blocosDoContrato = [
+          blocoContrato('1 · Contratante', 'Quem contrata: a sua empresa. Os dados vêm de Configurações → Empresa → Dados da Empresa.', campoContratante, semEmpresaNota, resumoContratante),
+          blocoContrato('2 · Contratado', 'Quem é contratado: este fornecedor. Os dados vêm das etapas anteriores deste cadastro.', resumoContratado),
+          cDados,
+          blocoContrato('4 · O que está incluso', 'As atividades e responsabilidades que fazem parte do contrato.', listaInc),
+          blocoContrato('5 · O que não está incluso', 'O que fica de fora, para não haver dúvida depois.', listaExc),
+          blocoContrato('6 · Condições de rescisão', 'Como o contrato pode ser encerrado e com quanto tempo de aviso.', campoRescisao, linhaRescisao, avisoRescisao),
+          blocoContrato('7 · Tipo de contrato e cláusulas', 'Opcional: um tipo de contrato traz cláusulas e campos prontos, que se somam aos blocos acima.', campo('Tipo de contrato', linhaModelo), notasModelo, boxClausulas, boxCampos),
+          blocoContrato('8 · Assinaturas e documento', 'Confira quem assina por cada parte e gere o documento. A assinatura é feita no papel impresso.', resumoAssinaturas, acoesContrato, avisoContrato),
+        ];
+        s6.append(quadroTem, ...blocosDoContrato, blocoContrato('Ficha do fornecedor', 'Documentos do cadastro do fornecedor (não é o contrato).', acoesDoc, avisoDoc));
+        s6.pintarTem = () => blocosDoContrato.forEach((b) => mostrar(b, temContrato.ativo));
+        pintarBlocosContrato = () => s6.pintarTem();
+        s6.pintarTem();
 
         // 7ª etapa · Revisão dos dados (18/11/2026, Rodrigo): o mesmo fluxo dos outros cadastros — um bloco por etapa, só para leitura,
         // com "Editar" em cada bloco e o Salvar no fim. Os dados são lidos das próprias etapas na hora de abrir a Revisão.
@@ -1225,7 +1261,7 @@
         return { ler, ir, irQuadro, get datasContrato() { return [cVencData, cInicio, cFim, ...datasExtras]; }, novosProdutos: () => (marcadas().join() === 'produto' ? [...novosProdutos] : []) };
       },
       salvar: (c) => {
-        if (c.datasContrato.some((d2) => !d2.checkValidity())) { c.irQuadro(2); return 'Confira as datas do contrato: use DD/MM/AA.'; }
+        if (c.datasContrato.some((d2) => !d2.checkValidity())) { c.irQuadro(5); return 'Confira as datas do contrato: use DD/MM/AA.'; }
         const campos = c.ler();
         const faltas = D.validarFornecedorEtapas(campos, R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador });
         const etapaComFalta = faltas.findIndex(Boolean);

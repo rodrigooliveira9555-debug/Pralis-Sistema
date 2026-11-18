@@ -507,8 +507,6 @@ body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-sea
 .compras-tipo-cartao[data-marcado=true] .compras-cartao-marca svg{visibility:visible}
 
 /* Contratos (18/11/2026): atividades incluídas e não incluídas, seleção hierárquica e tipos de contrato */
-.compras-atividades-duas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-@media (max-width:900px){.compras-atividades-duas{grid-template-columns:minmax(0,1fr)}}
 .compras-atividades{display:grid;gap:8px;align-content:start;padding:12px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff)}
 .compras-atividades.incluidas{border-left:4px solid var(--menu-accent)}
 .compras-atividades.excluidas{border-left:4px dashed var(--layout-line,#9a9aa2)}
@@ -621,3 +619,8 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .compras-fieldset.compras-quadro-auto{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px}
 .compras-fieldset.compras-quadro-auto>:not(.compras-campo):not(label):not(legend){grid-column:1 / -1}
 @media (max-width:600px){.compras-fieldset.compras-quadro-auto{grid-template-columns:minmax(0,1fr)}}
+/* Texto livre do contrato (rescisão, observações) na visualização: respeita as quebras de linha digitadas. */
+.compras-contrato-texto{margin:0;white-space:pre-wrap}
+/* Editor do tipo de contrato: as duas listas de atividades lado a lado. */
+.compras-atividades-duas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.compras-atividades-duas{grid-template-columns:minmax(0,1fr)}}

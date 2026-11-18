@@ -237,22 +237,54 @@
   /* =============== Documento do contrato (imprimir, enviar, visualizar) =============== */
   const dataBR = (iso) => (iso ? window.CicluzDateFields.display(iso) : '');
   const nomeDe = (lista, id) => (lista.find(([x]) => x === id) || [])[1] || '';
-  /** Seções [título, [[rótulo, texto]] ou { itens: [texto] }] só com o que está cadastrado. Nada jurídico é acrescentado pelo sistema. */
+  const enderecoTexto = (e) => { const x = e || {}; return [x.logradouro, x.numero, x.complemento, x.bairro, x.cidade, x.uf, x.cep].filter(Boolean).join(', '); };
+  const empresasCadastradas = () => (window.CicluzEmpresa && window.CicluzEmpresa.todas ? window.CicluzEmpresa.todas() : []);
+  /** As duas partes do contrato, só com o que está cadastrado: a empresa escolhida em "Contratante" (Configurações → Empresa) e o fornecedor. */
+  function partesDoContrato(f) {
+    const c = f.contrato || {}; const pf = f.tipoPessoa === 'fisica';
+    const emp = empresasCadastradas().find((x) => x.id === c.contratanteEmpresaId) || null;
+    const respEmp = emp && (emp.responsaveis || []).find((r) => String(r.nome || '').trim());
+    const cargoEmp = respEmp && window.CicluzEmpresa.CARGOS_EMPRESA ? nomeDe(window.CicluzEmpresa.CARGOS_EMPRESA, respEmp.cargo) : '';
+    const rep2 = f.representante || {};
+    return {
+      contratante: { nome: emp ? emp.razaoSocial || emp.nomeFantasia || '' : '', fantasia: emp ? emp.nomeFantasia || '' : '', documento: emp ? emp.cnpj || '' : '', endereco: emp ? enderecoTexto(emp.endereco) : '',
+        representante: respEmp ? respEmp.nome : '', cargo: cargoEmp },
+      contratado: { nome: f.razaoSocial || f.nome || '', fantasia: pf ? '' : (f.razaoSocial && f.nome !== f.razaoSocial ? f.nome : ''), documento: f.documento || '', pf, endereco: enderecoTexto(f.endereco),
+        representante: pf ? f.nome || '' : rep2.nome || '', cargo: pf ? '' : nomeDe(D.CARGOS_REPRESENTANTE, rep2.cargo) },
+    };
+  }
+  const tituloDoContrato = (f) => ((f.categorias || []).includes('servico') ? 'Contrato de prestação de serviços' : 'Contrato de fornecimento');
+  /**
+   * Contrato padrão em blocos (18/11/2026, Rodrigo): o documento é montado na ordem dos blocos da etapa Contrato — contratante,
+   * contratado, valor e pagamento, vigência e vencimento, reajuste, o que está incluso, o que não está, condições de rescisão e,
+   * por fim, as camadas opcionais (cláusulas do tipo de contrato, informações adicionais, observações). Só entra o que está
+   * preenchido; os blocos são numerados na ordem em que aparecem. Seção = [título, [[rótulo, texto]] | { itens } | { texto }].
+   * Nada jurídico é acrescentado pelo sistema: o texto da rescisão é o que a pessoa escreveu.
+   */
   function secoesContrato(f) {
-    const c = f.contrato || {}; const pf = f.tipoPessoa === 'fisica'; const e = f.endereco || {}; const empresa = window.CicluzSessao && window.CicluzSessao.perfil && window.CicluzSessao.perfil.empresa ? window.CicluzSessao.perfil.empresa.nome : '';
-    const secoes = [];
-    secoes.push(['Partes', [['Contratante', empresa], [pf ? 'Contratado (pessoa física)' : 'Contratado', f.razaoSocial || f.nome], [pf ? 'CPF' : 'CNPJ', f.documento], ['Endereço', [e.logradouro, e.numero, e.complemento, e.bairro, e.cidade, e.uf, e.cep].filter(Boolean).join(', ')]]]);
-    secoes.push(['Tipo de contrato', [['Modelo', c.modeloNome ? c.modeloNome + (c.modeloVersao ? ' (versão ' + c.modeloVersao + ')' : '') : '']]]);
-    if ((c.atividadesIncluidas || []).length) secoes.push(['Atividades e responsabilidades incluídas no contrato', { itens: c.atividadesIncluidas.map((i) => i.texto) }]);
-    if ((c.atividadesExcluidas || []).length) secoes.push(['Atividades e responsabilidades não incluídas no contrato', { itens: c.atividadesExcluidas.map((i) => i.texto) }]);
+    const c = f.contrato || {}; const p = partesDoContrato(f);
+    const pessoa = (x, rotuloNome, rotuloDoc) => [[rotuloNome, x.nome], ['Nome fantasia', x.fantasia], [rotuloDoc, x.documento], ['Endereço', x.endereco], ['Representante legal', [x.representante, x.cargo].filter(Boolean).join(' — ')]];
     const rec = c.recorrencia === 'personalizado' ? 'Personalizado' : c.recorrencia === 'compra-mensal' ? 'Compra Mensal' : nomeDe(D.RECORRENCIAS_CONTRATO, c.recorrencia);
-    secoes.push(['Condições', [['Forma de pagamento', nomeDe(D.FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)], ['Recorrência', rec], ['Valor', Number.isInteger(c.valorCentavos) ? D.moeda(c.valorCentavos / 100) : ''],
-      ['Início da vigência', dataBR(c.inicio)], ['Término da vigência', dataBR(c.fim)], ['Renovação', nomeDe(D.RENOVACOES_CONTRATO, c.renovacao)], ['Reajuste', nomeDe(D.REAJUSTES_CONTRATO, c.reajuste)], ['Observações do contrato', c.observacoes]]]);
+    const vencimento = c.diaPagamento === 'sexta' ? 'Toda sexta-feira' : c.vencimentoData ? dataBR(c.vencimentoData) : Number.isInteger(c.vencimentoDia) ? 'Todo dia ' + c.vencimentoDia : '';
+    const reajuste = nomeDe(D.REAJUSTES_CONTRATO, c.reajuste) + (c.reajuste === 'percentual' && typeof c.reajustePercentual === 'number' && !Number.isNaN(c.reajustePercentual) ? ' de ' + String(c.reajustePercentual).replace('.', ',') + '%' : '');
     const vals = c.camposAdicionais || {};
     const extras = (c.camposAdicionaisDef || []).map((d) => { const v = vals[d.id]; return [d.rotulo, d.tipo === 'data' ? dataBR(v) : d.tipo === 'moeda' && Number.isInteger(v) ? D.moeda(v / 100) : v]; });
-    if (extras.length) secoes.push(['Informações adicionais', extras]);
-    if ((c.clausulas || []).length) secoes.push(['Cláusulas', { itens: c.clausulas.map((x, k) => (x.titulo ? (k + 1) + '. ' + x.titulo + ': ' : (k + 1) + '. ') + x.texto) }]);
-    return secoes.map(([t, l]) => [t, Array.isArray(l) ? l.filter(([, v]) => v !== '' && v != null) : l]).filter(([, l]) => (Array.isArray(l) ? l.length : l.itens.length));
+    const secoes = [
+      ['Contratante', pessoa(p.contratante, 'Razão social', 'CNPJ')],
+      ['Contratado', pessoa(p.contratado, p.contratado.pf ? 'Nome completo' : 'Razão social', p.contratado.pf ? 'CPF' : 'CNPJ')],
+      ['Valor e pagamento', [['Valor', Number.isInteger(c.valorCentavos) ? D.moeda(c.valorCentavos / 100) : ''], ['Recorrência', rec], ['Forma de pagamento', nomeDe(D.FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)]]],
+      ['Vigência e vencimento', [['Início da vigência', dataBR(c.inicio)], ['Término da vigência', dataBR(c.fim)], ['Renovação', nomeDe(D.RENOVACOES_CONTRATO, c.renovacao)], ['Vencimento', vencimento]]],
+      ['Reajuste', [['Reajuste', reajuste]]],
+      ['O que está incluso no contrato', { itens: (c.atividadesIncluidas || []).map((i) => i.texto) }],
+      ['O que não está incluso no contrato', { itens: (c.atividadesExcluidas || []).map((i) => i.texto) }],
+      ['Condições de rescisão', { texto: String(c.rescisao || '').trim() }],
+      ['Cláusulas' + (c.modeloNome ? ' — ' + c.modeloNome + (c.modeloVersao ? ' (versão ' + c.modeloVersao + ')' : '') : ''), { itens: (c.clausulas || []).map((x) => (x.titulo ? x.titulo + ': ' : '') + x.texto) }],
+      ['Informações adicionais', extras],
+      ['Observações', { texto: String(c.observacoes || '').trim() }],
+    ];
+    return secoes.map(([t, l]) => [t, Array.isArray(l) ? l.filter(([, v]) => v !== '' && v != null) : l])
+      .filter(([, l]) => (Array.isArray(l) ? l.length : l.itens ? l.itens.length : Boolean(l.texto)))
+      .map(([t, l], k) => [(k + 1) + '. ' + t, l]);
   }
   /** Se faltar dado, devolve true depois de mostrar a lista do que falta (nenhum documento é gerado). */
   function incompleto(f, aviso) {
@@ -266,28 +298,36 @@
     const d = ifr.contentDocument; d.open(); d.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Contrato</title></head><body></body></html>'); d.close();
     const mk = (tag, texto, css) => { const n = d.createElement(tag); if (texto != null) n.textContent = texto; if (css) n.style.cssText = css; return n; };
     d.body.style.cssText = 'font:13px/1.5 Arial,sans-serif;color:#111;margin:28px';
-    d.body.append(mk('h1', 'Contrato — ' + ((f.contrato && f.contrato.modeloNome) || ''), 'font-size:20px;margin:0 0 4px'), mk('p', 'Documento gerado pelo sistema a partir dos dados cadastrados. Não é um contrato assinado e não substitui a revisão da empresa.', 'margin:0 0 14px;color:#555'));
+    const partes = partesDoContrato(f);
+    d.body.append(mk('h1', tituloDoContrato(f), 'font-size:20px;margin:0 0 4px'), mk('p', 'Documento gerado pelo sistema a partir dos dados cadastrados. Não é um contrato assinado e não substitui a revisão da empresa.', 'margin:0 0 14px;color:#555'));
     secoesContrato(f).forEach(([t, l]) => {
       d.body.append(mk('h2', t, 'font-size:14px;margin:16px 0 6px;border-bottom:1px solid #999;padding-bottom:2px'));
       if (Array.isArray(l)) l.forEach(([k, v]) => { const p = mk('p', null, 'margin:2px 0'); p.append(mk('b', k + ': '), d.createTextNode(String(v))); d.body.append(p); });
-      else { const ol = mk('ol', null, 'margin:4px 0 0 18px;padding:0'); l.itens.forEach((x) => ol.append(mk('li', x, 'margin:2px 0'))); d.body.append(ol); }
+      else if (l.itens) { const ol = mk('ol', null, 'margin:4px 0 0 18px;padding:0'); l.itens.forEach((x) => ol.append(mk('li', x, 'margin:2px 0'))); d.body.append(ol); }
+      else d.body.append(mk('p', l.texto, 'margin:2px 0;white-space:pre-wrap'));
     });
-    // Linhas de assinatura em branco: a assinatura é feita à mão, depois de impresso. Imprimir não registra assinatura.
-    const ass = mk('div', null, 'display:flex;gap:40px;margin-top:56px'); [['Contratante', ''], ['Contratado', '']].forEach(([t]) => { const b = mk('div', null, 'flex:1;text-align:center'); b.append(mk('div', null, 'border-top:1px solid #000;margin-bottom:4px'), mk('small', t)); ass.append(b); });
+    // Linhas de assinatura com o nome de quem assina por cada parte: a assinatura é feita à mão, depois de impresso. Imprimir não registra assinatura.
+    d.body.append(mk('h2', 'Assinaturas', 'font-size:14px;margin:24px 0 6px;border-bottom:1px solid #999;padding-bottom:2px'), mk('p', 'Local e data: ______________________________, ____ de ______________ de ________.', 'margin:8px 0 0'));
+    const ass = mk('div', null, 'display:flex;gap:40px;margin-top:56px'); [['Contratante', partes.contratante], ['Contratado', partes.contratado]].forEach(([t, x]) => { const b = mk('div', null, 'flex:1;text-align:center'); b.append(mk('div', null, 'border-top:1px solid #000;margin-bottom:4px'), mk('div', t + (x.nome ? ': ' + x.nome : ''), 'font-weight:bold'), mk('small', [x.representante, x.cargo].filter(Boolean).join(' — '))); ass.append(b); });
     d.body.append(ass);
     const limpar = () => { if (ifr.isConnected) ifr.remove(); }; ifr.contentWindow.addEventListener('afterprint', limpar); setTimeout(limpar, 120000); ifr.contentWindow.focus(); ifr.contentWindow.print();
   }
   function visualizarContrato(f, cores) {
     U.dialogo({
-      titulo: 'Contrato — visualização', ...cc(cores), largo: true,
+      titulo: tituloDoContrato(f) + ' — visualização', ...cc(cores), largo: true,
       montar: (form) => {
         form.append(el('p', 'profiles-note compras-largo', 'Prévia do documento gerado a partir dos dados cadastrados. Não é um contrato assinado.'));
         secoesContrato(f).forEach(([t, l]) => {
           const fs = el('fieldset', 'compras-fieldset compras-largo'); fs.append(el('legend', null, t));
           if (Array.isArray(l)) { const dl = el('dl', 'profiles-info'); l.forEach(([k, v]) => dl.append(el('dt', null, k), el('dd', null, String(v)))); fs.append(dl); }
-          else { const ol = el('ol'); l.itens.forEach((x) => ol.append(el('li', null, x))); fs.append(ol); }
+          else if (l.itens) { const ol = el('ol'); l.itens.forEach((x) => ol.append(el('li', null, x))); fs.append(ol); }
+          else { const p = el('p', 'compras-contrato-texto', l.texto); fs.append(p); }
           form.append(fs);
         });
+        // Quem assina: só os nomes; a assinatura continua sendo feita no papel (ou, no futuro, pelo serviço de assinatura digital).
+        const partes = partesDoContrato(f); const fsA = el('fieldset', 'compras-fieldset compras-largo'); fsA.append(el('legend', null, 'Assinaturas'));
+        const dlA = el('dl', 'profiles-info'); [['Contratante', partes.contratante], ['Contratado', partes.contratado]].forEach(([t, x]) => dlA.append(el('dt', null, t), el('dd', null, [x.nome, [x.representante, x.cargo].filter(Boolean).join(' — ')].filter(Boolean).join(' · ') || '—')));
+        fsA.append(dlA); form.append(fsA);
       },
     });
   }
@@ -311,5 +351,5 @@
     return linha;
   }
 
-  window.CicluzContratos = { abrirModelos, listaAtividades, seletorHierarquico, botoesDocumento, secoesContrato, modelos };
+  window.CicluzContratos = { abrirModelos, listaAtividades, seletorHierarquico, botoesDocumento, secoesContrato, partesDoContrato, enderecoTexto, modelos };
 })();

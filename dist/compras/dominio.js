@@ -612,7 +612,8 @@
     // percentual quando o reajuste é "Percentual fixo". O valor e o índice são só informados: sem fórmula.
     const contrato = () => validarContratoFinanceiro(f.contrato);
     // O contrato (condições) é conferido na etapa do responsável financeiro (3ª); a 6ª confere as atividades, o modelo e os campos adicionais.
-    return [basico(), vendedor(), contato(f.financeiro, 'financeiro') || contrato(), representante(), vinculos(), validarContratoDocumento(f.contrato)];
+    // 18/11/2026 (Rodrigo): o contrato inteiro (valor, vencimento, reajuste, atividades, rescisão) mora na etapa Contrato (6ª); a 3ª confere só o contato do financeiro.
+    return [basico(), vendedor(), contato(f.financeiro, 'financeiro'), representante(), vinculos(), contrato() || validarContratoDocumento(f.contrato)];
   }
   /* ---------- Contratos: atividades, modelos e documento (18/11/2026) ----------
    * Atividades e responsabilidades INCLUÍDAS e NÃO INCLUÍDAS no contrato são listas de itens { id, texto, ref? } (ref = id do grupo ou
@@ -748,11 +749,12 @@
   /** O que falta para o contrato poder ser impresso ou enviado como documento definitivo. [] = completo. */
   function faltasDoContrato(f) {
     const c = (f && f.contrato) || {}; const faltas = [];
-    if (!c.tem) return ['Marque "Tem contrato?" nos dados do responsável financeiro.'];
+    if (!c.tem) return ['Marque "Tem contrato?" na etapa Contrato.'];
     if (!String((f && (f.razaoSocial || f.nome)) || '').trim()) faltas.push('nome ou razão social do fornecedor');
     if (!digitos(f && f.documento)) faltas.push('CNPJ ou CPF do fornecedor');
-    if (!c.modeloId) faltas.push('tipo de contrato (modelo)');
-    if (!(c.clausulas || []).length) faltas.push('ao menos uma cláusula (vem do tipo de contrato)');
+    // Contrato padrão em blocos (18/11/2026, Rodrigo): o tipo de contrato e as cláusulas dele são uma camada opcional; o documento
+    // precisa das partes, do que está incluso e do início da vigência.
+    if (!c.contratanteEmpresaId) faltas.push('empresa contratante');
     if (!(c.atividadesIncluidas || []).length) faltas.push('ao menos uma atividade incluída no contrato');
     if (!c.inicio) faltas.push('início da vigência');
     const vals = c.camposAdicionais || {};

@@ -251,35 +251,35 @@ ok(() => {
   const vc = (contrato) => d.validarFornecedorEtapas({ ...pj, contrato: { tem: true, ...contrato } }, regras, ctx);
   assert.deepEqual(vc({ formaPagamento: 'boleto', recorrencia: 'mes', vencimentoDia: 10, valorCentavos: 150000, inicio: '2026-01-01', fim: '2026-12-31', reajuste: 'ipca', observacoes: 'Mensal' }), ['', '', '', '', '', '']);
   assert.deepEqual(vc({}), ['', '', '', '', '', '']);
-  assert.match(vc({ inicio: '2026-12-31', fim: '2026-01-01' })[2], /antes do início/);
-  assert.match(vc({ inicio: '31/12/2026' })[2], /datas do contrato/);
-  assert.match(vc({ valorCentavos: 10.5 })[2], /Valor do contrato/);
-  assert.match(vc({ valorCentavos: NaN })[2], /Valor do contrato/);
-  assert.match(vc({ formaPagamento: 'cheque' })[2], /Forma de pagamento/);
-  assert.match(vc({ recorrencia: 'semana' })[2], /Recorrência/);
-  assert.match(vc({ vencimentoDia: 32 })[2], /1 a 31/);
-  assert.match(vc({ vencimentoData: '10/01/2026' })[2], /vencimento/);
-  assert.match(vc({ reajuste: 'dolar' })[2], /Reajuste/);
-  assert.match(vc({ reajuste: 'percentual' })[2], /percentual/);
-  assert.match(vc({ reajuste: 'percentual', reajustePercentual: 150 })[2], /percentual/);
-  assert.equal(vc({ reajuste: 'percentual', reajustePercentual: 4.5 })[2], '');
-  assert.match(vc({ observacoes: 'x'.repeat(2001) })[2], /2000/);
+  assert.match(vc({ inicio: '2026-12-31', fim: '2026-01-01' })[5], /antes do início/);
+  assert.match(vc({ inicio: '31/12/2026' })[5], /datas do contrato/);
+  assert.match(vc({ valorCentavos: 10.5 })[5], /Valor do contrato/);
+  assert.match(vc({ valorCentavos: NaN })[5], /Valor do contrato/);
+  assert.match(vc({ formaPagamento: 'cheque' })[5], /Forma de pagamento/);
+  assert.match(vc({ recorrencia: 'semana' })[5], /Recorrência/);
+  assert.match(vc({ vencimentoDia: 32 })[5], /1 a 31/);
+  assert.match(vc({ vencimentoData: '10/01/2026' })[5], /vencimento/);
+  assert.match(vc({ reajuste: 'dolar' })[5], /Reajuste/);
+  assert.match(vc({ reajuste: 'percentual' })[5], /percentual/);
+  assert.match(vc({ reajuste: 'percentual', reajustePercentual: 150 })[5], /percentual/);
+  assert.equal(vc({ reajuste: 'percentual', reajustePercentual: 4.5 })[5], '');
+  assert.match(vc({ observacoes: 'x'.repeat(2001) })[5], /2000/);
   // Sem contrato, nada é conferido (o que estiver preenchido fica guardado como está).
   assert.equal(v({ contrato: { tem: false, valorCentavos: -1, inicio: 'x' } }), '');
   assert.deepEqual([d.FORMAS_PAGAMENTO_CONTRATO.length, d.RECORRENCIAS_CONTRATO.length, d.REAJUSTES_CONTRATO.length], [4, 7, 6]);
   assert.deepEqual(d.FORMAS_PAGAMENTO_FORNECEDOR, [['boleto', 'Boleto'], ['dinheiro', 'Dinheiro']]);
   assert.deepEqual(d.RECORRENCIAS_CONTRATO.map(([, n]) => n), ['Por visita', 'Por solicitação', 'Por hora', 'Por dia', 'Por mês', 'Por ano', 'Personalizado']);
   // Forma de pagamento, recorrência, valor e referência ao salário mínimo (16/11/2026): só informação, sem cálculo.
-  assert.equal(vc({ formaPagamento: 'dinheiro', diaPagamento: 'sexta', recorrencia: 'visita', valorCentavos: 15000 })[2], '');
-  assert.equal(vc({ formaPagamento: 'pix', recorrencia: 'mes' })[2], ''); // valor antigo continua válido
-  assert.match(vc({ diaPagamento: 'segunda' })[2], /Dia de pagamento/);
-  assert.equal(vc({ salarioMinimo: { ativo: true, percentual: 150.5 } })[2], ''); // acima de 100% vale
-  assert.equal(vc({ salarioMinimo: { ativo: false, percentual: null } })[2], '');
-  assert.match(vc({ salarioMinimo: { ativo: true, percentual: 0 } })[2], /percentual do salário mínimo/);
-  assert.match(vc({ salarioMinimo: { ativo: true, percentual: NaN } })[2], /percentual do salário mínimo/);
-  assert.match(vc({ salarioMinimo: { ativo: true, percentual: null } })[2], /percentual do salário mínimo/);
-  assert.match(vc({ recorrencia: 'personalizado' })[2], /recorrência personalizada/i);
-  assert.equal(vc({ recorrencia: 'personalizado', recorrenciaPersonalizada: { intervalo: 2, unidade: 'semana', diasSemana: [1, 5], termina: { tipo: 'nunca' } } })[2], '');
+  assert.equal(vc({ formaPagamento: 'dinheiro', diaPagamento: 'sexta', recorrencia: 'visita', valorCentavos: 15000 })[5], '');
+  assert.equal(vc({ formaPagamento: 'pix', recorrencia: 'mes' })[5], ''); // valor antigo continua válido
+  assert.match(vc({ diaPagamento: 'segunda' })[5], /Dia de pagamento/);
+  assert.equal(vc({ salarioMinimo: { ativo: true, percentual: 150.5 } })[5], ''); // acima de 100% vale
+  assert.equal(vc({ salarioMinimo: { ativo: false, percentual: null } })[5], '');
+  assert.match(vc({ salarioMinimo: { ativo: true, percentual: 0 } })[5], /percentual do salário mínimo/);
+  assert.match(vc({ salarioMinimo: { ativo: true, percentual: NaN } })[5], /percentual do salário mínimo/);
+  assert.match(vc({ salarioMinimo: { ativo: true, percentual: null } })[5], /percentual do salário mínimo/);
+  assert.match(vc({ recorrencia: 'personalizado' })[5], /recorrência personalizada/i);
+  assert.equal(vc({ recorrencia: 'personalizado', recorrenciaPersonalizada: { intervalo: 2, unidade: 'semana', diasSemana: [1, 5], termina: { tipo: 'nunca' } } })[5], '');
   // Recorrência personalizada (modelo Calendário/Lembretes).
   const rp = (x) => d.validarRecorrenciaPersonalizada({ intervalo: 1, unidade: 'dia', termina: { tipo: 'nunca' }, ...x });
   assert.equal(rp({}), '');
@@ -501,11 +501,13 @@ ok(() => {
   assert.equal(r3.patch.atividadesIncluidas.length, 0); assert.ok(r3.notas.some((n) => /não entrou|não entraram/.test(n)));
   assert.equal(d.somarMesesIso('2026-01-31', 1), '2026-02-28'); assert.equal(d.somarMesesIso('', 1), '');
   // contrato do fornecedor: documento só quando completo
-  const forn = { razaoSocial: 'Empresa Teste Ltda', documento: '11.222.333/0001-81', contrato: { tem: true, modeloId: 'm1', clausulas: [{ titulo: '', texto: 'T' }], atividadesIncluidas: [{ id: 'a', texto: 'Limpeza' }], inicio: '2026-11-01', camposAdicionaisDef: [{ id: 'c1', rotulo: 'Local', tipo: 'texto', obrigatorio: true }], camposAdicionais: {} } };
+  const forn = { razaoSocial: 'Empresa Teste Ltda', documento: '11.222.333/0001-81', contrato: { tem: true, contratanteEmpresaId: 'e1', modeloId: 'm1', clausulas: [{ titulo: '', texto: 'T' }], atividadesIncluidas: [{ id: 'a', texto: 'Limpeza' }], inicio: '2026-11-01', camposAdicionaisDef: [{ id: 'c1', rotulo: 'Local', tipo: 'texto', obrigatorio: true }], camposAdicionais: {} } };
   assert.deepEqual(d.faltasDoContrato(forn), ['campo "Local"']);
   forn.contrato.camposAdicionais = { c1: 'Loja Centro' }; assert.deepEqual(d.faltasDoContrato(forn), []);
   assert.deepEqual(d.faltasDoContrato({ ...forn, contrato: { tem: false } }).length, 1);
-  assert.ok(d.faltasDoContrato({ ...forn, contrato: { tem: true } }).length >= 4);
+  assert.ok(d.faltasDoContrato({ ...forn, contrato: { tem: true } }).length >= 3); // empresa contratante, atividade incluída e início da vigência
+  assert.deepEqual(d.faltasDoContrato({ ...forn, contrato: { ...forn.contrato, modeloId: '', clausulas: [] } }), []); // contrato padrão em blocos: o tipo de contrato e as cláusulas são opcionais
+  assert.deepEqual(d.faltasDoContrato({ ...forn, contrato: { ...forn.contrato, contratanteEmpresaId: '' } }), ['empresa contratante']);
   assert.equal(d.validarContratoDocumento(forn.contrato), '');
   assert.match(d.validarContratoDocumento({ ...forn.contrato, camposAdicionaisDef: [{ id: 'c2', rotulo: 'Quando', tipo: 'data' }], camposAdicionais: { c2: 'amanhã' } }), /data/);
   assert.match(d.validarContratoDocumento({ atividadesIncluidas: [{ id: '1', texto: 'A' }], atividadesExcluidas: [{ id: '2', texto: 'A' }] }), /ao mesmo tempo/);
