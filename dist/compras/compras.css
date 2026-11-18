@@ -477,25 +477,22 @@ body.dark-theme .compras-escolha-opcao.ativo { color: #f2f1f6; }
 .compras-doc-previa img, .compras-doc-previa iframe { display: block; width: 100%; max-width: 100%; min-height: 320px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; }
 
 /* ---------- VND - Clientes (17/11/2026): mesma grade de linhas de Fornecedores, com as colunas do cliente ---------- */
-.compras-linha.grade-cliente{grid-template-columns:64px var(--w-nome,minmax(190px,1fr)) var(--w-tipo,150px) var(--w-cadastro,160px) var(--w-whatsapp,140px) var(--w-email,240px) 72px 24px;width:max-content;min-width:100%;background:var(--theme-card,#fff)}
+.compras-linha.grade-cliente{grid-template-columns:64px var(--w-nome,minmax(190px,1fr)) var(--w-tipo,150px) var(--w-whatsapp,140px) var(--w-email,240px) 72px 24px;width:max-content;min-width:100%;background:var(--theme-card,#fff)}
 .compras-linha.grade-cliente>*{grid-row:1}
 .compras-linha.grade-cliente>.compras-linha-icones{grid-column:1;position:sticky;left:0;z-index:2;align-self:stretch;align-items:center;background:inherit;padding-left:12px;margin-left:-12px}
 .compras-linha.grade-cliente>.c-nome{grid-column:2;position:sticky;left:76px;z-index:1;align-self:stretch;display:flex;align-items:center;background:inherit;box-shadow:1px 0 0 var(--layout-line,#dedee3);padding-right:8px}
 .compras-linha.grade-cliente>.c-tipo{grid-column:3}
-.compras-linha.grade-cliente>.c-cadastro{grid-column:4}
-.compras-linha.grade-cliente>.c-whatsapp{grid-column:5}
-.compras-linha.grade-cliente>.c-email{grid-column:6}
-.compras-linha.grade-cliente>.account-list-state,.compras-linha.grade-cliente>.c-estado{grid-column:7}
+.compras-linha.grade-cliente>.c-whatsapp{grid-column:4}
+.compras-linha.grade-cliente>.c-email{grid-column:5}
+.compras-linha.grade-cliente>.account-list-state,.compras-linha.grade-cliente>.c-estado{grid-column:6}
 .oculta-tipo{--w-tipo:24px}
 .oculta-tipo .grade-cliente:not(.compras-linha-cabecalho)>.c-tipo,.oculta-tipo .compras-linha-cabecalho.grade-cliente>.c-tipo>.compras-coluna-titulo{display:none}
-.oculta-cadastro{--w-cadastro:24px}
-.oculta-cadastro .grade-cliente:not(.compras-linha-cabecalho)>.c-cadastro,.oculta-cadastro .compras-linha-cabecalho.grade-cliente>.c-cadastro>.compras-coluna-titulo{display:none}
 .oculta-whatsapp{--w-whatsapp:24px}
 .oculta-whatsapp .grade-cliente:not(.compras-linha-cabecalho)>.c-whatsapp,.oculta-whatsapp .compras-linha-cabecalho.grade-cliente>.c-whatsapp>.compras-coluna-titulo{display:none}
 .oculta-email{--w-email:24px}
 .oculta-email .grade-cliente:not(.compras-linha-cabecalho)>.c-email,.oculta-email .compras-linha-cabecalho.grade-cliente>.c-email>.compras-coluna-titulo{display:none}
-.compras-linha.grade-cliente>.account-action-toggle{grid-column:8;position:sticky;right:0;z-index:2;align-self:stretch;height:auto;background:inherit}
-.compras-linha.grade-cliente>.account-row-actions:not([hidden]){grid-column:7;grid-row:1;justify-self:end;position:sticky;right:32px;z-index:2;background:inherit}
+.compras-linha.grade-cliente>.account-action-toggle{grid-column:7;position:sticky;right:0;z-index:2;align-self:stretch;height:auto;background:inherit}
+.compras-linha.grade-cliente>.account-row-actions:not([hidden]){grid-column:6;grid-row:1;justify-self:end;position:sticky;right:32px;z-index:2;background:inherit}
 .compras-linha.grade-cliente:has(>.account-row-actions:not([hidden]))>.account-list-state{visibility:hidden}
 @container lista-grade (max-width:519px){.compras-linha.grade-cliente{--w-nome:120px}}
 .compras-cliente-controles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}

@@ -59,7 +59,7 @@
     }
     return secoes.map(([t, l]) => [t, l.filter(([, v]) => v)]).filter(([, l]) => l.length);
   }
-  const rotuloModalidade = (c) => nomeDe(D.TIPOS_PESSOA_CLIENTE, c.tipoPessoa) + ' · ' + nomeDe(D.TIPOS_CADASTRO_CLIENTE, c.cadastro);
+  const rotuloModalidade = (c) => nomeDe(D.TIPOS_PESSOA_CLIENTE, c.tipoPessoa);
   // aoEditar(titulo): devolve a função que leva à etapa daquele bloco (ou nada). Com ela, o bloco ganha o botão "Editar".
   const dlDe = (secoes, aoEditar) => {
     const box = el('div', 'compras-largo');
@@ -408,7 +408,7 @@
     if (!lista.length) linhas.append(U.vazio(busca ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado.', busca ? '' : 'Use "Novo Cliente" para cadastrar Pessoa Física ou Jurídica.'));
     else {
       const cab = U.cabecalhoColunas('grade-cliente', [
-        { chave: 'nome', rotulo: 'Cliente' }, { chave: 'tipo', rotulo: 'Tipo de cliente', ocultavel: true }, { chave: 'cadastro', rotulo: 'Tipo de cadastro', ocultavel: true },
+        { chave: 'nome', rotulo: 'Cliente' }, { chave: 'tipo', rotulo: 'Tipo de cliente', ocultavel: true },
         { chave: 'whatsapp', rotulo: 'WhatsApp', ocultavel: true }, { chave: 'email', rotulo: 'E-mail', ocultavel: true }, { chave: 'estado', rotulo: 'Situação' },
       ], { lista: linhas, preferencia: 'cicluz-clientes-colunas' });
       linhas.append(cab); ponta.append(cab.botaoGeral);
@@ -420,7 +420,7 @@
     const nomeC = D.nomeCliente(c) || '(sem nome)'; const inativo = c.situacao === 'inativo';
     const row = U.linhaLista({
       icones: [{ icone: c.tipoPessoa === 'juridica' ? ICONE_PJ : ICONE_PF, rotulo: nomeDe(D.TIPOS_PESSOA_CLIENTE, c.tipoPessoa) }], grade: 'grade-cliente',
-      colunas: [{ chave: 'nome', conteudo: nomeC }, { chave: 'tipo', conteudo: nomeDe(D.TIPOS_PESSOA_CLIENTE, c.tipoPessoa) }, { chave: 'cadastro', conteudo: nomeDe(D.TIPOS_CADASTRO_CLIENTE, c.cadastro) },
+      colunas: [{ chave: 'nome', conteudo: nomeC }, { chave: 'tipo', conteudo: nomeDe(D.TIPOS_PESSOA_CLIENTE, c.tipoPessoa) },
         { chave: 'whatsapp', conteudo: c.whatsapp }, { chave: 'email', conteudo: c.email }],
       estado: c.statusCadastro === 'recebido' ? 'Recebido' : inativo ? 'Inativo' : 'Ativo',
       acoes: { rotulo: nomeC, lista: linhas, aoEditar: () => editarCliente(c), aoExcluir: () => alternarSituacao(c) },
