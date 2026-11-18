@@ -134,13 +134,14 @@
   }
 
   /** Ficha de uma empresa. emp: a empresa gravada (ou nada, para cadastrar). aoSalvar() é chamado depois de gravar. */
-  function abrirFicha(emp, aoSalvar) {
+  /** opcoes.editar: abre a ficha já liberada para alterar (o Editar da seta da lista e os dois toques na linha). */
+  function abrirFicha(emp, aoSalvar, opcoes = {}) {
     const v = emp || {}; const e = v.endereco || {};
     const gravadas = todas();
     // A primeira empresa é sempre a Matriz; as outras escolhem o vínculo.
     const matriz = emp ? emp.vinculo === 'matriz' : !gravadas.length;
     const jaTemDados = Boolean(emp);
-    let editando = !jaTemDados;
+    let editando = !jaTemDados || Boolean(opcoes.editar);
     const dlg = U.dialogo({
       titulo: emp ? 'Dados da Empresa' : matriz ? 'Cadastro empresa' : 'Cadastro empresa — ' + 'nova unidade', cor: A.COR, corTexto: A.COR_TEXTO, largo: true, classe: 'compras-form-padrao', rotuloSalvar: 'Salvar',
       montar: (form, d) => {
@@ -483,7 +484,30 @@ if (x.responsaveisDaMatriz) { if (!daMatrizCopia.length) blocos.push(['Dados dos
     return dlg;
   }
 
-  /* Tela "Dados da Empresa": a lista das empresas (a Matriz primeiro), com o botão de cadastrar outra. Tocar numa abre a ficha. */
+  /**
+   * O que impede excluir a empresa, ou ''. Regras de proteção (18/11/2026): a Matriz só sai depois das outras (as outras se apoiam nela,
+   * e a primeira empresa cadastrada é sempre a Matriz); empresa usada em contrato de fornecedor ou de cliente não sai (o vínculo é por id).
+   */
+  function impedimentoDeExcluir(x, lista, dados) {
+    if (x.vinculo === 'matriz' && lista.some((y) => y.id !== x.id)) return 'A Matriz só pode ser excluída depois das outras empresas. Exclua antes as outras, ou edite os dados da Matriz.';
+    const usa = (r, chave) => Boolean(r && r.contrato && r.contrato[chave] === x.id && r.contrato[chave === 'contratanteEmpresaId' ? 'tem' : 'temDocumento']);
+    const nF = (dados.fornecedores || []).filter((r) => usa(r, 'contratanteEmpresaId')).length; const nC = (dados.clientes || []).filter((r) => usa(r, 'contratadaEmpresaId')).length;
+    if (nF || nC) return 'Esta empresa está em ' + [nF && nF + (nF === 1 ? ' contrato de fornecedor' : ' contratos de fornecedor'), nC && nC + (nC === 1 ? ' contrato de cliente' : ' contratos de cliente')].filter(Boolean).join(' e ') + '. Troque a empresa nesses contratos antes de excluir, ou deixe-a inativa.';
+    return '';
+  }
+  function excluirEmpresa(x) {
+    const nome = x.nomeFantasia || x.razaoSocial || 'Empresa sem nome';
+    const falta = impedimentoDeExcluir(x, todas(), S.dados);
+    if (falta) { U.dialogo({ titulo: 'Não é possível excluir', cor: A.COR, corTexto: A.COR_TEXTO, montar: (form) => { form.append(el('p', null, falta)); } }); return; }
+    U.confirmar('Excluir empresa', 'A empresa "' + nome + '" e os responsáveis legais cadastrados nela serão apagados. Não dá para desfazer.', 'Excluir', () => {
+      const ok = S.transacao((d) => { const lista = empresasEm(d).filter((y) => y.id !== x.id); d.empresas = lista; delete d.empresa; });
+      if (!ok) return 'Não foi possível excluir. Tente de novo.';
+      U.avisar('Empresa excluída.'); render(); return undefined;
+    }, { cor: A.COR, corTexto: A.COR_TEXTO });
+  }
+
+  /* Tela "Dados da Empresa": a lista das empresas (a Matriz primeiro), com o botão de cadastrar outra. Um toque na linha abre a ficha para
+     leitura; dois toques, ou a seta da direita (Editar e Excluir), abrem para editar — o mesmo padrão das outras listas. */
   let tela = null;
   function render() {
     const lista = todas();
@@ -494,12 +518,19 @@ if (x.responsaveisDaMatriz) { if (!daMatrizCopia.length) blocos.push(['Dados dos
     if (!lista.length) linhas.append(U.vazio('Nenhuma empresa cadastrada.', 'Comece pela Matriz, a empresa principal.'));
     lista.forEach((x) => {
       const quantos = x.responsaveisDaMatriz ? 'responsáveis da Matriz' : (x.responsaveis || []).length + ((x.responsaveis || []).length === 1 ? ' responsável legal' : ' responsáveis legais');
-      linhas.append(U.linhaLista({
-        icone: 'fornecedor', titulo: x.nomeFantasia || x.razaoSocial || 'Empresa sem nome',
+      const nome = x.nomeFantasia || x.razaoSocial || 'Empresa sem nome';
+      const row = U.linhaLista({
+        icone: 'fornecedor', titulo: nome,
         detalhe: [nomeDoVinculo(x.vinculo) || 'Sem vínculo', x.cnpj, x.razaoSocial, quantos].filter(Boolean).join(' · '),
         direita: el('span', 'account-list-state', x.situacao === 'inativo' ? 'Inativa' : 'Ativa'),
-        aoClicar: () => abrirFicha(x, render),
-      }));
+        acoes: { rotulo: nome, lista: linhas, aoEditar: () => abrirFicha(x, render, { editar: true }), aoExcluir: () => excluirEmpresa(x) },
+      });
+      const arrow = row.querySelector('.account-action-toggle'); const drawer = row.querySelector('.account-row-actions');
+      const toque = U.umOuDoisToques(() => abrirFicha(x, render), () => abrirFicha(x, render, { editar: true }));
+      row.onclick = (e) => { if (e.target.closest('button')) return; if (!drawer.hidden) { drawer.hidden = true; arrow.setAttribute('aria-expanded', 'false'); return; } toque(); };
+      row.onkeydown = (e) => { if (e.target === row && e.key === 'Enter') { e.preventDefault(); abrirFicha(x, render); } };
+      row.setAttribute('aria-label', 'Ver dados de ' + nome);
+      linhas.append(row);
     });
     sec.append(linhas);
     tela.body.replaceChildren(U.nota('A primeira empresa é a Matriz. As outras entram com o tipo de vínculo e têm os próprios responsáveis legais, ou usam os da Matriz.'), sec);
@@ -511,5 +542,5 @@ if (x.responsaveisDaMatriz) { if (!daMatrizCopia.length) blocos.push(['Dados dos
   }
 
   A.registrar('empresa', abrir);
-  window.CicluzEmpresa = { abrir, abrirFicha, validarEmpresa, validarEmpresaEtapas, ETAPAS, VINCULOS, CARGOS_EMPRESA, MOTIVOS_REPRESENTACAO, VINCULOS_REPRESENTANTE, idadeEm, formaDaRepresentacao, todas, dados: () => todas()[0] || null };
+  window.CicluzEmpresa = { abrir, abrirFicha, validarEmpresa, validarEmpresaEtapas, impedimentoDeExcluir, ETAPAS, VINCULOS, CARGOS_EMPRESA, MOTIVOS_REPRESENTACAO, VINCULOS_REPRESENTANTE, idadeEm, formaDaRepresentacao, todas, dados: () => todas()[0] || null };
 })();
