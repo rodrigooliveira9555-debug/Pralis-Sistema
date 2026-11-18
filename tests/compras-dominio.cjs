@@ -200,6 +200,15 @@ ok(() => {
   assert.match(v({ financeiro: { nome: 'Fin', whatsapp: '', email: 'x@' } }), /E-mail do financeiro/);
   // Pessoa física: CPF válido e endereço completo (só o complemento é opcional); sem CNPJ nem regime tributário.
   const pf = { tipoPessoa: 'fisica', documento: '529.982.247-25', nome: 'Pessoa Teste', endereco: { cep: '30130-000', logradouro: 'Rua Teste', numero: '10', complemento: '', bairro: 'Centro', cidade: 'Cidade Teste', uf: 'MG' } };
+  // Pessoa física (18/11/2026): WhatsApp, e-mail e aniversário ficam no primeiro quadro, então são conferidos na 1ª etapa e não na 2ª.
+  { const base = { ...pj, ...pf, id: 'fpf', categorias: ['produto'] };
+    const semZap = d.validarFornecedorEtapas({ ...base, whatsapp: '' }, regras, ctx);
+    assert.equal(semZap[0], 'Informe o WhatsApp.'); assert.equal(semZap[1], '');
+    assert.equal(d.validarFornecedorEtapas({ ...base, email: 'x@' }, regras, ctx)[0], 'E-mail inválido.');
+    assert.deepEqual(d.validarFornecedorEtapas(base, regras, ctx).slice(0, 2), ['', '']);
+    // Pessoa jurídica: o contato continua sendo conferido na 2ª etapa.
+    const pjSemZap = d.validarFornecedorEtapas({ ...pj, whatsapp: '' }, regras, ctx);
+    assert.equal(pjSemZap[0], ''); assert.equal(pjSemZap[1], 'Informe o WhatsApp do vendedor ou prestador.'); }
   assert.equal(v(pf), '');
   assert.match(v({ ...pf, documento: '111.111.111-11' }), /CPF válido/);
   assert.match(v({ ...pf, documento: '11.222.333/0001-81' }), /CPF válido/);

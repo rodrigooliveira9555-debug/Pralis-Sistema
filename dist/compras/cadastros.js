@@ -651,7 +651,7 @@
         }
         const funcoes1 = quadroFuncoes(f?.prestadores?.[0]?.funcoes, 1);
         // Pessoa Física (vale para Produto e para Serviço): a própria pessoa é o contato. Mesmo quadro Sim/Não da Situação; copia só o Nome completo.
-        const mesmoPF = U.quadroSituacao('O mesmo da etapa anterior', Boolean(f && f.contatoMesmo), { textos: ['Sim', 'Não'], dica: 'Preenche o nome com o Nome completo da etapa anterior. WhatsApp e e-mail são digitados aqui.',
+        const mesmoPF = U.quadroSituacao('O mesmo da etapa anterior', Boolean(f && f.contatoMesmo), { textos: ['Sim', 'Não'], dica: 'Preenche o nome com o Nome completo da etapa anterior.',
           aoMudar: (ligado) => { if (ligado) pedirCopiaNome(); else vNome.readOnly = false; } });
         mesmoPF.classList.add('compras-largo');
         mesmoPF.querySelector('.account-status-switch').setAttribute('aria-label', 'O mesmo da etapa anterior (Pessoa Física)');
@@ -666,7 +666,15 @@
             aoFechar: () => { if (!confirmado) mesmoPF.ativo = false; } });
         }
         nome.addEventListener('input', copiarNome);
-        aoMudarTipo = () => { mostrar(mesmoPF, ehPF()); copiarNome(); };
+        // Pessoa física no padrão do cliente (18/11/2026, Rodrigo): WhatsApp, e-mail e data de aniversário sobem para o quadro
+        // "Dados pessoais" da 1ª etapa. São os MESMOS campos (e o mesmo dado: whatsapp, email, vendedorAniversario) da 2ª etapa da
+        // pessoa jurídica; só mudam de lugar, então nada do que foi digitado se perde ao trocar o tipo.
+        function moverContatoPF() {
+          const [, zap, correio] = camposS2.map((x) => x[0]);
+          if (ehPF()) s1.append(zap, correio, vAniv.no); else camposS2[0][0].after(zap, vAniv.no, correio);
+          const rAniv = vAniv.no.querySelector('.compras-rotulo'); if (rAniv) rAniv.textContent = ehPF() ? 'Data de aniversário' : 'Aniversário';
+        }
+        aoMudarTipo = () => { mostrar(mesmoPF, ehPF()); copiarNome(); moverContatoPF(); pintarVendedor(); };
         s2.append(tituloS2, mesmoPF, camposS2[0][0], camposS2[1][0], vAniv.no, camposS2[2][0], funcoes1.no);
 
         /* Prestadores 2, 3…: só na categoria Serviço. Cada quadro pode ser removido. */
@@ -703,9 +711,11 @@
           const quem = D.quemVendeFornecedor(marcadas());
           const servico = ehServico();
           tituloS2.textContent = servico ? 'Prestador 1' : 'Dados do vendedor da empresa';
-          camposS2.forEach(([no, input, antes, depois]) => {
-            no.querySelector('.compras-rotulo').textContent = antes + quem + depois;
-            input.setAttribute('aria-label', antes + quem + depois);
+          camposS2.forEach(([no, input, antes, depois], k) => {
+            // Na pessoa física o WhatsApp e o e-mail estão no primeiro quadro e são da própria pessoa: rótulo sem "do vendedor".
+            const rotulo = ehPF() && k > 0 ? antes.replace(/ do $/, '') + depois : antes + quem + depois;
+            no.querySelector('.compras-rotulo').textContent = rotulo;
+            input.setAttribute('aria-label', rotulo);
           });
           [funcoes1.no, listaExtras, adicionarLinha].forEach((no) => mostrar(no, servico));
         };

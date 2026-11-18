@@ -545,6 +545,16 @@
    * dados continua abrindo e sendo usado.
    */
   function validarFornecedorEtapas(f, regras, { fornecedores = [], funcoes = null } = {}) {
+    // Contato que recebe a cotação (WhatsApp obrigatório; e-mail e aniversário no formato). Na pessoa jurídica é o vendedor ou
+    // prestador (2ª etapa); na pessoa física é a própria pessoa e os campos ficam no primeiro quadro (18/11/2026, Rodrigo).
+    const contatoPrincipal = (pf) => {
+      if (!digitos(f.whatsapp)) return pf ? 'Informe o WhatsApp.' : 'Informe o WhatsApp do vendedor ou prestador.';
+      if (telefoneRuim(f.whatsapp)) return 'WhatsApp inválido.';
+      if (f.email && !emailValido(f.email)) return pf ? 'E-mail inválido.' : 'E-mail do vendedor ou prestador inválido.';
+      // Aniversário: dia e mês (MM-DD), opcional; não existe ano.
+      if (aniversarioRuim(f.vendedorAniversario)) return aniversarioRuim(f.vendedorAniversario);
+      return '';
+    };
     const basico = () => {
       const pf = f.tipoPessoa === 'fisica';
       const cats = Array.isArray(f.categorias) ? f.categorias : [];
@@ -563,15 +573,12 @@
       if (pf) {
         const falta = [['cep', 'CEP'], ['logradouro', 'rua'], ['numero', 'número'], ['bairro', 'bairro'], ['cidade', 'cidade'], ['uf', 'UF']].filter(([k]) => !String(e[k] || '').trim()).map(([, n]) => n);
         if (falta.length) return 'Pessoa física: informe o endereço completo (falta ' + falta.join(', ') + ').';
+        return contatoPrincipal(true);
       }
       return '';
     };
     const vendedor = () => {
-      if (!digitos(f.whatsapp)) return 'Informe o WhatsApp do vendedor ou prestador.';
-      if (telefoneRuim(f.whatsapp)) return 'WhatsApp inválido.';
-      if (f.email && !emailValido(f.email)) return 'E-mail do vendedor ou prestador inválido.';
-      // Aniversário do vendedor: dia e mês (MM-DD), opcional; não existe ano.
-      if (aniversarioRuim(f.vendedorAniversario)) return aniversarioRuim(f.vendedorAniversario);
+      if (f.tipoPessoa !== 'fisica') { const c = contatoPrincipal(false); if (c) return c; }
       // Prestadores (categoria Serviço): o 1º espelha o contato acima; do 2º em diante, nome obrigatório e o resto no formato.
       const prestadores = Array.isArray(f.prestadores) ? f.prestadores : [];
       for (let i = 0; i < prestadores.length; i++) {
