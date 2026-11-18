@@ -51,8 +51,8 @@
     const pf = c.tipoPessoa === 'fisica'; const e = c.endereco || {};
     const contato = (x, extra = []) => [['Nome', x && x.nome], ['WhatsApp', x && x.whatsapp], ['E-mail', x && x.email], ...extra];
     const secoes = [
-      ['Identificação', [['Categoria', D.nomeCategoriasFornecedor(c)], ['Tipo de pessoa', pf ? 'Pessoa Física' : 'Pessoa Jurídica'], [pf ? 'Nome completo' : 'Nome fantasia', c.nome], ...(pf ? [] : [['Razão social', c.razaoSocial], ['Regime tributário', nomeDe(D.REGIMES_TRIBUTARIOS, c.regimeTributario)]]), [pf ? 'CPF' : 'CNPJ', c.documento], ['Situação', c.situacao === 'ativo' ? 'Ativo' : 'Inativo']]],
-      [pf ? 'Endereço completo' : 'Endereço', [['CEP', e.cep], ['Rua / logradouro', e.logradouro], ['Número', e.numero], ['Complemento', e.complemento], ['Bairro', e.bairro], ['Cidade', e.cidade], ['UF', e.uf]]],
+      ['Identificação', [['Categoria', D.nomeCategoriasFornecedor(c)], ['Tipo de fornecedor', pf ? 'PF - Pessoa Física' : 'PJ - Pessoa Jurídica'], [pf ? 'Nome completo' : 'Nome fantasia', c.nome], ...(pf ? [] : [['Razão social', c.razaoSocial], ['Regime tributário', nomeDe(D.REGIMES_TRIBUTARIOS, c.regimeTributario)]]), [pf ? 'CPF' : 'CNPJ', c.documento], ['Situação', c.situacao === 'ativo' ? 'Ativo' : 'Inativo']]],
+      ['Endereço', [['CEP', e.cep], ['Rua / logradouro', e.logradouro], ['Número', e.numero], ['Complemento', e.complemento], ['Bairro', e.bairro], ['Cidade', e.cidade], ['UF', e.uf]]],
       ['Contato (vendedor ou prestador)', [['Nome', c.contatoNome], ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Aniversário', D.aniversarioTexto(c.vendedorAniversario)]]],
       ['Financeiro', contato(c.financeiro)],
       ['Representante', contato(c.representante, [['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
@@ -477,14 +477,15 @@
         const cpfCampo = campo('CPF *', cpf);
         const tipoBox = el('div', 'account-status compras-situacao-quadro');
         const tipoOpcoes = U.cartoesEscolha({
-          rotulo: 'Tipo de pessoa', multiplo: false,
+          // Mesmo desenho do "Tipo de cliente" (18/11/2026, Rodrigo): "PF - Pessoa Física" e "PJ - Pessoa Jurídica", sem linha de detalhe.
+          rotulo: 'Tipo de fornecedor', multiplo: false,
           opcoes: [
-            { id: 'fisica', titulo: 'Pessoa Física (PF)', icone: '<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/>', cor: 'var(--menu-accent)', detalhe: 'CPF e endereço completo', marcado: tipoInicial === 'fisica' },
-            { id: 'juridica', titulo: 'Pessoa Jurídica (PJ)', icone: U.ICONES.fornecedor, cor: 'var(--menu-accent)', detalhe: 'CNPJ e razão social', marcado: tipoInicial === 'juridica' },
+            { id: 'fisica', titulo: 'PF - Pessoa Física', icone: '<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/>', cor: 'var(--menu-accent)', marcado: tipoInicial === 'fisica' },
+            { id: 'juridica', titulo: 'PJ - Pessoa Jurídica', icone: U.ICONES.fornecedor, cor: 'var(--menu-accent)', marcado: tipoInicial === 'juridica' },
           ],
           aoMudar: () => pintarTipo(),
         });
-        tipoBox.append(el('span', null, 'Tipo de pessoa *'), tipoOpcoes);
+        tipoBox.append(el('span', null, 'Tipo de fornecedor *'), tipoOpcoes);
         const ehPF = () => tipoOpcoes.marcados()[0] === 'fisica';
         const situacao = U.quadroSituacao('Situação do fornecedor', f ? f.situacao === 'ativo' : true, { dica: 'Fornecedor inativo não aparece no seletor de cotação.' });
         // Ordem do Rodrigo: categoria, CNPJ (que puxa os dados), razão social, nome fantasia, regime tributário; depois o endereço; por último o ramo.
@@ -518,7 +519,10 @@
           mostrar(cpfCampo, pf);
           const rot = pf ? 'Nome completo' : 'Nome fantasia';
           nomeCampo.querySelector('.compras-rotulo').textContent = rot; nome.setAttribute('aria-label', rot);
-          sEnd.querySelector('legend').textContent = pf ? 'Endereço completo' : 'Endereço';
+          // Como no cliente: pessoa física tem o quadro "Dados pessoais", com o Nome completo antes do CPF; o endereço chama-se só "Endereço".
+          s1.querySelector('legend').textContent = pf ? 'Dados pessoais' : 'Dados da empresa';
+          if (pf) cpfCampo.before(nomeCampo); else regimeCampo.before(nomeCampo);
+          nome.placeholder = pf ? 'Ex: Nome e sobrenome...' : 'Ex: Nome da empresa...';
           aoMudarTipo();
         }
         pintarTipo();

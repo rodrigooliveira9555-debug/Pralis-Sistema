@@ -84,7 +84,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
     if (u.includes('/cep/v2/01001000')) return r.fulfill({ json: { cep: '01001000', state: 'SP', city: 'Cidade Dois', neighborhood: 'Bairro Dois', street: 'Praça Teste' } });
     return r.abort();
   });
-  ok((await etapaF(df)).includes('Dados da empresa') && await df.getByLabel('Tipo de pessoa *', { exact: true }).count() === 0 && await df.getByLabel('CPF *', { exact: true }).count() === 0 && await df.getByLabel('CNPJ *', { exact: true }).isVisible() && await df.getByLabel('CEP', { exact: true }).isVisible(), 'Etapa 1 é Dados da empresa: só CNPJ (sem tipo de pessoa nem CPF) e o endereço por CEP');
+  ok((await etapaF(df)).includes('Dados da empresa') && await df.getByLabel('Tipo de fornecedor *', { exact: true }).count() === 0 && await df.getByLabel('CPF *', { exact: true }).count() === 0 && await df.getByLabel('CNPJ *', { exact: true }).isVisible() && await df.getByLabel('CEP', { exact: true }).isVisible(), 'Etapa 1 é Dados da empresa: só CNPJ (sem tipo de pessoa nem CPF) e o endereço por CEP');
   ok(await df.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).count() === 0, 'No cadastro novo o Salvar só aparece na última etapa');
   await avancar(df);
   ok((await erroF()).includes('categoria') && (await etapaF(df)).includes('Etapa 1'), 'Avançar confere a etapa: categoria é obrigatória');
