@@ -519,11 +519,6 @@ body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-sea
 .compras-tipo-cab>.compras-linha-icone svg{width:20px;height:20px}
 .compras-tipo-cartao[data-marcado=true] .compras-cartao-marca{border-color:var(--cartao-cor);background:var(--cartao-cor)}
 .compras-tipo-cartao[data-marcado=true] .compras-cartao-marca svg{visibility:visible}
-.compras-segmentado{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:3px;border:1px solid var(--layout-line,#dedee3);border-radius:999px;background:var(--theme-surface,#fff)}
-.compras-segmentado[hidden]{display:none}
-.compras-segmentado>button{min-height:34px;margin:0;padding:0 12px;border:0;border-radius:999px;background:transparent;color:inherit;font:600 14px/20px var(--ui-font);cursor:pointer}
-.compras-segmentado>button[aria-checked=true]{background:var(--cartao-cor);color:var(--menu-ink,#1b1b1f)}
-.compras-segmentado>button:focus-visible{outline:2px solid var(--cartao-cor);outline-offset:2px}
 
 /* Contratos (18/11/2026): atividades incluídas e não incluídas, seleção hierárquica e tipos de contrato */
 .compras-atividades-duas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}

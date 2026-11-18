@@ -214,7 +214,8 @@
         const novoPorDentro = !c && porDentro;
         let cadastro = m0.cadastro === 'completo' || (porDentro && tipo === 'juridica') ? 'completo' : 'simples';
         let passo = 0;
-        // Uma só seção no alto: Pessoa Física e Pessoa Jurídica lado a lado; o Tipo de cadastro (Simples | Completo) mora dentro do cartão marcado.
+        // Uma só seção no alto: Pessoa Física e Pessoa Jurídica lado a lado. O seletor Simples | Completo saiu da tela (18/11/2026, Rodrigo):
+        // Pessoa Jurídica é sempre em etapas; Pessoa Física abre na modalidade em que foi gravada (nova: uma página só).
         // A escolha só muda a tela depois de pedirTroca/aplicar (que pode pedir confirmação); pintarTopo() redesenha a partir de tipo e cadastro.
         const ICO_PF = '<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/>';
         const cartoesTopo = el('div', 'compras-tipo-cartoes'); cartoesTopo.setAttribute('role', 'radiogroup'); cartoesTopo.setAttribute('aria-label', 'Tipo de cliente');
@@ -226,24 +227,15 @@
           const marca = el('span', 'compras-cartao-marca'); marca.setAttribute('aria-hidden', 'true'); marca.innerHTML = '<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
           cab.append(ic, tx, marca);
           cab.onclick = () => { if (id !== tipo) pedirTroca('tipo', id === 'juridica'); };
-          const seg = el('div', 'compras-segmentado'); seg.setAttribute('role', 'radiogroup'); seg.setAttribute('aria-label', 'Tipo de cadastro');
-          const segBtns = [['simples', 'Simples'], ['completo', 'Completo']].map(([cid, rot]) => {
-            const b = el('button', null, rot); b.type = 'button'; b.setAttribute('role', 'radio');
-            b.onclick = () => { if (id === tipo && cid !== cadastro) pedirTroca('cadastro', cid === 'completo'); };
-            seg.append(b); return [cid, b];
-          });
-          box.append(cab, seg); cartoesTopo.append(box);
-          return { id, box, cab, seg, segBtns };
+          box.append(cab); cartoesTopo.append(box);
+          return { id, box, cab };
         });
         function pintarTopo() {
           topo.forEach((t) => {
-            // Novo Cliente (manual), prévia e link: só Pessoa Física / Pessoa Jurídica; o Simples | Completo fica só para quem edita um cadastro que já existe.
-            const on = t.id === tipo; t.box.dataset.marcado = String(on); t.cab.setAttribute('aria-checked', String(on)); t.seg.hidden = !on || !c;
-            t.segBtns.forEach(([cid, b]) => { b.setAttribute('aria-checked', String(on && cid === cadastro)); });
+            const on = t.id === tipo; t.box.dataset.marcado = String(on); t.cab.setAttribute('aria-checked', String(on));
           });
         }
         const tipoSw = { set ativo(_) { pintarTopo(); }, get ativo() { return tipo === 'juridica'; } };
-        const cadSw = { set ativo(_) { pintarTopo(); }, get ativo() { return cadastro === 'completo'; } };
         const tipoBox = el('div', 'account-status compras-situacao-quadro compras-tipo-pessoa'); tipoBox.append(el('span', null, 'Tipo de cliente'), cartoesTopo);
         pintarTopo();
         const controles = el('div', 'compras-largo compras-cliente-controles'); controles.append(tipoBox);
@@ -255,19 +247,16 @@
 
         const temDadosPF = () => [nome, cpf].some((i) => i.value.trim()) || Boolean(anivPF.valor());
         const temDadosPJ = () => [cnpj, razao, fantasia, contatoNome].some((i) => i.value.trim()) || rep.ler().nome;
-        const temDadosCompleto = () => (tipo === 'fisica' ? [cpf, cep, rua, numero, bairro, cidade].some((i) => i.value.trim()) : [regime, cep, rua, contatoNome].some((i) => i.value.trim()) || mensal.ativo || rep.ler().nome);
-        /** Trocar de tipo ou de modalidade nunca apaga: o que já foi digitado fica guardado. Pede confirmação quando há risco de a pessoa achar que perdeu. */
+        /** Trocar de tipo nunca apaga: o que já foi digitado fica guardado. Pede confirmação quando há risco de a pessoa achar que perdeu. */
         function pedirTroca(qual, ligado) {
-          const novoTipo = qual === 'tipo' ? (ligado ? 'juridica' : 'fisica') : tipo; const novoCad = qual === 'cadastro' ? (ligado ? 'completo' : 'simples') : cadastro;
-          const reverter = () => { (qual === 'tipo' ? tipoSw : cadSw).ativo = !ligado; };
-          const risco = qual === 'tipo' ? (tipo === 'fisica' ? temDadosPF() : temDadosPJ()) : (cadastro === 'completo' && temDadosCompleto());
+          const novoTipo = ligado ? 'juridica' : 'fisica'; const novoCad = cadastro;
+          const reverter = () => { tipoSw.ativo = !ligado; };
+          const risco = tipo === 'fisica' ? temDadosPF() : temDadosPJ();
           if (!risco) { aplicar(novoTipo, novoCad); return; }
           let confirmado = false;
           U.dialogo({
-            titulo: qual === 'tipo' ? 'Trocar o tipo de pessoa?' : 'Passar para o cadastro simples?', ...cores(), rotuloSalvar: 'Trocar',
-            montar: (f2) => { f2.append(el('p', null, qual === 'tipo'
-              ? 'Os dados de ' + (tipo === 'fisica' ? 'Pessoa Física' : 'Pessoa Jurídica') + ' ficam guardados no cadastro, mas não aparecem enquanto ele for ' + (novoTipo === 'fisica' ? 'Pessoa Física' : 'Pessoa Jurídica') + '. Nada é apagado.'
-              : 'Os dados do cadastro completo ficam guardados, mas só aparecem quando o cadastro voltar a ser Completo. Nada é apagado.')); },
+            titulo: 'Trocar o tipo de pessoa?', ...cores(), rotuloSalvar: 'Trocar',
+            montar: (f2) => { f2.append(el('p', null, 'Os dados de ' + (tipo === 'fisica' ? 'Pessoa Física' : 'Pessoa Jurídica') + ' ficam guardados no cadastro, mas não aparecem enquanto ele for ' + (novoTipo === 'fisica' ? 'Pessoa Física' : 'Pessoa Jurídica') + '. Nada é apagado.')); },
             salvar: () => { confirmado = true; aplicar(novoTipo, novoCad); },
             aoFechar: () => { if (!confirmado) reverter(); },
           });
@@ -319,7 +308,7 @@
         const cancelar = botao('Cancelar', () => dlg.close(), 'btn secondary footer-cancel-accent');
         const salvarFim = el('button', 'btn', 'Salvar'); salvarFim.type = 'submit';
         function desenhar() {
-          tipoSw.ativo = tipo === 'juridica'; cadSw.ativo = cadastro === 'completo'; pintarEndereco();
+          tipoSw.ativo = tipo === 'juridica'; pintarEndereco();
           // Pessoa jurídica em etapas: o e-mail do responsável é o que recebe notas e cobranças, e é obrigatório (17/11/2026, Rodrigo).
           const pjEtapas = tipo === 'juridica' && cadastro === 'completo';
           const rotE = pjEtapas ? 'E-mail (financeiro e/ou fiscal) *' : tipo === 'fisica' ? 'E-mail *' : 'E-mail';
@@ -416,7 +405,7 @@
     const sec = U.secao('Clientes', undefined, ponta);
     sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Novo Cliente', 'Cadastrar cliente', () => editarCliente()), ...(window.CicluzConviteLink ? [window.CicluzConviteLink.botao({ cores: cores(), modelos: MODELOS_LINK, visualizar: (id) => editarCliente(null, { modelo: MODELOS_LINK.find((m) => m.id === id).modelo, previa: true }) })] : []));
     sec.append(linhas);
-    if (!lista.length) linhas.append(U.vazio(busca ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado.', busca ? '' : 'Use "Novo Cliente" para escolher Pessoa Física ou Jurídica e o cadastro Simples ou Completo.'));
+    if (!lista.length) linhas.append(U.vazio(busca ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado.', busca ? '' : 'Use "Novo Cliente" para cadastrar Pessoa Física ou Jurídica.'));
     else {
       const cab = U.cabecalhoColunas('grade-cliente', [
         { chave: 'nome', rotulo: 'Cliente' }, { chave: 'tipo', rotulo: 'Tipo de cliente', ocultavel: true }, { chave: 'cadastro', rotulo: 'Tipo de cadastro', ocultavel: true },
