@@ -519,8 +519,8 @@
           mostrar(cpfCampo, pf);
           const rot = pf ? 'Nome completo' : 'Nome fantasia';
           nomeCampo.querySelector('.compras-rotulo').textContent = rot; nome.setAttribute('aria-label', rot);
-          // Como no cliente: pessoa física tem o quadro "Dados pessoais", com o Nome completo antes do CPF; o endereço chama-se só "Endereço".
-          s1.querySelector('legend').textContent = pf ? 'Dados pessoais' : 'Dados da empresa';
+          // Como no cliente: na pessoa física o Nome completo vem antes do CPF; o endereço chama-se só "Endereço".
+          s1.querySelector('legend').textContent = pf ? 'Dados do vendedor' : 'Dados da empresa'; // o nome certo (vendedor ou prestador) vem de pintarVendedor, pela categoria
           if (pf) cpfCampo.before(nomeCampo); else regimeCampo.before(nomeCampo);
           nome.placeholder = pf ? 'Ex: Nome e sobrenome...' : 'Ex: Nome da empresa...';
           aoMudarTipo();
@@ -659,7 +659,9 @@
         // pessoa jurídica; só mudam de lugar, então nada do que foi digitado se perde ao trocar o tipo.
         function moverContatoPF() {
           const [, zap, correio] = camposS2.map((x) => x[0]);
-          if (ehPF()) s1.append(zap, correio, vAniv.no, funcoes1.no); else { camposS2[0][0].after(zap, vAniv.no, correio); s2.append(funcoes1.no); }
+          // Pessoa física, na ordem do cliente pessoa física: Nome completo, WhatsApp, E-mail, Data de aniversário; depois o CPF.
+          if (ehPF()) s1.append(zap, correio, vAniv.no, cpfCampo, funcoes1.no);
+          else { camposS2[0][0].after(zap, vAniv.no, correio); s2.append(funcoes1.no); }
           // Categoria Serviço: as funções e os outros prestadores acompanham a etapa da pessoa.
           (ehPF() ? etapa1 : etapa2).append(listaExtras, adicionarLinha);
           const rAniv = vAniv.no.querySelector('.compras-rotulo'); if (rAniv) rAniv.textContent = ehPF() ? 'Data de aniversário' : 'Aniversário';
@@ -707,6 +709,8 @@
           const quem = D.quemVendeFornecedor(marcadas());
           const servico = ehServico();
           tituloS2.textContent = servico ? 'Prestador 1' : 'Dados do vendedor da empresa';
+          // Pessoa física: o primeiro quadro leva o nome da etapa ("Dados do prestador de serviço" ou "Dados do vendedor"), como o Rodrigo pediu.
+          s1.querySelector('legend').textContent = ehPF() ? D.etapasFornecedor(marcadas(), 'fisica')[0] : 'Dados da empresa';
           camposS2.forEach(([no, input, antes, depois], k) => {
             // Na pessoa física o WhatsApp e o e-mail estão no primeiro quadro e são da própria pessoa: rótulo sem "do vendedor".
             const rotulo = ehPF() && k > 0 ? antes.replace(/ do $/, '') + depois : antes + quem + depois;
