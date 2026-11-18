@@ -470,7 +470,32 @@
    * Diálogo modal no padrão do S2. montar(form) devolve o contexto; salvar(ctx) devolve
    * mensagem de erro (string) ou nada para fechar. Sem `salvar`, mostra só "Fechar".
    */
-  function dialogo({ titulo, subtitulo, montar, salvar, rotuloSalvar = 'Salvar', largo = false, aoFechar, cor = COR, corTexto = COR_TEXTO, classe = '' }) {
+  /**
+   * Padrão único de moldura (18/11/2026, Rodrigo): em toda janela, campo que ficaria solto direto no formulário entra num
+   * quadro com nome. Junta cada sequência de campos soltos (e o que estiver entre eles: notas, avisos) num fieldset; o que
+   * já está num quadro, numa etapa ou na barra de etapas não é tocado. O nome vem da opção "quadro" ou do título da janela
+   * sem o verbo ("Editar unidade" → "Unidade"). Janela só de texto (confirmação, aviso) fica como está.
+   */
+  const CAMPO_SOLTO = 'label.compras-campo, .compras-campo, .account-status, label.compras-interruptor, .compras-interruptor, .compras-cartoes';
+  const FORA_DO_QUADRO = 'fieldset, .stepper-wrap, .compras-etapa, .compras-etapas-nav, .compras-dialog-acoes, .profiles-error';
+  function nomeDoQuadro(titulo) {
+    const resto = String(titulo || '').replace(/^Prévia\s*[—-]\s*/i, '').replace(/^(Novo|Nova|Editar|Cadastro|Cadastrar|Registrar|Alterar|Lançar|Adicionar|Incluir)\s+/i, '').trim();
+    return resto ? resto.charAt(0).toLocaleUpperCase('pt-BR') + resto.slice(1) : 'Dados';
+  }
+  function enquadrarSoltos(form, nome) {
+    const grupos = []; let atual = [];
+    [...form.children].forEach((n) => { if (n.matches(FORA_DO_QUADRO)) { grupos.push(atual); atual = []; } else atual.push(n); });
+    grupos.push(atual);
+    grupos.forEach((nos) => {
+      const a = nos.findIndex((n) => n.matches(CAMPO_SOLTO)); if (a < 0) return;
+      let b = nos.length - 1; while (!nos[b].matches(CAMPO_SOLTO)) b -= 1;
+      const quadro = el('fieldset', 'compras-fieldset compras-quadro-auto compras-largo');
+      quadro.append(el('legend', null, nome));
+      nos[a].before(quadro);
+      quadro.append(...nos.slice(a, b + 1));
+    });
+  }
+  function dialogo({ titulo, subtitulo, montar, salvar, rotuloSalvar = 'Salvar', largo = false, aoFechar, cor = COR, corTexto = COR_TEXTO, classe = '', quadro }) {
     const d = el('dialog', 'location-dialog profiles-dialog compras-dialog' + (largo ? ' largo' : '') + (classe ? ' ' + classe : ''));
     d.style.setProperty('--menu-accent', cor);
     d.style.setProperty('--dialog-accent', cor);
@@ -482,6 +507,7 @@
     const erro = el('p', 'profiles-error');
     erro.setAttribute('role', 'alert');
     const ctx = montar(form, d) || {};
+    enquadrarSoltos(form, quadro || nomeDoQuadro(titulo));
     const acoes = el('div', 'actions compras-dialog-acoes');
     // Decisão do Zé (04/11/2026): todo diálogo confirma pelo ✓ e fecha pelo ✕ do rodapé fixo do S2.
     // A linha própria fica fora da vista, só para o ✓ repassar o clique (o rodapé procura um botão
@@ -504,7 +530,7 @@
       salvando = true;
       let msg;
       try { msg = await salvar(ctx); } catch (err) { console.warn(err); msg = 'Não foi possível salvar. Tente de novo.'; } finally { salvando = false; }
-      if (msg) { erro.textContent = msg; return; }
+      if (msg) { erro.textContent = msg; sinalizarObrigatorios(form); return; }
       d.close();
     };
     d.append(form);
@@ -516,6 +542,66 @@
     // O rodapé é montado pelo shell logo depois de abrir: o ✓ ganha o nome da ação como dica.
     if (salvar) setTimeout(() => { const ok = d.querySelector('.people-save-control'); if (ok) { ok.title = rotuloSalvar; ok.setAttribute('aria-label', rotuloSalvar); } }, 120);
     return d;
+  }
+
+  /**
+   * Sinaliza os campos obrigatórios vazios (pedido do Rodrigo, 17/11/2026): quando Avançar ou Salvar não passa, cada
+   * campo obrigatório vazio que está à vista dentro de "raiz" ganha o contorno na cor do menu e, embaixo, uma linha com
+   * o ícone de exclamação ("Preencha este campo." / "Selecione uma opção."). Todos de uma vez; a tela rola até o
+   * primeiro; o aviso de cada campo some quando ele é preenchido. O nome do campo não muda de cor: só a moldura. Obrigatório é o campo cujo
+   * rótulo termina em " *". Devolve quantos campos foram sinalizados.
+   */
+  const ICONE_AVISO = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>';
+  function limparSinal(campo) {
+    campo.classList.remove('campo-pendente');
+    campo.querySelectorAll(':scope > .campo-aviso').forEach((a) => a.remove());
+  }
+  function sinalizarObrigatorios(raiz) {
+    if (!raiz) return 0;
+    raiz.querySelectorAll('.campo-pendente').forEach(limparSinal);
+    const pendentes = [];
+    raiz.querySelectorAll('.compras-campo').forEach((campo) => {
+      const rotulo = campo.querySelector(':scope > .compras-rotulo');
+      if (!rotulo || !rotulo.textContent.trim().endsWith('*') || campo.offsetParent === null) return;
+      const entradas = [...campo.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=file]), select, textarea')];
+      if (!entradas.length || entradas.some((i) => String(i.value || '').trim())) return;
+      const alvo = entradas.find((i) => i.offsetParent !== null) || entradas[0];
+      const aviso = el('small', 'campo-aviso');
+      aviso.setAttribute('role', 'alert');
+      aviso.innerHTML = ICONE_AVISO;
+      aviso.append(el('span', null, alvo.tagName === 'SELECT' ? 'Selecione uma opção.' : 'Preencha este campo.'));
+      campo.classList.add('campo-pendente');
+      campo.append(aviso);
+      const aoMexer = () => { if (entradas.some((i) => String(i.value || '').trim())) { limparSinal(campo); entradas.forEach((i) => { i.removeEventListener('input', aoMexer); i.removeEventListener('change', aoMexer); }); } };
+      entradas.forEach((i) => { i.addEventListener('input', aoMexer); i.addEventListener('change', aoMexer); });
+      pendentes.push(alvo);
+    });
+    // Só rola até o primeiro: com o cursor dentro, o campo mostraria a moldura de foco (cinza) em vez da cor do aviso.
+    if (pendentes[0]) pendentes[0].scrollIntoView({ block: 'center' });
+    // Campo preenchido sem digitação (busca do CNPJ ou do CEP) não dispara evento: enquanto houver aviso à vista, confere
+    // a cada meio segundo e tira o aviso do que já foi preenchido; para sozinho quando não sobra nenhum.
+    clearInterval(raiz.vigiaObrigatorios);
+    raiz.vigiaObrigatorios = setInterval(() => {
+      const comAviso = [...raiz.querySelectorAll('.campo-pendente')];
+      if (!raiz.isConnected || !comAviso.length) { clearInterval(raiz.vigiaObrigatorios); return; }
+      comAviso.forEach((campo) => { if ([...campo.querySelectorAll('input:not([type=hidden]), select, textarea')].some((i) => String(i.value || '').trim())) limparSinal(campo); });
+    }, 500);
+    return pendentes.length;
+  }
+
+  /**
+   * Troca de etapa sempre recomeça do alto (pedido do Rodrigo, 17/11/2026): leva a barra de etapas para o topo da área
+   * que rola, para a etapa seguinte começar logo abaixo do cabeçalho. Não faz nada enquanto o formulário está sendo montado.
+   */
+  function subirAoTopo(no, form) {
+    if (no && (!form || form.isConnected) && no.isConnected) no.scrollIntoView({ block: 'start' });
+  }
+  /** Botão retangular "Editar" embaixo de um bloco da Revisão (o botão padrão do sistema): leva à etapa do bloco. */
+  function botaoEditarBloco(titulo, acao) {
+    const b = el('button', 'btn compras-revisao-editar', 'Editar');
+    b.type = 'button'; b.setAttribute('aria-label', 'Editar ' + titulo);
+    b.onclick = acao;
+    return b;
   }
 
   /** Confirmação local (sem janela nativa), como pede o padrão do S2. */
@@ -653,9 +739,69 @@
     return grupo;
   }
 
+  /**
+   * Botão retangular "Enviar" (aviãozinho) do cabeçalho de uma lista e o painel que ele abre — padrão único (18/11/2026,
+   * Rodrigo), usado por Fornecedores, Clientes e Patrimônios: uma coluna branca estreita com a seta de fechar e as bolinhas
+   * dos canais (WhatsApp, e-mail, SMS) e, ao lado, os campos do envio. O painel fica por cima da tela, preso ao botão.
+   * dica: texto do botão para o leitor de tela; campos: nós antes do "Tipo de envio"; depois: nós depois dele;
+   * aoCanal(id): chamado quando a pessoa toca num canal.
+   */
+  const CANAIS_ENVIO = [['whatsapp', 'WhatsApp'], ['email', 'E-mail'], ['sms', 'SMS']];
+  /* Prazo de resposta do Enviar (o mesmo em Fornecedores, Clientes e Patrimônios). O prazo padrão é preferência deste aparelho
+     (não é dado de cadastro): vem com o último prazo em dias úteis escolhido (3 enquanto ninguém trocar); "data e hora" vale só
+     para aquele envio. A chave é a que Fornecedores já usava, para a preferência gravada continuar valendo. */
+  const PRAZOS_RESPOSTA = [['1', '1 dia útil'], ['3', '3 dias úteis'], ['5', '5 dias úteis'], ['7', '7 dias úteis'], ['data', 'Escolher data e hora']];
+  const CHAVE_PRAZO_RESPOSTA = 'cicluz-fornecedores-prazo-convite';
+  /** Mensagem do Enviar: vem escrita e pode ser ajustada antes de enviar. Devolve { campo, texto() } (texto vazio volta ao padrão). */
+  const MENSAGEM_ENVIO = 'Olá! Segue o link para preenchimento do seu cadastro. Por favor, confira as informações antes de enviar.';
+  function mensagemEnvio(padrao = MENSAGEM_ENVIO) {
+    const caixa = el('textarea'); caixa.rows = 4; caixa.maxLength = 400; caixa.value = padrao; caixa.setAttribute('aria-label', 'Mensagem');
+    return { campo: campo('Mensagem', caixa), texto: () => caixa.value.trim() || padrao };
+  }
+  /** Campos do prazo. Devolve { campos, ler(), frase() }: ler() dá { tipo, dias } ou { tipo, data, hora }; frase() é o prazo por extenso, para a mensagem. */
+  function prazoResposta() {
+    let padrao = '3';
+    try { const v = localStorage.getItem(CHAVE_PRAZO_RESPOSTA); if (PRAZOS_RESPOSTA.some(([id]) => id === v && id !== 'data')) padrao = v; } catch (e) { /* sem preferência salva */ }
+    const prazo = seletor(PRAZOS_RESPOSTA, padrao);
+    const data = entrada('date', ''); const hora = entrada('time', '');
+    const dataCampo = campo('Responder até (data)', data); const horaCampo = campo('Hora', hora);
+    const pintar = () => { const livre = prazo.value === 'data'; dataCampo.style.display = livre ? '' : 'none'; horaCampo.style.display = livre ? '' : 'none'; };
+    prazo.onchange = () => { pintar(); if (prazo.value !== 'data') { try { localStorage.setItem(CHAVE_PRAZO_RESPOSTA, prazo.value); } catch (e) { /* vale só nesta visita */ } } };
+    pintar();
+    const ler = () => (prazo.value === 'data' ? { tipo: 'data', data: data.value, hora: hora.value } : { tipo: 'dias-uteis', dias: Number(prazo.value) });
+    const frase = () => {
+      if (prazo.value !== 'data') return 'Prazo para resposta: ' + prazo.selectedOptions[0].textContent + '.';
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(data.value || '');
+      const dia = m ? m[3] + '/' + m[2] + '/' + m[1] : (data.value || '');
+      return dia ? 'Prazo para resposta: até ' + dia + (hora.value ? ' às ' + hora.value : '') + '.' : '';
+    };
+    return { campos: [campo('Prazo de resposta', prazo), dataCampo, horaCampo], ler, frase };
+  }
+  function botaoEnviar({ dica, campos = [], depois = [], aoCanal }) {
+    const caixa = el('span', 'compras-enviar');
+    const painel = el('div', 'compras-enviar-painel');
+    painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', dica);
+    const b = botaoTitulo('Enviar', dica, () => abrir(painel.hidden), ICONES.send);
+    const bolinha = (rotulo, desenho, acao, classe = '') => {
+      const x = el('button', 'shortcut-circle compras-redondo ' + classe);
+      x.type = 'button'; x.title = rotulo; x.setAttribute('aria-label', rotulo); x.innerHTML = svg(desenho); x.onclick = acao;
+      return x;
+    };
+    const canais = el('div', 'compras-enviar-canais'); canais.setAttribute('role', 'group'); canais.setAttribute('aria-label', 'Tipo de envio');
+    const fechar = bolinha('Fechar', ICONES.voltar, () => { abrir(false); b.focus(); }, 'compras-enviar-fechar');
+    canais.append(fechar, ...CANAIS_ENVIO.map(([id, nomeCanal]) => bolinha('Enviar por ' + nomeCanal, ICONES[id], () => aoCanal(id))));
+    const lado = el('div', 'compras-enviar-prazo');
+    const tipo = el('div', 'compras-campo');
+    tipo.append(el('span', 'compras-rotulo', 'Tipo de envio'), el('small', 'profiles-note', 'Toque em WhatsApp, e-mail ou SMS, nos ícones ao lado.'));
+    lado.append(...campos, tipo, ...depois);
+    painel.append(canais, lado);
+    const abrir = flutuante(b, painel, { foco: fechar });
+    caixa.append(b, painel);
+    return caixa;
+  }
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, quadroSituacao, cartoesEscolha, flutuante,
+    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();

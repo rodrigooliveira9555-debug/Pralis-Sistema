@@ -45,7 +45,7 @@
   const MEDIDAS_BASE = ['UN', 'KG', 'G', 'LT', 'ML'];
   const UNIDADES_TRANSF = ['UN', 'G', 'ML'];
   // Nomes das etapas definidos pelo Rodrigo (17/11/2026).
-  const ETAPAS = ['Cadastro geral', 'Cadastro produção/​transformação', 'Cadastro específico', 'Cadastro promoção', 'Cadastro fiscal', 'Revisão'];
+  const ETAPAS = ['Cadastro geral', 'Cadastro produção/​transformação', 'Cadastro específico', 'Cadastro promoção', 'Cadastro fiscal', 'Revisão dos dados'];
   // Dias da promoção na ordem da lista (domingo primeiro, como no calendário); o número é a posição em promocao.dias.
   const DIAS_LISTA = [[6, 'Domingo'], [0, 'Segunda-feira'], [1, 'Terça-feira'], [2, 'Quarta-feira'], [3, 'Quinta-feira'], [4, 'Sexta-feira'], [5, 'Sábado']];
   const VISTO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 7"/></svg>';
@@ -528,7 +528,7 @@
         if (!novo) {
           const rod = el('div', 'compras-form-rodape');
           rod.append(botao('Histórico de nomes', () => X.historicoDeNomes(p)));
-          eGeral.append(rod);
+          rod.classList.add('compras-largo'); s1.append(rod);
         }
 
         /* ===== Prévias ao vivo ===== */
@@ -627,6 +627,7 @@
         const avancar = botao('Avançar', () => ir(atual + 1), 'btn form-next-action');
         const salvarFim = el('button', 'btn', 'Salvar');
         salvarFim.type = 'submit';
+        const cancelar = botao('Cancelar', () => form.closest('dialog').close(), 'btn secondary footer-cancel-accent');
         const nav = el('div', 'compras-form-rodape compras-etapas-nav');
         const barra = window.CicluzStepper.create({ steps: ETAPAS.map((label) => ({ label })), current: 0, label: 'Etapas do cadastro do produto', onSelect: (i) => ir(i) });
         /* Etapa 6 · Revisão: tudo o que foi preenchido nas outras etapas, só para leitura, com "Editar" por etapa. */
@@ -640,7 +641,7 @@
           etapasNo.slice(0, -1).forEach((etapa, k) => {
             const quadro = el('fieldset', 'compras-fieldset compras-revisao');
             quadro.append(el('legend', null, (k + 1) + ' · ' + ETAPAS[k]));
-            const linhas = el('dl', 'compras-revisao-lista compras-largo');
+            const linhas = el('dl', 'profiles-info compras-largo'); // o mesmo quadro branco da revisão do cliente e da empresa
             const por = (rotulo, valor) => { linhas.append(el('dt', null, rotulo), el('dd', null, valor || '—')); };
             if (k === 0) { por('Situação do produto', situacao.ativo ? 'Ativo' : 'Inativo'); por('Foto', foto.valor() ? 'Com foto' : 'Sem foto'); }
             etapa.querySelectorAll('label.compras-campo, label.compras-interruptor').forEach((l) => {
@@ -655,10 +656,7 @@
               por('Promoções', promocoes.length ? String(promocoes.length) : 'Sem promoção');
               promocoes.forEach((pr, j) => por('Promoção ' + (j + 1) + ' · quando vale', pr.agendada ? R.resumoRepeticaoPromocao(pr) : 'Sem agendamento: vale todos os dias, o dia todo.'));
             }
-            const editar = botao('Editar', () => ir(k), 'btn secondary');
-            const pe = el('div', 'compras-form-rodape compras-largo');
-            pe.append(editar);
-            quadro.append(linhas, pe);
+            quadro.append(U.botaoEditarBloco(ETAPAS[k], () => ir(k)), linhas);
             eRevisao.append(quadro);
           });
         }
@@ -669,8 +667,8 @@
           barra.set(atual);
           // Voltar a partir da 2ª etapa, Avançar até a penúltima; Salvar em todas na edição e só na última no cadastro novo.
           const ultima = atual === etapasNo.length - 1;
-          nav.replaceChildren(...[atual > 0 && voltar, !ultima && avancar, (!novo || ultima) && salvarFim].filter(Boolean));
-          if (form.isConnected) barra.el.scrollIntoView({ block: 'start' });
+          nav.replaceChildren(...[atual > 0 && voltar, cancelar, (!novo || ultima) && salvarFim, !ultima && avancar].filter(Boolean));
+          U.subirAoTopo(barra.el, form);
         }
         form.append(barra.el, ...etapasNo, nav);
         ir(0);

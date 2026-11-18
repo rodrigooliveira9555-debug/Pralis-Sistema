@@ -189,13 +189,13 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   ok(await p.evaluate(() => CicluzComprasDados.dados.funcoesPrestador.some((x) => x.nome === 'Vidraceiro Teste')) && await dp.locator('.compras-chip[aria-pressed=true]', { hasText: 'Vidraceiro Teste' }).count() === 1 && await dp.isVisible(), 'Acrescentar opção cria a função, já marcada, sem fechar o cadastro');
   await dp.locator('button', { hasText: 'Adicionar prestador' }).click();
   await dp.locator('fieldset', { has: p.locator('legend', { hasText: 'Prestador 2' }) }).getByLabel('Nome do prestador *', { exact: true }).fill('Segundo Prestador Teste');
-  await dp.getByLabel('Aniversário', { exact: true }).pressSequentially('031990');
+  await dp.getByLabel('Aniversário', { exact: true }).pressSequentially('1503');
   await avancar(dp); await avancar(dp); await avancar(dp);
   ok(await dp.locator('button', { hasText: 'Grupo de despesas' }).isVisible() && await dp.locator('button', { hasText: 'Produtos' }).isHidden(), 'Etapa 5 na categoria Serviço: botão Grupo de despesas, sem o de produtos');
   await avancar(dp);
   await dp.locator('.compras-etapas-nav button', { hasText: 'Salvar' }).click();
   await p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'));
-  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '11.444.777/0001-61' && f.tipoPessoa === 'juridica' && f.vendedorAniversario === '1990-03' && f.categorias.join() === 'servico' && f.prestadores.length === 2 && f.prestadores[0].funcoes.length === 2 && f.prestadores[0].whatsapp === f.whatsapp && f.prestadores[1].nome.toUpperCase() === 'SEGUNDO PRESTADOR TESTE')), 'Segundo fornecedor salvo com CNPJ, categoria Serviço e dois prestadores (o 1º espelha o contato, com duas funções)');
+  ok(await p.evaluate(() => CicluzComprasDados.dados.fornecedores.some((f) => f.documento === '11.444.777/0001-61' && f.tipoPessoa === 'juridica' && f.vendedorAniversario === '03-15' && f.categorias.join() === 'servico' && f.prestadores.length === 2 && f.prestadores[0].funcoes.length === 2 && f.prestadores[0].whatsapp === f.whatsapp && f.prestadores[1].nome.toUpperCase() === 'SEGUNDO PRESTADOR TESTE')), 'Segundo fornecedor salvo com CNPJ, categoria Serviço e dois prestadores (o 1º espelha o contato, com duas funções)');
   // Enviar link para cadastro (P-29): o botão e o painel existem; o envio fica desligado, sem abrir nada.
   const enviarF = p.locator('.view.show button[aria-label="Enviar link para cadastro"]');
   await enviarF.click();

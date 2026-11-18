@@ -222,7 +222,7 @@ const sessionUser=()=>{try{return JSON.parse(sessionStorage.getItem('cicluz-sync
 
 {const V=makeView('calendar','DES - Escala Individual','Lançamentos Colaboradores','Escala de cada colaborador por semana, com os horários alternativos, de domingo e de feriado. O DP define quem trabalha e quem folga em cada dia: a plataforma não distribui folgas. Dias sem lançamento mostram apenas os dias do modelo de escala vinculado. Semana de segunda a domingo.');
  const pSel=el('select'),modeBar=el('div','people-banner-tools'),nav=el('div','people-banner-tools'),title=el('h3','uniforms-heading'),area=el('div'),setBox=el('div'),holBox=el('div');
- pSel.setAttribute('aria-label','Colaborador');const top=el('div','form-fields uniforms-form');top.append(lbl('Colaborador *',pSel,'uniforms-wide'));
+ pSel.setAttribute('aria-label','Colaborador');const top=el('div','form-fields uniforms-form');top.dataset.quadro='Colaborador';top.append(lbl('Colaborador *',pSel,'uniforms-wide'));
  let mode='week',ref=today(),flash='',want='';
  const modeBtns={};for(const [k,n] of [['week','Semanal'],['month','Mensal'],['year','Anual']]){const b=button(n,()=>{mode=k;render()},'btn');b.dataset.mode=k;modeBtns[k]=b;modeBar.append(b)}
  const step=n=>{ref=mode==='week'?isoAdd(ref,7*n):mode==='month'?(()=>{const d=new Date(monthStart(ref)+'T12:00:00');d.setMonth(d.getMonth()+n);return d.toISOString().slice(0,10)})():(()=>{const d=new Date(ref+'T12:00:00');d.setFullYear(d.getFullYear()+n);return d.toISOString().slice(0,10)})();render()};
@@ -286,7 +286,7 @@ const sessionUser=()=>{try{return JSON.parse(sessionStorage.getItem('cicluz-sync
 
  /* Feriados (manual) */
  function holidaysView(){holBox.replaceChildren();holBox.append(el('h3','uniforms-heading','Feriados'),el('p','profiles-note','Cadastre manualmente os feriados que valem para a escala. A plataforma não traz lista de feriados.'));
-  const f=el('form','form-fields uniforms-form');f.noValidate=true;const d=DB.field('Data *'),n=el('input');n.maxLength=60;const {error,status}=messages(),act=el('div','uniforms-wide actions'),sv=el('button','btn','Cadastrar feriado');sv.type='submit';act.append(sv);f.append(d.label,lbl('Nome do feriado *',n),error,status,act);
+  const f=el('form','form-fields uniforms-form');f.dataset.quadro='Feriados';f.noValidate=true;const d=DB.field('Data *'),n=el('input');n.maxLength=60;const {error,status}=messages(),act=el('div','uniforms-wide actions'),sv=el('button','btn','Cadastrar feriado');sv.type='submit';act.append(sv);f.append(d.label,lbl('Nome do feriado *',n),error,status,act);
   f.onsubmit=e=>{e.preventDefault();error.textContent=status.textContent='';load();const iso=d.iso(),nm=n.value.trim(),errs=[];if(!iso)errs.push('Informe a data (DD/MM/AAAA).');if(!nm)errs.push('Informe o nome do feriado.');if(iso&&holidayOn(iso))errs.push('Já existe um feriado cadastrado nesta data.');if(errs.length){error.textContent=errs.join(' ');return}
    if(!transact(x=>x.holidays.push({id:newId(),date:iso,name:nm,createdAt:nowIso()}))){error.textContent='Não foi possível salvar neste navegador.';return}render()};
   holBox.append(f);const list=data.holidays.filter(h=>!h.cancelledAt).sort((a,b)=>a.date.localeCompare(b.date));

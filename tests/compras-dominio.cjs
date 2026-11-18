@@ -222,8 +222,8 @@ ok(() => {
   assert.match(v({ vendedorAniversario: '13-01' }), /mês/);
   assert.match(v({ vendedorAniversario: '08-' }), /incompleto/);
   assert.match(v({ vendedorAniversario: '-15' }), /incompleto/);
-  assert.equal(d.aniversarioTexto('08-15'), '15/08');
-  assert.equal(d.aniversarioTexto('1990-03-15'), '15/03');
+  assert.equal(d.aniversarioTexto('08-15'), '15/ago');
+  assert.equal(d.aniversarioTexto('1990-03-15'), '15/mar');
   assert.equal(d.aniversarioTexto('1990-03'), ''); // só mês: não inventa o dia
   assert.deepEqual(d.aniversarioPartes('1990-03'), { mes: '03', dia: '', legado: true });
   assert.deepEqual(d.aniversarioPartes('02-29'), { mes: '02', dia: '29', legado: false });
@@ -328,6 +328,31 @@ ok(() => {
   // Migração: quem já tinha início, fim, valor ou observações passa a ter contrato; vazio fica sem; uma vez só.
   const docC = { fornecedores: [{ id: 'a', contrato: { inicio: '2026-01-01', fim: '', valorCentavos: null, observacoes: '' } }, { id: 'b', contrato: { inicio: '', fim: '', valorCentavos: null, observacoes: '' } },
     { id: 'c', contrato: { inicio: '', fim: '', valorCentavos: 0, observacoes: '' } }, { id: 'd' }, { id: 'e', contrato: { tem: false, inicio: '2026-01-01' } }] };
+  // Padrão de nomes nos cadastros já gravados (17/11/2026): arruma nomes, endereços e e-mails uma vez e guarda o valor antigo.
+  {
+    const fmt = (v) => v.toLowerCase().split(' ').map((w, k) => (k > 0 && ['de', 'da', 'do', 'e'].includes(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))).join(' ');
+    const docN = { fornecedores: [{ id: 'f1', nome: 'PADARIA TESTE', razaoSocial: 'padaria teste ltda', email: 'Contato@Exemplo.TEST', endereco: { logradouro: 'RUA DAS FLORES', numero: '10' }, financeiro: { nome: 'maria da silva', email: 'FIN@exemplo.test' }, prestadores: [{ id: 'p1', nome: 'jose de souza' }] }],
+      clientes: [{ id: 'c1', nome: 'ana DE jesus', email: 'Ana@Exemplo.test' }, { id: 'c2', nome: 'Ja Certo' }],
+      empresas: [{ id: 'e1', vinculo: 'matriz', nomeFantasia: 'loja teste', responsaveis: [{ id: 'r1', nome: 'joao e maria', profissao: 'EMPRESARIO' }] }] };
+    d.migrarNomesPadrao(docN, fmt, '2026-11-17T00:00:00.000Z');
+    assert.equal(docN.fornecedores[0].nome, 'Padaria Teste');
+    assert.equal(docN.fornecedores[0].email, 'contato@exemplo.test');
+    assert.equal(docN.fornecedores[0].endereco.logradouro, 'Rua das Flores'.replace('das', 'Das')); // o formatador do teste só conhece de/da/do/e
+    assert.equal(docN.fornecedores[0].endereco.numero, '10');
+    assert.equal(docN.fornecedores[0].financeiro.nome, 'Maria da Silva');
+    assert.equal(docN.fornecedores[0].prestadores[0].nome, 'Jose de Souza');
+    assert.equal(docN.clientes[0].nome, 'Ana de Jesus');
+    assert.equal(docN.clientes[1].nome, 'Ja Certo');
+    assert.equal(docN.empresas[0].responsaveis[0].nome, 'Joao e Maria');
+    const marca = docN.migracoes.nomesPadrao;
+    assert.equal(marca.em, '2026-11-17T00:00:00.000Z');
+    assert.ok(marca.antes.some(([onde, campo, valor]) => onde === 'cliente:c1' && campo === 'nome' && valor === 'ana DE jesus')); // o valor antigo fica guardado
+    assert.ok(!marca.antes.some(([onde]) => onde === 'cliente:c2')); // o que já estava certo não entra
+    docN.clientes[0].nome = 'mudou depois'; d.migrarNomesPadrao(docN, fmt);
+    assert.equal(docN.clientes[0].nome, 'mudou depois'); // roda uma vez só
+    const semRegra = { clientes: [{ id: 'c9', nome: 'sem regra' }] }; d.migrarNomesPadrao(semRegra, undefined);
+    assert.ok(!semRegra.migracoes && semRegra.clientes[0].nome === 'sem regra'); // sem a regra central, não mexe e não marca
+  }
   d.migrarContratoFinanceiro(docC);
   assert.deepEqual(docC.fornecedores.map((x) => x.contrato && x.contrato.tem), [true, false, true, undefined, false]);
   assert.equal(docC.fornecedores[0].contrato.inicio, '2026-01-01');
@@ -402,12 +427,12 @@ ok(() => {
 
 // Clientes (VND - Clientes): PF/PJ × Simples/Completo no mesmo registro.
 ok(() => {
-  assert.deepEqual(d.TIPOS_PESSOA_CLIENTE.map(([, n]) => n), ['Pessoa Física', 'Pessoa Jurídica']);
+  assert.deepEqual(d.TIPOS_PESSOA_CLIENTE.map(([, n]) => n), ['PF - Pessoa Física', 'PJ - Pessoa Jurídica']);
   assert.deepEqual(d.TIPOS_CADASTRO_CLIENTE.map(([, n]) => n), ['Simples', 'Completo']);
   assert.deepEqual(d.etapasCliente('fisica', 'simples'), []);
   assert.deepEqual(d.etapasCliente('juridica', 'simples'), []);
-  assert.deepEqual(d.etapasCliente('fisica', 'completo'), ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão']);
-  assert.deepEqual(d.etapasCliente('juridica', 'completo'), ['Dados da empresa', 'Dados do contato', 'Informações de Pagamento', 'Dados do Responsável', 'Revisão']);
+  assert.deepEqual(d.etapasCliente('fisica', 'completo'), ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão dos dados']);
+  assert.deepEqual(d.etapasCliente('juridica', 'completo'), ['Dados da empresa', 'Dados do responsável financeiro da empresa', 'Dados do responsável legal da empresa', 'Revisão dos dados da empresa']);
   // Cliente mensal e Compra Mensal (18/11/2026)
   assert.deepEqual(d.periodoMensal(2026, 11), { inicio: '2026-11-01', fim: '2026-11-30' });
   assert.deepEqual(d.periodoMensal(2026, 2), { inicio: '2026-02-01', fim: '2026-02-28' });
@@ -486,10 +511,15 @@ ok(() => {
   assert.match(e({ ...pfs, whatsapp: '12' })[0], /WhatsApp inválido/);
   assert.match(e({ ...pfs, email: '' })[0], /Informe o e-mail/);
   assert.match(e({ ...pfs, email: 'sem-arroba' })[0], /E-mail inválido/);
-  assert.match(e({ ...pfs, nascimento: '' })[0], /nascimento/);
-  assert.match(e({ ...pfs, nascimento: '1990-02-31' })[0], /nascimento inválida/);
-  assert.match(e({ ...pfs, nascimento: '2999-01-01' })[0], /nascimento inválida/);
-  assert.match(e({ ...pfs, nascimento: '1890-01-01' })[0], /nascimento inválida/);
+  assert.match(e({ ...pfs, nascimento: '' })[0], /data de aniversário/);
+  assert.match(e({ ...pfs, nascimento: '1990-02-31' })[0], /data de aniversário/); // nascimento antigo impossível não vale como aniversário
+  // Data de aniversário (17/11/2026): dia e mês; o cliente antigo, só com nascimento, vale pelo dia e mês dele.
+  assert.equal(e({ ...pfs, nascimento: undefined, aniversario: '08-15' })[0], '');
+  assert.match(e({ ...pfs, nascimento: undefined, aniversario: '02-30' })[0], /aniversário inválida/);
+  assert.match(e({ ...pfs, nascimento: undefined, aniversario: '08-' })[0], /aniversário inválida/);
+  assert.equal(d.aniversarioCliente({ nascimento: '1990-08-15' }), '08-15');
+  assert.equal(d.aniversarioCliente({ nascimento: '1990-08-15', aniversario: '09-01' }), '09-01');
+  assert.equal(d.aniversarioCliente({}), '');
   assert.match(e({ ...pfs, nome: 'outro cliente', whatsapp: '(31) 90000-0000' })[0], /nome e WhatsApp/); // não duplica
   assert.deepEqual(e({ ...pfs, id: 'x1', nome: 'Outro Cliente', whatsapp: '(31) 90000-0000' }), ['']); // o próprio registro não conta como duplicado
   // PF completo: o mesmo mais CPF válido; endereço opcional, mas no formato.
@@ -513,15 +543,27 @@ ok(() => {
   // PJ completo: cinco etapas (base de Fornecedores): empresa, contato, financeiro, representante, revisão.
   const pjc = { ...pjs, cadastro: 'completo', regimeTributario: 'simples', contatoAniversario: '02-29', financeiro: { nome: 'Fin', whatsapp: '(31) 99999-0000', email: 'fin@exemplo.test' }, representante: { nome: 'Rep', cargo: 'diretor-geral' },
     contrato: { tem: true, formaPagamento: 'boleto', recorrencia: 'mes', valorCentavos: 250000, salarioMinimo: { ativo: true, percentual: 150 } } };
-  assert.deepEqual(e(pjc), ['', '', '', '', '']);
-  assert.match(e({ ...pjc, regimeTributario: 'xx' })[0], /Regime/);
-  assert.match(e({ ...pjc, contatoAniversario: '02-30' })[1], /Aniversário do contato/);
-  assert.match(e({ ...pjc, financeiro: { whatsapp: '1' } })[2], /WhatsApp do financeiro/);
-  assert.match(e({ ...pjc, contrato: { tem: true, recorrencia: 'personalizado' } })[2], /recorrência personalizada/i);
-  assert.match(e({ ...pjc, contrato: { tem: true, salarioMinimo: { ativo: true, percentual: 0 } } })[2], /percentual do salário mínimo/);
-  assert.deepEqual(e({ ...pjc, contrato: { tem: false, valorCentavos: -1 } }), ['', '', '', '', '']); // sem contrato, nada é conferido
-  assert.match(e({ ...pjc, representante: { cargo: 'chefe' } })[3], /Cargo do representante/);
-  assert.match(e({ ...pjc, representante: { whatsapp: '1' } })[3], /WhatsApp do representante/);
+  // 17/11/2026: PJ em etapas tem 4 etapas (contato + financeiro juntos) e a 1ª exige tudo, menos o complemento.
+  const pjOk = { ...pjc, contatoNome: 'Responsavel Teste', email: 'financeiro@exemplo.test', nomeFantasia: 'Fantasia Teste', endereco: { cep: '30130-000', logradouro: 'Rua Teste', numero: '10', bairro: 'Centro', cidade: 'Cidade Teste', uf: 'MG' } };
+  assert.deepEqual(e(pjOk), ['', '', '', '']);
+  assert.match(e({ ...pjOk, nomeFantasia: '' })[0], /nome fantasia/);
+  // quadro "Dados do responsável": nome, WhatsApp, e-mail e aniversário obrigatórios
+  assert.match(e({ ...pjOk, contatoNome: '' })[1], /nome do responsável/);
+  assert.match(e({ ...pjOk, email: '' })[1], /Informe o e-mail/);
+  assert.match(e({ ...pjOk, whatsapp: '' })[1], /WhatsApp/);
+  assert.match(e({ ...pjOk, contatoAniversario: '' })[1], /aniversário do responsável/);
+  assert.match(e({ ...pjOk, regimeTributario: '' })[0], /regime tributário/);
+  assert.match(e({ ...pjOk, endereco: { ...pjOk.endereco, numero: '' } })[0], /número do endereço/);
+  assert.match(e({ ...pjOk, endereco: { ...pjOk.endereco, uf: '' } })[0], /UF/);
+  assert.equal(e({ ...pjOk, endereco: { ...pjOk.endereco, complemento: '' } })[0], '');
+  assert.match(e({ ...pjOk, regimeTributario: 'xx' })[0], /Regime/);
+  assert.match(e({ ...pjOk, contatoAniversario: '02-30' })[1], /Aniversário do responsável/);
+  assert.match(e({ ...pjOk, financeiro: { mesmo: false, whatsapp: '1' } })[1], /WhatsApp do financeiro/);
+  assert.match(e({ ...pjOk, contrato: { tem: true, recorrencia: 'personalizado' } })[1], /recorrência personalizada/i);
+  assert.match(e({ ...pjOk, contrato: { tem: true, salarioMinimo: { ativo: true, percentual: 0 } } })[1], /percentual do salário mínimo/);
+  assert.deepEqual(e({ ...pjOk, contrato: { tem: false, valorCentavos: -1 } }), ['', '', '', '']); // sem contrato, nada é conferido
+  assert.match(e({ ...pjOk, representante: { cargo: 'chefe' } })[2], /Cargo do representante/);
+  assert.match(e({ ...pjOk, representante: { whatsapp: '1' } })[2], /WhatsApp do representante/);
   assert.equal(d.validarCliente(pjs, regras, ctx), '');
   assert.match(d.validarCliente({ ...pjs, razaoSocial: '' }, regras, ctx), /razão social/);
   // A regra do contrato é a mesma do fornecedor (extraída para uma função só).
