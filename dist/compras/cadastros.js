@@ -708,7 +708,7 @@
         const pintarVendedor = () => {
           const quem = D.quemVendeFornecedor(marcadas());
           const servico = ehServico();
-          tituloS2.textContent = servico ? 'Prestador 1' : 'Dados do vendedor da empresa';
+          tituloS2.textContent = servico ? 'Prestador 1' : 'Dados do vendedor';
           // Pessoa física: o primeiro quadro leva o nome da etapa ("Dados do prestador de serviço" ou "Dados do vendedor"), como o Rodrigo pediu.
           s1.querySelector('legend').textContent = ehPF() ? D.etapasFornecedor(marcadas(), 'fisica')[0] : 'Dados da empresa';
           camposS2.forEach(([no, input, antes, depois], k) => {
@@ -743,8 +743,8 @@
           return { no: s, mesmo, nome: n, whatsapp: w, email: m, pintar };
         }
         const valores = (c) => ({ nome: c.nome.value.trim(), whatsapp: c.whatsapp.value.trim(), email: c.email.value.trim() });
-        const fin = etapaContato(f?.financeiro, 'financeiro', () => ({ nome: (ehPF() ? nome : vNome).value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() }), 'Dados do responsável financeiro da empresa');
-        const rep = etapaContato(f?.representante, 'representante', () => valores(fin), 'Dados do responsável legal da empresa');
+        const fin = etapaContato(f?.financeiro, 'financeiro', () => ({ nome: (ehPF() ? nome : vNome).value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() }), 'Dados do responsável financeiro');
+        const rep = etapaContato(f?.representante, 'representante', () => valores(fin), 'Dados do responsável legal');
         // A cópia segue a ordem das etapas: primeiro o financeiro (copia o vendedor), depois o representante (copia o financeiro).
         const pintarCopias = () => { fin.pintar(); rep.pintar(); };
         // Cargo na empresa: não é copiado; com "O mesmo da etapa anterior" marcado, é o único campo a preencher na etapa.

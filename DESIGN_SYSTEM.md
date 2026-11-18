@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Fornecedor: nomes das etapas simplificados (18/11/2026)
+Decisão do Rodrigo, que supera os nomes com "da empresa" anotados na seção do fornecedor mais abaixo: **Dados da empresa** (só na pessoa jurídica) **· Dados do vendedor** (Produto) ou **Dados do prestador de serviço** (Serviço) **· Dados do responsável financeiro · Dados do responsável legal · Vínculos · Contrato · Revisão dos dados**. São os mesmos nomes na pessoa física e na jurídica; a única diferença é a etapa "Dados da empresa" na frente. Os quadros levam o nome da etapa.
+
 ## Cliente pessoa jurídica: cinco etapas, com "Contrato" (18/11/2026)
 Etapas do cliente pessoa jurídica (Rodrigo): **Dados da empresa · Dados do responsável financeiro · Dados do responsável legal · Contrato · Revisão dos dados** — supera os nomes com "da empresa" e a sequência de quatro etapas anotados abaixo. Os quadros da 2ª e da 3ª etapa levam o nome da etapa. **Contrato** é a etapa nova, antes da Revisão: hoje contém o quadro "Informações de cobrança" ("É cliente mensal?" e os campos que ele preenche), que saiu da etapa do responsável financeiro; a conferência do contrato passou para essa etapa (`validarClienteEtapas`). O que mais entra nessa etapa (modelo de contrato, cláusulas, documento para assinar, como no fornecedor) ainda não foi definido.
 

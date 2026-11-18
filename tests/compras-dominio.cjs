@@ -246,7 +246,7 @@ ok(() => {
   assert.match(v({ representante: { cargo: 'chefe' } }), /Cargo do representante/);
   assert.deepEqual(d.CARGOS_REPRESENTANTE.map(([, nome]) => nome), ['Proprietário', 'Sócio-proprietário', 'Diretor geral', 'Diretor comercial', 'Gerente geral', 'Gerente comercial',
     'Supervisor geral', 'Supervisor comercial', 'Representante comercial', 'Administrador', 'Financeiro', 'Procurador', 'Outro']);
-  assert.deepEqual(d.etapasFornecedor([]), ['Dados da empresa', 'Dados do vendedor da empresa', 'Dados do responsável financeiro da empresa', 'Dados do responsável legal da empresa', 'Vínculos', 'Contrato', 'Revisão dos dados']);
+  assert.deepEqual(d.etapasFornecedor([]), ['Dados da empresa', 'Dados do vendedor', 'Dados do responsável financeiro', 'Dados do responsável legal', 'Vínculos', 'Contrato', 'Revisão dos dados']);
   // Contrato (quadro "Tem contrato?" do financeiro): só é conferido quando tem; valor e índice só informados.
   const vc = (contrato) => d.validarFornecedorEtapas({ ...pj, contrato: { tem: true, ...contrato } }, regras, ctx);
   assert.deepEqual(vc({ formaPagamento: 'boleto', recorrencia: 'mes', vencimentoDia: 10, valorCentavos: 150000, inicio: '2026-01-01', fim: '2026-12-31', reajuste: 'ipca', observacoes: 'Mensal' }), ['', '', '', '', '', '']);
@@ -406,9 +406,9 @@ ok(() => {
   const etapas = d.validarFornecedorEtapas({ ...pj, categorias: [], whatsapp: '', financeiro: { email: 'x@' }, representante: { whatsapp: '1' } }, regras, ctx);
   assert.deepEqual(etapas.map(Boolean), [true, true, true, true, false, false]);
   assert.deepEqual(d.validarFornecedorEtapas(pj, regras, ctx), ['', '', '', '', '', '']);
-  assert.deepEqual(d.etapasFornecedor(['produto']).slice(1, 2), ['Dados do vendedor da empresa']);
-  assert.deepEqual(d.etapasFornecedor(['servico']).slice(1, 2), ['Dados do prestador de serviço da empresa']);
-  assert.deepEqual(d.etapasFornecedor(['produto', 'servico']).slice(1, 2), ['Dados do vendedor da empresa']);
+  assert.deepEqual(d.etapasFornecedor(['produto']).slice(1, 2), ['Dados do vendedor']);
+  assert.deepEqual(d.etapasFornecedor(['servico']).slice(1, 2), ['Dados do prestador de serviço']);
+  assert.deepEqual(d.etapasFornecedor(['produto', 'servico']).slice(1, 2), ['Dados do vendedor']);
   assert.equal(d.etapasFornecedor([]).length, 7);
   // Pessoa física: sem a etapa da empresa; a primeira é a da própria pessoa.
   assert.deepEqual(d.etapasFornecedor(['servico'], 'fisica'), ['Dados do prestador de serviço', 'Dados do responsável financeiro', 'Dados do responsável legal', 'Vínculos', 'Contrato', 'Revisão dos dados']);
