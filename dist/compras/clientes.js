@@ -366,6 +366,8 @@
         const nomes0 = () => D.etapasCliente(tipo, cadastro).map((label) => ({ label }));
         form.append(barraBox, corpo, erroEtapa, nav);
         desenhar();
+        // Cliente já cadastrado, em etapas, abre na Revisão dos dados, como em Dados da Empresa (18/11/2026, Rodrigo). Novo começa na 1ª etapa; o de uma página só abre no formulário.
+        if (c && passos.length > 1) ir(passos.length - 1);
         return { ler, registro, conferir, ir, get datas() { return tipo === 'juridica' && cadastro === 'completo' ? etapaCt.datas() : []; } };
       },
       salvar: (ctx) => {
@@ -451,7 +453,7 @@
       acoes: { rotulo: nomeC, lista: linhas, aoEditar: () => editarCliente(c), aoExcluir: () => alternarSituacao(c) },
     });
     if (inativo) row.classList.add('inativo');
-    // Tocar na linha mostra os dados; tocar duas vezes abre o cadastro para editar, na primeira etapa; a seta revela o lápis (editar) e o botão de ativar/desativar no lugar da lixeira.
+    // Tocar na linha mostra os dados; tocar duas vezes abre o cadastro para editar (na Revisão dos dados, quando é em etapas); a seta revela o lápis (editar) e o botão de ativar/desativar no lugar da lixeira.
     const arrow = row.querySelector('.account-action-toggle'); const drawer = row.querySelector('.account-row-actions');
     const off = [...drawer.children].find((b) => /^Excluir/.test(b.getAttribute('aria-label') || ''));
     const rotuloOff = (inativo ? 'Ativar ' : 'Desativar ') + nomeC;

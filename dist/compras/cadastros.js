@@ -1068,7 +1068,8 @@
           };
         }
         form.append(barra.el, ...quadros, erroEtapa, nav);
-        ir(0);
+        // Fornecedor já cadastrado abre na Revisão dos dados, como em Dados da Empresa (18/11/2026, Rodrigo): confere tudo e usa o Editar do bloco. Novo começa na 1ª etapa.
+        ir(f ? seq().length - 1 : 0);
         // Produtos marcados agora (categoria Produto): viram vínculo no mesmo catálogo do Compras ao salvar.
         // irQuadro(q): leva à posição da sequência em que está o quadro q (na pessoa física, o quadro do vendedor é o primeiro).
         const irQuadro = (q) => { const p = seq().indexOf(q); ir(p >= 0 ? p : 0); };

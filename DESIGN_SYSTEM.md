@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Cadastro já gravado abre na Revisão dos dados (18/11/2026)
+Pedido do Rodrigo: "igual no Empresas". Ao abrir um **cliente** ou um **fornecedor** já cadastrado (pela linha, pelos dois toques ou pelo Editar da seta), o cadastro em etapas abre direto na última etapa, **Revisão dos dados**, com o Editar em cada bloco e o Salvar no fim. Cadastro novo começa na 1ª etapa. Cliente de uma página só (pessoa física simples) abre no formulário, porque não tem Revisão. **Supera** o "dois toques abrem na primeira etapa" da seção abaixo.
+
 ## Lista: um toque mostra, dois toques editam (18/11/2026)
 Pedido do Rodrigo, na lista de clientes. Nas listas em que tocar na linha abre a visualização (VND - Clientes e MER - Patrimônio), **um toque** continua mostrando os dados e **dois toques seguidos** abrem o cadastro para editar, na primeira etapa (pessoa jurídica: "Dados da empresa"; pessoa física: o formulário). Peça única: `U.umOuDoisToques` em `compras/ui.js` (vale para mouse e dedo; o toque único espera 0,3 s pelo segundo). A seta da linha continua com Editar e Desativar/Baixar. **Dados da Empresa** (Configurações → Empresa) entrou no mesmo padrão: a seta à direita da linha traz Editar e Excluir; um toque abre a ficha para leitura e dois toques (ou o Editar) abrem já liberada para alterar. **Excluir empresa** pede confirmação e é recusado em dois casos (`impedimentoDeExcluir` em `acessos/empresa.js`): a Matriz enquanto houver outras empresas, e empresa usada em contrato de fornecedor ou de cliente.
 
