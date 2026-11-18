@@ -470,7 +470,32 @@
    * Diálogo modal no padrão do S2. montar(form) devolve o contexto; salvar(ctx) devolve
    * mensagem de erro (string) ou nada para fechar. Sem `salvar`, mostra só "Fechar".
    */
-  function dialogo({ titulo, subtitulo, montar, salvar, rotuloSalvar = 'Salvar', largo = false, aoFechar, cor = COR, corTexto = COR_TEXTO, classe = '' }) {
+  /**
+   * Padrão único de moldura (18/11/2026, Rodrigo): em toda janela, campo que ficaria solto direto no formulário entra num
+   * quadro com nome. Junta cada sequência de campos soltos (e o que estiver entre eles: notas, avisos) num fieldset; o que
+   * já está num quadro, numa etapa ou na barra de etapas não é tocado. O nome vem da opção "quadro" ou do título da janela
+   * sem o verbo ("Editar unidade" → "Unidade"). Janela só de texto (confirmação, aviso) fica como está.
+   */
+  const CAMPO_SOLTO = 'label.compras-campo, .compras-campo, .account-status, label.compras-interruptor, .compras-interruptor, .compras-cartoes';
+  const FORA_DO_QUADRO = 'fieldset, .stepper-wrap, .compras-etapa, .compras-etapas-nav, .compras-dialog-acoes, .profiles-error';
+  function nomeDoQuadro(titulo) {
+    const resto = String(titulo || '').replace(/^Prévia\s*[—-]\s*/i, '').replace(/^(Novo|Nova|Editar|Cadastro|Cadastrar|Registrar|Alterar|Lançar|Adicionar|Incluir)\s+/i, '').trim();
+    return resto ? resto.charAt(0).toLocaleUpperCase('pt-BR') + resto.slice(1) : 'Dados';
+  }
+  function enquadrarSoltos(form, nome) {
+    const grupos = []; let atual = [];
+    [...form.children].forEach((n) => { if (n.matches(FORA_DO_QUADRO)) { grupos.push(atual); atual = []; } else atual.push(n); });
+    grupos.push(atual);
+    grupos.forEach((nos) => {
+      const a = nos.findIndex((n) => n.matches(CAMPO_SOLTO)); if (a < 0) return;
+      let b = nos.length - 1; while (!nos[b].matches(CAMPO_SOLTO)) b -= 1;
+      const quadro = el('fieldset', 'compras-fieldset compras-quadro-auto compras-largo');
+      quadro.append(el('legend', null, nome));
+      nos[a].before(quadro);
+      quadro.append(...nos.slice(a, b + 1));
+    });
+  }
+  function dialogo({ titulo, subtitulo, montar, salvar, rotuloSalvar = 'Salvar', largo = false, aoFechar, cor = COR, corTexto = COR_TEXTO, classe = '', quadro }) {
     const d = el('dialog', 'location-dialog profiles-dialog compras-dialog' + (largo ? ' largo' : '') + (classe ? ' ' + classe : ''));
     d.style.setProperty('--menu-accent', cor);
     d.style.setProperty('--dialog-accent', cor);
@@ -482,6 +507,7 @@
     const erro = el('p', 'profiles-error');
     erro.setAttribute('role', 'alert');
     const ctx = montar(form, d) || {};
+    enquadrarSoltos(form, quadro || nomeDoQuadro(titulo));
     const acoes = el('div', 'actions compras-dialog-acoes');
     // Decisão do Zé (04/11/2026): todo diálogo confirma pelo ✓ e fecha pelo ✕ do rodapé fixo do S2.
     // A linha própria fica fora da vista, só para o ✓ repassar o clique (o rodapé procura um botão

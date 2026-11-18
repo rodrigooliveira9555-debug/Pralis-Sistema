@@ -495,10 +495,6 @@ body.dark-theme .compras-escolha-opcao.ativo { color: #f2f1f6; }
 .compras-linha.grade-cliente>.account-row-actions:not([hidden]){grid-column:6;grid-row:1;justify-self:end;position:sticky;right:32px;z-index:2;background:inherit}
 .compras-linha.grade-cliente:has(>.account-row-actions:not([hidden]))>.account-list-state{visibility:hidden}
 @container lista-grade (max-width:519px){.compras-linha.grade-cliente{--w-nome:120px}}
-.compras-cliente-controles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-@media (max-width:560px){.compras-cliente-controles{grid-template-columns:minmax(0,1fr)}}
-.compras-cliente-controles>.compras-situacao-quadro{grid-column:auto}
-.compras-cliente-controles>.compras-tipo-pessoa{grid-column:1/-1}
 body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-search){display:none}
 .compras-tipo-cartoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start;margin:8px 0 4px}
 @media (max-width:560px){.compras-tipo-cartoes{grid-template-columns:minmax(0,1fr)}}
@@ -619,3 +615,10 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 /* Painel do Enviar com mais campos (tipo, prazo, mensagem): não passa da altura da tela; rola por dentro. */
 .compras-enviar-prazo{max-height:calc(100vh - 96px);overflow-y:auto}
 .compras-enviar-prazo textarea{width:100%;box-sizing:border-box;resize:vertical}
+/* Padrão único de moldura (18/11/2026, Rodrigo): nenhum cartão ou campo fica solto fora de um quadro com nome. A pergunta que
+   liga ou desliga um quadro (Preencher endereço, Tem contrato?) mora dentro dele; desligada, o quadro mostra só a pergunta. */
+.compras-fieldset.compras-so-pergunta > :not(legend):not(.compras-situacao-quadro){display:none}
+/* Quadro criado pela janela para os campos que viriam soltos (U.dialogo): duas colunas, como os campos ficavam no formulário; o que não é campo ocupa a linha inteira. */
+.compras-fieldset.compras-quadro-auto{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px}
+.compras-fieldset.compras-quadro-auto>:not(.compras-campo):not(label):not(legend){grid-column:1 / -1}
+@media (max-width:600px){.compras-fieldset.compras-quadro-auto{grid-template-columns:minmax(0,1fr)}}

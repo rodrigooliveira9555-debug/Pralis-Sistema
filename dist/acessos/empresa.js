@@ -371,7 +371,7 @@
            os campos. Sem dados, já abre na etapa 1 para preencher; Avançar confere a etapa. */
         const situacao = U.quadroSituacao('Situação da empresa', v.situacao ? v.situacao === 'ativo' : true, { feminino: true, dica: 'Empresa inativa continua cadastrada.' });
         situacao.classList.add('compras-largo');
-        const etapa1 = el('div', 'compras-etapa compras-largo'); etapa1.append(situacao, empresa, endereco);
+        const etapa1 = el('div', 'compras-etapa compras-largo'); empresa.querySelector('legend').after(situacao); etapa1.append(empresa, endereco); // a Situação abre o quadro "Dados da empresa": nada fica fora de moldura
         // Responsáveis legais são de cada empresa. A que não é Matriz pode usar os da Matriz (o caso da Filial, que é a mesma pessoa jurídica).
         const mesmos = U.quadroSituacao('Mesmos responsáveis legais da matriz', !matriz && Boolean(emp ? emp.responsaveisDaMatriz : false), { textos: ['Sim', 'Não'], dica: 'Sim: os responsáveis da Matriz aparecem preenchidos abaixo. Não: cadastre os responsáveis desta empresa.', aoMudar: () => { usarDaMatriz = mesmos.ativo; desenharResponsaveis(); pintarModo(); } });
         mesmos.classList.add('compras-largo');

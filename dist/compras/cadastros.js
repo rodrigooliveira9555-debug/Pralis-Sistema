@@ -911,7 +911,7 @@
         cDados.append(campo('Forma de pagamento', cForma), vencDataCampo, diaPagtoCampo, rec.no, valorCampo, smBox, campo('Início da vigência', cInicio), campo('Término da vigência', cFim),
           campo('Reajuste', cReajuste, 'Só o índice combinado; o sistema não calcula o reajuste.'), percentualCampo, obsCampo);
         const pintarContrato = () => {
-          mostrar(cDados, temContrato.ativo);
+          cDados.classList.toggle('compras-so-pergunta', !temContrato.ativo); // desligado, o quadro mostra só a pergunta
           mostrar(vencDataCampo, cForma.value !== 'dinheiro' && cForma.value !== '');
           vencDataCampo.querySelector('.compras-rotulo').textContent = cForma.value === 'boleto' ? 'Data de vencimento do boleto' : 'Data de vencimento';
           mostrar(diaPagtoCampo, cForma.value === 'dinheiro');
@@ -949,7 +949,8 @@
           };
         };
         const etapa3 = el('div', 'compras-etapa');
-        etapa3.append(fin.no, temContrato, cDados);
+        temContrato.classList.add('compras-largo'); cDados.querySelector('legend').after(temContrato); // a pergunta abre o quadro "Dados do contrato"
+        etapa3.append(fin.no, cDados);
 
         /* ----- Etapa 6: contrato (o documento). Mostra o que foi combinado no financeiro; o modelo de contrato e a
            assinatura ainda não existem (aguardam decisão). ----- */

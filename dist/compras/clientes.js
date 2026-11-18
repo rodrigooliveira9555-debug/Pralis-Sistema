@@ -114,7 +114,7 @@
         const endSw = U.quadroSituacao('Preencher endereço', e0, { textos: ['Sim', 'Não'], dica: 'Endereço é opcional neste cadastro.', aoMudar: () => pintarEndereco() });
         endSw.classList.add('compras-largo'); endSw.querySelector('.account-status-switch').setAttribute('aria-label', 'Preencher endereço');
         const sEnd = el('fieldset', 'compras-fieldset');
-        sEnd.append(el('legend', null, 'Endereço'), campo('CEP', cep), campo('Rua / logradouro', rua), campo('Número', numero), campo('Complemento', complemento), campo('Bairro', bairro), campo('Cidade', cidade), campo('UF', uf), avisoCep);
+        sEnd.append(el('legend', null, 'Endereço'), endSw, campo('CEP', cep), campo('Rua / logradouro', rua), campo('Número', numero), campo('Complemento', complemento), campo('Bairro', bairro), campo('Cidade', cidade), campo('UF', uf), avisoCep);
         // Buscas já existentes (consultas-publicas.js): só preenchem o que está vazio e nunca trocam o que a pessoa digitou.
         const completar = (pares) => pares.forEach(([alvo, valor]) => { if (valor && !alvo.value.trim()) alvo.value = valor; });
         const falha = { 'nao-encontrado': 'não encontrado', indisponivel: 'consulta indisponível agora' };
@@ -242,7 +242,7 @@
         const tipoSw = { set ativo(_) { pintarTopo(); }, get ativo() { return tipo === 'juridica'; } };
         const tipoBox = el('div', 'account-status compras-situacao-quadro compras-tipo-pessoa'); tipoBox.append(el('span', null, 'Tipo de cliente'), cartoesTopo);
         pintarTopo();
-        const controles = el('div', 'compras-largo compras-cliente-controles'); controles.append(tipoBox);
+        tipoBox.classList.add('compras-largo');
         const barraBox = el('div', 'compras-largo');
         const corpo = el('div', 'compras-largo');
         const erroEtapa = el('p', 'profiles-error compras-largo'); erroEtapa.setAttribute('role', 'alert');
@@ -277,23 +277,25 @@
         }
         function paginas() {
           marcarObrigatorios();
-          // A "Situação do cliente" (ativo/inativo) aparece em toda modalidade do cadastro feito aqui dentro; no link de cadastro, não.
-          const sit = opcoes.externo ? [] : [situacao];
+          // Padrão único (18/11/2026, Rodrigo): nada fica solto fora de moldura. O "Tipo de cliente" e a "Situação do cliente" abrem o
+          // primeiro quadro (como a categoria e a situação no cadastro de fornecedor); no link de cadastro eles não aparecem.
+          const sit = opcoes.externo ? [] : [tipoBox, situacao];
           // Cada assunto dentro de um quadro com borda e título (pedido do Rodrigo, 17/11/2026): nenhum campo fica solto.
           const quadro = (legenda, ...nos) => { const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, legenda), ...nos); return q; };
-          if (tipo === 'fisica' && cadastro === 'simples') return [bloco(...sit, quadro('Dados pessoais', F.nome, F.whats, F.mail, F.nasc), endSw, sEnd)];
+          if (tipo === 'fisica' && cadastro === 'simples') return [bloco(quadro('Dados pessoais', ...sit, F.nome, F.whats, F.mail, F.nasc), sEnd)];
           if (tipo === 'fisica') {
             const comp = el('fieldset', 'compras-fieldset'); comp.append(el('legend', null, 'Sorteio'), el('p', 'profiles-note', 'Sorteio — Em definição'), el('small', 'profiles-note', 'Funcionalidade futura: por enquanto não há número, participação, prêmio nem regra de sorteio.'));
-            return [bloco(...sit, quadro('Dados pessoais', F.nome, F.cpf, F.whats, F.mail, F.nasc)), bloco(sEnd), bloco(comp), bloco(revisao)];
+            return [bloco(quadro('Dados pessoais', ...sit, F.nome, F.cpf, F.whats, F.mail, F.nasc)), bloco(sEnd), bloco(comp), bloco(revisao)];
           }
-          if (cadastro === 'simples') return [bloco(...sit, quadro('Dados da empresa', F.cnpj, avisoCnpj, F.razao, F.fantasia, F.whats, F.mail), endSw, sEnd)];
+          if (cadastro === 'simples') return [bloco(quadro('Dados da empresa', ...sit, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.whats, F.mail), sEnd)];
           // 17/11/2026 (Rodrigo): o contato e o financeiro viram uma etapa só, "Dados do responsável financeiro": o quadro
           // "Dados do responsável" em cima e as Informações de Pagamento embaixo; não existe mais um contato do financeiro à parte.
           const contato = el('fieldset', 'compras-fieldset'); contato.append(el('legend', null, 'Dados do responsável'), F.contatoNome, F.whats, F.mail, aniv.no, fixo('Cargo na empresa', 'Financeiro'));
-          return [bloco(...sit, quadro('Dados da empresa', F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime), sEnd), bloco(contato, cDados), bloco(rep.no), bloco(revisao)];
+          return [bloco(quadro('Dados da empresa', ...sit, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime), sEnd), bloco(contato, cDados), bloco(rep.no), bloco(revisao)];
         }
         /** Cadastro lido do formulário: só o tipo e a modalidade em uso (o resto do registro fica como está). */
-        function pintarEndereco() { mostrar(sEnd, cadastro === 'completo' || endSw.ativo); }
+        // "Preencher endereço" mora dentro do quadro Endereço: desligado, o quadro mostra só a pergunta (compras-so-pergunta, em compras.css).
+        function pintarEndereco() { const simples = cadastro === 'simples'; mostrar(endSw, simples); sEnd.classList.toggle('compras-so-pergunta', simples && !endSw.ativo); }
         function ler() {
           const base = { tipoPessoa: tipo, cadastro, ...(opcoes.externo ? {} : { situacao: situacao.ativo ? 'ativo' : 'inativo' }) };
           const endereco = cadastro === 'simples' && !endSw.ativo ? (c && c.endereco ? c.endereco : undefined) : { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value };
@@ -343,7 +345,7 @@
           nav.replaceChildren(...(etapas ? [passo > 0 && voltar, cancelar, (c || ultima) && salvarFim, !ultima && avancar] : [cancelar, salvarFim]).filter(Boolean));
         }
         const nomes0 = () => D.etapasCliente(tipo, cadastro).map((label) => ({ label }));
-        form.append(...(opcoes.externo ? [] : [controles]), barraBox, corpo, erroEtapa, nav);
+        form.append(barraBox, corpo, erroEtapa, nav);
         desenhar();
         return { ler, registro, conferir, ir, datas: [] };
       },

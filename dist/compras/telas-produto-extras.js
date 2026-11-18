@@ -204,12 +204,12 @@
         sigla.addEventListener('input', () => { sigla.value = sigla.value.toUpperCase().replace(/[^A-Z0-9/]/g, ''); });
         if (u && emUso(u.sigla)) sigla.readOnly = true;
         const nome = entrada('text', u?.nome || '', { maxLength: 40, required: true });
-        // Mesmo desenho dos outros cadastros: a Situação no quadro com interruptor e os campos num quadro com o nome na moldura.
+        // Mesmo desenho dos outros cadastros: um quadro com o nome na moldura; a Situação (interruptor) abre o quadro.
         const situacao = U.quadroSituacao('Situação da unidade', u ? u.ativa !== false : true, { feminino: true, dica: 'Unidade inativa sai das listas de escolha. Nada é apagado.' });
         situacao.classList.add('compras-largo');
         const quadro = el('fieldset', 'compras-fieldset compras-largo');
-        quadro.append(el('legend', null, 'Dados da unidade'), campo('Sigla *', sigla, u && emUso(u.sigla) ? 'Sigla em uso em produtos: não pode ser trocada.' : 'Até 6 letras, ex.: CX, SACO, PCT.'), campo('Nome *', nome));
-        form.append(situacao, quadro);
+        quadro.append(el('legend', null, 'Dados da unidade'), situacao, campo('Sigla *', sigla, u && emUso(u.sigla) ? 'Sigla em uso em produtos: não pode ser trocada.' : 'Até 6 letras, ex.: CX, SACO, PCT.'), campo('Nome *', nome));
+        form.append(quadro);
         return { sigla, nome, c: { get checked() { return situacao.ativo; } } };
       },
       salvar: (x) => {
