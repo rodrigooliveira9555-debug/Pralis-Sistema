@@ -1,5 +1,5 @@
 /*
- * Contratos do fornecedor (18/11/2026): atividades e responsabilidades incluídas e não incluídas, seleção hierárquica no padrão de
+ * Contratos do fornecedor e do cliente (18/11/2026; a etapa Contrato em blocos é a mesma nos dois cadastros — etapaContrato): atividades e responsabilidades incluídas e não incluídas, seleção hierárquica no padrão de
  * DES - Grupos de Despesas, tipos (modelos) de contrato, e o documento do contrato (imprimir para assinar à mão, enviar para assinatura
  * digital, visualizar). As regras ficam em compras/dominio.js (testadas); aqui só há tela.
  * Nada é inventado: o contrato só usa o que foi cadastrado (cláusulas dos modelos, atividades, valores). Assinatura digital NÃO existe
@@ -239,21 +239,26 @@
   const nomeDe = (lista, id) => (lista.find(([x]) => x === id) || [])[1] || '';
   const enderecoTexto = (e) => { const x = e || {}; return [x.logradouro, x.numero, x.complemento, x.bairro, x.cidade, x.uf, x.cep].filter(Boolean).join(', '); };
   const empresasCadastradas = () => (window.CicluzEmpresa && window.CicluzEmpresa.todas ? window.CicluzEmpresa.todas() : []);
-  /** As duas partes do contrato, só com o que está cadastrado: a empresa escolhida em "Contratante" (Configurações → Empresa) e o fornecedor. */
-  function partesDoContrato(f) {
-    const c = f.contrato || {}; const pf = f.tipoPessoa === 'fisica';
-    const emp = empresasCadastradas().find((x) => x.id === c.contratanteEmpresaId) || null;
+  /**
+   * As duas partes do contrato, só com o que está cadastrado: a sua empresa (Configurações → Empresa) e o fornecedor ou o cliente.
+   * papel 'fornecedor': a empresa contrata o fornecedor. papel 'cliente': o cliente (pessoa jurídica) contrata a empresa.
+   */
+  function partesDoContrato(f, papel = 'fornecedor') {
+    const c = f.contrato || {}; const cliente = papel === 'cliente'; const pf = !cliente && f.tipoPessoa === 'fisica';
+    const emp = empresasCadastradas().find((x) => x.id === c[D.papelContrato(papel).empresa]) || null;
     const respEmp = emp && (emp.responsaveis || []).find((r) => String(r.nome || '').trim());
     const cargoEmp = respEmp && window.CicluzEmpresa.CARGOS_EMPRESA ? nomeDe(window.CicluzEmpresa.CARGOS_EMPRESA, respEmp.cargo) : '';
     const rep2 = f.representante || {};
-    return {
-      contratante: { nome: emp ? emp.razaoSocial || emp.nomeFantasia || '' : '', fantasia: emp ? emp.nomeFantasia || '' : '', documento: emp ? emp.cnpj || '' : '', endereco: emp ? enderecoTexto(emp.endereco) : '',
-        representante: respEmp ? respEmp.nome : '', cargo: cargoEmp },
-      contratado: { nome: f.razaoSocial || f.nome || '', fantasia: pf ? '' : (f.razaoSocial && f.nome !== f.razaoSocial ? f.nome : ''), documento: f.documento || '', pf, endereco: enderecoTexto(f.endereco),
-        representante: pf ? f.nome || '' : rep2.nome || '', cargo: pf ? '' : nomeDe(D.CARGOS_REPRESENTANTE, rep2.cargo) },
-    };
+    const empresa = { nome: emp ? emp.razaoSocial || emp.nomeFantasia || '' : '', fantasia: emp ? emp.nomeFantasia || '' : '', documento: emp ? emp.cnpj || '' : '', pf: false, endereco: emp ? enderecoTexto(emp.endereco) : '',
+      representante: respEmp ? respEmp.nome : '', cargo: cargoEmp };
+    const outra = cliente
+      ? { nome: f.razaoSocial || f.nomeFantasia || '', fantasia: f.razaoSocial && f.nomeFantasia !== f.razaoSocial ? f.nomeFantasia || '' : '', documento: f.cnpj || '', pf: false, endereco: enderecoTexto(f.endereco),
+        representante: rep2.nome || '', cargo: nomeDe(D.CARGOS_REPRESENTANTE, rep2.cargo) }
+      : { nome: f.razaoSocial || f.nome || '', fantasia: pf ? '' : (f.razaoSocial && f.nome !== f.razaoSocial ? f.nome : ''), documento: f.documento || '', pf, endereco: enderecoTexto(f.endereco),
+        representante: pf ? f.nome || '' : rep2.nome || '', cargo: pf ? '' : nomeDe(D.CARGOS_REPRESENTANTE, rep2.cargo) };
+    return cliente ? { contratante: outra, contratado: empresa } : { contratante: empresa, contratado: outra };
   }
-  const tituloDoContrato = (f) => ((f.categorias || []).includes('servico') ? 'Contrato de prestação de serviços' : 'Contrato de fornecimento');
+  const tituloDoContrato = (f, papel) => (papel !== 'cliente' && (f.categorias || []).includes('servico') ? 'Contrato de prestação de serviços' : 'Contrato de fornecimento');
   /**
    * Contrato padrão em blocos (18/11/2026, Rodrigo): o documento é montado na ordem dos blocos da etapa Contrato — contratante,
    * contratado, valor e pagamento, vigência e vencimento, reajuste, o que está incluso, o que não está, condições de rescisão e,
@@ -261,8 +266,8 @@
    * preenchido; os blocos são numerados na ordem em que aparecem. Seção = [título, [[rótulo, texto]] | { itens } | { texto }].
    * Nada jurídico é acrescentado pelo sistema: o texto da rescisão é o que a pessoa escreveu.
    */
-  function secoesContrato(f) {
-    const c = f.contrato || {}; const p = partesDoContrato(f);
+  function secoesContrato(f, papel = 'fornecedor') {
+    const c = f.contrato || {}; const p = partesDoContrato(f, papel);
     const pessoa = (x, rotuloNome, rotuloDoc) => [[rotuloNome, x.nome], ['Nome fantasia', x.fantasia], [rotuloDoc, x.documento], ['Endereço', x.endereco], ['Representante legal', [x.representante, x.cargo].filter(Boolean).join(' — ')]];
     const rec = c.recorrencia === 'personalizado' ? 'Personalizado' : c.recorrencia === 'compra-mensal' ? 'Compra Mensal' : nomeDe(D.RECORRENCIAS_CONTRATO, c.recorrencia);
     const vencimento = c.diaPagamento === 'sexta' ? 'Toda sexta-feira' : c.vencimentoData ? dataBR(c.vencimentoData) : Number.isInteger(c.vencimentoDia) ? 'Todo dia ' + c.vencimentoDia : '';
@@ -270,7 +275,7 @@
     const vals = c.camposAdicionais || {};
     const extras = (c.camposAdicionaisDef || []).map((d) => { const v = vals[d.id]; return [d.rotulo, d.tipo === 'data' ? dataBR(v) : d.tipo === 'moeda' && Number.isInteger(v) ? D.moeda(v / 100) : v]; });
     const secoes = [
-      ['Contratante', pessoa(p.contratante, 'Razão social', 'CNPJ')],
+      ['Contratante', pessoa(p.contratante, p.contratante.pf ? 'Nome completo' : 'Razão social', p.contratante.pf ? 'CPF' : 'CNPJ')],
       ['Contratado', pessoa(p.contratado, p.contratado.pf ? 'Nome completo' : 'Razão social', p.contratado.pf ? 'CPF' : 'CNPJ')],
       ['Valor e pagamento', [['Valor', Number.isInteger(c.valorCentavos) ? D.moeda(c.valorCentavos / 100) : ''], ['Recorrência', rec], ['Forma de pagamento', nomeDe(D.FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)]]],
       ['Vigência e vencimento', [['Início da vigência', dataBR(c.inicio)], ['Término da vigência', dataBR(c.fim)], ['Renovação', nomeDe(D.RENOVACOES_CONTRATO, c.renovacao)], ['Vencimento', vencimento]]],
@@ -287,20 +292,20 @@
       .map(([t, l], k) => [(k + 1) + '. ' + t, l]);
   }
   /** Se faltar dado, devolve true depois de mostrar a lista do que falta (nenhum documento é gerado). */
-  function incompleto(f, aviso) {
-    const faltas = D.faltasDoContrato(f);
+  function incompleto(f, aviso, papel) {
+    const faltas = D.faltasDoContrato(f, papel);
     if (!faltas.length) { aviso.textContent = ''; return false; }
     aviso.textContent = faltas.length === 1 && /Tem contrato/.test(faltas[0]) ? faltas[0] : 'O documento só é gerado com o contrato completo. Falta: ' + faltas.join('; ') + '.';
     return true;
   }
-  function imprimirContrato(f) {
+  function imprimirContrato(f, papel) {
     const ifr = document.createElement('iframe'); ifr.setAttribute('aria-hidden', 'true'); ifr.tabIndex = -1; ifr.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0'; document.body.append(ifr);
     const d = ifr.contentDocument; d.open(); d.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Contrato</title></head><body></body></html>'); d.close();
     const mk = (tag, texto, css) => { const n = d.createElement(tag); if (texto != null) n.textContent = texto; if (css) n.style.cssText = css; return n; };
     d.body.style.cssText = 'font:13px/1.5 Arial,sans-serif;color:#111;margin:28px';
-    const partes = partesDoContrato(f);
-    d.body.append(mk('h1', tituloDoContrato(f), 'font-size:20px;margin:0 0 4px'), mk('p', 'Documento gerado pelo sistema a partir dos dados cadastrados. Não é um contrato assinado e não substitui a revisão da empresa.', 'margin:0 0 14px;color:#555'));
-    secoesContrato(f).forEach(([t, l]) => {
+    const partes = partesDoContrato(f, papel);
+    d.body.append(mk('h1', tituloDoContrato(f, papel), 'font-size:20px;margin:0 0 4px'), mk('p', 'Documento gerado pelo sistema a partir dos dados cadastrados. Não é um contrato assinado e não substitui a revisão da empresa.', 'margin:0 0 14px;color:#555'));
+    secoesContrato(f, papel).forEach(([t, l]) => {
       d.body.append(mk('h2', t, 'font-size:14px;margin:16px 0 6px;border-bottom:1px solid #999;padding-bottom:2px'));
       if (Array.isArray(l)) l.forEach(([k, v]) => { const p = mk('p', null, 'margin:2px 0'); p.append(mk('b', k + ': '), d.createTextNode(String(v))); d.body.append(p); });
       else if (l.itens) { const ol = mk('ol', null, 'margin:4px 0 0 18px;padding:0'); l.itens.forEach((x) => ol.append(mk('li', x, 'margin:2px 0'))); d.body.append(ol); }
@@ -312,12 +317,12 @@
     d.body.append(ass);
     const limpar = () => { if (ifr.isConnected) ifr.remove(); }; ifr.contentWindow.addEventListener('afterprint', limpar); setTimeout(limpar, 120000); ifr.contentWindow.focus(); ifr.contentWindow.print();
   }
-  function visualizarContrato(f, cores) {
+  function visualizarContrato(f, cores, papel) {
     U.dialogo({
-      titulo: tituloDoContrato(f) + ' — visualização', ...cc(cores), largo: true,
+      titulo: tituloDoContrato(f, papel) + ' — visualização', ...cc(cores), largo: true,
       montar: (form) => {
         form.append(el('p', 'profiles-note compras-largo', 'Prévia do documento gerado a partir dos dados cadastrados. Não é um contrato assinado.'));
-        secoesContrato(f).forEach(([t, l]) => {
+        secoesContrato(f, papel).forEach(([t, l]) => {
           const fs = el('fieldset', 'compras-fieldset compras-largo'); fs.append(el('legend', null, t));
           if (Array.isArray(l)) { const dl = el('dl', 'profiles-info'); l.forEach(([k, v]) => dl.append(el('dt', null, k), el('dd', null, String(v)))); fs.append(dl); }
           else if (l.itens) { const ol = el('ol'); l.itens.forEach((x) => ol.append(el('li', null, x))); fs.append(ol); }
@@ -325,7 +330,7 @@
           form.append(fs);
         });
         // Quem assina: só os nomes; a assinatura continua sendo feita no papel (ou, no futuro, pelo serviço de assinatura digital).
-        const partes = partesDoContrato(f); const fsA = el('fieldset', 'compras-fieldset compras-largo'); fsA.append(el('legend', null, 'Assinaturas'));
+        const partes = partesDoContrato(f, papel); const fsA = el('fieldset', 'compras-fieldset compras-largo'); fsA.append(el('legend', null, 'Assinaturas'));
         const dlA = el('dl', 'profiles-info'); [['Contratante', partes.contratante], ['Contratado', partes.contratado]].forEach(([t, x]) => dlA.append(el('dt', null, t), el('dd', null, [x.nome, [x.representante, x.cargo].filter(Boolean).join(' — ')].filter(Boolean).join(' · ') || '—')));
         fsA.append(dlA); form.append(fsA);
       },
@@ -340,16 +345,229 @@
       },
     });
   }
-  /** Botões do documento: Imprimir / Assinatura Física, Enviar / Assinatura Digital e Visualizar contrato. lerFornecedor() devolve o cadastro lido do formulário. */
-  function botoesDocumento({ lerFornecedor, cores, aviso }) {
+  /** Botões do documento: Imprimir / Assinatura Física, Enviar / Assinatura Digital e Visualizar contrato. lerFornecedor() devolve o cadastro lido do formulário (do fornecedor ou, com papel 'cliente', do cliente). */
+  function botoesDocumento({ lerFornecedor, cores, aviso, papel = 'fornecedor' }) {
     const linha = el('div', 'compras-form-rodape compras-largo compras-doc-acoes');
     linha.append(
-      U.botaoTitulo('Imprimir / Assinatura Física', 'Imprimir o contrato para assinar à mão', () => { const f = lerFornecedor(); if (!incompleto(f, aviso)) imprimirContrato(f); }, ICO.imprimir),
-      U.botaoTitulo('Enviar / Assinatura Digital', 'Enviar o contrato para assinatura digital', () => { const f = lerFornecedor(); if (!incompleto(f, aviso)) assinaturaDigital(cores); }, U.ICONES.send),
-      U.botaoTitulo('Visualizar contrato', 'Ver o documento do contrato', () => { const f = lerFornecedor(); if (!incompleto(f, aviso)) visualizarContrato(f, cores); }, ICO.olho),
+      U.botaoTitulo('Imprimir / Assinatura Física', 'Imprimir o contrato para assinar à mão', () => { const f = lerFornecedor(); if (!incompleto(f, aviso, papel)) imprimirContrato(f, papel); }, ICO.imprimir),
+      U.botaoTitulo('Enviar / Assinatura Digital', 'Enviar o contrato para assinatura digital', () => { const f = lerFornecedor(); if (!incompleto(f, aviso, papel)) assinaturaDigital(cores); }, U.ICONES.send),
+      U.botaoTitulo('Visualizar contrato', 'Ver o documento do contrato', () => { const f = lerFornecedor(); if (!incompleto(f, aviso, papel)) visualizarContrato(f, cores, papel); }, ICO.olho),
     );
     return linha;
   }
 
-  window.CicluzContratos = { abrirModelos, listaAtividades, seletorHierarquico, botoesDocumento, secoesContrato, partesDoContrato, enderecoTexto, modelos };
+  /* =============== Etapa Contrato em blocos (fornecedor e cliente) =============== */
+  /**
+   * Monta a etapa Contrato, a mesma nos dois cadastros (18/11/2026, Rodrigo: "no contrato do cliente, trazer o modelo criado no
+   * cadastro de fornecedor"). Os blocos seguem a ordem em que o documento é montado: 1 Contratante · 2 Contratado · 3 Valor,
+   * vencimento e reajuste · 4 O que está incluso · 5 O que não está incluso · 6 Condições de rescisão · 7 Tipo de contrato e
+   * cláusulas (opcional) · 8 Assinaturas e documento.
+   * papel: 'fornecedor' (a sua empresa contrata o fornecedor) ou 'cliente' (o cliente contrata a sua empresa).
+   * lerRegistro(): o cadastro lido do formulário. mensal(): só no cliente, diz se "É cliente mensal?" está ligado.
+   * Devolve { nos, ler, datas, pintar, bloco }. Tudo só informado: sem fórmula, sem lançamento e sem cálculo de reajuste.
+   */
+  function etapaContrato({ contrato, papel = 'fornecedor', lerRegistro, cores, mensal }) {
+    const cliente = papel === 'cliente'; const P = D.papelContrato(papel);
+    const R = () => window.CicluzFieldRules;
+    const mostrar = (no, sim) => { no.style.display = sim ? '' : 'none'; };
+    const ct = contrato || {};
+    const cDados = el('fieldset', 'compras-fieldset');
+    cDados.append(el('legend', null, 'Dados do contrato'));
+    const temContrato = U.quadroSituacao('Tem contrato?', Boolean(ct[P.tem]), { textos: ['Sim', 'Não'], dica: cliente ? 'Contrato de fornecimento com este cliente.' : 'Contrato de fornecimento ou de prestação de serviço com este fornecedor.', aoMudar: () => pintarContrato() });
+    temContrato.classList.add('compras-largo');
+    // Forma de pagamento: Boleto ou Dinheiro. Valor antigo (PIX, transferência) continua aparecendo até ser trocado.
+    const formas = [...(cliente ? D.FORMAS_PAGAMENTO_CONTRATO : D.FORMAS_PAGAMENTO_FORNECEDOR)];
+    const formaAntiga = ct.formaPagamento && !formas.some(([id]) => id === ct.formaPagamento) ? D.FORMAS_PAGAMENTO_CONTRATO.find(([id]) => id === ct.formaPagamento) : null;
+    if (formaAntiga) formas.push([formaAntiga[0], formaAntiga[1] + ' (cadastro anterior)']);
+    const cForma = seletor(formas, ct.formaPagamento || '', 'Selecione');
+    const formaCampo = campo('Forma de pagamento', cForma);
+    // No fornecedor, pagamento em dinheiro é toda sexta-feira. No cliente mensal, a forma e o vencimento vêm das Informações de cobrança.
+    const sexta = () => !cliente && cForma.value === 'dinheiro';
+    const ehMensal = () => Boolean(mensal && mensal());
+    const notaMensal = el('p', 'profiles-note compras-largo', 'Cliente mensal: fechamento do dia 1º ao último dia do mês, pagamento por boleto, com vencimento todo dia ' + D.CLIENTE_MENSAL.vencimentoDia + ' (definido nas Informações de cobrança, na etapa do responsável financeiro).');
+    const cVencData = entrada('date', ct.vencimentoData || '');
+    const vencDataCampo = campo('Data de vencimento do boleto', cVencData);
+    const diaPagtoCampo = el('div', 'compras-campo');
+    diaPagtoCampo.append(el('span', 'compras-rotulo', 'Dia de pagamento'), el('strong', null, 'Toda sexta-feira'), el('small', 'profiles-note', 'Só informativo: o sistema não faz o pagamento nem marca como pago.'));
+    // Tipo de recorrência no estilo do Calendário e dos Lembretes (recorrencia.js): lista compacta e painel Personalizado.
+    const rec = window.CicluzComprasRecorrencia.criar({ valor: ct.recorrencia || '', personalizada: ct.recorrenciaPersonalizada || null, cores: cc(cores), aoMudar: () => pintarValor() });
+    // Valor: máscara brasileira (R$ 1.500,00) e a frase informativa conforme a recorrência. Não calcula total nem cria pagamento.
+    const cValor = entrada('text', Number.isInteger(ct.valorCentavos) ? R().moneyMask(String(ct.valorCentavos)) : '', { inputMode: 'numeric', placeholder: 'R$ 0,00', maxLength: 24 });
+    const valorCampo = campo('Valor (R$)', cValor);
+    const valorResumo = el('small', 'profiles-note compras-valor-resumo'); valorResumo.setAttribute('aria-live', 'polite');
+    valorCampo.append(valorResumo);
+    const valorCentavos = () => { const n = D.digitos(cValor.value).replace(/^0+(?=\d)/, ''); return n ? parseInt(n, 10) : null; };
+    function pintarValor() { const c = valorCentavos(); valorResumo.textContent = c == null ? '' : D.resumoValorRecorrencia(c, rec.atual()); }
+    cValor.addEventListener('input', () => { cValor.value = R().moneyMask(cValor.value); pintarValor(); });
+    // Referência ao salário mínimo: só informação cadastral (percentual); não consulta o mínimo nem calcula.
+    const sm0 = ct.salarioMinimo || {};
+    const smQuadro = U.quadroSituacao('Referência do salário mínimo', Boolean(sm0.ativo), { aoMudar: () => pintarContrato() });
+    const smPct = entrada('text', typeof sm0.percentual === 'number' ? String(sm0.percentual).replace('.', ',') : '', { inputMode: 'decimal', placeholder: 'Ex.: 50', maxLength: 8 });
+    const smPctCampo = campo('Percentual do salário mínimo (%)', smPct);
+    // O rótulo com "salário" faria o field-validation.js tratar o campo como dinheiro: o nome para leitor de tela evita isso.
+    smPct.setAttribute('aria-label', 'Percentual sobre o mínimo (%)');
+    smPct.addEventListener('input', () => { smPct.value = smPct.value.replace(/[^\d,]/g, '').replace(/,(?=.*,)/g, ''); });
+    const smBox = el('div', 'compras-largo compras-sm');
+    smBox.append(smQuadro, smPctCampo, el('small', 'profiles-note', 'Só informação cadastral: o sistema não consulta o salário mínimo, não calcula reajuste e não troca o valor informado.'));
+    const cInicio = entrada('date', ct.inicio || '');
+    const cFim = entrada('date', ct.fim || '');
+    const cReajuste = seletor(D.REAJUSTES_CONTRATO, ct.reajuste || '', 'Selecione');
+    const cPercentual = entrada('text', ct.reajustePercentual != null ? String(ct.reajustePercentual).replace('.', ',') : '', { inputMode: 'decimal', placeholder: '0,00', maxLength: 6 });
+    const percentualCampo = campo('Percentual do reajuste (%) *', cPercentual);
+    const cObs = el('textarea');
+    cObs.rows = 3; cObs.maxLength = 2000; cObs.value = ct.observacoes || '';
+    const obsCampo = campo('Observações do contrato', cObs);
+    obsCampo.classList.add('compras-largo');
+    cDados.append(notaMensal, formaCampo, vencDataCampo, diaPagtoCampo, rec.no, valorCampo, smBox, campo('Início da vigência', cInicio), campo('Término da vigência', cFim),
+      campo('Reajuste', cReajuste, 'Só o índice combinado; o sistema não calcula o reajuste.'), percentualCampo, obsCampo);
+    // Mostra ou esconde os blocos do contrato conforme "Tem contrato?" (a função de verdade é ligada quando a etapa Contrato é montada).
+    let pintarBlocosContrato = () => {};
+    const pintarContrato = () => {
+      pintarBlocosContrato();
+      mostrar(notaMensal, ehMensal()); mostrar(formaCampo, !ehMensal());
+      mostrar(vencDataCampo, !ehMensal() && !sexta() && cForma.value !== '');
+      vencDataCampo.querySelector('.compras-rotulo').textContent = cForma.value === 'boleto' ? 'Data de vencimento do boleto' : 'Data de vencimento';
+      mostrar(diaPagtoCampo, !ehMensal() && sexta());
+      mostrar(smPctCampo, smQuadro.ativo);
+      mostrar(percentualCampo, cReajuste.value === 'percentual');
+    };
+    cForma.onchange = pintarContrato;
+    cReajuste.onchange = pintarContrato;
+    pintarContrato();
+    pintarValor();
+    // Número digitado: null quando vazio, NaN quando não é número (para a validação recusar em vez de virar vazio).
+    const numeroOuNada = (input) => { const t = String(input.value).trim(); if (!t) return null; const n = D.lerNumero(t); return n == null ? NaN : n; };
+    // Etapa 6 (18/11/2026): tipo de contrato (cópia do modelo), cláusulas, atividades incluídas e não incluídas e campos adicionais.
+    const ct6 = {
+      modeloId: ct.modeloId || '', modeloNome: ct.modeloNome || '', modeloVersao: ct.modeloVersao || null, clausulas: (ct.clausulas || []).map((x) => ({ ...x })),
+      incl: (ct.atividadesIncluidas || []).map((x) => ({ ...x })), excl: (ct.atividadesExcluidas || []).map((x) => ({ ...x })),
+      camposDef: (ct.camposAdicionaisDef || []).map((x) => ({ ...x })), campos: { ...(ct.camposAdicionais || {}) }, renovacao: ct.renovacao || '',
+    };
+    const datasExtras = [];
+    const lerContrato = () => {
+      const pct = numeroOuNada(cPercentual); const pctMinimo = numeroOuNada(smPct);
+      return {
+        modeloId: ct6.modeloId, modeloNome: ct6.modeloNome, modeloVersao: ct6.modeloVersao, clausulas: ct6.clausulas, atividadesIncluidas: ct6.incl, atividadesExcluidas: ct6.excl,
+        camposAdicionaisDef: ct6.camposDef, camposAdicionais: ct6.campos, renovacao: ct6.renovacao,
+        // Blocos novos do contrato padrão (campos opcionais): a empresa contratante (vínculo por id) e o texto da rescisão.
+        [P.empresa]: selContratante.value, rescisao: cRescisao.value.trim(),
+        [P.tem]: temContrato.ativo, formaPagamento: cForma.value,
+        // Vencimento: só em dinheiro some (o pagamento é toda sexta-feira, informativo). O dia do mês antigo fica guardado como estava.
+        vencimentoData: sexta() ? '' : cVencData.value, vencimentoDia: ct.vencimentoDia != null ? ct.vencimentoDia : null,
+        diaPagamento: sexta() ? 'sexta' : '',
+        ...rec.ler(),
+        valorCentavos: valorCentavos(),
+        salarioMinimo: { ativo: smQuadro.ativo, percentual: pctMinimo == null ? null : Number.isNaN(pctMinimo) ? NaN : Math.round(pctMinimo * 100) / 100 },
+        inicio: cInicio.value, fim: cFim.value,
+        reajuste: cReajuste.value, reajustePercentual: cReajuste.value === 'percentual' ? (pct == null ? null : Math.round(pct * 100) / 100) : null,
+        observacoes: cObs.value.trim(),
+      };
+    };
+    const blocoContrato = (titulo, explicacao, ...nos) => { const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, titulo), el('p', 'profiles-note compras-largo', explicacao), ...nos); return q; };
+    const empresasContratantes = () => (window.CicluzEmpresa && window.CicluzEmpresa.todas ? window.CicluzEmpresa.todas() : []);
+    const selContratante = seletor(empresasContratantes().map((e) => [e.id, (e.razaoSocial || e.nomeFantasia || '(empresa sem nome)') + (e.vinculo === 'matriz' ? ' (Matriz)' : '')]),
+      empresasContratantes().some((e) => e.id === ct[P.empresa]) ? ct[P.empresa] : (empresasContratantes()[0] || {}).id || '', 'Selecione a empresa');
+    const resumoContratante = el('dl', 'profiles-info compras-largo'); const resumoContratado = el('dl', 'profiles-info compras-largo'); const resumoAssinaturas = el('dl', 'profiles-info compras-largo');
+    const semEmpresaNota = el('p', 'profiles-note compras-largo', 'Nenhuma empresa cadastrada. Cadastre em Configurações → Empresa → Dados da Empresa para ela aparecer aqui.');
+    const pintarPartes = () => {
+      const p = partesDoContrato(lerRegistro(), papel);
+      const linhas = (dl, x, pares) => dl.replaceChildren(...pares.filter(([, v]) => v).flatMap(([k, v]) => [el('dt', null, k), el('dd', null, v)]), ...(pares.some(([, v]) => v) ? [] : [el('dt', null, 'Sem dados'), el('dd', null, '—')]));
+      const quem = (x) => [x.representante, x.cargo].filter(Boolean).join(' — ');
+      linhas(resumoContratante, p.contratante, [[p.contratante.pf ? 'Nome completo' : 'Razão social', p.contratante.nome], ['Nome fantasia', p.contratante.fantasia], [p.contratante.pf ? 'CPF' : 'CNPJ', p.contratante.documento], ['Endereço', p.contratante.endereco], ['Representante legal', quem(p.contratante)]]);
+      linhas(resumoContratado, p.contratado, [[p.contratado.pf ? 'Nome completo' : 'Razão social', p.contratado.nome], ['Nome fantasia', p.contratado.fantasia], [p.contratado.pf ? 'CPF' : 'CNPJ', p.contratado.documento], ['Endereço', p.contratado.endereco], ['Representante legal', quem(p.contratado)]]);
+      linhas(resumoAssinaturas, null, [['Assina pelo contratante', [p.contratante.nome, quem(p.contratante)].filter(Boolean).join(' · ')], ['Assina pelo contratado', [p.contratado.nome, quem(p.contratado)].filter(Boolean).join(' · ')]]);
+      mostrar(semEmpresaNota, !empresasContratantes().length);
+    };
+    const pintarResumoContrato = () => pintarPartes();
+    selContratante.onchange = pintarPartes;
+    // Condições de rescisão: texto livre. O "texto sugerido" é só um ponto de partida, com o prazo em branco para a pessoa preencher.
+    const RESCISAO_SUGERIDA = 'Qualquer das partes pode encerrar este contrato, sem multa, mediante aviso por escrito à outra parte com antecedência mínima de ____ dias. O contrato também pode ser encerrado de imediato, por qualquer das partes, se a outra descumprir o que foi combinado e não corrigir a falha depois de avisada por escrito. Os valores devidos até a data do encerramento continuam devidos.';
+    const cRescisao = el('textarea'); cRescisao.rows = 5; cRescisao.maxLength = 2000; cRescisao.value = ct.rescisao || ''; cRescisao.dataset.textoLivre = '1'; cRescisao.setAttribute('aria-label', 'Condições de rescisão');
+    const avisoRescisao = el('p', 'profiles-note compras-largo'); avisoRescisao.setAttribute('role', 'status');
+    const linhaRescisao = el('div', 'compras-form-rodape compras-largo');
+    linhaRescisao.append(botao('Usar texto sugerido', () => {
+      if (cRescisao.value.trim()) { avisoRescisao.textContent = 'Já existe um texto: apague-o antes, se quiser usar o sugerido.'; return; }
+      cRescisao.value = RESCISAO_SUGERIDA; avisoRescisao.textContent = 'Texto sugerido inserido: preencha o prazo e revise com quem cuida da parte jurídica da empresa.';
+    }, 'btn secondary'));
+    const notasModelo = el('p', 'profiles-note'); notasModelo.setAttribute('role', 'status');
+    const selModelo = seletor([], '', 'Selecione o tipo de contrato'); selModelo.setAttribute('aria-label', 'Tipo de contrato');
+    const modelosAtivos = () => modelos().filter((m) => m.ativo !== false || m.id === ct6.modeloId);
+    const pintarModelos = () => {
+      selModelo.replaceChildren(new Option(modelosAtivos().length ? 'Selecione o tipo de contrato' : 'Nenhum tipo de contrato cadastrado', ''), ...modelosAtivos().sort((a, b2) => a.nome.localeCompare(b2.nome, 'pt-BR')).map((m) => new Option(m.nome + (m.ativo === false ? ' (inativo)' : ''), m.id)));
+      if (ct6.modeloId && !modelosAtivos().some((m) => m.id === ct6.modeloId)) selModelo.append(new Option(ct6.modeloNome + ' (modelo removido)', ct6.modeloId));
+      selModelo.value = ct6.modeloId;
+    };
+    const boxClausulas = el('div', 'compras-largo'); const boxCampos = el('div', 'compras-largo compras-campos-adicionais');
+    const desenharClausulas = () => {
+      boxClausulas.replaceChildren(...(ct6.clausulas.length ? [el('span', 'compras-rotulo', 'Cláusulas do tipo de contrato (cópia da versão ' + (ct6.modeloVersao || '—') + ')'),
+        ...ct6.clausulas.map((x, k) => { const p = el('p', 'profiles-note compras-clausula'); p.append(el('b', null, (k + 1) + '. ' + (x.titulo ? x.titulo + ': ' : '')), document.createTextNode(x.texto)); return p; })] : []));
+    };
+    const desenharCampos = () => {
+      datasExtras.length = 0;
+      boxCampos.replaceChildren(...(ct6.camposDef.length ? [el('span', 'compras-rotulo', 'Informações adicionais do contrato'), ...ct6.camposDef.map((d2) => {
+        const v = ct6.campos[d2.id]; let inp;
+        if (d2.tipo === 'data') { inp = entrada('date', v || ''); datasExtras.push(inp); const sync = () => { ct6.campos[d2.id] = inp.value; }; inp.addEventListener('input', sync); inp.addEventListener('change', sync); }
+        else if (d2.tipo === 'moeda') { inp = entrada('text', Number.isInteger(v) ? R().moneyMask(String(v)) : '', { inputMode: 'numeric', placeholder: 'R$ 0,00', maxLength: 24 }); inp.addEventListener('input', () => { inp.value = R().moneyMask(inp.value); const n = D.digitos(inp.value).replace(/^0+(?=\d)/, ''); ct6.campos[d2.id] = n ? parseInt(n, 10) : ''; }); }
+        else { inp = entrada('text', v == null ? '' : String(v), { inputMode: d2.tipo === 'numero' ? 'decimal' : 'text', maxLength: 500 }); inp.dataset.textoLivre = '1'; inp.addEventListener('input', () => { ct6.campos[d2.id] = inp.value; }); }
+        return campo(d2.rotulo + (d2.obrigatorio ? ' *' : ''), inp);
+      })] : []));
+    };
+    const aplicarModelo = (m) => {
+      const { patch, notas } = D.aplicarModeloAoContrato(lerContrato(), m);
+      ct6.modeloId = patch.modeloId; ct6.modeloNome = patch.modeloNome; ct6.modeloVersao = patch.modeloVersao; ct6.clausulas = patch.clausulas;
+      ct6.incl = patch.atividadesIncluidas; ct6.excl = patch.atividadesExcluidas; ct6.camposDef = patch.camposAdicionaisDef;
+      const novos = {}; patch.camposAdicionaisDef.forEach((d2) => { if (ct6.campos[d2.id] != null) novos[d2.id] = ct6.campos[d2.id]; }); ct6.campos = novos;
+      if ('renovacao' in patch) ct6.renovacao = patch.renovacao;
+      if ('valorCentavos' in patch) { cValor.value = R().moneyMask(String(patch.valorCentavos)); pintarValor(); }
+      if ('recorrencia' in patch) rec.definir(patch.recorrencia);
+      if ('fim' in patch) { cFim.value = patch.fim; cFim.dispatchEvent(new Event('change', { bubbles: true })); }
+      notasModelo.textContent = notas.join(' ');
+      desenharClausulas(); desenharCampos(); listaInc.desenhar(); listaExc.desenhar(); pintarModelos(); pintarResumoContrato();
+    };
+    selModelo.onchange = () => {
+      const m = modelosAtivos().find((x) => x.id === selModelo.value); if (!m) { selModelo.value = ct6.modeloId; return; }
+      if (!ct6.modeloId || ct6.modeloId === m.id) { aplicarModelo(m); return; }
+      let ok = false;
+      U.dialogo({ titulo: 'Trocar o tipo de contrato?', ...cc(cores), rotuloSalvar: 'Trocar',
+        montar: (f2) => { f2.append(el('p', null, 'As cláusulas e os campos adicionais do tipo atual (' + ct6.modeloNome + ') serão trocados pelos de "' + m.nome + '". As atividades que você já tem ficam, e o que já estava preenchido é mantido.')); },
+        salvar: () => { ok = true; aplicarModelo(m); },
+        aoFechar: () => { if (!ok) selModelo.value = ct6.modeloId; } });
+    };
+    const abrirModelosBtn = U.botaoTitulo('Tipos de contrato', 'Cadastrar e editar os tipos (modelos) de contrato', () => abrirModelos({ cores, aoFechar: () => { pintarModelos(); } }), U.ICONES.contrato || undefined);
+    const linhaModelo = el('div', 'compras-form-rodape compras-largo'); linhaModelo.append(selModelo, abrirModelosBtn);
+    const listaInc = listaAtividades({ tipo: 'incluidas', cores, api: { itens: () => ct6.incl, trocar: (v) => { ct6.incl = v; }, outra: () => ct6.excl, mudou: () => pintarResumoContrato() } });
+    const listaExc = listaAtividades({ tipo: 'excluidas', cores, api: { itens: () => ct6.excl, trocar: (v) => { ct6.excl = v; }, outra: () => ct6.incl, mudou: () => pintarResumoContrato() } });
+    listaInc.classList.add('compras-largo'); listaExc.classList.add('compras-largo');
+    const avisoContrato = el('p', 'profiles-error compras-largo'); avisoContrato.setAttribute('role', 'alert');
+    const acoesContrato = botoesDocumento({ lerFornecedor: lerRegistro, cores, aviso: avisoContrato, papel });
+    pintarModelos(); desenharClausulas(); desenharCampos();
+    const campoRescisao = campo('Condições de rescisão', cRescisao); campoRescisao.classList.add('compras-largo');
+    const campoEmpresa = campo(cliente ? 'Empresa contratada' : 'Empresa contratante', selContratante);
+    cDados.querySelector('legend').textContent = '3 · Valor, vencimento e reajuste';
+    cDados.querySelector('legend').after(el('p', 'profiles-note compras-largo', 'Quanto é, como e quando se paga, por quanto tempo vale e como o valor é reajustado.'));
+    const quadroTem = blocoContrato('Contrato', 'Marque Sim para montar o contrato deste ' + (cliente ? 'cliente' : 'fornecedor') + '. Ele é montado em blocos, de cima para baixo, com o que você preencher em cada um.', temContrato);
+    const daEmpresa = 'Os dados vêm de Configurações → Empresa → Dados da Empresa.'; const doCadastro = 'Os dados vêm das etapas anteriores deste cadastro.';
+    const blocosDoContrato = [
+      cliente ? blocoContrato('1 · Contratante', 'Quem contrata: este cliente. ' + doCadastro, resumoContratante)
+        : blocoContrato('1 · Contratante', 'Quem contrata: a sua empresa. ' + daEmpresa, campoEmpresa, semEmpresaNota, resumoContratante),
+      cliente ? blocoContrato('2 · Contratado', 'Quem é contratado: a sua empresa. ' + daEmpresa, campoEmpresa, semEmpresaNota, resumoContratado)
+        : blocoContrato('2 · Contratado', 'Quem é contratado: este fornecedor. ' + doCadastro, resumoContratado),
+      cDados,
+      blocoContrato('4 · O que está incluso', 'As atividades e responsabilidades que fazem parte do contrato.', listaInc),
+      blocoContrato('5 · O que não está incluso', 'O que fica de fora, para não haver dúvida depois.', listaExc),
+      blocoContrato('6 · Condições de rescisão', 'Como o contrato pode ser encerrado e com quanto tempo de aviso.', campoRescisao, linhaRescisao, avisoRescisao),
+      blocoContrato('7 · Tipo de contrato e cláusulas', 'Opcional: um tipo de contrato traz cláusulas e campos prontos, que se somam aos blocos acima.', campo('Tipo de contrato', linhaModelo), notasModelo, boxClausulas, boxCampos),
+      blocoContrato('8 · Assinaturas e documento', 'Confira quem assina por cada parte e gere o documento. A assinatura é feita no papel impresso.', resumoAssinaturas, acoesContrato, avisoContrato),
+    ];
+    pintarBlocosContrato = () => blocosDoContrato.forEach((b) => mostrar(b, temContrato.ativo));
+    pintarBlocosContrato();
+    return {
+      nos: [quadroTem, ...blocosDoContrato], ler: lerContrato, bloco: blocoContrato,
+      datas: () => [cVencData, cInicio, cFim, ...datasExtras],
+      /** Redesenha o que depende de outras etapas (as partes, o cliente mensal, a lista de tipos de contrato). */
+      pintar: () => { pintarPartes(); pintarContrato(); pintarModelos(); },
+    };
+  }
+
+  window.CicluzContratos = { abrirModelos, listaAtividades, seletorHierarquico, botoesDocumento, secoesContrato, partesDoContrato, enderecoTexto, modelos, etapaContrato };
 })();

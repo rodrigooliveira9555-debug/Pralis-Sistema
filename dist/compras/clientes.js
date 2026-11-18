@@ -37,6 +37,16 @@
   const ICONE_PJ = '<path d="M4 21V5h10v16M14 9h6v12M8 9h2M8 13h2M8 17h2"/>';
   const clientes = () => (Array.isArray(S.dados.clientes) ? S.dados.clientes : []);
 
+  /** Resumo do contrato em blocos do cliente (o cliente é o contratante; a sua empresa, a contratada), para a visualização e a revisão. */
+  function linhasContrato(c) {
+    const k = c.contrato || {};
+    if (!k.temDocumento) return [['Tem contrato', 'Não']];
+    const p = window.CicluzContratos ? window.CicluzContratos.partesDoContrato(c, 'cliente') : { contratado: {} };
+    const n = (lista) => (lista && lista.length ? lista.length + (lista.length === 1 ? ' item' : ' itens') : '');
+    return [['Tem contrato', 'Sim'], ['Empresa contratada', p.contratado.nome], ['Valor', Number.isInteger(k.valorCentavos) ? D.moeda(k.valorCentavos / 100) : ''],
+      ['Forma de pagamento', nomeDe(D.FORMAS_PAGAMENTO_CONTRATO, k.formaPagamento)], ['Início da vigência', k.inicio ? window.CicluzDateFields.display(k.inicio) : ''], ['Término da vigência', k.fim ? window.CicluzDateFields.display(k.fim) : ''],
+      ['Reajuste', nomeDe(D.REAJUSTES_CONTRATO, k.reajuste)], ['O que está incluso', n(k.atividadesIncluidas)], ['O que não está incluso', n(k.atividadesExcluidas)], ['Condições de rescisão', k.rescisao ? 'Preenchidas' : ''], ['Tipo de contrato', k.modeloNome]];
+  }
   /** Seções [título, [[rótulo, valor]]] do que está cadastrado, só com o que foi preenchido (visualização e revisão). */
   function secoesCliente(c) {
     const pj = c.tipoPessoa === 'juridica'; const completo = c.cadastro === 'completo'; const e = c.endereco || {};
@@ -57,8 +67,9 @@
         ['Dados do responsável financeiro', [['Nome', c.contatoNome], ['WhatsApp', c.whatsapp], ['E-mail (financeiro e/ou fiscal)', c.email], ['Aniversário', D.aniversarioTexto(c.contatoAniversario)], ['Cargo na empresa', 'Financeiro']]],
         // Cadastro anterior a 17/11/2026 com um financeiro diferente do contato: continua à vista, para não sumir.
         ...(c.financeiro && c.financeiro.mesmo === false && (c.financeiro.nome || c.financeiro.whatsapp || c.financeiro.email) ? [['Financeiro (cadastro anterior)', contato(c.financeiro)]] : []),
+        ['Informações de cobrança', [['Cliente mensal', c.contrato && c.contrato.clienteMensal ? 'Sim' : 'Não'], ...(c.contrato && c.contrato.clienteMensal ? [['Fechamento', 'Do dia 1º ao último dia do mês'], ['Forma de pagamento', 'Boleto'], ['Vencimento', 'Todo dia ' + D.CLIENTE_MENSAL.vencimentoDia]] : [])]],
         ['Dados do responsável legal', contato(c.representante, [['Aniversário', D.aniversarioTexto(c.representante && c.representante.aniversario)], ['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
-        ['Contrato', [['Cliente mensal', c.contrato && c.contrato.clienteMensal ? 'Sim' : 'Não'], ...(c.contrato && c.contrato.clienteMensal ? [['Fechamento', 'Do dia 1º ao último dia do mês'], ['Forma de pagamento', 'Boleto'], ['Vencimento', 'Todo dia ' + D.CLIENTE_MENSAL.vencimentoDia]] : [])]],
+        ['Contrato', linhasContrato(c)],
       ];
     }
     return secoes.map(([t, l]) => [t, l.filter(([, v]) => v)]).filter(([, l]) => l.length);
@@ -193,16 +204,20 @@
           fixo('Vencimento', 'Todo dia ' + D.CLIENTE_MENSAL.vencimentoDia),
         ];
         const pintarMensal = () => camposMensal.forEach((no) => mostrar(no, mensal.ativo));
-        const mensal = U.quadroSituacao('É cliente mensal?', Boolean(ct.clienteMensal), { textos: ['Sim', 'Não'], dica: 'Ao marcar Sim, o fechamento, a forma de pagamento e o vencimento já vêm preenchidos.', aoMudar: () => pintarMensal() });
+        const mensal = U.quadroSituacao('É cliente mensal?', Boolean(ct.clienteMensal), { textos: ['Sim', 'Não'], dica: 'Ao marcar Sim, o fechamento, a forma de pagamento e o vencimento já vêm preenchidos.', aoMudar: () => { pintarMensal(); etapaCt.pintar(); } });
         mensal.classList.add('compras-largo');
         mensal.querySelector('.account-status-switch').setAttribute('aria-label', 'É cliente mensal?');
         // Informações de cobrança (17/11/2026, Rodrigo): só a pergunta "É cliente mensal?". Forma de pagamento, recorrência,
         // valor, salário mínimo, vigência, reajuste e observações saíram da tela; o que já estava gravado em contrato fica
         // guardado como está. Ligar "cliente mensal" grava boleto e vencimento no dia 10, a regra de antes.
         const cDados = el('fieldset', 'compras-fieldset'); cDados.append(el('legend', null, 'Informações de cobrança'), mensal, ...camposMensal); pintarMensal();
+        // Etapa Contrato (18/11/2026, Rodrigo): o mesmo contrato em blocos do cadastro de fornecedor (contratos.js). Aqui o cliente é o
+        // contratante e a sua empresa é a contratada. "Tem contrato?" grava temDocumento (campo novo e opcional); "tem" segue como era.
+        const etapaCt = window.CicluzContratos.etapaContrato({ contrato: ct, papel: 'cliente', lerRegistro: () => registro(), cores, mensal: () => mensal.ativo });
+        // Cliente mensal manda na forma de pagamento e no vencimento (boleto, dia 10), como antes; deixou de ser mensal, o dia 10 sai.
         const lerContrato = () => ({
-          ...ct, tem: true, clienteMensal: mensal.ativo,
-          ...(mensal.ativo ? { formaPagamento: D.CLIENTE_MENSAL.formaPagamento, vencimentoDia: D.CLIENTE_MENSAL.vencimentoDia } : ct.clienteMensal ? { formaPagamento: '', vencimentoDia: null } : {}),
+          ...ct, ...etapaCt.ler(), tem: true, clienteMensal: mensal.ativo,
+          ...(mensal.ativo ? { formaPagamento: D.CLIENTE_MENSAL.formaPagamento, vencimentoDia: D.CLIENTE_MENSAL.vencimentoDia, vencimentoData: '' } : ct.clienteMensal ? { vencimentoDia: null } : {}),
         });
 
         /* Revisão (última etapa do completo) */
@@ -292,8 +307,9 @@
           // 17/11/2026 (Rodrigo): o contato e o financeiro viram uma etapa só, "Dados do responsável financeiro": o quadro
           // "Dados do responsável" em cima e as Informações de Pagamento embaixo; não existe mais um contato do financeiro à parte.
           const contato = el('fieldset', 'compras-fieldset'); contato.append(el('legend', null, 'Dados do responsável financeiro'), F.contatoNome, F.whats, F.mail, aniv.no, fixo('Cargo na empresa', 'Financeiro'));
-          // 18/11/2026 (Rodrigo): a etapa Contrato, antes da Revisão, fica com as Informações de cobrança (que saíram da etapa do responsável financeiro).
-          return [bloco(quadro('Dados da empresa', ...sit, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime), sEnd), bloco(contato), bloco(rep.no), bloco(cDados), bloco(revisao)];
+          // 18/11/2026 (Rodrigo): as Informações de cobrança ficam embaixo dos dados do responsável financeiro, na mesma etapa; a etapa
+          // Contrato traz o contrato em blocos, o mesmo do cadastro de fornecedor.
+          return [bloco(quadro('Dados da empresa', ...sit, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime), sEnd), bloco(contato, cDados), bloco(rep.no), bloco(...etapaCt.nos), bloco(revisao)];
         }
         /** Cadastro lido do formulário: só o tipo e a modalidade em uso (o resto do registro fica como está). */
         // "Preencher endereço" mora dentro do quadro Endereço: desligado, o quadro mostra só a pergunta (compras-so-pergunta, em compras.css).
@@ -337,10 +353,11 @@
           passos.forEach((p, k) => mostrar(p, k === passo));
           if (barra) barra.update(nomes0(), passo);
           erroEtapa.textContent = '';
+          if (tipo === 'juridica' && cadastro === 'completo') etapaCt.pintar(); // as partes e o cliente mensal vêm das outras etapas
           const ultima = passo === passos.length - 1; const etapas = passos.length > 1;
           if (etapas && ultima) {
             // Cada bloco da revisão leva à etapa de onde os dados vieram.
-            const etapaDoBloco = { 'Dados cadastrais': 0, 'Dados pessoais': 0, 'Endereço': tipo === 'juridica' ? 0 : 1, 'Informações complementares': 2, 'Dados do responsável financeiro': 1, 'Dados do responsável legal': 2, 'Contrato': 3 };
+            const etapaDoBloco = { 'Dados cadastrais': 0, 'Dados pessoais': 0, 'Endereço': tipo === 'juridica' ? 0 : 1, 'Informações complementares': 2, 'Dados do responsável financeiro': 1, 'Informações de cobrança': 1, 'Dados do responsável legal': 2, 'Contrato': 3 };
             revisao.replaceChildren(el('p', 'profiles-note', 'Confira os dados antes de salvar. Para corrigir, toque em Editar no bloco.'), dlDe(secoesCliente(registro()), (t) => (t in etapaDoBloco ? () => ir(etapaDoBloco[t]) : null)));
           }
           U.subirAoTopo(barraBox, form);
@@ -349,7 +366,7 @@
         const nomes0 = () => D.etapasCliente(tipo, cadastro).map((label) => ({ label }));
         form.append(barraBox, corpo, erroEtapa, nav);
         desenhar();
-        return { ler, registro, conferir, ir, datas: [] };
+        return { ler, registro, conferir, ir, get datas() { return tipo === 'juridica' && cadastro === 'completo' ? etapaCt.datas() : []; } };
       },
       salvar: (ctx) => {
         if (opcoes.previa) return 'Isto é só uma prévia do formulário: nada é salvo.';

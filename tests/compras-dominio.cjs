@@ -458,6 +458,14 @@ ok(() => {
   assert.match(d.validarContratoFinanceiro({ tem: true, recorrencia: 'compra-mensal' }), /termina/);
   assert.equal(d.validarContratoFinanceiro({ tem: true, clienteMensal: true, formaPagamento: 'boleto', vencimentoDia: 10 }), '');
   assert.match(d.validarContratoFinanceiro({ tem: true, clienteMensal: true, formaPagamento: 'dinheiro' }), /boleto/);
+  // Contrato em blocos no cliente (18/11/2026): o mesmo do fornecedor, com o cliente como contratante e a empresa como contratada.
+  assert.deepEqual(d.papelContrato('cliente'), { tem: 'temDocumento', empresa: 'contratadaEmpresaId' });
+  assert.deepEqual(d.papelContrato('fornecedor'), { tem: 'tem', empresa: 'contratanteEmpresaId' });
+  const cliCt = { razaoSocial: 'Empresa Teste Ltda', cnpj: '11.222.333/0001-81', contrato: { tem: true, temDocumento: true, contratadaEmpresaId: 'e1', atividadesIncluidas: [{ id: 'a1', texto: 'Entrega diária' }], inicio: '2026-11-18' } };
+  assert.deepEqual(d.faltasDoContrato(cliCt, 'cliente'), []);
+  assert.equal(d.faltasDoContrato({ ...cliCt, contrato: { tem: true } }, 'cliente').length, 1); // "tem" antigo do cliente não é "Tem contrato?"
+  assert.deepEqual(d.faltasDoContrato({ ...cliCt, contrato: { ...cliCt.contrato, contratadaEmpresaId: '' } }, 'cliente'), ['empresa contratada']);
+  assert.deepEqual(d.faltasDoContrato({ ...cliCt, cnpj: '', razaoSocial: '' }, 'cliente'), ['razão social do cliente', 'CNPJ do cliente']);
   assert.equal(d.resumoTermino({ tipo: 'ocorrencias', ocorrencias: 3 }), 'por 3 ocorrências');
   // Endereço nos cadastros simples (18/11/2026): CEP com 8 dígitos e UF válida quando informados; vazio continua valendo
   const rg = { cpfValid: () => true, cnpjValid: () => true };
@@ -574,9 +582,10 @@ ok(() => {
   assert.match(e({ ...pjOk, regimeTributario: 'xx' })[0], /Regime/);
   assert.match(e({ ...pjOk, contatoAniversario: '02-30' })[1], /Aniversário do responsável/);
   assert.match(e({ ...pjOk, financeiro: { mesmo: false, whatsapp: '1' } })[1], /WhatsApp do financeiro/);
-  assert.match(e({ ...pjOk, contrato: { tem: true, recorrencia: 'personalizado' } })[3], /recorrência personalizada/i);
-  assert.match(e({ ...pjOk, contrato: { tem: true, salarioMinimo: { ativo: true, percentual: 0 } } })[3], /percentual do salário mínimo/);
+  assert.match(e({ ...pjOk, contrato: { tem: true, temDocumento: true, recorrencia: 'personalizado' } })[3], /recorrência personalizada/i);
+  assert.match(e({ ...pjOk, contrato: { tem: true, temDocumento: true, salarioMinimo: { ativo: true, percentual: 0 } } })[3], /percentual do salário mínimo/);
   assert.deepEqual(e({ ...pjOk, contrato: { tem: false, valorCentavos: -1 } }), ['', '', '', '', '']); // sem contrato, nada é conferido
+  assert.deepEqual(e({ ...pjOk, contrato: { tem: true, recorrencia: 'personalizado' } }), ['', '', '', '', '']); // no cliente, "Tem contrato?" é temDocumento: desligado, o contrato não é conferido
   assert.match(e({ ...pjOk, representante: { cargo: 'chefe' } })[2], /Cargo do representante/);
   assert.match(e({ ...pjOk, representante: { whatsapp: '1' } })[2], /WhatsApp do representante/);
   assert.equal(d.validarCliente(pjs, regras, ctx), '');

@@ -746,15 +746,26 @@
     }
     return '';
   }
-  /** O que falta para o contrato poder ser impresso ou enviado como documento definitivo. [] = completo. */
-  function faltasDoContrato(f) {
-    const c = (f && f.contrato) || {}; const faltas = [];
-    if (!c.tem) return ['Marque "Tem contrato?" na etapa Contrato.'];
-    if (!String((f && (f.razaoSocial || f.nome)) || '').trim()) faltas.push('nome ou razão social do fornecedor');
-    if (!digitos(f && f.documento)) faltas.push('CNPJ ou CPF do fornecedor');
+  /**
+   * O mesmo contrato em blocos serve ao fornecedor e ao cliente (18/11/2026, Rodrigo); só muda quem é quem. No fornecedor a sua
+   * empresa é a contratante; no cliente, a contratada. Cada papel guarda a resposta de "Tem contrato?" e a empresa em chaves
+   * próprias (no cliente, "tem" já existia com outro sentido e fica como estava).
+   */
+  const papelContrato = (papel) => (papel === 'cliente' ? { tem: 'temDocumento', empresa: 'contratadaEmpresaId' } : { tem: 'tem', empresa: 'contratanteEmpresaId' });
+  /** O que falta para o contrato poder ser impresso ou enviado como documento definitivo. [] = completo. papel: 'fornecedor' ou 'cliente'. */
+  function faltasDoContrato(f, papel = 'fornecedor') {
+    const c = (f && f.contrato) || {}; const faltas = []; const cliente = papel === 'cliente'; const P = papelContrato(papel);
+    if (!c[P.tem]) return ['Marque "Tem contrato?" na etapa Contrato.'];
+    if (cliente) {
+      if (!String((f && (f.razaoSocial || f.nomeFantasia)) || '').trim()) faltas.push('razão social do cliente');
+      if (!digitos(f && f.cnpj)) faltas.push('CNPJ do cliente');
+    } else {
+      if (!String((f && (f.razaoSocial || f.nome)) || '').trim()) faltas.push('nome ou razão social do fornecedor');
+      if (!digitos(f && f.documento)) faltas.push('CNPJ ou CPF do fornecedor');
+    }
     // Contrato padrão em blocos (18/11/2026, Rodrigo): o tipo de contrato e as cláusulas dele são uma camada opcional; o documento
     // precisa das partes, do que está incluso e do início da vigência.
-    if (!c.contratanteEmpresaId) faltas.push('empresa contratante');
+    if (!c[P.empresa]) faltas.push(cliente ? 'empresa contratada' : 'empresa contratante');
     if (!(c.atividadesIncluidas || []).length) faltas.push('ao menos uma atividade incluída no contrato');
     if (!c.inicio) faltas.push('início da vigência');
     const vals = c.camposAdicionais || {};
@@ -779,7 +790,7 @@
   function etapasCliente(tipoPessoa, cadastro) {
     if (cadastro !== 'completo') return [];
     return tipoPessoa === 'juridica'
-      // 18/11/2026 (Rodrigo): cinco etapas — empresa, responsável financeiro, responsável legal, Contrato (as informações de cobrança) e a Revisão.
+      // 18/11/2026 (Rodrigo): cinco etapas — empresa, responsável financeiro (com as informações de cobrança), responsável legal, Contrato (em blocos, como no fornecedor) e a Revisão.
       ? ['Dados da empresa', 'Dados do responsável financeiro', 'Dados do responsável legal', 'Contrato', 'Revisão dos dados']
       : ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão dos dados'];
   }
@@ -859,8 +870,9 @@
         || (!c.contatoAniversario ? 'Informe o aniversário do responsável.' : aniversarioRuim(c.contatoAniversario) || String(c.contatoAniversario).length !== 5 ? 'Aniversário do responsável inválido: escolha o dia e o mês.' : '')
         || financeiroAntigo(),
       (() => { const cargo = c.representante && c.representante.cargo; return cargo && !CARGOS_REPRESENTANTE.some(([id]) => id === cargo) ? 'Cargo do representante inválido.' : contatoRuim(c.representante, 'representante'); })(),
-      // Etapa Contrato (18/11/2026): as informações de cobrança são conferidas aqui, não mais na etapa do responsável financeiro.
-      validarContratoFinanceiro(c.contrato),
+      // Etapa Contrato (18/11/2026): o contrato em blocos, o mesmo do fornecedor. Só é conferido com "Tem contrato?" em Sim
+      // (no cliente, a chave temDocumento); as informações de cobrança (cliente mensal) ficam na etapa do responsável financeiro.
+      (() => { const k = c.contrato; if (!k || typeof k !== 'object' || !k.temDocumento) return ''; return validarContratoFinanceiro({ ...k, tem: true }) || validarContratoDocumento(k); })(),
       '',
     ];
   }
@@ -1045,7 +1057,7 @@
     digitos, motivoNaoConvidavel, podeConvidar,
     CATEGORIAS_FORNECEDOR, categoriaFornecedor, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarNomesPadrao, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, documentoAntigoFornecedor, validarFornecedor,
     chaveTexto, TIPOS_CAMPO_ADICIONAL, RENOVACOES_CONTRATO, LIMITES_CONTRATO, validarListaAtividades, validarAtividadesContrato, novaAtividade, validarModeloContrato,
-    somarMesesIso, aplicarModeloAoContrato, validarContratoDocumento, faltasDoContrato,
+    somarMesesIso, aplicarModeloAoContrato, validarContratoDocumento, faltasDoContrato, papelContrato,
     validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, aniversarioVendedor, migrarVendedorFornecedor,
     FUNCOES_PRESTADOR_INICIAIS, idFuncaoPrestador, funcaoPrestadorIgual, validarFuncaoPrestador, migrarPrestadoresFornecedor,
     FORMAS_PAGAMENTO_CONTRATO, FORMAS_PAGAMENTO_FORNECEDOR, RECORRENCIAS_CONTRATO, RECORRENCIAS_CLIENTE, CLIENTE_MENSAL, periodoMensal, validarTermino, resumoTermino, UNIDADES_REPETICAO, POSICOES_MES, DIAS_SEMANA_LONGOS, REAJUSTES_CONTRATO, migrarContratoFinanceiro,
