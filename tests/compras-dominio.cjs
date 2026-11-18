@@ -445,7 +445,7 @@ ok(() => {
   assert.deepEqual(d.etapasCliente('fisica', 'simples'), []);
   assert.deepEqual(d.etapasCliente('juridica', 'simples'), []);
   assert.deepEqual(d.etapasCliente('fisica', 'completo'), ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão dos dados']);
-  assert.deepEqual(d.etapasCliente('juridica', 'completo'), ['Dados da empresa', 'Dados do responsável financeiro da empresa', 'Dados do responsável legal da empresa', 'Revisão dos dados da empresa']);
+  assert.deepEqual(d.etapasCliente('juridica', 'completo'), ['Dados da empresa', 'Dados do responsável financeiro', 'Dados do responsável legal', 'Contrato', 'Revisão dos dados']);
   // Cliente mensal e Compra Mensal (18/11/2026)
   assert.deepEqual(d.periodoMensal(2026, 11), { inicio: '2026-11-01', fim: '2026-11-30' });
   assert.deepEqual(d.periodoMensal(2026, 2), { inicio: '2026-02-01', fim: '2026-02-28' });
@@ -558,7 +558,7 @@ ok(() => {
     contrato: { tem: true, formaPagamento: 'boleto', recorrencia: 'mes', valorCentavos: 250000, salarioMinimo: { ativo: true, percentual: 150 } } };
   // 17/11/2026: PJ em etapas tem 4 etapas (contato + financeiro juntos) e a 1ª exige tudo, menos o complemento.
   const pjOk = { ...pjc, contatoNome: 'Responsavel Teste', email: 'financeiro@exemplo.test', nomeFantasia: 'Fantasia Teste', endereco: { cep: '30130-000', logradouro: 'Rua Teste', numero: '10', bairro: 'Centro', cidade: 'Cidade Teste', uf: 'MG' } };
-  assert.deepEqual(e(pjOk), ['', '', '', '']);
+  assert.deepEqual(e(pjOk), ['', '', '', '', '']);
   assert.match(e({ ...pjOk, nomeFantasia: '' })[0], /nome fantasia/);
   // quadro "Dados do responsável": nome, WhatsApp, e-mail e aniversário obrigatórios
   assert.match(e({ ...pjOk, contatoNome: '' })[1], /nome do responsável/);
@@ -572,9 +572,9 @@ ok(() => {
   assert.match(e({ ...pjOk, regimeTributario: 'xx' })[0], /Regime/);
   assert.match(e({ ...pjOk, contatoAniversario: '02-30' })[1], /Aniversário do responsável/);
   assert.match(e({ ...pjOk, financeiro: { mesmo: false, whatsapp: '1' } })[1], /WhatsApp do financeiro/);
-  assert.match(e({ ...pjOk, contrato: { tem: true, recorrencia: 'personalizado' } })[1], /recorrência personalizada/i);
-  assert.match(e({ ...pjOk, contrato: { tem: true, salarioMinimo: { ativo: true, percentual: 0 } } })[1], /percentual do salário mínimo/);
-  assert.deepEqual(e({ ...pjOk, contrato: { tem: false, valorCentavos: -1 } }), ['', '', '', '']); // sem contrato, nada é conferido
+  assert.match(e({ ...pjOk, contrato: { tem: true, recorrencia: 'personalizado' } })[3], /recorrência personalizada/i);
+  assert.match(e({ ...pjOk, contrato: { tem: true, salarioMinimo: { ativo: true, percentual: 0 } } })[3], /percentual do salário mínimo/);
+  assert.deepEqual(e({ ...pjOk, contrato: { tem: false, valorCentavos: -1 } }), ['', '', '', '', '']); // sem contrato, nada é conferido
   assert.match(e({ ...pjOk, representante: { cargo: 'chefe' } })[2], /Cargo do representante/);
   assert.match(e({ ...pjOk, representante: { whatsapp: '1' } })[2], /WhatsApp do representante/);
   assert.equal(d.validarCliente(pjs, regras, ctx), '');

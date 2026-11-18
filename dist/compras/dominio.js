@@ -777,8 +777,8 @@
   function etapasCliente(tipoPessoa, cadastro) {
     if (cadastro !== 'completo') return [];
     return tipoPessoa === 'juridica'
-      // 17/11/2026 (Rodrigo): o contato e o financeiro são uma etapa só; depois, o responsável legal.
-      ? ['Dados da empresa', 'Dados do responsável financeiro da empresa', 'Dados do responsável legal da empresa', 'Revisão dos dados da empresa']
+      // 18/11/2026 (Rodrigo): cinco etapas — empresa, responsável financeiro, responsável legal, Contrato (as informações de cobrança) e a Revisão.
+      ? ['Dados da empresa', 'Dados do responsável financeiro', 'Dados do responsável legal', 'Contrato', 'Revisão dos dados']
       : ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão dos dados'];
   }
   const dataIsoValida = (v) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); if (!m) return false; const d = new Date(+m[1], +m[2] - 1, +m[3]); return d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3]; };
@@ -855,8 +855,10 @@
       // 17/11/2026 (Rodrigo): no quadro "Dados do responsável" tudo é obrigatório — nome, WhatsApp, e-mail e aniversário.
       (!String(c.contatoNome || '').trim() ? 'Informe o nome do responsável.' : '') || whatsEmail(true)
         || (!c.contatoAniversario ? 'Informe o aniversário do responsável.' : aniversarioRuim(c.contatoAniversario) || String(c.contatoAniversario).length !== 5 ? 'Aniversário do responsável inválido: escolha o dia e o mês.' : '')
-        || financeiroAntigo() || validarContratoFinanceiro(c.contrato),
+        || financeiroAntigo(),
       (() => { const cargo = c.representante && c.representante.cargo; return cargo && !CARGOS_REPRESENTANTE.some(([id]) => id === cargo) ? 'Cargo do representante inválido.' : contatoRuim(c.representante, 'representante'); })(),
+      // Etapa Contrato (18/11/2026): as informações de cobrança são conferidas aqui, não mais na etapa do responsável financeiro.
+      validarContratoFinanceiro(c.contrato),
       '',
     ];
   }

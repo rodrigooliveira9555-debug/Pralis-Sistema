@@ -54,10 +54,11 @@
       secoes = [
         ['Dados cadastrais', [['CNPJ', c.cnpj], ['Razão Social', c.razaoSocial], ['Nome Fantasia', c.nomeFantasia], ['Regime tributário', nomeDe(D.REGIMES_TRIBUTARIOS, c.regimeTributario)], ['Situação', c.situacao === 'inativo' ? 'Inativo' : 'Ativo']]],
         ['Endereço', enderecoLinhas],
-        ['Dados do responsável financeiro da empresa', [['Nome', c.contatoNome], ['WhatsApp', c.whatsapp], ['E-mail (financeiro e/ou fiscal)', c.email], ['Aniversário', D.aniversarioTexto(c.contatoAniversario)], ['Cargo na empresa', 'Financeiro'], ['Cliente mensal', c.contrato && c.contrato.clienteMensal ? 'Sim' : 'Não'], ...(c.contrato && c.contrato.clienteMensal ? [['Fechamento', 'Do dia 1º ao último dia do mês'], ['Forma de pagamento', 'Boleto'], ['Vencimento', 'Todo dia ' + D.CLIENTE_MENSAL.vencimentoDia]] : [])]],
+        ['Dados do responsável financeiro', [['Nome', c.contatoNome], ['WhatsApp', c.whatsapp], ['E-mail (financeiro e/ou fiscal)', c.email], ['Aniversário', D.aniversarioTexto(c.contatoAniversario)], ['Cargo na empresa', 'Financeiro']]],
         // Cadastro anterior a 17/11/2026 com um financeiro diferente do contato: continua à vista, para não sumir.
         ...(c.financeiro && c.financeiro.mesmo === false && (c.financeiro.nome || c.financeiro.whatsapp || c.financeiro.email) ? [['Financeiro (cadastro anterior)', contato(c.financeiro)]] : []),
-        ['Dados do responsável legal da empresa', contato(c.representante, [['Aniversário', D.aniversarioTexto(c.representante && c.representante.aniversario)], ['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
+        ['Dados do responsável legal', contato(c.representante, [['Aniversário', D.aniversarioTexto(c.representante && c.representante.aniversario)], ['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
+        ['Contrato', [['Cliente mensal', c.contrato && c.contrato.clienteMensal ? 'Sim' : 'Não'], ...(c.contrato && c.contrato.clienteMensal ? [['Fechamento', 'Do dia 1º ao último dia do mês'], ['Forma de pagamento', 'Boleto'], ['Vencimento', 'Todo dia ' + D.CLIENTE_MENSAL.vencimentoDia]] : [])]],
       ];
     }
     return secoes.map(([t, l]) => [t, l.filter(([, v]) => v)]).filter(([, l]) => l.length);
@@ -177,7 +178,7 @@
           repAniv.input.readOnly = copia;
           repAniv.no.querySelectorAll('button').forEach((b) => { b.disabled = copia; });
         };
-        const rep = contatoBloco(v.representante, 'responsável legal', () => contatoAtual(), 'Dados do responsável legal da empresa', pintarRepAniv);
+        const rep = contatoBloco(v.representante, 'responsável legal', () => contatoAtual(), 'Dados do responsável legal', pintarRepAniv);
         rep.no.append(repAniv.no);
         const repCargo = seletor(D.CARGOS_REPRESENTANTE, (v.representante && v.representante.cargo) || '', 'Selecione');
         rep.no.append(campo('Cargo na empresa', repCargo));
@@ -290,8 +291,9 @@
           if (cadastro === 'simples') return [bloco(quadro('Dados da empresa', ...sit, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.whats, F.mail), sEnd)];
           // 17/11/2026 (Rodrigo): o contato e o financeiro viram uma etapa só, "Dados do responsável financeiro": o quadro
           // "Dados do responsável" em cima e as Informações de Pagamento embaixo; não existe mais um contato do financeiro à parte.
-          const contato = el('fieldset', 'compras-fieldset'); contato.append(el('legend', null, 'Dados do responsável'), F.contatoNome, F.whats, F.mail, aniv.no, fixo('Cargo na empresa', 'Financeiro'));
-          return [bloco(quadro('Dados da empresa', ...sit, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime), sEnd), bloco(contato, cDados), bloco(rep.no), bloco(revisao)];
+          const contato = el('fieldset', 'compras-fieldset'); contato.append(el('legend', null, 'Dados do responsável financeiro'), F.contatoNome, F.whats, F.mail, aniv.no, fixo('Cargo na empresa', 'Financeiro'));
+          // 18/11/2026 (Rodrigo): a etapa Contrato, antes da Revisão, fica com as Informações de cobrança (que saíram da etapa do responsável financeiro).
+          return [bloco(quadro('Dados da empresa', ...sit, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime), sEnd), bloco(contato), bloco(rep.no), bloco(cDados), bloco(revisao)];
         }
         /** Cadastro lido do formulário: só o tipo e a modalidade em uso (o resto do registro fica como está). */
         // "Preencher endereço" mora dentro do quadro Endereço: desligado, o quadro mostra só a pergunta (compras-so-pergunta, em compras.css).
@@ -338,7 +340,7 @@
           const ultima = passo === passos.length - 1; const etapas = passos.length > 1;
           if (etapas && ultima) {
             // Cada bloco da revisão leva à etapa de onde os dados vieram.
-            const etapaDoBloco = { 'Dados cadastrais': 0, 'Dados pessoais': 0, 'Endereço': tipo === 'juridica' ? 0 : 1, 'Informações complementares': 2, 'Dados do responsável financeiro da empresa': 1, 'Dados do responsável legal da empresa': 2 };
+            const etapaDoBloco = { 'Dados cadastrais': 0, 'Dados pessoais': 0, 'Endereço': tipo === 'juridica' ? 0 : 1, 'Informações complementares': 2, 'Dados do responsável financeiro': 1, 'Dados do responsável legal': 2, 'Contrato': 3 };
             revisao.replaceChildren(el('p', 'profiles-note', 'Confira os dados antes de salvar. Para corrigir, toque em Editar no bloco.'), dlDe(secoesCliente(registro()), (t) => (t in etapaDoBloco ? () => ir(etapaDoBloco[t]) : null)));
           }
           U.subirAoTopo(barraBox, form);
