@@ -641,7 +641,7 @@
           etapasNo.slice(0, -1).forEach((etapa, k) => {
             const quadro = el('fieldset', 'compras-fieldset compras-revisao');
             quadro.append(el('legend', null, (k + 1) + ' · ' + ETAPAS[k]));
-            const linhas = el('dl', 'compras-revisao-lista compras-largo');
+            const linhas = el('dl', 'profiles-info compras-largo'); // o mesmo quadro branco da revisão do cliente e da empresa
             const por = (rotulo, valor) => { linhas.append(el('dt', null, rotulo), el('dd', null, valor || '—')); };
             if (k === 0) { por('Situação do produto', situacao.ativo ? 'Ativo' : 'Inativo'); por('Foto', foto.valor() ? 'Com foto' : 'Sem foto'); }
             etapa.querySelectorAll('label.compras-campo, label.compras-interruptor').forEach((l) => {

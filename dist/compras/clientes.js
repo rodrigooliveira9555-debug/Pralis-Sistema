@@ -17,7 +17,10 @@
   const cor = () => (typeof menuColor !== 'undefined' && menuColor[0]) || '#eab308';
   const cores = () => ({ cor: cor(), corTexto: '#785600' });
   const ICO_PESSOA = '<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/>';
-  /** Os quatro modelos de link de cadastro (Enviar Link de Cadastro): o modelo vem do link, quem preenche não escolhe. */
+  /**
+   * Modelos de link de cadastro: o modelo vem do link, quem preenche não escolhe. O "Enviar" oferece só dois (18/11/2026, Rodrigo):
+   * PF (página única) e PJ (em etapas); os outros dois continuam aqui para um link antigo ainda abrir o formulário dele.
+   */
   const MODELOS_LINK = [
     { id: 'pf-simples', titulo: 'Pessoa Física — Simples', icone: ICO_PESSOA, modelo: { tipoPessoa: 'fisica', cadastro: 'simples' } },
     { id: 'pf-completo', titulo: 'Pessoa Física — Completo', icone: ICO_PESSOA, modelo: { tipoPessoa: 'fisica', cadastro: 'completo' } },
@@ -404,7 +407,7 @@
     const ativos = todos.filter((c) => c.situacao !== 'inativo').length;
     const ponta = U.pontaDaLista(ativos, ativos + (ativos === 1 ? ' cliente ativo' : ' clientes ativos'));
     const sec = U.secao('Clientes', undefined, ponta);
-    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Novo Cliente', 'Cadastrar cliente', () => editarCliente()), ...(window.CicluzConviteLink ? [window.CicluzConviteLink.botao({ cores: cores(), modelos: MODELOS_LINK, visualizar: (id) => editarCliente(null, { modelo: MODELOS_LINK.find((m) => m.id === id).modelo, previa: true }) })] : []));
+    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Novo Cliente', 'Cadastrar cliente', () => editarCliente()), ...(window.CicluzConviteLink ? [window.CicluzConviteLink.botao({ rotuloModelo: 'Tipo de cliente', modelos: MODELOS_LINK.filter((m) => m.id === 'pf-simples' || m.id === 'pj-completo').map((m) => ({ id: m.id, titulo: nomeDe(D.TIPOS_PESSOA_CLIENTE, m.modelo.tipoPessoa) })), visualizar: (id) => editarCliente(null, { modelo: MODELOS_LINK.find((m) => m.id === id).modelo, previa: true }) })] : []));
     sec.append(linhas);
     if (!lista.length) linhas.append(U.vazio(busca ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado.', busca ? '' : 'Use "Novo Cliente" para cadastrar Pessoa Física ou Jurídica.'));
     else {

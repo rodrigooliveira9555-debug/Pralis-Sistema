@@ -713,9 +713,39 @@
     return grupo;
   }
 
+  /**
+   * Botão retangular "Enviar" (aviãozinho) do cabeçalho de uma lista e o painel que ele abre — padrão único (18/11/2026,
+   * Rodrigo), usado por Fornecedores, Clientes e Patrimônios: uma coluna branca estreita com a seta de fechar e as bolinhas
+   * dos canais (WhatsApp, e-mail, SMS) e, ao lado, os campos do envio. O painel fica por cima da tela, preso ao botão.
+   * dica: texto do botão para o leitor de tela; campos: nós antes do "Tipo de envio"; depois: nós depois dele;
+   * aoCanal(id): chamado quando a pessoa toca num canal.
+   */
+  const CANAIS_ENVIO = [['whatsapp', 'WhatsApp'], ['email', 'E-mail'], ['sms', 'SMS']];
+  function botaoEnviar({ dica, campos = [], depois = [], aoCanal }) {
+    const caixa = el('span', 'compras-enviar');
+    const painel = el('div', 'compras-enviar-painel');
+    painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', dica);
+    const b = botaoTitulo('Enviar', dica, () => abrir(painel.hidden), ICONES.send);
+    const bolinha = (rotulo, desenho, acao, classe = '') => {
+      const x = el('button', 'shortcut-circle compras-redondo ' + classe);
+      x.type = 'button'; x.title = rotulo; x.setAttribute('aria-label', rotulo); x.innerHTML = svg(desenho); x.onclick = acao;
+      return x;
+    };
+    const canais = el('div', 'compras-enviar-canais'); canais.setAttribute('role', 'group'); canais.setAttribute('aria-label', 'Tipo de envio');
+    const fechar = bolinha('Fechar', ICONES.voltar, () => { abrir(false); b.focus(); }, 'compras-enviar-fechar');
+    canais.append(fechar, ...CANAIS_ENVIO.map(([id, nomeCanal]) => bolinha('Enviar por ' + nomeCanal, ICONES[id], () => aoCanal(id))));
+    const lado = el('div', 'compras-enviar-prazo');
+    const tipo = el('div', 'compras-campo');
+    tipo.append(el('span', 'compras-rotulo', 'Tipo de envio'), el('small', 'profiles-note', 'Toque em WhatsApp, e-mail ou SMS, nos ícones ao lado.'));
+    lado.append(...campos, tipo, ...depois);
+    painel.append(canais, lado);
+    const abrir = flutuante(b, painel, { foco: fechar });
+    caixa.append(b, painel);
+    return caixa;
+  }
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, quadroSituacao, cartoesEscolha, flutuante,
+    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar,
   };
 })();

@@ -249,7 +249,6 @@
   }
   /* ---------- Enviar link para cadastro (P-29): a parte visível existe; o envio está desligado ---------- */
   const PRAZOS_CONVITE = [['1', '1 dia útil'], ['3', '3 dias úteis'], ['5', '5 dias úteis'], ['7', '7 dias úteis'], ['data', 'Escolher data e hora']];
-  const CANAIS_CONVITE = [['whatsapp', 'WhatsApp'], ['email', 'E-mail'], ['sms', 'SMS']];
   /* Prazo padrão dos convites: preferência do sistema neste aparelho (não é dado de fornecedor). Vem preenchido com o
      último prazo em dias úteis escolhido (3 enquanto ninguém trocar); "data e hora" vale só para aquele envio. */
   const CHAVE_PRAZO_CONVITE = 'cicluz-fornecedores-prazo-convite';
@@ -266,29 +265,8 @@
   function conviteCadastro(canal, prazo) { // eslint-disable-line no-unused-vars
     return null;
   }
-  /**
-   * Botão retangular "Enviar" (aviãozinho) do cabeçalho da lista e o painel que ele abre: uma coluna branca estreita
-   * com a seta de fechar e as bolinhas dos canais (WhatsApp, e-mail, SMS), e ao lado o Prazo de resposta (padrão
-   * 3 dias úteis, ou data e hora). O painel fica por cima da tela (fixo), alinhado ao botão.
-   */
+  /** "Enviar" de Fornecedores: o botão comum (U.botaoEnviar) com o Prazo de resposta (padrão 3 dias úteis, ou data e hora). */
   function botaoEnviarConvite() {
-    const caixa = el('span', 'compras-enviar');
-    const painel = el('div', 'compras-enviar-painel');
-    painel.hidden = true;
-    painel.setAttribute('role', 'dialog');
-    painel.setAttribute('aria-label', 'Enviar link para cadastro');
-    const b = U.botaoTitulo('Enviar', 'Enviar link para cadastro', () => abrir(painel.hidden), U.ICONES.send);
-    const bolinha = (rotulo, desenho, acao, classe = '') => {
-      const x = el('button', 'shortcut-circle compras-redondo ' + classe);
-      x.type = 'button'; x.title = rotulo; x.setAttribute('aria-label', rotulo);
-      x.innerHTML = U.svg(desenho);
-      x.onclick = acao;
-      return x;
-    };
-    const canais = el('div', 'compras-enviar-canais');
-    canais.setAttribute('role', 'group');
-    canais.setAttribute('aria-label', 'Tipo de envio');
-    const fechar = bolinha('Fechar', U.ICONES.voltar, () => { abrir(false); b.focus(); }, 'compras-enviar-fechar');
     const aviso = el('p', 'profiles-note');
     aviso.setAttribute('role', 'status');
     const prazo = seletor(PRAZOS_CONVITE, prazoPadraoConvite());
@@ -299,20 +277,15 @@
     const pintarPrazo = () => { const livre = prazo.value === 'data'; dataCampo.style.display = livre ? '' : 'none'; horaCampo.style.display = livre ? '' : 'none'; };
     prazo.onchange = () => { pintarPrazo(); guardarPrazoConvite(prazo.value); };
     const lerPrazo = () => (prazo.value === 'data' ? { tipo: 'data', data: data.value, hora: hora.value } : { tipo: 'dias-uteis', dias: Number(prazo.value) });
-    canais.append(fechar, ...CANAIS_CONVITE.map(([id, nomeCanal]) => bolinha('Enviar por ' + nomeCanal, U.ICONES[id], () => {
-      const convite = conviteCadastro(id, lerPrazo());
-      if (!convite) { aviso.textContent = 'O link de cadastro ainda não está ativo. Falta a liberação da parte do servidor.'; return; }
-      window.open(convite.url, '_blank', 'noopener');
-    })));
-    const lado = el('div', 'compras-enviar-prazo');
-    const tipo = el('div', 'compras-campo');
-    tipo.append(el('span', 'compras-rotulo', 'Tipo de envio'), el('small', 'profiles-note', 'Toque em WhatsApp, e-mail ou SMS, nos ícones ao lado.'));
-    lado.append(campo('Prazo de resposta', prazo), dataCampo, horaCampo, tipo, aviso);
     pintarPrazo();
-    painel.append(canais, lado);
-    const abrir = U.flutuante(b, painel, { foco: fechar });
-    caixa.append(b, painel);
-    return caixa;
+    return U.botaoEnviar({
+      dica: 'Enviar link para cadastro', campos: [campo('Prazo de resposta', prazo), dataCampo, horaCampo], depois: [aviso],
+      aoCanal: (id) => {
+        const convite = conviteCadastro(id, lerPrazo());
+        if (!convite) { aviso.textContent = 'O link de cadastro ainda não está ativo. Falta a liberação da parte do servidor.'; return; }
+        window.open(convite.url, '_blank', 'noopener');
+      },
+    });
   }
   const telasF = {};
   let origemF = 'mer';
