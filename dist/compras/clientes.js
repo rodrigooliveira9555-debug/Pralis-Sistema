@@ -54,7 +54,7 @@
         ['Dados do responsável financeiro da empresa', [['Nome', c.contatoNome], ['WhatsApp', c.whatsapp], ['E-mail (financeiro e/ou fiscal)', c.email], ['Aniversário', D.aniversarioTexto(c.contatoAniversario)], ['Cargo na empresa', 'Financeiro'], ['Cliente mensal', c.contrato && c.contrato.clienteMensal ? 'Sim' : 'Não'], ...(c.contrato && c.contrato.clienteMensal ? [['Fechamento', 'Do dia 1º ao último dia do mês'], ['Forma de pagamento', 'Boleto'], ['Vencimento', 'Todo dia ' + D.CLIENTE_MENSAL.vencimentoDia]] : [])]],
         // Cadastro anterior a 17/11/2026 com um financeiro diferente do contato: continua à vista, para não sumir.
         ...(c.financeiro && c.financeiro.mesmo === false && (c.financeiro.nome || c.financeiro.whatsapp || c.financeiro.email) ? [['Financeiro (cadastro anterior)', contato(c.financeiro)]] : []),
-        ['Dados do responsável geral da empresa', contato(c.representante, [['Aniversário', D.aniversarioTexto(c.representante && c.representante.aniversario)], ['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
+        ['Dados do responsável legal da empresa', contato(c.representante, [['Aniversário', D.aniversarioTexto(c.representante && c.representante.aniversario)], ['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
       ];
     }
     return secoes.map(([t, l]) => [t, l.filter(([, v]) => v)]).filter(([, l]) => l.length);
@@ -163,9 +163,9 @@
         const contatoAtual = () => ({ nome: contatoNome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() });
         const finAntigo = v.financeiro && v.financeiro.mesmo === false && (v.financeiro.nome || v.financeiro.whatsapp || v.financeiro.email) ? v.financeiro : null;
         const fin = { ler: () => finAntigo || { mesmo: true, ...contatoAtual() }, pintar: () => {} };
-        // Aniversário do responsável geral (18/11/2026, Rodrigo): dia e mês, no mesmo campo do responsável financeiro. Com
+        // Aniversário do responsável legal (18/11/2026, Rodrigo): dia e mês, no mesmo campo do responsável financeiro. Com
         // "O mesmo da etapa anterior" ligado, mostra o da etapa anterior, travado, e é esse que vai para o cadastro.
-        const repAniv = CAD().seletoresAniversario((v.representante && v.representante.aniversario) || '', { rotulo: 'Aniversário do responsável geral' });
+        const repAniv = CAD().seletoresAniversario((v.representante && v.representante.aniversario) || '', { rotulo: 'Aniversário do responsável legal' });
         let repAnivProprio = repAniv.input.value;
         const pintarRepAniv = (copia) => {
           if (copia && !repAniv.input.readOnly) repAnivProprio = repAniv.input.value;
@@ -173,7 +173,7 @@
           repAniv.input.readOnly = copia;
           repAniv.no.querySelectorAll('button').forEach((b) => { b.disabled = copia; });
         };
-        const rep = contatoBloco(v.representante, 'responsável geral', () => contatoAtual(), 'Dados do responsável geral da empresa', pintarRepAniv);
+        const rep = contatoBloco(v.representante, 'responsável legal', () => contatoAtual(), 'Dados do responsável legal da empresa', pintarRepAniv);
         rep.no.append(repAniv.no);
         const repCargo = seletor(D.CARGOS_REPRESENTANTE, (v.representante && v.representante.cargo) || '', 'Selecione');
         rep.no.append(campo('Cargo na empresa', repCargo));
@@ -208,8 +208,11 @@
         let tipo = m0.tipoPessoa === 'juridica' ? 'juridica' : 'fisica';
         // Cliente novo cadastrado aqui dentro (não o link nem a prévia): Pessoa Jurídica abre no cadastro em etapas, com a barra
         // de evolução, como era antes de 17/11/2026 (pedido do Rodrigo); Pessoa Física continua numa página só.
-        const novoPorDentro = !c && !opcoes.externo && !opcoes.previa;
-        let cadastro = m0.cadastro === 'completo' || (novoPorDentro && tipo === 'juridica') ? 'completo' : 'simples';
+        // Cadastro antigo aberto para editar (18/11/2026, Rodrigo): a Pessoa Jurídica abre sempre no formato atual, em etapas, mesmo a que
+        // foi gravada como "Simples", para os campos novos aparecerem e o cadastro ficar no padrão ao salvar. Nada muda no que está gravado enquanto não salvar.
+        const porDentro = !opcoes.externo && !opcoes.previa;
+        const novoPorDentro = !c && porDentro;
+        let cadastro = m0.cadastro === 'completo' || (porDentro && tipo === 'juridica') ? 'completo' : 'simples';
         let passo = 0;
         // Uma só seção no alto: Pessoa Física e Pessoa Jurídica lado a lado; o Tipo de cadastro (Simples | Completo) mora dentro do cartão marcado.
         // A escolha só muda a tela depois de pedirTroca/aplicar (que pode pedir confirmação); pintarTopo() redesenha a partir de tipo e cadastro.
@@ -269,7 +272,7 @@
             aoFechar: () => { if (!confirmado) reverter(); },
           });
         }
-        function aplicar(novoTipo, novoCad) { tipo = novoTipo; cadastro = novoPorDentro ? (novoTipo === 'juridica' ? 'completo' : 'simples') : novoCad; passo = 0; desenhar(); }
+        function aplicar(novoTipo, novoCad) { tipo = novoTipo; cadastro = porDentro && novoTipo === 'juridica' ? 'completo' : novoPorDentro ? 'simples' : novoCad; passo = 0; desenhar(); }
 
         /* Páginas de cada modalidade (os mesmos campos mudam de lugar) */
         const bloco = (...nos) => nos;
@@ -340,7 +343,7 @@
           const ultima = passo === passos.length - 1; const etapas = passos.length > 1;
           if (etapas && ultima) {
             // Cada bloco da revisão leva à etapa de onde os dados vieram.
-            const etapaDoBloco = { 'Dados cadastrais': 0, 'Dados pessoais': 0, 'Endereço': tipo === 'juridica' ? 0 : 1, 'Informações complementares': 2, 'Dados do responsável financeiro da empresa': 1, 'Dados do responsável geral da empresa': 2 };
+            const etapaDoBloco = { 'Dados cadastrais': 0, 'Dados pessoais': 0, 'Endereço': tipo === 'juridica' ? 0 : 1, 'Informações complementares': 2, 'Dados do responsável financeiro da empresa': 1, 'Dados do responsável legal da empresa': 2 };
             revisao.replaceChildren(el('p', 'profiles-note', 'Confira os dados antes de salvar. Para corrigir, toque em Editar no bloco.'), dlDe(secoesCliente(registro()), (t) => (t in etapaDoBloco ? () => ir(etapaDoBloco[t]) : null)));
           }
           U.subirAoTopo(barraBox, form);
