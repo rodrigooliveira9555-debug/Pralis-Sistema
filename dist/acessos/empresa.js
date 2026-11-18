@@ -391,6 +391,7 @@
           ir(atual + 1);
         }, 'btn form-next-action');
         const salvarFim = el('button', 'btn', 'Salvar'); salvarFim.type = 'submit';
+        const cancelar = botao('Cancelar', () => d.close(), 'btn secondary footer-cancel-accent');
         const nav = el('div', 'compras-form-rodape compras-etapas-nav compras-largo');
         // Na ficha nova só se anda para a frente pelo Avançar; com dados gravados, qualquer etapa abre pelo toque na barra.
         const barra = window.CicluzStepper.create({ steps: ETAPAS.map((label) => ({ label })), current: atual, label: 'Etapas dos dados da empresa', onSelect: (i) => { if (jaTemDados || i <= atual) ir(i); } });
@@ -427,7 +428,7 @@ if (x.responsaveisDaMatriz) { if (!daMatrizCopia.length) blocos.push(['Dados dos
           const ultima = atual === quadros.length - 1;
           // Lendo: só o Editar. Editando: Voltar a partir da 2ª etapa, Avançar até a penúltima; Salvar em todas quando a
           // ficha já existia e só na Revisão na ficha nova.
-          nav.replaceChildren(...(editando ? [atual > 0 && voltar, !ultima && avancar, (jaTemDados || ultima) && salvarFim].filter(Boolean) : [editar]));
+          nav.replaceChildren(...(editando ? [atual > 0 && voltar, cancelar, (jaTemDados || ultima) && salvarFim, !ultima && avancar].filter(Boolean) : [editar]));
         }
         function ir(i) {
           atual = Math.max(0, Math.min(quadros.length - 1, i));

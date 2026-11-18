@@ -528,7 +528,7 @@
         if (!novo) {
           const rod = el('div', 'compras-form-rodape');
           rod.append(botao('Histórico de nomes', () => X.historicoDeNomes(p)));
-          eGeral.append(rod);
+          rod.classList.add('compras-largo'); s1.append(rod);
         }
 
         /* ===== Prévias ao vivo ===== */
@@ -627,6 +627,7 @@
         const avancar = botao('Avançar', () => ir(atual + 1), 'btn form-next-action');
         const salvarFim = el('button', 'btn', 'Salvar');
         salvarFim.type = 'submit';
+        const cancelar = botao('Cancelar', () => form.closest('dialog').close(), 'btn secondary footer-cancel-accent');
         const nav = el('div', 'compras-form-rodape compras-etapas-nav');
         const barra = window.CicluzStepper.create({ steps: ETAPAS.map((label) => ({ label })), current: 0, label: 'Etapas do cadastro do produto', onSelect: (i) => ir(i) });
         /* Etapa 6 · Revisão: tudo o que foi preenchido nas outras etapas, só para leitura, com "Editar" por etapa. */
@@ -666,7 +667,7 @@
           barra.set(atual);
           // Voltar a partir da 2ª etapa, Avançar até a penúltima; Salvar em todas na edição e só na última no cadastro novo.
           const ultima = atual === etapasNo.length - 1;
-          nav.replaceChildren(...[atual > 0 && voltar, !ultima && avancar, (!novo || ultima) && salvarFim].filter(Boolean));
+          nav.replaceChildren(...[atual > 0 && voltar, cancelar, (!novo || ultima) && salvarFim, !ultima && avancar].filter(Boolean));
           U.subirAoTopo(barra.el, form);
         }
         form.append(barra.el, ...etapasNo, nav);

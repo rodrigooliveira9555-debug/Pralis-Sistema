@@ -201,8 +201,9 @@ body :is(.view,dialog,.modal) :is(.footer-save-accent,.footer-cancel-accent){dis
 
 
 body :is(.view,dialog,.modal) .footer-action-pair{display:flex!important;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px}
-body .footer-action-pair>.footer-cancel-accent{order:0!important}
-body .footer-action-pair>.footer-save-accent{order:1!important}
+/* A barra de ações dos cadastros em etapas (.compras-etapas-nav) tem ordem própria (compras.css): Voltar · Cancelar · Salvar · Avançar. */
+body .footer-action-pair:not(.compras-etapas-nav)>.footer-cancel-accent{order:0!important}
+body .footer-action-pair:not(.compras-etapas-nav)>.footer-save-accent{order:1!important}
 
 /* Operator fees: continuous rows and responsive fields for the expanded editor. */
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees > .operator-fee-brand {

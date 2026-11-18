@@ -1104,8 +1104,8 @@
         }, 'btn form-next-action');
         const salvarFim = el('button', 'btn', 'Salvar');
         salvarFim.type = 'submit';
+        const cancelar = botao('Cancelar', () => dlg.close(), 'btn secondary footer-cancel-accent');
         const nav = el('div', 'compras-form-rodape compras-etapas-nav');
-        nav.append(voltar, avancar, salvarFim);
         // No cadastro novo só se volta pela barra (para a frente, pelo Avançar, que confere a etapa); na edição, qualquer etapa.
         const barra = window.CicluzStepper.create({ steps: etapas(), current: 0, label: 'Etapas do cadastro do fornecedor', onSelect: (i) => { if (f || i <= atual) ir(i); } });
         function ir(i) {
@@ -1119,7 +1119,7 @@
           // Os botões entram e saem da barra (o formato padrão dos botões de rodapé força a exibição mesmo com hidden):
           // Voltar a partir da 2ª etapa, Avançar até a penúltima; Salvar em todas na edição e só na última no cadastro novo.
           const ultima = atual === quadros.length - 1;
-          nav.replaceChildren(...[atual > 0 && voltar, !ultima && avancar, (f || ultima) && salvarFim].filter(Boolean));
+          nav.replaceChildren(...[atual > 0 && voltar, cancelar, (f || ultima) && salvarFim, !ultima && avancar].filter(Boolean));
           const foco = quadros[atual].querySelector('input:not([type=checkbox]):not([readonly]),select');
           if (foco && form.isConnected) foco.focus({ preventScroll: true });
           U.subirAoTopo(barra.el, form);

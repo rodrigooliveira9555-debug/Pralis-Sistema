@@ -317,7 +317,23 @@ span.compras-chip { cursor: default; }
 @media (max-width: 600px) { .compras-form-padrao .compras-fieldset { grid-template-columns: minmax(0, 1fr); } }
 /* Cadastro em etapas: a barra (stepper.js) no topo e Voltar/Avançar/Salvar embaixo, como no Cadastro Completo. */
 .compras-form-padrao .stepper-wrap { margin: 4px 0 8px; }
-.compras-etapas-nav { justify-content: flex-end; }
+/* Barra de ações da página (padrão do Rodrigo, 18/11/2026) — vale em todo cadastro em etapas. Fica FORA dos quadros, no fim
+   do formulário, porque age sobre a página inteira; botão DENTRO de um quadro age só naquele bloco e fica à esquerda, embaixo
+   do conteúdo dele. Voltar à esquerda; à direita, nesta ordem, Cancelar · Salvar · Avançar. No celular: Voltar e Avançar na
+   linha de cima (esquerda e direita), Cancelar e Salvar na de baixo. */
+.compras-form-rodape.compras-etapas-nav { justify-content: flex-end; }
+.compras-etapas-nav > .btn { order: 2; }
+.compras-etapas-nav > .footer-cancel-accent { order: 1; }
+.compras-etapas-nav > .form-back-action { order: 0; margin-right: auto; }
+.compras-etapas-nav > .form-next-action { order: 3; }
+@media (max-width: 600px) {
+  /* Duas linhas: Voltar e Avançar em cima, Cancelar e Salvar embaixo (o ::after é a quebra de linha entre os dois pares). */
+  .compras-form-rodape.compras-etapas-nav::after { content: ""; flex: 0 0 100%; height: 0; margin-top: -10px; order: 2; }
+  .compras-etapas-nav > .btn { order: 4; flex: 0 0 calc(50% - 5px); }
+  .compras-etapas-nav > .footer-cancel-accent { order: 3; }
+  .compras-etapas-nav > .form-back-action { order: 0; }
+  .compras-etapas-nav > .form-next-action { order: 1; margin-left: auto; }
+}
 /* Voltar, Avançar e Salvar com a mesma largura (a do rodapé de formulário, que o layout-review.js mede no grupo). */
 .compras-etapas-nav > .btn { min-width: var(--acao-largura, 128px); }
 /* Uma etapa com mais de um quadro (ex.: dados da empresa + endereço). */

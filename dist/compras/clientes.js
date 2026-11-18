@@ -324,7 +324,7 @@
             revisao.replaceChildren(el('p', 'profiles-note', 'Confira os dados antes de salvar. Para corrigir, toque em Editar no bloco.'), dlDe(secoesCliente(registro()), (t) => (t in etapaDoBloco ? () => ir(etapaDoBloco[t]) : null)));
           }
           U.subirAoTopo(barraBox, form);
-          nav.replaceChildren(...(etapas ? [passo > 0 && voltar, !ultima && avancar, (c || ultima) && salvarFim] : [cancelar, salvarFim]).filter(Boolean));
+          nav.replaceChildren(...(etapas ? [passo > 0 && voltar, cancelar, (c || ultima) && salvarFim, !ultima && avancar] : [cancelar, salvarFim]).filter(Boolean));
         }
         const nomes0 = () => D.etapasCliente(tipo, cadastro).map((label) => ({ label }));
         form.append(...(opcoes.externo ? [] : [controles]), barraBox, corpo, erroEtapa, nav);
