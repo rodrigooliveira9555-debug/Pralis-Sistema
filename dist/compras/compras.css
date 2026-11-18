@@ -616,3 +616,6 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 /* Painel do Enviar: Copiar link e Visualizar formulário, um embaixo do outro, da largura do painel. */
 .compras-enviar-acoes{display:grid;gap:8px}
 .compras-enviar-acoes>.btn{width:100%;justify-content:space-between}
+/* Painel do Enviar com mais campos (tipo, prazo, mensagem): não passa da altura da tela; rola por dentro. */
+.compras-enviar-prazo{max-height:calc(100vh - 96px);overflow-y:auto}
+.compras-enviar-prazo textarea{width:100%;box-sizing:border-box;resize:vertical}

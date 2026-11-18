@@ -248,15 +248,6 @@
     return [{ ...mer, cor: 'var(--navigation-ink, #a2a0aa)', rotulo: 'Sem categoria' }];
   }
   /* ---------- Enviar link para cadastro (P-29): a parte visível existe; o envio está desligado ---------- */
-  const PRAZOS_CONVITE = [['1', '1 dia útil'], ['3', '3 dias úteis'], ['5', '5 dias úteis'], ['7', '7 dias úteis'], ['data', 'Escolher data e hora']];
-  /* Prazo padrão dos convites: preferência do sistema neste aparelho (não é dado de fornecedor). Vem preenchido com o
-     último prazo em dias úteis escolhido (3 enquanto ninguém trocar); "data e hora" vale só para aquele envio. */
-  const CHAVE_PRAZO_CONVITE = 'cicluz-fornecedores-prazo-convite';
-  const prazoPadraoConvite = () => {
-    try { const v = localStorage.getItem(CHAVE_PRAZO_CONVITE); if (PRAZOS_CONVITE.some(([id]) => id === v && id !== 'data')) return v; } catch (e) { /* sem preferência salva */ }
-    return '3';
-  };
-  const guardarPrazoConvite = (v) => { if (v === 'data') return; try { localStorage.setItem(CHAVE_PRAZO_CONVITE, v); } catch (e) { /* vale só nesta visita */ } };
   /**
    * ÚNICO ponto para ligar o envio quando a P-29 (parte do servidor) for decidida: recebe o canal e o prazo e deve
    * devolver { url } para abrir (wa.me, mailto:, sms:) com a mensagem e o link do convite. Hoje devolve null, porque
@@ -269,19 +260,11 @@
   function botaoEnviarConvite() {
     const aviso = el('p', 'profiles-note');
     aviso.setAttribute('role', 'status');
-    const prazo = seletor(PRAZOS_CONVITE, prazoPadraoConvite());
-    const data = entrada('date', '');
-    const hora = entrada('time', '');
-    const dataCampo = campo('Responder até (data)', data);
-    const horaCampo = campo('Hora', hora);
-    const pintarPrazo = () => { const livre = prazo.value === 'data'; dataCampo.style.display = livre ? '' : 'none'; horaCampo.style.display = livre ? '' : 'none'; };
-    prazo.onchange = () => { pintarPrazo(); guardarPrazoConvite(prazo.value); };
-    const lerPrazo = () => (prazo.value === 'data' ? { tipo: 'data', data: data.value, hora: hora.value } : { tipo: 'dias-uteis', dias: Number(prazo.value) });
-    pintarPrazo();
+    const prazo = U.prazoResposta();
     return U.botaoEnviar({
-      dica: 'Enviar link para cadastro', campos: [campo('Prazo de resposta', prazo), dataCampo, horaCampo], depois: [aviso],
+      dica: 'Enviar link para cadastro', campos: prazo.campos, depois: [aviso],
       aoCanal: (id) => {
-        const convite = conviteCadastro(id, lerPrazo());
+        const convite = conviteCadastro(id, prazo.ler());
         if (!convite) { aviso.textContent = 'O link de cadastro ainda não está ativo. Falta a liberação da parte do servidor.'; return; }
         window.open(convite.url, '_blank', 'noopener');
       },

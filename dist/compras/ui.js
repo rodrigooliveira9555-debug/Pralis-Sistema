@@ -721,6 +721,30 @@
    * aoCanal(id): chamado quando a pessoa toca num canal.
    */
   const CANAIS_ENVIO = [['whatsapp', 'WhatsApp'], ['email', 'E-mail'], ['sms', 'SMS']];
+  /* Prazo de resposta do Enviar (o mesmo em Fornecedores, Clientes e Patrimônios). O prazo padrão é preferência deste aparelho
+     (não é dado de cadastro): vem com o último prazo em dias úteis escolhido (3 enquanto ninguém trocar); "data e hora" vale só
+     para aquele envio. A chave é a que Fornecedores já usava, para a preferência gravada continuar valendo. */
+  const PRAZOS_RESPOSTA = [['1', '1 dia útil'], ['3', '3 dias úteis'], ['5', '5 dias úteis'], ['7', '7 dias úteis'], ['data', 'Escolher data e hora']];
+  const CHAVE_PRAZO_RESPOSTA = 'cicluz-fornecedores-prazo-convite';
+  /** Campos do prazo. Devolve { campos, ler(), frase() }: ler() dá { tipo, dias } ou { tipo, data, hora }; frase() é o prazo por extenso, para a mensagem. */
+  function prazoResposta() {
+    let padrao = '3';
+    try { const v = localStorage.getItem(CHAVE_PRAZO_RESPOSTA); if (PRAZOS_RESPOSTA.some(([id]) => id === v && id !== 'data')) padrao = v; } catch (e) { /* sem preferência salva */ }
+    const prazo = seletor(PRAZOS_RESPOSTA, padrao);
+    const data = entrada('date', ''); const hora = entrada('time', '');
+    const dataCampo = campo('Responder até (data)', data); const horaCampo = campo('Hora', hora);
+    const pintar = () => { const livre = prazo.value === 'data'; dataCampo.style.display = livre ? '' : 'none'; horaCampo.style.display = livre ? '' : 'none'; };
+    prazo.onchange = () => { pintar(); if (prazo.value !== 'data') { try { localStorage.setItem(CHAVE_PRAZO_RESPOSTA, prazo.value); } catch (e) { /* vale só nesta visita */ } } };
+    pintar();
+    const ler = () => (prazo.value === 'data' ? { tipo: 'data', data: data.value, hora: hora.value } : { tipo: 'dias-uteis', dias: Number(prazo.value) });
+    const frase = () => {
+      if (prazo.value !== 'data') return 'Prazo para resposta: ' + prazo.selectedOptions[0].textContent + '.';
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(data.value || '');
+      const dia = m ? m[3] + '/' + m[2] + '/' + m[1] : (data.value || '');
+      return dia ? 'Prazo para resposta: até ' + dia + (hora.value ? ' às ' + hora.value : '') + '.' : '';
+    };
+    return { campos: [campo('Prazo de resposta', prazo), dataCampo, horaCampo], ler, frase };
+  }
   function botaoEnviar({ dica, campos = [], depois = [], aoCanal }) {
     const caixa = el('span', 'compras-enviar');
     const painel = el('div', 'compras-enviar-painel');
@@ -746,6 +770,6 @@
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar,
+    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta,
   };
 })();
