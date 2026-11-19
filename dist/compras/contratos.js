@@ -355,7 +355,7 @@
     const bens = bensCadastrados().filter((b) => !b.baixa || marcados.has('bem:' + b.id)).sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR'));
     const folha = (b) => ({ id: 'bem:' + b.id, nome: b.nome + (b.baixa ? ' (baixado)' : ''), ativo: !b.baixa, folha: true, conta: 'Patrimônio' });
     const n = (q) => (q === 1 ? '1 patrimônio' : q + ' patrimônios');
-    const grupos = S.gruposRetirada();
+    const grupos = S.gruposPatrimonio(); // só Investimento
     const gs = grupos.map((g) => {
       const subs = g.subgrupos.map((s2) => { const itens = bens.filter((b) => b.grupoRetId === g.id && b.subgrupoRetId === s2.id).map(folha); return { id: 'grp:' + g.id + '|' + s2.id, nome: g.nome + ' › ' + s2.nome, ativo: g.ativo && s2.ativo, conta: n(itens.length), filhos: itens }; });
       const diretos = bens.filter((b) => b.grupoRetId === g.id && !g.subgrupos.some((s2) => s2.id === b.subgrupoRetId)).map(folha);

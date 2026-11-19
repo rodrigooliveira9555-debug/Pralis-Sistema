@@ -150,7 +150,7 @@
         if (opcoes.categoria) categoria.disabled = true;
         // Grupo de patrimônio (19/11/2026, Rodrigo): o grupo e o subgrupo de RET - Grupos de Retiradas em que o bem fica, guardados por id.
         // É por ele que o patrimônio aparece dentro do subgrupo na escolha do Objeto do contrato. Opcional; bem antigo continua sem grupo.
-        const gruposRet = (window.CicluzComprasDados && window.CicluzComprasDados.gruposRetirada) ? window.CicluzComprasDados.gruposRetirada() : [];
+        const gruposRet = (window.CicluzComprasDados && window.CicluzComprasDados.gruposPatrimonio) ? window.CicluzComprasDados.gruposPatrimonio() : []; // só Investimento
         const nomeRet = (t) => (typeof formatSystemName === 'function' ? formatSystemName(t) : t);
         const valorRet = v.grupoRetId ? v.grupoRetId + '|' + (v.subgrupoRetId || '') : '';
         const opcRet = gruposRet.flatMap((g) => (g.subgrupos.length ? g.subgrupos.filter((s2) => (g.ativo && s2.ativo) || valorRet === g.id + '|' + s2.id).map((s2) => [g.id + '|' + s2.id, nomeRet(g.nome) + ' › ' + nomeRet(s2.nome)]) : (g.ativo || valorRet === g.id + '|' ? [[g.id + '|', nomeRet(g.nome)]] : [])));

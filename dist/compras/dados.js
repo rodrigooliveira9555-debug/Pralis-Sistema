@@ -254,6 +254,9 @@
     }
     return (Array.isArray(lista) ? lista : []).map((g) => ({ id: g.id, nome: g.name, ativo: g.active !== false, subgrupos: (g.children || []).map((s) => ({ id: s.id, nome: s.name, ativo: s.active !== false })) }));
   }
+  /** Grupos de patrimônio (decisão do Rodrigo, 19/11/2026): dos grupos de retiradas, só o de Investimento (id fixo do cadastro: ret-g0). */
+  const GRUPO_INVESTIMENTO = 'ret-g0';
+  function gruposPatrimonio() { return gruposRetirada().filter((g) => g.id === GRUPO_INVESTIMENTO); }
   function nomeGrupo(grupoId, subgrupoId) {
     const g = gruposMercadoria().find((x) => x.id === grupoId);
     if (!g) return grupoId ? 'Grupo não encontrado' : 'Sem grupo';
@@ -354,7 +357,7 @@
     get dados() { return dados; },
     get erroLeitura() { return erroLeitura; },
     transacao, novoId, agoraIso, hojeIso,
-    gruposMercadoria, gruposRetirada, nomeGrupo, arvoreLocais, nosLocais, vinculo, arquivo, arquivoAberto, totalArquivo, gravarArquivo, tirarDoArquivo, locais,
+    gruposMercadoria, gruposRetirada, gruposPatrimonio, nomeGrupo, arvoreLocais, nosLocais, vinculo, arquivo, arquivoAberto, totalArquivo, gravarArquivo, tirarDoArquivo, locais,
     fornecedor, produto, responsavel, referencia, definirReferencia, fornecedoresDoProduto, bolinhas,
   };
 })();
