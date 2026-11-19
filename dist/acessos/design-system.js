@@ -19,6 +19,34 @@
   const letra = (texto, px, peso, linha) => { const p = el('p', 'ds-letra', texto); p.style.font = peso + ' ' + px + 'px/' + linha + 'px var(--ui-font)'; return p; };
   const redondo = (rotulo, desenho, perigo) => { const b = el('button', 'shortcut-circle compras-redondo' + (perigo ? ' perigo' : '')); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = U.svg(desenho); return b; };
   const comLegenda = (no, texto) => { const c = el('div', 'ds-peca'); c.append(no, el('small', 'profiles-note', texto)); return c; };
+  /* Biblioteca de ícones: uma grade com o desenho e o nome de cada um. O desenho vem de onde o sistema o guarda (não é copiado para cá). */
+  const umIcone = (html, nome) => { const c = el('div', 'ds-icone'); const q = el('span', 'ds-icone-caixa'); q.setAttribute('aria-hidden', 'true'); q.innerHTML = /^\s*<svg/.test(html) ? html : U.svg(html); c.append(q, el('small', null, nome)); return c; };
+  const grade = (lista) => { const g = el('div', 'ds-icones compras-largo'); if (!lista.length) g.append(el('p', 'profiles-note', 'Nenhum ícone encontrado nesta parte.')); g.append(...lista.map(([html, nome]) => umIcone(html, nome))); return g; };
+  // Os ícones do menu moram em index.html (icons, subIcone, moneyMark): lidos de lá quando existem.
+  const doMenuPrincipal = () => { const l = []; if (typeof moneyMark === 'function') l.push([moneyMark(0), 'Entradas'], [moneyMark(1), 'Transferências'], [moneyMark(2), 'Saídas'], [moneyMark(3), 'Resultados']);
+    if (typeof icons !== 'undefined') { if (icons.settings) l.push([icons.settings, 'Configurações']); if (icons.overview) l.push([icons.overview, 'Visão Geral']); } return l; };
+  const doSubmenu = () => { if (typeof subIcone === 'undefined') return []; const porDesenho = new Map(); Object.entries(subIcone).forEach(([nome, d]) => { porDesenho.set(d, [...(porDesenho.get(d) || []), nome]); }); return [...porDesenho].map(([d, nomes]) => [d, nomes.join(', ')]); };
+  /* Modelos em tamanho real do cabeçalho de cima e da barra de baixo, com cada parte numerada (as medidas vêm de acessos.css, iguais às das telas). */
+  const marca = (n) => el('span', 'ds-marca', String(n));
+  const DESENHOS_DA_BARRA = [['<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>', 'Menu inicial'], ['<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>', 'Busca'], ['<path d="M4 7h10M4 12h7M4 17h4M17 6v12m0 0-3-3m3 3 3-3"/>', 'Ordem'],
+    ['<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/>', 'Período'], ['<path d="M12 5v14M5 12h14"/>', 'Novo'], ['<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>', 'Símbolo do sistema'], ['<path d="m14 6-6 6 6 6"/>', 'Voltar'],
+    ['<path d="m6 6 12 12M18 6 6 18"/>', 'Fechar'], ['<path d="m5 12.5 4.5 4.5L19 7.5"/>', 'Salvar'], ['<circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/>', 'Mais atalhos'], ['<path d="m5 15 7-7 7 7"/>', 'Recolher o cabeçalho']];
+  function modeloCabecalho() {
+    const caixa = el('div', 'ds-modelo compras-largo'); const cab = el('div', 'ds-modelo-cab'); const ic = el('span', 'ds-modelo-cab-icone'); ic.innerHTML = U.svg('<path d="M8 4H6a1 1 0 0 0-1 1v15a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-2M9 3h6v3H9zM9 11h6M9 15h6"/>');
+    const tx = el('div', 'ds-modelo-cab-texto'); const t = el('b', null, 'Título da tela'); const s = el('small', null, 'Origem / Submenu / Nome da tela'); t.append(marca(2)); s.append(marca(3)); tx.append(t, s);
+    const i1 = el('span', 'ds-modelo-cab-ponto'); i1.append(ic, marca(1)); cab.append(i1, tx);
+    const leg = el('dl', 'profiles-info'); [['1 — Ícone', 'Caixa de 30 px, desenho de 21 px. É o ícone do item que abriu a tela.'], ['2 — Título', '16 px, peso 600, branco.'], ['3 — Subtítulo', '11 px, branco: o caminho até a tela.'], ['A faixa', '58 px de altura, na cor da origem, com os cantos de baixo arredondados (12 px) e 14 px de respiro nas laterais.']].forEach(([k, v]) => leg.append(el('dt', null, k), el('dd', null, v)));
+    caixa.append(cab, leg); return caixa;
+  }
+  function modeloBarra() {
+    const caixa = el('div', 'ds-modelo compras-largo'); const barra = el('div', 'ds-modelo-barra');
+    const bola = (k) => { const c = el('span', 'ds-modelo-bola'); const b = el('span', 'ds-modelo-bola-desenho'); b.innerHTML = U.svg(DESENHOS_DA_BARRA[k][0]); c.append(b, marca(k + 1)); c.title = DESENHOS_DA_BARRA[k][1]; return c; };
+    const grupo = (ks) => { const g = el('div', 'ds-modelo-grupo'); g.append(...ks.map(bola)); return g; };
+    barra.append(grupo([0, 1, 2, 3, 4]), grupo([5]), grupo([6, 7, 8, 9, 10]));
+    const leg = el('dl', 'profiles-info'); DESENHOS_DA_BARRA.forEach(([, nome], k) => leg.append(el('dt', null, (k + 1) + ' — ' + nome), el('dd', null, k < 5 ? 'Esquerda: navegação.' : k === 5 ? 'Meio: abre o menu rápido.' : 'Direita: ações da tela.')));
+    leg.append(el('dt', null, 'A faixa'), el('dd', null, '59 px de altura, fundo branco, 14 px de respiro nas laterais; cada botão é um círculo de 32 px na cor da origem.'));
+    caixa.append(barra, leg); return caixa;
+  }
   const LAPIS = '<path d="m4 20 4-.8L19 8l-3-3L5 16zM14.5 6.5l3 3"/>'; const LIXO = '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>';
   const ORIGENS = [['VND', 'Entradas · Vendas', 'vendas', '#eab308'], ['CNT', 'Transferências · Contas', 'contas', '#f97316'], ['DES', 'Saídas · Despesas', 'despesas', '#ef4444'], ['MER', 'Saídas · Mercadorias', 'mercadorias', '#22c55e'], ['RET', 'Saídas · Retiradas', 'retiradas', '#2563eb']];
 
@@ -62,6 +90,12 @@
         itens: [['Cabeçalho de cima (tela e janela)', 'Caixa de 30 px, desenho de 21 px'], ['Sigla no cabeçalho', 'Caixa de 30 px, letra de 11 px'], ['Menu principal', 'Quadrado colorido de 32 px'], ['Submenu', '16 px, só o traço, na cor da origem'], ['Cartão do menu', 'Círculo de 30 px, desenho de 15 px'],
           ['Linha de lista', 'Quadrado de 30 px, cantos arredondados, na cor da origem'], ['Botão redondo de ação (editar, excluir)', 'Círculo de 32 px, desenho de 18 px'], ['Botões da barra de baixo', 'Círculo de 32 px'], ['Círculo dentro do botão com título', '28 px'], ['Aviso de campo obrigatório', '16 px']],
         amostra: () => amostra(comLegenda(redondo('Exemplo de editar', LAPIS), 'Botão redondo: 32 px'), comLegenda((() => { const i = el('span', 'ds-sigla'); i.style.background = A.COR; i.append(el('span', 'sigla-text', 'CFG')); return i; })(), 'Ícone de linha e de cabeçalho: 30 px')) },
+      { titulo: 'Biblioteca — menu principal', texto: ['Os ícones das origens. O cifrão com o sinal diz o que a origem faz com o dinheiro: entra (+), troca de lugar (⇄), sai (−) ou fecha a conta (=).'], amostra: () => grade(doMenuPrincipal()) },
+      { titulo: 'Biblioteca — submenu', texto: ['Os ícones dos itens que abrem embaixo de cada origem. Itens do mesmo tipo usam o mesmo desenho.'], amostra: () => grade(doSubmenu()) },
+      { titulo: 'Biblioteca — peças das telas', texto: ['Os desenhos usados dentro das telas novas: cabeçalhos, linhas de lista, botões e avisos. O nome embaixo é o nome interno da peça.'], amostra: () => grade(Object.entries(U.ICONES || {}).map(([nome, d]) => [d, nome])) },
+      { titulo: 'Biblioteca — barra de baixo', texto: ['Os onze botões fixos no pé da tela, na ordem em que aparecem.'], amostra: () => grade(DESENHOS_DA_BARRA) },
+      { titulo: 'Biblioteca — ações da linha', texto: ['Os botões redondos que aparecem ao tocar na seta da linha.'], amostra: () => grade([[LAPIS, 'Editar'], [LIXO, 'Excluir'], ['<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>', 'Ver'], ['<path d="M5.6 5.6l12.8 12.8M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z"/>', 'Desativar'], ['<path d="m5 12 4 4L19 6"/>', 'Ativar']]) },
+      { titulo: 'Biblioteca — ícones para escolher', texto: ['Os desenhos que podem ser escolhidos no cadastro de cargo, de grupo, de conta e de área, setor e local.'], amostra: () => grade((window.CicluzBakeryIcons || []).map((x) => [x.path, x.label || 'Ícone'])) },
       { titulo: 'De onde vem o ícone do cabeçalho', texto: ['O ícone do cabeçalho é o do item em que você tocou para chegar à tela. Tocou em "Cadastros Geral" no submenu, o cabeçalho mostra a prancheta de Cadastros Geral; tocou num cartão, o cabeçalho mostra o ícone daquele cartão.',
         'Cartão que não tem ícone próprio usa o do submenu de onde veio.', 'Os ícones do submenu (lápis em Lançamentos, gráfico em Relatórios, prancheta em Cadastros Geral, caixa em Estoque, pasta em Pastas Documentos) não mudam.',
         'O cabeçalho tem sempre a mesma altura e o ícone sempre o mesmo tamanho, em qualquer tela ou janela.'] },
@@ -71,6 +105,7 @@
       { titulo: 'Desenho', texto: ['Os desenhos são de traço simples, sem preenchimento, todos com a mesma espessura e pontas arredondadas.', 'Cada desenho tem um nome escrito para quem usa leitor de tela.'] },
     ] },
     { id: 'cabecalho', titulo: 'Cabeçalho e Barra de Baixo', resumo: 'O cabeçalho de cima e a barra de baixo, com medidas e botões', quadros: [
+      { titulo: 'Cabeçalho de cima — modelo', texto: ['O cabeçalho em tamanho real, com cada parte numerada.'], amostra: () => modeloCabecalho() },
       { titulo: 'Cabeçalho de cima — o que tem', texto: ['É a faixa colorida no alto da tela, na cor da origem, com os cantos de baixo arredondados. Tem três coisas, nesta ordem.'],
         itens: [['Ícone', 'À esquerda: o ícone do item que abriu a tela (ou a sigla).'], ['Título', 'O nome da tela, ou o que a janela faz ("Novo cliente", "Editar área").'], ['Subtítulo', 'Embaixo do título: o caminho até a tela.']] },
       { titulo: 'Cabeçalho de cima — medidas', itens: [['Altura', '58 px'], ['Respiro', '8 px em cima e embaixo, 14 px nas laterais'], ['Entre o ícone e o título', '10 px'], ['Ícone', 'Caixa de 30 px, desenho de 21 px (sigla: letra de 11 px)'], ['Título', '16 px, linha de 20 px, peso 600'],
@@ -78,6 +113,7 @@
         texto: ['Estas medidas são as mesmas em todas as telas e janelas do sistema.'] },
       { titulo: 'Cabeçalho de cima — regras', texto: ['Tela e janela têm o mesmo cabeçalho. Toda janela mostra, no subtítulo, o caminho da tela de onde foi aberta.', 'O ícone nunca é maior que o das outras telas, nem fica colado no título.',
         'O cabeçalho de cima não tem botões: os atalhos ficam na barra de baixo. Ele pode ser recolhido pelo último botão da barra de baixo, para sobrar mais tela.'] },
+      { titulo: 'Barra de baixo — modelo', texto: ['A barra em tamanho real, com cada botão numerado.'], amostra: () => modeloBarra() },
       { titulo: 'Barra de baixo — o que é', texto: ['É a faixa branca fixa no pé da tela, com os atalhos. Fica sempre no mesmo lugar, em telas e janelas, para o dedo achar sem procurar.', 'Tem três partes: os atalhos de navegação à esquerda, o símbolo do sistema no meio e as ações da tela à direita.'],
         itens: [['Altura', '59 px'], ['Cor do fundo', 'Branco'], ['Respiro lateral', '14 px'], ['Botões', 'Círculos de 32 px, na cor da origem, com o desenho branco']] },
       { titulo: 'Barra de baixo — botões da esquerda', itens: [['Menu inicial (casa)', 'Volta para o menu principal.'], ['Busca (lupa)', 'Abre o campo de busca da tela.'], ['Ordem', 'Coloca a lista em ordem alfabética ou volta à ordem original.'], ['Período (calendário)', 'Escolhe as datas "de … a …" quando a tela tem filtro por data.'],

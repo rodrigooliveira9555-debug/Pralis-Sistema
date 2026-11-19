@@ -163,3 +163,26 @@ body.dark-theme .acessos-ok { color: #a7e8bd; }
 .ds-linha-cor { display: inline-flex; align-items: center; gap: 8px; }
 .ds-sigla { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 26%; color: #fff; }
 .ds-peca { display: grid; gap: 6px; justify-items: start; }
+/* Biblioteca de ícones: grade de caixinhas com o desenho e o nome. */
+.ds-icones { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 12px; }
+.ds-icone { display: grid; gap: 6px; justify-items: center; text-align: center; min-width: 0; }
+.ds-icone > small { font: 400 var(--ui-note, 11px)/14px var(--ui-font); overflow-wrap: anywhere; }
+.ds-icone-caixa { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 26%; background: var(--menu-accent); color: #fff; }
+.ds-icone-caixa svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* Modelos em tamanho real: as mesmas medidas do cabeçalho de cima e da barra de baixo das telas. */
+.ds-modelo { display: grid; gap: 12px; min-width: 0; }
+.ds-marca { display: inline-grid; place-items: center; width: 16px; height: 16px; margin-left: 6px; border-radius: 50%; background: #fff; color: var(--menu-accent); border: 1px solid var(--menu-accent); font: 700 10px/1 var(--ui-font); vertical-align: middle; }
+.ds-modelo-cab { display: flex; align-items: center; gap: 10px; height: 58px; padding: 8px 14px; box-sizing: border-box; border-radius: 0 0 12px 12px; background: var(--menu-accent); color: #fff; min-width: 0; }
+.ds-modelo-cab-ponto { display: inline-flex; align-items: center; flex: none; }
+.ds-modelo-cab-icone { display: grid; place-items: center; width: 30px; height: 30px; flex: none; }
+.ds-modelo-cab-icone svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ds-modelo-cab-texto { display: grid; min-width: 0; }
+.ds-modelo-cab-texto > b { font: 600 16px/20px var(--ui-font); }
+.ds-modelo-cab-texto > small { font: 400 11px/14px var(--ui-font); }
+.ds-modelo-barra { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 59px; padding: 0 14px; box-sizing: border-box; background: #fff; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; overflow-x: auto; }
+.ds-modelo-grupo { display: flex; align-items: center; gap: 8px; flex: none; }
+.ds-modelo-bola { display: inline-flex; align-items: center; flex: none; }
+.ds-modelo-bola-desenho { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--menu-accent); color: #fff; }
+.ds-modelo-bola-desenho svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ds-modelo-bola > .ds-marca { margin-left: 2px; }
+body.dark-theme .ds-modelo-barra { background: var(--theme-card, #2d2b34); }
