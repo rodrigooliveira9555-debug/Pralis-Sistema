@@ -20,6 +20,12 @@
     'Usuários': [['usuarios', 'Pessoas com Acesso', 'Criar contas, postos do caixa e cargos'], ['dados', 'Dados no Servidor', 'Situação de cada assunto gravado']],
     'Permissões': [['cargos', 'Cargos de Acesso', 'O que cada cargo pode fazer'], ['pessoa', 'Acessos por Pessoa', 'Ajustar só para uma pessoa']],
     'Senhas': [['senhas', 'Minha Senha', 'Trocar a sua senha'], ['senha-outra', 'Senha de Outra Pessoa', 'Quando alguém esqueceu a senha']],
+    // Modelo / Design System (18/11/2026): um cartão por tópico do padrão visual (acessos/design-system.js). A ordem é a de leitura.
+    'Modelo / Design System': [['ds-letras', 'Letras', 'A fonte do sistema, os pesos e o jeito de escrever'], ['ds-tamanhos', 'Tamanho das Letras', 'O tamanho de cada tipo de texto, do título à nota'], ['ds-cores', 'Cores', 'A cor de cada origem do menu e as cores fixas'],
+      ['ds-espacamento', 'Espaçamento', 'As distâncias entre quadros, campos e linhas'], ['ds-icones', 'Ícones', 'Tamanho, desenho e a sigla de três letras'], ['ds-campos', 'Campos de Preenchimento', 'Rótulo, obrigatório, situação e o aviso de campo vazio'],
+      ['ds-mascaras', 'Máscaras', 'O formato que cada campo assume enquanto se digita'], ['ds-botoes', 'Botões', 'Onde fica cada botão e o que cada um faz'], ['ds-cabecalho', 'Cabeçalho', 'Ícone, título e subtítulo das telas e das janelas'],
+      ['ds-quadros', 'Quadros e Molduras', 'Tudo dentro de quadro, com o título na borda'], ['ds-listas', 'Listas', 'O formato das telas de lista e o que cada toque faz'], ['ds-mensagens', 'Mensagens e Avisos', 'Como o sistema avisa, confirma e mostra erro'],
+      ['ds-conferencia', 'Conferência Final', 'O que conferir antes de dizer que uma tela está pronta']],
   };
   const SETOR_DA_TELA = {};
   Object.entries(CARDS).forEach(([setor, cards]) => cards.forEach(([id]) => { SETOR_DA_TELA[id] = setor; }));

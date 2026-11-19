@@ -152,3 +152,13 @@ body.dark-theme .acessos-ok { color: #a7e8bd; }
 @media (prefers-reduced-motion: reduce) {
   button.acessos-pessoa { transition: none; }
 }
+
+/* Modelo / Design System (acessos/design-system.js): só o que as amostras precisam; o resto são as peças do próprio sistema. */
+.ds-quadro > .ds-texto { margin: 0; font: 400 var(--ui-text, 14px)/20px var(--ui-font); }
+.ds-amostra { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; min-width: 0; }
+.ds-amostra > .compras-campo, .ds-amostra > .account-status, .ds-teste { flex: 1 1 220px; min-width: 0; }
+.ds-teste { display: grid; gap: 12px; }
+.ds-letra { margin: 0; flex: 1 1 100%; }
+.ds-cor { display: inline-block; flex: none; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--layout-line, #dedee3); }
+.ds-linha-cor { display: inline-flex; align-items: center; gap: 8px; }
+.ds-sigla { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 26%; color: #fff; }
