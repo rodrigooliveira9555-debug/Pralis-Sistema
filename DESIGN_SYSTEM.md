@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Cartão DES - Despesas Colaboradores em Lançamentos Colaboradores (19/11/2026)
+Pedido do Rodrigo. Lançamentos Colaboradores ganhou, em primeiro lugar, o cartão **DES - Despesas Colaboradores**, no mesmo desenho do cartão DES - Despesas de Lançamentos (ícone com a sigla DES). Por enquanto é só o cartão: a tela abre "em definição", como DES - Despesas. O que a tela lança ainda precisa ser definido pelo Rodrigo.
+
 ## Pastas Documentos: "Imagens Notas" (19/11/2026)
 Pedido do Rodrigo. **Supera** o nome "Imagens …" das pastas de lançamentos: nas cinco origens o cartão passa a se chamar **Imagens Notas** (só texto, sem barra) — VND - Imagens Notas Vendas Lançadas, CNT - Imagens Notas Transferências, DES - Imagens Notas Despesas Lançadas, MER - Imagens Notas Mercadorias Lançadas e RET - Imagens Notas Retiradas Lançadas. Só o nome mudou; as pastas continuam em definição (P-36).
 
