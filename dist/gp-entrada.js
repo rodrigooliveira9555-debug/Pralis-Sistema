@@ -21,7 +21,8 @@
       const ativos = lista.filter((i) => !i.inativo).length;
       const ponta = U.pontaDaLista(ativos, contagem(ativos));
       const sec = U.secao(titulo, undefined, ponta);
-      sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo(rotuloNovo, dicaNovo || rotuloNovo, aoNovo));
+      // Sem aoNovo a tabela é só de consulta/abertura (ex.: painel do confronto): o título fica como texto, sem botão de novo.
+      if (aoNovo) sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo(rotuloNovo, dicaNovo || rotuloNovo, aoNovo));
       sec.append(linhas);
       if (!lista.length) linhas.append(U.vazio(vazio.titulo, vazio.dica || ''));
       else {

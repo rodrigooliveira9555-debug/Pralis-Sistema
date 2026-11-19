@@ -133,6 +133,16 @@
     if (dica) l.append(el('small', 'profiles-note', dica));
     return l;
   }
+  /** Navegador de período (seta · título · seta), com os botões e o título da Agenda. aoMudar(-1) volta, aoMudar(1) avança. */
+  function navegadorPeriodo({ titulo, rotuloAnt = 'Mês anterior', rotuloProx = 'Próximo mês', aoMudar }) {
+    const nav = el('div', 'agenda-cal-nav tg-nav');
+    const ant = el('button', 'agenda-icone-botao'); ant.type = 'button'; ant.setAttribute('aria-label', rotuloAnt); ant.innerHTML = svg('<path d="m15 6-6 6 6 6"/>');
+    const prox = el('button', 'agenda-icone-botao'); prox.type = 'button'; prox.setAttribute('aria-label', rotuloProx); prox.innerHTML = svg('<path d="m9 6 6 6-6 6"/>');
+    const h = el('h3', 'agenda-cal-titulo tg-titulo', titulo); h.setAttribute('aria-live', 'polite');
+    ant.onclick = () => aoMudar(-1); prox.onclick = () => aoMudar(1);
+    nav.append(ant, h, prox);
+    return nav;
+  }
   function entrada(tipo = 'text', valor = '', extra = {}) {
     const i = el('input');
     i.type = tipo;
@@ -804,6 +814,6 @@
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, navegadorPeriodo, subirAoTopo, botaoEditarBloco, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();

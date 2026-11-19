@@ -1017,3 +1017,9 @@ A especificação técnica ("Informar especificação técnica?") fica na etapa 
 - Grade de colunas por tela em `compras/compras.css` (`grade-colab-s`, `grade-colab-c`, `grade-cargo`). Para uma nova tabela: nova grade + chaves ocultáveis `oculta-<chave>`; não criar tabela própria.
 - Cargos: a linha mantém a classe `job-item` (ordem por arrastar e busca do rodapé dependem dela).
 - Edição: cabeçalho com título e caminho; situação com o interruptor `account-status` (nunca checkbox); Cancelar à esquerda e Salvar à direita. `U.dialogo` mostra o caminho de navegação sob o título.
+
+## Tabela larga com colunas agrupadas (Folha de Pagamento Mês e Ponto Eletrônico)
+- Componente único: classes `tg-*` (em `compras/compras.css`) e `U.navegadorPeriodo` (seta · título · seta, botões da Agenda). Usado por `folha-mes.js` (11 rubricas × Projetado/Realizado/Diferença) e por `confronto.js` (4 batidas × Idealizado/Realizado/Diferença, por mês e por dia), em duas telas separadas: DES - Folha de Pagamento Mês (Relatórios) e DES - Confronto de Ponto (Lançamentos).
+- Fluxo de conciliação em etapas (padrão para outros confrontos): barra `CicluzStepper` com o estado de cada etapa, painel por colaborador (`gp-entrada.js` sem botão de novo), tratamento item a item com motivo e fechamento da competência só sem pendência. Nova tabela larga reutiliza estas classes: não criar outra grade.
+- Ausência de dado: "Pendente" (ainda não chegou), "Ausente" (chegou sem este campo) ou "—" (não se aplica). Nunca zero inventado.
+- Uma tabela só, `folha-mes.js`: primeira coluna fixa à esquerda (`position:sticky`), cabeçalho em dois níveis (rubrica centralizada sobre 3 subcolunas Projetado | Realizado | Diferença), rolagem só da tabela. Mesmos tokens e cabeçalho de VND - Clientes. Valor ausente é o indicador "Pendente", nunca zero. Navegação de mês com os botões da Agenda (`agenda-icone-botao`).

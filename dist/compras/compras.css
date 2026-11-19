@@ -549,35 +549,35 @@ body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-sea
 .compras-linha.grade-cargo{grid-template-columns:84px var(--w-nome,minmax(190px,1fr)) var(--w-categoria,110px) var(--w-cbo,100px) var(--w-setor,200px) var(--w-salario,120px) 70px 24px;--gp-estado:7}
 #jobs-list .job-item.grade-cargo>.menu-item-move{grid-column:1;justify-self:start;align-self:center;z-index:3;width:18px;margin:0}
 .compras-linha.grade-cargo>.compras-linha-icones{padding-left:36px;margin-left:-12px}
-.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo){width:max-content;min-width:100%;background:var(--theme-card,#fff)}
-.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>*{grid-row:1}
-.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.compras-linha-icones{grid-column:1;position:sticky;left:0;z-index:2;align-self:stretch;align-items:center;background:inherit;padding-left:12px;margin-left:-12px}
-.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-nome{grid-column:2;position:sticky;left:76px;z-index:1;align-self:stretch;display:flex;align-items:center;background:inherit;box-shadow:1px 0 0 var(--layout-line,#dedee3);padding-right:8px}
-.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.account-list-state,.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-estado{grid-column:var(--gp-estado)}
-.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.account-action-toggle{grid-column:calc(var(--gp-estado) + 1);position:sticky;right:0;z-index:2;align-self:stretch;height:auto;background:inherit}
-.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.account-row-actions:not([hidden]){grid-column:var(--gp-estado);grid-row:1;justify-self:end;position:sticky;right:32px;z-index:2;background:inherit}
-.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo):has(>.account-row-actions:not([hidden]))>.account-list-state{visibility:hidden}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto){width:max-content;min-width:100%;background:var(--theme-card,#fff)}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>*{grid-row:1}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>.compras-linha-icones{grid-column:1;position:sticky;left:0;z-index:2;align-self:stretch;align-items:center;background:inherit;padding-left:12px;margin-left:-12px}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>.c-nome{grid-column:2;position:sticky;left:76px;z-index:1;align-self:stretch;display:flex;align-items:center;background:inherit;box-shadow:1px 0 0 var(--layout-line,#dedee3);padding-right:8px}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>.account-list-state,.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>.c-estado{grid-column:var(--gp-estado)}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>.account-action-toggle{grid-column:calc(var(--gp-estado) + 1);position:sticky;right:0;z-index:2;align-self:stretch;height:auto;background:inherit}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>.account-row-actions:not([hidden]){grid-column:var(--gp-estado);grid-row:1;justify-self:end;position:sticky;right:32px;z-index:2;background:inherit}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto):has(>.account-row-actions:not([hidden]))>.account-list-state{visibility:hidden}
 .compras-linha.gp-linha .account-row-actions>button:first-child{background:var(--menu-accent)}
 .compras-linha.gp-linha.inativo>:not(.account-action-toggle):not(.account-row-actions){opacity:.55}
-@container lista-grade (max-width:519px){.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo){--w-nome:120px}}
+@container lista-grade (max-width:519px){.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto){--w-nome:120px}}
 .oculta-cpf{--w-cpf:24px}
-.oculta-cpf :is(.grade-colab-s,.grade-colab-c,.grade-cargo):not(.compras-linha-cabecalho)>.c-cpf,.oculta-cpf .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-cpf>.compras-coluna-titulo{display:none}
+.oculta-cpf :is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto):not(.compras-linha-cabecalho)>.c-cpf,.oculta-cpf .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>.c-cpf>.compras-coluna-titulo{display:none}
 .oculta-funcao{--w-funcao:24px}
-.oculta-funcao :is(.grade-colab-s,.grade-colab-c,.grade-cargo):not(.compras-linha-cabecalho)>.c-funcao,.oculta-funcao .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-funcao>.compras-coluna-titulo{display:none}
+.oculta-funcao :is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto):not(.compras-linha-cabecalho)>.c-funcao,.oculta-funcao .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>.c-funcao>.compras-coluna-titulo{display:none}
 .oculta-turno{--w-turno:24px}
-.oculta-turno :is(.grade-colab-s,.grade-colab-c,.grade-cargo):not(.compras-linha-cabecalho)>.c-turno,.oculta-turno .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-turno>.compras-coluna-titulo{display:none}
+.oculta-turno :is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto):not(.compras-linha-cabecalho)>.c-turno,.oculta-turno .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>.c-turno>.compras-coluna-titulo{display:none}
 .oculta-cbo{--w-cbo:24px}
-.oculta-cbo :is(.grade-colab-s,.grade-colab-c,.grade-cargo):not(.compras-linha-cabecalho)>.c-cbo,.oculta-cbo .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-cbo>.compras-coluna-titulo{display:none}
+.oculta-cbo :is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto):not(.compras-linha-cabecalho)>.c-cbo,.oculta-cbo .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>.c-cbo>.compras-coluna-titulo{display:none}
 .oculta-setor{--w-setor:24px}
-.oculta-setor :is(.grade-colab-s,.grade-colab-c,.grade-cargo):not(.compras-linha-cabecalho)>.c-setor,.oculta-setor .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-setor>.compras-coluna-titulo{display:none}
+.oculta-setor :is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto):not(.compras-linha-cabecalho)>.c-setor,.oculta-setor .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>.c-setor>.compras-coluna-titulo{display:none}
 .oculta-salario{--w-salario:24px}
-.oculta-salario :is(.grade-colab-s,.grade-colab-c,.grade-cargo):not(.compras-linha-cabecalho)>.c-salario,.oculta-salario .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-salario>.compras-coluna-titulo{display:none}
+.oculta-salario :is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto):not(.compras-linha-cabecalho)>.c-salario,.oculta-salario .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>.c-salario>.compras-coluna-titulo{display:none}
 /* Modo lista das telas de Gestão de Pessoas: só a tabela de entrada aparece; o formulário volta ao tocar em Novo ou numa linha. */
 .oculta-categoria{--w-categoria:24px}
-.oculta-categoria :is(.grade-colab-s,.grade-colab-c,.grade-cargo):not(.compras-linha-cabecalho)>.c-categoria,.oculta-categoria .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-categoria>.compras-coluna-titulo{display:none}
+.oculta-categoria :is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto):not(.compras-linha-cabecalho)>.c-categoria,.oculta-categoria .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>.c-categoria>.compras-coluna-titulo{display:none}
 .view.gp-lista .content>:is(.gp-form,#back-simple,#back-forms){display:none}
 .gp-entrada{display:grid;gap:12px}
-.view:not(.gp-lista) .content>.gp-entrada{display:none}
+:is(#cadastro-simples,#cadastro-completo):not(.gp-lista) .content>.gp-entrada{display:none}
 .compras-linha.grade-cargo>.c-nome{left:100px}
 /* Seleção de itens da lista (ex.: produtos): bolinha vazia; ao marcar, fica toda preenchida na cor do módulo. Sem o ✓ nativo. */
 input.compras-selecao-bolinha{appearance:none;-webkit-appearance:none;flex:none;box-sizing:border-box;width:22px;height:22px;min-height:0;margin:0;padding:0;border:2px solid var(--menu-accent);border-radius:50%;background:transparent;cursor:pointer;transition:background-color .12s}
@@ -662,3 +662,44 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .compras-fieldset.compras-quadro-auto{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px}
 .compras-fieldset.compras-quadro-auto>:not(.compras-campo):not(label):not(legend){grid-column:1 / -1}
 @media (max-width:600px){.compras-fieldset.compras-quadro-auto{grid-template-columns:minmax(0,1fr)}}
+/* ---------- DES - Folha de Pagamento Mês (folha-mes.js): colaborador fixo e três subcolunas por rubrica. Mesmos tokens de VND - Clientes. ---------- */
+.tg-nav{margin-bottom:4px;justify-content:center}
+.tg-titulo{margin:0;min-width:150px;text-align:center;font:600 16px/22px var(--ui-font)}
+.tg-rolagem{overflow:auto;max-width:100%}
+.tg-grade{display:grid;grid-template-columns:var(--tg-col,240px) repeat(calc(var(--tg-grupos) * 3),minmax(108px,1fr));width:max-content;min-width:100%}
+.tg-linha{display:contents}
+.tg-cel{display:flex;align-items:center;min-height:52px;padding:0 12px;box-sizing:border-box;border-bottom:1px solid var(--layout-line,#dedee3);background:var(--theme-card,#fff);font:400 12px/16px var(--ui-font);white-space:nowrap}
+.tg-linha:hover>.tg-cel{background:color-mix(in srgb,var(--menu-accent) 8%,var(--theme-card,#fff))}
+.tg-num{justify-content:flex-end;font-variant-numeric:tabular-nums}
+.tg-ini{border-left:1px solid var(--layout-line,#dedee3)}
+.tg-colab{position:sticky;left:0;z-index:2;box-shadow:1px 0 0 var(--layout-line,#dedee3)}
+.tg-nome{gap:10px;min-width:0}
+.tg-nome>b{min-width:0;overflow:hidden;text-overflow:ellipsis;font:600 13px/18px var(--ui-font)}
+.tg-cab{min-height:36px;font:600 11px/14px var(--ui-font);text-transform:uppercase;letter-spacing:.04em;color:var(--muted,#73737a)}
+.tg-cab.tg-colab{grid-column:1;grid-row:1 / span 2;z-index:3}
+.tg-grupo{grid-column:span 3;justify-content:center;text-align:center;border-left:1px solid var(--layout-line,#dedee3);overflow:hidden;text-overflow:ellipsis}
+.tg-sub{justify-content:flex-end}
+.tg-pendente{padding:1px 8px;border:1px dashed var(--layout-line,#c9c9d0);border-radius:999px;font:500 11px/16px var(--ui-font);opacity:.7}
+@media (max-width:600px){.tg-grade{--tg-col:168px}}
+/* ---------- DES - Ponto Eletrônico (ponto.js): usa a grade agrupada (.tg-*) da Folha de Pagamento Mês, com 4 grupos (as batidas). ---------- */
+.ponto-controles{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 16px}
+.ponto-controles>.compras-campo{min-width:220px;max-width:360px;flex:1 1 220px}
+.ponto-acoes{display:flex;flex-wrap:wrap;gap:8px}
+.ponto-acoes>.btn{width:auto}
+.tg-vazio{opacity:.5}
+.tg-dif{font-weight:600}
+.tg-dia{flex-direction:column;align-items:flex-start;justify-content:center;gap:2px}
+.tg-dia>b,.tg-nome-texto>b{min-width:0;overflow:hidden;text-overflow:ellipsis;font:600 13px/18px var(--ui-font)}
+.tg-dia>small,.tg-nome-texto>small{font:400 11px/14px var(--ui-font);opacity:.7}
+.tg-nome-texto{display:flex;flex-direction:column;min-width:0}
+/* ---------- DES - Confronto de Ponto (confronto.js) ---------- */
+.compras-linha.grade-confronto{grid-template-columns:64px var(--w-nome,minmax(190px,1fr)) var(--w-dias,120px) 120px 140px var(--w-sembatida,110px) 150px 24px;--gp-estado:7}
+.oculta-dias{--w-dias:24px}
+.oculta-dias :is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto):not(.compras-linha-cabecalho)>.c-dias,.oculta-dias .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>.c-dias>.compras-coluna-titulo{display:none}
+.oculta-sembatida{--w-sembatida:24px}
+.oculta-sembatida :is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto):not(.compras-linha-cabecalho)>.c-sembatida,.oculta-sembatida .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo,.grade-confronto)>.c-sembatida>.compras-coluna-titulo{display:none}
+.confronto-topo{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 16px}
+.confronto-topo>.agenda-cal-nav{margin:0}
+.tg-dentro{opacity:.6}
+.tg-linha.tg-diverge>.tg-cel{background:color-mix(in srgb,var(--menu-accent) 10%,var(--theme-card,#fff))}
+.tg-linha.tg-tratado>.tg-cel{background:color-mix(in srgb,var(--menu-accent) 4%,var(--theme-card,#fff))}
