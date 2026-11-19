@@ -548,19 +548,26 @@ body.dark-theme .compras-objeto-origem .compras-chip.ativo{color:#f2f1f6}
 /* Joinha (19/11/2026, Rodrigo): para cima é sempre azul (incluso, sim, aprovado) e para baixo é sempre vermelho (não incluso, não, reprovado), em qualquer origem. */
 .compras-atividades.incluidas :is(.compras-atividades-icone,.compras-atividade-marca),.joinha-cima{color:#2563eb}
 .compras-atividades.excluidas :is(.compras-atividades-icone,.compras-atividade-marca),.joinha-baixo{color:var(--cicluz-danger,#e34343)}
-.compras-hier{display:grid;gap:6px}
-.compras-hier-grupo{display:grid;gap:4px}
-.compras-hier-linha{display:flex;align-items:center;gap:8px;min-height:40px;padding:4px 8px;border:1px solid var(--layout-line,#dedee3);border-radius:10px;background:var(--theme-card,#fff)}
-.compras-hier-linha.filho{margin-left:28px}
-.compras-hier-linha input[type=checkbox]{flex:none;width:20px;height:20px;margin:0;accent-color:var(--menu-accent)}
-.compras-hier-icone{display:inline-grid;place-items:center;flex:none;width:28px;height:28px;border-radius:8px;background:color-mix(in srgb,var(--menu-accent) 14%,var(--theme-card,#fff))}
-.compras-hier-icone svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.compras-hier-nome{flex:1;min-width:0;overflow-wrap:anywhere}
+/* Janela de escolha em árvore no desenho da lista de origem (19/11/2026, Rodrigo): um quadro só, linhas separadas por um fio, ícone
+   quadrado com a sigla na cor da origem, nome com a contagem embaixo, situação à direita e a caixa de marcar antes do ícone. */
+.compras-hier{display:grid;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff);overflow:hidden}
+.compras-hier-linha{display:flex;align-items:center;gap:10px;min-height:52px;box-sizing:border-box;padding:8px 12px 8px calc(12px + var(--nivel,0)*28px);border-bottom:1px solid var(--layout-line,#dedee3)}
+.compras-hier-linha:last-child{border-bottom:0}
+.compras-hier-caixa{appearance:none;-webkit-appearance:none;flex:none;width:22px;height:22px;margin:0;border:1.5px solid var(--ui-border-base,#a2a0aa);border-radius:6px;background:var(--theme-card,#fff);cursor:pointer;display:inline-grid;place-items:center}
+.compras-hier-caixa:checked{background:var(--menu-accent);border-color:var(--menu-accent)}
+.compras-hier-caixa:checked::after{content:"";width:11px;height:6px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:translateY(-1px) rotate(-45deg)}
+.compras-hier-caixa:disabled{opacity:.45;cursor:default}
+.compras-hier-caixa:focus-visible{outline:2px solid var(--menu-accent);outline-offset:2px}
+.compras-hier-icone{display:inline-grid;place-items:center;flex:none;width:30px;height:30px;border-radius:26%;background:var(--menu-accent);color:#fff}
+.compras-hier-texto{display:grid;flex:1;min-width:0}
+.compras-hier-texto>b{font:500 var(--ui-text,14px)/18px var(--ui-font);overflow-wrap:anywhere}
+.compras-hier-texto>small{font:400 var(--ui-note,11px)/16px var(--ui-font);color:var(--muted,#73737a)}
+.compras-hier-estado{flex:none;font:400 var(--ui-note,11px)/16px var(--ui-font)}
 .compras-hier-seta{display:inline-grid;place-items:center;flex:none;width:26px;height:26px;padding:0;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}
 .compras-hier-seta svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
 .compras-hier-seta.aberto svg{transform:rotate(90deg)}
 .compras-hier-seta:disabled{opacity:.3;cursor:default}
-.compras-hier-conta{flex:none}
+.compras-hier-vazio{margin:0;padding:14px}
 .compras-modelos-lista{display:grid;gap:8px}
 .compras-modelo-linha{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff)}
 .compras-modelo-texto{display:grid;gap:2px;min-width:0}

@@ -33,51 +33,56 @@
    * situação e busca. Marcar um grupo marca só ele (não marca os filhos). marcados: Set de ids ("grupo" ou "grupo|subgrupo").
    * bloqueados: Map id → motivo (itens que já estão na outra lista; aparecem travados). aoConfirmar(Set).
    */
-  function seletorHierarquico({ titulo, cores, marcados, bloqueados = new Map(), aoConfirmar }) {
+  /**
+   * Janela de escolha em árvore, no mesmo desenho da lista de origem (19/11/2026, Rodrigo): cada linha tem a seta de abrir, a caixa de
+   * marcar (quadrada, de cantos arredondados), o ícone com a sigla da origem (DES, MER, RET), o nome, a contagem e a situação. Serve a
+   * qualquer cadastro em níveis — grupo › subgrupo › item — e deixa marcar em qualquer nível: o grupo, o subgrupo ou o item sozinho.
+   * nos: [{ id, nome, ativo, conta, selecionavel (padrão: sim), filhos: [...] }]. marcados: Set de ids. bloqueados: Map id → motivo.
+   */
+  function seletorArvore({ titulo, cores, sigla, rotuloBusca = 'Buscar', vazio = 'Nada cadastrado.', nos, marcados, bloqueados = new Map(), aoConfirmar }) {
     const escolha = new Set(marcados); const abertos = new Set();
+    const formatar = (n) => (typeof formatSystemName === 'function' ? formatSystemName(String(n || '')) : String(n || ''));
     U.dialogo({
       titulo, ...cc(cores), largo: true, classe: 'compras-hier-dialogo', rotuloSalvar: 'Confirmar',
       montar: (form) => {
-        const busca = entrada('text', '', { placeholder: 'Buscar grupo ou subgrupo', maxLength: 80, autocomplete: 'off' }); busca.setAttribute('aria-label', 'Buscar grupo ou subgrupo');
+        const busca = entrada('text', '', { placeholder: rotuloBusca, maxLength: 80, autocomplete: 'off' }); busca.setAttribute('aria-label', rotuloBusca);
         busca.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
         const resumo = el('p', 'profiles-note'); resumo.setAttribute('role', 'status'); const arvore = el('div', 'compras-hier'); arvore.setAttribute('role', 'tree');
-        const caixa = (id, rotulo, ativo) => {
-          const c = entrada('checkbox'); c.checked = escolha.has(id) || bloqueados.has(id); c.disabled = bloqueados.has(id) || (!ativo && !escolha.has(id));
-          c.setAttribute('aria-label', 'Selecionar ' + rotulo); c.onchange = () => { if (c.checked) escolha.add(id); else escolha.delete(id); contar(); }; return c;
-        };
-        const pill = (ativo) => el('span', 'pill ' + (ativo ? 'p-green' : 'p-red'), ativo ? 'Ativo' : 'Inativo');
-        const linha = (id, rotulo, ativo, icone, nivel) => {
-          const l = el('div', 'compras-hier-linha' + (nivel ? ' filho' : '')); l.setAttribute('role', 'treeitem');
-          const ic = el('span', 'compras-hier-icone'); ic.innerHTML = SVG(icone);
-          l.append(caixa(id, rotulo, ativo), ic, el('span', 'compras-hier-nome', rotulo));
-          if (bloqueados.has(id)) l.append(el('small', 'profiles-note', bloqueados.get(id)));
-          l.append(pill(ativo)); return l;
+        const contar = () => { resumo.textContent = (escolha.size === 1 ? '1 selecionado' : escolha.size + ' selecionados') + '.'; };
+        const casa = (no, caminho, termo) => !termo || U.dobrar(caminho + ' ' + no.nome).includes(termo) || (no.filhos || []).some((f) => casa(f, caminho + ' ' + no.nome, termo));
+        const linha = (no, nivel, caminho, termo) => {
+          const filhos = (no.filhos || []).filter((f) => casa(f, caminho + ' ' + no.nome, termo)); const aberto = Boolean(termo) || abertos.has(no.id);
+          const l = el('div', 'compras-hier-linha'); l.setAttribute('role', 'treeitem'); l.style.setProperty('--nivel', String(nivel));
+          const seta = el('button', 'compras-hier-seta' + (aberto ? ' aberto' : '')); seta.type = 'button'; seta.innerHTML = SVG(ICO.seta); seta.disabled = !(no.filhos || []).length;
+          seta.setAttribute('aria-label', (aberto ? 'Recolher ' : 'Expandir ') + no.nome); seta.setAttribute('aria-expanded', String(aberto));
+          seta.onclick = () => { if (abertos.has(no.id)) abertos.delete(no.id); else abertos.add(no.id); desenhar(); };
+          const ativo = no.ativo !== false; const travado = bloqueados.has(no.id);
+          const c = entrada('checkbox'); c.className = 'compras-hier-caixa'; c.checked = escolha.has(no.id) || travado; c.disabled = travado || (!ativo && !escolha.has(no.id));
+          c.setAttribute('aria-label', 'Selecionar ' + no.nome); c.onchange = () => { if (c.checked) escolha.add(no.id); else escolha.delete(no.id); contar(); };
+          if (no.selecionavel === false) { c.disabled = true; c.style.visibility = 'hidden'; }
+          const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); ic.append(el('span', 'sigla-text', sigla));
+          const tx = el('span', 'compras-hier-texto'); tx.append(el('b', null, no.folha ? no.nome : sigla + ' ' + formatar(no.nome)));
+          const conta = no.conta != null ? no.conta : (no.filhos ? pluralItens(no.filhos.length) : ''); if (conta) tx.append(el('small', null, conta));
+          if (travado) tx.append(el('small', null, bloqueados.get(no.id)));
+          l.append(seta, c, ic, tx, el('span', 'compras-hier-estado', ativo ? 'Ativo' : 'Inativo'));
+          return [l, ...(aberto ? filhos.flatMap((f) => linha(f, nivel + 1, caminho + ' ' + no.nome, termo)) : [])];
         };
         const desenhar = () => {
-          const termo = U.dobrar(busca.value.trim()); arvore.replaceChildren();
-          for (const g of grupos()) {
-            const filhos = g.subgrupos.filter((s) => !termo || U.dobrar(g.nome + ' ' + s.nome).includes(termo));
-            const proprio = !termo || U.dobrar(g.nome).includes(termo);
-            if (!proprio && !filhos.length) continue;
-            const aberto = Boolean(termo) || abertos.has(g.id); const bloco = el('div', 'compras-hier-grupo');
-            const cab = linha(g.id, g.nome, g.ativo, ICO.pasta, 0);
-            const seta = el('button', 'compras-hier-seta' + (aberto ? ' aberto' : '')); seta.type = 'button'; seta.innerHTML = SVG(ICO.seta); seta.disabled = !g.subgrupos.length;
-            seta.setAttribute('aria-label', (aberto ? 'Recolher ' : 'Expandir ') + g.nome); seta.setAttribute('aria-expanded', String(aberto));
-            seta.onclick = () => { if (abertos.has(g.id)) abertos.delete(g.id); else abertos.add(g.id); desenhar(); };
-            cab.prepend(seta); cab.querySelector('.compras-hier-nome').after(el('small', 'profiles-note compras-hier-conta', pluralItens(g.subgrupos.length)));
-            bloco.append(cab);
-            if (aberto) filhos.forEach((s) => bloco.append(linha(g.id + '|' + s.id, g.nome + ' › ' + s.nome, g.ativo && s.ativo, ICO.etiqueta, 1)));
-            arvore.append(bloco);
-          }
-          if (!arvore.children.length) arvore.append(el('p', 'profiles-note', termo ? 'Nada encontrado.' : 'Nenhum grupo de despesa cadastrado em Saídas › Grupos de Despesas.'));
+          const termo = U.dobrar(busca.value.trim()); const lista = nos().filter((n) => casa(n, '', termo));
+          arvore.replaceChildren(...lista.flatMap((n) => linha(n, 0, '', termo)));
+          if (!lista.length) arvore.append(el('p', 'profiles-note compras-hier-vazio', termo ? 'Nada encontrado.' : vazio));
           contar();
         };
-        const contar = () => { resumo.textContent = (escolha.size === 1 ? '1 selecionado' : escolha.size + ' selecionados') + '.'; };
         busca.addEventListener('input', desenhar);
         const box = el('div', 'compras-campo compras-largo'); box.append(busca, resumo, arvore); form.append(box); desenhar();
       },
       salvar: () => { aoConfirmar(escolha); },
     });
+  }
+  /** Grupos e subgrupos de despesa na janela em árvore (atividades do contrato e objeto do contrato). Ids: "grupo" ou "grupo|subgrupo". */
+  const arvoreDespesas = () => grupos().map((g) => ({ id: g.id, nome: g.nome, ativo: g.ativo, filhos: g.subgrupos.map((s) => ({ id: g.id + '|' + s.id, nome: s.nome, ativo: g.ativo && s.ativo })) }));
+  function seletorHierarquico({ titulo, cores, marcados, bloqueados = new Map(), aoConfirmar }) {
+    seletorArvore({ titulo, cores, sigla: 'DES', rotuloBusca: 'Buscar grupo ou subgrupo', vazio: 'Nenhum grupo de despesa cadastrado em Saídas › Grupos de Despesas.', nos: arvoreDespesas, marcados, bloqueados, aoConfirmar });
   }
   const nomeDoGrupo = (id) => {
     const [gid, sid] = String(id).split('|'); const g = grupos().find((x) => x.id === gid); if (!g) return '';
@@ -293,7 +298,7 @@
     const secoes = [
       ['Contratante', pessoa(p.contratante, p.contratante.pf ? 'Nome completo' : 'Razão social', p.contratante.pf ? 'CPF' : 'CNPJ')],
       ['Contratado', pessoa(p.contratado, p.contratado.pf ? 'Nome completo' : 'Razão social', p.contratado.pf ? 'CPF' : 'CNPJ')],
-      ['Objeto do contrato', [['Produtos', ((c.objeto || {}).produtoIds || []).map(nomeDoObjeto.produto).join('; ')], ['Despesas', ((c.objeto || {}).despesaIds || []).map(nomeDoObjeto.despesa).join('; ')], ['Patrimônios', ((c.objeto || {}).patrimonioIds || []).map(nomeDoObjeto.patrimonio).join('; ')]]],
+      ['Objeto do contrato', (() => { const a = objetoDaArvore(c.objeto); return [['Produtos', [...a.produto].map(nomeDoObjeto.produto).join('; ')], ['Despesas', [...a.despesa].map(nomeDoObjeto.despesa).join('; ')], ['Patrimônios', [...a.patrimonio].map(nomeDoObjeto.patrimonio).join('; ')]]; })()],
       ['Valor e pagamento', [['Valor', Number.isInteger(c.valorCentavos) ? D.moeda(c.valorCentavos / 100) : ''], ['Recorrência', rec], ['Forma de pagamento', nomeDe(D.FORMAS_PAGAMENTO_CONTRATO, c.formaPagamento)]]],
       ['Vigência e vencimento', [['Início da vigência', dataBR(c.inicio)], ['Término da vigência', dataBR(c.fim)], ['Renovação', nomeDe(D.RENOVACOES_CONTRATO, c.renovacao)], ['Vencimento', vencimento]]],
       ['Reajuste', [['Reajuste', reajuste]]],
@@ -310,11 +315,47 @@
   }
   /** Nome de cada item do objeto do contrato, lido do cadastro de origem na hora (o vínculo é por id). */
   const bensCadastrados = () => { const p = window.CicluzProducaoDados; return (p && p.patrimonio && p.patrimonio.dados && p.patrimonio.dados.bens) || []; };
+  /* Objeto do contrato em níveis (19/11/2026, Rodrigo): dá para escolher o grupo, o subgrupo ou o item. Na árvore e nos chips o id leva
+     um prefixo que diz o nível — "grp:" para grupo ou subgrupo ("grp:grupo" ou "grp:grupo|subgrupo"), "prd:" para produto e "bem:" para
+     patrimônio; a despesa não precisa (só tem grupo e subgrupo). No contrato gravado cada nível vai na sua lista (ver objetoParaGravar). */
+  const categoriasDoPatrimonio = () => (window.CicluzProducaoDominio && window.CicluzProducaoDominio.CATEGORIAS) || [];
+  const nomeDoGrupoMer = (id) => { const [gid, sid] = String(id).split('|'); const g = S.gruposMercadoria().find((x) => x.id === gid); if (!g) return ''; if (!sid) return g.nome; const s2 = g.subgrupos.find((x) => x.id === sid); return s2 ? g.nome + ' › ' + s2.nome : ''; };
   const nomeDoObjeto = {
-    produto: (id) => (S.produto(id) || {}).descricao || 'Produto removido',
+    produto: (id) => (id.startsWith('grp:') ? 'Grupo: ' + (typeof formatSystemName === 'function' ? formatSystemName(nomeDoGrupoMer(id.slice(4)) || 'removido') : nomeDoGrupoMer(id.slice(4)) || 'removido') : (S.produto(id.slice(4)) || {}).descricao || 'Produto removido'),
     despesa: (id) => nomeDoGrupo(id) || 'Grupo de despesa removido',
-    patrimonio: (id) => (bensCadastrados().find((b) => b.id === id) || {}).nome || 'Patrimônio removido',
+    patrimonio: (id) => (id.startsWith('grp:') ? 'Grupo: ' + (nomeDe(categoriasDoPatrimonio(), id.slice(4)) || id.slice(4)) : (bensCadastrados().find((b) => b.id === id.slice(4)) || {}).nome || 'Patrimônio removido'),
   };
+  /** Do contrato gravado para os ids da árvore, e de volta. */
+  const objetoDaArvore = (o) => { const x = o && typeof o === 'object' ? o : {}; return {
+    produto: new Set([...(x.produtoGrupoIds || []).map((i) => 'grp:' + i), ...(x.produtoIds || []).map((i) => 'prd:' + i)]), despesa: new Set(x.despesaIds || []),
+    patrimonio: new Set([...(x.patrimonioGrupoIds || []).map((i) => 'grp:' + i), ...(x.patrimonioIds || []).map((i) => 'bem:' + i)]) }; };
+  const objetoParaGravar = (a) => { const de = (conj, p) => [...conj].filter((i) => i.startsWith(p)).map((i) => i.slice(p.length)); return {
+    produtoGrupoIds: de(a.produto, 'grp:'), produtoIds: de(a.produto, 'prd:'), despesaIds: [...a.despesa], patrimonioGrupoIds: de(a.patrimonio, 'grp:'), patrimonioIds: de(a.patrimonio, 'bem:') }; };
+  /** Árvore de produtos: grupo de mercadorias › subgrupo › produtos do cadastro (cada produto fica no grupo e subgrupo em que foi cadastrado). */
+  function arvoreProdutos(marcados) {
+    const prods = ((S.dados && S.dados.produtos) || []).filter((p) => p.status === 'ativo' || marcados.has('prd:' + p.id)).sort((a, b) => String(a.descricao).localeCompare(String(b.descricao), 'pt-BR'));
+    const folha = (p) => ({ id: 'prd:' + p.id, nome: p.descricao, ativo: p.status === 'ativo', folha: true, conta: 'Produto' });
+    const n = (q) => (q === 1 ? '1 produto' : q + ' produtos');
+    const gs = S.gruposMercadoria().map((g) => {
+      const subs = g.subgrupos.map((s2) => { const itens = prods.filter((p) => p.grupoId === g.id && p.subgrupoId === s2.id).map(folha); return { id: 'grp:' + g.id + '|' + s2.id, nome: g.nome + ' › ' + s2.nome, ativo: g.ativo && s2.ativo, conta: n(itens.length), filhos: itens }; });
+      const diretos = prods.filter((p) => p.grupoId === g.id && !g.subgrupos.some((s2) => s2.id === p.subgrupoId)).map(folha);
+      const total = prods.filter((p) => p.grupoId === g.id).length;
+      return { id: 'grp:' + g.id, nome: g.nome, ativo: g.ativo, conta: pluralItens(g.subgrupos.length).replace('item', 'subgrupo').replace('itens', 'subgrupos') + ' · ' + n(total), filhos: [...subs, ...diretos] };
+    });
+    const semGrupo = prods.filter((p) => !S.gruposMercadoria().some((g) => g.id === p.grupoId)).map(folha);
+    if (semGrupo.length) gs.push({ id: 'sem-grupo', nome: 'Produtos sem grupo', ativo: true, selecionavel: false, conta: n(semGrupo.length), filhos: semGrupo });
+    return gs;
+  }
+  /** Árvore de patrimônios: o grupo é a categoria do cadastro do patrimônio (Máquina, Equipamento, Mobiliário…) e, dentro, os bens daquela categoria. */
+  function arvorePatrimonios(marcados) {
+    const bens = bensCadastrados().filter((b) => !b.baixa || marcados.has('bem:' + b.id)).sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR'));
+    const folha = (b) => ({ id: 'bem:' + b.id, nome: b.nome + (b.baixa ? ' (baixado)' : ''), ativo: !b.baixa, folha: true, conta: 'Patrimônio' });
+    const n = (q) => (q === 1 ? '1 patrimônio' : q + ' patrimônios');
+    const gs = categoriasDoPatrimonio().map(([id, nome]) => { const itens = bens.filter((b) => b.categoria === id).map(folha); return { id: 'grp:' + id, nome, ativo: true, conta: n(itens.length), filhos: itens }; });
+    const semGrupo = bens.filter((b) => !categoriasDoPatrimonio().some(([id]) => id === b.categoria)).map(folha);
+    if (semGrupo.length) gs.push({ id: 'sem-grupo', nome: 'Patrimônios sem grupo', ativo: true, selecionavel: false, conta: n(semGrupo.length), filhos: semGrupo });
+    return gs;
+  }
   /** Se faltar dado, devolve true depois de mostrar a lista do que falta (nenhum documento é gerado). */
   function incompleto(f, aviso, papel) {
     const faltas = D.faltasDoContrato(f, papel);
@@ -516,7 +557,7 @@
         // Blocos novos do contrato padrão (campos opcionais): a empresa contratante (vínculo por id) e o texto da rescisão.
         [P.empresa]: selContratante.value, rescisao: cRescisao.value.trim(),
         // Objeto do contrato: ids dos cadastros de produtos, grupos de despesa e patrimônios (campo novo e opcional).
-        objeto: { produtoIds: [...objeto.produto], despesaIds: [...objeto.despesa], patrimonioIds: [...objeto.patrimonio] },
+        objeto: objetoParaGravar(objeto),
         [P.tem]: temAtivo(), formaPagamento: cForma.value,
         // Vencimento: só em dinheiro some (o pagamento é toda sexta-feira, informativo). O dia do mês antigo fica guardado como estava.
         vencimentoData: sexta() ? '' : cVencData.value, vencimentoDia: ct.vencimentoDia != null ? ct.vencimentoDia : null,
@@ -616,8 +657,7 @@
     /* Bloco 3 · Objeto do contrato (18/11/2026, Rodrigo): o que está sendo contratado — produtos, despesas e/ou patrimônios, escolhidos
        dos cadastros que já existem (MER - Produtos, DES - Grupos de Despesas, RET - Patrimônios). Só vínculo por id: nada é digitado,
        nada é calculado e os cadastros de origem não são alterados. Pode ter um ou vários, de mais de um tipo. */
-    const obj0 = ct.objeto && typeof ct.objeto === 'object' ? ct.objeto : {};
-    const objeto = { produto: new Set(obj0.produtoIds || []), despesa: new Set(obj0.despesaIds || []), patrimonio: new Set(obj0.patrimonioIds || []) };
+    const objeto = objetoDaArvore(ct.objeto);
     // Cada lista na cor da sua origem no menu (18/11/2026, Rodrigo): produtos em Mercadorias, despesas em Despesas, patrimônios em Retiradas.
     const COR_DO_OBJETO = { produto: () => U.corOrigem('mercadorias', '#22c55e'), despesa: () => U.corOrigem('despesas', '#ef4444'), patrimonio: () => U.corOrigem('retiradas', '#2563eb') };
     const caixaObjeto = (tipo, rotulo, rotuloBotao, dica, vazio, plural, escolher) => {
@@ -632,18 +672,15 @@
       box.append(el('span', 'compras-rotulo', rotulo), linha, resumo, chipsBox); desenhar();
       return box;
     };
-    const n = (q, um, varios) => (q === 1 ? '1 ' + um : q + ' ' + varios) + (q === 1 ? ' vinculado.' : ' vinculados.');
-    const objProdutos = caixaObjeto('produto', 'Produtos do contrato', 'Grupo de produtos', 'Escolher os produtos deste contrato', 'Nenhum produto vinculado.', (q) => n(q, 'produto', 'produtos'), (trocar) => U.seletorDeItens({
-      titulo: 'Produtos do contrato', rotuloBusca: 'Buscar produto', cor: COR_DO_OBJETO.produto(), corTexto: cc(cores).corTexto, marcados: objeto.produto, aoConfirmar: trocar,
-      itens: ((S.dados && S.dados.produtos) || []).filter((p) => p.status === 'ativo' || objeto.produto.has(p.id)).sort((a, b) => String(a.descricao).localeCompare(String(b.descricao), 'pt-BR')).map((p) => ({ id: p.id, rotulo: p.descricao + (p.status === 'ativo' ? '' : ' (inativo)') })),
-    }));
+    const coresDe = (tipo) => ({ cor: COR_DO_OBJETO[tipo](), corTexto: cc(cores).corTexto });
+    const objProdutos = caixaObjeto('produto', 'Produtos do contrato', 'Grupo de produtos', 'Escolher grupos, subgrupos ou produtos deste contrato', 'Nenhum produto vinculado.', (q) => (q === 1 ? '1 item vinculado.' : q + ' itens vinculados.'), (trocar) => seletorArvore({
+      titulo: 'Produtos do contrato: grupos de mercadorias', cores: coresDe('produto'), sigla: 'MER', rotuloBusca: 'Buscar grupo, subgrupo ou produto', vazio: 'Nenhum grupo de mercadorias cadastrado em Saídas › Grupos de Mercadorias.',
+      nos: () => arvoreProdutos(objeto.produto), marcados: objeto.produto, aoConfirmar: trocar }));
     const objDespesas = caixaObjeto('despesa', 'Despesas do contrato', 'Grupo de despesas', 'Escolher os grupos e subgrupos de despesa deste contrato', 'Nenhuma despesa vinculada.', (q) => (q === 1 ? '1 grupo ou subgrupo vinculado.' : q + ' grupos ou subgrupos vinculados.'), (trocar) => seletorHierarquico({
-      titulo: 'Despesas do contrato: grupos de despesa', cores: { cor: COR_DO_OBJETO.despesa(), corTexto: cc(cores).corTexto }, marcados: objeto.despesa, aoConfirmar: trocar,
-    }));
-    const objPatrimonios = caixaObjeto('patrimonio', 'Patrimônios do contrato', 'Grupo de patrimônios', 'Escolher os patrimônios deste contrato', 'Nenhum patrimônio vinculado.', (q) => n(q, 'patrimônio', 'patrimônios'), (trocar) => U.seletorDeItens({
-      titulo: 'Patrimônios do contrato', rotuloBusca: 'Buscar patrimônio', cor: COR_DO_OBJETO.patrimonio(), corTexto: cc(cores).corTexto, marcados: objeto.patrimonio, aoConfirmar: trocar,
-      itens: bensCadastrados().filter((b) => !b.baixa || objeto.patrimonio.has(b.id)).sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR')).map((b) => ({ id: b.id, rotulo: b.nome + (b.baixa ? ' (baixado)' : '') })),
-    }));
+      titulo: 'Despesas do contrato: grupos de despesa', cores: coresDe('despesa'), marcados: objeto.despesa, aoConfirmar: trocar }));
+    const objPatrimonios = caixaObjeto('patrimonio', 'Patrimônios do contrato', 'Grupo de patrimônios', 'Escolher grupos ou patrimônios deste contrato', 'Nenhum patrimônio vinculado.', (q) => (q === 1 ? '1 item vinculado.' : q + ' itens vinculados.'), (trocar) => seletorArvore({
+      titulo: 'Patrimônios do contrato: grupos de patrimônio', cores: coresDe('patrimonio'), sigla: 'RET', rotuloBusca: 'Buscar grupo ou patrimônio', vazio: 'Nenhuma categoria de patrimônio disponível.',
+      nos: () => arvorePatrimonios(objeto.patrimonio), marcados: objeto.patrimonio, aoConfirmar: trocar }));
     const quadroTem = blocoContrato('Contrato', 'Marque Sim para montar o contrato deste ' + (cliente ? 'cliente' : 'fornecedor') + '. Ele é montado em blocos, de cima para baixo, com o que você preencher em cada um.', temContrato);
     const daEmpresa = 'Os dados vêm de Configurações → Empresa → Dados da Empresa.'; const doCadastro = 'Os dados vêm das etapas anteriores deste cadastro.';
     const blocosDoContrato = [

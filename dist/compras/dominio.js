@@ -735,7 +735,8 @@
     return { patch, notas };
   }
   /** As três listas do objeto do contrato (o que está sendo contratado), cada uma com ids do cadastro correspondente. */
-  const CHAVES_OBJETO_CONTRATO = ['produtoIds', 'despesaIds', 'patrimonioIds'];
+  // Em cada tipo dá para vincular o item ou o grupo dele (19/11/2026): produto ou grupo/subgrupo de mercadorias; patrimônio ou a categoria dele.
+  const CHAVES_OBJETO_CONTRATO = ['produtoIds', 'produtoGrupoIds', 'despesaIds', 'patrimonioIds', 'patrimonioGrupoIds'];
   /** Atividades, objeto e campos adicionais do contrato (modelo + valores digitados): '' quando em ordem. */
   function validarContratoDocumento(c) {
     if (!c || typeof c !== 'object') return '';

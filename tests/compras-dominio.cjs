@@ -473,7 +473,9 @@ ok(() => {
   assert.match(d.validarContratoDocumento({ objeto: { produtoIds: ['p1', 'p1'] } }), /Objeto do contrato inválido/);
   assert.match(d.validarContratoDocumento({ objeto: { patrimonioIds: [''] } }), /Objeto do contrato inválido/);
   assert.match(d.validarContratoDocumento({ objeto: ['p1'] }), /Objeto do contrato inválido/);
-  assert.deepEqual(d.CHAVES_OBJETO_CONTRATO, ['produtoIds', 'despesaIds', 'patrimonioIds']);
+  assert.deepEqual(d.CHAVES_OBJETO_CONTRATO, ['produtoIds', 'produtoGrupoIds', 'despesaIds', 'patrimonioIds', 'patrimonioGrupoIds']);
+  assert.equal(d.validarContratoDocumento({ objeto: { produtoGrupoIds: ['g1', 'g1|s1'], patrimonioGrupoIds: ['maquina'] } }), '');
+  assert.match(d.validarContratoDocumento({ objeto: { produtoGrupoIds: ['g1', 'g1'] } }), /Objeto do contrato inválido/);
   // Contrato em blocos no cliente (18/11/2026): o mesmo do fornecedor, com o cliente como contratante e a empresa como contratada.
   assert.deepEqual(d.papelContrato('cliente'), { tem: 'temDocumento', empresa: 'contratadaEmpresaId' });
   assert.deepEqual(d.papelContrato('fornecedor'), { tem: 'tem', empresa: 'contratanteEmpresaId' });
