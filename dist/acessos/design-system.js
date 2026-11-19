@@ -75,7 +75,7 @@
       { titulo: 'Cores fixas', texto: ['Estas não mudam com a origem.'],
         amostra: () => { const dl = el('dl', 'profiles-info compras-largo'); [['Excluir e ações sem volta', '#e34343'], ['Fundo da página e dos quadros', '#f5f5f7'], ['Fundo dos campos, das linhas e da barra de baixo', '#ffffff'], ['Linhas e bordas', '#dedee3'], ['Borda do campo', '#d4d4d8'], ['Texto', '#606066'], ['Texto das colunas e notas', '#6e6e73'], ['Texto e ícones sobre o cabeçalho', '#ffffff']]
           .forEach(([nome, hex]) => { const dd = el('dd'); dd.append(comCor(hex, hex)); dl.append(el('dt', null, nome), dd); }); return dl; } },
-      { titulo: 'Regras de uso', texto: ['Vermelho é só do excluir. Um botão que não apaga nada nunca é vermelho, mesmo numa tela de Despesas (onde o vermelho é a cor da origem, e não um alerta).',
+      { titulo: 'Regras de uso', texto: ['Vermelho é do excluir e do joinha para baixo. Um botão que não apaga nada nunca é vermelho, mesmo numa tela de Despesas (onde o vermelho é a cor da origem, e não um alerta).', 'Azul fixo (#2563eb) é do joinha para cima.',
         'O editar usa a cor do cabeçalho da tela.', 'No tema escuro as cores de origem são as mesmas; mudam o fundo e o texto.'] },
     ] },
     { id: 'espacamento', titulo: 'Espaçamento', resumo: 'As distâncias entre quadros, campos e linhas', quadros: [
@@ -102,6 +102,9 @@
       { titulo: 'Sigla de três letras', texto: ['As origens são identificadas por três letras dentro do quadrado do ícone: VND, CNT, DES, MER e RET. A sigla tem um tamanho só, em qualquer lugar em que apareça.',
         'Áreas, setores e locais também podem usar uma sigla de até três caracteres no lugar do desenho.'],
         amostra: () => amostra(...ORIGENS.map(([sigla, , chave, padrao]) => { const i = el('span', 'ds-sigla'); i.style.background = U.corOrigem(chave, padrao); i.append(el('span', 'sigla-text', sigla)); return i; })) },
+      { titulo: 'Joinha: para cima e para baixo', texto: ['O joinha tem desenho, cor e função fixos, e não acompanha a cor da tela — do mesmo jeito que a lixeira é vermelha em qualquer tela.', 'Para cima é o positivo, sempre azul: incluso, sim, aprovado. Para baixo é o negativo, sempre vermelho: não incluso, não, reprovado.', 'No contrato: "O que está incluso" leva o joinha azul; "O que não está incluso", o vermelho.'],
+        amostra: () => { const J = (window.CicluzContratos && window.CicluzContratos.JOINHA) || {}; const um = (classe, d, texto) => { const c = el('div', 'ds-icone'); const i = el('span', 'ds-joinha ' + classe); i.setAttribute('aria-hidden', 'true'); i.innerHTML = U.svg(d || ''); c.append(i, el('small', null, texto)); return c; };
+          return amostra(um('joinha-cima', J.cima, 'Para cima: azul (#2563eb)'), um('joinha-baixo', J.baixo, 'Para baixo: vermelho (#e34343)')); } },
       { titulo: 'Desenho', texto: ['Os desenhos são de traço simples, sem preenchimento, todos com a mesma espessura e pontas arredondadas.', 'Cada desenho tem um nome escrito para quem usa leitor de tela.'] },
     ] },
     { id: 'cabecalho', titulo: 'Cabeçalho e Barra de Baixo', resumo: 'O cabeçalho de cima e a barra de baixo, com medidas e botões', quadros: [
@@ -144,7 +147,7 @@
       { titulo: 'Interruptor', texto: ['Para ativo/inativo e para perguntas de sim ou não. Ligado, fica na cor da origem; desligado, cinza. O texto ao lado diz o estado ("Ativo", "Sim").'], itens: [['Medidas', '40 × 24 px']],
         amostra: () => amostra(U.quadroSituacao('Exemplo de interruptor', true, { dica: 'Toque para ligar ou desligar.' })) },
       { titulo: 'Dentro do quadro ou fora dele', texto: ['Botão dentro do quadro age só naquele quadro ("Editar" num bloco, "Adicionar" numa lista).', 'Botão fora do quadro age na página inteira (Cancelar, Salvar, Avançar).'] },
-      { titulo: 'Texto do botão', texto: ['Botão de página tem o nome por extenso ("Cancelar", "Salvar"), nunca só um desenho.', 'O nome diz o que acontece: "Salvar", "Excluir", "Trocar" — e não "OK" ou "Sim".', 'Vermelho é só do excluir.'] },
+      { titulo: 'Texto do botão', texto: ['Botão de página tem o nome por extenso ("Cancelar", "Salvar"), nunca só um desenho.', 'O nome diz o que acontece: "Salvar", "Excluir", "Trocar" — e não "OK" ou "Sim".', 'Em botão, vermelho é só do excluir.'] },
     ] },
     { id: 'campos', titulo: 'Campos de Preenchimento', resumo: 'Rótulo, obrigatório, situação e o aviso de campo vazio', quadros: [
       { titulo: 'Como é um campo', texto: ['O nome do campo fica em cima, em letra de 12 px. O campo tem 42 px de altura, fundo branco, borda fina e cantos de 8 px.', 'Campo obrigatório leva um asterisco no fim do nome.', 'Quando ajuda, o campo traz um exemplo em cinza claro ("Ex.: Nome e sobrenome…") e uma dica curta embaixo.',

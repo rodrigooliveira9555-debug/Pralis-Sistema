@@ -659,5 +659,5 @@
     };
   }
 
-  window.CicluzContratos = { abrirModelos, listaAtividades, seletorHierarquico, botoesDocumento, secoesContrato, partesDoContrato, enderecoTexto, modelos, etapaContrato };
+  window.CicluzContratos = { JOINHA: { cima: ICO.cima, baixo: ICO.baixo }, abrirModelos, listaAtividades, seletorHierarquico, botoesDocumento, secoesContrato, partesDoContrato, enderecoTexto, modelos, etapaContrato };
 })();
