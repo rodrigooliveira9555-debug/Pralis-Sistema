@@ -14,20 +14,28 @@ function seletorDeLocais(selecionados,{conjunto,permitidos,aoMudar}={}){let arvo
  const chosen=conjunto||new Set(selecionados||[]),abertos=new Set(),box=document.createElement('div');box.className='location-tree unidades-arvore';
  const abrirMarcados=(pool)=>pool.some(n=>{const dentro=abrirMarcados(n.children||[]);if(dentro)abertos.add(n.id);return dentro||chosen.has(n.id)});abrirMarcados(arvore);
  const desmarcar=n=>{chosen.delete(n.id);(n.children||[]).forEach(desmarcar)};
+ /* Seleção em cascata (19/11/2026, Rodrigo): marcar um nível marca tudo o que está abaixo dele (o que estiver ativo e permitido);
+    para escolher algo específico, marca-se de baixo para cima — o nível de baixo leva junto só o caminho até ele. */
+ const marcarAbaixo=(n,inativoAcima)=>{for(const f of n.children||[]){const inativo=!!f.inactive||inativoAcima;if(inativo||(permitidos&&!permitidos.has(f.id)))continue;chosen.add(f.id);marcarAbaixo(f,inativo)}};
+ const todosComFilhos=(pool,out=[])=>{for(const n of pool){if((n.children||[]).length){out.push(n.id);todosComFilhos(n.children,out)}}return out};
+ /* Barra fixa no topo do quadro: Expandir tudo e Recolher tudo ficam parados enquanto a lista rola (só para cima e para baixo). */
+ const barra=document.createElement('div');barra.className='escolha-barra';const contagem=document.createElement('small');contagem.className='profiles-note';contagem.setAttribute('role','status');const ferramentas=document.createElement('span');ferramentas.className='escolha-barra-botoes';
+ for(const [rotulo,d,abrir] of [['Expandir tudo','m5 9 7 7 7-7',true],['Recolher tudo','m5 15 7-7 7 7',false]]){const b=botao('',()=>{abertos.clear();if(abrir)todosComFilhos(arvore).forEach(id=>abertos.add(id));render()},'shortcut-circle compras-redondo');b.title=rotulo;b.setAttribute('aria-label',rotulo);b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+d+'"/></svg>';ferramentas.append(b)}
+ barra.append(contagem,ferramentas);
  function draw(pool,container,level,branchColor,pais,inativoAcima){for(const node of pool){const inativo=!!node.inactive||inativoAcima;if(inativo&&!chosen.has(node.id))continue;if(permitidos&&!permitidos.has(node.id)&&!chosen.has(node.id))continue;
    const wrap=document.createElement('div');wrap.className='location-node'+(level===1?' location-area-frame':'')+(inativo?' is-inactive':'');wrap.dataset.level=level;wrap.style.setProperty('--branch-color',branchColor||node.color);wrap.style.setProperty('--node-color',node.color);wrap.dataset.open=String(abertos.has(node.id));
    const row=document.createElement('div');row.className='location-row';row.style.setProperty('--node-color',node.color);row.style.setProperty('--node-ink',ink(node.color));
    const temFilhos=(node.children||[]).some(n=>!permitidos||permitidos.has(n.id)||chosen.has(n.id)),alternar=()=>{abertos.has(node.id)?abertos.delete(node.id):abertos.add(node.id);render()};
    if(temFilhos){const expand=botao('',alternar,'location-expand');expand.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg>';expand.setAttribute('aria-label','Expandir ou recolher '+node.name);expand.setAttribute('aria-expanded',String(abertos.has(node.id)));row.append(expand)}else{const spacer=document.createElement('span');spacer.className='location-expand-spacer';spacer.setAttribute('aria-hidden','true');row.append(spacer)}
    const c=document.createElement('input');c.type='checkbox';c.className='compras-hier-caixa';c.checked=chosen.has(node.id);c.dataset.level=level;c.setAttribute('aria-label','Marcar '+node.name);c.style.setProperty('--menu-accent',branchColor||node.color);
-   c.onchange=()=>{if(c.checked){chosen.add(node.id);pais.forEach(p=>chosen.add(p.id))}else desmarcar(node);render();if(aoMudar)aoMudar()};
+   c.onchange=()=>{if(c.checked){chosen.add(node.id);pais.forEach(p=>chosen.add(p.id));marcarAbaixo(node,inativo)}else desmarcar(node);render();if(aoMudar)aoMudar()};
    const icon=document.createElement('span');icon.className='location-icon location-initials';if(node.identityMode==='icon')icon.innerHTML='<svg viewBox="0 0 24 24">'+iconPath(node.icon||0)+'</svg>';else icon.textContent=initials(node);icon.style.background=node.color;icon.style.color=ink(node.color);icon.style.setProperty('--node-ink',ink(node.color));icon.setAttribute('aria-hidden','true');
    const title=botao(node.name,temFilhos?alternar:()=>c.click(),'location-name'),copy=document.createElement('span');copy.className='location-copy';copy.append(title);
    if(inativo){const off=document.createElement('small');off.className='pill location-inactive-pill';off.textContent='Inativo';copy.append(off)}
    if(level<4){const count=document.createElement('small');count.className='financial-count location-count';count.textContent=itemCountLabel(node);copy.append(count)}
    row.append(c,icon,copy);wrap.append(row);
    if(temFilhos&&abertos.has(node.id)){const children=document.createElement('div');children.className='location-children';draw(node.children,children,level+1,branchColor||node.color,[...pais,node],inativo);wrap.append(children)}container.append(wrap)}}
- function render(){box.replaceChildren();if(!arvore.length){const p=document.createElement('p');p.className='profiles-note';p.textContent='Nenhuma área cadastrada em DES - Área / Setor / Local.';box.append(p)}draw(arvore,box,1,null,[],false)}
+ function render(){box.replaceChildren(barra);contagem.textContent=chosen.size===1?'1 selecionado':chosen.size+' selecionados';if(!arvore.length){const p=document.createElement('p');p.className='profiles-note';p.textContent='Nenhuma área cadastrada em DES - Área / Setor / Local.';box.append(p)}draw(arvore,box,1,null,[],false)}
  render();return {box,chosen}}
 window.CicluzLocationTree={seletor:seletorDeLocais};
 const previous=showConfig;showConfig=function(type,origin){if(type!=='area')return previous(type,origin);showLocationTree(origin)};

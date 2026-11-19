@@ -41,14 +41,32 @@
    */
   function seletorArvore({ titulo, cores, sigla, iconeFolha, rotuloBusca = 'Buscar', vazio = 'Nada cadastrado.', nos, marcados, bloqueados = new Map(), aoConfirmar }) {
     const escolha = new Set(marcados); const abertos = new Set();
+    /* Seleção em cascata (19/11/2026, Rodrigo): marcar um nível marca tudo o que está abaixo; desmarcar um item desmarca os níveis acima
+       dele (o grupo deixa de estar inteiro). Ao confirmar, o que já está coberto por um nível marcado não é repetido: grava-se só o nível
+       mais alto, e o que entrar nele depois continua coberto. */
+    const pais = new Map(); const porId = new Map();
+    const mapear = (lista, pai) => lista.forEach((n) => { porId.set(n.id, n); if (pai) pais.set(n.id, pai.id); mapear(n.filhos || [], n); });
+    mapear(nos(), null);
+    const marcavel = (n) => n.selecionavel !== false && n.ativo !== false && !bloqueados.has(n.id);
+    const descer = (n, fn) => (n.filhos || []).forEach((f) => { fn(f); descer(f, fn); });
+    for (const id of [...escolha]) { const n = porId.get(id); if (n) descer(n, (f) => { if (marcavel(f)) escolha.add(f.id); }); }
+    const compacta = () => new Set([...escolha].filter((id) => { let p = pais.get(id); while (p) { if (escolha.has(p)) return false; p = pais.get(p); } return true; }));
     const formatar = (n) => (typeof formatSystemName === 'function' ? formatSystemName(String(n || '')) : String(n || ''));
     U.dialogo({
       titulo, ...cc(cores), largo: true, classe: 'compras-hier-dialogo', rotuloSalvar: 'Confirmar',
       montar: (form) => {
         const busca = entrada('text', '', { placeholder: rotuloBusca, maxLength: 80, autocomplete: 'off' }); busca.setAttribute('aria-label', rotuloBusca);
         busca.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
-        const resumo = el('p', 'profiles-note'); resumo.setAttribute('role', 'status'); const arvore = el('div', 'compras-hier'); arvore.setAttribute('role', 'tree');
-        const contar = () => { resumo.textContent = (escolha.size === 1 ? '1 selecionado' : escolha.size + ' selecionados') + '.'; };
+        const resumo = el('small', 'profiles-note'); resumo.setAttribute('role', 'status'); const arvore = el('div', 'compras-hier'); arvore.setAttribute('role', 'tree');
+        const contar = () => { const q = compacta().size; resumo.textContent = (q === 1 ? '1 selecionado' : q + ' selecionados') + '.'; };
+        // Barra fixa no topo do quadro: Expandir tudo e Recolher tudo ficam parados enquanto a lista rola (só para cima e para baixo).
+        const barra = el('div', 'escolha-barra'); const ferramentas = el('span', 'escolha-barra-botoes');
+        [['Expandir tudo', 'm5 9 7 7 7-7', true], ['Recolher tudo', 'm5 15 7-7 7 7', false]].forEach(([rotulo, d, abrir]) => {
+          const b = el('button', 'shortcut-circle compras-redondo'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = SVG('<path d="' + d + '"/>');
+          b.onclick = () => { abertos.clear(); if (abrir) porId.forEach((n, id) => { if ((n.filhos || []).length) abertos.add(id); }); desenhar(); };
+          ferramentas.append(b);
+        });
+        barra.append(resumo, ferramentas);
         const casa = (no, caminho, termo) => !termo || U.dobrar(caminho + ' ' + no.nome).includes(termo) || (no.filhos || []).some((f) => casa(f, caminho + ' ' + no.nome, termo));
         const linha = (no, nivel, caminho, termo) => {
           const filhos = (no.filhos || []).filter((f) => casa(f, caminho + ' ' + no.nome, termo)); const aberto = Boolean(termo) || abertos.has(no.id);
@@ -58,7 +76,7 @@
           seta.onclick = () => { if (abertos.has(no.id)) abertos.delete(no.id); else abertos.add(no.id); desenhar(); };
           const ativo = no.ativo !== false; const travado = bloqueados.has(no.id);
           const c = entrada('checkbox'); c.className = 'compras-hier-caixa'; c.checked = escolha.has(no.id) || travado; c.disabled = travado || (!ativo && !escolha.has(no.id));
-          c.setAttribute('aria-label', 'Selecionar ' + no.nome); c.onchange = () => { if (c.checked) escolha.add(no.id); else escolha.delete(no.id); contar(); };
+          c.setAttribute('aria-label', 'Selecionar ' + no.nome); c.onchange = () => { if (c.checked) { escolha.add(no.id); descer(no, (f) => { if (marcavel(f)) escolha.add(f.id); }); } else { escolha.delete(no.id); descer(no, (f) => { if (!bloqueados.has(f.id)) escolha.delete(f.id); }); let p = pais.get(no.id); while (p) { escolha.delete(p); p = pais.get(p); } } desenhar(); };
           if (no.selecionavel === false) { c.disabled = true; c.style.visibility = 'hidden'; }
           const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); if (no.folha && iconeFolha) ic.innerHTML = SVG(iconeFolha); else ic.append(el('span', 'sigla-text', sigla)); // grupo e subgrupo levam a sigla da origem; o item final leva o ícone dele (produto = carrinho)
           const tx = el('span', 'compras-hier-texto'); tx.append(el('b', null, no.folha ? no.nome : sigla + ' ' + formatar(no.nome)));
@@ -69,14 +87,14 @@
         };
         const desenhar = () => {
           const termo = U.dobrar(busca.value.trim()); const lista = nos().filter((n) => casa(n, '', termo));
-          arvore.replaceChildren(...lista.flatMap((n) => linha(n, 0, '', termo)));
+          arvore.replaceChildren(barra, ...lista.flatMap((n) => linha(n, 0, '', termo)));
           if (!lista.length) arvore.append(el('p', 'profiles-note compras-hier-vazio', termo ? 'Nada encontrado.' : vazio));
           contar();
         };
         busca.addEventListener('input', desenhar);
-        const box = el('div', 'compras-campo compras-largo'); box.append(busca, resumo, arvore); form.append(box); desenhar();
+        const box = el('div', 'compras-campo compras-largo'); box.append(busca, arvore); form.append(box); desenhar();
       },
-      salvar: () => { aoConfirmar(escolha); },
+      salvar: () => { aoConfirmar(compacta()); },
     });
   }
   /** Grupos e subgrupos de despesa na janela em árvore (atividades do contrato e objeto do contrato). Ids: "grupo" ou "grupo|subgrupo". */

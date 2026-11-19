@@ -127,7 +127,7 @@ body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees .operator-fee
 body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees label :is(input,select,textarea){border:0!important;box-shadow:none!important;outline:0!important}
 
 /* Area / Setor / Local: continuous rows inside one neutral frame. */
-body :is(#sector-view .location-tree,.location-tree.unidades-arvore){display:block;gap:0!important;border:1px solid var(--layout-line)!important;border-radius:14px;overflow:hidden;background:var(--theme-card,#fff)}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore){display:block;gap:0!important;border:1px solid var(--layout-line)!important;border-radius:14px;overflow:var(--arvore-rolagem,hidden);background:var(--theme-card,#fff)}
 body :is(#sector-view .location-tree,.location-tree.unidades-arvore)>.location-area-frame{border:0!important;border-radius:0!important;margin:0!important;padding:0 8px!important;background:var(--theme-card,#fff)!important}
 body :is(#sector-view .location-tree,.location-tree.unidades-arvore)>.location-area-frame+.location-area-frame{border-top:1px solid var(--layout-line)!important}
 body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-node{margin-top:0!important;margin-bottom:0!important}

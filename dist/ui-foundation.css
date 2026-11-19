@@ -445,6 +445,13 @@ body .btn.acao-com-circulo[hidden]{display:none}
 /* A caixa de marcar das listas de escolha: o tamanho e o respiro dos campos de janela são fixados por regras gerais, que agora leem
    estas duas variáveis; a caixa informa o seu próprio tamanho. */
 .compras-hier-caixa{--caixa-de-marcar:var(--escolha-caixa,20px);--campo-respiro:0px}
+/* Quadro das listas de escolha em árvore: rola só para cima e para baixo; a barra do topo (contagem + Expandir tudo / Recolher tudo) fica parada. */
+:is(.compras-hier,.location-tree.unidades-arvore){--arvore-rolagem:hidden auto;max-height:min(60vh,560px);overflow:hidden auto;overscroll-behavior:contain}
+.escolha-barra{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;box-sizing:border-box;padding:6px 10px;background:var(--theme-card,#fff);border-bottom:1px solid var(--layout-line,#dedee3)}
+.escolha-barra>.profiles-note{margin:0}
+.escolha-barra-botoes{display:inline-flex;gap:8px;flex:none}
+/* A sigla de três letras cabe inteira no ícone menor (não quebra em duas linhas). */
+.location-tree.unidades-arvore .location-row>.location-icon{white-space:nowrap;letter-spacing:0;overflow:hidden}
 /* Escolha de áreas, setores e locais: a árvore é a mesma da tela DES - Área / Setor / Local (as regras de desenho são compartilhadas em unified-layout.css e design-system.css); aqui só o quadro de fora e a caixa de marcar. */
 .unidades-quadro{display:grid;gap:6px;margin:0;padding:0;border:0;min-width:0}
 .unidades-quadro>legend{padding:0;font:var(--ui-label-weight,500) var(--ui-label,12px)/18px var(--ui-font);color:var(--layout-ink,inherit)}

@@ -1,5 +1,12 @@
 # CICLUZ — referência de interface
 
+## Árvore de escolha: seleção em cascata e barra fixa de Expandir / Recolher tudo (19/11/2026)
+Pedido do Rodrigo. Vale para toda árvore de escolha: a de **áreas, setores e locais** (Horário / Escala, Ficha de Cargos, colaborador) e a **do contrato** (grupo de produtos, de despesas e de patrimônios; grupos de despesa das atividades).
+
+**Seleção em cascata.** Marcar um nível marca **tudo o que está abaixo dele**; para escolher algo específico, marca-se de baixo para cima. Desmarcar um nível desmarca tudo o que está abaixo. **Supera** as regras anteriores no que diziam o contrário (área: "marcar um item marca só os níveis acima"; contrato: "marcar um grupo não marca os itens dele"). Na árvore de áreas, marcar um nível de baixo continua marcando o caminho até ele (a área do setor), sem marcar os irmãos; desmarcar um filho não desmarca o pai. Na árvore do contrato, desmarcar um item desmarca os níveis acima dele (o grupo deixa de estar inteiro) e, ao confirmar, **grava-se só o nível mais alto marcado** — o que está coberto por ele não é repetido, e o que entrar nesse grupo depois continua coberto. A contagem mostra esse número.
+
+**Barra fixa.** No topo do quadro da árvore há uma barra que **não rola**: à esquerda a contagem de selecionados, à direita os dois botões redondos **Expandir tudo** e **Recolher tudo**. O quadro tem altura máxima (60% da tela, até 560 px) e rola **só para cima e para baixo**; não há rolagem lateral. Classes `.escolha-barra` e `.escolha-barra-botoes`, em `ui-foundation.css`.
+
 ## Grupo de patrimônios do contrato: grupo de retiradas › subgrupo › patrimônio (19/11/2026)
 Pedido do Rodrigo. **Supera** o agrupamento pela categoria do bem (CIS, UTS, MAC, MOB, VE), decidido no mesmo dia. No Objeto do contrato, "Grupo de patrimônios" passa a ter **a mesma lógica do Grupo de produtos**: a árvore é **RET - Grupos de Retiradas** (grupo › subgrupo, com a sigla RET) e, dentro de cada subgrupo, **os patrimônios cadastrados nele**, com o ícone do patrimônio (o prédio). Dá para marcar o grupo, o subgrupo ou o bem. Bem sem grupo fica em "Patrimônios sem Grupo", que não é marcável como grupo. **Padrão geral:** em toda árvore de escolha, o item final (produto, patrimônio) aparece dentro do subgrupo em que foi cadastrado, com o seu próprio ícone; grupo e subgrupo levam a sigla da origem. 
 
