@@ -40,13 +40,22 @@
   /** Resumo do contrato em blocos do cliente (o cliente é o contratante; a sua empresa, a contratada), para a visualização e a revisão. */
   function linhasContrato(c) {
     const k = c.contrato || {};
-    if (!k.temDocumento) return [['Tem contrato', 'Não']];
+    if (!k.temDocumento) return []; // sem contrato não há o bloco (a resposta aparece em "Dados do responsável legal")
     const p = window.CicluzContratos ? window.CicluzContratos.partesDoContrato(c, 'cliente') : { contratado: {} };
     const n = (lista) => (lista && lista.length ? lista.length + (lista.length === 1 ? ' item' : ' itens') : '');
     const o = k.objeto || {}; const itensObjeto = [[o.produtoIds, 'produto', 'produtos'], [o.despesaIds, 'despesa', 'despesas'], [o.patrimonioIds, 'patrimônio', 'patrimônios']].filter(([l]) => l && l.length).map(([l, um, varios]) => l.length + ' ' + (l.length === 1 ? um : varios)).join(', ');
     return [['Tem contrato', 'Sim'], ['Empresa contratada', p.contratado.nome], ['Objeto do contrato', itensObjeto], ['Valor', Number.isInteger(k.valorCentavos) ? D.moeda(k.valorCentavos / 100) : ''],
       ['Forma de pagamento', nomeDe(D.FORMAS_PAGAMENTO_CONTRATO, k.formaPagamento)], ['Início da vigência', k.inicio ? window.CicluzDateFields.display(k.inicio) : ''], ['Término da vigência', k.fim ? window.CicluzDateFields.display(k.fim) : ''],
       ['Reajuste', nomeDe(D.REAJUSTES_CONTRATO, k.reajuste)], ['O que está incluso', n(k.atividadesIncluidas)], ['O que não está incluso', n(k.atividadesExcluidas)], ['Condições de rescisão', k.rescisao ? 'Preenchidas' : ''], ['Tipo de contrato', k.modeloNome]];
+  }
+  /** Linhas do responsável legal da pessoa jurídica: o cadastro curto ou, com contrato, o completo (os dados que o contrato pede). */
+  function linhasLegal(c) {
+    const r = c.representante || {}; const tem = Boolean(c.contrato && c.contrato.temDocumento); const E = window.CicluzEmpresa || {};
+    const base = [['Terá contrato', tem ? 'Sim' : 'Não'], ['Nome', r.nome], ['WhatsApp', r.whatsapp], ['E-mail', r.email], ['Aniversário', D.aniversarioTexto(r.aniversario)]];
+    if (!tem) return [...base, ['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, r.cargo)]];
+    return [...base, ['Cargo na empresa', nomeDe(E.CARGOS_EMPRESA || [], r.cargoEmpresa)], ['CPF', r.cpf], ['RG', [r.rg, r.rgOrgao].filter(Boolean).join(' · ')], ['Nacionalidade', r.nacionalidade],
+      ['Estado civil', nomeDe(E.ESTADOS_CIVIS || [], r.estadoCivil)], ['Profissão', r.profissao], ['Endereço', window.CicluzContratos ? window.CicluzContratos.enderecoTexto(r.endereco) : ''],
+      ['Representante legal dele', r.representacao && r.representacao.precisa ? (r.representacao.representantes || []).map((p) => p.nome).filter(Boolean).join('; ') : '']];
   }
   /** Seções [título, [[rótulo, valor]]] do que está cadastrado, só com o que foi preenchido (visualização e revisão). */
   function secoesCliente(c) {
@@ -69,7 +78,7 @@
         // Cadastro anterior a 17/11/2026 com um financeiro diferente do contato: continua à vista, para não sumir.
         ...(c.financeiro && c.financeiro.mesmo === false && (c.financeiro.nome || c.financeiro.whatsapp || c.financeiro.email) ? [['Financeiro (cadastro anterior)', contato(c.financeiro)]] : []),
         ['Informações de cobrança', [['Cliente mensal', c.contrato && c.contrato.clienteMensal ? 'Sim' : 'Não'], ...(c.contrato && c.contrato.clienteMensal ? [['Fechamento', 'Do dia 1º ao último dia do mês'], ['Forma de pagamento', 'Boleto'], ['Vencimento', 'Todo dia ' + D.CLIENTE_MENSAL.vencimentoDia]] : [])]],
-        ['Dados do responsável legal', contato(c.representante, [['Aniversário', D.aniversarioTexto(c.representante && c.representante.aniversario)], ['Cargo', nomeDe(D.CARGOS_REPRESENTANTE, c.representante && c.representante.cargo)]])],
+        ['Dados do responsável legal', linhasLegal(c)],
         ['Contrato', linhasContrato(c)],
       ];
     }
@@ -190,10 +199,49 @@
           repAniv.input.readOnly = copia;
           repAniv.no.querySelectorAll('button').forEach((b) => { b.disabled = copia; });
         };
-        const rep = contatoBloco(v.representante, 'responsável legal', () => contatoAtual(), 'Dados do responsável legal', pintarRepAniv);
+        const rep = contatoBloco(v.representante, 'responsável legal', () => contatoAtual(), 'Dados do responsável legal', (copia) => { pintarRepAniv(copia); sincronizarCompleto(copia); });
         rep.no.append(repAniv.no);
         const repCargo = seletor(D.CARGOS_REPRESENTANTE, (v.representante && v.representante.cargo) || '', 'Selecione');
-        rep.no.append(campo('Cargo na empresa', repCargo));
+        const repCargoCampo = campo('Cargo na empresa', repCargo); rep.no.append(repCargoCampo);
+        /* "Terá contrato?" (18/11/2026, Rodrigo): a primeira pergunta da etapa do responsável legal. Com Não, fica o cadastro curto
+           (o mesmo da etapa anterior, ou nome, WhatsApp, e-mail, aniversário e cargo) e o cadastro vai direto para a Revisão. Com Sim,
+           o responsável legal é cadastrado por completo — o mesmo bloco dos responsáveis legais de Dados da Empresa (cargo: proprietário,
+           sócio-proprietário, diretor não sócio ou procurador; qualificação; endereço; representante legal) —, esses dados entram no
+           contrato e o cadastro ganha a etapa Contrato. Campos novos e opcionais em "representante" (cargoEmpresa, cpf, rg…): sem migração. */
+        const E = window.CicluzEmpresa;
+        const CHAVES_COMPLETO = ['cpf', 'rg', 'rgOrgao', 'nacionalidade', 'estadoCivil', 'profissao', 'endereco', 'nascimento', 'representacao'];
+        const rv = v.representante || {};
+        const rc = E && E.responsaveisDe ? E.responsaveisDe({ responsaveis: [{ ...rv, cargo: rv.cargoEmpresa || '' }] })[0] : null;
+        const caixaCompleta = el('div', 'compras-etapa compras-largo');
+        const tituloCompleto = (cargo) => 'Responsável legal no contrato' + (nomeDe(E.CARGOS_EMPRESA, cargo) ? ' — ' + nomeDe(E.CARGOS_EMPRESA, cargo) : '');
+        const refazerCompleto = () => { if (rc) caixaCompleta.replaceChildren(E.blocoResponsavel(rc, { titulo: tituloCompleto })); };
+        const temCt = U.quadroSituacao('Terá contrato?', Boolean(rc && (v.contrato || {}).temDocumento), { textos: ['Sim', 'Não'], dica: 'Com Sim, os dados completos do responsável legal são pedidos aqui e entram no contrato, e o cadastro ganha a etapa Contrato.', aoMudar: () => aoMudarContrato() });
+        temCt.classList.add('compras-largo'); temCt.querySelector('.account-status-switch').setAttribute('aria-label', 'Terá contrato?');
+        rep.no.querySelector('legend').after(temCt);
+        const comContrato = () => Boolean(rc) && temCt.ativo;
+        const camposCurtos = [...[rep.nome, rep.whatsapp, rep.email].map((i) => i.closest('.compras-campo')), repCargoCampo];
+        const trio = [['nome', rep.nome], ['whatsapp', rep.whatsapp], ['email', rep.email]];
+        // "O mesmo da etapa anterior" com contrato: o nome, o WhatsApp e o e-mail do bloco completo acompanham os da etapa anterior.
+        function sincronizarCompleto(copia) {
+          if (!comContrato() || !copia) return;
+          const a = contatoAtual(); if (rc.nome === a.nome && rc.whatsapp === a.whatsapp && rc.email === a.email) return;
+          Object.assign(rc, a); refazerCompleto();
+        }
+        function pintarLegal() { const sim = comContrato(); camposCurtos.forEach((no) => mostrar(no, !sim)); mostrar(caixaCompleta, sim); }
+        // Trocar a resposta nunca apaga: o que foi digitado num formato passa para o outro quando lá está vazio.
+        function aoMudarContrato() {
+          if (comContrato()) { trio.forEach(([k, i]) => { if (!String(rc[k] || '').trim()) rc[k] = i.value.trim(); }); refazerCompleto(); }
+          else if (rc && !rep.mesmo.ativo) trio.forEach(([k, i]) => { if (!i.value.trim()) i.value = rc[k] || ''; });
+          pintarLegal(); const p = passo; desenhar(); ir(p);
+        }
+        refazerCompleto(); pintarLegal();
+        const lerRepresentante = () => {
+          const basico = rep.ler(); const comp = comContrato() ? E.lerResponsavel(rc) : null;
+          // Sem contrato agora, o que já estava gravado do cadastro completo fica guardado como está.
+          const guardado = Object.fromEntries(['cargoEmpresa', ...CHAVES_COMPLETO].filter((k) => rv[k] !== undefined).map((k) => [k, rv[k]]));
+          return { ...guardado, ...basico, ...(comp ? { nome: comp.nome, whatsapp: comp.whatsapp, email: comp.email, cargoEmpresa: comp.cargo, ...Object.fromEntries(CHAVES_COMPLETO.map((k) => [k, comp[k]])) } : {}),
+            cargo: repCargo.value, aniversario: rep.mesmo.ativo ? aniv.valor() : repAniv.valor() };
+        };
 
         /* Informações de Pagamento (sempre à vista): forma de pagamento, recorrência, valor e referência ao salário mínimo (mesmos componentes de Fornecedores) */
         const ct = v.contrato || {};
@@ -213,8 +261,8 @@
         // guardado como está. Ligar "cliente mensal" grava boleto e vencimento no dia 10, a regra de antes.
         const cDados = el('fieldset', 'compras-fieldset'); cDados.append(el('legend', null, 'Informações de cobrança'), mensal, ...camposMensal); pintarMensal();
         // Etapa Contrato (18/11/2026, Rodrigo): o mesmo contrato em blocos do cadastro de fornecedor (contratos.js). Aqui o cliente é o
-        // contratante e a sua empresa é a contratada. "Tem contrato?" grava temDocumento (campo novo e opcional); "tem" segue como era.
-        const etapaCt = window.CicluzContratos.etapaContrato({ contrato: ct, papel: 'cliente', lerRegistro: () => registro(), cores, mensal: () => mensal.ativo });
+        // contratante e a sua empresa é a contratada. A pergunta "Terá contrato?" fica na etapa do responsável legal e grava temDocumento (campo novo e opcional); "tem" segue como era.
+        const etapaCt = window.CicluzContratos.etapaContrato({ contrato: ct, papel: 'cliente', lerRegistro: () => registro(), cores, mensal: () => mensal.ativo, temExterno: () => comContrato() });
         // Cliente mensal manda na forma de pagamento e no vencimento (boleto, dia 10), como antes; deixou de ser mensal, o dia 10 sai.
         const lerContrato = () => ({
           ...ct, ...etapaCt.ler(), tem: true, clienteMensal: mensal.ativo,
@@ -310,7 +358,7 @@
           const contato = el('fieldset', 'compras-fieldset'); contato.append(el('legend', null, 'Dados do responsável financeiro'), F.contatoNome, F.whats, F.mail, aniv.no, fixo('Cargo na empresa', 'Financeiro'));
           // 18/11/2026 (Rodrigo): as Informações de cobrança ficam embaixo dos dados do responsável financeiro, na mesma etapa; a etapa
           // Contrato traz o contrato em blocos, o mesmo do cadastro de fornecedor.
-          return [bloco(quadro('Dados da empresa', ...sit, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime), sEnd), bloco(contato, cDados), bloco(rep.no), bloco(...etapaCt.nos), bloco(revisao)];
+          return [bloco(quadro('Dados da empresa', ...sit, F.cnpj, avisoCnpj, F.razao, F.fantasia, F.regime), sEnd), bloco(contato, cDados), bloco(rep.no, caixaCompleta), ...(comContrato() ? [bloco(...etapaCt.nos)] : []), bloco(revisao)];
         }
         /** Cadastro lido do formulário: só o tipo e a modalidade em uso (o resto do registro fica como está). */
         // "Preencher endereço" mora dentro do quadro Endereço: desligado, o quadro mostra só a pergunta (compras-so-pergunta, em compras.css).
@@ -322,10 +370,15 @@
           if (cadastro === 'simples') return { ...base, cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim(), endereco };
           fin.pintar(); rep.pintar();
           return { ...base, cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), regimeTributario: regime.value, endereco, whatsapp: whats.value.trim(), email: mail.value.trim(),
-            contatoNome: contatoNome.value.trim(), contatoAniversario: aniv.valor(), financeiro: fin.ler(), representante: { ...rep.ler(), cargo: repCargo.value, aniversario: rep.mesmo.ativo ? aniv.valor() : repAniv.valor() }, contrato: lerContrato() };
+            contatoNome: contatoNome.value.trim(), contatoAniversario: aniv.valor(), financeiro: fin.ler(), representante: lerRepresentante(), contrato: lerContrato() };
         }
         const registro = () => ({ ...(c || {}), ...ler(), id: c ? c.id : undefined });
-        const conferir = () => D.validarClienteEtapas(registro(), R(), { clientes: clientes() });
+        const conferir = () => {
+          const faltas = D.validarClienteEtapas(registro(), R(), { clientes: clientes() });
+          // Com contrato, o bloco completo do responsável legal é conferido com as mesmas regras de Dados da Empresa (formato de CPF, WhatsApp, CEP…).
+          if (tipo === 'juridica' && cadastro === 'completo' && comContrato() && !faltas[2]) faltas[2] = E.validarResponsaveis({ responsaveis: [E.lerResponsavel(rc)] }).split('responsável 1').join('responsável legal');
+          return faltas;
+        };
 
         const voltar = botao('Voltar', () => ir(passo - 1), 'btn secondary footer-cancel-accent form-back-action');
         voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
@@ -342,7 +395,7 @@
           const pags = paginas();
           passos = pags.map((nos) => { const d = el('div', 'compras-etapa'); d.append(...nos); return d; });
           corpo.replaceChildren(...passos);
-          const nomes = D.etapasCliente(tipo, cadastro);
+          const nomes = D.etapasCliente(tipo, cadastro, { semContrato: !comContrato() });
           if (nomes.length) {
             barra = window.CicluzStepper.create({ steps: nomes.map((label) => ({ label })), current: 0, label: 'Etapas do cadastro do cliente', onSelect: (i) => { if (c || i <= passo) ir(i); } });
             barraBox.replaceChildren(barra.el); mostrar(barraBox, true);
@@ -364,12 +417,12 @@
           U.subirAoTopo(barraBox, form);
           nav.replaceChildren(...(etapas ? [passo > 0 && voltar, cancelar, (c || ultima) && salvarFim, !ultima && avancar] : [cancelar, salvarFim]).filter(Boolean));
         }
-        const nomes0 = () => D.etapasCliente(tipo, cadastro).map((label) => ({ label }));
+        const nomes0 = () => D.etapasCliente(tipo, cadastro, { semContrato: !comContrato() }).map((label) => ({ label }));
         form.append(barraBox, corpo, erroEtapa, nav);
         desenhar();
         // Cliente já cadastrado, em etapas, abre na Revisão dos dados, como em Dados da Empresa (18/11/2026, Rodrigo). Novo começa na 1ª etapa; o de uma página só abre no formulário.
         if (c && passos.length > 1) ir(passos.length - 1);
-        return { ler, registro, conferir, ir, get datas() { return tipo === 'juridica' && cadastro === 'completo' ? etapaCt.datas() : []; } };
+        return { ler, registro, conferir, ir, get datas() { return tipo === 'juridica' && cadastro === 'completo' && comContrato() ? etapaCt.datas() : []; } };
       },
       salvar: (ctx) => {
         if (opcoes.previa) return 'Isto é só uma prévia do formulário: nada é salvo.';

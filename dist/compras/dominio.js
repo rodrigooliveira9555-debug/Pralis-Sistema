@@ -794,8 +794,10 @@
     return String(c.tipoPessoa === 'juridica' ? (c.nomeFantasia || c.razaoSocial) : c.nome || '').trim();
   }
   /** Etapas do cadastro completo (o simples é uma página só, sem etapas). */
-  function etapasCliente(tipoPessoa, cadastro) {
+  function etapasCliente(tipoPessoa, cadastro, { semContrato = false } = {}) {
     if (cadastro !== 'completo') return [];
+    // 18/11/2026 (Rodrigo): "Terá contrato?" é respondido na etapa do responsável legal; com Não, a etapa Contrato não existe e o cadastro vai direto para a Revisão.
+    if (tipoPessoa === 'juridica' && semContrato) return ['Dados da empresa', 'Dados do responsável financeiro', 'Dados do responsável legal', 'Revisão dos dados'];
     return tipoPessoa === 'juridica'
       // 18/11/2026 (Rodrigo): cinco etapas — empresa, responsável financeiro (com as informações de cobrança), responsável legal, Contrato (em blocos, como no fornecedor) e a Revisão.
       ? ['Dados da empresa', 'Dados do responsável financeiro', 'Dados do responsável legal', 'Contrato', 'Revisão dos dados']
@@ -879,7 +881,8 @@
       (() => { const cargo = c.representante && c.representante.cargo; return cargo && !CARGOS_REPRESENTANTE.some(([id]) => id === cargo) ? 'Cargo do representante inválido.' : contatoRuim(c.representante, 'representante'); })(),
       // Etapa Contrato (18/11/2026): o contrato em blocos, o mesmo do fornecedor. Só é conferido com "Tem contrato?" em Sim
       // (no cliente, a chave temDocumento); as informações de cobrança (cliente mensal) ficam na etapa do responsável financeiro.
-      (() => { const k = c.contrato; if (!k || typeof k !== 'object' || !k.temDocumento) return ''; return validarContratoFinanceiro({ ...k, tem: true }) || validarContratoDocumento(k); })(),
+      // Sem contrato a etapa não existe: a lista tem uma mensagem a menos (empresa, financeiro, legal, revisão).
+      ...(c.contrato && typeof c.contrato === 'object' && c.contrato.temDocumento ? [validarContratoFinanceiro({ ...c.contrato, tem: true }) || validarContratoDocumento(c.contrato)] : []),
       '',
     ];
   }

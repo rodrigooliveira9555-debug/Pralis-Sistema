@@ -133,6 +133,177 @@
     return '';
   }
 
+  /** Um responsável como é gravado: textos aparados, e-mail em minúsculas, representação só quando precisa. */
+  function lerResponsavel(r) {
+    return {
+    nascimento: r.nascimento || '',
+    representacao: r.representacao && r.representacao.precisa ? {
+      precisa: true, motivo: r.representacao.motivo || '',
+      representantes: r.representacao.representantes.map((p) => ({ ...p, nome: cheio(p.nome), cpf: cheio(p.cpf), rg: cheio(p.rg), rgOrgao: cheio(p.rgOrgao), nacionalidade: cheio(p.nacionalidade), profissao: cheio(p.profissao), whatsapp: cheio(p.whatsapp), email: cheio(p.email).toLocaleLowerCase('pt-BR'), processo: cheio(p.processo), endereco: Object.fromEntries(Object.entries(p.endereco || {}).map(([k, val]) => [k, cheio(val)])) })).filter((p) => p.nome || p.cpf || p.vinculo),
+    } : { precisa: false, motivo: '', representantes: [] },
+    id: r.id, cargo: r.cargo || '', nome: cheio(r.nome), cpf: cheio(r.cpf), rg: cheio(r.rg), rgOrgao: cheio(r.rgOrgao), nacionalidade: cheio(r.nacionalidade), estadoCivil: r.estadoCivil || '', profissao: cheio(r.profissao),
+    whatsapp: cheio(r.whatsapp), email: cheio(r.email).toLocaleLowerCase('pt-BR'),
+    endereco: Object.fromEntries(Object.entries(r.endereco || {}).map(([k, val]) => [k, cheio(val)])),
+    };
+  }
+  /**
+   * Bloco (quadro) com todos os dados de um responsável legal: cargo, dados pessoais para a qualificação em contrato, endereço e,
+   * quando precisa, o representante legal dele. Peça única: Dados da Empresa e o responsável legal do cliente com contrato
+   * (18/11/2026, Rodrigo). r: um responsável normalizado por responsaveisDe (o bloco altera r enquanto a pessoa digita).
+   * aoMudar(): chamado quando o bloco ganha ou perde campos. titulo(cargo): o texto da moldura.
+   */
+  function blocoResponsavel(r, { aoMudar = () => {}, titulo: tituloDe = tituloDoResponsavel } = {}) {
+    const texto = (valor, extra = {}) => entrada('text', valor || '', { maxLength: 120, ...extra });
+    const CAD = window.CicluzComprasCadastros;
+    const falha = { 'nao-encontrado': 'não encontrado', indisponivel: 'consulta indisponível agora' };
+    const aoEnter = (buscar) => (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); ev.stopPropagation(); buscar(true); } };
+    const pintarModo = aoMudar;
+    const bloco = el('fieldset', 'compras-fieldset');
+    const titulo = el('legend', null, tituloDe(r.cargo));
+    const cargo = seletor(CARGOS_EMPRESA, r.cargo, 'Selecione');
+    const nome = texto(r.nome);
+    const whats = entrada('tel', r.whatsapp, { inputMode: 'numeric', placeholder: '(00) 00000-0000' });
+    if (CAD && CAD.mascaraTelefone) mascara(whats, CAD.mascaraTelefone);
+    const mail = entrada('email', r.email, { maxLength: 160, inputMode: 'email', autocapitalize: 'off' }); mail.dataset.textoLivre = '1';
+    cargo.addEventListener('change', () => { r.cargo = cargo.value; titulo.textContent = tituloDe(r.cargo); });
+    nome.addEventListener('input', () => { r.nome = nome.value; });
+    whats.addEventListener('input', () => { r.whatsapp = whats.value; });
+    mail.addEventListener('input', () => { r.email = mail.value; });
+    // Dados que um contrato pede para qualificar quem assina: nome completo, nacionalidade, estado civil,
+    // profissão, RG, CPF e endereço (pedido do Rodrigo, 17/11/2026). Tudo opcional; o que vier preenchido é conferido.
+    const liga = (input, chave, alvo = r) => { input.addEventListener('input', () => { alvo[chave] = input.value; }); input.addEventListener('change', () => { alvo[chave] = input.value; }); return input; };
+    const cpf = liga(mascara(entrada('text', r.cpf, { inputMode: 'numeric', placeholder: '000.000.000-00', maxLength: 14 }), regras().cpfMask), 'cpf');
+    const rg = liga(entrada('text', r.rg, { maxLength: 20, placeholder: 'Ex: MG-00.000.000...' }), 'rg'); rg.dataset.textoLivre = '1';
+    const rgOrgao = liga(entrada('text', r.rgOrgao, { maxLength: 20, placeholder: 'Ex: SSP/MG...' }), 'rgOrgao'); rgOrgao.dataset.textoLivre = '1';
+    const nacionalidade = liga(texto(r.nacionalidade, { maxLength: 40, placeholder: 'Ex: Brasileira...' }), 'nacionalidade');
+    const estadoCivil = liga(seletor(ESTADOS_CIVIS, r.estadoCivil, 'Selecione'), 'estadoCivil');
+    const profissao = liga(texto(r.profissao, { maxLength: 60, placeholder: 'Ex: Empresário...' }), 'profissao');
+    const en = r.endereco;
+    const rCep = liga(mascara(entrada('text', en.cep, { inputMode: 'numeric', placeholder: '00000-000', maxLength: 9 }), C().cepMask), 'cep', en);
+    const rRua = liga(texto(en.logradouro, { maxLength: 160 }), 'logradouro', en); const rNumero = liga(texto(en.numero, { maxLength: 20 }), 'numero', en);
+    const rCompl = liga(texto(en.complemento, { maxLength: 80 }), 'complemento', en); const rBairro = liga(texto(en.bairro, { maxLength: 80 }), 'bairro', en);
+    const rCidade = liga(texto(en.cidade, { maxLength: 80 }), 'cidade', en); const rUf = liga(seletor(C().UFS, en.uf, 'UF'), 'uf', en);
+    const avisoCepR = el('p', 'profiles-note compras-largo'); avisoCepR.setAttribute('role', 'status');
+    let cepRFeito = D.digitos(en.cep);
+    const buscarCepR = async (forcar) => {
+      const nn = D.digitos(rCep.value); if (nn.length !== 8 || (nn === cepRFeito && !forcar)) return;
+      const trocouCepR = Boolean(cepRFeito) || Boolean(forcar); cepRFeito = nn; // CEP diferente: o endereço novo substitui o antigo
+      avisoCepR.textContent = 'Buscando o endereço do CEP…';
+      const res = await C().cep(nn); if (D.digitos(rCep.value) !== nn) return;
+      if (res.erro) { avisoCepR.textContent = 'CEP ' + falha[res.erro] + ': preencha o endereço à mão.'; return; }
+      [[rRua, 'logradouro'], [rBairro, 'bairro'], [rCidade, 'cidade'], [rUf, 'uf']].forEach(([alvo, chave]) => { if (trocouCepR || (res.dados[chave] && !alvo.value.trim())) { alvo.value = res.dados[chave] || ''; en[chave] = alvo.value; } });
+      avisoCepR.textContent = trocouCepR ? 'CEP novo: rua, bairro, cidade e UF foram trocados. Confira o número e o complemento.' : 'Endereço do CEP conferido. Confira e informe o número.';
+    };
+    rCep.addEventListener('input', () => buscarCepR(false)); rCep.addEventListener('keydown', aoEnter(buscarCepR));
+    // Dois quadros com borda dentro do bloco (pedido do Rodrigo, 17/11/2026): os dados pessoais e o endereço.
+    const quadro = (legenda, ...nos) => { const q = el('fieldset', 'compras-fieldset compras-largo'); q.append(el('legend', null, legenda), ...nos); return q; };
+    bloco.append(titulo,
+      quadro('Dados pessoais', campo('Cargo na empresa', cargo), campo('Nome completo do responsável', nome),
+        campo('CPF do responsável', cpf), campo('RG do responsável', rg), campo('Órgão emissor do RG', rgOrgao),
+        campo('Nacionalidade', nacionalidade), campo('Estado civil', estadoCivil), campo('Profissão', profissao),
+        campo('WhatsApp do responsável', whats), campo('E-mail do responsável', mail)),
+      quadro('Endereço do responsável legal', campo('CEP do responsável', rCep), campo('Rua / logradouro', rRua), campo('Número', rNumero), campo('Complemento', rCompl), campo('Bairro', rBairro), campo('Cidade', rCidade), campo('UF', rUf), avisoCepR));
+    /* Representante legal deste responsável: interruptor Sim/Não e, com Sim, o quadro com o motivo e um quadro por
+       representante (pode haver mais de um, como pai e mãe). A data de nascimento só serve para o sistema avisar
+       que a pessoa é menor de idade; não entra em contrato sozinha. */
+    const rp0 = r.representacao;
+    const nasc = liga(entrada('date', r.nascimento || ''), 'nascimento');
+    const avisoIdade = el('small', 'profiles-note');
+    const campoNasc = campo('Data de nascimento', nasc, 'Opcional. Serve para o sistema avisar quando o responsável é menor de idade.');
+    campoNasc.append(avisoIdade);
+    bloco.querySelector('fieldset').append(campoNasc);
+    const quadroRep = el('fieldset', 'compras-fieldset compras-largo');
+    const tituloRep = el('legend', null, '');
+    const motivo = seletor(MOTIVOS_REPRESENTACAO, rp0.motivo, 'Selecione');
+    const formaNota = el('small', 'profiles-note');
+    const campoMotivo = campo('Motivo da representação *', motivo); campoMotivo.classList.add('compras-largo'); campoMotivo.append(formaNota);
+    const caixaReps = el('div', 'compras-etapa compras-largo');
+    const maisRep = botao('Adicionar representante', () => { rp0.representantes.push(REPRESENTANTE_VAZIO(rp0.motivo)); desenharReps(); pintarModo(); }, 'btn');
+    const linhaMaisRep = el('div', 'compras-form-rodape compras-largo compras-empresa-remover'); linhaMaisRep.append(maisRep);
+    quadroRep.append(tituloRep, campoMotivo, caixaReps, linhaMaisRep);
+    const precisa = U.quadroSituacao('Precisa de representante legal?', rp0.precisa, {
+      textos: ['Sim', 'Não'], dica: 'Marque Sim quando este responsável é menor de idade, interditado ou falecido (espólio) e outra pessoa assina por ele.',
+      aoMudar: (sim) => { rp0.precisa = sim; if (sim && !rp0.representantes.length) rp0.representantes.push(REPRESENTANTE_VAZIO(rp0.motivo)); desenharReps(); pintarRep(); pintarModo(); },
+    });
+    precisa.classList.add('compras-largo');
+    function pintarRep() {
+      quadroRep.style.display = rp0.precisa ? '' : 'none';
+      tituloRep.textContent = 'Representante legal de ' + (cheio(r.nome) || 'este responsável');
+      formaNota.textContent = rp0.motivo ? 'No contrato: "' + formaDaRepresentacao(rp0.motivo) + '…".' : '';
+      const anos = idadeEm(r.nascimento);
+      avisoIdade.textContent = anos == null ? '' : anos < 18 ? 'Menor de idade (' + anos + ' anos): precisa de representante legal.' : anos + ' anos.';
+    }
+    function desenharReps() {
+      caixaReps.replaceChildren(...rp0.representantes.map((p, k) => {
+        const caixa = el('fieldset', 'compras-fieldset');
+        const tit = el('legend', null, '');
+        const pinta = () => { tit.textContent = 'Representante' + (nomeEm(VINCULOS_REPRESENTANTE, p.vinculo) ? ' — ' + nomeEm(VINCULOS_REPRESENTANTE, p.vinculo) : ''); };
+        const lg = (input, chave, alvo = p) => { input.addEventListener('input', () => { alvo[chave] = input.value; }); input.addEventListener('change', () => { alvo[chave] = input.value; }); return input; };
+        const vinc = lg(seletor(VINCULOS_REPRESENTANTE, p.vinculo, 'Selecione'), 'vinculo'); vinc.addEventListener('change', pinta);
+        const pNome = lg(texto(p.nome), 'nome');
+        const pCpf = lg(mascara(entrada('text', p.cpf, { inputMode: 'numeric', placeholder: '000.000.000-00', maxLength: 14 }), regras().cpfMask), 'cpf');
+        const pRg = lg(entrada('text', p.rg, { maxLength: 20, placeholder: 'Ex: MG-00.000.000...' }), 'rg'); pRg.dataset.textoLivre = '1';
+        const pOrgao = lg(entrada('text', p.rgOrgao, { maxLength: 20, placeholder: 'Ex: SSP/MG...' }), 'rgOrgao'); pOrgao.dataset.textoLivre = '1';
+        const pNac = lg(texto(p.nacionalidade, { maxLength: 40, placeholder: 'Ex: Brasileira...' }), 'nacionalidade');
+        const pCivil = lg(seletor(ESTADOS_CIVIS, p.estadoCivil, 'Selecione'), 'estadoCivil');
+        const pProf = lg(texto(p.profissao, { maxLength: 60, placeholder: 'Ex: Empresário...' }), 'profissao');
+        const pWhats = lg(entrada('tel', p.whatsapp, { inputMode: 'numeric', placeholder: '(00) 00000-0000' }), 'whatsapp'); if (CAD && CAD.mascaraTelefone) mascara(pWhats, CAD.mascaraTelefone);
+        const pMail = lg(entrada('email', p.email, { maxLength: 160, inputMode: 'email', autocapitalize: 'off' }), 'email'); pMail.dataset.textoLivre = '1';
+        const pe = p.endereco;
+        const pCep = lg(mascara(entrada('text', pe.cep, { inputMode: 'numeric', placeholder: '00000-000', maxLength: 9 }), C().cepMask), 'cep', pe);
+        const pRua = lg(texto(pe.logradouro, { maxLength: 160 }), 'logradouro', pe); const pNum = lg(texto(pe.numero, { maxLength: 20 }), 'numero', pe);
+        const pCompl = lg(texto(pe.complemento, { maxLength: 80 }), 'complemento', pe); const pBairro = lg(texto(pe.bairro, { maxLength: 80 }), 'bairro', pe);
+        const pCidade = lg(texto(pe.cidade, { maxLength: 80 }), 'cidade', pe); const pUf = lg(seletor(C().UFS, pe.uf, 'UF'), 'uf', pe);
+        const avisoCepP = el('p', 'profiles-note compras-largo'); avisoCepP.setAttribute('role', 'status');
+        let cepPFeito = D.digitos(pe.cep);
+        // Mesma regra de todo CEP do sistema: número diferente (ou Enter) busca e troca rua, bairro, cidade e UF.
+        const buscarCepP = async (forcar) => {
+          const nn = D.digitos(pCep.value); if (nn.length !== 8 || (nn === cepPFeito && !forcar)) return;
+          const trocouP = Boolean(cepPFeito) || Boolean(forcar); cepPFeito = nn;
+          avisoCepP.textContent = 'Buscando o endereço do CEP…';
+          const res = await C().cep(nn); if (D.digitos(pCep.value) !== nn) return;
+          if (res.erro) { avisoCepP.textContent = 'CEP ' + falha[res.erro] + ': preencha o endereço à mão.'; return; }
+          [[pRua, 'logradouro'], [pBairro, 'bairro'], [pCidade, 'cidade'], [pUf, 'uf']].forEach(([alvo, chave]) => { if (trocouP || (res.dados[chave] && !alvo.value.trim())) { alvo.value = res.dados[chave] || ''; pe[chave] = alvo.value; } });
+          avisoCepP.textContent = trocouP ? 'CEP novo: rua, bairro, cidade e UF foram trocados. Confira o número e o complemento.' : 'Endereço do CEP conferido. Confira e informe o número.';
+        };
+        pCep.addEventListener('input', () => buscarCepP(false)); pCep.addEventListener('keydown', aoEnter(buscarCepP));
+        const pDoc = lg(seletor(DOCUMENTOS_REPRESENTACAO, p.documento, 'Selecione'), 'documento');
+        const pProc = lg(entrada('text', p.processo, { maxLength: 40 }), 'processo'); pProc.dataset.textoLivre = '1';
+        const pVal = lg(entrada('date', p.validade || ''), 'validade');
+        caixa.append(tit, campo('Vínculo com o responsável', vinc), campo('Nome completo do representante *', pNome),
+          campo('CPF do representante', pCpf), campo('RG do representante', pRg), campo('Órgão emissor do RG', pOrgao),
+          campo('Nacionalidade', pNac), campo('Estado civil', pCivil), campo('Profissão', pProf),
+          campo('WhatsApp do representante', pWhats), campo('E-mail do representante', pMail),
+          campo('CEP do representante', pCep), campo('Rua / logradouro', pRua), campo('Número', pNum), campo('Complemento', pCompl), campo('Bairro', pBairro), campo('Cidade', pCidade), campo('UF', pUf), avisoCepP,
+          campo('Documento que comprova', pDoc), campo('Número do processo', pProc, 'Quando houver (tutela, curatela ou inventário).'), campo('Validade do documento', pVal, 'Curatela provisória tem prazo. Vazio = sem prazo.'));
+        if (rp0.representantes.length > 1) {
+          const tirarRep = botao('Remover', () => { rp0.representantes.splice(k, 1); desenharReps(); pintarModo(); }, 'btn secondary perigo-texto');
+          const peRep = el('div', 'compras-form-rodape compras-largo compras-empresa-remover'); peRep.append(tirarRep);
+          caixa.append(peRep);
+        }
+        pinta();
+        return caixa;
+      }));
+    }
+    motivo.addEventListener('change', () => {
+      rp0.motivo = motivo.value;
+      // O motivo sugere o vínculo de quem ainda não tem um (curador, inventariante).
+      rp0.representantes.forEach((p) => { if (!p.vinculo && VINCULO_SUGERIDO[rp0.motivo]) p.vinculo = VINCULO_SUGERIDO[rp0.motivo]; });
+      desenharReps(); pintarRep(); pintarModo();
+    });
+    nome.addEventListener('input', pintarRep);
+    const aoMudarNascimento = () => {
+      const anos = idadeEm(r.nascimento);
+      // Menor de idade: liga a representação e sugere o motivo pela idade; a pessoa confere.
+      if (anos != null && anos < 18 && !rp0.precisa) { rp0.precisa = true; precisa.ativo = true; if (!rp0.motivo) { rp0.motivo = anos < 16 ? 'menor-16' : 'menor-16-18'; motivo.value = rp0.motivo; } if (!rp0.representantes.length) rp0.representantes.push(REPRESENTANTE_VAZIO(rp0.motivo)); desenharReps(); pintarModo(); }
+      pintarRep();
+    };
+    nasc.addEventListener('input', aoMudarNascimento); nasc.addEventListener('change', aoMudarNascimento);
+    desenharReps(); pintarRep();
+    bloco.append(precisa, quadroRep);
+    return bloco;
+  }
+
   /** Ficha de uma empresa. emp: a empresa gravada (ou nada, para cadastrar). aoSalvar() é chamado depois de gravar. */
   /** opcoes.editar: abre a ficha já liberada para alterar (o Editar da seta da lista e os dois toques na linha). */
   function abrirFicha(emp, aoSalvar, opcoes = {}) {
@@ -213,149 +384,7 @@
           const lista = usarDaMatriz ? daMatrizCopia : responsaveis;
           const avisoMatriz = usarDaMatriz ? [el('p', 'profiles-note', lista.length ? 'Preenchido com os responsáveis legais da Matriz. Para mudar algum dado, altere na ficha da Matriz.' : 'A Matriz ainda não tem responsáveis legais cadastrados.')] : [];
           caixaResp.replaceChildren(...avisoMatriz, ...lista.map((r, i) => {
-            const bloco = el('fieldset', 'compras-fieldset');
-            const titulo = el('legend', null, tituloDoResponsavel(r.cargo));
-            const cargo = seletor(CARGOS_EMPRESA, r.cargo, 'Selecione');
-            const nome = texto(r.nome);
-            const whats = entrada('tel', r.whatsapp, { inputMode: 'numeric', placeholder: '(00) 00000-0000' });
-            if (CAD && CAD.mascaraTelefone) mascara(whats, CAD.mascaraTelefone);
-            const mail = entrada('email', r.email, { maxLength: 160, inputMode: 'email', autocapitalize: 'off' }); mail.dataset.textoLivre = '1';
-            cargo.addEventListener('change', () => { r.cargo = cargo.value; titulo.textContent = tituloDoResponsavel(r.cargo); });
-            nome.addEventListener('input', () => { r.nome = nome.value; });
-            whats.addEventListener('input', () => { r.whatsapp = whats.value; });
-            mail.addEventListener('input', () => { r.email = mail.value; });
-            // Dados que um contrato pede para qualificar quem assina: nome completo, nacionalidade, estado civil,
-            // profissão, RG, CPF e endereço (pedido do Rodrigo, 17/11/2026). Tudo opcional; o que vier preenchido é conferido.
-            const liga = (input, chave, alvo = r) => { input.addEventListener('input', () => { alvo[chave] = input.value; }); input.addEventListener('change', () => { alvo[chave] = input.value; }); return input; };
-            const cpf = liga(mascara(entrada('text', r.cpf, { inputMode: 'numeric', placeholder: '000.000.000-00', maxLength: 14 }), regras().cpfMask), 'cpf');
-            const rg = liga(entrada('text', r.rg, { maxLength: 20, placeholder: 'Ex: MG-00.000.000...' }), 'rg'); rg.dataset.textoLivre = '1';
-            const rgOrgao = liga(entrada('text', r.rgOrgao, { maxLength: 20, placeholder: 'Ex: SSP/MG...' }), 'rgOrgao'); rgOrgao.dataset.textoLivre = '1';
-            const nacionalidade = liga(texto(r.nacionalidade, { maxLength: 40, placeholder: 'Ex: Brasileira...' }), 'nacionalidade');
-            const estadoCivil = liga(seletor(ESTADOS_CIVIS, r.estadoCivil, 'Selecione'), 'estadoCivil');
-            const profissao = liga(texto(r.profissao, { maxLength: 60, placeholder: 'Ex: Empresário...' }), 'profissao');
-            const en = r.endereco;
-            const rCep = liga(mascara(entrada('text', en.cep, { inputMode: 'numeric', placeholder: '00000-000', maxLength: 9 }), C().cepMask), 'cep', en);
-            const rRua = liga(texto(en.logradouro, { maxLength: 160 }), 'logradouro', en); const rNumero = liga(texto(en.numero, { maxLength: 20 }), 'numero', en);
-            const rCompl = liga(texto(en.complemento, { maxLength: 80 }), 'complemento', en); const rBairro = liga(texto(en.bairro, { maxLength: 80 }), 'bairro', en);
-            const rCidade = liga(texto(en.cidade, { maxLength: 80 }), 'cidade', en); const rUf = liga(seletor(C().UFS, en.uf, 'UF'), 'uf', en);
-            const avisoCepR = el('p', 'profiles-note compras-largo'); avisoCepR.setAttribute('role', 'status');
-            let cepRFeito = D.digitos(en.cep);
-            const buscarCepR = async (forcar) => {
-              const nn = D.digitos(rCep.value); if (nn.length !== 8 || (nn === cepRFeito && !forcar)) return;
-              const trocouCepR = Boolean(cepRFeito) || Boolean(forcar); cepRFeito = nn; // CEP diferente: o endereço novo substitui o antigo
-              avisoCepR.textContent = 'Buscando o endereço do CEP…';
-              const res = await C().cep(nn); if (D.digitos(rCep.value) !== nn) return;
-              if (res.erro) { avisoCepR.textContent = 'CEP ' + falha[res.erro] + ': preencha o endereço à mão.'; return; }
-              [[rRua, 'logradouro'], [rBairro, 'bairro'], [rCidade, 'cidade'], [rUf, 'uf']].forEach(([alvo, chave]) => { if (trocouCepR || (res.dados[chave] && !alvo.value.trim())) { alvo.value = res.dados[chave] || ''; en[chave] = alvo.value; } });
-              avisoCepR.textContent = trocouCepR ? 'CEP novo: rua, bairro, cidade e UF foram trocados. Confira o número e o complemento.' : 'Endereço do CEP conferido. Confira e informe o número.';
-            };
-            rCep.addEventListener('input', () => buscarCepR(false)); rCep.addEventListener('keydown', aoEnter(buscarCepR));
-            // Dois quadros com borda dentro do bloco (pedido do Rodrigo, 17/11/2026): os dados pessoais e o endereço.
-            const quadro = (legenda, ...nos) => { const q = el('fieldset', 'compras-fieldset compras-largo'); q.append(el('legend', null, legenda), ...nos); return q; };
-            bloco.append(titulo,
-              quadro('Dados pessoais', campo('Cargo na empresa', cargo), campo('Nome completo do responsável', nome),
-                campo('CPF do responsável', cpf), campo('RG do responsável', rg), campo('Órgão emissor do RG', rgOrgao),
-                campo('Nacionalidade', nacionalidade), campo('Estado civil', estadoCivil), campo('Profissão', profissao),
-                campo('WhatsApp do responsável', whats), campo('E-mail do responsável', mail)),
-              quadro('Endereço do responsável legal', campo('CEP do responsável', rCep), campo('Rua / logradouro', rRua), campo('Número', rNumero), campo('Complemento', rCompl), campo('Bairro', rBairro), campo('Cidade', rCidade), campo('UF', rUf), avisoCepR));
-            /* Representante legal deste responsável: interruptor Sim/Não e, com Sim, o quadro com o motivo e um quadro por
-               representante (pode haver mais de um, como pai e mãe). A data de nascimento só serve para o sistema avisar
-               que a pessoa é menor de idade; não entra em contrato sozinha. */
-            const rp0 = r.representacao;
-            const nasc = liga(entrada('date', r.nascimento || ''), 'nascimento');
-            const avisoIdade = el('small', 'profiles-note');
-            const campoNasc = campo('Data de nascimento', nasc, 'Opcional. Serve para o sistema avisar quando o responsável é menor de idade.');
-            campoNasc.append(avisoIdade);
-            bloco.querySelector('fieldset').append(campoNasc);
-            const quadroRep = el('fieldset', 'compras-fieldset compras-largo');
-            const tituloRep = el('legend', null, '');
-            const motivo = seletor(MOTIVOS_REPRESENTACAO, rp0.motivo, 'Selecione');
-            const formaNota = el('small', 'profiles-note');
-            const campoMotivo = campo('Motivo da representação *', motivo); campoMotivo.classList.add('compras-largo'); campoMotivo.append(formaNota);
-            const caixaReps = el('div', 'compras-etapa compras-largo');
-            const maisRep = botao('Adicionar representante', () => { rp0.representantes.push(REPRESENTANTE_VAZIO(rp0.motivo)); desenharReps(); pintarModo(); }, 'btn');
-            const linhaMaisRep = el('div', 'compras-form-rodape compras-largo compras-empresa-remover'); linhaMaisRep.append(maisRep);
-            quadroRep.append(tituloRep, campoMotivo, caixaReps, linhaMaisRep);
-            const precisa = U.quadroSituacao('Precisa de representante legal?', rp0.precisa, {
-              textos: ['Sim', 'Não'], dica: 'Marque Sim quando este responsável é menor de idade, interditado ou falecido (espólio) e outra pessoa assina por ele.',
-              aoMudar: (sim) => { rp0.precisa = sim; if (sim && !rp0.representantes.length) rp0.representantes.push(REPRESENTANTE_VAZIO(rp0.motivo)); desenharReps(); pintarRep(); pintarModo(); },
-            });
-            precisa.classList.add('compras-largo');
-            function pintarRep() {
-              quadroRep.style.display = rp0.precisa ? '' : 'none';
-              tituloRep.textContent = 'Representante legal de ' + (cheio(r.nome) || 'este responsável');
-              formaNota.textContent = rp0.motivo ? 'No contrato: "' + formaDaRepresentacao(rp0.motivo) + '…".' : '';
-              const anos = idadeEm(r.nascimento);
-              avisoIdade.textContent = anos == null ? '' : anos < 18 ? 'Menor de idade (' + anos + ' anos): precisa de representante legal.' : anos + ' anos.';
-            }
-            function desenharReps() {
-              caixaReps.replaceChildren(...rp0.representantes.map((p, k) => {
-                const caixa = el('fieldset', 'compras-fieldset');
-                const tit = el('legend', null, '');
-                const pinta = () => { tit.textContent = 'Representante' + (nomeEm(VINCULOS_REPRESENTANTE, p.vinculo) ? ' — ' + nomeEm(VINCULOS_REPRESENTANTE, p.vinculo) : ''); };
-                const lg = (input, chave, alvo = p) => { input.addEventListener('input', () => { alvo[chave] = input.value; }); input.addEventListener('change', () => { alvo[chave] = input.value; }); return input; };
-                const vinc = lg(seletor(VINCULOS_REPRESENTANTE, p.vinculo, 'Selecione'), 'vinculo'); vinc.addEventListener('change', pinta);
-                const pNome = lg(texto(p.nome), 'nome');
-                const pCpf = lg(mascara(entrada('text', p.cpf, { inputMode: 'numeric', placeholder: '000.000.000-00', maxLength: 14 }), regras().cpfMask), 'cpf');
-                const pRg = lg(entrada('text', p.rg, { maxLength: 20, placeholder: 'Ex: MG-00.000.000...' }), 'rg'); pRg.dataset.textoLivre = '1';
-                const pOrgao = lg(entrada('text', p.rgOrgao, { maxLength: 20, placeholder: 'Ex: SSP/MG...' }), 'rgOrgao'); pOrgao.dataset.textoLivre = '1';
-                const pNac = lg(texto(p.nacionalidade, { maxLength: 40, placeholder: 'Ex: Brasileira...' }), 'nacionalidade');
-                const pCivil = lg(seletor(ESTADOS_CIVIS, p.estadoCivil, 'Selecione'), 'estadoCivil');
-                const pProf = lg(texto(p.profissao, { maxLength: 60, placeholder: 'Ex: Empresário...' }), 'profissao');
-                const pWhats = lg(entrada('tel', p.whatsapp, { inputMode: 'numeric', placeholder: '(00) 00000-0000' }), 'whatsapp'); if (CAD && CAD.mascaraTelefone) mascara(pWhats, CAD.mascaraTelefone);
-                const pMail = lg(entrada('email', p.email, { maxLength: 160, inputMode: 'email', autocapitalize: 'off' }), 'email'); pMail.dataset.textoLivre = '1';
-                const pe = p.endereco;
-                const pCep = lg(mascara(entrada('text', pe.cep, { inputMode: 'numeric', placeholder: '00000-000', maxLength: 9 }), C().cepMask), 'cep', pe);
-                const pRua = lg(texto(pe.logradouro, { maxLength: 160 }), 'logradouro', pe); const pNum = lg(texto(pe.numero, { maxLength: 20 }), 'numero', pe);
-                const pCompl = lg(texto(pe.complemento, { maxLength: 80 }), 'complemento', pe); const pBairro = lg(texto(pe.bairro, { maxLength: 80 }), 'bairro', pe);
-                const pCidade = lg(texto(pe.cidade, { maxLength: 80 }), 'cidade', pe); const pUf = lg(seletor(C().UFS, pe.uf, 'UF'), 'uf', pe);
-                const avisoCepP = el('p', 'profiles-note compras-largo'); avisoCepP.setAttribute('role', 'status');
-                let cepPFeito = D.digitos(pe.cep);
-                // Mesma regra de todo CEP do sistema: número diferente (ou Enter) busca e troca rua, bairro, cidade e UF.
-                const buscarCepP = async (forcar) => {
-                  const nn = D.digitos(pCep.value); if (nn.length !== 8 || (nn === cepPFeito && !forcar)) return;
-                  const trocouP = Boolean(cepPFeito) || Boolean(forcar); cepPFeito = nn;
-                  avisoCepP.textContent = 'Buscando o endereço do CEP…';
-                  const res = await C().cep(nn); if (D.digitos(pCep.value) !== nn) return;
-                  if (res.erro) { avisoCepP.textContent = 'CEP ' + falha[res.erro] + ': preencha o endereço à mão.'; return; }
-                  [[pRua, 'logradouro'], [pBairro, 'bairro'], [pCidade, 'cidade'], [pUf, 'uf']].forEach(([alvo, chave]) => { if (trocouP || (res.dados[chave] && !alvo.value.trim())) { alvo.value = res.dados[chave] || ''; pe[chave] = alvo.value; } });
-                  avisoCepP.textContent = trocouP ? 'CEP novo: rua, bairro, cidade e UF foram trocados. Confira o número e o complemento.' : 'Endereço do CEP conferido. Confira e informe o número.';
-                };
-                pCep.addEventListener('input', () => buscarCepP(false)); pCep.addEventListener('keydown', aoEnter(buscarCepP));
-                const pDoc = lg(seletor(DOCUMENTOS_REPRESENTACAO, p.documento, 'Selecione'), 'documento');
-                const pProc = lg(entrada('text', p.processo, { maxLength: 40 }), 'processo'); pProc.dataset.textoLivre = '1';
-                const pVal = lg(entrada('date', p.validade || ''), 'validade');
-                caixa.append(tit, campo('Vínculo com o responsável', vinc), campo('Nome completo do representante *', pNome),
-                  campo('CPF do representante', pCpf), campo('RG do representante', pRg), campo('Órgão emissor do RG', pOrgao),
-                  campo('Nacionalidade', pNac), campo('Estado civil', pCivil), campo('Profissão', pProf),
-                  campo('WhatsApp do representante', pWhats), campo('E-mail do representante', pMail),
-                  campo('CEP do representante', pCep), campo('Rua / logradouro', pRua), campo('Número', pNum), campo('Complemento', pCompl), campo('Bairro', pBairro), campo('Cidade', pCidade), campo('UF', pUf), avisoCepP,
-                  campo('Documento que comprova', pDoc), campo('Número do processo', pProc, 'Quando houver (tutela, curatela ou inventário).'), campo('Validade do documento', pVal, 'Curatela provisória tem prazo. Vazio = sem prazo.'));
-                if (rp0.representantes.length > 1) {
-                  const tirarRep = botao('Remover', () => { rp0.representantes.splice(k, 1); desenharReps(); pintarModo(); }, 'btn secondary perigo-texto');
-                  const peRep = el('div', 'compras-form-rodape compras-largo compras-empresa-remover'); peRep.append(tirarRep);
-                  caixa.append(peRep);
-                }
-                pinta();
-                return caixa;
-              }));
-            }
-            motivo.addEventListener('change', () => {
-              rp0.motivo = motivo.value;
-              // O motivo sugere o vínculo de quem ainda não tem um (curador, inventariante).
-              rp0.representantes.forEach((p) => { if (!p.vinculo && VINCULO_SUGERIDO[rp0.motivo]) p.vinculo = VINCULO_SUGERIDO[rp0.motivo]; });
-              desenharReps(); pintarRep(); pintarModo();
-            });
-            nome.addEventListener('input', pintarRep);
-            const aoMudarNascimento = () => {
-              const anos = idadeEm(r.nascimento);
-              // Menor de idade: liga a representação e sugere o motivo pela idade; a pessoa confere.
-              if (anos != null && anos < 18 && !rp0.precisa) { rp0.precisa = true; precisa.ativo = true; if (!rp0.motivo) { rp0.motivo = anos < 16 ? 'menor-16' : 'menor-16-18'; motivo.value = rp0.motivo; } if (!rp0.representantes.length) rp0.representantes.push(REPRESENTANTE_VAZIO(rp0.motivo)); desenharReps(); pintarModo(); }
-              pintarRep();
-            };
-            nasc.addEventListener('input', aoMudarNascimento); nasc.addEventListener('change', aoMudarNascimento);
-            desenharReps(); pintarRep();
-            bloco.append(precisa, quadroRep);
+            const bloco = blocoResponsavel(r, { aoMudar: () => pintarModo() });
             if (!usarDaMatriz && responsaveis.length > 1) {
               const tirar = botao('Remover', () => { responsaveis.splice(i, 1); desenharResponsaveis(); pintarModo(); }, 'btn secondary perigo-texto');
               const pe = el('div', 'compras-form-rodape compras-largo compras-empresa-remover'); pe.append(tirar);
@@ -445,16 +474,7 @@ if (x.responsaveisDaMatriz) { if (!daMatrizCopia.length) blocos.push(['Dados dos
           cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), regimeTributario: regime.value,
           endereco: { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value },
           // Bloco em branco não é gravado.
-          responsaveis: responsaveis.map((r) => ({
-            nascimento: r.nascimento || '',
-            representacao: r.representacao && r.representacao.precisa ? {
-              precisa: true, motivo: r.representacao.motivo || '',
-              representantes: r.representacao.representantes.map((p) => ({ ...p, nome: cheio(p.nome), cpf: cheio(p.cpf), rg: cheio(p.rg), rgOrgao: cheio(p.rgOrgao), nacionalidade: cheio(p.nacionalidade), profissao: cheio(p.profissao), whatsapp: cheio(p.whatsapp), email: cheio(p.email).toLocaleLowerCase('pt-BR'), processo: cheio(p.processo), endereco: Object.fromEntries(Object.entries(p.endereco || {}).map(([k, val]) => [k, cheio(val)])) })).filter((p) => p.nome || p.cpf || p.vinculo),
-            } : { precisa: false, motivo: '', representantes: [] },
-            id: r.id, cargo: r.cargo || '', nome: cheio(r.nome), cpf: cheio(r.cpf), rg: cheio(r.rg), rgOrgao: cheio(r.rgOrgao), nacionalidade: cheio(r.nacionalidade), estadoCivil: r.estadoCivil || '', profissao: cheio(r.profissao),
-            whatsapp: cheio(r.whatsapp), email: cheio(r.email).toLocaleLowerCase('pt-BR'),
-            endereco: Object.fromEntries(Object.entries(r.endereco || {}).map(([k, val]) => [k, cheio(val)])),
-          })).filter((r) => (matriz || !mesmos.ativo) && (r.nome || r.whatsapp || r.email || r.cargo || r.cpf || r.rg)),
+          responsaveis: responsaveis.map(lerResponsavel).filter((r) => (matriz || !mesmos.ativo) && (r.nome || r.whatsapp || r.email || r.cargo || r.cpf || r.rg)),
         });
         form.append(barra.el, notaModo, ...quadros, erroEtapa, nav);
         ir(atual);
@@ -552,5 +572,5 @@ if (x.responsaveisDaMatriz) { if (!daMatrizCopia.length) blocos.push(['Dados dos
     telaEstrutura.body.replaceChildren(U.vazio('Em definição.', 'O conteúdo desta tela ainda vai ser definido. Nada é gravado aqui por enquanto.'));
   }
   A.registrar('empresa-estrutura', abrirEstrutura);
-  window.CicluzEmpresa = { abrir, abrirFicha, validarEmpresa, validarEmpresaEtapas, impedimentoDeExcluir, ETAPAS, VINCULOS, CARGOS_EMPRESA, MOTIVOS_REPRESENTACAO, VINCULOS_REPRESENTANTE, idadeEm, formaDaRepresentacao, todas, dados: () => todas()[0] || null };
+  window.CicluzEmpresa = { abrir, abrirFicha, validarEmpresa, validarEmpresaEtapas, impedimentoDeExcluir, blocoResponsavel, lerResponsavel, responsaveisDe, validarResponsaveis, ESTADOS_CIVIS, ETAPAS, VINCULOS, CARGOS_EMPRESA, MOTIVOS_REPRESENTACAO, VINCULOS_REPRESENTANTE, idadeEm, formaDaRepresentacao, todas, dados: () => todas()[0] || null };
 })();

@@ -243,6 +243,12 @@
    * As duas partes do contrato, só com o que está cadastrado: a sua empresa (Configurações → Empresa) e o fornecedor ou o cliente.
    * papel 'fornecedor': a empresa contrata o fornecedor. papel 'cliente': o cliente (pessoa jurídica) contrata a empresa.
    */
+  /** Qualificação de quem assina, como um contrato pede: nacionalidade, estado civil, profissão, RG, CPF e endereço. Só o que estiver cadastrado. */
+  const qualificacaoDe = (r) => {
+    if (!r) return '';
+    const E = window.CicluzEmpresa || {}; const end = enderecoTexto(r.endereco);
+    return [r.nacionalidade, nomeDe(E.ESTADOS_CIVIS || [], r.estadoCivil), r.profissao, r.rg ? 'RG ' + r.rg + (r.rgOrgao ? ' (' + r.rgOrgao + ')' : '') : '', r.cpf ? 'CPF ' + r.cpf : '', end ? 'endereço: ' + end : ''].filter(Boolean).join(', ');
+  };
   function partesDoContrato(f, papel = 'fornecedor') {
     const c = f.contrato || {}; const cliente = papel === 'cliente'; const pf = !cliente && f.tipoPessoa === 'fisica';
     const emp = empresasCadastradas().find((x) => x.id === c[D.papelContrato(papel).empresa]) || null;
@@ -250,10 +256,12 @@
     const cargoEmp = respEmp && window.CicluzEmpresa.CARGOS_EMPRESA ? nomeDe(window.CicluzEmpresa.CARGOS_EMPRESA, respEmp.cargo) : '';
     const rep2 = f.representante || {};
     const empresa = { nome: emp ? emp.razaoSocial || emp.nomeFantasia || '' : '', fantasia: emp ? emp.nomeFantasia || '' : '', documento: emp ? emp.cnpj || '' : '', pf: false, endereco: emp ? enderecoTexto(emp.endereco) : '',
-      representante: respEmp ? respEmp.nome : '', cargo: cargoEmp };
+      representante: respEmp ? respEmp.nome : '', cargo: cargoEmp, qualificacao: qualificacaoDe(respEmp) };
     const outra = cliente
       ? { nome: f.razaoSocial || f.nomeFantasia || '', fantasia: f.razaoSocial && f.nomeFantasia !== f.razaoSocial ? f.nomeFantasia || '' : '', documento: f.cnpj || '', pf: false, endereco: enderecoTexto(f.endereco),
-        representante: rep2.nome || '', cargo: nomeDe(D.CARGOS_REPRESENTANTE, rep2.cargo) }
+        // Com contrato, o responsável legal do cliente é cadastrado por completo (cargo da lista de Dados da Empresa e a qualificação).
+        representante: rep2.nome || '', cargo: (c.temDocumento && window.CicluzEmpresa && nomeDe(window.CicluzEmpresa.CARGOS_EMPRESA || [], rep2.cargoEmpresa)) || nomeDe(D.CARGOS_REPRESENTANTE, rep2.cargo),
+        qualificacao: c.temDocumento ? qualificacaoDe(rep2) : '' }
       : { nome: f.razaoSocial || f.nome || '', fantasia: pf ? '' : (f.razaoSocial && f.nome !== f.razaoSocial ? f.nome : ''), documento: f.documento || '', pf, endereco: enderecoTexto(f.endereco),
         representante: pf ? f.nome || '' : rep2.nome || '', cargo: pf ? '' : nomeDe(D.CARGOS_REPRESENTANTE, rep2.cargo) };
     return cliente ? { contratante: outra, contratado: empresa } : { contratante: empresa, contratado: outra };
@@ -268,7 +276,7 @@
    */
   function secoesContrato(f, papel = 'fornecedor') {
     const c = f.contrato || {}; const p = partesDoContrato(f, papel);
-    const pessoa = (x, rotuloNome, rotuloDoc) => [[rotuloNome, x.nome], ['Nome fantasia', x.fantasia], [rotuloDoc, x.documento], ['Endereço', x.endereco], ['Representante legal', [x.representante, x.cargo].filter(Boolean).join(' — ')]];
+    const pessoa = (x, rotuloNome, rotuloDoc) => [[rotuloNome, x.nome], ['Nome fantasia', x.fantasia], [rotuloDoc, x.documento], ['Endereço', x.endereco], ['Representante legal', [x.representante, x.cargo].filter(Boolean).join(' — ')], ['Qualificação do representante', x.qualificacao]];
     const rec = c.recorrencia === 'personalizado' ? 'Personalizado' : c.recorrencia === 'compra-mensal' ? 'Compra Mensal' : nomeDe(D.RECORRENCIAS_CONTRATO, c.recorrencia);
     const vencimento = c.diaPagamento === 'sexta' ? 'Toda sexta-feira' : c.vencimentoData ? dataBR(c.vencimentoData) : Number.isInteger(c.vencimentoDia) ? 'Todo dia ' + c.vencimentoDia : '';
     const reajuste = nomeDe(D.REAJUSTES_CONTRATO, c.reajuste) + (c.reajuste === 'percentual' && typeof c.reajustePercentual === 'number' && !Number.isNaN(c.reajustePercentual) ? ' de ' + String(c.reajustePercentual).replace('.', ',') + '%' : '');
@@ -372,9 +380,11 @@
    * cláusulas (opcional) · 8 Assinaturas e documento. Entre o Contratado e o Valor entra o Objeto do contrato (os números abaixo já contam com ele).
    * papel: 'fornecedor' (a sua empresa contrata o fornecedor) ou 'cliente' (o cliente contrata a sua empresa).
    * lerRegistro(): o cadastro lido do formulário. mensal(): só no cliente, diz se "É cliente mensal?" está ligado.
+   * temExterno(): quando a pergunta "Terá contrato?" é feita em outra etapa (no cliente, a do responsável legal), devolve a resposta;
+   * aí esta etapa não repete a pergunta e traz só os blocos.
    * Devolve { nos, ler, datas, pintar, bloco }. Tudo só informado: sem fórmula, sem lançamento e sem cálculo de reajuste.
    */
-  function etapaContrato({ contrato, papel = 'fornecedor', lerRegistro, cores, mensal }) {
+  function etapaContrato({ contrato, papel = 'fornecedor', lerRegistro, cores, mensal, temExterno }) {
     const cliente = papel === 'cliente'; const P = D.papelContrato(papel);
     const R = () => window.CicluzFieldRules;
     const mostrar = (no, sim) => { no.style.display = sim ? '' : 'none'; };
@@ -383,6 +393,7 @@
     cDados.append(el('legend', null, 'Dados do contrato'));
     const temContrato = U.quadroSituacao('Tem contrato?', Boolean(ct[P.tem]), { textos: ['Sim', 'Não'], dica: cliente ? 'Contrato de fornecimento com este cliente.' : 'Contrato de fornecimento ou de prestação de serviço com este fornecedor.', aoMudar: () => pintarContrato() });
     temContrato.classList.add('compras-largo');
+    const temAtivo = () => (temExterno ? Boolean(temExterno()) : temContrato.ativo);
     // Forma de pagamento: Boleto ou Dinheiro. Valor antigo (PIX, transferência) continua aparecendo até ser trocado.
     const formas = [...(cliente ? D.FORMAS_PAGAMENTO_CONTRATO : D.FORMAS_PAGAMENTO_FORNECEDOR)];
     const formaAntiga = ct.formaPagamento && !formas.some(([id]) => id === ct.formaPagamento) ? D.FORMAS_PAGAMENTO_CONTRATO.find(([id]) => id === ct.formaPagamento) : null;
@@ -461,7 +472,7 @@
         [P.empresa]: selContratante.value, rescisao: cRescisao.value.trim(),
         // Objeto do contrato: ids dos cadastros de produtos, grupos de despesa e patrimônios (campo novo e opcional).
         objeto: { produtoIds: [...objeto.produto], despesaIds: [...objeto.despesa], patrimonioIds: [...objeto.patrimonio] },
-        [P.tem]: temContrato.ativo, formaPagamento: cForma.value,
+        [P.tem]: temAtivo(), formaPagamento: cForma.value,
         // Vencimento: só em dinheiro some (o pagamento é toda sexta-feira, informativo). O dia do mês antigo fica guardado como estava.
         vencimentoData: sexta() ? '' : cVencData.value, vencimentoDia: ct.vencimentoDia != null ? ct.vencimentoDia : null,
         diaPagamento: sexta() ? 'sexta' : '',
@@ -483,8 +494,8 @@
       const p = partesDoContrato(lerRegistro(), papel);
       const linhas = (dl, x, pares) => dl.replaceChildren(...pares.filter(([, v]) => v).flatMap(([k, v]) => [el('dt', null, k), el('dd', null, v)]), ...(pares.some(([, v]) => v) ? [] : [el('dt', null, 'Sem dados'), el('dd', null, '—')]));
       const quem = (x) => [x.representante, x.cargo].filter(Boolean).join(' — ');
-      linhas(resumoContratante, p.contratante, [[p.contratante.pf ? 'Nome completo' : 'Razão social', p.contratante.nome], ['Nome fantasia', p.contratante.fantasia], [p.contratante.pf ? 'CPF' : 'CNPJ', p.contratante.documento], ['Endereço', p.contratante.endereco], ['Representante legal', quem(p.contratante)]]);
-      linhas(resumoContratado, p.contratado, [[p.contratado.pf ? 'Nome completo' : 'Razão social', p.contratado.nome], ['Nome fantasia', p.contratado.fantasia], [p.contratado.pf ? 'CPF' : 'CNPJ', p.contratado.documento], ['Endereço', p.contratado.endereco], ['Representante legal', quem(p.contratado)]]);
+      linhas(resumoContratante, p.contratante, [[p.contratante.pf ? 'Nome completo' : 'Razão social', p.contratante.nome], ['Nome fantasia', p.contratante.fantasia], [p.contratante.pf ? 'CPF' : 'CNPJ', p.contratante.documento], ['Endereço', p.contratante.endereco], ['Representante legal', quem(p.contratante)], ['Qualificação do representante', p.contratante.qualificacao]]);
+      linhas(resumoContratado, p.contratado, [[p.contratado.pf ? 'Nome completo' : 'Razão social', p.contratado.nome], ['Nome fantasia', p.contratado.fantasia], [p.contratado.pf ? 'CPF' : 'CNPJ', p.contratado.documento], ['Endereço', p.contratado.endereco], ['Representante legal', quem(p.contratado)], ['Qualificação do representante', p.contratado.qualificacao]]);
       linhas(resumoAssinaturas, null, [['Assina pelo contratante', [p.contratante.nome, quem(p.contratante)].filter(Boolean).join(' · ')], ['Assina pelo contratado', [p.contratado.nome, quem(p.contratado)].filter(Boolean).join(' · ')]]);
       mostrar(semEmpresaNota, !empresasContratantes().length);
     };
@@ -599,10 +610,10 @@
       blocoContrato('8 · Tipo de contrato e cláusulas', 'Opcional: um tipo de contrato traz cláusulas e campos prontos, que se somam aos blocos acima.', campo('Tipo de contrato', linhaModelo), notasModelo, boxClausulas, boxCampos),
       blocoContrato('9 · Assinaturas e documento', 'Confira quem assina por cada parte e gere o documento. A assinatura é feita no papel impresso.', resumoAssinaturas, acoesContrato, avisoContrato),
     ];
-    pintarBlocosContrato = () => blocosDoContrato.forEach((b) => mostrar(b, temContrato.ativo));
+    pintarBlocosContrato = () => blocosDoContrato.forEach((b) => mostrar(b, temAtivo()));
     pintarBlocosContrato();
     return {
-      nos: [quadroTem, ...blocosDoContrato], ler: lerContrato, bloco: blocoContrato,
+      nos: [...(temExterno ? [] : [quadroTem]), ...blocosDoContrato], ler: lerContrato, bloco: blocoContrato,
       datas: () => [cVencData, cInicio, cFim, ...datasExtras],
       /** Redesenha o que depende de outras etapas (as partes, o cliente mensal, a lista de tipos de contrato). */
       pintar: () => { pintarPartes(); pintarContrato(); pintarModelos(); },
