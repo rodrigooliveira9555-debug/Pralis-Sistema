@@ -156,8 +156,8 @@ body .view :is(.job-main,.job-copy,.job-copy>b,.location-name,.account-list-row>
 body .view :is(.job-copy>b,.location-name,.account-list-row>b){font-weight:500!important}
 body .view :is(.job-item,.salary-row,.account-list-row,.location-row){margin-top:0!important;margin-bottom:0!important;border-color:var(--layout-line)!important}
 body :is(#sector-view .location-tree,.location-tree.unidades-arvore)>.location-area-frame{margin:0!important;padding:0!important}
-body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-area-frame>.location-row{min-height:52px!important;padding:4px 12px!important}
-body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-children .location-row{min-height:40px!important;padding:2px 4px!important}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-area-frame>.location-row{min-height:var(--arvore-linha,52px)!important;padding:var(--arvore-respiro,4px 12px)!important}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-children .location-row{min-height:var(--arvore-sublinha,40px)!important;padding:2px 4px!important}
 body .view :is(.location-move,.menu-item-move,.drag-handle,.job-drag-handle,.account-action-toggle,.location-expand,.job-toggle,.location-preview-arrow){color:var(--navigation-ink,#a2a0aa)!important}
 body :is(.view,dialog,.modal) .local-search-control{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
 body :is(.view,dialog,.modal) .local-search-control>input{flex:1;min-width:120px}

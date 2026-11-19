@@ -1,5 +1,28 @@
 # CICLUZ — referência de interface
 
+## Lista de escolha compacta: mesmo desenho da origem, proporcionalmente menor (19/11/2026)
+Pedido do Rodrigo. **Supera**, só no tamanho, as seções que diziam que a lista de escolha repete a linha de 52 px da origem (árvore do objeto do contrato, árvore de áreas, peças de uniforme). O desenho continua o mesmo (seta, **caixa de marcar à esquerda do ícone**, ícone, nome, detalhe, situação à direita); o que muda é a escala, cerca de 85%.
+
+| Medida | Lista de origem (cadastro) | Lista de escolha |
+| --- | --- | --- |
+| Linha | 52 px | **44 px** (`--escolha-linha`) |
+| Subnível | 40 px | **36 px** (`--escolha-sublinha`) |
+| Ícone | 30 px | **26 px** (`--escolha-icone`) |
+| Caixa de marcar | — | **20 px** (`--escolha-caixa`) |
+| Nome | 14 px | **13 px** (`--escolha-titulo`) |
+| Detalhe / contagem / situação | 11 px | **10 px** (`--escolha-detalhe`) |
+
+**Fonte única:** as seis variáveis estão em `:root`, em `ui-foundation.css` (bloco "LISTA DE ESCOLHA COMPACTA"). Lista de escolha nova usa essas variáveis; não se cria outro tamanho. As telas de cadastro não mudaram (conferido: 52/40 px, ícone 30, nome 14).
+
+**Onde foi aplicado (relação completa):**
+1. **Árvore de escolha do contrato** (`seletorArvore`, `.compras-hier`, em `compras/compras.css`): Objeto do contrato — Grupo de produtos, Grupo de despesas e Grupo de patrimônios — e os grupos de despesa das atividades, no contrato do fornecedor e do cliente.
+2. **Árvore de áreas, setores e locais** (`.location-tree.unidades-arvore`): janela de Horário / Escala, Ficha de Cargos e cadastro do colaborador.
+3. **Peças de uniforme** no Lançamento de Uniforme (`.uniforms-options .uniforms-escolha`).
+
+**Correções que vieram junto:** a caixa marcada não aparecia preenchida na árvore do contrato (o fundo dos campos da janela é fixado por regra geral; o preenchimento passou a ser por sombra interna, como nas outras duas); três regras gerais antigas com `!important` passaram a ler variável em vez de número fixo, sem `!important` novo (`--arvore-linha`/`--arvore-sublinha` em `unified-layout.css`, `--caixa-de-marcar` em `ui-foundation.css`, `--campo-respiro` no estilo de `index.html`).
+
+**Ainda no tamanho antigo (não são "linha com caixa de marcar"):** a janela de vínculos por interruptor (`seletorDeItens`, em Fornecedores), a lista de colaboradores do lançamento de Horário / Escala e a lista de peças de Uniformes Compras (as duas últimas estão fora do menu), e os seletores de modelos da Ficha de Cargos. A regra também está em Configurações → Design System → Listas.
+
 ## Ícones de Admissão, Capacitação e Demissão: o prédio com a seta (19/11/2026)
 Pedido do Rodrigo. **Supera** as siglas ADI, CAP e DEM nesses três cartões de Lançamentos Colaboradores. O desenho é o **prédio da empresa** (o mesmo de RET - Patrimônios, sem o cifrão) com uma seta ao lado: **Admissão / Contratação = seta entrando no prédio**, **Capacitação / Desenvolvimento = seta para cima**, **Demissão / Desligamento = seta saindo do prédio**. Desenhos em `telaIcone` (`admissao`, `capacitacao`, `demissao`), em `index.html`. Regra de leitura: seta para dentro = entra na empresa; para cima = cresce; para fora = sai.
 

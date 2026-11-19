@@ -156,7 +156,7 @@ body .profiles-table thead th:first-child{z-index:4}
 body .profiles-table .profiles-group>:is(th,td){background:#f5f5f7;font-weight:600}
 .profiles-job-link,.profiles-requirement{font:inherit;color:inherit;background:transparent;border:0;cursor:pointer;padding:0;text-align:inherit;white-space:normal;overflow-wrap:anywhere}
 .profiles-job-link{font-weight:600}.profiles-job-link:hover,.profiles-requirement:hover{color:var(--menu-accent);text-decoration:underline}.profiles-table small{display:block;font:400 var(--ui-note)/16px var(--ui-font);margin-top:4px}
-.profiles-content input[type=checkbox],.profiles-dialog input[type=checkbox]{width:22px!important;height:22px!important;min-height:22px!important;accent-color:var(--menu-accent,#7c3aed);cursor:pointer;flex:0 0 22px}
+.profiles-content input[type=checkbox],.profiles-dialog input[type=checkbox]{width:var(--caixa-de-marcar,22px)!important;height:var(--caixa-de-marcar,22px)!important;min-height:var(--caixa-de-marcar,22px)!important;accent-color:var(--menu-accent,#7c3aed);cursor:pointer;flex:0 0 22px}
 .profiles-content :is(button,input,select,textarea):focus-visible,.profiles-dialog :is(button,input,select,textarea):focus-visible{outline:2px solid var(--navigation-ink,#a2a0aa);outline-offset:3px}
 .profiles-empty{padding:20px;max-width:640px}.profiles-sr{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%)}
 .profiles-detail{display:grid;gap:12px}.profiles-info{margin:0;padding:16px;display:grid;grid-template-columns:minmax(130px,1fr) 3fr;gap:12px;background:#fff;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px}.profiles-info dt{font-weight:600}.profiles-info dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.profiles-section{background:#fff;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;padding:12px}.profiles-section h3{font:var(--ui-title-weight) var(--ui-title)/var(--ui-title-line) var(--ui-font);margin:0 0 12px}.profiles-delivery{padding:10px 0;border-bottom:1px solid var(--layout-line,#d4d4d8);margin:0;white-space:pre-wrap}.profiles-section .btn{margin-top:12px}
@@ -425,11 +425,31 @@ body .btn.acao-com-circulo[hidden]{display:none}
 /* Estrutura organizacional (06/11/2026): inactive nodes stay visible, dimmed, with their history. */
 .location-node.is-inactive>.location-row{opacity:.6}.location-inactive-pill{margin-left:6px;background:var(--layout-line,#e5e5ea);color:var(--muted,#73737a)}
 /* Regra disciplinar em sequência (19/11/2026): três passos numerados, um embaixo do outro, com uma seta entre eles dizendo o que leva de um ao outro. */.regra-sequencia{gap:0}legend:has(>.regra-numero){display:flex;align-items:center;gap:8px}.regra-numero{display:inline-grid;place-items:center;flex:none;width:22px;height:22px;border-radius:50%;background:var(--menu-accent);color:#fff;font:700 12px/1 var(--ui-font)}.regra-seta{display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 0;color:var(--menu-accent);font:600 12px/16px var(--ui-font)}.regra-seta svg{flex:none;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.regra-resumo{margin:0;font:600 14px/20px var(--ui-font)}
+/* LISTA DE ESCOLHA COMPACTA (19/11/2026, Rodrigo). Toda lista em que se marca um item (árvore do contrato, árvore de áreas/setores,
+   peças de uniforme) repete o desenho da lista de origem, só que proporcionalmente menor (cerca de 85%): linha de 44 px no lugar de 52,
+   subnível de 36 no lugar de 40, ícone de 26 no lugar de 30, caixa de marcar de 20, nome em 13 px e detalhe em 10 px. As medidas moram
+   aqui, uma vez só; lista de escolha nova usa estas variáveis em vez de inventar tamanho. */
+:root{--escolha-linha:44px;--escolha-sublinha:36px;--escolha-icone:26px;--escolha-caixa:20px;--escolha-titulo:13px;--escolha-detalhe:10px}
+/* Na árvore de áreas, o tamanho do ícone e do nome é fixado por regras gerais que leem --circle-size e --ui-text; a lista de escolha
+   troca o valor dessas duas variáveis só dentro das suas linhas. */
+.location-tree.unidades-arvore{--arvore-linha:var(--escolha-linha);--arvore-sublinha:var(--escolha-sublinha);--arvore-respiro:2px 10px}
+.location-tree.unidades-arvore .location-row{--ui-text:var(--escolha-titulo)}
+.location-tree.unidades-arvore .location-row>.location-icon{--circle-size:var(--escolha-icone);height:var(--escolha-icone);font-size:10px}
+.location-tree.unidades-arvore .location-row .location-name{line-height:16px}
+.location-tree.unidades-arvore .location-row .location-count{font-size:var(--escolha-detalhe);line-height:14px;margin-top:0}
+.uniforms-options .uniforms-escolha{min-height:var(--escolha-linha);padding-top:4px;padding-bottom:4px;gap:8px}
+.uniforms-options .uniforms-escolha>.compras-linha-icone{flex:0 0 var(--escolha-icone);width:var(--escolha-icone);height:var(--escolha-icone)}
+.uniforms-options .uniforms-escolha>.compras-linha-icone svg{width:16px;height:16px}
+.uniforms-options .uniforms-escolha .compras-linha-texto b{font-size:var(--escolha-titulo);line-height:16px}
+.uniforms-options .uniforms-escolha .compras-linha-texto small,.uniforms-options .uniforms-escolha .account-list-state{font-size:var(--escolha-detalhe);line-height:14px}
+/* A caixa de marcar das listas de escolha: o tamanho e o respiro dos campos de janela são fixados por regras gerais, que agora leem
+   estas duas variáveis; a caixa informa o seu próprio tamanho. */
+.compras-hier-caixa{--caixa-de-marcar:var(--escolha-caixa,20px);--campo-respiro:0px}
 /* Escolha de áreas, setores e locais: a árvore é a mesma da tela DES - Área / Setor / Local (as regras de desenho são compartilhadas em unified-layout.css e design-system.css); aqui só o quadro de fora e a caixa de marcar. */
 .unidades-quadro{display:grid;gap:6px;margin:0;padding:0;border:0;min-width:0}
 .unidades-quadro>legend{padding:0;font:var(--ui-label-weight,500) var(--ui-label,12px)/18px var(--ui-font);color:var(--layout-ink,inherit)}
-body :is(.location-tree.unidades-arvore .location-row,.uniforms-options .uniforms-escolha)>input.compras-hier-caixa{appearance:none;-webkit-appearance:none;box-sizing:border-box;flex:0 0 22px;width:22px;height:22px;min-height:0;margin:0;padding:0;border:1.5px solid var(--ui-border-base,#a2a0aa);border-radius:6px;background:var(--theme-card,#fff);display:inline-grid;place-items:center;cursor:pointer}
-body :is(.location-tree.unidades-arvore .location-row,.uniforms-options .uniforms-escolha)>input.compras-hier-caixa:checked{box-shadow:inset 0 0 0 11px var(--node-color,var(--menu-accent,#7c3aed));border-color:var(--node-color,var(--menu-accent,#7c3aed))} /* preenchimento por sombra interna: o fundo dos campos da tela é fixado por uma regra geral */
+body :is(.location-tree.unidades-arvore .location-row,.uniforms-options .uniforms-escolha,.compras-hier-linha)>input.compras-hier-caixa{appearance:none;-webkit-appearance:none;box-sizing:border-box;flex:0 0 var(--escolha-caixa);width:var(--escolha-caixa);height:var(--escolha-caixa);min-height:0;margin:0;padding:0;border:1.5px solid var(--ui-border-base,#a2a0aa);border-radius:6px;background:var(--theme-card,#fff);display:inline-grid;place-items:center;cursor:pointer}
+body :is(.location-tree.unidades-arvore .location-row,.uniforms-options .uniforms-escolha,.compras-hier-linha)>input.compras-hier-caixa:checked{box-shadow:inset 0 0 0 11px var(--node-color,var(--menu-accent,#7c3aed));border-color:var(--node-color,var(--menu-accent,#7c3aed))} /* preenchimento por sombra interna: o fundo dos campos da tela é fixado por uma regra geral */
 /* Identidade do cadastro (U.blocoIcone): o desenho dentro do quadradinho. As demais medidas vêm das regras do cadastro de grupo (.job-identity, .identity-pick, .account-icon-dot, .icon-live-preview). */
 .icone-do-quadradinho{display:inline-flex;width:18px;height:18px}
 .uniforms-form>.job-identity{padding:12px;border-radius:10px}
