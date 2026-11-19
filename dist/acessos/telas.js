@@ -169,6 +169,8 @@
     barra.append(busca,
       U.botao('Expandir tudo', () => { estado.fechados.clear(); desenhar(); }),
       U.botao('Recolher tudo', () => { MENU.forEach((g) => estado.fechados.add(g.n)); desenhar(); }));
+    // Com a Área filtrada só aparece um grupo: o botão deixa isso claro e volta ao menu inteiro.
+    if (estado.area) barra.append(U.botao('Mostrar todas as áreas', () => { estado.area = ''; desenhar(); }));
     const resumo = el('p', 'profiles-note acessos-telas-resumo');
     barra.append(resumo);
     blocos.push(barra);
