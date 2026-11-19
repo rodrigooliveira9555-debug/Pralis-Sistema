@@ -245,6 +245,15 @@
     }
     return (Array.isArray(lista) ? lista : []).map((g) => ({ id: g.id, nome: g.name, ativo: g.active !== false, subgrupos: (g.children || []).map((s) => ({ id: s.id, nome: s.name, ativo: s.active !== false })) }));
   }
+  /** Grupos de Retiradas (RET) do cadastro financeiro do S2 — é onde ficam os grupos de patrimônio (ex.: Investimento › Máquinas e Equipamentos). */
+  function gruposRetirada() {
+    let lista = null;
+    try { if (typeof financialGroups !== 'undefined') lista = financialGroups.retiradas; } catch (e) { /* ainda não carregado */ }
+    if (!lista) {
+      try { lista = (JSON.parse(localStorage.getItem('cicluz-financial-hierarchy-v1') || 'null') || {}).retiradas; } catch (e) { lista = null; }
+    }
+    return (Array.isArray(lista) ? lista : []).map((g) => ({ id: g.id, nome: g.name, ativo: g.active !== false, subgrupos: (g.children || []).map((s) => ({ id: s.id, nome: s.name, ativo: s.active !== false })) }));
+  }
   function nomeGrupo(grupoId, subgrupoId) {
     const g = gruposMercadoria().find((x) => x.id === grupoId);
     if (!g) return grupoId ? 'Grupo não encontrado' : 'Sem grupo';
@@ -345,7 +354,7 @@
     get dados() { return dados; },
     get erroLeitura() { return erroLeitura; },
     transacao, novoId, agoraIso, hojeIso,
-    gruposMercadoria, nomeGrupo, arvoreLocais, nosLocais, vinculo, arquivo, arquivoAberto, totalArquivo, gravarArquivo, tirarDoArquivo, locais,
+    gruposMercadoria, gruposRetirada, nomeGrupo, arvoreLocais, nosLocais, vinculo, arquivo, arquivoAberto, totalArquivo, gravarArquivo, tirarDoArquivo, locais,
     fornecedor, produto, responsavel, referencia, definirReferencia, fornecedoresDoProduto, bolinhas,
   };
 })();

@@ -148,6 +148,14 @@
         if (v.categoria && !opcCategoria.some(([k]) => k === v.categoria)) opcCategoria.push([v.categoria, (nomeDe(D.CATEGORIAS, v.categoria) || v.categoria) + ' (cadastro anterior)']);
         const categoria = seletor(opcCategoria, v.categoria || opcoes.categoria || '', 'Selecione');
         if (opcoes.categoria) categoria.disabled = true;
+        // Grupo de patrimônio (19/11/2026, Rodrigo): o grupo e o subgrupo de RET - Grupos de Retiradas em que o bem fica, guardados por id.
+        // É por ele que o patrimônio aparece dentro do subgrupo na escolha do Objeto do contrato. Opcional; bem antigo continua sem grupo.
+        const gruposRet = (window.CicluzComprasDados && window.CicluzComprasDados.gruposRetirada) ? window.CicluzComprasDados.gruposRetirada() : [];
+        const nomeRet = (t) => (typeof formatSystemName === 'function' ? formatSystemName(t) : t);
+        const valorRet = v.grupoRetId ? v.grupoRetId + '|' + (v.subgrupoRetId || '') : '';
+        const opcRet = gruposRet.flatMap((g) => (g.subgrupos.length ? g.subgrupos.filter((s2) => (g.ativo && s2.ativo) || valorRet === g.id + '|' + s2.id).map((s2) => [g.id + '|' + s2.id, nomeRet(g.nome) + ' › ' + nomeRet(s2.nome)]) : (g.ativo || valorRet === g.id + '|' ? [[g.id + '|', nomeRet(g.nome)]] : [])));
+        if (valorRet && !opcRet.some(([k]) => k === valorRet)) opcRet.push([valorRet, 'Grupo removido']);
+        const grupoRet = seletor(opcRet, valorRet, 'Selecione');
         const nome = texto(v.nome, { maxLength: 120, placeholder: 'Ex.: Notebook, Forno industrial, Geladeira' });
         const nomeTec = texto(v.nomeTecnico, { maxLength: 200, placeholder: 'Ex.: Notebook Dell Latitude 5440' });
         const marca = texto(v.marca); const modelo = texto(v.modelo); const serie = livre(texto(v.numeroSerie, { maxLength: 80 }));
@@ -208,7 +216,7 @@
         const espec = U.quadroSituacao('Informar especificação técnica?', v.informarEspecificacao != null ? Boolean(v.informarEspecificacao) : temDadosEspec, { textos: ['Sim', 'Não'], aoMudar: () => pintarEspec() });
         const secEspec1 = secao('Especificação técnica', espec);
         const e1 = el('div', 'compras-etapa');
-        e1.append(secao('Identificação', campo('Categoria *', categoria), campo('Nome simplificado *', nome), campo('Nome técnico', nomeTec), campo('Marca', marca), campo('Modelo', modelo), campo('Número de série', serie),
+        e1.append(secao('Identificação', campo('Categoria *', categoria), campo('Grupo de patrimônio', grupoRet), campo('Nome simplificado *', nome), campo('Nome técnico', nomeTec), campo('Marca', marca), campo('Modelo', modelo), campo('Número de série', serie),
           (() => { const l = el('label', 'compras-campo'); const ln = el('div', 'patrimonio-linha-campo'); numero.setAttribute('aria-label', 'Número de patrimônio'); ln.append(numero, gerar); l.append(el('span', 'compras-rotulo', 'Número de patrimônio'), ln, el('small', 'profiles-note', 'Único entre os bens; deixe em branco ou gere o próximo.')); return l; })(), campo('Valor do Patrimônio (R$)', valor.no), campo('Descrição detalhada', descricao), audio.no),
         secao('Classificação', campo('Tipo de bem', tipoBem), campo('Natureza', natureza), rotSit, sitNota, rotCons, campo('Data de cadastro', dataCad)),
         secao('Quantidade', campo('Unidade de medida', unidade), campo('Quantidade de unidades', quantidade), conjunto),
@@ -617,7 +625,7 @@
           const tecnicas = {}; PD.TECNICAS.forEach(([k]) => { const x = camposTec[k].entrada.value.trim(); if (x) tecnicas[k] = x; });
           const garDoc = gDoc.value; const inspDoc = iDoc.value;
           const dados = {
-            id: b ? b.id : undefined, nome: nome.value, categoria: categoria.value, marca: marca.value.trim(), modelo: modelo.value.trim(), numeroSerie: serie.value.trim(), numeroPatrimonio: numero.value.trim(), valor: valor.valor(), localId: local.value,
+            id: b ? b.id : undefined, nome: nome.value, categoria: categoria.value, grupoRetId: grupoRet.value.split('|')[0] || '', subgrupoRetId: grupoRet.value.split('|')[1] || '', marca: marca.value.trim(), modelo: modelo.value.trim(), numeroSerie: serie.value.trim(), numeroPatrimonio: numero.value.trim(), valor: valor.valor(), localId: local.value,
             nomeTecnico: nomeTec.value, descricao: descricao.value, tipoBem: tipoBem.value, natureza: natureza.value, situacaoPatrimonial: situacaoP, conservacao: conserv, dataCadastro: dataCad.value, codigoInterno: v.codigoInterno || '', // o campo saiu da tela (19/11/2026); o valor que já existia fica guardado
             unidade: unidade.value, quantidade: inteiro(quantidade), conjunto: conjunto.ativo, observacoes: v.observacoes || '', // as observações antigas ficam guardadas; a descrição detalhada e o áudio as substituem
             usadoNaProducao: prodCat ? usoProd.ativo : Boolean(v.usadoNaProducao), utensiliosIds: prodCat ? (usoProd.ativo && usaUt.ativo ? utensilios : []) : (v.utensiliosIds || []),
@@ -650,7 +658,7 @@
           const nomeFornecedor = (id) => (id ? S.nomeFornecedor(id) : '');
           const t = PD.totaisComponentes(d.pecas); const principal = d.imagens.find((i) => i.principal);
           const grupos = [
-            [1, 'Cadastro', [['Identificação', d.nome], ['Nome técnico', d.nomeTecnico], ['Categoria', nomeDe(D.CATEGORIAS, d.categoria)], ['Marca', d.marca], ['Modelo', d.modelo], ['Número de série', d.numeroSerie], ['Número de patrimônio', d.numeroPatrimonio], ['Valor', d.valor != null ? dinheiro(d.valor) : '']]],
+            [1, 'Cadastro', [['Identificação', d.nome], ['Nome técnico', d.nomeTecnico], ['Categoria', nomeDe(D.CATEGORIAS, d.categoria)], ['Grupo de patrimônio', (opcRet.find(([k]) => k === (d.grupoRetId ? d.grupoRetId + '|' + (d.subgrupoRetId || '') : '')) || [])[1] || ''], ['Marca', d.marca], ['Modelo', d.modelo], ['Número de série', d.numeroSerie], ['Número de patrimônio', d.numeroPatrimonio], ['Valor', d.valor != null ? dinheiro(d.valor) : '']]],
             [2, 'Imagens e documentos', [['Imagem principal', principal ? principal.name : ''], ['Imagens', d.imagens.length ? String(d.imagens.length) : ''], ['Documentos anexados', d.documentos.length ? String(d.documentos.length) : '']]],
             [3, 'Localização', [['Empresa', d.localizacao.empresa], ['Unidade', d.localizacao.unidade], ['Setor / local', d.localId ? S.nomeLocal(d.localId) : d.localizacao.departamento], ['Responsável', d.responsavel.nome]]],
             [4, 'Composição', [['Especificação técnica', d.informarEspecificacao ? 'Informada' : ''], ['Utilizado na produção', d.usadoNaProducao ? 'Sim' + (d.capacidade ? ' — capacidade ' + CD.numero(d.capacidade.valor) + ' ' + d.capacidade.unidade : '') : ''], ['Utensílios utilizados', d.utensiliosIds.length ? String(d.utensiliosIds.length) : ''], ['Materiais', d.materiais.join(', ')], ['Ficha técnica', d.fichaTecnica ? d.fichaTecnica.name : ''], ['Peças (tipos)', t.tipos ? String(t.tipos) : ''], ['Unidades de peças', t.unidades && t.tipos ? String(t.unidades) : ''], ['Patrimônios vinculados', d.vinculados.length ? String(d.vinculados.length) : '']]],

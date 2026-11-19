@@ -1,5 +1,10 @@
 # CICLUZ — referência de interface
 
+## Grupo de patrimônios do contrato: grupo de retiradas › subgrupo › patrimônio (19/11/2026)
+Pedido do Rodrigo. **Supera** o agrupamento pela categoria do bem (CIS, UTS, MAC, MOB, VE), decidido no mesmo dia. No Objeto do contrato, "Grupo de patrimônios" passa a ter **a mesma lógica do Grupo de produtos**: a árvore é **RET - Grupos de Retiradas** (grupo › subgrupo, com a sigla RET) e, dentro de cada subgrupo, **os patrimônios cadastrados nele**, com o ícone do patrimônio (o prédio). Dá para marcar o grupo, o subgrupo ou o bem. Bem sem grupo fica em "Patrimônios sem Grupo", que não é marcável como grupo. **Padrão geral:** em toda árvore de escolha, o item final (produto, patrimônio) aparece dentro do subgrupo em que foi cadastrado, com o seu próprio ícone; grupo e subgrupo levam a sigla da origem. 
+
+**Cadastro do patrimônio:** campo novo e opcional **Grupo de patrimônio**, ao lado da Categoria, na etapa 1 (lista "Grupo › Subgrupo" de RET - Grupos de Retiradas; também aparece na revisão). **Dados:** dois campos novos e opcionais no bem (`cicluz-patrimonio-v1`): `grupoRetId` e `subgrupoRetId`, sempre por id. Sem migração: bem antigo continua valendo e aparece em "sem grupo" até receber o grupo. Em `contrato.objeto.patrimonioGrupoIds` o valor passa a ser o id do grupo ("grupo" ou "grupo|subgrupo"); um valor antigo (categoria) continua sendo mostrado pelo nome da categoria. `S.gruposRetirada()` em `compras/dados.js` é a leitura única dos grupos de retirada. **Em aberto:** a árvore mostra todos os grupos de retiradas (Investimento, Sócios, Pro Labore, Participação); falta o Rodrigo dizer se deve mostrar só Investimento.
+
 ## Lista de escolha compacta: mesmo desenho da origem, proporcionalmente menor (19/11/2026)
 Pedido do Rodrigo. **Supera**, só no tamanho, as seções que diziam que a lista de escolha repete a linha de 52 px da origem (árvore do objeto do contrato, árvore de áreas, peças de uniforme). O desenho continua o mesmo (seta, **caixa de marcar à esquerda do ícone**, ícone, nome, detalhe, situação à direita); o que muda é a escala, cerca de 85%.
 

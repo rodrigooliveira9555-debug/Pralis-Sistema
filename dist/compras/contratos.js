@@ -320,10 +320,12 @@
      patrimônio; a despesa não precisa (só tem grupo e subgrupo). No contrato gravado cada nível vai na sua lista (ver objetoParaGravar). */
   const categoriasDoPatrimonio = () => (window.CicluzProducaoDominio && window.CicluzProducaoDominio.CATEGORIAS) || [];
   const nomeDoGrupoMer = (id) => { const [gid, sid] = String(id).split('|'); const g = S.gruposMercadoria().find((x) => x.id === gid); if (!g) return ''; if (!sid) return g.nome; const s2 = g.subgrupos.find((x) => x.id === sid); return s2 ? g.nome + ' › ' + s2.nome : ''; };
+  const nomeDoGrupoRet = (id) => { const [gid, sid] = String(id).split('|'); const g = S.gruposRetirada().find((x) => x.id === gid); if (!g) return ''; if (!sid) return g.nome; const s2 = g.subgrupos.find((x) => x.id === sid); return s2 ? g.nome + ' › ' + s2.nome : ''; };
+  const formatarNome = (t) => (typeof formatSystemName === 'function' ? formatSystemName(t) : t);
   const nomeDoObjeto = {
     produto: (id) => (id.startsWith('grp:') ? 'Grupo: ' + (typeof formatSystemName === 'function' ? formatSystemName(nomeDoGrupoMer(id.slice(4)) || 'removido') : nomeDoGrupoMer(id.slice(4)) || 'removido') : (S.produto(id.slice(4)) || {}).descricao || 'Produto removido'),
     despesa: (id) => nomeDoGrupo(id) || 'Grupo de despesa removido',
-    patrimonio: (id) => (id.startsWith('grp:') ? 'Grupo: ' + (nomeDe(categoriasDoPatrimonio(), id.slice(4)) || id.slice(4)) : (bensCadastrados().find((b) => b.id === id.slice(4)) || {}).nome || 'Patrimônio removido'),
+    patrimonio: (id) => (id.startsWith('grp:') ? 'Grupo: ' + (formatarNome(nomeDoGrupoRet(id.slice(4))) || nomeDe(categoriasDoPatrimonio(), id.slice(4)) || 'removido') : (bensCadastrados().find((b) => b.id === id.slice(4)) || {}).nome || 'Patrimônio removido'),
   };
   /** Do contrato gravado para os ids da árvore, e de volta. */
   const objetoDaArvore = (o) => { const x = o && typeof o === 'object' ? o : {}; return {
@@ -346,13 +348,21 @@
     if (semGrupo.length) gs.push({ id: 'sem-grupo', nome: 'Produtos sem grupo', ativo: true, selecionavel: false, conta: n(semGrupo.length), filhos: semGrupo });
     return gs;
   }
-  /** Árvore de patrimônios: o grupo é a categoria do cadastro do patrimônio (Máquina, Equipamento, Mobiliário…) e, dentro, os bens daquela categoria. */
+  /** Árvore de patrimônios (19/11/2026, Rodrigo — supera o agrupamento pela categoria): a mesma lógica dos produtos. Grupo de retiradas (RET) ›
+      subgrupo › patrimônios cadastrados naquele subgrupo (campo "Grupo de patrimônio" do cadastro do bem, guardado por id em
+      grupoRetId/subgrupoRetId). Bem sem grupo fica em "Patrimônios sem grupo", que não é marcável como grupo. */
   function arvorePatrimonios(marcados) {
     const bens = bensCadastrados().filter((b) => !b.baixa || marcados.has('bem:' + b.id)).sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR'));
     const folha = (b) => ({ id: 'bem:' + b.id, nome: b.nome + (b.baixa ? ' (baixado)' : ''), ativo: !b.baixa, folha: true, conta: 'Patrimônio' });
     const n = (q) => (q === 1 ? '1 patrimônio' : q + ' patrimônios');
-    const gs = categoriasDoPatrimonio().map(([id, nome]) => { const itens = bens.filter((b) => b.categoria === id).map(folha); return { id: 'grp:' + id, nome, ativo: true, conta: n(itens.length), filhos: itens }; });
-    const semGrupo = bens.filter((b) => !categoriasDoPatrimonio().some(([id]) => id === b.categoria)).map(folha);
+    const grupos = S.gruposRetirada();
+    const gs = grupos.map((g) => {
+      const subs = g.subgrupos.map((s2) => { const itens = bens.filter((b) => b.grupoRetId === g.id && b.subgrupoRetId === s2.id).map(folha); return { id: 'grp:' + g.id + '|' + s2.id, nome: g.nome + ' › ' + s2.nome, ativo: g.ativo && s2.ativo, conta: n(itens.length), filhos: itens }; });
+      const diretos = bens.filter((b) => b.grupoRetId === g.id && !g.subgrupos.some((s2) => s2.id === b.subgrupoRetId)).map(folha);
+      const total = bens.filter((b) => b.grupoRetId === g.id).length;
+      return { id: 'grp:' + g.id, nome: g.nome, ativo: g.ativo, conta: pluralItens(g.subgrupos.length).replace('item', 'subgrupo').replace('itens', 'subgrupos') + ' · ' + n(total), filhos: [...subs, ...diretos] };
+    });
+    const semGrupo = bens.filter((b) => !grupos.some((g) => g.id === b.grupoRetId)).map(folha);
     if (semGrupo.length) gs.push({ id: 'sem-grupo', nome: 'Patrimônios sem grupo', ativo: true, selecionavel: false, conta: n(semGrupo.length), filhos: semGrupo });
     return gs;
   }
@@ -680,7 +690,7 @@
       titulo: 'Despesas do contrato: grupos de despesa', cores: coresDe('despesa'), marcados: objeto.despesa, aoConfirmar: trocar }));
     const objPatrimonios = caixaObjeto('patrimonio', 'Patrimônios do contrato', 'Grupo de patrimônios', 'Escolher grupos ou patrimônios deste contrato', 'Nenhum patrimônio vinculado.', (q) => (q === 1 ? '1 item vinculado.' : q + ' itens vinculados.'), (trocar) => seletorArvore({
       titulo: 'Patrimônios do contrato: grupos de patrimônio', cores: coresDe('patrimonio'), sigla: 'RET', rotuloBusca: 'Buscar grupo ou patrimônio', vazio: 'Nenhuma categoria de patrimônio disponível.',
-      nos: () => arvorePatrimonios(objeto.patrimonio), marcados: objeto.patrimonio, aoConfirmar: trocar }));
+      nos: () => arvorePatrimonios(objeto.patrimonio), marcados: objeto.patrimonio, iconeFolha: typeof telaIcone !== 'undefined' && telaIcone.patrimonio ? '<path d="' + telaIcone.patrimonio + '"/>' : undefined, aoConfirmar: trocar }));
     const quadroTem = blocoContrato('Contrato', 'Marque Sim para montar o contrato deste ' + (cliente ? 'cliente' : 'fornecedor') + '. Ele é montado em blocos, de cima para baixo, com o que você preencher em cada um.', temContrato);
     const daEmpresa = 'Os dados vêm de Configurações → Empresa → Dados da Empresa.'; const doCadastro = 'Os dados vêm das etapas anteriores deste cadastro.';
     const blocosDoContrato = [
@@ -748,5 +758,5 @@
     if (!c || !PASTAS[chave] || e.target.closest('.menu-item-move')) return;
     e.preventDefault(); e.stopImmediatePropagation(); abrirPastaContratos(chave);
   }, true);
-  window.CicluzContratos = { abrirPastaContratos, JOINHA: { cima: ICO.cima, baixo: ICO.baixo }, abrirModelos, listaAtividades, seletorHierarquico, seletorArvore, botoesDocumento, secoesContrato, partesDoContrato, enderecoTexto, modelos, etapaContrato };
+  window.CicluzContratos = { abrirPastaContratos, arvores: { produtos: arvoreProdutos, patrimonios: arvorePatrimonios }, JOINHA: { cima: ICO.cima, baixo: ICO.baixo }, abrirModelos, listaAtividades, seletorHierarquico, seletorArvore, botoesDocumento, secoesContrato, partesDoContrato, enderecoTexto, modelos, etapaContrato };
 })();
