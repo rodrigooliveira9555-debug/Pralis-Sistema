@@ -222,6 +222,7 @@
     if (nivel !== 'none') {
       const atual = el('span', 'acessos-telas-atual' + (ajustada(chave) ? ' ajustado' : ''));
       atual.dataset.chave = chave;
+      atual.style.setProperty('--nivel-cor', g.c);
       atual.title = nomeDoNivel(nivel, s.t) + (ajustada(chave) ? ' (ajuste só desta pessoa)' : '');
       atual.append(iconeNivel(nivel, s.t), el('span', 'acessos-telas-atual-nome', nomeDoNivel(nivel, s.t)));
       if (ajustada(chave)) atual.append(el('span', 'acessos-nivel-ponto'));
@@ -229,6 +230,7 @@
     }
     const mais = botaoMais('Escolher o nível de acesso de ' + rotulo + ' (agora: ' + nomeDoNivel(nivel, s.t) + ')', aberta, () => { estado.aberta = aberta ? '' : chave; desenhar(); });
     mais.dataset.mais = chave;
+    mais.style.setProperty('--nivel-cor', g.c);
     direita.push(mais);
     const l = U.linhaLista({ icones: [icone], titulo: rotulo, direita });
     const saida = [l];
@@ -236,6 +238,7 @@
       const opcoes = el('div', 'acessos-nivel-escolha');
       opcoes.setAttribute('role', 'radiogroup');
       opcoes.setAttribute('aria-label', 'Nível de acesso de ' + rotulo);
+      opcoes.style.setProperty('--nivel-cor', g.c);
       ACEITA[s.t].forEach((id) => {
         const b = el('button', 'acessos-nivel-opcao' + (id === nivel ? ' marcado' : ''));
         b.type = 'button';

@@ -199,8 +199,14 @@ body.dark-theme .ds-modelo-barra { background: var(--theme-card, #2d2b34); }
 .acessos-telas-quem { display: grid; grid-template-columns: 170px 32px minmax(0, 1fr); align-items: center; gap: 8px 10px; min-height: 32px; }
 .acessos-telas-valor { font: 400 14px/20px var(--ui-font); overflow-wrap: anywhere; }
 .acessos-telas-valor.vazio { color: var(--muted, #73737a); }
-/* O "+" é o botão redondo de ação do sistema (shortcut-circle compras-redondo); aberto, vira "×". */
-.acessos-telas-mais svg { transition: transform 160ms ease; }
+/* O "+" e o ícone do nível seguem o botão redondo de ação do sistema (Design System › Ícones): círculo de 32 px cheio na cor da
+   origem (--nivel-cor; sem ela, o roxo de Configurações) e o desenho branco de 18 px. Aberto, o "+" vira "×". */
+.acessos-telas button.acessos-telas-mais {
+  flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; min-height: 0; padding: 0; border: 0; border-radius: 50%;
+  background: var(--nivel-cor, var(--menu-accent)); color: #fff; cursor: pointer;
+}
+.acessos-telas button.acessos-telas-mais:hover { filter: brightness(.94); }
+.acessos-telas-mais svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform 160ms ease; }
 .acessos-telas-mais[aria-expanded="true"] svg { transform: rotate(45deg); }
 .acessos-telas-opcoes { display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); padding: 2px 0 6px 0; }
 .acessos-telas-opcao {
@@ -231,22 +237,22 @@ body.dark-theme .acessos-telas-seta { color: #d8c8fb; }
 .acessos-telas-atual-nome { color: var(--ui-label-color, #52525b); }
 body.dark-theme .acessos-telas-atual-nome { color: #d4d4d8; }
 
-/* O ícone do nível: desenho do Design System (lápis, lápis com prancheta, olho, cadeado) + o $; cortado = sem aquele poder */
-.acessos-nivel-ic { position: relative; flex: none; display: inline-grid; place-items: center; width: 32px; height: 28px; color: var(--menu-accent); }
-body.dark-theme .acessos-nivel-ic { color: #d8c8fb; }
-.acessos-nivel-ic.olho, .acessos-nivel-ic.sem { color: var(--muted, #73737a); }
-body.dark-theme .acessos-nivel-ic.olho, body.dark-theme .acessos-nivel-ic.sem { color: #a1a1aa; }
-.acessos-nivel-ic svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.acessos-nivel-mo {
-  position: absolute; right: 0; bottom: -1px; width: 13px; height: 13px; border-radius: 50%; display: grid; place-items: center;
-  border: 1px solid var(--layout-ink, #3f3f46); background: var(--theme-card, #fff); color: var(--layout-ink, #3f3f46); font: 600 9px/1 var(--ui-font);
+/* O ícone do nível: círculo cheio na cor da origem com o desenho do Design System (lápis com prancheta = lançar, lápis = editar,
+   olho = visualizar, cadeado = sem acesso) e o $ num selo branco; cortado = sem aquele poder */
+.acessos-nivel-ic {
+  position: relative; flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--nivel-cor, var(--menu-accent)); color: #fff;
 }
-.acessos-nivel-mo.cheio { background: var(--layout-ink, #3f3f46); color: var(--theme-card, #fff); }
-body.dark-theme .acessos-nivel-mo { border-color: #d4d4d8; color: #d4d4d8; background: var(--theme-card, #222128); }
-body.dark-theme .acessos-nivel-mo.cheio { background: #d4d4d8; color: var(--theme-card, #222128); }
-.acessos-nivel-ic.xg::after, .acessos-nivel-ic.xm .acessos-nivel-mo::after { content: ""; position: absolute; height: 1.5px; background: var(--cicluz-danger, #e34343); transform: rotate(-45deg); }
-.acessos-nivel-ic.xg::after { left: 5px; right: 9px; top: 13px; }
-.acessos-nivel-ic.xm .acessos-nivel-mo::after { left: -2px; right: -2px; top: 5px; }
+.acessos-nivel-ic.sem { background: var(--navigation-ink, #a2a0aa); }
+.acessos-nivel-ic svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.acessos-nivel-mo {
+  position: absolute; right: -4px; bottom: -3px; width: 15px; height: 15px; border-radius: 50%; display: grid; place-items: center;
+  border: 1.5px solid var(--theme-card, #fff); background: #fff; color: #27272a; font: 700 9px/1 var(--ui-font);
+}
+.acessos-nivel-mo.cheio { background: #27272a; color: #fff; }
+.acessos-nivel-ic.xg::after, .acessos-nivel-ic.xm .acessos-nivel-mo::after { content: ""; position: absolute; height: 1.5px; transform: rotate(-45deg); }
+.acessos-nivel-ic.xg::after { left: 6px; right: 6px; top: 15px; background: #fff; }
+.acessos-nivel-ic.xm .acessos-nivel-mo::after { left: -1px; right: -1px; top: 5px; background: var(--cicluz-danger, #e34343); }
 .acessos-nivel-ponto { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--menu-accent); }
 
 /* As opções do nível, logo abaixo da linha (aparecem só quando o "+" da linha é tocado) */
