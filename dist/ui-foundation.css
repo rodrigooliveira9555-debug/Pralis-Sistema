@@ -253,11 +253,6 @@ body label.uniforms-phone{display:grid!important;grid-template-columns:minmax(0,
 .uniforms-purchase-total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:8px;font:400 var(--ui-text)/var(--ui-text-line) var(--ui-font);color:var(--layout-ink,inherit)}
 .uniforms-purchase-total .uniforms-total{margin-top:0}
 /* Lançamentos de Ocorrências: reuses the uniforms blocks; only attachments, period and review rows are new. */
-.occurrences-choice{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:0;padding:0;border:0;min-width:0}
-.occurrences-choice legend{float:left;width:100%;padding:0 0 6px;font:400 var(--ui-label,12px)/18px var(--ui-font);color:var(--ui-label-color,#52525b)}
-body .view .occurrences-choice label.profiles-choice{display:flex!important;flex-direction:row!important;align-items:center;gap:8px;min-height:var(--ui-field-height);padding:0 14px;border:1px solid var(--ui-border-base,#d4d4d8);border-radius:var(--ui-field-radius);background:var(--theme-field,#fff);cursor:pointer}
-.occurrences-choice input{width:18px;height:18px;margin:0;accent-color:var(--menu-accent,#7c3aed)}
-.occurrences-choice .profiles-choice:has(input:checked){border-color:var(--menu-accent,#7c3aed);background:color-mix(in srgb,var(--menu-accent,#7c3aed) var(--ui-hover-tint),var(--theme-field,#fff))}
 .occurrences-period{padding:10px 14px;border:1px solid var(--layout-line,#d4d4d8);border-radius:var(--ui-field-radius);background:var(--theme-card,#fff);font:400 var(--ui-label,12px)/18px var(--ui-font);color:var(--layout-ink,inherit)}
 .occurrences-period.is-emphasis{border-color:var(--menu-accent,#7c3aed);background:color-mix(in srgb,var(--menu-accent,#7c3aed) var(--ui-header-tint),var(--theme-card,#fff));font-weight:600}
 .uniforms-form label.is-emphasis input{border-color:var(--menu-accent,#7c3aed)!important;font-weight:600!important}
@@ -329,7 +324,9 @@ body .uniforms-table tr.is-attention>*{background:color-mix(in srgb,#ef4444 7%,t
 body .view label.uniforms-enum,body dialog label.uniforms-enum{border:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(form.account-editor,.form-fields,.form-demo,#job-form)>label.uniforms-enum.uniforms-enum{border:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important}
 .uniforms-enum>.uniforms-enum-label{font:inherit;color:inherit}
-.occurrences-choice{gap:8px 12px}.occurrences-choice legend{margin:0;padding:0 0 6px}
+/* Dentro das janelas de lançamento, o título de campo composto usa a letra do rótulo (vinha com a letra do corpo, maior). */
+.uniforms-form .uniforms-enum-label.compras-rotulo{font:var(--ui-label-weight,500) var(--ui-label,12px)/18px var(--ui-font);color:var(--ui-label-color,#3f3f46)}
+
 .people-simple-actions>button{white-space:nowrap;height:40px;min-height:40px}
 /* DP dialogs inside the shared screen shell: size to their content (capped by the viewport) and let the content scroll,
    instead of stretching the dialog while the content area collapses behind the footer. */
