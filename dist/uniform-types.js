@@ -46,7 +46,7 @@ function pintarPrevia(){previa.pintar(iconeDaPeca({name:nome.value||'',icon:icon
 nome.addEventListener('input',()=>{if(!icone.valor)repintarIcones();pintarPrevia()});
 /* QUADRO TIPO DE UNIFORME × CARGO (19/11/2026, Rodrigo — "tabela de batalha naval"). Supera, no mesmo dia, o quadro "Vínculo com cargo"
    que ficava dentro da janela do tipo, e a tela "DES - Uniformes por Cargo". Um lugar só para vincular: linhas = tipos de uniforme (por
-   grupo), colunas = cargos, célula = quantidade de peças daquele uniforme para aquele cargo. Célula vazia = não vinculado.
+   grupo), colunas = cargos, célula = quantidade de peças daquele uniforme para aquele cargo, de 0 a 3 (limite dito pelo Rodrigo). Célula vazia ou 0 = não vinculado.
    O dado continua onde sempre esteve: a referência por cargo de cicluz-uniformes-v1 (references[cargo].items = [{uniformId, quantity}]),
    para o lançamento seguir mostrando as peças do cargo. Nada é gravado até Salvar. */
 const listaDeCargos=()=>(window.CicluzUniformStore?.jobs()||[]).slice().sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
@@ -58,19 +58,19 @@ function abrirQuadro(){const cu=window.CicluzComprasUI,st=window.CicluzUniformSt
   montar:f=>{const filtros=el('div','compras-largo matriz-filtros'),selGrupo=el('select'),busca=el('input'),conta=el('small','profiles-note'),caixa=el('div','compras-largo matriz-uniformes');conta.setAttribute('role','status');
    selGrupo.add(new Option('Todos os grupos de uniforme',''));for(const g of [...new Set(tipos.map(u=>u.family))])selGrupo.add(new Option(g,g));selGrupo.setAttribute('aria-label','Grupo de uniforme');
    busca.type='search';busca.placeholder='Buscar cargo';busca.maxLength=60;busca.setAttribute('aria-label','Buscar cargo');busca.addEventListener('keydown',e=>{if(e.key==='Enter')e.preventDefault()});
-   const contar=()=>{const q=[...valores.values()].filter(v=>v!=='').length;conta.textContent=(q===1?'1 vínculo preenchido':q+' vínculos preenchidos')+'. Célula vazia = cargo não usa a peça.'};
+   const contar=()=>{const q=[...valores.values()].filter(v=>v!==''&&v!=='0').length;conta.textContent=(q===1?'1 vínculo preenchido':q+' vínculos preenchidos')+'. Quantidade de 0 a 3 por cargo; vazio ou 0 = o cargo não usa a peça.'};
    function desenhar(){const cs=jobs.filter(j=>!busca.value.trim()||fold(j.name+' '+j.full).includes(fold(busca.value.trim()))),ts=tipos.filter(u=>!selGrupo.value||u.family===selGrupo.value);caixa.replaceChildren();
     if(!jobs.length){caixa.append(el('p','profiles-note','Nenhum cargo cadastrado em DES - Cargos C/Salários.'));return}if(!cs.length){caixa.append(el('p','profiles-note','Nenhum cargo encontrado.'));return}
     const t=el('table','matriz-tabela'),th=el('thead'),hr=el('tr'),tb=el('tbody');const canto=el('th','matriz-canto','Tipo de uniforme');canto.scope='col';hr.append(canto);
-    for(const j of cs){const c=el('th',null,j.name);c.scope='col';c.title=j.full||j.name;hr.append(c)}th.append(hr);
-    let grupoAtual=null;for(const u of ts){if(u.family!==grupoAtual){grupoAtual=u.family;const gr=el('tr','matriz-grupo'),gc=el('th',null,grupoAtual);gc.colSpan=cs.length+1;gc.scope='colgroup';gr.append(gc);tb.append(gr)}
-     const tr=el('tr'),rotulo=el('th','matriz-peca');rotulo.scope='row';const ic=el('span','compras-linha-icone');ic.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+iconeDaPeca(u)+'</svg>';rotulo.append(ic,el('span',null,u.name+(u.active===false?' (inativo)':'')));tr.append(rotulo);
-     for(const j of cs){const td=el('td'),i=el('input'),k=u.id+'|'+j.key;i.type='text';i.inputMode='numeric';i.maxLength=3;i.value=valores.get(k)||'';i.setAttribute('aria-label',u.name+' — '+j.name+': quantidade de peças');i.oninput=()=>{i.value=i.value.replace(/\D/g,'').slice(0,3);if(i.value==='')valores.delete(k);else valores.set(k,i.value);i.classList.toggle('preenchido',i.value!=='');contar()};i.classList.toggle('preenchido',i.value!=='');td.append(i);tr.append(td)}tb.append(tr)}
+    for(const j of cs){const c=el('th','matriz-cargo');c.scope='col';c.title=j.full||j.name;c.append(el('span',null,j.name));hr.append(c)}th.append(hr);
+    let grupoAtual=null;for(const u of ts){if(u.family!==grupoAtual){grupoAtual=u.family;const gr=el('tr','matriz-grupo'),gc=el('th','matriz-grupo-nome'),miolo=el('div','matriz-grupo-miolo'),q=ts.filter(x=>x.family===grupoAtual).length,resto=el('td');gc.scope='rowgroup';miolo.append(el('span',null,grupoAtual),el('small',null,q===1?'1 peça':q+' peças'));gc.append(miolo);resto.colSpan=cs.length;gr.append(gc,resto);tb.append(gr)}
+     const tr=el('tr'),rotulo=el('th','matriz-peca');rotulo.scope='row';const ic=el('span','compras-linha-icone');ic.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+iconeDaPeca(u)+'</svg>';{const miolo=el('div','matriz-peca-miolo');miolo.append(ic,el('span',null,u.name+(u.active===false?' (inativo)':'')));rotulo.append(miolo)}tr.append(rotulo);
+     for(const j of cs){const td=el('td'),i=el('input'),k=u.id+'|'+j.key;i.type='text';i.inputMode='numeric';i.maxLength=1;i.value=valores.get(k)||'';i.setAttribute('aria-label',u.name+' — '+j.name+': quantidade de peças');i.oninput=()=>{i.value=i.value.replace(/[^0-3]/g,'').slice(-1);if(i.value==='')valores.delete(k);else valores.set(k,i.value);i.classList.toggle('preenchido',i.value!==''&&i.value!=='0');contar()};i.classList.toggle('preenchido',i.value!==''&&i.value!=='0');td.append(i);tr.append(td)}tb.append(tr)}
     t.append(th,tb);caixa.append(t);contar()}
    selGrupo.onchange=desenhar;busca.addEventListener('input',desenhar);filtros.append(selGrupo,busca);f.append(filtros,conta,caixa);desenhar()},
-  salvar:()=>{for(const v of valores.values())if(!(Number.isInteger(Number(v))&&Number(v)>=1))return 'A quantidade precisa ser 1 ou mais. Deixe a célula vazia quando o cargo não usa a peça.';
+  salvar:()=>{for(const v of valores.values())if(!/^[0-3]$/.test(v))return 'A quantidade vai de 0 a 3. Confira as células preenchidas (um cadastro antigo pode ter número maior).';
    const conhecidos=new Set(D.uniforms.map(u=>u.id));const ok=st.transact(()=>{const refs=st.get().references;for(const j of jobs){const antigos=(refs[j.key]?.items||[]).filter(i=>!conhecidos.has(i.uniformId)),novos=[];
-     for(const u of D.uniforms){const v=valores.get(u.id+'|'+j.key);if(v)novos.push({uniformId:u.id,quantity:Number(v)})}
+     for(const u of D.uniforms){const v=valores.get(u.id+'|'+j.key);if(v&&v!=='0')novos.push({uniformId:u.id,quantity:Number(v)})}
      const itens=[...antigos,...novos];if(itens.length)refs[j.key]={...(refs[j.key]||{jobName:j.full||j.name}),items:itens};else delete refs[j.key]}});
    if(!ok)return 'Não foi possível salvar neste navegador.';render();cu.avisar('Vínculo de uniformes por cargo salvo.');return undefined}})}
 const sit=U.campoSituacao(ativo,'Situação do tipo de uniforme',''); /* sem texto de ajuda dentro do quadro, como no cadastro de grupo */
