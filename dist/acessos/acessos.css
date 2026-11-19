@@ -162,3 +162,4 @@ body.dark-theme .acessos-ok { color: #a7e8bd; }
 .ds-cor { display: inline-block; flex: none; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--layout-line, #dedee3); }
 .ds-linha-cor { display: inline-flex; align-items: center; gap: 8px; }
 .ds-sigla { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 26%; color: #fff; }
+.ds-peca { display: grid; gap: 6px; justify-items: start; }

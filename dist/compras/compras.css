@@ -538,7 +538,7 @@ body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-sea
 .compras-atividade-texto{flex:1;min-width:0;overflow-wrap:anywhere}
 .compras-atividade-acoes{display:inline-flex;gap:6px;flex:none}
 /* Padrão do sistema (18/11/2026, Rodrigo): editar redondo na cor do cabeçalho; excluir redondo em vermelho. */
-.compras-dialog .compras-redondo.perigo{background:var(--cicluz-danger,#ef4444)}
+:is(.compras-dialog,.compras-view) .compras-redondo.perigo{background:var(--cicluz-danger,#ef4444)}
 /* Objeto do contrato: os três botões (Grupo de produtos, Grupo de despesas, Grupo de patrimônios) têm o mesmo tamanho. */
 .compras-objeto-origem .compras-titulo-botao{width:240px;max-width:100%;justify-content:space-between}
 /* Objeto do contrato: o texto do chip acompanha a cor da origem daquela lista. */
