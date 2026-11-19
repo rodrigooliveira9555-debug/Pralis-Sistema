@@ -33,23 +33,21 @@
   // g = desenho; mo = tem o $; xm = $ cortado (sem pagar); xg = desenho cortado (só o $); cheio = $ preenchido (depois de pagar).
   const NIVEL = {
     none: { nome: 'Sem acesso', g: 'cadeado' },
-    vA: { nome: 'Visualizar antes de pagar', g: 'olho', mo: 1 },
-    vD: { nome: 'Visualizar depois de pagar', g: 'olho', mo: 1, cheio: 1 },
-    lp: { nome: 'Lançar e pagar', g: 'lancar', mo: 1 },
-    l: { nome: 'Só lançar', g: 'lancar', mo: 1, xm: 1 },
-    pl: { nome: 'Só pagar (ícone de lançar cortado)', g: 'lancar', mo: 1, xg: 1 },
-    ep: { nome: 'Editar e pagar', g: 'lapis', mo: 1 },
-    e: { nome: 'Só editar', g: 'lapis', mo: 1, xm: 1 },
-    pe: { nome: 'Só pagar (ícone de editar cortado)', g: 'lapis', mo: 1, xg: 1 },
+    vA: { nome: 'Somente Visualizar antes de Pagar', g: 'olho', mo: 1 },
+    vD: { nome: 'Somente Visualizar depois de Pagar', g: 'olho', mo: 1, cheio: 1 },
+    lp: { nome: 'Lançar e Pagar', g: 'lancar', mo: 1 },
+    l: { nome: 'Somente Lançar', g: 'lancar', mo: 1, xm: 1 },
+    pl: { nome: 'Somente Pagar', g: 'lancar', mo: 1, xg: 1, dica: 'Somente Pagar (no ícone de lançar)' },
+    ep: { nome: 'Editar e Pagar', g: 'lapis', mo: 1 },
+    e: { nome: 'Somente Editar', g: 'lapis', mo: 1, xm: 1 },
+    pe: { nome: 'Somente Pagar', g: 'lapis', mo: 1, xg: 1, dica: 'Somente Pagar (no ícone de editar)' },
   };
-  const LEGENDA = [['lp', 'Pode lançar e pagar'], ['l', 'Pode lançar'], ['pl', 'Pode pagar'], ['ep', 'Pode editar e pagar'], ['e', 'Pode editar'], ['pe', 'Pode pagar'], ['vA', 'Pode visualizar antes de pagar'], ['vD', 'Pode visualizar depois de pagar']];
+  // A legenda e as opções de cada tela usam o mesmo texto (o do próprio nível).
+  const LEGENDA = ['lp', 'l', 'pl', 'ep', 'e', 'pe', 'vA', 'vD'];
   // Níveis que cada tipo de seção aceita (l lançamento, r relatório, c cadastro, v só consulta).
   const ACEITA = { l: ['none', 'vA', 'vD', 'lp', 'l', 'pl', 'ep', 'e', 'pe'], r: ['none', 'vA', 'vD'], c: ['none', 'vA', 'l', 'e'], v: ['none', 'vA'] };
-  const nomeDoNivel = (id, tipo) => {
-    if (id === 'vA' && tipo !== 'l') return 'Visualizar';
-    if (id === 'vD' && tipo === 'r') return 'Visualizar (já pago)';
-    return NIVEL[id].nome;
-  };
+  // Cadastro e consulta não têm pagamento: ali "visualizar" não leva o "antes de Pagar".
+  const nomeDoNivel = (id, tipo) => (id === 'vA' && (tipo === 'c' || tipo === 'v') ? 'Somente Visualizar' : NIVEL[id].nome);
   const PODE_PAGAR = ['lp', 'pl', 'ep', 'pe'];
 
   // tipo: em cadastro e consulta não existe pagamento, então o ícone vai sem o $ (só o desenho).
@@ -159,7 +157,7 @@
 
     const leg = U.secao('Níveis de acesso (o ícone de cada tela)');
     const grade = el('div', 'acessos-telas-legenda');
-    LEGENDA.forEach(([id, texto]) => { const i = el('div', 'acessos-telas-leg-item'); i.append(iconeNivel(id), el('span', null, texto)); grade.append(i); });
+    LEGENDA.forEach((id) => { const i = el('div', 'acessos-telas-leg-item'); i.append(iconeNivel(id), el('span', null, NIVEL[id].nome)); if (NIVEL[id].dica) i.title = NIVEL[id].dica; grade.append(i); });
     const corpo = el('div', 'compras-corpo'); corpo.append(grade);
     leg.append(corpo);
     blocos.push(leg);
@@ -247,6 +245,8 @@
         b.setAttribute('role', 'radio');
         b.setAttribute('aria-checked', String(id === nivel));
         b.append(iconeNivel(id, s.t), el('span', null, nomeDoNivel(id, s.t)));
+        // Os dois "Somente Pagar" têm o mesmo texto: a dica diz de qual ícone é cada um.
+        if (NIVEL[id].dica) { b.title = NIVEL[id].dica; b.setAttribute('aria-label', NIVEL[id].dica); }
         b.onclick = () => {
           if (id === 'none') delete estado.niveis[chave]; else estado.niveis[chave] = id;
           estado.aberta = '';
