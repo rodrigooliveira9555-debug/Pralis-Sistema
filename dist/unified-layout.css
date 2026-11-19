@@ -276,7 +276,7 @@ body #sector-view.financial-groups .operator-fees .fee-classification .fee-accou
 body #salary-view{--salary-value-width:160px;--salary-row-inset:12px;--salary-column-gap:16px}
 body:is(.dark-theme,:not(.dark-theme)) #salary-view .salary-row{
  display:grid!important;grid-template-columns:minmax(0,1fr) var(--salary-value-width)!important;align-items:center!important;
- gap:var(--salary-column-gap)!important;padding:var(--salary-row-inset)!important;min-height:64px;box-sizing:border-box;
+ gap:var(--salary-column-gap)!important;padding:3px var(--salary-row-inset)!important;min-height:51px;/* 51 px: a mesma altura das linhas do menu de Cadastros Geral (18/11/2026, Rodrigo) */box-sizing:border-box;
  border:0!important;border-bottom:1px solid var(--layout-line)!important;background:#fff!important;
 }
 body #salary-view .salary-job-identity{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
