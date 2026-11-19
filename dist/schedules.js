@@ -148,15 +148,22 @@ const storageWarning=()=>loadError?el('p','people-alert','Não foi possível ler
  views.shifts.reset=reset}
 
 /* ---------- Lançamentos: vínculo de vários colaboradores a um Horário / Escala ---------- */
+/* Filtro pelo setor (19/11/2026, Rodrigo): o Horário / Escala ligado a áreas/setores/locais só é oferecido a quem é desses lugares.
+   Lugares do colaborador = os marcados no cadastro dele; sem nenhum, os da ficha do cargo. Compara pelo nível mais fundo marcado no
+   Horário / Escala (marcou o setor, vale o setor; marcou só a área, vale a área inteira). Cadastro sem lugar marcado serve a todos. */
+function unidadesDaPessoa(pid){const p=P.byId(pid);if(!p)return [];if(p.orgUnitIds?.length)return p.orgUnitIds;return (p.jobName&&window.CicluzJobCards?.forJobName(p.jobName)?.card?.unitIds)||[]}
+function folhasDe(ids){const O=window.CicluzOrg,set=new Set(ids||[]),all=O?O.flat():[];return [...set].filter(id=>!all.some(n=>n.parentId===id&&set.has(n.id)))}
+function serveParaPessoa(j,pid){if(!j||!j.unitIds?.length)return true;const dele=new Set(unidadesDaPessoa(pid));return folhasDe(j.unitIds).some(id=>dele.has(id))}
 function peoplePicker(){const box=el('fieldset','uniforms-wide jornada-people'),legend=el('legend',null,'Colaboradores *'),search=el('input'),list=el('div','jornada-people-list'),tools=el('div','jornada-people-tools'),count=el('span','profiles-note');
- search.type='search';search.placeholder='Buscar colaborador…';search.setAttribute('aria-label','Buscar colaborador');const picked=new Set();
+ search.type='search';search.placeholder='Buscar colaborador…';search.setAttribute('aria-label','Buscar colaborador');const picked=new Set(),aviso=el('p','profiles-note');let filtro=null;
  const all=button('Marcar todos da lista',()=>{list.querySelectorAll('input').forEach(c=>{c.checked=true;picked.add(c.value)});paint()}),none=button('Limpar seleção',()=>{picked.clear();render()});
- tools.append(all,none,count);box.append(legend,search,list,tools);
+ tools.append(all,none,count);box.append(legend,search,aviso,list,tools);
  function paint(){count.textContent=picked.size?picked.size+' selecionado(s)':'Nenhum selecionado'}
- function render(){list.replaceChildren();const q=fold(search.value),people=P.selectable().filter(p=>p.active&&(fold(p.name).includes(q)||fold(p.jobName).includes(q))).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+ function render(){list.replaceChildren();const q=fold(search.value),ativos=P.selectable().filter(p=>p.active),dentro=filtro?ativos.filter(p=>filtro.serve(p.id)):ativos,fora=ativos.length-dentro.length,people=dentro.filter(p=>fold(p.name).includes(q)||fold(p.jobName).includes(q)).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  for(const id of [...picked])if(!dentro.some(p=>p.id===id))picked.delete(id);aviso.hidden=!filtro;aviso.textContent=filtro?'Mostrando só os colaboradores de '+filtro.onde+'.'+(fora?' '+fora+' colaborador(es) de outro setor ou sem setor no cadastro e no cargo não aparecem.':''):'';
   if(!people.length)list.append(el('p','profiles-note',q?'Nenhum colaborador ativo encontrado.':'Nenhum colaborador ativo cadastrado.'));
   for(const p of people){const l=el('label','jornada-person'),c=el('input');c.type='checkbox';c.value=p.id;c.checked=picked.has(p.id);c.onchange=()=>{c.checked?picked.add(p.id):picked.delete(p.id);paint()};l.append(c,el('span',null,p.name),el('small',null,p.jobName||'Cargo não informado'));list.append(l)}paint()}
- search.addEventListener('input',render);return {box,picked,render,clear:()=>{picked.clear();search.value='';render()}}}
+ search.addEventListener('input',render);return {box,picked,render,filtrar:f=>{filtro=f;render()},clear:()=>{picked.clear();search.value='';render()}}}
 const modelSelect=cur=>{const s=el('select');s.add(new Option('Selecione o horário / escala',''));for(const m of data.jornadas.filter(x=>x.active||x.id===cur).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')))s.add(new Option(m.name+' · '+jornadaText(m),m.id));s.value=cur||'';return s};
 /* O intervalo individual vale em todos os dias de trabalho, então precisa caber no horário de cada um deles. */
 const breakErrors=(j,a,b)=>{for(const d of workDows(j)){const e=timeErrors(j.dias[d].start,j.dias[d].end,a,b);if(e.length)return e.map(x=>DAY_NAMES[d]+': '+x.replace('O intervalo','O intervalo individual'))}return []};
@@ -169,10 +176,11 @@ const allLinks=pid=>data.links.filter(l=>l.personId===pid).sort((a,b)=>a.from.lo
  form.append(from.label,modelWrap,preview,lbl('Intervalo individual: início',bs),lbl('Intervalo individual: fim',be),el('p','uniforms-wide profiles-note','Deixe o intervalo individual em branco para usar o intervalo do cadastro.'),picker.box,error,status,actions);
  const goCad=button('Cadastrar horário / escala',()=>show('shifts'));
  function paintModel(){const cur=model.value;model=modelSelect(cur);model.addEventListener('change',paintPreview);modelWrap.replaceChildren(lbl('Horário / Escala *',model));if(model.options.length<2)modelWrap.append(el('p','profiles-note','Nenhum cadastro ativo. Cadastre em Cadastros Geral Colaboradores → DES - Horário / Escala.'),goCad);paintPreview()}
- function paintPreview(){const m=jornadaById(model.value),O=window.CicluzOrg,onde=m&&O?O.namesOf(m.unitIds).join(', '):'';preview.textContent=m?'Trabalho: '+jornadaText(m)+' · Folga: '+offText(workDows(m))+' · '+hm(weekNet(m))+' na semana'+(onde?' · '+onde:''):''}
+ function paintPreview(){const m=jornadaById(model.value),O=window.CicluzOrg,onde=m&&O?O.namesOf(m.unitIds).join(', '):'';picker.filtrar(m&&m.unitIds?.length?{serve:id=>serveParaPessoa(m,id),onde:O?O.namesOf(folhasDe(m.unitIds)).join(', '):'setores do cadastro'}:null);preview.textContent=m?'Trabalho: '+jornadaText(m)+' · Folga: '+offText(workDows(m))+' · '+hm(weekNet(m))+' na semana'+(onde?' · '+onde:''):''}
  function reset(){from.set(today());model.value='';bs.value=be.value='';picker.clear();error.textContent='';paintModel()}
  form.onsubmit=e=>{e.preventDefault();error.textContent='';status.textContent='';load();const day=from.iso(),m=jornadaById(model.value),ids=[...picker.picked].filter(id=>P.byId(id)),errs=[];
   if(!day)errs.push('Informe a data de início (DD/MM/AAAA).');if(!m)errs.push('Selecione o horário / escala.');else if(!m.active)errs.push('Este cadastro está inativo.');if(!ids.length)errs.push('Selecione ao menos um colaborador.');
+  if(m&&ids.some(id=>!serveParaPessoa(m,id)))errs.push('Há colaborador selecionado que não é do setor deste horário / escala.');
   if(m&&(bs.value||be.value))errs.push(...breakErrors(m,bs.value,be.value));
   if(errs.length){error.textContent=errs[0];return}
   const same=ids.filter(id=>{const c=current(id,'jornada',day);return c&&c.modelId===m.id&&c.from===day&&(c.breakStart||'')===(bs.value||'')});
