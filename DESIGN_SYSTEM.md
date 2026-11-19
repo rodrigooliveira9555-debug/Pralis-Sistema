@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Ícones: o cabeçalho mostra o item clicado (18/11/2026)
+Correção do Rodrigo: eu tinha trocado todos os ícones pelo da origem ("tudo repete a origem") e ele mandou voltar — **essa troca foi desfeita e não vale**. A regra é: os ícones do **submenu** continuam os de sempre (lápis em Lançamentos, gráfico em Relatórios, prancheta em Cadastros Geral, caixa em Estoque, pasta em Pastas Documentos…), os **cartões** continuam com os ícones próprios, e **o cabeçalho mostra o ícone do item que foi clicado**: ao tocar num item do submenu, o cabeçalho da tela mostra o ícone daquele item (antes mostrava o da origem, "−$"); ao tocar num cartão, mostra o ícone do cartão (já era assim). Cartão sem ícone próprio usa o do submenu. Em `index.html`, `openSection`.
+
 ## Design System dentro do sistema (18/11/2026)
 Pedido do Rodrigo. Em **Configurações** há o setor **Design System** (o nome é só esse, pedido do Rodrigo no mesmo dia), com um cartão por tópico do padrão visual: Letras · Tamanho das Letras · Cores · Espaçamento · Ícones · Campos de Preenchimento · Máscaras · Botões · Cabeçalho · Quadros e Molduras · Listas · Mensagens e Avisos · Conferência Final. Cada tópico abre uma tela só de leitura com a explicação em português simples, os valores e uma amostra viva feita com as peças do próprio sistema (`CicluzComprasUI`), para a amostra nunca destoar do que as telas usam; as cores de origem são lidas do cadastro de grupos. Código em `acessos/design-system.js`; os cartões, em `acessos/modulo.js`. **Este arquivo (DESIGN_SYSTEM.md) continua sendo a regra para quem programa; a tela é o resumo para quem usa. Mudou uma regra visual, atualize os dois.**
 

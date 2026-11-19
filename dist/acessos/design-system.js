@@ -55,6 +55,8 @@
     { id: 'icones', titulo: 'Ícones', resumo: 'Tamanho, desenho e a sigla de três letras', quadros: [
       { titulo: 'Tamanhos', itens: [['Ícone do cabeçalho', '30 px'], ['Ícone da linha de lista', '30 px, quadrado de cantos arredondados, na cor da origem'], ['Botão redondo de ação (editar, excluir)', '32 px'], ['Desenho dentro do botão', '18 px']],
         texto: ['O ícone do cabeçalho de uma janela tem o mesmo tamanho do ícone do cabeçalho das telas. Ícone maior que isso fica desproporcional.'] },
+      { titulo: 'De onde vem o ícone do cabeçalho', texto: ['O ícone do cabeçalho é o do item em que você tocou para chegar à tela. Tocou em "Cadastros Geral" no submenu, o cabeçalho mostra a prancheta de Cadastros Geral; tocou num cartão, o cabeçalho mostra o ícone daquele cartão.',
+        'Cartão que não tem ícone próprio usa o do submenu de onde veio.', 'Os ícones do submenu (lápis em Lançamentos, gráfico em Relatórios, prancheta em Cadastros Geral, caixa em Estoque, pasta em Pastas Documentos) não mudam.'] },
       { titulo: 'Sigla de três letras', texto: ['As origens são identificadas por três letras dentro do quadrado do ícone: VND, CNT, DES, MER e RET. A sigla tem um tamanho só, em qualquer lugar em que apareça.',
         'Áreas, setores e locais também podem usar uma sigla de até três caracteres no lugar do desenho.'],
         amostra: () => amostra(...ORIGENS.map(([sigla, , chave, padrao]) => { const i = el('span', 'ds-sigla'); i.style.background = U.corOrigem(chave, padrao); i.append(el('span', 'sigla-text', sigla)); return i; })) },
