@@ -41,18 +41,19 @@ const view=el('section','view');view.id='uniforms-view';view.style.setProperty('
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
 const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(ICON.shirt);const heading=el('div'),title=el('h2',null,'DES - Uniformes Entrega (-) Recebimento (+)'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
-addShortcuts(view.id,()=>menuBack(2,'Lançamentos Colaboradores')());
+addShortcuts(view.id,()=>menuBack(2,TELAS[activeTab].grupo)());
 const addButton=button('',()=>{selectTab('launch');novoLancamento()},'shortcut-circle');addButton.title='Novo lançamento';addButton.setAttribute('aria-label','Novo lançamento');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
 
 const note=el('div','form-note','Simulação local: lançamentos, estoque e referências ficam somente neste navegador até a integração com o banco de dados. Colaboradores demonstrativos.');
-const tabs=el('div','uniforms-tabs');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Seções de uniformes');
-const sectionsDef=[['launch','Lançamentos'],['stock','Controle de Estoque'],['reference','Referência por Cargo']],tabButtons={},tabPanels={};
-for(const [key,label] of sectionsDef){const b=button(label,()=>selectTab(key),'uniforms-tab');b.id='uniforms-tab-'+key;b.setAttribute('role','tab');b.setAttribute('aria-controls','uniforms-panel-'+key);tabButtons[key]=b;tabs.append(b);const p=el('div','uniforms-section');p.id='uniforms-panel-'+key;p.setAttribute('role','tabpanel');p.setAttribute('aria-labelledby',b.id);tabPanels[key]=p}
-tabs.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight'].includes(e.key))return;const keys=sectionsDef.map(s=>s[0]),i=keys.indexOf(activeTab),next=keys[(i+(e.key==='ArrowRight'?1:keys.length-1))%keys.length];selectTab(next);tabButtons[next].focus();e.preventDefault()});
+/* Sem abas (19/11/2026, Rodrigo): a tela de lançamento mostra só o lançamento de uniforme. As outras duas partes continuam nesta mesma
+   estrutura, cada uma aberta pelo seu cartão do menu: o controle de estoque em Estoque → DES - Uniformes e a referência por cargo em
+   Cadastros Geral Colaboradores → DES - Uniformes por Cargo. */
+const TELAS={launch:{titulo:'DES - Uniformes Entrega (-) Recebimento (+)',grupo:'Lançamentos Colaboradores'},stock:{titulo:'DES - Uniformes',grupo:'Estoque'},reference:{titulo:'DES - Uniformes por Cargo',grupo:'Cadastros Geral Colaboradores'}},tabPanels={};
+for(const key of Object.keys(TELAS)){const p=el('div','uniforms-section');p.id='uniforms-panel-'+key;tabPanels[key]=p}
 const loadNote=el('p','profiles-error');loadNote.setAttribute('role','alert');
-body.append(note,loadNote,tabs,...Object.values(tabPanels));
+body.append(note,loadNote,...Object.values(tabPanels));
 let activeTab='launch';
-function selectTab(key){activeTab=key;for(const [k,b] of Object.entries(tabButtons)){const on=k===key;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;tabPanels[k].hidden=!on}renderTab()}
+function selectTab(key){activeTab=key;const T=TELAS[key],caminho=menuCrumb(2,T.grupo,T.titulo);for(const k of Object.keys(tabPanels))tabPanels[k].hidden=k!==key;title.textContent=T.titulo;subtitle.textContent=caminho;const c=document.getElementById('crumb');if(c)c.textContent=caminho;const t=document.getElementById('title');if(t)t.textContent=T.titulo;addButton.hidden=key!=='launch';renderTab()}
 function renderTab(){loadNote.textContent=loadError?'Não foi possível ler os lançamentos salvos. Os dados foram preservados; recarregue a página antes de alterar.':'';if(activeTab==='launch'){renderForm();renderHistory()}else if(activeTab==='stock')renderStock();else renderReferences()}
 
 /* Botões de formulário circulares: Salvar (check) e Cancelar/Fechar (X), com o nome em dica; o texto passa a ser rótulo acessível. */
@@ -136,7 +137,7 @@ const SIZE=/\s+(PP|P|M|G|GG|XG|XGG|EG|EGG|UC)$/i,piece=n=>String(n||'').replace(
 function jobPieces(){if(typeField.node.value==='DEVOLVIDO')return null;const c=collaboratorById(collab.node.value),ref=c&&referenceFor(c);return ref?.items.length?new Set(ref.items.map(r=>piece(uniformName(r.uniformId)))):null}
 function renderPicker(){const q=fold(pickerSearch.node.value),allowed=allowedUniforms(),t=currentTotals();pickerList.replaceChildren();let shown=0;const jp=jobPieces(),c=collaboratorById(collab.node.value);
  showAllWrap.hidden=!jp;const filter=jp&&!showAll.checked?jp:null;
- pickerNote.textContent=!c?'Selecione o colaborador para ver as peças do cargo.':typeField.node.value==='DEVOLVIDO'?'Devolução: todos os uniformes, limitados ao que o colaborador retirou.':jp?(filter?'Mostrando as peças previstas para o cargo '+(referenceFor(c)?.job.name||'')+' (todos os tamanhos).':'Mostrando todos os uniformes, inclusive fora da referência do cargo.'):'Sem referência de uniformes para este cargo: todos os uniformes são exibidos. Configure em Referência por Cargo.';
+ pickerNote.textContent=!c?'Selecione o colaborador para ver as peças do cargo.':typeField.node.value==='DEVOLVIDO'?'Devolução: todos os uniformes, limitados ao que o colaborador retirou.':jp?(filter?'Mostrando as peças previstas para o cargo '+(referenceFor(c)?.job.name||'')+' (todos os tamanhos).':'Mostrando todos os uniformes, inclusive fora da referência do cargo.'):'Sem referência de uniformes para este cargo: todos os uniformes são exibidos. Configure em Cadastros Geral Colaboradores → DES - Uniformes por Cargo.';
  for(const u of D.uniforms){if(u.active===false&&!draft.items.has(u.id))continue;if(allowed&&!allowed.has(u.id)&&!draft.items.has(u.id))continue;if(filter&&!filter.has(piece(u.name))&&!draft.items.has(u.id))continue;if(q&&!fold(u.name+' '+u.category).includes(q))continue;
   /* Mesma linha do cadastro DES - Tipos de Uniforme (ícone da peça, nome, categoria · grupo), com a caixa de marcar à esquerda do ícone (19/11/2026, Rodrigo). */
   const check=el('input');check.type='checkbox';check.className='compras-hier-caixa';check.value=u.id;check.checked=draft.items.has(u.id);check.setAttribute('aria-label','Selecionar '+u.name);check.onclick=e=>e.stopPropagation();check.onchange=()=>{if(check.checked)draft.items.set(u.id,{quantity:'1',price:moneyInput(data.stock[u.id]?.price)});else draft.items.delete(u.id);renderItems()};
@@ -146,7 +147,7 @@ function renderPicker(){const q=fold(pickerSearch.node.value),allowed=allowedUni
 function renderReference(){reference.replaceChildren();const c=collaboratorById(collab.node.value);if(!c)return;const ref=referenceFor(c);const box=el('div','uniforms-reference-box');
  if(!ref){box.append(el('p','profiles-note','Cargo do colaborador não encontrado no cadastro de Cargos; sem referência de uniformes.'));reference.append(box);return}
  box.append(el('b',null,'Referência do cargo '+ref.job.name));
- if(!ref.items.length){box.append(el('p','profiles-note','Nenhuma quantidade de referência configurada para este cargo. Configure em Referência por Cargo.'));reference.append(box);return}
+ if(!ref.items.length){box.append(el('p','profiles-note','Nenhuma quantidade de referência configurada para este cargo. Configure em Cadastros Geral Colaboradores → DES - Uniformes por Cargo.'));reference.append(box);return}
  const list=el('ul','uniforms-reference-list');for(const r of ref.items){const li=el('li');li.append(el('span',null,uniformName(r.uniformId)),el('small',null,'Previsto '+r.quantity+' · com o colaborador '+Math.max(S.held(data.movements,c.id,r.uniformId),0)));list.append(li)}box.append(list);
  if(typeField.node.value!=='DEVOLVIDO')box.append(button('Selecionar itens previstos',()=>{for(const r of ref.items)if(!draft.items.has(r.uniformId)&&uniformById.has(r.uniformId))draft.items.set(r.uniformId,{quantity:String(r.quantity),price:moneyInput(data.stock[r.uniformId]?.price)});renderPicker();renderItems()}));reference.append(box)}
 function renderItems(){items.replaceChildren();const type=typeField.node.value,priced=type==='VENDIDO',isReturn=type==='DEVOLVIDO';
@@ -190,7 +191,7 @@ function editMovement(m){if(m.status==='CANCELADO')return;selectTab('launch');dr
 
 /* ---------- Seção 1: histórico ---------- */
 const historyStatus=el('p','profiles-note');historyStatus.setAttribute('role','status');const historyTable=el('div','uniforms-table-wrap');
-const pintarQuadro=quadroHistorico(history,'Lançamento de Uniforme Entrega','Novo lançamento de entrega, venda, devolução ou descarte',()=>novoLancamento(),[historyStatus,historyTable]);
+const pintarQuadro=quadroHistorico(history,'Lançamento de Uniforme','Novo lançamento de entrega, venda, devolução ou descarte',()=>novoLancamento(),[historyStatus,historyTable]);
 function collaboratorActive(m){const c=collaboratorById(m.collaboratorId);return c?c.active:m.collaboratorActive!==false}
 const RECEIPT_TYPES=new Set(['ENTREGUE','VENDIDO','DEVOLVIDO']),RECEIPT_ICON='M7 3h10v18l-2.5-1.5L12 21l-2.5-1.5L7 21zM10 8h4M10 12h4';
 function receiptLines(m){return ['Comprovante de '+({ENTREGUE:'entrega',VENDIDO:'venda',DEVOLVIDO:'devolução'})[m.type]+' de uniforme'+(m.status==='CANCELADO'?' (LANÇAMENTO CANCELADO)':''),'Colaborador: '+m.collaboratorName,'Cargo: '+(m.jobName||'—'),'Data: '+dateBR(m.date),'Peças:',...m.items.map(i=>'• '+uniformName(i.uniformId)+' — '+i.quantity+' un.'),...(m.type==='VENDIDO'?['Valor total: '+money(S.saleTotal(m))]:[]),'Lançamento: '+m.id.slice(0,8)]}
@@ -266,7 +267,7 @@ function renderOverview(){rOverview.replaceChildren();const entries=Object.entri
  for(const [key,r] of entries){const job=jobs.find(j=>j.key===key);const tr=el('tr');tr.append(el('td',null,job?.name||r.jobName),el('td','uniforms-num',String(r.items.length)),el('td','uniforms-num',String(r.items.reduce((n,i)=>n+i.quantity,0))));const a=el('td','uniforms-row-actions');a.append(iconButton('Abrir referência de '+(job?.name||r.jobName),ICON.eye,()=>{refJob=key;rSearch.node.value='';renderReferences();rJob.node.focus()}));tr.append(a);tbody.append(tr)}table.append(thead,tbody);rOverview.append(table)}
 
 /* ---------- Entrada ---------- */
-function showUniforms(tab='launch',opts={}){D.recarregar();document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Uniformes';load();resetForm();selectTab(tabButtons[tab]?tab:'launch');if(opts.collaboratorId){collab.node.value=opts.collaboratorId;collab.node.dispatchEvent(new Event('change'));openEditor(form,'Novo lançamento de uniforme',resetForm)}normalizeHeaderActions(view)}
+function showUniforms(tab='launch',opts={}){D.recarregar();document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Uniformes';load();resetForm();selectTab(tabPanels[tab]?tab:'launch');if(opts.collaboratorId){collab.node.value=opts.collaboratorId;collab.node.dispatchEvent(new Event('change'));openEditor(form,'Novo lançamento de uniforme',resetForm)}normalizeHeaderActions(view)}
 window.showUniforms=showUniforms;
 /* Shared with Compras de Uniformes: one store, one set of components. */
 window.CicluzUniformStore={load,transact,get:()=>data,failed:()=>loadError}
