@@ -268,7 +268,9 @@
         representante: rep2.nome || '', cargo: (c.temDocumento && window.CicluzEmpresa && nomeDe(window.CicluzEmpresa.CARGOS_EMPRESA || [], rep2.cargoEmpresa)) || nomeDe(D.CARGOS_REPRESENTANTE, rep2.cargo),
         qualificacao: c.temDocumento ? qualificacaoDe(rep2) : '' }
       : { nome: f.razaoSocial || f.nome || '', fantasia: pf ? '' : (f.razaoSocial && f.nome !== f.razaoSocial ? f.nome : ''), documento: f.documento || '', pf, endereco: enderecoTexto(f.endereco),
-        representante: pf ? f.nome || '' : rep2.nome || '', cargo: pf ? '' : nomeDe(D.CARGOS_REPRESENTANTE, rep2.cargo) };
+        // Com contrato, o responsável legal do fornecedor é cadastrado por completo (cargo da lista de Dados da Empresa e a qualificação).
+        representante: pf ? f.nome || '' : rep2.nome || '', cargo: pf ? '' : (c.tem && window.CicluzEmpresa && nomeDe(window.CicluzEmpresa.CARGOS_EMPRESA || [], rep2.cargoEmpresa)) || nomeDe(D.CARGOS_REPRESENTANTE, rep2.cargo),
+        qualificacao: c.tem ? qualificacaoDe(rep2) : '' };
     return cliente ? { contratante: outra, contratado: empresa } : { contratante: empresa, contratado: outra };
   }
   const tituloDoContrato = (f, papel) => (papel !== 'cliente' && (f.categorias || []).includes('servico') ? 'Contrato de prestação de serviços' : 'Contrato de fornecimento');
@@ -385,7 +387,7 @@
    * cláusulas (opcional) · 8 Assinaturas e documento. Entre o Contratado e o Valor entra o Objeto do contrato (os números abaixo já contam com ele).
    * papel: 'fornecedor' (a sua empresa contrata o fornecedor) ou 'cliente' (o cliente contrata a sua empresa).
    * lerRegistro(): o cadastro lido do formulário. mensal(): só no cliente, diz se "É cliente mensal?" está ligado.
-   * temExterno(): quando a pergunta "Terá contrato?" é feita em outra etapa (no cliente, a do responsável legal), devolve a resposta;
+   * temExterno(): quando a pergunta "Terá contrato?" é feita em outra etapa (a do responsável legal, nos dois cadastros), devolve a resposta;
    * aí esta etapa não repete a pergunta e traz só os blocos.
    * Devolve { nos, ler, datas, pintar, bloco }. Tudo só informado: sem fórmula, sem lançamento e sem cálculo de reajuste.
    */

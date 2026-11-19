@@ -332,7 +332,9 @@
     return c.length === 1 && c[0] === 'servico' ? 'prestador' : 'vendedor';
   }
   /** Etapas do cadastro (decisão do Rodrigo, 15/11/2026), nomes padronizados "Dados do …". A 2ª depende da categoria. */
-  function etapasFornecedor(categorias, tipoPessoa) {
+  function etapasFornecedor(categorias, tipoPessoa, { semContrato = false } = {}) {
+    // "Terá contrato?" = Não (18/11/2026, Rodrigo): a etapa Contrato não existe e o cadastro vai dos Vínculos direto para a Revisão.
+    if (semContrato) return etapasFornecedor(categorias, tipoPessoa).filter((nome) => nome !== 'Contrato');
     const c = Array.isArray(categorias) ? categorias : [];
     const prestador = quemVendeFornecedor(c) === 'prestador';
     // Pessoa física (18/11/2026, Rodrigo): não existe a etapa da empresa; a primeira já é a da pessoa (vendedor ou prestador de

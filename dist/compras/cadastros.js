@@ -811,10 +811,53 @@
         const fin = etapaContato(f?.financeiro, 'financeiro', () => ({ nome: (ehPF() ? nome : vNome).value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim() }), 'Dados do responsável financeiro');
         const rep = etapaContato(f?.representante, 'representante', () => valores(fin), 'Dados do responsável legal');
         // A cópia segue a ordem das etapas: primeiro o financeiro (copia o vendedor), depois o representante (copia o financeiro).
-        const pintarCopias = () => { fin.pintar(); rep.pintar(); };
+        const pintarCopias = () => { fin.pintar(); rep.pintar(); sincronizarCompleto(); };
         // Cargo na empresa: não é copiado; com "O mesmo da etapa anterior" marcado, é o único campo a preencher na etapa.
         const repCargo = seletor(D.CARGOS_REPRESENTANTE, f?.representante?.cargo || '', 'Selecione');
-        rep.no.append(campo('Cargo na empresa', repCargo));
+        const repCargoCampo = campo('Cargo na empresa', repCargo); rep.no.append(repCargoCampo);
+        /* "Terá contrato?" (18/11/2026, Rodrigo): a mesma regra do cadastro de cliente. É a primeira pergunta da etapa do responsável
+           legal. Com Não, fica o cadastro curto e o cadastro pula a etapa Contrato, indo dos Vínculos para a Revisão. Com Sim, o
+           responsável legal é cadastrado por completo — o bloco dos responsáveis legais de Dados da Empresa (peça única) —, esses dados
+           entram no contrato e a etapa Contrato traz só os blocos. A resposta é contrato.tem, como já era. Campos novos e opcionais em
+           "representante" (cargoEmpresa, cpf, rg…): sem migração. */
+        const E = window.CicluzEmpresa;
+        const CHAVES_COMPLETO = ['cpf', 'rg', 'rgOrgao', 'nacionalidade', 'estadoCivil', 'profissao', 'endereco', 'nascimento', 'representacao'];
+        const rv = f?.representante || {};
+        const rc = E && E.responsaveisDe ? E.responsaveisDe({ responsaveis: [{ ...rv, cargo: rv.cargoEmpresa || '' }] })[0] : null;
+        const caixaCompleta = el('div', 'compras-etapa compras-largo');
+        const tituloCompleto = (cargo) => 'Responsável legal no contrato' + (E.CARGOS_EMPRESA.some(([id]) => id === cargo) ? ' — ' + E.CARGOS_EMPRESA.find(([id]) => id === cargo)[1] : '');
+        const refazerCompleto = () => { if (rc) caixaCompleta.replaceChildren(E.blocoResponsavel(rc, { titulo: tituloCompleto })); };
+        const temCt = U.quadroSituacao('Terá contrato?', Boolean(f?.contrato?.tem), { textos: ['Sim', 'Não'], dica: 'Com Sim, os dados completos do responsável legal são pedidos aqui e entram no contrato, e o cadastro ganha a etapa Contrato.', aoMudar: () => aoMudarContrato() });
+        temCt.classList.add('compras-largo'); temCt.querySelector('.account-status-switch').setAttribute('aria-label', 'Terá contrato?');
+        rep.no.querySelector('legend').after(temCt);
+        const comContrato = () => temCt.ativo;
+        const completo = () => Boolean(rc) && temCt.ativo;
+        const camposCurtos = [...[rep.nome, rep.whatsapp, rep.email].map((i) => i.closest('.compras-campo')), repCargoCampo];
+        const trio = [['nome', rep.nome], ['whatsapp', rep.whatsapp], ['email', rep.email]];
+        // "O mesmo da etapa anterior" com contrato: o nome, o WhatsApp e o e-mail do bloco completo acompanham os da etapa anterior.
+        function sincronizarCompleto() {
+          if (!completo() || !rep.mesmo.ativo) return;
+          const a = valores(rep); if (rc.nome === a.nome && rc.whatsapp === a.whatsapp && rc.email === a.email) return;
+          Object.assign(rc, a); refazerCompleto();
+        }
+        function pintarLegal() { const sim = completo(); camposCurtos.forEach((no) => mostrar(no, !sim)); mostrar(caixaCompleta, sim); }
+        // Trocar a resposta nunca apaga: o que foi digitado num formato passa para o outro quando lá está vazio.
+        function aoMudarContrato() {
+          if (completo()) { trio.forEach(([k, i]) => { if (!String(rc[k] || '').trim()) rc[k] = i.value.trim(); }); refazerCompleto(); }
+          else if (rc && !rep.mesmo.ativo) trio.forEach(([k, i]) => { if (!i.value.trim()) i.value = rc[k] || ''; });
+          pintarLegal(); ir(atual);
+        }
+        refazerCompleto(); pintarLegal();
+        const lerRepresentante = () => {
+          const basico = { mesmo: rep.mesmo.ativo, ...valores(rep) }; const comp = completo() ? E.lerResponsavel(rc) : null;
+          // Sem contrato agora, o que já estava gravado do cadastro completo fica guardado como está.
+          const guardado = Object.fromEntries(['cargoEmpresa', ...CHAVES_COMPLETO].filter((k) => rv[k] !== undefined).map((k) => [k, rv[k]]));
+          return { ...guardado, ...basico, ...(comp ? { nome: comp.nome, whatsapp: comp.whatsapp, email: comp.email, cargoEmpresa: comp.cargo, ...Object.fromEntries(CHAVES_COMPLETO.map((k) => [k, comp[k]])) } : {}), cargo: repCargo.value };
+        };
+        /** Formato dos dados do bloco completo (CPF, WhatsApp, CEP…), com as regras de Dados da Empresa; '' quando em ordem ou sem contrato. */
+        const faltaDoCompleto = () => (completo() ? E.validarResponsaveis({ responsaveis: [E.lerResponsavel(rc)] }).split('responsável 1').join('responsável legal') : '');
+        // A etapa do responsável legal passa a ter dois quadros: as perguntas com o cadastro curto e, com contrato, o bloco completo.
+        const etapa4 = el('div', 'compras-etapa'); etapa4.append(rep.no, caixaCompleta);
 
         /* ----- Barra de etapas e navegação ----- */
         /* ----- Etapa 5: vínculos. Só guarda o vínculo; não cria lançamento nem regra de dinheiro. -----
@@ -908,7 +951,7 @@
 
         /* ----- Etapa Contrato em blocos (18/11/2026, Rodrigo): a montagem mora em contratos.js (etapaContrato) e é a mesma do cadastro de
            cliente. Aqui a empresa é a contratante e o fornecedor é o contratado. ----- */
-        const etapaCt = window.CicluzContratos.etapaContrato({ contrato: f?.contrato, papel: 'fornecedor', lerRegistro: () => ler(), cores: coresF });
+        const etapaCt = window.CicluzContratos.etapaContrato({ contrato: f?.contrato, papel: 'fornecedor', lerRegistro: () => ler(), cores: coresF, temExterno: () => comContrato() });
         const lerContrato = etapaCt.ler;
         const etapa3 = el('div', 'compras-etapa');
         etapa3.append(fin.no); // o contrato inteiro (valor, vencimento, reajuste…) mora na etapa Contrato
@@ -936,13 +979,14 @@
         // 7ª etapa · Revisão dos dados (18/11/2026, Rodrigo): o mesmo fluxo dos outros cadastros — um bloco por etapa, só para leitura,
         // com "Editar" em cada bloco e o Salvar no fim. Os dados são lidos das próprias etapas na hora de abrir a Revisão.
         const eRevisao = el('div', 'compras-etapa');
-        const quadros = [etapa1, etapa2, etapa3, rep.no, s5, s6, eRevisao];
+        const quadros = [etapa1, etapa2, etapa3, etapa4, s5, s6, eRevisao];
         const marcadas = () => catOpcoes.marcados();
         // Sequência em uso: a pessoa física não tem a etapa do vendedor à parte (posição 1 de quadros); "atual" é a posição nesta sequência.
-        const seq = () => (ehPF() ? [0, 2, 3, 4, 5, 6] : [0, 1, 2, 3, 4, 5, 6]);
-        const etapas = () => D.etapasFornecedor(marcadas(), ehPF() ? 'fisica' : 'juridica').map((label) => ({ label }));
+        // Sem contrato, a etapa Contrato (posição 5 de quadros) sai da sequência e da barra.
+        const seq = () => (ehPF() ? [0, 2, 3, 4, 5, 6] : [0, 1, 2, 3, 4, 5, 6]).filter((q) => q !== 5 || comContrato());
+        const etapas = () => D.etapasFornecedor(marcadas(), ehPF() ? 'fisica' : 'juridica', { semContrato: !comContrato() }).map((label) => ({ label }));
         // O que falta em cada posição da sequência: na pessoa física, a conferência da 2ª etapa (prestadores) soma-se à 1ª.
-        const faltasDaSequencia = () => { const t = D.validarFornecedorEtapas(ler(), R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador }); return seq().map((q) => t[q] || (ehPF() && q === 0 ? t[1] : '') || ''); };
+        const faltasDaSequencia = () => { const t = D.validarFornecedorEtapas(ler(), R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador }); return seq().map((q) => t[q] || (ehPF() && q === 0 ? t[1] : '') || (q === 3 ? faltaDoCompleto() : '') || ''); };
         let barra = null;
         // Troca a cor na hora, sem recarregar nem mexer nos dados: as mesmas variáveis que a janela recebeu ao abrir.
         function aplicarTema() {
@@ -1019,7 +1063,7 @@
               { id: idPrestador1, nome: vendedor.nome, whatsapp: vendedor.whatsapp, email: vendedor.email, aniversario: vAniv.valor(), funcoes: funcoes1.valores() },
               ...extras.map((x) => ({ id: x.id, nome: x.nome.value.trim(), whatsapp: x.whatsapp.value.trim(), email: x.email.value.trim(), aniversario: x.aniversario.valor(), funcoes: x.funcoes.valores() })),
             ] } : {}),
-            financeiro: contato(fin), representante: { ...contato(rep), cargo: repCargo.value },
+            financeiro: contato(fin), representante: lerRepresentante(),
             situacao: situacao.ativo ? 'ativo' : 'inativo',
           };
         }
@@ -1029,7 +1073,7 @@
         // Produtos marcados agora (categoria Produto): viram vínculo no mesmo catálogo do Compras ao salvar.
         // irQuadro(q): leva à posição da sequência em que está o quadro q (na pessoa física, o quadro do vendedor é o primeiro).
         const irQuadro = (q) => { const p = seq().indexOf(q); ir(p >= 0 ? p : 0); };
-        return { ler, ir, irQuadro, get datasContrato() { return etapaCt.datas(); }, novosProdutos: () => (marcadas().join() === 'produto' ? [...novosProdutos] : []) };
+        return { ler, ir, irQuadro, faltaDoCompleto, get datasContrato() { return comContrato() ? etapaCt.datas() : []; }, novosProdutos: () => (marcadas().join() === 'produto' ? [...novosProdutos] : []) };
       },
       salvar: (c) => {
         if (c.datasContrato.some((d2) => !d2.checkValidity())) { c.irQuadro(5); return 'Confira as datas do contrato: use DD/MM/AA.'; }
@@ -1037,6 +1081,7 @@
         const faltas = D.validarFornecedorEtapas(campos, R(), { fornecedores: S.dados.fornecedores, funcoes: S.dados.funcoesPrestador });
         const etapaComFalta = faltas.findIndex(Boolean);
         if (etapaComFalta >= 0) { c.irQuadro(etapaComFalta); return faltas[etapaComFalta]; }
+        const faltaLegal = c.faltaDoCompleto(); if (faltaLegal) { c.irQuadro(3); return faltaLegal; }
         delete campos.id;
         const idFornecedor = f ? f.id : S.novoId('f');
         const ok = S.transacao((d) => {

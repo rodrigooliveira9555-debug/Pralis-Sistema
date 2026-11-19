@@ -410,6 +410,9 @@ ok(() => {
   assert.deepEqual(d.etapasFornecedor(['servico']).slice(1, 2), ['Dados do prestador de serviço']);
   assert.deepEqual(d.etapasFornecedor(['produto', 'servico']).slice(1, 2), ['Dados do vendedor']);
   assert.equal(d.etapasFornecedor([]).length, 7);
+  // Sem contrato ("Terá contrato?" = Não), a etapa Contrato não existe.
+  assert.deepEqual(d.etapasFornecedor(['produto'], 'juridica', { semContrato: true }), ['Dados da empresa', 'Dados do vendedor', 'Dados do responsável financeiro', 'Dados do responsável legal', 'Vínculos', 'Revisão dos dados']);
+  assert.deepEqual(d.etapasFornecedor(['servico'], 'fisica', { semContrato: true }), ['Dados do prestador de serviço', 'Dados do responsável financeiro', 'Dados do responsável legal', 'Vínculos', 'Revisão dos dados']);
   // Pessoa física: sem a etapa da empresa; a primeira é a da própria pessoa.
   assert.deepEqual(d.etapasFornecedor(['servico'], 'fisica'), ['Dados do prestador de serviço', 'Dados do responsável financeiro', 'Dados do responsável legal', 'Vínculos', 'Contrato', 'Revisão dos dados']);
   assert.equal(d.etapasFornecedor(['produto'], 'fisica')[0], 'Dados do vendedor');
