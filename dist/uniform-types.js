@@ -44,53 +44,62 @@ const previa=U.previaIcone(),icone=U.blocoIcone({rotulo:'Ícone do tipo de unifo
 function repintarIcones(){const v=icone.valor;icone.pintar(opcoesDeIcone());icone.definir(v)}
 function pintarPrevia(){previa.pintar(iconeDaPeca({name:nome.value||'',icon:icone.valor}),nome.value.trim().toLocaleUpperCase('pt-BR')||'Nome do uniforme')}
 nome.addEventListener('input',()=>{if(!icone.valor)repintarIcones();pintarPrevia()});
-/* VÍNCULO COM CARGO (19/11/2026, Rodrigo): segundo quadro da janela. Supera a tela "DES - Uniformes por Cargo". O vínculo fica onde
-   sempre ficou — a referência por cargo, em cicluz-uniformes-v1 (references[cargo].items) — para o lançamento continuar mostrando as
-   peças do cargo. Cada cargo vinculado tem a sua quantidade de peças, informada aqui mesmo (campo ao lado do nome do cargo; começa em 1);
-   desvincular tira a peça da referência daquele cargo. A escolha usa a janela padrão de lista de escolha (seletorArvore). */
-const cargos=new Set(),qtd=new Map(),quadroCargos=el('fieldset','uniforms-wide quadro-interno'),resumoCargos=el('div','vinculo-cargos');quadroCargos.append(el('legend',null,'Vínculo com cargo'));
+/* QUADRO TIPO DE UNIFORME × CARGO (19/11/2026, Rodrigo — "tabela de batalha naval"). Supera, no mesmo dia, o quadro "Vínculo com cargo"
+   que ficava dentro da janela do tipo, e a tela "DES - Uniformes por Cargo". Um lugar só para vincular: linhas = tipos de uniforme (por
+   grupo), colunas = cargos, célula = quantidade de peças daquele uniforme para aquele cargo. Célula vazia = não vinculado.
+   O dado continua onde sempre esteve: a referência por cargo de cicluz-uniformes-v1 (references[cargo].items = [{uniformId, quantity}]),
+   para o lançamento seguir mostrando as peças do cargo. Nada é gravado até Salvar. */
 const listaDeCargos=()=>(window.CicluzUniformStore?.jobs()||[]).slice().sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
-/* Uma linha por cargo vinculado: o nome e a quantidade de peças daquele cargo (só números, 1 a 999). */
-function pintarCargos(){const js=listaDeCargos().filter(j=>cargos.has(j.key));resumoCargos.replaceChildren();
- if(!js.length){resumoCargos.append(el('small','profiles-note','Nenhum cargo vinculado.'));return}
- resumoCargos.append(el('small','profiles-note',js.length===1?'1 cargo vinculado. Informe a quantidade de peças.':js.length+' cargos vinculados. Informe a quantidade de peças de cada um.'));
- const cab=el('div','vinculo-cargo vinculo-cargo-cab');cab.append(el('span','compras-rotulo','Cargo'),el('span','compras-rotulo','Quantidade de peças *'));resumoCargos.append(cab);
- for(const j of js){const linha=el('div','vinculo-cargo'),i=el('input');i.type='text';i.inputMode='numeric';i.maxLength=3;i.value=qtd.get(j.key)||'1';if(!qtd.has(j.key))qtd.set(j.key,'1');i.setAttribute('aria-label','Quantidade de peças para '+j.name);i.oninput=()=>{i.value=i.value.replace(/\D/g,'').slice(0,3);qtd.set(j.key,i.value)};linha.append(el('span','vinculo-cargo-nome',j.name),i);resumoCargos.append(linha)}}
-function escolherCargos(){const C=window.CicluzContratos;if(!C)return;C.seletorArvore({titulo:'Cargos',sigla:'DES',cores:{cor:ACCENT,corTexto:'var(--section-text,#9c1c1c)'},rotuloBusca:'Buscar cargo',vazio:'Nenhum cargo cadastrado em DES - Cargos C/Salários.',iconeFolha:'<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0"/>',
- nos:()=>listaDeCargos().map(j=>({id:j.key,nome:j.name,ativo:true,folha:true,conta:[j.full&&j.full!==j.name?j.full:'',j.cbo?'CBO '+j.cbo:''].filter(Boolean).join(' · ')||'Cargo'})),marcados:cargos,aoConfirmar:s=>{cargos.clear();s.forEach(k=>cargos.add(k));for(const k of [...qtd.keys()])if(!cargos.has(k))qtd.delete(k);pintarCargos()}})}
-{const cu=window.CicluzComprasUI,b=cu?cu.botaoTitulo('Cargos','Escolher os cargos que usam este uniforme',escolherCargos):button('Cargos',escolherCargos,'btn');const caixa=el('div','campo-de-locais');caixa.append(b,resumoCargos);quadroCargos.append(caixa)}
-function carregarCargos(id){cargos.clear();qtd.clear();const st=window.CicluzUniformStore;if(st&&id){st.load();for(const [k,r] of Object.entries(st.get().references||{})){const it=(r.items||[]).find(i=>i.uniformId===id);if(it){cargos.add(k);qtd.set(k,String(it.quantity||1))}}}pintarCargos()}
-const quantidadeDe=k=>{const n=Number(qtd.get(k));return Number.isInteger(n)&&n>=1?n:0};
-function gravarCargos(id){const st=window.CicluzUniformStore;if(!st)return true;st.load();const jobs=listaDeCargos();return st.transact(()=>{const refs=st.get().references;for(const j of jobs){const ref=refs[j.key],item=ref&&(ref.items||[]).find(i=>i.uniformId===id),quer=cargos.has(j.key);
-  if(quer&&!item){const r=ref||(refs[j.key]={jobName:j.full||j.name,items:[]});r.items.push({uniformId:id,quantity:quantidadeDe(j.key)})}else if(quer&&item){item.quantity=quantidadeDe(j.key)}else if(!quer&&item){ref.items=ref.items.filter(i=>i.uniformId!==id);if(!ref.items.length)delete refs[j.key]}}})}
+const cargosDoTipo=id=>Object.values(window.CicluzUniformStore?.get().references||{}).filter(r=>(r.items||[]).some(i=>i.uniformId===id)).length;
+function abrirQuadro(){const cu=window.CicluzComprasUI,st=window.CicluzUniformStore;if(!cu||!st)return;st.load();
+ const jobs=listaDeCargos(),tipos=D.uniforms.filter(u=>u.active!==false||cargosDoTipo(u.id)),valores=new Map();
+ for(const j of jobs)for(const it of st.get().references[j.key]?.items||[])valores.set(it.uniformId+'|'+j.key,String(it.quantity||1));
+ cu.dialogo({titulo:'Vínculo Tipo de Uniforme / Cargo',largo:true,cor:ACCENT,corTexto:'var(--section-text,#9c1c1c)',quadro:'Quantidade de peças por cargo',classe:'matriz-uniformes-janela',
+  montar:f=>{const filtros=el('div','compras-largo matriz-filtros'),selGrupo=el('select'),busca=el('input'),conta=el('small','profiles-note'),caixa=el('div','compras-largo matriz-uniformes');conta.setAttribute('role','status');
+   selGrupo.add(new Option('Todos os grupos de uniforme',''));for(const g of [...new Set(tipos.map(u=>u.family))])selGrupo.add(new Option(g,g));selGrupo.setAttribute('aria-label','Grupo de uniforme');
+   busca.type='search';busca.placeholder='Buscar cargo';busca.maxLength=60;busca.setAttribute('aria-label','Buscar cargo');busca.addEventListener('keydown',e=>{if(e.key==='Enter')e.preventDefault()});
+   const contar=()=>{const q=[...valores.values()].filter(v=>v!=='').length;conta.textContent=(q===1?'1 vínculo preenchido':q+' vínculos preenchidos')+'. Célula vazia = cargo não usa a peça.'};
+   function desenhar(){const cs=jobs.filter(j=>!busca.value.trim()||fold(j.name+' '+j.full).includes(fold(busca.value.trim()))),ts=tipos.filter(u=>!selGrupo.value||u.family===selGrupo.value);caixa.replaceChildren();
+    if(!jobs.length){caixa.append(el('p','profiles-note','Nenhum cargo cadastrado em DES - Cargos C/Salários.'));return}if(!cs.length){caixa.append(el('p','profiles-note','Nenhum cargo encontrado.'));return}
+    const t=el('table','matriz-tabela'),th=el('thead'),hr=el('tr'),tb=el('tbody');const canto=el('th','matriz-canto','Tipo de uniforme');canto.scope='col';hr.append(canto);
+    for(const j of cs){const c=el('th',null,j.name);c.scope='col';c.title=j.full||j.name;hr.append(c)}th.append(hr);
+    let grupoAtual=null;for(const u of ts){if(u.family!==grupoAtual){grupoAtual=u.family;const gr=el('tr','matriz-grupo'),gc=el('th',null,grupoAtual);gc.colSpan=cs.length+1;gc.scope='colgroup';gr.append(gc);tb.append(gr)}
+     const tr=el('tr'),rotulo=el('th','matriz-peca');rotulo.scope='row';const ic=el('span','compras-linha-icone');ic.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+iconeDaPeca(u)+'</svg>';rotulo.append(ic,el('span',null,u.name+(u.active===false?' (inativo)':'')));tr.append(rotulo);
+     for(const j of cs){const td=el('td'),i=el('input'),k=u.id+'|'+j.key;i.type='text';i.inputMode='numeric';i.maxLength=3;i.value=valores.get(k)||'';i.setAttribute('aria-label',u.name+' — '+j.name+': quantidade de peças');i.oninput=()=>{i.value=i.value.replace(/\D/g,'').slice(0,3);if(i.value==='')valores.delete(k);else valores.set(k,i.value);i.classList.toggle('preenchido',i.value!=='');contar()};i.classList.toggle('preenchido',i.value!=='');td.append(i);tr.append(td)}tb.append(tr)}
+    t.append(th,tb);caixa.append(t);contar()}
+   selGrupo.onchange=desenhar;busca.addEventListener('input',desenhar);filtros.append(selGrupo,busca);f.append(filtros,conta,caixa);desenhar()},
+  salvar:()=>{for(const v of valores.values())if(!(Number.isInteger(Number(v))&&Number(v)>=1))return 'A quantidade precisa ser 1 ou mais. Deixe a célula vazia quando o cargo não usa a peça.';
+   const conhecidos=new Set(D.uniforms.map(u=>u.id));const ok=st.transact(()=>{const refs=st.get().references;for(const j of jobs){const antigos=(refs[j.key]?.items||[]).filter(i=>!conhecidos.has(i.uniformId)),novos=[];
+     for(const u of D.uniforms){const v=valores.get(u.id+'|'+j.key);if(v)novos.push({uniformId:u.id,quantity:Number(v)})}
+     const itens=[...antigos,...novos];if(itens.length)refs[j.key]={...(refs[j.key]||{jobName:j.full||j.name}),items:itens};else delete refs[j.key]}});
+   if(!ok)return 'Não foi possível salvar neste navegador.';render();cu.avisar('Vínculo de uniformes por cargo salvo.');return undefined}})}
 const sit=U.campoSituacao(ativo,'Situação do tipo de uniforme',''); /* sem texto de ajuda dentro do quadro, como no cadastro de grupo */
 const acoes=el('div','uniforms-wide actions'),salvar=el('button','btn','Salvar');salvar.type='submit';acoes.append(button('Cancelar',()=>reset(),'btn ghost'),salvar);
 sit.classList.remove('uniforms-wide');
-form.append(U.quadroIdentidade(lbl('Nome do uniforme (peça e tamanho) *',nome),icone),lbl('Grupo *',grupo),sit,lbl('Categoria *',categoria),grupos,previa.box,quadroCargos,erro,acoes);
+form.append(U.quadroIdentidade(lbl('Nome do uniforme (peça e tamanho) *',nome),icone),lbl('Grupo *',grupo),sit,lbl('Categoria *',categoria),grupos,previa.box,erro,acoes);
 const wrap=el('div');body.append(aviso,form,wrap);
 let editando=null;
-function reset(){U.closeEditor(form);editando=null;nome.value='';grupo.value='';categoria.value='';ativo.value='1';icone.definir('');cargos.clear();qtd.clear();pintarCargos();erro.textContent=''}
+function reset(){U.closeEditor(form);editando=null;nome.value='';grupo.value='';categoria.value='';ativo.value='1';icone.definir('');erro.textContent=''}
 function abrir(titulo){grupos.replaceChildren(...[...new Set(D.uniforms.map(u=>u.family))].map(f=>new Option(f)));sit.pintar();repintarIcones();pintarPrevia();erro.textContent='';U.openEditor(form,titulo,reset)}
 function novo(){reset();abrir('Novo tipo de uniforme')}
-function editar(u){reset();editando=u.id;nome.value=u.name;grupo.value=u.family;categoria.value=u.category;ativo.value=u.active===false?'0':'1';icone.definir(u.icon&&desenhoDe(u.icon)?u.icon:'');carregarCargos(u.id);abrir('Editar tipo de uniforme: '+u.name)}
+function editar(u){reset();editando=u.id;nome.value=u.name;grupo.value=u.family;categoria.value=u.category;ativo.value=u.active===false?'0':'1';icone.definir(u.icon&&desenhoDe(u.icon)?u.icon:'');abrir('Editar tipo de uniforme: '+u.name)}
 function gravar(mudar){if(D.falhou()){erro.textContent='Não foi possível ler os tipos de uniforme salvos. Nada foi gravado para não sobrescrever os dados.';return false}
  const tipos=D.uniforms.map(u=>({id:u.id,name:u.name,category:u.category,family:u.family,active:u.active!==false,...(u.icon?{icon:u.icon}:{})}));mudar(tipos);try{D.gravarTipos(tipos);return true}catch{erro.textContent='Não foi possível salvar neste navegador.';return false}}
 form.onsubmit=e=>{e.preventDefault();erro.textContent='';const n=nome.value.trim().toLocaleUpperCase('pt-BR'),g=grupo.value.trim().toLocaleUpperCase('pt-BR'),c=categoria.value,errs=[];
  if(!n)errs.push('Informe o nome do uniforme.');if(!g)errs.push('Informe o grupo.');if(!c)errs.push('Selecione a categoria.');
  if(n&&D.uniforms.some(u=>u.id!==editando&&fold(u.name)===fold(n)))errs.push('Já existe um tipo de uniforme com este nome.');
- if([...cargos].some(k=>!quantidadeDe(k)))errs.push('Informe a quantidade de peças (1 ou mais) de cada cargo vinculado.');
  if(errs.length){erro.textContent=errs[0];window.CicluzComprasUI?.sinalizarObrigatorios(form);return}
- const era=editando,escolhido=icone.valor;let idGravado=era;const ok=gravar(tipos=>{if(era){const t=tipos.find(u=>u.id===era);Object.assign(t,{name:n,family:g,category:c,active:ativo.value==='1'});if(escolhido)t.icon=escolhido;else delete t.icon}
-  else{const maior=tipos.reduce((m,u)=>{const x=/^uni-(\d+)$/.exec(u.id);return x?Math.max(m,+x[1]):m},0);idGravado='uni-'+String(maior+1).padStart(2,'0');tipos.push({id:idGravado,name:n,family:g,category:c,active:ativo.value==='1',...(escolhido?{icon:escolhido}:{})})}});
- if(!ok)return;if(!gravarCargos(idGravado)){erro.textContent='O tipo foi salvo, mas não foi possível gravar o vínculo com os cargos neste navegador.';return}reset();render();window.CicluzComprasUI?.avisar((era?'Tipo de uniforme atualizado: ':'Tipo de uniforme cadastrado: ')+n+'.')};
+ const era=editando,escolhido=icone.valor,ok=gravar(tipos=>{if(era){const t=tipos.find(u=>u.id===era);Object.assign(t,{name:n,family:g,category:c,active:ativo.value==='1'});if(escolhido)t.icon=escolhido;else delete t.icon}
+  else{const maior=tipos.reduce((m,u)=>{const x=/^uni-(\d+)$/.exec(u.id);return x?Math.max(m,+x[1]):m},0);tipos.push({id:'uni-'+String(maior+1).padStart(2,'0'),name:n,family:g,category:c,active:ativo.value==='1',...(escolhido?{icon:escolhido}:{})})}});
+ if(!ok)return;reset();render();window.CicluzComprasUI?.avisar((era?'Tipo de uniforme atualizado: ':'Tipo de uniforme cadastrado: ')+n+'.')};
 function alternar(u){const rodar=()=>{if(gravar(tipos=>{const x=tipos.find(y=>y.id===u.id);x.active=u.active===false}))render();return null};
  if(u.active!==false)confirmDialog('Desativar tipo de uniforme?','"'+u.name+'" deixa de aparecer em novos lançamentos, compras e referências. O estoque e o histórico continuam como estão.','Desativar',rodar,()=>{});else rodar()}
 
 function render(){const cu=window.CicluzComprasUI;wrap.replaceChildren();aviso.textContent=D.falhou()?'Não foi possível ler os tipos de uniforme salvos neste navegador. Nada será gravado para não sobrescrever os dados.':'';if(!cu)return;
  const lista=D.uniforms,sec=cu.secao('Tipos de Uniforme',undefined,cu.pontaDaLista(lista.length,lista.length+(lista.length===1?' tipo cadastrado':' tipos cadastrados'))),linhas=el('div','compras-lista');
- sec.querySelector('.compras-secao-cab h3').replaceChildren(cu.botaoTitulo('Novo Tipo de Uniforme','Cadastrar peça de uniforme',novo));
+ sec.querySelector('.compras-secao-cab h3').replaceChildren(cu.botaoTitulo('Novo Tipo de Uniforme','Cadastrar peça de uniforme',novo),cu.botaoTitulo('Vínculo Tipo de Uniforme / Cargo','Informar a quantidade de peças de cada uniforme por cargo',abrirQuadro,'<path d="M4 5h16v14H4zM4 10h16M4 15h16M10 5v14M15 5v14"/>'));
  if(!lista.length)linhas.append(cu.vazio('Nenhum tipo de uniforme cadastrado.','Use "Novo Tipo de Uniforme" para cadastrar.'));
- for(const u of lista){const on=u.active!==false,row=cu.linhaLista({icone:iconeDaPeca(u),titulo:u.name,detalhe:u.category+' · grupo '+u.family+' · '+(q=>q===1?'1 cargo':q+' cargos')(Object.values(window.CicluzUniformStore?.get().references||{}).filter(r=>(r.items||[]).some(i=>i.uniformId===u.id)).length),direita:el('span','account-list-state',on?'Ativo':'Inativo'),acoes:{rotulo:u.name,lista:linhas,aoEditar:()=>editar(u),aoExcluir:()=>alternar(u)}});
+ for(const u of lista){const on=u.active!==false,row=cu.linhaLista({icone:iconeDaPeca(u),titulo:u.name,detalhe:u.category+' · grupo '+u.family+' · '+(q=>q===1?'1 cargo':q+' cargos')(cargosDoTipo(u.id)),direita:el('span','account-list-state',on?'Ativo':'Inativo'),acoes:{rotulo:u.name,lista:linhas,aoEditar:()=>editar(u),aoExcluir:()=>alternar(u)}});
   U.botaoSituacao(row,on,u.name);if(!on)row.classList.add('inativo');linhas.append(row)}
  sec.append(linhas);wrap.append(sec)}
 
