@@ -348,4 +348,4 @@ body.dark-theme .view.show>.panel>.head[data-header-standard=yes],body.dark-them
 
 /* Section dividers share the same rounded grey stroke, including Gestão. */
 .nav-tree>.sidebar-section-toggle::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;border-radius:999px;background:#eeedf1}
-.dark-theme .nav-tree>.sidebar-section-toggle::before{background:#3b3942}
+.dark-theme .nav-tree>.sidebar-section-toggle::before{background:#3b3942}/* O título de seção do menu (GESTÃO, AGENDA, CONFIGURAÇÕES) não é um item: não ganha fundo ao passar o dedo ou o mouse, no claro nem no escuro (19/11/2026: aparecia uma faixa branca no tema escuro). */body .nav .nav-tree>.sidebar-section-toggle:hover{background:transparent}
