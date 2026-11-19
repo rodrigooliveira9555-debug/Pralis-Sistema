@@ -101,7 +101,7 @@ const act=el('div','uniforms-wide actions'),save=el('button','btn','Salvar');sav
 /* Situação no interruptor padrão (no lugar do seletor Ativo/Inativo). O seletor fActive continua guardando o valor; o interruptor só o mostra e altera. */
 const statusSlot=el('div','uniforms-wide');let sitBox=null;
 /* Campo obrigatório vazio (18/11/2026, Rodrigo): o mesmo aviso do cadastro de cliente — a borda do campo na cor do cabeçalho e a mensagem embaixo (CicluzComprasUI.sinalizarObrigatorios). Para isso os rótulos ganham o formato dos cadastros novos (.compras-campo > .compras-rotulo), uma vez só. */
-let camposPadronizados=false;function padronizarCampos(){if(camposPadronizados)return;camposPadronizados=true;for(const l of form.querySelectorAll(':scope>label')){const t=[...l.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());if(!t)continue;const r=el('span','compras-rotulo',t.textContent.trim());t.replaceWith(r);l.classList.add('compras-campo')}}
+const padronizarCampos=()=>U.padronizarCampos(form); /* peça comum (uniforms.js) */
 function pintarSituacao(){const cu=window.CicluzComprasUI;if(!cu){statusSlot.replaceChildren(lbl('Status *',fActive));return}sitBox=cu.quadroSituacao('Situação do cadastro',fActive.value==='1',{dica:'Cadastro inativo continua guardado.',aoMudar:()=>{fActive.value=sitBox.ativo?'1':'0'}});statusSlot.replaceChildren(sitBox)}
 form.append(formTitle,lbl('Tipo de ocorrência *',fType),lbl('Nome da categoria *',fCat),catNewLbl,lbl('Subcategoria *',fSub),subNewLbl,lbl('Tipo de documento *',fDoc),statusSlot,more,fe,fs,act);
 body.append(form);
