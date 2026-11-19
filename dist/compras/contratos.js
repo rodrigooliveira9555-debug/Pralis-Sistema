@@ -706,5 +706,47 @@
     };
   }
 
-  window.CicluzContratos = { JOINHA: { cima: ICO.cima, baixo: ICO.baixo }, abrirModelos, listaAtividades, seletorHierarquico, seletorArvore, botoesDocumento, secoesContrato, partesDoContrato, enderecoTexto, modelos, etapaContrato };
+  /* PASTAS DE CONTRATOS (Pastas Documentos, 19/11/2026, Rodrigo). A pasta não guarda cópia: lista quem tem contrato no cadastro e abre o
+     mesmo documento que o cadastro gera. Só leitura; o contrato continua sendo preenchido no cadastro de origem. Cada origem tem a sua:
+     DES = fornecedores de serviço, MER = fornecedores de produto (fornecedor sem categoria aparece nas duas, para nenhum contrato ficar
+     escondido), VND = clientes. */
+  const PASTAS = {
+    'des-contratos-fornecedores': { titulo: 'DES - Contratos Fornecedores', origem: 'Saídas · Despesas', nivel: 2, cores: () => ({ cor: U.corOrigem('despesas', '#ef4444'), corTexto: '#a11c1c' }), papel: 'fornecedor', icone: 'fornecedor', quem: 'fornecedor', cadastro: 'DES - Fornecedores',
+      lista: () => (S.dados.fornecedores || []).filter((x) => x.contrato && x.contrato.tem && (!(x.categorias || []).length || (x.categorias || []).includes('servico'))) },
+    'mer-contratos-fornecedores': { titulo: 'MER - Contratos Fornecedores', origem: 'Saídas · Mercadorias', nivel: 3, cores: () => ({ cor: U.corOrigem('mercadorias', U.COR), corTexto: U.COR_TEXTO }), papel: 'fornecedor', icone: 'fornecedor', quem: 'fornecedor', cadastro: 'MER - Fornecedores',
+      lista: () => (S.dados.fornecedores || []).filter((x) => x.contrato && x.contrato.tem && (!(x.categorias || []).length || (x.categorias || []).includes('produto'))) },
+    'vnd-contratos-clientes': { titulo: 'VND - Contratos Clientes', origem: 'Entradas · Vendas', nivel: 0, cores: () => ({ cor: U.corOrigem('vendas', '#eab308'), corTexto: '#785600' }), papel: 'cliente', icone: 'cadastro', quem: 'cliente', cadastro: 'VND - Clientes',
+      lista: () => (Array.isArray(S.dados.clientes) ? S.dados.clientes : []).filter((x) => x.contrato && x.contrato.temDocumento) },
+  };
+  const telasPasta = {};
+  function abrirPastaContratos(chave) {
+    const p = PASTAS[chave]; if (!p) return; const cores = p.cores();
+    if (!telasPasta[chave]) telasPasta[chave] = U.criarTela({ id: 'pasta-' + chave, titulo: p.titulo, caminho: p.origem + ' / Pastas Documentos / ' + p.titulo, icone: p.icone, voltar: () => menuBack(p.nivel, 'Pastas Documentos')(), ...cores });
+    const tela = telasPasta[chave]; tela.ativar();
+    const data = (iso) => (iso && window.CicluzDateFields ? window.CicluzDateFields.display(iso) : '');
+    const nomeDe = (x) => x.nomeFantasia || x.nome || x.razaoSocial || 'Sem nome';
+    const lista = p.lista().sort((a, b) => String(nomeDe(a)).localeCompare(String(nomeDe(b)), 'pt-BR'));
+    const sec = U.secao('Contratos', undefined, U.pontaDaLista(lista.length, lista.length + (lista.length === 1 ? ' contrato' : ' contratos')));
+    const linhas = el('div', 'compras-lista');
+    if (!lista.length) linhas.append(U.vazio('Nenhum ' + p.quem + ' com contrato.', 'O contrato é preenchido em Cadastros Geral → ' + p.cadastro + ', na etapa Contrato.'));
+    for (const x of lista) {
+      const c = x.contrato; const faltas = D.faltasDoContrato(x, p.papel);
+      const vigencia = c.inicio ? 'de ' + data(c.inicio) + (c.fim ? ' a ' + data(c.fim) : '') : 'sem data de início';
+      linhas.append(U.linhaLista({
+        icone: p.icone, titulo: nomeDe(x), detalhe: [tituloDoContrato(x, p.papel), vigencia, x.situacao && x.situacao !== 'ativo' ? p.quem + ' inativo' : ''].filter(Boolean).join(' · '),
+        direita: el('span', 'account-list-state', faltas.length ? 'Incompleto' : 'Completo'),
+        aoClicar: () => { if (faltas.length) U.avisar('O documento só é gerado com o contrato completo. Falta: ' + faltas.join('; ') + '.'); else visualizarContrato(x, cores, p.papel); },
+      }));
+    }
+    sec.append(linhas);
+    tela.body.replaceChildren(el('p', 'profiles-note', 'Contratos preenchidos no cadastro de cada ' + p.quem + '. Toque numa linha para ver o documento. Para alterar, abra o cadastro em Cadastros Geral → ' + p.cadastro + '.'), sec);
+  }
+  // O cartão da pasta em Pastas Documentos abre esta tela (mesmo caminho usado pelas pastas do colaborador, em documents.js).
+  document.addEventListener('click', (e) => {
+    const c = e.target.closest && e.target.closest('#sector-content .section-card[data-target^=vz-doc-]');
+    const chave = c && c.dataset.target.slice(7);
+    if (!c || !PASTAS[chave] || e.target.closest('.menu-item-move')) return;
+    e.preventDefault(); e.stopImmediatePropagation(); abrirPastaContratos(chave);
+  }, true);
+  window.CicluzContratos = { abrirPastaContratos, JOINHA: { cima: ICO.cima, baixo: ICO.baixo }, abrirModelos, listaAtividades, seletorHierarquico, seletorArvore, botoesDocumento, secoesContrato, partesDoContrato, enderecoTexto, modelos, etapaContrato };
 })();
