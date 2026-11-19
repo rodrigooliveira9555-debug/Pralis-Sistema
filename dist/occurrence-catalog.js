@@ -202,7 +202,7 @@ function editDisc(r){load();const cu=window.CicluzComprasUI;
    catSel2.add(new Option('Selecione a categoria',''));const seen=new Set();for(const x of [...data.categories].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))){if(!x.catId||seen.has(x.catId))continue;seen.add(x.catId);catSel2.add(new Option(x.name,x.catId))}
    const nums=(sel,cur)=>{sel.add(new Option('Selecione a quantidade',''));for(let i=1;i<=Math.max(10,cur||0);i++)sel.add(new Option(String(i),String(i)))};nums(warnSel,r?.warnCount);nums(suspSel,r?.suspCount);
    if(r){catSel2.value=r.catId;warnSel.value=r.warnCount?String(r.warnCount):'';suspSel.value=r.suspCount?String(r.suspCount):''}
-   const passo=(n,titulo,...nos)=>{const q=el('fieldset','compras-fieldset regra-passo');const lg=el('legend');lg.append(el('span','regra-numero',String(n)),document.createTextNode(titulo));q.append(lg,...nos);return q};
+   const passo=(n,titulo,...nos)=>{const q=el('fieldset','compras-fieldset regra-passo');const lg=el('legend');lg.append(el('span','regra-numero',String(n)),document.createTextNode(' '+titulo));q.append(lg,...nos);return q};
    const seta=()=>{const d=el('div','regra-seta');d.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15m0 0-6-6m6 6 6-6"/></svg>';const t=el('span');d.append(t);d.texto=t;return d};
    const warnTxt=el('p','profiles-note compras-largo'),suspTxt=el('p','profiles-note compras-largo'),resumo=el('p','regra-resumo compras-largo'),setaW=seta(),setaS=seta();resumo.setAttribute('role','status');
    const sit=cu.quadroSituacao('Situação da regra',r?r.active:true,{feminino:true,dica:'Regra inativa não gera alerta em novos lançamentos.'});sit.classList.add('compras-largo');

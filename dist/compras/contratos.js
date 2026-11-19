@@ -519,7 +519,9 @@
         observacoes: cObs.value.trim(),
       };
     };
-    const blocoContrato = (titulo, explicacao, ...nos) => { const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, titulo), el('p', 'profiles-note compras-largo', explicacao), ...nos); return q; };
+    // Bloco numerado (19/11/2026, Rodrigo): o número do bloco vai numa bolinha na cor do cabeçalho, como nos passos da regra disciplinar. Título no formato "N · Nome"; sem número, a legenda fica só com o nome.
+    const legendaDoBloco = (titulo) => { const m = /^(\d+) · (.+)$/.exec(titulo); const lg = el('legend'); if (m) lg.append(el('span', 'regra-numero', m[1]), document.createTextNode(' ' + m[2])); else lg.textContent = titulo; return lg; };
+    const blocoContrato = (titulo, explicacao, ...nos) => { const q = el('fieldset', 'compras-fieldset'); q.append(legendaDoBloco(titulo), el('p', 'profiles-note compras-largo', explicacao), ...nos); return q; };
     const empresasContratantes = () => (window.CicluzEmpresa && window.CicluzEmpresa.todas ? window.CicluzEmpresa.todas() : []);
     const selContratante = seletor(empresasContratantes().map((e) => [e.id, (e.razaoSocial || e.nomeFantasia || '(empresa sem nome)') + (e.vinculo === 'matriz' ? ' (Matriz)' : '')]),
       empresasContratantes().some((e) => e.id === ct[P.empresa]) ? ct[P.empresa] : (empresasContratantes()[0] || {}).id || '', 'Selecione a empresa');
@@ -599,7 +601,7 @@
     pintarModelos(); desenharClausulas(); desenharCampos();
     const campoRescisao = campo('Condições de rescisão', cRescisao); campoRescisao.classList.add('compras-largo');
     const campoEmpresa = campo(cliente ? 'Empresa contratada' : 'Empresa contratante', selContratante);
-    cDados.querySelector('legend').textContent = '4 · Valor, vencimento e reajuste';
+    cDados.querySelector('legend').replaceWith(legendaDoBloco('4 · Valor, vencimento e reajuste'));
     cDados.querySelector('legend').after(el('p', 'profiles-note compras-largo', 'Quanto é, como e quando se paga, por quanto tempo vale e como o valor é reajustado.'));
     /* Bloco 3 · Objeto do contrato (18/11/2026, Rodrigo): o que está sendo contratado — produtos, despesas e/ou patrimônios, escolhidos
        dos cadastros que já existem (MER - Produtos, DES - Grupos de Despesas, RET - Patrimônios). Só vínculo por id: nada é digitado,
