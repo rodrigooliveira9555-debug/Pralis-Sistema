@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Ícones de Admissão, Capacitação e Demissão: o prédio com a seta (19/11/2026)
+Pedido do Rodrigo. **Supera** as siglas ADI, CAP e DEM nesses três cartões de Lançamentos Colaboradores. O desenho é o **prédio da empresa** (o mesmo de RET - Patrimônios, sem o cifrão) com uma seta ao lado: **Admissão / Contratação = seta entrando no prédio**, **Capacitação / Desenvolvimento = seta para cima**, **Demissão / Desligamento = seta saindo do prédio**. Desenhos em `telaIcone` (`admissao`, `capacitacao`, `demissao`), em `index.html`. Regra de leitura: seta para dentro = entra na empresa; para cima = cresce; para fora = sai.
+
 ## Uniformes: tela só de lançamento, sem abas; três cartões novos em Lançamentos Colaboradores (19/11/2026)
 Pedido do Rodrigo. **Supera** as três abas da tela de uniformes (Lançamentos · Controle de Estoque · Referência por Cargo), que foram apagadas. 
 
