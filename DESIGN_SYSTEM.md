@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Pastas Documentos: "Imagens / Notas" (19/11/2026)
+Pedido do Rodrigo. **Supera** o nome "Imagens …" das pastas de lançamentos: nas cinco origens o cartão passa a se chamar **Imagens / Notas** — VND - Imagens / Notas Vendas Lançadas, CNT - Imagens / Notas Transferências, DES - Imagens / Notas Despesas Lançadas, MER - Imagens / Notas Mercadorias Lançadas e RET - Imagens / Notas Retiradas Lançadas. Só o nome mudou; as pastas continuam em definição (P-36).
+
 ## Pastas de contratos: fornecedor (DES e MER) e cliente (VND) (19/11/2026)
 Decisão do Rodrigo: a pasta de contratos mostra **os contratos do cadastro**. Em Pastas Documentos, **DES - Contratos Fornecedores**, **MER - Contratos Fornecedores** e **VND - Contratos Clientes** deixaram de ser cartões "em definição" e abrem a mesma tela (`abrirPastaContratos`, em `compras/contratos.js`): lista no padrão (linha com ícone, nome, tipo do contrato e vigência, e "Completo"/"Incompleto" à direita, contador no título). Tocar na linha abre **o mesmo documento que o cadastro gera**; contrato incompleto mostra o aviso do que falta. A pasta é só leitura e não guarda cópia. **Quem aparece em cada uma:** DES = fornecedor com contrato e categoria Serviço; MER = fornecedor com contrato e categoria Produto; fornecedor sem categoria aparece nas duas; VND = cliente com contrato. **Continuam em definição:** as pastas "Documentos Fornecedores" (DES, MER), "Documentos Clientes", as de Imagens e as de Retiradas (ver P-36).
 
