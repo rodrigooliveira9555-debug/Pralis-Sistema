@@ -457,6 +457,9 @@ dialog .escolha-barra{--cor-do-cabecalho:var(--menu-accent)}
 /* A sigla de três letras cabe inteira no ícone menor (não quebra em duas linhas). */
 .location-tree.unidades-arvore .location-row>.location-icon{white-space:nowrap;letter-spacing:0;overflow:hidden}
 /* Escolha de áreas, setores e locais: a árvore é a mesma da tela DES - Área / Setor / Local (as regras de desenho são compartilhadas em unified-layout.css e design-system.css); aqui só o quadro de fora e a caixa de marcar. */
+/* Segundo quadro dentro de uma janela de cadastro (ex.: "Vínculo com cargo"): mesma moldura e título dos quadros do sistema. */
+.quadro-interno{display:grid;gap:8px;margin:0;padding:12px;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;min-width:0;background:var(--theme-card,#fff)}
+.quadro-interno>legend{padding:0 6px;font:600 var(--ui-label,12px)/18px var(--ui-font);color:var(--layout-ink,inherit)}
 /* Campo recolhido de áreas, setores e locais: rótulo, botão que abre a árvore em janela e o resumo do que está marcado. */
 .campo-de-locais{display:grid;gap:6px;justify-items:start;min-width:0}
 .campo-de-locais-resumo{display:grid;gap:2px;min-width:0}

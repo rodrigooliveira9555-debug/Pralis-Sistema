@@ -47,8 +47,8 @@ const addButton=button('',()=>{selectTab('launch');novoLancamento()},'shortcut-c
 const note=el('div','form-note','Simulação local: lançamentos, estoque e referências ficam somente neste navegador até a integração com o banco de dados. Colaboradores demonstrativos.');
 /* Sem abas (19/11/2026, Rodrigo): a tela de lançamento mostra só o lançamento de uniforme. As outras duas partes continuam nesta mesma
    estrutura, cada uma aberta pelo seu cartão do menu: o controle de estoque em Estoque → DES - Uniformes e a referência por cargo em
-   Cadastros Geral Colaboradores → DES - Uniformes por Cargo. */
-const TELAS={launch:{titulo:'DES - Uniformes Entrega (-) Recebimento (+)',grupo:'Lançamentos Colaboradores'},stock:{titulo:'DES - Uniformes',grupo:'Estoque'},reference:{titulo:'DES - Uniformes por Cargo',grupo:'Cadastros Geral Colaboradores'}},tabPanels={};
+   o vínculo com o cargo, que mora dentro de DES - Tipos de Uniforme. */
+const TELAS={launch:{titulo:'DES - Uniformes Entrega (-) Recebimento (+)',grupo:'Lançamentos Colaboradores'},stock:{titulo:'DES - Uniformes',grupo:'Estoque'},/* sem cartão no menu desde 19/11/2026: o vínculo com o cargo é feito em DES - Tipos de Uniforme; o painel antigo segue montado só para o código que ainda o cita */reference:{titulo:'DES - Tipos de Uniforme',grupo:'Cadastros Geral Colaboradores'}},tabPanels={};
 for(const key of Object.keys(TELAS)){const p=el('div','uniforms-section');p.id='uniforms-panel-'+key;tabPanels[key]=p}
 const loadNote=el('p','profiles-error');loadNote.setAttribute('role','alert');
 body.append(note,loadNote,...Object.values(tabPanels));
@@ -137,7 +137,7 @@ const SIZE=/\s+(PP|P|M|G|GG|XG|XGG|EG|EGG|UC)$/i,piece=n=>String(n||'').replace(
 function jobPieces(){if(typeField.node.value==='DEVOLVIDO')return null;const c=collaboratorById(collab.node.value),ref=c&&referenceFor(c);return ref?.items.length?new Set(ref.items.map(r=>piece(uniformName(r.uniformId)))):null}
 function renderPicker(){const q=fold(pickerSearch.node.value),allowed=allowedUniforms(),t=currentTotals();pickerList.replaceChildren();let shown=0;const jp=jobPieces(),c=collaboratorById(collab.node.value);
  showAllWrap.hidden=!jp;const filter=jp&&!showAll.checked?jp:null;
- pickerNote.textContent=!c?'Selecione o colaborador para ver as peças do cargo.':typeField.node.value==='DEVOLVIDO'?'Devolução: todos os uniformes, limitados ao que o colaborador retirou.':jp?(filter?'Mostrando as peças previstas para o cargo '+(referenceFor(c)?.job.name||'')+' (todos os tamanhos).':'Mostrando todos os uniformes, inclusive fora da referência do cargo.'):'Sem referência de uniformes para este cargo: todos os uniformes são exibidos. Configure em Cadastros Geral Colaboradores → DES - Uniformes por Cargo.';
+ pickerNote.textContent=!c?'Selecione o colaborador para ver as peças do cargo.':typeField.node.value==='DEVOLVIDO'?'Devolução: todos os uniformes, limitados ao que o colaborador retirou.':jp?(filter?'Mostrando as peças previstas para o cargo '+(referenceFor(c)?.job.name||'')+' (todos os tamanhos).':'Mostrando todos os uniformes, inclusive fora da referência do cargo.'):'Sem referência de uniformes para este cargo: todos os uniformes são exibidos. Vincule em Cadastros Geral Colaboradores → DES - Tipos de Uniforme (Vínculo com cargo).';
  for(const u of D.uniforms){if(u.active===false&&!draft.items.has(u.id))continue;if(allowed&&!allowed.has(u.id)&&!draft.items.has(u.id))continue;if(filter&&!filter.has(piece(u.name))&&!draft.items.has(u.id))continue;if(q&&!fold(u.name+' '+u.category).includes(q))continue;
   /* Mesma linha do cadastro DES - Tipos de Uniforme (ícone da peça, nome, categoria · grupo), com a caixa de marcar à esquerda do ícone (19/11/2026, Rodrigo). */
   const check=el('input');check.type='checkbox';check.className='compras-hier-caixa';check.value=u.id;check.checked=draft.items.has(u.id);check.setAttribute('aria-label','Selecionar '+u.name);check.onclick=e=>e.stopPropagation();check.onchange=()=>{if(check.checked)draft.items.set(u.id,{quantity:'1',price:moneyInput(data.stock[u.id]?.price)});else draft.items.delete(u.id);renderItems()};
@@ -147,7 +147,7 @@ function renderPicker(){const q=fold(pickerSearch.node.value),allowed=allowedUni
 function renderReference(){reference.replaceChildren();const c=collaboratorById(collab.node.value);if(!c)return;const ref=referenceFor(c);const box=el('div','uniforms-reference-box');
  if(!ref){box.append(el('p','profiles-note','Cargo do colaborador não encontrado no cadastro de Cargos; sem referência de uniformes.'));reference.append(box);return}
  box.append(el('b',null,'Referência do cargo '+ref.job.name));
- if(!ref.items.length){box.append(el('p','profiles-note','Nenhuma quantidade de referência configurada para este cargo. Configure em Cadastros Geral Colaboradores → DES - Uniformes por Cargo.'));reference.append(box);return}
+ if(!ref.items.length){box.append(el('p','profiles-note','Nenhuma quantidade de referência configurada para este cargo. Vincule em Cadastros Geral Colaboradores → DES - Tipos de Uniforme (Vínculo com cargo).'));reference.append(box);return}
  const list=el('ul','uniforms-reference-list');for(const r of ref.items){const li=el('li');li.append(el('span',null,uniformName(r.uniformId)),el('small',null,'Previsto '+r.quantity+' · com o colaborador '+Math.max(S.held(data.movements,c.id,r.uniformId),0)));list.append(li)}box.append(list);
  if(typeField.node.value!=='DEVOLVIDO')box.append(button('Selecionar itens previstos',()=>{for(const r of ref.items)if(!draft.items.has(r.uniformId)&&uniformById.has(r.uniformId))draft.items.set(r.uniformId,{quantity:String(r.quantity),price:moneyInput(data.stock[r.uniformId]?.price)});renderPicker();renderItems()}));reference.append(box)}
 function renderItems(){items.replaceChildren();const type=typeField.node.value,priced=type==='VENDIDO',isReturn=type==='DEVOLVIDO';
@@ -270,7 +270,7 @@ function renderOverview(){rOverview.replaceChildren();const entries=Object.entri
 function showUniforms(tab='launch',opts={}){D.recarregar();document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Uniformes';load();resetForm();selectTab(tabPanels[tab]?tab:'launch');if(opts.collaboratorId){collab.node.value=opts.collaboratorId;collab.node.dispatchEvent(new Event('change'));openEditor(form,'Novo lançamento de uniforme',resetForm)}normalizeHeaderActions(view)}
 window.showUniforms=showUniforms;
 /* Shared with Compras de Uniformes: one store, one set of components. */
-window.CicluzUniformStore={load,transact,get:()=>data,failed:()=>loadError}
+window.CicluzUniformStore={load,transact,get:()=>data,failed:()=>loadError,jobs:()=>jobsWithStored()}
 window.CicluzUniformReceipt={types:RECEIPT_TYPES,lines:m=>receiptLines(m),open:id=>{load();const m=data.movements.find(x=>x.id===id);if(m)receiptDialog(m)}};;
 window.CicluzUniformUI={openExternal,el,button,iconButton,svg,ICON,fold,newId,money,moneyInput,cents,dateBR,today,enumField,dialog,confirmDialog,openEditor,closeEditor,blocoIcone,quadroIdentidade,previaIcone,botaoSituacao,soJanela,quadroHistorico,unitPicker,padronizarCampos,campoSituacao,iconize,iconizeActions,uniformName,STATUS};
 window.addEventListener('storage',e=>{if(e.key===KEY){load();if(view.classList.contains('show'))renderTab()}});
