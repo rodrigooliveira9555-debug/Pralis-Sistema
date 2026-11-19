@@ -20,7 +20,15 @@ const names=[
 function category(name){const piece=name.split(' - ').pop();if(piece.startsWith('CAMISA'))return 'Camisa';if(piece.startsWith('CALÇADO'))return 'Calçado';if(piece.startsWith('CALÇA'))return 'Calça';if(piece.startsWith('BONÉ')||piece.startsWith('TOUCA'))return 'Boné ou Touca';if(piece.startsWith('AVENTAL'))return 'Avental';return 'Outro'}
 function family(name){const prefix=name.split(' - ')[0];if(prefix.startsWith('PRODUÇÃO'))return category(name)==='Camisa'?'PRODUÇÃO — CAMISAS':'PRODUÇÃO — CALÇAS';if(prefix==='GERAL')return 'GERAL — CALÇADOS';return prefix}
 /* Codes follow the received order; never renumber existing entries. */
-const uniforms=names.map((name,i)=>({id:'uni-'+String(i+1).padStart(2,'0'),name,category:category(name),family:family(name)}));
+const base=names.map((name,i)=>({id:'uni-'+String(i+1).padStart(2,'0'),name,category:category(name),family:family(name),active:true}));
+/* Cadastro DES - Tipos de Uniforme (19/11/2026): a lista vale a de cima até o primeiro salvamento do cadastro; depois vale a que está
+   guardada em cicluz-uniformes-tipos-v1 ({version:1, tipos:[{id,name,category,family,active}]}). Os códigos nunca mudam. A lista sai
+   agrupada por grupo (family), na ordem em que cada grupo aparece, porque as telas de escolha desenham um título por grupo. */
+const KEY='cicluz-uniformes-tipos-v1';let cache=null,falha=false;
+function guardados(){falha=false;if(typeof localStorage==='undefined')return null;let bruto=null;try{bruto=localStorage.getItem(KEY)}catch{falha=true;return null}if(bruto==null)return null;
+ try{const s=JSON.parse(bruto);if(s&&s.version===1&&Array.isArray(s.tipos)&&s.tipos.every(u=>u&&typeof u.id==='string'&&typeof u.name==='string'))return s.tipos}catch{}falha=true;return null}
+function lista(){if(!cache){const t=guardados()||base,ordem=[];for(const u of t)if(!ordem.includes(u.family))ordem.push(u.family);cache=ordem.flatMap(f=>t.filter(u=>u.family===f))}return cache}
+function gravarTipos(tipos){if(falha)throw new Error('leitura');localStorage.setItem(KEY,JSON.stringify({version:1,tipos}));cache=null}
 const categories=['Camisa','Calça','Boné ou Touca','Avental','Calçado'];
 const types=[
  {id:'VENDIDO',label:'Vendido',effect:-1,priced:true},
@@ -36,7 +44,7 @@ const demoCollaborators=[
  {id:'demo-colab-04',name:'Renata Alves',jobName:'GERENTE DE LOJA N-1',active:true},
  {id:'demo-colab-05',name:'Marcos Lima',jobName:'OPERADOR DE CAIXA',active:false}
 ];
-const api={uniforms,categories,types,demoCollaborators};
+const api={get uniforms(){return lista()},base,categories,types,demoCollaborators,gravarTipos,recarregar:()=>{cache=null},falhou:()=>{lista();return falha}};
 if(typeof module!=='undefined')module.exports=api;
 root.CicluzUniformData=api;
 })(typeof window!=='undefined'?window:globalThis);

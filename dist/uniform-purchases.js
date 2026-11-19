@@ -4,7 +4,7 @@
 const D=window.CicluzUniformData,S=window.CicluzUniformStock,store=window.CicluzUniformStore,U=window.CicluzUniformUI;if(!D||!S||!store||!U)return;
 const {el,button,iconButton,svg,ICON,fold,newId,money,moneyInput,cents,dateBR,today,enumField,dialog,confirmDialog,uniformName,STATUS}=U;
 const ACCENT='var(--section-accent,#ef4444)',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Uniformes Compras'),CART=telaIcone.compra;
-const data=()=>store.get(),uniformIds=D.uniforms.map(u=>u.id),uniformById=new Map(D.uniforms.map(u=>[u.id,u]));
+const data=()=>store.get(); /* a lista de uniformes vem do cadastro DES - Tipos de Uniforme e pode mudar com a tela aberta: sempre lida de D.uniforms */
 
 /* Supplier source: empty until the registry exists; the database will replace this function. */
 /* Fornecedores: the Compras register (Cadastros › MER - Fornecedores), linked by id — the same list Compras uses for quotations. */
@@ -55,10 +55,10 @@ function editing(){return draft.editingId?data().purchases.find(p=>p.id===draft.
 function renderSuppliers(){const list=suppliers(),q=fold(sup.search.value),cur=sup.select.value;sup.select.replaceChildren();if(!list.length){sup.select.add(new Option('Nenhum fornecedor cadastrado',''));return}sup.select.add(new Option('Sem fornecedor',''));for(const s of list)if(s.id===cur||fold(s.name).includes(q))sup.select.add(new Option(s.name,s.id));
  const own=editing();if(own?.supplierId&&!list.some(s=>s.id===own.supplierId)&&own.supplierId===cur)sup.select.add(new Option(own.supplierName+' (preservado)',own.supplierId));sup.select.value=cur}
 sup.search.addEventListener('input',renderSuppliers);
-function totalsNow(){return S.totals(data(),uniformIds)}
+function totalsNow(){return S.totals(data(),D.uniforms.map(u=>u.id))}
 /* Balance without this purchase, so editing shows the real effect. */
 function before(id,t){const own=editing();let n=t[id].balance;if(own&&own.status!=='CANCELADO')for(const i of own.items)if(i.uniformId===id)n-=i.quantity;return n}
-function renderPicker(){const q=fold(pickSearch.value),t=totalsNow();pickList.replaceChildren();let family='',shown=0;for(const u of D.uniforms){if(q&&!fold(u.name+' '+u.category).includes(q))continue;if(u.family!==family){family=u.family;pickList.append(el('p','uniforms-family',family))}const label=el('label','profiles-choice uniforms-option'),check=el('input');check.type='checkbox';check.checked=draft.items.has(u.id);check.onchange=()=>{if(check.checked)draft.items.set(u.id,{quantity:'1',price:''});else draft.items.delete(u.id);renderItems()};label.append(check,el('span',null,u.name),el('small',null,'Saldo '+before(u.id,t)));pickList.append(label);shown++}if(!shown)pickList.append(el('p','profiles-note','Nenhum uniforme encontrado.'))}
+function renderPicker(){const q=fold(pickSearch.value),t=totalsNow();pickList.replaceChildren();let family='',shown=0;for(const u of D.uniforms){if(u.active===false)continue;if(q&&!fold(u.name+' '+u.category).includes(q))continue;if(u.family!==family){family=u.family;pickList.append(el('p','uniforms-family',family))}const label=el('label','profiles-choice uniforms-option'),check=el('input');check.type='checkbox';check.checked=draft.items.has(u.id);check.onchange=()=>{if(check.checked)draft.items.set(u.id,{quantity:'1',price:''});else draft.items.delete(u.id);renderItems()};label.append(check,el('span',null,u.name),el('small',null,'Saldo '+before(u.id,t)));pickList.append(label);shown++}if(!shown)pickList.append(el('p','profiles-note','Nenhum uniforme encontrado.'))}
 pickSearch.addEventListener('input',renderPicker);
 const qtyOf=v=>{const n=Number(v.quantity);return /^\d+$/.test(String(v.quantity).trim())&&n>=1?n:null};
 function renderItems(){items.replaceChildren();if(!draft.items.size){items.append(el('p','profiles-note','Nenhum uniforme selecionado. Cada uniforme recebe sua própria quantidade e valor unitário.'));return}
@@ -114,7 +114,7 @@ function showDetails(p){dialog('Detalhes da compra',(f,form)=>{const dl=el('dl',
  if(p.revisions?.length){form.append(el('h3','uniforms-heading','Histórico de alterações'));const ul=el('ul','uniforms-reference-list');for(const r of p.revisions){const li=el('li'),prev=r.previous||{};li.append(el('span',null,new Date(r.at).toLocaleString('pt-BR')+' — '+(r.action||'Corrigida')),el('small',null,r.action?'Situação anterior: '+((STATUS[prev.status]||[prev.status])[0]):'Versão anterior: '+dateBR(prev.date)+' · '+(prev.supplierName||'sem fornecedor')+' · '+(prev.items||[]).map(i=>uniformName(i.uniformId)+' ×'+i.quantity+' a '+money(i.unitPrice)).join(', ')));ul.append(li)}form.append(ul)}
  form.append(button('Ver controle de estoque',()=>{form.closest('dialog').close();showUniforms('stock')}))})}
 
-function showUniformPurchases(){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Compras de Uniformes';store.load();loadNote.textContent=store.failed()?'Não foi possível ler os dados salvos. Eles foram preservados; recarregue a página antes de alterar.':'';resetForm();formStatus.textContent='';renderHistory();normalizeHeaderActions(view)}
+function showUniformPurchases(){D.recarregar();document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Compras de Uniformes';store.load();loadNote.textContent=store.failed()?'Não foi possível ler os dados salvos. Eles foram preservados; recarregue a página antes de alterar.':'';resetForm();formStatus.textContent='';renderHistory();normalizeHeaderActions(view)}
 window.showUniformPurchases=showUniformPurchases;
 window.CicluzDateBR={field:dateField,mask:maskDate,parse:parseDate};
 window.CicluzPhoneBR={digits:phoneDigits,mask:maskPhone,valid:phoneValid};
