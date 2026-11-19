@@ -1,7 +1,9 @@
 /*
  * Configurações → Permissões → Acesso por Tela (ESBOÇO, pedido do Washington, 19/11/2026). O menu inteiro aberto, uma
- * linha por tela, e em cada linha um ícone com o NÍVEL de acesso daquela tela: sem acesso, só ver (antes ou depois de
- * pagar), lançar, editar e pagar. Quem escolhe o nível: o cargo (padrão) e, por cima, o ajuste de uma pessoa.
+ * linha por tela. Em cada linha, só o ícone do NÍVEL de acesso daquela tela (se tiver) e o "+": tocar no "+" mostra as
+ * opções. Nível: sem acesso, ver (antes ou depois de pagar), lançar, editar e pagar. Quem escolhe: o cargo (padrão) e,
+ * por cima, o ajuste de uma pessoa. No topo, "Para quem é este acesso": o "+" de cada linha também só mostra a lista
+ * quando é tocado. Ícones: os do Design System (lápis = editar, olho = ver, lápis com prancheta = lançar).
  * SEM backend: a lista de telas vem de telas-dados.js (exemplo tirado do menu), as pessoas e os cargos são de mentira e
  * nada é gravado nem muda o acesso de ninguém. Quando o modelo de dados for aprovado, o nível passa a valer na API.
  */
@@ -13,26 +15,29 @@
   if (!U || !A || !MENU) return;
   const { el } = U;
   let tela = null;
-  // niveis[chave da tela] = nível; base = o que o cargo dá; fechados = grupos recolhidos; aberta = tela com a escolha aberta.
-  const estado = { pessoa: '', cargo: '', area: '', busca: '', base: {}, niveis: {}, fechados: new Set(), aberta: '' };
+  // niveis[chave da tela] = nível; base = o que o cargo dá; fechados = grupos recolhidos; aberta = tela com as opções
+  // abertas; quem = linha do topo com a lista aberta (pessoa, cargo ou area).
+  const estado = { pessoa: '', cargo: '', area: '', busca: '', base: {}, niveis: {}, fechados: new Set(), aberta: '', quem: '' };
 
   /* ---------- Os níveis ---------- */
 
-  // g = desenho (mais, lápis, olho, cadeado); mo = tem o $; xm = $ cortado (sem pagar); xg = desenho cortado (só o $);
-  // cheio = $ preenchido (ver depois de pagar).
+  // Desenhos do Design System (aba Ícones): lápis (editar) e olho (ver) são os de "Biblioteca — ações da linha"; a
+  // prancheta é a de Cadastros Geral, com um lápis pequeno dentro (lançar). O cadeado é o de Senhas.
   const G = {
-    mais: 'M12 5v14M5 12h14',
-    lapis: 'M4 20h4L19 9l-4-4L4 16zM13 7l4 4',
-    olho: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+    lancar: 'M8 4H6a1 1 0 0 0-1 1v15a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-2M9 3h6v3H9zM9 17l.7-2.6 5.6-5.6 1.9 1.9-5.6 5.6z',
+    lapis: 'm4 20 4-.8L19 8l-3-3L5 16zM14.5 6.5l3 3',
+    olho: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',
     cadeado: 'M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4M12 15v2',
+    mais: 'M12 5v14M5 12h14',
   };
+  // g = desenho; mo = tem o $; xm = $ cortado (sem pagar); xg = desenho cortado (só o $); cheio = $ preenchido (depois de pagar).
   const NIVEL = {
     none: { nome: 'Sem acesso', g: 'cadeado' },
     vA: { nome: 'Visualizar antes de pagar', g: 'olho', mo: 1 },
     vD: { nome: 'Visualizar depois de pagar', g: 'olho', mo: 1, cheio: 1 },
-    lp: { nome: 'Lançar e pagar', g: 'mais', mo: 1 },
-    l: { nome: 'Só lançar', g: 'mais', mo: 1, xm: 1 },
-    pl: { nome: 'Só pagar (ícone de lançar cortado)', g: 'mais', mo: 1, xg: 1 },
+    lp: { nome: 'Lançar e pagar', g: 'lancar', mo: 1 },
+    l: { nome: 'Só lançar', g: 'lancar', mo: 1, xm: 1 },
+    pl: { nome: 'Só pagar (ícone de lançar cortado)', g: 'lancar', mo: 1, xg: 1 },
     ep: { nome: 'Editar e pagar', g: 'lapis', mo: 1 },
     e: { nome: 'Só editar', g: 'lapis', mo: 1, xm: 1 },
     pe: { nome: 'Só pagar (ícone de editar cortado)', g: 'lapis', mo: 1, xg: 1 },
@@ -56,6 +61,18 @@
     if (d.mo && !semPagamento) s.append(el('span', 'acessos-nivel-mo' + (d.cheio ? ' cheio' : ''), '$'));
     s.setAttribute('aria-hidden', 'true');
     return s;
+  }
+
+  /** O botão redondo "+" do sistema (botão redondo de ação). Aberto, o "+" vira "×". */
+  function botaoMais(rotulo, aberto, acao) {
+    const b = el('button', 'shortcut-circle compras-redondo acessos-telas-mais');
+    b.type = 'button';
+    b.title = rotulo;
+    b.setAttribute('aria-label', rotulo);
+    b.setAttribute('aria-expanded', String(aberto));
+    b.innerHTML = U.svg('<path d="' + G.mais + '"/>');
+    b.onclick = acao;
+    return b;
   }
 
   /* ---------- Cargos e pessoas de exemplo ---------- */
@@ -90,17 +107,35 @@
   const nivelDe = (chave) => estado.niveis[chave] || 'none';
   const ajustada = (chave) => (estado.base[chave] || 'none') !== nivelDe(chave);
 
-  function seletorComMais(id, rotulo, vazio, opcoes, valor, aoMudar) {
+  /**
+   * Uma linha de "Para quem é este acesso": o nome, o "+" e o que está escolhido (só o texto). A lista de opções não fica
+   * à vista: aparece logo abaixo da linha quando o "+" é tocado, e some ao escolher.
+   */
+  function linhaQuem(id, rotulo, vazio, valorTexto, opcoes, aoEscolher) {
+    const box = el('div', 'acessos-telas-quem-bloco');
+    const aberto = estado.quem === id;
     const linha = el('div', 'acessos-telas-quem');
-    const l = el('label', 'compras-rotulo', rotulo); l.htmlFor = id;
-    const mais = U.botao('', () => { sel.focus(); if (sel.showPicker) { try { sel.showPicker(); } catch (e) { /* já aberto */ } } }, 'acessos-telas-mais');
-    mais.innerHTML = U.svg('<path d="' + G.mais + '"/>');
-    mais.setAttribute('aria-label', 'Escolher: ' + rotulo.toLocaleLowerCase('pt-BR'));
-    const sel = U.seletor(opcoes, valor, vazio);
-    sel.id = id;
-    sel.onchange = () => aoMudar(sel.value);
-    linha.append(l, mais, sel);
-    return linha;
+    linha.append(
+      el('span', 'compras-rotulo', rotulo),
+      botaoMais('Escolher: ' + rotulo.toLocaleLowerCase('pt-BR'), aberto, () => { estado.quem = aberto ? '' : id; desenhar(); }),
+      el('span', 'acessos-telas-valor' + (valorTexto ? '' : ' vazio'), valorTexto || vazio),
+    );
+    box.append(linha);
+    if (aberto) {
+      const lista = el('div', 'acessos-telas-opcoes');
+      lista.setAttribute('role', 'radiogroup');
+      lista.setAttribute('aria-label', rotulo);
+      opcoes.forEach(([valor, texto, marcado]) => {
+        const b = el('button', 'acessos-telas-opcao' + (marcado ? ' marcado' : ''), texto);
+        b.type = 'button';
+        b.setAttribute('role', 'radio');
+        b.setAttribute('aria-checked', String(Boolean(marcado)));
+        b.onclick = () => { estado.quem = ''; aoEscolher(valor); };
+        lista.append(b);
+      });
+      box.append(lista);
+    }
+    return box;
   }
 
   function desenhar() {
@@ -110,12 +145,15 @@
 
     const quem = el('fieldset', 'compras-fieldset acessos-telas-quadro');
     quem.append(el('legend', null, 'Para quem é este acesso'));
+    const pessoas = Object.entries(PESSOAS).map(([id, [n, c]]) => [id, n + ' (' + CARGOS[c][0] + ')', id === estado.pessoa]);
+    const cargos = Object.entries(CARGOS).map(([id, [n]]) => [id, n, id === estado.cargo]);
+    const areas = [['', 'Todas as áreas', !estado.area], ...MENU.map((g) => [g.n, g.n, g.n === estado.area])];
     quem.append(
-      seletorComMais('acessos-telas-pessoa', 'Usuário / colaborador', 'Selecionar o nome', Object.entries(PESSOAS).map(([id, [n, c]]) => [id, n + ' (' + CARGOS[c][0] + ')']), estado.pessoa, (v) => { estado.pessoa = v; carregar(v ? PESSOAS[v][1] : ''); desenhar(); }),
-      seletorComMais('acessos-telas-cargo', 'Cargo', 'Selecionar o cargo', Object.entries(CARGOS).map(([id, [n]]) => [id, n]), estado.cargo, (v) => { estado.pessoa = ''; carregar(v); desenhar(); }),
-      seletorComMais('acessos-telas-area', 'Área', 'Todas as áreas', MENU.map((g) => [g.n, g.n]), estado.area, (v) => { estado.area = v; desenhar(); }),
+      linhaQuem('pessoa', 'Usuário / colaborador', 'Selecionar o nome', estado.pessoa ? pessoas.find((p) => p[0] === estado.pessoa)[1] : '', [['', 'Nenhuma pessoa', !estado.pessoa], ...pessoas], (v) => { estado.pessoa = v; carregar(v ? PESSOAS[v][1] : ''); desenhar(); }),
+      linhaQuem('cargo', 'Cargo', 'Selecionar o cargo', estado.cargo ? CARGOS[estado.cargo][0] : '', [['', 'Nenhum cargo', !estado.cargo], ...cargos], (v) => { estado.pessoa = ''; carregar(v); desenhar(); }),
+      linhaQuem('area', 'Área', 'Todas as áreas', estado.area, areas, (v) => { estado.area = v; desenhar(); }),
     );
-    const qual = estado.pessoa ? 'Ajustes só para ' + PESSOAS[estado.pessoa][0] + ', por cima do cargo ' + CARGOS[estado.cargo][0] + '.' : estado.cargo ? 'Editando o padrão do cargo ' + CARGOS[estado.cargo][0] + ': vale para todo mundo que tem esse cargo.' : 'Escolha uma pessoa ou um cargo para ver os níveis.';
+    const qual = estado.pessoa ? 'Ajustes só para ' + PESSOAS[estado.pessoa][0] + ', por cima do cargo ' + CARGOS[estado.cargo][0] + '.' : estado.cargo ? 'Editando o padrão do cargo ' + CARGOS[estado.cargo][0] + ': vale para todo mundo que tem esse cargo.' : 'Escolha uma pessoa ou um cargo (toque no +) para ver os níveis.';
     quem.append(el('p', 'profiles-note acessos-telas-qual', qual));
     blocos.push(quem);
 
@@ -171,24 +209,30 @@
     tela.body.scrollTop = rolagem;
   }
 
-  /** Uma linha de tela: ícone da origem, nome e o botão do nível. Com a escolha aberta, vem logo abaixo da linha. */
+  /**
+   * Uma linha de tela: ícone da origem, nome, o nível atual (só o ícone e o nome, sem caixa; nada quando é "Sem acesso")
+   * e o "+". As opções abrem logo abaixo da linha.
+   */
   function linha(g, s, chave, rotulo) {
     const nivel = nivelDe(chave);
     const sigla = /^([A-Z]{3}) - /.exec(rotulo);
     const icone = { cor: g.c, html: sigla ? '<span class="sigla-text">' + sigla[1] + '</span>' : U.svg(U.ICONES.lista) };
-    const botao = el('button', 'acessos-nivel' + (ajustada(chave) ? ' ajustado' : ''));
-    botao.type = 'button';
-    botao.dataset.chave = chave;
-    botao.setAttribute('aria-expanded', String(estado.aberta === chave));
-    botao.setAttribute('aria-label', 'Nível de acesso de ' + rotulo + ': ' + nomeDoNivel(nivel, s.t));
-    botao.append(iconeNivel(nivel, s.t), el('span', 'acessos-nivel-nome', nomeDoNivel(nivel, s.t)));
-    if (ajustada(chave)) { const p = el('span', 'acessos-nivel-ponto'); p.title = 'Ajuste só desta pessoa (diferente do cargo)'; botao.append(p); }
-    botao.append(el('span', 'acessos-nivel-seta'));
-    botao.querySelector('.acessos-nivel-seta').innerHTML = U.svg('<path d="m6 9 6 6 6-6"/>');
-    botao.onclick = () => { estado.aberta = estado.aberta === chave ? '' : chave; desenhar(); };
-    const l = U.linhaLista({ icones: [icone], titulo: rotulo, direita: [botao] });
+    const aberta = estado.aberta === chave;
+    const direita = [];
+    if (nivel !== 'none') {
+      const atual = el('span', 'acessos-telas-atual' + (ajustada(chave) ? ' ajustado' : ''));
+      atual.dataset.chave = chave;
+      atual.title = nomeDoNivel(nivel, s.t) + (ajustada(chave) ? ' (ajuste só desta pessoa)' : '');
+      atual.append(iconeNivel(nivel, s.t), el('span', 'acessos-telas-atual-nome', nomeDoNivel(nivel, s.t)));
+      if (ajustada(chave)) atual.append(el('span', 'acessos-nivel-ponto'));
+      direita.push(atual);
+    }
+    const mais = botaoMais('Escolher o nível de acesso de ' + rotulo + ' (agora: ' + nomeDoNivel(nivel, s.t) + ')', aberta, () => { estado.aberta = aberta ? '' : chave; desenhar(); });
+    mais.dataset.mais = chave;
+    direita.push(mais);
+    const l = U.linhaLista({ icones: [icone], titulo: rotulo, direita });
     const saida = [l];
-    if (estado.aberta === chave) {
+    if (aberta) {
       const opcoes = el('div', 'acessos-nivel-escolha');
       opcoes.setAttribute('role', 'radiogroup');
       opcoes.setAttribute('aria-label', 'Nível de acesso de ' + rotulo);
@@ -198,7 +242,13 @@
         b.setAttribute('role', 'radio');
         b.setAttribute('aria-checked', String(id === nivel));
         b.append(iconeNivel(id, s.t), el('span', null, nomeDoNivel(id, s.t)));
-        b.onclick = () => { if (id === 'none') delete estado.niveis[chave]; else estado.niveis[chave] = id; estado.aberta = ''; desenhar(); const volta = tela.body.querySelector('[data-chave="' + chave + '"]'); if (volta) volta.focus(); };
+        b.onclick = () => {
+          if (id === 'none') delete estado.niveis[chave]; else estado.niveis[chave] = id;
+          estado.aberta = '';
+          desenhar();
+          const volta = tela.body.querySelector('[data-mais="' + chave + '"]');
+          if (volta) volta.focus();
+        };
         opcoes.append(b);
       });
       saida.push(opcoes);

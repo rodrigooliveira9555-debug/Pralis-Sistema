@@ -193,16 +193,24 @@ body.dark-theme .ds-modelo-barra { background: var(--theme-card, #2d2b34); }
 .ds-conferencia-saida{display:grid;gap:8px;width:100%;min-width:0}
 .ds-conferencia-lista{margin:0;padding-left:18px;display:grid;gap:4px;font:400 var(--ui-label,12px)/18px var(--ui-font)}
 
-/* Acesso por Tela (esboço): quadro de "para quem", legenda dos níveis e o menu inteiro com o nível de cada tela */
+/* Acesso por Tela (esboço): "para quem", legenda dos níveis e o menu inteiro com o nível de cada tela */
 .acessos-telas-quadro { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
-.acessos-telas-quem { display: grid; grid-template-columns: 170px 32px minmax(0, 1fr); align-items: center; gap: 8px 10px; }
-.acessos-telas-mais {
-  width: 32px; height: 32px; padding: 0; border: 1.5px solid var(--menu-accent); border-radius: 50%; background: transparent;
-  color: var(--menu-accent); display: inline-grid; place-items: center; cursor: pointer;
+.acessos-telas-quem-bloco { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.acessos-telas-quem { display: grid; grid-template-columns: 170px 32px minmax(0, 1fr); align-items: center; gap: 8px 10px; min-height: 32px; }
+.acessos-telas-valor { font: 400 14px/20px var(--ui-font); overflow-wrap: anywhere; }
+.acessos-telas-valor.vazio { color: var(--muted, #73737a); }
+/* O "+" é o botão redondo de ação do sistema (shortcut-circle compras-redondo); aberto, vira "×". */
+.acessos-telas-mais svg { transition: transform 160ms ease; }
+.acessos-telas-mais[aria-expanded="true"] svg { transform: rotate(45deg); }
+.acessos-telas-opcoes { display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); padding: 2px 0 6px 0; }
+.acessos-telas-opcao {
+  min-height: 40px; padding: 4px 12px; border: 1px solid var(--layout-line, #dedee3); border-radius: 8px; background: var(--theme-card, #fff); color: inherit;
+  font: 500 13px/18px var(--ui-font); text-align: left; cursor: pointer;
 }
-.acessos-telas-mais svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-.acessos-telas-mais:focus-visible, .acessos-telas-seta:focus-visible, .acessos-nivel:focus-visible, .acessos-nivel-opcao:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
-body.dark-theme .acessos-telas-mais { color: #d8c8fb; border-color: #d8c8fb; }
+.acessos-telas-opcao:hover { border-color: var(--menu-accent); }
+.acessos-telas-opcao.marcado { border-color: var(--menu-accent); background: color-mix(in srgb, var(--menu-accent) 12%, var(--theme-card, #fff)); }
+.acessos-telas-opcao:focus-visible, .acessos-telas-seta:focus-visible, .acessos-nivel-opcao:focus-visible, .acessos-telas-mais:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
+body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-telas-seta:focus-visible, body.dark-theme .acessos-nivel-opcao:focus-visible, body.dark-theme .acessos-telas-mais:focus-visible { outline-color: #d8c8fb; }
 .acessos-telas-qual { margin: 0; }
 .acessos-telas-legenda { display: grid; gap: 8px 14px; grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr)); }
 .acessos-telas-leg-item { display: flex; align-items: center; gap: 8px; font: 400 13px/18px var(--ui-font); }
@@ -218,13 +226,17 @@ body.dark-theme .acessos-telas-seta { color: #d8c8fb; }
 .acessos-telas-sec { display: flex; align-items: center; gap: 8px; padding: 10px 14px 6px; border-top: 1px solid var(--layout-line, #dedee3); font: 600 12px/16px var(--ui-font); color: var(--muted, #73737a); }
 .acessos-telas-sec small { font: 600 11px/16px var(--ui-font); }
 .acessos-telas .compras-linha-icone .sigla-text { color: var(--theme-surface, #fff); }
+/* O nível atual da tela: só o ícone e o nome, sem caixa */
+.acessos-telas-atual { display: inline-flex; align-items: center; gap: 6px; font: 500 13px/18px var(--ui-font); }
+.acessos-telas-atual-nome { color: var(--ui-label-color, #52525b); }
+body.dark-theme .acessos-telas-atual-nome { color: #d4d4d8; }
 
-/* O ícone do nível: desenho (mais, lápis, olho, cadeado) + o $; cortado = sem aquele poder */
+/* O ícone do nível: desenho do Design System (lápis, lápis com prancheta, olho, cadeado) + o $; cortado = sem aquele poder */
 .acessos-nivel-ic { position: relative; flex: none; display: inline-grid; place-items: center; width: 32px; height: 28px; color: var(--menu-accent); }
 body.dark-theme .acessos-nivel-ic { color: #d8c8fb; }
 .acessos-nivel-ic.olho, .acessos-nivel-ic.sem { color: var(--muted, #73737a); }
 body.dark-theme .acessos-nivel-ic.olho, body.dark-theme .acessos-nivel-ic.sem { color: #a1a1aa; }
-.acessos-nivel-ic svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.acessos-nivel-ic svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .acessos-nivel-mo {
   position: absolute; right: 0; bottom: -1px; width: 13px; height: 13px; border-radius: 50%; display: grid; place-items: center;
   border: 1px solid var(--layout-ink, #3f3f46); background: var(--theme-card, #fff); color: var(--layout-ink, #3f3f46); font: 600 9px/1 var(--ui-font);
@@ -235,17 +247,9 @@ body.dark-theme .acessos-nivel-mo.cheio { background: #d4d4d8; color: var(--them
 .acessos-nivel-ic.xg::after, .acessos-nivel-ic.xm .acessos-nivel-mo::after { content: ""; position: absolute; height: 1.5px; background: var(--cicluz-danger, #e34343); transform: rotate(-45deg); }
 .acessos-nivel-ic.xg::after { left: 5px; right: 9px; top: 13px; }
 .acessos-nivel-ic.xm .acessos-nivel-mo::after { left: -2px; right: -2px; top: 5px; }
-
-/* O botão do nível em cada linha e a lista de escolha que abre logo abaixo */
-.acessos-nivel {
-  display: inline-flex; align-items: center; gap: 6px; min-width: 200px; min-height: 36px; padding: 2px 8px 2px 4px; border: 1px solid var(--layout-line, #dedee3); border-radius: 8px;
-  background: var(--theme-card, #fff); color: inherit; font: 500 13px/18px var(--ui-font); text-align: left; cursor: pointer;
-}
-.acessos-nivel:hover { border-color: var(--menu-accent); }
-.acessos-nivel-nome { flex: 1 1 auto; }
-.acessos-nivel-seta svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; display: block; }
-.acessos-nivel[aria-expanded="true"] .acessos-nivel-seta svg { transform: rotate(180deg); }
 .acessos-nivel-ponto { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--menu-accent); }
+
+/* As opções do nível, logo abaixo da linha (aparecem só quando o "+" da linha é tocado) */
 .acessos-nivel-escolha {
   display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(min(215px, 100%), 1fr)); padding: 8px 14px 12px 56px;
   border-top: 1px solid var(--layout-line, #dedee3); background: color-mix(in srgb, var(--menu-accent) 4%, var(--theme-card, #fff));
@@ -258,7 +262,7 @@ body.dark-theme .acessos-nivel-mo.cheio { background: #d4d4d8; color: var(--them
 .acessos-nivel-opcao.marcado { border-color: var(--menu-accent); background: color-mix(in srgb, var(--menu-accent) 12%, var(--theme-card, #fff)); }
 @media (max-width: 600px) {
   .acessos-telas-quem { grid-template-columns: 32px minmax(0, 1fr); }
-  .acessos-telas-quem > label { grid-column: 1 / -1; }
-  .acessos-nivel { min-width: 0; width: 100%; }
+  .acessos-telas-quem > .compras-rotulo { grid-column: 1 / -1; }
   .acessos-nivel-escolha { padding-left: 14px; }
 }
+@media (prefers-reduced-motion: reduce) { .acessos-telas-mais svg { transition: none; } }
