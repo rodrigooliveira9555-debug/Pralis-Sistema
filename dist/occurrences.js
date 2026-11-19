@@ -38,7 +38,7 @@ const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('
 const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(DOC_ICON);const heading=el('div');heading.append(el('h2',null,'DES - Ocorrências'),el('p',null,PATH));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
 addShortcuts(view.id,()=>menuBack(2,'Lançamentos Colaboradores')());
-const addButton=button('',()=>{resetForm();formStatus.textContent='';collab.search.closest('label').querySelector('select').focus()},'shortcut-circle');addButton.title='Nova ocorrência';addButton.setAttribute('aria-label','Nova ocorrência');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
+const addButton=button('',()=>novaOcorrencia(),'shortcut-circle');addButton.title='Nova ocorrência';addButton.setAttribute('aria-label','Nova ocorrência');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
 const loadNote=el('p','profiles-error');loadNote.setAttribute('role','alert');
 body.append(el('div','form-note','Simulação local: ocorrências ficam neste navegador. Anexos e dados médicos (clínica, CID, médico e CRM) ficam só na memória e são perdidos ao atualizar a página. Nenhuma penalidade, desconto ou desligamento é aplicado automaticamente.'),loadNote);
 
@@ -78,7 +78,7 @@ paintMedNote();
 /* Free text and document codes keep exactly what was typed: stop the platform's name capitalization on blur. */
 for(const n of [reason,med.cid,med.crm])n.addEventListener('focusout',e=>e.stopPropagation());
 const formError=el('p','uniforms-wide profiles-error');formError.setAttribute('role','alert');const formStatus=el('p','uniforms-wide profiles-note');formStatus.setAttribute('role','status');
-const actions=el('div','uniforms-wide actions');const save=el('button','btn','Salvar Ocorrência');save.type='submit';actions.append(button('Cancelar',()=>{if(!dirty){resetForm();formStatus.textContent='Nada a descartar.';return}confirmDialog('Descartar alterações?','As alterações não salvas deste formulário serão descartadas. Ocorrências já salvas não são alteradas nem excluídas.','Descartar alterações',()=>{resetForm();formStatus.textContent='Alterações descartadas. Nenhuma ocorrência salva foi alterada.';return null},()=>{})}),save); U.iconizeActions(actions);
+const actions=el('div','uniforms-wide actions');const save=el('button','btn','Salvar Ocorrência');save.type='submit';actions.append(button('Cancelar',()=>{if(!dirty){resetForm();formStatus.textContent='Nada a descartar.';return}confirmDialog('Descartar alterações?','As alterações não salvas deste formulário serão descartadas. Ocorrências já salvas não são alteradas nem excluídas.','Descartar alterações',()=>{resetForm();formStatus.textContent='Alterações descartadas. Nenhuma ocorrência salva foi alterada.';return null},()=>{})},'btn ghost'),save); /* Cancelar · Salvar por extenso, à direita */
 /* Catalog (DES - Tipos de Ocorrência): category of the type, its model, and the suspension conferência. */
 const CAT=()=>window.CicluzOccurrenceCatalog;
 function paintTypes(keepVal){const cur=keepVal===undefined?type.value:keepVal,C=CAT();type.replaceChildren(new Option('Selecione',''));for(const [t] of TYPES){const all=C?C.catsOf(t,true):[];if(!all.length||all.some(x=>x.active))type.add(new Option(t,t))}if(cur&&![...type.options].some(o=>o.value===cur))type.add(new Option(cur+' (sem cadastro ativo)',cur));type.value=[...type.options].some(o=>o.value===cur)?cur:''}
@@ -122,7 +122,8 @@ catLabel.hidden=true;catNote.hidden=true;
 type.addEventListener('change',()=>MX?.refresh());
 const previewRow=el('div','uniforms-wide people-banner-tools');if(MX)previewRow.append(MX.previewBtn);
 form.append(formTitle,collab.label,dateIn.label,typeLabel,hint,...(MX?MX.nodes:[]),modelBox,ruleBox,catLabel,catNote,daysLabel,dayTools,period,reasonLabel,noteLabel,...(MX?[MX.audioBox]:[]),attachBox,...medLabels,medNote,statusLabel,commBox,summaryBox,...(MX?[previewRow]:[]),formError,formStatus,actions);
-const history=el('div','uniforms-history');body.append(form,history);
+const history=el('div','uniforms-history');body.append(form,history);U.soJanela(form,'Dados da ocorrência',formTitle);
+function novaOcorrencia(){resetForm();formStatus.textContent='';U.openEditor(form,'Nova ocorrência',resetForm)}
 if(MX)collab.select.addEventListener('change',()=>MX.paintHistory());
 if(MX)dateIn.node.addEventListener('input',()=>MX.paintHistory());
 
@@ -193,10 +194,10 @@ function editRecord(r){draft.attachments.forEach(release);const mem=sensitive.ge
 
 /* ---------- Histórico ---------- */
 const hStatus=el('p','profiles-note');hStatus.setAttribute('role','status');const hTable=el('div','uniforms-table-wrap');
-history.append(el('h3','uniforms-heading','Histórico de ocorrências'),hStatus,hTable);
+const pintarQuadro=U.quadroHistorico(history,'Lançamento de Ocorrência','Registrar nova ocorrência',()=>novaOcorrencia(),[hStatus,hTable]);
 function docCell(r){const mem=sensitive.get(r.id);if(mem?.attachments.length)return mem.attachments.length+' anexo(s)';if(r.attachmentCount)return 'Indisponível após atualizar';return '—'}
 function renderHistory(){hTable.replaceChildren();const all=data.records;const list=[...all].sort((a,b)=>b.date.localeCompare(a.date)||String(b.createdAt).localeCompare(String(a.createdAt)));
- hStatus.textContent=all.length?all.length+' ocorrência(s), da mais recente à mais antiga.':'Nenhuma ocorrência registrada.';
+ hStatus.textContent=all.length?all.length+' ocorrência(s), da mais recente à mais antiga.':'Nenhuma ocorrência registrada.';pintarQuadro(all.length);
  if(!list.length)return;
  const table=el('table','uniforms-table'),hr=el('tr');for(const h of ['Data','Colaborador','Tipo de ocorrência','Categoria · subcategoria','Dias','Status','Foi comunicado?','Documento','Ações'])hr.append(el('th',null,h));const thead=el('thead');thead.append(hr);const tbody=el('tbody');
  for(const r of list){const tr=el('tr');if(isCancelled(r.status))tr.classList.add('is-cancelled');const st=el('td');st.append(el('span','pill '+((STATUSES.find(s=>s[0]===r.status)||FLOW.find(s=>s[0]===r.status)||[])[1]||''),r.status));
@@ -215,7 +216,7 @@ function showDetails(r){const mem=sensitive.get(r.id);dialog('Detalhes da ocorr�
  for(const [k,v] of rows)dl.append(el('dt',null,k),el('dd',null,v));form.append(dl);{const printRows=rows.filter(([k])=>k!=='Dados médicos'&&!MEDICAL.some(([,n])=>n===k));form.append(window.CicluzOccTools.docActions('Ocorrência — '+r.collaboratorName,printRows))}if(mem?.attachments.length)form.append(button('Visualizar documento',()=>{form.closest('dialog').close();viewFiles(mem.attachments)},'btn'));if(r.audio&&window.CicluzMatrix)form.append(button('Ouvir áudio',async()=>{const u=await window.CicluzMatrix.playAudio(r.audio);if(u){const a=el('audio');a.controls=true;a.src=u;form.append(a);a.play().catch(()=>{})}},'btn secondary'));
  if(r.revisions?.length){form.append(el('h3','uniforms-heading','Histórico de alterações'));const ul=el('ul','uniforms-reference-list');for(const v of r.revisions){const li=el('li'),p=v.previous||{};li.append(el('span',null,new Date(v.at).toLocaleString('pt-BR')+' — '+(v.action||'Editada')),el('small',null,v.action?'Status anterior: '+p.status:'Antes: '+dateBR(p.date)+' · '+p.type+' · '+(p.days?p.days+' dia(s)':'sem dias')+' · '+p.status+' · comunicado '+p.communicated));ul.append(li)}form.append(ul)}})}
 
-function showOccurrences(opts={}){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Ocorrências';load();loadNote.textContent=loadError?'Não foi possível ler as ocorrências salvas. Os dados foram preservados; recarregue a página antes de alterar.':'';resetForm();formStatus.textContent='';if(opts.collaboratorId){renderCollaborators(collab.select,collab.search,opts.collaboratorId)}renderHistory();normalizeHeaderActions(view)}
+function showOccurrences(opts={}){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Ocorrências';load();loadNote.textContent=loadError?'Não foi possível ler as ocorrências salvas. Os dados foram preservados; recarregue a página antes de alterar.':'';resetForm();formStatus.textContent='';if(opts.collaboratorId){renderCollaborators(collab.select,collab.search,opts.collaboratorId)}renderHistory();if(opts.collaboratorId)U.openEditor(form,'Nova ocorrência',resetForm);normalizeHeaderActions(view)}
 window.showOccurrences=showOccurrences;
 /* Read-only access for the collaborator file; medical data and attachments stay in this module's memory. */
 window.CicluzOccurrences={types:TYPES.map(t=>t[0]),typeConfig,list:()=>{if(!view.classList.contains('show'))load();return data.records},attachments:id=>sensitive.get(id)?.attachments||[],show:showOccurrences};

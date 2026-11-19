@@ -38,9 +38,10 @@ const status=el('select');STATUSES.forEach(s=>{const o=new Option(s,s);if(DECISI
 const notes=el('textarea');notes.rows=4;notes.addEventListener('focusout',e=>e.stopPropagation());
 const decision=el('div','uniforms-wide people-decision');
 const formError=el('p','uniforms-wide profiles-error');formError.setAttribute('role','alert');const formStatus=el('p','uniforms-wide profiles-note');formStatus.setAttribute('role','status');
-const actions=el('div','uniforms-wide actions');const save=el('button','btn','Salvar');save.type='submit';actions.append(button('Cancelar',()=>{resetForm();formStatus.textContent='Edição descartada.'}),save); U.iconizeActions(actions);
+const actions=el('div','uniforms-wide actions');const save=el('button','btn','Salvar');save.type='submit';actions.append(button('Cancelar',()=>resetForm(),'btn ghost'),save); /* Cancelar · Salvar por extenso, à direita */
 form.append(formTitle,cand.label,lbl('Função e turno',jobOut),start.label,end.label,lbl('Quantidade de dias',daysOut),payRef,lbl('Status do período de teste *',status),deadline,lbl('Observações',notes,'uniforms-wide'),decision,formError,formStatus,actions);
-const history=el('div','uniforms-history');body.append(form,history);
+const history=el('div','uniforms-history');body.append(form,history);U.soJanela(form,'Dados do período de teste',formTitle);
+function novoPeriodo(){resetForm();formStatus.textContent='';U.openEditor(form,'Registrar período de teste',resetForm)}
 
 function candOptions(cur=cand.select.value){const q=fold(cand.search.value);cand.select.replaceChildren(new Option('Selecione o candidato',''));const list=data().people.filter(p=>eligible(p)||p.id===cur);
  if(!list.length)cand.select.add(new Option('Nenhum candidato com exame admissional APTO aguardando o período',''));for(const p of list)if(p.id===cur||fold(p.name).includes(q))cand.select.add(new Option(p.name+(p.jobName?' · '+p.jobName:'')+(p.trial?.decision?' (decidido)':''),p.id));cand.select.value=cur}
@@ -72,10 +73,10 @@ function decide(p,approve){const info=P.trialInfo(p),early=info&&(info.kind==='r
 
 /* ---------- Alertas e histórico ---------- */
 function renderAlerts(){alerts.replaceChildren();for(const {p,info} of P.trialAlerts()){const box=el('div','people-alert');box.append(el('b',null,p.name+' — '+info.text),el('span',null,info.alert));const btn=button('Registrar decisão',()=>{loadTrial(p);U.openEditor(form,formTitle.textContent,resetForm)});box.append(btn);alerts.append(box)}}
-const hStatus=el('p','profiles-note');hStatus.setAttribute('role','status');const hTable=el('div','uniforms-table-wrap');history.append(el('h3','uniforms-heading','Períodos de teste'),hStatus,hTable);
+const hStatus=el('p','profiles-note');hStatus.setAttribute('role','status');const hTable=el('div','uniforms-table-wrap');const pintarQuadro=U.quadroHistorico(history,'Lançamento de Período de Teste','Registrar período de teste de um candidato',()=>novoPeriodo(),[hStatus,hTable]);
 /* Pending decisions first (nearest deadline on top), decided periods afterwards. */
 function renderHistory(){hTable.replaceChildren();const all=data().people.filter(p=>p.trial),list=[...all].sort((a,b)=>(a.trial.decision?1:0)-(b.trial.decision?1:0)||a.trial.end.localeCompare(b.trial.end));
- hStatus.textContent=all.length?all.length+' período(s) de teste · aguardando decisão primeiro.':'Nenhum período de teste registrado.';if(!list.length)return;
+ hStatus.textContent=all.length?all.length+' período(s) de teste · aguardando decisão primeiro.':'Nenhum período de teste registrado.';pintarQuadro(all.length);if(!list.length)return;
  const table=el('table','uniforms-table'),hr=el('tr');for(const h of ['Candidato','Cargo','Início','Fim','Dias','Status','Prazo','Ações'])hr.append(el('th',null,h));const thead=el('thead');thead.append(hr);const tbody=el('tbody');
  for(const p of list){const t=p.trial,i=P.trialInfo(p),tr=el('tr');if(i&&(i.kind==='ended'||i.kind==='today'))tr.classList.add('is-attention');if(t.status==='Cancelado')tr.classList.add('is-cancelled');const st=el('td');st.append(el('span','pill '+PILL[t.status],t.status));const dl=el('td');dl.append(el('span','pill '+(KIND_PILL[i?.kind]||''),i?.text||'—'));
   tr.append(el('td',null,p.name),el('td',null,p.jobName||'—'),el('td',null,dateBR(t.start)),el('td',null,dateBR(t.end)),el('td','uniforms-num',String(t.days)),st,dl);const a=el('td','uniforms-row-actions');
@@ -85,7 +86,7 @@ function renderHistory(){hTable.replaceChildren();const all=data().people.filter
 function details(p){dialog('Período de teste — '+p.name,(f,form)=>{const t=p.trial,i=P.trialInfo(p),d=el('dl','profiles-info');for(const [k,v] of [['Candidato',p.name],['Cargo',p.jobName||'Não informado'],['Início',dateBR(t.start)],['Fim',dateBR(t.end)],['Quantidade de dias',t.days+' dias corridos'],['Status',t.status],['Prazo',i?.text||'—'],['Decisão do DP',t.decision?(t.decision==='aprovado'?'Aprovado para continuidade':'Não aprovado')+' em '+dateBR(t.decidedAt.slice(0,10)):'Pendente'],['Observações',t.notes||'Nenhuma']])d.append(el('dt',null,k),el('dd',null,v));form.append(d)})}
 function renderAll(){P.load();renderAlerts();candOptions();renderHistory()}
 
-function showTrial(opts={}){document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Período de Teste';P.load();resetForm();formStatus.textContent='';if(opts.personId){const p=P.byId(opts.personId);if(p)loadTrial(p)}renderAll();normalizeHeaderActions(view)}
+function showTrial(opts={}){document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Período de Teste';P.load();resetForm();formStatus.textContent='';if(opts.personId){const p=P.byId(opts.personId);if(p){loadTrial(p);U.openEditor(form,formTitle.textContent,resetForm)}}renderAll();normalizeHeaderActions(view)}
 window.showTrial=showTrial;
 /* Module indicator: the Período de Teste card shows how many deadlines need a decision, recomputed whenever the card list is built. */
 const cards=document.getElementById('sector-content');

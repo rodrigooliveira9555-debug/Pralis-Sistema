@@ -31,7 +31,7 @@ const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('
 const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(STETHO);const heading=el('div');heading.append(el('h2',null,'DES - Exames Ocupacionais'),el('p',null,PATH));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
 addShortcuts(view.id,()=>menuBack(2,'Lançamentos Colaboradores')());
-const addButton=button('',()=>{resetForm();formStatus.textContent=''},'shortcut-circle');addButton.title='Novo exame';addButton.setAttribute('aria-label','Novo exame');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
+const addButton=button('',()=>novoExame(),'shortcut-circle');addButton.title='Novo exame';addButton.setAttribute('aria-label','Novo exame');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
 body.append(el('div','form-note','Guia de encaminhamento de exames. Demonstração local: registros neste navegador; a assinatura desenhada fica só na memória e não tem validade jurídica. Nenhuma mensagem é enviada automaticamente.'));
 
 /* ---------- Formulário (guia) ---------- */
@@ -90,8 +90,8 @@ const msgBox=el('div','uniforms-wide exams-message');const msgText=el('pre','exa
 const formError=el('p','uniforms-wide profiles-error');formError.setAttribute('role','alert');const formStatus=el('p','uniforms-wide profiles-note');formStatus.setAttribute('role','status');
 const actions=el('div','uniforms-wide actions exam-actions');const G=window.CicluzGP;let sendNext='';
 /* Salvar (check) e Enviar (avião de papel, abre menu E-mail/WhatsApp/SMS); nada é enviado sozinho: o aplicativo abre e a pessoa confirma. */
-const ICO_OK='m5 12 4 4L19 6',ICO_X='M6 6l12 12M18 6 6 18',ICO_PLANE='M22 2 11 13M22 2l-7 20-4-9-9-4z',ICO_MAIL='M3 5h18v14H3zM3 6l9 7 9-7',ICO_SMS='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM8 9h8M8 13h5';
-const save=U.iconize(el('button'),'Salvar',ICO_OK),cancelBtn=U.iconize(el('button'),'Cancelar',ICO_X);save.addEventListener('click',()=>{sendNext=''});cancelBtn.type='button';cancelBtn.addEventListener('click',()=>{resetForm();formStatus.textContent='Encaminhamento descartado.'});
+const ICO_PLANE='M22 2 11 13M22 2l-7 20-4-9-9-4z',ICO_MAIL='M3 5h18v14H3zM3 6l9 7 9-7',ICO_SMS='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM8 9h8M8 13h5';
+const save=el('button','btn','Salvar'),cancelBtn=el('button','btn ghost','Cancelar'); /* Cancelar · Salvar por extenso, como nas outras janelas; o Enviar continua redondo ao lado */save.addEventListener('click',()=>{sendNext=''});cancelBtn.type='button';cancelBtn.addEventListener('click',()=>{resetForm();formStatus.textContent='Encaminhamento descartado.'});
 const sendWrap=el('div','exam-send'),sendMenu=el('div','exam-send-menu');sendMenu.hidden=true;sendMenu.setAttribute('role','menu');
 const sendBtn=G.roundButton('Enviar',ICO_PLANE,()=>{sendMenu.hidden=!sendMenu.hidden;sendBtn.setAttribute('aria-expanded',String(!sendMenu.hidden))});sendBtn.setAttribute('aria-haspopup','menu');sendBtn.setAttribute('aria-expanded','false');
 for(const [l,path,ch] of [['E-mail',ICO_MAIL,'email'],['WhatsApp',CHAT,'whatsapp'],['SMS',ICO_SMS,'sms']]){const o=G.roundButton(l,path,()=>{sendMenu.hidden=true;sendBtn.setAttribute('aria-expanded','false');sendNext=ch;form.requestSubmit()});o.setAttribute('role','menuitem');sendMenu.append(o)}
@@ -119,7 +119,8 @@ form.append(formTitle,
  section('Data e horário do exame'),day.label,lbl('Hora',hour),hoursNote,lbl('Status do agendamento',scheduleStatus),
  section('Responsável pelo encaminhamento'),lbl('Nome do responsável pelo encaminhamento',referrer),referDate.label,sigBox,
  section('Pré-visualização da guia'),preview,section('Envio por WhatsApp'),msgBox,formError,formStatus,actions);
-const history=el('div','uniforms-history');body.append(form,history);
+const history=el('div','uniforms-history');body.append(form,history);U.soJanela(form,'Guia de encaminhamento',formTitle);
+function novoExame(){resetForm();formStatus.textContent='';U.openEditor(form,'Novo encaminhamento de exame',resetForm)}
 
 let draft={editingId:null};
 function personOptions(){const q=fold(person.search.value),cur=person.select.value;person.select.replaceChildren(new Option('Selecione o colaborador',''));for(const p of data().people)if(p.id===cur||fold(p.name).includes(q))person.select.add(new Option(p.name+(({CANDIDATO:' (candidato)',INATIVO:' (inativo)'})[p.status]||''),p.id));person.select.value=cur}
@@ -210,9 +211,9 @@ function linkDialog(personId){const link=P.generateLink(personId);if(!link)retur
 window.CicluzExams={linkDialog};
 
 /* ---------- Histórico ---------- */
-const hStatus=el('p','profiles-note');hStatus.setAttribute('role','status');const hTable=el('div','uniforms-table-wrap');history.append(el('h3','uniforms-heading','Histórico de exames'),hStatus,hTable);
+const hStatus=el('p','profiles-note');hStatus.setAttribute('role','status');const hTable=el('div','uniforms-table-wrap');const pintarQuadro=U.quadroHistorico(history,'Lançamento de Exame Ocupacional','Novo encaminhamento de exame ocupacional',()=>novoExame(),[hStatus,hTable]);
 function renderHistory(){P.load();hTable.replaceChildren();const all=data().exams;const list=[...all].sort((a,b)=>String(b.date||b.createdAt).localeCompare(String(a.date||a.createdAt)));
- hStatus.textContent=all.length?all.length+' exame(s), do agendamento mais recente ao mais antigo.':'Nenhum exame registrado.';if(!list.length)return;
+ hStatus.textContent=all.length?all.length+' exame(s), do agendamento mais recente ao mais antigo.':'Nenhum exame registrado.';pintarQuadro(all.length);if(!list.length)return;
  const table=el('table','uniforms-table'),hr=el('tr');for(const h of ['Agendado para','Colaborador','Tipo','Unidade','Status','Resultado','Ações'])hr.append(el('th',null,h));const thead=el('thead');thead.append(hr);const tbody=el('tbody');
  for(const x of list){const tr=el('tr');if(x.scheduleStatus==='Cancelado')tr.classList.add('is-cancelled');const pill=(t,c)=>{const td=el('td');td.append(el('span','pill '+c,t));return td};
   tr.append(el('td',null,x.date?dateBR(x.date)+(x.time?' '+x.time:''):'—'),el('td',null,x.personName),el('td',null,typeLabel(x.type)),el('td',null,UNITS[x.unit]?.label||'—'),pill(...(window.CicluzExamFlow?window.CicluzExamFlow.statusOf(x):[x.scheduleStatus,SCHEDULE_PILL[x.scheduleStatus]])),pill(x.result,RESULT_PILL[x.result]));
@@ -232,6 +233,6 @@ function showExams(opts={}){document.querySelectorAll('.view').forEach(v=>v.clas
  /* Demissional opened from the dismissal: company and CNPJ come from the collaborator's latest exam, when one exists. */
  if(opts.type==='DEMISSIONAL'&&opts.personId){const last=data().exams.filter(x=>x.personId===opts.personId&&x.company?.name).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)))[0];if(last){if(![...company.options].some(o=>o.value===last.company.name))company.add(new Option(last.company.name+' (registro anterior)',last.company.name));company.value=last.company.name;const d=companyCnpj(last.company.name)||last.company.cnpj;cnpj.value=d?cnpjMask(d):'';fillCompanies();authorizer.value=last.company.authorizer||'';authPhone.value=last.company.authorizerPhone?PH.mask(last.company.authorizerPhone):''}renderUnit();
   const p=P.byId(opts.personId);if(P.inDismissal(p))formStatus.textContent='Desligamento em andamento de '+p.name+': dados do colaborador preenchidos'+(last?', empresa do último exame':'')+'. Informe unidade, dia e hora e salve o agendamento.'}
- renderPreview();renderHistory();normalizeHeaderActions(view)}
+ renderPreview();renderHistory();normalizeHeaderActions(view);if(opts.personId||opts.type)U.openEditor(form,'Novo encaminhamento de exame',resetForm)}
 window.showExams=showExams;
 })();

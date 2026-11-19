@@ -42,7 +42,7 @@ const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('
 const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(ICON.shirt);const heading=el('div'),title=el('h2',null,'DES - Uniformes Entrega/Recebimento'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
 addShortcuts(view.id,()=>menuBack(2,'Lançamentos Colaboradores')());
-const addButton=button('',()=>{selectTab('launch');resetForm();dateInput.focus()},'shortcut-circle');addButton.title='Novo lançamento';addButton.setAttribute('aria-label','Novo lançamento');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
+const addButton=button('',()=>{selectTab('launch');novoLancamento()},'shortcut-circle');addButton.title='Novo lançamento';addButton.setAttribute('aria-label','Novo lançamento');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
 
 const note=el('div','form-note','Simulação local: lançamentos, estoque e referências ficam somente neste navegador até a integração com o banco de dados. Colaboradores demonstrativos.');
 const tabs=el('div','uniforms-tabs');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Seções de uniformes');
@@ -61,13 +61,19 @@ function iconize(b,label,path){b.classList.remove('btn','secondary','shortcut-ci
 function iconizeActions(box){for(const b of box.querySelectorAll(':scope>button')){const t=(b.getAttribute('aria-label')||b.textContent||'').trim();if(b.type==='submit')iconize(b,t||'Salvar',ICO_CHECK);else if(/^(Cancelar|Fechar)$/.test(t))iconize(b,t,ICO_CLOSE)}return box}
 function dialog(titleText,build,onSave,saveLabel='Salvar',after=renderTab){const d=el('dialog','location-dialog profiles-dialog uniforms-dialog');d.style.setProperty('--menu-accent',ACCENT);const h=el('h2',null,titleText),form=el('form','account-editor'),err=el('p','profiles-error');err.setAttribute('role','alert');form.noValidate=true;const field=(name,node)=>{const l=el('label',null,name);node.setAttribute('aria-label',name);l.append(node);form.append(l);return node};const result=build(field,form);const actions=el('div','actions');if(onSave){const save=el('button','btn',saveLabel);save.type='submit';actions.append(button('Cancelar',()=>d.close()),save)}else actions.append(button('Fechar',()=>d.close()));iconizeActions(actions);form.append(err,actions);form.onsubmit=e=>{e.preventDefault();if(!onSave)return d.close();const message=onSave(result);if(message){err.textContent=message;return}d.close();after()};d.append(h,form);document.body.append(d);d.onclose=()=>d.remove();d.showModal();form.querySelector('input,select,textarea')?.focus();return d}
 /* Painel de edição único: o formulário existente abre em janela própria (sem rolar a página) e volta ao lugar ao fechar. */
-function openEditor(form,titleText,onCancel){if(form._ed)return;const d=el('dialog','location-dialog profiles-dialog uniforms-dialog edit-panel');d.style.setProperty('--menu-accent',ACCENT);const host=form.closest('.view')||document.body,home=document.createComment('editor');form.before(home);form.hidden=false;d.append(el('h2',null,titleText),form);host.append(d);form._ed={d,home,onCancel};d.addEventListener('close',()=>{const e=form._ed;if(!e)return;form._ed=null;e.home.replaceWith(form);e.d.remove();e.onCancel?.()});d.showModal();d.querySelector('input:not([type=hidden]),select,textarea')?.focus({preventScroll:true})}
+function openEditor(form,titleText,onCancel){if(form._ed)return;if(form.dataset.soJanela)padronizarCampos(form);const d=el('dialog','location-dialog profiles-dialog uniforms-dialog edit-panel');d.style.setProperty('--menu-accent',ACCENT);const host=form.closest('.view')||document.body,home=document.createComment('editor');form.before(home);form.hidden=false;d.append(el('h2',null,titleText),form);host.append(d);form._ed={d,home,onCancel};d.addEventListener('close',()=>{const e=form._ed;if(!e)return;form._ed=null;e.home.replaceWith(form);if(form.dataset.soJanela)form.hidden=true;e.d.remove();e.onCancel?.()});d.showModal();d.querySelector('input:not([type=hidden]),select,textarea')?.focus({preventScroll:true})}
 /* Padrão do sistema nas janelas antigas (19/11/2026, Rodrigo). padronizarCampos: os rótulos ganham o formato dos cadastros novos (.compras-campo > .compras-rotulo), para o aviso de campo obrigatório vazio (CicluzComprasUI.sinalizarObrigatorios) funcionar; faz uma vez só por formulário. campoSituacao: o seletor Ativo/Inativo continua guardando o valor, mas quem aparece é o interruptor padrão; chame .pintar() depois de mudar o valor do seletor. */
 function padronizarCampos(form){if(form.dataset.camposPadrao)return;form.dataset.camposPadrao='1';for(const l of form.querySelectorAll(':scope>label')){const t=[...l.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());if(!t)continue;const r=el('span','compras-rotulo',t.textContent.trim());t.replaceWith(r);l.classList.add('compras-campo')}}
 function campoSituacao(select,titulo,dica,feminino){const slot=el('div','uniforms-wide');slot.pintar=()=>{const cu=window.CicluzComprasUI;if(!cu){const l=el('label',null,titulo);l.append(select);slot.replaceChildren(l);return}const q=cu.quadroSituacao(titulo,select.value==='1',{dica,feminino:!!feminino,aoMudar:()=>{select.value=q.ativo?'1':'0'}});slot.replaceChildren(q)};return slot}
 /* Áreas, setores e locais: a escolha usa a mesma árvore da tela DES - Área / Setor / Local (location-tree.js), com caixa de marcar. Usado no cargo e no Horário / Escala. */
 function unitPicker(selected,legend){const O=window.CicluzOrg,box=el('fieldset','unidades-quadro uniforms-wide'),arvore=window.CicluzLocationTree.seletor(selected);box.append(el('legend',null,legend),arvore.box);return {box,chosen:arvore.chosen,invalid:()=>O?.invalidSelection([...arvore.chosen])||[]}}
-function closeEditor(form){const e=form._ed;if(!e)return;form._ed=null;e.home.replaceWith(form);e.d.close();e.d.remove()}
+function closeEditor(form){if(form.dataset.soJanela)form.hidden=true;const e=form._ed;if(!e)return;form._ed=null;e.home.replaceWith(form);e.d.close();e.d.remove()}
+/* Telas de lançamento (19/11/2026, Rodrigo): a primeira tela é o histórico; o lançamento abre em janela pelo botão do título do quadro.
+   soJanela: o formulário deixa de aparecer na página (só dentro da janela), ganha o quadro e esconde o título interno.
+   quadroHistorico: devolve pintar(total), que monta o quadro do histórico com o botão "+ Lançamento de …" e o contador. */
+function soJanela(form,quadro,tituloInterno){form.dataset.soJanela='1';form.dataset.quadro=quadro;form.hidden=true;if(tituloInterno)tituloInterno.hidden=true}
+function quadroHistorico(host,rotulo,dica,aoNovo,corpo){let sec=null;return total=>{const cu=window.CicluzComprasUI;if(!cu){if(!sec){sec=el('div');host.append(sec)}sec.replaceChildren(button(rotulo,aoNovo,'btn'),...corpo);return}
+ const nova=cu.secao(rotulo,undefined,cu.pontaDaLista(total,total+(total===1?' lançamento':' lançamentos')));nova.querySelector('.compras-secao-cab h3').replaceChildren(cu.botaoTitulo(rotulo,dica,aoNovo));nova.append(...corpo);if(sec)sec.replaceWith(nova);else host.append(nova);sec=nova}}
 function confirmDialog(titleText,text,confirmLabel,onConfirm,after){return dialog(titleText,(field,form)=>{form.append(el('p','uniforms-confirm-text',text))},()=>onConfirm(),confirmLabel,after)}
 
 /* ---------- Seção 1: formulário de lançamento ---------- */
@@ -90,7 +96,8 @@ const items=el('div','uniforms-wide uniforms-items');
 const formError=el('p','uniforms-wide profiles-error');formError.setAttribute('role','alert');const formStatus=el('p','uniforms-wide profiles-note');formStatus.setAttribute('role','status');
 const formActions=el('div','uniforms-wide actions');const cancelEdit=button('Cancelar',()=>{resetForm();formStatus.textContent='Lançamento descartado.'});const saveButton=el('button','btn','Salvar');saveButton.type='submit';formActions.append(cancelEdit,saveButton);
 form.append(formTitle,date.label,collab.label,jobField.label,statusField.label,reference,picker,items,typeField.label,origin.label,formError,formStatus,formActions);
-const history=el('div','uniforms-history');launch.append(form,history);
+const history=el('div','uniforms-history');launch.append(form,history);soJanela(form,'Dados do lançamento',formTitle);
+function novoLancamento(){resetForm();openEditor(form,'Novo lançamento de uniforme',resetForm)}
 
 /* Draft: selected uniforms keep their own quantity and price text while typing. */
 let draft={editingId:null,items:new Map()};
@@ -164,7 +171,7 @@ function editMovement(m){if(m.status==='CANCELADO')return;selectTab('launch');dr
 
 /* ---------- Seção 1: histórico ---------- */
 const historyStatus=el('p','profiles-note');historyStatus.setAttribute('role','status');const historyTable=el('div','uniforms-table-wrap');
-history.append(el('h3','uniforms-heading','Histórico de lançamentos'),historyStatus,historyTable);
+const pintarQuadro=quadroHistorico(history,'Lançamento de Uniforme Entrega','Novo lançamento de entrega, venda, devolução ou descarte',()=>novoLancamento(),[historyStatus,historyTable]);
 function collaboratorActive(m){const c=collaboratorById(m.collaboratorId);return c?c.active:m.collaboratorActive!==false}
 const RECEIPT_TYPES=new Set(['ENTREGUE','VENDIDO','DEVOLVIDO']),RECEIPT_ICON='M7 3h10v18l-2.5-1.5L12 21l-2.5-1.5L7 21zM10 8h4M10 12h4';
 function receiptLines(m){return ['Comprovante de '+({ENTREGUE:'entrega',VENDIDO:'venda',DEVOLVIDO:'devolução'})[m.type]+' de uniforme'+(m.status==='CANCELADO'?' (LANÇAMENTO CANCELADO)':''),'Colaborador: '+m.collaboratorName,'Cargo: '+(m.jobName||'—'),'Data: '+dateBR(m.date),'Peças:',...m.items.map(i=>'• '+uniformName(i.uniformId)+' — '+i.quantity+' un.'),...(m.type==='VENDIDO'?['Valor total: '+money(S.saleTotal(m))]:[]),'Lançamento: '+m.id.slice(0,8)]}
@@ -174,7 +181,7 @@ function printReceipt(m){const fr=el('iframe');fr.title='Impressão do comprovan
 function receiptDialog(m){dialog('Comprovante — '+m.collaboratorName,(f,form)=>{const box=el('div','uniforms-receipt');for(const l of receiptLines(m))box.append(el('p',null,l));
   form.append(box,el('p','profiles-note','Comprovante demonstrativo gerado a partir do lançamento. Não foi enviado nem guardado fora deste navegador; para valer como recibo, imprima e colha a assinatura. Fica disponível também na ficha do colaborador e em Documentações.'));
   const p=window.CicluzPeople?.byId(m.collaboratorId),tools=el('div','people-banner-tools');tools.append(button('Imprimir',()=>printReceipt(m)),button('Compartilhar no WhatsApp',()=>openExternal('https://wa.me/'+(p?.whatsapp?'55'+p.whatsapp:'')+'?text='+encodeURIComponent(receiptLines(m).join('\n'))),'btn'));form.append(tools)},null)}
-function renderHistory(){historyTable.replaceChildren();
+function renderHistory(){historyTable.replaceChildren();pintarQuadro(data.movements.length);
  const list=[...data.movements].sort((a,b)=>b.date.localeCompare(a.date)||String(b.createdAt).localeCompare(String(a.createdAt)));
  historyStatus.textContent=list.length?list.length+' lançamento(s), do mais recente ao mais antigo.':'Nenhum lançamento registrado.';
  if(!list.length)return;
@@ -240,11 +247,11 @@ function renderOverview(){rOverview.replaceChildren();const entries=Object.entri
  for(const [key,r] of entries){const job=jobs.find(j=>j.key===key);const tr=el('tr');tr.append(el('td',null,job?.name||r.jobName),el('td','uniforms-num',String(r.items.length)),el('td','uniforms-num',String(r.items.reduce((n,i)=>n+i.quantity,0))));const a=el('td','uniforms-row-actions');a.append(iconButton('Abrir referência de '+(job?.name||r.jobName),ICON.eye,()=>{refJob=key;rSearch.node.value='';renderReferences();rJob.node.focus()}));tr.append(a);tbody.append(tr)}table.append(thead,tbody);rOverview.append(table)}
 
 /* ---------- Entrada ---------- */
-function showUniforms(tab='launch',opts={}){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Uniformes';load();resetForm();selectTab(tabButtons[tab]?tab:'launch');if(opts.collaboratorId){collab.node.value=opts.collaboratorId;collab.node.dispatchEvent(new Event('change'))}normalizeHeaderActions(view)}
+function showUniforms(tab='launch',opts={}){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent='Uniformes';load();resetForm();selectTab(tabButtons[tab]?tab:'launch');if(opts.collaboratorId){collab.node.value=opts.collaboratorId;collab.node.dispatchEvent(new Event('change'));openEditor(form,'Novo lançamento de uniforme',resetForm)}normalizeHeaderActions(view)}
 window.showUniforms=showUniforms;
 /* Shared with Compras de Uniformes: one store, one set of components. */
 window.CicluzUniformStore={load,transact,get:()=>data,failed:()=>loadError}
 window.CicluzUniformReceipt={types:RECEIPT_TYPES,lines:m=>receiptLines(m),open:id=>{load();const m=data.movements.find(x=>x.id===id);if(m)receiptDialog(m)}};;
-window.CicluzUniformUI={openExternal,el,button,iconButton,svg,ICON,fold,newId,money,moneyInput,cents,dateBR,today,enumField,dialog,confirmDialog,openEditor,closeEditor,unitPicker,padronizarCampos,campoSituacao,iconize,iconizeActions,uniformName,STATUS};
+window.CicluzUniformUI={openExternal,el,button,iconButton,svg,ICON,fold,newId,money,moneyInput,cents,dateBR,today,enumField,dialog,confirmDialog,openEditor,closeEditor,soJanela,quadroHistorico,unitPicker,padronizarCampos,campoSituacao,iconize,iconizeActions,uniformName,STATUS};
 window.addEventListener('storage',e=>{if(e.key===KEY){load();if(view.classList.contains('show'))renderTab()}});
 })();

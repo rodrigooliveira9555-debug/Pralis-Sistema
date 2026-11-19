@@ -42,3 +42,6 @@ Quem decide: **M** = Marco · **R** = Rodrigo (dono das regras operacionais e fi
 
 ## P-34 — Horário e escala: um cadastro só (resolvida em 19/11/2026)
 Rodrigo decidiu: horário e escala andam juntos num cadastro único; a hora pode mudar por dia da semana; o colaborador recebe um vínculo só; o cadastro é ligado a área/setor/local. Implementado (ver topo do `DESIGN_SYSTEM.md`). O setor do cadastro **filtra** os colaboradores no lançamento (decidido em 19/11/2026).
+
+## P-35 — Telas tiradas do menu Lançamentos Colaboradores e "Tipos de Uniforme" (19/11/2026)
+Rodrigo mandou tirar do menu: Lançamento de Horário / Escala, Escala Individual, Horas Extras e Noturno e Receber Documentos. Foram tirados só do menu, como na P-33. **Falta decidir:** (1) apagar código e dados dessas telas ou só manter fora do menu; (2) por onde o colaborador passa a receber o Horário / Escala, já que a tela de lançamento saiu do menu (hoje só pelo botão na ficha do colaborador); (3) "Tipos de Uniforme" em Cadastros Geral Colaboradores: essa tela não existe hoje — a lista de uniformes é fixa no código (`uniforms-data.js`). Criar o cadastro muda o formato dos dados e precisa de definição do Rodrigo.
