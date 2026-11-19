@@ -226,7 +226,7 @@
         const caixaCompleta = el('div', 'compras-etapa compras-largo');
         const tituloCompleto = (cargo) => 'Responsável legal no contrato' + (nomeDe(E.CARGOS_EMPRESA, cargo) ? ' — ' + nomeDe(E.CARGOS_EMPRESA, cargo) : '');
         const refazerCompleto = () => { if (rc) caixaCompleta.replaceChildren(E.blocoResponsavel(rc, { titulo: tituloCompleto })); };
-        const temCt = U.quadroSituacao('Terá contrato?', Boolean(rc && (v.contrato || {}).temDocumento), { textos: ['Sim', 'Não'], dica: 'Com Sim, os dados completos do responsável legal são pedidos aqui e entram no contrato, e o cadastro ganha a etapa Contrato.', aoMudar: () => aoMudarContrato() });
+        const temCt = U.quadroSituacao('Terá contrato?', Boolean(rc && (v.contrato || {}).temDocumento), { textos: ['Sim', 'Não'], dica: 'Com Sim, os dados completos de quem assina são pedidos aqui e entram no contrato, e o cadastro ganha a etapa Contrato.', aoMudar: () => aoMudarContrato() });
         temCt.classList.add('compras-largo'); temCt.querySelector('.account-status-switch').setAttribute('aria-label', 'Terá contrato?');
         rep.no.querySelector('legend').after(temCt);
         const comContrato = () => Boolean(rc) && temCt.ativo;

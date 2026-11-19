@@ -100,6 +100,8 @@ const fe=el('p','uniforms-wide profiles-error'),fs=el('p','uniforms-wide profile
 const act=el('div','uniforms-wide actions'),save=el('button','btn','Salvar');save.type='submit';let editing=null;act.append(button('Cancelar',()=>closeForm(),'btn ghost'),save); /* padrão: Cancelar · Salvar por extenso, à direita, fora do quadro */
 /* Situação no interruptor padrão (no lugar do seletor Ativo/Inativo). O seletor fActive continua guardando o valor; o interruptor só o mostra e altera. */
 const statusSlot=el('div','uniforms-wide');let sitBox=null;
+/* Campo obrigatório vazio (18/11/2026, Rodrigo): o mesmo aviso do cadastro de cliente — a borda do campo na cor do cabeçalho e a mensagem embaixo (CicluzComprasUI.sinalizarObrigatorios). Para isso os rótulos ganham o formato dos cadastros novos (.compras-campo > .compras-rotulo), uma vez só. */
+let camposPadronizados=false;function padronizarCampos(){if(camposPadronizados)return;camposPadronizados=true;for(const l of form.querySelectorAll(':scope>label')){const t=[...l.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());if(!t)continue;const r=el('span','compras-rotulo',t.textContent.trim());t.replaceWith(r);l.classList.add('compras-campo')}}
 function pintarSituacao(){const cu=window.CicluzComprasUI;if(!cu){statusSlot.replaceChildren(lbl('Status *',fActive));return}sitBox=cu.quadroSituacao('Situação do cadastro',fActive.value==='1',{dica:'Cadastro inativo continua guardado.',aoMudar:()=>{fActive.value=sitBox.ativo?'1':'0'}});statusSlot.replaceChildren(sitBox)}
 form.append(formTitle,lbl('Tipo de ocorrência *',fType),lbl('Nome da categoria *',fCat),catNewLbl,lbl('Subcategoria *',fSub),subNewLbl,lbl('Tipo de documento *',fDoc),statusSlot,more,fe,fs,act);
 body.append(form);
@@ -118,7 +120,7 @@ function fillWarnSel(cur){mWarn.replaceChildren(new Option('Não conferir',''));
 const paintMore=()=>{warnBox.hidden=fType.value!=='SUSPENSÃO'};
 fCat.addEventListener('change',()=>{catNewLbl.hidden=fCat.value!==NEW;fillSubSel('')});fSub.addEventListener('change',()=>{subNewLbl.hidden=fSub.value!==NEW});fType.addEventListener('change',()=>{paintMore();fillWarnSel('')});
 
-function openForm(c){editing=c?c.id:null;load();fillTypeSel(c?.type);fillCatSel(c?.catId);fillSubSel(c?.subId);fillDocSel(c?(c.docCatId||(c.model?'legacy':'')):'',c?.model);fActive.value=c?(c.active?'1':'0'):'1';pintarSituacao();fCatNew.value=fSubNew.value='';
+function openForm(c){editing=c?c.id:null;load();fillTypeSel(c?.type);fillCatSel(c?.catId);fillSubSel(c?.subId);fillDocSel(c?(c.docCatId||(c.model?'legacy':'')):'',c?.model);padronizarCampos();fActive.value=c?(c.active?'1':'0'):'1';pintarSituacao();fCatNew.value=fSubNew.value='';
  const cf=c?.config||{};mSev.value=cf.severity||'';mLook.value=cf.lookbackDays||'';mRec.value=cf.alertRecurrences||'';mDP.checked=!!cf.needsDP;mLegal.checked=!!cf.needsLegal;mGuide.value=cf.guidance||'';
  const r=c?ruleOf(c.id):null;fillWarnSel(r?.warningCategoryId||'');mWarnDays.value=r?.periodDays||'';paintMore();more.open=!!(c&&(cf.severity||cf.lookbackDays||cf.alertRecurrences||cf.needsDP||cf.needsLegal||r));
  formTitle.textContent=c?'Editar cadastro: '+catText(c):'Novo cadastro';save.textContent='Salvar';fe.textContent=fs.textContent='';form.hidden=false;{const want=more.open;U.openEditor(form,formTitle.textContent,closeForm);more.open=want}}
@@ -129,7 +131,7 @@ form.onsubmit=e=>{e.preventDefault();fe.textContent=fs.textContent='';load();con
  if(!fSub.value)errs.push('Selecione ou cadastre a subcategoria.');if(fSub.value===NEW&&!fSubNew.value.trim())errs.push('Informe o nome da nova subcategoria.');if(!fDoc.value)errs.push('Selecione o tipo de documento (ou "Sem documento associado").');
  const look=mLook.value===''?null:Number(mLook.value),recur=mRec.value===''?null:Number(mRec.value),wd=mWarnDays.value===''?null:Number(mWarnDays.value);
  if([look,recur,wd].some(x=>x!==null&&!(Number.isInteger(x)&&x>=1)))errs.push('Nas configurações adicionais, use números inteiros a partir de 1.');if(type==='SUSPENSÃO'&&!!mWarn.value!==(wd!==null))errs.push('Para conferir advertências anteriores, informe a categoria e o período juntos.');
- if(errs.length){fe.textContent=errs.join(' ');return}
+ if(errs.length){fe.textContent=errs[0];window.CicluzComprasUI?.sinalizarObrigatorios(form);return}
  const catId=fCat.value===NEW?M.addCategory(fCatNew.value):fCat.value;if(!catId){fe.textContent='Não foi possível cadastrar a categoria.';return}
  const subId=fSub.value===NEW?M.addSub(catId,fSubNew.value):fSub.value;if(!subId){fe.textContent='Não foi possível cadastrar a subcategoria.';return}
  const cat=M.catById(catId),sub=M.subById(catId,subId);load();
@@ -156,7 +158,7 @@ const CU=()=>window.CicluzComprasUI,DOC_ICON='M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M
 function ruleLines(c){const r=discOf(c);if(!r)return ['Sem regra configurada.'];const o=[];if(r.warnCount)o.push(r.warnCount+(r.warnCount===1?' advertência':' advertências')+' → avaliar suspensão');if(r.suspCount)o.push(r.suspCount+(r.suspCount===1?' suspensão':' suspensões')+' → avaliar justa causa');if(!r.active)o.push('Regra inativa');return o}
 function leafRow(c,linhas){const stack=lines=>lines.map(t=>el('span',null,t));
  const row=CU().linhaLista({icones:[{icone:'<path d="'+DOC_ICON+'"/>',rotulo:c.type}],grade:'grade-ocorrencia',
-  colunas:[{chave:'nome',conteudo:c.type},{chave:'categoria',conteudo:c.name},{chave:'subcategoria',conteudo:c.subcategory||'—'},{chave:'tipodoc',conteudo:docName(c)||'—'},{chave:'regra',conteudo:stack(ruleLines(c))}],
+  colunas:[{chave:'nome',conteudo:typeof formatSystemName==='function'?formatSystemName(c.type):c.type},{chave:'categoria',conteudo:c.name},{chave:'subcategoria',conteudo:c.subcategory||'—'},{chave:'tipodoc',conteudo:docName(c)||'—'},{chave:'regra',conteudo:stack(ruleLines(c))}],
   estado:c.active?'Ativo':'Inativo',
   acoes:{rotulo:catText(c),lista:linhas,aoEditar:()=>openForm(c),aoExcluir:()=>toggleRow(c)}});
  if(!c.active)row.classList.add('inativo');

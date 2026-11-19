@@ -651,7 +651,7 @@ button.stepper-node:focus-visible{outline:2px solid var(--stepper-accent);outlin
 .compras-linha.grade-ocorrencia>*{grid-row:1}
 .compras-linha.grade-ocorrencia>.compras-linha-icones{grid-column:1;position:sticky;left:0;z-index:2;align-self:stretch;align-items:center;background:inherit;padding-left:12px;margin-left:-12px}
 .compras-linha.grade-ocorrencia>.c-nome{grid-column:2;position:sticky;left:76px;z-index:1;align-self:stretch;display:flex;align-items:center;background:inherit;box-shadow:1px 0 0 var(--layout-line,#dedee3);padding-right:8px}
-.compras-linha.grade-ocorrencia>.c-categoria{grid-column:3}
+.compras-linha.grade-ocorrencia>.c-categoria{grid-column:3;font-weight:400;color:var(--muted,#73737a)}/* só o nome da linha tem peso; as outras colunas são iguais entre si, como em Clientes */
 .compras-linha.grade-ocorrencia>.c-subcategoria{grid-column:4}
 .compras-linha.grade-ocorrencia>.c-tipodoc{grid-column:5}
 .compras-linha.grade-ocorrencia>.c-regra{grid-column:6}
