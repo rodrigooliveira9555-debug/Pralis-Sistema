@@ -1,5 +1,20 @@
 # CICLUZ — referência de interface
 
+## Identidade do cadastro: um bloco só para nome, ícone e prévia (19/11/2026)
+Correção pedida pelo Rodrigo, que comparou o cadastro de grupo (referência) com a janela de Tipos de Uniforme e viu dois desenhos diferentes para a mesma coisa. **Supera** a seção "Tipos de Uniforme: ícone por peça e escolha do ícone no cadastro" no ponto da escolha do ícone (fileira `.icon-choice` solta, com anel no escolhido e texto embaixo): esse desenho foi apagado. 
+
+**Regra:** todo cadastro que tem ícone próprio usa o bloco do cadastro de grupo, pelas peças únicas de `uniforms.js` (`CicluzUniformUI`): `blocoIcone`, `quadroIdentidade` e `previaIcone`. Ninguém monta esse bloco à mão em tela nova.
+
+**Ordem da janela de cadastro:**
+1. Quadro de identidade (`.job-identity.account-identity`, 12 px de respiro, canto de 10 px): o campo do nome e, abaixo, "Ícone do …" com **seis quadradinhos de 32 px** (`.account-icon-dot`) e o resto em **"Mais ícones"** (`details.identity-advanced`).
+2. Demais campos em duas colunas; o **quadro de Situação** (interruptor) fica na coluna da direita, sem texto de ajuda dentro.
+3. **Cartão de prévia** (`.icon-live-preview`): o ícone e o nome como vão aparecer na lista.
+4. **Cancelar · Salvar** fora do quadro, à direita.
+
+O quadradinho escolhido não muda de cor; quem mostra a escolha é a prévia. Quando o sistema consegue escolher sozinho, o primeiro quadradinho é "Automático".
+
+**Conferência obrigatória:** antes de entregar uma janela de cadastro nova ou alterada, abrir o cadastro de grupo ao lado e comparar por foto e por medida (quadro de identidade, letra dos rótulos, quadradinho, quadro de Situação, prévia). **Dívida registrada:** `groups.js`, `location-tree.js` e o cadastro de cargo ainda montam esse bloco com código próprio (mesmo desenho, mesmas classes); a troca pelas peças únicas fica para uma entrega própria, por mexer em telas financeiras. A regra também está em Configurações → Design System → Ícones.
+
 ## Janelas de lançamento: Sim/Não em lista de escolha e títulos de campo na letra do rótulo (19/11/2026)
 Correção pedida pelo Rodrigo na janela de Ocorrência. **Supera** os dois botões de rádio de "Foi comunicado?" (`.occurrences-choice`, removido do CSS): pergunta de **Sim/Não obrigatória e sem resposta pronta** usa a **lista de escolha padrão** de 42 px (Selecione · Sim · Não), ao lado dos outros campos; quando há resposta pronta, usa o interruptor. Botão de rádio solto não é usado em janela. O título dos campos compostos (colaborador com busca, observação por áudio, foto ou documento) passa a usar **a letra do rótulo** (12 px) como os outros campos: `padronizarCampos` marca `.uniforms-enum-label` como `.compras-rotulo`. Vale para as quatro janelas de lançamento (Ocorrência, Exame, Uniforme, Período de Teste). **Conferência obrigatória antes de entregar:** rolar a janela inteira e olhar cada trecho por foto, não só o topo.
 
