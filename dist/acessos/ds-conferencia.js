@@ -79,6 +79,8 @@
     ['DES - Contratos Fornecedores', () => window.CicluzContratos.abrirPastaContratos('des-contratos-fornecedores'), false],
     ['MER - Contratos Fornecedores', () => window.CicluzContratos.abrirPastaContratos('mer-contratos-fornecedores'), false],
     ['VND - Contratos Clientes', () => window.CicluzContratos.abrirPastaContratos('vnd-contratos-clientes'), false],
+    ['DES - Folha de Pagamento', chamar('showFolhaCustos'), false],
+    ['DES - Folha de Pagamento Importação Contabilidade', chamar('showFolhaImportacao'), false],
     ['Janela de escolha (árvore do contrato)', () => window.CicluzContratos.seletorArvore({ titulo: 'Conferência', sigla: 'MER', nos: () => [{ id: 'a', nome: 'Grupo', ativo: true, filhos: [{ id: 'a|b', nome: 'Subgrupo', ativo: true }] }], marcados: new Set(), aoConfirmar: () => {} }), 'ja-e-janela'],
   ];
   const fecharJanelas = async () => { for (let i = 0; i < 4 && document.querySelector('dialog[open]'); i++) { const d = [...document.querySelectorAll('dialog[open]')].pop(); d.close(); await esperar(150); } };
