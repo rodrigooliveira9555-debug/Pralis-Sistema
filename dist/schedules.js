@@ -58,14 +58,16 @@ function makeView(key,title,group,note){const view=el('section','view');view.id=
  const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
  addShortcuts(view.id,()=>menuBack(2,group)());if(note)body.append(el('div','form-note',note));
  return views[key]={view,body,title,group,render:()=>{}}}
-function show(key,opts={}){load();P.load();const v=views[key];document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));v.view.classList.add('show');document.getElementById('crumb').textContent=menuCrumb(2,v.group,v.title);const t=document.getElementById('title');if(t)t.textContent=v.title;v.render(opts);normalizeHeaderActions(v.view)}
+/* Horários e Escalas numa tela só, "DES - Horário / Escala" (18/11/2026, pedido do Rodrigo): a parte das escalas mora dentro da tela dos horários, em bloco próprio com título. Quem pede a tela pela chave antiga ('scales') cai na mesma tela. */
+function makePart(key,parentKey,partTitle,note){const p=views[parentKey],body=el('div','jornada-parte');body.append(el('h3','uniforms-heading jornada-parte-titulo',partTitle));if(note)body.append(el('p','profiles-note',note));p.body.append(body);(p.parts=p.parts||[]).push(key);return views[key]={view:p.view,body,title:p.title,group:p.group,render:()=>{},parentKey}}
+function show(key,opts={}){load();P.load();const v=views[key].parentKey?views[views[key].parentKey]:views[key];document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));v.view.classList.add('show');document.getElementById('crumb').textContent=menuCrumb(2,v.group,v.title);const t=document.getElementById('title');if(t)t.textContent=v.title;v.render(opts);for(const k of v.parts||[])views[k].render(opts);normalizeHeaderActions(v.view)}
 const statusPill=active=>el('span','pill '+(active?'p-green':'p-red'),active?'Ativo':'Inativo');
 const messages=()=>{const error=el('p','uniforms-wide profiles-error'),status=el('p','uniforms-wide profiles-note');error.setAttribute('role','alert');status.setAttribute('role','status');return {error,status}};
 function table(heads){const t=el('table','uniforms-table'),hr=el('tr');for(const h of heads)hr.append(el('th',null,h));const th=el('thead');th.append(hr);const tb=el('tbody');t.append(th,tb);return {t,tb}}
 const storageWarning=()=>loadError?el('p','people-alert','Não foi possível ler os horários e escalas salvos neste navegador. Nada será gravado para não sobrescrever os dados.'):null;
 
 /* ---------- Cadastro de Horários ---------- */
-{const V=makeView('shifts','DES - Horários','Cadastros Geral Colaboradores','Modelos de horário reutilizáveis. O modelo não tem colaborador: o vínculo é feito em Lançamentos Colaboradores → DES - Lançamento de Horários, onde cada pessoa pode ter o próprio intervalo sem alterar o modelo. Os horários são exemplos de cadastro, não jornadas oficiais definidas pela plataforma.');
+{const V=makeView('shifts','DES - Horário / Escala','Cadastros Geral Colaboradores');V.body.append(el('p','profiles-note','Modelos de horário e de escala reutilizáveis. O modelo não tem colaborador: o vínculo é feito em Lançamentos Colaboradores.'),el('h3','uniforms-heading jornada-parte-titulo','Horários'),el('p','profiles-note','Cada pessoa pode ter o próprio intervalo sem alterar o modelo (em DES - Lançamento de Horários). Os horários são exemplos de cadastro, não jornadas oficiais definidas pela plataforma.'));
  const form=el('form','form-fields uniforms-form');form.noValidate=true;const heading=el('h3','uniforms-wide uniforms-heading','Cadastro horário');
  const name=el('input'),start=time(),end=time(),bs=time(),be=time(),brkOut=el('input'),totalOut=el('input'),active=el('select');name.maxLength=60;name.placeholder='Ex.: Horário 01 — Manhã';brkOut.readOnly=totalOut.readOnly=true;active.add(new Option('Ativo','1'));active.add(new Option('Inativo','0'));
  const sixNote=el('p','uniforms-wide people-alert schedules-six');sixNote.hidden=true;
@@ -97,7 +99,7 @@ function recalc(){const c=calc(start.value,end.value,bs.value,be.value);brkOut.v
  views.shifts.reset=reset}
 
 /* ---------- Cadastro de Escalas ---------- */
-{const V=makeView('scales','DES - Escalas','Cadastros Geral Colaboradores','Modelos de escala reutilizáveis: dias de trabalho e de folga na semana. O modelo não tem colaborador: o vínculo é feito em Lançamentos Colaboradores → DES - Escalas de Folga. A plataforma não aplica regras de folga ou jornada que não estejam configuradas aqui.');
+{const V=makePart('scales','shifts','Escalas','Dias de trabalho e de folga na semana; o vínculo com a pessoa é feito em DES - Escalas de Folga. A plataforma não aplica regras de folga ou jornada que não estejam configuradas aqui.');
  const form=el('form','form-fields uniforms-form');form.noValidate=true;const heading=el('h3','uniforms-wide uniforms-heading','Cadastro escala');
  const name=el('input'),type=el('select'),notes=el('textarea'),active=el('select'),offOut=el('input');name.maxLength=60;name.placeholder='Ex.: Segunda a sábado';SCALE_TYPES.forEach(x=>type.add(new Option(x,x)));notes.rows=3;notes.addEventListener('focusout',e=>e.stopPropagation());active.add(new Option('Ativo','1'));active.add(new Option('Inativo','0'));offOut.readOnly=true;
  const daysBox=el('fieldset','uniforms-wide jornada-days');daysBox.append(el('legend',null,'Dias de trabalho *'));const checks=DAYS.map((d,i)=>{const l=el('label','jornada-day'),c=el('input');c.type='checkbox';c.value=String(i);c.setAttribute('aria-label',DAY_NAMES[i]);l.append(c,el('span',null,d));daysBox.append(l);c.addEventListener('change',paintOff);return c});
@@ -139,7 +141,7 @@ function peoplePicker(){const box=el('fieldset','uniforms-wide jornada-people'),
  search.addEventListener('input',render);return {box,picked,render,clear:()=>{picked.clear();search.value='';render()}}}
 const modelSelect=(kind,cur)=>{const s=el('select');s.add(new Option(kind==='shift'?'Selecione o horário':'Selecione a escala',''));for(const m of (kind==='shift'?data.shifts:data.scales).filter(x=>x.active||x.id===cur).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')))s.add(new Option(m.name+' · '+(kind==='shift'?m.start+' às '+m.end:daysText(m.days)),m.id));s.value=cur||'';return s};
 
-function makeLinker(kind){const isShift=kind==='shift',key=isShift?'shift-links':'scale-links',noun=isShift?'horário':'escala',cad=isShift?'DES - Horários':'DES - Escalas';
+function makeLinker(kind){const isShift=kind==='shift',key=isShift?'shift-links':'scale-links',noun=isShift?'horário':'escala',cad='DES - Horário / Escala';
  const V=makeView(key,isShift?'DES - Lançamento de Horários':'DES - Escalas de Folga','Lançamentos Colaboradores',isShift?'Vincule um modelo de horário a um ou vários colaboradores a partir de uma data. O intervalo individual vale só para aquele colaborador e não altera o modelo. Vínculos anteriores ficam no histórico.':'Vincule um modelo de escala a um ou vários colaboradores a partir de uma data e registre folgas e exceções. Vínculos anteriores ficam no histórico.');
  const form=el('form','form-fields uniforms-form');form.noValidate=true;const from=DB.field('Data de início *'),modelWrap=el('div','uniforms-wide jornada-model'),preview=el('p','uniforms-wide profiles-note');preview.setAttribute('aria-live','polite');let model=modelSelect(kind);
  const bs=time(),be=time(),picker=peoplePicker(),{error,status}=messages(),actions=el('div','uniforms-wide actions'),save=el('button','btn','Vincular aos selecionados');save.type='submit';
@@ -273,7 +275,7 @@ const sessionUser=()=>{try{return JSON.parse(sessionStorage.getItem('cicluz-sync
 
  /* Horários alternativos do colaborador (optional) */
  function setsView(p){setBox.replaceChildren();setBox.append(el('h3','uniforms-heading','Horários do colaborador'));const ef=effective(p.id,ref),cur=setOf(p.id,ref);
-  setBox.append(el('p','profiles-note','Horário principal: '+(ef.shift?ef.shift.name+' · '+shiftText(ef.shift):'não vinculado')+'. Os alternativos, de domingo e de feriado são opcionais e usam os modelos de DES - Horários.'));
+  setBox.append(el('p','profiles-note','Horário principal: '+(ef.shift?ef.shift.name+' · '+shiftText(ef.shift):'não vinculado')+'. Os alternativos, de domingo e de feriado são opcionais e usam os modelos de DES - Horário / Escala.'));
   const f=el('form','form-fields uniforms-form');f.noValidate=true;const sels={},from=DB.field('A partir de *');from.set(today());
   for(const [k] of SLOTS.filter(s=>s[0]!=='main')){const s=el('select');s.add(new Option('Não usar',''));for(const m of data.shifts.filter(x=>x.active||x.id===cur?.[k]).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')))s.add(new Option(m.name+' · '+m.start+' às '+m.end,m.id));s.value=cur?.[k]||'';sels[k]=s}
   const {error,status}=messages(),act=el('div','uniforms-wide actions'),sv=el('button','btn','Salvar horários');sv.type='submit';act.append(sv);status.textContent=flash;flash='';
