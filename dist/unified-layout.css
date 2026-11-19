@@ -43,7 +43,10 @@ body:is(.dark-theme,:not(.dark-theme)) .view :is(table,td){background:#fff;color
 body:is(.dark-theme,:not(.dark-theme)) .view th{background:var(--layout-gap)!important;color:var(--layout-ink)!important}
 /* Native dialogs and the existing modal share one header, field and spacing treatment. */
 body:is(.dark-theme,:not(.dark-theme)) :is(dialog,.modal>.dialog){--ui-control-bg:var(--theme-field,#fff);--ui-input-color:var(--layout-ink);--ui-label-color:var(--layout-ink);--ui-border-base:var(--layout-line);--menu-accent:var(--dialog-accent,#7c3aed);background:#fff!important;color:var(--layout-ink)!important;border:0!important;border-radius:0!important;padding:22px;box-sizing:border-box;overflow:auto}
-body:is(.dark-theme,:not(.dark-theme)) dialog form{padding:0}
+body:is(.dark-theme,:not(.dark-theme)) dialog form:not(.form-fields){padding:0}
+/* Formulário que é o próprio quadro de campos (.form-fields) mantém o respiro do quadro também dentro de janela (18/11/2026): sem isso os campos encostavam na borda e a linha Cancelar/Salvar saía do quadro. */
+body:is(.dark-theme,:not(.dark-theme)) dialog form.form-fields{padding:14px}
+body:is(.dark-theme,:not(.dark-theme)) dialog form.form-fields[data-quadro]{padding-top:18px}
 body:is(.dark-theme,:not(.dark-theme)) :is(dialog,.modal>.dialog) :is(.location-dialog-header,.organogram-editor-header){margin:-22px -22px 18px;padding:18px 22px;background:var(--dialog-accent,#7c3aed)!important;color:var(--navigation-ink)!important;border-color:var(--layout-line)!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(dialog,.modal>.dialog)>:is(h2,h3),body:is(.dark-theme,:not(.dark-theme)) dialog>form>:is(h2,h3){background:var(--dialog-accent,#7c3aed)!important;color:var(--navigation-ink)!important;margin:-22px -22px 18px;padding:18px 22px}
 body:is(.dark-theme,:not(.dark-theme)) dialog :is(.location-dialog-header,.organogram-editor-header) :is(h2,h3,.shortcut-circle){color:var(--navigation-ink)!important;border-color:var(--navigation-ink)!important}

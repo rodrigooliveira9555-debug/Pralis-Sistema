@@ -427,6 +427,7 @@ body .btn.acao-com-circulo[hidden]{display:none}
 
 /* Estrutura organizacional (06/11/2026): inactive nodes stay visible, dimmed, with their history. */
 .location-node.is-inactive>.location-row{opacity:.6}.location-inactive-pill{margin-left:6px;background:var(--layout-line,#e5e5ea);color:var(--muted,#73737a)}
+/* Mensagem de erro ou de aviso vazia não ocupa lugar no quadro (deixava um vão antes dos botões). */.form-fields>:is(.profiles-error,.profiles-note):empty{display:none}
 /* Janela de Área / Setor / Local no padrão dos quadros (18/11/2026, Rodrigo): cada bloco ocupa a largura inteira do quadro. */.location-quadro>*{grid-column:1/-1}
 
 /* Ficha de Cargo e Matriz de Exigências (06/11/2026). */
