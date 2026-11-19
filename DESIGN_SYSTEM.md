@@ -5,7 +5,7 @@ Pedido do Rodrigo. **Supera** as três abas da tela de uniformes (Lançamentos �
 
 **DES - Uniformes Entrega (-) Recebimento (+)** mostra só o histórico e o botão **Lançamento de Uniforme** (antes "Lançamento de Uniforme Entrega"). As outras duas partes não foram perdidas — cada uma ganhou o seu cartão no menu, na mesma estrutura: o **controle de estoque** abre em Saídas · Despesas → Estoque → **DES - Uniformes** (cartão que já existia, em definição) e a **referência por cargo** em Cadastros Geral Colaboradores → **DES - Uniformes por Cargo** (cartão novo, ao lado de DES - Tipos de Uniforme). Regra: tela de lançamento não tem abas; cadastro e estoque ficam cada um no seu menu. 
 
-**Lançamentos Colaboradores** ganhou três cartões, com a sigla DES no ícone e tela "em definição": **DES - Admissão / Contratação**, **DES - Demissão / Desligamento** e **DES - Capacitação / Desenvolvimento**.
+**Lançamentos Colaboradores** ganhou três cartões, com tela "em definição" e **sigla própria no ícone** (definida pelo Rodrigo): **DES - Admissão / Contratação = ADI**, **DES - Demissão / Desligamento = DEM** e **DES - Capacitação / Desenvolvimento = CAP**. No mapa de ícones do menu (`iconeLinha`, em `index.html`), `'sigla'` usa as três primeiras letras do nome e `'sigla:XXX'` usa a sigla escrita.
 
 ## Cartão DES - Despesas Colaboradores em Lançamentos Colaboradores (19/11/2026)
 Pedido do Rodrigo. Lançamentos Colaboradores ganhou, em primeiro lugar, o cartão **DES - Despesas Colaboradores**, no mesmo desenho do cartão DES - Despesas de Lançamentos (ícone com a sigla DES). Por enquanto é só o cartão: a tela abre "em definição", como DES - Despesas. O que a tela lança ainda precisa ser definido pelo Rodrigo.
