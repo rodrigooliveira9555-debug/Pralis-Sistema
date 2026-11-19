@@ -39,7 +39,7 @@
    * qualquer cadastro em níveis — grupo › subgrupo › item — e deixa marcar em qualquer nível: o grupo, o subgrupo ou o item sozinho.
    * nos: [{ id, nome, ativo, conta, selecionavel (padrão: sim), filhos: [...] }]. marcados: Set de ids. bloqueados: Map id → motivo.
    */
-  function seletorArvore({ titulo, cores, sigla, rotuloBusca = 'Buscar', vazio = 'Nada cadastrado.', nos, marcados, bloqueados = new Map(), aoConfirmar }) {
+  function seletorArvore({ titulo, cores, sigla, iconeFolha, rotuloBusca = 'Buscar', vazio = 'Nada cadastrado.', nos, marcados, bloqueados = new Map(), aoConfirmar }) {
     const escolha = new Set(marcados); const abertos = new Set();
     const formatar = (n) => (typeof formatSystemName === 'function' ? formatSystemName(String(n || '')) : String(n || ''));
     U.dialogo({
@@ -60,7 +60,7 @@
           const c = entrada('checkbox'); c.className = 'compras-hier-caixa'; c.checked = escolha.has(no.id) || travado; c.disabled = travado || (!ativo && !escolha.has(no.id));
           c.setAttribute('aria-label', 'Selecionar ' + no.nome); c.onchange = () => { if (c.checked) escolha.add(no.id); else escolha.delete(no.id); contar(); };
           if (no.selecionavel === false) { c.disabled = true; c.style.visibility = 'hidden'; }
-          const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); ic.append(el('span', 'sigla-text', sigla));
+          const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); if (no.folha && iconeFolha) ic.innerHTML = SVG(iconeFolha); else ic.append(el('span', 'sigla-text', sigla)); // grupo e subgrupo levam a sigla da origem; o item final leva o ícone dele (produto = carrinho)
           const tx = el('span', 'compras-hier-texto'); tx.append(el('b', null, no.folha ? no.nome : sigla + ' ' + formatar(no.nome)));
           const conta = no.conta != null ? no.conta : (no.filhos ? pluralItens(no.filhos.length) : ''); if (conta) tx.append(el('small', null, conta));
           if (travado) tx.append(el('small', null, bloqueados.get(no.id)));
@@ -675,7 +675,7 @@
     const coresDe = (tipo) => ({ cor: COR_DO_OBJETO[tipo](), corTexto: cc(cores).corTexto });
     const objProdutos = caixaObjeto('produto', 'Produtos do contrato', 'Grupo de produtos', 'Escolher grupos, subgrupos ou produtos deste contrato', 'Nenhum produto vinculado.', (q) => (q === 1 ? '1 item vinculado.' : q + ' itens vinculados.'), (trocar) => seletorArvore({
       titulo: 'Produtos do contrato: grupos de mercadorias', cores: coresDe('produto'), sigla: 'MER', rotuloBusca: 'Buscar grupo, subgrupo ou produto', vazio: 'Nenhum grupo de mercadorias cadastrado em Saídas › Grupos de Mercadorias.',
-      nos: () => arvoreProdutos(objeto.produto), marcados: objeto.produto, aoConfirmar: trocar }));
+      nos: () => arvoreProdutos(objeto.produto), marcados: objeto.produto, iconeFolha: U.ICONES.produto, aoConfirmar: trocar }));
     const objDespesas = caixaObjeto('despesa', 'Despesas do contrato', 'Grupo de despesas', 'Escolher os grupos e subgrupos de despesa deste contrato', 'Nenhuma despesa vinculada.', (q) => (q === 1 ? '1 grupo ou subgrupo vinculado.' : q + ' grupos ou subgrupos vinculados.'), (trocar) => seletorHierarquico({
       titulo: 'Despesas do contrato: grupos de despesa', cores: coresDe('despesa'), marcados: objeto.despesa, aoConfirmar: trocar }));
     const objPatrimonios = caixaObjeto('patrimonio', 'Patrimônios do contrato', 'Grupo de patrimônios', 'Escolher grupos ou patrimônios deste contrato', 'Nenhum patrimônio vinculado.', (q) => (q === 1 ? '1 item vinculado.' : q + ' itens vinculados.'), (trocar) => seletorArvore({
@@ -706,5 +706,5 @@
     };
   }
 
-  window.CicluzContratos = { JOINHA: { cima: ICO.cima, baixo: ICO.baixo }, abrirModelos, listaAtividades, seletorHierarquico, botoesDocumento, secoesContrato, partesDoContrato, enderecoTexto, modelos, etapaContrato };
+  window.CicluzContratos = { JOINHA: { cima: ICO.cima, baixo: ICO.baixo }, abrirModelos, listaAtividades, seletorHierarquico, seletorArvore, botoesDocumento, secoesContrato, partesDoContrato, enderecoTexto, modelos, etapaContrato };
 })();

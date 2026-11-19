@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Ícone do produto é o carrinho (19/11/2026)
+Pedido do Rodrigo. **Supera** a sacola como ícone do produto. Em toda tela em que o produto aparece com ícone (lista de produtos e demais linhas com `icone: 'produto'`), o desenho é o **carrinho** (`ICONES.produto` em `compras/ui.js`). Na árvore de escolha (`seletorArvore`): **grupo e subgrupo** continuam com a sigla da origem (MER) e o **produto**, que é o item final, mostra o carrinho, no mesmo quadrado e na mesma cor (opção `iconeFolha`).
+
 ## DES - Tipos de Uniforme: cadastro novo em Cadastros Geral Colaboradores (19/11/2026)
 Pedido do Rodrigo. As peças de uniforme, que eram uma lista fixa no código, ganharam cadastro próprio (`uniform-types.js`). Tela no padrão: lista em linhas de 52 px com o botão de título **Novo Tipo de Uniforme**, contador e a seta com **Editar** e **Desativar/Reativar**; cadastro em janela com quadro (nome do uniforme, grupo, categoria, situação no interruptor), obrigatório vazio destacado e Cancelar · Salvar. Tipo **não é apagado**, só desativado: o inativo some das escolhas de lançamento, compra e referência por cargo, e continua no estoque e no histórico. **Dados:** chave nova `cicluz-uniformes-tipos-v1` (`{version:1, tipos:[{id,name,category,family,active}]}`), criada só no primeiro salvamento; até lá vale a lista que já vinha no sistema. Os códigos `uni-NN` não mudam, então lançamentos, compras, estoque e referências já gravados continuam apontando certo. Sem migração. A chave fica só no aparelho, como a `cicluz-uniformes-v1` (não está na lista de sincronização do servidor). `CicluzUniformData.uniforms` passou a ser lido sempre do cadastro. `botaoSituacao` foi para `uniforms.js` (usado também no Horário / Escala).
 

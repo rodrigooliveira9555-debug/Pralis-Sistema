@@ -11,7 +11,7 @@
     compras: '<path d="M2 3h3l3 13h12l2-10H6M10 21h1m6 0h1"/>',
     estoque: '<path d="M3 6l9-4 9 4v14l-9 3-9-3Z M3 6l9 4 9-4M12 10v13"/>',
     fornecedor: '<path d="M3 21V8l6-4v4l6-4v4l6-4v17ZM7 17h2m4 0h2"/>',
-    produto: '<path d="M4 7h16l-1.5 13h-13ZM9 7a3 3 0 0 1 6 0"/>',
+    produto: '<path d="M2 3h3l3 13h12l2-10H6M10 21h1m6 0h1"/>' /* carrinho (19/11/2026, Rodrigo): o produto usa o carrinho em toda tela, inclusive na árvore de escolha */,
     agenda: '<path d="M4 5h16v16H4zM4 10h16M8 3v4m8-4v4M9 15l2 2 4-4"/>',
     lista: '<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
     caminhao: '<path d="M2 6h11v10H2zM13 10h4l4 4v2h-8M6 19a2 2 0 1 0 0-.01M17 19a2 2 0 1 0 0-.01"/>',
