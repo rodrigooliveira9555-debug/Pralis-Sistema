@@ -71,14 +71,18 @@ function setInactive(id,inactive){return transact(d=>{const x=d.people.find(y=>y
    DES - Simples Colaborador e DES - Completo Colaborador abrem numa lista, no mesmo formato de Clientes, Fornecedores e Produtos:
    o quadro com "Novo Colaborador" e uma linha por pessoa, com a seta de ações. "Novo Colaborador" ou tocar numa linha leva ao
    formulário que já existia; Voltar e Cancelar trazem de volta à lista. A lista e o formulário moram na mesma tela: só um aparece
-   por vez. linhas(): [{ titulo, detalhe, estado, abrir, extras }]. */
-function criarEntrada(view,{secao,rotuloNovo,dicaNovo,nota,vazio,linhas,aoNovo,voltarId,aoVoltarDoFormulario}){
+   por vez. linhas(): [{ titulo, cpf, funcao, turno, estado, abrir, extras }]. Como em Clientes: colunas que recolhem (a bolinha
+   "‹ ›" na ponta do cabeçalho) e o botão Enviar ao lado do Novo Colaborador (modeloEnvio: { id, titulo } do link de cadastro). */
+function criarEntrada(view,{secao,rotuloNovo,dicaNovo,nota,vazio,linhas,aoNovo,voltarId,aoVoltarDoFormulario,modeloEnvio,preferencia}){
  const content=view.querySelector('.content'),box=el('div','cadastro-entrada');content.prepend(box);let atual='form';const guardados=new Map();
  const ICONE_PESSOA='<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/>';
  function render(){const CU=window.CicluzComprasUI;if(!CU)return;const itens=linhas();const ponta=CU.pontaDaLista(itens.length,itens.length+(itens.length===1?' colaborador':' colaboradores'));
-  const sec=CU.secao(secao,undefined,ponta);sec.querySelector('.compras-secao-cab h3').replaceChildren(CU.botaoTitulo(rotuloNovo,dicaNovo,aoNovo));const lista=el('div','compras-lista');
+  const sec=CU.secao(secao,undefined,ponta);
+  sec.querySelector('.compras-secao-cab h3').replaceChildren(CU.botaoTitulo(rotuloNovo,dicaNovo,aoNovo),...(window.CicluzConviteLink&&modeloEnvio?[window.CicluzConviteLink.botao({modelos:[modeloEnvio],visualizar:()=>aoNovo()})]:[]));
+  const lista=el('div','compras-lista compras-lista-grade');CU.arrastarParaRolar(lista);
   if(!itens.length)lista.append(CU.vazio(vazio[0],vazio[1]));
-  for(const it of itens){const row=CU.linhaLista({icone:ICONE_PESSOA,titulo:it.titulo,detalhe:it.detalhe,direita:el('span','account-list-state',it.estado),acoes:{rotulo:it.titulo,lista,aoEditar:it.abrir,aoExcluir:()=>{}}});
+  else{const cab=CU.cabecalhoColunas('grade-colaborador',[{chave:'nome',rotulo:'Colaborador'},{chave:'cpf',rotulo:'CPF',ocultavel:true},{chave:'funcao',rotulo:'Função',ocultavel:true},{chave:'turno',rotulo:'Turno',ocultavel:true},{chave:'estado',rotulo:'Etapa'}],{lista,preferencia});lista.append(cab);ponta.append(cab.botaoGeral)}
+  for(const it of itens){const row=CU.linhaLista({icones:[{icone:ICONE_PESSOA,rotulo:'Colaborador'}],grade:'grade-colaborador',colunas:[{chave:'nome',conteudo:it.titulo},{chave:'cpf',conteudo:it.cpf},{chave:'funcao',conteudo:it.funcao},{chave:'turno',conteudo:it.turno}],estado:it.estado,acoes:{rotulo:it.titulo,lista,aoEditar:it.abrir,aoExcluir:()=>{}}});
    /* Colaborador não é excluído por aqui: o botão de excluir sai e entram as ações que a tela já tinha. */
    const drawer=row.querySelector('.account-row-actions');[...drawer.children].find(b=>/^Excluir/.test(b.getAttribute('aria-label')||''))?.remove();for(const b of it.extras||[])drawer.prepend(b);lista.append(row)}
   sec.append(lista);box.replaceChildren(CU.nota(nota()),sec)}
@@ -138,14 +142,14 @@ simpleFields.append(lbl('Nome completo *',nameIn),lbl('CPF *',cpfIn),lbl('WhatsA
  simpleFields.after(dup,err,msg,actions);
  /* A tabela "Acompanhamento dos candidatos" que ficava embaixo do formulário virou a lista inicial da tela (criarEntrada). */
  let proximoModo=null;
- const entrada=criarEntrada(simpleView,{secao:'Colaboradores',rotuloNovo:'Novo Colaborador',dicaNovo:'Cadastrar colaborador pelo Cadastro Simples',voltarId:'back-simple',aoVoltarDoFormulario:()=>cancelSimple(),
+ const entrada=criarEntrada(simpleView,{secao:'Colaboradores',rotuloNovo:'Novo Colaborador',dicaNovo:'Cadastrar colaborador pelo Cadastro Simples',modeloEnvio:{id:'colaborador-simples',titulo:'Cadastro Simples'},preferencia:'cicluz-colaborador-simples-colunas',voltarId:'back-simple',aoVoltarDoFormulario:()=>cancelSimple(),
   nota:()=>'Candidatos em admissão. Toque numa linha para abrir o cadastro; a seta mostra as outras ações. Colaboradores ativados aparecem em Colaboradores Cadastrados.',
   vazio:['Nenhum candidato em admissão.','Use "Novo Colaborador" para começar a admissão pelo Cadastro Simples.'],
   aoNovo:()=>{loadCandidate(null);entrada.modo('form')},
   linhas:()=>{load();return data.people.filter(inAdmission).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))).map(p=>{const all=stages(p),cur=all.find(s=>s.state!=='done'&&s.state!=='legacy')||all[all.length-1];const extras=[];
    if(p.simple?.status==='ok'&&!isApto(p))extras.push(iconButton('Exame Admissional',ICON.calendar,()=>window.showExams?.({personId:p.id,type:'ADMISSIONAL'}),'people-act is-purple'));else if(trialReady(p)&&p.trial?.decision!=='aprovado')extras.push(iconButton('Período de Teste',ICON.calendar,()=>window.showTrial?.({personId:p.id}),'people-act is-purple'));
    extras.push(iconButton('Ver acompanhamento',ICON.eye,()=>window.showCollaborators?.({tab:'tracking',personId:p.id}),'people-act is-purple')); /* vermelho é só do excluir */
-   return {titulo:p.name,detalhe:[maskCpf(p.cpf),p.jobName,p.shift].filter(Boolean).join(' · '),estado:cur.label+': '+cur.text,abrir:()=>{loadCandidate(p.id);entrada.modo('form')},extras}})}});
+   return {titulo:p.name,cpf:p.cpf?maskCpf(p.cpf):'',funcao:p.jobName,turno:p.shift,estado:cur.label+': '+cur.text,abrir:()=>{loadCandidate(p.id);entrada.modo('form')},extras}})}});
  let editing=null,dirty=false,busy=false;
  function jobOptions(cur=job.select.value){let jobs=[];try{jobs=[...new Set(jobsCurrent().map(e=>e.j.nome))].sort((a,b)=>a.localeCompare(b,'pt-BR'))}catch{}const q=fold(job.search.value);job.select.replaceChildren(new Option('Selecione a função',''));for(const j of jobs)if(j===cur||fold(j).includes(q))job.select.add(new Option(j,j));if(cur&&!jobs.includes(cur))job.select.add(new Option(cur,cur));job.select.value=cur}
  job.search.addEventListener('input',()=>jobOptions());
@@ -177,7 +181,10 @@ simpleFields.append(lbl('Nome completo *',nameIn),lbl('CPF *',cpfIn),lbl('WhatsA
    busy=false;if(!ok){if(!cur)id=null;paintButtons();err.textContent='Não foi possível salvar neste navegador.';return null}fill(byId(id));
    msg.textContent=markOk?'Cadastro Simples concluído: '+name+' está disponível no Exame Admissional.':'Cadastro salvo: '+name+' (em andamento). Marque como OK para concluir a etapa.';
    /* Depois de salvar, volta para a lista (onde a pessoa já aparece) e a mensagem vai no aviso do sistema. */
+   if(document.body.classList.contains('cadastro-teste')){entrada.modo('lista');window.CicluzConviteLink?.confirmarRecebimento();return null}
    entrada.modo('lista');window.CicluzComprasUI?.avisar(msg.textContent);return null};
+  /* Aberto pelo link de cadastro (Enviar; simulação, como em Clientes): o cadastro fica salvo em andamento, sem concluir a etapa — quem confere e conclui é o DP. */
+  if(document.body.classList.contains('cadastro-teste')){markOk=false;const r=commit();return r}
   if(markOk&&cur?.simple?.status!=='ok')confirmDialog('Salvar Cadastro?','O Cadastro Simples de '+name+' será salvo e concluído (OK), e o candidato ficará disponível no Exame Admissional.','Salvar Cadastro',commit,()=>{});else commit()}
  function renderSimpleList(){if(entrada.atual==='lista')entrada.render()}
  new MutationObserver(()=>{if(simpleView.classList.contains('show')&&!simpleView.dataset.peopleShown){simpleView.dataset.peopleShown='1';load();if(editing&&!byId(editing))fill(null);jobOptions();entrada.modo(proximoModo||'lista');proximoModo=null}else if(!simpleView.classList.contains('show'))delete simpleView.dataset.peopleShown}).observe(simpleView,{attributes:true,attributeFilter:['class']});
@@ -194,12 +201,12 @@ const banner=el('div','form-note people-complete-banner');
 let syncPick=null,entradaCompleto=null,proximoModoCompleto=null;
 if(completeView&&steps){completeView.querySelector('.form-note').after(banner);
  /* Lista inicial do Cadastro Completo: quem já pode fazer (ou já fez) o Cadastro Completo. "Novo Colaborador" abre o formulário em etapas, sem pessoa vinculada, como a tela abria antes. */
- entradaCompleto=criarEntrada(completeView,{secao:'Colaboradores',rotuloNovo:'Novo Colaborador',dicaNovo:'Abrir o Cadastro Completo com dependente',voltarId:'back-forms',aoVoltarDoFormulario:()=>entradaCompleto.modo('lista'),
+ entradaCompleto=criarEntrada(completeView,{secao:'Colaboradores',rotuloNovo:'Novo Colaborador',dicaNovo:'Abrir o Cadastro Completo com dependente',modeloEnvio:{id:'colaborador-completo',titulo:'Cadastro Completo'},preferencia:'cicluz-colaborador-completo-colunas',voltarId:'back-forms',aoVoltarDoFormulario:()=>entradaCompleto.modo('lista'),
   nota:()=>'Cadastro Completo com dependente. Aparecem aqui as pessoas com Exame Admissional APTO (e Período de Teste aprovado) e as que já têm o Cadastro Completo.',
   vazio:['Nenhum colaborador liberado para o Cadastro Completo.','Use "Novo Colaborador" para abrir o cadastro sem pessoa vinculada.'],
   aoNovo:()=>{entradaCompleto.modo('form');bindComplete(null);try{showStep(0)}catch{}},
   linhas:()=>{load();return data.people.filter(p=>p.complete?.status==='concluido'||p.complete?.fields||(inAdmission(p)&&completeReady(p))).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))
-   .map(p=>({titulo:p.name,detalhe:[p.cpf?maskCpf(p.cpf):'',p.jobName].filter(Boolean).join(' · '),estado:p.complete?.status==='concluido'?'Concluído':p.complete?.fields?'Em andamento':'Liberado',abrir:()=>{entradaCompleto.modo('form');bindComplete(p.id,true)}}))}});
+   .map(p=>({titulo:p.name,cpf:p.cpf?maskCpf(p.cpf):'',funcao:p.jobName,turno:p.shift,estado:p.complete?.status==='concluido'?'Concluído':p.complete?.fields?'Em andamento':'Liberado',abrir:()=>{entradaCompleto.modo('form');bindComplete(p.id,true)}}))}});
  new MutationObserver(()=>{if(completeView.classList.contains('show')&&!completeView.dataset.entradaMostrada){completeView.dataset.entradaMostrada='1';entradaCompleto.modo(proximoModoCompleto||'lista');proximoModoCompleto=null}else if(!completeView.classList.contains('show'))delete completeView.dataset.entradaMostrada}).observe(completeView,{attributes:true,attributeFilter:['class']});
  /* Primeiro campo do Cadastro Completo: escolher a pessoa do Cadastro Simples (só quem já pode seguir para o Completo). O vínculo é pelo ID e os dados vêm do Simples. Opcional: sem escolher, o Completo funciona como antes. */
  const pick=U.enumField('Colaborador do Cadastro Simples (opcional)','Buscar colaborador por nome ou CPF','people-complete-pick');
@@ -235,5 +242,7 @@ function bindComplete(id,fill){boundId=id;renderBanner();syncPick?.(id||'');docu
 function openComplete(id){const p=byId(id);if(!p?.complete?.token)return false;if(location.hash==='#cadastro-completo/'+p.complete.token)openFromHash();else location.hash='cadastro-completo/'+p.complete.token;return true}
 function openView(id,crumb){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));document.getElementById(id).classList.add('show');const c=document.getElementById('crumb');if(c)c.textContent=crumb}
 
-window.CicluzPeople={load,transact,get:()=>data,failed:()=>loadError,byId,selectable,stages,nextStep,stepper,isApto,admissionExams,maskCpf,log,isFlow2,examReady,trialReady,completeReady,inAdmission,trialInfo,trialDays,trialAlerts,dayDiff,linkFor,generateLink,copyLink,openComplete,activate,setInactive,inDismissal,dismissalExams,startDismissal,concludeDismissal,cancelDismissal,editSimple:id=>window.CicluzSimpleForm?.edit(id),openView};
+window.CicluzPeople={load,transact,get:()=>data,failed:()=>loadError,byId,selectable,stages,nextStep,stepper,isApto,admissionExams,maskCpf,log,isFlow2,examReady,trialReady,completeReady,inAdmission,trialInfo,trialDays,trialAlerts,dayDiff,linkFor,generateLink,copyLink,openComplete,activate,setInactive,inDismissal,dismissalExams,startDismissal,concludeDismissal,cancelDismissal,editSimple:id=>window.CicluzSimpleForm?.edit(id),openView,
+ /* Link de cadastro (Enviar): abre o Cadastro Completo no formulário, sem pessoa vinculada. */
+ novoCompleto:()=>{proximoModoCompleto='form';setTimeout(()=>{proximoModoCompleto=null},0);openView('cadastro-completo',menuCrumb(2,'Cadastros Geral Colaboradores','DES - Completo Colaborador C/Dependente'));entradaCompleto?.modo('form');bindComplete(null);document.dispatchEvent(new Event('cicluz-close-menu'))}};
 })();

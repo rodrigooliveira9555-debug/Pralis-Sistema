@@ -717,6 +717,9 @@
     ['pf-simples', 'pf-completo', 'pj-simples', 'pj-completo'].forEach((id) => {
       abridores[id] = { pronto: () => Boolean(window.CicluzComprasClientes && window.CicluzComprasClientes.abrirExterno), abrir: () => window.CicluzComprasClientes.abrirExterno(window.CicluzComprasClientes.MODELOS_LINK.find((m) => m.id === id).modelo) };
     });
+    // Colaboradores (18/11/2026): o Enviar das listas de Cadastro Simples e de Cadastro Completo abre o formulário correspondente.
+    abridores['colaborador-simples'] = { pronto: () => Boolean(window.CicluzSimpleForm), abrir: () => { window.CicluzSimpleForm.edit(null); document.dispatchEvent(new Event('cicluz-close-menu')); } };
+    abridores['colaborador-completo'] = { pronto: () => Boolean(window.CicluzPeople && window.CicluzPeople.novoCompleto), abrir: () => window.CicluzPeople.novoCompleto() };
     window.CicluzConviteLink.iniciarPeloEndereco(abridores);
   }
 })();

@@ -1,6 +1,7 @@
 /*
  * Enviar Link de Cadastro (18/11/2026): o botão "Enviar" comum (U.botaoEnviar) com os campos do link — a escolha do modelo quando há
- * mais de um (em VND - Clientes: PF ou PJ), Copiar link e Visualizar formulário. Usado por VND - Clientes e RET - Patrimônios.
+ * mais de um (em VND - Clientes: PF ou PJ), Copiar link e Visualizar formulário. Usado por VND - Clientes, RET - Patrimônios e pelas
+ * listas de colaborador (DES - Simples Colaborador e DES - Completo Colaborador).
  * SIMULAÇÃO PARA TESTE DO FLUXO (pedido de 18/11/2026): ainda não existe servidor que receba cadastros de quem abre o link
  * (P-30 em PROJECT_BRAIN/11). O link gerado aqui é um endereço real desta mesma página com ?cadastro-teste=<modelo>; ao abri-lo NESTE
  * navegador (sessão já aberta) aparece só o formulário do modelo, e o cadastro enviado fica salvo aqui como "Recebido" e inativo, à espera
