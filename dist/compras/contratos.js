@@ -241,7 +241,7 @@
   const empresasCadastradas = () => (window.CicluzEmpresa && window.CicluzEmpresa.todas ? window.CicluzEmpresa.todas() : []);
   /**
    * As duas partes do contrato, só com o que está cadastrado: a sua empresa (Configurações → Empresa) e o fornecedor ou o cliente.
-   * papel 'fornecedor': a empresa contrata o fornecedor. papel 'cliente': o cliente (pessoa jurídica) contrata a empresa.
+   * papel 'fornecedor': a empresa contrata o fornecedor. papel 'cliente': o cliente (pessoa jurídica ou física) contrata a empresa.
    */
   /** Qualificação de quem assina, como um contrato pede: nacionalidade, estado civil, profissão, RG, CPF e endereço. Só o que estiver cadastrado. */
   const qualificacaoDe = (r) => {
@@ -257,7 +257,12 @@
     const rep2 = f.representante || {};
     const empresa = { nome: emp ? emp.razaoSocial || emp.nomeFantasia || '' : '', fantasia: emp ? emp.nomeFantasia || '' : '', documento: emp ? emp.cnpj || '' : '', pf: false, endereco: emp ? enderecoTexto(emp.endereco) : '',
       representante: respEmp ? respEmp.nome : '', cargo: cargoEmp, qualificacao: qualificacaoDe(respEmp) };
-    const outra = cliente
+    const clientePF = cliente && f.tipoPessoa === 'fisica';
+    const outra = clientePF
+      // Cliente pessoa física: ele mesmo assina; a qualificação traz o que o documento e o endereço (linhas próprias) não mostram.
+      ? { nome: f.nome || '', fantasia: '', documento: f.cpf || '', pf: true, endereco: enderecoTexto(f.endereco), representante: f.nome || '', cargo: '',
+        qualificacao: qualificacaoDe({ nacionalidade: f.nacionalidade, estadoCivil: f.estadoCivil, profissao: f.profissao, rg: f.rg, rgOrgao: f.rgOrgao }) }
+      : cliente
       ? { nome: f.razaoSocial || f.nomeFantasia || '', fantasia: f.razaoSocial && f.nomeFantasia !== f.razaoSocial ? f.nomeFantasia || '' : '', documento: f.cnpj || '', pf: false, endereco: enderecoTexto(f.endereco),
         // Com contrato, o responsável legal do cliente é cadastrado por completo (cargo da lista de Dados da Empresa e a qualificação).
         representante: rep2.nome || '', cargo: (c.temDocumento && window.CicluzEmpresa && nomeDe(window.CicluzEmpresa.CARGOS_EMPRESA || [], rep2.cargoEmpresa)) || nomeDe(D.CARGOS_REPRESENTANTE, rep2.cargo),

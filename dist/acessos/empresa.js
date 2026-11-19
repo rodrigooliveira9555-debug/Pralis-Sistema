@@ -150,9 +150,10 @@
    * Bloco (quadro) com todos os dados de um responsável legal: cargo, dados pessoais para a qualificação em contrato, endereço e,
    * quando precisa, o representante legal dele. Peça única: Dados da Empresa e o responsável legal do cliente com contrato
    * (18/11/2026, Rodrigo). r: um responsável normalizado por responsaveisDe (o bloco altera r enquanto a pessoa digita).
-   * aoMudar(): chamado quando o bloco ganha ou perde campos. titulo(cargo): o texto da moldura.
+   * aoMudar(): chamado quando o bloco ganha ou perde campos. titulo(cargo): o texto da moldura. semCargo, quem e quemLegal: para a
+   * pessoa física com contrato, que não tem cargo e é chamada de "cliente" nos rótulos.
    */
-  function blocoResponsavel(r, { aoMudar = () => {}, titulo: tituloDe = tituloDoResponsavel } = {}) {
+  function blocoResponsavel(r, { aoMudar = () => {}, titulo: tituloDe = tituloDoResponsavel, semCargo = false, quem = 'responsável', quemLegal = 'responsável legal' } = {}) {
     const texto = (valor, extra = {}) => entrada('text', valor || '', { maxLength: 120, ...extra });
     const CAD = window.CicluzComprasCadastros;
     const falha = { 'nao-encontrado': 'não encontrado', indisponivel: 'consulta indisponível agora' };
@@ -198,18 +199,18 @@
     // Dois quadros com borda dentro do bloco (pedido do Rodrigo, 17/11/2026): os dados pessoais e o endereço.
     const quadro = (legenda, ...nos) => { const q = el('fieldset', 'compras-fieldset compras-largo'); q.append(el('legend', null, legenda), ...nos); return q; };
     bloco.append(titulo,
-      quadro('Dados pessoais', campo('Cargo na empresa', cargo), campo('Nome completo do responsável', nome),
-        campo('CPF do responsável', cpf), campo('RG do responsável', rg), campo('Órgão emissor do RG', rgOrgao),
+      quadro('Dados pessoais', ...(semCargo ? [] : [campo('Cargo na empresa', cargo)]), campo('Nome completo do ' + quem, nome),
+        campo('CPF do ' + quem, cpf), campo('RG do ' + quem, rg), campo('Órgão emissor do RG', rgOrgao),
         campo('Nacionalidade', nacionalidade), campo('Estado civil', estadoCivil), campo('Profissão', profissao),
-        campo('WhatsApp do responsável', whats), campo('E-mail do responsável', mail)),
-      quadro('Endereço do responsável legal', campo('CEP do responsável', rCep), campo('Rua / logradouro', rRua), campo('Número', rNumero), campo('Complemento', rCompl), campo('Bairro', rBairro), campo('Cidade', rCidade), campo('UF', rUf), avisoCepR));
+        campo('WhatsApp do ' + quem, whats), campo('E-mail do ' + quem, mail)),
+      quadro('Endereço do ' + quemLegal, campo('CEP do ' + quem, rCep), campo('Rua / logradouro', rRua), campo('Número', rNumero), campo('Complemento', rCompl), campo('Bairro', rBairro), campo('Cidade', rCidade), campo('UF', rUf), avisoCepR));
     /* Representante legal deste responsável: interruptor Sim/Não e, com Sim, o quadro com o motivo e um quadro por
        representante (pode haver mais de um, como pai e mãe). A data de nascimento só serve para o sistema avisar
        que a pessoa é menor de idade; não entra em contrato sozinha. */
     const rp0 = r.representacao;
     const nasc = liga(entrada('date', r.nascimento || ''), 'nascimento');
     const avisoIdade = el('small', 'profiles-note');
-    const campoNasc = campo('Data de nascimento', nasc, 'Opcional. Serve para o sistema avisar quando o responsável é menor de idade.');
+    const campoNasc = campo('Data de nascimento', nasc, 'Opcional. Serve para o sistema avisar quando o ' + quem + ' é menor de idade.');
     campoNasc.append(avisoIdade);
     bloco.querySelector('fieldset').append(campoNasc);
     const quadroRep = el('fieldset', 'compras-fieldset compras-largo');
@@ -222,13 +223,13 @@
     const linhaMaisRep = el('div', 'compras-form-rodape compras-largo compras-empresa-remover'); linhaMaisRep.append(maisRep);
     quadroRep.append(tituloRep, campoMotivo, caixaReps, linhaMaisRep);
     const precisa = U.quadroSituacao('Precisa de representante legal?', rp0.precisa, {
-      textos: ['Sim', 'Não'], dica: 'Marque Sim quando este responsável é menor de idade, interditado ou falecido (espólio) e outra pessoa assina por ele.',
+      textos: ['Sim', 'Não'], dica: 'Marque Sim quando este ' + quem + ' é menor de idade, interditado ou falecido (espólio) e outra pessoa assina por ele.',
       aoMudar: (sim) => { rp0.precisa = sim; if (sim && !rp0.representantes.length) rp0.representantes.push(REPRESENTANTE_VAZIO(rp0.motivo)); desenharReps(); pintarRep(); pintarModo(); },
     });
     precisa.classList.add('compras-largo');
     function pintarRep() {
       quadroRep.style.display = rp0.precisa ? '' : 'none';
-      tituloRep.textContent = 'Representante legal de ' + (cheio(r.nome) || 'este responsável');
+      tituloRep.textContent = 'Representante legal de ' + (cheio(r.nome) || 'este ' + quem);
       formaNota.textContent = rp0.motivo ? 'No contrato: "' + formaDaRepresentacao(rp0.motivo) + '…".' : '';
       const anos = idadeEm(r.nascimento);
       avisoIdade.textContent = anos == null ? '' : anos < 18 ? 'Menor de idade (' + anos + ' anos): precisa de representante legal.' : anos + ' anos.';
@@ -270,7 +271,7 @@
         const pDoc = lg(seletor(DOCUMENTOS_REPRESENTACAO, p.documento, 'Selecione'), 'documento');
         const pProc = lg(entrada('text', p.processo, { maxLength: 40 }), 'processo'); pProc.dataset.textoLivre = '1';
         const pVal = lg(entrada('date', p.validade || ''), 'validade');
-        caixa.append(tit, campo('Vínculo com o responsável', vinc), campo('Nome completo do representante *', pNome),
+        caixa.append(tit, campo('Vínculo com o ' + quem, vinc), campo('Nome completo do representante *', pNome),
           campo('CPF do representante', pCpf), campo('RG do representante', pRg), campo('Órgão emissor do RG', pOrgao),
           campo('Nacionalidade', pNac), campo('Estado civil', pCivil), campo('Profissão', pProf),
           campo('WhatsApp do representante', pWhats), campo('E-mail do representante', pMail),

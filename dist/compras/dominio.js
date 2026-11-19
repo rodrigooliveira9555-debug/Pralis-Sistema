@@ -763,7 +763,10 @@
   function faltasDoContrato(f, papel = 'fornecedor') {
     const c = (f && f.contrato) || {}; const faltas = []; const cliente = papel === 'cliente'; const P = papelContrato(papel);
     if (!c[P.tem]) return ['Marque "Tem contrato?" na etapa Contrato.'];
-    if (cliente) {
+    if (cliente && f && f.tipoPessoa === 'fisica') {
+      if (!String(f.nome || '').trim()) faltas.push('nome do cliente');
+      if (!digitos(f.cpf)) faltas.push('CPF do cliente');
+    } else if (cliente) {
       if (!String((f && (f.razaoSocial || f.nomeFantasia)) || '').trim()) faltas.push('razão social do cliente');
       if (!digitos(f && f.cnpj)) faltas.push('CNPJ do cliente');
     } else {
@@ -794,7 +797,9 @@
     return String(c.tipoPessoa === 'juridica' ? (c.nomeFantasia || c.razaoSocial) : c.nome || '').trim();
   }
   /** Etapas do cadastro completo (o simples é uma página só, sem etapas). */
-  function etapasCliente(tipoPessoa, cadastro, { semContrato = false } = {}) {
+  function etapasCliente(tipoPessoa, cadastro, { semContrato = false, contratoPF = false } = {}) {
+    // Pessoa física com contrato (18/11/2026, Rodrigo): ganha a barra de etapas — os dados, o contrato e a revisão.
+    if (tipoPessoa !== 'juridica' && contratoPF) return ['Dados do cliente', 'Contrato', 'Revisão dos dados'];
     if (cadastro !== 'completo') return [];
     // 18/11/2026 (Rodrigo): "Terá contrato?" é respondido na etapa do responsável legal; com Não, a etapa Contrato não existe e o cadastro vai direto para a Revisão.
     if (tipoPessoa === 'juridica' && semContrato) return ['Dados da empresa', 'Dados do responsável financeiro', 'Dados do responsável legal', 'Revisão dos dados'];
@@ -870,6 +875,9 @@
     };
     // Financeiro separado do contato só existe em cadastro anterior a 17/11/2026 (mesmo: false); o novo é o próprio contato.
     const financeiroAntigo = () => (c.financeiro && c.financeiro.mesmo === false ? contatoRuim(c.financeiro, 'financeiro') : '');
+    // Pessoa física com contrato: três etapas (dados do cliente, contrato, revisão), em qualquer modalidade.
+    const kPF = !pj && c.contrato && typeof c.contrato === 'object' && c.contrato.temDocumento ? c.contrato : null;
+    if (kPF) return [pessoa() || enderecoRuim(), validarContratoFinanceiro({ ...kPF, tem: true }) || validarContratoDocumento(kPF), ''];
     if (!completo) return [pj ? empresa() || whatsEmail(false) : pessoa() || enderecoRuim()];
     if (!pj) return [pessoa(), enderecoRuim(), '', ''];
     return [

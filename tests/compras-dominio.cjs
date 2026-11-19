@@ -446,6 +446,10 @@ ok(() => {
   assert.deepEqual(d.etapasCliente('juridica', 'simples'), []);
   assert.deepEqual(d.etapasCliente('fisica', 'completo'), ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão dos dados']);
   assert.deepEqual(d.etapasCliente('juridica', 'completo'), ['Dados da empresa', 'Dados do responsável financeiro', 'Dados do responsável legal', 'Contrato', 'Revisão dos dados']);
+  // Pessoa física com contrato: dados do cliente, contrato e revisão.
+  assert.deepEqual(d.etapasCliente('fisica', 'simples', { contratoPF: true }), ['Dados do cliente', 'Contrato', 'Revisão dos dados']);
+  assert.deepEqual(d.etapasCliente('fisica', 'simples'), []);
+  assert.deepEqual(d.faltasDoContrato({ tipoPessoa: 'fisica', nome: '', cpf: '', contrato: { temDocumento: true, contratadaEmpresaId: 'e1', atividadesIncluidas: [{ id: 'a', texto: 'Entrega' }], inicio: '2026-11-18' } }, 'cliente'), ['nome do cliente', 'CPF do cliente']);
   // Sem contrato ("Terá contrato?" = Não), a etapa Contrato não existe: vai do responsável legal direto para a Revisão.
   assert.deepEqual(d.etapasCliente('juridica', 'completo', { semContrato: true }), ['Dados da empresa', 'Dados do responsável financeiro', 'Dados do responsável legal', 'Revisão dos dados']);
   // Cliente mensal e Compra Mensal (18/11/2026)

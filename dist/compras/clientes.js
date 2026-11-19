@@ -82,6 +82,17 @@
         ['Contrato', linhasContrato(c)],
       ];
     }
+    // Pessoa física com contrato: os dados completos (os que o contrato pede) e o resumo do contrato.
+    if (!pj && c.contrato && c.contrato.temDocumento) {
+      const E = window.CicluzEmpresa || {};
+      secoes = [
+        ['Dados pessoais', [['Nome completo', c.nome], ['CPF', c.cpf], ['RG', [c.rg, c.rgOrgao].filter(Boolean).join(' · ')], ['Nacionalidade', c.nacionalidade], ['Estado civil', nomeDe(E.ESTADOS_CIVIS || [], c.estadoCivil)], ['Profissão', c.profissao],
+          ['WhatsApp', c.whatsapp], ['E-mail', c.email], ['Data de aniversário', D.aniversarioTexto(D.aniversarioCliente(c))], ['Situação', c.situacao === 'inativo' ? 'Inativo' : 'Ativo'], ['Terá contrato', 'Sim'],
+          ['Representante legal', c.representacao && c.representacao.precisa ? (c.representacao.representantes || []).map((p) => p.nome).filter(Boolean).join('; ') : '']]],
+        ['Endereço', enderecoLinhas],
+        ['Contrato', linhasContrato(c)],
+      ];
+    }
     return secoes.map(([t, l]) => [t, l.filter(([, v]) => v)]).filter(([, l]) => l.length);
   }
   const rotuloModalidade = (c) => nomeDe(D.TIPOS_PESSOA_CLIENTE, c.tipoPessoa);
@@ -230,11 +241,28 @@
         function pintarLegal() { const sim = comContrato(); camposCurtos.forEach((no) => mostrar(no, !sim)); mostrar(caixaCompleta, sim); }
         // Trocar a resposta nunca apaga: o que foi digitado num formato passa para o outro quando lá está vazio.
         function aoMudarContrato() {
+          if (tipo === 'fisica') { if (rcPF) sincronizarPF(); desenhar(); return; }
           if (comContrato()) { trio.forEach(([k, i]) => { if (!String(rc[k] || '').trim()) rc[k] = i.value.trim(); }); refazerCompleto(); }
           else if (rc && !rep.mesmo.ativo) trio.forEach(([k, i]) => { if (!i.value.trim()) i.value = rc[k] || ''; });
           pintarLegal(); const p = passo; desenhar(); ir(p);
         }
         refazerCompleto(); pintarLegal();
+        /* Pessoa física com contrato (18/11/2026, Rodrigo): a mesma pergunta "Terá contrato?", logo depois da Situação. Com Sim, o cadastro
+           ganha as etapas Dados do cliente · Contrato · Revisão, e os dados do cliente são pedidos por completo (o mesmo bloco de Dados da
+           Empresa, sem o cargo), porque são eles que qualificam o cliente no contrato. No link de cadastro a pergunta não aparece. */
+        const rcPF = E && E.responsaveisDe ? E.responsaveisDe({ responsaveis: [{ nome: v.nome, cpf: v.cpf, rg: v.rg, rgOrgao: v.rgOrgao, nacionalidade: v.nacionalidade, estadoCivil: v.estadoCivil, profissao: v.profissao,
+          whatsapp: v.whatsapp, email: v.email, endereco: v.endereco, nascimento: v.nascimento, representacao: v.representacao }] })[0] : null;
+        const caixaPF = el('div', 'compras-etapa compras-largo');
+        const refazerPF = () => { if (rcPF) caixaPF.replaceChildren(E.blocoResponsavel(rcPF, { semCargo: true, quem: 'cliente', quemLegal: 'cliente', titulo: () => 'Dados do cliente para o contrato' })); };
+        const contratoPF = () => tipo === 'fisica' && !opcoes.externo && Boolean(rcPF) && temCt.ativo;
+        // Os mesmos dados nos dois formatos (curto e completo): ao trocar, o que está vazio de um lado recebe o que foi digitado no outro.
+        function sincronizarPF() {
+          const pares = [[rcPF, 'nome', nome], [rcPF, 'cpf', cpf], [rcPF, 'whatsapp', whats], [rcPF, 'email', mail], [rcPF.endereco, 'cep', cep], [rcPF.endereco, 'logradouro', rua], [rcPF.endereco, 'numero', numero],
+            [rcPF.endereco, 'complemento', complemento], [rcPF.endereco, 'bairro', bairro], [rcPF.endereco, 'cidade', cidade], [rcPF.endereco, 'uf', uf]];
+          if (contratoPF()) { pares.forEach(([alvo, k, i]) => { if (!String(alvo[k] || '').trim()) alvo[k] = i.value.trim(); }); refazerPF(); }
+          else pares.forEach(([alvo, k, i]) => { if (!String(i.value || '').trim()) i.value = alvo[k] || ''; });
+        }
+        refazerPF();
         const lerRepresentante = () => {
           const basico = rep.ler(); const comp = comContrato() ? E.lerResponsavel(rc) : null;
           // Sem contrato agora, o que já estava gravado do cadastro completo fica guardado como está.
@@ -260,14 +288,6 @@
         // valor, salário mínimo, vigência, reajuste e observações saíram da tela; o que já estava gravado em contrato fica
         // guardado como está. Ligar "cliente mensal" grava boleto e vencimento no dia 10, a regra de antes.
         const cDados = el('fieldset', 'compras-fieldset'); cDados.append(el('legend', null, 'Informações de cobrança'), mensal, ...camposMensal); pintarMensal();
-        // Etapa Contrato (18/11/2026, Rodrigo): o mesmo contrato em blocos do cadastro de fornecedor (contratos.js). Aqui o cliente é o
-        // contratante e a sua empresa é a contratada. A pergunta "Terá contrato?" fica na etapa do responsável legal e grava temDocumento (campo novo e opcional); "tem" segue como era.
-        const etapaCt = window.CicluzContratos.etapaContrato({ contrato: ct, papel: 'cliente', lerRegistro: () => registro(), cores, mensal: () => mensal.ativo, temExterno: () => comContrato() });
-        // Cliente mensal manda na forma de pagamento e no vencimento (boleto, dia 10), como antes; deixou de ser mensal, o dia 10 sai.
-        const lerContrato = () => ({
-          ...ct, ...etapaCt.ler(), tem: true, clienteMensal: mensal.ativo,
-          ...(mensal.ativo ? { formaPagamento: D.CLIENTE_MENSAL.formaPagamento, vencimentoDia: D.CLIENTE_MENSAL.vencimentoDia, vencimentoData: '' } : ct.clienteMensal ? { vencimentoDia: null } : {}),
-        });
 
         /* Revisão (última etapa do completo) */
         const revisao = el('div', 'compras-largo');
@@ -283,6 +303,15 @@
         const novoPorDentro = !c && porDentro;
         let cadastro = m0.cadastro === 'completo' || (porDentro && tipo === 'juridica') ? 'completo' : 'simples';
         let passo = 0;
+        // (Criado aqui, depois de "tipo" existir: a etapa pergunta o tipo de pessoa ao ser montada.)
+        // Etapa Contrato (18/11/2026, Rodrigo): o mesmo contrato em blocos do cadastro de fornecedor (contratos.js). Aqui o cliente é o
+        // contratante e a sua empresa é a contratada. A pergunta "Terá contrato?" fica na etapa do responsável legal e grava temDocumento (campo novo e opcional); "tem" segue como era.
+        const etapaCt = window.CicluzContratos.etapaContrato({ contrato: ct, papel: 'cliente', lerRegistro: () => registro(), cores, mensal: () => tipo === 'juridica' && mensal.ativo, temExterno: () => (tipo === 'fisica' ? contratoPF() : comContrato()) });
+        // Cliente mensal manda na forma de pagamento e no vencimento (boleto, dia 10), como antes; deixou de ser mensal, o dia 10 sai.
+        const lerContrato = () => ({
+          ...ct, ...etapaCt.ler(), tem: true, clienteMensal: mensal.ativo,
+          ...(mensal.ativo ? { formaPagamento: D.CLIENTE_MENSAL.formaPagamento, vencimentoDia: D.CLIENTE_MENSAL.vencimentoDia, vencimentoData: '' } : ct.clienteMensal ? { vencimentoDia: null } : {}),
+        });
         // Uma só seção no alto: Pessoa Física e Pessoa Jurídica lado a lado. O seletor Simples | Completo saiu da tela (18/11/2026, Rodrigo):
         // Pessoa Jurídica é sempre em etapas; Pessoa Física abre na modalidade em que foi gravada (nova: uma página só).
         // A escolha só muda a tela depois de pedirTroca/aplicar (que pode pedir confirmação); pintarTopo() redesenha a partir de tipo e cadastro.
@@ -344,9 +373,12 @@
           marcarObrigatorios();
           // Padrão único (18/11/2026, Rodrigo): nada fica solto fora de moldura. O "Tipo de cliente" e a "Situação do cliente" abrem o
           // primeiro quadro (como a categoria e a situação no cadastro de fornecedor); no link de cadastro eles não aparecem.
-          const sit = opcoes.externo ? [] : [tipoBox, situacao];
+          // "Terá contrato?": na pessoa física vem depois da Situação; na jurídica, abre a etapa do responsável legal (o mesmo interruptor muda de lugar).
+          const sit = opcoes.externo ? [] : [tipoBox, situacao, ...(tipo === 'fisica' && rcPF ? [temCt] : [])];
+          if (tipo === 'juridica' && temCt.parentNode !== rep.no) rep.no.querySelector('legend').after(temCt);
           // Cada assunto dentro de um quadro com borda e título (pedido do Rodrigo, 17/11/2026): nenhum campo fica solto.
           const quadro = (legenda, ...nos) => { const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, legenda), ...nos); return q; };
+          if (contratoPF()) return [bloco(quadro('Dados do cliente', ...sit, F.nasc), caixaPF), bloco(...etapaCt.nos), bloco(revisao)];
           if (tipo === 'fisica' && cadastro === 'simples') return [bloco(quadro('Dados pessoais', ...sit, F.nome, F.whats, F.mail, F.nasc), sEnd)];
           if (tipo === 'fisica') {
             const comp = el('fieldset', 'compras-fieldset'); comp.append(el('legend', null, 'Sorteio'), el('p', 'profiles-note', 'Sorteio — Em definição'), el('small', 'profiles-note', 'Funcionalidade futura: por enquanto não há número, participação, prêmio nem regra de sorteio.'));
@@ -366,6 +398,13 @@
         function ler() {
           const base = { tipoPessoa: tipo, cadastro, ...(opcoes.externo ? {} : { situacao: situacao.ativo ? 'ativo' : 'inativo' }) };
           const endereco = cadastro === 'simples' && !endSw.ativo ? (c && c.endereco ? c.endereco : undefined) : { cep: cep.value.trim(), logradouro: rua.value.trim(), numero: numero.value.trim(), complemento: complemento.value.trim(), bairro: bairro.value.trim(), cidade: cidade.value.trim(), uf: uf.value };
+          if (contratoPF()) {
+            const p = E.lerResponsavel(rcPF);
+            return { ...base, nome: p.nome, cpf: p.cpf, whatsapp: p.whatsapp, email: p.email, endereco: p.endereco, rg: p.rg, rgOrgao: p.rgOrgao, nacionalidade: p.nacionalidade, estadoCivil: p.estadoCivil, profissao: p.profissao,
+              representacao: p.representacao, aniversario: anivPF.valor(), nascimento: p.nascimento || (v.nascimento && v.nascimento.slice(5) === anivPF.valor() ? v.nascimento : undefined), contrato: { ...ct, ...etapaCt.ler() } };
+          }
+          // Pessoa física que tinha contrato e deixou de ter: só a resposta muda; o contrato preenchido fica guardado.
+          if (tipo === 'fisica' && ct.temDocumento && !opcoes.externo) base.contrato = { ...ct, temDocumento: false };
           if (tipo === 'fisica') return { ...base, nome: nome.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim(), aniversario: anivPF.valor(), nascimento: v.nascimento && v.nascimento.slice(5) === anivPF.valor() ? v.nascimento : undefined, endereco, ...(cadastro === 'completo' ? { cpf: cpf.value.trim() } : {}) };
           if (cadastro === 'simples') return { ...base, cnpj: cnpj.value.trim(), razaoSocial: razao.value.trim(), nomeFantasia: fantasia.value.trim(), whatsapp: whats.value.trim(), email: mail.value.trim(), endereco };
           fin.pintar(); rep.pintar();
@@ -377,6 +416,7 @@
           const faltas = D.validarClienteEtapas(registro(), R(), { clientes: clientes() });
           // Com contrato, o bloco completo do responsável legal é conferido com as mesmas regras de Dados da Empresa (formato de CPF, WhatsApp, CEP…).
           if (tipo === 'juridica' && cadastro === 'completo' && comContrato() && !faltas[2]) faltas[2] = E.validarResponsaveis({ responsaveis: [E.lerResponsavel(rc)] }).split('responsável 1').join('responsável legal');
+          if (contratoPF() && !faltas[0]) faltas[0] = E.validarResponsaveis({ responsaveis: [E.lerResponsavel(rcPF)] }).split('do responsável 1').join('do cliente');
           return faltas;
         };
 
@@ -395,7 +435,7 @@
           const pags = paginas();
           passos = pags.map((nos) => { const d = el('div', 'compras-etapa'); d.append(...nos); return d; });
           corpo.replaceChildren(...passos);
-          const nomes = D.etapasCliente(tipo, cadastro, { semContrato: !comContrato() });
+          const nomes = D.etapasCliente(tipo, cadastro, { semContrato: !comContrato(), contratoPF: contratoPF() });
           if (nomes.length) {
             barra = window.CicluzStepper.create({ steps: nomes.map((label) => ({ label })), current: 0, label: 'Etapas do cadastro do cliente', onSelect: (i) => { if (c || i <= passo) ir(i); } });
             barraBox.replaceChildren(barra.el); mostrar(barraBox, true);
@@ -407,22 +447,23 @@
           passos.forEach((p, k) => mostrar(p, k === passo));
           if (barra) barra.update(nomes0(), passo);
           erroEtapa.textContent = '';
-          if (tipo === 'juridica' && cadastro === 'completo') etapaCt.pintar(); // as partes e o cliente mensal vêm das outras etapas
+          if ((tipo === 'juridica' && cadastro === 'completo') || contratoPF()) etapaCt.pintar(); // as partes e o cliente mensal vêm das outras etapas
           const ultima = passo === passos.length - 1; const etapas = passos.length > 1;
           if (etapas && ultima) {
             // Cada bloco da revisão leva à etapa de onde os dados vieram.
             const etapaDoBloco = { 'Dados cadastrais': 0, 'Dados pessoais': 0, 'Endereço': tipo === 'juridica' ? 0 : 1, 'Informações complementares': 2, 'Dados do responsável financeiro': 1, 'Informações de cobrança': 1, 'Dados do responsável legal': 2, 'Contrato': 3 };
+            if (contratoPF()) Object.assign(etapaDoBloco, { 'Endereço': 0, 'Contrato': 1 });
             revisao.replaceChildren(el('p', 'profiles-note', 'Confira os dados antes de salvar. Para corrigir, toque em Editar no bloco.'), dlDe(secoesCliente(registro()), (t) => (t in etapaDoBloco ? () => ir(etapaDoBloco[t]) : null)));
           }
           U.subirAoTopo(barraBox, form);
           nav.replaceChildren(...(etapas ? [passo > 0 && voltar, cancelar, (c || ultima) && salvarFim, !ultima && avancar] : [cancelar, salvarFim]).filter(Boolean));
         }
-        const nomes0 = () => D.etapasCliente(tipo, cadastro, { semContrato: !comContrato() }).map((label) => ({ label }));
+        const nomes0 = () => D.etapasCliente(tipo, cadastro, { semContrato: !comContrato(), contratoPF: contratoPF() }).map((label) => ({ label }));
         form.append(barraBox, corpo, erroEtapa, nav);
         desenhar();
         // Cliente já cadastrado, em etapas, abre na Revisão dos dados, como em Dados da Empresa (18/11/2026, Rodrigo). Novo começa na 1ª etapa; o de uma página só abre no formulário.
         if (c && passos.length > 1) ir(passos.length - 1);
-        return { ler, registro, conferir, ir, get datas() { return tipo === 'juridica' && cadastro === 'completo' && comContrato() ? etapaCt.datas() : []; } };
+        return { ler, registro, conferir, ir, get datas() { return (tipo === 'juridica' && cadastro === 'completo' && comContrato()) || contratoPF() ? etapaCt.datas() : []; } };
       },
       salvar: (ctx) => {
         if (opcoes.previa) return 'Isto é só uma prévia do formulário: nada é salvo.';
