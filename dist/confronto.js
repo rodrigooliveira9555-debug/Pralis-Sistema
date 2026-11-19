@@ -7,7 +7,7 @@
  *   4 Tratar    — cada divergência é conferida ou justificada (com motivo) pelo DP.
  *   5 Fechar    — só fecha sem pendência; congela a tolerância; dá para reabrir.
  * Regras (divergência, tolerância, tratamento, fechamento) em ponto-dominio.js, testadas. Aqui só apresentação e armazenamento.
- * Dado em cicluz-ponto-v1, só neste navegador, não sincronizado: batida de ponto é dado pessoal (P-32).
+ * Dado em cicluz-ponto-v1, só neste navegador, não sincronizado: batida de ponto é dado pessoal (P-38).
  */
 (function () {
   'use strict';

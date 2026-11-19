@@ -3,7 +3,7 @@
  *
  * As quatro batidas do dia: Entrada, Saída para o intervalo, Retorno do intervalo e Saída.
  *   IDEALIZADO = o que o Cicluz espera (horário e escala vinculados ao colaborador, em Horários e Escalas).
- *   REALIZADO  = o que veio da Conplus, importado em arquivo CSV (a API ainda não existe; PROJECT_BRAIN/11, P-32).
+ *   REALIZADO  = o que veio da Conplus, importado em arquivo CSV (a API ainda não existe; PROJECT_BRAIN/11, P-38).
  *   DIFERENÇA  = Realizado − Idealizado, em minutos (positivo = batida depois do esperado). Só aritmética:
  *                tolerância, atraso, falta e hora extra são regras do DP e NÃO são decididas aqui.
  * CONFRONTO (DES - Confronto de Ponto): por competência (mês) — importar, conferir, detalhar, tratar e fechar.

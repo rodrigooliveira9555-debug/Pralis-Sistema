@@ -6,7 +6,7 @@
  * Nada aqui calcula folha nem inventa valor. Os dois valores vêm de uma FONTE trocável (CicluzFolhaMes.usarFonte):
  *   projetado(competencia) e realizado(competencia), com competencia "AAAA-MM", devolvem { [idDaPessoa]: { [rubrica]: número } }
  *   (ou null quando ainda não existe). Valor que a fonte não traz aparece como "Pendente", nunca como zero.
- * Hoje não existe motor de folha do Cicluz nem a API da Conplus (PROJECT_BRAIN/11, P-31): as duas fontes devolvem null.
+ * Hoje não existe motor de folha do Cicluz nem a API da Conplus (PROJECT_BRAIN/11, P-37): as duas fontes devolvem null.
  * As rubricas são as dos eventos das folhas Conplus de demonstração (Dia 05 e Dia 20); a lista oficial substitui esta função.
  */
 (function () {
