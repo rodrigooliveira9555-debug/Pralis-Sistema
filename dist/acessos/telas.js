@@ -45,7 +45,8 @@
   // A legenda e as opções de cada tela usam o mesmo texto (o do próprio nível).
   const LEGENDA = ['lp', 'l', 'pl', 'ep', 'e', 'pe', 'vA', 'vD'];
   // Níveis que cada tipo de seção aceita (l lançamento, r relatório, c cadastro, v só consulta).
-  const ACEITA = { l: ['none', 'vA', 'vD', 'lp', 'l', 'pl', 'ep', 'e', 'pe'], r: ['none', 'vA', 'vD'], c: ['none', 'vA', 'l', 'e'], v: ['none', 'vA'] };
+  // Mesma ordem da legenda (lançar, editar, visualizar), com "Sem acesso" primeiro.
+  const ACEITA = { l: ['none', 'lp', 'l', 'pl', 'ep', 'e', 'pe', 'vA', 'vD'], r: ['none', 'vA', 'vD'], c: ['none', 'l', 'e', 'vA'], v: ['none', 'vA'] };
   // Cadastro e consulta não têm pagamento: ali "visualizar" não leva o "antes de Pagar".
   const nomeDoNivel = (id, tipo) => (id === 'vA' && (tipo === 'c' || tipo === 'v') ? 'Somente Visualizar' : NIVEL[id].nome);
   const PODE_PAGAR = ['lp', 'pl', 'ep', 'pe'];
