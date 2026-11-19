@@ -65,6 +65,11 @@ function openEditor(form,titleText,onCancel){if(form._ed)return;const d=el('dial
 /* Padrão do sistema nas janelas antigas (19/11/2026, Rodrigo). padronizarCampos: os rótulos ganham o formato dos cadastros novos (.compras-campo > .compras-rotulo), para o aviso de campo obrigatório vazio (CicluzComprasUI.sinalizarObrigatorios) funcionar; faz uma vez só por formulário. campoSituacao: o seletor Ativo/Inativo continua guardando o valor, mas quem aparece é o interruptor padrão; chame .pintar() depois de mudar o valor do seletor. */
 function padronizarCampos(form){if(form.dataset.camposPadrao)return;form.dataset.camposPadrao='1';for(const l of form.querySelectorAll(':scope>label')){const t=[...l.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());if(!t)continue;const r=el('span','compras-rotulo',t.textContent.trim());t.replaceWith(r);l.classList.add('compras-campo')}}
 function campoSituacao(select,titulo,dica,feminino){const slot=el('div','uniforms-wide');slot.pintar=()=>{const cu=window.CicluzComprasUI;if(!cu){const l=el('label',null,titulo);l.append(select);slot.replaceChildren(l);return}const q=cu.quadroSituacao(titulo,select.value==='1',{dica,feminino:!!feminino,aoMudar:()=>{select.value=q.ativo?'1':'0'}});slot.replaceChildren(q)};return slot}
+/* Áreas, setores e locais em caixas de marcar (DES - Área / Setor / Local). Usado no cargo e no Horário / Escala. */
+function unitPicker(selected,legend){const O=window.CicluzOrg,box=el('fieldset','profiles-units uniforms-wide');box.append(el('legend',null,legend));const chosen=new Set(selected||[]);const list=O?.flat()||[];
+ if(!list.length)box.append(el('p','profiles-note','Nenhuma área cadastrada em DES - Área / Setor / Local.'));
+ for(const n of list){if(n.inactive&&!chosen.has(n.id))continue;const l=el('label','profiles-choice profiles-unit'),c=el('input');c.type='checkbox';c.checked=chosen.has(n.id);c.dataset.level=n.level;c.onchange=()=>{c.checked?chosen.add(n.id):chosen.delete(n.id);paint()};l.style.setProperty('--unit-indent',String(n.level-1));l.append(c,el('span',null,n.name+(n.inactive?' (inativo)':'')),el('small',null,n.levelName));box.append(l)}
+ const warn=el('p','profiles-error');box.append(warn);function paint(){const bad=O?.invalidSelection([...chosen])||[];warn.textContent=bad.length?'Combinação inválida: '+bad.join('; ')+'.':''}paint();return {box,chosen,invalid:()=>O?.invalidSelection([...chosen])||[]}}
 function closeEditor(form){const e=form._ed;if(!e)return;form._ed=null;e.home.replaceWith(form);e.d.close();e.d.remove()}
 function confirmDialog(titleText,text,confirmLabel,onConfirm,after){return dialog(titleText,(field,form)=>{form.append(el('p','uniforms-confirm-text',text))},()=>onConfirm(),confirmLabel,after)}
 
@@ -243,6 +248,6 @@ window.showUniforms=showUniforms;
 /* Shared with Compras de Uniformes: one store, one set of components. */
 window.CicluzUniformStore={load,transact,get:()=>data,failed:()=>loadError}
 window.CicluzUniformReceipt={types:RECEIPT_TYPES,lines:m=>receiptLines(m),open:id=>{load();const m=data.movements.find(x=>x.id===id);if(m)receiptDialog(m)}};;
-window.CicluzUniformUI={openExternal,el,button,iconButton,svg,ICON,fold,newId,money,moneyInput,cents,dateBR,today,enumField,dialog,confirmDialog,openEditor,closeEditor,padronizarCampos,campoSituacao,iconize,iconizeActions,uniformName,STATUS};
+window.CicluzUniformUI={openExternal,el,button,iconButton,svg,ICON,fold,newId,money,moneyInput,cents,dateBR,today,enumField,dialog,confirmDialog,openEditor,closeEditor,unitPicker,padronizarCampos,campoSituacao,iconize,iconizeActions,uniformName,STATUS};
 window.addEventListener('storage',e=>{if(e.key===KEY){load();if(view.classList.contains('show'))renderTab()}});
 })();

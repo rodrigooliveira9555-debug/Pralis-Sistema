@@ -11,13 +11,19 @@ const SCALE_TYPES=['Dias fixos da semana','Revezamento','Outra'];
 const CLOCK='M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z';
 
 /* ---------- Data ---------- */
-let data={version:1,shifts:[],scales:[],links:[],exceptions:[],sets:[],holidays:[],days:{},dayLog:[]},loadError=false;
-function load(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s){if(s.version!==1||!['shifts','scales','links','exceptions'].every(k=>Array.isArray(s[k])))throw Error('format');data=s}for(const k of ['sets','holidays','dayLog'])if(!Array.isArray(data[k]))data[k]=[];if(!data.days||typeof data.days!=='object'||Array.isArray(data.days))data.days={};loadError=false}catch{loadError=true}}
+let data={version:1,shifts:[],scales:[],jornadas:[],links:[],exceptions:[],sets:[],holidays:[],days:{},dayLog:[]},loadError=false;
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s){if(s.version!==1||!['shifts','scales','links','exceptions'].every(k=>Array.isArray(s[k])))throw Error('format');data=s}for(const k of ['jornadas','sets','holidays','dayLog'])if(!Array.isArray(data[k]))data[k]=[];if(!data.days||typeof data.days!=='object'||Array.isArray(data.days))data.days={};loadError=false}catch{loadError=true}}
 function transact(change){const before=structuredClone(data);try{if(loadError)throw Error('read');change(data);localStorage.setItem(KEY,JSON.stringify(data));return true}catch{data=before;return false}}
 load();
 const nowIso=()=>new Date().toISOString();
 const shiftById=id=>data.shifts.find(s=>s.id===id),scaleById=id=>data.scales.find(s=>s.id===id);
-const modelOf=l=>l.kind==='shift'?shiftById(l.modelId):scaleById(l.modelId);
+const jornadaById=id=>data.jornadas.find(j=>j.id===id);
+const modelOf=l=>l.kind==='jornada'?jornadaById(l.modelId):l.kind==='shift'?shiftById(l.modelId):scaleById(l.modelId);
+/* Horário / Escala: `dias` guarda o horário de cada dia de trabalho (chave = dia da semana, 0 domingo); `padrao` é o horário que vale quando o dia não tem um próprio. */
+const HOUR_KEYS=['start','end','breakStart','breakEnd'],ORDEM_SEMANA=[1,2,3,4,5,6,0];
+const workDows=j=>Object.keys(j.dias).map(Number).sort((a,b)=>a-b);
+const hoursOf=(j,dow)=>j.dias[dow]||j.padrao;
+const sameHours=(a,b)=>HOUR_KEYS.every(k=>((a&&a[k])||'')===((b&&b[k])||''));
 
 /* ---------- Time arithmetic (HH:MM, crossing midnight allowed) ---------- */
 const mins=t=>{const m=/^(\d{2}):(\d{2})$/.exec(t||'');return m&&+m[1]<24&&+m[2]<60?+m[1]*60+ +m[2]:null};
@@ -35,17 +41,23 @@ const shiftText=s=>s?s.start+' às '+s.end+' · intervalo '+breakText(s.breakSta
 function daysText(days){const d=[...new Set(days)].sort((a,b)=>a-b);if(!d.length)return 'Nenhum dia';if(d.length===7)return 'Todos os dias';
  const runs=[];for(const x of d){const r=runs[runs.length-1];if(r&&x===r[1]+1)r[1]=x;else runs.push([x,x])}return runs.map(([a,b])=>a===b?DAYS[a]:b===a+1?DAYS[a]+', '+DAYS[b]:DAYS[a]+' a '+DAYS[b]).join(', ')}
 const offText=days=>daysText([0,1,2,3,4,5,6].filter(x=>!days.includes(x)));
+/* Jornada da semana do cadastro, sem os intervalos; `brk` troca o intervalo de todos os dias pelo individual do colaborador. */
+const weekNet=(j,brk)=>workDows(j).reduce((t,d)=>{const h=j.dias[d];return t+(calc(h.start,h.end,brk?brk[0]:h.breakStart,brk?brk[1]:h.breakEnd).net||0)},0);
+const jornadaText=j=>{const ds=workDows(j),varia=ds.some(d=>!sameHours(j.dias[d],j.padrao));return daysText(ds)+' · '+j.padrao.start+' às '+j.padrao.end+(varia?' (muda em '+daysText(ds.filter(d=>!sameHours(j.dias[d],j.padrao)))+')':'')};
 
 /* ---------- Links ---------- */
 const linksOf=(pid,kind)=>data.links.filter(l=>l.personId===pid&&l.kind===kind).sort((a,b)=>a.from.localeCompare(b.from)||a.createdAt.localeCompare(b.createdAt));
 function current(pid,kind,day=today()){const l=linksOf(pid,kind).filter(x=>x.from<=day);return l[l.length-1]||null}
 const upcoming=(pid,kind,day=today())=>linksOf(pid,kind).filter(x=>x.from>day);
 /* What the person works with on a given day: the live model plus the person's own break, if any. */
-function effective(pid,day=today()){const ls=current(pid,'shift',day),lc=current(pid,'scale',day),s=ls&&shiftById(ls.modelId),c=lc&&scaleById(lc.modelId);
- const own=!!(ls&&ls.breakStart);return {shiftLink:ls,scaleLink:lc,shift:s,scale:c,breakStart:own?ls.breakStart:s?.breakStart||'',breakEnd:own?ls.breakEnd:s?.breakEnd||'',ownBreak:own}}
+function effective(pid,day=today()){const lj=current(pid,'jornada',day),j=lj&&jornadaById(lj.modelId);
+ if(j){const h=hoursOf(j,new Date(day+'T12:00:00').getDay()),own=!!lj.breakStart;return {jornada:j,jornadaLink:lj,shiftLink:lj,scaleLink:lj,shift:{id:j.id,name:j.name,active:j.active,start:h.start,end:h.end,breakStart:h.breakStart||'',breakEnd:h.breakEnd||''},scale:{id:j.id,name:j.name,type:j.type,days:workDows(j),active:j.active},breakStart:own?lj.breakStart:h.breakStart||'',breakEnd:own?lj.breakEnd:h.breakEnd||'',ownBreak:own,weekNet:weekNet(j,own?[lj.breakStart,lj.breakEnd]:null)}}
+ /* Sem Horário / Escala vinculado, valem os vínculos antigos (horário e escala separados). */
+ const ls=current(pid,'shift',day),lc=current(pid,'scale',day),s=ls&&shiftById(ls.modelId),c=lc&&scaleById(lc.modelId);
+ const own=!!(ls&&ls.breakStart),bS=own?ls.breakStart:s?.breakStart||'',bE=own?ls.breakEnd:s?.breakEnd||'',net=s?calc(s.start,s.end,bS,bE).net:null;return {jornada:null,jornadaLink:null,shiftLink:ls,scaleLink:lc,shift:s,scale:c,breakStart:bS,breakEnd:bE,ownBreak:own,weekNet:net!=null&&c?net*c.days.length:null}}
 const linkedCount=(kind,id)=>{const day=today();return new Set(data.links.filter(l=>l.kind===kind&&l.modelId===id).map(l=>l.personId).filter(pid=>current(pid,kind,day)?.modelId===id||upcoming(pid,kind,day).some(x=>x.modelId===id))).size};
-const snapshotOf=(kind,m)=>kind==='shift'?{name:m.name,start:m.start,end:m.end,breakStart:m.breakStart,breakEnd:m.breakEnd}:{name:m.name,type:m.type,days:[...m.days]};
-function addLinks(kind,modelId,personIds,from,brk){const m=kind==='shift'?shiftById(modelId):scaleById(modelId),at=nowIso();
+const snapshotOf=(kind,m)=>kind==='jornada'?{name:m.name,type:m.type,padrao:{...m.padrao},dias:structuredClone(m.dias),unitIds:[...(m.unitIds||[])]}:kind==='shift'?{name:m.name,start:m.start,end:m.end,breakStart:m.breakStart,breakEnd:m.breakEnd}:{name:m.name,type:m.type,days:[...m.days]};
+function addLinks(kind,modelId,personIds,from,brk){const m=modelOf({kind,modelId}),at=nowIso();
  return transact(d=>{for(const pid of personIds)d.links.push({id:newId(),personId:pid,kind,modelId,from,breakStart:brk?.[0]||'',breakEnd:brk?.[1]||'',snapshot:snapshotOf(kind,m),createdAt:at})})}
 
 /* ---------- Screen scaffolding (same structure as the other Gestão de Pessoas screens) ---------- */
@@ -58,9 +70,9 @@ function makeView(key,title,group,note){const view=el('section','view');view.id=
  const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
  addShortcuts(view.id,()=>menuBack(2,group)());if(note)body.append(el('div','form-note',note));
  return views[key]={view,body,title,group,render:()=>{}}}
-/* Horários e Escalas numa tela só, "DES - Horário / Escala" (18/11/2026, pedido do Rodrigo): a parte das escalas mora dentro da tela dos horários, em bloco próprio com título. Quem pede a tela pela chave antiga ('scales') cai na mesma tela. */
-function makePart(key,parentKey,partTitle,note){const p=views[parentKey],body=el('div','jornada-parte');p.body.append(body);(p.parts=p.parts||[]).push(key);return views[key]={view:p.view,body,title:p.title,group:p.group,render:()=>{},parentKey}}
-function show(key,opts={}){load();P.load();const v=views[key].parentKey?views[views[key].parentKey]:views[key];document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));v.view.classList.add('show');document.getElementById('crumb').textContent=menuCrumb(2,v.group,v.title);const t=document.getElementById('title');if(t)t.textContent=v.title;v.render(opts);for(const k of v.parts||[])views[k].render(opts);normalizeHeaderActions(v.view)}
+/* Chaves antigas de tela (cadastro de escalas e os dois lançamentos separados) caem nas telas novas: atalhos e endereços salvos continuam abrindo. */
+const TELA_ANTIGA={scales:'shifts','shift-links':'links','scale-links':'links'};
+function show(key,opts={}){load();P.load();const v=views[TELA_ANTIGA[key]||key];document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));v.view.classList.add('show');document.getElementById('crumb').textContent=menuCrumb(2,v.group,v.title);const t=document.getElementById('title');if(t)t.textContent=v.title;v.render(opts);normalizeHeaderActions(v.view)}
 const statusPill=active=>el('span','pill '+(active?'p-green':'p-red'),active?'Ativo':'Inativo');
 const messages=()=>{const error=el('p','uniforms-wide profiles-error'),status=el('p','uniforms-wide profiles-note');error.setAttribute('role','alert');status.setAttribute('role','status');return {error,status}};
 /* Lista no padrão do sistema (19/11/2026, Rodrigo): na seta da linha, o botão de excluir vira Desativar ou Reativar — modelo de horário e de escala não é apagado. */
@@ -69,81 +81,73 @@ const ICONE_RELOGIO='<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',ICO
 function table(heads){const t=el('table','uniforms-table'),hr=el('tr');for(const h of heads)hr.append(el('th',null,h));const th=el('thead');th.append(hr);const tb=el('tbody');t.append(th,tb);return {t,tb}}
 const storageWarning=()=>loadError?el('p','people-alert','Não foi possível ler os horários e escalas salvos neste navegador. Nada será gravado para não sobrescrever os dados.'):null;
 
-/* ---------- Cadastro de Horários ---------- */
-{const V=makeView('shifts','DES - Horário / Escala','Cadastros Geral Colaboradores');V.body.append(el('p','profiles-note','Modelos de horário e de escala reutilizáveis. O modelo não tem colaborador: o vínculo com a pessoa é feito em Lançamentos Colaboradores.'));
- /* O cadastro abre em janela (padrão do sistema): na tela fica só a lista, com o botão Novo Horário. */
- const form=el('form','form-fields uniforms-form');form.noValidate=true;form.hidden=true;form.dataset.quadro='Dados do horário';const heading=el('h3','uniforms-wide uniforms-heading','Novo horário');heading.hidden=true;
- const name=el('input'),start=time(),end=time(),bs=time(),be=time(),brkOut=el('input'),totalOut=el('input'),active=el('select');name.maxLength=60;name.placeholder='Ex.: Horário 01 — Manhã';brkOut.readOnly=totalOut.readOnly=true;active.add(new Option('Ativo','1'));active.add(new Option('Inativo','0'));
+/* ---------- Cadastro de Horário / Escala (um cadastro só, 19/11/2026, Rodrigo) ----------
+   Horário e escala andam juntos: o cadastro guarda os dias de trabalho e o horário de cada dia (o padrão vale para todos e cada dia
+   pode ter o seu), mais as áreas, setores e locais em que é usado. Os cadastros antigos, separados (data.shifts e data.scales),
+   continuam guardados e valendo para quem já estava vinculado, mas não são mais criados nem editados. */
+{const V=makeView('shifts','DES - Horário / Escala','Cadastros Geral Colaboradores');V.body.append(el('p','profiles-note','Cada cadastro junta os dias de trabalho, o horário de cada dia e as áreas e setores em que é usado. O vínculo com o colaborador é feito em Lançamentos Colaboradores → DES - Lançamento de Horário / Escala.'));
+ const form=el('form','form-fields uniforms-form');form.noValidate=true;form.hidden=true;form.dataset.quadro='Dados do horário / escala';
+ const name=el('input'),type=el('select'),notes=el('textarea'),active=el('select'),offOut=el('input'),start=time(),end=time(),bs=time(),be=time(),weekOut=el('input');
+ name.maxLength=60;name.placeholder='Ex.: Produção manhã — segunda a sábado';SCALE_TYPES.forEach(x=>type.add(new Option(x,x)));notes.rows=3;notes.addEventListener('focusout',e=>e.stopPropagation());active.add(new Option('Ativo','1'));active.add(new Option('Inativo','0'));offOut.readOnly=weekOut.readOnly=true;
+ const daysBox=el('fieldset','uniforms-wide jornada-days');daysBox.append(el('legend',null,'Dias de trabalho *'));
+ const checks=DAYS.map((d,i)=>{const l=el('label','jornada-day'),c=el('input');c.type='checkbox';c.value=String(i);c.setAttribute('aria-label',DAY_NAMES[i]);l.append(c,el('span',null,d));daysBox.append(l);c.addEventListener('change',()=>{aplicarPadrao();paint()});return c});
+ /* Horário de cada dia: nasce igual ao padrão; o dia alterado à mão fica marcado como diferente e deixa de acompanhar o padrão. */
+ const diasBox=el('fieldset','uniforms-wide jornada-dias');diasBox.append(el('legend',null,'Horário de cada dia'),el('p','profiles-note','Cada dia começa com o horário padrão. Altere só o dia que for diferente (ex.: sábado até meio-dia).'));
+ const rows=ORDEM_SEMANA.map(dow=>{const box=el('div','jornada-dia'),head=el('div','jornada-dia-cab'),tag=el('small','jornada-dia-tag','Diferente do padrão'),out=el('small','jornada-dia-total'),ins={start:time(),end:time(),breakStart:time(),breakEnd:time()};
+  const volta=button('Usar o padrão',()=>{r.manual=false;aplicarPadrao();paint()},'btn ghost jornada-dia-volta');head.append(el('strong',null,DAY_NAMES[dow]),tag,out,volta);
+  const campos=el('div','jornada-dia-campos');campos.append(lbl('Entrada',ins.start),lbl('Saída',ins.end),lbl('Início do intervalo',ins.breakStart),lbl('Fim do intervalo',ins.breakEnd));for(const k of HOUR_KEYS){ins[k].setAttribute('aria-label',campos.children[HOUR_KEYS.indexOf(k)].firstChild.textContent+' de '+DAY_NAMES[dow]);ins[k].addEventListener('input',()=>{r.manual=!sameHours(valores(r),padrao());paint()})}
+  box.append(head,campos);diasBox.append(box);const r={dow,box,tag,out,ins,volta,manual:false};return r});
  const sixNote=el('p','uniforms-wide people-alert schedules-six');sixNote.hidden=true;
-const {error,status}=messages(),actions=el('div','uniforms-wide actions'),save=el('button','btn','Salvar');save.type='submit';let editing=null;const sit=U.campoSituacao(active,'Situação do horário','Horário inativo não pode ser escolhido em novos vínculos.');
- actions.append(button('Cancelar',()=>reset(),'btn ghost'),save); /* Cancelar · Salvar por extenso, à direita */
- form.append(heading,lbl('Nome do horário *',name,'uniforms-wide'),lbl('Hora de entrada *',start),lbl('Hora de saída *',end),lbl('Início do intervalo',bs),lbl('Fim do intervalo',be),lbl('Duração do intervalo',brkOut),lbl('Jornada total (sem o intervalo)',totalOut),sixNote,sit,error,status,actions);
- const wrap=el('div');V.body.append(form,wrap);
- /* Same reference as the CARGOS/HORÁRIOS/ESCALAS sheet: an interval is expected when the workday passes 6h. Alert only. */
-function recalc(){const c=calc(start.value,end.value,bs.value,be.value);brkOut.value=bs.value&&be.value?hm(c.brk):'';totalOut.value=c.net==null||!c.work?'':hm(c.net);sixNote.hidden=!(c.work>360&&!(bs.value&&be.value));sixNote.textContent='Jornada acima de 6h sem intervalo. Na planilha de horários o intervalo entra quando a jornada passa de 6h: confira antes de salvar.'}
- for(const i of [start,end,bs,be])i.addEventListener('input',recalc);
- function reset(){U.closeEditor(form);form.hidden=true;editing=null;form.reset();name.value='';active.value='1';heading.textContent='Novo horário';error.textContent='';recalc()}
- function abrir(titulo){U.padronizarCampos(form);sit.pintar();error.textContent='';status.textContent='';U.openEditor(form,titulo,reset)}
- function novo(){reset();abrir('Novo horário')}
- function edit(s){editing=s.id;name.value=s.name;start.value=s.start;end.value=s.end;bs.value=s.breakStart||'';be.value=s.breakEnd||'';active.value=s.active?'1':'0';heading.textContent='Editar horário: '+s.name;recalc();abrir(heading.textContent)}
- form.onsubmit=e=>{e.preventDefault();error.textContent='';status.textContent='';load();const n=name.value.trim(),errs=timeErrors(start.value,end.value,bs.value,be.value);if(!n)errs.unshift('Informe o nome do horário.');
-  if(data.shifts.some(s=>s.id!==editing&&fold(s.name)===fold(n)))errs.push('Já existe um horário com este nome.');
-  const same=data.shifts.find(s=>s.id!==editing&&s.start===start.value&&s.end===end.value&&(s.breakStart||'')===bs.value&&(s.breakEnd||'')===be.value);if(same)errs.push('Estes horários já estão cadastrados em "'+same.name+'". Reutilize esse modelo.');
-  if(errs.length){error.textContent=errs[0];window.CicluzComprasUI?.sinalizarObrigatorios(form);return}
-  const rec={name:n,start:start.value,end:end.value,breakStart:bs.value,breakEnd:be.value,active:active.value==='1'};
-  const commit=()=>{const ok=transact(d=>{if(editing){const s=d.shifts.find(x=>x.id===editing);(s.history=s.history||[]).push({at:nowIso(),before:{name:s.name,start:s.start,end:s.end,breakStart:s.breakStart,breakEnd:s.breakEnd,active:s.active}});Object.assign(s,rec,{updatedAt:nowIso()})}else d.shifts.push({id:newId(),...rec,createdAt:nowIso(),history:[]})});
-   if(!ok){error.textContent='Não foi possível salvar neste navegador.';return null}const msg=(editing?'Horário atualizado: ':'Horário cadastrado: ')+n+'.';reset();V.render();window.CicluzComprasUI?.avisar(msg);return null};
-  const old=editing&&shiftById(editing),users=editing?linkedCount('shift',editing):0,changed=old&&(old.start!==rec.start||old.end!==rec.end||(old.breakStart||'')!==rec.breakStart||(old.breakEnd||'')!==rec.breakEnd);
-  if(users&&changed)confirmDialog('Alterar o horário para todos?','Este modelo está vinculado a '+users+' colaborador(es). A alteração vale para todos eles a partir de agora. Intervalos individuais continuam como estão, e o histórico guarda os horários anteriores.','Alterar para todos',commit,()=>{});else commit()};
- function toggle(s){const users=linkedCount('shift',s.id);const run=()=>{transact(d=>{const x=d.shifts.find(y=>y.id===s.id);x.active=!x.active;x.updatedAt=nowIso()});V.render();return null};
-  if(s.active)confirmDialog('Desativar horário?','"'+s.name+'" não poderá ser escolhido em novos vínculos.'+(users?' Os '+users+' colaborador(es) já vinculados continuam com ele até receberem outro horário.':''),'Desativar',run,()=>{});else run()}
- V.render=()=>{const cu=window.CicluzComprasUI;wrap.replaceChildren();const w=storageWarning();if(w)wrap.append(w);const list=[...data.shifts].sort((a,b)=>(b.active-a.active)||a.name.localeCompare(b.name,'pt-BR'));
-  const ponta=cu.pontaDaLista(list.length,list.length+(list.length===1?' horário cadastrado':' horários cadastrados')),sec=cu.secao('Horários',undefined,ponta),linhas=el('div','compras-lista');
-  sec.querySelector('.compras-secao-cab h3').replaceChildren(cu.botaoTitulo('Novo Horário','Cadastrar modelo de horário',novo));
-  if(!list.length)linhas.append(cu.vazio('Nenhum horário cadastrado.','Use "Novo Horário" para cadastrar um modelo.'));
-  for(const s of list){const c=calc(s.start,s.end,s.breakStart,s.breakEnd),n=linkedCount('shift',s.id);
-   const row=cu.linhaLista({icone:ICONE_RELOGIO,titulo:s.name,detalhe:[s.start+' às '+s.end,s.breakStart?'intervalo '+s.breakStart+' às '+s.breakEnd:'sem intervalo','jornada '+hm(c.net),n+(n===1?' colaborador':' colaboradores')].join(' · '),direita:el('span','account-list-state',s.active?'Ativo':'Inativo'),acoes:{rotulo:s.name,lista:linhas,aoEditar:()=>edit(s),aoExcluir:()=>toggle(s)}});
-   botaoSituacao(row,s.active,s.name);if(!s.active)row.classList.add('inativo');linhas.append(row)}
-  sec.append(linhas);wrap.append(sec)};
- views.shifts.reset=reset}
-
-/* ---------- Cadastro de Escalas ---------- */
-{const V=makePart('scales','shifts','Escalas','Dias de trabalho e de folga na semana; o vínculo com a pessoa é feito em DES - Escalas de Folga. A plataforma não aplica regras de folga ou jornada que não estejam configuradas aqui.');
- const form=el('form','form-fields uniforms-form');form.noValidate=true;form.hidden=true;form.dataset.quadro='Dados da escala';const heading=el('h3','uniforms-wide uniforms-heading','Nova escala');heading.hidden=true;
- const name=el('input'),type=el('select'),notes=el('textarea'),active=el('select'),offOut=el('input');name.maxLength=60;name.placeholder='Ex.: Segunda a sábado';SCALE_TYPES.forEach(x=>type.add(new Option(x,x)));notes.rows=3;notes.addEventListener('focusout',e=>e.stopPropagation());active.add(new Option('Ativo','1'));active.add(new Option('Inativo','0'));offOut.readOnly=true;
- const daysBox=el('fieldset','uniforms-wide jornada-days');daysBox.append(el('legend',null,'Dias de trabalho *'));const checks=DAYS.map((d,i)=>{const l=el('label','jornada-day'),c=el('input');c.type='checkbox';c.value=String(i);c.setAttribute('aria-label',DAY_NAMES[i]);l.append(c,el('span',null,d));daysBox.append(l);c.addEventListener('change',paintOff);return c});
- const {error,status}=messages(),actions=el('div','uniforms-wide actions'),save=el('button','btn','Salvar');save.type='submit';let editing=null;const sit=U.campoSituacao(active,'Situação da escala','Escala inativa não pode ser escolhida em novos vínculos.',true);
- actions.append(button('Cancelar',()=>reset(),'btn ghost'),save); /* Cancelar · Salvar por extenso, à direita */
- form.append(heading,lbl('Nome da escala *',name,'uniforms-wide'),lbl('Tipo de escala *',type),daysBox,lbl('Dias de folga',offOut,'uniforms-wide'),lbl('Observações',notes,'uniforms-wide'),sit,error,status,actions);
+ const unidadesSlot=el('div','uniforms-wide');let unidades=null;
+ const {error,status}=messages(),actions=el('div','uniforms-wide actions'),save=el('button','btn','Salvar');save.type='submit';let editing=null;const sit=U.campoSituacao(active,'Situação do horário / escala','Cadastro inativo não pode ser escolhido em novos vínculos.');
+ actions.append(button('Cancelar',()=>reset(),'btn ghost'),save);
+ form.append(lbl('Nome do horário / escala *',name,'uniforms-wide'),lbl('Tipo de escala *',type),lbl('Dias de folga',offOut),daysBox,lbl('Hora de entrada *',start),lbl('Hora de saída *',end),lbl('Início do intervalo',bs),lbl('Fim do intervalo',be),diasBox,lbl('Jornada da semana (sem os intervalos)',weekOut,'uniforms-wide'),sixNote,unidadesSlot,lbl('Observações',notes,'uniforms-wide'),sit,error,status,actions);
  const wrap=el('div');V.body.append(form,wrap);
  const chosen=()=>checks.filter(c=>c.checked).map(c=>+c.value);
- function paintOff(){const d=chosen();offOut.value=d.length?offText(d):''}
- function reset(){U.closeEditor(form);form.hidden=true;editing=null;name.value='';type.value=SCALE_TYPES[0];notes.value='';active.value='1';checks.forEach(c=>c.checked=false);heading.textContent='Nova escala';error.textContent='';paintOff()}
+ const padrao=()=>({start:start.value,end:end.value,breakStart:bs.value,breakEnd:be.value});
+ const valores=r=>({start:r.ins.start.value,end:r.ins.end.value,breakStart:r.ins.breakStart.value,breakEnd:r.ins.breakEnd.value});
+ function aplicarPadrao(){const p=padrao();for(const r of rows)if(!r.manual)for(const k of HOUR_KEYS)r.ins[k].value=p[k]}
+ function paint(){const d=chosen();offOut.value=d.length?offText(d):'';let semana=0,alerta=false;
+  for(const r of rows){const on=d.includes(r.dow);r.box.hidden=!on;if(!on)continue;const v=valores(r),c=calc(v.start,v.end,v.breakStart,v.breakEnd);r.tag.hidden=r.volta.hidden=!r.manual;r.out.textContent=c.net==null||!c.work?'':'Jornada '+hm(c.net);if(c.net!=null&&c.work)semana+=c.net;if(c.work>360&&!(v.breakStart&&v.breakEnd))alerta=true}
+  diasBox.hidden=!d.length;weekOut.value=d.length&&semana?hm(semana):'';sixNote.hidden=!alerta;sixNote.textContent='Há dia com jornada acima de 6h sem intervalo. Na planilha de horários o intervalo entra quando a jornada passa de 6h: confira antes de salvar.'}
+ for(const i of [start,end,bs,be])i.addEventListener('input',()=>{aplicarPadrao();paint()});
+ function montarUnidades(sel){unidades=U.unitPicker(sel,'Áreas, setores e locais em que este horário / escala é usado');unidadesSlot.replaceChildren(unidades.box)}
+ function limpar(){editing=null;name.value='';type.value=SCALE_TYPES[0];notes.value='';active.value='1';start.value=end.value=bs.value=be.value='';checks.forEach(c=>c.checked=false);for(const r of rows){r.manual=false;for(const k of HOUR_KEYS)r.ins[k].value=''}error.textContent='';paint()}
+ function reset(){U.closeEditor(form);form.hidden=true;limpar()}
  function abrir(titulo){U.padronizarCampos(form);sit.pintar();error.textContent='';status.textContent='';U.openEditor(form,titulo,reset)}
- function novo(){reset();abrir('Nova escala')}
- function edit(s){editing=s.id;name.value=s.name;type.value=s.type;notes.value=s.notes||'';active.value=s.active?'1':'0';checks.forEach(c=>c.checked=s.days.includes(+c.value));heading.textContent='Editar escala: '+s.name;paintOff();abrir(heading.textContent)}
- form.onsubmit=e=>{e.preventDefault();error.textContent='';status.textContent='';load();const n=name.value.trim(),days=chosen(),errs=[];if(!n)errs.push('Informe o nome da escala.');if(!days.length)errs.push('Marque ao menos um dia de trabalho.');
-  if(data.scales.some(s=>s.id!==editing&&fold(s.name)===fold(n)))errs.push('Já existe uma escala com este nome.');
-  const same=data.scales.find(s=>s.id!==editing&&s.type===type.value&&s.days.length===days.length&&s.days.every(x=>days.includes(x)));if(same&&n)errs.push('Estes dias já estão cadastrados em "'+same.name+'" ('+same.type+'). Reutilize esse modelo.');
+ function novo(){reset();montarUnidades([]);abrir('Novo horário / escala')}
+ function edit(s){reset();editing=s.id;name.value=s.name;type.value=s.type;notes.value=s.notes||'';active.value=s.active?'1':'0';start.value=s.padrao.start;end.value=s.padrao.end;bs.value=s.padrao.breakStart||'';be.value=s.padrao.breakEnd||'';
+  checks.forEach(c=>c.checked=!!s.dias[c.value]);for(const r of rows){const h=s.dias[r.dow]||s.padrao;for(const k of HOUR_KEYS)r.ins[k].value=h[k]||'';r.manual=!sameHours(h,s.padrao)}montarUnidades(s.unitIds||[]);paint();abrir('Editar horário / escala: '+s.name)}
+ form.onsubmit=e=>{e.preventDefault();error.textContent='';status.textContent='';load();const n=name.value.trim(),days=chosen(),p=padrao(),errs=[];if(!n)errs.push('Informe o nome do horário / escala.');if(!days.length)errs.push('Marque ao menos um dia de trabalho.');
+  errs.push(...timeErrors(p.start,p.end,p.breakStart,p.breakEnd));const dias={};
+  for(const r of rows){if(!days.includes(r.dow))continue;const v=valores(r);dias[r.dow]=v;if(r.manual)errs.push(...timeErrors(v.start,v.end,v.breakStart,v.breakEnd).map(x=>DAY_NAMES[r.dow]+': '+x))}
+  if(data.jornadas.some(s=>s.id!==editing&&fold(s.name)===fold(n)))errs.push('Já existe um horário / escala com este nome.');
+  const bad=unidades?unidades.invalid():[];if(bad.length)errs.push('Combinação inválida de áreas e setores: '+bad.join('; ')+'.');
   if(errs.length){error.textContent=errs[0];window.CicluzComprasUI?.sinalizarObrigatorios(form);return}
-  const rec={name:n,type:type.value,days,notes:notes.value.trim(),active:active.value==='1'};
-  const commit=()=>{const ok=transact(d=>{if(editing){const s=d.scales.find(x=>x.id===editing);(s.history=s.history||[]).push({at:nowIso(),before:{name:s.name,type:s.type,days:[...s.days],active:s.active}});Object.assign(s,rec,{updatedAt:nowIso()})}else d.scales.push({id:newId(),...rec,createdAt:nowIso(),history:[]})});
-   if(!ok){error.textContent='Não foi possível salvar neste navegador.';return null}const msg=(editing?'Escala atualizada: ':'Escala cadastrada: ')+n+'.';reset();V.render();window.CicluzComprasUI?.avisar(msg);return null};
-  const old=editing&&scaleById(editing),users=editing?linkedCount('scale',editing):0,changed=old&&(old.type!==rec.type||old.days.join()!==[...days].sort().join());
-  if(users&&changed)confirmDialog('Alterar a escala para todos?','Esta escala está vinculada a '+users+' colaborador(es). A alteração vale para todos eles a partir de agora; o histórico guarda os dias anteriores.','Alterar para todos',commit,()=>{});else commit()};
- function toggle(s){const users=linkedCount('scale',s.id);const run=()=>{transact(d=>{const x=d.scales.find(y=>y.id===s.id);x.active=!x.active;x.updatedAt=nowIso()});V.render();return null};
-  if(s.active)confirmDialog('Desativar escala?','"'+s.name+'" não poderá ser escolhida em novos vínculos.'+(users?' Os '+users+' colaborador(es) já vinculados continuam com ela até receberem outra escala.':''),'Desativar',run,()=>{});else run()}
- V.render=()=>{const cu=window.CicluzComprasUI;wrap.replaceChildren();const w=storageWarning();if(w)wrap.append(w);const list=[...data.scales].sort((a,b)=>(b.active-a.active)||a.name.localeCompare(b.name,'pt-BR'));
-  const ponta=cu.pontaDaLista(list.length,list.length+(list.length===1?' escala cadastrada':' escalas cadastradas')),sec=cu.secao('Escalas',undefined,ponta),linhas=el('div','compras-lista');
-  sec.querySelector('.compras-secao-cab h3').replaceChildren(cu.botaoTitulo('Nova Escala','Cadastrar modelo de escala',novo));
-  if(!list.length)linhas.append(cu.vazio('Nenhuma escala cadastrada.','Use "Nova Escala" para cadastrar um modelo.'));
-  for(const s of list){const n=linkedCount('scale',s.id);
-   const row=cu.linhaLista({icone:ICONE_ESCALA,titulo:s.name,detalhe:[s.type,'trabalho: '+daysText(s.days),'folga: '+offText(s.days),n+(n===1?' colaborador':' colaboradores')].join(' · '),direita:el('span','account-list-state',s.active?'Ativa':'Inativa'),acoes:{rotulo:s.name,lista:linhas,aoEditar:()=>edit(s),aoExcluir:()=>toggle(s)}});
+  const rec={name:n,type:type.value,notes:notes.value.trim(),active:active.value==='1',padrao:p,dias,unitIds:unidades?[...unidades.chosen]:[]};
+  const commit=()=>{const ok=transact(d=>{if(editing){const s=d.jornadas.find(x=>x.id===editing);(s.history=s.history||[]).push({at:nowIso(),before:{name:s.name,type:s.type,padrao:s.padrao,dias:s.dias,unitIds:s.unitIds||[],active:s.active}});Object.assign(s,rec,{updatedAt:nowIso()})}else d.jornadas.push({id:newId(),...rec,createdAt:nowIso(),history:[]})});
+   if(!ok){error.textContent='Não foi possível salvar neste navegador.';return null}const msg=(editing?'Horário / escala atualizado: ':'Horário / escala cadastrado: ')+n+'.';reset();V.render();window.CicluzComprasUI?.avisar(msg);return null};
+  const old=editing&&jornadaById(editing),users=editing?linkedCount('jornada',editing):0,changed=old&&(old.type!==rec.type||!sameHours(old.padrao,rec.padrao)||workDows(old).join()!==workDows(rec).join()||workDows(rec).some(d=>!sameHours(old.dias[d],rec.dias[d])));
+  if(users&&changed)confirmDialog('Alterar para todos?','Este horário / escala está vinculado a '+users+' colaborador(es). A alteração vale para todos eles a partir de agora. Intervalos individuais continuam como estão, e o histórico guarda os dias e horários anteriores.','Alterar para todos',commit,()=>{});else commit()};
+ function toggle(s){const users=linkedCount('jornada',s.id);const run=()=>{transact(d=>{const x=d.jornadas.find(y=>y.id===s.id);x.active=!x.active;x.updatedAt=nowIso()});V.render();return null};
+  if(s.active)confirmDialog('Desativar horário / escala?','"'+s.name+'" não poderá ser escolhido em novos vínculos.'+(users?' Os '+users+' colaborador(es) já vinculados continuam com ele até receberem outro.':''),'Desativar',run,()=>{});else run()}
+ V.render=()=>{const cu=window.CicluzComprasUI,O=window.CicluzOrg;wrap.replaceChildren();const w=storageWarning();if(w)wrap.append(w);const list=[...data.jornadas].sort((a,b)=>(b.active-a.active)||a.name.localeCompare(b.name,'pt-BR'));
+  const ponta=cu.pontaDaLista(list.length,list.length+(list.length===1?' horário / escala cadastrado':' horários / escalas cadastrados')),sec=cu.secao('Horários / Escalas',undefined,ponta),linhas=el('div','compras-lista');
+  sec.querySelector('.compras-secao-cab h3').replaceChildren(cu.botaoTitulo('Novo Horário / Escala','Cadastrar horário / escala',novo));
+  if(!list.length)linhas.append(cu.vazio('Nenhum horário / escala cadastrado.','Use "Novo Horário / Escala" para cadastrar.'));
+  for(const s of list){const n=linkedCount('jornada',s.id),onde=O?O.namesOf(s.unitIds,2).concat(O.namesOf(s.unitIds,1).filter(()=>!O.namesOf(s.unitIds,2).length)):[];
+   const row=cu.linhaLista({icone:ICONE_ESCALA,titulo:s.name,detalhe:[jornadaText(s),'folga '+offText(workDows(s)),hm(weekNet(s))+' na semana',onde.length?onde.join(', '):'sem área/setor',n+(n===1?' colaborador':' colaboradores')].join(' · '),direita:el('span','account-list-state',s.active?'Ativo':'Inativo'),acoes:{rotulo:s.name,lista:linhas,aoEditar:()=>edit(s),aoExcluir:()=>toggle(s)}});
    botaoSituacao(row,s.active,s.name);if(!s.active)row.classList.add('inativo');linhas.append(row)}
-  sec.append(linhas);wrap.append(sec)};
- views.scales.reset=reset}
+  sec.append(linhas);wrap.append(sec);
+  /* Cadastros antigos (horário e escala separados): só leitura. Continuam valendo para quem já estava vinculado a eles. */
+  if(data.shifts.length||data.scales.length){const antigos=cu.secao('Cadastros antigos (horário e escala separados)',undefined,cu.pontaDaLista(data.shifts.length+data.scales.length,'Cadastros antigos')),la=el('div','compras-lista');
+   antigos.append(el('p','profiles-note','Feitos antes de horário e escala virarem um cadastro só. Continuam valendo para quem já está vinculado; para trocar, cadastre um Horário / Escala e vincule o colaborador.'));
+   for(const s of data.shifts)la.append(cu.linhaLista({icone:ICONE_RELOGIO,titulo:s.name,detalhe:'Horário · '+shiftText(s),direita:el('span','account-list-state',s.active?'Ativo':'Inativo')}));
+   for(const s of data.scales)la.append(cu.linhaLista({icone:ICONE_ESCALA,titulo:s.name,detalhe:'Escala · trabalho: '+daysText(s.days)+' · folga: '+offText(s.days),direita:el('span','account-list-state',s.active?'Ativa':'Inativa')}));
+   antigos.append(la);wrap.append(antigos)}};
+ views.shifts.reset=reset}
 
-/* ---------- Lançamentos: vínculo de vários colaboradores a um modelo ---------- */
+/* ---------- Lançamentos: vínculo de vários colaboradores a um Horário / Escala ---------- */
 function peoplePicker(){const box=el('fieldset','uniforms-wide jornada-people'),legend=el('legend',null,'Colaboradores *'),search=el('input'),list=el('div','jornada-people-list'),tools=el('div','jornada-people-tools'),count=el('span','profiles-note');
  search.type='search';search.placeholder='Buscar colaborador…';search.setAttribute('aria-label','Buscar colaborador');const picked=new Set();
  const all=button('Marcar todos da lista',()=>{list.querySelectorAll('input').forEach(c=>{c.checked=true;picked.add(c.value)});paint()}),none=button('Limpar seleção',()=>{picked.clear();render()});
@@ -153,58 +157,59 @@ function peoplePicker(){const box=el('fieldset','uniforms-wide jornada-people'),
   if(!people.length)list.append(el('p','profiles-note',q?'Nenhum colaborador ativo encontrado.':'Nenhum colaborador ativo cadastrado.'));
   for(const p of people){const l=el('label','jornada-person'),c=el('input');c.type='checkbox';c.value=p.id;c.checked=picked.has(p.id);c.onchange=()=>{c.checked?picked.add(p.id):picked.delete(p.id);paint()};l.append(c,el('span',null,p.name),el('small',null,p.jobName||'Cargo não informado'));list.append(l)}paint()}
  search.addEventListener('input',render);return {box,picked,render,clear:()=>{picked.clear();search.value='';render()}}}
-const modelSelect=(kind,cur)=>{const s=el('select');s.add(new Option(kind==='shift'?'Selecione o horário':'Selecione a escala',''));for(const m of (kind==='shift'?data.shifts:data.scales).filter(x=>x.active||x.id===cur).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')))s.add(new Option(m.name+' · '+(kind==='shift'?m.start+' às '+m.end:daysText(m.days)),m.id));s.value=cur||'';return s};
+const modelSelect=cur=>{const s=el('select');s.add(new Option('Selecione o horário / escala',''));for(const m of data.jornadas.filter(x=>x.active||x.id===cur).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')))s.add(new Option(m.name+' · '+jornadaText(m),m.id));s.value=cur||'';return s};
+/* O intervalo individual vale em todos os dias de trabalho, então precisa caber no horário de cada um deles. */
+const breakErrors=(j,a,b)=>{for(const d of workDows(j)){const e=timeErrors(j.dias[d].start,j.dias[d].end,a,b);if(e.length)return e.map(x=>DAY_NAMES[d]+': '+x.replace('O intervalo','O intervalo individual'))}return []};
+const allLinks=pid=>data.links.filter(l=>l.personId===pid).sort((a,b)=>a.from.localeCompare(b.from)||a.createdAt.localeCompare(b.createdAt));
 
-function makeLinker(kind){const isShift=kind==='shift',key=isShift?'shift-links':'scale-links',noun=isShift?'horário':'escala',cad='DES - Horário / Escala';
- const V=makeView(key,isShift?'DES - Lançamento de Horários':'DES - Escalas de Folga','Lançamentos Colaboradores',isShift?'Vincule um modelo de horário a um ou vários colaboradores a partir de uma data. O intervalo individual vale só para aquele colaborador e não altera o modelo. Vínculos anteriores ficam no histórico.':'Vincule um modelo de escala a um ou vários colaboradores a partir de uma data e registre folgas e exceções. Vínculos anteriores ficam no histórico.');
- const form=el('form','form-fields uniforms-form');form.noValidate=true;const from=DB.field('Data de início *'),modelWrap=el('div','uniforms-wide jornada-model'),preview=el('p','uniforms-wide profiles-note');preview.setAttribute('aria-live','polite');let model=modelSelect(kind);
+{const V=makeView('links','DES - Lançamento de Horário / Escala','Lançamentos Colaboradores','Vincule um Horário / Escala a um ou vários colaboradores a partir de uma data. O intervalo individual vale só para aquele colaborador e não altera o cadastro. Vínculos anteriores ficam no histórico.');
+ const form=el('form','form-fields uniforms-form');form.noValidate=true;form.dataset.quadro='Vincular horário / escala';const from=DB.field('Data de início *'),modelWrap=el('div','uniforms-wide jornada-model'),preview=el('p','uniforms-wide profiles-note');preview.setAttribute('aria-live','polite');let model=modelSelect();
  const bs=time(),be=time(),picker=peoplePicker(),{error,status}=messages(),actions=el('div','uniforms-wide actions'),save=el('button','btn','Vincular aos selecionados');save.type='submit';
- actions.append(button('Cancelar',()=>{reset();status.textContent='Seleção descartada. Nada foi salvo.'}),save); U.iconizeActions(actions);
- const parts=[el('h3','uniforms-wide uniforms-heading','Vincular '+noun),from.label,modelWrap,preview];if(isShift)parts.push(lbl('Intervalo individual: início',bs),lbl('Intervalo individual: fim',be),el('p','uniforms-wide profiles-note','Deixe o intervalo individual em branco para usar o intervalo do modelo.'));
- parts.push(picker.box,error,status,actions);form.append(...parts);
- const goCad=button('Cadastrar '+noun,()=>show(isShift?'shifts':'scales'));
- function paintModel(){const cur=model.value;model=modelSelect(kind,cur);model.addEventListener('change',paintPreview);modelWrap.replaceChildren(lbl('Modelo de '+noun+' *',model));if(model.options.length<2)modelWrap.append(el('p','profiles-note','Nenhum modelo ativo. Cadastre em Cadastros Geral Colaboradores → '+cad+'.'),goCad);paintPreview()}
- function paintPreview(){const m=isShift?shiftById(model.value):scaleById(model.value);preview.textContent=m?(isShift?'Modelo: '+shiftText(m)+' · jornada '+hm(calc(m.start,m.end,m.breakStart,m.breakEnd).net):'Trabalho: '+daysText(m.days)+' · Folga: '+offText(m.days)+' · '+m.type):''}
+ actions.append(button('Cancelar',()=>{reset();status.textContent='Seleção descartada. Nada foi salvo.'},'btn ghost'),save);
+ form.append(from.label,modelWrap,preview,lbl('Intervalo individual: início',bs),lbl('Intervalo individual: fim',be),el('p','uniforms-wide profiles-note','Deixe o intervalo individual em branco para usar o intervalo do cadastro.'),picker.box,error,status,actions);
+ const goCad=button('Cadastrar horário / escala',()=>show('shifts'));
+ function paintModel(){const cur=model.value;model=modelSelect(cur);model.addEventListener('change',paintPreview);modelWrap.replaceChildren(lbl('Horário / Escala *',model));if(model.options.length<2)modelWrap.append(el('p','profiles-note','Nenhum cadastro ativo. Cadastre em Cadastros Geral Colaboradores → DES - Horário / Escala.'),goCad);paintPreview()}
+ function paintPreview(){const m=jornadaById(model.value),O=window.CicluzOrg,onde=m&&O?O.namesOf(m.unitIds).join(', '):'';preview.textContent=m?'Trabalho: '+jornadaText(m)+' · Folga: '+offText(workDows(m))+' · '+hm(weekNet(m))+' na semana'+(onde?' · '+onde:''):''}
  function reset(){from.set(today());model.value='';bs.value=be.value='';picker.clear();error.textContent='';paintModel()}
- form.onsubmit=e=>{e.preventDefault();error.textContent='';status.textContent='';load();const day=from.iso(),m=isShift?shiftById(model.value):scaleById(model.value),ids=[...picker.picked].filter(id=>P.byId(id)),errs=[];
-  if(!day)errs.push('Informe a data de início (DD/MM/AAAA).');if(!m)errs.push('Selecione o modelo de '+noun+'.');else if(!m.active)errs.push('Este modelo está inativo.');if(!ids.length)errs.push('Selecione ao menos um colaborador.');
-  if(isShift&&m&&(bs.value||be.value))errs.push(...timeErrors(m.start,m.end,bs.value,be.value).map(x=>x.replace('O intervalo','O intervalo individual')));
-  if(errs.length){error.textContent=errs.join(' ');return}
-  const same=ids.filter(id=>{const c=current(id,kind,day);return c&&c.modelId===m.id&&c.from===day&&(c.breakStart||'')===(bs.value||'')});
-  if(!addLinks(kind,m.id,ids,day,isShift&&bs.value?[bs.value,be.value]:null)){error.textContent='Não foi possível salvar neste navegador.';return}
+ form.onsubmit=e=>{e.preventDefault();error.textContent='';status.textContent='';load();const day=from.iso(),m=jornadaById(model.value),ids=[...picker.picked].filter(id=>P.byId(id)),errs=[];
+  if(!day)errs.push('Informe a data de início (DD/MM/AAAA).');if(!m)errs.push('Selecione o horário / escala.');else if(!m.active)errs.push('Este cadastro está inativo.');if(!ids.length)errs.push('Selecione ao menos um colaborador.');
+  if(m&&(bs.value||be.value))errs.push(...breakErrors(m,bs.value,be.value));
+  if(errs.length){error.textContent=errs[0];return}
+  const same=ids.filter(id=>{const c=current(id,'jornada',day);return c&&c.modelId===m.id&&c.from===day&&(c.breakStart||'')===(bs.value||'')});
+  if(!addLinks('jornada',m.id,ids,day,bs.value?[bs.value,be.value]:null)){error.textContent='Não foi possível salvar neste navegador.';return}
   const n=ids.length;reset();V.render();status.textContent=n+' colaborador(es) vinculado(s) a "'+m.name+'" a partir de '+dateBR(day)+'.'+(same.length?' '+same.length+' já tinha(m) este vínculo nesta data; o registro foi repetido no histórico.':'')};
- /* Individual break: a new link for one person with the same model, starting on the chosen date. */
- function breakDialog(p){const cur=current(p.id,'shift');const m=cur&&shiftById(cur.modelId);if(!m)return;
-  dialog('Intervalo individual de '+p.name,(field,f)=>{f.append(el('p','profiles-note','Modelo "'+m.name+'": '+shiftText(m)+'. A alteração vale só para '+p.name+'; o modelo e os demais colaboradores não mudam.'));
-   const d=DB.field('A partir de *');d.set(today());f.append(d.label);const a=field('Início do intervalo',time()),b=field('Fim do intervalo',time());a.value=cur.breakStart||m.breakStart||'';b.value=cur.breakEnd||m.breakEnd||'';
-   const useModel=el('input');useModel.type='checkbox';const l=el('label','jornada-check');l.append(useModel,el('span',null,'Voltar a usar o intervalo do modelo'));f.append(l);useModel.onchange=()=>{a.disabled=b.disabled=useModel.checked};return {d,a,b,useModel}},
+ /* Intervalo individual: um vínculo novo da mesma pessoa com o mesmo cadastro, a partir da data escolhida. */
+ function breakDialog(p){const cur=current(p.id,'jornada');const m=cur&&jornadaById(cur.modelId);if(!m)return;
+  dialog('Intervalo individual de '+p.name,(field,f)=>{f.append(el('p','profiles-note','"'+m.name+'": '+jornadaText(m)+'. A alteração vale só para '+p.name+'; o cadastro e os demais colaboradores não mudam.'));
+   const d=DB.field('A partir de *');d.set(today());f.append(d.label);const a=field('Início do intervalo',time()),b=field('Fim do intervalo',time());a.value=cur.breakStart||m.padrao.breakStart||'';b.value=cur.breakEnd||m.padrao.breakEnd||'';
+   const useModel=el('input');useModel.type='checkbox';const l=el('label','jornada-check');l.append(useModel,el('span',null,'Voltar a usar o intervalo do cadastro'));f.append(l);useModel.onchange=()=>{a.disabled=b.disabled=useModel.checked};return {d,a,b,useModel}},
    ({d,a,b,useModel})=>{const day=d.iso();if(!day)return 'Informe a data (DD/MM/AAAA).';if(day<cur.from)return 'A data não pode ser anterior ao início do vínculo atual ('+dateBR(cur.from)+').';
-    const brk=useModel.checked?null:[a.value,b.value];if(brk){if(!brk[0]&&!brk[1])return 'Informe o intervalo ou marque "Voltar a usar o intervalo do modelo".';const e=timeErrors(m.start,m.end,brk[0],brk[1]);if(e.length)return e.join(' ')}
-    load();return addLinks('shift',m.id,[p.id],day,brk)?null:'Não foi possível salvar neste navegador.'},'Salvar intervalo',()=>{V.render();status.textContent='Intervalo de '+p.name+' atualizado. O modelo "'+m.name+'" não foi alterado.'})}
- function historyDialog(p){dialog('Histórico de '+noun+' — '+p.name,(field,f)=>{const ls=linksOf(p.id,kind).reverse(),day=today();if(!ls.length){f.append(el('p','profiles-note','Nenhum vínculo registrado.'));return}
-   const {t,tb}=table(['A partir de','Modelo',isShift?'Horário no vínculo':'Dias no vínculo','Situação']);const cur=current(p.id,kind,day);
-   for(const l of ls){const s=l.snapshot||{},tr=el('tr');const sit=l===cur?'Vigente':l.from>day?'Programado':'Encerrado';
-    tr.append(el('td',null,dateBR(l.from)),el('td',null,s.name||modelOf(l)?.name||'—'),el('td',null,isShift?(s.start+' às '+s.end+' · intervalo '+(l.breakStart?breakText(l.breakStart,l.breakEnd)+' (individual)':breakText(s.breakStart,s.breakEnd))):daysText(s.days||[])),el('td',null,sit));tb.append(tr)}
+    const brk=useModel.checked?null:[a.value,b.value];if(brk){if(!brk[0]&&!brk[1])return 'Informe o intervalo ou marque "Voltar a usar o intervalo do cadastro".';const e=breakErrors(m,brk[0],brk[1]);if(e.length)return e[0]}
+    load();return addLinks('jornada',m.id,[p.id],day,brk)?null:'Não foi possível salvar neste navegador.'},'Salvar intervalo',()=>{V.render();status.textContent='Intervalo de '+p.name+' atualizado. O cadastro "'+m.name+'" não foi alterado.'})}
+ function historyDialog(p){dialog('Histórico de horário / escala — '+p.name,(field,f)=>{const ls=allLinks(p.id).reverse(),day=today();if(!ls.length){f.append(el('p','profiles-note','Nenhum vínculo registrado.'));return}
+   const {t,tb}=table(['A partir de','Cadastro','Dias e horário no vínculo','Situação']);const novo=current(p.id,'jornada',day);
+   for(const l of ls){const s=l.snapshot||{},tr=el('tr');const sit=l.from>day?'Programado':l===current(p.id,l.kind,day)&&(l.kind==='jornada'||!novo)?'Vigente':'Encerrado';
+    const oque=l.kind==='jornada'?(s.dias?jornadaText(s):'—')+(l.breakStart?' · intervalo '+breakText(l.breakStart,l.breakEnd)+' (individual)':''):l.kind==='shift'?'Horário (cadastro antigo): '+s.start+' às '+s.end+' · intervalo '+(l.breakStart?breakText(l.breakStart,l.breakEnd)+' (individual)':breakText(s.breakStart,s.breakEnd)):'Escala (cadastro antigo): '+daysText(s.days||[]);
+    tr.append(el('td',null,dateBR(l.from)),el('td',null,s.name||modelOf(l)?.name||'—'),el('td',null,oque),el('td',null,sit));tb.append(tr)}
    const w=el('div','uniforms-table-wrap');w.append(t);f.append(w)},null)}
- /* Scale exceptions: a dated note for one person; cancelling keeps the record. */
- const listNote=el('p','profiles-note'),wrap=el('div','uniforms-table-wrap'),exWrap=el('div','uniforms-table-wrap');
- V.body.append(form,el('h3','uniforms-heading',isShift?'Horários vinculados':'Escalas vinculadas'),listNote,wrap);if(!isShift){const go=button('Abrir Escala Individual',()=>show('calendar'));V.body.append(el('h3','uniforms-heading','Folgas e exceções anteriores'),el('p','profiles-note','Registros feitos antes da Escala Individual, mantidos como histórico. Novas folgas e trocas são lançadas por semana em DES - Escala Individual.'),go,exWrap)};
+ const listNote=el('p','profiles-note'),wrap=el('div','uniforms-table-wrap'),exTitle=el('h3','uniforms-heading','Folgas e exceções anteriores'),exNote=el('p','profiles-note','Registros feitos antes da Escala Individual, mantidos como histórico. Novas folgas e trocas são lançadas por semana em DES - Escala Individual.'),exWrap=el('div','uniforms-table-wrap');
+ V.body.append(form,el('h3','uniforms-heading','Colaboradores vinculados'),listNote,wrap,exTitle,exNote,exWrap);
  V.render=()=>{paintModel();picker.render();if(!from.iso())from.set(today());wrap.replaceChildren();const w=storageWarning();if(w)wrap.append(w);const day=today();
-  const rows=P.get().people.filter(p=>linksOf(p.id,kind).length).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));listNote.textContent=rows.length?rows.length+' colaborador(es) com '+noun+' vinculado(a).':'Nenhum colaborador com '+noun+' vinculado(a).';
-  if(rows.length){const {t,tb}=table(isShift?['Colaborador','Cargo','Horário','Intervalo','Desde','Ações']:['Colaborador','Cargo','Escala','Trabalho','Folga','Desde','Ações']);
-   for(const p of rows){const ef=effective(p.id,day),cur=isShift?ef.shiftLink:ef.scaleLink,next=upcoming(p.id,kind,day)[0],m=cur&&modelOf(cur),tr=el('tr'),a=el('td','uniforms-row-actions');
-    const since=el('td',null,cur?dateBR(cur.from):'—');if(next){since.append(el('br'),el('small',null,'Muda em '+dateBR(next.from)+': '+(modelOf(next)?.name||'—')))}
+  const rows=P.get().people.filter(p=>allLinks(p.id).length).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));listNote.textContent=rows.length?rows.length+' colaborador(es) com horário / escala vinculado.':'Nenhum colaborador com horário / escala vinculado.';
+  if(rows.length){const {t,tb}=table(['Colaborador','Cargo','Horário / Escala','Trabalho','Folga','Intervalo','Desde','Ações']);
+   for(const p of rows){const ef=effective(p.id,day),cur=current(p.id,'jornada',day),m=cur&&jornadaById(cur.modelId),next=upcoming(p.id,'jornada',day)[0],tr=el('tr'),a=el('td','uniforms-row-actions');
+    const desde=cur||ef.shiftLink||ef.scaleLink,since=el('td',null,desde?dateBR(desde.from):'—');if(next){since.append(el('br'),el('small',null,'Muda em '+dateBR(next.from)+': '+(modelOf(next)?.name||'—')))}
     if(p.status!=='ATIVO')tr.classList.add('is-cancelled');
-    a.append(iconButton('Histórico de '+noun+' de '+p.name,ICON.eye,()=>historyDialog(p)));if(isShift&&m&&p.status==='ATIVO')a.append(iconButton('Intervalo individual de '+p.name,CLOCK,()=>breakDialog(p),'is-accent'));
-    const name=el('td',null,p.name);if(m&&!m.active)name.append(el('br'),el('small',null,'Modelo inativo'));
-    if(isShift){const brk=el('td',null,ef.shift?breakText(ef.breakStart,ef.breakEnd):'—');if(ef.ownBreak)brk.append(el('br'),el('small',null,'Individual'));tr.append(name,el('td',null,p.jobName||'—'),el('td',null,m?m.name+' · '+m.start+' às '+m.end:next?'A partir de '+dateBR(next.from):'—'),brk,since,a)}
-    else tr.append(name,el('td',null,p.jobName||'—'),el('td',null,m?m.name:next?'A partir de '+dateBR(next.from):'—'),el('td',null,m?daysText(m.days):'—'),el('td',null,m?offText(m.days):'—'),since,a);tb.append(tr)}wrap.append(t)}
-  if(!isShift){exWrap.replaceChildren();const list=data.exceptions.filter(x=>!x.cancelledAt).sort((a,b)=>b.date.localeCompare(a.date));if(!list.length){exWrap.append(el('p','profiles-note','Nenhuma folga ou exceção registrada.'));return}
-   const {t,tb}=table(['Data','Colaborador','Tipo','Escala na data','Observação','Ações']);for(const x of list){const p=P.byId(x.personId),tr=el('tr'),a=el('td','uniforms-row-actions');
-    a.append(iconButton('Cancelar registro de '+x.kind,ICON.ban,()=>confirmDialog('Cancelar este registro?',x.kind+' de '+(p?.name||'—')+' em '+dateBR(x.date)+' ficará marcada como cancelada. O registro não é apagado.','Cancelar registro',()=>{transact(d=>{d.exceptions.find(y=>y.id===x.id).cancelledAt=nowIso()});return null},()=>V.render())));
-    tr.append(el('td',null,dateBR(x.date)),el('td',null,p?.name||'—'),el('td',null,x.kind),el('td',null,scaleById(x.scaleId)?.name||'—'),el('td',null,x.note||'—'),a);tb.append(tr)}exWrap.append(t)}};
+    a.append(iconButton('Histórico de horário / escala de '+p.name,ICON.eye,()=>historyDialog(p)));if(m&&p.status==='ATIVO')a.append(iconButton('Intervalo individual de '+p.name,CLOCK,()=>breakDialog(p),'is-accent'));
+    const name=el('td',null,p.name);if(m&&!m.active)name.append(el('br'),el('small',null,'Cadastro inativo'));
+    const qual=el('td',null,m?m.name:ef.shift||ef.scale?[ef.shift?.name,ef.scale?.name].filter(Boolean).join(' + '):next?'A partir de '+dateBR(next.from):'—');if(!m&&(ef.shift||ef.scale))qual.append(el('br'),el('small',null,'Cadastro antigo'));
+    const brk=el('td',null,ef.shift?breakText(ef.breakStart,ef.breakEnd):'—');if(ef.ownBreak)brk.append(el('br'),el('small',null,'Individual'));
+    tr.append(name,el('td',null,p.jobName||'—'),qual,el('td',null,m?jornadaText(m):ef.scale?daysText(ef.scale.days)+(ef.shift?' · '+ef.shift.start+' às '+ef.shift.end:''):'—'),el('td',null,ef.scale?offText(ef.scale.days):'—'),brk,since,a);tb.append(tr)}wrap.append(t)}
+  exWrap.replaceChildren();const list=data.exceptions.filter(x=>!x.cancelledAt).sort((a,b)=>b.date.localeCompare(a.date));exTitle.hidden=exNote.hidden=exWrap.hidden=!list.length;if(!list.length)return;
+  const {t,tb}=table(['Data','Colaborador','Tipo','Escala na data','Observação','Ações']);for(const x of list){const p=P.byId(x.personId),tr=el('tr'),a=el('td','uniforms-row-actions');
+   a.append(iconButton('Cancelar registro de '+x.kind,ICON.ban,()=>confirmDialog('Cancelar este registro?',x.kind+' de '+(p?.name||'—')+' em '+dateBR(x.date)+' ficará marcada como cancelada. O registro não é apagado.','Cancelar registro',()=>{transact(d=>{d.exceptions.find(y=>y.id===x.id).cancelledAt=nowIso()});return null},()=>V.render())));
+   tr.append(el('td',null,dateBR(x.date)),el('td',null,p?.name||'—'),el('td',null,x.kind),el('td',null,scaleById(x.scaleId)?.name||'—'),el('td',null,x.note||'—'),a);tb.append(tr)}exWrap.append(t)};
  V.reset=reset}
-makeLinker('shift');makeLinker('scale');
 
 
 /* ---------- Escala individual por semana, horários alternativos e feriados ----------
@@ -222,7 +227,8 @@ const holidayOn=day=>data.holidays.find(h=>!h.cancelledAt&&h.date===day)||null;
 /* Alternative shifts chosen for a person (appended with a start date; the latest one on or before the day applies). */
 function setOf(pid,day){const l=data.sets.filter(s=>s.personId===pid&&s.from<=day).sort((a,b)=>a.from.localeCompare(b.from)||a.createdAt.localeCompare(b.createdAt));return l[l.length-1]||null}
 function shiftFor(pid,day,slot){const ef=effective(pid,day);if(slot==='main')return ef.shift?{shift:ef.shift,breakStart:ef.breakStart,breakEnd:ef.breakEnd}:null;
- const id=setOf(pid,day)?.[slot],s=id&&shiftById(id);return s?{shift:s,breakStart:s.breakStart,breakEnd:s.breakEnd}:null}
+ const id=setOf(pid,day)?.[slot],j=id&&jornadaById(id);if(j){const h=hoursOf(j,dowOf(day));return {shift:{id:j.id,name:j.name,start:h.start,end:h.end,breakStart:h.breakStart||'',breakEnd:h.breakEnd||''},breakStart:h.breakStart||'',breakEnd:h.breakEnd||''}}
+ const s=id&&shiftById(id);return s?{shift:s,breakStart:s.breakStart,breakEnd:s.breakEnd}:null}
 const netOf=x=>x?calc(x.shift.start,x.shift.end,x.breakStart,x.breakEnd).net:null;
 /* What a date holds for a person: the saved entry when there is one, otherwise the scale model's own days (explicit=false). */
 function dayInfo(pid,day){const e=data.days[pid]?.[day],dow=dowOf(day),h=holidayOn(day);
@@ -249,7 +255,7 @@ const sessionUser=()=>{try{return JSON.parse(sessionStorage.getItem('cicluz-sync
  const sitText=x=>x.work==null?'Sem escala':x.work?'Trabalha ('+slotName(x.slot)+')':'Folga';
 
  function weekView(p){const days=weekDays(ref),{error,status}=messages();status.textContent=flash;flash='';
-  if(!effective(p.id,ref).shift)area.append(el('p','people-alert','Este colaborador não tem horário principal vinculado nesta semana. Vincule em Lançamentos Colaboradores → DES - Lançamento de Horários antes de lançar dias de trabalho.'));
+  if(!effective(p.id,ref).shift)area.append(el('p','people-alert','Este colaborador não tem Horário / Escala vinculado nesta semana. Vincule em Lançamentos Colaboradores → DES - Lançamento de Horário / Escala antes de lançar dias de trabalho.'));
   const {t,tb}=table(['Dia','Situação','Horário','Observação','Jornada']);
   const totEl=el('p','profiles-note');totEl.setAttribute('aria-live','polite');
   const rows=days.map(d=>{const i=dayInfo(p.id,d),tr=el('tr'),dayTd=el('td',null,DAY_NAMES[dowOf(d)]+' '+dateBR(d).slice(0,5));if(i.holiday)dayTd.append(el('br'),el('small',null,'Feriado: '+i.holiday.name));
@@ -289,16 +295,16 @@ const sessionUser=()=>{try{return JSON.parse(sessionStorage.getItem('cicluz-sync
 
  /* Horários alternativos do colaborador (optional) */
  function setsView(p){setBox.replaceChildren();setBox.append(el('h3','uniforms-heading','Horários do colaborador'));const ef=effective(p.id,ref),cur=setOf(p.id,ref);
-  setBox.append(el('p','profiles-note','Horário principal: '+(ef.shift?ef.shift.name+' · '+shiftText(ef.shift):'não vinculado')+'. Os alternativos, de domingo e de feriado são opcionais e usam os modelos de DES - Horário / Escala.'));
+  setBox.append(el('p','profiles-note','Horário principal: '+(ef.shift?ef.shift.name+' · '+shiftText(ef.shift):'não vinculado')+'. Os alternativos, de domingo e de feriado são opcionais e usam os cadastros de DES - Horário / Escala (vale o horário do dia naquele cadastro).'));
   const f=el('form','form-fields uniforms-form');f.noValidate=true;const sels={},from=DB.field('A partir de *');from.set(today());
-  for(const [k] of SLOTS.filter(s=>s[0]!=='main')){const s=el('select');s.add(new Option('Não usar',''));for(const m of data.shifts.filter(x=>x.active||x.id===cur?.[k]).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')))s.add(new Option(m.name+' · '+m.start+' às '+m.end,m.id));s.value=cur?.[k]||'';sels[k]=s}
+  for(const [k] of SLOTS.filter(s=>s[0]!=='main')){const s=el('select');s.add(new Option('Não usar',''));for(const m of [...data.jornadas.filter(x=>x.active||x.id===cur?.[k]),...data.shifts.filter(x=>x.id===cur?.[k])].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')))s.add(new Option(m.name+' · '+(m.padrao||m).start+' às '+(m.padrao||m).end,m.id));s.value=cur?.[k]||'';sels[k]=s}
   const {error,status}=messages(),act=el('div','uniforms-wide actions'),sv=el('button','btn','Salvar horários');sv.type='submit';act.append(sv);status.textContent=flash;flash='';
   f.append(from.label,lbl('Horário alternativo 2',sels.alt2),lbl('Horário alternativo 3',sels.alt3),lbl('Horário de domingo',sels.sunday),lbl('Horário de feriado',sels.holiday),error,status,act);
   f.onsubmit=e=>{e.preventDefault();error.textContent=status.textContent='';load();const d=from.iso();if(!d){error.textContent='Informe a data de início (DD/MM/AAAA).';return}
    const rec={alt2:sels.alt2.value,alt3:sels.alt3.value,sunday:sels.sunday.value,holiday:sels.holiday.value},same=cur&&['alt2','alt3','sunday','holiday'].every(k=>(cur[k]||'')===rec[k]);if(same){status.textContent='Nada mudou nos horários.';return}
    if(!transact(x=>x.sets.push({id:newId(),personId:p.id,from:d,...rec,createdAt:nowIso(),by:sessionUser()}))){error.textContent='Não foi possível salvar neste navegador.';return}flash='Horários salvos a partir de '+dateBR(d)+'. Os anteriores ficam no histórico.';render()};
   setBox.append(f);const hist=data.sets.filter(s=>s.personId===p.id).sort((a,b)=>b.from.localeCompare(a.from)||b.createdAt.localeCompare(a.createdAt));
-  if(hist.length){const {t,tb}=table(['A partir de','Alt. 2','Alt. 3','Domingo','Feriado']);const nm=id=>id?shiftById(id)?.name||'—':'—';for(const s of hist){const tr=el('tr');tr.append(el('td',null,dateBR(s.from)),el('td',null,nm(s.alt2)),el('td',null,nm(s.alt3)),el('td',null,nm(s.sunday)),el('td',null,nm(s.holiday)));tb.append(tr)}const w=el('div','uniforms-table-wrap');w.append(t);setBox.append(el('h4',null,'Histórico dos horários'),w)}}
+  if(hist.length){const {t,tb}=table(['A partir de','Alt. 2','Alt. 3','Domingo','Feriado']);const nm=id=>id?(jornadaById(id)||shiftById(id))?.name||'—':'—';for(const s of hist){const tr=el('tr');tr.append(el('td',null,dateBR(s.from)),el('td',null,nm(s.alt2)),el('td',null,nm(s.alt3)),el('td',null,nm(s.sunday)),el('td',null,nm(s.holiday)));tb.append(tr)}const w=el('div','uniforms-table-wrap');w.append(t);setBox.append(el('h4',null,'Histórico dos horários'),w)}}
 
  /* Feriados (manual) */
  function holidaysView(){holBox.replaceChildren();holBox.append(el('h3','uniforms-heading','Feriados'),el('p','profiles-note','Cadastre manualmente os feriados que valem para a escala. A plataforma não traz lista de feriados.'));
@@ -319,13 +325,13 @@ const sessionUser=()=>{try{return JSON.parse(sessionStorage.getItem('cicluz-sync
 
 /* ---------- Ficha individual ---------- */
 function section(p){load();const day=today(),ef=effective(p.id,day),sec=el('section','profiles-section jornada-file-section');sec.append(el('h3',null,'Horário e escala'));
- const rows=[['Cargo',p.jobName],['Setor',p.sector],['Modelo de horário',ef.shift?ef.shift.name+' · '+ef.shift.start+' às '+ef.shift.end:''],['Intervalo',ef.shift?breakText(ef.breakStart,ef.breakEnd)+(ef.ownBreak?' · individual':' · do modelo'):''],['Horário desde',ef.shiftLink?dateBR(ef.shiftLink.from):''],
-  ['Modelo de escala',ef.scale?ef.scale.name+' · '+daysText(ef.scale.days):''],['Folga',ef.scale?offText(ef.scale.days):''],['Escala desde',ef.scaleLink?dateBR(ef.scaleLink.from):'']];
+ const antigo=!ef.jornada&&(ef.shift||ef.scale);
+ const rows=[['Cargo',p.jobName],['Setor',p.sector],['Horário / Escala',ef.jornada?ef.jornada.name:antigo?[ef.shift?.name,ef.scale?.name].filter(Boolean).join(' + ')+' (cadastro antigo)':''],['Dias e horário',ef.jornada?jornadaText(ef.jornada):antigo?[ef.scale?daysText(ef.scale.days):'',ef.shift?ef.shift.start+' às '+ef.shift.end:''].filter(Boolean).join(' · '):''],['Folga',ef.scale?offText(ef.scale.days):''],['Intervalo',ef.shift?breakText(ef.breakStart,ef.breakEnd)+(ef.ownBreak?' · individual':' · do cadastro'):''],['Jornada da semana',ef.weekNet!=null?hm(ef.weekNet):''],['Desde',ef.shiftLink||ef.scaleLink?dateBR((ef.shiftLink||ef.scaleLink).from):'']];
  const d=el('dl','profiles-info');for(const [k,v] of rows)d.append(el('dt',null,k),el('dd',null,v||'—'));sec.append(d);
- const next=[...upcoming(p.id,'shift',day),...upcoming(p.id,'scale',day)].sort((a,b)=>a.from.localeCompare(b.from));for(const n of next)sec.append(el('p','profiles-note','Programado: '+(n.kind==='shift'?'horário':'escala')+' "'+(modelOf(n)?.name||'—')+'" a partir de '+dateBR(n.from)+'.'));
+ const next=upcoming(p.id,'jornada',day);for(const n of next)sec.append(el('p','profiles-note','Programado: horário / escala "'+(modelOf(n)?.name||'—')+'" a partir de '+dateBR(n.from)+'.'));
  const ex=data.exceptions.filter(x=>x.personId===p.id&&!x.cancelledAt).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);if(ex.length)sec.append(el('p','profiles-note','Folgas e exceções recentes: '+ex.map(x=>dateBR(x.date)+' ('+x.kind+')').join(', ')+'.'));
- if(p.status==='ATIVO'){const tools=el('div','people-banner-tools');tools.append(button('Vincular horário',()=>show('shift-links')),button('Vincular escala',()=>show('scale-links')),button('Escala individual',()=>show('calendar',{personId:p.id})));sec.append(tools)}return sec}
+ if(p.status==='ATIVO'){const tools=el('div','people-banner-tools');tools.append(button('Vincular horário / escala',()=>show('links')),button('Escala individual',()=>show('calendar',{personId:p.id})));sec.append(tools)}return sec}
 
 window.showJornada=(key,opts)=>show(key,opts);
-window.CicluzJornada={load,get:()=>data,weekMinutes,dayInfo,weekStart,shiftFor,netOf,effective,current,upcoming,linksOf,section,calc,daysText,offText,show};
+window.CicluzJornada={load,get:()=>data,weekMinutes,dayInfo,weekStart,shiftFor,netOf,effective,current,upcoming,linksOf,section,calc,daysText,offText,jornadaText,weekNet,show};
 })();
