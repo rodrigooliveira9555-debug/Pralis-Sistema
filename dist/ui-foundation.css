@@ -30,7 +30,7 @@ body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input,select,textarea):where(:not([type=checkbox])):where(:not([type=radio])):where(:not([type=color])):where(:not([type=range])):hover:where(:not(:disabled)){border-color:color-mix(in srgb,var(--ui-control-accent) 50%,var(--ui-border-base))!important}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input,select,textarea):where(:not([type=checkbox])):where(:not([type=radio])):where(:not([type=color])):where(:not([type=range])):focus{border-color:var(--ui-control-accent)!important;outline:none!important;box-shadow:var(--ui-focus-shadow,0 0 0 3px color-mix(in srgb,var(--ui-control-accent) var(--ui-focus-ring),transparent))!important}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input,select,textarea):disabled{opacity:.6;cursor:not-allowed}
-body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input,select,textarea)[aria-invalid=true]{border-color:#ef4444!important}
+body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input,select,textarea)[aria-invalid=true]{border-color:var(--menu-accent,#ef4444)!important}
 
 /* Uniform heading roles, including nested overview panels and dynamic dialogs. */
 /* Bound the native date renderer as well as its outer box (notably on Safari). */
@@ -156,7 +156,7 @@ body .profiles-table thead th:first-child{z-index:4}
 body .profiles-table .profiles-group>:is(th,td){background:#f5f5f7;font-weight:600}
 .profiles-job-link,.profiles-requirement{font:inherit;color:inherit;background:transparent;border:0;cursor:pointer;padding:0;text-align:inherit;white-space:normal;overflow-wrap:anywhere}
 .profiles-job-link{font-weight:600}.profiles-job-link:hover,.profiles-requirement:hover{color:var(--menu-accent);text-decoration:underline}.profiles-table small{display:block;font:400 var(--ui-note)/16px var(--ui-font);margin-top:4px}
-.profiles-content input[type=checkbox],.profiles-dialog input[type=checkbox]{width:var(--caixa-de-marcar,22px)!important;height:var(--caixa-de-marcar,22px)!important;min-height:var(--caixa-de-marcar,22px)!important;accent-color:var(--menu-accent,#7c3aed);cursor:pointer;flex:0 0 22px}
+.profiles-content input[type=checkbox],.profiles-dialog input[type=checkbox]{cursor:pointer}
 .profiles-content :is(button,input,select,textarea):focus-visible,.profiles-dialog :is(button,input,select,textarea):focus-visible{outline:2px solid var(--navigation-ink,#a2a0aa);outline-offset:3px}
 .profiles-empty{padding:20px;max-width:640px}.profiles-sr{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%)}
 .profiles-detail{display:grid;gap:12px}.profiles-info{margin:0;padding:16px;display:grid;grid-template-columns:minmax(130px,1fr) 3fr;gap:12px;background:#fff;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px}.profiles-info dt{font-weight:600}.profiles-info dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.profiles-section{background:#fff;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;padding:12px}.profiles-section h3{font:var(--ui-title-weight) var(--ui-title)/var(--ui-title-line) var(--ui-font);margin:0 0 12px}.profiles-delivery{padding:10px 0;border-bottom:1px solid var(--layout-line,#d4d4d8);margin:0;white-space:pre-wrap}.profiles-section .btn{margin-top:12px}
@@ -405,7 +405,7 @@ body .btn.acao-com-circulo[hidden]{display:none}
 .jornada-person span{overflow-wrap:anywhere}.jornada-person small{grid-column:2;color:var(--muted,#73737a);font:400 var(--ui-note,12px)/16px var(--ui-font)}
 .jornada-people-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .form-fields .jornada-check,.jornada-check{display:flex;flex-direction:row;align-items:center;gap:8px}
-.form-fields :is(.jornada-person,.jornada-day,.jornada-check) input[type=checkbox],.jornada-check input[type=checkbox]{width:18px;height:18px;min-height:0;margin:0;flex:none}
+
 .docs-personal-table td:first-child{font-weight:600}
 @media(max-width:600px){.docs-personal-table .docs-col-origin{display:none}}
 
@@ -444,7 +444,7 @@ body .btn.acao-com-circulo[hidden]{display:none}
 .uniforms-options .uniforms-escolha .compras-linha-texto small,.uniforms-options .uniforms-escolha .account-list-state{font-size:var(--escolha-detalhe);line-height:14px}
 /* A caixa de marcar das listas de escolha: o tamanho e o respiro dos campos de janela são fixados por regras gerais, que agora leem
    estas duas variáveis; a caixa informa o seu próprio tamanho. */
-.compras-hier-caixa{--caixa-de-marcar:var(--escolha-caixa,20px);--campo-respiro:0px}
+.compras-hier-caixa{--caixa-de-marcar:var(--escolha-caixa,20px);--campo-altura:var(--escolha-caixa,20px);--campo-respiro:0px}
 /* Quadro das listas de escolha em árvore: rola só para cima e para baixo; a barra do topo (contagem + Expandir tudo / Recolher tudo) fica parada. */
 :is(.compras-hier,.location-tree.unidades-arvore){--arvore-rolagem:hidden auto;max-height:min(60vh,560px);overflow:hidden auto;overscroll-behavior:contain}
 .escolha-barra{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;box-sizing:border-box;padding:6px 10px;background:var(--theme-card,#fff);border-bottom:1px solid var(--layout-line,#dedee3)}
@@ -505,7 +505,7 @@ dialog .escolha-barra{--cor-do-cabecalho:var(--menu-accent)}
 .campo-de-locais{display:grid;gap:6px;justify-items:start;min-width:0}
 .campo-de-locais-resumo{display:grid;gap:2px;min-width:0}
 .campo-de-locais-resumo>.profiles-note{margin:0;overflow-wrap:anywhere}
-body :is(.location-tree.unidades-arvore .location-row,.uniforms-options .uniforms-escolha,.compras-hier-linha)>input.compras-hier-caixa{appearance:none;-webkit-appearance:none;box-sizing:border-box;flex:0 0 var(--escolha-caixa);width:var(--escolha-caixa);height:var(--escolha-caixa);min-height:0;margin:0;padding:0;border:1.5px solid var(--ui-border-base,#a2a0aa);border-radius:6px;background:var(--theme-card,#fff);display:inline-grid;place-items:center;cursor:pointer}
+body :is(.location-tree.unidades-arvore .location-row,.uniforms-options .uniforms-escolha,.compras-hier-linha)>input.compras-hier-caixa{appearance:none;-webkit-appearance:none;box-sizing:border-box;flex:0 0 var(--escolha-caixa);width:var(--escolha-caixa);min-width:0;height:var(--escolha-caixa);min-height:0;margin:0;padding:0;border:1.5px solid var(--ui-border-base,#a2a0aa);border-radius:6px;background:var(--theme-card,#fff);display:inline-grid;place-items:center;cursor:pointer}
 body :is(.location-tree.unidades-arvore .location-row,.uniforms-options .uniforms-escolha,.compras-hier-linha)>input.compras-hier-caixa:checked{box-shadow:inset 0 0 0 11px var(--node-color,var(--menu-accent,#7c3aed));border-color:var(--node-color,var(--menu-accent,#7c3aed))} /* preenchimento por sombra interna: o fundo dos campos da tela é fixado por uma regra geral */
 /* Identidade do cadastro (U.blocoIcone): o desenho dentro do quadradinho. As demais medidas vêm das regras do cadastro de grupo (.job-identity, .identity-pick, .account-icon-dot, .icon-live-preview). */
 .icone-do-quadradinho{display:inline-flex;width:18px;height:18px}
@@ -522,6 +522,7 @@ body :is(.location-tree.unidades-arvore .location-row,.uniforms-options .uniform
 .jornada-dia-campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;min-width:0}
 /* Mensagem de erro ou de aviso vazia não ocupa lugar no quadro (deixava um vão antes dos botões). */.form-fields>:is(.profiles-error,.profiles-note):empty{display:none}
 /* Janela de Área / Setor / Local no padrão dos quadros (18/11/2026, Rodrigo): cada bloco ocupa a largura inteira do quadro. */.location-quadro>*{grid-column:1/-1}
+.location-dialog-titles{min-width:0;flex:1;margin-left:4px}.location-dialog-header>.location-header-mark{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;min-width:30px;flex:0 0 30px;color:#fff}.location-header-mark svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.location-dialog-titles p{margin:0;font-size:11px;line-height:1.4;color:inherit}
 
 /* Ficha de Cargo e Matriz de Exigências (06/11/2026). */
 .profiles-units{display:grid;gap:4px;margin:0;padding:10px 12px;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;min-width:0;max-height:320px;overflow:auto}
@@ -780,6 +781,13 @@ button.stepper-node:focus-visible{outline:2px solid var(--stepper-accent);outlin
 .folhas-map select{min-width:200px;max-width:100%}
 .folhas-import-sum{display:grid;gap:8px}
 .folhas-import-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+/* Caixa de seleção única da plataforma: quadrado de cantos arredondados, borda e preenchimento na cor do módulo, ✓ branco ao marcar.
+   A seleção de itens de lista (.compras-selecao-bolinha) continua sendo a bolinha. */
+body input[type=checkbox]:not(.compras-selecao-bolinha){appearance:none;-webkit-appearance:none;flex:none;box-sizing:border-box;width:22px;height:22px;min-width:22px;min-height:0;margin:0;padding:0;border:2px solid var(--field-accent,var(--menu-accent,var(--panel-color,#7c3aed)));border-radius:7px;background:var(--theme-field,#fff) center/15px no-repeat;cursor:pointer;vertical-align:middle;transition:background-color .12s}
+body input[type=checkbox]:not(.compras-selecao-bolinha):checked{background-color:var(--field-accent,var(--menu-accent,var(--panel-color,#7c3aed)));background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E")}
+body input[type=checkbox]:not(.compras-selecao-bolinha):indeterminate{background-color:var(--field-accent,var(--menu-accent,var(--panel-color,#7c3aed)));background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.4' stroke-linecap='round'%3E%3Cpath d='M6 12h12'/%3E%3C/svg%3E")}
+body input[type=checkbox]:not(.compras-selecao-bolinha):disabled{opacity:.5;cursor:not-allowed}
+body input[type=checkbox]:not(.compras-selecao-bolinha):focus-visible{outline:2px solid var(--field-accent,var(--menu-accent,var(--panel-color,#7c3aed)));outline-offset:2px}
 /* Quadro com borda em todo bloco de campos (17/11/2026, Rodrigo): o mesmo desenho do quadro dos cadastros novos (.compras-fieldset) — borda fina, cantos de 12 px, respiro interno. Com data-quadro, o título fica sobre a borda, como uma legenda. Bloco dentro de bloco não repete a borda. */
 .form-fields{border:1px solid var(--layout-line,#dedee3);border-radius:12px;padding:14px;box-sizing:border-box;min-width:0}
 .form-fields .form-fields{border:0;border-radius:0;padding:0}
@@ -794,7 +802,7 @@ dialog .form-fields[data-quadro]::before,.modal .form-fields[data-quadro]::befor
 .dep-card{background:transparent;border-color:var(--layout-line,#dedee3);padding:14px}
 .dep-card .form-fields{border:0;border-radius:0;padding:0;background:transparent}
 .dep-card label:has(>input[type=checkbox]){flex-direction:row;align-items:center;gap:8px;font-weight:500;margin:6px 0}
-.dep-card label>input[type=checkbox]{flex:none;width:20px;height:20px;padding:0;margin:0;accent-color:var(--menu-accent,#7c3aed)}
+.dep-card label>input[type=checkbox]{flex:none}
 /* Título na moldura também nos quadros antigos (18/11/2026, Rodrigo): quando o quadro começa por um título (h3 .uniforms-heading), ele sobe para a borda, igual ao data-quadro e à legenda dos cadastros em etapas. */
 .form-fields:has(>.uniforms-heading:first-child){position:relative;margin-top:12px;padding-top:18px}
 .form-fields>.uniforms-heading:first-child{position:absolute;top:-10px;left:12px;margin:0;padding:0 6px;background:var(--layout-gap,#f5f5f7);font:600 13px/18px var(--ui-font,inherit)}
