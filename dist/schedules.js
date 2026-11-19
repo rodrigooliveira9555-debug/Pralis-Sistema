@@ -121,7 +121,6 @@ const storageWarning=()=>loadError?el('p','people-alert','Não foi possível ler
   errs.push(...timeErrors(p.start,p.end,p.breakStart,p.breakEnd));const dias={};
   for(const r of rows){if(!days.includes(r.dow))continue;const v=valores(r);dias[r.dow]=v;if(r.manual)errs.push(...timeErrors(v.start,v.end,v.breakStart,v.breakEnd).map(x=>DAY_NAMES[r.dow]+': '+x))}
   if(data.jornadas.some(s=>s.id!==editing&&fold(s.name)===fold(n)))errs.push('Já existe um horário / escala com este nome.');
-  const bad=unidades?unidades.invalid():[];if(bad.length)errs.push('Combinação inválida de áreas e setores: '+bad.join('; ')+'.');
   if(errs.length){error.textContent=errs[0];window.CicluzComprasUI?.sinalizarObrigatorios(form);return}
   const rec={name:n,type:type.value,notes:notes.value.trim(),active:active.value==='1',padrao:p,dias,unitIds:unidades?[...unidades.chosen]:[]};
   const commit=()=>{const ok=transact(d=>{if(editing){const s=d.jornadas.find(x=>x.id===editing);(s.history=s.history||[]).push({at:nowIso(),before:{name:s.name,type:s.type,padrao:s.padrao,dias:s.dias,unitIds:s.unitIds||[],active:s.active}});Object.assign(s,rec,{updatedAt:nowIso()})}else d.jornadas.push({id:newId(),...rec,createdAt:nowIso(),history:[]})});
@@ -151,8 +150,10 @@ const storageWarning=()=>loadError?el('p','people-alert','Não foi possível ler
    Lugares do colaborador = os marcados no cadastro dele; sem nenhum, os da ficha do cargo. Compara pelo nível mais fundo marcado no
    Horário / Escala (marcou o setor, vale o setor; marcou só a área, vale a área inteira). Cadastro sem lugar marcado serve a todos. */
 function unidadesDaPessoa(pid){const p=P.byId(pid);if(!p)return [];if(p.orgUnitIds?.length)return p.orgUnitIds;return (p.jobName&&window.CicluzJobCards?.forJobName(p.jobName)?.card?.unitIds)||[]}
-function folhasDe(ids){const O=window.CicluzOrg,set=new Set(ids||[]),all=O?O.flat():[];return [...set].filter(id=>!all.some(n=>n.parentId===id&&set.has(n.id)))}
-function serveParaPessoa(j,pid){if(!j||!j.unitIds?.length)return true;const dele=new Set(unidadesDaPessoa(pid));return folhasDe(j.unitIds).some(id=>dele.has(id))}
+/* Com a seleção em cascata, o nível marcado no Horário / Escala já traz os de baixo. O colaborador serve quando algum lugar dele está
+   marcado no cadastro, ou fica abaixo de um lugar marcado. toposDe: o nível mais alto marcado de cada ramo (para o aviso da tela). */
+function toposDe(ids){const O=window.CicluzOrg,set=new Set(ids||[]);return [...set].filter(id=>{const n=O?.byId(id);return !n||!n.parentId||!set.has(n.parentId)})}
+function serveParaPessoa(j,pid){if(!j||!j.unitIds?.length)return true;const O=window.CicluzOrg,M=new Set(j.unitIds);return unidadesDaPessoa(pid).some(id=>{for(let n=O?.byId(id),passo=0;n&&passo<8;n=n.parentId?O.byId(n.parentId):null,passo++)if(M.has(n.id))return true;return M.has(id)})}
 function peoplePicker(){const box=el('fieldset','uniforms-wide jornada-people'),legend=el('legend',null,'Colaboradores *'),search=el('input'),list=el('div','jornada-people-list'),tools=el('div','jornada-people-tools'),count=el('span','profiles-note');
  search.type='search';search.placeholder='Buscar colaborador…';search.setAttribute('aria-label','Buscar colaborador');const picked=new Set(),aviso=el('p','profiles-note');let filtro=null;
  const all=button('Marcar todos da lista',()=>{list.querySelectorAll('input').forEach(c=>{c.checked=true;picked.add(c.value)});paint()}),none=button('Limpar seleção',()=>{picked.clear();render()});
@@ -175,7 +176,7 @@ const allLinks=pid=>data.links.filter(l=>l.personId===pid).sort((a,b)=>a.from.lo
  form.append(from.label,modelWrap,preview,lbl('Intervalo individual: início',bs),lbl('Intervalo individual: fim',be),el('p','uniforms-wide profiles-note','Deixe o intervalo individual em branco para usar o intervalo do cadastro.'),picker.box,error,status,actions);
  const goCad=button('Cadastrar horário / escala',()=>show('shifts'));
  function paintModel(){const cur=model.value;model=modelSelect(cur);model.addEventListener('change',paintPreview);modelWrap.replaceChildren(lbl('Horário / Escala *',model));if(model.options.length<2)modelWrap.append(el('p','profiles-note','Nenhum cadastro ativo. Cadastre em Cadastros Geral Colaboradores → DES - Horário / Escala.'),goCad);paintPreview()}
- function paintPreview(){const m=jornadaById(model.value),O=window.CicluzOrg,onde=m&&O?O.namesOf(m.unitIds).join(', '):'';picker.filtrar(m&&m.unitIds?.length?{serve:id=>serveParaPessoa(m,id),onde:O?O.namesOf(folhasDe(m.unitIds)).join(', '):'setores do cadastro'}:null);preview.textContent=m?'Trabalho: '+jornadaText(m)+' · Folga: '+offText(workDows(m))+' · '+hm(weekNet(m))+' na semana'+(onde?' · '+onde:''):''}
+ function paintPreview(){const m=jornadaById(model.value),O=window.CicluzOrg,onde=m&&O?O.namesOf(m.unitIds).join(', '):'';picker.filtrar(m&&m.unitIds?.length?{serve:id=>serveParaPessoa(m,id),onde:O?O.namesOf(toposDe(m.unitIds)).join(', '):'setores do cadastro'}:null);preview.textContent=m?'Trabalho: '+jornadaText(m)+' · Folga: '+offText(workDows(m))+' · '+hm(weekNet(m))+' na semana'+(onde?' · '+onde:''):''}
  function reset(){from.set(today());model.value='';bs.value=be.value='';picker.clear();error.textContent='';paintModel()}
  form.onsubmit=e=>{e.preventDefault();error.textContent='';status.textContent='';load();const day=from.iso(),m=jornadaById(model.value),ids=[...picker.picked].filter(id=>P.byId(id)),errs=[];
   if(!day)errs.push('Informe a data de início (DD/MM/AAAA).');if(!m)errs.push('Selecione o horário / escala.');else if(!m.active)errs.push('Este cadastro está inativo.');if(!ids.length)errs.push('Selecione ao menos um colaborador.');

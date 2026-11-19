@@ -411,6 +411,8 @@ body.dark-theme .compras-aviso-campo { color: #f6d38f; }
 .compras-form-produto .compras-fieldset { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); align-items: start; }
 @media (min-width: 601px) { .compras-form-produto [data-campo="codigoBarras"] { grid-column: span 2; } }
 /* Linha de ações substituída pelo rodapé fixo: fora da vista, mas presente para o ✓ repassar o clique. */
+/* Linha Cancelar · Salvar à vista nas janelas simples (Design System, 19/11/2026): fora do quadro, à direita, sem faixa de fundo. */
+.compras-dialog .compras-dialog-acoes:not(.compras-dialog-acoes-rodape) { position: static; background: transparent; padding: 12px 0 0; }
 .compras-dialog .compras-dialog-acoes.compras-dialog-acoes-rodape { position: absolute; width: 1px; height: 1px; padding: 0; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 /* Página do fornecedor: referência do item (como no S1). */
 .rodada-dados { margin: 0; display: flex; gap: 6px; align-items: baseline; font-size: 13px; }

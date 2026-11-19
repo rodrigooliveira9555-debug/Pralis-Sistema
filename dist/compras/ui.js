@@ -584,14 +584,16 @@
     const ctx = montar(form, d) || {};
     enquadrarSoltos(form, quadro || nomeDoQuadro(titulo));
     const acoes = el('div', 'actions compras-dialog-acoes');
-    // Decisão do Zé (04/11/2026): todo diálogo confirma pelo ✓ e fecha pelo ✕ do rodapé fixo do S2.
-    // A linha própria fica fora da vista, só para o ✓ repassar o clique (o rodapé procura um botão
-    // "Salvar…"); por isso a ação nomeada vira "Salvar · <ação>" e o ✓ recebe a dica com o nome dela.
-    acoes.classList.add('compras-dialog-acoes-rodape');
-    acoes.append(botao(salvar ? 'Cancelar' : 'Fechar', () => d.close()));
+    // Design System (Rodrigo, 19/11/2026 — supera, para as janelas simples, a decisão de 04/11 de esconder a linha): toda janela mostra
+    // Cancelar · Salvar por extenso, à direita, fora do quadro (Fechar quando não há o que salvar). O ✓ e o ✕ da barra de baixo continuam
+    // funcionando (a barra procura um botão "Salvar…"). Só a janela que já tem a sua própria navegação por etapas
+    // (.compras-etapas-nav: Voltar · Avançar · Salvar) mantém esta linha fora da vista, para não haver dois botões de salvar.
+    const temEtapas = Boolean(form.querySelector('.compras-etapas-nav'));
+    if (temEtapas) acoes.classList.add('compras-dialog-acoes-rodape');
+    acoes.append(botao(salvar ? 'Cancelar' : 'Fechar', () => d.close(), 'btn ghost'));
     if (salvar) {
-      const s = el('button', 'btn', /^Salvar(\s|$)/i.test(rotuloSalvar) ? rotuloSalvar : 'Salvar · ' + rotuloSalvar);
-      s.type = 'submit';
+      const s = el('button', 'btn', temEtapas ? (/^Salvar(\s|$)/i.test(rotuloSalvar) ? rotuloSalvar : 'Salvar · ' + rotuloSalvar) : 'Salvar');
+      s.type = 'submit'; if (!temEtapas && !/^Salvar(\s|$)/i.test(rotuloSalvar)) s.title = rotuloSalvar;
       acoes.append(s);
     }
     form.append(erro, acoes);

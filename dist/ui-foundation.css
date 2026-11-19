@@ -449,7 +449,11 @@ body .btn.acao-com-circulo[hidden]{display:none}
 :is(.compras-hier,.location-tree.unidades-arvore){--arvore-rolagem:hidden auto;max-height:min(60vh,560px);overflow:hidden auto;overscroll-behavior:contain}
 .escolha-barra{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;box-sizing:border-box;padding:6px 10px;background:var(--theme-card,#fff);border-bottom:1px solid var(--layout-line,#dedee3)}
 .escolha-barra>.profiles-note{margin:0}
-.escolha-barra-botoes{display:inline-flex;gap:8px;flex:none}
+/* Expandir / recolher tudo: um botão só, redondo e preenchido na cor do cabeçalho da janela. */
+/* A cor do cabeçalho da janela é a --menu-accent posta no próprio <dialog>; a barra a guarda antes que uma linha da árvore a troque. */
+dialog .escolha-barra{--cor-do-cabecalho:var(--menu-accent)}
+.escolha-barra .escolha-expandir{box-sizing:border-box;flex:0 0 32px;width:32px;min-width:32px;height:32px;min-height:32px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:var(--cor-do-cabecalho,var(--menu-accent,#7c3aed));color:#fff}
+.escolha-barra .escolha-expandir svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 /* A sigla de três letras cabe inteira no ícone menor (não quebra em duas linhas). */
 .location-tree.unidades-arvore .location-row>.location-icon{white-space:nowrap;letter-spacing:0;overflow:hidden}
 /* Escolha de áreas, setores e locais: a árvore é a mesma da tela DES - Área / Setor / Local (as regras de desenho são compartilhadas em unified-layout.css e design-system.css); aqui só o quadro de fora e a caixa de marcar. */

@@ -59,14 +59,14 @@
         busca.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
         const resumo = el('small', 'profiles-note'); resumo.setAttribute('role', 'status'); const arvore = el('div', 'compras-hier'); arvore.setAttribute('role', 'tree');
         const contar = () => { const q = compacta().size; resumo.textContent = (q === 1 ? '1 selecionado' : q + ' selecionados') + '.'; };
-        // Barra fixa no topo do quadro: Expandir tudo e Recolher tudo ficam parados enquanto a lista rola (só para cima e para baixo).
-        const barra = el('div', 'escolha-barra'); const ferramentas = el('span', 'escolha-barra-botoes');
-        [['Expandir tudo', 'm5 9 7 7 7-7', true], ['Recolher tudo', 'm5 15 7-7 7 7', false]].forEach(([rotulo, d, abrir]) => {
-          const b = el('button', 'shortcut-circle compras-redondo'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = SVG('<path d="' + d + '"/>');
-          b.onclick = () => { abertos.clear(); if (abrir) porId.forEach((n, id) => { if ((n.filhos || []).length) abertos.add(id); }); desenhar(); };
-          ferramentas.append(b);
-        });
-        barra.append(resumo, ferramentas);
+        // Barra fixa no topo do quadro. Expandir / recolher tudo é UM botão só, o mesmo da barra de baixo das telas: redondo, na cor do
+        // cabeçalho, com a seta para cima e para baixo; um toque expande tudo, o seguinte recolhe.
+        const barra = el('div', 'escolha-barra'); let tudoAberto = false;
+        const alternarTudo = el('button', 'compras-redondo escolha-expandir'); alternarTudo.type = 'button'; alternarTudo.innerHTML = SVG('<path d="m5 9 7-6 7 6M5 15l7 6 7-6"/>');
+        const pintarAlternar = () => { const r = tudoAberto ? 'Recolher tudo' : 'Expandir tudo'; alternarTudo.title = r; alternarTudo.setAttribute('aria-label', r); alternarTudo.setAttribute('aria-expanded', String(tudoAberto)); };
+        alternarTudo.onclick = () => { tudoAberto = !tudoAberto; abertos.clear(); if (tudoAberto) porId.forEach((n, id) => { if ((n.filhos || []).length) abertos.add(id); }); pintarAlternar(); desenhar(); };
+        pintarAlternar();
+        barra.append(resumo, alternarTudo);
         const casa = (no, caminho, termo) => !termo || U.dobrar(caminho + ' ' + no.nome).includes(termo) || (no.filhos || []).some((f) => casa(f, caminho + ' ' + no.nome, termo));
         const linha = (no, nivel, caminho, termo) => {
           const filhos = (no.filhos || []).filter((f) => casa(f, caminho + ' ' + no.nome, termo)); const aberto = Boolean(termo) || abertos.has(no.id);

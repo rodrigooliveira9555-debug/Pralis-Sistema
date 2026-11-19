@@ -14,28 +14,34 @@ function seletorDeLocais(selecionados,{conjunto,permitidos,aoMudar}={}){let arvo
  const chosen=conjunto||new Set(selecionados||[]),abertos=new Set(),box=document.createElement('div');box.className='location-tree unidades-arvore';
  const abrirMarcados=(pool)=>pool.some(n=>{const dentro=abrirMarcados(n.children||[]);if(dentro)abertos.add(n.id);return dentro||chosen.has(n.id)});abrirMarcados(arvore);
  const desmarcar=n=>{chosen.delete(n.id);(n.children||[]).forEach(desmarcar)};
- /* Seleção em cascata (19/11/2026, Rodrigo): marcar um nível marca tudo o que está abaixo dele (o que estiver ativo e permitido);
-    para escolher algo específico, marca-se de baixo para cima — o nível de baixo leva junto só o caminho até ele. */
+ /* Seleção em cascata (19/11/2026, Rodrigo, corrigida no mesmo dia): marcar um nível marca tudo o que está ABAIXO dele (o que estiver
+    ativo e permitido) e nada acima. Marcar um nível de baixo fica só nele: o de cima não é marcado. Desmarcar um nível desmarca o que
+    está abaixo e também os níveis acima (eles deixam de estar inteiros). */
  const marcarAbaixo=(n,inativoAcima)=>{for(const f of n.children||[]){const inativo=!!f.inactive||inativoAcima;if(inativo||(permitidos&&!permitidos.has(f.id)))continue;chosen.add(f.id);marcarAbaixo(f,inativo)}};
  const todosComFilhos=(pool,out=[])=>{for(const n of pool){if((n.children||[]).length){out.push(n.id);todosComFilhos(n.children,out)}}return out};
- /* Barra fixa no topo do quadro: Expandir tudo e Recolher tudo ficam parados enquanto a lista rola (só para cima e para baixo). */
- const barra=document.createElement('div');barra.className='escolha-barra';const contagem=document.createElement('small');contagem.className='profiles-note';contagem.setAttribute('role','status');const ferramentas=document.createElement('span');ferramentas.className='escolha-barra-botoes';
- for(const [rotulo,d,abrir] of [['Expandir tudo','m5 9 7 7 7-7',true],['Recolher tudo','m5 15 7-7 7 7',false]]){const b=botao('',()=>{abertos.clear();if(abrir)todosComFilhos(arvore).forEach(id=>abertos.add(id));render()},'shortcut-circle compras-redondo');b.title=rotulo;b.setAttribute('aria-label',rotulo);b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+d+'"/></svg>';ferramentas.append(b)}
- barra.append(contagem,ferramentas);
- function draw(pool,container,level,branchColor,pais,inativoAcima){for(const node of pool){const inativo=!!node.inactive||inativoAcima;if(inativo&&!chosen.has(node.id))continue;if(permitidos&&!permitidos.has(node.id)&&!chosen.has(node.id))continue;
+ /* Quem aparece: o que é permitido, o que já está marcado e os níveis de cima que levam até eles (esses sem caixa de marcar). */
+ const visivel=n=>!permitidos||permitidos.has(n.id)||chosen.has(n.id)||(n.children||[]).some(visivel);
+ /* Barra fixa no topo do quadro. Expandir / recolher tudo é UM botão só, o mesmo da barra de baixo das telas: redondo, na cor do
+    cabeçalho, com a seta para cima e para baixo; um toque expande tudo, o seguinte recolhe. */
+ const barra=document.createElement('div');barra.className='escolha-barra';const contagem=document.createElement('small');contagem.className='profiles-note';contagem.setAttribute('role','status');
+ let tudoAberto=false;const alternarTudo=botao('',()=>{tudoAberto=!tudoAberto;abertos.clear();if(tudoAberto)todosComFilhos(arvore).forEach(id=>abertos.add(id));render()},'compras-redondo escolha-expandir');alternarTudo.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7-6 7 6M5 15l7 6 7-6"/></svg>';
+ const pintarAlternar=()=>{const r=tudoAberto?'Recolher tudo':'Expandir tudo';alternarTudo.title=r;alternarTudo.setAttribute('aria-label',r);alternarTudo.setAttribute('aria-expanded',String(tudoAberto))};
+ barra.append(contagem,alternarTudo);
+ function draw(pool,container,level,branchColor,pais,inativoAcima){for(const node of pool){const inativo=!!node.inactive||inativoAcima;if(inativo&&!chosen.has(node.id))continue;if(!visivel(node))continue;const soCaminho=!!permitidos&&!permitidos.has(node.id)&&!chosen.has(node.id);
    const wrap=document.createElement('div');wrap.className='location-node'+(level===1?' location-area-frame':'')+(inativo?' is-inactive':'');wrap.dataset.level=level;wrap.style.setProperty('--branch-color',branchColor||node.color);wrap.style.setProperty('--node-color',node.color);wrap.dataset.open=String(abertos.has(node.id));
    const row=document.createElement('div');row.className='location-row';row.style.setProperty('--node-color',node.color);row.style.setProperty('--node-ink',ink(node.color));
-   const temFilhos=(node.children||[]).some(n=>!permitidos||permitidos.has(n.id)||chosen.has(n.id)),alternar=()=>{abertos.has(node.id)?abertos.delete(node.id):abertos.add(node.id);render()};
+   const temFilhos=(node.children||[]).some(visivel),alternar=()=>{abertos.has(node.id)?abertos.delete(node.id):abertos.add(node.id);render()};
    if(temFilhos){const expand=botao('',alternar,'location-expand');expand.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg>';expand.setAttribute('aria-label','Expandir ou recolher '+node.name);expand.setAttribute('aria-expanded',String(abertos.has(node.id)));row.append(expand)}else{const spacer=document.createElement('span');spacer.className='location-expand-spacer';spacer.setAttribute('aria-hidden','true');row.append(spacer)}
    const c=document.createElement('input');c.type='checkbox';c.className='compras-hier-caixa';c.checked=chosen.has(node.id);c.dataset.level=level;c.setAttribute('aria-label','Marcar '+node.name);c.style.setProperty('--menu-accent',branchColor||node.color);
-   c.onchange=()=>{if(c.checked){chosen.add(node.id);pais.forEach(p=>chosen.add(p.id));marcarAbaixo(node,inativo)}else desmarcar(node);render();if(aoMudar)aoMudar()};
+   if(soCaminho){c.disabled=true;c.style.visibility='hidden'}
+   c.onchange=()=>{if(c.checked){chosen.add(node.id);marcarAbaixo(node,inativo)}else{desmarcar(node);pais.forEach(p=>chosen.delete(p.id))}render();if(aoMudar)aoMudar()};
    const icon=document.createElement('span');icon.className='location-icon location-initials';if(node.identityMode==='icon')icon.innerHTML='<svg viewBox="0 0 24 24">'+iconPath(node.icon||0)+'</svg>';else icon.textContent=initials(node);icon.style.background=node.color;icon.style.color=ink(node.color);icon.style.setProperty('--node-ink',ink(node.color));icon.setAttribute('aria-hidden','true');
    const title=botao(node.name,temFilhos?alternar:()=>c.click(),'location-name'),copy=document.createElement('span');copy.className='location-copy';copy.append(title);
    if(inativo){const off=document.createElement('small');off.className='pill location-inactive-pill';off.textContent='Inativo';copy.append(off)}
    if(level<4){const count=document.createElement('small');count.className='financial-count location-count';count.textContent=itemCountLabel(node);copy.append(count)}
    row.append(c,icon,copy);wrap.append(row);
    if(temFilhos&&abertos.has(node.id)){const children=document.createElement('div');children.className='location-children';draw(node.children,children,level+1,branchColor||node.color,[...pais,node],inativo);wrap.append(children)}container.append(wrap)}}
- function render(){box.replaceChildren(barra);contagem.textContent=chosen.size===1?'1 selecionado':chosen.size+' selecionados';if(!arvore.length){const p=document.createElement('p');p.className='profiles-note';p.textContent='Nenhuma área cadastrada em DES - Área / Setor / Local.';box.append(p)}draw(arvore,box,1,null,[],false)}
+ function render(){box.replaceChildren(barra);pintarAlternar();contagem.textContent=chosen.size===1?'1 selecionado':chosen.size+' selecionados';if(!arvore.length){const p=document.createElement('p');p.className='profiles-note';p.textContent='Nenhuma área cadastrada em DES - Área / Setor / Local.';box.append(p)}draw(arvore,box,1,null,[],false)}
  render();return {box,chosen}}
 /* CAMPO RECOLHIDO (19/11/2026, Rodrigo): dentro do cadastro fica só o botão "Áreas, setores e locais" e o resumo do que está marcado; a
    árvore abre numa janela própria (a mesma seletorDeLocais), com Cancelar · Confirmar — igual ao Objeto do contrato. Nada muda no
@@ -44,8 +50,8 @@ function campoDeLocais({titulo='',selecionados,conjunto,permitidos,aoMudar}={}){
  const box=document.createElement('div');box.className='uniforms-wide campo-de-locais';const resumo=document.createElement('div');resumo.className='campo-de-locais-resumo';resumo.setAttribute('role','status');
  const ler=()=>{try{const saved=JSON.parse(localStorage.getItem(storage)||'[]');return Array.isArray(saved)?saved:saved.tree||[]}catch{return []}};
  const nota=t=>{const p=document.createElement('small');p.className='profiles-note';p.textContent=t;return p};
- function pintar(){resumo.replaceChildren();const abaixo=(n,out=[])=>{for(const f of n.children||[]){if(chosen.has(f.id))out.push(f.name);abaixo(f,out)}return out};
-  for(const a of ler()){const d=abaixo(a),total=descendantCount(a);if(!chosen.has(a.id)&&!d.length)continue;resumo.append(nota(a.name+(total&&d.length===total?' (área inteira)':d.length?': '+d.slice(0,6).join(', ')+(d.length>6?' e mais '+(d.length-6):''):'')))}
+ function pintar(){resumo.replaceChildren();const topos=(n,out=[])=>{for(const f of n.children||[]){if(chosen.has(f.id))out.push(f.name);else topos(f,out)}return out};
+  for(const a of ler()){if(chosen.has(a.id)){resumo.append(nota(a.name+' (área inteira)'));continue}const d=topos(a);if(d.length)resumo.append(nota(a.name+': '+d.slice(0,6).join(', ')+(d.length>6?' e mais '+(d.length-6):'')))}
   if(!resumo.children.length)resumo.append(nota('Nenhuma área vinculada.'))}
  function abrir(){const temp=new Set(chosen);if(!cu)return;
   cu.dialogo({titulo:'Áreas, setores e locais',largo:true,rotuloSalvar:'Confirmar',cor:'var(--section-accent,#ef4444)',corTexto:'var(--section-text,#9c1c1c)',quadro:'Áreas, setores e locais',

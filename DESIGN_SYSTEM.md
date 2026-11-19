@@ -1,5 +1,11 @@
 # CICLUZ — referência de interface
 
+## Correções do Rodrigo nas janelas de escolha (19/11/2026) — valem sobre as três seções abaixo
+1. **Seleção:** marcar um nível marca tudo o que está ABAIXO dele e nada acima. Marcar um nível de baixo fica só nele (a área não é marcada junto). Desmarcar um nível desmarca o que está abaixo e os níveis acima. Não existe mais "combinação inválida" de áreas e setores (a regra  foi apagada).
+2. **Expandir / recolher tudo é UM botão só:** redondo, 32 px, preenchido na **cor do cabeçalho da janela**, com a seta para cima e para baixo (o mesmo desenho da barra de baixo). Um toque expande tudo, o seguinte recolhe. Supera os dois botões (Expandir tudo / Recolher tudo).
+3. **Toda janela simples mostra Cancelar · Salvar** por extenso, à direita, fora do quadro (128×40). Supera, para as janelas simples de , a regra de 04/11/2026 que escondia essa linha (o ✓ e o ✕ da barra de baixo continuam funcionando). Só a janela com navegação por etapas (Voltar · Avançar · Salvar) não repete a linha.
+**Pendente:** conferência automática do Design System (pedido do Rodrigo): uma rotina que abre cada tela/janela e acusa o que está fora do padrão. Ainda não existe.
+
 ## Áreas, setores e locais: campo recolhido que abre a árvore em janela (19/11/2026)
 Decisão do Rodrigo (escolheu "abrir em janela"). **Supera** a árvore aberta dentro do cadastro. Em Horário / Escala, Ficha de Cargos e cadastro do colaborador, o cadastro mostra só **o rótulo, o botão "Áreas, setores e locais" (+) e o resumo do que está marcado** — uma linha por área ("Operação de Loja: Caixa, Atendimento", "Comercial (área inteira)" ou "Nenhuma área vinculada."). Tocar no botão abre **a árvore numa janela própria**, com a barra fixa de Expandir/Recolher tudo e **Cancelar · Salvar** (o botão de confirmar da janela aparece como "Salvar", como na janela do contrato); nada muda no cadastro enquanto a janela não é salva. É o mesmo jeito do Objeto do contrato. **Regra geral:** escolha em árvore não fica aberta dentro do cadastro; fica um botão com o resumo, e a árvore abre em janela. Peça única: `CicluzLocationTree.campo` (`campoDeLocais`, em `location-tree.js`), usada por `unitPicker` em `uniforms.js` e pelo cadastro do colaborador.
 
