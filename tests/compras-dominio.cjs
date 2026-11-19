@@ -613,4 +613,35 @@ ok(() => {
   assert.match(d.validarContratoFinanceiro({ tem: true, formaPagamento: 'cheque' }), /Forma de pagamento/);
 });
 
+// Salário mínimo vigente e conversão percentual × valor (18/11/2026)
+ok(() => {
+  const lista = [{ id: 'a', valorCentavos: 100000, inicio: '2026-01-01' }, { id: 'b', valorCentavos: 120000, inicio: '2027-01-01' }, { id: 'c', valorCentavos: 90000, inicio: '2025-01-01' }];
+  assert.equal(d.salarioMinimoVigente(lista, '2026-11-18').id, 'a');
+  assert.equal(d.salarioMinimoVigente(lista, '2027-01-01').id, 'b'); // vale a partir do próprio dia de início
+  assert.equal(d.salarioMinimoVigente(lista, '2025-06-01').id, 'c');
+  assert.equal(d.salarioMinimoVigente(lista, '2024-12-31'), null);
+  assert.equal(d.salarioMinimoVigente([], '2026-11-18'), null);
+  assert.equal(d.salarioMinimoVigente([{ id: 'x', valorCentavos: 0, inicio: '2026-01-01' }, { id: 'y', valorCentavos: 100, inicio: 'ontem' }], '2026-11-18'), null);
+  // percentual → valor (centavos, arredondado ao centavo)
+  assert.equal(d.valorDoPercentualDoMinimo(100000, 50), 50000);
+  assert.equal(d.valorDoPercentualDoMinimo(100000, 150), 150000);
+  assert.equal(d.valorDoPercentualDoMinimo(151800, 33.33), 50595); // 505,9494 → 505,95
+  assert.equal(d.valorDoPercentualDoMinimo(100001, 50), 50001); // 500,005 → 500,01
+  assert.equal(d.valorDoPercentualDoMinimo(null, 50), null);
+  assert.equal(d.valorDoPercentualDoMinimo(100000, 0), null);
+  assert.equal(d.valorDoPercentualDoMinimo(100000, NaN), null);
+  // valor → percentual (duas casas)
+  assert.equal(d.percentualDoValorSobreMinimo(50000, 100000), 50);
+  assert.equal(d.percentualDoValorSobreMinimo(50595, 151800), 33.33);
+  assert.equal(d.percentualDoValorSobreMinimo(151800, 151800), 100);
+  assert.equal(d.percentualDoValorSobreMinimo(0, 100000), null);
+  assert.equal(d.percentualDoValorSobreMinimo(50000, 0), null);
+  // cadastro do valor
+  assert.equal(d.validarSalarioMinimo({ id: 'n', valorCentavos: 100000, inicio: '2026-06-01' }, lista), '');
+  assert.match(d.validarSalarioMinimo({ id: 'n', valorCentavos: 0, inicio: '2026-06-01' }, lista), /valor/);
+  assert.match(d.validarSalarioMinimo({ id: 'n', valorCentavos: 100000, inicio: '2026-02-30' }, lista), /início/);
+  assert.match(d.validarSalarioMinimo({ id: 'n', valorCentavos: 100000, inicio: '2026-01-01' }, lista), /Já existe/);
+  assert.equal(d.validarSalarioMinimo({ id: 'a', valorCentavos: 110000, inicio: '2026-01-01' }, lista), ''); // editar o próprio
+});
+
 console.log(checks + ' checks de regras de Compras passaram');

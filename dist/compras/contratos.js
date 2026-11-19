@@ -435,7 +435,33 @@
     smPct.setAttribute('aria-label', 'Percentual sobre o mínimo (%)');
     U.mascaraPercentual(smPct); // mostra o "%" enquanto digita
     const smBox = el('div', 'compras-largo compras-sm');
-    smBox.append(smQuadro, smPctCampo, el('small', 'profiles-note', 'Só informação cadastral: o sistema não consulta o salário mínimo, não calcula reajuste e não troca o valor informado.'));
+    /* Percentual ↔ valor pelo salário mínimo vigente (18/11/2026, aprovado pelo Rodrigo). O valor do salário vem de Configurações →
+       Empresa → Salário Mínimo Vigente. Digitar o percentual calcula o valor; digitar o valor calcula o percentual. Sem salário
+       cadastrado, nada é calculado. Contrato já gravado abre como foi salvo: só um aviso diz quando o salário mudou. */
+    const smNota = el('small', 'profiles-note'); smNota.setAttribute('role', 'status');
+    const smVigente = () => D.salarioMinimoVigente((S.dados && S.dados.salariosMinimos) || [], D.isoData(new Date()));
+    const smNumero = () => { const n = D.lerNumero(U.lerPercentual(smPct)); return typeof n === 'number' && n > 0 ? n : null; };
+    const pintarSm = () => {
+      if (!smQuadro.ativo) { smNota.textContent = ''; return; }
+      const v = smVigente();
+      if (!v) { smNota.textContent = 'Cadastre o salário mínimo em Configurações → Empresa → Salário Mínimo Vigente para o valor ser calculado. Enquanto isso, nada é calculado.'; return; }
+      const base = 'Salário mínimo vigente: ' + D.moeda(v.valorCentavos / 100) + ' (desde ' + window.CicluzDateFields.display(v.inicio) + '). ';
+      const esperado = D.valorDoPercentualDoMinimo(v.valorCentavos, smNumero()); const atual = valorCentavos();
+      smNota.textContent = base + (esperado != null && atual != null && esperado !== atual
+        ? 'Atenção: pelo salário vigente, este percentual dá ' + D.moeda(esperado / 100) + ', e o valor do contrato está em ' + D.moeda(atual / 100) + '. Digite o percentual de novo para atualizar o valor.'
+        : 'Digite o percentual para calcular o valor, ou o valor para calcular o percentual.');
+    };
+    smPct.addEventListener('input', () => {
+      const v = smVigente(); const calculado = smQuadro.ativo && v ? D.valorDoPercentualDoMinimo(v.valorCentavos, smNumero()) : null;
+      if (calculado != null) { cValor.value = R().moneyMask(String(calculado)); pintarValor(); }
+      pintarSm();
+    });
+    cValor.addEventListener('input', () => {
+      const v = smVigente(); const pct = smQuadro.ativo && v ? D.percentualDoValorSobreMinimo(valorCentavos(), v.valorCentavos) : null;
+      if (pct != null) smPct.value = String(pct).replace('.', ',') + '%';
+      pintarSm();
+    });
+    smBox.append(smQuadro, smPctCampo, smNota);
     const cInicio = entrada('date', ct.inicio || '');
     const cFim = entrada('date', ct.fim || '');
     const cReajuste = seletor(D.REAJUSTES_CONTRATO, ct.reajuste || '', 'Selecione');
@@ -456,7 +482,7 @@
       mostrar(vencDataCampo, !ehMensal() && !sexta() && cForma.value !== '');
       vencDataCampo.querySelector('.compras-rotulo').textContent = cForma.value === 'boleto' ? 'Data de vencimento do boleto' : 'Data de vencimento';
       mostrar(diaPagtoCampo, !ehMensal() && sexta());
-      mostrar(smPctCampo, smQuadro.ativo);
+      mostrar(smPctCampo, smQuadro.ativo); pintarSm();
       mostrar(percentualCampo, cReajuste.value === 'percentual');
     };
     cForma.onchange = pintarContrato;

@@ -811,6 +811,33 @@
       : ['Dados pessoais', 'Endereço', 'Informações complementares', 'Revisão dos dados'];
   }
   const dataIsoValida = (v) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); if (!m) return false; const d = new Date(+m[1], +m[2] - 1, +m[3]); return d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3]; };
+
+  /* ---------- Salário mínimo vigente (18/11/2026, aprovado pelo Rodrigo) ----------
+   * O valor é digitado em Configurações → Empresa → Salário Mínimo Vigente, com a data de início de cada valor; o sistema não
+   * busca o número em lugar nenhum. Vigente = o de início mais recente que não seja depois de hoje. Serve ao contrato com
+   * "Referência do salário mínimo": percentual → valor e valor → percentual. Contrato já gravado não é recalculado sozinho. */
+  /** O que impede salvar um valor do salário mínimo, ou ''. item: { id, valorCentavos, inicio }. */
+  function validarSalarioMinimo(item, lista) {
+    if (!item || !(Number.isInteger(item.valorCentavos) && item.valorCentavos > 0)) return 'Informe o valor do salário mínimo.';
+    if (!dataIsoValida(item.inicio)) return 'Informe a data de início da vigência: use DD/MM/AA.';
+    if ((lista || []).some((x) => x.id !== item.id && x.inicio === item.inicio)) return 'Já existe um valor com esta data de início.';
+    return '';
+  }
+  /** O valor em vigor na data hojeIso ('AAAA-MM-DD'), ou null quando nenhum começou ainda. */
+  function salarioMinimoVigente(lista, hojeIso) {
+    const validos = (lista || []).filter((x) => x && Number.isInteger(x.valorCentavos) && x.valorCentavos > 0 && dataIsoValida(x.inicio) && x.inicio <= hojeIso);
+    return validos.sort((a, b) => (a.inicio < b.inicio ? 1 : -1))[0] || null;
+  }
+  /** Percentual do salário mínimo → valor em centavos (arredondado ao centavo), ou null quando não dá para calcular. */
+  function valorDoPercentualDoMinimo(salarioCentavos, percentual) {
+    if (!(Number.isInteger(salarioCentavos) && salarioCentavos > 0) || !(typeof percentual === 'number' && percentual > 0)) return null;
+    return Math.round((salarioCentavos * percentual) / 100);
+  }
+  /** Valor em centavos → percentual do salário mínimo (duas casas), ou null quando não dá para calcular. */
+  function percentualDoValorSobreMinimo(valorCentavos, salarioCentavos) {
+    if (!(Number.isInteger(salarioCentavos) && salarioCentavos > 0) || !(Number.isInteger(valorCentavos) && valorCentavos > 0)) return null;
+    return Math.round((valorCentavos / salarioCentavos) * 10000) / 100;
+  }
   /**
    * O que impede salvar, uma mensagem por etapa ('' quando em ordem). Simples: um item só. Completo: um por etapa.
    * Obrigatórios — PF simples: nome, WhatsApp, e-mail e data de nascimento (sem CPF nem endereço); PF completo: os mesmos
@@ -1077,7 +1104,7 @@
     digitos, motivoNaoConvidavel, podeConvidar,
     CATEGORIAS_FORNECEDOR, categoriaFornecedor, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarNomesPadrao, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, documentoAntigoFornecedor, validarFornecedor,
     chaveTexto, TIPOS_CAMPO_ADICIONAL, RENOVACOES_CONTRATO, LIMITES_CONTRATO, validarListaAtividades, validarAtividadesContrato, novaAtividade, validarModeloContrato,
-    somarMesesIso, aplicarModeloAoContrato, validarContratoDocumento, faltasDoContrato, papelContrato, CHAVES_OBJETO_CONTRATO,
+    somarMesesIso, aplicarModeloAoContrato, validarContratoDocumento, faltasDoContrato, papelContrato, CHAVES_OBJETO_CONTRATO, validarSalarioMinimo, salarioMinimoVigente, valorDoPercentualDoMinimo, percentualDoValorSobreMinimo,
     validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, aniversarioVendedor, migrarVendedorFornecedor,
     FUNCOES_PRESTADOR_INICIAIS, idFuncaoPrestador, funcaoPrestadorIgual, validarFuncaoPrestador, migrarPrestadoresFornecedor,
     FORMAS_PAGAMENTO_CONTRATO, FORMAS_PAGAMENTO_FORNECEDOR, RECORRENCIAS_CONTRATO, RECORRENCIAS_CLIENTE, CLIENTE_MENSAL, periodoMensal, validarTermino, resumoTermino, UNIDADES_REPETICAO, POSICOES_MES, DIAS_SEMANA_LONGOS, REAJUSTES_CONTRATO, migrarContratoFinanceiro,
