@@ -120,7 +120,8 @@ const orgBox=el('fieldset','people-org');const orgPicked=new Set();const orgList
 function orgAllowed(){const O=window.CicluzOrg;if(!O)return [];const all=O.flat().filter(n=>!n.inactive||orgPicked.has(n.id));const card=window.CicluzJobCards?.forJobName(job.select.value)?.card;const ids=card?.unitIds?.length?new Set(card.unitIds):null;return ids?all.filter(n=>ids.has(n.id)||orgPicked.has(n.id)):all}
 function renderOrg(){const list=orgAllowed();const card=window.CicluzJobCards?.forJobName(job.select.value)?.card;orgList.replaceChildren();
  orgNote.textContent=!list.length?'Nenhuma área cadastrada em DES - Área / Setor / Local.':card?.unitIds?.length?'Mostrando as unidades ligadas à Ficha do cargo '+job.select.value+'.':'Sem ficha de cargo com unidades: todas as unidades ativas são exibidas.';
- for(const n of list){const l=el('label','profiles-choice profiles-unit'),c=el('input');c.type='checkbox';c.checked=orgPicked.has(n.id);c.onchange=()=>{c.checked?orgPicked.add(n.id):orgPicked.delete(n.id);paintOrg()};l.style.setProperty('--unit-indent',String(n.level-1));l.append(c,el('span',null,n.name+(n.inactive?' (inativo)':'')),el('small',null,n.levelName));orgList.append(l)}paintOrg()}
+ /* A escolha usa a mesma árvore da tela DES - Área / Setor / Local, com caixa de marcar (19/11/2026, Rodrigo). */
+ if(list.length)orgList.append(window.CicluzLocationTree.seletor(null,{conjunto:orgPicked,permitidos:new Set(list.map(n=>n.id)),aoMudar:paintOrg}).box);paintOrg()}
 function paintOrg(){const bad=window.CicluzOrg?.invalidSelection([...orgPicked])||[];orgErr.textContent=bad.length?'Combinação inválida: '+bad.join('; ')+'.':''}
 function orgSet(ids){orgPicked.clear();for(const id of ids||[])orgPicked.add(id);renderOrg()}
 job.select.addEventListener('change',()=>{const allowed=new Set(orgAllowed().map(n=>n.id));for(const id of [...orgPicked])if(!allowed.has(id))orgPicked.delete(id);renderOrg()});
