@@ -1249,3 +1249,8 @@ A especificação técnica ("Informar especificação técnica?") fica na etapa 
 - Grade de colunas por tela em `compras/compras.css` (`grade-colab-s`, `grade-colab-c`, `grade-cargo`). Para uma nova tabela: nova grade + chaves ocultáveis `oculta-<chave>`; não criar tabela própria.
 - Cargos: a linha mantém a classe `job-item` (ordem por arrastar e busca do rodapé dependem dela).
 - Edição: cabeçalho com título e caminho; situação com o interruptor `account-status` (nunca checkbox); Cancelar à esquerda e Salvar à direita. `U.dialogo` mostra o caminho de navegação sob o título.
+
+## Folha e Ponto: seletor de competência, valor clicável e conferência de duas fontes
+- Seletor de mês/dia (`.folha-mes`): seta · retângulo com o mês em maiúsculas (campo padrão, no tema) · seta, na barra superior ao lado do botão Colunas / Importar. Vale para a Folha e para o Ponto.
+- Valor da folha clicável (`.folha-clicavel`): abre o detalhe em diálogo (só consulta). Ação financeira só aparece habilitada quando existir o módulo que a executa; antes disso fica desabilitada com o motivo.
+- Conferência de duas fontes lado a lado (Ponto): grupos de colunas "Ponto importado — Conplus" e "Ponto manual — Cicluz" na mesma tabela `.folha-tabela`, Colaborador/Dia fixo, `Aguardando importação Conplus` quando não há dado oficial, divergência marcada nos dois lados. O lado importado é só leitura; o manual tem histórico e responsável.
