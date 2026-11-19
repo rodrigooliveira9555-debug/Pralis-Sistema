@@ -210,7 +210,7 @@
    * uma na cor e com o Voltar do menu de onde veio. Os dados são os de cicluz-compras-v1.fornecedores.
    * ===================================================================== */
   // Cor das origens: a mesma fonte dos cartões do menu (groupConfig, de groups.js), com o padrão de cada origem.
-  const corOrigem = (chave, padrao) => { try { return (typeof groupConfig !== 'undefined' && groupConfig[chave] && groupConfig[chave].color) || padrao; } catch (e) { return padrao; } };
+  const corOrigem = U.corOrigem; // peça central (ui.js)
   const corMercadorias = () => corOrigem('mercadorias', U.COR);
   const corDespesas = () => corOrigem('despesas', '#ef4444');
   const ORIGENS = {

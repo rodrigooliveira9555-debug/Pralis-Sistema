@@ -397,6 +397,22 @@
    * nó ou lista de nós; célula sem conteúdo fica vazia. Na tela estreita as células empilham sob o nome.
    * estado: texto pequeno à direita, antes da seta (ex.: "Ativo"), como nos cadastros de grupos.
    */
+  /** Cor de uma origem do menu (mercadorias, despesas, retiradas…): a mesma fonte dos cartões do menu (groupConfig, de groups.js). */
+  const corOrigem = (chave, padrao) => { try { return (typeof groupConfig !== 'undefined' && groupConfig[chave] && groupConfig[chave].color) || padrao; } catch (e) { return padrao; } };
+  /**
+   * Campo de percentual que mostra o "%" enquanto a pessoa digita (18/11/2026, Rodrigo): só números e uma vírgula, com o símbolo
+   * sempre no fim e o cursor antes dele. Para ler o número, use lerPercentual(input).
+   */
+  function mascaraPercentual(input) {
+    const pintar = () => {
+      const limpo = String(input.value).replace(/[^\d,]/g, '').replace(/,(?=.*,)/g, '');
+      input.value = limpo ? limpo + '%' : '';
+      if (limpo && document.activeElement === input) { try { input.setSelectionRange(limpo.length, limpo.length); } catch (e) { /* campo sem seleção */ } }
+    };
+    input.addEventListener('input', pintar); pintar();
+    return input;
+  }
+  const lerPercentual = (input) => String(input.value).replace('%', '').trim();
   /** Caixa de marcar com rótulo (e dica opcional). O input fica em .input. */
   function interruptor(rotulo, marcado, dica) {
     const l = el('label', 'compras-interruptor');
@@ -920,6 +936,6 @@
   window.CicluzComprasUI = {
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();

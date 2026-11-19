@@ -20,7 +20,8 @@
     seta: '<path d="m9 6 6 6-6 6"/>', imprimir: '<path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M7 14h10v7H7z"/>',
     olho: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>',
   };
-  const bolinha = (rotulo, desenho, acao) => { const b = el('button', 'shortcut-circle compras-redondo'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = SVG(desenho); b.onclick = acao; return b; };
+  // perigo: o botão de excluir, em vermelho (padrão do sistema: editar na cor do cabeçalho, excluir em vermelho).
+  const bolinha = (rotulo, desenho, acao, perigo) => { const b = el('button', 'shortcut-circle compras-redondo' + (perigo ? ' perigo' : '')); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = SVG(desenho); b.onclick = acao; return b; };
   const grupos = () => (window.CicluzProducaoDados && window.CicluzProducaoDados.gruposDespesa()) || [];
   const modelos = () => (S.dados && Array.isArray(S.dados.modelosContrato) ? S.dados.modelosContrato : []);
   const cc = (c) => (typeof c === 'function' ? c() : c || {});
@@ -134,7 +135,7 @@
       lista.replaceChildren(...(itens.length ? itens.map((i) => {
         const li = el('li', 'compras-atividade-item'); const mar = el('span', 'compras-atividade-marca'); mar.innerHTML = SVG(inc ? ICO.cima : ICO.baixo);
         const acoes = el('span', 'compras-atividade-acoes');
-        acoes.append(bolinha('Editar atividade ' + i.texto, ICO.lapis, () => editar(i)), bolinha('Remover atividade ' + i.texto, ICO.lixo, () => { api.trocar(api.itens().filter((x) => x.id !== i.id)); desenhar(); api.mudou(); }));
+        acoes.append(bolinha('Editar atividade ' + i.texto, ICO.lapis, () => editar(i)), bolinha('Excluir atividade ' + i.texto, ICO.lixo, () => { api.trocar(api.itens().filter((x) => x.id !== i.id)); desenhar(); api.mudou(); }, true));
         li.append(mar, el('span', 'compras-atividade-texto', i.texto), acoes); return li;
       }) : [el('li', 'profiles-note compras-atividade-vazia', inc ? 'Nenhuma atividade incluída ainda.' : 'Nenhuma atividade excluída ainda.')]));
     }
@@ -180,7 +181,7 @@
         const desenharCl = () => boxCl.replaceChildren(...clausulas.map((c, k) => {
           const w = el('div', 'compras-modelo-clausula'); const t = entrada('text', c.titulo || '', { maxLength: 120, placeholder: 'Título da cláusula (opcional)' }); t.setAttribute('aria-label', 'Título da cláusula ' + (k + 1)); t.dataset.textoLivre = '1'; t.oninput = () => { c.titulo = t.value; };
           const x = el('textarea'); x.rows = 3; x.maxLength = 4000; x.value = c.texto || ''; x.setAttribute('aria-label', 'Texto da cláusula ' + (k + 1)); x.dataset.textoLivre = '1'; x.oninput = () => { c.texto = x.value; };
-          w.append(t, x, bolinha('Remover cláusula ' + (k + 1), ICO.lixo, () => { clausulas.splice(k, 1); desenharCl(); })); return w;
+          w.append(t, x, bolinha('Excluir cláusula ' + (k + 1), ICO.lixo, () => { clausulas.splice(k, 1); desenharCl(); }, true)); return w;
         }));
         const addCl = botao('Adicionar cláusula', () => { clausulas.push({ titulo: '', texto: '' }); desenharCl(); }, 'btn secondary');
         /* atividades */
@@ -199,7 +200,7 @@
           const w = el('div', 'compras-modelo-campo'); const r = entrada('text', c.rotulo || '', { maxLength: 60, placeholder: 'Nome do campo' }); r.setAttribute('aria-label', 'Nome do campo adicional ' + (k + 1)); r.dataset.textoLivre = '1'; r.oninput = () => { c.rotulo = r.value; };
           const t = seletor(D.TIPOS_CAMPO_ADICIONAL, c.tipo || 'texto'); t.setAttribute('aria-label', 'Tipo do campo adicional ' + (k + 1)); t.onchange = () => { c.tipo = t.value; };
           const obL = el('label', 'compras-interruptor'); const obI = entrada('checkbox'); obI.checked = Boolean(c.obrigatorio); obI.onchange = () => { c.obrigatorio = obI.checked; }; obL.append(obI, el('span', null, 'Obrigatório'));
-          w.append(r, t, obL, bolinha('Remover campo adicional ' + (k + 1), ICO.lixo, () => { campos.splice(k, 1); desenharCa(); })); return w;
+          w.append(r, t, obL, bolinha('Excluir campo adicional ' + (k + 1), ICO.lixo, () => { campos.splice(k, 1); desenharCa(); }, true)); return w;
         }));
         const addCa = botao('Adicionar campo adicional', () => { campos.push({ id: S.novoId('ca'), rotulo: '', tipo: 'texto', obrigatorio: false }); desenharCa(); }, 'btn secondary');
         const sec = (t, ...nos) => { const f = el('fieldset', 'compras-fieldset'); f.append(el('legend', null, t), ...nos); return f; };
@@ -432,13 +433,14 @@
     const smPctCampo = campo('Percentual do salário mínimo (%)', smPct);
     // O rótulo com "salário" faria o field-validation.js tratar o campo como dinheiro: o nome para leitor de tela evita isso.
     smPct.setAttribute('aria-label', 'Percentual sobre o mínimo (%)');
-    smPct.addEventListener('input', () => { smPct.value = smPct.value.replace(/[^\d,]/g, '').replace(/,(?=.*,)/g, ''); });
+    U.mascaraPercentual(smPct); // mostra o "%" enquanto digita
     const smBox = el('div', 'compras-largo compras-sm');
     smBox.append(smQuadro, smPctCampo, el('small', 'profiles-note', 'Só informação cadastral: o sistema não consulta o salário mínimo, não calcula reajuste e não troca o valor informado.'));
     const cInicio = entrada('date', ct.inicio || '');
     const cFim = entrada('date', ct.fim || '');
     const cReajuste = seletor(D.REAJUSTES_CONTRATO, ct.reajuste || '', 'Selecione');
     const cPercentual = entrada('text', ct.reajustePercentual != null ? String(ct.reajustePercentual).replace('.', ',') : '', { inputMode: 'decimal', placeholder: '0,00', maxLength: 6 });
+    U.mascaraPercentual(cPercentual);
     const percentualCampo = campo('Percentual do reajuste (%) *', cPercentual);
     const cObs = el('textarea');
     cObs.rows = 3; cObs.maxLength = 2000; cObs.value = ct.observacoes || '';
@@ -462,7 +464,7 @@
     pintarContrato();
     pintarValor();
     // Número digitado: null quando vazio, NaN quando não é número (para a validação recusar em vez de virar vazio).
-    const numeroOuNada = (input) => { const t = String(input.value).trim(); if (!t) return null; const n = D.lerNumero(t); return n == null ? NaN : n; };
+    const numeroOuNada = (input) => { const t = U.lerPercentual(input); if (!t) return null; const n = D.lerNumero(t); return n == null ? NaN : n; };
     // Etapa 6 (18/11/2026): tipo de contrato (cópia do modelo), cláusulas, atividades incluídas e não incluídas e campos adicionais.
     const ct6 = {
       modeloId: ct.modeloId || '', modeloNome: ct.modeloNome || '', modeloVersao: ct.modeloVersao || null, clausulas: (ct.clausulas || []).map((x) => ({ ...x })),
@@ -578,8 +580,10 @@
        nada é calculado e os cadastros de origem não são alterados. Pode ter um ou vários, de mais de um tipo. */
     const obj0 = ct.objeto && typeof ct.objeto === 'object' ? ct.objeto : {};
     const objeto = { produto: new Set(obj0.produtoIds || []), despesa: new Set(obj0.despesaIds || []), patrimonio: new Set(obj0.patrimonioIds || []) };
+    // Cada lista na cor da sua origem no menu (18/11/2026, Rodrigo): produtos em Mercadorias, despesas em Despesas, patrimônios em Retiradas.
+    const COR_DO_OBJETO = { produto: () => U.corOrigem('mercadorias', '#22c55e'), despesa: () => U.corOrigem('despesas', '#ef4444'), patrimonio: () => U.corOrigem('retiradas', '#2563eb') };
     const caixaObjeto = (tipo, rotulo, rotuloBotao, dica, vazio, plural, escolher) => {
-      const box = el('div', 'compras-campo compras-largo'); const chipsBox = el('div', 'compras-chips'); const resumo = el('p', 'profiles-note'); resumo.setAttribute('role', 'status');
+      const box = el('div', 'compras-campo compras-largo compras-objeto-origem'); box.style.setProperty('--menu-accent', COR_DO_OBJETO[tipo]()); const chipsBox = el('div', 'compras-chips'); const resumo = el('p', 'profiles-note'); resumo.setAttribute('role', 'status');
       const desenhar = () => {
         const ids = [...objeto[tipo]];
         chipsBox.replaceChildren(...ids.map((id) => { const nome = nomeDoObjeto[tipo](id); const c = botao(nome + ' ×', () => { objeto[tipo].delete(id); desenhar(); }, 'compras-chip ativo'); c.setAttribute('aria-label', 'Remover ' + nome); return c; }));
@@ -592,14 +596,14 @@
     };
     const n = (q, um, varios) => (q === 1 ? '1 ' + um : q + ' ' + varios) + (q === 1 ? ' vinculado.' : ' vinculados.');
     const objProdutos = caixaObjeto('produto', 'Produtos do contrato', 'Produtos', 'Escolher os produtos deste contrato', 'Nenhum produto vinculado.', (q) => n(q, 'produto', 'produtos'), (trocar) => U.seletorDeItens({
-      titulo: 'Produtos do contrato', rotuloBusca: 'Buscar produto', ...cc(cores), marcados: objeto.produto, aoConfirmar: trocar,
+      titulo: 'Produtos do contrato', rotuloBusca: 'Buscar produto', cor: COR_DO_OBJETO.produto(), corTexto: cc(cores).corTexto, marcados: objeto.produto, aoConfirmar: trocar,
       itens: ((S.dados && S.dados.produtos) || []).filter((p) => p.status === 'ativo' || objeto.produto.has(p.id)).sort((a, b) => String(a.descricao).localeCompare(String(b.descricao), 'pt-BR')).map((p) => ({ id: p.id, rotulo: p.descricao + (p.status === 'ativo' ? '' : ' (inativo)') })),
     }));
     const objDespesas = caixaObjeto('despesa', 'Despesas do contrato', 'Grupo de despesas', 'Escolher os grupos e subgrupos de despesa deste contrato', 'Nenhuma despesa vinculada.', (q) => (q === 1 ? '1 grupo ou subgrupo vinculado.' : q + ' grupos ou subgrupos vinculados.'), (trocar) => seletorHierarquico({
-      titulo: 'Despesas do contrato: grupos de despesa', cores, marcados: objeto.despesa, aoConfirmar: trocar,
+      titulo: 'Despesas do contrato: grupos de despesa', cores: { cor: COR_DO_OBJETO.despesa(), corTexto: cc(cores).corTexto }, marcados: objeto.despesa, aoConfirmar: trocar,
     }));
     const objPatrimonios = caixaObjeto('patrimonio', 'Patrimônios do contrato', 'Patrimônios', 'Escolher os patrimônios deste contrato', 'Nenhum patrimônio vinculado.', (q) => n(q, 'patrimônio', 'patrimônios'), (trocar) => U.seletorDeItens({
-      titulo: 'Patrimônios do contrato', rotuloBusca: 'Buscar patrimônio', ...cc(cores), marcados: objeto.patrimonio, aoConfirmar: trocar,
+      titulo: 'Patrimônios do contrato', rotuloBusca: 'Buscar patrimônio', cor: COR_DO_OBJETO.patrimonio(), corTexto: cc(cores).corTexto, marcados: objeto.patrimonio, aoConfirmar: trocar,
       itens: bensCadastrados().filter((b) => !b.baixa || objeto.patrimonio.has(b.id)).sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR')).map((b) => ({ id: b.id, rotulo: b.nome + (b.baixa ? ' (baixado)' : '') })),
     }));
     const quadroTem = blocoContrato('Contrato', 'Marque Sim para montar o contrato deste ' + (cliente ? 'cliente' : 'fornecedor') + '. Ele é montado em blocos, de cima para baixo, com o que você preencher em cada um.', temContrato);
