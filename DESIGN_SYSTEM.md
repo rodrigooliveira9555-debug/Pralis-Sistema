@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Áreas, setores e locais: campo recolhido que abre a árvore em janela (19/11/2026)
+Decisão do Rodrigo (escolheu "abrir em janela"). **Supera** a árvore aberta dentro do cadastro. Em Horário / Escala, Ficha de Cargos e cadastro do colaborador, o cadastro mostra só **o rótulo, o botão "Áreas, setores e locais" (+) e o resumo do que está marcado** — uma linha por área ("Operação de Loja: Caixa, Atendimento", "Comercial (área inteira)" ou "Nenhuma área vinculada."). Tocar no botão abre **a árvore numa janela própria**, com a barra fixa de Expandir/Recolher tudo e **Cancelar · Salvar** (o botão de confirmar da janela aparece como "Salvar", como na janela do contrato); nada muda no cadastro enquanto a janela não é salva. É o mesmo jeito do Objeto do contrato. **Regra geral:** escolha em árvore não fica aberta dentro do cadastro; fica um botão com o resumo, e a árvore abre em janela. Peça única: `CicluzLocationTree.campo` (`campoDeLocais`, em `location-tree.js`), usada por `unitPicker` em `uniforms.js` e pelo cadastro do colaborador.
+
 ## Árvore de escolha: seleção em cascata e barra fixa de Expandir / Recolher tudo (19/11/2026)
 Pedido do Rodrigo. Vale para toda árvore de escolha: a de **áreas, setores e locais** (Horário / Escala, Ficha de Cargos, colaborador) e a **do contrato** (grupo de produtos, de despesas e de patrimônios; grupos de despesa das atividades).
 

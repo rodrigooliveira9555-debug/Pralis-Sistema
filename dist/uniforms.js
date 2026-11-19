@@ -68,8 +68,8 @@ function padronizarCampos(form){if(form.dataset.camposPadrao)return;form.dataset
  /* Campos compostos (busca + lista, áudio, anexos): o título deles é um span próprio; ganha o mesmo rótulo dos outros campos. */
  for(const t of form.querySelectorAll('.uniforms-enum-label')){t.classList.add('compras-rotulo');if(t.parentElement.tagName==='LABEL')t.parentElement.classList.add('compras-campo')}}
 function campoSituacao(select,titulo,dica,feminino){const slot=el('div','uniforms-wide');slot.pintar=()=>{const cu=window.CicluzComprasUI;if(!cu){const l=el('label',null,titulo);l.append(select);slot.replaceChildren(l);return}const q=cu.quadroSituacao(titulo,select.value==='1',{dica,feminino:!!feminino,aoMudar:()=>{select.value=q.ativo?'1':'0'}});slot.replaceChildren(q)};return slot}
-/* Áreas, setores e locais: a escolha usa a mesma árvore da tela DES - Área / Setor / Local (location-tree.js), com caixa de marcar. Usado no cargo e no Horário / Escala. */
-function unitPicker(selected,legend){const O=window.CicluzOrg,box=el('fieldset','unidades-quadro uniforms-wide'),arvore=window.CicluzLocationTree.seletor(selected);box.append(el('legend',null,legend),arvore.box);return {box,chosen:arvore.chosen,invalid:()=>O?.invalidSelection([...arvore.chosen])||[]}}
+/* Áreas, setores e locais: no cadastro fica o botão com o resumo; a árvore (a mesma da tela DES - Área / Setor / Local) abre em janela (location-tree.js, campoDeLocais). Usado no cargo e no Horário / Escala. */
+function unitPicker(selected,legend){const O=window.CicluzOrg,campo=window.CicluzLocationTree.campo({titulo:legend,selecionados:selected});return {box:campo.box,chosen:campo.chosen,invalid:()=>O?.invalidSelection([...campo.chosen])||[]}}
 function closeEditor(form){if(form.dataset.soJanela)form.hidden=true;const e=form._ed;if(!e)return;form._ed=null;e.home.replaceWith(form);e.d.close();e.d.remove()}
 /* IDENTIDADE DO CADASTRO (padrão único, 19/11/2026, Rodrigo). É o desenho do cadastro de grupo (groups.js): um quadro com o nome e, logo
    abaixo, "Ícone do …" com seis quadradinhos e o resto em "Mais ícones"; o escolhido não muda de cor — quem mostra a escolha é o cartão

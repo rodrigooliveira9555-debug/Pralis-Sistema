@@ -121,7 +121,7 @@ function orgAllowed(){const O=window.CicluzOrg;if(!O)return [];const all=O.flat(
 function renderOrg(){const list=orgAllowed();const card=window.CicluzJobCards?.forJobName(job.select.value)?.card;orgList.replaceChildren();
  orgNote.textContent=!list.length?'Nenhuma área cadastrada em DES - Área / Setor / Local.':card?.unitIds?.length?'Mostrando as unidades ligadas à Ficha do cargo '+job.select.value+'.':'Sem ficha de cargo com unidades: todas as unidades ativas são exibidas.';
  /* A escolha usa a mesma árvore da tela DES - Área / Setor / Local, com caixa de marcar (19/11/2026, Rodrigo). */
- if(list.length)orgList.append(window.CicluzLocationTree.seletor(null,{conjunto:orgPicked,permitidos:new Set(list.map(n=>n.id)),aoMudar:paintOrg}).box);paintOrg()}
+ if(list.length)orgList.append(window.CicluzLocationTree.campo({conjunto:orgPicked,permitidos:new Set(list.map(n=>n.id)),aoMudar:paintOrg}).box);paintOrg()}
 function paintOrg(){const bad=window.CicluzOrg?.invalidSelection([...orgPicked])||[];orgErr.textContent=bad.length?'Combinação inválida: '+bad.join('; ')+'.':''}
 function orgSet(ids){orgPicked.clear();for(const id of ids||[])orgPicked.add(id);renderOrg()}
 job.select.addEventListener('change',()=>{const allowed=new Set(orgAllowed().map(n=>n.id));for(const id of [...orgPicked])if(!allowed.has(id))orgPicked.delete(id);renderOrg()});

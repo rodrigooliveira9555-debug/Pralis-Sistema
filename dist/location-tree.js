@@ -37,7 +37,24 @@ function seletorDeLocais(selecionados,{conjunto,permitidos,aoMudar}={}){let arvo
    if(temFilhos&&abertos.has(node.id)){const children=document.createElement('div');children.className='location-children';draw(node.children,children,level+1,branchColor||node.color,[...pais,node],inativo);wrap.append(children)}container.append(wrap)}}
  function render(){box.replaceChildren(barra);contagem.textContent=chosen.size===1?'1 selecionado':chosen.size+' selecionados';if(!arvore.length){const p=document.createElement('p');p.className='profiles-note';p.textContent='Nenhuma área cadastrada em DES - Área / Setor / Local.';box.append(p)}draw(arvore,box,1,null,[],false)}
  render();return {box,chosen}}
-window.CicluzLocationTree={seletor:seletorDeLocais};
+/* CAMPO RECOLHIDO (19/11/2026, Rodrigo): dentro do cadastro fica só o botão "Áreas, setores e locais" e o resumo do que está marcado; a
+   árvore abre numa janela própria (a mesma seletorDeLocais), com Cancelar · Confirmar — igual ao Objeto do contrato. Nada muda no
+   cadastro enquanto a janela não é confirmada. Opções: titulo (rótulo em cima do botão), selecionados ou conjunto, permitidos, aoMudar. */
+function campoDeLocais({titulo='',selecionados,conjunto,permitidos,aoMudar}={}){const chosen=conjunto||new Set(selecionados||[]),cu=window.CicluzComprasUI;
+ const box=document.createElement('div');box.className='uniforms-wide campo-de-locais';const resumo=document.createElement('div');resumo.className='campo-de-locais-resumo';resumo.setAttribute('role','status');
+ const ler=()=>{try{const saved=JSON.parse(localStorage.getItem(storage)||'[]');return Array.isArray(saved)?saved:saved.tree||[]}catch{return []}};
+ const nota=t=>{const p=document.createElement('small');p.className='profiles-note';p.textContent=t;return p};
+ function pintar(){resumo.replaceChildren();const abaixo=(n,out=[])=>{for(const f of n.children||[]){if(chosen.has(f.id))out.push(f.name);abaixo(f,out)}return out};
+  for(const a of ler()){const d=abaixo(a),total=descendantCount(a);if(!chosen.has(a.id)&&!d.length)continue;resumo.append(nota(a.name+(total&&d.length===total?' (área inteira)':d.length?': '+d.slice(0,6).join(', ')+(d.length>6?' e mais '+(d.length-6):''):'')))}
+  if(!resumo.children.length)resumo.append(nota('Nenhuma área vinculada.'))}
+ function abrir(){const temp=new Set(chosen);if(!cu)return;
+  cu.dialogo({titulo:'Áreas, setores e locais',largo:true,rotuloSalvar:'Confirmar',cor:'var(--section-accent,#ef4444)',corTexto:'var(--section-text,#9c1c1c)',quadro:'Áreas, setores e locais',
+   montar:form=>{const arv=seletorDeLocais(null,{conjunto:temp,permitidos});arv.box.classList.add('compras-largo');form.append(arv.box)},
+   salvar:()=>{chosen.clear();temp.forEach(id=>chosen.add(id));pintar();if(aoMudar)aoMudar()}})}
+ if(titulo){const r=document.createElement('span');r.className='compras-rotulo';r.textContent=titulo;box.append(r)}
+ const b=cu?cu.botaoTitulo('Áreas, setores e locais','Escolher áreas, setores e locais',abrir):document.createElement('button');if(!cu){b.type='button';b.className='btn';b.textContent='Áreas, setores e locais';b.onclick=abrir}
+ box.append(b,resumo);pintar();return {box,chosen,pintar}}
+window.CicluzLocationTree={seletor:seletorDeLocais,campo:campoDeLocais};
 const previous=showConfig;showConfig=function(type,origin){if(type!=='area')return previous(type,origin);showLocationTree(origin)};
 function showLocationTree(origin){const view=document.getElementById('sector-view'),box=document.getElementById('sector-content');view.classList.remove('financial-groups','account-orange');view.style.setProperty('--menu-accent','var(--section-accent,#ef4444)');view.querySelector('.panel').style.setProperty('--panel-color','var(--section-accent,#ef4444)');view.querySelector('.panel').style.setProperty('--panel-text','var(--section-text,#9c1c1c)');document.getElementById('sector-title').textContent='DES - Área / Setor / Local';document.getElementById('sector-path').textContent=menuCrumb(2,origin,'DES - Área / Setor / Local');view.querySelectorAll('.view-alphabetize,.financial-expand-all,.location-tool').forEach(el=>el.remove());setSectorBack(()=>menuBack(2,'Cadastros Geral Colaboradores')());box.replaceChildren();const opened=new Set();let locationQuery='';const fold=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');const matches=node=>fold(node.name).includes(fold(locationQuery))||(node.children||[]).some(matches);
 const button=(label,fn,cls='btn secondary')=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;b.onclick=fn;return b};
