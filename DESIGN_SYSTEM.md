@@ -1,5 +1,18 @@
 # CICLUZ — referência de interface
 
+## DES - Ponto Eletrônico Importação (19/11/2026)
+Pedido do Rodrigo. Cartão em Lançamentos Colaboradores, logo abaixo de Período de Teste. Uma tela só, com as peças da folha de pagamento:
+- **Barra**: ‹ mês › (redondos de 32 px), campo **Colaborador** ("Todos (resumo do mês)" ou uma pessoa), campo **Tolerância (min)** e botão **Importar Ponto**.
+- **Por mês** (todos): uma linha por colaborador — dias previstos, dias com marcação, dias com divergência, previsto, realizado e **diferença acumulada**. Tocar na linha abre o dia a dia.
+- **Por dia** (um colaborador): uma linha por dia do mês e as quatro marcações (Entrada · Saída almoço · Entrada · Saída), cada uma com **Idealizado | Realizado** lado a lado; depois Horas do dia (Previsto · Realizado · Diferença) e Situação. Linha de total presa embaixo.
+- **Idealizado** = o Horário / Escala vinculado ao colaborador naquele dia (`CicluzJornada.effective`). Sem vínculo, o colaborador aparece como "Sem Horário / Escala vinculado" e não há comparação.
+- **Sinalização** (mesmo destaque da Diferença da folha, na cor da origem): marcação além da tolerância, marcação faltando, dia previsto sem marcação, marcação em dia de folga.
+- **Tolerância**: escolhida na tela, guardada neste aparelho (`cicluz-ponto-tolerancia`); começa em 0. O valor oficial ainda é decisão do Rodrigo.
+- **Contas** (só horas): horas do dia = (saída − entrada) − intervalo; diferença = realizado − previsto. Só entram na soma os dias que o arquivo cobriu.
+- **Importação**: planilha CSV, uma linha por colaborador e dia; o sistema sugere qual coluna é o quê, mostra a conferência e só então grava. Importar de novo substitui só os dias repetidos. Colaborador achado pelo CPF e, sem CPF, pelo nome.
+- Dados: chave nova `cicluz-ponto-v1` (`marcacoes[idDoColaborador]['AAAA-MM-DD'] = [e1, s1, e2, s2]`), opcional, sem migração, só neste aparelho.
+- A tabela é a `.folha-tabela` (classes `.ponto-*` só ajustam largura e centro). No celular (até 560 px) a coluna presa encolhe para 128 px, na folha e no ponto.
+
 ## Relatório DES - Folha de Pagamento e Importação Contabilidade (19/11/2026)
 Pedido do Rodrigo. Duas telas novas, com as peças que já existem:
 - **DES - Folha de Pagamento** (Saídas · Despesas › Relatórios): tabela de colaboradores ativos (linhas) × reflexos da folha (colunas). As colunas são os **grupos de despesa de pessoal já cadastrados** (Folha Pag, Premiação, Benefícios, Diárias e H. Extras, Encargos Sociais, Vale Trans., 13º, Férias e Rescisões), cada uma com três subcolunas: **Projetado · Realizado · Diferença**, mais a coluna Total e a linha Total do Mês. Em cima, a barra do mês (‹ mês ›, botões redondos de 32 px) e o botão **Colunas**, que abre a mesma janela de escolha das árvores para ocultar/mostrar colunas (a escolha fica guardada neste aparelho, em `cicluz-folha-colunas-ocultas`).

@@ -523,6 +523,22 @@ dialog .escolha-barra{--cor-do-cabecalho:var(--menu-accent)}
 .folha-tabela :is(td,th).folha-total{font-weight:600;background:color-mix(in srgb,var(--menu-accent,#7c3aed) 4%,var(--theme-card,#fff))}
 .folha-tabela tfoot :is(th,td){position:sticky;bottom:0;z-index:1;border-top:2px solid var(--menu-accent,#7c3aed);font-weight:700}
 .folha-tabela tfoot th.folha-pessoa{z-index:2}
+/* No celular a coluna presa do colaborador encolhe, para sobrar espaço para os valores. */
+@media (max-width:560px){.folha-tabela :is(th.folha-canto,th.folha-pessoa){min-width:128px;max-width:128px}}
+/* DES - Ponto Eletrônico Importação: mesma tabela da folha (.folha-tabela), com horas no centro e colunas mais estreitas. */
+.ponto-barra{align-items:flex-end}
+.ponto-barra .folha-mes{min-height:var(--campo-altura,42px)}
+.ponto-filtros{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;flex:1 1 260px}
+.ponto-filtros>label:first-child{flex:1 1 200px;max-width:340px}
+.ponto-filtros>label:last-child{flex:0 0 120px}
+.folha-tabela :is(td.ponto-hora,td.ponto-estado){text-align:center;font-variant-numeric:tabular-nums}
+.folha-tabela td.ponto-estado{text-align:left}
+.ponto-tabela th.folha-sub{min-width:84px}
+.ponto-resumo thead th{border-bottom:2px solid var(--menu-accent,#7c3aed)}
+.ponto-resumo th.folha-grupo{min-width:110px;white-space:normal}
+.ponto-resumo tr.ponto-linha{cursor:pointer}
+.ponto-dias :is(th.folha-canto,th.folha-pessoa){min-width:76px}
+.ponto-dias th.ponto-situacao{min-width:170px;border-bottom:2px solid var(--menu-accent,#7c3aed)}
 /* Campo recolhido de áreas, setores e locais: rótulo, botão que abre a árvore em janela e o resumo do que está marcado. */
 .campo-de-locais{display:grid;gap:6px;justify-items:start;min-width:0}
 .campo-de-locais-resumo{display:grid;gap:2px;min-width:0}
