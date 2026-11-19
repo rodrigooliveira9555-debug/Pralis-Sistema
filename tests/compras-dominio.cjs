@@ -644,6 +644,18 @@ ok(() => {
   assert.match(d.validarSalarioMinimo({ id: 'n', valorCentavos: 100000, inicio: '2026-02-30' }, lista), /início/);
   assert.match(d.validarSalarioMinimo({ id: 'n', valorCentavos: 100000, inicio: '2026-01-01' }, lista), /Já existe/);
   assert.equal(d.validarSalarioMinimo({ id: 'a', valorCentavos: 110000, inicio: '2026-01-01' }, lista), ''); // editar o próprio
+  // ano de referência e fim da vigência (19/11/2026)
+  assert.equal(d.validarSalarioMinimo({ id: 'n', valorCentavos: 100000, inicio: '2026-06-01', ano: 2026, fim: '2026-12-31' }, lista), '');
+  assert.match(d.validarSalarioMinimo({ id: 'n', valorCentavos: 100000, inicio: '2026-06-01', ano: 26 }, lista), /ano de referência/);
+  assert.match(d.validarSalarioMinimo({ id: 'n', valorCentavos: 100000, inicio: '2026-06-01', ano: 2026, fim: '2026-05-31' }, lista), /antes do início/);
+  assert.match(d.validarSalarioMinimo({ id: 'n', valorCentavos: 100000, inicio: '2026-06-01', ano: 2030 }, [{ id: 'z', valorCentavos: 1, inicio: '2030-01-01', ano: 2030 }]), /Já existe um valor para o ano/);
+  // alerta: só depois do fim previsto e sem valor mais novo; o vigente continua sendo o anterior
+  const comFim = [{ id: 'p', valorCentavos: 100000, inicio: '2025-01-01', fim: '2025-12-31', ano: 2025 }];
+  assert.equal(d.alertaSalarioMinimo(comFim, '2025-12-31'), '');
+  assert.match(d.alertaSalarioMinimo(comFim, '2026-01-01'), /terminou em 31\/12\/2025/);
+  assert.equal(d.salarioMinimoVigente(comFim, '2026-03-01').id, 'p');
+  assert.equal(d.alertaSalarioMinimo([...comFim, { id: 'q', valorCentavos: 110000, inicio: '2026-01-01', ano: 2026 }], '2026-03-01'), '');
+  assert.equal(d.alertaSalarioMinimo([{ id: 's', valorCentavos: 100000, inicio: '2025-01-01' }], '2030-01-01'), ''); // sem fim informado, sem alerta
 });
 
 console.log(checks + ' checks de regras de Compras passaram');

@@ -16,7 +16,9 @@
   U.ICONES.acessos = ICONE;
 
   const CARDS = {
-    'Empresa': [['empresa', 'Dados da Empresa', 'CNPJ, razão social, regime tributário, endereço e responsáveis'], ['empresa-estrutura', 'Estrutura de Dados da Empresa', 'Em definição'], ['salario-minimo', 'Salário Mínimo Vigente', 'Valor e início da vigência; base dos contratos']],
+    'Empresa': [['empresa', 'Dados da Empresa', 'CNPJ, razão social, regime tributário, endereço e responsáveis'], ['empresa-estrutura', 'Estrutura de Dados da Empresa', 'Em definição']],
+    // Diversos (19/11/2026, pedido do Rodrigo): cadastros gerais que não são da empresa nem de acesso. O Salário Mínimo Vigente saiu de Empresa e veio para cá.
+    'Diversos': [['salario-minimo', 'Salário Mínimo Vigente', 'Valor e início da vigência; base dos contratos']],
     'Usuários': [['usuarios', 'Pessoas com Acesso', 'Criar contas, postos do caixa e cargos'], ['dados', 'Dados no Servidor', 'Situação de cada assunto gravado']],
     'Permissões': [['cargos', 'Cargos de Acesso', 'O que cada cargo pode fazer'], ['pessoa', 'Acessos por Pessoa', 'Ajustar só para uma pessoa']],
     'Senhas': [['senhas', 'Minha Senha', 'Trocar a sua senha'], ['senha-outra', 'Senha de Outra Pessoa', 'Quando alguém esqueceu a senha']],

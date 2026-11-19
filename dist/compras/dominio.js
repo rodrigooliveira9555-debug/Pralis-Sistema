@@ -814,7 +814,7 @@
   const dataIsoValida = (v) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); if (!m) return false; const d = new Date(+m[1], +m[2] - 1, +m[3]); return d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3]; };
 
   /* ---------- Salário mínimo vigente (18/11/2026, aprovado pelo Rodrigo) ----------
-   * O valor é digitado em Configurações → Empresa → Salário Mínimo Vigente, com a data de início de cada valor; o sistema não
+   * O valor é digitado em Configurações → Diversos → Salário Mínimo Vigente, com a data de início de cada valor; o sistema não
    * busca o número em lugar nenhum. Vigente = o de início mais recente que não seja depois de hoje. Serve ao contrato com
    * "Referência do salário mínimo": percentual → valor e valor → percentual. Contrato já gravado não é recalculado sozinho. */
   /** O que impede salvar um valor do salário mínimo, ou ''. item: { id, valorCentavos, inicio }. */
@@ -822,7 +822,27 @@
     if (!item || !(Number.isInteger(item.valorCentavos) && item.valorCentavos > 0)) return 'Informe o valor do salário mínimo.';
     if (!dataIsoValida(item.inicio)) return 'Informe a data de início da vigência: use DD/MM/AA.';
     if ((lista || []).some((x) => x.id !== item.id && x.inicio === item.inicio)) return 'Já existe um valor com esta data de início.';
+    // Ano de referência e fim da vigência (19/11/2026, Rodrigo): campos novos. O ano é obrigatório no cadastro (a tela exige); aqui só é
+    // conferido quando vem preenchido, para o cadastro antigo (sem ano) continuar abrindo e salvando.
+    if (item.ano != null && item.ano !== '') {
+      if (!(Number.isInteger(item.ano) && item.ano >= 2000 && item.ano <= 2100)) return 'Informe o ano de referência com quatro números.';
+      if ((lista || []).some((x) => x.id !== item.id && x.ano === item.ano)) return 'Já existe um valor para o ano de ' + item.ano + '.';
+    }
+    if (item.fim) {
+      if (!dataIsoValida(item.fim)) return 'Confira a data de fim da vigência: use DD/MM/AA.';
+      if (item.fim < item.inicio) return 'O fim da vigência não pode ser antes do início.';
+    }
     return '';
+  }
+  /**
+   * Alerta do salário mínimo (19/11/2026, Rodrigo): o fim da vigência é uma data prevista; quando ela passa e ainda não há um valor mais
+   * novo cadastrado, o sistema avisa que falta incluir o novo. O valor antigo CONTINUA sendo o vigente até o novo ser cadastrado — o
+   * alerta não muda nenhum cálculo. Devolve o texto do alerta, ou '' quando está tudo em dia.
+   */
+  function alertaSalarioMinimo(lista, hojeIso) {
+    const v = salarioMinimoVigente(lista, hojeIso);
+    if (!v || !dataIsoValida(v.fim) || v.fim >= hojeIso) return '';
+    return 'A vigência do salário mínimo' + (v.ano ? ' de ' + v.ano : '') + ' terminou em ' + v.fim.slice(8, 10) + '/' + v.fim.slice(5, 7) + '/' + v.fim.slice(0, 4) + '. Cadastre o novo valor: até lá, o sistema continua usando o anterior.';
   }
   /** O valor em vigor na data hojeIso ('AAAA-MM-DD'), ou null quando nenhum começou ainda. */
   function salarioMinimoVigente(lista, hojeIso) {
@@ -1105,7 +1125,7 @@
     digitos, motivoNaoConvidavel, podeConvidar,
     CATEGORIAS_FORNECEDOR, categoriaFornecedor, nomeCategoriasFornecedor, migrarRamoFornecedor, migrarNomesPadrao, migrarCategoriaProduto, vinculosComProdutos, contarVinculos, documentoAntigoFornecedor, validarFornecedor,
     chaveTexto, TIPOS_CAMPO_ADICIONAL, RENOVACOES_CONTRATO, LIMITES_CONTRATO, validarListaAtividades, validarAtividadesContrato, novaAtividade, validarModeloContrato,
-    somarMesesIso, aplicarModeloAoContrato, validarContratoDocumento, faltasDoContrato, papelContrato, CHAVES_OBJETO_CONTRATO, validarSalarioMinimo, salarioMinimoVigente, valorDoPercentualDoMinimo, percentualDoValorSobreMinimo,
+    somarMesesIso, aplicarModeloAoContrato, validarContratoDocumento, faltasDoContrato, papelContrato, CHAVES_OBJETO_CONTRATO, validarSalarioMinimo, salarioMinimoVigente, alertaSalarioMinimo, valorDoPercentualDoMinimo, percentualDoValorSobreMinimo,
     validarFornecedorEtapas, REGIMES_TRIBUTARIOS, CARGOS_REPRESENTANTE, etapasFornecedor, quemVendeFornecedor, aniversarioVendedor, migrarVendedorFornecedor,
     FUNCOES_PRESTADOR_INICIAIS, idFuncaoPrestador, funcaoPrestadorIgual, validarFuncaoPrestador, migrarPrestadoresFornecedor,
     FORMAS_PAGAMENTO_CONTRATO, FORMAS_PAGAMENTO_FORNECEDOR, RECORRENCIAS_CONTRATO, RECORRENCIAS_CLIENTE, CLIENTE_MENSAL, periodoMensal, validarTermino, resumoTermino, UNIDADES_REPETICAO, POSICOES_MES, DIAS_SEMANA_LONGOS, REAJUSTES_CONTRATO, migrarContratoFinanceiro,

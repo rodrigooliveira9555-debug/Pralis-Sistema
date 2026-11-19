@@ -505,7 +505,7 @@
     U.mascaraPercentual(smPct); // mostra o "%" enquanto digita
     const smBox = el('div', 'compras-largo compras-sm');
     /* Percentual ↔ valor pelo salário mínimo vigente (18/11/2026, aprovado pelo Rodrigo). O valor do salário vem de Configurações →
-       Empresa → Salário Mínimo Vigente. Digitar o percentual calcula o valor; digitar o valor calcula o percentual. Sem salário
+       Diversos → Salário Mínimo Vigente. Digitar o percentual calcula o valor; digitar o valor calcula o percentual. Sem salário
        cadastrado, nada é calculado. Contrato já gravado abre como foi salvo: só um aviso diz quando o salário mudou. */
     const smNota = el('small', 'profiles-note'); smNota.setAttribute('role', 'status');
     // A referência aparece assim que o interruptor é ligado (19/11/2026, Rodrigo): o valor do salário mínimo vigente, só para leitura. Sem
@@ -525,7 +525,7 @@
       const v = smVigente(); const ligado = smQuadro.ativo;
       mostrar(smRefCampo, ligado); mostrar(smCadastrar, ligado && !v);
       smRef.value = v ? D.moeda(v.valorCentavos / 100) : '';
-      smRefDica.textContent = v ? 'Desde ' + window.CicluzDateFields.display(v.inicio) + '. Vem de Configurações → Empresa → Salário Mínimo Vigente.' : 'Ainda não há salário mínimo cadastrado.';
+      { const alertaSm = v && window.CicluzSalarioMinimo && window.CicluzSalarioMinimo.alerta ? window.CicluzSalarioMinimo.alerta() : ''; smRefDica.textContent = v ? 'Desde ' + window.CicluzDateFields.display(v.inicio) + '. Vem de Configurações → Diversos → Salário Mínimo Vigente.' + (alertaSm ? ' Atenção: ' + alertaSm : '') : 'Ainda não há salário mínimo cadastrado.'; }
       if (!ligado) { smNota.textContent = ''; return; }
       if (!v) { smNota.textContent = 'Sem o salário mínimo cadastrado, o percentual não vira valor. Toque em "Cadastrar salário mínimo".'; return; }
       const base = '';

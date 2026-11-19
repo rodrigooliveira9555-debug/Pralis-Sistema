@@ -1,7 +1,9 @@
 /*
- * Configurações → Empresa → Salário Mínimo Vigente (18/11/2026, pedido e aprovação do Rodrigo).
+ * Configurações → Diversos → Salário Mínimo Vigente (18/11/2026, pedido e aprovação do Rodrigo).
  * Guarda o valor do salário mínimo e a data de início de cada valor (cicluz-compras-v1.salariosMinimos, coleção nova e opcional:
- * sem migração). O valor é digitado aqui: o sistema não busca o número em lugar nenhum. Vigente = o de início mais recente que
+ * sem migração). Cada valor tem o ano de referência, o início e o fim previsto da vigência (ano e fim: campos novos de 19/11/2026,
+ * opcionais nos dados antigos). Passado o fim sem um valor mais novo, a tela e o contrato mostram o alerta para cadastrar o novo; o
+ * valor anterior continua valendo até lá. O valor é digitado aqui: o sistema não busca o número em lugar nenhum. Vigente = o de início mais recente que
  * não seja depois de hoje. É a base do contrato com "Referência do salário mínimo" (percentual ↔ valor). As regras ficam em
  * compras/dominio.js (testadas). Mudar o valor aqui não altera contrato já gravado.
  */
@@ -28,15 +30,21 @@
         // O rótulo com "salário" faria o field-validation.js tratar o campo de outro jeito: o nome para leitor de tela é o do valor.
         valor.setAttribute('aria-label', 'Valor do mínimo (R$)');
         const inicio = entrada('date', item ? item.inicio : '');
+        const fim = entrada('date', item ? item.fim || '' : '');
+        const ano = entrada('text', item && item.ano ? String(item.ano) : '', { inputMode: 'numeric', placeholder: 'Ex.: ' + new Date().getFullYear(), maxLength: 4 });
+        ano.addEventListener('input', () => { ano.value = ano.value.replace(/\D/g, '').slice(0, 4); });
         const quadro = el('fieldset', 'compras-fieldset');
-        quadro.append(el('legend', null, 'Dados do salário mínimo'), campo('Valor (R$) *', valor), campo('Início da vigência *', inicio, 'A partir desta data, este é o valor usado nos contratos.'));
+        quadro.append(el('legend', null, 'Dados do salário mínimo'), campo('Ano de referência *', ano), campo('Valor (R$) *', valor),
+          campo('Início da vigência *', inicio, 'A partir desta data, este é o valor usado nos contratos.'),
+          campo('Fim da vigência (previsto)', fim, 'Data aproximada. Quando ela passar sem um valor novo cadastrado, o sistema avisa; o valor continua valendo até o novo entrar.'));
         form.append(quadro);
-        return { valor, inicio };
+        return { valor, inicio, fim, ano };
       },
       salvar: (c) => {
-        if (!c.inicio.checkValidity()) return 'Confira a data: use DD/MM/AA.';
+        if (!c.inicio.checkValidity() || !c.fim.checkValidity()) return 'Confira as datas: use DD/MM/AA.';
+        if (!/^\d{4}$/.test(c.ano.value)) return 'Informe o ano de referência com quatro números.';
         const n = D.digitos(c.valor.value).replace(/^0+(?=\d)/, '');
-        const novo = { id: item ? item.id : S.novoId('sm'), valorCentavos: n ? parseInt(n, 10) : 0, inicio: c.inicio.value };
+        const novo = { id: item ? item.id : S.novoId('sm'), valorCentavos: n ? parseInt(n, 10) : 0, inicio: c.inicio.value, fim: c.fim.value || '', ano: parseInt(c.ano.value, 10) };
         const falta = D.validarSalarioMinimo(novo, lista()); if (falta) return falta;
         const ok = S.transacao((d) => {
           if (!Array.isArray(d.salariosMinimos)) d.salariosMinimos = [];
@@ -69,12 +77,13 @@
       const rotulo = dinheiro(x.valorCentavos);
       const estado = v && v.id === x.id ? 'Vigente' : x.inicio > hoje() ? 'Futuro' : 'Anterior';
       linhas.append(U.linhaLista({
-        icone: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>', titulo: rotulo, detalhe: 'Início da vigência: ' + dataBR(x.inicio), direita: el('span', 'account-list-state', estado),
+        icone: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>', titulo: (x.ano ? x.ano + ' · ' : '') + rotulo, detalhe: 'Vigência: de ' + dataBR(x.inicio) + (x.fim ? ' a ' + dataBR(x.fim) + ' (previsto)' : ' · sem fim informado'), direita: el('span', 'account-list-state', estado),
         acoes: { rotulo, lista: linhas, aoEditar: () => editar(x), aoExcluir: () => excluir(x) },
       }));
     });
     sec.append(linhas);
-    tela.body.replaceChildren(U.nota(v ? 'Vigente hoje: ' + dinheiro(v.valorCentavos) + ' (desde ' + dataBR(v.inicio) + '). É a base dos contratos com referência do salário mínimo.'
+    const alerta = D.alertaSalarioMinimo(lista(), hoje()); const aviso = alerta ? el('p', 'people-alert', alerta) : null; if (aviso) aviso.setAttribute('role', 'alert');
+    tela.body.replaceChildren(...(aviso ? [aviso] : []), U.nota(v ? 'Vigente hoje: ' + dinheiro(v.valorCentavos) + ' (desde ' + dataBR(v.inicio) + '). É a base dos contratos com referência do salário mínimo.'
       : 'Nenhum salário mínimo em vigor. Sem ele, o contrato com referência do salário mínimo não calcula o valor.'), sec);
   }
   function abrir() {
@@ -83,5 +92,5 @@
     render();
   }
   A.registrar('salario-minimo', abrir);
-  window.CicluzSalarioMinimo = { abrir, vigente, novo: (aoSalvar) => editar(null, aoSalvar) };
+  window.CicluzSalarioMinimo = { abrir, vigente, alerta: () => D.alertaSalarioMinimo(lista(), hoje()), novo: (aoSalvar) => editar(null, aoSalvar) };
 })();
