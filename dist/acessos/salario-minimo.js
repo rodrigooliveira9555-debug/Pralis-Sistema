@@ -17,7 +17,8 @@
   const dinheiro = (centavos) => D.moeda(centavos / 100);
   const cores = { cor: A.COR, corTexto: A.COR_TEXTO };
 
-  function editar(item) {
+  /** aoSalvar(): chamado depois de gravar (o contrato usa para recalcular o valor na hora). */
+  function editar(item, aoSalvar) {
     U.dialogo({
       titulo: item ? 'Editar salário mínimo' : 'Novo valor do salário mínimo', ...cores, rotuloSalvar: 'Salvar',
       montar: (form) => {
@@ -43,7 +44,7 @@
           if (i >= 0) d.salariosMinimos[i] = { ...d.salariosMinimos[i], ...novo, atualizadoEm: S.agoraIso() }; else d.salariosMinimos.push({ ...novo, criadoEm: S.agoraIso() });
         });
         if (!ok) return 'Não foi possível salvar. Tente de novo.';
-        U.avisar('Salário mínimo salvo.'); render(); return undefined;
+        U.avisar('Salário mínimo salvo.'); render(); if (aoSalvar) aoSalvar(); return undefined;
       },
     });
   }
@@ -57,6 +58,7 @@
 
   let tela = null;
   function render() {
+    if (!tela) return; // cadastrado de dentro do contrato, sem a tela ter sido aberta
     const itens = [...lista()].sort((a, b) => (a.inicio < b.inicio ? 1 : -1)); const v = vigente();
     const ponta = U.pontaDaLista(itens.length, itens.length + (itens.length === 1 ? ' valor cadastrado' : ' valores cadastrados'));
     const sec = U.secao('Salário mínimo', undefined, ponta);
@@ -81,5 +83,5 @@
     render();
   }
   A.registrar('salario-minimo', abrir);
-  window.CicluzSalarioMinimo = { abrir, vigente };
+  window.CicluzSalarioMinimo = { abrir, vigente, novo: (aoSalvar) => editar(null, aoSalvar) };
 })();

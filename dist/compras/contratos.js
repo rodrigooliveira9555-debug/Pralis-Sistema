@@ -428,7 +428,7 @@
     cValor.addEventListener('input', () => { cValor.value = R().moneyMask(cValor.value); pintarValor(); });
     // Referência ao salário mínimo: só informação cadastral (percentual); não consulta o mínimo nem calcula.
     const sm0 = ct.salarioMinimo || {};
-    const smQuadro = U.quadroSituacao('Referência do salário mínimo', Boolean(sm0.ativo), { aoMudar: () => pintarContrato() });
+    const smQuadro = U.quadroSituacao('Referência do salário mínimo', Boolean(sm0.ativo), { aoMudar: () => { pintarContrato(); recalcularPeloMinimo(); } });
     const smPct = entrada('text', typeof sm0.percentual === 'number' ? String(sm0.percentual).replace('.', ',') : '', { inputMode: 'decimal', placeholder: 'Ex.: 50', maxLength: 8 });
     const smPctCampo = campo('Percentual do salário mínimo (%)', smPct);
     // O rótulo com "salário" faria o field-validation.js tratar o campo como dinheiro: o nome para leitor de tela evita isso.
@@ -439,29 +439,39 @@
        Empresa → Salário Mínimo Vigente. Digitar o percentual calcula o valor; digitar o valor calcula o percentual. Sem salário
        cadastrado, nada é calculado. Contrato já gravado abre como foi salvo: só um aviso diz quando o salário mudou. */
     const smNota = el('small', 'profiles-note'); smNota.setAttribute('role', 'status');
+    // A referência aparece assim que o interruptor é ligado (19/11/2026, Rodrigo): o valor do salário mínimo vigente, só para leitura. Sem
+    // valor cadastrado, o botão ao lado abre o cadastro ali mesmo e, ao salvar, o valor do contrato é calculado na hora.
+    const smRef = entrada('text', '', { readOnly: true, placeholder: 'Não cadastrado' }); smRef.setAttribute('aria-label', 'Mínimo vigente (referência)');
+    const smRefDica = el('small', 'profiles-note'); const smRefCampo = campo('Salário mínimo vigente', smRef); smRefCampo.append(smRefDica);
+    const smCadastrar = botao('Cadastrar salário mínimo', () => { if (window.CicluzSalarioMinimo && window.CicluzSalarioMinimo.novo) window.CicluzSalarioMinimo.novo(() => { recalcularPeloMinimo(); pintarSm(); }); }, 'btn secondary');
+    /** Com a referência ligada e o percentual preenchido, o valor passa a ser o percentual do salário vigente. */
+    function recalcularPeloMinimo() {
+      const v = smVigente(); const calculado = smQuadro.ativo && v ? D.valorDoPercentualDoMinimo(v.valorCentavos, smNumero()) : null;
+      if (calculado != null) { cValor.value = R().moneyMask(String(calculado)); pintarValor(); }
+      pintarSm();
+    }
     const smVigente = () => D.salarioMinimoVigente((S.dados && S.dados.salariosMinimos) || [], D.isoData(new Date()));
     const smNumero = () => { const n = D.lerNumero(U.lerPercentual(smPct)); return typeof n === 'number' && n > 0 ? n : null; };
     const pintarSm = () => {
-      if (!smQuadro.ativo) { smNota.textContent = ''; return; }
-      const v = smVigente();
-      if (!v) { smNota.textContent = 'Cadastre o salário mínimo em Configurações → Empresa → Salário Mínimo Vigente para o valor ser calculado. Enquanto isso, nada é calculado.'; return; }
-      const base = 'Salário mínimo vigente: ' + D.moeda(v.valorCentavos / 100) + ' (desde ' + window.CicluzDateFields.display(v.inicio) + '). ';
+      const v = smVigente(); const ligado = smQuadro.ativo;
+      mostrar(smRefCampo, ligado); mostrar(smCadastrar, ligado && !v);
+      smRef.value = v ? D.moeda(v.valorCentavos / 100) : '';
+      smRefDica.textContent = v ? 'Desde ' + window.CicluzDateFields.display(v.inicio) + '. Vem de Configurações → Empresa → Salário Mínimo Vigente.' : 'Ainda não há salário mínimo cadastrado.';
+      if (!ligado) { smNota.textContent = ''; return; }
+      if (!v) { smNota.textContent = 'Sem o salário mínimo cadastrado, o percentual não vira valor. Toque em "Cadastrar salário mínimo".'; return; }
+      const base = '';
       const esperado = D.valorDoPercentualDoMinimo(v.valorCentavos, smNumero()); const atual = valorCentavos();
       smNota.textContent = base + (esperado != null && atual != null && esperado !== atual
         ? 'Atenção: pelo salário vigente, este percentual dá ' + D.moeda(esperado / 100) + ', e o valor do contrato está em ' + D.moeda(atual / 100) + '. Digite o percentual de novo para atualizar o valor.'
         : 'Digite o percentual para calcular o valor, ou o valor para calcular o percentual.');
     };
-    smPct.addEventListener('input', () => {
-      const v = smVigente(); const calculado = smQuadro.ativo && v ? D.valorDoPercentualDoMinimo(v.valorCentavos, smNumero()) : null;
-      if (calculado != null) { cValor.value = R().moneyMask(String(calculado)); pintarValor(); }
-      pintarSm();
-    });
+    smPct.addEventListener('input', () => recalcularPeloMinimo());
     cValor.addEventListener('input', () => {
       const v = smVigente(); const pct = smQuadro.ativo && v ? D.percentualDoValorSobreMinimo(valorCentavos(), v.valorCentavos) : null;
       if (pct != null) smPct.value = String(pct).replace('.', ',') + '%';
       pintarSm();
     });
-    smBox.append(smQuadro, smPctCampo, smNota);
+    smBox.append(smQuadro, smRefCampo, smPctCampo, smCadastrar, smNota);
     const cInicio = entrada('date', ct.inicio || '');
     const cFim = entrada('date', ct.fim || '');
     const cReajuste = seletor(D.REAJUSTES_CONTRATO, ct.reajuste || '', 'Selecione');
