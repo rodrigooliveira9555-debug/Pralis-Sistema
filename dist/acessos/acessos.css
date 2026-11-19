@@ -188,3 +188,7 @@ body.dark-theme .acessos-ok { color: #a7e8bd; }
 .ds-modelo-bola-desenho svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .ds-modelo-bola > .ds-marca { margin-left: 2px; }
 body.dark-theme .ds-modelo-barra { background: var(--theme-card, #2d2b34); }
+/* Conferência automática do Design System (Configurações → Design System → Conferência Final) */
+.ds-conferencia{display:grid;gap:10px;justify-items:start;min-width:0}
+.ds-conferencia-saida{display:grid;gap:8px;width:100%;min-width:0}
+.ds-conferencia-lista{margin:0;padding-left:18px;display:grid;gap:4px;font:400 var(--ui-label,12px)/18px var(--ui-font)}
