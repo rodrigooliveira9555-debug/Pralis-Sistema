@@ -2,7 +2,7 @@
 (()=>{
 'use strict';
 const D=window.CicluzUniformData,S=window.CicluzUniformStock;if(!D||!S)return;
-const KEY='cicluz-uniformes-v1',ACCENT='var(--section-accent,#ef4444)',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Uniformes Entrega/Recebimento');
+const KEY='cicluz-uniformes-v1',ACCENT='var(--section-accent,#ef4444)',PATH=menuCrumb(2,'Lançamentos Colaboradores','DES - Uniformes Entrega (-) Recebimento (+)');
 const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
 const button=(text,fn,cls='btn secondary')=>{const b=el('button',cls,text);b.type='button';b.onclick=fn;return b};
 const svg=path=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>';
@@ -39,7 +39,7 @@ function referenceFor(collab){const job=jobFor(collab);return job?{job,items:dat
 /* View shell, same structure as the other internal views. */
 const view=el('section','view');view.id='uniforms-view';view.style.setProperty('--menu-accent',ACCENT);
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
-const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(ICON.shirt);const heading=el('div'),title=el('h2',null,'DES - Uniformes Entrega/Recebimento'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
+const head=el('div','head'),badge=el('span','origin-icon');badge.innerHTML=svg(ICON.shirt);const heading=el('div'),title=el('h2',null,'DES - Uniformes Entrega (-) Recebimento (+)'),subtitle=el('p',null,PATH);heading.append(title,subtitle);head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
 addShortcuts(view.id,()=>menuBack(2,'Lançamentos Colaboradores')());
 const addButton=button('',()=>{selectTab('launch');novoLancamento()},'shortcut-circle');addButton.title='Novo lançamento';addButton.setAttribute('aria-label','Novo lançamento');addButton.innerHTML=svg(ICON.plus);head.querySelector('.shortcut-actions').append(addButton);
@@ -134,12 +134,14 @@ function allowedUniforms(){if(typeField.node.value==='DEVOLVIDO'&&origin.node.va
 const SIZE=/\s+(PP|P|M|G|GG|XG|XGG|EG|EGG|UC)$/i,piece=n=>String(n||'').replace(SIZE,'');
 /* Referenced pieces of the selected collaborator's cargo; null when there is no reference (nothing is invented) or for returns. */
 function jobPieces(){if(typeField.node.value==='DEVOLVIDO')return null;const c=collaboratorById(collab.node.value),ref=c&&referenceFor(c);return ref?.items.length?new Set(ref.items.map(r=>piece(uniformName(r.uniformId)))):null}
-function renderPicker(){const q=fold(pickerSearch.node.value),allowed=allowedUniforms(),t=currentTotals();pickerList.replaceChildren();let family='',shown=0;const jp=jobPieces(),c=collaboratorById(collab.node.value);
+function renderPicker(){const q=fold(pickerSearch.node.value),allowed=allowedUniforms(),t=currentTotals();pickerList.replaceChildren();let shown=0;const jp=jobPieces(),c=collaboratorById(collab.node.value);
  showAllWrap.hidden=!jp;const filter=jp&&!showAll.checked?jp:null;
  pickerNote.textContent=!c?'Selecione o colaborador para ver as peças do cargo.':typeField.node.value==='DEVOLVIDO'?'Devolução: todos os uniformes, limitados ao que o colaborador retirou.':jp?(filter?'Mostrando as peças previstas para o cargo '+(referenceFor(c)?.job.name||'')+' (todos os tamanhos).':'Mostrando todos os uniformes, inclusive fora da referência do cargo.'):'Sem referência de uniformes para este cargo: todos os uniformes são exibidos. Configure em Referência por Cargo.';
- for(const u of D.uniforms){if(u.active===false&&!draft.items.has(u.id))continue;if(allowed&&!allowed.has(u.id)&&!draft.items.has(u.id))continue;if(filter&&!filter.has(piece(u.name))&&!draft.items.has(u.id))continue;if(q&&!fold(u.name+' '+u.category).includes(q))continue;if(u.family!==family){family=u.family;pickerList.append(el('p','uniforms-family',family))}
-  const label=el('label','profiles-choice uniforms-option'),check=el('input');check.type='checkbox';check.value=u.id;check.checked=draft.items.has(u.id);check.onchange=()=>{if(check.checked)draft.items.set(u.id,{quantity:'1',price:moneyInput(data.stock[u.id]?.price)});else draft.items.delete(u.id);renderItems()};
-  const info=t[u.id].configured||t[u.id].balance!==0?'Saldo '+available(u.id,t):'Estoque não configurado';label.append(check,el('span',null,u.name),el('small',null,info));pickerList.append(label);shown++}
+ for(const u of D.uniforms){if(u.active===false&&!draft.items.has(u.id))continue;if(allowed&&!allowed.has(u.id)&&!draft.items.has(u.id))continue;if(filter&&!filter.has(piece(u.name))&&!draft.items.has(u.id))continue;if(q&&!fold(u.name+' '+u.category).includes(q))continue;
+  /* Mesma linha do cadastro DES - Tipos de Uniforme (ícone da peça, nome, categoria · grupo), com a caixa de marcar à esquerda do ícone (19/11/2026, Rodrigo). */
+  const check=el('input');check.type='checkbox';check.className='compras-hier-caixa';check.value=u.id;check.checked=draft.items.has(u.id);check.setAttribute('aria-label','Selecionar '+u.name);check.onclick=e=>e.stopPropagation();check.onchange=()=>{if(check.checked)draft.items.set(u.id,{quantity:'1',price:moneyInput(data.stock[u.id]?.price)});else draft.items.delete(u.id);renderItems()};
+  const info=t[u.id].configured||t[u.id].balance!==0?'Saldo '+available(u.id,t):'Estoque não configurado',cu=window.CicluzComprasUI,desenho=window.CicluzUniformTypes?.iconeDaPeca(u)||ICON.shirt;
+  const row=cu?cu.linhaLista({icone:desenho,titulo:u.name,detalhe:u.category+' · grupo '+u.family,direita:el('span','account-list-state',info),aoClicar:()=>check.click()}):el('label','compras-linha');if(!cu)row.append(el('span',null,u.name));row.classList.add('uniforms-escolha');row.prepend(check);pickerList.append(row);shown++}
  if(!shown)pickerList.append(el('p','profiles-note',allowed?'Nenhum uniforme desta movimentação corresponde à busca.':'Nenhum uniforme encontrado.'))}
 function renderReference(){reference.replaceChildren();const c=collaboratorById(collab.node.value);if(!c)return;const ref=referenceFor(c);const box=el('div','uniforms-reference-box');
  if(!ref){box.append(el('p','profiles-note','Cargo do colaborador não encontrado no cadastro de Cargos; sem referência de uniformes.'));reference.append(box);return}

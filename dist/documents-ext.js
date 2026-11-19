@@ -52,7 +52,7 @@ const view=el('section','view');view.id='doc-receive-view';view.style.setPropert
 const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('--panel-color',ACCENT);panel.style.setProperty('--panel-text','var(--section-text,#9c1c1c)');
 const head=el('div','head'),heading=el('div');heading.append(el('h2',null,TITLE),el('p',null,menuCrumb(2,GROUP,TITLE)));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);addShortcuts(view.id,()=>menuBack(2,GROUP)());
-body.append(el('div','form-note','Registro manual de documentos recebidos por entrega física, WhatsApp, e-mail ou outro meio. O arquivo vai para o mesmo registro de Documentações do colaborador. Não há recebimento automático: o DP anexa e confere.'));
+body.append(el('div','form-note','Registro manual de documentos recebidos por entrega física, WhatsApp, e-mail ou outro meio. O arquivo vai para o mesmo registro de Documentos Colaboradores. Não há recebimento automático: o DP anexa e confere.'));
 const lbl=(n,node,cls)=>{const l=el('label',cls,n);node.setAttribute('aria-label',n.replace(/\s*\*$/,''));l.append(node);return l};
 const form=el('form','form-fields uniforms-form');form.noValidate=true;
 const who=el('select'),doc=el('select'),origin=el('select'),when=DB.field('Data do recebimento *'),notes=el('input'),chk=el('input'),ff=G.fileField('Arquivo recebido *'),err=el('p','uniforms-wide profiles-error'),st=el('p','uniforms-wide profiles-note');

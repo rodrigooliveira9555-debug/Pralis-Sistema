@@ -27,7 +27,7 @@ const panel=el('div','panel form-demo uniforms-panel');panel.style.setProperty('
 const head=el('div','head'),heading=el('div');heading.append(el('h2',null,TITULO),el('p',null,PATH));head.append(heading);
 const body=el('div','content uniforms-content');panel.append(head,body);view.append(panel);document.querySelector('main').append(view);
 addShortcuts(view.id,()=>menuBack(2,GRUPO)());
-body.append(el('p','profiles-note','Peças de uniforme usadas em Uniformes Entrega/Recebimento, Uniformes Compras, no controle de estoque e na referência por cargo. O grupo junta as peças na hora de escolher.'));
+body.append(el('p','profiles-note','Peças de uniforme usadas em Uniformes Entrega (-) Recebimento (+), no controle de estoque e na referência por cargo. O grupo junta as peças na hora de escolher.'));
 const aviso=el('p','profiles-error');aviso.setAttribute('role','alert');
 
 /* Cadastro em janela */
@@ -74,6 +74,6 @@ function render(){const cu=window.CicluzComprasUI;wrap.replaceChildren();aviso.t
   U.botaoSituacao(row,on,u.name);if(!on)row.classList.add('inativo');linhas.append(row)}
  sec.append(linhas);wrap.append(sec)}
 
-window.CicluzUniformTypes={ICONES_PECA,NOMES_PECA};
+window.CicluzUniformTypes={ICONES_PECA,NOMES_PECA,iconeDaPeca};
 window.showUniformTypes=()=>{document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=PATH;const t=document.getElementById('title');if(t)t.textContent=TITULO;D.recarregar();reset();render();normalizeHeaderActions(view)};
 })();

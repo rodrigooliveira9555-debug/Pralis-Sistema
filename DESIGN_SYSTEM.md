@@ -1,5 +1,14 @@
 # CICLUZ — referência de interface
 
+## Documentos em Pastas Documentos, menu de lançamentos enxuto e escolha de uniforme no desenho do cadastro (19/11/2026)
+Pedidos do Rodrigo. 
+
+**Pastas Documentos.** A tela "Documentações" saiu de Lançamentos Colaboradores (cartão, aviso de provisório e o submenu de 11 documentos foram apagados) e passou a ser **DES - Documentos Colaboradores**, em Saídas · Despesas → Pastas Documentos: abre a pasta inteira do colaborador (documentos internos, pessoais e gerados pela plataforma). **DES - Contratos Colaboradores** abre direto o Contrato de Trabalho, no mesmo registro (sem segunda cópia). Regra: documento de colaborador fica na pasta de colaborador, o de fornecedor na de fornecedor; as pastas de fornecedor ainda são cartões "em definição" (ver P-36).
+
+**Lançamentos Colaboradores** ficou com quatro cartões: Exames Ocupacionais, **Uniformes Entrega (-) Recebimento (+)** (nome novo), Ocorrências e Período de Teste. "DES - Uniformes Compras" saiu do menu (código e dados continuam, ver P-33/P-35).
+
+**Escolha de uniforme no lançamento.** A lista de peças usa **a mesma linha do cadastro DES - Tipos de Uniforme** (`linhaLista`: ícone da peça, nome, "categoria · grupo") com a **caixa de marcar à esquerda do ícone** e o saldo à direita; tocar na linha marca a peça. Regra geral: lista de escolha repete a linha do cadastro de origem, só acrescentando a caixa de marcar antes do ícone (como na árvore de áreas e na árvore do contrato).
+
 ## Identidade do cadastro: um bloco só para nome, ícone e prévia (19/11/2026)
 Correção pedida pelo Rodrigo, que comparou o cadastro de grupo (referência) com a janela de Tipos de Uniforme e viu dois desenhos diferentes para a mesma coisa. **Supera** a seção "Tipos de Uniforme: ícone por peça e escolha do ícone no cadastro" no ponto da escolha do ícone (fileira `.icon-choice` solta, com anel no escolhido e texto embaixo): esse desenho foi apagado. 
 
