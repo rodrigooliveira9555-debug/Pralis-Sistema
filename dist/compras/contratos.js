@@ -595,14 +595,14 @@
       return box;
     };
     const n = (q, um, varios) => (q === 1 ? '1 ' + um : q + ' ' + varios) + (q === 1 ? ' vinculado.' : ' vinculados.');
-    const objProdutos = caixaObjeto('produto', 'Produtos do contrato', 'Produtos', 'Escolher os produtos deste contrato', 'Nenhum produto vinculado.', (q) => n(q, 'produto', 'produtos'), (trocar) => U.seletorDeItens({
+    const objProdutos = caixaObjeto('produto', 'Produtos do contrato', 'Grupo de produtos', 'Escolher os produtos deste contrato', 'Nenhum produto vinculado.', (q) => n(q, 'produto', 'produtos'), (trocar) => U.seletorDeItens({
       titulo: 'Produtos do contrato', rotuloBusca: 'Buscar produto', cor: COR_DO_OBJETO.produto(), corTexto: cc(cores).corTexto, marcados: objeto.produto, aoConfirmar: trocar,
       itens: ((S.dados && S.dados.produtos) || []).filter((p) => p.status === 'ativo' || objeto.produto.has(p.id)).sort((a, b) => String(a.descricao).localeCompare(String(b.descricao), 'pt-BR')).map((p) => ({ id: p.id, rotulo: p.descricao + (p.status === 'ativo' ? '' : ' (inativo)') })),
     }));
     const objDespesas = caixaObjeto('despesa', 'Despesas do contrato', 'Grupo de despesas', 'Escolher os grupos e subgrupos de despesa deste contrato', 'Nenhuma despesa vinculada.', (q) => (q === 1 ? '1 grupo ou subgrupo vinculado.' : q + ' grupos ou subgrupos vinculados.'), (trocar) => seletorHierarquico({
       titulo: 'Despesas do contrato: grupos de despesa', cores: { cor: COR_DO_OBJETO.despesa(), corTexto: cc(cores).corTexto }, marcados: objeto.despesa, aoConfirmar: trocar,
     }));
-    const objPatrimonios = caixaObjeto('patrimonio', 'Patrimônios do contrato', 'Patrimônios', 'Escolher os patrimônios deste contrato', 'Nenhum patrimônio vinculado.', (q) => n(q, 'patrimônio', 'patrimônios'), (trocar) => U.seletorDeItens({
+    const objPatrimonios = caixaObjeto('patrimonio', 'Patrimônios do contrato', 'Grupo de patrimônios', 'Escolher os patrimônios deste contrato', 'Nenhum patrimônio vinculado.', (q) => n(q, 'patrimônio', 'patrimônios'), (trocar) => U.seletorDeItens({
       titulo: 'Patrimônios do contrato', rotuloBusca: 'Buscar patrimônio', cor: COR_DO_OBJETO.patrimonio(), corTexto: cc(cores).corTexto, marcados: objeto.patrimonio, aoConfirmar: trocar,
       itens: bensCadastrados().filter((b) => !b.baixa || objeto.patrimonio.has(b.id)).sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR')).map((b) => ({ id: b.id, rotulo: b.nome + (b.baixa ? ' (baixado)' : '') })),
     }));
