@@ -1,5 +1,5 @@
 /*
- * Configurações → Modelo / Design System (18/11/2026, pedido do Rodrigo).
+ * Configurações → Design System (18/11/2026, pedido do Rodrigo).
  * O padrão visual do sistema explicado dentro do próprio sistema, em tópicos: letras, tamanhos, cores, espaçamento, ícones, campos,
  * máscaras, botões, cabeçalho, quadros, listas, mensagens e conferência final. Cada tópico é um cartão do setor e abre uma tela com
  * a explicação, os valores e uma amostra viva, feita com as mesmas peças das telas (CicluzComprasUI), para a amostra nunca ficar
