@@ -12,12 +12,13 @@
   const U = window.CicluzComprasUI;
   const A = window.CicluzAcessos;
   const MENU = window.CicluzAcessosTelasDados;
-  if (!U || !A || !MENU) return;
+  const ACOES = window.CicluzAcessosAcoesDados;
+  if (!U || !A || !MENU || !ACOES) return;
   const { el } = U;
   let tela = null;
   // niveis[chave da tela] = nível; base = o que o cargo dá; fechados = grupos recolhidos; aberta = tela com as opções
   // abertas; quem = linha do topo com a lista aberta (pessoa, cargo ou area).
-  const estado = { pessoa: '', cargo: '', area: '', busca: '', base: {}, niveis: {}, fechados: new Set(), aberta: '', quem: '' };
+  const estado = { aba: 'telas', pessoa: '', cargo: '', area: '', busca: '', base: {}, niveis: {}, acoesBase: new Set(), acoes: new Set(), fechados: new Set(), aberta: '', quem: '' };
 
   /* ---------- Os níveis ---------- */
 
@@ -78,9 +79,9 @@
 
   // Padrão de cada cargo de exemplo: só algumas telas, pela chave do menu. Os outros cargos sugeridos começam vazios.
   const CARGOS = {
-    caixa: ['Caixa', { 'vz-lan-vnd-vendas': 'vD', 'caixa:abertura': 'l', 'caixa:turno': 'l', 'caixa:fechamento': 'l', 'vz-rel-vnd-vendas': 'vA' }],
-    tesouraria: ['Tesouraria', { 'caixa:tesouraria': 'lp', 'caixa:fechamentos': 'vD', 'caixa:gerencia': 'vA', 'ti-contas': 'vA', 'vz-lan-cnt-transfere-ncias': 'lp', 'vz-rel-cnt-transfere-ncias': 'vD' }],
-    gerencia: ['Gerência', { 'vz-lan-vnd-vendas': 'vD', 'caixa:gerencia': 'ep', 'vz-rel-vnd-vendas': 'vD', 'caixa:fechamentos': 'vD', 'caixa:tesouraria': 'vA', 'vz-lan-des-despesas': 'lp', 'vz-rel-des-despesas': 'vD' }],
+    caixa: ['Caixa', { 'vz-lan-vnd-vendas': 'vD', 'caixa:abertura': 'l', 'caixa:turno': 'l', 'caixa:fechamento': 'l', 'vz-rel-vnd-vendas': 'vA' }, ['caixa_sangria']],
+    tesouraria: ['Tesouraria', { 'caixa:tesouraria': 'lp', 'caixa:fechamentos': 'vD', 'caixa:gerencia': 'vA', 'ti-contas': 'vA', 'vz-lan-cnt-transfere-ncias': 'lp', 'vz-rel-cnt-transfere-ncias': 'vD' }, ['transferencias_confirmar', 'lacres_gerenciar', 'caixa_conferir_fechamento', 'lancamentos_discriminar']],
+    gerencia: ['Gerência', { 'vz-lan-vnd-vendas': 'vD', 'caixa:gerencia': 'ep', 'vz-rel-vnd-vendas': 'vD', 'caixa:fechamentos': 'vD', 'caixa:tesouraria': 'vA', 'vz-lan-des-despesas': 'lp', 'vz-rel-des-despesas': 'vD' }, ['caixa_monitorar', 'lancamentos_discriminar', 'lancamentos_recorrencia', 'compras_aprovar', 'compras_receber']],
     compras: ['Compras', {}], dp: ['DP', {}], financeiro: ['Financeiro', {}], 'dir-op': ['Diretor de Operações', {}], 'dir-geral': ['Diretor Geral', {}],
   };
   const PESSOAS = { a: ['Colaborador exemplo A', 'caixa'], b: ['Colaborador exemplo B', 'tesouraria'], c: ['Colaborador exemplo C', 'gerencia'] };
@@ -89,6 +90,8 @@
     estado.cargo = cargo;
     estado.base = cargo ? { ...CARGOS[cargo][1] } : {};
     estado.niveis = { ...estado.base };
+    estado.acoesBase = new Set(cargo ? CARGOS[cargo][2] || [] : []);
+    estado.acoes = new Set(estado.acoesBase);
     estado.aberta = '';
   }
 
@@ -104,6 +107,7 @@
   }
 
   const nivelDe = (chave) => estado.niveis[chave] || 'none';
+  const acaoAjustada = (chave) => estado.acoesBase.has(chave) !== estado.acoes.has(chave);
   const ajustada = (chave) => (estado.base[chave] || 'none') !== nivelDe(chave);
 
   /**
@@ -156,6 +160,17 @@
     quem.append(el('p', 'profiles-note acessos-telas-qual', qual));
     blocos.push(quem);
 
+    const abas = U.chips([['telas', 'Telas'], ['acoes', 'Ações especiais']], estado.aba, (v) => { estado.aba = v; estado.aberta = ''; desenhar(); });
+    abas.classList.add('compras-abas', 'acessos-telas-abas');
+    abas.setAttribute('aria-label', 'O que mostrar');
+    blocos.push(abas);
+    if (estado.aba === 'acoes') desenharAcoes(blocos); else desenharTelas(blocos);
+    tela.body.replaceChildren(...blocos);
+    tela.body.scrollTop = rolagem;
+  }
+
+  /** Aba "Telas": a legenda dos níveis e o menu inteiro com o nível de cada tela. */
+  function desenharTelas(blocos) {
     const leg = U.secao('Níveis de acesso (o ícone de cada tela)');
     const grade = el('div', 'acessos-telas-legenda');
     LEGENDA.forEach((id) => { const i = el('div', 'acessos-telas-leg-item'); i.append(iconeNivel(id), el('span', null, NIVEL[id].nome)); if (NIVEL[id].dica) i.title = NIVEL[id].dica; grade.append(i); });
@@ -206,8 +221,44 @@
     });
     if (termo && !mostradas) blocos.push(U.vazio('Nenhuma tela encontrada', 'Tente outro nome.'));
     resumo.textContent = com + (com === 1 ? ' tela com acesso' : ' telas com acesso') + ' · ' + pagam + (pagam === 1 ? ' pode pagar' : ' podem pagar');
-    tela.body.replaceChildren(...blocos);
-    tela.body.scrollTop = rolagem;
+  }
+
+  /**
+   * Aba "Ações especiais": as permissões que não são lançar, editar, pagar nem ver. Um interruptor por ação, em grupos por
+   * área (valem para a área inteira, como hoje). "Administração" fica separada, com aviso.
+   */
+  function desenharAcoes(blocos) {
+    let ligadas = 0;
+    ACOES.forEach((g) => {
+      const sec = U.secao(g.n, g.i.length);
+      if (g.aviso) sec.append(U.nota(g.aviso));
+      const lista = el('div', 'compras-lista');
+      g.i.forEach(([chave, rotulo, desc, sensivel]) => {
+        const ligada = estado.acoes.has(chave);
+        if (ligada) ligadas++;
+        const chip = [];
+        if (sensivel) { const s = U.situacao('Sensível', 'atencao'); s.title = 'Mexe em dinheiro já registrado, em dado do DP ou no acesso dos outros'; chip.push(s); }
+        if (acaoAjustada(chave)) { const p = el('span', 'acessos-nivel-ponto'); p.title = 'Ajuste só desta pessoa (diferente do cargo)'; chip.push(p); }
+        const chave2 = el('button', 'account-status-switch');
+        chave2.type = 'button';
+        chave2.dataset.acao = chave;
+        chave2.setAttribute('role', 'switch');
+        chave2.setAttribute('aria-checked', String(ligada));
+        chave2.setAttribute('aria-label', rotulo);
+        chave2.append(el('span'));
+        chave2.onclick = () => {
+          if (estado.acoes.has(chave)) estado.acoes.delete(chave); else estado.acoes.add(chave);
+          desenhar();
+          const volta = tela.body.querySelector('[data-acao="' + chave + '"]');
+          if (volta) volta.focus();
+        };
+        lista.append(U.linhaLista({ titulo: rotulo, detalhe: desc, direita: [...chip, chave2] }));
+      });
+      sec.append(lista);
+      blocos.push(sec);
+    });
+    const total = ACOES.reduce((n, g) => n + g.i.length, 0);
+    blocos.push(U.nota(ligadas + ' de ' + total + ' ações especiais liberadas. Valem para a área inteira (todas as telas de Lançamentos, por exemplo), como hoje.'));
   }
 
   /**
