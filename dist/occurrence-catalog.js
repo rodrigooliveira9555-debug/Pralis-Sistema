@@ -191,27 +191,47 @@ function renderDisc(){discBox.replaceChildren();if(!data.disc.length){discBox.ap
 function viewDisc(r){const sc=scopeText(r);dialog('Regra disciplinar — '+sc,(f,form)=>{const dl=el('dl','profiles-info');for(const [k,v] of [['Categoria',sc],['1 — Advertência',r.warnCount?'Para '+r.warnCount+(r.warnCount===1?' advertência':' advertências')+', aplicar suspensão.':'Não definido'],['2 — Suspensão',r.suspCount?'Para '+r.suspCount+(r.suspCount===1?' suspensão':' suspensões')+', aplicar justa causa.':'Não definido'],...(r.lookbackDays?[['Período de apuração (regra anterior)',r.lookbackDays+' dia(s)']]:[]),['Status',r.active?'Ativa':'Inativa'],...(r.notes?[['Observações',r.notes]]:[]),['Alterações',String((r.history||[]).length)]]){dl.append(el('dt',null,k),el('dd',null,v))}form.append(dl,el('p','profiles-note','Ao atingir o limite, o sistema só sinaliza: "avaliar suspensão" ou "avaliar justa causa". Nada é aplicado automaticamente: a decisão é do Departamento Pessoal e dos responsáveis autorizados.'))})}
 function toggleDisc(r){const sc=scopeText(r),run=()=>{transact(d=>{const x=d.disc.find(y=>y.id===r.id);(x.history=x.history||[]).push({at:now(),before:{active:x.active}});x.active=!x.active;x.updatedAt=now()});renderDisc();renderTable();discFlash.textContent=(r.active?'Regra desativada: ':'Regra ativada: ')+sc+'.';return null};
  if(r.active)confirmDialog('Desativar regra?','A regra de '+sc+' deixa de gerar alertas em novos lançamentos. Ocorrências já registradas e o histórico continuam como estão.','Desativar',run,()=>{});else run()}
-function editDisc(r){load();
- dialog(r?'Editar regra disciplinar':'Nova regra disciplinar',(field,form)=>{
-  const catSel2=el('select'),warnSel=el('select'),suspSel=el('select'),warnTxt=el('p','profiles-note'),suspTxt=el('p','profiles-note');
-  catSel2.add(new Option('Selecionar categoria',''));const seen=new Set();for(const x of [...data.categories].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))){if(!x.catId||seen.has(x.catId))continue;seen.add(x.catId);catSel2.add(new Option(x.name,x.catId))}
-  const nums=(sel,cur)=>{sel.add(new Option('Selecionar número',''));for(let i=1;i<=Math.max(10,cur||0);i++)sel.add(new Option(String(i),String(i)))};nums(warnSel,r?.warnCount);nums(suspSel,r?.suspCount);
-  const paint=()=>{const w=warnSel.value,s=suspSel.value;warnTxt.textContent='Para '+(w||'X')+(w==='1'?' advertência':' advertências')+', aplicar suspensão.';suspTxt.textContent='Para '+(s||'X')+(s==='1'?' suspensão':' suspensões')+', aplicar justa causa.'};
-  warnSel.onchange=suspSel.onchange=paint;
-  field('Categoria *',catSel2);
-  form.append(el('h4','uniforms-wide uniforms-heading','1 — Advertência'));field('Quantidade de advertências *',warnSel);form.append(warnTxt);
-  form.append(el('h4','uniforms-wide uniforms-heading','2 — Suspensão'));field('Quantidade de suspensões *',suspSel);form.append(suspTxt);
-  form.append(el('p','profiles-note','O sistema apenas sinaliza ("avaliar suspensão" ou "avaliar justa causa"). Nada é aplicado automaticamente: a decisão é do Departamento Pessoal.'));
-  if(r){catSel2.value=r.catId;warnSel.value=r.warnCount?String(r.warnCount):'';suspSel.value=r.suspCount?String(r.suspCount):''}paint();
-  return {catSel2,warnSel,suspSel}},
- x=>{const catId=x.catSel2.value,warn=Number(x.warnSel.value),susp=Number(x.suspSel.value);
-  if(!catId)return 'Selecione a categoria.';if(!x.warnSel.value)return 'Selecione a quantidade de advertências.';if(!x.suspSel.value)return 'Selecione a quantidade de suspensões.';
-  if(!(Number.isInteger(warn)&&warn>=1&&Number.isInteger(susp)&&susp>=1))return 'As quantidades devem ser números inteiros a partir de 1.';
-  const active=r?r.active:true,catName=data.categories.find(y=>y.catId===catId)?.name||'';
-  if(active&&data.disc.some(y=>y.id!==r?.id&&y.active&&y.catId===catId))return 'Já existe uma regra ativa para esta categoria. Edite a existente.';
-  const rec={name:r&&r.catId===catId?r.name:catName,catId,type:'',subId:'',warnCount:warn,suspCount:susp,lookbackDays:r?r.lookbackDays:null,active,notes:r?.notes||''};
-  const ok=transact(d=>{if(r){const o=d.disc.find(y=>y.id===r.id);(o.history=o.history||[]).push({at:now(),before:{name:o.name,catId:o.catId,warnCount:o.warnCount,suspCount:o.suspCount,lookbackDays:o.lookbackDays,active:o.active,notes:o.notes}});Object.assign(o,rec,{updatedAt:now()})}else d.disc.push({id:newId(),...rec,createdAt:now(),history:[]})});
-  if(!ok)return 'Não foi possível salvar neste navegador.';discFlash.textContent=(r?'Regra atualizada: ':'Regra salva: ')+catName+'.';return null},'Salvar',()=>{renderDisc();renderTable();setRules(true)})}
+/* Regra disciplinar no padrão do sistema (19/11/2026, Rodrigo): janela dos cadastros novos (CicluzComprasUI.dialogo), com a regra
+   desenhada como uma sequência — a categoria e, embaixo, 1 Advertência → 2 Suspensão → 3 Justa causa, com uma seta entre os passos
+   dizendo o que leva de um ao outro. O 3º passo é só o fim da sequência: não tem campo. O que é gravado não mudou
+   (catId, warnCount, suspCount, active); a situação, que antes só mudava pela lista, passa a aparecer também aqui. */
+function editDisc(r){load();const cu=window.CicluzComprasUI;
+ cu.dialogo({titulo:r?'Editar regra disciplinar':'Nova regra disciplinar',cor:ACCENT,corTexto:'var(--section-text,#9c1c1c)',largo:true,classe:'compras-form-padrao',rotuloSalvar:'Salvar',
+  montar:(form,dlg)=>{
+   const catSel2=el('select'),warnSel=el('select'),suspSel=el('select');
+   catSel2.add(new Option('Selecione a categoria',''));const seen=new Set();for(const x of [...data.categories].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))){if(!x.catId||seen.has(x.catId))continue;seen.add(x.catId);catSel2.add(new Option(x.name,x.catId))}
+   const nums=(sel,cur)=>{sel.add(new Option('Selecione a quantidade',''));for(let i=1;i<=Math.max(10,cur||0);i++)sel.add(new Option(String(i),String(i)))};nums(warnSel,r?.warnCount);nums(suspSel,r?.suspCount);
+   if(r){catSel2.value=r.catId;warnSel.value=r.warnCount?String(r.warnCount):'';suspSel.value=r.suspCount?String(r.suspCount):''}
+   const passo=(n,titulo,...nos)=>{const q=el('fieldset','compras-fieldset regra-passo');const lg=el('legend');lg.append(el('span','regra-numero',String(n)),document.createTextNode(titulo));q.append(lg,...nos);return q};
+   const seta=()=>{const d=el('div','regra-seta');d.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15m0 0-6-6m6 6 6-6"/></svg>';const t=el('span');d.append(t);d.texto=t;return d};
+   const warnTxt=el('p','profiles-note compras-largo'),suspTxt=el('p','profiles-note compras-largo'),resumo=el('p','regra-resumo compras-largo'),setaW=seta(),setaS=seta();resumo.setAttribute('role','status');
+   const sit=cu.quadroSituacao('Situação da regra',r?r.active:true,{feminino:true,dica:'Regra inativa não gera alerta em novos lançamentos.'});sit.classList.add('compras-largo');
+   const qCat=el('fieldset','compras-fieldset');qCat.append(el('legend',null,'Categoria'),cu.campo('Categoria *',catSel2),el('p','profiles-note compras-largo','A regra vale para as ocorrências desta categoria. Categorias diferentes nunca se somam.'),sit);
+   const seq=el('div','regra-sequencia compras-etapa');
+   seq.append(passo(1,'Advertência',cu.campo('Quantidade de advertências *',warnSel),warnTxt),setaW,
+    passo(2,'Suspensão',cu.campo('Quantidade de suspensões *',suspSel),suspTxt),setaS,
+    passo(3,'Justa causa',el('p','profiles-note compras-largo','Fim da sequência: aqui não há nada para preencher. Ao atingir o limite de suspensões, o sistema sinaliza "avaliar justa causa".')));
+   const qRes=el('fieldset','compras-fieldset');qRes.append(el('legend',null,'Resumo da regra'),resumo,el('p','profiles-note compras-largo','O sistema apenas sinaliza ("avaliar suspensão" ou "avaliar justa causa"). Nada é aplicado automaticamente: a decisão é do Departamento Pessoal.'));
+   const plural=(n,um,varios)=>n+' '+(n==='1'?um:varios);
+   const paint=()=>{const w=warnSel.value,s2=suspSel.value,cat=catSel2.value?catSel2.selectedOptions[0].text:'';
+    warnTxt.textContent=w?'Com '+plural(w,'advertência','advertências')+' nesta categoria, o sistema avisa para avaliar a suspensão.':'Escolha quantas advertências levam à suspensão.';
+    suspTxt.textContent=s2?'Com '+plural(s2,'suspensão','suspensões')+' nesta categoria, o sistema avisa para avaliar a justa causa.':'Escolha quantas suspensões levam à justa causa.';
+    setaW.texto.textContent=(w?plural(w,'advertência','advertências'):'tantas advertências')+' levam à suspensão';
+    setaS.texto.textContent=(s2?plural(s2,'suspensão','suspensões'):'tantas suspensões')+' levam à justa causa';
+    resumo.textContent=cat&&w&&s2?cat+': '+plural(w,'advertência','advertências')+' → suspensão → '+plural(s2,'suspensão','suspensões')+' → justa causa.':'Preencha a categoria e as duas quantidades para ver a regra completa.'};
+   catSel2.onchange=warnSel.onchange=suspSel.onchange=paint;paint();
+   const nav=el('div','compras-form-rodape compras-etapas-nav compras-largo'),salvar=el('button','btn','Salvar');salvar.type='submit';nav.append(cu.botao('Cancelar',()=>dlg.close(),'btn secondary footer-cancel-accent'),salvar);
+   const corpo=el('div','compras-etapa compras-largo');corpo.append(qCat,seq,qRes);form.append(corpo,nav); /* a mensagem de erro é a da própria janela (CicluzComprasUI.dialogo) */
+   return {catSel2,warnSel,suspSel,sit,form}},
+  salvar:x=>{const catId=x.catSel2.value,warn=Number(x.warnSel.value),susp=Number(x.suspSel.value);
+   const falta=!catId?'Selecione a categoria.':!x.warnSel.value?'Selecione a quantidade de advertências.':!x.suspSel.value?'Selecione a quantidade de suspensões.':'';
+   if(falta){cu.sinalizarObrigatorios(x.form);return falta}
+   if(!(Number.isInteger(warn)&&warn>=1&&Number.isInteger(susp)&&susp>=1))return 'As quantidades devem ser números inteiros a partir de 1.';
+   const active=x.sit.ativo,catName=data.categories.find(y=>y.catId===catId)?.name||'';
+   if(active&&data.disc.some(y=>y.id!==r?.id&&y.active&&y.catId===catId))return 'Já existe uma regra ativa para esta categoria. Edite a existente.';
+   const rec={name:r&&r.catId===catId?r.name:catName,catId,type:'',subId:'',warnCount:warn,suspCount:susp,lookbackDays:r?r.lookbackDays:null,active,notes:r?.notes||''};
+   const ok=transact(d=>{if(r){const o=d.disc.find(y=>y.id===r.id);(o.history=o.history||[]).push({at:now(),before:{name:o.name,catId:o.catId,warnCount:o.warnCount,suspCount:o.suspCount,lookbackDays:o.lookbackDays,active:o.active,notes:o.notes}});Object.assign(o,rec,{updatedAt:now()})}else d.disc.push({id:newId(),...rec,createdAt:now(),history:[]})});
+   if(!ok)return 'Não foi possível salvar neste navegador.';discFlash.textContent=(r?'Regra atualizada: ':'Regra salva: ')+catName+'.';renderDisc();renderTable();setRules(true);cu.avisar(r?'Regra atualizada.':'Regra salva.');return undefined}})}
 function render(){load();warn.hidden=!loadError;warn.textContent='Não foi possível ler o cadastro salvo neste navegador. Nada será gravado para não sobrescrever os dados.';dayIn.value=data.suspensionDays.join(', ');renderDisc();renderTable()}
 function show(){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));view.classList.add('show');document.getElementById('crumb').textContent=menuCrumb(2,GROUP,TITLE);const t=document.getElementById('title');if(t)t.textContent=TITLE;closeForm();flash.textContent='';render();normalizeHeaderActions(view)}
 window.showOccurrenceCatalog=show;
