@@ -200,7 +200,8 @@ body :is(.view,dialog,.modal) button:is(.footer-save-accent,.footer-cancel-accen
 body :is(.view,dialog,.modal) :is(.footer-save-accent,.footer-cancel-accent){display:inline-flex!important;align-items:center;justify-content:space-between;gap:10px}
 
 
-body :is(.view,dialog,.modal) .footer-action-pair{display:flex!important;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px}
+/* :not([hidden]): o par de ações some quando a tela está na lista inicial (people.js, criarEntrada). */
+body :is(.view,dialog,.modal) .footer-action-pair:not([hidden]){display:flex!important;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px}
 /* A barra de ações dos cadastros em etapas (.compras-etapas-nav) tem ordem própria (compras.css): Voltar · Cancelar · Salvar · Avançar. */
 body .footer-action-pair:not(.compras-etapas-nav)>.footer-cancel-accent{order:0!important}
 body .footer-action-pair:not(.compras-etapas-nav)>.footer-save-accent{order:1!important}
