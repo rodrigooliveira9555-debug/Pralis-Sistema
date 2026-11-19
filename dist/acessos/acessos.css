@@ -257,7 +257,7 @@ body.dark-theme .acessos-telas-atual-nome { color: #d4d4d8; }
 
 /* As opções do nível, logo abaixo da linha (aparecem só quando o "+" da linha é tocado) */
 .acessos-nivel-escolha {
-  display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(min(215px, 100%), 1fr)); padding: 8px 14px 12px 56px;
+  display: grid; gap: 6px; grid-template-columns: minmax(0, 400px); padding: 8px 14px 12px 56px;
   border-top: 1px solid var(--layout-line, #dedee3); background: color-mix(in srgb, var(--menu-accent) 4%, var(--theme-card, #fff));
 }
 .acessos-nivel-opcao {
@@ -269,6 +269,6 @@ body.dark-theme .acessos-telas-atual-nome { color: #d4d4d8; }
 @media (max-width: 600px) {
   .acessos-telas-quem { grid-template-columns: 32px minmax(0, 1fr); }
   .acessos-telas-quem > .compras-rotulo { grid-column: 1 / -1; }
-  .acessos-nivel-escolha { padding-left: 14px; }
+  .acessos-nivel-escolha { padding-left: 14px; grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) { .acessos-telas-mais svg { transition: none; } }
