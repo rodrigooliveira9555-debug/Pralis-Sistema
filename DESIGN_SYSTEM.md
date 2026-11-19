@@ -1,5 +1,8 @@
 # CICLUZ — referência de interface
 
+## Tipos de Uniforme: ícone por peça e escolha do ícone no cadastro (19/11/2026)
+Pedido do Rodrigo. **Supera** a camisa como ícone único da lista de DES - Tipos de Uniforme. Cada linha mostra o ícone da peça que está escrita no nome: **boné, touca, camisa, calça, avental ou calçado** (desenhos de traço simples em `uniform-types.js`, `ICONES_PECA`; peça que não é nenhuma dessas usa a camisa). Na janela de cadastro há o campo **Ícone**, no mesmo formato dos outros cadastros (`.identity-pick > .icon-library > .icon-choice`, quadradinhos de 32 px): a primeira opção é **Automático (pelo nome)**, depois as seis peças e os ícones importados na biblioteca do sistema. O escolhido ganha um anel por fora. **Dados:** campo novo e opcional `icon` no tipo (`cicluz-uniformes-tipos-v1`); sem ele vale o automático. Sem migração. A regra também está em Configurações → Design System → Ícones ("Escolha do ícone no cadastro").
+
 ## Ícone do produto é o carrinho (19/11/2026)
 Pedido do Rodrigo. **Supera** a sacola como ícone do produto. Em toda tela em que o produto aparece com ícone (lista de produtos e demais linhas com `icone: 'produto'`), o desenho é o **carrinho** (`ICONES.produto` em `compras/ui.js`). Na árvore de escolha (`seletorArvore`): **grupo e subgrupo** continuam com a sigla da origem (MER) e o **produto**, que é o item final, mostra o carrinho, no mesmo quadrado e na mesma cor (opção `iconeFolha`).
 
