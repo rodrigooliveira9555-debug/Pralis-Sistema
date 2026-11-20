@@ -1,5 +1,9 @@
 # CICLUZ — referência de interface
 
+## Grupos e subgrupos de Despesas, Mercadorias e Retiradas: lista "Referência de Custo" (19/11/2026)
+Pedido do Washington. No cadastro do **grupo** e do **subgrupo** de **DES - Grupos de Despesas**, **MER - Grupos de Mercadorias** e **RET - Grupos de Retiradas** (Cadastros Geral) entrou a lista de seleção **"Referência de Custo"**, logo depois da "Referência documental", no padrão das listas do sistema (rótulo de 12 px em cima, campo de 42 px, canto de 8 px; veja o Manual de Design, aba Campos). Opções, na ordem: **Selecione** (nenhuma), **R$ VALOR VARIÁVEL / <ORIGEM> - VARIÁVEL**, **R$ FIXO / <ORIGEM> - VARIÁVEL**, **R$ VALOR VARIÁVEL / <ORIGEM> - FIXO** e **R$ FIXO / <ORIGEM> - FIXO**, onde <ORIGEM> é DES, MER ou RET conforme a tela. Os grupos de Vendas e de Contas não têm o campo. (O nome provisório "Tipo de valor", do primeiro desenho, foi trocado por "Referência de Custo" a pedido do Washington.)
+**Dado salvo:** campo novo e opcional `valueKind` no grupo e no subgrupo (`dist/groups.js`), com os valores `variavel/variavel`, `fixo/variavel`, `variavel/fixo` e `fixo/fixo` (valor / grupo). Cadastro já feito sem o campo continua valendo e abre em "Selecione"; não há migração. **Ainda não é usado em nenhuma conta nem relatório:** por ora só guarda a escolha (ver P-40 no doc 11).
+
 ## DES - Ponto Eletrônico Importação (19/11/2026)
 Pedido do Rodrigo. Cartão em Lançamentos Colaboradores, logo abaixo de Período de Teste. Uma tela só, com as peças da folha de pagamento:
 - **Barra**: ‹ mês › (redondos de 32 px), campo **Colaborador** ("Todos (resumo do mês)" ou uma pessoa), campo **Tolerância (min)** e botão **Importar Ponto**.
