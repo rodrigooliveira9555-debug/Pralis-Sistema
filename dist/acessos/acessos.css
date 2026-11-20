@@ -192,3 +192,89 @@ body.dark-theme .ds-modelo-barra { background: var(--theme-card, #2d2b34); }
 .ds-conferencia{display:grid;gap:10px;justify-items:start;min-width:0}
 .ds-conferencia-saida{display:grid;gap:8px;width:100%;min-width:0}
 .ds-conferencia-lista{margin:0;padding-left:18px;display:grid;gap:4px;font:400 var(--ui-label,12px)/18px var(--ui-font)}
+
+/* Acesso por Tela (esboço): "para quem", legenda dos níveis e o menu inteiro com o nível de cada tela */
+.acessos-telas-quadro { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.acessos-telas-quem-bloco { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.acessos-telas-quem { display: grid; grid-template-columns: 170px 32px minmax(0, 1fr); align-items: center; gap: 8px 10px; min-height: 32px; }
+.acessos-telas-valor { font: 400 14px/20px var(--ui-font); overflow-wrap: anywhere; }
+.acessos-telas-valor.vazio { color: var(--muted, #73737a); }
+/* O "+" e o ícone do nível seguem o botão redondo de ação do sistema (Design System › Ícones): círculo de 32 px cheio na cor da
+   origem (--nivel-cor; sem ela, o roxo de Configurações) e o desenho branco de 18 px. Aberto, o "+" vira "×". */
+.acessos-telas button.acessos-telas-mais {
+  flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; min-height: 0; padding: 0; border: 0; border-radius: 50%;
+  background: var(--nivel-cor, var(--menu-accent)); color: #fff; cursor: pointer;
+}
+.acessos-telas button.acessos-telas-mais:hover { filter: brightness(.94); }
+.acessos-telas-mais svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform 160ms ease; }
+.acessos-telas-mais[aria-expanded="true"] svg { transform: rotate(45deg); }
+.acessos-telas-opcoes { display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); padding: 2px 0 6px 0; }
+.acessos-telas-opcao {
+  min-height: 40px; padding: 4px 12px; border: 1px solid var(--layout-line, #dedee3); border-radius: 8px; background: var(--theme-card, #fff); color: inherit;
+  font: 500 13px/18px var(--ui-font); text-align: left; cursor: pointer;
+}
+.acessos-telas-opcao:hover { border-color: var(--menu-accent); }
+.acessos-telas-opcao.marcado { border-color: var(--menu-accent); background: color-mix(in srgb, var(--menu-accent) 12%, var(--theme-card, #fff)); }
+.acessos-telas-opcao:focus-visible, .acessos-telas-seta:focus-visible, .acessos-nivel-opcao:focus-visible, .acessos-telas-mais:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
+body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-telas-seta:focus-visible, body.dark-theme .acessos-nivel-opcao:focus-visible, body.dark-theme .acessos-telas-mais:focus-visible { outline-color: #d8c8fb; }
+.acessos-telas-qual { margin: 0; }
+.acessos-telas-legenda { display: grid; gap: 8px 14px; grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr)); }
+.acessos-telas-leg-item { display: flex; align-items: center; gap: 8px; font: 400 13px/18px var(--ui-font); }
+.acessos-telas-resumo { margin: 0 0 0 auto; }
+.acessos-telas-grupo .compras-secao-cab h3::before { content: ""; flex: none; width: 12px; height: 12px; border-radius: 4px; background: var(--origem, var(--menu-accent)); }
+.acessos-telas-grupo.recolhido .compras-secao-cab { border-bottom: 0; }
+.acessos-telas-seta {
+  flex: none; width: 32px; height: 32px; padding: 0; border: 1px solid var(--layout-line, #dedee3); border-radius: 50%; background: var(--theme-card, #fff);
+  color: var(--panel-text, #5520ad); display: inline-grid; place-items: center; cursor: pointer; margin-left: auto;
+}
+body.dark-theme .acessos-telas-seta { color: #d8c8fb; }
+.acessos-telas-seta svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.acessos-telas-sec { display: flex; align-items: center; gap: 8px; padding: 10px 14px 6px; border-top: 1px solid var(--layout-line, #dedee3); font: 600 12px/16px var(--ui-font); color: var(--muted, #73737a); }
+.acessos-telas-sec small { font: 600 11px/16px var(--ui-font); }
+.acessos-telas .compras-linha-icone .sigla-text { color: var(--theme-surface, #fff); }
+/* O nível atual da tela: só o ícone e o nome, sem caixa */
+.acessos-telas-atual { display: inline-flex; align-items: center; gap: 6px; font: 500 13px/18px var(--ui-font); }
+.acessos-telas-atual-nome { color: var(--ui-label-color, #52525b); }
+body.dark-theme .acessos-telas-atual-nome { color: #d4d4d8; }
+
+/* O ícone do nível: círculo cheio na cor da origem com o desenho do Design System (lápis com prancheta = lançar, lápis = editar,
+   olho = visualizar, cadeado = sem acesso) e o $ num selo branco; cortado = sem aquele poder */
+.acessos-nivel-ic {
+  position: relative; flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--nivel-cor, var(--menu-accent)); color: #fff;
+}
+.acessos-nivel-ic.sem { background: var(--navigation-ink, #a2a0aa); }
+.acessos-nivel-ic svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.acessos-nivel-mo {
+  position: absolute; right: -4px; bottom: -3px; width: 15px; height: 15px; border-radius: 50%; display: grid; place-items: center;
+  border: 1.5px solid var(--theme-card, #fff); background: #fff; color: #27272a; font: 700 9px/1 var(--ui-font);
+}
+.acessos-nivel-mo.cheio { background: #27272a; color: #fff; }
+.acessos-nivel-ic.xg::after, .acessos-nivel-ic.xm .acessos-nivel-mo::after { content: ""; position: absolute; height: 1.5px; transform: rotate(-45deg); }
+.acessos-nivel-ic.xg::after { left: 6px; right: 6px; top: 15px; background: #fff; }
+.acessos-nivel-ic.xm .acessos-nivel-mo::after { left: -1px; right: -1px; top: 5px; background: var(--cicluz-danger, #e34343); }
+.acessos-nivel-ponto { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--menu-accent); }
+
+/* As opções do nível, logo abaixo da linha (aparecem só quando o "+" da linha é tocado) */
+.acessos-nivel-escolha {
+  display: grid; gap: 6px; grid-template-columns: minmax(0, 400px); padding: 8px 14px 12px 56px;
+  border-top: 1px solid var(--layout-line, #dedee3); background: color-mix(in srgb, var(--menu-accent) 4%, var(--theme-card, #fff));
+}
+.acessos-nivel-opcao {
+  display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 2px 10px 2px 4px; border: 1px solid var(--layout-line, #dedee3); border-radius: 8px;
+  background: var(--theme-card, #fff); color: inherit; font: 500 13px/18px var(--ui-font); text-align: left; cursor: pointer;
+}
+.acessos-nivel-opcao:hover { border-color: var(--menu-accent); }
+.acessos-nivel-opcao.marcado { border-color: var(--menu-accent); background: color-mix(in srgb, var(--menu-accent) 12%, var(--theme-card, #fff)); }
+@media (max-width: 600px) {
+  .acessos-telas-quem { grid-template-columns: 32px minmax(0, 1fr); }
+  .acessos-telas-quem > .compras-rotulo { grid-column: 1 / -1; }
+  .acessos-nivel-escolha { padding-left: 14px; grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .acessos-telas-mais svg { transition: none; } }
+
+/* Abas (Telas | Ações especiais) e o interruptor das ações especiais, ligado na cor da tela */
+.acessos-telas-abas { margin: 2px 0; }
+.acessos-telas .account-status-switch[aria-checked="true"] { background: var(--menu-accent); border-color: var(--menu-accent); }
+.acessos-telas .account-status-switch:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
+.acessos-telas .compras-secao > .profiles-note { padding: 10px 14px 0; }
