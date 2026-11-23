@@ -164,6 +164,7 @@
             const w = el('span', 'compras-celula-pilha');
             const m = entrada('text', motivos[i.produtoId] || '', { maxLength: 200, placeholder: 'Motivo, se continuar diferente' });
             m.setAttribute('aria-label', 'Motivo da diferença de ' + nomeProduto(i.produtoId));
+            m.dataset.textoLivre = '1'; // texto livre: fica como foi digitado, sem a maiúscula automática de nomes (23/11/2026, Zé)
             m.oninput = () => { motivos[i.produtoId] = m.value; };
             w.append(el('b', null, nomeProduto(i.produtoId)), m);
             return w;
@@ -273,7 +274,7 @@
     U.dialogo({
       titulo: 'Recusar conferência',
       montar: (form) => {
-        const m = el('textarea'); m.rows = 3; m.maxLength = 300;
+        const m = el('textarea'); m.rows = 3; m.maxLength = 300; m.dataset.textoLivre = '1';
         form.append(U.nota('O estoque não muda. Para contar de novo, gere uma nova conferência pelo agendamento.'), campo('Motivo da recusa *', m));
         return { m };
       },
