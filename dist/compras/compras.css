@@ -552,7 +552,16 @@ body.dark-theme .compras-objeto-origem .compras-chip.ativo{color:#f2f1f6}
 .compras-atividades.excluidas :is(.compras-atividades-icone,.compras-atividade-marca),.joinha-baixo{color:var(--cicluz-danger,#e34343)}
 /* Janela de escolha em árvore no desenho da lista de origem (19/11/2026, Rodrigo): um quadro só, linhas separadas por um fio, ícone
    quadrado com a sigla na cor da origem, nome com a contagem embaixo, situação à direita e a caixa de marcar antes do ícone. */
-.compras-hier{display:grid;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff);overflow:hidden}
+/* Campo de escolha em árvore (23/11/2026, Zé): parece um seletor e abre a janela em árvore. Mesmos tokens dos campos. */
+.compras-arvore-campo{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-width:0;min-height:var(--ui-field-height,42px);box-sizing:border-box;padding:0 12px;margin:0;border:1px solid var(--ui-border-base,#d4d4d8);border-radius:var(--ui-field-radius,8px);background:var(--ui-control-bg,#fff);color:var(--ui-input-color,#27272a);font:400 var(--ui-input-size,15px)/20px var(--ui-font,inherit);text-align:left;cursor:pointer;box-shadow:none}
+.compras-arvore-campo:hover{border-color:var(--menu-accent,#7c3aed)}
+.compras-arvore-campo:focus-visible{outline:2px solid var(--menu-accent,#7c3aed);outline-offset:2px}
+.compras-arvore-campo svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.7}
+.compras-arvore-texto{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.compras-arvore-campo.vazio .compras-arvore-texto{opacity:.65}
+/* grid-auto-rows:max-content: com a altura máxima da janela, o grid encolhia as linhas e o nome que quebra em 2 ou 3 linhas (320 px)
+   vazava sobre a linha de baixo (23/11/2026). */
+.compras-hier{display:grid;grid-auto-rows:max-content;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff);overflow:hidden}
 .compras-hier-linha{display:flex;align-items:center;gap:8px;min-height:var(--escolha-linha,44px);box-sizing:border-box;padding:5px 10px 5px calc(10px + var(--nivel,0)*24px);border-bottom:1px solid var(--layout-line,#dedee3)}
 .compras-hier-linha:last-child{border-bottom:0}
 .compras-hier-caixa{appearance:none;-webkit-appearance:none;flex:none;width:var(--escolha-caixa,20px);height:var(--escolha-caixa,20px);margin:0;border:1.5px solid var(--ui-border-base,#a2a0aa);border-radius:6px;background:var(--theme-card,#fff);cursor:pointer;display:inline-grid;place-items:center}

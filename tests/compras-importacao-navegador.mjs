@@ -5,6 +5,7 @@ import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { iniciar, SESSAO_LOCAL } from './servidor.mjs';
+import { escolherNaArvore } from './ajuda-arvore.mjs';
 
 const require = createRequire(import.meta.url);
 const XLSX = require('../dist/vendor/sheetjs/xlsx.full.min.js');
@@ -95,7 +96,7 @@ await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)'
 ok(await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)').count() === 1, 'Inativos: só o do arquivo');
 await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'INATIVO FICTICIO' }).click();
 await dlg(p).locator('.stepper-node').nth(1).click(); // etapa 2: grupo de mercadorias
-await dlg(p).getByLabel('Grupo de mercadorias', { exact: true }).selectOption('g15');
+await escolherNaArvore(p, dlg(p).getByRole('button', { name: 'Grupo de mercadorias', exact: true }), { grupo: 'INATIVOS' });
 await dlg(p).locator('.people-save-control').click();
 await fechado(p);
 await p.waitForFunction(async () => (await CicluzComprasDados.arquivo()).length === 0);
@@ -133,8 +134,7 @@ ok(await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalh
 await p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: 'SEM GRUPO FICTICIO' }).click();
 ok((await dlg(p).locator('.compras-alerta-vinculo').textContent()).includes('grupo de mercadorias'), 'Formulário mostra o alerta de vínculo');
 await dlg(p).locator('.stepper-node').nth(1).click(); // etapa 2: grupo de mercadorias
-await dlg(p).getByLabel('Grupo de mercadorias', { exact: true }).selectOption('g10');
-await dlg(p).getByLabel('Subgrupo', { exact: true }).selectOption('g10s0');
+await escolherNaArvore(p, dlg(p).getByRole('button', { name: 'Grupo de mercadorias', exact: true }), { grupo: 'FAB. PRÓPRIA', subgrupo: 'PANIFICAÇÃO' });
 await dlg(p).locator('.people-save-control').click();
 await fechado(p);
 depois = await produtos(p);

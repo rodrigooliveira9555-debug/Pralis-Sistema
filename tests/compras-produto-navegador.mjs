@@ -3,6 +3,7 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { iniciar, SESSAO_LOCAL } from './servidor.mjs';
+import { escolherNaArvore } from './ajuda-arvore.mjs';
 
 const { servidor, url } = await iniciar();
 const navegador = await chromium.launch();
@@ -68,7 +69,9 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   ok((await s1b.getByLabel('Como se compra (automático)', { exact: true }).inputValue()) === 'BISCOITO INTEGRAL 200 G - CAIXA COM BISCOITO INTEGRAL 200 G APROXIMADAMENTE 12UN', 'Como se compra no formato do S1');
   const s2 = sec(p, 'Revenda ou transformação');
   await etapa(p, 2);
-  await s2.getByLabel('Grupo de mercadorias', { exact: true }).selectOption({ label: 'MERCEARIA' });
+  // Grupo e subgrupo num campo só, escolhidos na árvore (23/11/2026, Zé).
+  await escolherNaArvore(p, s2.getByRole('button', { name: 'Grupo de mercadorias', exact: true }), { grupo: 'MERCEARIA' });
+  ok((await s2.getByRole('button', { name: 'Grupo de mercadorias', exact: true }).textContent()).trim() === 'Mercearia', 'Campo de grupo mostra o que foi escolhido na árvore');
   const sLoja = sec(p, 'Desta loja');
   await etapa(p, 3);
   ok((await sLoja.getByLabel('Margem (%)', { exact: true }).inputValue()) === '25', 'Trocar o grupo copia a margem padrão do grupo');
@@ -162,7 +165,7 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   await sec(p, 'Produto').getByLabel('Nome do produto', { exact: true }).fill('Biscoito Integral Aveia');
   await sec(p, 'Produto').getByLabel('Medida base', { exact: true }).selectOption('G');
   await etapa(p, 2);
-  await sec(p, 'Revenda ou transformação').getByLabel('Grupo de mercadorias', { exact: true }).selectOption({ label: 'MERCEARIA' });
+  await escolherNaArvore(p, sec(p, 'Revenda ou transformação').getByRole('button', { name: 'Grupo de mercadorias', exact: true }), { grupo: 'MERCEARIA' });
   await salvarDialogo(p);
   ok(await d3.locator('.compras-duplicidade').isVisible(), 'Nome igual pede confirmação');
   await d3.getByRole('button', { name: 'Cadastrar mesmo assim' }).click();
@@ -175,7 +178,7 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   await sec(p, 'Produto').getByLabel('Nome do produto', { exact: true }).fill('Produto Validação');
   await sec(p, 'Como se compra').getByLabel('Qt. embalagem', { exact: true }).fill('10');
   await etapa(p, 2);
-  await sec(p, 'Revenda ou transformação').getByLabel('Grupo de mercadorias', { exact: true }).selectOption({ label: 'MERCEARIA' });
+  await escolherNaArvore(p, sec(p, 'Revenda ou transformação').getByRole('button', { name: 'Grupo de mercadorias', exact: true }), { grupo: 'MERCEARIA' });
   await etapa(p, 3);
   await sec(p, 'Desta loja').getByLabel('Estoque mín.', { exact: true }).fill('15');
   await salvarDialogo(p);

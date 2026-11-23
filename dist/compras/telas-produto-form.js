@@ -289,16 +289,18 @@
         /* ===== Revenda ou transformação ===== */
         const s2 = sec('Revenda ou transformação', 'Classificação e operação do produto', eTransf);
         const tipo = seletor([['revenda', 'Revenda'], ['transformacao', 'Transformação']], p?.tipo || 'revenda');
-        const grupo = seletor(grupos.filter((g) => g.ativo || g.id === p?.grupoId).map((g) => [g.id, g.nome]), p?.grupoId || '', 'Selecione o grupo');
-        const sub = el('select');
-        const montarSub = (manter) => {
-          const g = grupos.find((x) => x.id === grupo.value);
-          sub.replaceChildren(new Option('Sem subgrupo', ''));
-          (g ? g.subgrupos.filter((s) => s.ativo || s.id === p?.subgrupoId) : []).forEach((s) => sub.add(new Option(s.nome, s.id)));
-          sub.value = manter && g && g.subgrupos.some((s) => s.id === p?.subgrupoId) ? p.subgrupoId : '';
-        };
-        montarSub(true);
-        s2.append(campoP('Tipo', tipo), campoP('Grupo de mercadorias *', grupo, DICAS.grupo, 'Vem do cadastro MER - Grupos de Mercadorias.', 'grupoId'), campoP('Subgrupo', sub, null, 'Quando o subgrupo tem regra própria, ela vale no lugar da do grupo.'));
+        // Grupo e subgrupo num campo só, escolhidos na árvore do cadastro MER - Grupos de Mercadorias (23/11/2026, Zé): toca no
+        // grupo, abre os subgrupos, marca um. O valor continua gravado como grupoId e subgrupoId (sem migração).
+        const gAtual = grupos.find((g) => g.id === p?.grupoId);
+        const valorGrupo = gAtual ? gAtual.id + (gAtual.subgrupos.some((s) => s.id === p?.subgrupoId) ? '|' + p.subgrupoId : '') : (p?.grupoId || '');
+        const arvGrupo = U.campoArvore({
+          rotulo: 'Grupo de mercadorias', titulo: 'Grupo de mercadorias do produto', sigla: 'MER', rotuloBusca: 'Buscar grupo ou subgrupo',
+          vazio: 'Nenhum grupo de mercadorias cadastrado em Saídas › Cadastros Geral › MER - Grupos de Mercadorias.',
+          nos: () => U.arvoreGruposMercadoria(grupos, { atual: valorGrupo }), valor: valorGrupo, textoVazio: 'Selecione o grupo ou subgrupo',
+        });
+        const grupo = { get value() { return arvGrupo.value.split('|')[0] || ''; }, addEventListener: (...a) => arvGrupo.addEventListener(...a) };
+        const sub = { get value() { return arvGrupo.value.split('|')[1] || ''; } };
+        s2.append(campoP('Tipo', tipo), campoP('Grupo de mercadorias *', arvGrupo, DICAS.grupo, 'Grupo ou subgrupo do cadastro MER - Grupos de Mercadorias. Quando o subgrupo tem regra própria, ela vale no lugar da do grupo.', 'grupoId'));
         const sLoja = sec('Desta loja', 'Estoque, pontos de venda e preço', eLoja);
         // Setor de estoque = nó da árvore de locais (vínculo pelo id). Texto antigo sem nó continua como opção, com o alerta.
         const textosSemNo = locais.concat(p?.setorEstoque && !locais.includes(p.setorEstoque) ? [p.setorEstoque] : []).filter((t) => !nosLocais.some((n) => n.nome === t));
@@ -614,12 +616,10 @@
           fiscalTimer = setTimeout(atualizarFiscal, 150);
         }
         grupo.addEventListener('change', () => {
-          montarSub(false);
           const mg = margemDoGrupo();
-          if (mg != null) margem.value = decimal(Math.round(mg * 10000) / 100); // S1: trocar o grupo copia a margem padrão
+          if (mg != null) margem.value = decimal(Math.round(mg * 10000) / 100); // S1: trocar o grupo (ou o subgrupo) copia a margem padrão
           atualizar();
         });
-        sub.addEventListener('change', () => { const mg = margemDoGrupo(); if (mg != null) margem.value = decimal(Math.round(mg * 10000) / 100); atualizar(); });
         ean.addEventListener('input', () => { avisarEanRepetido(); atualizar(); });
         [nome, gramatura, medida, balanca, emb, cde, qtdEmb, medCompra, aprox, tipo, custo, margem, pontual, precisao, qtdTransf, unidTransf, fNcm, fCest, fCat, ...Object.values(camposFiscais).filter((c) => c.manual).map((c) => c.i)].forEach((x) => x.addEventListener('input', atualizar));
         [ajuda.input, auto.input, liberado.input].forEach((x) => x.addEventListener('change', atualizar));
@@ -641,6 +641,7 @@
         const escondido = (no, raiz) => { for (let x = no; x && x !== raiz; x = x.parentElement) if (x.style && x.style.display === 'none') return true; return false; };
         function valorDe(no) {
           if (no.tagName === 'SELECT') return no.selectedOptions[0] && no.value !== '' ? no.selectedOptions[0].textContent : '';
+          if (no.classList.contains('compras-arvore-campo')) return no.value ? no.title : ''; // campo em árvore: o texto do que foi escolhido
           return no.value.trim();
         }
         function pintarRevisao() {
@@ -653,7 +654,7 @@
             if (k === 0) { por('Situação do produto', situacao.ativo ? 'Ativo' : 'Inativo'); por('Foto', foto.valor() ? 'Com foto' : 'Sem foto'); }
             etapa.querySelectorAll('label.compras-campo, label.compras-interruptor').forEach((l) => {
               if (escondido(l, etapa)) return;
-              const no = l.querySelector('input,select');
+              const no = l.querySelector('input,select,.compras-arvore-campo');
               if (!no || no.type === 'file') return;
               const base = (l.querySelector('.compras-rotulo') || l.querySelector('span')).textContent;
               const rotulo = base.endsWith(' *') ? base.slice(0, -2) : base;
