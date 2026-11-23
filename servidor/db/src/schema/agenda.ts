@@ -6,9 +6,9 @@ import {
 import { usuarioAutenticacao } from "./autenticacao.ts";
 import { empresas, perfisUsuarios } from "./cadastro.ts";
 
-// Agenda: chat e arquivos de cada compromisso (decisão do Zé, 05/11/2026). O compromisso mora no
-// documento sincronizado "cicluz-agenda-v1"; `compromisso_id` é o id dele lá (texto, sem FK: o
-// documento não é tabela). A API confere a permissão no documento a cada pedido.
+// Agenda: chat e arquivos de cada compromisso (decisão do Zé, 05/11/2026). `compromisso_id` é o id do
+// compromisso em agenda_compromissos (texto; a FK entra na 0009, depois da transferência no ar, porque pode
+// haver mensagens de compromissos que já não existem). A API confere a permissão nas tabelas a cada pedido.
 
 const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
 
