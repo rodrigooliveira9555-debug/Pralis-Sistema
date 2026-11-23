@@ -20,7 +20,7 @@
     // Diversos (19/11/2026, pedido do Rodrigo): cadastros gerais que não são da empresa nem de acesso. O Salário Mínimo Vigente saiu de Empresa e veio para cá.
     'Diversos': [['salario-minimo', 'Salário Mínimo Vigente', 'Valor e início da vigência; base dos contratos']],
     'Usuários': [['usuarios', 'Pessoas com Acesso', 'Criar contas, postos do caixa e cargos'], ['dados', 'Dados no Servidor', 'Situação de cada assunto gravado']],
-    'Permissões': [['telas', 'Acesso por Tela', 'O menu inteiro, com o nível de cada tela (esboço)']],
+    'Permissões': [['telas', 'Acesso por Tela', 'O menu inteiro, com sete permissões por tela (esboço)']],
     'Senhas': [['senhas', 'Minha Senha', 'Trocar a sua senha'], ['senha-outra', 'Senha de Outra Pessoa', 'Quando alguém esqueceu a senha']],
     // Design System (18/11/2026; o setor se chama só "Design System", pedido do Rodrigo): um cartão por tópico do padrão visual (acessos/design-system.js). A ordem é a de leitura.
     'Design System': [['ds-letras', 'Letras', 'A fonte do sistema, os pesos e o jeito de escrever'],
