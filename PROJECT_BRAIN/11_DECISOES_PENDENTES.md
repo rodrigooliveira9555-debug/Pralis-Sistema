@@ -78,3 +78,14 @@ calculado com ela. | Rodrigo | regra nova de estoque |
 `dist/folhas-conplus-demo.js` (11/11/2026) diz que tudo é fictício e os nomes são "Colaborador Demonstração NN", mas os salários,
 cargos, datas de admissão e eventos parecem vir de uma planilha real. Se forem valores reais, mesmo sem nome, precisam ser trocados
 por valores inventados (regra 8 do CLAUDE.md: nada de salário real no repositório). **Confirmar com quem gerou o arquivo.** | quem fez a tela da folha | possível dado real no repositório |
+
+## P-45 — A nova Agenda (áudios do Rodrigo com o Zé, 23/11/2026)
+Áudios de 23/11/2026 (transcrição e resumo guardados pelo Zé, fora do repositório). Revisão técnica do mesmo dia: `docs/REVISAO_AGENDA_2026-11-23.md`.
+**Decidido (Zé, 23/11/2026, a partir do que o Rodrigo falou):**
+1. **Base primeiro:** a Agenda sai do documento único `cicluz-agenda-v1` e vai para o servidor, um registro por compromisso, com a permissão conferida no servidor ("banco à parte" do áudio). Fecha G1, G4 e G5 da revisão e o DT-15. Migration e troca do formato salvo param para aprovação antes de aplicar.
+2. **Grupo = lista:** cada uma das "Minhas listas" vira um grupo, como grupo de WhatsApp: tem membros, as tarefas e um chat do grupo. O chat de cada compromisso continua.
+3. **Hora fora do expediente:** na primeira versão a Agenda **só registra e mostra** (relatório). Nada vai para a folha até o Rodrigo confirmar a regra de pagamento.
+4. **Onde:** a Agenda é construída aqui no S2, isolada do resto, para poder ir depois para a plataforma CICLUZ (que o Rodrigo e o Marco vão estruturar).
+5. **Menu:** Agenda fica com "Agenda" e "Configurações da Agenda". Agendamento de Pedidos e de Produção em Lançamentos (já feito em 7679093).
+**Pedido, ainda não detalhado (entra depois da base):** ícone roxo de agendar em cada tela, com a tarefa levando à tela e fechando ao lançar; regras automáticas por tela ("pendente", "chegou colaborador"); Configurações da Agenda por pessoa (só no expediente ou também fora; deslogar após X segundos sem mexer); relatório de desempenho (no prazo, fora do prazo, não feitas, tempo de resposta); chat mais parecido com WhatsApp; perfil comportamental da tarefa × da pessoa (P-19, aguardando a lista de perfis).
+**Perguntas abertas:** (a) quem entra no grupo de uma lista: escolhido à mão, ou quem tem certa permissão? (b) quem configura as regras automáticas de cada tela? (c) deslogar por inatividade vale para o sistema todo ou só a Agenda, e com qual tempo? (d) a conta de acesso precisa ser ligada ao colaborador para saber o expediente (ver P-41 item 5); (e) regra de pagamento da hora fora do expediente (Rodrigo); (f) um repositório ou dois para a CICLUZ (Rodrigo e Marco). | Zé/Rodrigo/Marco | perguntas (a) a (f) abertas |
