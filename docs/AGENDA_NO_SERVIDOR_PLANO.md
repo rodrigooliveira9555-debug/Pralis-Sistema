@@ -2,8 +2,11 @@
 
 > **Status (23/11/2026): em execução, Entrega A.** A2 feito: a regra está em `servidor/shared/src/agenda/regras.ts`,
 > com a cópia gerada `dist/agenda/regras.js` (ainda não carregada pela tela; isso é a Entrega B), e o servidor usa essa
-> regra no chat e nos arquivos (`acessoAgenda` saiu). Nenhuma migration foi criada ainda: o SQL abaixo é **proposta** e
-> só vira arquivo depois da aprovação do Zé (CLAUDE.md, regra 6).
+> regra no chat e nos arquivos (`acessoAgenda` saiu). A3 feito: **SQL aprovado pelo Zé em 23/11/2026**; o arquivo é
+> `servidor/db/migrations/0007_agenda_tabelas.sql` (gerado pelo drizzle-kit; o índice de `perfis_usuarios` foi posto
+> no começo e o trigger no fim, à mão). O bloco SQL abaixo é a proposta original; **vale o arquivo**. Diferença aprovada:
+> a cópia concluída de uma repetição **pode ser reaberta**, como hoje na tela (`agenda_compromissos_copia_check` só
+> exige que a cópia não repita).
 > Responde à P-45 item 1 (doc 11) e fecha G1, G4, G5, M2, M3 e M4 da `docs/REVISAO_AGENDA_2026-11-23.md` e o DT-15.
 > Modelo seguido: `docs/PRODUTOS_NO_SERVIDOR_PLANO.md` (tabela + API + transferência com conclusão só se tudo chegou).
 
@@ -418,6 +421,8 @@ compromissos, 41 concluídos, 12 avaliações" e confirma. Se algo não bater, n
 - `listas` → `agenda_grupos` (mesmo id). Cor que não for `#rrggbb` vira a primeira cor padrão e a original vai para a
   pendência (neutraliza G2). Dono = administrador que transfere (pergunta 3). Membros iniciais = **todas as contas ativas
   da empresa**, `origem = 'transferencia'` (hoje todo mundo vê todas as listas; ninguém perde nada; pergunta 4).
+- **Decisões do Zé (23/11/2026, junto com o SQL):** compromisso cuja lista não existe mais vai para a primeira lista e
+  entra na pendência; duas listas com o mesmo nome: a segunda ganha " (2)" no nome e entra na pendência.
 - `colunas` → `agenda_colunas`; documento sem colunas recebe as duas iniciais (`col-a-fazer`, `col-em-progresso`), como `completar()` faz.
 - `itens` → `agenda_compromissos` (mesmo id), passando antes pelo mesmo `completar()` de hoje (`responsavelId` antigo
   vira responsável, `avaliacao` vazia). `repeticao.ancora` vazia vira a `data`. `localizacao` → colunas `local_*`.
