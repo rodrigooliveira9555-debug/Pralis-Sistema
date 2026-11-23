@@ -1,6 +1,11 @@
 # Agenda no servidor — plano para aprovação (Zé; Marco de acordo)
 
-> **Status (23/11/2026): em execução, Entrega A.** A2 feito: a regra está em `servidor/shared/src/agenda/regras.ts`,
+> **Status (23/11/2026): Entrega A concluída (A2–A7, servidor e testes); Entrega B (tela) em andamento.** Na Entrega A,
+> escolhas de detalhe feitas seguindo as propostas da seção 9: lista visível para membro, dona, administrador ou quem vê
+> algum compromisso dela; criar compromisso exige ser membro ou dona da lista; mudar a ordenação da lista é da dona ou do
+> administrador; compromisso criado por id que não é conta fica com o gestor escolhido para os "sem criador" (o id antigo
+> vai para `legado`); colunas com nome repetido no documento ganham " (2)" (como as listas).
+> A2 feito: a regra está em `servidor/shared/src/agenda/regras.ts`,
 > com a cópia gerada `dist/agenda/regras.js` (ainda não carregada pela tela; isso é a Entrega B), e o servidor usa essa
 > regra no chat e nos arquivos (`acessoAgenda` saiu). A3 feito: **SQL aprovado pelo Zé em 23/11/2026**; o arquivo é
 > `servidor/db/migrations/0007_agenda_tabelas.sql` (gerado pelo drizzle-kit; o índice de `perfis_usuarios` foi posto
