@@ -19,7 +19,7 @@
   // blocos = as colunas abertas ({alvo: {tipo, id, nome}, quem: linha com a lista aberta}); abertos = grupos abertos; secAbertas =
   // seções abertas ('grupo|seção'). registros guarda (só na memória) o que cada pessoa, cargo ou área tem ligado.
   let seq = 0;
-  const novoBloco = () => ({ id: ++seq, alvo: null, quem: '' });
+  const novoBloco = () => ({ id: ++seq, alvo: null, quem: '', recolhida: false });
   const estado = { aba: 'telas', busca: '', abertos: new Set(), secAbertas: new Set(), blocos: [novoBloco()] };
   const registros = new Map();
 
@@ -58,6 +58,9 @@
     s.setAttribute('aria-hidden', 'true');
     return s;
   }
+
+  /** Uma célula de coluna (a do bloco i); recolhida, só fica a faixa estreita com a setinha para reabrir. */
+  const blocoEl = (i, extra) => el('div', 'acessos-tl-bloco' + (extra ? ' ' + extra : '') + (estado.blocos[i] && estado.blocos[i].recolhida ? ' recolhida' : ''));
 
   /** O botão redondo "+" do sistema (botão redondo de ação). Aberto, o "+" vira "×". */
   function botaoMais(rotulo, aberto, acao) {
@@ -163,6 +166,22 @@
    * "+" da linha (com busca quando é longa) e some ao escolher; o escolhido vira o dono da coluna e a linha mostra o nome.
    */
   function cabecaDaColuna(b) {
+    if (b.recolhida) {
+      const mini = el('div', 'acessos-bloco-compacto');
+      const abre = el('button', 'compras-coluna-seta');
+      abre.type = 'button';
+      abre.setAttribute('aria-expanded', 'false');
+      abre.title = 'Mostrar a coluna de ' + b.alvo.nome;
+      abre.setAttribute('aria-label', abre.title);
+      abre.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>';
+      abre.onclick = () => { b.recolhida = false; desenhar(); };
+      const nome = el('span', 'acessos-bloco-nome-vert', b.alvo.nome);
+      nome.title = b.alvo.nome;
+      const resumo = el('small', 'profiles-note acessos-bloco-resumo');
+      resumo.hidden = true;
+      mini.append(abre, nome, resumo);
+      return mini;
+    }
     const box = el('div', 'acessos-bloco-cab');
     const usados = new Set(estado.blocos.filter((x) => x !== b && x.alvo).map((x) => x.alvo.tipo + ':' + x.alvo.id));
     LINHAS.forEach(([id, rotulo, vazio, ler, semItens]) => {
@@ -209,6 +228,16 @@
       box.append(linha);
     });
     box.append(el('small', 'profiles-note acessos-bloco-resumo'));
+    if (b.alvo) {
+      const fecha = el('button', 'compras-coluna-seta acessos-bloco-seta');
+      fecha.type = 'button';
+      fecha.setAttribute('aria-expanded', 'true');
+      fecha.title = 'Recolher a coluna de ' + b.alvo.nome;
+      fecha.setAttribute('aria-label', fecha.title);
+      fecha.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>';
+      fecha.onclick = () => { b.recolhida = true; b.quem = ''; desenhar(); };
+      box.append(fecha);
+    }
     if (b.alvo || estado.blocos.length > 1) {
       const x = el('button', 'acessos-bloco-x');
       x.type = 'button';
@@ -240,6 +269,19 @@
     blocos.push(abas);
     const barra = el('div', 'acessos-barra');
     if (estado.aba === 'telas') barra.append(U.buscaFixa('acessos-telas', 'Buscar tela', estado.busca, (v) => { estado.busca = v; desenhar(); }));
+    // O "‹ ›" redondo do sistema (o mesmo das listas): recolhe todas as colunas de uma vez ou, com todas recolhidas, mostra todas.
+    const escolhidas = estado.blocos.filter((b) => b.alvo);
+    if (escolhidas.length) {
+      const algumaAberta = escolhidas.some((b) => !b.recolhida);
+      const geral = el('button', 'shortcut-circle compras-redondo compras-colunas-geral acessos-colunas-geral');
+      geral.type = 'button';
+      geral.innerHTML = U.svg('<path d="m9 5-6 7 6 7M15 5l6 7-6 7"/>');
+      geral.setAttribute('aria-expanded', String(algumaAberta));
+      geral.title = algumaAberta ? 'Recolher todas as colunas' : 'Mostrar todas as colunas';
+      geral.setAttribute('aria-label', geral.title);
+      geral.onclick = () => { escolhidas.forEach((b) => { b.recolhida = algumaAberta; if (algumaAberta) b.quem = ''; }); desenhar(); };
+      barra.append(geral);
+    }
     blocos.push(barra);
 
     const mat = el('div', 'acessos-matriz');
@@ -272,7 +314,7 @@
     e.append(mais, el('span', 'acessos-tl-esq-txt', aberta ? 'Nova coluna' : 'Escolha para quem é a coluna aberta'));
     cab.append(e);
     estado.blocos.forEach((b, i) => {
-      const w = el('div', 'acessos-tl-bloco acessos-tl-bloco-cab');
+      const w = blocoEl(i, 'acessos-tl-bloco-cab');
       const c = cabecaDaColuna(b);
       resumos.push([regs[i], c.querySelector('.acessos-bloco-resumo')]);
       w.append(c);
@@ -335,8 +377,8 @@
       const esqGrupo = el('div', 'acessos-tl-esq acessos-tl-esq-grupo');
       esqGrupo.append(h, nivel);
       linhaGrupo.append(esqGrupo);
-      estado.blocos.forEach(() => {
-        const w = el('div', 'acessos-tl-bloco');
+      estado.blocos.forEach((_, i) => {
+        const w = blocoEl(i);
         PERMS.forEach((p) => {
           const c = el('span', 'acessos-tl-cel acessos-tl-cab-ic');
           c.title = p.nome;
@@ -388,7 +430,7 @@
     };
     esq.append(b);
     linha.append(esq);
-    estado.blocos.forEach(() => linha.append(el('div', 'acessos-tl-bloco')));
+    estado.blocos.forEach((_, i) => linha.append(blocoEl(i)));
     return linha;
   }
 
@@ -423,7 +465,7 @@
     if (nova) { const et = U.situacao('Novo · desligado', 'atencao'); et.classList.add('acessos-tl-novo'); esq.append(et); }
     linha.append(esq);
     regs.forEach((reg, i) => {
-      const w = el('div', 'acessos-tl-bloco');
+      const w = blocoEl(i);
       PERMS.forEach((p) => {
         const cel = el('span', 'acessos-tl-cel');
         const ligada = Boolean(reg) && (reg.telas[t.chave] || new Set()).has(p.id);
@@ -472,7 +514,7 @@
         if (sensivel) { const s = U.situacao('Sensível', 'atencao'); s.title = 'Mexe em dinheiro já registrado, em dado do DP ou no acesso dos outros'; esq.append(s); }
         linha.append(esq);
         regs.forEach((reg, i) => {
-          const w = el('div', 'acessos-tl-bloco');
+          const w = blocoEl(i);
           const cel = el('span', 'acessos-tl-cel');
           const quem = estado.blocos[i].alvo ? estado.blocos[i].alvo.nome : 'coluna sem escolha';
           cel.append(interruptor(rotulo + ' (' + quem + ')', Boolean(reg) && reg.acoes.has(chave), !reg, (liga) => {
