@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { iniciarApi } from './servidor-api.mjs';
-import { escolherNaArvore } from './ajuda-arvore.mjs';
+import { escolherNaArvore, escolherLocal } from './ajuda-arvore.mjs';
 
 const require = createRequire(import.meta.url);
 const XLSX = require('../dist/vendor/sheetjs/xlsx.full.min.js');
@@ -177,7 +177,7 @@ ok((await dlg().locator('.compras-alerta-vinculo').textContent()).includes('grup
 await irEtapa(2);
 await escolherNaArvore(p, dlg().getByRole('button', { name: 'Grupo de mercadorias', exact: true }), { grupo: 'MERCEARIA' });
 await irEtapa(3);
-await dlg().getByLabel('Setor de estoque', { exact: true }).selectOption({ label: 'LJ › VITRINES' });
+await escolherLocal(p, dlg().getByRole('button', { name: 'Setor de estoque', exact: true }), ['LJ', 'VITRINES']);
 await dlg().locator('.people-save-control').click();
 await fechado();
 const vinculado = await p.evaluate(async () => (await CicluzSync.api('/produtos?status=todos&busca=novo%20do%20app')).itens[0]);

@@ -305,11 +305,21 @@
         const sub = { get value() { return arvGrupo.value.split('|')[1] || ''; } };
         s2.append(campoP('Tipo', tipo), campoP('Grupo de mercadorias *', arvGrupo, DICAS.grupo, 'Grupo ou subgrupo do cadastro MER - Grupos de Mercadorias. Quando o subgrupo tem regra própria, ela vale no lugar da do grupo.', 'grupoId'));
         const sLoja = sec('Desta loja', 'Estoque, pontos de venda e preço', eLoja);
-        // Setor de estoque = nó da árvore de locais (vínculo pelo id). Texto antigo sem nó continua como opção, com o alerta.
-        const textosSemNo = locais.concat(p?.setorEstoque && !locais.includes(p.setorEstoque) ? [p.setorEstoque] : []).filter((t) => !nosLocais.some((n) => n.nome === t));
+        // Setor de estoque e Área escolhidos na árvore Área › Setor › Local do S2, num campo que abre a janela de locais (23/11/2026,
+        // Zé: "igual ao grupo e subgrupo"). O dado gravado não muda: o setor pelo id do nó (localId; texto antigo sem nó continua como
+        // "txt:" com o aviso) e a área pelo nome, como sempre foi.
+        const LT = window.CicluzLocationTree;
+        const nomeDoNo = (id) => (nosLocais.find((n) => n.id === id) || {}).nome || '';
+        const campoLocal = (rotulo, valor, textoVazio) => U.campoArvore({
+          rotulo, valor, textoVazio,
+          janela: (atual, escolher) => LT.janelaUnica({ titulo: rotulo + ' do produto', atual: atual.startsWith('txt:') ? '' : atual, aoEscolher: escolher }),
+          texto: (v) => (v.startsWith('txt:') ? v.slice(4) + ' (sem vínculo na árvore)' : LT.caminhoDe(v)),
+        });
         const valorSetor = p?.localId && nosLocais.some((n) => n.id === p.localId) ? p.localId : (p?.setorEstoque ? 'txt:' + p.setorEstoque : '');
-        const setor = seletor(nosLocais.map((n) => [n.id, n.caminho]).concat(textosSemNo.map((t) => ['txt:' + t, t + ' (sem vínculo na árvore)'])), valorSetor, 'Selecione');
-        const area = seletor(locais.concat(p?.areaEstoque && !locais.includes(p.areaEstoque) ? [p.areaEstoque] : []), p?.areaEstoque || '', 'Selecione');
+        const setor = campoLocal('Setor de estoque', valorSetor, 'Selecione o setor ou local');
+        const noArea = p?.areaEstoque ? nosLocais.find((n) => n.nome === p.areaEstoque) : null;
+        const area = campoLocal('Área', noArea ? noArea.id : (p?.areaEstoque ? 'txt:' + p.areaEstoque : ''), 'Selecione a área');
+        const areaGravada = () => (area.value.startsWith('txt:') ? area.value.slice(4) : nomeDoNo(area.value));
         const min = entrada('number', p?.estoqueMin ?? '', { min: 0, step: 'any' });
         const max = entrada('number', p?.estoqueMax ?? '', { min: 0, step: 'any' });
         const listaLocais = el('datalist'); listaLocais.id = 'compras-locais-' + Date.now();
@@ -686,7 +696,7 @@
 
         return {
           alertas, status, ajuda, liberado, foto, ean, marca, nome, gramatura, medida, balanca, validade, emb, cde, qtdEmb, medCompra, aprox,
-          tipo, grupo, sub, setor, area, min, max, local1, local2, setor1, setor2, areaVenda, custo, margem, auto, pontual,
+          tipo, grupo, sub, setor, area, areaGravada, min, max, local1, local2, setor1, setor2, areaVenda, custo, margem, auto, pontual,
           precisao, qtdTransf, unidTransf, receituario, refRec, fNcm, fCest, fCat, descricaoAtual, precoCalculado, atualizarFiscal, fiscaisDigitados, form,
           irParaEtapaDe: (no) => { const k = etapasNo.indexOf(no.closest('.compras-etapa')); if (k >= 0 && k !== atual) ir(k); },
         };
@@ -760,7 +770,7 @@
         quantidadeIndividual: gram, unidadeIndividual: c.medida.value, pesavel, teclaBalanca: pesavel ? R.TECLA_BALANCA_FIXA : null, validadeBalanca: pesavel ? validadeBalanca : null,
         descricao, embalagem: c.emb.value, cDe: c.emb.value ? c.cde.value : null, qtdEmbalagem, medidaCompra: c.medCompra.value, compraAproximada: c.aprox.value === 'sim',
         tipo, grupoId: c.grupo.value, subgrupoId: c.sub.value,
-        ...localDoSetor(c.setor.value), areaEstoque: c.area.value, estoqueMin, estoqueMax,
+        ...localDoSetor(c.setor.value), areaEstoque: c.areaGravada(), estoqueMin, estoqueMax,
         localVenda1: c.local1.value.trim(), localVenda2: c.local2.value.trim(), setorVenda1: c.setor1.value.trim(), setorVenda2: c.setor2.value.trim(), areaVenda: c.areaVenda.value || null,
         custo: num(c.custo.value), margem: margemPct == null ? null : margemPct / 100, auto, precoVenda: c.precoCalculado(),
         transformacao: tipo === 'transformacao' ? { precisao: c.precisao.value || null, quantidade: c.qtdTransf.value === '' ? null : Number(c.qtdTransf.value), unidade: c.unidTransf.value || null, produtoReceituario: c.receituario.value.trim() || null, refReceituario: c.refRec.value.trim() || null } : null,

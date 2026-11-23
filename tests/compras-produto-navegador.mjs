@@ -6,7 +6,7 @@ import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { iniciar, SESSAO_LOCAL } from './servidor.mjs';
 import { iniciarApi } from './servidor-api.mjs';
-import { escolherNaArvore } from './ajuda-arvore.mjs';
+import { escolherNaArvore, escolherLocal } from './ajuda-arvore.mjs';
 
 const navegador = await chromium.launch();
 const erros = [];
@@ -92,8 +92,10 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   const sLoja = sec(p, 'Desta loja');
   await etapa(p, 3);
   ok((await sLoja.getByLabel('Margem (%)', { exact: true }).inputValue()) === '25', 'Trocar o grupo copia a margem padrão do grupo');
-  await sLoja.getByLabel('Setor de estoque', { exact: true }).selectOption({ index: 1 });
-  await sLoja.getByLabel('Área', { exact: true }).selectOption({ index: 1 });
+  // Setor de estoque e Área escolhidos na janela de áreas, setores e locais (23/11/2026, Zé).
+  await escolherLocal(p, sLoja.getByRole('button', { name: 'Setor de estoque', exact: true }), ['Operação de Loja', 'Caixa', 'Principal']);
+  ok((await sLoja.getByRole('button', { name: 'Setor de estoque', exact: true }).textContent()).trim() === 'Operação de Loja › Caixa › Principal', 'Setor de estoque mostra o caminho escolhido na árvore de locais');
+  await escolherLocal(p, sLoja.getByRole('button', { name: 'Área', exact: true }), ['Operação de Loja']);
   await sLoja.getByLabel('Estoque mín.', { exact: true }).fill('12');
   await sLoja.getByLabel('Estoque máx.', { exact: true }).fill('48');
   await sLoja.getByLabel('Local de venda primário', { exact: true }).fill('balcão');
@@ -156,7 +158,7 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   const ligacao = await p.evaluate(async (id) => { const s = await CicluzSync.api('/produtos/item/' + id); const ids = ((s.dados.promocoes || [])[0] || {}).agendaItemIds || []; return { ids, existem: ids.filter((x) => CicluzAgendaDados.item(x)).length, titulo: ids[0] && CicluzAgendaDados.item(ids[0]).titulo }; }, g.id);
   ok(ligacao.ids.length >= 1 && ligacao.existem === ligacao.ids.length && /BISCOITO INTEGRAL/.test(ligacao.titulo), 'Promoção agendada: compromisso na Agenda e ligação gravada no servidor (' + JSON.stringify(ligacao) + ')');
   ok(g.conversoes.length === 1 && g.conversoes[0].unidade === 'CX' && g.conversoes[0].unidadesIndividuais === 12, 'Conversão gravada');
-  ok(g.setorEstoque && g.areaEstoque, 'Setor e área de estoque da árvore de locais');
+  ok(g.localId && g.setorEstoque === 'PRINCIPAL' && g.areaEstoque === 'Operação de Loja', 'Setor (pelo id do nó, com o nome) e área (pelo nome) gravados como antes: ' + [g.localId, g.setorEstoque, g.areaEstoque].join(' / '));
 
   // Reabrir e conferir que os campos voltam preenchidos
   await p.evaluate((id) => CicluzProdutoForm.editarProduto(CicluzComprasDados.produto(id), () => {}), g.id);

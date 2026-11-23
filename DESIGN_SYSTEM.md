@@ -10,6 +10,10 @@ onde só o produto é marcável). Nessas telas a escolha é **única** (sem casc
 Os grupos vêm do cadastro do S2 (Saídas › Cadastros Geral › MER - Grupos de Mercadorias); o dado gravado continua grupoId e subgrupoId.
 Peça única: `U.seletorArvore` (saiu de contratos.js), `U.campoArvore` e `U.arvoreGruposMercadoria` em `dist/compras/ui.js`. Correção
 no mesmo dia: a linha da árvore cresce quando o nome quebra (320 px), em vez de vazar sobre a de baixo.
+**Locais (mesmo dia, Zé):** "Setor de estoque" e "Área" do produto e o "Local do estoque" de MER - Produtos da Produção usam o mesmo
+campo, abrindo a janela de **áreas, setores e locais** (o desenho do cadastro de locais, com cor e sigla da área) em **escolha única**
+(`CicluzLocationTree.janelaUnica`). O dado não muda: setor e local do estoque pelo id do nó; área pelo nome; texto antigo sem nó
+aparece como "… (sem vínculo na árvore)". Local sem cor (ex.: vindo de importação) usa a cor da área de cima e não quebra a janela.
 
 ## Configurações → Permissões → Acesso por Tela: esboço do nível de acesso por tela (19/11/2026)
 Pedido do Washington, a partir de um esboço dele. Novo cartão **Acesso por Tela** em Permissões (`dist/acessos/telas.js`, dados de exemplo em `telas-dados.js`, estilos em `acessos.css`). **É um esboço sem backend: nada é gravado e nenhum acesso muda.** Mostra o **menu inteiro aberto** (grupo › seção › tela, 117 telas, as chaves são as `data-menu-item-key` dos cartões do menu) e, em cada tela, o **ícone do nível de acesso** (só o ícone e o nome, **sem caixa de seleção**; nada quando é "Sem acesso") e o botão redondo **"+"**: as opções do nível só aparecem quando o "+" da linha é tocado (e o "+" vira "×" enquanto está aberto).

@@ -1012,28 +1012,31 @@
    * Campo de escolha única em árvore (23/11/2026, Zé: no lugar dos seletores comuns de grupo e subgrupo). Parece um campo, mostra o
    * que foi escolhido e, ao tocar, abre a janela em árvore (seletorArvore, modo único). É um botão com .value (o id do nó, ou '') que
    * dispara "change" quando a escolha muda. obrigatorio: Confirmar sem nada marcado é recusado.
+   * janela(atual, escolher) e texto(valor): para árvores com janela própria (áreas, setores e locais: CicluzLocationTree.janelaUnica);
+   * texto devolve o que o campo mostra, ou '' quando o valor não existe mais.
    */
-  function campoArvore({ rotulo, titulo, sigla, cores, iconeFolha, rotuloBusca, vazio, nos, valor = '', textoVazio = 'Selecione', obrigatorio = false }) {
+  function campoArvore({ rotulo, titulo, sigla, cores, iconeFolha, rotuloBusca, vazio, nos, valor = '', textoVazio = 'Selecione', obrigatorio = false, janela, texto: textoDe }) {
     const b = el('button', 'compras-arvore-campo'); b.type = 'button'; b.setAttribute('aria-haspopup', 'dialog'); b.setAttribute('aria-label', rotulo);
     const texto = el('span', 'compras-arvore-texto'); b.append(texto); b.insertAdjacentHTML('beforeend', svg('<path d="m6 9 6 6 6-6"/>'));
     let atual = valor || '';
     const achar = (lista, id) => { for (const n of lista) { if (n.id === id) return n; const f = achar(n.filhos || [], id); if (f) return f; } return null; };
     const formatar = (n) => (typeof formatSystemName === 'function' ? formatSystemName(String(n || '')) : String(n || ''));
     const pintar = () => {
-      const n = atual ? achar(nos(), atual) : null;
-      texto.textContent = n ? (n.folha ? n.nome : formatar(n.nome)) : atual ? 'Escolha não encontrada no cadastro' : textoVazio;
-      b.classList.toggle('vazio', !n); b.title = texto.textContent;
+      const n = atual && !textoDe ? achar(nos(), atual) : null;
+      const t = textoDe ? (atual ? textoDe(atual) : '') : n ? (n.folha ? n.nome : formatar(n.nome)) : '';
+      texto.textContent = t || (atual ? 'Escolha não encontrada no cadastro' : textoVazio);
+      b.classList.toggle('vazio', !t); b.title = texto.textContent;
+    };
+    const escolher = (novo) => {
+      if (!novo && obrigatorio) return 'Marque uma opção para confirmar.';
+      if (novo !== atual) { atual = novo; pintar(); b.dispatchEvent(new Event('change', { bubbles: true })); }
+      return undefined;
     };
     Object.defineProperty(b, 'value', { get: () => atual, set: (v) => { atual = v || ''; pintar(); } });
-    b.addEventListener('click', () => seletorArvore({
+    b.addEventListener('click', () => (janela ? janela(atual, escolher) : seletorArvore({
       titulo, cores, sigla, iconeFolha, rotuloBusca, vazio, nos, unico: true, marcados: new Set(atual ? [atual] : []),
-      aoConfirmar: (escolha) => {
-        const novo = [...escolha][0] || '';
-        if (!novo && obrigatorio) return 'Marque uma opção para confirmar.';
-        if (novo !== atual) { atual = novo; pintar(); b.dispatchEvent(new Event('change', { bubbles: true })); }
-        return undefined;
-      },
-    }));
+      aoConfirmar: (escolha) => escolher([...escolha][0] || ''),
+    })));
     pintar();
     return b;
   }
