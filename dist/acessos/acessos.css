@@ -318,12 +318,41 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
   .acessos-tl-esq-grupo .compras-conta { display: none; }
   .acessos-tl-esq-txt { font-size: 11px; }
 }
+/* Celular: uma coluna ocupa todo o espaço ao lado dos nomes (os sete ícones e interruptores cabem sem rolar); com mais colunas, rola-se
+   de uma em uma. A lista de nomes, cargos e áreas abre dentro da própria coluna, sem ser cortada. */
 @media (max-width: 480px) {
-  .acessos-matriz { --tl-col: 38px; }
-  .acessos-tl-bloco { padding: 0 8px; }
-  .acessos-tl .account-status-switch { width: 32px; min-width: 32px; height: 20px; padding: 3px; }
-  .acessos-tl .account-status-switch > span { width: 14px; height: 14px; }
-  .acessos-tl .account-status-switch[aria-checked="true"] > span { transform: translateX(12px); }
+  .acessos-matriz { --tl-nome: 120px; --tl-bloco: calc(100cqw - var(--tl-nome) - 2px); scroll-snap-type: x proximity; scroll-padding-left: var(--tl-nome); }
+  .acessos-tl-bloco { padding: 0 6px; scroll-snap-align: start; }
+  .acessos-tl-esq { padding: 6px 6px 6px 8px; }
+  .acessos-tl-nome { font-size: 11px; line-height: 14px; }
+  .acessos-tl .account-status-switch { width: 26px; min-width: 26px; height: 16px; padding: 3px; }
+  .acessos-tl .account-status-switch > span { width: 10px; height: 10px; }
+  .acessos-tl .account-status-switch[aria-checked="true"] > span { transform: translateX(10px); }
+  .acessos-tl-cel { padding: 6px 0; }
+  .acessos-nivel-ic { width: 24px; height: 24px; }
+  .acessos-nivel-ic svg { width: 14px; height: 14px; }
+  .acessos-nivel-seta { width: 12px; height: 12px; right: -3px; bottom: -2px; }
+  .acessos-nivel-ic .acessos-nivel-seta svg { width: 8px; height: 8px; }
+  .acessos-tl-esq-grupo { position: sticky; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 4px; padding: 8px 6px 8px 8px; }
+  .acessos-tl-esq-grupo h3 { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .acessos-tl-grupo-nome b { font-size: 13px; line-height: 16px; }
+  .acessos-tl-esq-grupo .acessos-telas-nivel { position: absolute; top: 8px; right: 6px; margin: 0; width: 28px; height: 28px; }
+  .acessos-tl-sec-nome { gap: 2px; font-size: 11px; }
+  .acessos-tl-sec-nome small { display: none; }
+  .acessos-tl-sec-nome .acessos-tl-seta { width: 12px; }
+  .acessos-tl-sec-nome .acessos-tl-subic { width: 18px; height: 18px; }
+  .acessos-tl-sec-nome .acessos-tl-subic svg { width: 16px; height: 16px; }
+  .acessos-bloco-cab .acessos-telas-valor { font-size: 12px; }
+  .acessos-tl-quem-lin > .acessos-tl-esq { padding-top: 10px; }
+}
+@media (max-width: 360px) {
+  .acessos-matriz { --tl-nome: 104px; }
+  .acessos-tl-sec-nome .acessos-tl-subic { display: none; }
+  .acessos-tl .account-status-switch { width: 22px; min-width: 22px; height: 14px; padding: 2px; }
+  .acessos-tl .account-status-switch > span { width: 8px; height: 8px; }
+  .acessos-tl .account-status-switch[aria-checked="true"] > span { transform: translateX(8px); }
+  .acessos-nivel-ic { width: 22px; height: 22px; }
+  .acessos-nivel-ic svg { width: 13px; height: 13px; }
 }
 @media (prefers-reduced-motion: reduce) { .acessos-telas-mais svg, .acessos-tl-seta { transition: none; } }
 
