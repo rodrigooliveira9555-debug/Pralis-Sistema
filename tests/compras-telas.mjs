@@ -7,6 +7,7 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { iniciar, SESSAO_LOCAL } from './servidor.mjs';
+import { escolherNaArvore } from './ajuda-arvore.mjs';
 
 const { servidor, url } = await iniciar();
 const navegador = await chromium.launch();
@@ -34,24 +35,24 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
 {
   const p = await abrirPagina(1024);
   // Menu de Mercadorias (vídeo do Rodrigo, 06/11/2026): sem o item "Compras (revisar)"; rotina em Lançamentos,
-  // cadastros em Cadastros Geral, estoque em Estoques e o agendamento em Agenda.
+  // cadastros em Cadastros Geral, estoque e contagem em Estoques; o agendamento abre os Lançamentos (Zé, 23/11/2026).
   const subMercadorias = await p.evaluate(() => sections[3][1].join('|'));
   ok(subMercadorias === 'Lançamentos|Lançamentos Produção|Relatórios|Cadastros Geral|Cadastros Geral Produção|Estoques|Pastas Documentos', 'Mercadorias sem "Compras (revisar)": ' + subMercadorias);
   const cardsDe = async (sub) => { await p.evaluate((x) => menuBack(3, x)(), sub); return p.locator('#sector-content .section-card b').allTextContents(); };
   const lanc = await cardsDe('Lançamentos');
-  ok(lanc.join('|') === 'MER - Mercadorias|MER - Pedido de Compra|MER - Cotação por Fornecedor|MER - Pedidos a Receber|MER - Contagem de Estoque', 'Lançamentos: pede → cota → recebe → conta, sem os espaços reservados MER - Pedidos e MER - Estoque: ' + lanc.join('|'));
+  ok(lanc.join('|') === 'MER - Mercadorias|MER - Agenda de Pedidos|MER - Pedido de Compra|MER - Cotação por Fornecedor|MER - Pedidos a Receber', 'Lançamentos: agenda → pede → cota → recebe: ' + lanc.join('|'));
   const cad = await cardsDe('Cadastros Geral');
   ok(cad.join('|') === 'MER - Grupos de Mercadorias|MER - Fornecedores|MER - Produtos|Unidades de Medida|MER - Catálogo e Preço-Base', 'Cadastros Geral com o Catálogo e Preço-Base: ' + cad.join('|'));
-  ok((await cardsDe('Estoques')).join('|') === 'MER - Grupo Mercadorias', 'Estoques só com o estoque');
+  ok((await cardsDe('Estoques')).join('|') === 'MER - Grupo Mercadorias|MER - Contagem de Estoque', 'Estoques com o estoque e a contagem');
   ok(await p.locator('#sector-content .card-inherited-icon.revisar').count() === 0, 'Nenhuma exclamação de revisar nas linhas de Mercadorias');
-  for (const [sub, titulo, id] of [['Lançamentos', 'MER - Pedido de Compra', 'solicitacao'], ['Lançamentos', 'MER - Cotação por Fornecedor', 'cotacao'], ['Lançamentos', 'MER - Pedidos a Receber', 'pedidos'], ['Lançamentos', 'MER - Contagem de Estoque', 'conferencias'], ['Cadastros Geral', 'MER - Catálogo e Preço-Base', 'cadastro']]) {
+  for (const [sub, titulo, id] of [['Lançamentos', 'MER - Pedido de Compra', 'solicitacao'], ['Lançamentos', 'MER - Cotação por Fornecedor', 'cotacao'], ['Lançamentos', 'MER - Pedidos a Receber', 'pedidos'], ['Estoques', 'MER - Contagem de Estoque', 'conferencias'], ['Lançamentos', 'MER - Agenda de Pedidos', 'agendamento'], ['Cadastros Geral', 'MER - Catálogo e Preço-Base', 'cadastro']]) {
     await p.evaluate((x) => menuBack(3, x)(), sub);
     await p.locator('#sector-content .section-card', { hasText: titulo }).click();
     ok(await p.locator('#compras-' + id + '.show').count() === 1 && (await p.locator('#compras-' + id + ' .head h2').first().textContent()).trim() === titulo, sub + ' → ' + titulo + ' abre a tela com o mesmo nome');
     ok((await p.locator('#compras-' + id + ' .head p').first().textContent()).includes('Saídas · Mercadorias / ' + sub + ' / ' + titulo), 'Caminho de ' + titulo + ' mostra ' + sub);
   }
   const agendaBotao = await p.evaluate(() => [...document.querySelectorAll('.nav button')].map((b) => b.textContent.trim()).filter((t) => t.includes('Agenda de Pedidos')));
-  ok(agendaBotao.join() === 'MER - Agenda de Pedidos', 'Agenda → MER - Agenda de Pedidos, sem "(revisar)": ' + agendaBotao.join());
+  ok(agendaBotao.length === 0, 'O agendamento saiu do menu Agenda (um caminho só, pelos Lançamentos): ' + agendaBotao.join());
 
   // "+" fixo do menu rápido aciona a criação da tela (header-add-circle)
   for (const [tela, titulo] of [['produtos', 'Cadastro produto'], ['fornecedores', 'Cadastro fornecedor'], ['cotacao', 'Pedido urgente'], ['conferencias', 'Agendar conferência']]) {
@@ -60,6 +61,20 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
     ok(await p.locator('dialog.compras-dialog[open]', { hasText: titulo }).count() === 1, '"+" abre ' + titulo);
     await p.locator('dialog.compras-dialog[open] .people-close-control').click();
   }
+  // Agendar contagem com grupo e subgrupo escolhidos na árvore (23/11/2026, Zé): grava grupoId e subgrupoId como antes.
+  await p.evaluate(() => CicluzCompras.abrir('conferencias'));
+  await p.locator('.view.show .people-add-control').click();
+  const dc = p.locator('dialog.compras-dialog[open]').last();
+  ok((await dc.getByRole('button', { name: 'Grupo', exact: true }).textContent()).trim() === 'Todos os grupos', 'Contagem: sem escolha, o campo diz "Todos os grupos"');
+  await escolherNaArvore(p, dc.getByRole('button', { name: 'Grupo', exact: true }), { grupo: 'BEBIDAS', subgrupo: 'REFRIGERANTES' });
+  ok((await dc.getByRole('button', { name: 'Grupo', exact: true }).textContent()).trim() === 'Bebidas › Refrigerantes', 'Contagem: o campo mostra o subgrupo escolhido');
+  await dc.getByLabel('Quem conta *', { exact: true }).selectOption({ index: 1 });
+  const agendasAntes = await p.evaluate(() => CicluzComprasDados.dados.conferenciaAgendas.length);
+  await dc.locator('.people-save-control').click();
+  await p.waitForFunction((n) => CicluzComprasDados.dados.conferenciaAgendas.length === n + 1, agendasAntes, { timeout: 8000 });
+  const filtroContagem = await p.evaluate(() => CicluzComprasDados.dados.conferenciaAgendas.at(-1).filtro);
+  ok(filtroContagem.grupoId && filtroContagem.subgrupoId && filtroContagem.subgrupoId.startsWith(filtroContagem.grupoId), 'Contagem agendada grava o grupo e o subgrupo escolhidos na árvore: ' + JSON.stringify(filtroContagem));
+  await p.evaluate(() => CicluzComprasDados.transacao((d) => { d.conferenciaAgendas.pop(); })); // não interfere no resto do teste
   // Fornecedores (15/11/2026) e Unidades de Medida (18/11/2026) têm o botão de cadastrar no cabeçalho da lista (pedido do
   // Rodrigo); as outras telas seguem sem repetir o "+".
   await p.evaluate(() => CicluzCompras.abrir('unidades'));
@@ -249,12 +264,14 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
     const altura = (await p.locator('#compras-' + tela + ' .compras-abas').boundingBox()).height;
     ok(altura < 60, 'Abas com a altura dos chips em ' + tela + ' (' + Math.round(altura) + 'px)');
   }
-  // Agendamento pela interface: fica no menu Agenda → "MER - Agenda de Pedidos" (Rodrigo, 05/11 e 06/11)
-  await p.evaluate(() => [...document.querySelectorAll('.nav button')].find((b) => b.textContent.includes('MER - Agenda de Pedidos')).click());
-  ok(await p.locator('#compras-agendamento.show').count() === 1, 'Agenda → MER - Agenda de Pedidos abre o agendamento do Compras');
+  // Agendamento pela interface: Lançamentos → "MER - Agenda de Pedidos" (Zé, 23/11/2026; antes ficava no menu Agenda)
+  await p.evaluate(() => menuBack(3, 'Lançamentos')());
+  await p.locator('#sector-content .section-card', { hasText: 'MER - Agenda de Pedidos' }).click();
+  ok(await p.locator('#compras-agendamento.show').count() === 1, 'Lançamentos → MER - Agenda de Pedidos abre o agendamento do Compras');
   await p.locator('.view.show .people-add-control').click(); // "+" do rodapé fixo
   const d1 = dialogo(p);
-  await d1.locator('select[aria-label="Grupo *"]').selectOption({ label: 'BEBIDAS' });
+  // Grupo e subgrupo num campo só, escolhidos na árvore (23/11/2026, Zé).
+  await escolherNaArvore(p, d1.getByRole('button', { name: 'Grupo *', exact: true }), { grupo: 'BEBIDAS' });
   await d1.getByRole('checkbox', { name: 'Marcar REFRIGERANTE COLA 2 LT' }).check();
   await d1.getByRole('checkbox', { name: 'Marcar REFRIGERANTE GUARANÁ 2 LT' }).check();
   await d1.locator('select[aria-label="Responsável por executar *"]').selectOption('u-jose');
@@ -301,7 +318,8 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await campo.fill('25');
   await separacao.getByRole('button', { name: 'Salvar ajuste' }).click();
   ok(await forn.getByText('Ajuste salvo. O comprador vê a quantidade nova no pedido.').count() === 1, 'Ajuste salvo');
-  ok(await p.evaluate(() => CicluzComprasDados.dados.pedidos[0].eventos.some((e) => e.obs.includes('Fornecedor ajustou ao estoque dele'))), 'Ajuste registrado no histórico do pedido');
+  // O ajuste é gravado na aba do fornecedor; a do comprador recebe pelo aviso do armazenamento: espera chegar (sem corrida).
+  ok(await p.waitForFunction(() => CicluzComprasDados.dados.pedidos[0].eventos.some((e) => e.obs.includes('Fornecedor ajustou ao estoque dele')), null, { timeout: 8000 }).then(() => true, () => false), 'Ajuste registrado no histórico do pedido');
 
   // Produtos que também vendo: vínculo nasce aprovado
   await forn.getByRole('button', { name: 'Ver lista' }).click();

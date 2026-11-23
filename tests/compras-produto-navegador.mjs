@@ -6,6 +6,7 @@ import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { iniciar, SESSAO_LOCAL } from './servidor.mjs';
 import { iniciarApi } from './servidor-api.mjs';
+import { escolherNaArvore } from './ajuda-arvore.mjs';
 
 const navegador = await chromium.launch();
 const erros = [];
@@ -85,7 +86,9 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   ok((await s1b.getByLabel('Como se compra (automático)', { exact: true }).inputValue()) === 'BISCOITO INTEGRAL 200 G - CAIXA COM BISCOITO INTEGRAL 200 G APROXIMADAMENTE 12UN', 'Como se compra no formato do S1');
   const s2 = sec(p, 'Revenda ou transformação');
   await etapa(p, 2);
-  await s2.getByLabel('Grupo de mercadorias', { exact: true }).selectOption({ label: 'MERCEARIA' });
+  // Grupo e subgrupo num campo só, escolhidos na árvore (23/11/2026, Zé).
+  await escolherNaArvore(p, s2.getByRole('button', { name: 'Grupo de mercadorias', exact: true }), { grupo: 'MERCEARIA' });
+  ok((await s2.getByRole('button', { name: 'Grupo de mercadorias', exact: true }).textContent()).trim() === 'Mercearia', 'Campo de grupo mostra o que foi escolhido na árvore');
   const sLoja = sec(p, 'Desta loja');
   await etapa(p, 3);
   ok((await sLoja.getByLabel('Margem (%)', { exact: true }).inputValue()) === '25', 'Trocar o grupo copia a margem padrão do grupo');
@@ -120,10 +123,9 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   await s4.getByLabel('Término', { exact: true }).fill('10:00');
   // date-fields.js do S2 mostra um campo DD/MM/AA no lugar do original (que guarda ISO).
   await s4.getByLabel('Terminar repetição', { exact: true }).filter({ visible: true }).fill('31/12/26');
-  // Sai do campo de data antes de tocar no dia. DEFEITO CONHECIDO (23/11/2026, avisado ao Zé): logo depois de digitar a data, o 1º toque
-  // num dia se perde, porque a confirmação da data redesenha a lista de dias e o botão tocado é trocado antes do clique.
-  await p.keyboard.press('Tab');
+  // Toca no dia logo depois de digitar a data (sem sair do campo antes): o 1º toque tem de valer (defeito corrigido em 23/11/2026).
   await s4.getByRole('button', { name: 'Promoção 1: Dom' }).click();
+  ok(await s4.getByRole('button', { name: 'Promoção 1: Dom' }).getAttribute('aria-pressed') === 'false', 'O 1º toque no dia logo depois de digitar a data já desmarca o dia');
   await etapa(p, 1);
   const s5 = sec(p, 'Conversões de unidade');
   await s5.getByRole('button', { name: 'Adicionar conversão' }).click();
@@ -186,7 +188,7 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   await sec(p, 'Produto').getByLabel('Nome do produto', { exact: true }).fill('Biscoito Integral Aveia');
   await sec(p, 'Produto').getByLabel('Medida base', { exact: true }).selectOption('G');
   await etapa(p, 2);
-  await sec(p, 'Revenda ou transformação').getByLabel('Grupo de mercadorias', { exact: true }).selectOption({ label: 'MERCEARIA' });
+  await escolherNaArvore(p, sec(p, 'Revenda ou transformação').getByRole('button', { name: 'Grupo de mercadorias', exact: true }), { grupo: 'MERCEARIA' });
   await salvarDialogo(p);
   ok(await d3.locator('.compras-duplicidade').isVisible(), 'Nome igual pede confirmação');
   await d3.getByRole('button', { name: 'Cadastrar mesmo assim' }).click();
@@ -199,7 +201,7 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   await sec(p, 'Produto').getByLabel('Nome do produto', { exact: true }).fill('Produto Validação');
   await sec(p, 'Como se compra').getByLabel('Qt. embalagem', { exact: true }).fill('10');
   await etapa(p, 2);
-  await sec(p, 'Revenda ou transformação').getByLabel('Grupo de mercadorias', { exact: true }).selectOption({ label: 'MERCEARIA' });
+  await escolherNaArvore(p, sec(p, 'Revenda ou transformação').getByRole('button', { name: 'Grupo de mercadorias', exact: true }), { grupo: 'MERCEARIA' });
   await etapa(p, 3);
   await sec(p, 'Desta loja').getByLabel('Estoque mín.', { exact: true }).fill('15');
   await salvarDialogo(p);

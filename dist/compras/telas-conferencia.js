@@ -18,7 +18,7 @@
   let modo = 'fazer';
   function abrir() {
     if (!tela) {
-      tela = U.criarTela({ id: 'compras-conferencias', titulo: 'MER - Contagem de Estoque', caminho: CAMINHO + 'MER - Contagem de Estoque', icone: 'conferencia', voltar: M.voltarLancamentos });
+      tela = U.criarTela({ id: 'compras-conferencias', titulo: 'MER - Contagem de Estoque', caminho: 'Saídas · Mercadorias / Estoques / MER - Contagem de Estoque', icone: 'conferencia', voltar: M.voltarEstoques });
       U.atalho(tela, 'Agendar conferência', 'M12 5v14M5 12h14', () => formulario(), { criar: true });
     }
     SV.processarConferencias();
@@ -80,11 +80,15 @@
       montar: (form) => {
         const sec = (t) => { const s = el('fieldset', 'compras-fieldset'); s.append(el('legend', null, t)); form.append(s); return s; };
         const s1 = sec('O que contar');
-        const grupos = S.gruposMercadoria();
-        const g = seletor(grupos.map((x) => [x.id, x.nome]), f.grupoId, 'Todos os grupos');
-        const sg = el('select');
-        const subs = () => { const gr = grupos.find((x) => x.id === g.value); sg.replaceChildren(new Option('Todos os subgrupos', '')); (gr ? gr.subgrupos : []).forEach((s) => sg.add(new Option(s.nome, s.id))); sg.value = f.subgrupoId && gr && gr.subgrupos.some((s) => s.id === f.subgrupoId) ? f.subgrupoId : ''; };
-        g.onchange = subs; subs();
+        // Grupo e subgrupo num campo só, escolhidos na árvore (23/11/2026, Zé). Vazio = todos os grupos. Grava grupoId e subgrupoId como antes.
+        const valorGrupo = f.grupoId ? f.grupoId + (f.subgrupoId ? '|' + f.subgrupoId : '') : '';
+        const arvGrupo = U.campoArvore({
+          rotulo: 'Grupo', titulo: 'Grupo a contar', sigla: 'MER', rotuloBusca: 'Buscar grupo ou subgrupo', textoVazio: 'Todos os grupos',
+          vazio: 'Nenhum grupo de mercadorias cadastrado em Saídas › Cadastros Geral › MER - Grupos de Mercadorias.',
+          nos: () => U.arvoreGruposMercadoria(S.gruposMercadoria(), { atual: valorGrupo }), valor: valorGrupo,
+        });
+        const g = { get value() { return arvGrupo.value.split('|')[0] || ''; } };
+        const sg = { get value() { return arvGrupo.value.split('|')[1] || ''; } };
         const locais = S.locais();
         const area = seletor(locais, f.area, 'Todas');
         const setor = seletor(locais, f.setor, 'Todos');
@@ -93,7 +97,7 @@
         const rk = el('div', 'compras-chips compras-largo');
         const desenhaRk = () => rk.replaceChildren(...RANK.map(([k, t]) => { const b = botao(t, () => { rank.has(k) ? rank.delete(k) : rank.add(k); desenhaRk(); }, 'compras-chip' + (rank.has(k) ? ' ativo' : '')); b.setAttribute('aria-pressed', String(rank.has(k))); return b; }));
         desenhaRk();
-        s1.append(campo('Grupo', g), campo('Subgrupo', sg), campo('Área', area), campo('Setor / local de estoque', setor), campo('Local de venda', local), rk, U.nota('Sem filtro, a conferência cobre o estoque todo.'));
+        s1.append(campo('Grupo', arvGrupo, 'Toque para escolher um grupo ou subgrupo; sem escolha, conta todos.'), campo('Área', area), campo('Setor / local de estoque', setor), campo('Local de venda', local), rk, U.nota('Sem filtro, a conferência cobre o estoque todo.'));
         const s2 = sec('Quem conta');
         const resp = seletor(S.RESPONSAVEIS.map((u) => [u.id, u.nome]), a?.responsavelId || '', 'Selecione');
         s2.append(campo('Quem conta *', resp));
@@ -164,6 +168,7 @@
             const w = el('span', 'compras-celula-pilha');
             const m = entrada('text', motivos[i.produtoId] || '', { maxLength: 200, placeholder: 'Motivo, se continuar diferente' });
             m.setAttribute('aria-label', 'Motivo da diferença de ' + nomeProduto(i.produtoId));
+            m.dataset.textoLivre = '1'; // texto livre: fica como foi digitado, sem a maiúscula automática de nomes (23/11/2026, Zé)
             m.oninput = () => { motivos[i.produtoId] = m.value; };
             w.append(el('b', null, nomeProduto(i.produtoId)), m);
             return w;
@@ -273,7 +278,7 @@
     U.dialogo({
       titulo: 'Recusar conferência',
       montar: (form) => {
-        const m = el('textarea'); m.rows = 3; m.maxLength = 300;
+        const m = el('textarea'); m.rows = 3; m.maxLength = 300; m.dataset.textoLivre = '1';
         form.append(U.nota('O estoque não muda. Para contar de novo, gere uma nova conferência pelo agendamento.'), campo('Motivo da recusa *', m));
         return { m };
       },

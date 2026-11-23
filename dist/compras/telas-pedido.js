@@ -19,7 +19,7 @@
   let telaA = null;
   function abrirAgendamento() {
     if (!telaA) {
-      telaA = U.criarTela({ id: 'compras-agendamento', titulo: 'MER - Agenda de Pedidos', caminho: 'Agenda · Atividades / MER - Agenda de Pedidos', icone: 'agenda', voltar: () => returnToNavigation() });
+      telaA = U.criarTela({ id: 'compras-agendamento', titulo: 'MER - Agenda de Pedidos', caminho: CAMINHO + 'MER - Agenda de Pedidos', icone: 'agenda', voltar: M.voltarLancamentos });
       U.atalho(telaA, 'Novo agendamento', 'M12 5v14M5 12h14', () => formularioAgenda(), { criar: true });
     }
     telaA.ativar();
@@ -138,7 +138,6 @@
   }
 
   function formularioAgenda(a) {
-    const grupos = S.gruposMercadoria().filter((g) => g.ativo);
     const marcados = new Set(a ? a.produtoIds : []);
     const filtro = { busca: '', area: '', setor: '', local: '', soMarcados: false };
     U.dialogo({
@@ -148,15 +147,19 @@
         const sec = (t) => { const s = el('fieldset', 'compras-fieldset'); s.append(el('legend', null, t)); form.append(s); return s; };
         // Pedido
         const s1 = sec('Pedido');
-        const grupo = seletor(grupos.map((g) => [g.id, g.nome]), a?.grupoId || '', 'Selecione o grupo');
-        const sub = el('select');
+        // Grupo e subgrupo num campo só, escolhidos na árvore (23/11/2026, Zé). Grava grupoId e subgrupoId como antes.
+        const valorGrupo = a?.grupoId ? a.grupoId + (a.subgrupoId ? '|' + a.subgrupoId : '') : '';
+        const arvGrupo = U.campoArvore({
+          rotulo: 'Grupo', titulo: 'Grupo do agendamento', sigla: 'MER', rotuloBusca: 'Buscar grupo ou subgrupo', obrigatorio: true,
+          vazio: 'Nenhum grupo de mercadorias cadastrado em Saídas › Cadastros Geral › MER - Grupos de Mercadorias.',
+          nos: () => U.arvoreGruposMercadoria(S.gruposMercadoria(), { atual: valorGrupo }), valor: valorGrupo, textoVazio: 'Selecione o grupo ou subgrupo',
+        });
+        const grupo = { get value() { return arvGrupo.value.split('|')[0] || ''; } };
+        const sub = { get value() { return arvGrupo.value.split('|')[1] || ''; } };
         const contador = el('p', 'compras-texto-auto compras-largo');
         const contar = () => { contador.textContent = marcados.size + ' produto(s) marcado(s) na lista abaixo'; };
-        const subs = () => { const g = grupos.find((x) => x.id === grupo.value); sub.replaceChildren(new Option('Todos os subgrupos', '')); (g ? g.subgrupos.filter((s) => s.ativo) : []).forEach((s) => sub.add(new Option(s.nome, s.id))); sub.value = a && a.grupoId === grupo.value ? a.subgrupoId || '' : ''; };
-        grupo.onchange = () => { subs(); desenhaProdutos(); };
-        sub.onchange = desenhaProdutos;
-        subs();
-        s1.append(campo('Grupo *', grupo), campo('Subgrupo', sub), contador);
+        arvGrupo.addEventListener('change', () => desenhaProdutos());
+        s1.append(campo('Grupo *', arvGrupo, 'Toque para escolher o grupo ou um subgrupo dele.'), contador);
         // Quando
         const s2 = sec('Quando');
         const inicio = entrada('date', a?.inicio || amanha(), { min: a ? '' : S.hojeIso() });
@@ -257,7 +260,7 @@
     const intro = U.nota('Os pedidos agendados que você executa. Na data, faça o pedido: ponha as quantidades e envie aos fornecedores.');
     const s1 = U.secao('Para enviar', pend.length);
     const l1 = el('div', 'compras-lista');
-    if (!pend.length) l1.append(U.vazio('Nada esperando você agora.', 'Para testar, gere um pedido em Agenda → MER - Agenda de Pedidos → próxima data → "Gerar o pedido agora".'));
+    if (!pend.length) l1.append(U.vazio('Nada esperando você agora.', 'Para testar, gere um pedido em Lançamentos → MER - Agenda de Pedidos → próxima data → "Gerar o pedido agora".'));
     pend.forEach((o) => {
       const a = S.dados.agendas.find((x) => x.id === o.agendaId);
       l1.append(U.linhaLista({ icone: 'compras', titulo: S.nomeGrupo(a.grupoId, a.subgrupoId), detalhe: 'Pedido de ' + D.dataCurta(o.data) + ' ' + o.hora + ' · ' + a.produtoIds.length + ' produto(s) · ' + S.responsavel(a.responsavelId), direita: botao('Fazer o pedido', () => fazerPedido(o), 'btn') }));

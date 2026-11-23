@@ -117,7 +117,7 @@
           ['Falta', (i) => D.numero(i.pendente), 'num'],
           ['Recebido', (i) => { const x = entrada('text', '', { inputMode: 'decimal', placeholder: '0' }); x.style.maxWidth = '100px'; x.setAttribute('aria-label', 'Recebido de ' + S.produto(i.produtoId).descricao); x.oninput = () => { ent[i.id].recebido = x.value; atualiza(); }; (inputs[i.id] = inputs[i.id] || {}).r = x; return x; }],
           ['Devolvido', (i) => { const x = entrada('text', '', { inputMode: 'decimal', placeholder: '0' }); x.style.maxWidth = '100px'; x.setAttribute('aria-label', 'Devolvido de ' + S.produto(i.produtoId).descricao); x.oninput = () => { ent[i.id].devolvido = x.value; atualiza(); }; inputs[i.id].d = x; return x; }],
-          ['Motivo da devolução', (i) => { const x = entrada('text', '', { placeholder: 'Se devolveu' }); x.setAttribute('aria-label', 'Motivo da devolução de ' + S.produto(i.produtoId).descricao); x.oninput = () => { ent[i.id].motivo = x.value; }; inputs[i.id].m = x; return x; }],
+          ['Motivo da devolução', (i) => { const x = entrada('text', '', { placeholder: 'Se devolveu' }); x.dataset.textoLivre = '1'; x.setAttribute('aria-label', 'Motivo da devolução de ' + S.produto(i.produtoId).descricao); x.oninput = () => { ent[i.id].motivo = x.value; }; inputs[i.id].m = x; return x; }],
         ], pend);
         const obs = el('textarea'); obs.rows = 2;
         form.append(atalhos, tab, campo('Observação da conferência', obs), resumo, U.nota('Item com devolução fecha. O que entra vai para o estoque com registro no extrato.'));

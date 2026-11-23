@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { iniciarApi } from './servidor-api.mjs';
+import { escolherNaArvore } from './ajuda-arvore.mjs';
 
 const require = createRequire(import.meta.url);
 const XLSX = require('../dist/vendor/sheetjs/xlsx.full.min.js');
@@ -123,7 +124,7 @@ await fechado();
 await p.locator('.view.show .people-add-control').click();
 await dlg().getByLabel('Nome do produto', { exact: true }).fill('Pão de Queijo Teste');
 await irEtapa(2); // o grupo de mercadorias fica na 2ª etapa do cadastro
-await dlg().getByLabel('Grupo de mercadorias', { exact: true }).selectOption({ label: 'MERCEARIA' });
+await escolherNaArvore(p, dlg().getByRole('button', { name: 'Grupo de mercadorias', exact: true }), { grupo: 'MERCEARIA' });
 await dlg().locator('.people-save-control').click();
 await fechado().catch(async () => { throw new Error('Não salvou: ' + (await dlg().locator('.compras-alertas, .profiles-error').allTextContents()).join(' | ')); });
 const criado = await p.evaluate(() => CicluzComprasDados.dados.produtos.find((x) => x.nomeCatalogo === 'PÃO DE QUEIJO TESTE'));
@@ -174,7 +175,7 @@ ok(await linhaProduto('NOVO DO APP').locator('.compras-situacao', { hasText: 'Se
 await linhaProduto('NOVO DO APP').click();
 ok((await dlg().locator('.compras-alerta-vinculo').textContent()).includes('grupo de mercadorias'), 'Formulário mostra o alerta de vínculo');
 await irEtapa(2);
-await dlg().getByLabel('Grupo de mercadorias', { exact: true }).selectOption('g7');
+await escolherNaArvore(p, dlg().getByRole('button', { name: 'Grupo de mercadorias', exact: true }), { grupo: 'MERCEARIA' });
 await irEtapa(3);
 await dlg().getByLabel('Setor de estoque', { exact: true }).selectOption({ label: 'LJ › VITRINES' });
 await dlg().locator('.people-save-control').click();

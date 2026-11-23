@@ -8,6 +8,7 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { iniciar, SESSAO_LOCAL } from './servidor.mjs';
+import { escolherNaArvore } from './ajuda-arvore.mjs';
 
 const { servidor, url } = await iniciar();
 // Microfone de mentira do Chromium, para testar a observação em áudio do bem sem aparelho nem permissão.
@@ -52,21 +53,20 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   // Lugar de cada tela pela lógica do vídeo do Rodrigo (06/11), igual ao Compras
   const cardsDe = async (sub) => { await p.evaluate((x) => menuBack(3, x)(), sub); return (await p.locator('#sector-content .section-card b').allTextContents()).join('|'); };
   let c = await cardsDe('Lançamentos Produção');
-  ok(c === 'MER - Pedidos de Produção|MER - Mapa de Produção|MER - Abastecimento', 'Lançamentos Produção só com a rotina da produção: ' + c);
+  ok(c === 'MER - Agenda de Produção|MER - Pedidos de Produção|MER - Mapa de Produção|MER - Abastecimento', 'Lançamentos Produção: agenda → pedidos → mapa → abastecimento: ' + c);
   c = await cardsDe('Relatórios');
   ok(c === 'MER - Mercadorias|MER - Pedidos|MER - Produção', 'Relatórios de Mercadorias com MER - Produção: ' + c);
   c = await cardsDe('Cadastros Geral Produção');
   ok(c === 'MER - Produtos da Produção|MER - Ficha Técnica de Produtos|MER - Parâmetros de Custo|MER - Ingredientes Ficha Técnica / Tabela TACO', 'Cadastros Geral Produção: ' + c);
-  for (const [sub, titulo, id] of [['Lançamentos Produção', 'MER - Pedidos de Produção', 'pedidos'], ['Lançamentos Produção', 'MER - Mapa de Produção', 'mapa'], ['Lançamentos Produção', 'MER - Abastecimento', 'abastecimento'], ['Relatórios', 'MER - Produção', 'relatorios'], ['Cadastros Geral Produção', 'MER - Produtos da Produção', 'produtos'], ['Cadastros Geral Produção', 'MER - Ficha Técnica de Produtos', 'fichas'], ['Cadastros Geral Produção', 'MER - Parâmetros de Custo', 'custos']]) {
+  for (const [sub, titulo, id] of [['Lançamentos Produção', 'MER - Agenda de Produção', 'agendamento'], ['Lançamentos Produção', 'MER - Pedidos de Produção', 'pedidos'], ['Lançamentos Produção', 'MER - Mapa de Produção', 'mapa'], ['Lançamentos Produção', 'MER - Abastecimento', 'abastecimento'], ['Relatórios', 'MER - Produção', 'relatorios'], ['Cadastros Geral Produção', 'MER - Produtos da Produção', 'produtos'], ['Cadastros Geral Produção', 'MER - Ficha Técnica de Produtos', 'fichas'], ['Cadastros Geral Produção', 'MER - Parâmetros de Custo', 'custos']]) {
     await p.evaluate((x) => menuBack(3, x)(), sub);
     await p.locator('#sector-content .section-card', { hasText: titulo }).click();
     const tela = p.locator('#producao-' + id);
     ok(await p.locator('#producao-' + id + '.show').count() === 1 && (await tela.locator('.head h2').first().textContent()).trim() === titulo && (await tela.locator('.head p').first().textContent()).includes('Saídas · Mercadorias / ' + sub + ' / ' + titulo), sub + ' → ' + titulo + ': abre a tela com o mesmo nome e a trilha certa');
   }
+  // Os agendamentos saíram do menu Agenda (Zé, 23/11/2026): a Agenda de Produção abre os Lançamentos Produção.
   const agenda = await p.evaluate(() => [...document.querySelectorAll('details[data-menu-name="Agenda/Atividades"] .children button')].map((b) => b.textContent.trim()).join('|'));
-  ok(agenda === 'Lançamentos|MER - Agenda de Pedidos|MER - Agenda de Produção', 'Agenda com MER - Agenda de Produção: ' + agenda);
-  await p.evaluate(() => [...document.querySelectorAll('.nav button')].find((b) => b.textContent.trim() === 'MER - Agenda de Produção').click());
-  ok(await p.locator('#producao-agendamento.show').count() === 1 && (await p.locator('#producao-agendamento .head p').first().textContent()).includes('Agenda · Atividades / MER - Agenda de Produção'), 'Agenda → MER - Agenda de Produção abre o agendamento da produção');
+  ok(agenda === 'Lançamentos', 'Menu Agenda sem os agendamentos de compras e de produção: ' + agenda);
   ok(await p.locator('#asset-view').count() === 0, 'A prévia antiga de Patrimônios (que não salvava) saiu');
 
   // Sem produto ligado, o "+" do agendamento explica o caminho e leva ao cadastro
@@ -191,7 +191,13 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   await p.evaluate(() => CicluzProducao.abrir('produtos'));
   await mais(p);
   d = dialogo(p);
-  await d.getByLabel('Produto *', { exact: true }).selectOption('p-pao-teste');
+  // Produto escolhido na árvore grupo › subgrupo › produto (23/11/2026, Zé); grupo e subgrupo não são marcáveis aqui.
+  await d.getByRole('button', { name: 'Produto *', exact: true }).click();
+  const jp = p.locator('dialog.compras-dialog[open]').last();
+  ok(await jp.getByRole('checkbox', { name: 'Selecionar FAB. PRÓPRIA', exact: true }).isHidden(), 'Na árvore do produto da produção, o grupo não é marcável (só o produto)');
+  await jp.locator('.people-close-control').click();
+  await escolherNaArvore(p, d.getByRole('button', { name: 'Produto *', exact: true }), { grupo: 'FAB. PRÓPRIA', subgrupo: 'PANIFICAÇÃO', item: 'PÃO DE SAL' });
+  ok((await d.getByRole('button', { name: 'Produto *', exact: true }).textContent()).trim() === 'PÃO DE SAL', 'O campo mostra o produto escolhido na árvore');
   ok((await d.getByLabel('Utensílio *', { exact: true }).locator('option').nth(1).textContent()).startsWith('ASSADEIRA'), 'Utensílios aparecem primeiro na lista');
   await d.getByLabel('Utensílio *', { exact: true }).selectOption(assadeiraId);
   await d.getByLabel('Quantos na largura *', { exact: true }).fill('5');
@@ -420,6 +426,28 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
 }
 
 /* ---------- 3) Matriz de layout ---------- */
+// Bem elétrico: o consumo em kWh por hora (23/11/2026, Zé: "falta o campo") é gravado e entra no custo de energia da ficha.
+{
+  const p = await abrirPagina(1024);
+  await p.evaluate(() => CicluzProducao.abrir('patrimonio'));
+  await p.locator('#producao-patrimonio .compras-secao-cab button[aria-label="Cadastrar patrimônio"]').click();
+  const d = dialogo(p);
+  await d.getByLabel('Nome simplificado *', { exact: true }).fill('Forno elétrico teste');
+  await d.getByLabel('Categoria *', { exact: true }).selectOption('MAC');
+  await d.locator('.account-status:has-text("Informar especificação técnica?") .account-status-switch').click();
+  await d.getByLabel('Tipo de Energia', { exact: true }).selectOption('eletrica');
+  ok(await d.getByLabel('Consumo elétrico por hora (kWh)', { exact: true }).isVisible(), 'Energia elétrica mostra o campo de consumo em kWh por hora');
+  await d.getByLabel('Potência Elétrica (W)', { exact: true }).fill('2000');
+  await d.getByLabel('Consumo elétrico por hora (kWh)', { exact: true }).fill('2,5');
+  await salvar(p); await fechado(p);
+  const bem = await p.evaluate(() => JSON.parse(localStorage.getItem('cicluz-patrimonio-v1')).bens.find((b) => b.nome === 'FORNO ELÉTRICO TESTE'));
+  ok(bem && bem.energia === 'eletrica' && bem.consumoHora === 2.5 && bem.potenciaW === 2000, 'Bem elétrico grava o consumo (2,5 kWh/h) e a potência (2000 W) separados');
+  // Custo: 30 min × 2,5 kWh/h × R$ 0,80 = R$ 1,00 (a fórmula é a mesma de antes; só faltava o campo).
+  const energia = await p.evaluate((id) => CicluzProducaoDominio.custoDoPlano({ etapas: [{ ingredientes: [], recursos: [{ tempoEquipe: 0, tempo: 30, bem: CicluzProducaoDados.patrimonio.dados.bens.find((b) => b.id === id) }] }] }, { custoIngrediente: () => 0, custoMinuto: () => 0, precoEnergia: (t) => (t === 'eletrica' ? 0.8 : null) }).energia, bem.id);
+  ok(energia === 1, 'Custo de energia elétrica entra na conta: 30 min × 2,5 kWh/h × R$ 0,80 = R$ 1,00 (' + energia + ')');
+  await p.close();
+}
+
 async function semear(p) {
   await criarPao(p);
   await p.evaluate(() => {

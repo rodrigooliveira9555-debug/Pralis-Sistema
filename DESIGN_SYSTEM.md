@@ -1,5 +1,16 @@
 # CICLUZ — referência de interface
 
+## Grupo e subgrupo de mercadorias escolhidos em árvore, num campo só (23/11/2026)
+Pedido do Zé. **Supera**, nas telas do Compras e da Produção, os dois seletores comuns "Grupo" e "Subgrupo". Onde se escolhe grupo de
+mercadorias há **um campo só**, com o desenho de um seletor (mesma altura, borda e seta), que mostra o que foi escolhido ("Bebidas ›
+Refrigerantes") e, ao tocar, abre a **janela em árvore** do contrato (seta de abrir, caixa, ícone MER, nome, contagem e situação): toca
+no grupo, abrem os subgrupos, marca um e Confirma. Vale para: cadastro de produto (MER - Produtos, etapa 2), MER - Agenda de Pedidos,
+agendamento de MER - Contagem de Estoque (vazio = "Todos os grupos") e MER - Produtos da Produção (árvore grupo › subgrupo › produto,
+onde só o produto é marcável). Nessas telas a escolha é **única** (sem cascata); a janela abre já mostrando o que estava escolhido.
+Os grupos vêm do cadastro do S2 (Saídas › Cadastros Geral › MER - Grupos de Mercadorias); o dado gravado continua grupoId e subgrupoId.
+Peça única: `U.seletorArvore` (saiu de contratos.js), `U.campoArvore` e `U.arvoreGruposMercadoria` em `dist/compras/ui.js`. Correção
+no mesmo dia: a linha da árvore cresce quando o nome quebra (320 px), em vez de vazar sobre a de baixo.
+
 ## Configurações → Permissões → Acesso por Tela: esboço do nível de acesso por tela (19/11/2026)
 Pedido do Washington, a partir de um esboço dele. Novo cartão **Acesso por Tela** em Permissões (`dist/acessos/telas.js`, dados de exemplo em `telas-dados.js`, estilos em `acessos.css`). **É um esboço sem backend: nada é gravado e nenhum acesso muda.** Mostra o **menu inteiro aberto** (grupo › seção › tela, 117 telas, as chaves são as `data-menu-item-key` dos cartões do menu) e, em cada tela, o **ícone do nível de acesso** (só o ícone e o nome, **sem caixa de seleção**; nada quando é "Sem acesso") e o botão redondo **"+"**: as opções do nível só aparecem quando o "+" da linha é tocado (e o "+" vira "×" enquanto está aberto).
 **Topo, "Para quem é este acesso":** três linhas — **Usuário / colaborador**, **Cargo** e **Área** (a Área só filtra o menu mostrado) —, cada uma com o nome, o botão redondo "+" e o valor escolhido **só como texto**; **a lista de opções só aparece ao tocar no "+"** (não há caixa de seleção). Escolher uma pessoa carrega o cargo dela (os ajustes são só dela, por cima do cargo); escolher só o cargo edita o padrão do cargo. Pessoas e cargos são de mentira. Além do esboço: busca de tela, **Expandir tudo / Recolher tudo**, recolher por grupo, contagem "N telas com acesso · M podem pagar" e o ponto roxo nos níveis ajustados.
