@@ -259,6 +259,11 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 }
 .acessos-tl-sec { --tl-bg: color-mix(in srgb, var(--origem, var(--menu-accent)) 6%, var(--theme-card, #fff)); }
 .acessos-tl-tela.nova { --tl-bg: color-mix(in srgb, var(--cicluz-warning, #eab308) 10%, var(--theme-card, #fff)); }
+.acessos-tl-grupo-lin { --tl-bg: color-mix(in srgb, var(--origem, var(--menu-accent)) 12%, var(--theme-card, #fff)); border-top: 0; }
+.acessos-tl-esq-grupo { flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; }
+.acessos-tl-esq-grupo h3 { flex: 1 1 auto; min-width: 0; margin: 0; display: flex; align-items: center; gap: 8px; font: var(--ui-section-title-weight, 600) var(--ui-section-title, 14px)/var(--ui-section-title-line, 20px) var(--ui-font); }
+.acessos-tl-esq-grupo .acessos-telas-nivel { flex: none; margin-left: auto; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: var(--theme-surface, #fff); }
+.acessos-tl-esq-grupo .acessos-telas-nivel svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .acessos-tl-quem-lin { position: sticky; top: 0; z-index: 4; --tl-bg: var(--theme-card, #fff); border-top: 0; border-bottom: 1px solid var(--layout-line, #dedee3); }
 .acessos-tl-quem-lin > .acessos-tl-esq { z-index: 5; justify-content: flex-start; padding-top: 12px; }
 .acessos-tl-esq-txt { font: 400 12px/16px var(--ui-font); color: var(--muted, #73737a); }
@@ -292,7 +297,6 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 .acessos-tl-cel { flex: 1 1 0; display: grid; place-items: center; min-width: 0; padding: 8px 0; }
 .acessos-tl-novo { flex: none; }
 .acessos-tl-cab-ic { padding: 8px 0 6px; }
-.acessos-tl-cab-ic.fora { opacity: .3; }
 /* O ícone da permissão: círculo cheio na cor da origem com o desenho do Design System (lápis com prancheta = lançar, lista = discriminar,
    lápis = editar, olho = visualizar, $ = pagar) e, no canto, o selo branco com a seta (← antes de pagar, → depois, ↔ pagar). */
 .acessos-nivel-ic {
@@ -310,6 +314,8 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
   .acessos-tl-esq { padding-left: 10px; padding-right: 8px; }
   .acessos-tl-nome { gap: 6px; font-size: 12px; line-height: 16px; }
   .acessos-tl-nome .compras-linha-icones { display: none; }
+  .acessos-tl-esq-grupo { gap: 6px; }
+  .acessos-tl-esq-grupo .compras-conta { display: none; }
   .acessos-tl-esq-txt { font-size: 11px; }
 }
 @media (max-width: 480px) {

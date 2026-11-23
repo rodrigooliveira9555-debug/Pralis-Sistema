@@ -38,19 +38,16 @@
     seta: 'm9 6 6 6-6 6',
   };
   const SETA = { esq: 'M19 12H6m5-5-5 5 5 5', dir: 'M5 12h13m-5-5 5 5-5 5', ambas: 'M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4' };
-  // so = tipos de seção em que a permissão existe (l lançamento, r relatório, c cadastro, v só consulta).
   const PERMS = [
-    { id: 'lan', nome: 'Lançar', g: 'lancar', seta: 'esq', so: ['l', 'c'] },
-    { id: 'dis', nome: 'Discriminar', g: 'discriminar', seta: 'esq', so: ['l'] },
-    { id: 'edA', nome: 'Editar antes de pagar', g: 'lapis', seta: 'esq', so: ['l', 'c'] },
-    { id: 'veA', nome: 'Visualizar antes de pagar', g: 'olho', seta: 'esq', so: ['l', 'r', 'c', 'v'] },
-    { id: 'pag', nome: 'Pagar', g: 'pagar', seta: 'ambas', so: ['l'] },
-    { id: 'edD', nome: 'Editar depois de pagar', g: 'lapis', seta: 'dir', so: ['l'] },
-    { id: 'veD', nome: 'Visualizar depois de pagar', g: 'olho', seta: 'dir', so: ['l', 'r'] },
+    { id: 'lan', nome: 'Lançar', g: 'lancar', seta: 'esq' },
+    { id: 'dis', nome: 'Discriminar', g: 'discriminar', seta: 'esq' },
+    { id: 'edA', nome: 'Editar antes de pagar', g: 'lapis', seta: 'esq' },
+    { id: 'veA', nome: 'Visualizar antes de pagar', g: 'olho', seta: 'esq' },
+    { id: 'pag', nome: 'Pagar', g: 'pagar', seta: 'ambas' },
+    { id: 'edD', nome: 'Editar depois de pagar', g: 'lapis', seta: 'dir' },
+    { id: 'veD', nome: 'Visualizar depois de pagar', g: 'olho', seta: 'dir' },
   ];
-  const aceitas = (tipo) => PERMS.filter((p) => p.so.includes(tipo)).map((p) => p.id);
-  // Cadastro e consulta não têm pagamento: ali o nome não leva o "antes de pagar".
-  const nomeDaPerm = (p, tipo) => ((tipo === 'c' || tipo === 'v') ? p.nome.replace(' antes de pagar', '') : p.nome);
+  const TODAS = PERMS.map((p) => p.id);
 
   function iconePerm(p) {
     const s = el('span', 'acessos-nivel-ic');
@@ -76,8 +73,6 @@
 
   /* ---------- O menu do sistema ---------- */
 
-  const tipoDaSecao = (i, sec) => (sec === 'Design System' ? 'v' : i === 5 || sec === 'Relatórios' ? 'r' : /^Lançamentos/.test(sec) ? 'l' : 'c');
-
   /** Grupo › seção › tela, lidos do menu na hora. A chave de cada tela é a do cartão do menu (data-menu-item-key). */
   function lerMenu() {
     const m = window.CicluzMenu;
@@ -94,7 +89,7 @@
           vistas.add(chave);
           return { chave, rotulo };
         });
-        if (telas.length) secoes.push({ n: sec, t: tipoDaSecao(i, sec), telas });
+        if (telas.length) secoes.push({ n: sec, telas });
       });
       return { i, n: nome, c: m.cores[i] || '#7c3aed', secoes };
     }).filter((g) => g.secoes.length);
@@ -146,7 +141,7 @@
     let r = registros.get(k);
     if (!r) {
       r = { telas: {}, conhecidas: new Set(), acoes: new Set() };
-      menu.forEach((g) => g.secoes.forEach((s) => s.telas.forEach((t) => { r.telas[t.chave] = new Set(aceitas(s.t)); r.conhecidas.add(t.chave); })));
+      menu.forEach((g) => g.secoes.forEach((s) => s.telas.forEach((t) => { r.telas[t.chave] = new Set(TODAS); r.conhecidas.add(t.chave); })));
       registros.set(k, r);
     }
     return r;
@@ -337,8 +332,24 @@
         const volta = tela.body.querySelector('[data-grupo="' + g.n + '"]');
         if (volta) volta.focus();
       };
-      cab.replaceChildren(el('div', 'acessos-tl-cab-esq'));
-      cab.firstChild.append(h, nivel);
+      // A linha do grupo é a que recolhe e leva os sete ícones, um conjunto por coluna, alinhados com os interruptores.
+      const linhaGrupo = el('div', 'acessos-tl acessos-tl-grupo-lin');
+      const esqGrupo = el('div', 'acessos-tl-esq acessos-tl-esq-grupo');
+      esqGrupo.append(h, nivel);
+      linhaGrupo.append(esqGrupo);
+      estado.blocos.forEach(() => {
+        const w = el('div', 'acessos-tl-bloco');
+        PERMS.forEach((p) => {
+          const c = el('span', 'acessos-tl-cel acessos-tl-cab-ic');
+          c.title = p.nome;
+          c.setAttribute('role', 'img');
+          c.setAttribute('aria-label', p.nome);
+          c.append(iconePerm(p));
+          w.append(c);
+        });
+        linhaGrupo.append(w);
+      });
+      cab.replaceWith(linhaGrupo);
 
       let achouNoGrupo = false;
       g.secoes.forEach((s) => {
@@ -359,7 +370,7 @@
     if (termo && !mostradas) mat.append(U.vazio('Nenhuma tela encontrada', 'Tente outro nome.'));
   }
 
-  /** Cabeça de uma seção (Lançamentos, Relatórios…): o ícone do submenu, o nome, a contagem e, aberta, os sete ícones de cada coluna. */
+  /** Cabeça de uma seção (Lançamentos, Relatórios…): o ícone do submenu, o nome e a contagem. Os sete ícones ficam na linha do grupo. */
   function cabecaSecao(g, s, qtd, aberta, chaveSec) {
     const linha = el('div', 'acessos-tl acessos-tl-sec');
     const esq = el('div', 'acessos-tl-esq');
@@ -379,21 +390,7 @@
     };
     esq.append(b);
     linha.append(esq);
-    estado.blocos.forEach(() => {
-      const w = el('div', 'acessos-tl-bloco');
-      if (aberta) {
-        const ok = aceitas(s.t);
-        PERMS.forEach((p) => {
-          const c = el('span', 'acessos-tl-cel acessos-tl-cab-ic' + (ok.includes(p.id) ? '' : ' fora'));
-          c.title = nomeDaPerm(p, s.t);
-          c.setAttribute('role', 'img');
-          c.setAttribute('aria-label', nomeDaPerm(p, s.t) + (ok.includes(p.id) ? '' : ' (não existe nesta seção)'));
-          c.append(iconePerm(p));
-          w.append(c);
-        });
-      }
-      linha.append(w);
-    });
+    estado.blocos.forEach(() => linha.append(el('div', 'acessos-tl-bloco')));
     return linha;
   }
 
@@ -410,7 +407,7 @@
     return sw;
   }
 
-  /** Uma linha de tela: à esquerda o ícone da origem e o nome; para cada coluna, os sete interruptores (vazio onde não existe). */
+  /** Uma linha de tela: à esquerda o ícone da origem e o nome; para cada coluna, os mesmos sete interruptores. */
   function linhaTela(g, s, t, regs, atualizarResumos) {
     const nova = regs.some((r) => r && !r.conhecidas.has(t.chave));
     const linha = el('div', 'acessos-tl acessos-tl-tela' + (nova ? ' nova' : ''));
@@ -427,15 +424,13 @@
     esq.append(nome);
     if (nova) { const et = U.situacao('Novo · desligado', 'atencao'); et.classList.add('acessos-tl-novo'); esq.append(et); }
     linha.append(esq);
-    const ok = aceitas(s.t);
     regs.forEach((reg, i) => {
       const w = el('div', 'acessos-tl-bloco');
       PERMS.forEach((p) => {
         const cel = el('span', 'acessos-tl-cel');
-        if (!ok.includes(p.id)) { cel.classList.add('fora'); w.append(cel); return; }
         const ligada = Boolean(reg) && (reg.telas[t.chave] || new Set()).has(p.id);
         const quem = estado.blocos[i].alvo ? estado.blocos[i].alvo.nome : 'coluna sem escolha';
-        const sw = interruptor(nomeDaPerm(p, s.t) + ' — ' + t.rotulo + ' (' + quem + ')', ligada, !reg, (liga) => {
+        const sw = interruptor(p.nome + ' — ' + t.rotulo + ' (' + quem + ')', ligada, !reg, (liga) => {
           const conj = reg.telas[t.chave] || (reg.telas[t.chave] = new Set());
           if (liga) conj.add(p.id); else conj.delete(p.id);
           reg.conhecidas.add(t.chave);
@@ -446,7 +441,7 @@
           }
           atualizarResumos();
         });
-        sw.title = nomeDaPerm(p, s.t);
+        sw.title = p.nome;
         cel.append(sw);
         w.append(cel);
       });
@@ -487,7 +482,7 @@
             atualizarResumos();
           }));
           w.append(cel);
-          for (let k = 1; k < PERMS.length; k++) w.append(el('span', 'acessos-tl-cel fora'));
+          for (let k = 1; k < PERMS.length; k++) w.append(el('span', 'acessos-tl-cel'));
           linha.append(w);
         });
         sec.append(linha);
