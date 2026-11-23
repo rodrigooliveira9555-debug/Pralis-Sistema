@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import {
   adiamentoSchema,
@@ -6,17 +6,21 @@ import {
   colunaCriacaoSchema,
   colunaEdicaoSchema,
   compromissoIdSchema,
+  copiaDoAparelhoSchema,
   exclusaoCompromissoSchema,
   grupoCriacaoSchema,
   grupoEdicaoSchema,
   grupoMembrosSchema,
+  LIMITE_CORPO_AGENDA,
   ok,
   relacaoCriacaoSchema,
-  relacaoEdicaoSchema
+  relacaoEdicaoSchema,
+  transferenciaAgendaSchema
 } from "@cicluz/shared";
 import { perfilDaRequisicao } from "../auth/guards.ts";
 import * as grupos from "./grupos.service.ts";
 import * as interacoes from "./interacoes.service.ts";
+import * as transferencia from "./transferencia.service.ts";
 
 // Rotas de listas, membros, colunas, pessoas, avaliação, soneca e ligações do mapa (plano, seção 3).
 
@@ -94,5 +98,22 @@ export async function registrarRotasGrupos(app: FastifyInstance) {
     const { id } = idParams.parse(request.params);
     await interacoes.excluirRelacao(perfilDaRequisicao(request), id);
     return ok({});
+  });
+}
+
+/* Transferência do documento antigo (plano, seção 4) */
+export async function registrarRotasTransferencia(app: FastifyInstance) {
+  // Por sessão (vários aparelhos saem pelo mesmo IP da loja), como a importação de produtos.
+  const porSessao = (request: FastifyRequest) => {
+    const sessao = /session_token=([^;]+)/.exec(request.headers.cookie ?? "")?.[1];
+    return sessao ? `sessao:${sessao}` : `ip:${request.ip}`;
+  };
+  const limite = { rateLimit: { max: 10, timeWindow: "1 minute", keyGenerator: porSessao } };
+  app.get("/api/agenda/transferencia", async (request) => ok(await transferencia.previa(perfilDaRequisicao(request))));
+  app.post("/api/agenda/transferencia", { config: limite }, async (request) =>
+    ok(await transferencia.executar(perfilDaRequisicao(request), transferenciaAgendaSchema.parse(request.body))));
+  app.post("/api/agenda/transferencia/aparelho", { bodyLimit: LIMITE_CORPO_AGENDA, config: limite }, async (request) => {
+    const { valor } = copiaDoAparelhoSchema.parse(request.body);
+    return ok(await transferencia.receberDoAparelho(perfilDaRequisicao(request), valor));
   });
 }

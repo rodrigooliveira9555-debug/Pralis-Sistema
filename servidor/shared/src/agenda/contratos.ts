@@ -197,3 +197,17 @@ export type GrupoEdicao = z.infer<typeof grupoEdicaoSchema>;
 export type RelacaoCriacao = z.infer<typeof relacaoCriacaoSchema>;
 export type AvaliacaoEnvio = z.infer<typeof avaliacaoSchema>;
 export type PessoaAgendaResposta = { id: string; nome: string };
+
+/* ---------- Transferência do documento antigo para as tabelas ---------- */
+
+export const LIMITE_CORPO_AGENDA = 15 * 1024 * 1024;
+export const transferenciaAgendaSchema = z.object({
+  /** A versão do documento que o administrador viu na prévia (mudou depois → refazer a prévia). null = não havia documento. */
+  documentoVersao: z.number().int().min(1).nullable(),
+  /** Conta que vira gestora dos compromissos sem criador (pergunta 7). */
+  gestorSemCriador: z.string().trim().min(1).max(200),
+  /** "de → para" dos ids que não são conta (pergunta 8). null = fica guardado sem dar acesso. */
+  dePara: z.record(z.string().max(200), z.string().max(200).nullable()).default({})
+});
+export const copiaDoAparelhoSchema = z.object({ valor: z.string().min(2).max(LIMITE_CORPO_AGENDA) });
+export type TransferenciaAgenda = z.infer<typeof transferenciaAgendaSchema>;
