@@ -19,7 +19,7 @@
   let telaA = null;
   function abrirAgendamento() {
     if (!telaA) {
-      telaA = U.criarTela({ id: 'compras-agendamento', titulo: 'MER - Agenda de Pedidos', caminho: 'Agenda · Atividades / MER - Agenda de Pedidos', icone: 'agenda', voltar: () => returnToNavigation() });
+      telaA = U.criarTela({ id: 'compras-agendamento', titulo: 'MER - Agenda de Pedidos', caminho: CAMINHO + 'MER - Agenda de Pedidos', icone: 'agenda', voltar: M.voltarLancamentos });
       U.atalho(telaA, 'Novo agendamento', 'M12 5v14M5 12h14', () => formularioAgenda(), { criar: true });
     }
     telaA.ativar();
@@ -257,7 +257,7 @@
     const intro = U.nota('Os pedidos agendados que você executa. Na data, faça o pedido: ponha as quantidades e envie aos fornecedores.');
     const s1 = U.secao('Para enviar', pend.length);
     const l1 = el('div', 'compras-lista');
-    if (!pend.length) l1.append(U.vazio('Nada esperando você agora.', 'Para testar, gere um pedido em Agenda → MER - Agenda de Pedidos → próxima data → "Gerar o pedido agora".'));
+    if (!pend.length) l1.append(U.vazio('Nada esperando você agora.', 'Para testar, gere um pedido em Lançamentos → MER - Agenda de Pedidos → próxima data → "Gerar o pedido agora".'));
     pend.forEach((o) => {
       const a = S.dados.agendas.find((x) => x.id === o.agendaId);
       l1.append(U.linhaLista({ icone: 'compras', titulo: S.nomeGrupo(a.grupoId, a.subgrupoId), detalhe: 'Pedido de ' + D.dataCurta(o.data) + ' ' + o.hora + ' · ' + a.produtoIds.length + ' produto(s) · ' + S.responsavel(a.responsavelId), direita: botao('Fazer o pedido', () => fazerPedido(o), 'btn') }));

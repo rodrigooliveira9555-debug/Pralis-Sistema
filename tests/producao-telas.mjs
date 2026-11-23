@@ -52,21 +52,20 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   // Lugar de cada tela pela lógica do vídeo do Rodrigo (06/11), igual ao Compras
   const cardsDe = async (sub) => { await p.evaluate((x) => menuBack(3, x)(), sub); return (await p.locator('#sector-content .section-card b').allTextContents()).join('|'); };
   let c = await cardsDe('Lançamentos Produção');
-  ok(c === 'MER - Pedidos de Produção|MER - Mapa de Produção|MER - Abastecimento', 'Lançamentos Produção só com a rotina da produção: ' + c);
+  ok(c === 'MER - Agenda de Produção|MER - Pedidos de Produção|MER - Mapa de Produção|MER - Abastecimento', 'Lançamentos Produção: agenda → pedidos → mapa → abastecimento: ' + c);
   c = await cardsDe('Relatórios');
   ok(c === 'MER - Mercadorias|MER - Pedidos|MER - Produção', 'Relatórios de Mercadorias com MER - Produção: ' + c);
   c = await cardsDe('Cadastros Geral Produção');
   ok(c === 'MER - Produtos da Produção|MER - Ficha Técnica de Produtos|MER - Parâmetros de Custo|MER - Ingredientes Ficha Técnica / Tabela TACO', 'Cadastros Geral Produção: ' + c);
-  for (const [sub, titulo, id] of [['Lançamentos Produção', 'MER - Pedidos de Produção', 'pedidos'], ['Lançamentos Produção', 'MER - Mapa de Produção', 'mapa'], ['Lançamentos Produção', 'MER - Abastecimento', 'abastecimento'], ['Relatórios', 'MER - Produção', 'relatorios'], ['Cadastros Geral Produção', 'MER - Produtos da Produção', 'produtos'], ['Cadastros Geral Produção', 'MER - Ficha Técnica de Produtos', 'fichas'], ['Cadastros Geral Produção', 'MER - Parâmetros de Custo', 'custos']]) {
+  for (const [sub, titulo, id] of [['Lançamentos Produção', 'MER - Agenda de Produção', 'agendamento'], ['Lançamentos Produção', 'MER - Pedidos de Produção', 'pedidos'], ['Lançamentos Produção', 'MER - Mapa de Produção', 'mapa'], ['Lançamentos Produção', 'MER - Abastecimento', 'abastecimento'], ['Relatórios', 'MER - Produção', 'relatorios'], ['Cadastros Geral Produção', 'MER - Produtos da Produção', 'produtos'], ['Cadastros Geral Produção', 'MER - Ficha Técnica de Produtos', 'fichas'], ['Cadastros Geral Produção', 'MER - Parâmetros de Custo', 'custos']]) {
     await p.evaluate((x) => menuBack(3, x)(), sub);
     await p.locator('#sector-content .section-card', { hasText: titulo }).click();
     const tela = p.locator('#producao-' + id);
     ok(await p.locator('#producao-' + id + '.show').count() === 1 && (await tela.locator('.head h2').first().textContent()).trim() === titulo && (await tela.locator('.head p').first().textContent()).includes('Saídas · Mercadorias / ' + sub + ' / ' + titulo), sub + ' → ' + titulo + ': abre a tela com o mesmo nome e a trilha certa');
   }
+  // Os agendamentos saíram do menu Agenda (Zé, 23/11/2026): a Agenda de Produção abre os Lançamentos Produção.
   const agenda = await p.evaluate(() => [...document.querySelectorAll('details[data-menu-name="Agenda/Atividades"] .children button')].map((b) => b.textContent.trim()).join('|'));
-  ok(agenda === 'Lançamentos|MER - Agenda de Pedidos|MER - Agenda de Produção', 'Agenda com MER - Agenda de Produção: ' + agenda);
-  await p.evaluate(() => [...document.querySelectorAll('.nav button')].find((b) => b.textContent.trim() === 'MER - Agenda de Produção').click());
-  ok(await p.locator('#producao-agendamento.show').count() === 1 && (await p.locator('#producao-agendamento .head p').first().textContent()).includes('Agenda · Atividades / MER - Agenda de Produção'), 'Agenda → MER - Agenda de Produção abre o agendamento da produção');
+  ok(agenda === 'Lançamentos', 'Menu Agenda sem os agendamentos de compras e de produção: ' + agenda);
   ok(await p.locator('#asset-view').count() === 0, 'A prévia antiga de Patrimônios (que não salvava) saiu');
 
   // Sem produto ligado, o "+" do agendamento explica o caminho e leva ao cadastro

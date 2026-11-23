@@ -40,11 +40,12 @@ Texto fixo "reunirá os principais números".
 
 ## Saídas · Mercadorias/CMV (MER, verde)
 Organização do Rodrigo (vídeo de 06/11/2026); detalhes no `DESIGN_SYSTEM.md`, regra "Compras encaixado no menu de Mercadorias".
-- ✅ **Lançamentos** (`dist/compras/`): MER - Pedido de Compra, MER - Cotação por Fornecedor, MER - Pedidos a Receber,
-  MER - Contagem de Estoque. ⬜ MER - Mercadorias (espaço reservado).
+- ✅ **Lançamentos** (`dist/compras/`): MER - Agenda de Pedidos (agendamento do Compras), MER - Pedido de Compra,
+  MER - Cotação por Fornecedor, MER - Pedidos a Receber. ⬜ MER - Mercadorias (espaço reservado). **23/11/2026 (Zé):** o
+  agendamento saiu do menu Agenda e veio para cá; a Contagem de Estoque foi para Estoques.
 - 🟨 **Produção** (`dist/producao/`, 05/11/2026, aguardando aprovação do Zé) — pedido de produção da TNP, no lugar
-  pela lógica do vídeo do Rodrigo. **Agenda → MER - Agenda de Produção** (janela de demanda, repetição do Compras,
-  quantidade pré-programada). **Lançamentos Produção**: MER - Pedidos de Produção (para fazer, pedido extra, Repor
+  pela lógica do vídeo do Rodrigo. **Lançamentos Produção**: MER - Agenda de Produção (janela de demanda, repetição do
+  Compras, quantidade pré-programada; saiu do menu Agenda em 23/11/2026, Zé), MER - Pedidos de Produção (para fazer, pedido extra, Repor
   estoque com sugestão aprovada), MER - Mapa de Produção (por horário, processo, setor ou produto; iniciar/concluir etapa
   em sequência; capacidade repete o processo), MER - Abastecimento (real, conferência em 1 ou 2 etapas, todos ou só a
   curva A, sobra que volta ao estoque e descarte). **Relatórios**: MER - Produção. **Cadastros Geral Produção**:
@@ -56,7 +57,7 @@ Organização do Rodrigo (vídeo de 06/11/2026); detalhes no `DESIGN_SYSTEM.md`,
   MER - Catálogo e Preço-Base. **MER - Produtos** importa TODOS os produtos da TNP do app de produtos (Backup XLSX, só
   administrador; 09/11/2026): ativos no Compras, inativos no arquivo compactado (aparecem com "Só ativos" desmarcado),
   com alerta e filtro "Sem vínculo / Sem grupo / Sem local" e o botão Revincular.
-- ✅ **Estoques**: MER - Grupo Mercadorias. **Agenda → MER - Agenda de Pedidos** (agendamento do Compras).
+- ✅ **Estoques**: MER - Grupo Mercadorias e MER - Contagem de Estoque (veio de Lançamentos em 23/11/2026, Zé).
 
 ## Saídas · Retiradas/Investimentos (RET, azul)
 - ⬜ Financeiro, Diretor Geral (2)

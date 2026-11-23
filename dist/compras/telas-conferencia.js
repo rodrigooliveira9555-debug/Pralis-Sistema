@@ -18,7 +18,7 @@
   let modo = 'fazer';
   function abrir() {
     if (!tela) {
-      tela = U.criarTela({ id: 'compras-conferencias', titulo: 'MER - Contagem de Estoque', caminho: CAMINHO + 'MER - Contagem de Estoque', icone: 'conferencia', voltar: M.voltarLancamentos });
+      tela = U.criarTela({ id: 'compras-conferencias', titulo: 'MER - Contagem de Estoque', caminho: 'Saídas · Mercadorias / Estoques / MER - Contagem de Estoque', icone: 'conferencia', voltar: M.voltarEstoques });
       U.atalho(tela, 'Agendar conferência', 'M12 5v14M5 12h14', () => formulario(), { criar: true });
     }
     SV.processarConferencias();
