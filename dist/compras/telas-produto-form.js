@@ -426,21 +426,28 @@
             const gradeMes = el('div', 'compras-grade-escolha em-7');
             const gradeAno = el('div', 'compras-grade-escolha em-4');
             const alternar = (lista, valor) => (lista.includes(valor) ? lista.filter((x) => x !== valor) : [...lista, valor].sort((a, b) => a - b));
+            // Os botões de dia e de mês são criados UMA vez e só têm a marcação atualizada. Recriá-los a cada mudança fazia o
+            // 1º toque se perder logo depois de editar uma data: o "change" da data (ao sair do campo) redesenhava a lista entre
+            // o apertar e o soltar, e o botão tocado era trocado antes do clique (defeito achado em 23/11/2026).
+            const botoesDias = DIAS_LISTA.map(([j, nomeDia]) => {
+              const b = el('button', 'compras-dia-linha');
+              b.type = 'button';
+              b.append(el('span', null, nomeDia));
+              b.insertAdjacentHTML('beforeend', VISTO);
+              b.onclick = () => { pr.dias[j] = !pr.dias[j]; pintar(); atualizar(); };
+              b.setAttribute('aria-label', 'Promoção ' + (i + 1) + ': ' + R.DIAS_PROMO[j][1]);
+              return [j, b];
+            });
+            dias.append(...botoesDias.map(([, b]) => b));
+            const lista = (v) => (Array.isArray(v) ? v : []);
+            const celulasMes = Array.from({ length: 31 }, (_, k) => celula(String(k + 1), false, 'dia ' + (k + 1), () => { rp.diasMes = alternar(lista(rp.diasMes), k + 1); pintar(); atualizar(); }));
+            gradeMes.append(...celulasMes);
+            const celulasAno = MESES_CURTOS.map((m, k) => celula(m, false, m, () => { rp.meses = alternar(lista(rp.meses), k + 1); pintar(); atualizar(); }));
+            gradeAno.append(...celulasAno);
             const marca = () => {
-              dias.replaceChildren(...DIAS_LISTA.map(([j, nomeDia]) => {
-                const b = el('button', 'compras-dia-linha' + (pr.dias[j] ? ' marcado' : ''));
-                b.type = 'button';
-                b.append(el('span', null, nomeDia));
-                b.insertAdjacentHTML('beforeend', VISTO);
-                b.onclick = () => { pr.dias[j] = !pr.dias[j]; pintar(); atualizar(); };
-                b.setAttribute('aria-pressed', String(Boolean(pr.dias[j])));
-                b.setAttribute('aria-label', 'Promoção ' + (i + 1) + ': ' + R.DIAS_PROMO[j][1]);
-                return b;
-              }));
-              const diasMes = Array.isArray(rp.diasMes) ? rp.diasMes : [];
-              gradeMes.replaceChildren(...Array.from({ length: 31 }, (_, k) => celula(String(k + 1), diasMes.includes(k + 1), 'dia ' + (k + 1), () => { rp.diasMes = alternar(diasMes, k + 1); pintar(); atualizar(); })));
-              const meses = Array.isArray(rp.meses) ? rp.meses : [];
-              gradeAno.replaceChildren(...MESES_CURTOS.map((m, k) => celula(m, meses.includes(k + 1), m, () => { rp.meses = alternar(meses, k + 1); pintar(); atualizar(); })));
+              botoesDias.forEach(([j, b]) => { b.classList.toggle('marcado', Boolean(pr.dias[j])); b.setAttribute('aria-pressed', String(Boolean(pr.dias[j]))); });
+              celulasMes.forEach((c, k) => c.setAttribute('aria-pressed', String(lista(rp.diasMes).includes(k + 1))));
+              celulasAno.forEach((c, k) => c.setAttribute('aria-pressed', String(lista(rp.meses).includes(k + 1))));
             };
             // Interruptor "Agendar promoção" (pedido do Rodrigo, 17/11/2026): desligado, a promoção vale todos os dias, o dia
             // todo, e os campos de quando somem; ligado, abre data de início, horário, repetição e término. O que foi

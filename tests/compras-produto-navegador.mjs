@@ -101,10 +101,9 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   await s4.getByLabel('Término', { exact: true }).fill('10:00');
   // date-fields.js do S2 mostra um campo DD/MM/AA no lugar do original (que guarda ISO).
   await s4.getByLabel('Terminar repetição', { exact: true }).filter({ visible: true }).fill('31/12/26');
-  // Sai do campo de data antes de tocar no dia. DEFEITO CONHECIDO (23/11/2026, avisado ao Zé): logo depois de digitar a data, o 1º toque
-  // num dia se perde, porque a confirmação da data redesenha a lista de dias e o botão tocado é trocado antes do clique.
-  await p.keyboard.press('Tab');
+  // Toca no dia logo depois de digitar a data (sem sair do campo antes): o 1º toque tem de valer (defeito corrigido em 23/11/2026).
   await s4.getByRole('button', { name: 'Promoção 1: Dom' }).click();
+  ok(await s4.getByRole('button', { name: 'Promoção 1: Dom' }).getAttribute('aria-pressed') === 'false', 'O 1º toque no dia logo depois de digitar a data já desmarca o dia');
   await etapa(p, 1);
   const s5 = sec(p, 'Conversões de unidade');
   await s5.getByRole('button', { name: 'Adicionar conversão' }).click();
