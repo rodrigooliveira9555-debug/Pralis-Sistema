@@ -349,8 +349,8 @@ Pedido do Rodrigo, aplicado em `dist/index.html` e `dist/people-header-pilot.js`
 ## Configurações — Usuários, Permissões e Senhas (06/11/2026)
 Telas em `dist/acessos/`, no roxo de Configurações (#7c3aed; texto #5520ad, o mesmo par do Agenda), com as peças do Compras. Pedido do Marco: permissões **mais simples que as do principal**.
 - **Pessoas com Acesso**: linha por conta com círculo de iniciais (posto: quadrado "P1" cheio na cor), nome, e-mail e etiquetas (Sem acesso, PDVn · Turno, Administrador, cargos ou "Sem cargo"); a linha inteira abre a edição (sem botões na linha). Chips Todas / Pessoas / Postos do Caixa / Sem Acesso. "Postos do Caixa" vira grade dos 8 postos (4 colunas; 2 abaixo de 760 px): livre com borda tracejada e "Criar conta"; ocupado com fundo leve e "Editar".
-- **Cargos de Acesso**: lista com "n de 31 permissões" e "n pessoas"; o diálogo largo tem uma caixa por área (fieldset) com caixas de marcar, contador "n de m" e "Marcar todas" na legenda. Área cujas telas ainda não conferem a permissão diz isso uma vez na legenda.
-- **Acessos por Pessoa**: cada permissão em uma linha com "Pode"/"Não pode", a origem ("Pelo cargo Caixa", "Liberado só para esta pessoa") e três chips: Como o cargo / Liberar / Bloquear (no celular os chips descem para a linha de baixo). "Liberar" só aparece para quem tem a permissão.
+- ~~**Cargos de Acesso**~~ **Tela removida em 23/11/2026 (pedido do Washington): Permissões ficou só com "Acesso por Tela".** O servidor e os dados de cargos de acesso e exceções por pessoa continuam como estavam.
+- ~~**Acessos por Pessoa**~~ **Tela removida em 23/11/2026 (pedido do Washington): Permissões ficou só com "Acesso por Tela".** O servidor e os dados de cargos de acesso e exceções por pessoa continuam como estavam.
 - Sem permissão: a tela abre com um aviso vazio explicando o que pedir. Sem conexão: aviso com "Tentar de novo" (as contas só existem no servidor).
 
 ## Produção e Patrimônio (05/11/2026, aguardando aprovação do Zé)
