@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import {
-  acessoAgenda,
+  AgendaRegras,
   TAMANHO_MAXIMO_ARQUIVO,
   type ArquivoEnvio,
   type ArquivoResposta,
@@ -37,7 +37,7 @@ async function compromissos(empresaId: string) {
 async function exigirAcesso(perfil: PerfilSessao, compromissoId: string) {
   const item = (await compromissos(perfil.empresa.id)).get(compromissoId);
   if (!item) throw new ErroDominio("Compromisso não encontrado. Se acabou de criar, espere alguns segundos para ele chegar ao servidor.", 404, "AGENDA_COMPROMISSO_NAO_ENCONTRADO");
-  const acesso = acessoAgenda(item, perfil.usuarioId);
+  const acesso = AgendaRegras.acesso(item, perfil.usuarioId);
   if (!acesso.ver) throw proibido("Você não participa deste compromisso.", "AGENDA_SEM_ACESSO");
   return { item, acesso };
 }
@@ -67,7 +67,7 @@ export async function naoLidas(perfil: PerfilSessao) {
   const saida: Record<string, number> = {};
   for (const l of await repo.contarNaoLidas(perfil.empresa.id, perfil.usuarioId)) {
     const item = itens.get(l.compromissoId);
-    if (item && acessoAgenda(item, perfil.usuarioId).ver) saida[l.compromissoId] = l.total;
+    if (item && AgendaRegras.acesso(item, perfil.usuarioId).ver) saida[l.compromissoId] = l.total;
   }
   return saida;
 }

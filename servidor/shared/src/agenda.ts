@@ -1,9 +1,10 @@
 import { z } from "zod";
+import type { Compromisso } from "./agenda/regras.ts";
 
 // Agenda: chat e arquivos de cada compromisso (decisão do Zé, 05/11/2026). O compromisso em si mora
 // no documento sincronizado "cicluz-agenda-v1"; aqui ficam só as mensagens e os arquivos, ligados
 // pelo id do compromisso. A permissão é a do compromisso (gestor = quem criou; os outros, o que o
-// gestor marcou) — a mesma regra de dist/agenda/dominio.js (acesso), conferida no servidor.
+// gestor marcou) — a regra única de ./agenda/regras.ts (acesso), conferida no servidor.
 
 export const CHAVE_AGENDA = "cicluz-agenda-v1";
 export const TAMANHO_MAXIMO_ARQUIVO = 10 * 1024 * 1024;
@@ -31,19 +32,4 @@ export type MensagemResposta = { id: string; autorId: string; autorNome: string;
 export type ArquivoResposta = { id: string; nome: string; tipo: string; tamanho: number; papel: PapelArquivo; enviadoPor: string; enviadoPorNome: string; criadoEm: string; podeExcluir: boolean };
 
 /** O compromisso como está no documento da agenda (só o que a permissão usa). */
-export type CompromissoAgenda = {
-  id: string;
-  titulo?: string;
-  criadoPor?: string;
-  pessoas?: Array<{ id: string; responsavel?: boolean; ver?: boolean; editar?: boolean; concluir?: boolean; excluir?: boolean }>;
-};
-export type AcessoAgenda = { ver: boolean; editar: boolean; gestor: boolean; responsavel: boolean };
-
-/** Mesma regra da tela: sem criador (feito antes do login) = sem controle; gestor = quem criou. */
-export function acessoAgenda(item: CompromissoAgenda, usuarioId: string): AcessoAgenda {
-  const responsavel = (item.pessoas ?? []).some((p) => p.id === usuarioId && p.responsavel);
-  if (!item.criadoPor || item.criadoPor === usuarioId) return { ver: true, editar: true, gestor: true, responsavel };
-  const p = (item.pessoas ?? []).find((x) => x.id === usuarioId);
-  if (!p) return { ver: false, editar: false, gestor: false, responsavel: false };
-  return { ver: Boolean(p.ver || p.editar || p.concluir || p.excluir || p.responsavel), editar: Boolean(p.editar), gestor: false, responsavel };
-}
+export type CompromissoAgenda = { id: string } & Pick<Compromisso, "titulo" | "criadoPor" | "pessoas">;

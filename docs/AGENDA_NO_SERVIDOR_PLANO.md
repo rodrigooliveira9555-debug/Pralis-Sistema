@@ -1,7 +1,9 @@
 # Agenda no servidor — plano para aprovação (Zé; Marco de acordo)
 
-> **Status (23/11/2026): PLANO, nada implementado.** Nenhuma migration foi criada em `servidor/db/migrations`, nenhum
-> código mudou. O SQL abaixo é **proposta** e só vira arquivo depois da aprovação do Zé (CLAUDE.md, regra 6).
+> **Status (23/11/2026): em execução, Entrega A.** A2 feito: a regra está em `servidor/shared/src/agenda/regras.ts`,
+> com a cópia gerada `dist/agenda/regras.js` (ainda não carregada pela tela; isso é a Entrega B), e o servidor usa essa
+> regra no chat e nos arquivos (`acessoAgenda` saiu). Nenhuma migration foi criada ainda: o SQL abaixo é **proposta** e
+> só vira arquivo depois da aprovação do Zé (CLAUDE.md, regra 6).
 > Responde à P-45 item 1 (doc 11) e fecha G1, G4, G5, M2, M3 e M4 da `docs/REVISAO_AGENDA_2026-11-23.md` e o DT-15.
 > Modelo seguido: `docs/PRODUTOS_NO_SERVIDOR_PLANO.md` (tabela + API + transferência com conclusão só se tudo chegou).
 

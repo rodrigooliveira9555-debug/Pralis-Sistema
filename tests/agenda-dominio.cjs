@@ -1,7 +1,12 @@
 // Regras da Agenda (listas automáticas, atraso, ordem, grupos, repetição, alerta, frases, calendário).
 // Rodar: node tests/agenda-dominio.cjs
+// Os mesmos casos rodam duas vezes: com dist/agenda/dominio.js e com a regra única gerada do servidor
+// (dist/agenda/regras.js, fonte servidor/shared/src/agenda/regras.ts) no lugar das funções que ela tem.
 const assert = require('node:assert/strict');
-const d = require('../dist/agenda/dominio.js');
+const dominio = require('../dist/agenda/dominio.js');
+const regras = require('../dist/agenda/regras.js');
+
+function rodar(d) {
 let checks = 0;
 const ok = (fn) => { fn(); checks++; };
 
@@ -187,4 +192,13 @@ ok(() => assert.equal(d.tituloMes('2026-11-05'), 'Novembro de 2026'));
 ok(() => assert.equal(d.tituloDia('2026-11-05'), 'Quinta-feira, 5 de novembro'));
 ok(() => assert.equal(d.tituloSemana('2026-11-30'), '29 de novembro a 5 de dezembro'));
 
-console.log(checks + ' verificações das regras da Agenda passaram');
+return checks;
+}
+
+const doDominio = rodar(dominio);
+const comRegras = { ...dominio, ...regras };
+['acesso', 'normalizarPessoas', 'pessoaResponsavel', 'responsaveis', 'podeAvaliar', 'comparativo', 'valorValido', 'validar', 'proxima', 'temRepeticao', 'somarDias', 'somarMeses', 'dataValida', 'horaValida']
+  .forEach((nome) => assert.equal(comRegras[nome], regras[nome], nome + ' tem de vir da regra gerada'));
+const daRegra = rodar(comRegras);
+assert.equal(daRegra, doDominio, 'a regra gerada passa pelos mesmos casos');
+console.log(doDominio + ' verificações das regras da Agenda passaram (' + daRegra + ' de novo com a regra gerada do servidor)');
