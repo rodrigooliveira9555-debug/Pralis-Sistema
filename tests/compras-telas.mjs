@@ -7,6 +7,7 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { iniciar, SESSAO_LOCAL } from './servidor.mjs';
+import { escolherNaArvore } from './ajuda-arvore.mjs';
 
 const { servidor, url } = await iniciar();
 const navegador = await chromium.launch();
@@ -60,6 +61,20 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
     ok(await p.locator('dialog.compras-dialog[open]', { hasText: titulo }).count() === 1, '"+" abre ' + titulo);
     await p.locator('dialog.compras-dialog[open] .people-close-control').click();
   }
+  // Agendar contagem com grupo e subgrupo escolhidos na árvore (23/11/2026, Zé): grava grupoId e subgrupoId como antes.
+  await p.evaluate(() => CicluzCompras.abrir('conferencias'));
+  await p.locator('.view.show .people-add-control').click();
+  const dc = p.locator('dialog.compras-dialog[open]').last();
+  ok((await dc.getByRole('button', { name: 'Grupo', exact: true }).textContent()).trim() === 'Todos os grupos', 'Contagem: sem escolha, o campo diz "Todos os grupos"');
+  await escolherNaArvore(p, dc.getByRole('button', { name: 'Grupo', exact: true }), { grupo: 'BEBIDAS', subgrupo: 'REFRIGERANTES' });
+  ok((await dc.getByRole('button', { name: 'Grupo', exact: true }).textContent()).trim() === 'Bebidas › Refrigerantes', 'Contagem: o campo mostra o subgrupo escolhido');
+  await dc.getByLabel('Quem conta *', { exact: true }).selectOption({ index: 1 });
+  const agendasAntes = await p.evaluate(() => CicluzComprasDados.dados.conferenciaAgendas.length);
+  await dc.locator('.people-save-control').click();
+  await p.waitForFunction((n) => CicluzComprasDados.dados.conferenciaAgendas.length === n + 1, agendasAntes, { timeout: 8000 });
+  const filtroContagem = await p.evaluate(() => CicluzComprasDados.dados.conferenciaAgendas.at(-1).filtro);
+  ok(filtroContagem.grupoId && filtroContagem.subgrupoId && filtroContagem.subgrupoId.startsWith(filtroContagem.grupoId), 'Contagem agendada grava o grupo e o subgrupo escolhidos na árvore: ' + JSON.stringify(filtroContagem));
+  await p.evaluate(() => CicluzComprasDados.transacao((d) => { d.conferenciaAgendas.pop(); })); // não interfere no resto do teste
   // Fornecedores (15/11/2026) e Unidades de Medida (18/11/2026) têm o botão de cadastrar no cabeçalho da lista (pedido do
   // Rodrigo); as outras telas seguem sem repetir o "+".
   await p.evaluate(() => CicluzCompras.abrir('unidades'));
@@ -255,7 +270,8 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   ok(await p.locator('#compras-agendamento.show').count() === 1, 'Lançamentos → MER - Agenda de Pedidos abre o agendamento do Compras');
   await p.locator('.view.show .people-add-control').click(); // "+" do rodapé fixo
   const d1 = dialogo(p);
-  await d1.locator('select[aria-label="Grupo *"]').selectOption({ label: 'BEBIDAS' });
+  // Grupo e subgrupo num campo só, escolhidos na árvore (23/11/2026, Zé).
+  await escolherNaArvore(p, d1.getByRole('button', { name: 'Grupo *', exact: true }), { grupo: 'BEBIDAS' });
   await d1.getByRole('checkbox', { name: 'Marcar REFRIGERANTE COLA 2 LT' }).check();
   await d1.getByRole('checkbox', { name: 'Marcar REFRIGERANTE GUARANÁ 2 LT' }).check();
   await d1.locator('select[aria-label="Responsável por executar *"]').selectOption('u-jose');
