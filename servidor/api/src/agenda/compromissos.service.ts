@@ -33,7 +33,7 @@ const SEM = {
   excluir: "Você não tem permissão para excluir este compromisso."
 } as const;
 const semAcesso = (acao: keyof typeof SEM) => proibido(SEM[acao], "AGENDA_SEM_ACESSO");
-const invalido = (mensagem: string) => new ErroDominio(mensagem, 400, "AGENDA_INVALIDO");
+export const invalido = (mensagem: string) => new ErroDominio(mensagem, 400, "AGENDA_INVALIDO");
 export const naoTransferida = () =>
   conflito("A Agenda ainda está sendo levada para o servidor. Volte em alguns minutos.", "AGENDA_NAO_TRANSFERIDA");
 
@@ -42,7 +42,7 @@ export const naoTransferida = () =>
 const pessoasDe = (linhas: LinhaParticipante[]): Pessoa[] =>
   linhas.map((p) => ({ id: p.usuarioId, responsavel: p.responsavel, ver: p.ver, editar: p.editar, concluir: p.concluir, excluir: p.excluir }));
 
-const notaDe = (n: LinhaAvaliacao): R.Nota => ({
+export const notaDe = (n: LinhaAvaliacao): R.Nota => ({
   avaliadoId: n.avaliadoId, porId: n.porId, papel: n.papel as R.PapelNota, valor: n.valor, comentario: n.comentario, em: n.em.toISOString()
 });
 
@@ -68,7 +68,7 @@ type Subtarefa = { id: string; titulo: string; concluida: boolean; concluidaEm: 
 const subtarefasDe = (c: Pick<NovoCompromisso, "subtarefas">) => (Array.isArray(c.subtarefas) ? (c.subtarefas as Subtarefa[]) : []);
 
 /** O compromisso na forma que regras.ts entende (criadoPor = gestor). */
-function paraRegra(c: LinhaCompromisso, pessoas: Pessoa[], notas: R.Nota[]): R.Compromisso {
+export function paraRegra(c: LinhaCompromisso, pessoas: Pessoa[], notas: R.Nota[]): R.Compromisso {
   const loc = localizacaoDe(c);
   return {
     titulo: c.titulo, url: c.url, data: c.data ?? "", hora: c.hora ?? "", horaFim: c.horaFim ?? "",
@@ -104,7 +104,7 @@ function resposta(c: LinhaCompromisso, participantes: LinhaParticipante[], notas
 }
 
 /** Resposta de um compromisso lendo pessoas, notas e a soneca desta pessoa. */
-async function respostaDe(ex: typeof banco | TransacaoBanco, perfil: PerfilSessao, c: LinhaCompromisso) {
+export async function respostaDe(ex: typeof banco | TransacaoBanco, perfil: PerfilSessao, c: LinhaCompromisso) {
   const empresaId = perfil.empresa.id;
   // Uma consulta por vez: dentro da transação é a mesma conexão.
   const ps = await repo.participantesDe(ex, empresaId, [c.id]);
@@ -174,7 +174,7 @@ async function exigirTransferida(perfil: PerfilSessao) {
 /* ---------- Gravação: um caminho só ---------- */
 
 /** Abre a transação com o contador travado; sem Agenda nas tabelas, recusa. */
-async function gravar<T>(perfil: PerfilSessao, fazer: (tx: TransacaoBanco) => Promise<T>) {
+export async function gravar<T>(perfil: PerfilSessao, fazer: (tx: TransacaoBanco) => Promise<T>) {
   return banco.transaction(async (tx) => {
     if ((await repo.subirVersao(tx, perfil.empresa.id)) === null) throw naoTransferida();
     return fazer(tx);
@@ -182,7 +182,7 @@ async function gravar<T>(perfil: PerfilSessao, fazer: (tx: TransacaoBanco) => Pr
 }
 
 /** Lê o compromisso travado e confere que a pessoa o vê (senão 404) e pode a ação (senão 403). */
-async function carregar(tx: TransacaoBanco, perfil: PerfilSessao, id: string, acao: keyof typeof SEM | "ver") {
+export async function carregar(tx: TransacaoBanco, perfil: PerfilSessao, id: string, acao: keyof typeof SEM | "ver") {
   const c = await repo.compromisso(tx, perfil.empresa.id, id, true);
   if (!c || c.excluidoEm) throw naoEncontrado();
   const participantes = await repo.participantesDe(tx, perfil.empresa.id, [id]);

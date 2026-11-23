@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, inArray, isNull, lt, ne, or, sql, desc } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, lt, ne, or, sql, desc } from "drizzle-orm";
 import {
   agendaAdiamentos,
   agendaAvaliacoes,
@@ -149,8 +149,7 @@ export async function adiamentosDe(ex: Executor, empresaId: string, usuarioId: s
   return ex
     .select({ compromissoId: agendaAdiamentos.compromissoId, ate: agendaAdiamentos.ate })
     .from(agendaAdiamentos)
-    .where(and(eq(agendaAdiamentos.empresaId, empresaId), eq(agendaAdiamentos.usuarioId, usuarioId), inArray(agendaAdiamentos.compromissoId, ids),
-      gt(agendaAdiamentos.ate, sql`now() - interval '1 day'`)));
+    .where(and(eq(agendaAdiamentos.empresaId, empresaId), eq(agendaAdiamentos.usuarioId, usuarioId), inArray(agendaAdiamentos.compromissoId, ids)));
 }
 
 /** Mudou quando ou o alerta: a soneca de todos deixa de valer. */

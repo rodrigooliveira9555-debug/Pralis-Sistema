@@ -1,13 +1,12 @@
-import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type * as Conexao from "../../api/src/banco/conexao.ts";
-import { comSessao, criarApp, criarConta, entrar } from "./ajuda.ts";
+import { comSessao, criarApp } from "./ajuda.ts";
+import { ajudaAgenda, novoId, type Conta, type Pool } from "./ajuda-agenda.ts";
 
 // Compromissos da Agenda nas tabelas (plano docs/AGENDA_NO_SERVIDOR_PLANO.md, seções 3 e 7). Dados fictícios.
 
 let app: FastifyInstance;
-let pool: typeof Conexao.pool;
+let pool: Pool;
 
 beforeAll(async () => {
   app = await criarApp();
@@ -19,39 +18,8 @@ afterAll(async () => {
   await pool.end();
 });
 
-type Conta = Awaited<ReturnType<typeof criarConta>> & { cookie: string };
-async function logado(papel: "administrador" | "usuario", empresaNome?: string): Promise<Conta> {
-  const conta = await criarConta(papel, empresaNome);
-  const { cookie } = await entrar(app, conta.email, conta.senha);
-  return { ...conta, cookie };
-}
+const { logado, cenario, pedir, agenda } = ajudaAgenda(() => app, () => pool);
 
-/** A Agenda da empresa "já nas tabelas" (o que a transferência do passo A6 faz): contador, uma lista e membros. */
-async function prepararAgenda(dono: Conta, membros: Conta[]) {
-  await pool.query(`INSERT INTO agenda_estado (empresa_id) VALUES ($1)`, [dono.empresaId]);
-  await pool.query(`INSERT INTO agenda_grupos (empresa_id, id, nome, cor, dono_id, criado_por, atualizado_por) VALUES ($1, 'lista-loja', 'Loja', '#2563eb', $2, $2, $2)`,
-    [dono.empresaId, dono.usuarioId]);
-  await pool.query(`INSERT INTO agenda_colunas (empresa_id, id, nome, ordem, criado_por, atualizado_por) VALUES ($1, 'col-a-fazer', 'A fazer', 0, $2, $2)`,
-    [dono.empresaId, dono.usuarioId]);
-  for (const m of [dono, ...membros]) {
-    await pool.query(`INSERT INTO agenda_grupo_membros (empresa_id, grupo_id, usuario_id, criado_por) VALUES ($1, 'lista-loja', $2, $3)`, [dono.empresaId, m.usuarioId, dono.usuarioId]);
-  }
-}
-
-/** Gestor, responsável (edita e conclui), leitor (só vê), alguém de fora (membro da lista, não participa). */
-async function cenario() {
-  const gestor = await logado("administrador");
-  const resp = await logado("usuario", gestor.empresaNome);
-  const leitor = await logado("usuario", gestor.empresaNome);
-  const fora = await logado("usuario", gestor.empresaNome);
-  await prepararAgenda(gestor, [resp, leitor, fora]);
-  return { gestor, resp, leitor, fora };
-}
-
-const pedir = (cookie: string, method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", url: string, payload?: object) =>
-  app.inject({ method, url, headers: comSessao(cookie), ...(payload ? { payload } : {}) });
-
-const novoId = () => "ag-" + randomUUID();
 const base = (extra: object = {}) => ({ grupoId: "lista-loja", titulo: "Fechar o caixa", ...extra });
 
 async function criar(c: Conta, extra: object = {}) {
@@ -60,7 +28,6 @@ async function criar(c: Conta, extra: object = {}) {
   expect(r.statusCode, r.body).toBe(201);
   return r.json().data as { id: string; versao: number; data: string; repeticao: { ancora: string; feitas: number } | null } & Record<string, unknown>;
 }
-const agenda = async (c: Conta) => (await pedir(c.cookie, "GET", "/api/agenda")).json().data;
 
 describe("agenda: antes da transferência", () => {
   it("GET diz que ainda não está no servidor; gravar é recusado", async () => {

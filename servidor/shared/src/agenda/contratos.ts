@@ -158,3 +158,42 @@ export type AgendaResposta = {
   compromissos: CompromissoResposta[];
   relacoes: RelacaoAgendaResposta[];
 };
+
+/* ---------- Listas (grupos), membros e colunas ---------- */
+
+const nomeLista = z.string().trim().min(1, "Informe o nome da lista.").max(40, "O nome da lista passa de 40 letras.");
+const corLista = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida");
+const iconeLista = z.string().regex(/^[a-z0-9-]{1,30}$/, "Ícone inválido");
+export const ORDENACOES_AGENDA = ["manual", "data", "criacao", "prioridade", "titulo"] as const;
+
+export const grupoCriacaoSchema = z.object({ id: compromissoIdSchema, nome: nomeLista, cor: corLista, icone: iconeLista.default("lista") });
+export const grupoEdicaoSchema = z.object({
+  versao: z.number().int().min(1),
+  nome: nomeLista.optional(),
+  cor: corLista.optional(),
+  icone: iconeLista.optional(),
+  ordenacao: z.enum(ORDENACOES_AGENDA).optional()
+}).strict();
+export const grupoMembrosSchema = z.object({ usuarioIds: z.array(z.string().trim().min(1).max(200)).max(500) });
+
+const nomeColuna = z.string().trim().min(1, "Informe o nome da coluna.").max(30, "O nome da coluna passa de 30 letras.");
+export const colunaCriacaoSchema = z.object({ id: compromissoIdSchema, nome: nomeColuna });
+export const colunaEdicaoSchema = z.object({ nome: nomeColuna });
+
+/* ---------- Ligações do mapa, avaliação e soneca ---------- */
+
+const rotulo = z.string().trim().max(40, "O rótulo passa de 40 letras.").default("");
+export const relacaoCriacaoSchema = z.object({ id: compromissoIdSchema, de: compromissoIdSchema, para: compromissoIdSchema, rotulo });
+export const relacaoEdicaoSchema = z.object({ rotulo });
+export const avaliacaoSchema = z.object({
+  avaliadoId: z.string().trim().min(1).max(200),
+  valor: z.number().int(),
+  comentario: z.string().trim().max(500, "O comentário passa de 500 letras.").default("")
+});
+export const adiamentoSchema = z.object({ ate: z.string().datetime({ offset: true }) });
+
+export type GrupoCriacao = z.infer<typeof grupoCriacaoSchema>;
+export type GrupoEdicao = z.infer<typeof grupoEdicaoSchema>;
+export type RelacaoCriacao = z.infer<typeof relacaoCriacaoSchema>;
+export type AvaliacaoEnvio = z.infer<typeof avaliacaoSchema>;
+export type PessoaAgendaResposta = { id: string; nome: string };
