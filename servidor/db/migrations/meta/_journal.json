@@ -43,6 +43,13 @@
       "when": 1793985700633,
       "tag": "0005_acesso_de_antes_explicito",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794259808435,
+      "tag": "0006_produtos",
+      "breakpoints": true
     }
   ]
 }

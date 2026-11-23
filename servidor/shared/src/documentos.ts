@@ -37,8 +37,20 @@ export const CHAVES_SINCRONIZADAS = [
   // e Patrimônio (bens). Vínculos pelo id (produto do Compras, bem, local, responsável). Sem dado pessoal.
   "cicluz-producao-v1",
   "cicluz-patrimonio-v1",
-  // Produtos inativos do app de produtos, compactados (gzip + base64): fora do cicluz-compras-v1 para caber no aparelho.
+  // Arquivo ANTIGO de inativos (09/11/2026, gzip + base64). Os produtos agora ficam na tabela `produtos`; esta chave só
+  // existe para os aparelhos ainda receberem o arquivo até a transferência acontecer no ar. Remover depois dela.
   "cicluz-produtos-arquivo-v1",
+  // Cadastros novos de 11 a 19/11/2026 que ficavam só no aparelho (incluídos em 23/11/2026, Zé). Sem dado pessoal: tabela TACO e
+  // ingredientes ligados a ela (Produção), prestadores de serviço (clínicas: nome, telefone, endereço), configuração da comunicação
+  // da Gestão de Pessoas (WhatsApp oficial e antecedências), lista de exames complementares, categorias da matriz disciplinar (só o
+  // catálogo; as ocorrências e o áudio não vão) e tipos de uniforme. Ponto (cicluz-ponto-v1) e custos da folha
+  // (cicluz-folha-custos-v1) ficam FORA: têm dado de colaborador e dependem da regra de LGPD (P-11).
+  "cicluz-taco-v1",
+  "cicluz-prestadores-v1",
+  "cicluz-gp-config-v1",
+  "cicluz-exames-complementares-v1",
+  "cicluz-ocorrencias-matriz-v1",
+  "cicluz-uniformes-tipos-v1",
   // Marcas de importação dos seeds. Precisam acompanhar os dados (e ir no mesmo lote): sem elas,
   // um aparelho novo reimportaria o seed por cima do que veio do servidor.
   "cicluz-financial-import-complete-v3-ret",
@@ -56,7 +68,11 @@ export type ChaveSincronizada = (typeof CHAVES_SINCRONIZADAS)[number];
 // documento e o aparelho (da mesma empresa) tem, o aparelho envia o dele em vez de apagá-lo. Só vale
 // para chave que a tela nunca apaga: para as outras, "sem documento" pode ser uma remoção feita em
 // outro aparelho, e reenviar ressuscitaria o dado apagado.
-export const CHAVES_ADOTADAS_DO_APARELHO = ["cicluz-compras-v1", "cicluz-agenda-v1", "cicluz-producao-v1", "cicluz-patrimonio-v1", "cicluz-produtos-arquivo-v1"] as const satisfies readonly ChaveSincronizada[];
+export const CHAVES_ADOTADAS_DO_APARELHO = [
+  "cicluz-compras-v1", "cicluz-agenda-v1", "cicluz-producao-v1", "cicluz-patrimonio-v1", "cicluz-produtos-arquivo-v1",
+  // 23/11/2026: as telas destas chaves nunca apagam a chave; o que já foi digitado no aparelho sobe na primeira entrada.
+  "cicluz-taco-v1", "cicluz-prestadores-v1", "cicluz-gp-config-v1", "cicluz-exames-complementares-v1", "cicluz-ocorrencias-matriz-v1", "cicluz-uniformes-tipos-v1"
+] as const satisfies readonly ChaveSincronizada[];
 
 export function chaveSincronizada(chave: string): chave is ChaveSincronizada {
   return (CHAVES_SINCRONIZADAS as readonly string[]).includes(chave);

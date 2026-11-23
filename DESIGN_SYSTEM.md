@@ -1,5 +1,29 @@
 # CICLUZ — referência de interface
 
+## Grupo e subgrupo de mercadorias escolhidos em árvore, num campo só (23/11/2026)
+Pedido do Zé. **Supera**, nas telas do Compras e da Produção, os dois seletores comuns "Grupo" e "Subgrupo". Onde se escolhe grupo de
+mercadorias há **um campo só**, com o desenho de um seletor (mesma altura, borda e seta), que mostra o que foi escolhido ("Bebidas ›
+Refrigerantes") e, ao tocar, abre a **janela em árvore** do contrato (seta de abrir, caixa, ícone MER, nome, contagem e situação): toca
+no grupo, abrem os subgrupos, marca um e Confirma. Vale para: cadastro de produto (MER - Produtos, etapa 2), MER - Agenda de Pedidos,
+agendamento de MER - Contagem de Estoque (vazio = "Todos os grupos") e MER - Produtos da Produção (árvore grupo › subgrupo › produto,
+onde só o produto é marcável). Nessas telas a escolha é **única** (sem cascata); a janela abre já mostrando o que estava escolhido.
+Os grupos vêm do cadastro do S2 (Saídas › Cadastros Geral › MER - Grupos de Mercadorias); o dado gravado continua grupoId e subgrupoId.
+Peça única: `U.seletorArvore` (saiu de contratos.js), `U.campoArvore` e `U.arvoreGruposMercadoria` em `dist/compras/ui.js`. Correção
+no mesmo dia: a linha da árvore cresce quando o nome quebra (320 px), em vez de vazar sobre a de baixo.
+**Locais (mesmo dia, Zé):** "Setor de estoque" e "Área" do produto e o "Local do estoque" de MER - Produtos da Produção usam o mesmo
+campo, abrindo a janela de **áreas, setores e locais** (o desenho do cadastro de locais, com cor e sigla da área) em **escolha única**
+(`CicluzLocationTree.janelaUnica`). O dado não muda: setor e local do estoque pelo id do nó; área pelo nome; texto antigo sem nó
+aparece como "… (sem vínculo na árvore)". Local sem cor (ex.: vindo de importação) usa a cor da área de cima e não quebra a janela.
+Os filtros **Área** e **Setor / local de estoque** do agendamento da Contagem e da Agenda de Pedidos também (peça única
+`U.campoLocal`); gravam e comparam o nome sem olhar maiúsculas, minúsculas e acentos. **Local de venda** continua lista: é texto
+livre do produto, não é nó da árvore.
+
+## Excluir é vermelho em todo o sistema (23/11/2026)
+A regra que pinta os botões das janelas na cor da tela (05/11/2026) pegava também os de excluir: "Remover", "Excluir compromisso"
+e outros apareciam verdes ou roxos. Ela deixa de fora `.perigo` e `.perigo-texto`, que voltam ao vermelho. Para remover um item
+**dentro** do cadastro (linha de conversão de unidade, promoção do produto), o botão é o **redondo vermelho com a lixeira branca**
+(`U.botaoRemover`), na ponta da linha — não um botão largo.
+
 ## Configurações → Permissões → Acesso por Tela: esboço do nível de acesso por tela (19/11/2026)
 Pedido do Washington, a partir de um esboço dele. Novo cartão **Acesso por Tela** em Permissões (`dist/acessos/telas.js`, dados de exemplo em `telas-dados.js`, estilos em `acessos.css`). **É um esboço sem backend: nada é gravado e nenhum acesso muda.** Mostra o **menu inteiro aberto** (grupo › seção › tela, 117 telas, as chaves são as `data-menu-item-key` dos cartões do menu) e, em cada tela, o **ícone do nível de acesso** (só o ícone e o nome, **sem caixa de seleção**; nada quando é "Sem acesso") e o botão redondo **"+"**: as opções do nível só aparecem quando o "+" da linha é tocado (e o "+" vira "×" enquanto está aberto).
 **Topo, "Para quem é este acesso":** três linhas — **Usuário / colaborador**, **Cargo** e **Área** (a Área só filtra o menu mostrado) —, cada uma com o nome, o botão redondo "+" e o valor escolhido **só como texto**; **a lista de opções só aparece ao tocar no "+"** (não há caixa de seleção). Escolher uma pessoa carrega o cargo dela (os ajustes são só dela, por cima do cargo); escolher só o cargo edita o padrão do cargo. Pessoas e cargos são de mentira. Além do esboço: busca de tela, **Expandir tudo / Recolher tudo**, recolher por grupo, contagem "N telas com acesso · M podem pagar" e o ponto roxo nos níveis ajustados.
@@ -328,7 +352,7 @@ Pedido do Rodrigo (áudio de 09/11) e decisões do Zé. Em **MER - Produtos**, q
 - **Alerta de vínculo**: na linha e no card, selo `.compras-situacao.tom-atencao` "Sem grupo", "Sem local" ou os dois; no formulário, faixa `.compras-alerta.tom-atencao` no topo dizendo o que falta. Some quando o grupo e o local da árvore são escolhidos.
 - **Filtro**: grupo de chips **Vínculo** (Todos · Sem vínculo (N) · Sem grupo (N) · Sem local (N)), separado do grupo **Compra** (Pendentes é pendência de compra, não de vínculo).
 - **Setor de estoque** no formulário passa a listar a **árvore de locais** com o caminho ("LJ › VITRINES"); texto antigo sem nó aparece como "… (sem vínculo na árvore)". Um controle só para o local.
-- **Todos os produtos**: os inativos do app ficam no arquivo compactado; a lista avisa "N inativo(s) do app ficam arquivados: desmarque "Só ativos" para vê-los". Desmarcado, eles aparecem junto (abertos na hora); editar e salvar um deles o traz para o Compras.
+- **Todos os produtos ficam no servidor** (tabela `produtos`, docs/PRODUTOS_NO_SERVIDOR_PLANO.md; substitui o "arquivo compactado" de 09/11): a lista (padrão) mostra os ativos guardados no aparelho, também sem internet; o botão "Inativos" do cabeçalho da lista (desenho do Rodrigo de 17/11) busca os inativos no servidor, em páginas, e a lupa do rodapé busca junto (23/11/2026, junção com a main). Criar, editar, inativar, importar e revincular só gravam conectados; sem conexão a tela diz isso no formulário. O código interno de produto novo é dado pelo servidor ("Produto salvo com o código 13xxx").
 - **Cards e selos responsivos** (pedido do Zé, 09/11): o card encolhe com a coluna (`.compras-card { min-width: 0 }`, `dl` com `minmax(0, 1fr)`) e os selos `.compras-situacao` dentro de card e de tabela quebram linha em vez de vazar (o texto da pendência de compra é longo). Conferido em 320/390/660/1024, claro e escuro.
 - Sem CSS de cor novo: só layout (`.compras-acoes-importacao`, `.compras-importacao-previa`, `.compras-importacao-linha`) em `compras/compras.css`, borda com `--layout-line`.
 

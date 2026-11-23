@@ -499,11 +499,14 @@
 
   /* =================== Conferências de estoque =================== */
 
+  /** Nome de local igual, sem olhar maiúsculas, minúsculas e acentos (o setor do produto é gravado em maiúsculas; a árvore, não). */
+  const semAcento = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleUpperCase('pt-BR');
+  const mesmoLocal = (a, b) => semAcento(a) === semAcento(b);
   function produtosDoRecorte(f) {
     const b = S.bolinhas();
     return S.dados.produtos.filter((p) => p.status === 'ativo'
       && (!f.grupoId || p.grupoId === f.grupoId) && (!f.subgrupoId || p.subgrupoId === f.subgrupoId)
-      && (!f.area || p.areaEstoque === f.area) && (!f.setor || p.setorEstoque === f.setor) && (!f.localVenda || S.locaisDeVenda(p).includes(f.localVenda))
+      && (!f.area || mesmoLocal(p.areaEstoque, f.area)) && (!f.setor || mesmoLocal(p.setorEstoque, f.setor)) && (!f.localVenda || S.locaisDeVenda(p).some((l) => mesmoLocal(l, f.localVenda)))
       && (!f.ranking || !f.ranking.length || f.ranking.some((k) => b[k].has(p.id))));
   }
   function salvarAgendaConferencia(entrada, existente) {
@@ -702,7 +705,7 @@
     pedidosDoConvite, registrarSeparacao, produtosParaFornecedor, marcarProdutosQueVende,
     aceitarOferta, contrapropor, encerrarRodada, fecharVencidas, encerrarSolicitacao, estadoOferta,
     receberPedido, cancelarPedido,
-    produtosDoRecorte, salvarAgendaConferencia, encerrarAgendaConferencia, processarConferencias, proximasConferencias, salvarContagem,
+    produtosDoRecorte, mesmoLocal, salvarAgendaConferencia, encerrarAgendaConferencia, processarConferencias, proximasConferencias, salvarContagem,
     resumoConferencia, aprovarConferencia, recusarConferencia, custoUnitario,
     vincular, decidirVinculo, definirPrecoBase,
   };

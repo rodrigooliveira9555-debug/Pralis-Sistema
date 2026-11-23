@@ -1,8 +1,7 @@
 /*
  * Importação dos produtos do app de produtos (SISTEMA_PRALIS_PRODUTOS) para o MER - Produtos do S2.
- * Pedido do Rodrigo (áudio de 09/11/2026): TODOS os produtos da loja TNP. Os ATIVOS ficam no Compras (cicluz-compras-v1,
- * usados em compra, estoque e produção); os INATIVOS ficam no ARQUIVO compactado (cicluz-produtos-arquivo-v1, gzip +
- * base64: ~4.800 produtos em ~0,5 MB), porque os ~7.200 abertos não cabem no documento (4 MB) nem no iPad (~5 MB).
+ * Pedido do Rodrigo (áudio de 09/11/2026): TODOS os produtos da loja TNP. A tela monta os produtos a partir do backup
+ * e manda para a API de produtos (docs/PRODUTOS_NO_SERVIDOR_PLANO.md), que casa grupo e local e não duplica.
  * Fonte: o Backup XLSX do app (Manutenção → Backup XLSX), abas Produtos e Promocoes.
  *
  * Herança do app: a BASE dá identidade, códigos, fiscal e como se compra; a cópia da TNP dá status, custo,
@@ -25,15 +24,13 @@
     'p-farinha', 'p-fermento', 'p-acucar', 'p-oleo', 'p-cafe', 'p-saco-pao', 'p-sacola', 'p-chocolate', 'p-bala', 'p-agua', 'p-inativo'];
   const LOJA = 'TNP';
   const FAIXA_PRODUTO = 700000; // mesma fronteira de produto-regras.js (códigos ≥ 700000 não são de produto novo)
-  /** Limite de segurança do documento cicluz-compras-v1: o servidor recusa acima de 4 MB e o iPad guarda ~5 MB no total. */
-  const LIMITE_BYTES = 3.5 * 1024 * 1024;
 
   /* ---------- Normalização ---------- */
   /** Tira caracteres de formato (U+2060 do app, zero-width, BOM, hífen suave), acentos, caixa e espaços repetidos. */
   function limpar(s) {
     return String(s == null ? '' : s)
-      .replace(/[­​-‏⁠-⁤﻿]/g, '')
-      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[\u00AD\u200B-\u200F\u2060-\u2064\uFEFF]/g, '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/\s+/g, ' ').trim().toUpperCase();
   }
   /** "MER BEBIDAS - SUCOS" → { grupo: 'BEBIDAS', sub: 'SUCOS' }. Sem " - ": só o grupo. */
@@ -156,7 +153,7 @@
       const o = b || t;
       const tipo = texto(o.tipo) === 'transformacao' ? 'transformacao' : 'revenda';
       const locais = { setorEstoque: texto(t.setor_estoque), localVenda1: texto(t.local_venda_1), localVenda2: texto(t.local_venda_2), setorVenda1: texto(t.setor_venda_1), setorVenda2: texto(t.setor_venda_2) };
-      const grupoApp = texto(o.grupo).replace(/[­​-‏⁠-⁤﻿]/g, '');
+      const grupoApp = texto(o.grupo).replace(/[\u00AD\u200B-\u200F\u2060-\u2064\uFEFF]/g, '');
       const g = casarGrupo(grupoApp, grupos);
       const unidade = texto(o.medida_base) || 'UN';
       const promos = (promosPorProduto.get(texto(t.id)) || []).sort((a, z) => numero(a.indice) - numero(z.indice)).map(promocaoDe);
@@ -204,128 +201,27 @@
   const ehExemplo = (id) => EXEMPLOS.includes(id);
   /** Registro de teste preso a um produto de exemplo: cita o id dele em qualquer campo (produtoId, itens, listas). */
   const citaExemplo = (r) => { const t = JSON.stringify(r); return EXEMPLOS.some((id) => t.includes('"' + id + '"')); };
-  function registrosDosExemplos(d) {
-    const saem = {};
-    for (const [colecao, lista] of Object.entries(d)) {
-      if (colecao === 'produtos' || !Array.isArray(lista)) continue;
-      const n = lista.filter(citaExemplo).length;
-      if (n) saem[colecao] = n;
-    }
-    return saem;
-  }
-
-  /** Índices por id do app e por código interno. */
-  function indices(lista) {
-    const porApp = new Map(); const porCodigo = new Map();
-    const marcar = (p, i) => { if (ehExemplo(p.id)) return; if (p.appId) porApp.set(p.appId, i); if (p.codigoInterno) porCodigo.set(String(p.codigoInterno), i); };
-    lista.forEach(marcar);
-    // achar: posição do produto do app na lista; incluir: acrescenta e já indexa (sem refazer o índice inteiro).
-    return { achar: (n) => (porApp.has(n.appId) ? porApp.get(n.appId) : porCodigo.get(String(n.codigoInterno))), incluir: (p) => { lista.push(p); marcar(p, lista.length - 1); } };
-  }
-
-  /** Campos que são do S2 (não vêm do app) e sobrevivem à reimportação. */
-  const DO_S2 = ['id', 'saldo', 'liberadoCompra', 'conversoes', 'vendas3m', 'compras3m', 'lucro3m', 'pesavel', 'teclaBalanca', 'validadeBalanca', 'areaEstoque', 'areaVenda', 'vinculoManual'];
-  function mesclar(atual, novo) {
-    if (!atual) return { ...novo, saldo: 0, liberadoCompra: novo.status === 'ativo', conversoes: [], vendas3m: 0, compras3m: 0, lucro3m: 0, vinculoManual: {} };
-    const r = { ...atual, ...novo };
-    for (const c of DO_S2) if (c in atual) r[c] = atual[c];
-    const manual = atual.vinculoManual || {};
-    if (manual.grupo) { r.grupoId = atual.grupoId; r.subgrupoId = atual.subgrupoId; }
-    if (manual.local) r.localId = atual.localId;
-    return r;
-  }
-
-  /**
-   * Grava a importação. `d` é o Compras (dentro de S.transacao) e `arquivo` é a lista aberta do arquivo de inativos.
-   * - Ativo do app: atualiza no Compras; se estava no arquivo, volta para o Compras; senão, entra novo.
-   * - Inativo do app: se já está no Compras (tem histórico lá), fica lá com status inativo; senão vai para o arquivo.
-   * Tira os exemplos e os registros que os citam. Devolve os números e o arquivo novo (para compactar e gravar).
-   */
-  function aplicar(d, montado, arquivo = []) {
+  /** Tira os produtos de exemplo e os registros que os citam (sem mexer em mais nada). Devolve quantos saíram. */
+  function tirarExemplos(d) {
+    let saiu = 0;
     for (const [colecao, lista] of Object.entries(d)) {
       if (!Array.isArray(lista)) continue;
-      d[colecao] = colecao === 'produtos' ? lista.filter((p) => !ehExemplo(p.id)) : lista.filter((r) => !citaExemplo(r));
+      const fica = colecao === 'produtos' ? lista.filter((p) => !ehExemplo(p.id)) : lista.filter((r) => !citaExemplo(r));
+      saiu += lista.length - fica.length;
+      d[colecao] = fica;
     }
-    // A marca "arquivado" é só da tela (lista aberta); não vai para o Compras nem para o arquivo gravado.
-    const novoArquivo = arquivo.filter((p) => !ehExemplo(p.id)).map(({ arquivado, ...p }) => p);
-    const iC = indices(d.produtos); const iA = indices(novoArquivo);
-    const r = { novos: 0, atualizados: 0, arquivados: 0, voltaramDoArquivo: 0 };
-    const removidosDoArquivo = new Set();
-    for (const n of montado.produtos) {
-      const c = iC.achar(n);
-      if (c != null) { d.produtos[c] = mesclar(d.produtos[c], n); r.atualizados++; continue; }
-      const a = iA.achar(n);
-      if (a != null && !removidosDoArquivo.has(a)) { iC.incluir({ ...mesclar(novoArquivo[a], n), liberadoCompra: true }); removidosDoArquivo.add(a); r.voltaramDoArquivo++; r.atualizados++; }
-      else { iC.incluir({ ...mesclar(null, n), id: 'pi-' + n.codigoInterno }); r.novos++; }
-    }
-    for (const n of montado.inativos || []) {
-      const c = iC.achar(n);
-      if (c != null) { d.produtos[c] = { ...mesclar(d.produtos[c], n), liberadoCompra: false }; r.atualizados++; continue; }
-      const a = iA.achar(n);
-      if (a != null && !removidosDoArquivo.has(a)) { novoArquivo[a] = mesclar(novoArquivo[a], n); r.atualizados++; r.arquivados++; }
-      else { iA.incluir({ ...mesclar(null, n), id: 'pi-' + n.codigoInterno }); r.novos++; r.arquivados++; }
-    }
-    const arquivoFinal = novoArquivo.filter((p, i) => !removidosDoArquivo.has(i));
-    d.codigoInternoApp = Math.max(Number(d.codigoInternoApp) || 0, montado.maiorCodigoApp || 0);
-    d.importacaoProdutos = { em: new Date().toISOString(), novos: r.novos, atualizados: r.atualizados, ativos: montado.produtos.length, arquivados: arquivoFinal.length };
-    return { ...r, arquivo: arquivoFinal };
+    return saiu;
   }
 
-  /**
-   * Prévia (nada é gravado): simula em cópias e conta o que entra, o que atualiza, o que fica sem vínculo e o que sai.
-   */
-  function planejar(d, montado, { grupos, arvore, arquivo = [] } = {}) {
-    const nos = nosDaArvore(arvore);
-    const copia = JSON.parse(JSON.stringify(d));
-    const exemplos = d.produtos.filter((p) => ehExemplo(p.id)).length;
-    const registrosQueSaem = registrosDosExemplos(d);
-    const r = aplicar(copia, montado, JSON.parse(JSON.stringify(arquivo)));
-    const ativosFinais = copia.produtos.filter((p) => p.status === 'ativo' && (p.appId || p.codigoInterno));
-    const alertas = ativosFinais.map((p) => alertasDeVinculo(p, grupos, nos));
-    return {
-      novos: r.novos, atualizados: r.atualizados, total: montado.produtos.length + (montado.inativos || []).length,
-      ativos: montado.produtos.length, inativos: (montado.inativos || []).length, noArquivo: r.arquivo.length, voltaramDoArquivo: r.voltaramDoArquivo,
-      semGrupo: alertas.filter((a) => a.semGrupo).length, semLocal: alertas.filter((a) => a.semLocal).length,
-      conflitos: conflitosDeCodigo(montado.produtos.concat(montado.inativos || [])), exemplosQueSaem: exemplos, registrosQueSaem,
-      ignorados: { outrasLojas: montado.contagem.total - (montado.contagem.porLoja[LOJA] || 0) },
-      maiorCodigoApp: montado.maiorCodigoApp, simulado: { compras: copia, arquivo: r.arquivo },
-    };
-  }
-
-  /** Refaz o casamento por nome (grupo e local) onde o vínculo não foi feito à mão. Devolve quantos mudaram. */
-  function revincular(produtos, { grupos, arvore } = {}) {
-    const nos = nosDaArvore(arvore);
-    let mudou = 0;
-    for (const p of produtos) {
-      const manual = p.vinculoManual || {};
-      const origem = p.origemApp || {};
-      if (!manual.grupo && origem.grupo) {
-        const g = casarGrupo(origem.grupo, grupos);
-        const gid = g ? g.grupoId : null; const sid = g ? g.subgrupoId : null;
-        if (gid !== (p.grupoId || null) || sid !== (p.subgrupoId || null)) { p.grupoId = gid; p.subgrupoId = sid; mudou++; }
-      }
-      if (!manual.local) {
-        const textos = origem.locais ? origem.locais.split(' | ') : textosDeLocal(p);
-        const lid = casarLocal(textos, nos);
-        if (lid !== (p.localId || null)) { p.localId = lid; mudou++; }
-      }
-    }
-    return mudou;
-  }
-
-  /* ---------- Arquivo compactado (gzip + base64) ---------- */
+  /* ---------- Arquivo antigo de inativos (só LEITURA, para a transferência ao servidor) ----------
+   * Entre 09/11/2026 e a transferência, os inativos do app ficavam compactados (gzip + base64) em
+   * cicluz-produtos-arquivo-v1. Depois de transferidos, a chave é apagada; aqui só se lê. */
   const FORMATO = 'gzip-base64';
   async function fluxo(bytesEntrada, transformacao) {
     const s2 = new Blob([bytesEntrada]).stream().pipeThrough(transformacao);
     return new Uint8Array(await new Response(s2).arrayBuffer());
   }
-  function paraBase64(u8) { let t = ''; for (let i = 0; i < u8.length; i += 0x8000) t += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(t); }
   function deBase64(b64) { const t = atob(b64); const u8 = new Uint8Array(t.length); for (let i = 0; i < t.length; i++) u8[i] = t.charCodeAt(i); return u8; }
-  /** Lista de produtos → texto do arquivo (o que vai para o localStorage e para o servidor). */
-  async function compactar(lista) {
-    const gz = await fluxo(new TextEncoder().encode(JSON.stringify(lista)), new CompressionStream('gzip'));
-    return JSON.stringify({ versao: 1, formato: FORMATO, total: lista.length, dados: paraBase64(gz) });
-  }
   /** Texto do arquivo → lista de produtos. Vazio ou ausente → lista vazia. */
   async function descompactar(textoArquivo) {
     if (!textoArquivo) return [];
@@ -333,14 +229,9 @@
     if (!o || o.formato !== FORMATO || !o.dados) return [];
     return JSON.parse(new TextDecoder().decode(await fluxo(deBase64(o.dados), new DecompressionStream('gzip'))));
   }
-  const totalDoArquivo = (textoArquivo) => { try { return (JSON.parse(textoArquivo || 'null') || {}).total || 0; } catch (e) { return 0; } };
-  const compactacaoDisponivel = () => typeof CompressionStream !== 'undefined' && typeof DecompressionStream !== 'undefined';
-
-  const bytes = (valor) => (typeof TextEncoder !== 'undefined' ? new TextEncoder().encode(JSON.stringify(valor)).length : Buffer.byteLength(JSON.stringify(valor), 'utf8'));
 
   return {
-    EXEMPLOS, LOJA, LIMITE_BYTES, limpar, separarGrupo, casarGrupo, nosDaArvore, casarLocal,
-    montarProdutos, conflitosDeCodigo, alertasDeVinculo, planejar, aplicar, revincular, bytes,
-    compactar, descompactar, totalDoArquivo, compactacaoDisponivel, CHAVE_ARQUIVO: 'cicluz-produtos-arquivo-v1',
+    EXEMPLOS, LOJA, limpar, separarGrupo, casarGrupo, nosDaArvore, casarLocal,
+    montarProdutos, conflitosDeCodigo, alertasDeVinculo, tirarExemplos, descompactar, CHAVE_ARQUIVO: 'cicluz-produtos-arquivo-v1',
   };
 });

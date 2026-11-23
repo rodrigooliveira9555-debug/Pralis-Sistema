@@ -5,7 +5,9 @@
   "scripts": {
     "serve": "node tests/servidor.mjs",
     "test": "node tests/date-fields.cjs && node tests/identity-reader.cjs && node tests/field-validation.cjs && node tests/consultas-publicas.cjs && node tests/compras-dominio.cjs && node tests/compras-produto.cjs && node tests/compras-importacao.cjs && node tests/agenda-dominio.cjs && node tests/agenda-mapa-layout.cjs && node tests/producao-dominio.cjs && node tests/producao-taco.cjs && node tests/patrimonio-dominio.cjs && node tests/ponto-conferencia.cjs && node tests/qr.cjs && node tests/scanner-nucleo.cjs",
-    "test:telas": "node tests/compras-telas.mjs && node tests/compras-regras-navegador.mjs && node tests/compras-produto-navegador.mjs && node tests/compras-importacao-navegador.mjs && node tests/entrar-adocao.mjs && node tests/agenda-telas.mjs && node tests/producao-telas.mjs",
+    "local:api": "node tests/local-com-api.mjs",
+    "test:telas-api": "node tests/produtos-servidor-navegador.mjs && node tests/compras-produto-navegador.mjs",
+    "test:telas": "node tests/compras-telas.mjs && node tests/compras-regras-navegador.mjs && node tests/entrar-adocao.mjs && node tests/agenda-telas.mjs && node tests/producao-telas.mjs",
     "versoes": "node scripts/atualizar-versoes.cjs"
   },
   "devDependencies": {

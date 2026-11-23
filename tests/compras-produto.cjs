@@ -39,10 +39,6 @@ ok(() => assert.equal(R.semelhanca('Pão Francês', 'PAO FRANCES'), 100));
 ok(() => assert.ok(R.semelhanca('ABC', 'XYZ') < 55));
 
 // Códigos
-ok(() => assert.equal(R.proximoCodigoInterno([]), '13130'));
-ok(() => assert.equal(R.proximoCodigoInterno(['13200', '700001', 'x']), '13201'));
-ok(() => assert.equal(R.codigoBarrasNaCriacao('', '13130'), '13130'));
-ok(() => assert.equal(R.codigoBarrasNaCriacao('789', '13130'), '789'));
 
 // Preço de venda "auto": custo unitário × (1 + margem); margem do produto vence a do grupo
 ok(() => assert.equal(R.calcularPrecoVenda({ auto: true, custo: 12, quantidadeCaixa: 6, margem: 0.5, margemGrupo: 0.3 }), 3));

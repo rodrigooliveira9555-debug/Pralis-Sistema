@@ -1,5 +1,5 @@
 /*
- * MER - Agenda de Produção (Agenda) e MER - Pedidos de Produção (Saídas · Mercadorias → Lançamentos Produção).
+ * MER - Agenda de Produção e MER - Pedidos de Produção (os dois em Saídas · Mercadorias → Lançamentos Produção).
  * "O mesmo fluxo do pedido… a máscara é a mesma… só que um vai para a cotação, o outro vai para o
  * mapa de produção" [33:35]: reaproveita o campo de repetição do Compras; muda a janela de demanda,
  * a entrega (mesmo dia ou dia seguinte) e as quantidades em múltiplos da meia fornada.
@@ -56,7 +56,7 @@
   let telaA = null;
   function abrirAgendamento() {
     if (!telaA) {
-      telaA = U.criarTela({ id: 'producao-agendamento', titulo: 'MER - Agenda de Produção', caminho: M.CAMINHO_AGENDA + 'MER - Agenda de Produção', icone: 'agenda', voltar: M.voltarAgenda });
+      telaA = U.criarTela({ id: 'producao-agendamento', titulo: 'MER - Agenda de Produção', caminho: M.CAMINHO + 'MER - Agenda de Produção', icone: 'agenda', voltar: M.voltarProducao });
       U.atalho(telaA, 'Novo agendamento', 'M12 5v14M5 12h14', () => formularioAgenda(), { criar: true });
       document.addEventListener('cicluz-producao-mudou', () => { if (telaA.view.classList.contains('show')) renderAgendas(); });
     }
