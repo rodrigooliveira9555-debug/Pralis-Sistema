@@ -272,30 +272,28 @@
   });
 
   /**
-   * Primeiro aparelho de ADMINISTRADOR conectado com o catálogo ainda no aparelho: leva os produtos (Compras + arquivo
-   * de inativos, sem os de exemplo) para o servidor. Só quando TODOS chegaram o catálogo do servidor passa a valer;
-   * aí o documento fica só com o estado da loja e o arquivo de inativos é aposentado. Senão, nada muda e o
-   * administrador vê o que faltou.
+   * Primeiro aparelho de ADMINISTRADOR conectado com o catálogo ainda no aparelho: leva os produtos do Compras (sem os de
+   * exemplo) para o servidor. Só quando TODOS chegaram o catálogo do servidor passa a valer; aí o documento fica só com o
+   * estado da loja. Senão, nada muda e o administrador vê o que faltou. (A transferência da TNP aconteceu no ar em 23/11/2026.)
    */
   async function transferirSePreciso() {
     const P = window.CicluzProdutos;
     const perfil = window.CicluzSessao && window.CicluzSessao.perfil;
     if (!P || !P.conectado()) return null;
     const c = await P.atualizar();
+    // Catálogo já no servidor: a cópia local do arquivo antigo de inativos (cicluz-produtos-arquivo-v1, de 09/11/2026), se ainda
+    // existir neste aparelho, sai — tudo o que ela tinha está na tabela desde a transferência.
+    if (c && c.ativado) { try { localStorage.removeItem('cicluz-produtos-arquivo-v1'); } catch (e) { /* fica e não é lida */ } }
     if (!c || c.ativado || !perfil || perfil.papel !== 'administrador') return null;
     const I = window.CicluzProdutoImportacao;
-    const daqui = dados.produtos.filter((p) => !I.EXEMPLOS.includes(p.id));
-    const arquivados = await lerArquivoAntigo();
-    const ids = new Set(daqui.map((p) => p.id));
-    const todos = daqui.concat(arquivados.filter((p) => !ids.has(p.id)));
+    const todos = dados.produtos.filter((p) => !I.EXEMPLOS.includes(p.id));
     // Empresa sem produtos no aparelho (ex.: nova): o catálogo do servidor passa a valer direto (transferência vazia).
     const maior = Math.max(Number(dados.codigoInternoApp) || 0, ...todos.map((p) => Number(p.codigoInterno)).filter((n) => Number.isFinite(n) && n < 700000));
     const r = await P.transferir(todos, maior);
     if (r.faltando.length || r.invalidos.length) return { ...r, total: todos.length };
-    // Catálogo no servidor: o documento passa a guardar só o estado da loja; o arquivo de inativos sai.
+    // Catálogo no servidor: o documento passa a guardar só o estado da loja.
     dados = completar(dados);
     try { localStorage.setItem(KEY, JSON.stringify(paraGravar(dados))); } catch (e) { /* grava na próxima mudança */ }
-    try { localStorage.removeItem(CHAVE_ARQUIVO); } catch (e) { /* fica e não é mais lido */ }
     document.dispatchEvent(new CustomEvent('cicluz-compras-mudou', { detail: { externo: true } }));
     return { ...r, total: todos.length, concluida: true };
   }
@@ -354,15 +352,7 @@
     return window.CicluzProdutoImportacao.alertasDeVinculo(p, grupos, nos);
   }
 
-  /* ---------- Arquivo antigo de inativos (cicluz-produtos-arquivo-v1): só LEITURA, para a transferência ----------
-   * Entre 09/11/2026 e a transferência ao servidor, os inativos do app ficavam compactados nesta chave. A transferência
-   * os leva para a tabela e apaga a chave. Nada mais grava aqui. */
-  const CHAVE_ARQUIVO = 'cicluz-produtos-arquivo-v1';
-  async function lerArquivoAntigo() {
-    let t = '';
-    try { t = localStorage.getItem(CHAVE_ARQUIVO) || ''; } catch (e) { t = ''; }
-    return (await window.CicluzProdutoImportacao.descompactar(t)).map(normalizarProduto);
-  }
+
 
   /* ---------- Consultas comuns ---------- */
   const fornecedor = (id) => dados.fornecedores.find((f) => f.id === id);

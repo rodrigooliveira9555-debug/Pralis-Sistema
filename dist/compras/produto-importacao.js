@@ -213,25 +213,9 @@
     return saiu;
   }
 
-  /* ---------- Arquivo antigo de inativos (só LEITURA, para a transferência ao servidor) ----------
-   * Entre 09/11/2026 e a transferência, os inativos do app ficavam compactados (gzip + base64) em
-   * cicluz-produtos-arquivo-v1. Depois de transferidos, a chave é apagada; aqui só se lê. */
-  const FORMATO = 'gzip-base64';
-  async function fluxo(bytesEntrada, transformacao) {
-    const s2 = new Blob([bytesEntrada]).stream().pipeThrough(transformacao);
-    return new Uint8Array(await new Response(s2).arrayBuffer());
-  }
-  function deBase64(b64) { const t = atob(b64); const u8 = new Uint8Array(t.length); for (let i = 0; i < t.length; i++) u8[i] = t.charCodeAt(i); return u8; }
-  /** Texto do arquivo → lista de produtos. Vazio ou ausente → lista vazia. */
-  async function descompactar(textoArquivo) {
-    if (!textoArquivo) return [];
-    const o = JSON.parse(textoArquivo);
-    if (!o || o.formato !== FORMATO || !o.dados) return [];
-    return JSON.parse(new TextDecoder().decode(await fluxo(deBase64(o.dados), new DecompressionStream('gzip'))));
-  }
 
   return {
     EXEMPLOS, LOJA, limpar, separarGrupo, casarGrupo, nosDaArvore, casarLocal,
-    montarProdutos, conflitosDeCodigo, alertasDeVinculo, tirarExemplos, descompactar, CHAVE_ARQUIVO: 'cicluz-produtos-arquivo-v1',
+    montarProdutos, conflitosDeCodigo, alertasDeVinculo, tirarExemplos,
   };
 });

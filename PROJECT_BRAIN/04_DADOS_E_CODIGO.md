@@ -66,6 +66,7 @@
   antigo, sem os 19 de exemplo; produto antigo sem código ganha o próximo do servidor); o servidor só insere o que não
   existe; o catálogo passa a valer na conclusão, que só acontece se TODOS chegaram; aí o documento fica só com o estado e o
   arquivo antigo é apagado. O primeiro código de produto novo é 13130 (último antes do S2: 13129), regra só no servidor.
+  **Transferência feita no ar em 23/11/2026**; depois dela a chave `cicluz-produtos-arquivo-v1` saiu da sincronização e do código.
 - **Fornecedor único (15/11/2026)**, dentro de `cicluz-compras-v1` (mesma chave e versão). Campos do fornecedor: `nome`,
   `documento`, `whatsapp` e `situacao` (já existiam), mais `razaoSocial` (texto, opcional; o `nome` é o nome fantasia, e
   continua sendo o nome exibido em todo o sistema, sem migração), `categorias` (lista com 'produto' e/ou 'servico'), `ramo`
