@@ -13,7 +13,7 @@
     'conferenciaAgendas', 'conferencias',
   ];
   /* Coleções acrescentadas depois: dado antigo sem elas continua válido (recebe lista vazia ou a carga inicial). */
-  const COLECOES_NOVAS = ['unidades', 'historicoNomes'];
+  const COLECOES_NOVAS = ['unidades', 'historicoNomes', 'clientes', 'modelosContrato'];
   const UNIDADES_INICIAIS = [['UN', 'Unidade'], ['KG', 'Quilo'], ['CX', 'Caixa'], ['FD', 'Fardo'], ['PC', 'Peça'], ['SC', 'Saco'], ['MI', 'Milheiro'], ['LT', 'Litro'], ['DZ', 'Dúzia'], ['G', 'Grama'], ['ML', 'Mililitro']];
 
   const novoId = (prefixo) => prefixo + '-' + (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
@@ -188,6 +188,19 @@
     for (const c of COLECOES_NOVAS) if (!Array.isArray(d[c])) d[c] = [];
     if (!d.unidades.length) d.unidades = UNIDADES_INICIAIS.map(([sigla, nome]) => ({ id: 'un-' + sigla.toLowerCase(), sigla, nome, ativa: true }));
     d.produtos = servidor() ? produtosDoServidor(d.produtos) : d.produtos.map(normalizarProduto);
+    // Fornecedor: o texto livre antigo de "categoria" vira o campo ramo (uma vez por documento, marca em d.migracoes).
+    // Só em memória: vai para o armazenamento na próxima gravação, para abrir a tela não criar versão no banco.
+    window.CicluzComprasDominio.migrarRamoFornecedor(d);
+    // Fornecedor antigo ligado a produtos (catálogo, histórico, cotação ou pedido) e sem categoria vira Produto (uma vez).
+    window.CicluzComprasDominio.migrarCategoriaProduto(d);
+    // Cadastro em etapas: a data de nascimento do fornecedor pessoa física passa a ser a do vendedor ou prestador (uma vez).
+    window.CicluzComprasDominio.migrarVendedorFornecedor(d);
+    // Funções do prestador (cadastro próprio, com a lista inicial) e o contato único do fornecedor de Serviço como Prestador 1 (uma vez).
+    window.CicluzComprasDominio.migrarPrestadoresFornecedor(d);
+    // Contrato: início, fim, valor e observações passam a ser do quadro "Tem contrato?" do financeiro (uma vez).
+    window.CicluzComprasDominio.migrarContratoFinanceiro(d);
+    // Nomes, endereços e e-mails já gravados entram no padrão do sistema (uma vez; o valor antigo de cada troca fica guardado na marca).
+    window.CicluzComprasDominio.migrarNomesPadrao(d, window.formatSystemName);
     return d;
   }
 
@@ -298,6 +311,18 @@
     }
     return (Array.isArray(lista) ? lista : []).map((g) => ({ id: g.id, nome: g.name, ativo: g.active !== false, subgrupos: (g.children || []).map((s) => ({ id: s.id, nome: s.name, ativo: s.active !== false })) }));
   }
+  /** Grupos de Retiradas (RET) do cadastro financeiro do S2 — é onde ficam os grupos de patrimônio (ex.: Investimento › Máquinas e Equipamentos). */
+  function gruposRetirada() {
+    let lista = null;
+    try { if (typeof financialGroups !== 'undefined') lista = financialGroups.retiradas; } catch (e) { /* ainda não carregado */ }
+    if (!lista) {
+      try { lista = (JSON.parse(localStorage.getItem('cicluz-financial-hierarchy-v1') || 'null') || {}).retiradas; } catch (e) { lista = null; }
+    }
+    return (Array.isArray(lista) ? lista : []).map((g) => ({ id: g.id, nome: g.name, ativo: g.active !== false, subgrupos: (g.children || []).map((s) => ({ id: s.id, nome: s.name, ativo: s.active !== false })) }));
+  }
+  /** Grupos de patrimônio (decisão do Rodrigo, 19/11/2026): dos grupos de retiradas, só o de Investimento (id fixo do cadastro: ret-g0). */
+  const GRUPO_INVESTIMENTO = 'ret-g0';
+  function gruposPatrimonio() { return gruposRetirada().filter((g) => g.id === GRUPO_INVESTIMENTO); }
   function nomeGrupo(grupoId, subgrupoId) {
     const g = gruposMercadoria().find((x) => x.id === grupoId);
     if (!g) return grupoId ? 'Grupo não encontrado' : 'Sem grupo';
@@ -378,7 +403,7 @@
     get dados() { return dados; },
     get erroLeitura() { return erroLeitura; },
     transacao, novoId, agoraIso, hojeIso,
-    gruposMercadoria, nomeGrupo, arvoreLocais, nosLocais, vinculo, transferirSePreciso, emModoServidor: servidor, locais,
+    gruposMercadoria, gruposRetirada, gruposPatrimonio, nomeGrupo, arvoreLocais, nosLocais, vinculo, transferirSePreciso, emModoServidor: servidor, locais,
     fornecedor, produto, responsavel, referencia, definirReferencia, fornecedoresDoProduto, bolinhas,
   };
 

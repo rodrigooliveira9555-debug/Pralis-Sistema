@@ -16,9 +16,28 @@
   U.ICONES.acessos = ICONE;
 
   const CARDS = {
+    'Empresa': [['empresa', 'Dados da Empresa', 'CNPJ, razão social, regime tributário, endereço e responsáveis'], ['empresa-estrutura', 'Estrutura de Dados da Empresa', 'Em definição']],
+    // Diversos (19/11/2026, pedido do Rodrigo): cadastros gerais que não são da empresa nem de acesso. O Salário Mínimo Vigente saiu de Empresa e veio para cá.
+    'Diversos': [['salario-minimo', 'Salário Mínimo Vigente', 'Valor e início da vigência; base dos contratos']],
     'Usuários': [['usuarios', 'Pessoas com Acesso', 'Criar contas, postos do caixa e cargos'], ['dados', 'Dados no Servidor', 'Situação de cada assunto gravado']],
-    'Permissões': [['cargos', 'Cargos de Acesso', 'O que cada cargo pode fazer'], ['pessoa', 'Acessos por Pessoa', 'Ajustar só para uma pessoa']],
+    'Permissões': [['cargos', 'Cargos de Acesso', 'O que cada cargo pode fazer'], ['pessoa', 'Acessos por Pessoa', 'Ajustar só para uma pessoa'], ['telas', 'Acesso por Tela', 'O menu inteiro, com o nível de cada tela (esboço)']],
     'Senhas': [['senhas', 'Minha Senha', 'Trocar a sua senha'], ['senha-outra', 'Senha de Outra Pessoa', 'Quando alguém esqueceu a senha']],
+    // Design System (18/11/2026; o setor se chama só "Design System", pedido do Rodrigo): um cartão por tópico do padrão visual (acessos/design-system.js). A ordem é a de leitura.
+    'Design System': [['ds-letras', 'Letras', 'A fonte do sistema, os pesos e o jeito de escrever'],
+      ['ds-tamanhos', 'Tamanho das Letras', 'O tamanho de cada tipo de texto, do título à nota'],
+      ['ds-cores', 'Cores', 'A cor de cada origem do menu e as cores fixas'],
+      ['ds-espacamento', 'Espaçamento', 'As distâncias entre quadros, campos e linhas'],
+      ['ds-icones', 'Ícones', 'O tamanho do ícone em cada lugar, o desenho e a sigla'],
+      ['ds-cabecalho', 'Cabeçalho e Barra de Baixo', 'O cabeçalho de cima e a barra de baixo, com medidas e botões'],
+      ['ds-botoes', 'Botões', 'A biblioteca de botões: todos os tipos, medidas e onde usar'],
+      ['ds-campos', 'Campos de Preenchimento', 'Rótulo, obrigatório, situação e o aviso de campo vazio'],
+      ['ds-mascaras', 'Máscaras', 'O formato que cada campo assume enquanto se digita'],
+      ['ds-quadros', 'Quadros e Molduras', 'Tudo dentro de quadro, com o título na borda'],
+      ['ds-listas', 'Listas', 'O formato das telas de lista e o que cada toque faz'],
+      ['ds-menu', 'Menu e Cartões', 'O menu principal, o submenu e os cartões de cada setor'],
+      ['ds-janelas', 'Janelas e Painéis', 'A janela de cadastro, a de confirmação e o painel flutuante'],
+      ['ds-mensagens', 'Mensagens e Avisos', 'Como o sistema avisa, confirma e mostra erro'],
+      ['ds-conferencia', 'Conferência Final', 'O que conferir antes de dizer que uma tela está pronta']],
   };
   const SETOR_DA_TELA = {};
   Object.entries(CARDS).forEach(([setor, cards]) => cards.forEach(([id]) => { SETOR_DA_TELA[id] = setor; }));

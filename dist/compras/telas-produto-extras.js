@@ -79,8 +79,12 @@
       leitor.readAsDataURL(arquivo);
     });
   }
-  /** Bloco de foto do formulário (Tirar foto, Galeria, arrastar e soltar, Remover). Devolve { no, valor() }. */
-  function campoFoto(atual, nomeProduto) {
+  /**
+   * Bloco de foto do formulário (Tirar foto, Galeria, arrastar e soltar, Remover). Devolve { no, valor() }.
+   * textos: para outro cadastro reaproveitar o bloco (ex.: peça do patrimônio) com as próprias frases.
+   */
+  function campoFoto(atual, nomeProduto, textos = {}) {
+    const T = { vazio: 'Adicione uma foto do produto', pendente: 'A foto nova é gravada ao salvar o produto.', coisa: 'produto', ...textos };
     let valor = atual || null;
     let pendente = false;
     const box = el('div', 'compras-foto');
@@ -105,13 +109,13 @@
       area.replaceChildren();
       acoes.replaceChildren(botao('Tirar foto', () => camera.click()), botao('Galeria', () => galeria.click()));
       if (valor) {
-        const img = el('img'); img.src = valor; img.alt = 'Foto de ' + (nomeProduto() || 'produto');
+        const img = el('img'); img.src = valor; img.alt = 'Foto de ' + (nomeProduto() || T.coisa);
         img.onclick = () => fotoAmpliada(valor, nomeProduto());
         area.append(img);
-        if (pendente) area.append(el('small', 'profiles-note', 'A foto nova é gravada ao salvar o produto.'));
+        if (pendente) area.append(el('small', 'profiles-note', T.pendente));
         acoes.append(botao('Remover', () => { valor = null; pendente = true; desenha(); }, 'btn secondary perigo-texto'));
       } else {
-        area.append(el('b', null, 'Adicione uma foto do produto'), el('small', 'profiles-note', 'JPEG, PNG ou WebP · até 8 MB'));
+        area.append(el('b', null, T.vazio), el('small', 'profiles-note', 'JPEG, PNG ou WebP · até 8 MB'));
       }
     }
     desenha();
@@ -161,26 +165,52 @@
     const lista = S.dados.unidades.slice().sort((a, b) => (a.ativa === b.ativa ? a.sigla.localeCompare(b.sigla) : a.ativa === false ? 1 : -1));
     const topo = el('div', 'profiles-controls');
     topo.append(U.nota('Siglas usadas no "como se compra" (embalagem e medida de compra), na medida base e nas conversões do produto.'));
-    telaU.body.replaceChildren(topo, U.tabela([
-      ['Sigla', (u) => { const s = el('b', null, u.sigla); return s; }],
-      ['Nome', (u) => u.nome],
-      ['Situação', (u) => U.situacao(u.ativa === false ? 'Inativa' : 'Ativa', u.ativa === false ? 'neutro' : 'positivo')],
-      ['Em uso', (u) => (emUso(u.sigla) ? 'Sim' : '—')],
-    ], lista, { aoClicar: editarUnidade, classeLinha: (u) => (u.ativa === false ? 'inativo' : '') }));
+    // Lista no padrão das outras (18/11/2026, Rodrigo): tocar na linha edita; a seta à direita revela Editar e Excluir.
+    const linhas = el('div', 'compras-lista');
+    if (!lista.length) linhas.append(U.vazio('Nenhuma unidade cadastrada.', 'Use o "+" para cadastrar.'));
+    lista.forEach((u) => {
+      const uso = emUso(u.sigla);
+      linhas.append(U.linhaLista({
+        icone: 'lista', titulo: u.sigla, detalhe: u.nome + (uso ? ' · em uso em produtos' : ''), estado: u.ativa === false ? 'Inativa' : 'Ativa',
+        acoes: { rotulo: u.sigla + ' - ' + u.nome, lista: linhas, aoEditar: () => editarUnidade(u), aoExcluir: () => excluirUnidade(u) },
+      }));
+      if (u.ativa === false) linhas.lastElementChild.classList.add('inativo');
+    });
+    // Mesmo cabeçalho de lista dos outros cadastros: botão de cadastrar à esquerda e a quantidade na ponta.
+    const ativas = lista.filter((u) => u.ativa !== false).length;
+    const sec = U.secao('Unidades', undefined, U.pontaDaLista(ativas, ativas + (ativas === 1 ? ' unidade ativa' : ' unidades ativas')));
+    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Nova Unidade', 'Cadastrar unidade', () => editarUnidade()));
+    sec.append(linhas);
+    telaU.body.replaceChildren(topo, sec);
+  }
+  /** Unidade em uso em produto não é excluída (o produto ficaria sem a sigla): a saída é desativar. */
+  function excluirUnidade(u) {
+    if (emUso(u.sigla)) {
+      U.dialogo({ titulo: 'Unidade não pode ser excluída', montar: (form) => { form.append(el('p', null, '"' + u.sigla + ' - ' + u.nome + '" está em uso em produtos. Para tirar de uso, edite e deixe a unidade inativa.')); } });
+      return;
+    }
+    U.confirmar('Excluir unidade?', '"' + u.sigla + ' - ' + u.nome + '" não está em uso e será excluída. Não dá para desfazer.', 'Excluir', () => {
+      const ok = S.transacao((d) => { d.unidades = d.unidades.filter((o) => o.id !== u.id); });
+      if (!ok) return 'Não foi possível excluir neste navegador.';
+      U.avisar('Unidade excluída.');
+      renderUnidades();
+    });
   }
   function editarUnidade(u) {
     U.dialogo({
-      titulo: u ? 'Editar unidade' : 'Nova unidade',
+      titulo: u ? 'Editar unidade' : 'Cadastro unidade', classe: 'compras-form-padrao',
       montar: (form) => {
         const sigla = entrada('text', u?.sigla || '', { maxLength: 6, required: true });
         sigla.addEventListener('input', () => { sigla.value = sigla.value.toUpperCase().replace(/[^A-Z0-9/]/g, ''); });
         if (u && emUso(u.sigla)) sigla.readOnly = true;
         const nome = entrada('text', u?.nome || '', { maxLength: 40, required: true });
-        const ativa = el('label', 'compras-interruptor');
-        const c = entrada('checkbox'); c.checked = u ? u.ativa !== false : true;
-        ativa.append(c, el('span', null, 'Unidade ativa'));
-        form.append(campo('Sigla *', sigla, u && emUso(u.sigla) ? 'Sigla em uso em produtos: não pode ser trocada.' : 'Até 6 letras, ex.: CX, SACO, PCT.'), campo('Nome *', nome), ativa);
-        return { sigla, nome, c };
+        // Mesmo desenho dos outros cadastros: um quadro com o nome na moldura; a Situação (interruptor) abre o quadro.
+        const situacao = U.quadroSituacao('Situação da unidade', u ? u.ativa !== false : true, { feminino: true, dica: 'Unidade inativa sai das listas de escolha. Nada é apagado.' });
+        situacao.classList.add('compras-largo');
+        const quadro = el('fieldset', 'compras-fieldset compras-largo');
+        quadro.append(el('legend', null, 'Dados da unidade'), situacao, campo('Sigla *', sigla, u && emUso(u.sigla) ? 'Sigla em uso em produtos: não pode ser trocada.' : 'Até 6 letras, ex.: CX, SACO, PCT.'), campo('Nome *', nome));
+        form.append(quadro);
+        return { sigla, nome, c: { get checked() { return situacao.ativo; } } };
       },
       salvar: (x) => {
         const sigla = x.sigla.value.trim().toUpperCase();

@@ -196,25 +196,68 @@ campos e regras). Cards de Entradas → Caixas, na ordem do fluxo:
 
 ### R-224 — Ajustar início das vendas (09/11/2026)
 
-- **Regra (Marco, 28/10/2026, registro do principal):** quem abriu o caixa no sistema depois de já vender no PDV recua o **início das vendas** na etapa Vendas do fechamento. As vendas do PDV desse intervalo **sem caixa** passam a ser deste caixa (Entradas, saldo, relatório); a **abertura oficial nunca muda**. Limites: **60 min** antes da abertura oficial, mesmo dia, nunca antes do fechamento do caixa anterior do mesmo PDV, só com o caixa aberto ou em fechamento, **motivo de 3 a 500 letras**. Cada ajuste guarda quem, quando, motivo e as duas horas. Com o caixa em fechamento, o relatório de vendas já gerado é **descartado**. Folha × início: tolerância de **2 min**.
+- **Regra (Marco, 28/10/2026, registro do principal):** quem abriu o caixa no sistema depois de já vender no PDV recua o **início das vendas** na etapa Vendas do fechamento. As vendas do PDV desse intervalo **sem caixa** passam a ser deste caixa (Entradas, saldo, relatório); a **abertura oficial nunca muda**. Limites: **60 min** antes da abertura oficial, mesmo dia, nunca no mesmo minuto nem antes do fechamento do caixa anterior do mesmo PDV (a janela começa um minuto depois do fechamento; correção da revisão do Marco, 10/11/2026), só com o caixa aberto ou em fechamento, **motivo de 3 a 500 letras**. Cada ajuste guarda quem, quando, motivo e as duas horas. Com o caixa em fechamento, o relatório de vendas já gerado é **descartado**. Folha × início: tolerância de **2 min**.
 - **Arquivos:** `inicio-vendas.js` (regra, sem tela), `fechamento-inicio.js` (bloco "Início das vendas", aviso da folha e diálogo "Ajustar início"); `modulo.js` (`turno.semCaixa`, `abertura.inicioVendas` e `edicoes`, retrato no fechamento), `fechamento-comum.js` (`lidoNoPdv`: o que a folha e a maquininha imprimem inclui as vendas sem caixa), `fechamentos-dossie.js` (bloco "Início das vendas" e nota na Gerência), `turno.js` ("desde HH:MM (início ajustado)").
 - **Na tela:** etapa 1 (Vendas), seção da folha: Abertura oficial, Início das vendas, vendas deste caixa e do PDV sem caixa, botão **Ajustar início**. Se a folha lida começa mais de 2 min antes do início e cabe nos 60 min, aparece o aviso com **"Ajustar início para HH:MM"** (hora da folha e motivo já preenchidos). Reajustar para mais tarde **devolve** as vendas que ficaram fora do período.
 - **Adaptações da casca (diferem do principal):** o novo início é uma **hora** do mesmo dia (o principal pede data e hora com fuso, então a recusa de "dia diferente" não existe aqui); a venda "que já pertence a outro caixa" não existe (cada PDV tem um caixa por vez); as 3 vendas sem caixa (07:10, 07:25 e 07:40, R$ 55,60) são **fictícias** e nascem com todo caixa aberto; a folha lida traz o "Período de" simulado (primeira venda do PDV).
 - **Verificado:** o teste `e2e-inicio.js` percorre 33 pontos: recusas (depois da abertura, mais de 60 min, caixa anterior, motivo, mesmo início), efeito em Entradas e saldo (+R$ 55,60 e +R$ 41,60 em dinheiro), registro do ajuste, descarte do relatório, devolução ao reajustar, fechamento, dossiê e Gerência.
-- **Aprovação:** Washington autorizou implementar em 09/11/2026. A leitura do principal é de 04/11/2026 (ver "Falta" abaixo); o Marco deve confirmar que a R-224 não mudou desde então.
+- **DECISÃO DO MARCO (10/11/2026) — fica como está:** ao ajustar o início das vendas com o caixa em fechamento, o relatório é descartado **e a contagem registrada também**, porque o esperado e a diferença dela foram calculados antes do ajuste. O que o operador digitou (cédulas e moedas) **não** se perde: basta gerar o relatório de novo. No código, `contagem.registrada` é zerada junto com o relatório. A **alternativa B** (descartar só o relatório, manter a contagem e recalcular o esperado e a diferença) **fica para quando existir backend**. Por que é assim: na casca a contagem registrada nasce **junto** com o relatório em `gerarRelatorio` e guarda o **esperado congelado** e a **diferença**; as telas do fechamento (etapa 4 e revisão) leem esses dois valores. **Custo conhecido e aceito:** perde-se o histórico `registrada.correcoes` (as correções da contagem e suas justificativas) e a regra "corrigir a contagem exige motivo" deixa de enxergar a mudança.
+- **Aprovação:** Washington autorizou implementar em 09/11/2026. **O Marco conferiu em 09/11/2026 que a R-224 não mudou no principal desde 04/11/2026** (registrado em 10/11/2026).
+
+## Mapa do Caixa hoje, tela por tela (10/11/2026, `main` c03146b)
+
+Tudo é **casca**: dados fictícios, em centavos, só na memória (recarregar zera), **sem backend, banco nem `/api`**. Legenda: **pronta (casca)** = o fluxo inteiro da tela existe e está testado; **parcial** = falta parte do que o principal faz; **não começou**. Os números R-xxx são as regras do sistema principal (leitura de 04/11/2026); a **R-224** foi conferida pelo Marco em 09/11/2026 e não mudou desde então.
+
+| Tela (menu) | Estado | Regras do principal que segue | Onde difere do principal |
+| --- | --- | --- | --- |
+| **Abertura** (Entradas › Lançamentos) | pronta (casca) | R-040 abrir = confirmar o recebimento do malote (lacre rompido, entra pelo **contado**); R-205 o declarado nunca é reescrito; R-028 quem enviou não confirma; R-229 posto do operador (PDV × turno) | posto **fixo** PDV 1 · Manhã (sem login por posto); horário vem do relógio do navegador (R-184 usa o servidor); sem conferência física gravada; um caixa vivo por vez |
+| **Turno** (Entradas › Lançamentos) | parcial | R-232 saldo e esperado **cegos** para o operador; R-231 recebimento sem lacre (operador confirma ou "Não recebi"); R-187 sangria = transferência de retorno; R-208 "Vendas do caixa"; R-224 mostra "desde HH:MM (início ajustado)" | faltam "Últimos lançamentos", campanhas (R-199), filtros de horário e paginação em "Vendas do caixa"; nova sangria fica no Turno (no principal, em Transferências); valor total da sangria é obrigatório |
+| **Fechamento · 1 Vendas** | parcial | R-232 contagem cega (cédulas e moedas); folha CREARE com valores travados e correção manual com motivo; **R-224 ajustar início das vendas** (60 min, mesmo dia, nunca no mesmo minuto nem antes do caixa anterior, motivo, descarte do relatório, tolerância de 2 min da folha); R-226 responsável é quem abriu | leitura da folha e do período **simulada** por botão (no principal, IA); o início é uma **hora** (não data e hora); a venda "de outro caixa" não existe; as 3 vendas sem caixa são fictícias; ao descartar o relatório a casca também zera a contagem registrada (**decisão do Marco, 10/11/2026: fica assim**; ver a seção do R-224) |
+| **Fechamento · 2 Maquininha** | parcial | comprovante com 4 formas (crédito, débito, Pix, voucher); sem correção manual (decisão do Marco, 29/10) | leitura simulada; sem manhã/tarde (acumulado − manhã, R-227/228/229); sem bandeira/operadora |
+| **Fechamento · 3 Relatório final** | pronta (casca) | Folha × PDV × Maquininha só **informa**: divergência não bloqueia nem vira quebra | usa a leitura simulada |
+| **Fechamento · 4 Fechamento** | pronta (casca) | esperado × contado só aqui; lacre = o reservado; observação obrigatória se divergir; falta = quebra + aviso, **sobra só avisa**; o contado vira retorno final pendente ao Cofre | "Encerrar com divergência" simplificado; sem ajuste de fechamento posterior |
+| **Gerência** (Entradas › Lançamentos) | pronta (casca) | R-200 mensagens dentro do monitor; R-231 envio de recebimento sem lacre (só com caixa aberto na conta); R-028 quem enviou não confirma; monitor só com caixas abertos | só o caixa desta sessão é real; outros dois abertos são fictícios; a Gerência manda mensagens (no principal só o administrador tem a permissão) |
+| **Tesouraria · Transferências** (Transferências › Lançamentos) | pronta (casca) | painel com filtros, lacres e detalhe; conferência estrita do retorno (contagem cega, recusa com motivo, divergência encerrada vira quebra); R-143/R-165 sem fundo não há transferência | a conferência estrita do retorno **não tem tela no principal** (adaptação aprovada); sem "agendada", sem prazo de confirmação (423) nem `liberar-trava`; R-190 vínculo ao caixa aberto só em parte |
+| **Tesouraria · Nova transferência** | pronta (casca) | Cofre → conta de posto = malote; lacre **digitado e único** (R-021), sem cadastro de malote (R-022); origem ≠ destino; valor > 0 | **não** há múltiplo destino (R-030) nem planejamento de retorno (R-185, legado) |
+| **Tesouraria · Lacres** (popup) | pronta (casca) | abertura, fechamento e bolsas de sangria, com o estado de cada lacre | — |
+| **Tesouraria · Contas e saldos** | pronta (casca) | saldo derivado das transferências e lançamentos; ajuste de saldo **imutável**, só o Tesoureiro, com justificativa | sem "Zerar saldos"; fundo da conta não existe (P-16) |
+| **Fechamentos de Caixa** (Entradas › Relatórios) | pronta (casca) | dossiê (contagem, folha × PDV × maquininha, paradas, transferências, início das vendas, histórico); "Fechou certo" só com o retorno recebido; "Teve quebra" e revisão só de acréscimo | só o Tesoureiro decide, o Financeiro consulta e o Gerente vê sem a contagem (**sem resposta do Rodrigo**); anexos são só um nome de arquivo |
+| **Pendências e sino de notificações** | não começou | — | as notificações geradas aparecem só no dossiê |
+| **Perfil Diretor Geral** | não começou | — | vale a regra da Tesouraria |
+
+Perfis no site: o seletor "Ver como" (Operador, Gerente, Tesoureiro, Financeiro) substitui o login por perfil.
 
 ## Falta
+Separado por quem destrava. Detalhes das perguntas no fim de cada item.
 
-1. **Maquininha manhã/tarde** (acumulado − manhã) e posto escolhível (hoje fixo PDV 1 · Manhã).
-2. Planejamentos de retorno (legado), "Últimos lançamentos",
-   campanhas, filtros de horário em "Vendas do caixa", paginação do histórico.
-3. Conferência física da abertura gravada, prazo de confirmação (423) e `liberar-trava` (a conferência estrita do
-   retorno já existe, em Tesouraria; "Fechamentos de Caixa" não pagina a lista).
-4. Perfil **Diretor Geral**, página de **Pendências** e notificações em sino.
-5. **Dúvidas para o Rodrigo/Marco** em `Caixa-Brain/13 - Dúvidas abertas.md` (malote da Tarde com a
-   Manhã aberta; quem edita malote; bandeira/operadora na maquininha; Gerência vê o relatório de
-   fechamento?; quem envia mensagens; sobra só avisa?).
-6. Confirmar no **iPad/Safari** (só foi testado em Edge).
+### Depende do Rodrigo (regra de negócio)
+1. **Clientes** (Entradas › Cadastros Geral): quais campos tem o cadastro (P-21). O cartão existe e a tela está vazia; não se inventa cadastro.
+2. **Atalho VND** do menu rápido diz "Lançar vendas", mas venda não se lança à mão (R-062): renomear e abrir a consulta de Vendas? (P-23)
+3. **A sobra só avisa?** (sem quebra, como no principal) · o **Gerente** acessa a Tesouraria? · só o **Tesoureiro** decide "Fechou certo"/"Teve quebra" e o Financeiro só consulta? · a Gerência vê o relatório de fechamento? Hoje a casca adota "sim" para os três primeiros e "sem a contagem" para o quarto.
+4. **Malote da Tarde com o caixa da Manhã ainda aberto** (R-190): o malote fica preso ao caixa da Manhã? · quem **edita** um malote errado? · a maquininha deve ter **bandeira/operadora**? · **quem envia mensagens** pela Gerência?
+5. **Pedidos gerais fora do Caixa** (Vendas em Geral, Documentos, padronização de ícones): Vendas unificada, "Imagens Vendas Lançadas" e o ícone do cabeçalho foram feitos (#43); o resto do pedido não tem decisão.
+
+### Depende do Marco
+1. **Backend e banco do Caixa** (P-13: onde a API roda; migration; login por posto; permissões reais). Sem isso nada é gravado.
+2. **Atualizar a leitura do principal:** a conta usada no GitHub não enxerga o repositório dele (erro 404); a leitura que temos é de 04/11/2026.
+3. **Deploy e publicação:** nada foi feito no Coolify.
+
+### O que eu faço sem depender de ninguém
+1. **Maquininha manhã/tarde** (acumulado − manhã, mesma maquininha) e **posto escolhível** (hoje fixo PDV 1 · Manhã).
+2. **Últimos lançamentos**, campanhas (somente leitura, R-199), filtros de horário e paginação em "Vendas do caixa".
+3. **Conferência física da abertura** gravada, **prazo de confirmação** (423) e `liberar-trava`.
+4. **Perfil Diretor Geral**, página de **Pendências** e **notificações em sino**.
+5. **Mais de um caixa aberto** de verdade (hoje só o da sessão é real).
+6. **Não será feito** (legado): planejamento de retorno e seu cancelamento (R-185).
+
+### Decidido pelo Marco (não está mais pendente)
+- **Descarte da contagem ao ajustar o início das vendas (item 3b da revisão da #44), 10/11/2026:** fica como está (o relatório e a contagem registrada são descartados; o operador gera o relatório de novo). A alternativa B fica para quando existir backend.
+- **R-224:** não mudou no principal desde 04/11/2026 (o Marco conferiu em 09/11/2026).
+
+### Não testado
+- **Safari/iPad** (o site roda no iPad do Rodrigo): só foi testado no Edge.
+- Leitor de tela (foco e teclado só conferidos por comportamento).
+- O sistema principal **não foi executado**: tudo vem de leitura de código, de 04/11/2026.
 
 ## Desenvolvimento
 

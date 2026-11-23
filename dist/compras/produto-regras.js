@@ -124,10 +124,124 @@
     const hoje = agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0') + '-' + String(agora.getDate()).padStart(2, '0');
     return validaAte >= hoje;
   }
+  /*
+   * Repetição da promoção (pedido do Rodrigo, 17/11/2026, no modelo da repetição dos Lembretes). Campos novos e
+   * opcionais na promoção: dataInicio ('AAAA-MM-DD') e repeticao { tipo, intervalo, diasMes, meses }.
+   * Promoção sem "repeticao" (as antigas) segue a regra de antes: dias da semana marcados, horário e validade.
+   *   nunca   → vale só no dia da data de início.
+   *   diaria  → todos os dias; com intervalo N > 1, a cada N dias contados da data de início.
+   *   semanal → nos dias da semana marcados; com N > 1, a cada N semanas (domingo a sábado) contadas da semana da data de início.
+   *   mensal  → nos dias do mês marcados (sem nenhum marcado, o dia da data de início); com N > 1, a cada N meses contados do mês da data de início.
+   *   anual   → nos meses marcados (sem nenhum, o mês da data de início), no dia do mês da data de início; com N > 1, a cada N anos.
+   * Em todos os casos: nunca antes da data de início, nunca depois de "validaAte" (terminar repetição) e só dentro do horário.
+   */
+  const TIPOS_REPETICAO = ['nunca', 'diaria', 'semanal', 'mensal', 'anual'];
+  const dataLocal = (iso) => { const [a, m, d] = String(iso || '').split('-').map(Number); return a && m && d ? new Date(a, m - 1, d) : null; };
+  const diaCorrido = (d) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000;
+  const intervaloDe = (r) => Math.max(1, Math.trunc(Number(r && r.intervalo) || 1));
+  /** A promoção vale neste dia do calendário? (sem olhar o horário) */
+  function promocaoOcorreNoDia(promo, dia) {
+    if (!promocaoDentroDaValidade(promo.validaAte, dia)) return false;
+    const ini = dataLocal(promo.dataInicio);
+    if (ini && diaCorrido(dia) < diaCorrido(ini)) return false;
+    const diaSemana = (dia.getDay() + 6) % 7;
+    const r = promo.repeticao;
+    if (!r) return !(promo.dias && promo.dias[diaSemana] !== true);
+    const n = intervaloDe(r);
+    if (r.tipo === 'nunca') return Boolean(ini) && diaCorrido(dia) === diaCorrido(ini);
+    if (r.tipo === 'diaria') return n === 1 || (Boolean(ini) && (diaCorrido(dia) - diaCorrido(ini)) % n === 0);
+    if (r.tipo === 'semanal') {
+      if (diasDe(promo)[diaSemana] !== true) return false;
+      if (n === 1) return true;
+      if (!ini) return false;
+      const domingo = (d) => diaCorrido(d) - d.getDay();
+      return ((domingo(dia) - domingo(ini)) / 7) % n === 0;
+    }
+    if (r.tipo === 'mensal') {
+      const diasMes = Array.isArray(r.diasMes) && r.diasMes.length ? r.diasMes : ini ? [ini.getDate()] : [];
+      if (!diasMes.includes(dia.getDate())) return false;
+      if (n === 1) return true;
+      if (!ini) return false;
+      return ((dia.getFullYear() - ini.getFullYear()) * 12 + dia.getMonth() - ini.getMonth()) % n === 0;
+    }
+    if (r.tipo === 'anual') {
+      if (!ini) return false;
+      const meses = Array.isArray(r.meses) && r.meses.length ? r.meses : [ini.getMonth() + 1];
+      if (!meses.includes(dia.getMonth() + 1) || dia.getDate() !== ini.getDate()) return false;
+      return (dia.getFullYear() - ini.getFullYear()) % n === 0;
+    }
+    return false;
+  }
+  const NOMES_DIAS = ['segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado', 'domingo'];
+  const NOMES_MESES = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
+  const dataCurta = (iso) => { const d = dataLocal(iso); return d ? String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getFullYear()).slice(2) : ''; };
+  /** Frase que diz quando a promoção vale (acompanha as escolhas na tela e entra na Revisão). */
+  function resumoRepeticaoPromocao(promo) {
+    const r = promo.repeticao || { tipo: 'semanal', intervalo: 1 };
+    const n = intervaloDe(r);
+    const ini = dataLocal(promo.dataInicio);
+    const desde = promo.dataInicio && r.tipo !== 'nunca' ? (n > 1 ? ', contando de ' : ', a partir de ') + dataCurta(promo.dataInicio) : '';
+    const ate = promo.validaAte ? ', até ' + dataCurta(promo.validaAte) : '';
+    let base;
+    if (r.tipo === 'nunca') base = ini ? 'Vale só no dia ' + dataCurta(promo.dataInicio) : 'Vale em um dia só: informe a data de início';
+    else if (r.tipo === 'diaria') base = n === 1 ? 'Vale todos os dias' : 'Vale a cada ' + n + ' dias';
+    else if (r.tipo === 'semanal') {
+      const marcados = [6, 0, 1, 2, 3, 4, 5].filter((i) => diasDe(promo)[i]).map((i) => NOMES_DIAS[i]);
+      base = (n === 1 ? 'Vale toda semana' : 'Vale a cada ' + n + ' semanas') + (marcados.length === 7 ? ', todos os dias' : marcados.length ? ': ' + marcados.join(', ') : ': nenhum dia marcado');
+    } else if (r.tipo === 'mensal') {
+      const diasMes = Array.isArray(r.diasMes) && r.diasMes.length ? [...r.diasMes].sort((a, b) => a - b) : ini ? [ini.getDate()] : [];
+      base = (n === 1 ? 'Vale todo mês' : 'Vale a cada ' + n + ' meses') + (diasMes.length ? (diasMes.length === 1 ? ', no dia ' : ', nos dias ') + diasMes.join(', ') : ': nenhum dia marcado');
+    } else if (r.tipo === 'anual') {
+      const meses = Array.isArray(r.meses) && r.meses.length ? [...r.meses].sort((a, b) => a - b) : ini ? [ini.getMonth() + 1] : [];
+      base = (n === 1 ? 'Vale todo ano' : 'Vale a cada ' + n + ' anos') + (ini ? ', no dia ' + ini.getDate() + ' de ' + meses.map((m) => NOMES_MESES[m - 1]).join(', ') : ': informe a data de início');
+    } else base = 'Repetição não reconhecida';
+    return base + desde + ate + '.';
+  }
+  /**
+   * Compromissos da Agenda que representam uma promoção agendada (pedido do Rodrigo, 17/11/2026): só com
+   * "agendada" ligado e data de início. Devolve [{ data, hora, horaFim, repeticao }] no formato da Agenda
+   * (agenda/dominio.js: dia da semana 0 = domingo). Normalmente um compromisso; a repetição mensal com vários dias
+   * do mês (ou a anual com vários meses) vira um compromisso por dia (ou por mês), porque a Agenda repete um dia só.
+   * A data é a primeira vez que a promoção vale de hoje em diante; promoção já encerrada não gera compromisso.
+   */
+  function compromissosDaPromocao(promo, hoje = new Date()) {
+    const ini = dataLocal(promo.dataInicio);
+    if (!promo.agendada || !ini) return [];
+    const r = promo.repeticao || { tipo: 'semanal', intervalo: 1 };
+    const n = intervaloDe(r);
+    const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const hora = promo.horaInicio || '';
+    const horaFim = hora && promo.horaFim && promo.horaFim > hora ? promo.horaFim : '';
+    const fim = promo.validaAte ? { tipo: 'data', data: promo.validaAte, vezes: 0 } : { tipo: 'nunca', data: '', vezes: 0 };
+    const de = diaCorrido(hoje) > diaCorrido(ini) ? new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()) : ini;
+    const primeira = (filtro) => {
+      const d = new Date(de);
+      for (let i = 0; i < 1500; i++) { if (promocaoOcorreNoDia(promo, d) && (!filtro || filtro(d))) return iso(d); d.setDate(d.getDate() + 1); }
+      return '';
+    };
+    const um = (data, repeticao) => (data ? [{ data, hora, horaFim, repeticao: { ...repeticao, fim } }] : []);
+    const pers = (unidade, extra = {}) => ({ tipo: 'personalizada', unidade, intervalo: n, ...extra });
+    if (r.tipo === 'nunca') return [{ data: promo.dataInicio, hora, horaFim, repeticao: null }];
+    if (r.tipo === 'diaria') return um(primeira(), n === 1 ? { tipo: 'dia' } : pers('dia'));
+    if (r.tipo === 'semanal') {
+      const dias = diasDe(promo);
+      const so = (lista) => dias.every((m, i) => Boolean(m) === lista.includes(i));
+      const diasSemana = [0, 1, 2, 3, 4, 5, 6].filter((i) => dias[i]).map((i) => (i + 1) % 7).sort((a, b) => a - b);
+      return um(primeira(), n === 1 && so([0, 1, 2, 3, 4]) ? { tipo: 'dias-uteis' } : n === 1 && so([5, 6]) ? { tipo: 'fins-de-semana' } : pers('semana', { diasSemana }));
+    }
+    if (r.tipo === 'mensal') {
+      const diasMes = Array.isArray(r.diasMes) && r.diasMes.length ? [...r.diasMes].sort((a, b) => a - b) : [ini.getDate()];
+      const repete = n === 1 ? { tipo: 'mes' } : n === 3 ? { tipo: 'trimestre' } : n === 6 ? { tipo: 'semestre' } : pers('mes');
+      return diasMes.flatMap((dm) => um(primeira((d) => d.getDate() === dm), repete));
+    }
+    if (r.tipo === 'anual') {
+      const meses = Array.isArray(r.meses) && r.meses.length ? [...r.meses].sort((a, b) => a - b) : [ini.getMonth() + 1];
+      return meses.flatMap((m) => um(primeira((d) => d.getMonth() + 1 === m), n === 1 ? { tipo: 'ano' } : pers('ano')));
+    }
+    return [];
+  }
   function promocaoAtiva(promo, agora) {
-    if (!promocaoDentroDaValidade(promo.validaAte, agora)) return false;
-    const dia = (agora.getDay() + 6) % 7;
-    if (promo.dias && promo.dias[dia] !== true) return false;
+    if (!promocaoOcorreNoDia(promo, agora)) return false;
     const agoraMin = agora.getHours() * 60 + agora.getMinutes();
     const ini = minutos(promo.horaInicio); const fim = minutos(promo.horaFim);
     if (ini == null && fim == null) return true;
@@ -144,11 +258,22 @@
     const precos = promocoes.filter((p) => promocaoAtiva(p, agora)).map((p) => precoDaPromocao(p, pv)).filter((x) => x != null);
     return precos.length ? Math.min(...precos) : arredondar(pv);
   }
-  function promocoesSeSobrepoem(a, b) {
-    const da = diasDe(a); const db = diasDe(b);
-    if (!da.some((m, i) => m && db[i])) return false;
+  function promocoesSeSobrepoem(a, b, agora = new Date()) {
     const ja = janelaDe(a); const jb = janelaDe(b);
-    return ja.inicio <= jb.fim && jb.inicio <= ja.fim;
+    const horarioCruza = ja.inicio <= jb.fim && jb.inicio <= ja.fim;
+    // Promoções antigas (só dias da semana): a mesma conta de antes.
+    if (!a.repeticao && !b.repeticao && !a.dataInicio && !b.dataInicio) {
+      const da = diasDe(a); const db = diasDe(b);
+      return da.some((m, i) => m && db[i]) && horarioCruza;
+    }
+    // Com repetição: sobrepõem quando caem no mesmo dia em algum momento dos próximos dois anos.
+    if (!horarioCruza) return false;
+    const dia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+    for (let i = 0; i < 732; i++) {
+      if (promocaoOcorreNoDia(a, dia) && promocaoOcorreNoDia(b, dia)) return true;
+      dia.setDate(dia.getDate() + 1);
+    }
+    return false;
   }
   function validarPromocoesDoProduto(promocoes) {
     const erros = [];
@@ -161,7 +286,18 @@
       }
       const ini = minutos(p.horaInicio); const fim = minutos(p.horaFim);
       if (ini != null && fim != null && fim < ini) erros.push(pos + ': o término é anterior ao início. Promoção que vira o dia precisa ser dividida em duas.');
-      if (!diasDe(p).some(Boolean)) erros.push(pos + ': marque ao menos um dia da semana.');
+      const r = p.repeticao;
+      if ((!r || r.tipo === 'semanal') && !diasDe(p).some(Boolean)) erros.push(pos + ': marque ao menos um dia da semana.');
+      if (r) {
+        const n = Number(r.intervalo == null ? 1 : r.intervalo);
+        if (!TIPOS_REPETICAO.includes(r.tipo)) erros.push(pos + ': escolha a repetição.');
+        else if (!Number.isInteger(n) || n < 1 || n > 99) erros.push(pos + ': "A cada" precisa ser um número inteiro de 1 a 99.');
+        else if (r.tipo === 'nunca' && !p.dataInicio) erros.push(pos + ': informe a data de início (sem repetição, a promoção vale só nesse dia).');
+        else if (r.tipo === 'anual' && !p.dataInicio) erros.push(pos + ': informe a data de início (ela define o dia do ano).');
+        else if (r.tipo === 'mensal' && !(Array.isArray(r.diasMes) && r.diasMes.length) && !p.dataInicio) erros.push(pos + ': marque ao menos um dia do mês.');
+        else if (n > 1 && !p.dataInicio) erros.push(pos + ': informe a data de início, para contar o intervalo da repetição.');
+      }
+      if (p.dataInicio && p.validaAte && p.validaAte < p.dataInicio) erros.push(pos + ': o fim da repetição é anterior à data de início.');
     });
     for (let a = 0; a < promocoes.length; a++) for (let b = a + 1; b < promocoes.length; b++) {
       if (promocoesSeSobrepoem(promocoes[a], promocoes[b])) erros.push('Promoções ' + (a + 1) + ' e ' + (b + 1) + ' se sobrepõem no mesmo dia e horário.');
@@ -238,7 +374,7 @@
   return {
     arredondar, montarDescricao, montarValidacaoQtd, montarComoSeCompra, normalizarTextosProduto,
     semelhanca, checarDuplicidade, SEMELHANCA_MINIMA,
-    calcularPrecoVenda, DIAS_PROMO, calcularPrecoVendaComPromocao, promocaoDentroDaValidade, promocoesSeSobrepoem, validarPromocoesDoProduto,
+    calcularPrecoVenda, DIAS_PROMO, TIPOS_REPETICAO, promocaoOcorreNoDia, resumoRepeticaoPromocao, compromissosDaPromocao, calcularPrecoVendaComPromocao, promocaoDentroDaValidade, promocoesSeSobrepoem, validarPromocoesDoProduto,
     validarEstoquePorEmbalagem, TECLA_BALANCA_FIXA, validarBalanca, pendenciasDeCompra,
     ORDENACOES, ordenarProdutos, paginar, fraseInativacao,
   };

@@ -144,7 +144,7 @@ Cada fase é uma PR própria, com o caminho antigo removido na mesma entrega em 
   conclusão, que a tela só faz se **todos** chegaram. Se faltar algum (ex.: código interno repetido), nada muda e o administrador vê o aviso.
 - **Resumo dos ativos** (cadastro completo) guardado no aparelho em `cicluz-produtos-resumo-v1` (não sincronizado): a loja vê e usa
   os produtos sem internet. O documento `cicluz-compras-v1` passa a guardar por produto só `saldo, vendas3m, compras3m, lucro3m`.
-- **Inativos**: só pela listagem paginada da API (desmarcar "Só ativos").
+- **Inativos**: só pela listagem paginada da API (botão "Inativos" do cabeçalho da lista, desde a lista sem filtros de 17/11/2026).
 - **Ambiente de teste de tela com a API real**: `npm run test:telas-api` (precisa do Docker).
 - **Teto de pedidos** da API passou a valer só para `/api/` (os arquivos do site, servidos só no modo servidor único local, não contam).
 

@@ -4,7 +4,7 @@ body.dark-theme{color-scheme:dark;--ui-color-scheme:dark;--theme-surface:#222128
 body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell{--ui-control-bg:var(--theme-field);--ui-input-color:var(--layout-ink);--ui-label-color:#d4d4d8;--ui-border-base:var(--layout-line);color:var(--layout-ink)}
 body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel,
 body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content{background:var(--layout-gap)!important;color:var(--layout-ink)!important}
-body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content :is(.card,.process,.record,.dep-card,.job-item,.salary-row,.location-row,.job-identity,.account-identity,.icon-live-preview,.doc-capture,.form-note,.identity-advanced,.location-tree,.operator-fees,.operator-fee-brand,.operator-fee-brand>summary,.operator-fee-rule,.location-identity,.location-preview-card,.job-preview,.salary-item,.next-card,.record-grid,.profiles-info,.profiles-section,.account-field-group,.account-status){background:var(--theme-card)!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
+body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content :is(.card,.process,.record,.job-item,.salary-row,.location-row,.job-identity,.account-identity,.icon-live-preview,.doc-capture,.form-note,.identity-advanced,.location-tree,.operator-fees,.operator-fee-brand,.operator-fee-brand>summary,.operator-fee-rule,.location-identity,.location-preview-card,.job-preview,.salary-item,.next-card,.record-grid,.profiles-info,.profiles-section,.account-field-group,.account-status){background:var(--theme-card)!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
 body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content :is(input:not([type=color]):not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea){background:var(--theme-field)!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important;color-scheme:dark}
 body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content :is(table,thead,tbody,tr,td,th){background-color:var(--theme-card)!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
 body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content :is(.record b,.record small,.card-arrow,.job-copy b,.job-copy small,.account-list-state,.location-name,.profiles-note){color:var(--layout-ink)!important}
@@ -36,3 +36,16 @@ body.dark-theme .account-status-switch>span{background:var(--navigation-ink)!imp
 /* Step navigation keeps the dark canvas visible through the back control. */
 body.dark-theme #cadastro-completo #prev-step:not(:disabled){background:transparent!important;border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;color:var(--menu-accent,var(--panel-color,#7c3aed))!important;box-shadow:none!important}
 body.dark-theme #cadastro-completo #next-step:not(:disabled){background:var(--menu-accent,var(--panel-color,#7c3aed))!important;border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;color:#fff!important;box-shadow:none!important}
+
+/* Modo escuro — componentes que ficavam claros ou ilegíveis. Tudo pelos tokens do tema; as cores dos módulos não mudam. */
+body.dark-theme .p-green{background:color-mix(in srgb,#22c55e 20%,var(--theme-card));color:#86efac}
+body.dark-theme .p-red{background:color-mix(in srgb,#ef4444 20%,var(--theme-card));color:#fca5a5}
+body.dark-theme .p-yellow{background:color-mix(in srgb,#eab308 20%,var(--theme-card));color:#fde047}
+body.dark-theme .p-purple{background:color-mix(in srgb,#7c3aed 24%,var(--theme-card));color:#c4b5fd}
+body.dark-theme .organogram-canvas,body.dark-theme .organogram-mindmap{background-color:var(--theme-card);border-color:var(--layout-line)}
+body.dark-theme .organogram-mindmap{background-image:radial-gradient(var(--layout-line) .65px,transparent .65px)}
+body.dark-theme .organogram-card,body.dark-theme .organogram-mindmap .organogram-card,body.dark-theme .organogram-empty,body.dark-theme .organogram-mindmap .organogram-empty{background:var(--theme-card);border-color:var(--layout-line);color:var(--layout-ink)}
+body.dark-theme .organogram-totals{color:var(--layout-ink)}
+body.dark-theme .organogram-note,body.dark-theme .organogram-mindmap .organogram-position-copy small{color:var(--ui-label-color,#d4d4d8)}
+/* Cabeçalho roxo (Resultados) e azul (Retiradas): o texto escuro do modo escuro não tem contraste sobre essas cores; usa branco. */
+body.dark-theme :is(#sector-view,.view)[data-origin-color="#7c3aed"]>.panel>.head,body.dark-theme :is(#sector-view,.view)[data-origin-color="#2563eb"]>.panel>.head{--theme-surface:#fff}

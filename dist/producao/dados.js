@@ -52,7 +52,10 @@
     return { KEY, get dados() { return dados; }, get erroLeitura() { return erroLeitura; }, transacao };
   }
 
-  const producao = criarArmazem('cicluz-producao-v1', ['produtos', 'fichas', 'agendas', 'ocorrencias', 'pedidos', 'ordens'], 'cicluz-producao-mudou');
+  // "ingredientes" (18/11/2026): coleção nova e opcional; documento antigo sem ela ganha a lista vazia ao abrir, sem migração.
+  const producao = criarArmazem('cicluz-producao-v1', ['produtos', 'fichas', 'agendas', 'ocorrencias', 'pedidos', 'ordens', 'ingredientes'], 'cicluz-producao-mudou');
+  // Tabela TACO importada pelo usuário (vazia = vale a oficial que vem no sistema, em producao/taco-dados.js).
+  const taco = criarArmazem('cicluz-taco-v1', ['linhas', 'colunas'], 'cicluz-taco-mudou');
   const patrimonio = criarArmazem('cicluz-patrimonio-v1', ['bens'], 'cicluz-patrimonio-mudou');
 
   /* ---------- Integrações (só leitura) ---------- */
@@ -81,6 +84,26 @@
   const produto = (id) => C().produto(id);
   const nomeProduto = (id) => { const p = produto(id); return p ? p.descricao : 'Produto não encontrado'; };
   const unidades = () => C().unidades();
+
+  /** Fornecedores do cadastro do Compras (MER - Fornecedores), o único cadastro de fornecedor; vínculo pelo id. */
+  const fornecedores = () => C().dados.fornecedores;
+  const nomeFornecedor = (id) => { if (!id) return ''; const f = C().fornecedor(id); return f ? f.nome : 'Fornecedor não encontrado'; };
+  /** Grupos e subgrupos de DES - Grupos de Despesas (cicluz-financial-hierarchy-v1), só leitura; vínculo pelos ids. */
+  function gruposDespesa() {
+    let lista = null;
+    try { if (typeof financialGroups !== 'undefined') lista = financialGroups.despesas; } catch (e) { /* ainda não carregado */ }
+    if (!lista) {
+      try { lista = (JSON.parse(localStorage.getItem('cicluz-financial-hierarchy-v1') || 'null') || {}).despesas; } catch (e) { lista = null; }
+    }
+    return (Array.isArray(lista) ? lista : []).map((g) => ({ id: g.id, nome: g.name, ativo: g.active !== false, subgrupos: (g.children || []).map((s) => ({ id: s.id, nome: s.name, ativo: s.active !== false })) }));
+  }
+  function nomeGrupoDespesa(grupoId, subgrupoId) {
+    if (!grupoId) return '';
+    const g = gruposDespesa().find((x) => x.id === grupoId);
+    if (!g) return 'Grupo não encontrado';
+    const s = g.subgrupos.find((x) => x.id === subgrupoId);
+    return s ? g.nome + ' › ' + s.nome : g.nome;
+  }
 
   const bem = (id) => patrimonio.dados.bens.find((b) => b.id === id);
   const nomeBem = (id) => { const b = bem(id); return b ? b.nome : 'Bem não encontrado'; };
@@ -113,8 +136,9 @@
   const hojeIso = () => C().hojeIso();
 
   window.CicluzProducaoDados = {
-    producao, patrimonio, criarArmazem,
+    producao, patrimonio, taco, criarArmazem,
     locais, local, nomeLocal, produtos, produto, nomeProduto, unidades,
+    fornecedores, nomeFornecedor, gruposDespesa, nomeGrupoDespesa,
     bem, nomeBem, cargos, cargo, nomeCargo, parametros, config, ficha, fichasDo, fichaPadrao, produzidos,
     novoId, agoraIso, hojeIso,
     get RESPONSAVEIS() { return C().RESPONSAVEIS; },

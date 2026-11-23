@@ -14,9 +14,9 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head:not(.header-identity-collapsed)>.shortcut-actions{grid-column:1/-1!important;grid-row:2!important;display:flex!important;align-items:center;justify-content:flex-end;gap:5px;width:100%;flex-wrap:wrap}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head:not(.header-identity-collapsed)>.fixed-header-tools{grid-row:3!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head+.content{position:relative;z-index:5;background:var(--layout-gap)!important;color:var(--layout-ink)!important;margin-top:-12px;border-radius:20px 20px 0 0;padding:14px!important}
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.card,.process,.record,.dep-card,.job-item,.salary-row,.account-editor,.location-row){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(input,select,textarea){background-color:var(--theme-field,#fff)!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .record-grid[data-navigation-menu=true]{display:flex!important;flex-direction:column;gap:0!important;border:1px solid var(--layout-line);border-radius:14px;overflow:hidden;background:#fff}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.card,.process,.record,.job-item,.salary-row,.account-editor,.location-row){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(input,select,textarea):where(:not(.compras-selecao-bolinha)):where(:not([type=checkbox])){background-color:var(--theme-field,#fff)!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .record-grid[data-navigation-menu=true]{display:flex!important;flex-direction:column;gap:0!important;border:1px solid var(--layout-line);border-radius:14px;overflow:hidden;background:var(--theme-card,#fff)}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .record-grid[data-navigation-menu=true]>.record{margin:0!important;padding:10px 12px!important;min-height:48px!important;border:0!important;border-bottom:1px solid var(--layout-line)!important;border-radius:0!important;box-shadow:none!important;transform:none!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .record-grid[data-navigation-menu=true]>.record:last-child{border-bottom:0!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .record-grid[data-navigation-menu=true]>.record :is(b,small,.card-arrow){color:var(--layout-ink)!important}
@@ -34,7 +34,7 @@ body #people .dashboard-intro{background:var(--menu-accent,var(--panel-color,#7c
 
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-list-state,.financial-count,.job-item small,.salary-row small){color:var(--layout-ink)!important}
 /* Information blocks remain white in either theme; gray is only the shared spacing surface. */
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.job-identity,.account-identity,.icon-live-preview,.doc-capture,.form-note,.identity-advanced,.dep-card,.location-tree,.operator-fees){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.job-identity,.account-identity,.icon-live-preview,.doc-capture,.form-note,.identity-advanced,.location-tree,.operator-fees){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.job-identity,.account-identity,.icon-live-preview,.doc-capture,.dep-card) :is(label,p,small,strong,b,summary){color:var(--layout-ink)!important}
 /* Nested information sections and tables keep the common neutral surface. */
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.location-identity,.location-preview-card,.job-preview,.salary-item,.next-card,.process,.card,.panel){border-color:var(--layout-line)!important}
@@ -42,8 +42,11 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.locatio
 body:is(.dark-theme,:not(.dark-theme)) .view :is(table,td){background:#fff;color:var(--layout-ink);border-color:var(--layout-line)!important}
 body:is(.dark-theme,:not(.dark-theme)) .view th{background:var(--layout-gap)!important;color:var(--layout-ink)!important}
 /* Native dialogs and the existing modal share one header, field and spacing treatment. */
-body:is(.dark-theme,:not(.dark-theme)) :is(dialog,.modal>.dialog){--ui-control-bg:var(--theme-field,#fff);--ui-input-color:var(--layout-ink);--ui-label-color:var(--layout-ink);--ui-border-base:var(--layout-line);--menu-accent:var(--dialog-accent,#7c3aed);background:#fff!important;color:var(--layout-ink)!important;border:1px solid var(--layout-line)!important;border-radius:20px!important;padding:22px;box-sizing:border-box;overflow:auto}
-body:is(.dark-theme,:not(.dark-theme)) dialog form{padding:0}
+body:is(.dark-theme,:not(.dark-theme)) :is(dialog,.modal>.dialog){--ui-control-bg:var(--theme-field,#fff);--ui-input-color:var(--layout-ink);--ui-label-color:var(--layout-ink);--ui-border-base:var(--layout-line);--menu-accent:var(--dialog-accent,#7c3aed);background:#fff!important;color:var(--layout-ink)!important;border:0!important;border-radius:0!important;padding:22px;box-sizing:border-box;overflow:auto}
+body:is(.dark-theme,:not(.dark-theme)) dialog form:not(.form-fields){padding:0}
+/* Formulário que é o próprio quadro de campos (.form-fields) mantém o respiro do quadro também dentro de janela (18/11/2026): sem isso os campos encostavam na borda e a linha Cancelar/Salvar saía do quadro. */
+body:is(.dark-theme,:not(.dark-theme)) dialog form.form-fields{padding:14px}
+body:is(.dark-theme,:not(.dark-theme)) dialog form.form-fields[data-quadro]{padding-top:18px}
 body:is(.dark-theme,:not(.dark-theme)) :is(dialog,.modal>.dialog) :is(.location-dialog-header,.organogram-editor-header){margin:-22px -22px 18px;padding:18px 22px;background:var(--dialog-accent,#7c3aed)!important;color:var(--navigation-ink)!important;border-color:var(--layout-line)!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(dialog,.modal>.dialog)>:is(h2,h3),body:is(.dark-theme,:not(.dark-theme)) dialog>form>:is(h2,h3){background:var(--dialog-accent,#7c3aed)!important;color:var(--navigation-ink)!important;margin:-22px -22px 18px;padding:18px 22px}
 body:is(.dark-theme,:not(.dark-theme)) dialog :is(.location-dialog-header,.organogram-editor-header) :is(h2,h3,.shortcut-circle){color:var(--navigation-ink)!important;border-color:var(--navigation-ink)!important}
@@ -78,7 +81,7 @@ body .view .operator-fee-brand{margin-block:var(--layout-item-gap)!important}
 body #sector-view.financial-groups .financial-subgroups{gap:0!important;margin-top:0!important;margin-bottom:0!important}
 
 /* One continuous frame for registry lists; rows are divided without gaps. */
-body .view :is(.record-grid,#jobs-list,#salary-list){gap:0!important;border:1px solid var(--layout-line)!important;border-radius:14px!important;overflow:hidden;background:#fff!important}
+body .view :is(.record-grid,#jobs-list,#salary-list){gap:0!important;border:1px solid var(--layout-line)!important;border-radius:14px!important;overflow:hidden;background:var(--theme-card,#fff)!important}
 body .view :is(.record-grid,#jobs-list,#salary-list)>:is(.record,.financial-group,.job-item,.salary-row){margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
 body .view :is(.record-grid,#jobs-list,#salary-list)>:is(.record,.financial-group,.job-item,.salary-row):not(:last-child){border-bottom:1px solid var(--layout-line)!important}
 body #sector-view.financial-groups .financial-group>.account-list-row,body #sector-view.financial-groups .financial-subgroups>.account-list-row{margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
@@ -124,22 +127,22 @@ body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees .operator-fee
 body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees label :is(input,select,textarea){border:0!important;box-shadow:none!important;outline:0!important}
 
 /* Area / Setor / Local: continuous rows inside one neutral frame. */
-body #sector-view .location-tree{display:block;gap:0!important;border:1px solid var(--layout-line)!important;border-radius:14px;overflow:hidden;background:#fff}
-body #sector-view .location-tree>.location-area-frame{border:0!important;border-radius:0!important;margin:0!important;padding:0 8px!important;background:#fff!important}
-body #sector-view .location-tree>.location-area-frame+.location-area-frame{border-top:1px solid var(--layout-line)!important}
-body #sector-view .location-tree .location-node{margin-top:0!important;margin-bottom:0!important}
-body #sector-view .location-tree .location-row{margin:0!important;border-radius:0!important}
-body #sector-view .location-tree .location-children{margin-top:0!important;margin-bottom:0!important;padding-top:0!important;padding-bottom:0!important}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore){display:block;gap:0!important;border:1px solid var(--layout-line)!important;border-radius:14px;overflow:var(--arvore-rolagem,hidden);background:var(--theme-card,#fff)}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore)>.location-area-frame{border:0!important;border-radius:0!important;margin:0!important;padding:0 8px!important;background:var(--theme-card,#fff)!important}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore)>.location-area-frame+.location-area-frame{border-top:1px solid var(--layout-line)!important}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-node{margin-top:0!important;margin-bottom:0!important}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-row{margin:0!important;border-radius:0!important}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-children{margin-top:0!important;margin-bottom:0!important;padding-top:0!important;padding-bottom:0!important}
 
 /* Neutral location glyphs and editor surrounds; header glyphs remain white. */
-body #sector-view .location-tree :is(.location-icon,.location-dot){background:transparent!important;color:var(--navigation-ink,#a2a0aa)!important;border-color:var(--layout-line)!important}
-body #sector-view .location-tree :is(.location-expand,.location-inline-add,.account-action-toggle,.location-move){color:var(--navigation-ink,#a2a0aa)!important;border-color:var(--layout-line)!important}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) :is(.location-icon,.location-dot){background:transparent!important;color:var(--navigation-ink,#a2a0aa)!important;border-color:var(--layout-line)!important}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) :is(.location-expand,.location-inline-add,.account-action-toggle,.location-move){color:var(--navigation-ink,#a2a0aa)!important;border-color:var(--layout-line)!important}
 body dialog.location-dialog :is(.location-preview-card,.location-identity){border-color:var(--layout-line)!important}
 body dialog.location-dialog :is(.location-preview-card,.location-identity) .location-icon{background:transparent!important;color:var(--navigation-ink,#a2a0aa)!important;border-color:var(--layout-line)!important}
 
 body dialog.location-dialog,body dialog.location-dialog form{background:var(--layout-gap,#f5f5f7)!important}
-body #sector-view .location-tree .location-children{border-left-color:var(--layout-line)!important}
-body #sector-view .location-tree .location-children>.location-node>.location-row::before{background:var(--layout-line)!important}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-children{border-left-color:var(--layout-line)!important}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-children>.location-node>.location-row::before{background:var(--layout-line)!important}
 
 /* Gray hierarchy surrounds also apply to expanding card subgroups. */
 body #sector-view.financial-groups .financial-subgroups{background:var(--layout-gap)!important;border-left-color:var(--layout-line)!important}
@@ -147,14 +150,14 @@ body #sector-view.financial-groups .financial-subgroups>.account-list-row::befor
 body #salary-view .salary-row[hidden],body #salary-view #salary-search[hidden]{display:none!important}
 /* Cross-tab review: plain labels around one framed information field. */
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view#sector-view,#job-edit,#job-form,.view,dialog,.modal) .single-field-block.single-field-block.single-field-block{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0!important;padding:0!important}
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view#sector-view,#job-edit,#job-form,.view,dialog,.modal) .single-field-block.single-field-block.single-field-block :is(input,select,textarea){border:1px solid var(--layout-line)!important;border-radius:var(--ui-field-radius)!important;box-shadow:none!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view#sector-view,#job-edit,#job-form,.view,dialog,.modal) .single-field-block.single-field-block.single-field-block :is(input,select,textarea):where(:not([aria-invalid=true])){border:1px solid var(--layout-line)!important;border-radius:var(--ui-field-radius)!important;box-shadow:none!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view#sector-view,#job-edit,#job-form,.view,dialog,.modal) .single-field-block.single-field-block.single-field-block :is(input,select,textarea):focus-visible{border-color:var(--navigation-ink,#a2a0aa)!important;outline:2px solid #a2a0aa38!important;outline-offset:var(--ui-focus-offset,1px)}
 body .view :is(.job-main,.job-copy,.job-copy>b,.location-name,.account-list-row>b,.salary-job-identity){font-family:var(--ui-font)!important;font-size:var(--ui-text)!important;line-height:var(--ui-text-line)!important;color:var(--layout-ink)!important;text-align:left!important;letter-spacing:normal!important}
 body .view :is(.job-copy>b,.location-name,.account-list-row>b){font-weight:500!important}
 body .view :is(.job-item,.salary-row,.account-list-row,.location-row){margin-top:0!important;margin-bottom:0!important;border-color:var(--layout-line)!important}
-body #sector-view .location-tree>.location-area-frame{margin:0!important;padding:0!important}
-body #sector-view .location-tree .location-area-frame>.location-row{min-height:52px!important;padding:4px 12px!important}
-body #sector-view .location-tree .location-children .location-row{min-height:40px!important;padding:2px 4px!important}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore)>.location-area-frame{margin:0!important;padding:0!important}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-area-frame>.location-row{min-height:var(--arvore-linha,52px)!important;padding:var(--arvore-respiro,4px 12px)!important}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-children .location-row{min-height:var(--arvore-sublinha,40px)!important;padding:2px 4px!important}
 body .view :is(.location-move,.menu-item-move,.drag-handle,.job-drag-handle,.account-action-toggle,.location-expand,.job-toggle,.location-preview-arrow){color:var(--navigation-ink,#a2a0aa)!important}
 body :is(.view,dialog,.modal) .local-search-control{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
 body :is(.view,dialog,.modal) .local-search-control>input{flex:1;min-width:120px}
@@ -163,7 +166,7 @@ body :is(.view,dialog,.modal) .local-search-toggle{color:var(--theme-field,#fff)
 body :is(.location-dialog-header,.organogram-editor-header) .header-save-circle{color:#fff!important;border-color:#fff!important;background:transparent!important}
 
 /* Área / Setor / Local: preserve the chosen badge color and the menu edit accent. */
-body #sector-view .location-tree .location-row > .location-icon {
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-row > .location-icon {
  background:var(--node-color,#7c3aed)!important;
  color:var(--node-ink,#fff)!important;
 }
@@ -197,12 +200,14 @@ body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button:is(.foote
 body :is(.view,dialog,.modal) button.form-next-action:not(:disabled){background:var(--menu-accent,var(--panel-color,#7c3aed))!important;border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;color:#fff!important;box-shadow:none!important}
 body :is(.view,dialog,.modal) button:is(.footer-save-accent,.footer-cancel-accent,.form-back-action,.form-next-action):disabled{background:transparent!important;border:1px solid var(--navigation-ink)!important;color:var(--navigation-ink)!important;box-shadow:none!important}
 
-body :is(.view,dialog,.modal) :is(.footer-save-accent,.footer-cancel-accent){display:inline-flex!important;align-items:center;justify-content:center;gap:8px}
-body .footer-action-icon{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body :is(.view,dialog,.modal) :is(.footer-save-accent,.footer-cancel-accent){display:inline-flex!important;align-items:center;justify-content:space-between;gap:10px}
 
-body :is(.view,dialog,.modal) .footer-action-pair{display:flex!important;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px}
-body .footer-action-pair>.footer-cancel-accent{order:0!important}
-body .footer-action-pair>.footer-save-accent{order:1!important}
+
+/* :not([hidden]): o par de ações some quando a tela está na lista inicial (people.js, criarEntrada). */
+body :is(.view,dialog,.modal) .footer-action-pair:not([hidden]){display:flex!important;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px}
+/* A barra de ações dos cadastros em etapas (.compras-etapas-nav) tem ordem própria (compras.css): Voltar · Cancelar · Salvar · Avançar. */
+body .footer-action-pair:not(.compras-etapas-nav)>.footer-cancel-accent{order:0!important}
+body .footer-action-pair:not(.compras-etapas-nav)>.footer-save-accent{order:1!important}
 
 /* Operator fees: continuous rows and responsive fields for the expanded editor. */
 body:is(.dark-theme,:not(.dark-theme)) #sector-view.financial-groups .operator-fees > .operator-fee-brand {
@@ -274,7 +279,7 @@ body #sector-view.financial-groups .operator-fees .fee-classification .fee-accou
 body #salary-view{--salary-value-width:160px;--salary-row-inset:12px;--salary-column-gap:16px}
 body:is(.dark-theme,:not(.dark-theme)) #salary-view .salary-row{
  display:grid!important;grid-template-columns:minmax(0,1fr) var(--salary-value-width)!important;align-items:center!important;
- gap:var(--salary-column-gap)!important;padding:var(--salary-row-inset)!important;min-height:64px;box-sizing:border-box;
+ gap:var(--salary-column-gap)!important;padding:3px var(--salary-row-inset)!important;min-height:51px;/* 51 px: a mesma altura das linhas do menu de Cadastros Geral (18/11/2026, Rodrigo) */box-sizing:border-box;
  border:0!important;border-bottom:1px solid var(--layout-line)!important;background:#fff!important;
 }
 body #salary-view .salary-job-identity{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
@@ -288,31 +293,31 @@ body #salary-view .form-actions{margin-top:20px}
  body #salary-view{--salary-value-width:clamp(140px,40vw,160px);--salary-row-inset:10px;--salary-column-gap:10px}
 }
 /* Location action drawers stay on one line and open inside their own row. */
-body #sector-view .location-tree .location-node>.location-row{
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-node>.location-row{
  --menu-accent:#7c3aed;display:flex!important;flex-wrap:nowrap!important;align-items:center;
  overflow:hidden;transition:padding-right .18s ease;
 }
-body #sector-view .location-tree .location-node>.location-row:has(>.account-row-actions:not([hidden])){
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-node>.location-row:has(>.account-row-actions:not([hidden])){
  padding-right:110px!important;flex-wrap:nowrap!important;
 }
-body #sector-view .location-tree .location-row>.location-copy{flex:1 1 auto;min-width:0;overflow:hidden}
-body #sector-view .location-tree .location-row .location-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-body #sector-view .location-tree .location-row>.account-action-toggle{flex:0 0 28px;width:28px;min-width:28px;margin-left:auto}
-body #sector-view .location-tree .location-row>.account-row-actions:not([hidden]){
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-row>.location-copy{flex:1 1 auto;min-width:0;overflow:hidden}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-row .location-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-row>.account-action-toggle{flex:0 0 28px;width:28px;min-width:28px;margin-left:auto}
+body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-row>.account-row-actions:not([hidden]){
  display:flex!important;flex-wrap:nowrap!important;flex-basis:auto!important;position:absolute;
  right:0;top:0;bottom:0;width:76px!important;animation:location-actions-in .18s ease-out;
 }
 @keyframes location-actions-in{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
-@media(prefers-reduced-motion:reduce){body #sector-view .location-tree .location-row{transition:none!important}body #sector-view .location-tree .account-row-actions{animation:none!important}}
+@media(prefers-reduced-motion:reduce){body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .location-row{transition:none!important}body :is(#sector-view .location-tree,.location-tree.unidades-arvore) .account-row-actions{animation:none!important}}
 
 /* Header identity rings and transient registration navigation. */
-body:is(.dark-theme,:not(.dark-theme)) dialog.location-dialog .location-dialog-header>.location-icon{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;min-width:30px;flex:0 0 30px;box-sizing:border-box;border:1px solid #fff!important;border-radius:50%;background:transparent!important;color:#fff!important}
+body:is(.dark-theme,:not(.dark-theme)) dialog.location-dialog .location-dialog-header>.location-icon:not(.location-header-mark){display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;min-width:30px;flex:0 0 30px;box-sizing:border-box;border:1px solid #fff!important;border-radius:50%;background:transparent!important;color:#fff!important}
 body #job-edit>.panel>.head>.config-inherit-icon{border:1px solid #fff!important;border-radius:50%!important}
 body #job-edit .icon-live-preview::after{color:var(--navigation-ink,#a2a0aa)!important}
 body #cadastro-completo .form-actions>[hidden]{display:none!important}
 body #cadastro-completo .form-actions>div{margin-left:auto}
-body #cadastro-completo :is(#prev-step,#next-step){width:auto;min-width:112px;height:40px;min-height:40px;gap:8px;border-radius:10px;padding:8px 12px;font:600 12px/1.25 var(--ui-font)}
-body #cadastro-completo :is(#prev-step,#next-step) svg{width:17px;height:17px;stroke-width:1.8}
+body #cadastro-completo :is(#prev-step,#next-step){box-sizing:border-box;width:auto;min-width:var(--acao-largura);height:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:space-between;gap:10px;border-radius:10px;padding:0 var(--acao-respiro) 0 16px;font:600 12px/1.25 var(--ui-font)}
+
 body #cadastro-completo .registration-next[hidden]{display:none!important}
 
 /* The content rounds into the secondary header, matching the main header. */
@@ -332,4 +337,4 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head
 body.dark-theme{--menu-hover-tint:20%}
 body :is(#sector-view,.view).view.app-screen-shell>.panel>.content :is(.record,.account-list-row,.job-item,.location-row):is(:hover,:focus-visible){--menu-entry-accent:var(--item-color,var(--node-color,var(--card-color,var(--menu-accent,#7c3aed))));background:color-mix(in srgb,var(--menu-entry-accent) var(--menu-hover-tint),var(--theme-card,#fff))!important;color:var(--menu-entry-accent)!important}
 body :is(#sector-view,.view).view.app-screen-shell>.panel>.content :is(.record,.account-list-row,.job-item,.location-row):is(:hover,:focus-visible) :is(b,small,.card-arrow,.account-list-state,.job-copy,.location-name,.financial-count){color:var(--menu-entry-accent)!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content :is(.job-icon,.location-icon,.icon-live-badge,.origin-icon){background:var(--icon-accent,var(--node-color,var(--item-color,var(--card-color,var(--menu-accent,#7c3aed)))))!important;color:var(--theme-surface,#fff)!important;border:1px solid var(--icon-accent,var(--node-color,var(--item-color,var(--card-color,var(--menu-accent,#7c3aed)))))!important;box-sizing:border-box;border-radius:var(--icon-radius,50%)}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content :is(.job-icon,.location-icon,.icon-live-badge,.origin-icon){background:var(--icon-accent,var(--node-color,var(--item-color,var(--card-color,var(--menu-accent,#7c3aed)))))!important;color:var(--node-ink,var(--theme-surface,#fff))!important;border:1px solid var(--icon-accent,var(--node-color,var(--item-color,var(--card-color,var(--menu-accent,#7c3aed)))))!important;box-sizing:border-box;border-radius:var(--icon-radius,50%)}

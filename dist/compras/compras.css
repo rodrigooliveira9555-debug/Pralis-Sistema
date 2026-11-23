@@ -69,8 +69,107 @@ body.dark-theme .compras-conta { background: #34333b; color: #d4d4d8; }
 }
 .compras-lista > .compras-linha:first-child { border-top: 0; }
 button.compras-linha { cursor: pointer; }
+/* Linha com a setinha de ações dos cadastros de grupos (createFinancialActions): a seta revela Editar e Excluir,
+   redondos de --row-action-size, Editar na cor do menu e Excluir em vermelho, como nos grupos. */
+.compras-linha.com-acoes { cursor: pointer; flex-wrap: nowrap; }
+/* Formato da linha de DES - Grupos de Despesas (medido na tela): 52 px, ícone quadrado de cantos arredondados
+   (--row-icon-radius), título 14/500, informação menor embaixo, estado à direita e fundo
+   na cor da origem ao passar o cursor ou focar. */
+.compras-linha.com-acoes { padding: 8px 12px; gap: 8px; }
+.compras-linha.com-acoes:hover, .compras-linha.com-acoes:focus-within { background: color-mix(in srgb, var(--menu-accent) 8%, var(--theme-surface, #fff)); }
+body.dark-theme .compras-linha.com-acoes:hover, body.dark-theme .compras-linha.com-acoes:focus-within { background: color-mix(in srgb, var(--menu-accent) 18%, #24232b); }
+body:not(.dark-theme) .compras-linha.com-acoes:hover .compras-linha-texto b { color: var(--panel-text, inherit); }
+.compras-linha.com-acoes .compras-linha-texto { flex-basis: 0; min-width: 0; }
+.compras-linha.com-acoes .compras-linha-texto b { font: 500 var(--ui-text, 14px)/18px var(--ui-font); }
+.compras-linha .account-list-state { flex: none; font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); }
+/* Lista em grade (ex.: fornecedores): colunas de largura fixa, iguais em todas as linhas, para cada dado cair
+   sempre na mesma vertical; célula sem dado fica vazia. Abaixo de 1000 px as células empilham sob o nome. */
+.compras-linha.em-colunas { display: grid; align-items: center; column-gap: 8px; row-gap: 2px; }
+.compras-celula { min-width: 0; overflow-wrap: anywhere; font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); }
+.compras-celula.c-nome { font: 500 var(--ui-text, 14px)/18px var(--ui-font); color: inherit; }
+.compras-celula.c-categoria { font-weight: 500; color: inherit; }
+.compras-celula.c-selos { display: flex; flex-wrap: wrap; gap: 4px; }
+.compras-linha-cabecalho { min-height: 0; padding-top: 6px; padding-bottom: 6px; cursor: default; }
+.compras-linha-cabecalho .compras-celula { font: 600 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); text-transform: uppercase; letter-spacing: .04em; }
+/* A lista rola para os lados dentro dela mesma (a página não). */
+.compras-lista-grade { container-type: inline-size; container-name: lista-grade; overflow-x: auto; overscroll-behavior-x: contain; }
+.compras-lista-grade.arrastando { cursor: grabbing; user-select: none; }
+/* Bolinhas do cabeçalho branco da lista (o "‹ ›" ao lado do título e o "+" na outra ponta): círculo cheio na cor do
+   menu de onde se veio (--menu-accent), com o desenho na cor da superfície, como os redondos do rodapé. */
+.compras-secao-cab .compras-redondo { flex: none; width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: var(--theme-surface, #fff); }
+/* Quantidade da lista: círculo do mesmo diâmetro da bolinha "+", ao lado dela, mas só com contorno e fundo claro na cor
+   do menu, para não parecer botão. Com mais dígitos vira pílula. */
+.compras-secao-ponta { display: flex; align-items: center; gap: 8px; flex: none; }
+.compras-contagem { box-sizing: border-box; min-width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); padding: 0 8px; border-radius: 999px; display: grid; place-items: center; border: 1.5px solid var(--menu-accent); background: color-mix(in srgb, var(--menu-accent) 10%, var(--theme-surface, #fff)); color: var(--panel-text, inherit); font: 600 var(--ui-note, 11px)/1 var(--ui-font); cursor: default; }
+body.dark-theme .compras-contagem { color: var(--layout-ink, #f2f1f6); }
+.compras-secao-cab .compras-redondo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* Setinha do título de cada coluna: o mesmo desenho, tamanho e cor da seta do fim das linhas (.account-action-toggle);
+   aponta para a direita com a coluna oculta e vira com a coluna aberta. */
+.compras-coluna-seta { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; background: transparent; color: var(--navigation-ink, #a2a0aa); cursor: pointer; }
+.compras-coluna-seta svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
+.compras-coluna-seta[aria-expanded=true] svg { transform: rotate(180deg); }
+.compras-linha-cabecalho .compras-celula { display: flex; align-items: center; gap: 4px; }
+.compras-linha-cabecalho .compras-coluna-titulo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Fornecedores: ícones (lugar para dois) · fornecedor · categoria · nome do contato · WhatsApp · razão social · CPF/CNPJ ·
+   ramo · avisos · situação · seta. Cada célula tem coluna fixa, igual em todas as linhas; a largura de cada coluna
+   ocultável vem de uma variável, que a classe oculta-<chave> da lista reduz à faixa da setinha. */
+.compras-linha.grade-fornecedor {
+  grid-template-columns: 64px var(--w-nome, minmax(190px, 1fr)) var(--w-categoria, 128px) var(--w-contato, 148px) var(--w-whatsapp, 124px)
+    var(--w-razao, 190px) var(--w-documento, 138px) var(--w-ramo, 116px) var(--w-selos, 130px) 72px 24px;
+  width: max-content; min-width: 100%; background: var(--theme-card, #fff);
+}
+.compras-linha.grade-fornecedor > * { grid-row: 1; }
+/* O ícone da categoria fica sempre à vista, fixo à esquerda. */
+.compras-linha.grade-fornecedor > .compras-linha-icones { grid-column: 1; position: sticky; left: 0; z-index: 2; align-self: stretch; align-items: center; background: inherit; padding-left: 12px; margin-left: -12px; }
+.compras-linha.grade-fornecedor > .c-nome { grid-column: 2; }
+.compras-linha.grade-fornecedor > .c-categoria { grid-column: 3; }
+.compras-linha.grade-fornecedor > .c-contato { grid-column: 4; }
+.compras-linha.grade-fornecedor > .c-whatsapp { grid-column: 5; }
+.compras-linha.grade-fornecedor > .c-razao { grid-column: 6; }
+.compras-linha.grade-fornecedor > .c-documento { grid-column: 7; }
+.compras-linha.grade-fornecedor > .c-ramo { grid-column: 8; }
+.compras-linha.grade-fornecedor > .c-selos { grid-column: 9; }
+.compras-linha.grade-fornecedor > .account-list-state, .compras-linha.grade-fornecedor > .c-estado { grid-column: 10; }
+.oculta-razao { --w-razao: 24px; }
+.oculta-razao .grade-fornecedor:not(.compras-linha-cabecalho) > .c-razao, .oculta-razao .compras-linha-cabecalho > .c-razao > .compras-coluna-titulo { display: none; }
+.oculta-categoria { --w-categoria: 24px; }
+.oculta-categoria .grade-fornecedor:not(.compras-linha-cabecalho) > .c-categoria, .oculta-categoria .compras-linha-cabecalho > .c-categoria > .compras-coluna-titulo { display: none; }
+.oculta-contato { --w-contato: 24px; }
+.oculta-contato .grade-fornecedor:not(.compras-linha-cabecalho) > .c-contato, .oculta-contato .compras-linha-cabecalho > .c-contato > .compras-coluna-titulo { display: none; }
+.oculta-whatsapp { --w-whatsapp: 24px; }
+.oculta-whatsapp .grade-fornecedor:not(.compras-linha-cabecalho) > .c-whatsapp, .oculta-whatsapp .compras-linha-cabecalho > .c-whatsapp > .compras-coluna-titulo { display: none; }
+.oculta-documento { --w-documento: 24px; }
+.oculta-documento .grade-fornecedor:not(.compras-linha-cabecalho) > .c-documento, .oculta-documento .compras-linha-cabecalho > .c-documento > .compras-coluna-titulo { display: none; }
+.oculta-ramo { --w-ramo: 24px; }
+.oculta-ramo .grade-fornecedor:not(.compras-linha-cabecalho) > .c-ramo, .oculta-ramo .compras-linha-cabecalho > .c-ramo > .compras-coluna-titulo { display: none; }
+.oculta-selos { --w-selos: 24px; }
+.oculta-selos .grade-fornecedor:not(.compras-linha-cabecalho) > .c-selos, .oculta-selos .compras-linha-cabecalho > .c-selos > .compras-coluna-titulo { display: none; }
+/* A seta de Editar/Excluir fica sempre à vista, fixa à direita; a gaveta abre ao lado dela, por cima da situação. */
+.compras-linha.grade-fornecedor > .account-action-toggle { grid-column: 11; position: sticky; right: 0; z-index: 2; align-self: stretch; height: auto; background: inherit; }
+.compras-linha.grade-fornecedor > .account-row-actions:not([hidden]) { grid-column: 10; grid-row: 1; justify-self: end; position: sticky; right: 32px; z-index: 2; background: inherit; }
+.compras-linha.grade-fornecedor:has(> .account-row-actions:not([hidden])) > .account-list-state { visibility: hidden; }
+/* O ícone e o nome do fornecedor nunca ocultam e ficam fixos à esquerda quando a lista rola (regra do Rodrigo).
+   No celular a coluna do nome estreita, para sobrar espaço para as colunas que rolam. */
+.grade-fornecedor > .c-nome { position: sticky; left: 76px; z-index: 1; align-self: stretch; display: flex; align-items: center; background: inherit; box-shadow: 1px 0 0 var(--layout-line, #dedee3); padding-right: 8px; }
+@container lista-grade (max-width: 519px) {
+  .compras-linha.grade-fornecedor { --w-nome: 112px; }
+}
+.compras-linha .account-action-toggle { flex: none; width: 32px; height: 32px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.compras-linha .account-row-actions { display: flex; flex: none; align-items: center; gap: var(--row-action-gap, 6px); }
+.compras-linha .account-row-actions[hidden] { display: none; }
+.compras-linha .account-row-actions > button { width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); flex: none; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: var(--theme-surface, #fff); }
+.compras-linha .account-row-actions > button:first-child { order: 1; background: var(--cicluz-danger, #ef4444); }
+.compras-linha .account-row-actions svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+/* No celular os selos descem para a linha de baixo, alinhados ao texto, e a seta fica na primeira linha. */
+@media (max-width: 560px) {
+  .compras-linha.com-acoes:not(.em-colunas) { flex-wrap: wrap; }
+  .compras-linha.com-acoes .compras-linha-direita { order: 5; flex: 1 0 100%; justify-content: flex-start; margin-left: 0; padding-left: 42px; box-sizing: border-box; }
+}
 button.compras-linha:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
-.compras-linha-icone { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--menu-accent); }
+/* Ícone de linha é só imagem: quadrado de cantos arredondados (--row-icon-radius). Círculo fica para botão (regra de 15/11/2026). */
+.compras-linha-icone { flex: 0 0 30px; width: 30px; height: 30px; border-radius: var(--row-icon-radius, 26%); display: grid; place-items: center; background: var(--menu-accent); }
+/* Mais de um ícone na linha (ex.: fornecedor de Produto e de Serviço), cada um com a própria cor */
+.compras-linha-icones { display: flex; flex: none; gap: 4px; }
 .compras-linha-icone svg { width: 16px; height: 16px; fill: none; stroke: var(--theme-surface, #fff); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 /* O texto nunca fica mais estreito que 180px: sem espaço, os botões descem para a linha de baixo. */
 .compras-linha-texto { flex: 1 1 180px; min-width: min(180px, 100%); display: grid; gap: 2px; }
@@ -106,7 +205,7 @@ body.dark-theme .tom-negativo { background: #45201f; color: #f8b4b4; }
 .compras-tabela tr.destaque td { background: color-mix(in srgb, #f59e0b 9%, transparent); }
 .compras-tabela td.destaque { color: #8a5300; font-weight: 700; }
 body.dark-theme .compras-tabela td.destaque { color: #f6d38f; }
-.compras-tabela input { min-height: 36px !important; }
+.compras-tabela input:not([type=checkbox]) { min-height: 36px !important; }
 .compras-produto-celula { display: grid; gap: 2px; }
 .compras-produto-celula > b { display: inline; }
 .compras-produto-celula small { color: var(--muted, #73737a); font-size: 11px; line-height: 16px; }
@@ -153,7 +252,7 @@ body.dark-theme .compras-trilha li { background: #34333b; color: #d4d4d8; }
 
 /* Diálogos (o shell do S2 adapta <dialog> em people-header-pilot.js). */
 .compras-dialog { background: var(--theme-surface, #fff); color: var(--layout-ink, #3f3f46); }
-body dialog.shell-dialog.compras-dialog.largo { width: min(1000px, calc(100vw - 16px)) !important; }
+
 .compras-dialog.largo { width: min(1000px, calc(100vw - 32px)); max-width: none; }
 .compras-dialog h2 { margin: 0 0 4px; font: var(--ui-title-weight, 600) var(--ui-title, 16px)/var(--ui-title-line, 20px) var(--ui-font); }
 .compras-dialog-sub { margin: 0 0 12px; font: 400 var(--ui-subtitle, 11px)/var(--ui-subtitle-line, 14px) var(--ui-font); color: var(--muted, #73737a); }
@@ -163,7 +262,82 @@ body dialog.shell-dialog.compras-dialog.largo { width: min(1000px, calc(100vw - 
 /* Itens do diálogo podem encolher: uma tabela larga rola dentro da própria caixa, sem passar da borda. */
 .compras-dialog .compras-form > * { min-width: 0; }
 .compras-fieldset { border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; padding: 12px 14px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; min-width: 0; }
+/* "Enviar link para cadastro": botão retangular no cabeçalho da lista e painel fixo por cima da tela (o quadro da
+   lista corta o que sai dele): coluna branca estreita com a seta de fechar e as bolinhas dos canais, e ao lado o prazo. */
+.compras-enviar { display: inline-flex; }
+.compras-enviar-painel { position: fixed; z-index: 30; display: flex; align-items: flex-start; gap: 8px; font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); }
+.compras-enviar-painel[hidden] { display: none; }
+.compras-enviar-canais, .compras-enviar-prazo { background: var(--theme-card, #fff); border: 1px solid var(--layout-line, #dedee3); border-radius: 14px; box-shadow: 0 8px 24px rgb(0 0 0 / .14); }
+.compras-enviar-canais { display: grid; justify-items: center; gap: 10px; padding: 10px 8px; }
+.compras-secao-cab .compras-enviar-fechar { background: transparent; color: var(--panel-text, #12672e); }
+.compras-enviar-prazo { display: grid; gap: 8px; padding: 12px; width: min(230px, calc(100vw - 84px)); box-sizing: border-box; }
+.compras-enviar-prazo .profiles-note { margin: 0; }
+.compras-enviar-prazo > .profiles-note:empty, .compras-enviar-prazo > .profiles-error:empty { display: none; }
+/* Janela de escolha da etapa Vínculos (produtos; grupos e subgrupos de despesa): lista de caixas de marcar. */
+.compras-vinculos-lista { display: grid; gap: 8px; padding: 4px 2px; min-width: 0; }
+/* Subgrupo dentro do grupo: recuado, para a hierarquia aparecer. */
+.compras-vinculos-lista > .compras-vinculo-nivel { margin-left: 28px; }
+span.compras-chip { cursor: default; }
+/* "+ Acrescentar opção": chip tracejado, para não parecer uma opção da lista. */
+/* Seleção por cartões (U.cartoesEscolha): cartão = botão inteiro; lado a lado quando cabe, empilhado no celular.
+   Marcado: borda de 2 px e fundo bem claro na cor da opção, círculo cheio com o "certo". */
+.compras-cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; min-width: 0; }
+.compras-cartao-escolha { --cartao-cor: var(--menu-accent); display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 68px; margin: 0; padding: 12px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); color: var(--layout-ink, inherit); font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); text-align: left; cursor: pointer; }
+.compras-cartao-escolha:is([aria-pressed=true], [aria-checked=true]) { padding: 11px; border: 2px solid var(--cartao-cor); background: color-mix(in srgb, var(--cartao-cor) 9%, var(--theme-card, #fff)); }
+.compras-cartao-escolha:focus-visible { outline: 2px solid var(--cartao-cor); outline-offset: 2px; }
+.compras-cartao-escolha > .compras-linha-icone { flex: none; width: 40px; height: 40px; background: var(--cartao-cor); }
+.compras-cartao-escolha > .compras-linha-icone svg { width: 20px; height: 20px; }
+.compras-cartao-texto { display: grid; gap: 2px; min-width: 0; }
+.compras-cartao-texto > strong { font: 600 15px/20px var(--ui-font); }
+.compras-cartao-texto > small { font: 400 12px/16px var(--ui-font); color: var(--muted, #73737a); }
+.compras-cartao-marca { width: 24px; height: 24px; border: 2px solid var(--layout-line, #dedee3); border-radius: 50%; display: grid; place-items: center; box-sizing: border-box; }
+.compras-cartao-marca svg { width: 14px; height: 14px; fill: none; stroke: var(--theme-surface, #fff); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; visibility: hidden; }
+.compras-cartao-escolha:is([aria-pressed=true], [aria-checked=true]) > .compras-cartao-marca { border-color: var(--cartao-cor); background: var(--cartao-cor); }
+.compras-cartao-escolha:is([aria-pressed=true], [aria-checked=true]) > .compras-cartao-marca svg { visibility: visible; }
+/* Quadro "Situação do(a) <coisa>" (U.quadroSituacao): moldura como a dos quadros do formulário; o interruptor é o
+   .account-status-switch dos cadastros financeiros, ligado na cor do menu de origem. */
+.compras-situacao-quadro { grid-column: 1 / -1; display: grid; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; padding: 12px 14px; background: var(--theme-card, #fff); font: 600 12px/1.4 var(--ui-font); min-width: 0; }
+.compras-situacao-quadro .account-status-row { height: 40px; margin-top: 6px; }
+.compras-situacao-quadro .account-status-switch[aria-checked=true] { background: var(--menu-accent); }
+.compras-situacao-quadro .account-status-switch:focus-visible { outline-color: var(--menu-accent); }
+.compras-situacao-quadro .account-status-text { font-size: 12px; }
+.compras-situacao-quadro > small { margin: 2px 0 0; font-weight: 400; }
+/* O mesmo quadro também recebe a seleção por cartões (Categoria do fornecedor). */
+.compras-situacao-quadro > .compras-cartoes { margin: 8px 0 4px; }
+/* Campo preenchido por "O mesmo da etapa anterior": à vista, só para leitura. */
+.compras-fieldset input[readonly] { opacity: .7; cursor: default; }
 .compras-fieldset legend { padding: 0 6px; font: 600 13px/18px var(--ui-font); }
+/* Campos alinhados pelo topo: a dica embaixo de um campo não desloca os campos vizinhos da mesma linha. */
+.compras-fieldset { align-items: start; }
+/* Formulário no padrão dos cadastros do sistema (medido no editor de DES - Grupos de Despesas): duas colunas,
+   8 px entre linhas e 14 px entre colunas; uma coluna no celular. Os campos (rótulo 12 px, 42 px, raio 8) já vêm
+   do ui-foundation.css. */
+.compras-form-padrao .compras-fieldset { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
+@media (max-width: 600px) { .compras-form-padrao .compras-fieldset { grid-template-columns: minmax(0, 1fr); } }
+/* Cadastro em etapas: a barra (stepper.js) no topo e Voltar/Avançar/Salvar embaixo, como no Cadastro Completo. */
+.compras-form-padrao .stepper-wrap { margin: 4px 0 8px; }
+/* Barra de ações da página (padrão do Rodrigo, 18/11/2026) — vale em todo cadastro em etapas. Fica FORA dos quadros, no fim
+   do formulário, porque age sobre a página inteira; botão DENTRO de um quadro age só naquele bloco e fica à esquerda, embaixo
+   do conteúdo dele. Voltar à esquerda; à direita, nesta ordem, Cancelar · Salvar · Avançar. No celular: Voltar e Avançar na
+   linha de cima (esquerda e direita), Cancelar e Salvar na de baixo. */
+.compras-form-rodape.compras-etapas-nav { justify-content: flex-end; }
+.compras-etapas-nav > .btn { order: 2; }
+.compras-etapas-nav > .footer-cancel-accent { order: 1; }
+.compras-etapas-nav > .form-back-action { order: 0; margin-right: auto; }
+.compras-etapas-nav > .form-next-action { order: 3; }
+@media (max-width: 600px) {
+  /* Duas linhas: Voltar e Avançar em cima, Cancelar e Salvar embaixo (o ::after é a quebra de linha entre os dois pares). */
+  .compras-form-rodape.compras-etapas-nav::after { content: ""; flex: 0 0 100%; height: 0; margin-top: -10px; order: 2; }
+  .compras-etapas-nav > .btn { order: 4; flex: 0 0 calc(50% - 5px); }
+  .compras-etapas-nav > .footer-cancel-accent { order: 3; }
+  .compras-etapas-nav > .form-back-action { order: 0; }
+  .compras-etapas-nav > .form-next-action { order: 1; margin-left: auto; }
+}
+/* Voltar, Avançar e Salvar com a mesma largura (a do rodapé de formulário, que o layout-review.js mede no grupo). */
+.compras-etapas-nav > .btn { min-width: var(--acao-largura, 128px); }
+/* Uma etapa com mais de um quadro (ex.: dados da empresa + endereço). */
+.compras-etapa { display: grid; gap: 12px; min-width: 0; }
+.compras-form-padrao .compras-form > .compras-etapa { grid-column: 1 / -1; }
 .compras-fieldset > .compras-interruptor, .compras-fieldset > .compras-texto-auto, .compras-fieldset > .compras-largo { grid-column: 1 / -1; }
 .compras-texto-auto { margin: 0; font-size: 12px; color: var(--panel-text, #12672e); font-weight: 600; }
 body.dark-theme .compras-texto-auto { color: #a7e8bd; }
@@ -214,10 +388,7 @@ body.dark-theme .compras-aviso-campo { color: #f6d38f; }
 .compras-subbloco h4 { margin: 0; font: 600 13px/18px var(--ui-font); }
 .compras-fiscal-topo { display: grid; gap: 4px; justify-items: start; }
 .compras-fiscal-topo p { margin: 0; }
-.compras-fiscal-todos summary { cursor: pointer; font-weight: 600; font-size: 12px; color: var(--panel-text, #12672e); }
-body.dark-theme .compras-fiscal-todos summary { color: #a7e8bd; }
 .compras-promocoes, .compras-conversoes { display: grid; gap: 10px; }
-.compras-dias .compras-chip { min-width: 44px; }
 .compras-foto { display: grid; gap: 8px; }
 .compras-foto-area { border: 1px dashed var(--layout-line, #dedee3); border-radius: 12px; padding: 12px; display: grid; gap: 4px; justify-items: center; text-align: center; min-height: 84px; align-content: center; }
 .compras-foto-area.arrastando { border-color: var(--menu-accent); background: color-mix(in srgb, var(--menu-accent) 8%, transparent); }
@@ -235,10 +406,13 @@ body.dark-theme .compras-fiscal-todos summary { color: #a7e8bd; }
 .compras-card-topo > .compras-produto-celula { flex: 1; min-width: 0; }
 .compras-card-foto-botao { padding: 0; border: 0; background: none; cursor: zoom-in; flex: 0 0 56px; }
 .compras-card-foto { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; display: block; }
-.compras-form-produto > .compras-fieldset, .compras-form-produto > .compras-alertas, .compras-form-produto > .compras-form-rodape { grid-column: 1 / -1; }
+.compras-form-produto > .compras-etapa, .compras-form-produto > .stepper-wrap, .compras-form-produto > .compras-alertas, .compras-form-produto > .compras-alerta, .compras-form-produto > .compras-form-rodape { grid-column: 1 / -1; }
+.compras-form-produto .stepper-wrap { margin: 4px 0 8px; }
 .compras-form-produto .compras-fieldset { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); align-items: start; }
 @media (min-width: 601px) { .compras-form-produto [data-campo="codigoBarras"] { grid-column: span 2; } }
 /* Linha de ações substituída pelo rodapé fixo: fora da vista, mas presente para o ✓ repassar o clique. */
+/* Linha Cancelar · Salvar à vista nas janelas simples (Design System, 19/11/2026): fora do quadro, à direita, sem faixa de fundo. */
+.compras-dialog .compras-dialog-acoes:not(.compras-dialog-acoes-rodape) { position: static; background: transparent; padding: 12px 0 0; }
 .compras-dialog .compras-dialog-acoes.compras-dialog-acoes-rodape { position: absolute; width: 1px; height: 1px; padding: 0; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 /* Página do fornecedor: referência do item (como no S1). */
 .rodada-dados { margin: 0; display: flex; gap: 6px; align-items: baseline; font-size: 13px; }
@@ -254,7 +428,7 @@ body.dark-theme .compras-fiscal-todos summary { color: #a7e8bd; }
    do S2 também atingia o checkbox e empurrava o texto. */
 .compras-dialog .compras-form > .compras-interruptor { grid-column: 1 / -1; }
 .compras-dialog .compras-interruptor { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: center; column-gap: 10px; row-gap: 4px; }
-.compras-dialog .compras-interruptor > input[type=checkbox] { width: 20px; height: 20px; min-height: 0; margin: 0; }
+
 .compras-dialog .compras-interruptor > small { grid-column: 2; margin: 0; white-space: normal; }
 
 /* Conferência: campo de quantidade estreito e células com uma linha de apoio embaixo. */
@@ -270,3 +444,263 @@ body.dark-theme .compras-fiscal-todos summary { color: #a7e8bd; }
 .compras-importacao-linha { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--layout-line, #dedee3); overflow-wrap: anywhere; }
 .compras-importacao-linha > b { white-space: nowrap; }
 .compras-produto-celula .compras-situacao { justify-self: start; }
+
+/* ---------- Cadastro de fornecedor: recorrência no estilo Calendário e Lembretes, aniversário, salário mínimo e documentos (16/11/2026) ---------- */
+.compras-escolha-gatilho { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 42px; padding: 0 12px; box-sizing: border-box; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); color: var(--layout-ink, #27272a); font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); cursor: pointer; text-align: left; }
+.compras-escolha-texto.vazio { color: var(--navigation-ink, #a2a0aa); }
+.compras-escolha-seta { display: inline-grid; place-items: center; flex: none; }
+.compras-escolha-seta svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
+.compras-escolha-gatilho[aria-expanded=true] .compras-escolha-seta svg { transform: rotate(180deg); }
+.compras-escolha-gatilho:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
+.compras-escolha-painel { position: fixed; z-index: 30; display: grid; min-width: min(260px, calc(100vw - 24px)); box-sizing: border-box; padding: 6px; border: 1px solid var(--layout-line, #dedee3); border-radius: 14px; background: var(--theme-card, #fff); box-shadow: 0 8px 24px rgb(0 0 0 / .14); font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); }
+.compras-escolha-painel[hidden] { display: none; }
+.compras-escolha-opcao { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+.compras-escolha-opcao:hover, .compras-escolha-opcao:focus-visible { background: color-mix(in srgb, var(--menu-accent) 10%, var(--theme-card, #fff)); outline: none; }
+.compras-escolha-opcao.ativo { font-weight: 600; color: var(--panel-text, #9c1c1c); }
+body.dark-theme .compras-escolha-opcao.ativo { color: #f2f1f6; }
+.compras-escolha-check { width: 18px; height: 18px; flex: none; color: var(--menu-accent); }
+.compras-escolha-check svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.compras-recorr-linha { display: flex; flex-wrap: wrap; gap: 8px; }
+.compras-recorr-linha > * { flex: 1 1 120px; min-width: 0; }
+.compras-recorr-pers { display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 8px 8px 8px 12px; border-radius: 12px; background: color-mix(in srgb, var(--menu-accent) 8%, var(--theme-card, #fff)); }
+.compras-recorr-pers-texto { flex: 1; min-width: 0; font: 500 var(--ui-text)/var(--ui-text-line) var(--ui-font); overflow-wrap: anywhere; }
+.compras-recorr-resumo { margin: 0; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--menu-accent) 8%, var(--theme-card, #fff)); font: 600 var(--ui-text)/var(--ui-text-line) var(--ui-font); }
+.compras-recorr-resumo.pendente { font-weight: 400; color: var(--navigation-ink, #6d6c76); }
+.compras-recorr-dialogo .compras-recorr-linha > select { flex: 1 1 100px; }
+.compras-sm { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; align-items: start; }
+.compras-sm > small { grid-column: 1 / -1; }
+.compras-sm > .compras-situacao-quadro { grid-column: auto; }
+@media (max-width: 560px) { .compras-sm { grid-template-columns: minmax(0, 1fr); } }
+.compras-valor-resumo:empty { display: none; }
+.compras-doc-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.compras-doc-acoes .compras-redondo, .compras-recorr-pers .compras-redondo, .compras-aniv-campo .compras-redondo, .compras-atividade-acoes .compras-redondo, .compras-modelo-clausula .compras-redondo, .compras-modelo-campo .compras-redondo, .folha-mes .compras-redondo { flex: none; width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: #fff; }
+.compras-doc-acoes .compras-redondo svg, .compras-recorr-pers .compras-redondo svg, .compras-aniv-campo .compras-redondo svg, .compras-atividade-acoes .compras-redondo svg, .compras-modelo-clausula .compras-redondo svg, .compras-modelo-campo .compras-redondo svg, .folha-mes .compras-redondo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.compras-doc-previa img, .compras-doc-previa iframe { display: block; width: 100%; max-width: 100%; min-height: 320px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; }
+
+/* ---------- VND - Clientes (17/11/2026): mesma grade de linhas de Fornecedores, com as colunas do cliente ---------- */
+.compras-linha.grade-cliente{grid-template-columns:64px var(--w-nome,minmax(190px,1fr)) var(--w-tipo,150px) var(--w-whatsapp,140px) var(--w-email,240px) 72px 24px;width:max-content;min-width:100%;background:var(--theme-card,#fff)}
+.compras-linha.grade-cliente>*{grid-row:1}
+.compras-linha.grade-cliente>.compras-linha-icones{grid-column:1;position:sticky;left:0;z-index:2;align-self:stretch;align-items:center;background:inherit;padding-left:12px;margin-left:-12px}
+.compras-linha.grade-cliente>.c-nome{grid-column:2;position:sticky;left:76px;z-index:1;align-self:stretch;display:flex;align-items:center;background:inherit;box-shadow:1px 0 0 var(--layout-line,#dedee3);padding-right:8px}
+.compras-linha.grade-cliente>.c-tipo{grid-column:3}
+.compras-linha.grade-cliente>.c-whatsapp{grid-column:4}
+.compras-linha.grade-cliente>.c-email{grid-column:5}
+.compras-linha.grade-cliente>.account-list-state,.compras-linha.grade-cliente>.c-estado{grid-column:6}
+.oculta-tipo{--w-tipo:24px}
+.oculta-tipo .grade-cliente:not(.compras-linha-cabecalho)>.c-tipo,.oculta-tipo .compras-linha-cabecalho.grade-cliente>.c-tipo>.compras-coluna-titulo{display:none}
+.oculta-whatsapp{--w-whatsapp:24px}
+.oculta-whatsapp .grade-cliente:not(.compras-linha-cabecalho)>.c-whatsapp,.oculta-whatsapp .compras-linha-cabecalho.grade-cliente>.c-whatsapp>.compras-coluna-titulo{display:none}
+.oculta-email{--w-email:24px}
+.oculta-email .grade-cliente:not(.compras-linha-cabecalho)>.c-email,.oculta-email .compras-linha-cabecalho.grade-cliente>.c-email>.compras-coluna-titulo{display:none}
+.compras-linha.grade-cliente>.account-action-toggle{grid-column:7;position:sticky;right:0;z-index:2;align-self:stretch;height:auto;background:inherit}
+.compras-linha.grade-cliente>.account-row-actions:not([hidden]){grid-column:6;grid-row:1;justify-self:end;position:sticky;right:32px;z-index:2;background:inherit}
+.compras-linha.grade-cliente:has(>.account-row-actions:not([hidden]))>.account-list-state{visibility:hidden}
+@container lista-grade (max-width:519px){.compras-linha.grade-cliente{--w-nome:120px}}
+/* ---------- Colaboradores (18/11/2026): a mesma grade de linhas de Clientes, com as colunas do colaborador (CPF, Função, Turno e a Etapa) ---------- */
+.compras-linha.grade-colaborador{grid-template-columns:64px var(--w-nome,minmax(190px,1fr)) var(--w-cpf,140px) var(--w-funcao,180px) var(--w-turno,110px) minmax(150px,max-content) 24px;width:max-content;min-width:100%;background:var(--theme-card,#fff)}
+.compras-linha.grade-colaborador>*{grid-row:1}
+.compras-linha.grade-colaborador>.compras-linha-icones{grid-column:1;position:sticky;left:0;z-index:2;align-self:stretch;align-items:center;background:inherit;padding-left:12px;margin-left:-12px}
+.compras-linha.grade-colaborador>.c-nome{grid-column:2;position:sticky;left:76px;z-index:1;align-self:stretch;display:flex;align-items:center;background:inherit;box-shadow:1px 0 0 var(--layout-line,#dedee3);padding-right:8px}
+.compras-linha.grade-colaborador>.c-cpf{grid-column:3}
+.compras-linha.grade-colaborador>.c-funcao{grid-column:4}
+.compras-linha.grade-colaborador>.c-turno{grid-column:5}
+.compras-linha.grade-colaborador>.account-list-state,.compras-linha.grade-colaborador>.c-estado{grid-column:6}
+.oculta-cpf{--w-cpf:24px}
+.oculta-cpf .grade-colaborador:not(.compras-linha-cabecalho)>.c-cpf,.oculta-cpf .compras-linha-cabecalho.grade-colaborador>.c-cpf>.compras-coluna-titulo{display:none}
+.oculta-funcao{--w-funcao:24px}
+.oculta-funcao .grade-colaborador:not(.compras-linha-cabecalho)>.c-funcao,.oculta-funcao .compras-linha-cabecalho.grade-colaborador>.c-funcao>.compras-coluna-titulo{display:none}
+.oculta-turno{--w-turno:24px}
+.oculta-turno .grade-colaborador:not(.compras-linha-cabecalho)>.c-turno,.oculta-turno .compras-linha-cabecalho.grade-colaborador>.c-turno>.compras-coluna-titulo{display:none}
+.compras-linha.grade-colaborador>.account-action-toggle{grid-column:7;position:sticky;right:0;z-index:2;align-self:stretch;height:auto;background:inherit}
+.compras-linha.grade-colaborador>.account-row-actions:not([hidden]){grid-column:6;grid-row:1;justify-self:end;position:sticky;right:32px;z-index:2;background:inherit}
+.compras-linha.grade-colaborador:has(>.account-row-actions:not([hidden]))>.account-list-state{visibility:hidden}
+@container lista-grade (max-width:519px){.compras-linha.grade-colaborador{--w-nome:120px}}
+body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-search){display:none}
+.compras-tipo-cartoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start;margin:8px 0 4px}
+@media (max-width:560px){.compras-tipo-cartoes{grid-template-columns:minmax(0,1fr)}}
+.compras-tipo-cartao{--cartao-cor:var(--menu-accent);display:grid;gap:10px;min-width:0;padding:12px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff)}
+.compras-tipo-cartao[data-marcado=true]{padding:11px;border:2px solid var(--cartao-cor);background:color-mix(in srgb,var(--cartao-cor) 9%,var(--theme-card,#fff))}
+.compras-tipo-cab{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;min-height:44px;margin:0;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer;font:inherit}
+.compras-tipo-cab:focus-visible{outline:2px solid var(--cartao-cor);outline-offset:4px;border-radius:8px}
+.compras-tipo-cab>.compras-linha-icone{flex:none;width:40px;height:40px;background:var(--cartao-cor)}
+.compras-tipo-cab>.compras-linha-icone svg{width:20px;height:20px}
+.compras-tipo-cartao[data-marcado=true] .compras-cartao-marca{border-color:var(--cartao-cor);background:var(--cartao-cor)}
+.compras-tipo-cartao[data-marcado=true] .compras-cartao-marca svg{visibility:visible}
+
+/* Contratos (18/11/2026): atividades incluídas e não incluídas, seleção hierárquica e tipos de contrato */
+.compras-atividades{display:grid;gap:8px;align-content:start;padding:12px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff)}
+.compras-atividades.incluidas{border-left:4px solid #2563eb}
+.compras-atividades.excluidas{border-left:4px dashed var(--cicluz-danger,#e34343)}
+.compras-atividades-cab{display:flex;align-items:center;gap:8px}
+.compras-atividades-cab h4{margin:0;font:600 14px/18px var(--ui-font)}
+.compras-atividades-icone,.compras-atividade-marca{display:inline-grid;place-items:center;flex:none;width:22px;height:22px}
+.compras-atividades-icone svg,.compras-atividade-marca svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.compras-atividades-lista{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.compras-atividade-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--layout-line,#dedee3);border-radius:10px}
+.compras-atividade-texto{flex:1;min-width:0;overflow-wrap:anywhere}
+.compras-atividade-acoes{display:inline-flex;gap:6px;flex:none}
+/* Padrão do sistema (18/11/2026, Rodrigo): editar redondo na cor do cabeçalho; excluir redondo em vermelho. */
+:is(.compras-dialog,.compras-view) .compras-redondo.perigo{background:var(--cicluz-danger,#ef4444)}
+/* Objeto do contrato: os três botões (Grupo de produtos, Grupo de despesas, Grupo de patrimônios) têm o mesmo tamanho. */
+.compras-objeto-origem .compras-titulo-botao{width:240px;max-width:100%;justify-content:space-between}
+/* Objeto do contrato: o texto do chip acompanha a cor da origem daquela lista. */
+.compras-objeto-origem .compras-chip.ativo{color:color-mix(in srgb,var(--menu-accent) 70%,#000)}
+body.dark-theme .compras-objeto-origem .compras-chip.ativo{color:#f2f1f6}
+.compras-atividade-vazia{border:0;padding:4px 0}
+/* Joinha (19/11/2026, Rodrigo): para cima é sempre azul (incluso, sim, aprovado) e para baixo é sempre vermelho (não incluso, não, reprovado), em qualquer origem. */
+.compras-atividades.incluidas :is(.compras-atividades-icone,.compras-atividade-marca),.joinha-cima{color:#2563eb}
+.compras-atividades.excluidas :is(.compras-atividades-icone,.compras-atividade-marca),.joinha-baixo{color:var(--cicluz-danger,#e34343)}
+/* Janela de escolha em árvore no desenho da lista de origem (19/11/2026, Rodrigo): um quadro só, linhas separadas por um fio, ícone
+   quadrado com a sigla na cor da origem, nome com a contagem embaixo, situação à direita e a caixa de marcar antes do ícone. */
+.compras-hier{display:grid;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff);overflow:hidden}
+.compras-hier-linha{display:flex;align-items:center;gap:8px;min-height:var(--escolha-linha,44px);box-sizing:border-box;padding:5px 10px 5px calc(10px + var(--nivel,0)*24px);border-bottom:1px solid var(--layout-line,#dedee3)}
+.compras-hier-linha:last-child{border-bottom:0}
+.compras-hier-caixa{appearance:none;-webkit-appearance:none;flex:none;width:var(--escolha-caixa,20px);height:var(--escolha-caixa,20px);margin:0;border:1.5px solid var(--ui-border-base,#a2a0aa);border-radius:6px;background:var(--theme-card,#fff);cursor:pointer;display:inline-grid;place-items:center}
+.compras-hier-caixa:checked{background:var(--menu-accent);border-color:var(--menu-accent)}
+.compras-hier-caixa:checked::after{content:"";width:10px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:translateY(-1px) rotate(-45deg)}
+.compras-hier-caixa:disabled{opacity:.45;cursor:default}
+.compras-hier-caixa:focus-visible{outline:2px solid var(--menu-accent);outline-offset:2px}
+.compras-hier-icone{display:inline-grid;place-items:center;flex:none;width:var(--escolha-icone,26px);height:var(--escolha-icone,26px);border-radius:26%;background:var(--menu-accent);color:#fff}
+.compras-hier-icone svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.compras-hier-texto{display:grid;flex:1;min-width:0}
+.compras-hier-texto>b{font:500 var(--escolha-titulo,13px)/16px var(--ui-font);overflow-wrap:anywhere}
+.compras-hier-texto>small{font:400 var(--escolha-detalhe,10px)/14px var(--ui-font);color:var(--muted,#73737a)}
+.compras-hier-estado{flex:none;font:400 var(--escolha-detalhe,10px)/14px var(--ui-font)}
+.compras-hier-icone .sigla-text{font-size:10px}
+.compras-hier-seta{display:inline-grid;place-items:center;flex:none;width:22px;height:22px;padding:0;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}
+.compras-hier-seta svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+.compras-hier-seta.aberto svg{transform:rotate(90deg)}
+.compras-hier-seta:disabled{opacity:.3;cursor:default}
+.compras-hier-vazio{margin:0;padding:14px}
+.compras-modelos-lista{display:grid;gap:8px}
+.compras-modelo-linha{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff)}
+.compras-modelo-texto{display:grid;gap:2px;min-width:0}
+.compras-modelo-clausula,.compras-modelo-campo{display:grid;gap:6px;align-items:start;padding:8px;border:1px solid var(--layout-line,#dedee3);border-radius:10px;margin-bottom:8px}
+.compras-modelo-campo{grid-template-columns:minmax(0,1fr) minmax(120px,160px) auto auto;align-items:center}
+@media (max-width:560px){.compras-modelo-campo{grid-template-columns:minmax(0,1fr)}}
+.compras-clausula{margin:0}
+
+/* Tabelas de entrada de Gestão de Pessoas (gp-entrada.js): mesma linha, cabeçalho e gaveta de VND - Clientes; só muda o conjunto de colunas. */
+.compras-linha.grade-colab-s{grid-template-columns:64px var(--w-nome,minmax(190px,1fr)) var(--w-cpf,140px) var(--w-funcao,200px) var(--w-turno,100px) 230px 24px;--gp-estado:6}
+.compras-linha.grade-colab-c{grid-template-columns:64px var(--w-nome,minmax(190px,1fr)) var(--w-cpf,140px) var(--w-funcao,200px) 150px 24px;--gp-estado:5}
+.compras-linha.grade-cargo{grid-template-columns:84px var(--w-nome,minmax(190px,1fr)) var(--w-categoria,110px) var(--w-cbo,100px) var(--w-setor,200px) var(--w-salario,120px) 70px 24px;--gp-estado:7}
+#jobs-list .job-item.grade-cargo>.menu-item-move{grid-column:1;justify-self:start;align-self:center;z-index:3;width:18px;margin:0}
+.compras-linha.grade-cargo>.compras-linha-icones{padding-left:36px;margin-left:-12px}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo){width:max-content;min-width:100%;background:var(--theme-card,#fff)}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>*{grid-row:1}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.compras-linha-icones{grid-column:1;position:sticky;left:0;z-index:2;align-self:stretch;align-items:center;background:inherit;padding-left:12px;margin-left:-12px}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-nome{grid-column:2;position:sticky;left:76px;z-index:1;align-self:stretch;display:flex;align-items:center;background:inherit;box-shadow:1px 0 0 var(--layout-line,#dedee3);padding-right:8px}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.account-list-state,.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-estado{grid-column:var(--gp-estado)}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.account-action-toggle{grid-column:calc(var(--gp-estado) + 1);position:sticky;right:0;z-index:2;align-self:stretch;height:auto;background:inherit}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.account-row-actions:not([hidden]){grid-column:var(--gp-estado);grid-row:1;justify-self:end;position:sticky;right:32px;z-index:2;background:inherit}
+.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo):has(>.account-row-actions:not([hidden]))>.account-list-state{visibility:hidden}
+.compras-linha.gp-linha .account-row-actions>button:first-child{background:var(--menu-accent)}
+.compras-linha.gp-linha.inativo>:not(.account-action-toggle):not(.account-row-actions){opacity:.55}
+@container lista-grade (max-width:519px){.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo){--w-nome:120px}}
+.oculta-cpf{--w-cpf:24px}
+.oculta-cpf :is(.grade-colab-s,.grade-colab-c,.grade-cargo):not(.compras-linha-cabecalho)>.c-cpf,.oculta-cpf .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-cpf>.compras-coluna-titulo{display:none}
+.oculta-funcao{--w-funcao:24px}
+.oculta-funcao :is(.grade-colab-s,.grade-colab-c,.grade-cargo):not(.compras-linha-cabecalho)>.c-funcao,.oculta-funcao .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-funcao>.compras-coluna-titulo{display:none}
+.oculta-turno{--w-turno:24px}
+.oculta-turno :is(.grade-colab-s,.grade-colab-c,.grade-cargo):not(.compras-linha-cabecalho)>.c-turno,.oculta-turno .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-turno>.compras-coluna-titulo{display:none}
+.oculta-cbo{--w-cbo:24px}
+.oculta-cbo :is(.grade-colab-s,.grade-colab-c,.grade-cargo):not(.compras-linha-cabecalho)>.c-cbo,.oculta-cbo .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-cbo>.compras-coluna-titulo{display:none}
+.oculta-setor{--w-setor:24px}
+.oculta-setor :is(.grade-colab-s,.grade-colab-c,.grade-cargo):not(.compras-linha-cabecalho)>.c-setor,.oculta-setor .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-setor>.compras-coluna-titulo{display:none}
+.oculta-salario{--w-salario:24px}
+.oculta-salario :is(.grade-colab-s,.grade-colab-c,.grade-cargo):not(.compras-linha-cabecalho)>.c-salario,.oculta-salario .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-salario>.compras-coluna-titulo{display:none}
+/* Modo lista das telas de Gestão de Pessoas: só a tabela de entrada aparece; o formulário volta ao tocar em Novo ou numa linha. */
+.oculta-categoria{--w-categoria:24px}
+.oculta-categoria :is(.grade-colab-s,.grade-colab-c,.grade-cargo):not(.compras-linha-cabecalho)>.c-categoria,.oculta-categoria .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-categoria>.compras-coluna-titulo{display:none}
+.view.gp-lista .content>:is(.gp-form,#back-simple,#back-forms){display:none}
+.gp-entrada{display:grid;gap:12px}
+.view:not(.gp-lista) .content>.gp-entrada{display:none}
+.compras-linha.grade-cargo>.c-nome{left:100px}
+/* Seleção de itens da lista (ex.: produtos): bolinha vazia; ao marcar, fica toda preenchida na cor do módulo. Sem o ✓ nativo. */
+input.compras-selecao-bolinha{appearance:none;-webkit-appearance:none;flex:none;box-sizing:border-box;width:22px;height:22px;min-height:0;margin:0;padding:0;border:2px solid var(--menu-accent);border-radius:50%;background:transparent;cursor:pointer;transition:background-color .12s}
+input.compras-selecao-bolinha:checked{background:var(--menu-accent)}
+input.compras-selecao-bolinha:focus-visible{outline:2px solid var(--menu-accent);outline-offset:2px}
+/* ---------- MER - Produtos (17/11/2026): mesma grade de linhas de Fornecedores. Seleção, ícone e nome fixos à esquerda;
+   as outras colunas ocultam pela setinha do título (classe oculta-<chave> na lista). ---------- */
+.compras-linha.grade-produto{grid-template-columns:64px var(--w-nome,minmax(230px,1fr)) var(--w-tipo,116px) var(--w-estoque,96px) var(--w-minmax,96px) var(--w-preco,104px) var(--w-compra,300px) 72px 24px;width:max-content;min-width:100%;background:var(--theme-card,#fff)}
+.compras-linha.grade-produto>*{grid-row:1}
+.compras-linha.grade-produto>.compras-linha-icones{grid-column:1;position:sticky;left:0;z-index:2;align-self:stretch;align-items:center;background:inherit;padding-left:12px;margin-left:-12px}
+.compras-linha.grade-produto>.c-nome{grid-column:2;position:sticky;left:76px;z-index:1;align-self:stretch;display:flex;align-items:center;background:inherit;box-shadow:1px 0 0 var(--layout-line,#dedee3);padding-right:8px}
+.compras-linha.grade-produto>.c-tipo{grid-column:3}
+.compras-linha.grade-produto>.c-estoque{grid-column:4}
+.compras-linha.grade-produto>.c-minmax{grid-column:5}
+.compras-linha.grade-produto>.c-preco{grid-column:6}
+.compras-linha.grade-produto>.c-compra{grid-column:7}
+.compras-linha.grade-produto>.c-estoque,.compras-linha.grade-produto>.c-minmax,.compras-linha.grade-produto>.c-preco{justify-content:flex-end;text-align:right;font-variant-numeric:tabular-nums}
+.compras-linha.grade-produto>.account-list-state,.compras-linha.grade-produto>.c-estado{grid-column:8}
+.compras-linha.grade-produto>.account-action-toggle{grid-column:9;position:sticky;right:0;z-index:2;align-self:stretch;height:auto;background:inherit}
+.compras-linha.grade-produto>.account-row-actions:not([hidden]){grid-column:8;grid-row:1;justify-self:end;position:sticky;right:32px;z-index:2;background:inherit}
+.compras-linha.grade-produto:has(>.account-row-actions:not([hidden]))>.account-list-state{visibility:hidden}
+.compras-linha.grade-produto.inativo>.compras-celula{opacity:.55}
+.oculta-tipo .grade-produto:not(.compras-linha-cabecalho)>.c-tipo,.oculta-tipo .compras-linha-cabecalho.grade-produto>.c-tipo>.compras-coluna-titulo{display:none}
+.oculta-estoque{--w-estoque:24px}
+.oculta-estoque .grade-produto:not(.compras-linha-cabecalho)>.c-estoque,.oculta-estoque .compras-linha-cabecalho.grade-produto>.c-estoque>.compras-coluna-titulo{display:none}
+.oculta-minmax{--w-minmax:24px}
+.oculta-minmax .grade-produto:not(.compras-linha-cabecalho)>.c-minmax,.oculta-minmax .compras-linha-cabecalho.grade-produto>.c-minmax>.compras-coluna-titulo{display:none}
+.oculta-preco{--w-preco:24px}
+.oculta-preco .grade-produto:not(.compras-linha-cabecalho)>.c-preco,.oculta-preco .compras-linha-cabecalho.grade-produto>.c-preco>.compras-coluna-titulo{display:none}
+.oculta-compra{--w-compra:24px}
+.oculta-compra .grade-produto:not(.compras-linha-cabecalho)>.c-compra,.oculta-compra .compras-linha-cabecalho.grade-produto>.c-compra>.compras-coluna-titulo{display:none}
+@container lista-grade (max-width:519px){.compras-linha.grade-produto{--w-nome:150px}}
+
+/* ---------- MER - Produtos (17/11/2026): dias da promoção em lista, campos fiscais abertos pelo interruptor e etapa Revisão ---------- */
+/* Dias da semana: um cartão com uma linha por dia e o visto à direita no dia marcado (referência: repetição semanal dos Lembretes). */
+.compras-dias-lista{max-width:420px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff);overflow:hidden}
+.compras-dia-linha{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:44px;padding:0 14px;border:0;border-bottom:1px solid var(--layout-line,#dedee3);background:transparent;color:inherit;font:400 var(--ui-text,14px)/18px var(--ui-font);text-align:left;cursor:pointer}
+.compras-dia-linha:last-child{border-bottom:0}
+/* O diálogo (.location-dialog [aria-pressed=true]) pinta de lilás o que está marcado; aqui a linha fica branca, só com o visto. */
+.compras-dias-lista .compras-dia-linha[aria-pressed]{background:transparent}
+.compras-dia-linha svg{flex:none;width:20px;height:20px;fill:none;stroke:var(--menu-accent);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;visibility:hidden}
+.compras-dia-linha.marcado{font-weight:600}
+.compras-dia-linha.marcado svg{visibility:visible}
+.compras-dia-linha:focus-visible{outline:2px solid var(--menu-accent);outline-offset:-2px}
+.compras-grade-fiscal{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 14px;align-items:start}
+/* Promoção com repetição (17/11/2026): grade de 1 a 31 (mensal) e dos meses (anual); a célula marcada fica cheia na cor do menu. */
+.compras-grade-escolha{display:grid;max-width:420px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff);overflow:hidden}
+.compras-grade-escolha.em-7{grid-template-columns:repeat(7,minmax(0,1fr))}
+.compras-grade-escolha.em-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.compras-grade-escolha .compras-grade-celula{min-height:44px;padding:0;border:0;border-radius:0;box-shadow:inset -1px -1px 0 var(--layout-line,#dedee3);background:var(--theme-card,#fff);color:inherit;font:400 var(--ui-text,14px)/18px var(--ui-font);cursor:pointer}
+.compras-grade-escolha .compras-grade-celula[aria-pressed=true]{background:var(--menu-accent);color:var(--theme-surface,#fff);font-weight:600}
+.compras-grade-escolha .compras-grade-celula:focus-visible{outline:2px solid var(--menu-accent);outline-offset:-2px}
+.compras-promo>.compras-recorr-resumo{margin:10px 0}
+/* Data de aniversário (17/11/2026): campo DD/MM com o botão do calendário ao lado; o painel traz a grade dos meses e a dos dias. */
+.compras-aniv-campo{display:flex;align-items:center;gap:8px}
+.compras-aniv-campo>input{flex:1;min-width:0}
+.compras-aniv-painel{width:min(320px,calc(100vw - 24px));gap:6px;padding:12px;background:var(--layout-gap,#f5f5f7)}
+/* Painel no cinza do fundo das telas; cada opção é um quadro branco, separado; a escolhida fica cheia na cor do menu. */
+.compras-aniv-painel .compras-grade-escolha{max-width:none;gap:6px;border:0;border-radius:0;background:transparent;overflow:visible}
+.compras-aniv-painel .compras-grade-escolha .compras-grade-celula{min-height:36px;border:1px solid var(--layout-line,#dedee3);border-radius:8px;box-shadow:none}
+/* Campo obrigatório vazio (17/11/2026): só a moldura do campo fica na cor do menu (o nome do campo não muda) e, embaixo, a linha de aviso com o ícone de exclamação. Aparece só quando Avançar ou Salvar não passa.
+   O texto usa a cor de texto do menu (--panel-text), que tem contraste sobre o branco; o contorno e o ícone, a cor do menu. */
+/* A moldura dos campos vem das variáveis --layout-line e --ui-border-base (regras gerais de campo): aqui elas apontam para a cor do menu, só neste campo. O id dentro do :is() não existe na tela: só dá peso ao seletor, como nas regras gerais, para a cor valer também com o cursor no campo. */
+:is(dialog,.view,#compras-campo-pendente) .compras-campo.campo-pendente :is(input:not([type=hidden]),select,textarea){--layout-line:var(--menu-accent);--ui-border-base:var(--menu-accent);--ui-control-accent:var(--menu-accent);--navigation-ink:var(--menu-accent)}
+.compras-campo>.campo-aviso{display:flex;align-items:center;gap:6px;margin:4px 0 0;font:500 var(--ui-note,11px)/16px var(--ui-font)}
+.compras-campo>.campo-aviso>span{color:var(--panel-text,inherit)}
+.compras-campo>.campo-aviso svg{flex:none;width:16px;height:16px;fill:none;stroke:var(--menu-accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)}
+/* Revisão (17/11/2026): o botão retangular "Editar" leva à etapa do bloco. */
+/* Ajuste do Rodrigo (17/11/2026): o botão fica embaixo do quadro de dados, dentro do retângulo do bloco, e não mais no canto de cima. */
+.compras-fieldset > .compras-revisao-editar{order:99;grid-column:1 / -1;justify-self:start}
+/* Painel do Enviar: Copiar link e Visualizar formulário, um embaixo do outro, da largura do painel. */
+.compras-enviar-acoes{display:grid;gap:8px}
+.compras-enviar-acoes>.btn{width:100%;justify-content:space-between}
+/* Painel do Enviar com mais campos (tipo, prazo, mensagem): não passa da altura da tela; rola por dentro. */
+.compras-enviar-prazo{max-height:calc(100vh - 96px);overflow-y:auto}
+.compras-enviar-prazo textarea{width:100%;box-sizing:border-box;resize:vertical}
+/* Padrão único de moldura (18/11/2026, Rodrigo): nenhum cartão ou campo fica solto fora de um quadro com nome. A pergunta que
+   liga ou desliga um quadro (Preencher endereço, Tem contrato?) mora dentro dele; desligada, o quadro mostra só a pergunta. */
+.compras-fieldset.compras-so-pergunta > :not(legend):not(.compras-situacao-quadro){display:none}
+/* Quadro criado pela janela para os campos que viriam soltos (U.dialogo): duas colunas, como os campos ficavam no formulário; o que não é campo ocupa a linha inteira. */
+.compras-fieldset.compras-quadro-auto{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px}
+.compras-fieldset.compras-quadro-auto>:not(.compras-campo):not(label):not(legend){grid-column:1 / -1}
+@media (max-width:600px){.compras-fieldset.compras-quadro-auto{grid-template-columns:minmax(0,1fr)}}
+/* Texto livre do contrato (rescisão, observações) na visualização: respeita as quebras de linha digitadas. */
+.compras-contrato-texto{margin:0;white-space:pre-wrap}
+/* Editor do tipo de contrato: as duas listas de atividades lado a lado. */
+.compras-atividades-duas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.compras-atividades-duas{grid-template-columns:minmax(0,1fr)}}

@@ -10,7 +10,8 @@ import assert from 'node:assert/strict';
 import { iniciar, SESSAO_LOCAL } from './servidor.mjs';
 
 const { servidor, url } = await iniciar();
-const navegador = await chromium.launch();
+// Microfone de mentira do Chromium, para testar a observação em áudio do bem sem aparelho nem permissão.
+const navegador = await chromium.launch({ args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
 const erros = [];
 let verificacoes = 0;
 const ok = (cond, msg) => { assert.ok(cond, msg); verificacoes++; };
@@ -33,7 +34,8 @@ const fechado = (p) => p.waitForFunction(() => !document.querySelector('dialog.c
   console.log('ABERTO', await p.evaluate(() => { const d = document.querySelector('dialog.compras-dialog[open]'); return d && (d.querySelector('h2').textContent + ' | ' + d.querySelector('.profiles-error').textContent); }));
   throw e;
 });
-const erroDialogo = (p) => dialogo(p).locator('.profiles-error').textContent();
+// O cadastro do patrimônio tem duas áreas de erro (a da etapa e a do diálogo): junta o que estiver escrito.
+const erroDialogo = async (p) => (await dialogo(p).locator('.profiles-error').allTextContents()).join(' ').trim();
 const prod = (p) => p.evaluate(() => JSON.parse(localStorage.getItem('cicluz-producao-v1') || 'null'));
 const mais = (p) => p.locator('.view.show .people-add-control').click();
 const saldoDe = (p, id) => p.evaluate((i) => CicluzComprasDados.produto(i).saldo, id);
@@ -54,7 +56,7 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   c = await cardsDe('Relatórios');
   ok(c === 'MER - Mercadorias|MER - Pedidos|MER - Produção', 'Relatórios de Mercadorias com MER - Produção: ' + c);
   c = await cardsDe('Cadastros Geral Produção');
-  ok(c === 'MER - Produtos da Produção|MER - Ficha Técnica de Produtos|MER - Parâmetros de Custo', 'Cadastros Geral Produção: ' + c);
+  ok(c === 'MER - Produtos da Produção|MER - Ficha Técnica de Produtos|MER - Parâmetros de Custo|MER - Ingredientes Ficha Técnica / Tabela TACO', 'Cadastros Geral Produção: ' + c);
   for (const [sub, titulo, id] of [['Lançamentos Produção', 'MER - Pedidos de Produção', 'pedidos'], ['Lançamentos Produção', 'MER - Mapa de Produção', 'mapa'], ['Lançamentos Produção', 'MER - Abastecimento', 'abastecimento'], ['Relatórios', 'MER - Produção', 'relatorios'], ['Cadastros Geral Produção', 'MER - Produtos da Produção', 'produtos'], ['Cadastros Geral Produção', 'MER - Ficha Técnica de Produtos', 'fichas'], ['Cadastros Geral Produção', 'MER - Parâmetros de Custo', 'custos']]) {
     await p.evaluate((x) => menuBack(3, x)(), sub);
     await p.locator('#sector-content .section-card', { hasText: titulo }).click();
@@ -78,28 +80,112 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   await p.evaluate(() => menuBack(4, 'Cadastros Geral')());
   await p.locator('#sector-content .section-card', { hasText: 'RET - Patrimônios' }).click();
   ok(await p.locator('#producao-patrimonio.show').count() === 1, 'O card RET - Patrimônios abre o cadastro novo');
-  await mais(p);
+  // Entrada: abre na lista de bens, sem diálogo; a bolinha "+" do cabeçalho da lista abre o cadastro
+  ok(await p.locator('dialog[open]').count() === 0 && await p.locator('#producao-patrimonio .compras-filtros').count() === 1, 'RET - Patrimônios abre na lista de bens, sem abrir o cadastro sozinho');
+  await p.locator('#producao-patrimonio .compras-secao-cab button[aria-label="Cadastrar patrimônio"]').click();
   let d = dialogo(p);
-  await d.getByLabel('Nome do bem *', { exact: true }).fill('Masseira 40 kg');
-  await d.getByLabel('Categoria *', { exact: true }).selectOption('maquina');
-  await d.getByLabel('Capacidade', { exact: true }).fill('40');
-  await d.getByLabel('Energia', { exact: true }).selectOption('eletrica');
-  await salvar(p);
-  ok((await erroDialogo(p)).includes('consumo'), 'Energia elétrica exige consumo por hora');
-  await d.locator('input[aria-label^="Consumo"]').fill('3,5');
+  ok((await d.locator('h2').textContent()) === 'Novo patrimônio', 'A bolinha + do cabeçalho da lista abre o cadastro de um bem novo');
+  ok((await d.locator('.stepper-label').allTextContents()).length === 6, 'O cadastro do bem tem seis etapas numeradas');
+  // Navega pelas etapas pelos botões Avançar/Voltar do próprio formulário
+  const avancar = async () => { await d.locator('.compras-etapas-nav button.form-next-action').click(); };
+  await d.getByLabel('Nome simplificado *', { exact: true }).fill('Masseira 40 kg');
+  await d.getByLabel('Categoria *', { exact: true }).selectOption('MAC');
+  await d.locator('.account-status:has-text("utilizado na produção") .account-status-switch').click();
+  await d.getByLabel('Quantidade da capacidade', { exact: true }).fill('40');
+  await d.getByLabel('Unidade de medida da capacidade', { exact: true }).selectOption('KG');
+  await d.locator('.account-status:has-text("Informar especificação técnica?") .account-status-switch').click();
+  // Energia e consumo ficam na especificação técnica da 1ª etapa (reunião de 17/11/2026).
+  await d.getByLabel('Tipo de Energia', { exact: true }).selectOption('gas');
+  await d.getByLabel('Consumo de gás por hora', { exact: true }).fill('3,5');
+  await avancar();
+  ok((await erroDialogo(p)).includes('unidade do consumo de gás'), 'Gás exige a unidade do consumo (sem presumir)');
+  await d.getByLabel('Unidade do consumo de gás', { exact: true }).selectOption('kg/h');
   await salvar(p); await fechado(p);
   await mais(p);
   d = dialogo(p);
-  await d.getByLabel('Nome do bem *', { exact: true }).fill('Assadeira 58x68 (6 tiras)');
-  await d.getByLabel('Categoria *', { exact: true }).selectOption('utensilio');
+  await d.getByLabel('Nome simplificado *', { exact: true }).fill('Assadeira 58x68 (6 tiras)');
+  await d.getByLabel('Categoria *', { exact: true }).selectOption('UTS');
+  await avancar(); await avancar(); await avancar();
   await d.getByLabel('Largura (cm)', { exact: true }).fill('58');
   await d.getByLabel('Comprimento (cm)', { exact: true }).fill('68');
   await salvar(p); await fechado(p);
   const bens = await p.evaluate(() => JSON.parse(localStorage.getItem('cicluz-patrimonio-v1')).bens);
   ok(bens.length === 2 && bens[0].nome === 'MASSEIRA 40 KG' && bens[0].capacidade.valor === 40 && bens[0].consumoHora === 3.5, 'Bem salvo com capacidade e consumo (nome em maiúsculas)');
-  ok(await p.locator('#producao-patrimonio .compras-linha').count() === 2, 'Lista mostra os 2 bens');
+  ok(bens[0].ativo === true && bens[0].situacaoPatrimonial === 'ativo', 'Bem novo fica ativo (a Produção só escolhe bens ativos)');
+  ok(await p.locator('#producao-patrimonio .compras-linha.grade-patrimonio:not(.compras-linha-cabecalho)').count() === 2, 'Lista mostra os 2 bens');
   const masseiraId = bens[0].id;
   const assadeiraId = bens[1].id;
+
+  // Manutenção do bem: peças com data de substituição, manutenção periódica e áudio
+  const abrirEdicao = async (nome) => {
+    await p.locator('#producao-patrimonio .compras-linha', { hasText: nome }).locator('.c-nome').click();
+    await p.locator('dialog.patrimonio-ficha[open] .patrimonio-ficha-acoes button', { hasText: 'Editar' }).click();
+    return dialogo(p);
+  };
+  d = await abrirEdicao('MASSEIRA');
+  ok(await d.locator('.compras-etapa').first().locator('.compras-campo').first().locator('.compras-rotulo').textContent() === 'Categoria *', 'Categoria é o primeiro campo do bem');
+  ok((await d.locator('.compras-etapa:visible .compras-fieldset legend').allTextContents()).join('|') === 'Identificação|Classificação|Quantidade|Especificação técnica|Identificação técnica|Energia e consumo|Dimensões e características físicas|Outras informações técnicas|Ficha Técnica do Equipamento|Produção', 'Blocos da primeira etapa do bem (especificação técnica na etapa 1, reunião de 17/11/2026)');
+  await d.locator('.stepper-item:nth-child(4) .stepper-node').click();
+  const abrirPeca = async () => { await d.locator('button', { hasText: 'Adicionar peça' }).click(); return p.locator('dialog[open]:has(h2:has-text("Nova peça"))'); };
+  let pc = await abrirPeca();
+  await pc.getByLabel('Peça *', { exact: true }).fill('');
+  await pc.locator('input.date-mask-input[aria-label="Substituir em"]').fill('10/01/27');
+  await p.locator('button.people-save-control[aria-label="Salvar peça"]').click();
+  ok((await pc.locator('.profiles-error').allTextContents()).join(' ').includes('nome da peça'), 'Peça sem nome é recusada');
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(200);
+  pc = await abrirPeca();
+  await pc.getByLabel('Peça *', { exact: true }).fill('Correia');
+  // Última troca + intervalo em meses calculam a próxima (e travam o campo); sem eles, a data é digitada
+  await pc.locator('input.date-mask-input[aria-label="Última troca"]').fill('20/06/26');
+  await pc.getByLabel('A cada (meses)', { exact: true }).fill('6');
+  ok(await pc.locator('input.date-mask-input[aria-label="Substituir em"]').inputValue() === '20/12/26' && await pc.locator('input.date-mask-input[aria-label="Substituir em"]').evaluate((i) => i.readOnly), 'Próxima substituição = última troca + 6 meses, calculada');
+  await p.locator('button.people-save-control[aria-label="Salvar peça"]').click();
+  await p.waitForTimeout(300);
+  ok(await d.locator('.patrimonio-tabela-box tbody tr').count() === 1, 'A peça entra na tabela de componentes');
+  await d.locator('.stepper-item:nth-child(6) .stepper-node').click();
+  await d.locator('.account-status:has-text("Exige manutenção periódica?") .account-status-switch').click();
+  await d.locator('input.date-mask-input[aria-label="Próxima manutenção prevista"]').fill('31/02/27');
+  await salvar(p);
+  ok((await d.locator('input.date-mask-input[aria-label="Próxima manutenção prevista"]').evaluate((i) => i.validationMessage)).includes('DD/MM/AA') && await p.locator('dialog.compras-dialog[open]').count() === 1, 'Data de revisão impossível é recusada (aviso de data da plataforma; o cadastro não fecha)');
+  await d.locator('input.date-mask-input[aria-label="Próxima manutenção prevista"]').fill('15/01/20');
+  await d.locator('.stepper-item:nth-child(1) .stepper-node').click();
+  await d.locator('button', { hasText: 'Gravar áudio' }).click();
+  await d.locator('button', { hasText: 'Parar gravação' }).waitFor();
+  await salvar(p);
+  ok((await erroDialogo(p)).includes('Pare a gravação'), 'Não salva com a gravação em andamento');
+  await p.waitForTimeout(700);
+  await d.locator('button', { hasText: 'Parar gravação' }).click();
+  await d.locator('audio:not([hidden])').waitFor();
+  await salvar(p); await fechado(p);
+  let masseira = await p.evaluate(() => JSON.parse(localStorage.getItem('cicluz-patrimonio-v1')).bens[0]);
+  ok(masseira.pecas.length === 1 && masseira.pecas[0].nome === 'CORREIA' && masseira.pecas[0].ultimaTroca === '2026-06-20' && masseira.pecas[0].intervaloMeses === 6 && masseira.pecas[0].proximaTroca === '2026-12-20' && masseira.pecas[0].id && masseira.pecas[0].quantidade === 1, 'Peça salva com id, nome, quantidade e data da substituição');
+  ok(masseira.revisao.proxima === '2020-01-15' && masseira.capacidade.valor === 40 && masseira.consumoHora === 3.5, 'Revisão salva sem perder o que o bem já tinha');
+  ok(masseira.audio && masseira.audio.id && masseira.audio.seconds >= 1 && await p.evaluate(async (id) => !!(await CicluzDocuments.files.get(id)), masseira.audio.id), 'Áudio guardado no aparelho e referenciado pelo bem');
+  ok((await p.locator('#producao-patrimonio .compras-linha', { hasText: 'MASSEIRA' }).locator('.compras-situacao').textContent()) === 'Manutenção vencida', 'Lista avisa a revisão vencida');
+  // Recarrega: tudo continua lá, e o áudio pode ser ouvido ou descartado
+  await p.reload({ waitUntil: 'load' });
+  await p.waitForFunction(() => window.CicluzProducao && window.CicluzProducaoServico && window.CicluzAudioNota);
+  await p.evaluate(() => CicluzProducao.abrir('patrimonio'));
+  await p.locator('#producao-patrimonio .compras-linha', { hasText: 'MASSEIRA' }).locator('.c-nome').click();
+  const ficha = (await p.locator('dialog.patrimonio-ficha[open]').innerText()).replace(/\u00a0/g, ' ');
+  ok(ficha.includes('CORREIA') && ficha.includes('Manutenção periódica') && ficha.includes('15/01/20'), 'Depois de recarregar, a ficha mostra a peça e a manutenção');
+  await p.locator('dialog.patrimonio-ficha[open] .patrimonio-ficha-acoes button', { hasText: 'Editar' }).click();
+  d = dialogo(p);
+  await d.locator('.stepper-item:nth-child(4) .stepper-node').click();
+  ok((await d.locator('.patrimonio-tabela-box tbody tr').first().innerText()).includes('CORREIA'), 'Edição traz a peça');
+  await d.locator('.stepper-item:nth-child(6) .stepper-node').click();
+  ok(await d.locator('input.date-mask-input[aria-label="Próxima manutenção prevista"]').inputValue() === '15/01/20', 'Edição traz a data da manutenção');
+  await d.locator('.stepper-item:nth-child(1) .stepper-node').click();
+  await d.locator('button', { hasText: 'Ouvir áudio' }).click();
+  await d.locator('audio:not([hidden])').waitFor();
+  await d.locator('.stepper-item:nth-child(6) .stepper-node').click();
+  await d.locator('.account-status:has-text("Exige manutenção periódica?") .account-status-switch').click();
+  await d.locator('.stepper-item:nth-child(1) .stepper-node').click();
+  await d.locator('button', { hasText: 'Descartar áudio' }).click();
+  await salvar(p); await fechado(p);
+  masseira = await p.evaluate(() => JSON.parse(localStorage.getItem('cicluz-patrimonio-v1')).bens[0]);
+  ok(masseira.audio === null && masseira.revisao === null && masseira.pecas.length === 1, 'Descartar o áudio e desligar a manutenção periódica tiram os dois do bem; a peça fica');
 
   // Produto da produção
   await p.evaluate(() => CicluzProducao.abrir('produtos'));
@@ -132,31 +218,31 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   await d.getByLabel('Nome da ficha *', { exact: true }).fill('Do zero');
   const etapa = (n) => d.locator('.producao-etapa').nth(n);
   await etapa(0).getByLabel('Processo *', { exact: true }).selectOption('pre-pesar');
-  await etapa(0).getByRole('button', { name: '+ Ingrediente' }).click();
+  await etapa(0).getByRole('button', { name: 'Ingrediente', exact: true }).click();
   await etapa(0).getByLabel('Ingrediente 1', { exact: true }).selectOption('p-farinha');
   await etapa(0).getByLabel('Quantidade do ingrediente 1', { exact: true }).fill('30');
   await etapa(0).getByLabel('Unidade do ingrediente 1', { exact: true }).selectOption('KG');
-  await etapa(0).getByRole('button', { name: '+ Equipamento / tempo' }).click();
+  await etapa(0).getByRole('button', { name: 'Equipamento / tempo', exact: true }).click();
   await etapa(0).getByLabel('Tempo em minutos 1', { exact: true }).fill('15');
   await etapa(0).getByLabel('Nível profissional 1', { exact: true }).selectOption('ajudante');
   const cargoSel = etapa(0).getByLabel('Cargo 1', { exact: true });
   const padeiro = await cargoSel.evaluate((s) => [...s.options].find((o) => /^padeiro$/i.test(o.textContent.trim()))?.value);
   ok(Boolean(padeiro), 'Lista de cargos vem do cadastro de Cargos (tem Padeiro)');
   await cargoSel.selectOption(padeiro);
-  await d.getByRole('button', { name: '+ Etapa' }).click();
+  await d.getByRole('button', { name: 'Etapa', exact: true }).click();
   await etapa(1).getByLabel('Processo *', { exact: true }).selectOption('misturar');
-  await etapa(1).getByRole('button', { name: '+ Ingrediente' }).click();
+  await etapa(1).getByRole('button', { name: 'Ingrediente', exact: true }).click();
   await etapa(1).getByLabel('Ingrediente 1', { exact: true }).selectOption('p-farinha');
   await etapa(1).getByLabel('Quantidade do ingrediente 1', { exact: true }).fill('30');
   await etapa(1).getByLabel('Unidade do ingrediente 1', { exact: true }).selectOption('KG');
-  await etapa(1).getByRole('button', { name: '+ Equipamento / tempo' }).click();
+  await etapa(1).getByRole('button', { name: 'Equipamento / tempo', exact: true }).click();
   await etapa(1).getByLabel('Equipamento ou utensílio 1', { exact: true }).selectOption(masseiraId);
   await etapa(1).getByLabel('Tempo em minutos 1', { exact: true }).fill('20');
   await etapa(1).getByLabel('Acompanhamento 1', { exact: true }).selectOption('0');
   ok((await etapa(1).locator('.producao-etapa-resumo').textContent()).includes('Tempo 20 min · equipe 0 min'), 'Masseira sem acompanhamento: tempo de equipe zero');
-  await d.getByRole('button', { name: '+ Etapa' }).click();
+  await d.getByRole('button', { name: 'Etapa', exact: true }).click();
   await etapa(2).getByLabel('Processo *', { exact: true }).selectOption('assar');
-  await etapa(2).getByRole('button', { name: '+ Equipamento / tempo' }).click();
+  await etapa(2).getByRole('button', { name: 'Equipamento / tempo', exact: true }).click();
   await etapa(2).getByLabel('Tempo em minutos 1', { exact: true }).fill('25');
   await etapa(2).getByLabel('Acompanhamento 1', { exact: true }).selectOption('0.2');
   ok((await d.locator('.compras-texto-auto').last().textContent()).includes('tempo total 1 h · tempo de equipe 20 min'), 'Resumo da ficha: 60 min no total, 20 min de equipe');
@@ -175,10 +261,12 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   ok((await erroDialogo(p)).includes('negativo'), 'Parâmetro negativo é recusado');
   await dialogo(p).getByLabel('Encargos sobre a folha (%)', { exact: true }).fill('0');
   await dialogo(p).getByLabel('Preço do kWh (R$)', { exact: true }).fill('1,00'); // máscara do S2: dígitos em centavos
+  // A masseira do teste é a gás (3,5 kg/h): desde 16/11/2026 o bem elétrico só guarda a potência (W), que não gera custo.
+  await dialogo(p).getByLabel('Preço do kg de gás (R$)', { exact: true }).fill('1,00');
   await salvar(p); await fechado(p);
   const custo = await p.evaluate(() => { const f = CicluzProducaoDados.producao.dados.fichas[0]; return CicluzProducaoServico.custoDaFicha(f); });
   ok(custo.ingredientes === 235.2, 'C1: 2 × 30 kg = 2,4 sacos × R$ 98 = R$ 235,20 (' + custo.ingredientes + ')');
-  ok(custo.energia === 1.17, 'C3: masseira 20 min × 3,5 kWh/h × R$ 1 = R$ 1,17 (' + custo.energia + ')');
+  ok(custo.energia === 1.17, 'C3: masseira a gás 20 min × 3,5 kg/h × R$ 1/kg = R$ 1,17 (' + custo.energia + ')');
   ok(custo.maoDeObra > 0 && custo.faltas.join() === 'salário do cargo ou horas por mês', 'C2 calculado para a etapa com cargo; a etapa sem cargo fica como falta');
   ok(custo.total === Math.round((custo.ingredientes + custo.maoDeObra + custo.energia) * 100) / 100 && custo.unitario === Math.round(custo.total / 36 * 100) / 100, 'C4: total e custo por unidade');
   await p.evaluate(() => CicluzProducao.abrir('fichas'));
@@ -384,6 +472,18 @@ for (const largura of [320, 390, 1024]) {
     const m = await medir(p);
     ok(m.lateral <= 0 && m.dialogoLateral <= 1, 'Editor de ficha sem rolagem lateral: ' + largura + 'px ' + (escuro ? 'escuro' : 'claro') + ' (' + m.dialogoLateral + 'px)');
     await p.locator('dialog.compras-dialog[open] .people-close-control').click();
+    await fechado(p);
+    // Cadastro do bem com peças: a linha abre a ficha do bem; Editar abre o cadastro; a peça é cadastrada na sua janela (etapa 4).
+    await p.evaluate(() => CicluzProducao.abrir('patrimonio'));
+    await p.locator('#producao-patrimonio .compras-linha.com-acoes').first().locator('.c-nome').click();
+    await p.locator('dialog.patrimonio-ficha[open] .patrimonio-ficha-acoes button', { hasText: 'Editar' }).click();
+    await dialogo(p).locator('.stepper-item:nth-child(4) .stepper-node').click();
+    await dialogo(p).locator('button', { hasText: 'Adicionar peça' }).click();
+    await p.locator('dialog[open]:has(h2:has-text("Nova peça"))').getByLabel('Peça *', { exact: true }).fill('Resistência do forno de lastro');
+    await p.waitForTimeout(150);
+    const mb = await p.evaluate(() => ({ lateral: document.documentElement.scrollWidth - innerWidth, dialogos: [...document.querySelectorAll('dialog[open]')].map((x) => x.scrollWidth - x.clientWidth) }));
+    ok(mb.lateral <= 0 && mb.dialogos.every((x) => x <= 1), 'Cadastro do bem e janela da peça sem rolagem lateral: ' + largura + 'px ' + (escuro ? 'escuro' : 'claro') + ' (' + mb.dialogos.join('/') + 'px)');
+    await p.evaluate(() => [...document.querySelectorAll('dialog[open]')].reverse().forEach((x) => x.close()));
     await fechado(p);
   }
   await p.close();

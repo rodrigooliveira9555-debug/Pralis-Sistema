@@ -18,6 +18,7 @@
   const B = S.patrimonio;
   const erro = (m) => ({ erro: m });
   const NAO_SALVOU = 'Não foi possível salvar neste navegador.';
+  const PD = () => window.CicluzPatrimonioDominio;
   const proximoNumero = (lista) => lista.reduce((m, x) => Math.max(m, x.numero || 0), 0) + 1;
   const texto = (v) => String(v == null ? '' : v).trim();
   const num = (v) => (v === '' || v == null || Number.isNaN(Number(v)) ? null : Number(v));
@@ -31,19 +32,82 @@
     if (b.capacidade && !(b.capacidade.valor > 0)) return 'A capacidade deve ser maior que zero (ou deixe em branco).';
     if (b.capacidade && !b.capacidade.unidade) return 'Escolha a unidade da capacidade.';
     if (b.medidas && (!(b.medidas.largura > 0) || !(b.medidas.comprimento > 0))) return 'Preencha largura e comprimento, ou deixe os dois em branco.';
-    if (b.energia && b.energia !== 'nenhuma' && !(b.consumoHora > 0)) return 'Informe o consumo por hora do equipamento.';
+    if (b.consumoHora != null && !(b.consumoHora > 0)) return 'O consumo por hora deve ser maior que zero (ou deixe em branco).';
     const np = texto(b.numeroPatrimonio);
     if (np && B.dados.bens.some((x) => x.id !== b.id && texto(x.numeroPatrimonio) === np)) return 'Já existe um bem com o número de patrimônio ' + np + '.';
-    return '';
+    for (const p of b.pecas) {
+      if (!p.nome) return 'Informe o nome da peça (ou remova a linha).';
+      if ([p.ultimaTroca, p.proximaTroca].some((d) => d && !dataValida(d))) return 'Data inválida na peça ' + p.nome + '.';
+      if (!intervaloValido(p.intervaloMeses)) return 'Na peça ' + p.nome + ', "A cada (meses)" deve ser um número inteiro a partir de 1.';
+      if (p.valor != null && !(p.valor >= 0)) return 'Na peça ' + p.nome + ', o valor não pode ser negativo.';
+      if (p.foto && !/^data:image\/(jpeg|png|webp);base64,/.test(p.foto)) return 'Na peça ' + p.nome + ', a imagem não é válida.';
+      if (p.subgrupoDespesaId && !p.grupoDespesaId) return 'Na peça ' + p.nome + ', escolha o grupo de despesas.';
+    }
+    if (b.revisao) {
+      if ([b.revisao.ultima, b.revisao.proxima].some((d) => d && !dataValida(d))) return 'Data da revisão inválida.';
+      if (!intervaloValido(b.revisao.intervaloMeses)) return 'Na revisão, "A cada (meses)" deve ser um número inteiro a partir de 1.';
+    }
+    // Campos do cadastro em seis etapas (patrimonio-dominio.js): uma mensagem por etapa; mostra a primeira.
+    const regras = window.CicluzFieldRules;
+    return PD().validar(b, { bens: B.dados.bens, cnpjValid: regras ? regras.cnpjValid : undefined, hoje: S.hojeIso() }).find(Boolean) || '';
   }
-  function salvarBem(entrada) {
+  const dataValida = (iso) => /^\d{4}-\d{2}-\d{2}$/.test(iso) && !Number.isNaN(Date.parse(iso + 'T12:00:00'));
+  const intervaloValido = (n) => n == null || (Number.isInteger(n) && n >= 1);
+  const intervalo = (v) => (texto(v) === '' ? null : Number(v));
+  /**
+   * Deixa o bem no formato salvo. Peças/materiais: [{ id, nome, marca, modelo, fornecedorId, grupoDespesaId,
+   * subgrupoDespesaId, valor, foto, ultimaTroca, intervaloMeses, proximaTroca }] (fornecedor do Compras e grupo de
+   * DES - Grupos de Despesas pelos ids; valor em reais com 2 casas, como o valor do bem; foto reduzida em data URL);
+   * revisão periódica: { ultima, intervaloMeses, proxima } ou null; datas ISO ou '', intervalo inteiro ou null.
+   * Com a última data e o intervalo, a próxima é sempre última + N meses (D.proximaData); sem um dos dois,
+   * vale a próxima digitada. Áudio: referência { id, type, size, seconds } do arquivo guardado no aparelho,
+   * ou null. Linha de peça toda em branco é descartada.
+   */
+  function prepararBem(entrada) {
     const b = { ...entrada, nome: texto(entrada.nome).toLocaleUpperCase('pt-BR') };
-    if (b.energia === 'nenhuma' || !b.energia) { b.energia = 'nenhuma'; b.consumoHora = null; }
+    if (b.energia === 'nenhuma' || !b.energia) { b.energia = 'nenhuma'; b.consumoHora = null; b.consumoGas = null; b.potenciaW = null; }
+    if (b.energia === 'solar') b.consumoHora = null; // sem cálculo de geração nem de consumo solar
+    b.pecas = (Array.isArray(entrada.pecas) ? entrada.pecas : [])
+      .map((p) => {
+        const ultimaTroca = texto(p.ultimaTroca);
+        const intervaloMeses = intervalo(p.intervaloMeses);
+        const valor = num(p.valor);
+        return {
+          id: p.id || S.novoId('peca'), nome: texto(p.nome).toLocaleUpperCase('pt-BR'), marca: texto(p.marca), modelo: texto(p.modelo),
+          fornecedorId: texto(p.fornecedorId), grupoDespesaId: texto(p.grupoDespesaId), subgrupoDespesaId: texto(p.subgrupoDespesaId),
+          valor: valor == null ? null : D.centavos(valor), foto: p.foto || null,
+          ultimaTroca, intervaloMeses, proximaTroca: D.proximaData(ultimaTroca, intervaloMeses) || texto(p.proximaTroca),
+          // Campos do patrimônio completo (17/11/2026), normalizados em patrimonio-dominio.js.
+          codigo: p.codigo, tipo: p.tipo, serie: p.serie, quantidade: p.quantidade, unidade: p.unidade, situacao: p.situacao, obs: p.obs, substituidaPor: p.substituidaPor,
+        };
+      })
+      .filter((p) => p.nome || p.marca || p.modelo || p.fornecedorId || p.grupoDespesaId || p.valor != null || p.foto || p.ultimaTroca || p.intervaloMeses != null || p.proximaTroca);
+    const rv = entrada.revisao || {};
+    const ultima = texto(rv.ultima);
+    const meses = intervalo(rv.intervaloMeses);
+    const proxima = D.proximaData(ultima, meses) || texto(rv.proxima);
+    b.revisao = ultima || meses != null || proxima ? { ultima, intervaloMeses: meses, proxima } : null;
+    b.audio = entrada.audio && entrada.audio.id ? { id: entrada.audio.id, type: entrada.audio.type || '', size: entrada.audio.size || 0, seconds: entrada.audio.seconds || 0 } : null;
+    const n = PD().normalizar(b);
+    // A situação "ativo" do bem (usada pela Produção) acompanha a situação patrimonial: inativo e baixado saem das escolhas.
+    if (n.situacaoPatrimonial) n.ativo = !['inativo', 'baixado'].includes(n.situacaoPatrimonial);
+    return n;
+  }
+  /** Mensagem do que impede salvar, ou '' (a tela confere antes de guardar o áudio no aparelho). */
+  const conferirBem = (entrada) => validarBem(prepararBem(entrada));
+  function salvarBem(entrada) {
+    const b = prepararBem(entrada);
     const msg = validarBem(b);
     if (msg) return erro(msg);
     let id = b.id;
     const ok = B.transacao((d) => {
-      if (id) Object.assign(d.bens.find((x) => x.id === id), b, { atualizadoEm: S.agoraIso() });
+      if (id) {
+        const antes = d.bens.find((x) => x.id === id);
+        // Histórico de alterações do próprio cadastro (o que mudou e quando); só guarda o que existe, sem inventar.
+        const campos = PD().mudancas(antes, b);
+        const historico = [...(antes.historico || []), ...(campos.length ? [{ em: S.agoraIso(), campos }] : [])].slice(-100);
+        Object.assign(antes, b, { historico, atualizadoEm: S.agoraIso() });
+      }
       else { id = S.novoId('bem'); d.bens.push({ ativo: true, ...b, id, criadoEm: S.agoraIso() }); }
     });
     return ok ? { ok: true, id } : erro(NAO_SALVOU);
@@ -61,7 +125,26 @@
     return B.transacao((d) => { d.bens = d.bens.filter((x) => x.id !== id); }) ? { ok: true } : erro(NAO_SALVOU);
   }
   function alternarBem(id) {
-    return B.transacao((d) => { const x = d.bens.find((b) => b.id === id); x.ativo = x.ativo === false; }) ? { ok: true } : erro(NAO_SALVOU);
+    return B.transacao((d) => { const x = d.bens.find((b) => b.id === id); x.ativo = x.ativo === false; if (x.situacaoPatrimonial) x.situacaoPatrimonial = x.ativo ? 'ativo' : 'inativo'; }) ? { ok: true } : erro(NAO_SALVOU);
+  }
+  /**
+   * Baixa patrimonial: processo à parte, com motivo e data, que só marca o bem como baixado (inativo para a Produção).
+   * Não apaga nada, não executa baixa contábil nem lançamento: o histórico e a localização continuam como estavam.
+   */
+  function baixarBem(id, { motivo, data, observacao }) {
+    const P = PD();
+    if (!P.MOTIVOS_BAIXA.some(([k]) => k === motivo)) return erro('Escolha o motivo da baixa.');
+    if (!P.dataValida(data)) return erro('Informe a data da baixa.');
+    if (data > S.hojeIso()) return erro('A data da baixa não pode ser futura.');
+    const ok = B.transacao((d) => {
+      const x = d.bens.find((b) => b.id === id);
+      if (!x) throw new Error('bem');
+      x.baixa = { motivo, data, observacao: texto(observacao), registradaEm: S.agoraIso() };
+      x.situacaoPatrimonial = 'baixado'; x.ativo = false;
+      x.historico = [...(x.historico || []), { em: S.agoraIso(), campos: ['baixa', 'situacaoPatrimonial'] }].slice(-100);
+      x.atualizadoEm = S.agoraIso();
+    });
+    return ok ? { ok: true } : erro(NAO_SALVOU);
   }
 
   /* =================== Produto da produção =================== */
@@ -505,7 +588,7 @@
 
   window.CicluzProducaoServico = {
     salvarParametros, custoDaFicha,
-    salvarBem, excluirBem, alternarBem, usosDoBem,
+    salvarBem, conferirBem, excluirBem, alternarBem, baixarBem, usosDoBem,
     salvarConfig, desligarProducao,
     salvarFicha, duplicarFicha, definirPadrao, excluirFicha,
     salvarAgenda, encerrarAgenda, proximasDatas, cancelarData, processarAgendas,

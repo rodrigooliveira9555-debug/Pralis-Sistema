@@ -3,7 +3,7 @@
 'use strict';
 const D=window.CicluzUniformData,U=window.CicluzUniformUI,F=window.CicluzFieldRules,PH=window.CicluzPhoneBR;if(!D||!U||!F||!PH)return;
 const {el,button,iconButton,svg,ICON,fold,newId,dateBR,confirmDialog}=U;
-const KEY='cicluz-pessoas-v1',ACCENT='#7c3aed';
+const KEY='cicluz-pessoas-v1',ACCENT='var(--section-accent,#ef4444)';
 
 /* ---------- Registry ---------- */
 let data={version:1,people:[],exams:[],companies:[]},loadError=false;
@@ -75,7 +75,7 @@ if(simpleView&&simpleFields){
  const shiftOptions=[...simpleFields.querySelectorAll('select')].find(s=>/Turno/.test(s.closest('label')?.textContent||''))?.querySelectorAll('option');
  const SHIFTS=shiftOptions?[...shiftOptions].map(o=>o.textContent.trim()).filter(t=>t&&t!=='Selecione'):['Manhã','Tarde','Integral'];
  simpleFields.replaceChildren();
- simpleView.querySelector('.form-note').textContent='Primeira etapa da admissão. Salvar Cadastro mantém em andamento; Marcar Cadastro como OK conclui a etapa e libera o Exame Admissional.';
+ simpleView.querySelector('.form-note').textContent='Primeira etapa da admissão. Salvar Cadastro salva os dados, conclui a etapa (cadastro OK) e libera o Exame Admissional.';
  [...simpleView.querySelectorAll('.content > p')].forEach(p=>{if(/Endereço, dependentes/.test(p.textContent))p.remove()});
  const lbl=(name,node)=>{const l=el('label',null,name);node.setAttribute('aria-label',name.replace(/\s*\*$/,''));l.append(node);return l};
  const nameIn=el('input');nameIn.type='text';nameIn.maxLength=120;nameIn.autocomplete='off';nameIn.placeholder='Nome completo do candidato';
@@ -94,13 +94,14 @@ const orgBox=el('fieldset','people-org');const orgPicked=new Set();const orgList
 function orgAllowed(){const O=window.CicluzOrg;if(!O)return [];const all=O.flat().filter(n=>!n.inactive||orgPicked.has(n.id));const card=window.CicluzJobCards?.forJobName(job.select.value)?.card;const ids=card?.unitIds?.length?new Set(card.unitIds):null;return ids?all.filter(n=>ids.has(n.id)||orgPicked.has(n.id)):all}
 function renderOrg(){const list=orgAllowed();const card=window.CicluzJobCards?.forJobName(job.select.value)?.card;orgList.replaceChildren();
  orgNote.textContent=!list.length?'Nenhuma área cadastrada em DES - Área / Setor / Local.':card?.unitIds?.length?'Mostrando as unidades ligadas à Ficha do cargo '+job.select.value+'.':'Sem ficha de cargo com unidades: todas as unidades ativas são exibidas.';
- for(const n of list){const l=el('label','profiles-choice profiles-unit'),c=el('input');c.type='checkbox';c.checked=orgPicked.has(n.id);c.onchange=()=>{c.checked?orgPicked.add(n.id):orgPicked.delete(n.id);paintOrg()};l.style.setProperty('--unit-indent',String(n.level-1));l.append(c,el('span',null,n.name+(n.inactive?' (inativo)':'')),el('small',null,n.levelName));orgList.append(l)}paintOrg()}
-function paintOrg(){const bad=window.CicluzOrg?.invalidSelection([...orgPicked])||[];orgErr.textContent=bad.length?'Combinação inválida: '+bad.join('; ')+'.':''}
+ /* A escolha usa a mesma árvore da tela DES - Área / Setor / Local: no cadastro fica o botão com o resumo e a árvore abre em janela (19/11/2026, Rodrigo). */
+ if(list.length)orgList.append(window.CicluzLocationTree.campo({conjunto:orgPicked,permitidos:new Set(list.map(n=>n.id)),aoMudar:paintOrg}).box);paintOrg()}
+function paintOrg(){orgErr.textContent=''} /* desde 19/11/2026 um nível de baixo pode ser marcado sem o de cima: não há mais combinação inválida */
 function orgSet(ids){orgPicked.clear();for(const id of ids||[])orgPicked.add(id);renderOrg()}
 job.select.addEventListener('change',()=>{const allowed=new Set(orgAllowed().map(n=>n.id));for(const id of [...orgPicked])if(!allowed.has(id))orgPicked.delete(id);renderOrg()});
 simpleFields.append(lbl('Nome completo *',nameIn),lbl('CPF *',cpfIn),lbl('WhatsApp *',phone),lbl('E-mail',email),birth.label,job.label,lbl('Turno *',shift),orgBox);
  const err=el('p','profiles-error');err.setAttribute('role','alert');const msg=el('p','profiles-note');msg.setAttribute('role','status');
- const title=el('h3','uniforms-heading','Novo cadastro simples');simpleFields.before(title);
+ const title=el('h3','uniforms-heading','Cadastro simples');simpleFields.before(title);
  /* Foto do documento: o aparelho lê nome, CPF e data de nascimento (nada sai do navegador) e só preenche os campos; a imagem não é guardada aqui, ela vai depois para a pasta do colaborador em Documentos. */
  const scanBox=CicluzDocCapture.create('Foto do documento','Fotografe ou selecione o RG, o CPF ou a CNH: o nome, o CPF e a data de nascimento são preenchidos abaixo. WhatsApp e e-mail são digitados.',{tipos:['RG','CPF','CNH'],frenteVerso:true});
  let lido={};
@@ -112,9 +113,8 @@ simpleFields.append(lbl('Nome completo *',nameIn),lbl('CPF *',cpfIn),lbl('WhatsA
   catch{CicluzDocCapture.estado(block,{texto:'Não foi possível ler a foto neste aparelho. Preencha os campos à mão.'})}
   finally{CicluzDocCapture.estado(block,{ativo:true})}});
  title.after(scanBox);
- const actions=el('div','actions people-simple-actions');const saveBtn=button('Salvar Cadastro',()=>saveSimple(false),'btn');const okBtn=button('Marcar Cadastro como OK',()=>saveSimple(true),'btn secondary footer-save-accent');actions.append(button('Cancelar',cancelSimple),okBtn,saveBtn);
+ const actions=el('div','actions people-simple-actions');const saveBtn=button('Salvar Cadastro',()=>saveSimple(true),'btn');actions.append(button('Cancelar',cancelSimple),saveBtn);
  simpleFields.after(dup,err,msg,actions);
- const list=el('div','uniforms-history people-simple-list');const listStatus=el('p','profiles-note');const listTable=el('div','uniforms-table-wrap');list.append(el('h3','uniforms-heading','Acompanhamento dos candidatos'),listStatus,listTable);simpleView.querySelector('.content').append(list);
  let editing=null,dirty=false,busy=false;
  function jobOptions(cur=job.select.value){let jobs=[];try{jobs=[...new Set(jobsCurrent().map(e=>e.j.nome))].sort((a,b)=>a.localeCompare(b,'pt-BR'))}catch{}const q=fold(job.search.value);job.select.replaceChildren(new Option('Selecione a função',''));for(const j of jobs)if(j===cur||fold(j).includes(q))job.select.add(new Option(j,j));if(cur&&!jobs.includes(cur))job.select.add(new Option(cur,cur));job.select.value=cur}
  job.search.addEventListener('input',()=>jobOptions());
@@ -123,8 +123,8 @@ simpleFields.append(lbl('Nome completo *',nameIn),lbl('CPF *',cpfIn),lbl('WhatsA
  function checkDuplicate(){dup.replaceChildren();const other=duplicateOf();if(!other)return null;const box=el('p','people-alert');box.append(el('span',null,'Já existe cadastro com este CPF: '+other.name+' ('+({ATIVO:'colaborador ativo',INATIVO:'colaborador inativo',CANDIDATO:'candidato em admissão'})[other.status]+'). '));
   box.append(other.status==='CANDIDATO'?button('Abrir cadastro existente',()=>{dirty=false;selectCandidate(other.id)},'btn'):button('Ver em Colaboradores Cadastrados',()=>window.showCollaborators?.({personId:other.id}),'btn'));dup.append(box);return other}
  cpfIn.addEventListener('input',()=>queueMicrotask(checkDuplicate));
- function paintButtons(){saveBtn.disabled=okBtn.disabled=busy||loadError;const locked=!!(editing&&byId(editing)?.simple?.status==='ok');cpfIn.readOnly=locked;cpfIn.tabIndex=locked?-1:0;cpfIn.title=locked?'CPF confirmado no Cadastro Simples OK.':''}
- function fill(p){editing=p?.id||null;nameIn.value=p?.name||'';cpfIn.value=p?.cpf?F.cpfMask(p.cpf):'';phone.value=p?.whatsapp?PH.mask(p.whatsapp):'';email.value=p?.email||'';birth.set(p?.birthDate||'');jobOptions(p?.jobName||'');shift.value=p?.shift||'';orgSet(p?.orgUnitIds||[]);title.textContent=p?'Cadastro simples de '+p.name:'Novo cadastro simples';dirty=false;err.textContent='';dup.replaceChildren();paintButtons()}
+ function paintButtons(){saveBtn.disabled=busy||loadError;const locked=!!(editing&&byId(editing)?.simple?.status==='ok');cpfIn.readOnly=locked;cpfIn.tabIndex=locked?-1:0;cpfIn.title=locked?'CPF confirmado no Cadastro Simples OK.':''}
+ function fill(p){editing=p?.id||null;nameIn.value=p?.name||'';cpfIn.value=p?.cpf?F.cpfMask(p.cpf):'';phone.value=p?.whatsapp?PH.mask(p.whatsapp):'';email.value=p?.email||'';birth.set(p?.birthDate||'');jobOptions(p?.jobName||'');shift.value=p?.shift||'';orgSet(p?.orgUnitIds||[]);title.textContent=p?'Cadastro simples de '+p.name:'Cadastro simples';dirty=false;err.textContent='';dup.replaceChildren();paintButtons()}
  function selectCandidate(id){if(dirty&&editing!==id){confirmDialog('Descartar alterações?','As alterações não salvas serão descartadas.','Descartar',()=>{loadCandidate(id);return null},()=>{});return}loadCandidate(id)}
  function loadCandidate(id){load();fill(id?byId(id):null);msg.textContent=id?(byId(id).simple?.status==='ok'?'Cadastro já marcado como OK; alterações salvas continuam válidas.':'Complete os campos e salve.'):''}
  /* Any correction clears the previous message, so it never contradicts the browser's own field warning. */
@@ -139,22 +139,35 @@ simpleFields.append(lbl('Nome completo *',nameIn),lbl('CPF *',cpfIn),lbl('WhatsA
   if(!birth.node.value)errors.push('Informe a data de nascimento.');else if(!b)errors.push('Data de nascimento inválida (DD/MM/AAAA).');else if(b>U.today())errors.push('A data de nascimento não pode ser futura.');
   if(!job.select.value)errors.push('Selecione a função.');if(!shift.value)errors.push('Selecione o turno.');return errors}
  /* Salvar keeps the stage in progress; Marcar como OK is the official conclusion, confirmed once. */
- function saveSimple(markOk){if(busy)return;err.textContent='';msg.textContent='';const errors=validateSimple();{const bad=window.CicluzOrg?.invalidSelection([...orgPicked])||[];if(bad.length)errors.push('Áreas, setores e locais: combinação inválida ('+bad.join('; ')+').')}if(errors.length){err.textContent=errors.join(' ');return}
+ function saveSimple(markOk){if(busy)return;err.textContent='';msg.textContent='';const errors=validateSimple();if(errors.length){err.textContent=errors.join(' ');return}
   const name=nameIn.value.trim(),cur=editing&&byId(editing);const commit=()=>{busy=true;paintButtons();const now=new Date().toISOString(),fields={name,cpf:cpfIn.value.replace(/\D/g,''),whatsapp:PH.digits(phone.value),email:email.value.trim(),birthDate:birth.iso(),jobName:job.select.value,shift:shift.value,orgUnitIds:[...orgPicked]};{const sec=window.CicluzOrg?.namesOf(fields.orgUnitIds,2)||[];if(sec.length)fields.sector=sec.join(', ')}let id=editing;
    const ok=transact(d=>{let x=id&&d.people.find(y=>y.id===id);if(!x){x={id:newId(),status:'CANDIDATO',flow:2,createdAt:now,history:[]};d.people.push(x);id=x.id;log(x,'Candidato incluído pelo Cadastro Simples.')}if(x.simple?.status==='ok')fields.cpf=x.cpf;if(x.jobName&&x.jobName!==fields.jobName)log(x,'Cargo alterado de '+x.jobName+' para '+(fields.jobName||'—')+'.');if(JSON.stringify(x.orgUnitIds||[])!==JSON.stringify(fields.orgUnitIds))log(x,'Áreas/setores/locais: '+((window.CicluzOrg?.namesOf(fields.orgUnitIds)||[]).join(', ')||'nenhum')+'.');Object.assign(x,fields);const wasOk=x.simple?.status==='ok';x.simple={status:markOk||wasOk?'ok':'andamento',savedAt:now,okAt:markOk&&!wasOk?now:x.simple?.okAt};log(x,markOk&&!wasOk?'Cadastro Simples marcado como OK; liberado para o Exame Admissional.':'Cadastro Simples salvo'+(wasOk?' (já concluído).':' (em andamento).'))});
    busy=false;if(!ok){if(!cur)id=null;paintButtons();err.textContent='Não foi possível salvar neste navegador.';return null}fill(byId(id));renderSimpleList();
    msg.textContent=markOk?'Cadastro Simples concluído: '+name+' está disponível no Exame Admissional.':'Cadastro salvo: '+name+' (em andamento). Marque como OK para concluir a etapa.';return null};
-  if(markOk&&cur?.simple?.status!=='ok')confirmDialog('Marcar Cadastro como OK?','O Cadastro Simples de '+name+' será concluído e o candidato ficará disponível no Exame Admissional.','Marcar Cadastro como OK',commit,()=>{});else commit()}
- function renderSimpleList(){load();listTable.replaceChildren();const people=data.people.filter(inAdmission).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));listStatus.textContent=people.length?people.length+' candidato(s) em admissão. Colaboradores ativados aparecem em Colaboradores Cadastrados.':'Nenhum candidato em admissão.';if(!people.length)return;
-  const table=el('table','uniforms-table'),hr=el('tr');for(const h of ['Nome completo','CPF','Função','Turno','Etapa atual','Ações'])hr.append(el('th',null,h));const thead=el('thead');thead.append(hr);const tbody=el('tbody');
-  for(const p of people){const tr=el('tr'),all=stages(p),cur=all.find(s=>s.state!=='done'&&s.state!=='legacy')||all[all.length-1];const st=el('td');st.append(el('span','pill '+({pending:'p-yellow',progress:'p-yellow',attention:'p-red',failed:'p-red',blocked:'p-red',done:'p-green'})[cur.state],cur.label+': '+cur.text));
-   tr.append(el('td',null,p.name),el('td',null,maskCpf(p.cpf)),el('td',null,p.jobName||'—'),el('td',null,p.shift||'—'),st);const a=el('td','uniforms-row-actions');
-   a.append(iconButton('Abrir cadastro',ICON.edit,()=>{selectCandidate(p.id);simpleView.querySelector('.content').scrollTo({top:0,behavior:'smooth'})},'is-accent'));
-   if(p.simple?.status==='ok'&&!isApto(p))a.append(iconButton('Exame Admissional',ICON.calendar,()=>window.showExams?.({personId:p.id,type:'ADMISSIONAL'})));else if(trialReady(p)&&p.trial?.decision!=='aprovado')a.append(iconButton('Período de Teste',ICON.calendar,()=>window.showTrial?.({personId:p.id})));
-   a.append(iconButton('Ver acompanhamento',ICON.eye,()=>window.showCollaborators?.({tab:'tracking',personId:p.id})));tr.append(a);tbody.append(tr)}table.append(thead,tbody);listTable.append(table)}
- new MutationObserver(()=>{if(simpleView.classList.contains('show')&&!simpleView.dataset.peopleShown){simpleView.dataset.peopleShown='1';load();if(editing&&!byId(editing))fill(null);jobOptions();renderSimpleList()}else if(!simpleView.classList.contains('show'))delete simpleView.dataset.peopleShown}).observe(simpleView,{attributes:true,attributeFilter:['class']});
+  if(markOk&&cur?.simple?.status!=='ok')confirmDialog('Salvar Cadastro?','O Cadastro Simples de '+name+' será salvo e concluído (OK), e o candidato ficará disponível no Exame Admissional.','Salvar Cadastro',commit,()=>{});else commit()}
+ /* Tabela de entrada (mesmo padrão de VND - Clientes). O formulário abaixo continua o mesmo; ele aparece ao tocar em Novo Colaborador ou numa linha. */
+ let entradaS=null;
+ const etapaDe=p=>{const all=stages(p),cur=all.find(s=>s.state!=='done'&&s.state!=='legacy')||all[all.length-1];return cur.label+': '+cur.text};
+ function abrirFormSimples(id){simpleView.dataset.entrada='form-lista';simpleView.classList.remove('gp-lista');if(id)selectCandidate(id);else{fill(null);msg.textContent='';err.textContent=''}simpleView.querySelector('.content').scrollTo({top:0})}
+ function renderSimpleList(){load();const G=window.CicluzGPEntrada;if(!G||!window.CicluzComprasUI)return;
+  if(!entradaS){entradaS=G.criar({grade:'grade-colab-s',titulo:'Candidatos',rotuloNovo:'Novo Colaborador',dicaNovo:'Cadastrar colaborador',preferencia:'cicluz-colab-simples-colunas',
+   colunas:[{chave:'nome',rotulo:'Colaborador'},{chave:'cpf',rotulo:'CPF',ocultavel:true},{chave:'funcao',rotulo:'Função',ocultavel:true},{chave:'turno',rotulo:'Turno',ocultavel:true},{chave:'estado',rotulo:'Etapa atual'}],
+   nota:'Primeira etapa da admissão. Colaboradores ativados aparecem em Colaboradores Cadastrados. Use a seta da linha para abrir o cadastro ou seguir para a próxima etapa.',
+   contagem:n=>n+(n===1?' candidato em admissão':' candidatos em admissão'),vazio:{titulo:'Nenhum candidato em admissão.',dica:'Use "Novo Colaborador" para iniciar o Cadastro Simples.'},aoNovo:()=>abrirFormSimples(null),
+   itens:()=>{load();return data.people.filter(inAdmission).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))).map(p=>({id:p.id,nome:p.name,icone:'<path d="'+ICON.user+'"/>',rotuloIcone:'Candidato',celulas:{cpf:maskCpf(p.cpf),funcao:p.jobName||'—',turno:p.shift||'—'},estado:etapaDe(p),aoAbrir:()=>abrirFormSimples(p.id),
+     extras:[...(p.simple?.status==='ok'&&!isApto(p)?[{rotulo:'Exame Admissional',caminho:ICON.calendar,aoClicar:()=>window.showExams?.({personId:p.id,type:'ADMISSIONAL'})}]:trialReady(p)&&p.trial?.decision!=='aprovado'?[{rotulo:'Período de Teste',caminho:ICON.calendar,aoClicar:()=>window.showTrial?.({personId:p.id})}]:[]),
+      {rotulo:'Ver acompanhamento',caminho:ICON.eye,aoClicar:()=>window.showCollaborators?.({tab:'tracking',personId:p.id})}]}))}});
+   simpleView.querySelector('.content').append(entradaS.no)}
+  entradaS.desenhar()}
+ const modoSimples=modo=>{simpleView.classList.toggle('gp-lista',modo==='lista');if(modo==='lista')renderSimpleList()};
+ {const voltar=document.getElementById('back-simple'),original=voltar.onclick;
+  voltar.onclick=e=>{if(simpleView.dataset.entrada!=='form-lista'){original&&original.call(voltar,e);return}
+   const sair=()=>{dirty=false;delete simpleView.dataset.entrada;resetSimple();msg.textContent='';err.textContent='';modoSimples('lista')};
+   if(dirty)confirmDialog('Descartar alterações?','As alterações não salvas serão descartadas. Nenhum cadastro salvo é excluído.','Descartar',()=>{sair();return null},()=>{});else sair()}}
+ new MutationObserver(()=>{if(simpleView.classList.contains('show')&&!simpleView.dataset.peopleShown){simpleView.dataset.peopleShown='1';load();if(editing&&!byId(editing))fill(null);jobOptions();modoSimples(simpleView.dataset.entrada?'form':'lista')}else if(!simpleView.classList.contains('show')){delete simpleView.dataset.peopleShown;delete simpleView.dataset.entrada}}).observe(simpleView,{attributes:true,attributeFilter:['class']});
+ {const ct=simpleView.querySelector('.content'),fb=el('div','gp-form');[...ct.children].forEach(c=>{if(c.id!=='back-simple')fb.append(c)});ct.append(fb)}
  resetSimple();
- window.CicluzSimpleForm={edit:id=>{openView('cadastro-simples',menuCrumb(2,'Cadastros Geral Colaboradores','DES - Simples Colaborador'));loadCandidate(id);renderSimpleList()}};
+ window.CicluzSimpleForm={edit:id=>{simpleView.dataset.entrada='form';simpleView.classList.remove('gp-lista');openView('cadastro-simples',menuCrumb(2,'Cadastros Geral Colaboradores','DES - Simples Colaborador'));loadCandidate(id)}};
 }
 
 /* ---------- Etapa 3: Cadastro Completo bound to one person ---------- */
@@ -184,12 +197,30 @@ if(completeView&&steps){completeView.querySelector('.form-note').after(banner);
   const now=new Date().toISOString(),birth=fieldsOf().find(x=>x.dataset.dateNative&&/nascimento/i.test(textOf(x))&&!x.closest('.dep-card'));
   const ok=transact(d=>{const x=d.people.find(y=>y.id===boundId);const first=x.complete?.status!=='concluido';x.complete={...(x.complete||{}),status:'concluido',savedAt:now,dependents:deps.length,fields:fieldsOf().map(f=>({type:f.dataset.dateNative?'date':f.type,value:f.value,checked:f.checked})),summary,deps};if(birth?.value)x.birthDate=birth.value;log(x,first?'Cadastro Completo concluído ('+deps.length+' dependente(s)); aguardando ativação pelo DP.':'Cadastro Completo atualizado.')});
   const status=completeView.querySelector('.registration-status');if(status)status.textContent=ok?'Cadastro Completo concluído para '+p.name+'. Próximo passo: ativação pelo DP em Colaboradores Cadastrados.':'Não foi possível salvar o vínculo com o candidato neste navegador.';renderBanner()});
- window.addEventListener('hashchange',openFromHash);setTimeout(openFromHash,0)}
+ window.addEventListener('hashchange',openFromHash);setTimeout(openFromHash,0);
+ /* Tabela de entrada (mesmo padrão de VND - Clientes). O formulário em etapas e o vínculo com o Cadastro Simples seguem como estavam. */
+ {const ct=completeView.querySelector('.content'),fb=el('div','gp-form');[...ct.children].forEach(c=>{if(c.id!=='back-forms')fb.append(c)});ct.append(fb)}
+ let entradaC=null;
+ const abrirFormCompleto=id=>{completeView.dataset.entrada='form-lista';completeView.classList.remove('gp-lista');bindComplete(id||null,!!id);completeView.querySelector('.content').scrollTo({top:0})};
+ const renderCompleteList=()=>{load();const G=window.CicluzGPEntrada;if(!G||!window.CicluzComprasUI)return;
+  if(!entradaC){entradaC=G.criar({grade:'grade-colab-c',titulo:'Colaboradores',rotuloNovo:'Novo Colaborador',dicaNovo:'Cadastrar colaborador',preferencia:'cicluz-colab-completo-colunas',
+   colunas:[{chave:'nome',rotulo:'Colaborador'},{chave:'cpf',rotulo:'CPF',ocultavel:true},{chave:'funcao',rotulo:'Função',ocultavel:true},{chave:'estado',rotulo:'Cadastro completo'}],
+   nota:'Terceira etapa da admissão: dados pessoais, endereço, documentos e dependentes. Use a seta da linha para abrir o cadastro do colaborador.',
+   contagem:n=>n+(n===1?' cadastro completo':' cadastros completos'),vazio:{titulo:'Nenhum colaborador no Cadastro Completo.',dica:'Aparecem aqui as pessoas com Exame Admissional APTO. Use "Novo Colaborador" para preencher sem vínculo.'},aoNovo:()=>abrirFormCompleto(null),
+   itens:()=>{load();return data.people.filter(p=>p.complete||(inAdmission(p)&&completeReady(p))).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')).map(p=>({id:p.id,nome:p.name,icone:'<path d="'+ICON.user+'"/>',rotuloIcone:'Colaborador',celulas:{cpf:maskCpf(p.cpf),funcao:p.jobName||'—'},estado:p.complete?.status==='concluido'?'Concluído':'Pendente',aoAbrir:()=>abrirFormCompleto(p.id),
+     extras:[{rotulo:'Ver acompanhamento',caminho:ICON.eye,aoClicar:()=>window.showCollaborators?.({tab:'tracking',personId:p.id})}]}))}});
+   completeView.querySelector('.content').append(entradaC.no)}
+  entradaC.desenhar()};
+ const modoCompleto=modo=>{completeView.classList.toggle('gp-lista',modo==='lista');if(modo==='lista')renderCompleteList()};
+ {const voltar=document.getElementById('back-forms'),original=voltar.onclick;
+  voltar.onclick=e=>{if(completeView.dataset.entrada!=='form-lista'){original&&original.call(voltar,e);return}delete completeView.dataset.entrada;modoCompleto('lista')}}
+ new MutationObserver(()=>{if(completeView.classList.contains('show')&&!completeView.dataset.peopleShown){completeView.dataset.peopleShown='1';modoCompleto(completeView.dataset.entrada?'form':'lista')}else if(!completeView.classList.contains('show')){delete completeView.dataset.peopleShown;delete completeView.dataset.entrada}}).observe(completeView,{attributes:true,attributeFilter:['class']});
+ document.addEventListener('cicluz-registration-save',()=>queueMicrotask(()=>{if(completeView.classList.contains('gp-lista'))return;if(entradaC)renderCompleteList()}))}
 function renderBanner(){banner.replaceChildren();const p=boundId&&byId(boundId);if(!p){banner.append(el('span',null,'Sem candidato vinculado. Para vincular, gere o link após o Exame Admissional APTO (Colaboradores Cadastrados → Acompanhamento ou Exame Admissional).'));return}
  banner.append(el('b',null,'Cadastro de '+p.name),el('span',null,' · link demonstrativo: funciona somente neste navegador; nada é enviado a outro dispositivo. '+(p.complete?.status==='concluido'?'Cadastro concluído.':'Preencha as etapas e conclua.')));
  const tools=el('div','people-banner-tools');tools.append(button('Concluir Cadastro',()=>document.dispatchEvent(new Event('cicluz-registration-save')),'btn'),button('Ver acompanhamento',()=>window.showCollaborators?.({tab:'tracking',personId:p.id})));banner.append(tools)}
 /* A pasted link lands on the form itself: the start-up menu covering the screen is closed. */
-function openFromHash(){const m=/^#cadastro-completo\/([\w-]+)$/.exec(location.hash);if(!m)return;load();const p=data.people.find(x=>x.complete?.token===m[1]);openView('cadastro-completo',menuCrumb(2,'Cadastros Geral Colaboradores','DES - Completo Colaborador C/Dependente'));document.dispatchEvent(new Event('cicluz-close-menu'));if(!p){bindComplete(null);banner.replaceChildren(el('b',null,'Link não encontrado neste navegador. '),el('span',null,'Links demonstrativos só existem no navegador em que foram gerados.'));return}bindComplete(p.id,true)}
+function openFromHash(){const m=/^#cadastro-completo\/([\w-]+)$/.exec(location.hash);if(!m)return;load();const p=data.people.find(x=>x.complete?.token===m[1]);completeView.dataset.entrada='form';completeView.classList.remove('gp-lista');openView('cadastro-completo',menuCrumb(2,'Cadastros Geral Colaboradores','DES - Completo Colaborador C/Dependente'));document.dispatchEvent(new Event('cicluz-close-menu'));if(!p){bindComplete(null);banner.replaceChildren(el('b',null,'Link não encontrado neste navegador. '),el('span',null,'Links demonstrativos só existem no navegador em que foram gerados.'));return}bindComplete(p.id,true)}
 function bindComplete(id,fill){boundId=id;renderBanner();syncPick?.(id||'');document.dispatchEvent(new CustomEvent('cicluz-complete-bound',{detail:{id}}));if(!id||!fill)return;const p=byId(id);
  steps.querySelectorAll('.dep-card').forEach(c=>c.remove());const saved=p.complete?.fields;
  if(saved){while(steps.querySelectorAll('.dep-card').length<(p.complete.dependents||0))document.getElementById('add-dependent').click();fieldsOf().forEach((x,i)=>{const s=saved[i];if(!s||s.type!==(x.dataset.dateNative?'date':x.type))return;if(['checkbox','radio'].includes(x.type))x.checked=!!s.checked;else x.value=s.value||''})}

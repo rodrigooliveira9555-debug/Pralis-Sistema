@@ -23,7 +23,7 @@
       subtitulo: 'As vendas do PDV desse intervalo que estão sem caixa passam a ser deste caixa. A abertura oficial (' + a.abertoEm + ') não muda.',
       rotuloSalvar: 'Ajustar início',
       montar: (form) => {
-        form.append(U.nota('Pode recuar de ' + j.de + ' até ' + j.ate + ': no máximo ' + C.RECUO_MAXIMO_MIN + ' minutos antes da abertura oficial, no mesmo dia e nunca antes do fechamento do caixa anterior deste PDV.'));
+        form.append(U.nota('Pode recuar de ' + j.de + ' até ' + j.ate + ': no máximo ' + C.RECUO_MAXIMO_MIN + ' minutos antes da abertura oficial, no mesmo dia e nunca no mesmo minuto nem antes do fechamento do caixa anterior deste PDV.'));
         const h = entrada('time', hora || a.inicioVendas, { step: 60, required: true });
         const m = el('textarea');
         m.rows = 3;

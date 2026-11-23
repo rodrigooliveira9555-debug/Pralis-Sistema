@@ -25,9 +25,12 @@
   const PARTES = [['massa', 'Massa'], ['recheio', 'Recheio'], ['cobertura', 'Cobertura'], ['ingrediente', 'Ingrediente']];
   // Lista NIVELPROFISSIONAL da planilha. Decisão do Zé (05/11): a etapa guarda o cargo (cadastro de Cargos) e o nível.
   const NIVEIS = [['ajudante', 'Ajudante'], ['iniciante', 'Profissional iniciante'], ['intermediario', 'Profissional intermediário'], ['avancado', 'Profissional avançado'], ['especialista', 'Especialista']];
-  // As 4 categorias decididas pelo Rodrigo [06:50].
-  const CATEGORIAS = [['utensilio', 'Utensílio'], ['maquina', 'Máquina'], ['equipamento', 'Equipamento'], ['mobiliario', 'Mobiliário']];
-  const ENERGIAS = [['nenhuma', 'Não consome'], ['eletrica', 'Energia elétrica'], ['gas', 'Gás']];
+  // As 4 categorias decididas pelo Rodrigo [06:50]; em 17/11/2026 ganharam ao lado as do patrimônio completo (só acréscimo: os códigos de hoje não mudam).
+  const PAT = (typeof module === 'object' && module.exports ? require('./patrimonio-dominio.js') : (typeof self !== 'undefined' ? self : this).CicluzPatrimonioDominio || { CATEGORIAS_NOVAS: [], CATEGORIAS_PATRIMONIO: [] });
+  const NOVAS = PAT.CATEGORIAS_NOVAS;
+  // As cinco categorias do cadastro de patrimônios (18/11/2026) vêm primeiro; as antigas ficam para o que já foi cadastrado.
+  const CATEGORIAS = [...PAT.CATEGORIAS_PATRIMONIO, ['utensilio', 'Utensílio'], ['maquina', 'Máquina'], ['equipamento', 'Equipamento'], ['mobiliario', 'Mobiliário'], ...NOVAS];
+  const ENERGIAS = [['nenhuma', 'Não consome'], ['eletrica', 'Energia elétrica'], ['gas', 'Gás'], ['solar', 'Energia solar']];
   const UNIDADE_CONSUMO = { eletrica: 'kWh por hora', gas: 'kg de gás por hora' };
   const EXATIDOES = [['exato', 'Exato'], ['aproximado', 'Aproximado']];
   const ACOMPANHAMENTOS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
@@ -44,6 +47,34 @@
 
   const EPS = 1e-9;
   const arred = (n, casas = 3) => { const f = 10 ** casas; return Math.round((Number(n) + Number.EPSILON) * f) / f; };
+
+  /* ---------- Manutenção do patrimônio (peças e revisão) ---------- */
+
+  /** Dias de antecedência do aviso "próxima" na lista de bens (provisório, a confirmar com o Rodrigo: P-25). */
+  const AVISO_MANUTENCAO_DIAS = 30;
+  const doisDigitos = (n) => String(n).padStart(2, '0');
+  /**
+   * Próxima data = última feita + N meses (decisão do Rodrigo, 15/11/2026). Mês sem o dia
+   * (31/01 + 1 mês) cai no último dia do mês. Sem última data ou sem intervalo, devolve ''.
+   */
+  function proximaData(ultimaIso, meses) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ultimaIso || '');
+    const n = Number(meses);
+    if (!m || !Number.isInteger(n) || n < 1) return '';
+    const total = Number(m[1]) * 12 + (Number(m[2]) - 1) + n;
+    const ano = Math.floor(total / 12);
+    const mes = total % 12;
+    const ultimoDia = new Date(Date.UTC(ano, mes + 1, 0)).getUTCDate();
+    return ano + '-' + doisDigitos(mes + 1) + '-' + doisDigitos(Math.min(Number(m[3]), ultimoDia));
+  }
+  /** 'vencida' (antes de hoje), 'proxima' (de hoje até o aviso) ou '' para a data ISO de uma manutenção. */
+  function situacaoManutencao(iso, hojeIso, dias = AVISO_MANUTENCAO_DIAS) {
+    if (!iso || !hojeIso) return '';
+    if (iso < hojeIso) return 'vencida';
+    const limite = new Date(hojeIso + 'T12:00:00Z');
+    limite.setUTCDate(limite.getUTCDate() + dias);
+    return iso <= limite.toISOString().slice(0, 10) ? 'proxima' : '';
+  }
 
   /* ---------- Formato de pedido (utensílio de fornada) ---------- */
 
@@ -245,7 +276,7 @@
       e.recursos.forEach((r) => {
         if (r.tempoEquipe > 0) { const m = f.custoMinuto(r); if (m == null) faltas.add('salário do cargo ou horas por mês'); else maoDeObra += r.tempoEquipe * m; }
         const bem = r.bem;
-        if (bem && bem.energia && bem.energia !== 'nenhuma' && r.tempo > 0) {
+        if (bem && bem.energia && bem.energia !== 'nenhuma' && bem.energia !== 'solar' && r.tempo > 0) {
           const preco = f.precoEnergia(bem.energia);
           if (preco == null) faltas.add(bem.energia === 'gas' ? 'preço do gás' : 'preço do kWh');
           else energia += (r.tempo / 60) * (Number(bem.consumoHora) || 0) * preco;
@@ -335,6 +366,7 @@
   return {
     PROCESSOS, PARTES, NIVEIS, CATEGORIAS, ENERGIAS, UNIDADE_CONSUMO, EXATIDOES, ACOMPANHAMENTOS, CONFERENCIAS, VISOES,
     SITUACOES_PEDIDO, SITUACOES_ORDEM, nomeDe, arred,
+    AVISO_MANUTENCAO_DIAS, proximaData, situacaoManutencao,
     fornada, meia, passo, validarFormato, ehMultiplo, utensilios, multiplos, resumoFormato, validarQuantidade, validarConfigProduto,
     tempoEfetivo, naFaixa, emKg, ingredientesPara, lotes, planoDaFicha, perda, validarFicha,
     converter, aProduzir, sugestaoReposicao, turnoDe,

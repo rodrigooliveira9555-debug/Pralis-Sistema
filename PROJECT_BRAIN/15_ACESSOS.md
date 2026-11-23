@@ -47,6 +47,8 @@
    Diretor de Operações, Diretor Geral — inspirados em `db/src/referencia-permissoes.ts` do
    principal. **Precisa do Rodrigo:** conferir o que cada um libera.
 
+9. **Acesso por Tela (esboço, Washington, 19/11/2026):** terceiro cartão de Permissões. Menu inteiro com o nível de acesso de cada tela. **Só esboço**: dados de exemplo (`dist/acessos/telas-dados.js`), sem backend, nada gravado. Ver DESIGN_SYSTEM.md e P-41 no doc 11. Não substitui os cargos de acesso atuais.
+
 ## O que a permissão bloqueia hoje (honesto)
 
 - **Bloqueia de verdade (API):** Lançamentos financeiros (9 ações) e Configurações (ver usuários,

@@ -71,25 +71,37 @@ ok(await forn.evaluate(() => (CicluzComprasDados.produto('pi-13001') || {}).desc
 await forn.close();
 
 /* ---------- 2) Lista e busca ---------- */
+// Lista sem filtros (Rodrigo, 17/11/2026): ativos do resumo guardado; o botão "Inativos" do cabeçalho busca os inativos no
+// servidor; a busca é a lupa do rodapé.
 await p.evaluate(() => { if (document.body.classList.contains('mobile-menu-visible')) document.getElementById('toggleMenu').click(); CicluzCompras.abrir('produtos'); });
-const linhas = () => p.locator('#compras-produtos .compras-tabela tbody tr').allTextContents();
-ok((await linhas()).length === 2, 'Lista (Só ativos) com os 2 ativos do resumo');
-await p.locator('#compras-produtos label', { hasText: 'Só ativos' }).click();
-await p.waitForFunction(() => /3 produto/.test(document.querySelector('#compras-produtos .compras-linha-info').textContent), null, { timeout: 15000 });
-ok((await linhas()).length === 3 && (await linhas()).some((t) => t.includes('PRODUTO 13002')), 'Sem "Só ativos": a página vem do servidor, com o inativo');
-const campoBusca = p.locator('#compras-produtos .compras-busca');
-if (await campoBusca.isHidden()) await p.locator('#compras-produtos .local-search-toggle').click();
+const linhas = () => p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)').allTextContents();
+const quantasLinhas = (n) => p.waitForFunction((x) => document.querySelectorAll('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)').length === x, n, { timeout: 15000 });
+ok((await linhas()).length === 2, 'Lista (ativos) com os 2 ativos do resumo');
+await p.locator('#compras-produtos .compras-secao-cab button', { hasText: 'Inativos' }).click();
+await quantasLinhas(1);
+ok((await linhas())[0].includes('PRODUTO 13002'), 'Inativos: a página vem do servidor, só com o inativo');
+const campoBusca = p.locator('.people-bottom-header .shared-header-search');
+if (await campoBusca.isHidden()) await p.locator('.view.show .people-search-toggle').click();
 await campoBusca.pressSequentially('bolo', { delay: 80 });
-await p.waitForFunction(() => /1 produto/.test(document.querySelector('#compras-produtos .compras-linha-info').textContent), null, { timeout: 15000 });
-ok((await linhas()).length === 1 && (await linhas())[0].includes('BOLO CASEIRO'), 'Busca no servidor por nome');
+await quantasLinhas(0);
+ok(await campoBusca.isVisible() && await campoBusca.inputValue() === 'bolo', 'Busca nos inativos roda no servidor (nenhum inativo com "bolo") e o campo não fecha');
 await campoBusca.fill('');
-await p.locator('#compras-produtos label', { hasText: 'Só ativos' }).click();
+await p.locator('#compras-produtos .compras-secao-cab button', { hasText: /^Ativos$/ }).click();
+await campoBusca.pressSequentially('bolo', { delay: 80 });
+await quantasLinhas(1);
+ok((await linhas())[0].includes('BOLO CASEIRO'), 'Busca nos ativos (resumo do aparelho) por nome');
+await campoBusca.fill('');
+await quantasLinhas(2);
 
 /* ---------- 3) Editar pela API; conflito de versão ---------- */
 const dlg = () => p.locator('dialog.compras-dialog[open]').last();
 const fechado = () => p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'), null, { timeout: 15000 })
   .catch(async () => { throw new Error('Diálogo não fechou: ' + (await p.locator('dialog.compras-dialog[open]').last().locator('.compras-alertas, .profiles-error').allTextContents()).join(' | ')); });
-await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'BOLO CASEIRO' }).click();
+const linhaProduto = (nome) => p.locator('#compras-produtos .grade-produto:not(.compras-linha-cabecalho)', { hasText: nome });
+// Etapa 3 ("Cadastro específico"): estoque mínimo e máximo desta loja.
+const irEtapa = (n) => dlg().locator('.stepper-node').nth(n - 1).click();
+await linhaProduto('BOLO CASEIRO').click();
+await irEtapa(3);
 await dlg().getByLabel('Estoque mín.', { exact: true }).fill('12');
 await dlg().locator('.people-save-control').click();
 await fechado();
@@ -97,7 +109,8 @@ const editado = await p.evaluate(async () => CicluzSync.api('/produtos/item/p-fe
 ok(editado.dados.estoqueMin === 12 && editado.versao === 2, 'Edição gravada no servidor (versão 2)');
 ok(await p.evaluate(() => CicluzComprasDados.dados.produtos.find((x) => x.id === 'p-feito-no-s2').saldo === 3), 'Editar o cadastro não mexe no saldo do aparelho');
 // Outra pessoa salva antes: a tela recusa com aviso, sem sobrescrever.
-await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'BOLO CASEIRO' }).click();
+await linhaProduto('BOLO CASEIRO').click();
+await irEtapa(3);
 await p.evaluate(async () => { const x = await CicluzSync.api('/produtos/item/p-feito-no-s2'); await CicluzSync.api('/produtos/item/p-feito-no-s2', { metodo: 'PUT', corpo: { nome: x.nome, descricao: x.descricao, tipo: x.tipo, status: x.status, liberadoCompra: x.liberadoCompra, calculoAutomatico: x.calculoAutomatico, grupoId: x.grupoId, subgrupoId: x.subgrupoId, localId: x.localId, custo: x.custo, precoVenda: x.precoVenda, dados: x.dados, versao: x.versao } }); });
 await dlg().getByLabel('Estoque mín.', { exact: true }).fill('18');
 await dlg().locator('.people-save-control').click();
@@ -109,6 +122,7 @@ await fechado();
 /* ---------- 4) Criar: o servidor gera o código ---------- */
 await p.locator('.view.show .people-add-control').click();
 await dlg().getByLabel('Nome do produto', { exact: true }).fill('Pão de Queijo Teste');
+await irEtapa(2); // o grupo de mercadorias fica na 2ª etapa do cadastro
 await dlg().getByLabel('Grupo de mercadorias', { exact: true }).selectOption({ label: 'MERCEARIA' });
 await dlg().locator('.people-save-control').click();
 await fechado().catch(async () => { throw new Error('Não salvou: ' + (await dlg().locator('.compras-alertas, .profiles-error').allTextContents()).join(' | ')); });
@@ -134,7 +148,7 @@ const livro = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(livro, XLSX.utils.json_to_sheet([...par(13001, { nome: 'PRODUTO 13001 NOVO NOME', grupo: 'MER BEBIDAS - REFRIGERANTES' }, { venda_pontual: '8.25', setor_estoque: 'LJ - VITRINES' }), ...par(13400, { nome: 'NOVO DO APP', grupo: '' }), ...par(13401, { nome: 'INATIVO DO APP', status: 'inativo' }, { status: 'inativo' })]), 'Produtos');
 XLSX.utils.book_append_sheet(livro, XLSX.utils.json_to_sheet([{ produto_id: '', loja: '' }]), 'Promocoes');
 await p.evaluate(() => { if (document.body.classList.contains('mobile-menu-visible')) document.getElementById('toggleMenu').click(); CicluzCompras.abrir('produtos'); });
-await p.locator('#compras-produtos button', { hasText: 'Importar do app de produtos' }).click();
+await p.locator('#compras-produtos button[aria-label="Importar do app de produtos"]').click();
 await dlg().getByLabel('Arquivo do backup (.xlsx)', { exact: true }).setInputFiles({ name: 'backup.xlsx', mimeType: 'application/octet-stream', buffer: Buffer.from(XLSX.write(livro, { type: 'buffer', bookType: 'xlsx' })) });
 await dlg().locator('.compras-importacao-linha', { hasText: 'Ativos' }).first().waitFor({ timeout: 20000 });
 await dlg().locator('.people-save-control').click();
@@ -145,7 +159,7 @@ ok(JSON.stringify(aposImportar.find((x) => x[0] === '13001')) === JSON.stringify
 ok(await p.evaluate(() => CicluzComprasDados.dados.produtos.find((x) => x.id === 'pi-13001').saldo === 12), 'Importar não mexe no saldo do aparelho');
 
 /* ---------- 6b) Arquivo errado na importação ---------- */
-await p.locator('#compras-produtos button', { hasText: 'Importar do app de produtos' }).click();
+await p.locator('#compras-produtos button[aria-label="Importar do app de produtos"]').click();
 const errado = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(errado, XLSX.utils.json_to_sheet([{ a: 1 }]), 'Planilha1');
 await dlg().getByLabel('Arquivo do backup (.xlsx)', { exact: true }).setInputFiles({ name: 'outro.xlsx', mimeType: 'application/octet-stream', buffer: Buffer.from(XLSX.write(errado, { type: 'buffer', bookType: 'xlsx' })) });
 await dlg().locator('.compras-alerta.tom-negativo').waitFor({ timeout: 15000 });
@@ -153,21 +167,20 @@ ok((await dlg().locator('.compras-alerta.tom-negativo').textContent()).includes(
 await dlg().locator('.people-close-control').click();
 await fechado();
 
-/* ---------- 6c) Alerta de vínculo, filtro e escolha à mão ---------- */
+/* ---------- 6c) Alerta de vínculo na linha e escolha à mão (a lista não tem mais filtros: Rodrigo, 17/11/2026) ---------- */
 await p.evaluate(() => { if (document.body.classList.contains('mobile-menu-visible')) document.getElementById('toggleMenu').click(); CicluzCompras.abrir('produtos'); });
-const chip = (rot) => p.locator('#compras-produtos .compras-chip', { hasText: rot });
-await chip('Sem grupo').first().click();
-const semGrupoLinhas = await linhas();
-ok(semGrupoLinhas.some((t) => t.includes('NOVO DO APP')) && semGrupoLinhas.every((t) => t.includes('Sem grupo')), 'Filtro "Sem grupo" com o alerta na linha: ' + semGrupoLinhas.length);
-await p.locator('#compras-produtos .compras-tabela tbody tr', { hasText: 'NOVO DO APP' }).click();
+await linhaProduto('NOVO DO APP').waitFor({ timeout: 15000 });
+ok(await linhaProduto('NOVO DO APP').locator('.compras-situacao', { hasText: 'Sem grupo' }).count() === 1, 'A linha do produto importado sem grupo mostra o alerta "Sem grupo"');
+await linhaProduto('NOVO DO APP').click();
 ok((await dlg().locator('.compras-alerta-vinculo').textContent()).includes('grupo de mercadorias'), 'Formulário mostra o alerta de vínculo');
+await irEtapa(2);
 await dlg().getByLabel('Grupo de mercadorias', { exact: true }).selectOption('g7');
+await irEtapa(3);
 await dlg().getByLabel('Setor de estoque', { exact: true }).selectOption({ label: 'LJ › VITRINES' });
 await dlg().locator('.people-save-control').click();
 await fechado();
 const vinculado = await p.evaluate(async () => (await CicluzSync.api('/produtos?status=todos&busca=novo%20do%20app')).itens[0]);
 ok(vinculado.grupoId === 'g7' && vinculado.localId === 's-vit' && !vinculado.semGrupo && !vinculado.semLocal && vinculado.dados.vinculoManual.grupo && vinculado.dados.vinculoManual.local, 'Grupo e local escolhidos à mão: alerta some e fica marcado como manual');
-await p.locator('#compras-produtos button', { hasText: 'Limpar' }).click();
 
 /* ---------- 6d) Revincular depois que a árvore muda (no aparelho → servidor) ---------- */
 await p.evaluate(() => localStorage.setItem('cicluz-location-tree-v1', JSON.stringify({ tree: [{ id: 'a-lj2', name: 'LJ', children: [{ id: 's-vit2', name: 'VITRINES', children: [] }] }], history: [] })));
@@ -183,8 +196,8 @@ const manual = await p.evaluate(async () => (await CicluzSync.api('/produtos?sta
 ok(manual === 's-vit', 'Vínculo escolhido à mão não muda no Revincular');
 
 /* ---------- 6e) Busca letra por letra: o campo não fecha ---------- */
-const campoBusca2 = p.locator('#compras-produtos .compras-busca');
-if (await campoBusca2.isHidden()) await p.locator('#compras-produtos .local-search-toggle').click();
+const campoBusca2 = p.locator('.people-bottom-header .shared-header-search');
+if (await campoBusca2.isHidden()) await p.locator('.view.show .people-search-toggle').click();
 await campoBusca2.fill('');
 await campoBusca2.pressSequentially('13150', { delay: 120 });
 await p.waitForTimeout(400);
