@@ -37,7 +37,7 @@ async function esperarFechar(p) {
   }
 }
 const sec = (p, legenda) => dlg(p).locator('fieldset', { has: p.locator('legend', { hasText: legenda }) });
-// O cadastro tem 5 etapas; a barra de etapas leva direto à etapa pedida (1 a 5).
+// O cadastro tem 6 etapas (a 6ª é a Revisão dos dados); a barra de etapas leva direto à etapa pedida.
 const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
 
 /* ---------- 1) Criar produto com os campos novos, salvar, reabrir e conferir ---------- */
@@ -93,7 +93,7 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   ok(await s3.locator('.compras-situacao').first().isVisible(), 'Fiscal mostra o estado da classificação');
   await etapa(p, 4);
   const s4 = sec(p, 'Promoção');
-  await s4.getByRole('button', { name: '+ Adicionar promoção' }).click();
+  await s4.getByRole('button', { name: 'Adicionar promoção' }).click();
   await s4.locator('.compras-promo .account-status-switch').click(); // Agendar promoção: abre data, horário, repetição e dias
   await s4.getByLabel('Tipo', { exact: true }).selectOption('desconto');
   await s4.getByLabel('Desconto %', { exact: true }).fill('10');
@@ -101,10 +101,13 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   await s4.getByLabel('Término', { exact: true }).fill('10:00');
   // date-fields.js do S2 mostra um campo DD/MM/AA no lugar do original (que guarda ISO).
   await s4.getByLabel('Terminar repetição', { exact: true }).filter({ visible: true }).fill('31/12/26');
+  // Sai do campo de data antes de tocar no dia. DEFEITO CONHECIDO (23/11/2026, avisado ao Zé): logo depois de digitar a data, o 1º toque
+  // num dia se perde, porque a confirmação da data redesenha a lista de dias e o botão tocado é trocado antes do clique.
+  await p.keyboard.press('Tab');
   await s4.getByRole('button', { name: 'Promoção 1: Dom' }).click();
   await etapa(p, 1);
   const s5 = sec(p, 'Conversões de unidade');
-  await s5.getByRole('button', { name: '+ Adicionar conversão' }).click();
+  await s5.getByRole('button', { name: 'Adicionar conversão' }).click();
   await s5.getByLabel('Unidade', { exact: true }).selectOption('CX');
   await s5.getByLabel('Quantidade', { exact: true }).fill('1');
   await s5.getByLabel('Unidades individuais', { exact: true }).fill('12');
