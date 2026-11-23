@@ -189,7 +189,7 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 /* A matriz: à esquerda o nome das telas (preso, não rola), e para cada escolha (colaborador, cargo ou área) uma coluna com os sete
    interruptores. Quem rola é só a matriz, para o lado e para baixo; a primeira linha (as escolhas) fica presa no alto. */
 .acessos-matriz {
-  --tl-nome: 290px; --tl-col: 46px; --tl-bloco: calc(var(--tl-col) * 7 + 20px);
+  --tl-nome: 290px; --tl-col: 46px; --tl-bloco: calc(var(--tl-col) * 8 + 20px);
   container-type: inline-size; overflow: auto; max-height: calc(100dvh - 210px); min-height: 320px;
   border: 1px solid var(--layout-line, #dedee3); border-radius: 8px; background: var(--theme-card, #fff);
 }
@@ -255,6 +255,13 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 .acessos-tl-cel { flex: 1 1 0; display: grid; place-items: center; min-width: 0; padding: 8px 0; }
 .acessos-tl-novo { flex: none; }
 .acessos-tl-cab-ic { padding: 8px 0 6px; }
+.acessos-tl-cab-btn { border: 0; background: none; cursor: pointer; }
+.acessos-tl-cab-btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+.acessos-tl-cab-btn:focus-visible { outline: none; }
+.acessos-tl-cab-btn:focus-visible .acessos-nivel-ic { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
+/* Ações especiais de uma coluna: uma coluna só, com o interruptor de cada ação. */
+.acessos-matriz-acoes { --tl-bloco: calc(var(--tl-col) * 4); }
+.acessos-bloco-dono { font: 600 14px/20px var(--ui-font); overflow-wrap: anywhere; }
 /* O ícone da permissão: círculo cheio na cor da origem com o desenho do Design System (lápis com prancheta = lançar, lista = discriminar,
    lápis = editar, olho = visualizar, $ = pagar) e, no canto, o selo branco com a seta (← antes de pagar, → depois, ↔ pagar). */
 .acessos-nivel-ic {
@@ -268,7 +275,7 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 }
 .acessos-nivel-ic .acessos-nivel-seta svg { width: 10px; height: 10px; stroke-width: 2.6; }
 @media (max-width: 760px) {
-  .acessos-matriz { --tl-nome: 150px; --tl-col: 42px; }
+  .acessos-matriz { --tl-nome: 150px; --tl-col: 38px; }
   .acessos-tl-esq { padding-left: 10px; padding-right: 8px; }
   .acessos-tl-nome { gap: 6px; font-size: 12px; line-height: 16px; }
   .acessos-tl-nome .compras-linha-icones { display: none; }
@@ -283,12 +290,14 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
   .acessos-tl-bloco { padding: 0 6px; scroll-snap-align: start; }
   .acessos-tl-esq { padding: 6px 6px 6px 8px; }
   .acessos-tl-nome { font-size: 11px; line-height: 14px; }
-  .acessos-tl .account-status-switch { width: 26px; min-width: 26px; height: 16px; padding: 3px; }
-  .acessos-tl .account-status-switch > span { width: 10px; height: 10px; }
-  .acessos-tl .account-status-switch[aria-checked="true"] > span { transform: translateX(10px); }
+  .acessos-tl .account-status-switch { width: 24px; min-width: 24px; height: 15px; padding: 3px; }
+  .acessos-tl .account-status-switch > span { width: 9px; height: 9px; }
+  .acessos-tl .account-status-switch[aria-checked="true"] > span { transform: translateX(9px); }
   .acessos-tl-cel { padding: 6px 0; }
-  .acessos-nivel-ic { width: 24px; height: 24px; }
-  .acessos-nivel-ic svg { width: 14px; height: 14px; }
+  .acessos-tl .account-status-switch { position: relative; }
+  .acessos-tl .account-status-switch::after { content: ""; position: absolute; inset: -12px -2px; }
+  .acessos-nivel-ic { width: 23px; height: 23px; }
+  .acessos-nivel-ic svg { width: 13px; height: 13px; }
   .acessos-nivel-seta { width: 12px; height: 12px; right: -3px; bottom: -2px; }
   .acessos-nivel-ic .acessos-nivel-seta svg { width: 8px; height: 8px; }
   .acessos-tl-esq-grupo { position: sticky; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 4px; padding: 8px 6px 8px 8px; }
@@ -306,16 +315,15 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 @media (max-width: 360px) {
   .acessos-matriz { --tl-nome: 104px; }
   .acessos-tl-sec-nome .acessos-tl-subic { display: none; }
-  .acessos-tl .account-status-switch { width: 22px; min-width: 22px; height: 14px; padding: 2px; }
+  .acessos-tl .account-status-switch { width: 19px; min-width: 19px; height: 12px; padding: 2px; }
   .acessos-tl .account-status-switch > span { width: 8px; height: 8px; }
-  .acessos-tl .account-status-switch[aria-checked="true"] > span { transform: translateX(8px); }
-  .acessos-nivel-ic { width: 22px; height: 22px; }
-  .acessos-nivel-ic svg { width: 13px; height: 13px; }
+  .acessos-tl .account-status-switch[aria-checked="true"] > span { transform: translateX(7px); }
+  .acessos-nivel-ic { width: 20px; height: 20px; }
+  .acessos-nivel-ic svg { width: 12px; height: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .acessos-telas-mais svg, .acessos-tl-seta { transition: none; } }
 
-/* Abas (Telas | Ações especiais) e os interruptores, ligados na cor da tela */
-.acessos-telas-abas { margin: 2px 0; }
+/* Interruptores, ligados na cor da tela */
 .acessos-telas .account-status-switch[aria-checked="true"] { background: var(--menu-accent); border-color: var(--menu-accent); }
 .acessos-telas .account-status-switch:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
 .acessos-telas .account-status-switch:disabled { opacity: .45; cursor: not-allowed; }
