@@ -420,6 +420,28 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
 }
 
 /* ---------- 3) Matriz de layout ---------- */
+// Bem elétrico: o consumo em kWh por hora (23/11/2026, Zé: "falta o campo") é gravado e entra no custo de energia da ficha.
+{
+  const p = await abrirPagina(1024);
+  await p.evaluate(() => CicluzProducao.abrir('patrimonio'));
+  await p.locator('#producao-patrimonio .compras-secao-cab button[aria-label="Cadastrar patrimônio"]').click();
+  const d = dialogo(p);
+  await d.getByLabel('Nome simplificado *', { exact: true }).fill('Forno elétrico teste');
+  await d.getByLabel('Categoria *', { exact: true }).selectOption('MAC');
+  await d.locator('.account-status:has-text("Informar especificação técnica?") .account-status-switch').click();
+  await d.getByLabel('Tipo de Energia', { exact: true }).selectOption('eletrica');
+  ok(await d.getByLabel('Consumo elétrico por hora (kWh)', { exact: true }).isVisible(), 'Energia elétrica mostra o campo de consumo em kWh por hora');
+  await d.getByLabel('Potência Elétrica (W)', { exact: true }).fill('2000');
+  await d.getByLabel('Consumo elétrico por hora (kWh)', { exact: true }).fill('2,5');
+  await salvar(p); await fechado(p);
+  const bem = await p.evaluate(() => JSON.parse(localStorage.getItem('cicluz-patrimonio-v1')).bens.find((b) => b.nome === 'FORNO ELÉTRICO TESTE'));
+  ok(bem && bem.energia === 'eletrica' && bem.consumoHora === 2.5 && bem.potenciaW === 2000, 'Bem elétrico grava o consumo (2,5 kWh/h) e a potência (2000 W) separados');
+  // Custo: 30 min × 2,5 kWh/h × R$ 0,80 = R$ 1,00 (a fórmula é a mesma de antes; só faltava o campo).
+  const energia = await p.evaluate((id) => CicluzProducaoDominio.custoDoPlano({ etapas: [{ ingredientes: [], recursos: [{ tempoEquipe: 0, tempo: 30, bem: CicluzProducaoDados.patrimonio.dados.bens.find((b) => b.id === id) }] }] }, { custoIngrediente: () => 0, custoMinuto: () => 0, precoEnergia: (t) => (t === 'eletrica' ? 0.8 : null) }).energia, bem.id);
+  ok(energia === 1, 'Custo de energia elétrica entra na conta: 30 min × 2,5 kWh/h × R$ 0,80 = R$ 1,00 (' + energia + ')');
+  await p.close();
+}
+
 async function semear(p) {
   await criarPao(p);
   await p.evaluate(() => {

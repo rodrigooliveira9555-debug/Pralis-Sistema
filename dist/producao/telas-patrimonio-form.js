@@ -433,10 +433,13 @@
         const energia = seletor([['nenhuma', 'Não utiliza energia'], ...PD.TIPOS_ENERGIA], v.energia || 'nenhuma'); energia.setAttribute('aria-label', 'Tipo de Energia');
         const gasValor = entrada('text', g0 ? nd(g0.valor) : '', { inputMode: 'decimal', placeholder: 'Ex.: 1,5' }); const gasUn = seletor(PD.UNIDADES_GAS, (g0 && g0.unidade) || '', 'Unidade'); gasUn.setAttribute('aria-label', 'Unidade do consumo de gás');
         const potW = entrada('text', nd(v.potenciaW), { inputMode: 'decimal', placeholder: 'Ex.: 2000' });
+        // Consumo elétrico em kWh por hora de uso (23/11/2026, Zé: "falta o campo"): é ele que entra no custo de energia da ficha
+        // técnica (tempo × consumo × preço do kWh). A potência em W continua só informativa: o sistema não converte W em kWh.
+        const kwh = entrada('text', v.energia === 'eletrica' ? nd(v.consumoHora) : '', { inputMode: 'decimal', placeholder: 'Ex.: 1,5' });
         const boxGas = el('div', 'patrimonio-condicional compras-largo'); // Consumo de gás por hora: um campo só, com a unidade junto do valor (sem conversão e sem presumir kg). A unidade a adotar ainda precisa de validação técnica.
         gasValor.setAttribute('aria-label', 'Consumo de gás por hora'); const linhaGas = el('div', 'patrimonio-linha-campo'); linhaGas.append(gasValor, gasUn);
         boxGas.append(campo('Consumo de gás por hora', linhaGas, 'A unidade fica junto do valor; o sistema não converte entre unidades.')); linhaGas.removeAttribute('aria-label');
-        const boxEle = el('div', 'patrimonio-condicional compras-largo'); boxEle.append(campo('Potência Elétrica (W)', potW, 'Potência em watts (W). Não é o consumo em kWh e não gera custo.'));
+        const boxEle = el('div', 'patrimonio-condicional compras-largo'); boxEle.append(campo('Potência Elétrica (W)', potW, 'Potência em watts (W). Só informativa: não é o consumo e não gera custo.'), campo('Consumo elétrico por hora (kWh)', kwh, 'Quanto o equipamento gasta em 1 hora de uso. É o que entra no custo de energia da ficha técnica.'));
         const boxSol = el('div', 'patrimonio-condicional compras-largo'); boxSol.append(el('p', 'profiles-note', 'Energia solar selecionada. O sistema não calcula geração nem consumo solar.'));
         function pintarEnergia() { mostrar(boxGas, energia.value === 'gas'); mostrar(boxEle, energia.value === 'eletrica'); mostrar(boxSol, energia.value === 'solar'); }
         energia.addEventListener('change', () => { pintarEnergia(); pintarTecnicas(); });
@@ -620,7 +623,7 @@
         /* ---------- Leitura, revisão e navegação ---------- */
         function ler() {
           const cap = num(capValor); const l = num(larg); const co = num(comp);
-          const prodCat = PD.CATEGORIAS_PRODUCAO.includes(categoria.value); const en = energia.value; const gv = num(gasValor); const pw = num(potW);
+          const prodCat = PD.CATEGORIAS_PRODUCAO.includes(categoria.value); const en = energia.value; const gv = num(gasValor); const pw = num(potW); const kw = num(kwh);
           const al = num(dimAlt); const la = num(dimLarg); const pr = num(dimProf); const pe = num(pesoVal);
           const tecnicas = {}; PD.TECNICAS.forEach(([k]) => { const x = camposTec[k].entrada.value.trim(); if (x) tecnicas[k] = x; });
           const garDoc = gDoc.value; const inspDoc = iDoc.value;
@@ -637,7 +640,7 @@
             movimentacoes: movs, responsaveis: [...respSel.values()],
             tecnicas, capacidade: prodCat ? (usoProd.ativo && cap != null ? { valor: cap, unidade: capUn.value } : null) : (v.capacidade || null), medidas: l != null || co != null ? { largura: l, comprimento: co } : null,
             energia: en, consumoGas: en === 'gas' && gv != null ? { valor: gv, unidade: gasUn.value } : null, potenciaW: en === 'eletrica' ? pw : null,
-            consumoHora: en === 'gas' ? (gv != null && gasUn.value === 'kg/h' ? gv : null) : en === 'eletrica' ? (v.consumoHora != null ? v.consumoHora : null) : null,
+            consumoHora: en === 'gas' ? (gv != null && gasUn.value === 'kg/h' ? gv : null) : en === 'eletrica' ? kw : null,
             pecas, composto: composto.ativo, vinculados: composto.ativo ? vinculados : [],
             financeiro: { tipoAquisicao: tipoAq.value, dataAquisicao: dAq.value, dataRecebimento: dRec.value, dataOperacao: dOp.value, fornecedorId: fornecedor.value, nf: nf.value.trim(), serieNf: serieNf.value.trim(),
               valorAquisicao: vAq.valor(), frete: frete.valor(), instalacao: instal.valor(), custosAdicionais: custos.valor(), descontos: descontos.valor(), valorTotal: PD.valorTotalAquisicao({ valorAquisicao: vAq.valor(), frete: frete.valor(), instalacao: instal.valor(), custosAdicionais: custos.valor(), descontos: descontos.valor() }), moeda: 'BRL' },
