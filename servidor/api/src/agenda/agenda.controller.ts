@@ -4,6 +4,7 @@ import { arquivoSchema, compromissoIdSchema, LIMITE_CORPO_ARQUIVO, listarMensage
 import { perfilDaRequisicao } from "../auth/guards.ts";
 import { abreNoNavegador, disposicao } from "./agenda.regras.ts";
 import * as servico from "./agenda.service.ts";
+import { registrarRotasCompromissos } from "./compromissos.controller.ts";
 
 const compromissoParams = z.object({ id: compromissoIdSchema });
 const arquivoParams = z.object({ id: z.string().uuid() });
@@ -12,6 +13,8 @@ const limiteChat = { rateLimit: { max: 120, timeWindow: "1 minute" } };
 const limiteArquivo = { rateLimit: { max: 20, timeWindow: "1 minute" } };
 
 export async function registrarRotasAgenda(app: FastifyInstance) {
+  await registrarRotasCompromissos(app);
+
   app.get("/api/agenda/compromissos/:id/mensagens", { config: limiteChat }, async (request) => {
     const { id } = compromissoParams.parse(request.params);
     const { depois } = listarMensagensSchema.parse(request.query);

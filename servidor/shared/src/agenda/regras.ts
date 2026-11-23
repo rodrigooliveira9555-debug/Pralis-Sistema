@@ -280,3 +280,23 @@ export function validar(item: Compromisso): string {
   if (item.avaliacao && item.avaliacao.tipo && !TIPOS_AVALIACAO.some(([k]) => k === item.avaliacao?.tipo)) return "Tipo de avaliação inválido.";
   return "";
 }
+
+/* ---------- Etiquetas ---------- */
+
+// Sem acento e sem maiúscula, para comparar (U+0300 a U+036F: marcas de acento depois do NFD).
+const MARCAS = new RegExp("[" + String.fromCharCode(0x300) + "-" + String.fromCharCode(0x36f) + "]", "g");
+const dobrar = (s: unknown) => String(s || "").normalize("NFD").replace(MARCAS, "").toLocaleLowerCase("pt-BR");
+
+/** Etiquetas: sem "#", sem espaços nas pontas, sem repetir (ignorando maiúsculas), até 30 letras. */
+export function normalizarEtiquetas(lista: unknown): string[] {
+  const vistas = new Set<string>();
+  const saida: string[] = [];
+  ([] as unknown[]).concat(lista || []).forEach((bruta) => {
+    String(bruta || "").split(/[,;]/).forEach((parte) => {
+      const t = parte.trim().replace(/^#+/, "").replace(/\s+/g, " ").slice(0, 30);
+      const k = dobrar(t);
+      if (t && !vistas.has(k)) { vistas.add(k); saida.push(t); }
+    });
+  });
+  return saida;
+}

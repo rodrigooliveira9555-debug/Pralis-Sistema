@@ -197,7 +197,7 @@ return checks;
 
 const doDominio = rodar(dominio);
 const comRegras = { ...dominio, ...regras };
-['acesso', 'normalizarPessoas', 'pessoaResponsavel', 'responsaveis', 'podeAvaliar', 'comparativo', 'valorValido', 'validar', 'proxima', 'temRepeticao', 'somarDias', 'somarMeses', 'dataValida', 'horaValida']
+['acesso', 'normalizarEtiquetas', 'normalizarPessoas', 'pessoaResponsavel', 'responsaveis', 'podeAvaliar', 'comparativo', 'valorValido', 'validar', 'proxima', 'temRepeticao', 'somarDias', 'somarMeses', 'dataValida', 'horaValida']
   .forEach((nome) => assert.equal(comRegras[nome], regras[nome], nome + ' tem de vir da regra gerada'));
 const daRegra = rodar(comRegras);
 assert.equal(daRegra, doDominio, 'a regra gerada passa pelos mesmos casos');

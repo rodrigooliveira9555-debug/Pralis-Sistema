@@ -6,4 +6,5 @@ export * from "./acessos.ts";
 export * from "./lancamentos/index.ts";
 export * from "./agenda.ts";
 export * as AgendaRegras from "./agenda/regras.ts";
+export * from "./agenda/contratos.ts";
 export * from "./produtos.ts";

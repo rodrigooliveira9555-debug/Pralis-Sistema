@@ -40,6 +40,7 @@ var regras = (() => {
     horaValida: () => horaValida,
     inicioDaSemana: () => inicioDaSemana,
     isoData: () => isoData,
+    normalizarEtiquetas: () => normalizarEtiquetas,
     normalizarPessoas: () => normalizarPessoas,
     pessoaResponsavel: () => pessoaResponsavel,
     podeAvaliar: () => podeAvaliar,
@@ -272,6 +273,23 @@ var regras = (() => {
     if (loc && loc.aviso && !(+(loc.raio ?? NaN) >= 50 && +(loc.raio ?? NaN) <= 5e4)) return "Informe o raio do aviso.";
     if (item.avaliacao && item.avaliacao.tipo && !TIPOS_AVALIACAO.some(([k]) => k === item.avaliacao?.tipo)) return "Tipo de avaliação inválido.";
     return "";
+  }
+  var MARCAS = new RegExp("[" + String.fromCharCode(768) + "-" + String.fromCharCode(879) + "]", "g");
+  var dobrar = (s) => String(s || "").normalize("NFD").replace(MARCAS, "").toLocaleLowerCase("pt-BR");
+  function normalizarEtiquetas(lista) {
+    const vistas = /* @__PURE__ */ new Set();
+    const saida = [];
+    [].concat(lista || []).forEach((bruta) => {
+      String(bruta || "").split(/[,;]/).forEach((parte) => {
+        const t = parte.trim().replace(/^#+/, "").replace(/\s+/g, " ").slice(0, 30);
+        const k = dobrar(t);
+        if (t && !vistas.has(k)) {
+          vistas.add(k);
+          saida.push(t);
+        }
+      });
+    });
+    return saida;
   }
   return __toCommonJS(regras_exports);
 })();
