@@ -318,7 +318,8 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await campo.fill('25');
   await separacao.getByRole('button', { name: 'Salvar ajuste' }).click();
   ok(await forn.getByText('Ajuste salvo. O comprador vê a quantidade nova no pedido.').count() === 1, 'Ajuste salvo');
-  ok(await p.evaluate(() => CicluzComprasDados.dados.pedidos[0].eventos.some((e) => e.obs.includes('Fornecedor ajustou ao estoque dele'))), 'Ajuste registrado no histórico do pedido');
+  // O ajuste é gravado na aba do fornecedor; a do comprador recebe pelo aviso do armazenamento: espera chegar (sem corrida).
+  ok(await p.waitForFunction(() => CicluzComprasDados.dados.pedidos[0].eventos.some((e) => e.obs.includes('Fornecedor ajustou ao estoque dele')), null, { timeout: 8000 }).then(() => true, () => false), 'Ajuste registrado no histórico do pedido');
 
   // Produtos que também vendo: vínculo nasce aprovado
   await forn.getByRole('button', { name: 'Ver lista' }).click();
