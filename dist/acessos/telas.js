@@ -314,9 +314,8 @@
       const h = cab.querySelector('h3');
       h.replaceChildren(marca, nome, el('span', 'compras-conta', String(total)));
 
-      // Um botão por grupo; cada toque abre mais um nível: 1 = o grupo (as seções), 2 = as seções (as telas), 3 = recolhe tudo.
-      const todasAbertas = g.secoes.every((s) => estado.secAbertas.has(g.n + '|' + s.n));
-      const rotuloNivel = !aberto ? 'Expandir ' + g.n : todasAbertas ? 'Recolher ' + g.n : 'Expandir mais um nível de ' + g.n;
+      // Um botão por grupo: um toque abre o grupo inteiro (as seções e as telas); o toque seguinte recolhe.
+      const rotuloNivel = (aberto ? 'Recolher ' : 'Expandir ') + g.n;
       const nivel = el('button', 'compras-redondo acessos-telas-nivel');
       nivel.type = 'button';
       nivel.dataset.grupo = g.n;
@@ -325,8 +324,7 @@
       nivel.setAttribute('aria-expanded', String(aberto));
       nivel.innerHTML = U.svg('<path d="' + G.niveis + '"/>');
       nivel.onclick = () => {
-        if (!aberto) { estado.abertos.add(g.n); g.secoes.forEach((s) => estado.secAbertas.delete(g.n + '|' + s.n)); }
-        else if (!todasAbertas) g.secoes.forEach((s) => estado.secAbertas.add(g.n + '|' + s.n));
+        if (!aberto) { estado.abertos.add(g.n); g.secoes.forEach((s) => estado.secAbertas.add(g.n + '|' + s.n)); }
         else { estado.abertos.delete(g.n); g.secoes.forEach((s) => estado.secAbertas.delete(g.n + '|' + s.n)); }
         desenhar();
         const volta = tela.body.querySelector('[data-grupo="' + g.n + '"]');
