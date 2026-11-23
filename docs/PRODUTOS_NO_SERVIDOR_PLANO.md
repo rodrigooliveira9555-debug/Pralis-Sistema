@@ -153,8 +153,9 @@ Cada fase é uma PR própria, com o caminho antigo removido na mesma entrega em 
 - **Tabela e API:** de acordo (Zé e Marco).
 - **Sem internet:** a loja vê os produtos sem internet. O resumo dos ativos fica guardado no aparelho e se atualiza
   quando há conexão; a lista completa (inativos, busca no catálogo inteiro) usa a API.
-- **Permissões:** as de Compras que já existem. `compras_visualizar` para ver; para criar, editar, importar e
-  revincular, as de Compras de quem já administra o cadastro, sem permissão nova.
+- **Permissões:** as de Compras que já existem. `compras_visualizar` para ver; para criar, editar e inativar, quem pede, cota,
+  aprova ou recebe (`compras_solicitar`, `compras_cotar`, `compras_aprovar`, `compras_receber`); importar do app e revincular,
+  só o administrador. **Confirmado pelo Zé em 23/11/2026.**
 - **Dinheiro:** custo com **2 casas** (`numeric(14,2)`) e preço de venda com 2. Atenção na migração: custos do app com
   mais de 2 casas precisam de uma regra de arredondamento aprovada antes (fórmula de dinheiro: perguntar).
 - **Quando:** como melhoria, depois que o Rodrigo montar a árvore de locais e revisar os grupos.

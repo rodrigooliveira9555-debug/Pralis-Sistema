@@ -129,12 +129,7 @@
         const max = entrada('number', c?.estoqueMax ?? '', { min: 0, inputMode: 'decimal' });
         const prodMax = entrada('number', c?.producaoMax ?? '', { min: 0, inputMode: 'decimal' });
         // Local do estoque escolhido na árvore Área › Setor › Local (23/11/2026, Zé), como o setor de estoque do produto. Grava o id do nó.
-        const LT = window.CicluzLocationTree;
-        const localEst = U.campoArvore({
-          rotulo: 'Local do estoque', valor: c?.localEstoqueId || '', textoVazio: 'Sem local',
-          janela: (atual, escolher) => LT.janelaUnica({ titulo: 'Local do estoque do produto', atual, aoEscolher: escolher }),
-          texto: (v) => LT.caminhoDe(v),
-        });
+        const localEst = U.campoLocal({ rotulo: 'Local do estoque', titulo: 'Local do estoque do produto', valor: c?.localEstoqueId || '', textoVazio: 'Sem local' });
         const dicaMult = el('small', 'profiles-note');
         s2.append(estL, campo('Estoque mínimo', min), campo('Estoque máximo', max), campo('Produção máxima por pedido', prodMax), campo('Local do estoque', localEst), dicaMult);
 

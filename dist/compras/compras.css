@@ -22,10 +22,14 @@ body.dark-theme :is(.compras-view, .compras-dialog) .btn.secondary { color: #a7e
 /* Abas: linha inteira quando dividem a barra com filtros; na coluna do conteúdo, só a própria altura. */
 .compras-abas { flex: 0 0 auto; align-self: flex-start; }
 .profiles-controls > .compras-abas { flex: 1 1 100%; }
+/* Linha da conversão de unidade (23/11/2026): unidade, quantidade, unidades individuais e o remover redondo na ponta. */
+.compras-conversao-linha { display: grid; grid-template-columns: minmax(0, 2fr) minmax(80px, 1fr) minmax(80px, 1fr) auto; gap: 8px; align-items: end; }
+.compras-conversao-linha > .compras-remover { margin-bottom: 5px; } /* centraliza o botão de 32 px na altura do campo de 42 px */
+@media (max-width: 600px) { .compras-conversao-linha { grid-template-columns: 1fr 1fr auto; } .compras-conversao-linha > label:first-child { grid-column: 1 / -1; } }
 .compras-item-urgente { display: grid; grid-template-columns: minmax(0, 3fr) minmax(90px, 1fr) auto; gap: 8px; align-items: end; }
 .compras-item-urgente > small { grid-column: 1 / -1; margin: -4px 0 4px; }
 .compras-vai-para { font-size: 12px; }
-.btn.secondary.perigo-texto { color: #dc2626; border-color: #fca5a5; }
+.btn.secondary.perigo-texto { color: #dc2626; border-color: #fca5a5; background: transparent; }
 @media (max-width: 600px) {
   .compras-datas { padding-left: 14px; }
   .compras-item-urgente { grid-template-columns: 1fr 1fr; }
@@ -540,7 +544,7 @@ body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-sea
 .compras-atividade-texto{flex:1;min-width:0;overflow-wrap:anywhere}
 .compras-atividade-acoes{display:inline-flex;gap:6px;flex:none}
 /* Padrão do sistema (18/11/2026, Rodrigo): editar redondo na cor do cabeçalho; excluir redondo em vermelho. */
-:is(.compras-dialog,.compras-view) .compras-redondo.perigo{background:var(--cicluz-danger,#ef4444)}
+:is(.compras-dialog,.compras-view) .compras-redondo.perigo{background:var(--cicluz-danger,#ef4444);border-color:var(--cicluz-danger,#ef4444);color:#fff} /* ícone branco sobre o vermelho (23/11/2026) */
 /* Objeto do contrato: os três botões (Grupo de produtos, Grupo de despesas, Grupo de patrimônios) têm o mesmo tamanho. */
 .compras-objeto-origem .compras-titulo-botao{width:240px;max-width:100%;justify-content:space-between}
 /* Objeto do contrato: o texto do chip acompanha a cor da origem daquela lista. */

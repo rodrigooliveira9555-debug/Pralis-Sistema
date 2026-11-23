@@ -68,7 +68,13 @@ function janelaUnica({titulo='Áreas, setores e locais',atual='',aoEscolher,cor,
   salvar:()=>aoEscolher([...temp][0]||'')})}
 function caminhoDe(id){let raiz=[];try{const saved=JSON.parse(localStorage.getItem(storage)||'[]');raiz=Array.isArray(saved)?saved:saved.tree||[]}catch{}
  const achar=(pool,antes)=>{for(const n of pool){const c=[...antes,n.name];if(n.id===id)return c;const f=achar(n.children||[],c);if(f)return f}return null};const c=id?achar(raiz,[]):null;return c?c.join(' › '):''}
-window.CicluzLocationTree={seletor:seletorDeLocais,campo:campoDeLocais,janelaUnica,caminhoDe};
+/* Nome ↔ nó (para campos que, por herança do S1, gravam o NOME do local: área do produto, filtros da contagem e do pedido).
+   A busca pelo nome ignora maiúsculas, minúsculas e acentos e fica com o primeiro nó que casar. */
+function nosPlanos(){let raiz=[];try{const saved=JSON.parse(localStorage.getItem(storage)||'[]');raiz=Array.isArray(saved)?saved:saved.tree||[]}catch{}const out=[];const andar=p=>p.forEach(n=>{out.push(n);andar(n.children||[])});andar(raiz);return out}
+const dobrarNome=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLocaleUpperCase('pt-BR');
+function idPorNome(nome){const d=dobrarNome(nome);return d?(nosPlanos().find(n=>dobrarNome(n.name)===d)||{}).id||'':''}
+function nomeDe(id){return (nosPlanos().find(n=>n.id===id)||{}).name||''}
+window.CicluzLocationTree={seletor:seletorDeLocais,campo:campoDeLocais,janelaUnica,caminhoDe,idPorNome,nomeDe,mesmoNome:(a,b)=>dobrarNome(a)===dobrarNome(b)};
 const previous=showConfig;showConfig=function(type,origin){if(type!=='area')return previous(type,origin);showLocationTree(origin)};
 function showLocationTree(origin){const view=document.getElementById('sector-view'),box=document.getElementById('sector-content');view.classList.remove('financial-groups','account-orange');view.style.setProperty('--menu-accent','var(--section-accent,#ef4444)');view.querySelector('.panel').style.setProperty('--panel-color','var(--section-accent,#ef4444)');view.querySelector('.panel').style.setProperty('--panel-text','var(--section-text,#9c1c1c)');document.getElementById('sector-title').textContent='DES - Área / Setor / Local';document.getElementById('sector-path').textContent=menuCrumb(2,origin,'DES - Área / Setor / Local');view.querySelectorAll('.view-alphabetize,.financial-expand-all,.location-tool').forEach(el=>el.remove());setSectorBack(()=>menuBack(2,'Cadastros Geral Colaboradores')());box.replaceChildren();const opened=new Set();let locationQuery='';const fold=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');const matches=node=>fold(node.name).includes(fold(locationQuery))||(node.children||[]).some(matches);
 const button=(label,fn,cls='btn secondary')=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;b.onclick=fn;return b};

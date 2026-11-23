@@ -24,6 +24,7 @@
     email: '<path d="M3 6h18v12H3zM3 7l9 6 9-6"/>',
     sms: '<path d="M4 5h16v11H9l-5 4zM8 10h.01M12 10h.01M16 10h.01"/>',
     voltar: '<path d="m15 5-7 7 7 7"/>',
+    lixo: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
   };
   const svg = (path) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + path + '</svg>';
 
@@ -937,6 +938,15 @@
     caixa.append(b, painel);
     return caixa;
   }
+  /**
+   * Remover um item dentro do cadastro (linha de conversão, promoção): botão redondo VERMELHO com a lixeira (23/11/2026, Zé), o padrão
+   * de excluir do sistema. Redondo de propósito: a regra geral que pinta os botões retangulares das janelas na cor da tela não o pega.
+   */
+  function botaoRemover(rotulo, acao) {
+    const b = el('button', 'shortcut-circle compras-redondo perigo compras-remover'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo);
+    b.innerHTML = svg(ICONES.lixo); b.onclick = acao;
+    return b;
+  }
   /* =============== Janela de escolha em árvore (peça única) =============== */
   /**
    * Janela de escolha em árvore, no mesmo desenho da lista de origem (19/11/2026, Rodrigo): cada linha tem a seta de abrir, a caixa de
@@ -1041,6 +1051,23 @@
     return b;
   }
   /**
+   * Campo de UM local da árvore Área › Setor › Local (23/11/2026, Zé): o mesmo campo do grupo, abrindo a janela de áreas, setores e
+   * locais (CicluzLocationTree.janelaUnica). .value = id do nó, ou "txt:nome" para o texto antigo sem nó (aparece com o aviso).
+   * Para quem grava o NOME (área do produto, filtros): campoLocal.nomeGravado(campo) devolve o nome a gravar.
+   */
+  function campoLocal({ rotulo, titulo, valor = '', textoVazio = 'Selecione' }) {
+    const LT = window.CicluzLocationTree;
+    return campoArvore({
+      rotulo, valor, textoVazio,
+      janela: (atual, escolher) => LT.janelaUnica({ titulo: titulo || rotulo, atual: atual.startsWith('txt:') ? '' : atual, aoEscolher: escolher }),
+      texto: (v) => (v.startsWith('txt:') ? v.slice(4) + ' (sem vínculo na árvore)' : LT.caminhoDe(v)),
+    });
+  }
+  /** Valor inicial de um campoLocal a partir de um NOME gravado: o nó com esse nome ou, sem nó, o texto antigo. */
+  campoLocal.doNome = (nome) => (nome ? window.CicluzLocationTree.idPorNome(nome) || 'txt:' + nome : '');
+  /** Nome a gravar a partir do campo (o do nó ou o texto antigo). */
+  campoLocal.nomeGravado = (campo) => (campo.value.startsWith('txt:') ? campo.value.slice(4) : window.CicluzLocationTree.nomeDe(campo.value));
+  /**
    * Árvore dos grupos de mercadorias do cadastro do S2 (MER - Grupos de Mercadorias) para o campoArvore: grupo (id "g") › subgrupo
    * (id "g|s"). Inativos só entram se forem o valor atual. produtos (opcional): lista de produtos que viram as folhas (id "prd:id");
    * os que não têm grupo do cadastro ficam em "Produtos sem grupo". soProdutos: só o produto é marcável e os ramos sem produto somem.
@@ -1065,7 +1092,7 @@
   }
 
   window.CicluzComprasUI = {
-    seletorArvore, campoArvore, arvoreGruposMercadoria,
+    seletorArvore, campoArvore, campoLocal, arvoreGruposMercadoria, botaoRemover,
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
     tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,

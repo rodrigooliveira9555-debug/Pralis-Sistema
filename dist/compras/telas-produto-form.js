@@ -308,18 +308,10 @@
         // Setor de estoque e Área escolhidos na árvore Área › Setor › Local do S2, num campo que abre a janela de locais (23/11/2026,
         // Zé: "igual ao grupo e subgrupo"). O dado gravado não muda: o setor pelo id do nó (localId; texto antigo sem nó continua como
         // "txt:" com o aviso) e a área pelo nome, como sempre foi.
-        const LT = window.CicluzLocationTree;
-        const nomeDoNo = (id) => (nosLocais.find((n) => n.id === id) || {}).nome || '';
-        const campoLocal = (rotulo, valor, textoVazio) => U.campoArvore({
-          rotulo, valor, textoVazio,
-          janela: (atual, escolher) => LT.janelaUnica({ titulo: rotulo + ' do produto', atual: atual.startsWith('txt:') ? '' : atual, aoEscolher: escolher }),
-          texto: (v) => (v.startsWith('txt:') ? v.slice(4) + ' (sem vínculo na árvore)' : LT.caminhoDe(v)),
-        });
         const valorSetor = p?.localId && nosLocais.some((n) => n.id === p.localId) ? p.localId : (p?.setorEstoque ? 'txt:' + p.setorEstoque : '');
-        const setor = campoLocal('Setor de estoque', valorSetor, 'Selecione o setor ou local');
-        const noArea = p?.areaEstoque ? nosLocais.find((n) => n.nome === p.areaEstoque) : null;
-        const area = campoLocal('Área', noArea ? noArea.id : (p?.areaEstoque ? 'txt:' + p.areaEstoque : ''), 'Selecione a área');
-        const areaGravada = () => (area.value.startsWith('txt:') ? area.value.slice(4) : nomeDoNo(area.value));
+        const setor = U.campoLocal({ rotulo: 'Setor de estoque', titulo: 'Setor de estoque do produto', valor: valorSetor, textoVazio: 'Selecione o setor ou local' });
+        const area = U.campoLocal({ rotulo: 'Área', titulo: 'Área do produto', valor: U.campoLocal.doNome(p?.areaEstoque), textoVazio: 'Selecione a área' });
+        const areaGravada = () => U.campoLocal.nomeGravado(area);
         const min = entrada('number', p?.estoqueMin ?? '', { min: 0, step: 'any' });
         const max = entrada('number', p?.estoqueMax ?? '', { min: 0, step: 'any' });
         const listaLocais = el('datalist'); listaLocais.id = 'compras-locais-' + Date.now();
@@ -414,7 +406,7 @@
             if (typeof pr.agendada !== 'boolean') pr.agendada = Boolean(pr.dataInicio || pr.validaAte || pr.horaInicio || pr.horaFim || !(rp.tipo === 'diaria' || rp.tipo === 'semanal') || (Number(rp.intervalo) || 1) !== 1 || !pr.dias.every(Boolean));
             const card = el('div', 'compras-bloco compras-promo');
             const cab = el('div', 'compras-linha-info');
-            cab.append(el('b', null, 'Promoção ' + (i + 1)), botao('Remover', () => { promocoes.splice(i, 1); desenharPromos(); atualizar(); }, 'btn secondary perigo-texto'));
+            cab.append(el('b', null, 'Promoção ' + (i + 1)), U.botaoRemover('Remover promoção ' + (i + 1), () => { promocoes.splice(i, 1); desenharPromos(); atualizar(); }));
             const t = seletor([['valor', 'Valor fixo'], ['desconto', 'Desconto %']], pr.tipo);
             const v = entrada('text', pr.valor != null ? D.moeda(pr.valor) : '', { inputMode: 'decimal', placeholder: 'R$ 0,00' });
             const d = entrada('number', pr.descontoFracao != null ? Math.round(pr.descontoFracao * 10000) / 100 : '', { min: 0, max: 100, step: 'any' });
@@ -534,14 +526,14 @@
           listaConv.replaceChildren();
           if (!conversoes.length) listaConv.append(el('p', 'profiles-note', 'Sem conversão cadastrada.'));
           conversoes.forEach((c, i) => {
-            const linha = el('div', 'compras-item-urgente');
+            const linha = el('div', 'compras-conversao-linha');
             const un = seletor(unidades.concat(c.unidade && !unidades.includes(c.unidade) ? [c.unidade] : []), c.unidade, 'Unidade');
             const q = entrada('number', c.quantidade, { min: 0, step: 'any' });
             const ui = entrada('number', c.unidadesIndividuais, { min: 0, step: 'any' });
             un.onchange = () => { c.unidade = un.value; };
             q.oninput = () => { c.quantidade = num(q.value); };
             ui.oninput = () => { c.unidadesIndividuais = num(ui.value); };
-            linha.append(campoP('Unidade', un), campoP('Quantidade', q), campoP('Unidades individuais', ui), botao('Remover', () => { conversoes.splice(i, 1); desenharConv(); }, 'btn secondary perigo-texto'));
+            linha.append(campoP('Unidade', un), campoP('Quantidade', q), campoP('Unidades individuais', ui), U.botaoRemover('Remover conversão ' + (i + 1), () => { conversoes.splice(i, 1); desenharConv(); }));
             listaConv.append(linha);
           });
         }

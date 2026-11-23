@@ -90,8 +90,10 @@
         const g = { get value() { return arvGrupo.value.split('|')[0] || ''; } };
         const sg = { get value() { return arvGrupo.value.split('|')[1] || ''; } };
         const locais = S.locais();
-        const area = seletor(locais, f.area, 'Todas');
-        const setor = seletor(locais, f.setor, 'Todos');
+        // Área e setor escolhidos na árvore Área › Setor › Local (23/11/2026, Zé); gravam o nome, como antes. Local de venda é texto
+        // livre do produto (não é nó da árvore): continua na lista.
+        const area = U.campoLocal({ rotulo: 'Área', titulo: 'Área a contar', valor: U.campoLocal.doNome(f.area), textoVazio: 'Todas' });
+        const setor = U.campoLocal({ rotulo: 'Setor / local de estoque', titulo: 'Setor ou local de estoque a contar', valor: U.campoLocal.doNome(f.setor), textoVazio: 'Todos' });
         const local = seletor(locais, f.localVenda, 'Todos');
         const rank = new Set(f.ranking || []);
         const rk = el('div', 'compras-chips compras-largo');
@@ -113,7 +115,7 @@
       },
       salvar: (c) => {
         const r = SV.salvarAgendaConferencia({
-          filtro: { grupoId: c.g.value, subgrupoId: c.sg.value, area: c.area.value, setor: c.setor.value, localVenda: c.local.value, ranking: [...c.rank] },
+          filtro: { grupoId: c.g.value, subgrupoId: c.sg.value, area: U.campoLocal.nomeGravado(c.area), setor: U.campoLocal.nomeGravado(c.setor), localVenda: c.local.value, ranking: [...c.rank] },
           responsavelId: c.resp.value, inicio: c.inicio.value, hora: c.hora.value, regra: c.rep.regra(), termino: c.rep.termino(), orientacao: c.ori.value.trim(),
         }, a);
         if (r.erro) return r.erro;

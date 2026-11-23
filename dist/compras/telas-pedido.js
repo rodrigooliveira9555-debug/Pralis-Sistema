@@ -191,8 +191,11 @@
         const filtros = el('div', 'profiles-controls compras-largo');
         const busca = U.busca('Buscar produto', (v) => { filtro.busca = v; desenhaProdutos(); });
         const locais = S.locais();
-        const fArea = seletor(locais, '', 'Área / setor da loja'); fArea.onchange = () => { filtro.area = fArea.value; desenhaProdutos(); };
-        const fSetor = seletor(locais, '', 'Local de estoque'); fSetor.onchange = () => { filtro.setor = fSetor.value; desenhaProdutos(); };
+        // Área e local de estoque na árvore Área › Setor › Local (23/11/2026, Zé); o filtro compara o nome. Local de venda é texto livre.
+        const fArea = U.campoLocal({ rotulo: 'Área / setor da loja', titulo: 'Filtrar pela área ou setor da loja', textoVazio: 'Área / setor da loja' });
+        fArea.addEventListener('change', () => { filtro.area = U.campoLocal.nomeGravado(fArea); desenhaProdutos(); });
+        const fSetor = U.campoLocal({ rotulo: 'Local de estoque', titulo: 'Filtrar pelo local de estoque', textoVazio: 'Local de estoque' });
+        fSetor.addEventListener('change', () => { filtro.setor = U.campoLocal.nomeGravado(fSetor); desenhaProdutos(); });
         const fLocal = seletor(locais, '', 'Local de venda'); fLocal.onchange = () => { filtro.local = fLocal.value; desenhaProdutos(); };
         filtros.append(busca, fArea, fSetor, fLocal);
         const acoes = el('div', 'compras-filtros compras-largo');
@@ -210,7 +213,7 @@
         function listados() {
           return S.dados.produtos.filter((p) => p.status === 'ativo' && p.liberadoCompra
             && (!grupo.value || p.grupoId === grupo.value) && (!sub.value || p.subgrupoId === sub.value)
-            && (!filtro.area || p.areaEstoque === filtro.area) && (!filtro.setor || p.setorEstoque === filtro.setor) && (!filtro.local || S.locaisDeVenda(p).includes(filtro.local))
+            && (!filtro.area || SV.mesmoLocal(p.areaEstoque, filtro.area)) && (!filtro.setor || SV.mesmoLocal(p.setorEstoque, filtro.setor)) && (!filtro.local || S.locaisDeVenda(p).some((l) => SV.mesmoLocal(l, filtro.local)))
             && (!filtro.soMarcados || marcados.has(p.id))
             && U.dobrar(p.descricao + ' ' + (p.codigoInterno || '') + ' ' + (p.codigoBarras || '')).includes(U.dobrar(filtro.busca)));
         }

@@ -171,7 +171,11 @@ const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
   ok(valores.bal === 'sim' && valores.val === '15' && valores.emb === 'CX' && valores.qtd === '12', 'Reaberto: balança e como se compra');
   ok(valores.min === '12' && valores.max === '48' && valores.l2 === 'CAIXA' && valores.s2 === 'CAIXA' && valores.area === 'biscoitos', 'Reaberto: estoque e venda');
   ok(valores.margem === '50' && valores.cest === '1234567', 'Reaberto: comercial e fiscal');
-  ok(await d2.locator('.compras-foto-area img').count() === 1 && await d2.locator('.compras-promo').count() === 1 && await d2.locator('.compras-conversoes .compras-item-urgente').count() === 1, 'Reaberto: foto, promoção e conversão');
+  ok(await d2.locator('.compras-foto-area img').count() === 1 && await d2.locator('.compras-promo').count() === 1 && await d2.locator('.compras-conversoes .compras-conversao-linha').count() === 1, 'Reaberto: foto, promoção e conversão');
+  // Remover dentro do cadastro: botão redondo vermelho com lixeira (23/11/2026), não o retangular na cor da tela.
+  const corRemover = await d2.getByRole('button', { name: 'Remover conversão 1', exact: true }).evaluate((b) => getComputedStyle(b).backgroundColor);
+  const [rr, gg, bb] = corRemover.match(/[0-9]+/g).map(Number);
+  ok(rr > 200 && gg < 110 && bb < 110, 'Remover conversão é o botão redondo vermelho (' + corRemover + ')');
 
   // Histórico de nomes ao trocar o nome
   await sec(p, 'Produto').getByLabel('Nome do produto', { exact: true }).fill('Biscoito Integral Aveia');

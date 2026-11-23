@@ -60,3 +60,21 @@ Implementado sobre a tela do Rodrigo, sem trocar o formato dele: `cicluz-ponto-v
 
 ## P-41 — Acesso por Tela: nível de acesso por tela do menu (19/11/2026)
 Washington mandou um esboço: o menu inteiro aberto, um ícone de nível em cada tela (lançar, editar, visualizar, com e sem o pagamento) e, no topo, Usuário / colaborador, Cargo e Área. A tela está feita só como esboço (cartão **Acesso por Tela** em Permissões), com dados de exemplo e sem backend. **Precisa do Washington/Rodrigo confirmar o que foi assumido:** (1) "só pagar" aparece duas vezes no esboço (lançar cortado e editar cortado): foi tratado como o mesmo poder, com dois desenhos; (2) "visualizar antes de pagar" e "depois de pagar": assumido que antes vê só o não pago e depois vê também o já pago; (3) um nível único por tela ou combinação (com vários cargos a soma de níveis não é única); (4) **respondida em 19/11/2026 (Washington, opção C):** as ações que não são lançar, editar, pagar nem ver (17 no catálogo de hoje: Lançamentos 5, Caixa 3, Transferências 2, Compras 3, Pessoas 1, Administração 3) ficam numa **aba "Ações especiais" da própria tela Acesso por Tela**, valendo para a área inteira (suposto, não respondido) e incluindo as ações de fluxo (sangria, conferir fechamento, aprovar pedido, confirmar lacre; suposto); (5) "usuário / colaborador": hoje a conta de acesso e o colaborador do DP são cadastros separados; (6) o botão "+" do esboço é vermelho e foi feito no roxo de Configurações. **Para valer de verdade:** modelo de dados por tela (migration, a autorizar), conversão dos cargos atuais (31 permissões em 8 áreas) e bloqueio na API de cada módulo (hoje só Lançamentos e Configurações têm API).
+
+## P-42 — Cadastros novos que ficavam só no aparelho (23/11/2026)
+**Resolvida em parte (Zé):** passam a ir para o servidor (lista em `servidor/shared/src/documentos.ts`, adotadas do aparelho na
+primeira entrada, sem apagar o que já foi digitado) a tabela TACO e os ingredientes ligados a ela, os prestadores de serviço, a
+configuração da comunicação da Gestão de Pessoas, a lista de exames complementares, as categorias da matriz disciplinar e os tipos
+de uniforme — nenhum tem dado pessoal. **Continuam só no aparelho** o ponto (`cicluz-ponto-v1`) e os custos da folha
+(`cicluz-folha-custos-v1`): têm dado de colaborador e dependem da regra de LGPD da **P-11**. Vale a partir da próxima publicação da API.
+
+## P-43 — Conversões de unidade do produto: para que usar? (23/11/2026)
+O cadastro de produto tem "Conversões de unidade" (ex.: 1 CX = 12 unidades), herdado do cadastro do S1. Hoje o S2 **só guarda**:
+nenhuma conta usa (recebimento, estoque, produção), e o único efeito é impedir excluir uma unidade em uso. **Pergunta ao Rodrigo:**
+deve servir para receber numa unidade (caixa) e o estoque entrar em outra (unidades)? Em quais telas? Sem a resposta, nada é
+calculado com ela. | Rodrigo | regra nova de estoque |
+
+## P-44 — Folha de pagamento de demonstração: os valores são fictícios? (23/11/2026)
+`dist/folhas-conplus-demo.js` (11/11/2026) diz que tudo é fictício e os nomes são "Colaborador Demonstração NN", mas os salários,
+cargos, datas de admissão e eventos parecem vir de uma planilha real. Se forem valores reais, mesmo sem nome, precisam ser trocados
+por valores inventados (regra 8 do CLAUDE.md: nada de salário real no repositório). **Confirmar com quem gerou o arquivo.** | quem fez a tela da folha | possível dado real no repositório |

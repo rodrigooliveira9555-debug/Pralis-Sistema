@@ -14,6 +14,15 @@ no mesmo dia: a linha da árvore cresce quando o nome quebra (320 px), em vez de
 campo, abrindo a janela de **áreas, setores e locais** (o desenho do cadastro de locais, com cor e sigla da área) em **escolha única**
 (`CicluzLocationTree.janelaUnica`). O dado não muda: setor e local do estoque pelo id do nó; área pelo nome; texto antigo sem nó
 aparece como "… (sem vínculo na árvore)". Local sem cor (ex.: vindo de importação) usa a cor da área de cima e não quebra a janela.
+Os filtros **Área** e **Setor / local de estoque** do agendamento da Contagem e da Agenda de Pedidos também (peça única
+`U.campoLocal`); gravam e comparam o nome sem olhar maiúsculas, minúsculas e acentos. **Local de venda** continua lista: é texto
+livre do produto, não é nó da árvore.
+
+## Excluir é vermelho em todo o sistema (23/11/2026)
+A regra que pinta os botões das janelas na cor da tela (05/11/2026) pegava também os de excluir: "Remover", "Excluir compromisso"
+e outros apareciam verdes ou roxos. Ela deixa de fora `.perigo` e `.perigo-texto`, que voltam ao vermelho. Para remover um item
+**dentro** do cadastro (linha de conversão de unidade, promoção do produto), o botão é o **redondo vermelho com a lixeira branca**
+(`U.botaoRemover`), na ponta da linha — não um botão largo.
 
 ## Configurações → Permissões → Acesso por Tela: esboço do nível de acesso por tela (19/11/2026)
 Pedido do Washington, a partir de um esboço dele. Novo cartão **Acesso por Tela** em Permissões (`dist/acessos/telas.js`, dados de exemplo em `telas-dados.js`, estilos em `acessos.css`). **É um esboço sem backend: nada é gravado e nenhum acesso muda.** Mostra o **menu inteiro aberto** (grupo › seção › tela, 117 telas, as chaves são as `data-menu-item-key` dos cartões do menu) e, em cada tela, o **ícone do nível de acesso** (só o ícone e o nome, **sem caixa de seleção**; nada quando é "Sem acesso") e o botão redondo **"+"**: as opções do nível só aparecem quando o "+" da linha é tocado (e o "+" vira "×" enquanto está aberto).
