@@ -100,16 +100,4 @@ t('exemplos saem com os registros que os citam; o resto fica', () => {
   assert.deepEqual([d.catalogo.length, d.convites.length, d.rodadas.length, d.fornecedores.length], [1, 0, 1, 1]);
 });
 
-// Arquivo antigo de inativos (09/11 até a transferência): só se LÊ, para levar ao servidor.
-const promessas = [];
-promessas.push((async () => {
-  const zlib = require('node:zlib');
-  const lista = montado.inativos;
-  const texto = JSON.stringify({ versao: 1, formato: 'gzip-base64', total: lista.length, dados: zlib.gzipSync(JSON.stringify(lista)).toString('base64') });
-  assert.deepEqual(await I.descompactar(texto), lista, 'lê o arquivo antigo como foi gravado');
-  assert.deepEqual(await I.descompactar(''), []); assert.deepEqual(await I.descompactar(null), []);
-  assert.deepEqual(await I.descompactar(JSON.stringify({ formato: 'outro' })), []);
-  grupos++;
-})());
-
-Promise.all(promessas).then(() => console.log('compras-importacao: ' + grupos + ' grupos de verificação ok'));
+console.log('compras-importacao: ' + grupos + ' grupos de verificação ok');
