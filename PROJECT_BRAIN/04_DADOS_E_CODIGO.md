@@ -34,7 +34,9 @@
   [{ avaliadoId, porId, papel gestor|auto, valor, comentario, em }] }, só depois de concluído e sem mudar.
   Chat e arquivos NÃO ficam no documento: tabelas `agenda_mensagens`, `agenda_chat_leituras` e `agenda_arquivos`
   (até 10 MB, tipo conferido pelo conteúdo), API `/api/agenda/...` (`servidor/api/src/agenda`), com a permissão do
-  compromisso lida do documento a cada pedido (essa parte é sigilo de verdade, ao contrário do DT-15).
+  compromisso lida do documento a cada pedido. ~~(essa parte é sigilo de verdade, ao contrário do DT-15)~~ **SUPERADA em
+  23/11/2026:** não é sigilo, porque qualquer usuário logado regrava o documento (G1 de `docs/REVISAO_AGENDA_2026-11-23.md`).
+  Correção planejada em `docs/AGENDA_NO_SERVIDOR_PLANO.md` (P-45).
   Relações do mapa mental: `relacoes` [{ id, de, para, rotulo }] (somem junto com o compromisso). Preferência do
   aparelho: `cicluz-agenda-mapa` (estrutura, agrupamento, recolhidos).
   Código: `dist/agenda/` (dominio, dados, calendario, kanban, telas, alertas, agenda.css).
