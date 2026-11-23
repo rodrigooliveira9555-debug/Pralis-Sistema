@@ -1039,21 +1039,26 @@
   }
   /**
    * Árvore dos grupos de mercadorias do cadastro do S2 (MER - Grupos de Mercadorias) para o campoArvore: grupo (id "g") › subgrupo
-   * (id "g|s"). Inativos só entram se forem o valor atual. produtos (opcional): lista de produtos que viram as folhas (id "prd:id").
+   * (id "g|s"). Inativos só entram se forem o valor atual. produtos (opcional): lista de produtos que viram as folhas (id "prd:id");
+   * os que não têm grupo do cadastro ficam em "Produtos sem grupo". soProdutos: só o produto é marcável e os ramos sem produto somem.
    */
   function arvoreGruposMercadoria(grupos, { atual = '', produtos = null, soProdutos = false } = {}) {
     const [ga, sa] = String(atual).split('|');
     const folha = (p) => ({ id: 'prd:' + p.id, nome: p.descricao, ativo: p.status !== 'inativo', folha: true, conta: 'Produto' });
     const nProd = (q) => (q === 1 ? '1 produto' : q + ' produtos');
-    return grupos.filter((g) => g.ativo || g.id === ga).map((g) => {
+    const arvore = grupos.filter((g) => g.ativo || g.id === ga).map((g) => {
       const subs = g.subgrupos.filter((s) => (g.ativo && s.ativo) || (g.id === ga && s.id === sa)).map((s) => {
         const itens = produtos ? produtos.filter((p) => p.grupoId === g.id && p.subgrupoId === s.id).map(folha) : null;
         return { id: g.id + '|' + s.id, nome: g.nome + ' › ' + s.nome, ativo: g.ativo && s.ativo, selecionavel: !soProdutos, ...(itens ? { filhos: itens, conta: nProd(itens.length) } : { conta: 'Subgrupo' }) };
       });
       const diretos = produtos ? produtos.filter((p) => p.grupoId === g.id && !g.subgrupos.some((s) => s.id === p.subgrupoId)).map(folha) : [];
       const contaG = (g.subgrupos.length === 1 ? '1 subgrupo' : g.subgrupos.length + ' subgrupos') + (produtos ? ' · ' + nProd(produtos.filter((p) => p.grupoId === g.id).length) : '');
-      return { id: g.id, nome: g.nome, ativo: g.ativo, selecionavel: !soProdutos, conta: contaG, filhos: [...subs, ...diretos] };
+      return { id: g.id, nome: g.nome, ativo: g.ativo, selecionavel: !soProdutos, conta: contaG, filhos: [...subs.filter((s) => !soProdutos || s.filhos.length), ...diretos] };
     });
+    if (!produtos) return arvore;
+    const semGrupo = produtos.filter((p) => !grupos.some((g) => g.id === p.grupoId)).map(folha);
+    if (semGrupo.length) arvore.push({ id: 'sem-grupo', nome: 'Produtos sem grupo', ativo: true, selecionavel: false, conta: nProd(semGrupo.length), filhos: semGrupo });
+    return soProdutos ? arvore.filter((g) => g.filhos.length) : arvore;
   }
 
   window.CicluzComprasUI = {

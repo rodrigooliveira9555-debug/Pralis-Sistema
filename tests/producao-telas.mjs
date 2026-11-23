@@ -8,6 +8,7 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { iniciar, SESSAO_LOCAL } from './servidor.mjs';
+import { escolherNaArvore } from './ajuda-arvore.mjs';
 
 const { servidor, url } = await iniciar();
 // Microfone de mentira do Chromium, para testar a observação em áudio do bem sem aparelho nem permissão.
@@ -190,7 +191,13 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   await p.evaluate(() => CicluzProducao.abrir('produtos'));
   await mais(p);
   d = dialogo(p);
-  await d.getByLabel('Produto *', { exact: true }).selectOption('p-pao-teste');
+  // Produto escolhido na árvore grupo › subgrupo › produto (23/11/2026, Zé); grupo e subgrupo não são marcáveis aqui.
+  await d.getByRole('button', { name: 'Produto *', exact: true }).click();
+  const jp = p.locator('dialog.compras-dialog[open]').last();
+  ok(await jp.getByRole('checkbox', { name: 'Selecionar FAB. PRÓPRIA', exact: true }).isHidden(), 'Na árvore do produto da produção, o grupo não é marcável (só o produto)');
+  await jp.locator('.people-close-control').click();
+  await escolherNaArvore(p, d.getByRole('button', { name: 'Produto *', exact: true }), { grupo: 'FAB. PRÓPRIA', subgrupo: 'PANIFICAÇÃO', item: 'PÃO DE SAL' });
+  ok((await d.getByRole('button', { name: 'Produto *', exact: true }).textContent()).trim() === 'PÃO DE SAL', 'O campo mostra o produto escolhido na árvore');
   ok((await d.getByLabel('Utensílio *', { exact: true }).locator('option').nth(1).textContent()).startsWith('ASSADEIRA'), 'Utensílios aparecem primeiro na lista');
   await d.getByLabel('Utensílio *', { exact: true }).selectOption(assadeiraId);
   await d.getByLabel('Quantos na largura *', { exact: true }).fill('5');
