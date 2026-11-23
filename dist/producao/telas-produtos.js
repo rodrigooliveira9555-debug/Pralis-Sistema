@@ -71,14 +71,10 @@
   }
 
   /** Produtos que ainda podem ser ligados: ativos, sem configuração. Fabricação própria primeiro. */
+  /** Produtos que ainda podem ser ligados à produção: ativos e não ligados. A árvore os agrupa por grupo e subgrupo (FAB. PRÓPRIA aparece lá). */
   function candidatos() {
     const ligados = new Set(S.producao.dados.produtos.map((c) => c.produtoId));
-    const grupos = C.gruposMercadoria();
-    const nomeG = (id) => (grupos.find((g) => g.id === id) || {}).nome || '';
-    const fab = (p) => /FAB\.? PR[ÓO]PRIA/i.test(nomeG(p.grupoId));
-    return S.produtos().filter((p) => p.status === 'ativo' && !ligados.has(p.id))
-      .sort((a, b) => (fab(b) - fab(a)) || a.descricao.localeCompare(b.descricao, 'pt-BR'))
-      .map((p) => [p.id, p.descricao + (fab(p) ? '' : ' · ' + (nomeG(p.grupoId) || 'sem grupo'))]);
+    return S.produtos().filter((p) => p.status === 'ativo' && !ligados.has(p.id)).sort((a, b) => a.descricao.localeCompare(b.descricao, 'pt-BR'));
   }
 
   function formulario(c) {
@@ -89,10 +85,18 @@
       montar: (form) => {
         const sec = (t) => { const s = el('fieldset', 'compras-fieldset'); s.append(el('legend', null, t)); form.append(s); return s; };
         const s0 = sec('Produto');
-        const produto = seletor(c ? [[c.produtoId, p0.descricao]] : candidatos(), c?.produtoId || '', c ? undefined : 'Selecione');
-        produto.disabled = Boolean(c);
+        // Produto novo: escolhido na árvore grupo › subgrupo › produto do cadastro (23/11/2026, Zé); só o produto é marcável.
+        // Produto já ligado: o campo só mostra qual é (não muda).
+        const arvProduto = c ? null : U.campoArvore({
+          rotulo: 'Produto', titulo: 'Produto a ligar à produção', sigla: 'MER', iconeFolha: U.ICONES.produto, rotuloBusca: 'Buscar grupo, subgrupo ou produto', obrigatorio: true,
+          vazio: 'Nenhum produto ativo para ligar. Cadastre antes em Saídas · Mercadorias → Cadastros Geral → MER - Produtos.',
+          nos: () => U.arvoreGruposMercadoria(C.gruposMercadoria(), { produtos: candidatos(), soProdutos: true }), textoVazio: 'Selecione o produto',
+        });
+        const fixo = c ? seletor([[c.produtoId, p0.descricao]], c.produtoId) : null;
+        if (fixo) fixo.disabled = true;
+        const produto = c ? fixo : { get value() { return arvProduto.value.replace(/^prd:/, ''); }, addEventListener: (...a) => arvProduto.addEventListener(...a) };
         const processo = seletor(D.PROCESSOS, c?.processoPrincipal || '', 'Selecione');
-        s0.append(campo('Produto *', produto, c ? null : 'Não achou? Cadastre antes em Saídas · Mercadorias → Cadastros Geral → MER - Produtos (grupo FAB. PRÓPRIA).'), campo('Principal processo', processo));
+        s0.append(campo('Produto *', c ? fixo : arvProduto, c ? null : 'Não achou? Cadastre antes em Saídas · Mercadorias → Cadastros Geral → MER - Produtos (grupo FAB. PRÓPRIA).'), campo('Principal processo', processo));
 
         const s1 = sec('Como se pede: utensílio de fornada');
         const temFormato = el('label', 'compras-interruptor compras-largo');
@@ -124,7 +128,8 @@
         const min = entrada('number', c?.estoqueMin ?? '', { min: 0, inputMode: 'decimal' });
         const max = entrada('number', c?.estoqueMax ?? '', { min: 0, inputMode: 'decimal' });
         const prodMax = entrada('number', c?.producaoMax ?? '', { min: 0, inputMode: 'decimal' });
-        const localEst = seletor(S.locais().map((l) => [l.id, l.caminho]), c?.localEstoqueId || '', 'Sem local');
+        // Local do estoque escolhido na árvore Área › Setor › Local (23/11/2026, Zé), como o setor de estoque do produto. Grava o id do nó.
+        const localEst = U.campoLocal({ rotulo: 'Local do estoque', titulo: 'Local do estoque do produto', valor: c?.localEstoqueId || '', textoVazio: 'Sem local' });
         const dicaMult = el('small', 'profiles-note');
         s2.append(estL, campo('Estoque mínimo', min), campo('Estoque máximo', max), campo('Produção máxima por pedido', prodMax), campo('Local do estoque', localEst), dicaMult);
 

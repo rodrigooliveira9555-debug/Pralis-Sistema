@@ -81,7 +81,7 @@
     const barra = el('div', 'folha-barra'), mesBox = el('div', 'folha-mes'), rot = el('b', null, rotuloMes(mes)); rot.setAttribute('aria-live', 'polite');
     mesBox.append(redondo('Mês anterior', 'm15 6-6 6 6 6', () => { mes = andarMes(mes, -1); desenharRelatorio(); }), rot, redondo('Próximo mês', 'm9 6 6 6-6 6', () => { mes = andarMes(mes, 1); desenharRelatorio(); }));
     const botaoColunas = U.botaoTitulo('Colunas', 'Escolher os reflexos que aparecem na tabela', () => {
-      window.CicluzContratos.seletorArvore({ titulo: 'Colunas do relatório', sigla: 'DES', cores: cores(), rotuloBusca: 'Buscar reflexo', nos: () => cols.map((c) => ({ id: c.id, nome: c.nome, ativo: true, conta: 'Reflexo da folha' })), marcados: new Set(visiveis.map((c) => c.id)),
+      window.CicluzComprasUI.seletorArvore({ titulo: 'Colunas do relatório', sigla: 'DES', cores: cores(), rotuloBusca: 'Buscar reflexo', nos: () => cols.map((c) => ({ id: c.id, nome: c.nome, ativo: true, conta: 'Reflexo da folha' })), marcados: new Set(visiveis.map((c) => c.id)),
         aoConfirmar: (s) => { try { localStorage.setItem(PREF, JSON.stringify(cols.filter((c) => !s.has(c.id)).map((c) => c.id))); } catch (e) { /* preferência do aparelho */ } desenharRelatorio(); } });
     }, '<path d="M4 5h16v14H4zM9 5v14M15 5v14"/>');
     barra.append(mesBox);

@@ -35,8 +35,13 @@ describe("login", () => {
     expect(corpo.data.chavesSincronizadas).toContain("cicluz-agenda-v1");
     expect(corpo.data.chavesSincronizadas).toContain("cicluz-producao-v1");
     expect(corpo.data.chavesSincronizadas).toContain("cicluz-patrimonio-v1");
-    expect(corpo.data.chavesSincronizadas).toContain("cicluz-produtos-arquivo-v1");
-    expect(corpo.data.chavesAdotadas).toEqual(["cicluz-compras-v1", "cicluz-agenda-v1", "cicluz-producao-v1", "cicluz-patrimonio-v1", "cicluz-produtos-arquivo-v1"]);
+    // O arquivo antigo de inativos saiu depois da transferência ao servidor (23/11/2026).
+    expect(corpo.data.chavesSincronizadas).not.toContain("cicluz-produtos-arquivo-v1");
+    const novas = ["cicluz-taco-v1", "cicluz-prestadores-v1", "cicluz-gp-config-v1", "cicluz-exames-complementares-v1", "cicluz-ocorrencias-matriz-v1", "cicluz-uniformes-tipos-v1"];
+    for (const chave of novas) expect(corpo.data.chavesSincronizadas).toContain(chave);
+    // Dado de colaborador fica fora até a regra de LGPD (P-11).
+    for (const chave of ["cicluz-ponto-v1", "cicluz-folha-custos-v1", "cicluz-cadastro-completo-v1"]) expect(corpo.data.chavesSincronizadas).not.toContain(chave);
+    expect(corpo.data.chavesAdotadas).toEqual(["cicluz-compras-v1", "cicluz-agenda-v1", "cicluz-producao-v1", "cicluz-patrimonio-v1", ...novas]);
   });
 
   it("recusa senha errada sem criar sessão", async () => {

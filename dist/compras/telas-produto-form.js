@@ -132,11 +132,14 @@
       return ids;
     });
     sobram.forEach((id) => { if (A.item(id)) A.excluirItem(id); });
-    S.transacao((d) => {
-      const alvo = d.produtos.find((x) => x.id === produto.id);
-      if (alvo) (alvo.promocoes || []).forEach((pr, i) => { if (idsPorPromocao[i] && idsPorPromocao[i].length) pr.agendaItemIds = idsPorPromocao[i]; else delete pr.agendaItemIds; });
+    // A ligação promoção → compromissos volta como promoções novas: quem chama grava no produto (no servidor, o produto não
+    // mora no documento do Compras, então gravar em d.produtos se perderia).
+    const promocoes = (produto.promocoes || []).map((pr, i) => {
+      const nova = { ...pr };
+      if (idsPorPromocao[i] && idsPorPromocao[i].length) nova.agendaItemIds = idsPorPromocao[i]; else delete nova.agendaItemIds;
+      return nova;
     });
-    return { total: idsPorPromocao.reduce((n, ids) => n + ids.length, 0), falhas };
+    return { total: idsPorPromocao.reduce((n, ids) => n + ids.length, 0), falhas, promocoes };
   }
   function repeticaoMostrada(pr) {
     const e = repeticaoEscolhida.get(pr); const r = pr.repeticao;
@@ -201,7 +204,7 @@
 
     const dlg = U.dialogo({
       titulo: novo ? 'Cadastro produto' : 'Editar produto',
-      subtitulo: novo ? 'Os dados ficam salvos só neste navegador.' : (p.codigoInterno ? 'Código interno ' + p.codigoInterno : ''),
+      subtitulo: novo ? 'O código interno é gerado pelo servidor ao salvar.' : (p.codigoInterno ? 'Código interno ' + p.codigoInterno : ''),
       largo: true,
       rotuloSalvar: 'Salvar produto',
       montar: (form) => {
@@ -289,22 +292,26 @@
         /* ===== Revenda ou transformação ===== */
         const s2 = sec('Revenda ou transformação', 'Classificação e operação do produto', eTransf);
         const tipo = seletor([['revenda', 'Revenda'], ['transformacao', 'Transformação']], p?.tipo || 'revenda');
-        const grupo = seletor(grupos.filter((g) => g.ativo || g.id === p?.grupoId).map((g) => [g.id, g.nome]), p?.grupoId || '', 'Selecione o grupo');
-        const sub = el('select');
-        const montarSub = (manter) => {
-          const g = grupos.find((x) => x.id === grupo.value);
-          sub.replaceChildren(new Option('Sem subgrupo', ''));
-          (g ? g.subgrupos.filter((s) => s.ativo || s.id === p?.subgrupoId) : []).forEach((s) => sub.add(new Option(s.nome, s.id)));
-          sub.value = manter && g && g.subgrupos.some((s) => s.id === p?.subgrupoId) ? p.subgrupoId : '';
-        };
-        montarSub(true);
-        s2.append(campoP('Tipo', tipo), campoP('Grupo de mercadorias *', grupo, DICAS.grupo, 'Vem do cadastro MER - Grupos de Mercadorias.', 'grupoId'), campoP('Subgrupo', sub, null, 'Quando o subgrupo tem regra própria, ela vale no lugar da do grupo.'));
+        // Grupo e subgrupo num campo só, escolhidos na árvore do cadastro MER - Grupos de Mercadorias (23/11/2026, Zé): toca no
+        // grupo, abre os subgrupos, marca um. O valor continua gravado como grupoId e subgrupoId (sem migração).
+        const gAtual = grupos.find((g) => g.id === p?.grupoId);
+        const valorGrupo = gAtual ? gAtual.id + (gAtual.subgrupos.some((s) => s.id === p?.subgrupoId) ? '|' + p.subgrupoId : '') : (p?.grupoId || '');
+        const arvGrupo = U.campoArvore({
+          rotulo: 'Grupo de mercadorias', titulo: 'Grupo de mercadorias do produto', sigla: 'MER', rotuloBusca: 'Buscar grupo ou subgrupo',
+          vazio: 'Nenhum grupo de mercadorias cadastrado em Saídas › Cadastros Geral › MER - Grupos de Mercadorias.',
+          nos: () => U.arvoreGruposMercadoria(grupos, { atual: valorGrupo }), valor: valorGrupo, textoVazio: 'Selecione o grupo ou subgrupo',
+        });
+        const grupo = { get value() { return arvGrupo.value.split('|')[0] || ''; }, addEventListener: (...a) => arvGrupo.addEventListener(...a) };
+        const sub = { get value() { return arvGrupo.value.split('|')[1] || ''; } };
+        s2.append(campoP('Tipo', tipo), campoP('Grupo de mercadorias *', arvGrupo, DICAS.grupo, 'Grupo ou subgrupo do cadastro MER - Grupos de Mercadorias. Quando o subgrupo tem regra própria, ela vale no lugar da do grupo.', 'grupoId'));
         const sLoja = sec('Desta loja', 'Estoque, pontos de venda e preço', eLoja);
-        // Setor de estoque = nó da árvore de locais (vínculo pelo id). Texto antigo sem nó continua como opção, com o alerta.
-        const textosSemNo = locais.concat(p?.setorEstoque && !locais.includes(p.setorEstoque) ? [p.setorEstoque] : []).filter((t) => !nosLocais.some((n) => n.nome === t));
+        // Setor de estoque e Área escolhidos na árvore Área › Setor › Local do S2, num campo que abre a janela de locais (23/11/2026,
+        // Zé: "igual ao grupo e subgrupo"). O dado gravado não muda: o setor pelo id do nó (localId; texto antigo sem nó continua como
+        // "txt:" com o aviso) e a área pelo nome, como sempre foi.
         const valorSetor = p?.localId && nosLocais.some((n) => n.id === p.localId) ? p.localId : (p?.setorEstoque ? 'txt:' + p.setorEstoque : '');
-        const setor = seletor(nosLocais.map((n) => [n.id, n.caminho]).concat(textosSemNo.map((t) => ['txt:' + t, t + ' (sem vínculo na árvore)'])), valorSetor, 'Selecione');
-        const area = seletor(locais.concat(p?.areaEstoque && !locais.includes(p.areaEstoque) ? [p.areaEstoque] : []), p?.areaEstoque || '', 'Selecione');
+        const setor = U.campoLocal({ rotulo: 'Setor de estoque', titulo: 'Setor de estoque do produto', valor: valorSetor, textoVazio: 'Selecione o setor ou local' });
+        const area = U.campoLocal({ rotulo: 'Área', titulo: 'Área do produto', valor: U.campoLocal.doNome(p?.areaEstoque), textoVazio: 'Selecione a área' });
+        const areaGravada = () => U.campoLocal.nomeGravado(area);
         const min = entrada('number', p?.estoqueMin ?? '', { min: 0, step: 'any' });
         const max = entrada('number', p?.estoqueMax ?? '', { min: 0, step: 'any' });
         const listaLocais = el('datalist'); listaLocais.id = 'compras-locais-' + Date.now();
@@ -399,7 +406,7 @@
             if (typeof pr.agendada !== 'boolean') pr.agendada = Boolean(pr.dataInicio || pr.validaAte || pr.horaInicio || pr.horaFim || !(rp.tipo === 'diaria' || rp.tipo === 'semanal') || (Number(rp.intervalo) || 1) !== 1 || !pr.dias.every(Boolean));
             const card = el('div', 'compras-bloco compras-promo');
             const cab = el('div', 'compras-linha-info');
-            cab.append(el('b', null, 'Promoção ' + (i + 1)), botao('Remover', () => { promocoes.splice(i, 1); desenharPromos(); atualizar(); }, 'btn secondary perigo-texto'));
+            cab.append(el('b', null, 'Promoção ' + (i + 1)), U.botaoRemover('Remover promoção ' + (i + 1), () => { promocoes.splice(i, 1); desenharPromos(); atualizar(); }));
             const t = seletor([['valor', 'Valor fixo'], ['desconto', 'Desconto %']], pr.tipo);
             const v = entrada('text', pr.valor != null ? D.moeda(pr.valor) : '', { inputMode: 'decimal', placeholder: 'R$ 0,00' });
             const d = entrada('number', pr.descontoFracao != null ? Math.round(pr.descontoFracao * 10000) / 100 : '', { min: 0, max: 100, step: 'any' });
@@ -426,21 +433,28 @@
             const gradeMes = el('div', 'compras-grade-escolha em-7');
             const gradeAno = el('div', 'compras-grade-escolha em-4');
             const alternar = (lista, valor) => (lista.includes(valor) ? lista.filter((x) => x !== valor) : [...lista, valor].sort((a, b) => a - b));
+            // Os botões de dia e de mês são criados UMA vez e só têm a marcação atualizada. Recriá-los a cada mudança fazia o
+            // 1º toque se perder logo depois de editar uma data: o "change" da data (ao sair do campo) redesenhava a lista entre
+            // o apertar e o soltar, e o botão tocado era trocado antes do clique (defeito achado em 23/11/2026).
+            const botoesDias = DIAS_LISTA.map(([j, nomeDia]) => {
+              const b = el('button', 'compras-dia-linha');
+              b.type = 'button';
+              b.append(el('span', null, nomeDia));
+              b.insertAdjacentHTML('beforeend', VISTO);
+              b.onclick = () => { pr.dias[j] = !pr.dias[j]; pintar(); atualizar(); };
+              b.setAttribute('aria-label', 'Promoção ' + (i + 1) + ': ' + R.DIAS_PROMO[j][1]);
+              return [j, b];
+            });
+            dias.append(...botoesDias.map(([, b]) => b));
+            const lista = (v) => (Array.isArray(v) ? v : []);
+            const celulasMes = Array.from({ length: 31 }, (_, k) => celula(String(k + 1), false, 'dia ' + (k + 1), () => { rp.diasMes = alternar(lista(rp.diasMes), k + 1); pintar(); atualizar(); }));
+            gradeMes.append(...celulasMes);
+            const celulasAno = MESES_CURTOS.map((m, k) => celula(m, false, m, () => { rp.meses = alternar(lista(rp.meses), k + 1); pintar(); atualizar(); }));
+            gradeAno.append(...celulasAno);
             const marca = () => {
-              dias.replaceChildren(...DIAS_LISTA.map(([j, nomeDia]) => {
-                const b = el('button', 'compras-dia-linha' + (pr.dias[j] ? ' marcado' : ''));
-                b.type = 'button';
-                b.append(el('span', null, nomeDia));
-                b.insertAdjacentHTML('beforeend', VISTO);
-                b.onclick = () => { pr.dias[j] = !pr.dias[j]; pintar(); atualizar(); };
-                b.setAttribute('aria-pressed', String(Boolean(pr.dias[j])));
-                b.setAttribute('aria-label', 'Promoção ' + (i + 1) + ': ' + R.DIAS_PROMO[j][1]);
-                return b;
-              }));
-              const diasMes = Array.isArray(rp.diasMes) ? rp.diasMes : [];
-              gradeMes.replaceChildren(...Array.from({ length: 31 }, (_, k) => celula(String(k + 1), diasMes.includes(k + 1), 'dia ' + (k + 1), () => { rp.diasMes = alternar(diasMes, k + 1); pintar(); atualizar(); })));
-              const meses = Array.isArray(rp.meses) ? rp.meses : [];
-              gradeAno.replaceChildren(...MESES_CURTOS.map((m, k) => celula(m, meses.includes(k + 1), m, () => { rp.meses = alternar(meses, k + 1); pintar(); atualizar(); })));
+              botoesDias.forEach(([j, b]) => { b.classList.toggle('marcado', Boolean(pr.dias[j])); b.setAttribute('aria-pressed', String(Boolean(pr.dias[j]))); });
+              celulasMes.forEach((c, k) => c.setAttribute('aria-pressed', String(lista(rp.diasMes).includes(k + 1))));
+              celulasAno.forEach((c, k) => c.setAttribute('aria-pressed', String(lista(rp.meses).includes(k + 1))));
             };
             // Interruptor "Agendar promoção" (pedido do Rodrigo, 17/11/2026): desligado, a promoção vale todos os dias, o dia
             // todo, e os campos de quando somem; ligado, abre data de início, horário, repetição e término. O que foi
@@ -512,14 +526,14 @@
           listaConv.replaceChildren();
           if (!conversoes.length) listaConv.append(el('p', 'profiles-note', 'Sem conversão cadastrada.'));
           conversoes.forEach((c, i) => {
-            const linha = el('div', 'compras-item-urgente');
+            const linha = el('div', 'compras-conversao-linha');
             const un = seletor(unidades.concat(c.unidade && !unidades.includes(c.unidade) ? [c.unidade] : []), c.unidade, 'Unidade');
             const q = entrada('number', c.quantidade, { min: 0, step: 'any' });
             const ui = entrada('number', c.unidadesIndividuais, { min: 0, step: 'any' });
             un.onchange = () => { c.unidade = un.value; };
             q.oninput = () => { c.quantidade = num(q.value); };
             ui.oninput = () => { c.unidadesIndividuais = num(ui.value); };
-            linha.append(campoP('Unidade', un), campoP('Quantidade', q), campoP('Unidades individuais', ui), botao('Remover', () => { conversoes.splice(i, 1); desenharConv(); }, 'btn secondary perigo-texto'));
+            linha.append(campoP('Unidade', un), campoP('Quantidade', q), campoP('Unidades individuais', ui), U.botaoRemover('Remover conversão ' + (i + 1), () => { conversoes.splice(i, 1); desenharConv(); }));
             listaConv.append(linha);
           });
         }
@@ -607,12 +621,10 @@
           fiscalTimer = setTimeout(atualizarFiscal, 150);
         }
         grupo.addEventListener('change', () => {
-          montarSub(false);
           const mg = margemDoGrupo();
-          if (mg != null) margem.value = decimal(Math.round(mg * 10000) / 100); // S1: trocar o grupo copia a margem padrão
+          if (mg != null) margem.value = decimal(Math.round(mg * 10000) / 100); // S1: trocar o grupo (ou o subgrupo) copia a margem padrão
           atualizar();
         });
-        sub.addEventListener('change', () => { const mg = margemDoGrupo(); if (mg != null) margem.value = decimal(Math.round(mg * 10000) / 100); atualizar(); });
         ean.addEventListener('input', () => { avisarEanRepetido(); atualizar(); });
         [nome, gramatura, medida, balanca, emb, cde, qtdEmb, medCompra, aprox, tipo, custo, margem, pontual, precisao, qtdTransf, unidTransf, fNcm, fCest, fCat, ...Object.values(camposFiscais).filter((c) => c.manual).map((c) => c.i)].forEach((x) => x.addEventListener('input', atualizar));
         [ajuda.input, auto.input, liberado.input].forEach((x) => x.addEventListener('change', atualizar));
@@ -634,6 +646,7 @@
         const escondido = (no, raiz) => { for (let x = no; x && x !== raiz; x = x.parentElement) if (x.style && x.style.display === 'none') return true; return false; };
         function valorDe(no) {
           if (no.tagName === 'SELECT') return no.selectedOptions[0] && no.value !== '' ? no.selectedOptions[0].textContent : '';
+          if (no.classList.contains('compras-arvore-campo')) return no.value ? no.title : ''; // campo em árvore: o texto do que foi escolhido
           return no.value.trim();
         }
         function pintarRevisao() {
@@ -646,7 +659,7 @@
             if (k === 0) { por('Situação do produto', situacao.ativo ? 'Ativo' : 'Inativo'); por('Foto', foto.valor() ? 'Com foto' : 'Sem foto'); }
             etapa.querySelectorAll('label.compras-campo, label.compras-interruptor').forEach((l) => {
               if (escondido(l, etapa)) return;
-              const no = l.querySelector('input,select');
+              const no = l.querySelector('input,select,.compras-arvore-campo');
               if (!no || no.type === 'file') return;
               const base = (l.querySelector('.compras-rotulo') || l.querySelector('span')).textContent;
               const rotulo = base.endsWith(' *') ? base.slice(0, -2) : base;
@@ -675,7 +688,7 @@
 
         return {
           alertas, status, ajuda, liberado, foto, ean, marca, nome, gramatura, medida, balanca, validade, emb, cde, qtdEmb, medCompra, aprox,
-          tipo, grupo, sub, setor, area, min, max, local1, local2, setor1, setor2, areaVenda, custo, margem, auto, pontual,
+          tipo, grupo, sub, setor, area, areaGravada, min, max, local1, local2, setor1, setor2, areaVenda, custo, margem, auto, pontual,
           precisao, qtdTransf, unidTransf, receituario, refRec, fNcm, fCest, fCat, descricaoAtual, precoCalculado, atualizarFiscal, fiscaisDigitados, form,
           irParaEtapaDe: (no) => { const k = etapasNo.indexOf(no.closest('.compras-etapa')); if (k >= 0 && k !== atual) ir(k); },
         };
@@ -749,7 +762,7 @@
         quantidadeIndividual: gram, unidadeIndividual: c.medida.value, pesavel, teclaBalanca: pesavel ? R.TECLA_BALANCA_FIXA : null, validadeBalanca: pesavel ? validadeBalanca : null,
         descricao, embalagem: c.emb.value, cDe: c.emb.value ? c.cde.value : null, qtdEmbalagem, medidaCompra: c.medCompra.value, compraAproximada: c.aprox.value === 'sim',
         tipo, grupoId: c.grupo.value, subgrupoId: c.sub.value,
-        ...localDoSetor(c.setor.value), areaEstoque: c.area.value, estoqueMin, estoqueMax,
+        ...localDoSetor(c.setor.value), areaEstoque: c.areaGravada(), estoqueMin, estoqueMax,
         localVenda1: c.local1.value.trim(), localVenda2: c.local2.value.trim(), setorVenda1: c.setor1.value.trim(), setorVenda2: c.setor2.value.trim(), areaVenda: c.areaVenda.value || null,
         custo: num(c.custo.value), margem: margemPct == null ? null : margemPct / 100, auto, precoVenda: c.precoCalculado(),
         transformacao: tipo === 'transformacao' ? { precisao: c.precisao.value || null, quantidade: c.qtdTransf.value === '' ? null : Number(c.qtdTransf.value), unidade: c.unidTransf.value || null, produtoReceituario: c.receituario.value.trim() || null, refReceituario: c.refRec.value.trim() || null } : null,
@@ -763,36 +776,38 @@
         if ((campos.localId || null) !== (p.localId || null)) manual.local = true;
         campos.vinculoManual = manual;
       }
-      let gravado = null;
-      let veioDoArquivo = false;
-      const ok = S.transacao((d) => {
-        if (novo) {
-          // Inclui o maior código do app de produtos (importação): o próximo não pode repetir código do PDV, nem de inativo.
-          const codigoInterno = R.proximoCodigoInterno(d.produtos.map((x) => x.codigoInterno).filter(Boolean).concat(d.codigoInternoApp ? [d.codigoInternoApp] : []));
-          const codigoBarras = R.codigoBarrasNaCriacao(eanDig, codigoInterno);
-          const fiscal = F.fiscalDoProduto({ anterior: anteriorFiscal, nome: campos.nomeCatalogo, codigoBarras, nomeGrupo: n.nomeGrupo, nomeSubgrupo: n.nomeSubgrupo }).fiscal;
-          gravado = { id: S.novoId('p'), codigoInterno, codigoBarras, unidade: campos.medidaCompra || campos.unidadeIndividual || 'UN', saldo: 0, vendas3m: 0, compras3m: 0, lucro3m: 0, criadoEm: S.agoraIso(), ...campos, fiscal };
-          d.produtos.push(gravado);
-        } else {
-          let alvo = d.produtos.find((x) => x.id === p.id);
-          // Produto do arquivo de inativos: ao salvar, passa para o Compras (e sai do arquivo logo depois).
-          if (!alvo && p.arquivado) { const { arquivado, ...semMarca } = structuredClone(p); alvo = semMarca; d.produtos.push(alvo); veioDoArquivo = true; }
-          // Produto vindo do app de produtos: o fiscal é o do app; as tabelas fiscais do S2 ainda são de exemplo e não o sobrescrevem.
-          const fiscal = alvo.appId ? anteriorFiscal : F.fiscalDoProduto({ anterior: anteriorFiscal, nome: campos.nomeCatalogo || campos.descricao, codigoBarras: eanDig || alvo.codigoBarras, nomeGrupo: n.nomeGrupo, nomeSubgrupo: n.nomeSubgrupo }).fiscal;
-          const nomeAntes = alvo.nomeCatalogo ?? alvo.descricao;
-          if (campos.nomeCatalogo != null && campos.nomeCatalogo !== nomeAntes) {
-            d.historicoNomes.push({ id: S.novoId('hn'), produtoId: alvo.id, nomeAnterior: nomeAntes, nomeNovo: campos.nomeCatalogo, alteradoPor: 'José · Compras', alteradoEm: S.agoraIso() });
-          }
-          Object.assign(alvo, campos, { codigoBarras: eanDig || alvo.codigoBarras, fiscal });
-          gravado = alvo;
+      // O catálogo fica no servidor (docs/PRODUTOS_NO_SERVIDOR_PLANO.md): cria (o servidor gera o código interno) ou edita
+      // com a versão aberta (409 se alguém salvou antes). O histórico de nomes continua no Compras.
+      if (!S.emModoServidor() || !window.CicluzProdutos.conectado()) {
+        return mostrarErro(c, S.emModoServidor() ? 'Sem conexão com o servidor: o cadastro de produtos só grava conectado.' : 'Os produtos ainda estão sendo levados para o servidor. Peça ao administrador para abrir o S2 e tente de novo.');
+      }
+      const P = window.CicluzProdutos;
+      const nomeAntes = p ? (p.nomeCatalogo ?? p.descricao) : null;
+      const fiscalDerivado = (cod) => F.fiscalDoProduto({ anterior: anteriorFiscal, nome: campos.nomeCatalogo || campos.descricao, codigoBarras: cod, nomeGrupo: n.nomeGrupo, nomeSubgrupo: n.nomeSubgrupo }).fiscal;
+      let pedido;
+      try {
+        pedido = novo
+          ? P.criar({ ...campos, codigoBarras: eanDig || null, unidade: campos.medidaCompra || campos.unidadeIndividual || 'UN', criadoEm: S.agoraIso(), fiscal: fiscalDerivado(eanDig) })
+          : P.editar({ ...p, ...campos, codigoBarras: eanDig || p.codigoBarras, fiscal: p.appId ? anteriorFiscal : fiscalDerivado(eanDig || p.codigoBarras) });
+      } catch (e) { return mostrarErro(c, e.message); }
+      pedido.then((salvo) => {
+        if (!novo && campos.nomeCatalogo != null && campos.nomeCatalogo !== nomeAntes) {
+          S.transacao((d) => { d.historicoNomes.push({ id: S.novoId('hn'), produtoId: salvo.id, nomeAnterior: nomeAntes, nomeNovo: campos.nomeCatalogo, alteradoPor: 'José · Compras', alteradoEm: S.agoraIso() }); });
         }
-      });
-      if (!ok) return mostrarErro(c, 'Não foi possível salvar neste navegador. A foto pode ser grande demais para o armazenamento.');
-      if (veioDoArquivo) S.tirarDoArquivo(p.id).then((foi) => { if (!foi) U.avisar('O produto foi salvo, mas não saiu do arquivo de inativos. Aparece uma vez só na lista.'); if (aoSalvar) aoSalvar(gravado); });
-      const agenda = sincronizarAgenda(gravado, p ? p.promocoes : []);
-      U.avisar('Produto salvo.' + (agenda.total ? ' ' + agenda.total + (agenda.total === 1 ? ' promoção na Agenda.' : ' compromissos de promoção na Agenda.') : '') + (agenda.falhas.length ? ' A Agenda não aceitou: ' + agenda.falhas[0] : ''));
-      if (aoSalvar) aoSalvar(gravado);
-      return undefined;
+        // Promoção agendada vira compromisso na Agenda (17/11/2026, Rodrigo). A ligação (agendaItemIds) é gravada no produto
+        // do servidor numa segunda gravação, só quando mudou; se ela falhar, o produto já está salvo e o aviso diz o que faltou.
+        const agenda = sincronizarAgenda(salvo, p ? p.promocoes : []);
+        const ligacaoMudou = JSON.stringify(agenda.promocoes) !== JSON.stringify(salvo.promocoes || []);
+        return (ligacaoMudou ? P.editar({ ...salvo, promocoes: agenda.promocoes }).catch((e) => { agenda.falhas.push('a ligação com a Agenda não foi gravada no servidor (' + (e.message || 'erro') + ')'); return salvo; }) : Promise.resolve(salvo))
+          .then((final) => {
+            dlg.close();
+            U.avisar((novo ? 'Produto salvo com o código ' + final.codigoInterno + '.' : 'Produto salvo.')
+              + (agenda.total ? ' ' + agenda.total + (agenda.total === 1 ? ' promoção na Agenda.' : ' compromissos de promoção na Agenda.') : '')
+              + (agenda.falhas.length ? ' A Agenda não aceitou: ' + agenda.falhas[0] : ''));
+            if (aoSalvar) aoSalvar(final);
+          });
+      }).catch((e) => mostrarErro(c, e.message || 'Não foi possível salvar no servidor.'));
+      return 'Salvando no servidor…';
     }
     return dlg;
   }

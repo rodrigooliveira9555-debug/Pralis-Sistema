@@ -33,70 +33,8 @@
    * situação e busca. Marcar um grupo marca só ele (não marca os filhos). marcados: Set de ids ("grupo" ou "grupo|subgrupo").
    * bloqueados: Map id → motivo (itens que já estão na outra lista; aparecem travados). aoConfirmar(Set).
    */
-  /**
-   * Janela de escolha em árvore, no mesmo desenho da lista de origem (19/11/2026, Rodrigo): cada linha tem a seta de abrir, a caixa de
-   * marcar (quadrada, de cantos arredondados), o ícone com a sigla da origem (DES, MER, RET), o nome, a contagem e a situação. Serve a
-   * qualquer cadastro em níveis — grupo › subgrupo › item — e deixa marcar em qualquer nível: o grupo, o subgrupo ou o item sozinho.
-   * nos: [{ id, nome, ativo, conta, selecionavel (padrão: sim), filhos: [...] }]. marcados: Set de ids. bloqueados: Map id → motivo.
-   */
-  function seletorArvore({ titulo, cores, sigla, iconeFolha, rotuloBusca = 'Buscar', vazio = 'Nada cadastrado.', nos, marcados, bloqueados = new Map(), aoConfirmar }) {
-    const escolha = new Set(marcados); const abertos = new Set();
-    /* Seleção em cascata (19/11/2026, Rodrigo): marcar um nível marca tudo o que está abaixo; desmarcar um item desmarca os níveis acima
-       dele (o grupo deixa de estar inteiro). Ao confirmar, o que já está coberto por um nível marcado não é repetido: grava-se só o nível
-       mais alto, e o que entrar nele depois continua coberto. */
-    const pais = new Map(); const porId = new Map();
-    const mapear = (lista, pai) => lista.forEach((n) => { porId.set(n.id, n); if (pai) pais.set(n.id, pai.id); mapear(n.filhos || [], n); });
-    mapear(nos(), null);
-    const marcavel = (n) => n.selecionavel !== false && n.ativo !== false && !bloqueados.has(n.id);
-    const descer = (n, fn) => (n.filhos || []).forEach((f) => { fn(f); descer(f, fn); });
-    for (const id of [...escolha]) { const n = porId.get(id); if (n) descer(n, (f) => { if (marcavel(f)) escolha.add(f.id); }); }
-    const compacta = () => new Set([...escolha].filter((id) => { let p = pais.get(id); while (p) { if (escolha.has(p)) return false; p = pais.get(p); } return true; }));
-    const formatar = (n) => (typeof formatSystemName === 'function' ? formatSystemName(String(n || '')) : String(n || ''));
-    U.dialogo({
-      titulo, ...cc(cores), largo: true, classe: 'compras-hier-dialogo', rotuloSalvar: 'Confirmar',
-      montar: (form) => {
-        const busca = entrada('text', '', { placeholder: rotuloBusca, maxLength: 80, autocomplete: 'off' }); busca.setAttribute('aria-label', rotuloBusca);
-        busca.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
-        const resumo = el('small', 'profiles-note'); resumo.setAttribute('role', 'status'); const arvore = el('div', 'compras-hier'); arvore.setAttribute('role', 'tree');
-        const contar = () => { const q = compacta().size; resumo.textContent = (q === 1 ? '1 selecionado' : q + ' selecionados') + '.'; };
-        // Barra fixa no topo do quadro. Expandir / recolher tudo é UM botão só, o mesmo da barra de baixo das telas: redondo, na cor do
-        // cabeçalho, com a seta para cima e para baixo; um toque expande tudo, o seguinte recolhe.
-        const barra = el('div', 'escolha-barra'); let tudoAberto = false;
-        const alternarTudo = el('button', 'compras-redondo escolha-expandir'); alternarTudo.type = 'button'; alternarTudo.innerHTML = SVG('<path d="m5 9 7-6 7 6M5 15l7 6 7-6"/>');
-        const pintarAlternar = () => { const r = tudoAberto ? 'Recolher tudo' : 'Expandir tudo'; alternarTudo.title = r; alternarTudo.setAttribute('aria-label', r); alternarTudo.setAttribute('aria-expanded', String(tudoAberto)); };
-        alternarTudo.onclick = () => { tudoAberto = !tudoAberto; abertos.clear(); if (tudoAberto) porId.forEach((n, id) => { if ((n.filhos || []).length) abertos.add(id); }); pintarAlternar(); desenhar(); };
-        pintarAlternar();
-        barra.append(resumo, alternarTudo);
-        const casa = (no, caminho, termo) => !termo || U.dobrar(caminho + ' ' + no.nome).includes(termo) || (no.filhos || []).some((f) => casa(f, caminho + ' ' + no.nome, termo));
-        const linha = (no, nivel, caminho, termo) => {
-          const filhos = (no.filhos || []).filter((f) => casa(f, caminho + ' ' + no.nome, termo)); const aberto = Boolean(termo) || abertos.has(no.id);
-          const l = el('div', 'compras-hier-linha'); l.setAttribute('role', 'treeitem'); l.style.setProperty('--nivel', String(nivel));
-          const seta = el('button', 'compras-hier-seta' + (aberto ? ' aberto' : '')); seta.type = 'button'; seta.innerHTML = SVG(ICO.seta); seta.disabled = !(no.filhos || []).length;
-          seta.setAttribute('aria-label', (aberto ? 'Recolher ' : 'Expandir ') + no.nome); seta.setAttribute('aria-expanded', String(aberto));
-          seta.onclick = () => { if (abertos.has(no.id)) abertos.delete(no.id); else abertos.add(no.id); desenhar(); };
-          const ativo = no.ativo !== false; const travado = bloqueados.has(no.id);
-          const c = entrada('checkbox'); c.className = 'compras-hier-caixa'; c.checked = escolha.has(no.id) || travado; c.disabled = travado || (!ativo && !escolha.has(no.id));
-          c.setAttribute('aria-label', 'Selecionar ' + no.nome); c.onchange = () => { if (c.checked) { escolha.add(no.id); descer(no, (f) => { if (marcavel(f)) escolha.add(f.id); }); } else { escolha.delete(no.id); descer(no, (f) => { if (!bloqueados.has(f.id)) escolha.delete(f.id); }); let p = pais.get(no.id); while (p) { escolha.delete(p); p = pais.get(p); } } desenhar(); };
-          if (no.selecionavel === false) { c.disabled = true; c.style.visibility = 'hidden'; }
-          const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); if (no.folha && iconeFolha) ic.innerHTML = SVG(iconeFolha); else ic.append(el('span', 'sigla-text', sigla)); // grupo e subgrupo levam a sigla da origem; o item final leva o ícone dele (produto = carrinho)
-          const tx = el('span', 'compras-hier-texto'); tx.append(el('b', null, no.folha ? no.nome : sigla + ' ' + formatar(no.nome)));
-          const conta = no.conta != null ? no.conta : (no.filhos ? pluralItens(no.filhos.length) : ''); if (conta) tx.append(el('small', null, conta));
-          if (travado) tx.append(el('small', null, bloqueados.get(no.id)));
-          l.append(seta, c, ic, tx, el('span', 'compras-hier-estado', ativo ? 'Ativo' : 'Inativo'));
-          return [l, ...(aberto ? filhos.flatMap((f) => linha(f, nivel + 1, caminho + ' ' + no.nome, termo)) : [])];
-        };
-        const desenhar = () => {
-          const termo = U.dobrar(busca.value.trim()); const lista = nos().filter((n) => casa(n, '', termo));
-          arvore.replaceChildren(barra, ...lista.flatMap((n) => linha(n, 0, '', termo)));
-          if (!lista.length) arvore.append(el('p', 'profiles-note compras-hier-vazio', termo ? 'Nada encontrado.' : vazio));
-          contar();
-        };
-        busca.addEventListener('input', desenhar);
-        const box = el('div', 'compras-campo compras-largo'); box.append(busca, arvore); form.append(box); desenhar();
-      },
-      salvar: () => { aoConfirmar(compacta()); },
-    });
-  }
+  // A janela em árvore é a peça única U.seletorArvore (compras/ui.js, desde 23/11/2026).
+  const seletorArvore = U.seletorArvore;
   /** Grupos e subgrupos de despesa na janela em árvore (atividades do contrato e objeto do contrato). Ids: "grupo" ou "grupo|subgrupo". */
   const arvoreDespesas = () => grupos().map((g) => ({ id: g.id, nome: g.nome, ativo: g.ativo, filhos: g.subgrupos.map((s) => ({ id: g.id + '|' + s.id, nome: s.nome, ativo: g.ativo && s.ativo })) }));
   function seletorHierarquico({ titulo, cores, marcados, bloqueados = new Map(), aoConfirmar }) {
@@ -776,5 +714,5 @@
     if (!c || !PASTAS[chave] || e.target.closest('.menu-item-move')) return;
     e.preventDefault(); e.stopImmediatePropagation(); abrirPastaContratos(chave);
   }, true);
-  window.CicluzContratos = { abrirPastaContratos, arvores: { produtos: arvoreProdutos, patrimonios: arvorePatrimonios }, JOINHA: { cima: ICO.cima, baixo: ICO.baixo }, abrirModelos, listaAtividades, seletorHierarquico, seletorArvore, botoesDocumento, secoesContrato, partesDoContrato, enderecoTexto, modelos, etapaContrato };
+  window.CicluzContratos = { abrirPastaContratos, arvores: { produtos: arvoreProdutos, patrimonios: arvorePatrimonios }, JOINHA: { cima: ICO.cima, baixo: ICO.baixo }, abrirModelos, listaAtividades, seletorHierarquico, botoesDocumento, secoesContrato, partesDoContrato, enderecoTexto, modelos, etapaContrato };
 })();
