@@ -18,9 +18,10 @@
   let tela = null;
   // blocos = as colunas abertas ({alvo: {tipo, id, nome}, quem: linha com a lista aberta}); abertos = grupos abertos; secAbertas =
   // seções abertas ('grupo|seção'). registros guarda (só na memória) o que cada pessoa, cargo ou área tem ligado.
+  let modoDesenhado = 'telas';
   let seq = 0;
   const novoBloco = () => ({ id: ++seq, alvo: null, quem: '', recolhida: false });
-  const estado = { aba: 'telas', busca: '', abertos: new Set(), secAbertas: new Set(), blocos: [novoBloco()] };
+  const estado = { modo: 'telas', foco: 0, busca: '', abertos: new Set(), secAbertas: new Set(), blocos: [novoBloco()] };
   const registros = new Map();
 
   /* ---------- As sete permissões ---------- */
@@ -36,6 +37,7 @@
     mais: 'M12 5v14M5 12h14',
     niveis: 'm5 9 7-6 7 6M5 15l7 6 7-6',
     seta: 'm9 6 6 6-6 6',
+    exclama: 'M12 6.5v7M12 17.5h.01',
   };
   const SETA = { esq: 'M19 12H6m5-5-5 5 5 5', dir: 'M5 12h13m-5-5 5 5-5 5', ambas: 'M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4' };
   const PERMS = [
@@ -46,21 +48,29 @@
     { id: 'pag', nome: 'Pagar', g: 'pagar', seta: 'ambas' },
     { id: 'edD', nome: 'Editar depois de pagar', g: 'lapis', seta: 'dir' },
     { id: 'veD', nome: 'Visualizar depois de pagar', g: 'olho', seta: 'dir' },
+    // O "!" não tem seta: ligar abre as Ações especiais da própria coluna (colaborador, cargo ou área). Começa DESLIGADO (são sensíveis).
+    { id: 'esp', nome: 'Ações especiais', g: 'exclama', seta: '' },
   ];
-  const TODAS = PERMS.map((p) => p.id);
+  const TODAS = PERMS.filter((p) => p.id !== 'esp').map((p) => p.id);
 
   function iconePerm(p) {
     const s = el('span', 'acessos-nivel-ic');
     s.innerHTML = U.svg('<path d="' + G[p.g] + '"/>');
-    const b = el('span', 'acessos-nivel-seta');
-    b.innerHTML = U.svg('<path d="' + SETA[p.seta] + '"/>');
-    s.append(b);
+    if (p.seta) {
+      const b = el('span', 'acessos-nivel-seta');
+      b.innerHTML = U.svg('<path d="' + SETA[p.seta] + '"/>');
+      s.append(b);
+    }
     s.setAttribute('aria-hidden', 'true');
     return s;
   }
 
+  /** As colunas que a matriz mostra: todas nas telas; nas ações especiais, só a que foi aberta. */
+  const colunas = () => (estado.modo === 'acoes' ? estado.blocos.filter((b) => b.id === estado.foco) : estado.blocos);
+  const abrirAcoes = (b) => { estado.modo = 'acoes'; estado.foco = b.id; estado.focar = 'voltar'; desenhar(); };
+
   /** Uma célula de coluna (a do bloco i); recolhida, só fica a faixa estreita com a setinha para reabrir. */
-  const blocoEl = (i, extra) => el('div', 'acessos-tl-bloco' + (extra ? ' ' + extra : '') + (estado.blocos[i] && estado.blocos[i].recolhida ? ' recolhida' : ''));
+  const blocoEl = (b, extra) => el('div', 'acessos-tl-bloco' + (extra ? ' ' + extra : '') + (estado.modo !== 'acoes' && b && b.recolhida ? ' recolhida' : ''));
 
   /** O botão redondo "+" do sistema (botão redondo de ação). Aberto, o "+" vira "×". */
   function botaoMais(rotulo, aberto, acao) {
@@ -158,7 +168,16 @@
       tela.view.classList.add('acessos-telas');
     }
     tela.ativar();
+    estado.modo = 'telas';
     desenhar();
+  }
+
+  /** Cabeça da coluna nas Ações especiais: o dono vem da coluna aberta (não se troca aqui). */
+  function cabecaFixa(b) {
+    const box = el('div', 'acessos-bloco-cab');
+    const linha = LINHAS.find(([id]) => id === b.alvo.tipo);
+    box.append(el('small', 'profiles-note', linha ? linha[1] : ''), el('b', 'acessos-bloco-dono', b.alvo.nome), el('small', 'profiles-note acessos-bloco-resumo'));
+    return box;
   }
 
   /**
@@ -259,18 +278,15 @@
     const rolagem = tela.body.scrollTop;
     const esq = antes ? antes.scrollLeft : 0;
     const topo = antes ? antes.scrollTop : 0;
+    if (estado.modo === 'acoes' && !estado.blocos.some((b) => b.id === estado.foco && b.alvo)) estado.modo = 'telas';
     const menu = lerMenu();
-    const regs = estado.blocos.map((b) => registro(menu, b.alvo));
+    const regs = colunas().map((b) => registro(menu, b.alvo));
     const blocos = [];
-    blocos.push(U.nota('Esboço: nada é gravado e nenhum acesso muda. As telas são as do menu do sistema; colaboradores, cargos e áreas são os cadastrados no sistema. Toque no + para escolher quem; cada escolha vira uma coluna ao lado, já com tudo ligado, e o + da esquerda abre a próxima. Cada ícone é uma permissão: ← antes de pagar · ↔ pagar · → depois de pagar (passe o mouse no ícone para ver o nome).'));
-    const abas = U.chips([['telas', 'Telas'], ['acoes', 'Ações especiais']], estado.aba, (v) => { estado.aba = v; desenhar(); });
-    abas.classList.add('compras-abas', 'acessos-telas-abas');
-    abas.setAttribute('aria-label', 'O que mostrar');
-    blocos.push(abas);
+    blocos.push(U.nota('Esboço: nada é gravado e nenhum acesso muda. As telas são as do menu do sistema; colaboradores, cargos e áreas são os cadastrados no sistema. Toque no + para escolher quem; cada escolha vira uma coluna ao lado, já com tudo ligado, e o + da esquerda abre a próxima. Cada ícone é uma permissão: ← antes de pagar · ↔ pagar · → depois de pagar; o ! abre as ações especiais da coluna (passe o mouse no ícone para ver o nome).'));
     const barra = el('div', 'acessos-barra');
-    if (estado.aba === 'telas') barra.append(U.buscaFixa('acessos-telas', 'Buscar tela', estado.busca, (v) => { estado.busca = v; desenhar(); }));
+    if (estado.modo === 'telas') barra.append(U.buscaFixa('acessos-telas', 'Buscar tela', estado.busca, (v) => { estado.busca = v; desenhar(); }));
     // O "‹ ›" redondo do sistema (o mesmo das listas): recolhe todas as colunas de uma vez ou, com todas recolhidas, mostra todas.
-    const escolhidas = estado.blocos.filter((b) => b.alvo);
+    const escolhidas = estado.modo === 'acoes' ? [] : estado.blocos.filter((b) => b.alvo);
     if (escolhidas.length) {
       const algumaAberta = escolhidas.some((b) => !b.recolhida);
       const geral = el('button', 'shortcut-circle compras-redondo compras-colunas-geral acessos-colunas-geral');
@@ -285,15 +301,16 @@
     blocos.push(barra);
 
     const mat = el('div', 'acessos-matriz');
+    if (estado.modo === 'acoes') mat.classList.add('acessos-matriz-acoes');
     mat.setAttribute('role', 'region');
     mat.setAttribute('aria-label', 'Acessos por tela: o nome das telas fica à esquerda, uma coluna de interruptores para cada escolha');
     mat.tabIndex = 0;
     const resumos = [];
     const atualizarResumos = () => resumos.forEach(([reg, alvo]) => {
-      if (estado.aba === 'acoes') { alvo.textContent = reg ? reg.acoes.size + ' de ' + ACOES.reduce((n, g) => n + g.i.length, 0) + ' ações liberadas' : 'Escolha para quem é esta coluna.'; return; }
+      if (estado.modo === 'acoes') { alvo.textContent = reg ? reg.acoes.size + ' de ' + ACOES.reduce((n, g) => n + g.i.length, 0) + ' ações liberadas' : 'Escolha para quem é esta coluna.'; return; }
       let com = 0; let novas = 0;
       menu.forEach((g) => g.secoes.forEach((s) => s.telas.forEach((t) => {
-        if (reg && (reg.telas[t.chave] || new Set()).size) com++;
+        if (reg && TODAS.some((id) => (reg.telas[t.chave] || new Set()).has(id))) com++;
         if (reg && !reg.conhecidas.has(t.chave)) novas++;
       })));
       alvo.textContent = reg
@@ -305,36 +322,55 @@
     const cab = el('div', 'acessos-tl acessos-tl-quem-lin');
     const aberta = estado.blocos.every((b) => b.alvo);
     const e = el('div', 'acessos-tl-esq');
-    const mais = botaoMais(aberta ? 'Abrir mais uma coluna: escolher outro colaborador, cargo ou área' : 'Escolha primeiro para quem é a coluna aberta', false, () => {
+    const voltar = estado.modo === 'acoes' ? el('button', 'shortcut-circle compras-redondo acessos-telas-mais') : null;
+    if (voltar) {
+      voltar.type = 'button';
+      voltar.title = 'Voltar às telas';
+      voltar.setAttribute('aria-label', 'Voltar às telas');
+      voltar.innerHTML = U.svg('<path d="M15 5 8 12l7 7"/>');
+      voltar.onclick = () => { estado.focar = 'esp:' + estado.foco; estado.modo = 'telas'; desenhar(); };
+      e.append(voltar, el('span', 'acessos-tl-esq-txt', 'Voltar às telas'));
+    }
+    const mais = voltar ? null : botaoMais(aberta ? 'Abrir mais uma coluna: escolher outro colaborador, cargo ou área' : 'Escolha primeiro para quem é a coluna aberta', false, () => {
       if (!estado.blocos.every((b) => b.alvo)) return;
       estado.blocos.push(novoBloco());
       desenhar(true);
     });
-    mais.disabled = !aberta;
-    e.append(mais, el('span', 'acessos-tl-esq-txt', aberta ? 'Nova coluna' : 'Escolha para quem é a coluna aberta'));
+    if (mais) {
+      mais.disabled = !aberta;
+      e.append(mais, el('span', 'acessos-tl-esq-txt', aberta ? 'Nova coluna' : 'Escolha para quem é a coluna aberta'));
+    }
     cab.append(e);
-    estado.blocos.forEach((b, i) => {
-      const w = blocoEl(i, 'acessos-tl-bloco-cab');
-      const c = cabecaDaColuna(b);
+    colunas().forEach((b, i) => {
+      const w = blocoEl(b, 'acessos-tl-bloco-cab');
+      const c = estado.modo === 'acoes' ? cabecaFixa(b) : cabecaDaColuna(b);
       resumos.push([regs[i], c.querySelector('.acessos-bloco-resumo')]);
       w.append(c);
       cab.append(w);
     });
     mat.append(cab);
 
-    if (estado.aba === 'acoes') desenharAcoes(mat, regs, atualizarResumos); else desenharTelas(mat, menu, regs, atualizarResumos);
+    if (estado.modo === 'acoes') desenharAcoes(mat, regs, atualizarResumos); else desenharTelas(mat, menu, regs, atualizarResumos);
     atualizarResumos();
     blocos.push(mat);
     tela.body.replaceChildren(...blocos);
-    tela.body.scrollTop = rolagem;
-    mat.scrollTop = topo;
-    mat.scrollLeft = irAoFim === true ? mat.scrollWidth : esq;
+    const trocou = modoDesenhado !== estado.modo;
+    modoDesenhado = estado.modo;
+    tela.body.scrollTop = trocou ? 0 : rolagem;
+    mat.scrollTop = trocou ? 0 : topo;
+    mat.scrollLeft = irAoFim === true ? mat.scrollWidth : trocou ? 0 : esq;
+    // Depois de trocar de visão o DOM é refeito: o foco vai para o botão que leva de volta (ou para o "!" de onde se saiu).
+    if (estado.focar) {
+      const ponto = estado.focar === 'voltar' ? tela.body.querySelector('[aria-label="Voltar às telas"]') : tela.body.querySelector('[data-esp="' + estado.focar.slice(4) + '"]');
+      estado.focar = '';
+      if (ponto) ponto.focus();
+    }
   }
 
   /** O cabeçalho (grupo ou seção de ações): fica preso à esquerda enquanto a matriz rola para o lado. */
   const prenderAEsquerda = (sec) => { sec.classList.add('acessos-telas-grupo'); };
 
-  /** Aba "Telas": o menu inteiro; à esquerda o nome, e para cada coluna os sete interruptores. */
+  /** Visão "Telas": o menu inteiro; à esquerda o nome, e para cada coluna os sete interruptores mais o "!". */
   function desenharTelas(mat, menu, regs, atualizarResumos) {
     const termo = U.dobrar(estado.busca);
     let mostradas = 0;
@@ -372,14 +408,26 @@
         const volta = tela.body.querySelector('[data-grupo="' + g.n + '"]');
         if (volta) volta.focus();
       };
-      // A linha do grupo é a que recolhe e leva os sete ícones, um conjunto por coluna, alinhados com os interruptores.
+      // A linha do grupo é a que recolhe e leva os sete ícones mais o "!", um conjunto por coluna, alinhados com os interruptores.
       const linhaGrupo = el('div', 'acessos-tl acessos-tl-grupo-lin');
       const esqGrupo = el('div', 'acessos-tl-esq acessos-tl-esq-grupo');
       esqGrupo.append(h, nivel);
       linhaGrupo.append(esqGrupo);
-      estado.blocos.forEach((_, i) => {
-        const w = blocoEl(i);
+      estado.blocos.forEach((b) => {
+        const w = blocoEl(b);
         PERMS.forEach((p) => {
+          if (p.id === 'esp') {
+            const c = el('button', 'acessos-tl-cel acessos-tl-cab-ic acessos-tl-cab-btn');
+            c.type = 'button';
+            c.dataset.esp = String(b.id);
+            c.setAttribute('aria-disabled', String(!b.alvo));
+            c.title = b.alvo ? 'Abrir as ações especiais de ' + b.alvo.nome : 'Ações especiais: escolha antes para quem é a coluna';
+            c.setAttribute('aria-label', c.title);
+            c.onclick = () => { if (b.alvo) abrirAcoes(b); };
+            c.append(iconePerm(p));
+            w.append(c);
+            return;
+          }
           const c = el('span', 'acessos-tl-cel acessos-tl-cab-ic');
           c.title = p.nome;
           c.setAttribute('role', 'img');
@@ -410,7 +458,7 @@
     if (termo && !mostradas) mat.append(U.vazio('Nenhuma tela encontrada', 'Tente outro nome.'));
   }
 
-  /** Cabeça de uma seção (Lançamentos, Relatórios…): o ícone do submenu, o nome e a contagem. Os sete ícones ficam na linha do grupo. */
+  /** Cabeça de uma seção (Lançamentos, Relatórios…): o ícone do submenu, o nome e a contagem. Os ícones ficam na linha do grupo. */
   function cabecaSecao(g, s, qtd, aberta, chaveSec) {
     const linha = el('div', 'acessos-tl acessos-tl-sec');
     const esq = el('div', 'acessos-tl-esq');
@@ -430,7 +478,7 @@
     };
     esq.append(b);
     linha.append(esq);
-    estado.blocos.forEach((_, i) => linha.append(blocoEl(i)));
+    estado.blocos.forEach((b) => linha.append(blocoEl(b)));
     return linha;
   }
 
@@ -447,7 +495,7 @@
     return sw;
   }
 
-  /** Uma linha de tela: à esquerda o ícone da origem e o nome; para cada coluna, os mesmos sete interruptores. */
+  /** Uma linha de tela: à esquerda o ícone da origem e o nome; para cada coluna, os mesmos sete interruptores mais o "!". */
   function linhaTela(g, s, t, regs, atualizarResumos) {
     const nova = regs.some((r) => r && !r.conhecidas.has(t.chave));
     const linha = el('div', 'acessos-tl acessos-tl-tela' + (nova ? ' nova' : ''));
@@ -465,15 +513,16 @@
     if (nova) { const et = U.situacao('Novo · desligado', 'atencao'); et.classList.add('acessos-tl-novo'); esq.append(et); }
     linha.append(esq);
     regs.forEach((reg, i) => {
-      const w = blocoEl(i);
+      const w = blocoEl(colunas()[i]);
       PERMS.forEach((p) => {
         const cel = el('span', 'acessos-tl-cel');
         const ligada = Boolean(reg) && (reg.telas[t.chave] || new Set()).has(p.id);
-        const quem = estado.blocos[i].alvo ? estado.blocos[i].alvo.nome : 'coluna sem escolha';
+        const quem = colunas()[i].alvo ? colunas()[i].alvo.nome : 'coluna sem escolha';
         const sw = interruptor(p.nome + ' — ' + t.rotulo + ' (' + quem + ')', ligada, !reg, (liga) => {
           const conj = reg.telas[t.chave] || (reg.telas[t.chave] = new Set());
           if (liga) conj.add(p.id); else conj.delete(p.id);
           reg.conhecidas.add(t.chave);
+          if (liga && p.id === 'esp') { abrirAcoes(colunas()[i]); return; }
           if (regs.every((r) => !r || r.conhecidas.has(t.chave))) {
             linha.classList.remove('nova');
             const et = linha.querySelector('.acessos-tl-novo');
@@ -491,7 +540,7 @@
   }
 
   /**
-   * Aba "Ações especiais": as permissões que não são lançar, discriminar, editar, visualizar nem pagar. Uma linha por ação, em grupos
+   * Visão "Ações especiais" (aberta pelo "!" de uma coluna): as permissões que não são lançar, discriminar, editar, visualizar nem pagar. Uma linha por ação, em grupos
    * por área, com um interruptor por coluna (valem para a área inteira, como hoje). "Administração" fica separada, com aviso.
    */
   function desenharAcoes(mat, regs, atualizarResumos) {
@@ -514,15 +563,14 @@
         if (sensivel) { const s = U.situacao('Sensível', 'atencao'); s.title = 'Mexe em dinheiro já registrado, em dado do DP ou no acesso dos outros'; esq.append(s); }
         linha.append(esq);
         regs.forEach((reg, i) => {
-          const w = blocoEl(i);
+          const w = blocoEl(colunas()[i]);
           const cel = el('span', 'acessos-tl-cel');
-          const quem = estado.blocos[i].alvo ? estado.blocos[i].alvo.nome : 'coluna sem escolha';
+          const quem = colunas()[i].alvo ? colunas()[i].alvo.nome : 'coluna sem escolha';
           cel.append(interruptor(rotulo + ' (' + quem + ')', Boolean(reg) && reg.acoes.has(chave), !reg, (liga) => {
             if (liga) reg.acoes.add(chave); else reg.acoes.delete(chave);
             atualizarResumos();
           }));
           w.append(cel);
-          for (let k = 1; k < PERMS.length; k++) w.append(el('span', 'acessos-tl-cel'));
           linha.append(w);
         });
         sec.append(linha);

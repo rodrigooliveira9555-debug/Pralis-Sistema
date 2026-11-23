@@ -5,7 +5,7 @@
  */
 
 /*
- * Aba "Ações especiais": as permissões que não são lançar, editar, pagar ou ver (verbos próprios de um fluxo). As chaves e os
+ * Ações especiais (abertas pelo "!" de uma tela, na coluna do colaborador, cargo ou área): as permissões que não são lançar, editar, pagar ou ver (verbos próprios de um fluxo). As chaves e os
  * nomes são os do catálogo de hoje (servidor/shared/src/acessos.ts); a descrição é só um apoio da tela. Valem para a ÁREA
  * inteira, como hoje (não por tela). s = sensível (mexe em dinheiro já registrado, em dado do DP ou no acesso dos outros).
  */
