@@ -22,7 +22,7 @@ import { contasComPermissao } from "./contas-por-permissao.ts";
 import * as gr from "./grupos.repository.ts";
 import { sincronizarAreas } from "./grupos.service.ts";
 import * as rr from "./rotina.repository.ts";
-import { exigirExpediente, expedienteAgora, horaLocal, inatividadeEfetiva } from "./rotina.regras.ts";
+import { exigirExpediente, expedienteAgora, horaLocal, limiteParado } from "./rotina.regras.ts";
 
 // Rotina da Agenda (0008, P-46, áudios do Rodrigo de 23/11/2026):
 // - Configurações da Agenda por pessoa: o administrador define o expediente (quando a conta não está ligada a um
@@ -68,7 +68,7 @@ export async function minhaConfig(perfil: PerfilSessao, momento = new Date()): P
   const dentro = e.situacao.onde === "dentro" || e.situacao.onde === "sem-expediente";
   return {
     ...e.config, dentroDoExpediente: dentro, bloqueadaAgora: e.config.foraExpediente === "bloquear" && !dentro, descricaoExpediente: e.descricao,
-    origemExpediente: e.origem, inatividadeEfetivaMinutos: inatividadeEfetiva(e.config)
+    origemExpediente: e.origem, inatividadeEfetivaMinutos: await limiteParado(banco, perfil.empresa.id, perfil.usuarioId)
   };
 }
 

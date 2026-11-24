@@ -302,8 +302,8 @@ export type ConfigPessoaResposta = ConfigPessoa & {
 /** O que a própria pessoa recebe ao entrar: a regra dela e se agora está dentro do expediente. */
 export type MinhaConfigResposta = ConfigPessoa & {
   dentroDoExpediente: boolean; bloqueadaAgora: boolean; descricaoExpediente: string; origemExpediente: OrigemExpediente;
-  /** Tempo parado que vale para a pessoa (o dela ou o padrão). */
-  inatividadeEfetivaMinutos: number;
+  /** Tempo parado que vale para a pessoa (o dela ou o padrão); null = não sai sozinho (conta de posto do caixa). */
+  inatividadeEfetivaMinutos: number | null;
 };
 
 /* ---------- Expediente vindo dos Horários/Escalas (0009, P-46 item 5) ---------- */

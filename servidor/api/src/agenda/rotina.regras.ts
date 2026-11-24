@@ -3,7 +3,7 @@ import { agendaConfigPessoas, agendaHorasFora } from "@cicluz/db/schema";
 import { INATIVIDADE_PADRAO_MINUTOS, type ConfigPessoa, type OrigemExpediente, type PerfilSessao } from "@cicluz/shared";
 import { banco, type TransacaoBanco } from "../banco/conexao.ts";
 import { ErroDominio } from "../erros.ts";
-import { colaboradorDaConta, diasDoColaborador } from "./rotina.repository.ts";
+import { colaboradorDaConta, diasDoColaborador, ehPosto } from "./rotina.repository.ts";
 
 // Expediente da pessoa na Agenda (P-46). De onde vem (item 5, Zé 24/11/2026): conta ligada a um colaborador →
 // o dia daquele colaborador nos Horários/Escalas (o aparelho calcula e manda; tabela expedientes_colaboradores);
@@ -100,6 +100,15 @@ export const configDe = (l: Linha | undefined): ConfigPessoa =>
 export const inatividadeEfetiva = (c: Pick<ConfigPessoa, "inatividadeMinutos">) => c.inatividadeMinutos ?? INATIVIDADE_PADRAO_MINUTOS;
 
 type Executor = typeof banco | TransacaoBanco;
+
+/**
+ * Minutos parado até sair, ou null = não sai sozinho. Conta de posto do caixa (PDV) não sai (Zé, 24/11/2026: um
+ * caixa parado entre clientes não pode cair no login); as outras, o tempo da pessoa ou o padrão de 15.
+ */
+export async function limiteParado(ex: Executor, empresaId: string, usuarioId: string): Promise<number | null> {
+  if (await ehPosto(ex, empresaId, usuarioId)) return null;
+  return inatividadeEfetiva(await lerConfig(ex, empresaId, usuarioId));
+}
 
 export async function lerConfig(ex: Executor, empresaId: string, usuarioId: string) {
   const [l] = await ex.select().from(agendaConfigPessoas).where(and(eq(agendaConfigPessoas.empresaId, empresaId), eq(agendaConfigPessoas.usuarioId, usuarioId))).limit(1);

@@ -101,6 +101,16 @@ export async function ligarColaborador(empresaId: string, usuarioId: string, col
   return r.length > 0;
 }
 
+/** Conta de posto do caixa (PDV × turno): fica de fora do tempo parado (Zé, 24/11/2026). */
+export async function ehPosto(ex: Executor, empresaId: string, usuarioId: string) {
+  const [l] = await ex
+    .select({ pdv: perfisUsuarios.postoPdv })
+    .from(perfisUsuarios)
+    .where(and(eq(perfisUsuarios.empresaId, empresaId), eq(perfisUsuarios.usuarioId, usuarioId)))
+    .limit(1);
+  return l?.pdv != null;
+}
+
 /** Primeiro administrador ativo da empresa (dono da lista "Tarefas das telas"). */
 export async function administrador(ex: Executor, empresaId: string) {
   const [l] = await ex

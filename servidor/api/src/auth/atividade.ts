@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { sessaoAutenticacao, sessoesAtividade } from "@cicluz/db/schema";
 import type { PerfilSessao } from "@cicluz/shared";
-import { inatividadeEfetiva, lerConfig } from "../agenda/rotina.regras.ts";
+import { limiteParado } from "../agenda/rotina.regras.ts";
 import { banco } from "../banco/conexao.ts";
 import { ErroDominio } from "../erros.ts";
 
@@ -22,8 +22,8 @@ export const sessaoParada = (minutos: number) =>
 export async function conferirAtividade(sessaoId: string, perfil: PerfilSessao, automatico: boolean, agora = new Date()) {
   const [linha] = await banco.select().from(sessoesAtividade).where(eq(sessoesAtividade.sessaoId, sessaoId)).limit(1);
   if (linha) {
-    const minutos = inatividadeEfetiva(await lerConfig(banco, perfil.empresa.id, perfil.usuarioId));
-    if (agora.getTime() - linha.ultimaInteracaoEm.getTime() > minutos * 60_000) {
+    const minutos = await limiteParado(banco, perfil.empresa.id, perfil.usuarioId);
+    if (minutos !== null && agora.getTime() - linha.ultimaInteracaoEm.getTime() > minutos * 60_000) {
       // Apaga a sessão (a linha de atividade vai junto, em cascata): o cookie deixa de valer em todo pedido.
       await banco.delete(sessaoAutenticacao).where(eq(sessaoAutenticacao.id, sessaoId));
       throw sessaoParada(minutos);

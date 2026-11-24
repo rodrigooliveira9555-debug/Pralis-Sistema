@@ -228,6 +228,16 @@ describe("sair por tempo parado no servidor (P-46 item 4)", () => {
     expect((await pedir(leitor.cookie, "GET", "/api/agenda")).statusCode).toBe(200);
   });
 
+  it("conta de posto do caixa (PDV) não sai sozinha", async () => {
+    const { resp } = await cenario();
+    await pool.query(`UPDATE perfis_usuarios SET posto_pdv = 1, posto_turno = 'manha' WHERE usuario_id = $1`, [resp.usuarioId]);
+    await pedir(resp.cookie, "GET", "/api/sessao");
+    expect((await pedir(resp.cookie, "GET", "/api/agenda/configuracoes/minha")).json().data.inatividadeEfetivaMinutos).toBeNull();
+    const id = await sessaoDe(resp);
+    await pool.query(`UPDATE sessoes_atividade SET ultima_interacao_em = now() - interval '5 hours' WHERE sessao_id = $1`, [id]);
+    expect((await pedir(resp.cookie, "GET", "/api/agenda")).statusCode).toBe(200);
+  });
+
   it("o tempo da pessoa (Configurações da Agenda) vale no lugar do padrão", async () => {
     const { gestor: admin, resp } = await cenario();
     await pedir(admin.cookie, "PUT", `/api/agenda/configuracoes/${resp.usuarioId}`, { inatividadeMinutos: 60 });
