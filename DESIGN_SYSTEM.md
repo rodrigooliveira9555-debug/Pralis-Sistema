@@ -1,5 +1,12 @@
 # CICLUZ — referência de interface
 
+## DES - Cargos C/Salários: a lista no padrão de VND - Clientes (24/11/2026)
+Pedido do Rodrigo (a lista estava fora do padrão). A lista de cargos usa a mesma moldura e a mesma linha de VND - Clientes e das listas de colaboradores:
+- **Moldura única** (`.compras-secao`, cantos de 12 px): a barra com o botão **Novo Cargo**, o total e o "‹ ›" fica **fixa no alto** da moldura; **só a tabela rola** para o lado. Antes a barra ficava dentro da parte que rola e o total e o "‹ ›" saíam cortados.
+- **Linha de 52 px**, nome em texto simples (500, 14 px, sem negrito) e cabeçalho de 32 px, como em Clientes. O cartão antigo do roxo (`#jobs-view .job-item`: borda, 46 px, vão de 8 px, cor própria) saiu do código; a linha só tem o desenho das listas.
+- **Nome longo**: no máximo duas linhas (`.c-nome-texto`), com o nome inteiro no título; a linha nunca passa de 60 px (no celular os nomes quebravam em três linhas e a conferência acusava 71 px).
+- Fica de fora desta entrega: DES - Atualização Salários Dissídio Coletivo (`#salary-view .salary-row`) ainda usa o cartão antigo; quando for refeita, segue este mesmo padrão.
+
 ## Acesso por Tela: lista única, três linhas de escolha e menu de seleção no padrão dos cadastros (24/11/2026, VERSÃO VIGENTE)
 Pedido do Rodrigo; **substitui, nesta seção, os itens abaixo que dizem o contrário** (quadros separados, três cabeçalhos em colunas, busca e botão único de expandir). O que vale:
 - **Uma lista só, ligada de ponta a ponta**: moldura única de cantos arredondados; menu principal, submenu e tela são linhas da mesma lista, separadas só por um fio. Sem vão nem quadro separado entre os menus.
