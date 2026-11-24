@@ -226,6 +226,11 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 .acessos-tl-grupo-lin { --tl-bg: var(--theme-card, #fff); border-top: 0; }
 .acessos-tl-tela, .acessos-tl-sec { min-height: 52px; }
 .acessos-tl-grupo-lin { min-height: 60px; }
+/* Três níveis, cada um mais recuado que o de cima (como o menu principal): o menu principal (selo de 32 px, recuo de 14 px); o submenu, com o ícone
+   centrado logo abaixo do selo; e as telas, que começam debaixo do nome do submenu e têm uma linha-guia descendo do ícone do submenu. */
+.acessos-tl-sec > .acessos-tl-esq { padding-left: 18px; }
+.acessos-tl-tela > .acessos-tl-esq { padding-left: 50px; }
+.acessos-tl-tela > .acessos-tl-esq::before { content: ""; position: absolute; left: 30px; top: 0; bottom: 0; width: 1px; background: var(--layout-line, #dedee3); pointer-events: none; }
 .acessos-tl-sec:hover, .acessos-tl-grupo-lin:hover, .acessos-tl-tela:hover { --tl-bg: color-mix(in srgb, var(--origem, var(--menu-accent)) 8%, var(--theme-card, #fff)); }
 .acessos-tl-esq-grupo { flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; }
 .acessos-tl-esq-grupo h3 { flex: 1 1 auto; min-width: 0; margin: 0; display: flex; align-items: center; gap: 8px; font: var(--ui-section-title-weight, 600) var(--ui-section-title, 14px)/var(--ui-section-title-line, 20px) var(--ui-font); }
@@ -310,6 +315,9 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 @media (max-width: 760px) {
   .acessos-matriz { --tl-nome: 150px; --tl-col: 38px; }
   .acessos-tl-esq { padding-left: 10px; padding-right: 8px; }
+  .acessos-tl-sec > .acessos-tl-esq { padding-left: 14px; }
+  .acessos-tl-tela > .acessos-tl-esq { padding-left: 26px; }
+  .acessos-tl-tela > .acessos-tl-esq::before { display: none; }
   .acessos-tl-nome { gap: 6px; font-size: 12px; line-height: 16px; }
   .acessos-tl-nome .compras-linha-icones { display: none; }
   .acessos-tl-esq-grupo { gap: 6px; }
@@ -322,6 +330,8 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
   .acessos-matriz { --tl-nome: 120px; --tl-bloco: calc(100cqw - var(--tl-nome) - 2px); scroll-snap-type: x proximity; scroll-padding-left: var(--tl-nome); }
   .acessos-tl-bloco { padding: 0 6px; scroll-snap-align: start; }
   .acessos-tl-esq { padding: 6px 6px 6px 8px; }
+  .acessos-tl-sec > .acessos-tl-esq { padding-left: 12px; }
+  .acessos-tl-tela > .acessos-tl-esq { padding-left: 22px; }
   .acessos-tl-nome { font-size: 11px; line-height: 14px; }
   .acessos-tl .acessos-marca { width: 20px; height: 20px; }
   .acessos-tl .acessos-marca svg { width: 12px; height: 12px; }
