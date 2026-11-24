@@ -53,6 +53,8 @@
     // O "!" não tem seta: ligar abre as Ações especiais da própria coluna (colaborador, cargo ou área). Começa DESLIGADO (são sensíveis).
     { id: 'esp', nome: 'Ações especiais', g: 'exclama', seta: '' },
   ];
+  // Rótulos curtos do cabeçalho das colunas (a seta ← → que diz de que lado do pagamento está cada um fica nos ícones do menu principal).
+  const ROTULO_PERM = { lan: 'Lançar', dis: 'Discrim.', edA: 'Editar', veA: 'Ver', pag: 'Pagar', edD: 'Editar', veD: 'Ver', esp: 'Ações' };
   const TODAS = PERMS.filter((p) => p.id !== 'esp').map((p) => p.id);
 
   function iconePerm(p) {
@@ -440,6 +442,17 @@
         if (ti === 0 && fimDoCabecalho) linha.append(fimDoCabecalho);
         cab.append(linha);
       });
+      // Entre as três linhas e o menu: o cabeçalho das colunas, no padrão dos cabeçalhos de lista (título em maiúsculas, 32 px).
+      const colunasCab = el('div', 'acessos-tl acessos-cab-colunas');
+      const ec = el('div', 'acessos-tl-esq');
+      ec.append(el('span', 'acessos-cab-titulo', 'Menu e telas'));
+      colunasCab.append(ec);
+      estado.blocos.forEach((b) => {
+        const w = blocoEl(b);
+        PERMS.forEach((p) => { const c = el('span', 'acessos-tl-cel'); c.append(el('span', 'acessos-cab-rotulo', ROTULO_PERM[p.id])); w.append(c); });
+        colunasCab.append(w);
+      });
+      cab.append(colunasCab);
     }
     mat.append(cab);
 

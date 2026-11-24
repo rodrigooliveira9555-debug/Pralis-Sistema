@@ -249,6 +249,13 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 .acessos-cabecalho { position: sticky; top: 0; z-index: 4; width: max-content; min-width: 100%; box-sizing: border-box; background: var(--theme-card, #fff); border-bottom: 1px solid var(--layout-line, #dedee3); border-radius: 12px 12px 0 0; }
 .acessos-cabecalho > .acessos-tl { min-height: var(--linha-lista, 52px); }
 .acessos-cabecalho > .acessos-tl:first-child { border-top: 0; }
+/* O cabeçalho das colunas, entre as três linhas e o menu: 32 px, títulos em maiúsculas pequenas (padrão dos cabeçalhos de lista). */
+.acessos-cabecalho > .acessos-tl.acessos-cab-colunas { min-height: var(--linha-cabecalho, 32px); height: var(--linha-cabecalho, 32px); }
+.acessos-cab-colunas > .acessos-tl-esq { padding-top: 0; padding-bottom: 0; }
+.acessos-cab-titulo { font: 600 11px/16px var(--ui-font); letter-spacing: .04em; text-transform: uppercase; color: var(--muted, #73737a); }
+.acessos-cab-colunas .acessos-tl-cel { padding: 0; }
+.acessos-cab-rotulo { font: 600 9px/12px var(--ui-font); letter-spacing: .02em; text-transform: uppercase; color: var(--muted, #73737a); white-space: nowrap; text-align: center; }
+@media (max-width: 560px) { .acessos-cab-rotulo { display: none; } }
 .acessos-cabecalho .acessos-tl-esq { padding-top: 0; padding-bottom: 0; justify-content: center; }
 .acessos-cabecalho .acessos-tl-bloco-cab { position: relative; align-items: center; padding: 0 10px; overflow: visible; }
 .acessos-cabecalho .acessos-tl-bloco.recolhida { padding: 0; }
