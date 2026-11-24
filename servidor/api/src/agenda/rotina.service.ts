@@ -9,7 +9,7 @@ import type {
   TarefaDeTela
 } from "@cicluz/shared";
 import { banco } from "../banco/conexao.ts";
-import { ErroDominio, proibido } from "../erros.ts";
+import { conflito, ErroDominio, proibido } from "../erros.ts";
 import * as repo from "./compromissos.repository.ts";
 import { concluir, gravar, invalido, montar, naoEncontrado, naoTransferida, respostaDe } from "./compromissos.service.ts";
 import * as gr from "./grupos.repository.ts";
@@ -71,6 +71,7 @@ function prazo(data: string, horaFim: string | null) {
 
 export async function desempenho(perfil: PerfilSessao, de: string, ate: string, momento = new Date()): Promise<DesempenhoResposta> {
   if (!(await repo.estado(banco, perfil.empresa.id))) throw naoTransferida();
+  await exigirExpediente(perfil);
   const so = admin(perfil) ? null : perfil.usuarioId;
   const [pessoas, linhas, horas] = await Promise.all([
     rr.contas(perfil.empresa.id), rr.responsabilidades(perfil.empresa.id, de, ate, so), rr.horasForaPorDia(perfil.empresa.id, de, ate, so)
@@ -128,16 +129,24 @@ async function garantirListaDasTelas(tx: Parameters<Parameters<typeof gravar>[1]
   await gr.trocarMembros(tx, empresaId, LISTA_TAREFAS_TELAS, ativas, perfil.usuarioId);
 }
 
+/** Só devolve o compromisso a quem o vê (quem disparou a tela pode não participar da tarefa: recebe só o id). */
+async function seVisivel(ex: Parameters<typeof respostaDe>[0], perfil: PerfilSessao, c: Parameters<typeof respostaDe>[2]) {
+  const r = await respostaDe(ex, perfil, c);
+  return r.acesso.ver ? r : null;
+}
+
 /**
- * Cria a tarefa que a tela pediu, uma vez por referência. Gestor = quem estava na tela; responsáveis veem e
- * concluem. Pedir de novo (outro aparelho, a mesma tela aberta duas vezes) devolve a mesma tarefa.
+ * Cria a tarefa que a tela pediu, uma vez por referência. Gestor = dono da lista "Tarefas das telas" (o
+ * administrador), não quem estava na tela: um colega que só abriu o Compras não vira gestor nem avalia ninguém.
+ * Responsáveis veem e concluem. Pedir de novo (outro aparelho, a mesma tela aberta duas vezes) devolve o mesmo id.
  */
 export async function criarTarefaDeTela(perfil: PerfilSessao, e: TarefaDeTela) {
   const empresaId = perfil.empresa.id;
   const ja = await rr.porVinculo(banco, empresaId, e.vinculoRef);
-  if (ja) return { criado: false, compromisso: await respostaDe(banco, perfil, ja) };
+  if (ja) return { criado: false, id: ja.id, compromisso: await seVisivel(banco, perfil, ja) };
   return gravar(perfil, async (tx) => {
     await garantirListaDasTelas(tx, perfil);
+    const lista = (await repo.grupo(tx, empresaId, LISTA_TAREFAS_TELAS))!;
     const pessoas = [...new Set(e.responsaveis)].map((id) => ({ id, responsavel: true, ver: true, editar: false, concluir: true, excluir: false }));
     const contas = await repo.contasDaEmpresa(tx, empresaId, pessoas.map((p) => p.id));
     if (pessoas.some((p) => !contas.has(p.id))) throw invalido("Uma das pessoas da tarefa não é conta desta empresa.");
@@ -148,24 +157,29 @@ export async function criarTarefaDeTela(perfil: PerfilSessao, e: TarefaDeTela) {
     }, null);
     const ordem = (await repo.maiorOrdem(tx, empresaId, LISTA_TAREFAS_TELAS)) + 1;
     const criou = await repo.inserirCompromisso(tx, {
-      ...m.linha, empresaId, id: e.id, vinculoRef: e.vinculoRef, gestorId: perfil.usuarioId, ordem: String(ordem), criadoPor: perfil.usuarioId, atualizadoPor: perfil.usuarioId
+      ...m.linha, empresaId, id: e.id, vinculoRef: e.vinculoRef, gestorId: lista.donoId, ordem: String(ordem), criadoPor: perfil.usuarioId, atualizadoPor: perfil.usuarioId
     });
-    // Corrida com outro aparelho: a referência (ou o id) já entrou; devolve a que ficou.
+    // Corrida com outro aparelho: a mesma referência já entrou e devolve o id dela. Id que já é de outro
+    // compromisso (sem a mesma referência) é recusado, sem revelar nada dele.
     if (!criou) {
-      const outra = (await rr.porVinculo(tx, empresaId, e.vinculoRef)) ?? (await repo.compromisso(tx, empresaId, e.id));
-      if (!outra) throw invalido("Não foi possível criar a tarefa.");
-      return { criado: false, compromisso: await respostaDe(tx, perfil, outra) };
+      const mesma = await rr.porVinculo(tx, empresaId, e.vinculoRef);
+      if (!mesma) throw conflito("Este identificador já foi usado. Recarregue e tente de novo.", "AGENDA_ID_EM_USO");
+      return { criado: false, id: mesma.id, compromisso: await seVisivel(tx, perfil, mesma) };
     }
     await repo.trocarParticipantes(tx, empresaId, e.id, perfil.usuarioId, m.pessoas);
-    return { criado: true, compromisso: await respostaDe(tx, perfil, (await repo.compromisso(tx, empresaId, e.id))!) };
+    return { criado: true, id: e.id, compromisso: await seVisivel(tx, perfil, (await repo.compromisso(tx, empresaId, e.id))!) };
   });
 }
 
 /** A tela fez o que a tarefa pedia (ex.: o pedido foi enviado): conclui a tarefa, se quem fez pode concluir. */
 export async function concluirPorVinculo(perfil: PerfilSessao, vinculoRef: string) {
+  await exigirExpediente(perfil);
   const c = await rr.porVinculo(banco, perfil.empresa.id, vinculoRef);
   if (!c || c.excluidoEm) throw naoEncontrado();
-  if (c.concluida) return { resultado: "sem-mudanca" as const, compromisso: await respostaDe(banco, perfil, c) };
+  // Quem não vê a tarefa recebe 404, como se ela não existisse (não revela nada dela).
+  const atual = await seVisivel(banco, perfil, c);
+  if (!atual) throw naoEncontrado();
+  if (c.concluida) return { resultado: "sem-mudanca" as const, compromisso: atual };
   const r = await concluir(perfil, c.id, c.repeticaoTipo && c.data ? { concluida: true, ocorrencia: c.data } : { concluida: true });
   return { resultado: r.resultado, compromisso: r.compromisso };
 }
@@ -206,6 +220,7 @@ export async function marcarLidoGrupo(perfil: PerfilSessao, grupoId: string) {
 export async function naoLidasGrupos(perfil: PerfilSessao) {
   const empresaId = perfil.empresa.id;
   if (!(await repo.estado(banco, empresaId))) return {};
+  await exigirExpediente(perfil);
   const membro = await repo.gruposDoMembro(empresaId, perfil.usuarioId);
   const grupos = await repo.gruposAtivos(empresaId);
   const pode = new Set(grupos.filter((g) => admin(perfil) || g.donoId === perfil.usuarioId || membro.has(g.id)).map((g) => g.id));

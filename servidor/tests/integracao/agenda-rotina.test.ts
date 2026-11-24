@@ -152,25 +152,30 @@ describe("agenda: hora fora do expediente e desempenho", () => {
 });
 
 describe("agenda: tarefa vinda de uma tela", () => {
-  const tarefa = (resp: Conta, ref = "compras:agenda:ag-1:2026-11-25") => ({
+  const REF = "compras:oc:oc-ag-1";
+  const tarefa = (resp: Conta, ref = REF) => ({
     id: novoId(), vinculoRef: ref, vinculoTela: "#/saidas-mercadorias/lancamentos/mer-pedido-de-compra", vinculoTitulo: "MER - Pedido de Compra",
     titulo: "Fazer o pedido de compra", data: "2026-11-25", hora: "08:00", responsaveis: [resp.usuarioId]
   });
 
   it("cai na lista 'Tarefas das telas' para o responsável; pedir de novo não duplica; fazer o pedido conclui", async () => {
     const { gestor: admin, resp, leitor } = await cenario();
+    // Quem só disparou a tela (o leitor abriu o Compras) recebe o id, não a tarefa: ele não participa dela.
     const r1 = await pedir(leitor.cookie, "POST", "/api/agenda/tarefas-de-tela", tarefa(resp));
     expect(r1.statusCode, r1.body).toBe(201);
-    expect(r1.json().data).toMatchObject({ grupoId: "lista-tarefas-das-telas", vinculoTela: "#/saidas-mercadorias/lancamentos/mer-pedido-de-compra", vinculoTitulo: "MER - Pedido de Compra", alerta: 0 });
-    // Outro aparelho pede a mesma tarefa (id diferente, mesma referência): devolve a mesma.
+    expect(r1.json().data.compromisso).toBeNull();
+    // Outro aparelho pede a mesma tarefa (id diferente, mesma referência): devolve a mesma. O gestor é o
+    // dono da lista (administrador), não quem disparou.
     const r2 = await pedir(admin.cookie, "POST", "/api/agenda/tarefas-de-tela", tarefa(resp));
     expect(r2.statusCode).toBe(200);
     expect(r2.json().data.id).toBe(r1.json().data.id);
+    expect(r2.json().data.compromisso).toMatchObject({ grupoId: "lista-tarefas-das-telas", gestorId: admin.usuarioId, vinculoTitulo: "MER - Pedido de Compra", alerta: 0 });
 
     const doResp = await agenda(resp);
     expect(doResp.grupos.map((g: { id: string; nome: string }) => g.nome)).toContain("Tarefas das telas");
-    const t = doResp.compromissos.find((c: { vinculoRef: string }) => c.vinculoRef === "compras:agenda:ag-1:2026-11-25");
+    const t = doResp.compromissos.find((c: { vinculoRef: string }) => c.vinculoRef === REF);
     expect(t.acesso).toMatchObject({ ver: true, concluir: true, responsavel: true });
+    expect((await agenda(leitor)).compromissos.map((c: { id: string }) => c.id)).not.toContain(t.id);
     // Quem não é responsável nem gestor não vê a tarefa.
     const { fora } = { fora: await logado("usuario", admin.empresaNome) };
     expect((await agenda(fora)).compromissos).toHaveLength(0);
@@ -186,6 +191,13 @@ describe("agenda: tarefa vinda de uma tela", () => {
     const { gestor: admin, resp } = await cenario();
     expect((await pedir(admin.cookie, "POST", "/api/agenda/tarefas-de-tela", { ...tarefa(resp), responsaveis: ["u-jose"] })).statusCode).toBe(400);
     expect((await pedir(admin.cookie, "POST", "/api/agenda/tarefas-de-tela", { ...tarefa(resp), vinculoRef: "com espaço" })).statusCode).toBe(400);
+    // Só as telas que criam tarefa (pedido de compra e de produção): outra referência é recusada.
+    expect((await pedir(admin.cookie, "POST", "/api/agenda/tarefas-de-tela", { ...tarefa(resp), vinculoRef: "qualquer:coisa" })).statusCode).toBe(400);
+    // O id de um compromisso alheio com uma referência nova: 409, sem devolver nada dele.
+    const alheio = await criar(admin, { titulo: "Assunto reservado" });
+    const tentativa = await pedir(resp.cookie, "POST", "/api/agenda/tarefas-de-tela", { ...tarefa(resp, "compras:oc:oc-novo"), id: alheio.id });
+    expect(tentativa.statusCode).toBe(409);
+    expect(tentativa.body).not.toContain("Assunto reservado");
     expect((await pedir(admin.cookie, "POST", "/api/agenda/tarefas-de-tela", { ...tarefa(resp), vinculoTela: "javascript:alert(1)" })).statusCode).toBe(400);
     const c = await criar(admin, { vinculoTela: "#/agenda/lancamentos", vinculoTitulo: "Agenda" });
     expect(c).toMatchObject({ vinculoTela: "#/agenda/lancamentos", vinculoTitulo: "Agenda", vinculoRef: "" });

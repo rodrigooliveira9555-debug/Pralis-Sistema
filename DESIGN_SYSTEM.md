@@ -1,5 +1,25 @@
 # CICLUZ — referência de interface
 
+## Agenda: rotina (P-45, áudios do Rodrigo de 23/11/2026; feito em 24/11/2026)
+**Menu da Agenda:** só **Agenda** e **Configurações da Agenda** (Agendamento de Pedidos e de Produção ficam em Lançamentos).
+**Ícone roxo de agendar:** botão **"Agendar tarefa desta tela"** na barra de baixo de **toda** tela, logo depois do "+", sempre no
+roxo da Agenda (#7c3aed), qualquer que seja a cor da tela (regra `.people-agendar-control` em `people-header-pilot.css`, só a
+variável de cor, sem `!important`). **É exceção à cor por origem**, por pedido do Rodrigo (23/11/2026). Abre "Novo compromisso"
+com a **tela ligada**; na Agenda a tarefa mostra o ícone **"Abrir a tela"** (monitor com ✓) na linha e a seção **"Tela ligada"**
+na janela (um só botão cheio, "Abrir a tela"; "Desligar a tela" é link). Em telas de **até 340 px** só cabem cinco botões de 24 px
+(mínimo de toque) à esquerda do logotipo: o de agendar **sai da barra** nessas telas (a Agenda continua com o "+").
+**Chat no jeito do WhatsApp** (compromisso e grupo, peça única `abrirConversa` em `agenda/conversa.js`): separador do dia (Hoje,
+Ontem, DD/MM/AA), balões (os meus à direita com o roxo da Agenda clareado; os dos outros à esquerda com a bolinha das iniciais e o
+nome na primeira mensagem seguida), hora dentro do balão, campo de **uma linha** e botão redondo de enviar (44 px). **Exceção ao
+"Enter nunca salva": no chat, Enter envia a mensagem** (como no WhatsApp).
+**Grupo = lista:** botão **"Chat do grupo"** no cabeçalho da lista (com o número de mensagens novas) e contador roxo na linha da
+lista; **"Membros do grupo"** em "Editar lista" (quem criou entra sempre).
+**Configurações da Agenda:** "A sua Agenda" (a regra da própria pessoa) e, para o administrador, a lista de pessoas; a janela de
+cada pessoa tem os dias como chips, início e fim do expediente, "Fora do expediente", "Hora trabalhada fora do expediente" (só
+registro) e "Sair do sistema depois de quantos minutos parado". Fora do expediente com bloqueio: "A Agenda está fechada agora".
+**Desempenho** (aba da Agenda): um cartão por pessoa, com % no prazo, barra (verde no prazo, âmbar fora do prazo, vermelho não
+feitas, cinza em aberto; cada parte também tem o número e o nome ao lado, a cor não é o único sinal) e os números.
+
 ## Configurações → Permissões → Acesso por Tela: sete permissões por tela, em colunas (23/11/2026, substitui a versão de 19/11/2026)
 Pedido do Washington. Cartão **Acesso por Tela** em Permissões (`dist/acessos/telas.js`, ações especiais em `telas-dados.js`, estilos em `acessos.css`). **Esboço sem backend: nada é gravado e nenhum acesso muda.** O nível único por tela (os 8 níveis com $ e texto, de 19/11/2026) **foi removido**: no lugar entraram **sete permissões independentes por tela**, cada uma um interruptor, **só com o ícone (sem texto)**, em colunas fixas: **← Lançar · ← Discriminar · ← Editar · ← Visualizar · ↔ Pagar · → Editar · → Visualizar**. A **seta** substitui o $: ← antes de pagar, → depois de pagar, ↔ o próprio pagar (leitura assumida, P-41).
 **O ícone da permissão** segue o botão redondo de ação do Design System: círculo de 32 px cheio na cor da origem (Entradas amarelo, Transferências laranja, DES vermelho, MER verde, RET azul, Resultados e Configurações roxo) com o desenho branco de 18 px — **lápis com prancheta = lançar, lista = discriminar, lápis = editar, olho = visualizar, $ = pagar** — e, no canto, um selo branco de 15 px com a seta. Os sete ícones ficam **na linha do grupo** (a que recolhe: Entradas, Transferências, Saídas…), uma vez por coluna, alinhados com os interruptores de baixo (o `account-status-switch` do sistema, ligado na cor do grupo); **a linha da seção (Lançamentos, Relatórios…) e a linha da tela não repetem o ícone**. **Todas as telas têm os mesmos sete interruptores**, sem distinção por tipo de seção (Relatórios, Cadastros, Pastas, Design System): nada de coluna ausente nem de ícone apagado; o que a tela faz com cada permissão fica para o backend (P-41).

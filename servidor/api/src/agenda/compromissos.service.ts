@@ -163,6 +163,7 @@ export async function agenda(perfil: PerfilSessao): Promise<AgendaResposta> {
 /** Um compromisso; quem não vê recebe 404 (não revela que existe). */
 export async function obter(perfil: PerfilSessao, id: string) {
   await exigirTransferida(perfil);
+  await exigirExpediente(perfil);
   const c = await repo.compromisso(banco, perfil.empresa.id, id);
   if (!c || c.excluidoEm) throw naoEncontrado();
   const r = await respostaDe(banco, perfil, c);

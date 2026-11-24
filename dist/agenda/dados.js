@@ -191,6 +191,7 @@
   function bloquear(motivo) {
     motivoBloqueio = motivo || 'Fora do seu expediente.';
     dados = { listas: [], colunas: [], itens: [], relacoes: [] };
+    try { localStorage.removeItem(CHAVE_CACHE); } catch (e) { /* sem acesso ao armazenamento */ }
     situacao = 'fora-expediente';
     avisar(true);
   }
@@ -629,7 +630,8 @@
   async function tarefaDeTela(corpo) {
     const r = await api('/agenda/tarefas-de-tela', { metodo: 'POST', corpo: { id: novoId('ag'), ...corpo } });
     if (r.erro) return r;
-    if (situacao === 'servidor') { guardarItem(r.dados); gravou(); }
+    // O compromisso só volta para quem participa dele (quem só disparou a tela recebe o id).
+    if (r.dados.compromisso && situacao === 'servidor') { guardarItem(r.dados.compromisso); gravou(); }
     return { ok: true, id: r.dados.id };
   }
   /** A tela fez o que a tarefa pedia: conclui (se a pessoa pode). */

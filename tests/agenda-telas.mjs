@@ -38,8 +38,8 @@ const AGENDA_ANTIGA = {
   ],
   colunas: [{ id: 'col-a-fazer', nome: 'A fazer' }, { id: 'col-em-progresso', nome: 'Em progresso' }],
   itens: [
-    { id: 'ag-antigo-1', listaId: 'lista-diretor-operacoes', titulo: 'Feito antes do login', criadoPor: '', pessoas: [{ id: 'u-jose', responsavel: true, ver: true, concluir: true }] },
-    { id: 'ag-antigo-2', listaId: 'lista-diretor-operacoes', titulo: 'Da lista provisória', criadoPor: '', pessoas: [{ id: 'u-ana', responsavel: true, ver: true }] },
+    { id: 'ag-antigo-1', listaId: 'lista-diretor-operacoes', titulo: 'Feito antes do login', criadoPor: '', pessoas: [{ id: 'conta-jose', responsavel: true, ver: true, concluir: true }] },
+    { id: 'ag-antigo-2', listaId: 'lista-diretor-operacoes', titulo: 'Da lista provisória', criadoPor: '', pessoas: [{ id: 'conta-ana', responsavel: true, ver: true }] },
   ],
   relacoes: [],
 };
@@ -149,11 +149,13 @@ async function limparAgenda(p) {
 {
   const p = await abrirPagina(1280, 900);
   const hoje = await hojeDe(p);
-  // Entrada pelo menu lateral: Agenda · Atividades → Lançamentos (lista Diretor de Operações)
+  // Entrada pelo menu lateral: Agenda · Atividades → Agenda (P-45: o menu tem só "Agenda" e "Configurações da Agenda")
   await p.locator('summary', { hasText: 'Agenda' }).first().click();
-  await p.getByRole('button', { name: 'Lançamentos', exact: true }).first().click();
+  await p.getByRole('button', { name: 'Agenda', exact: true }).first().click();
   ok(await p.locator('#agenda-view.show').count() === 1, 'O submenu abre a Agenda');
-  ok((await p.locator('.agenda-detalhe-titulo').textContent()).startsWith('Diretor de Operações'), 'Abre já na lista do submenu');
+  ok((await p.locator('details[data-menu-name="Agenda/Atividades"] .children button').allTextContents()).map((t) => t.trim()).join('|') === 'Agenda|Configurações da Agenda', 'Menu da Agenda: só "Agenda" e "Configurações da Agenda"');
+  ok((await p.locator('.agenda-detalhe-titulo').textContent()).startsWith('Todos'), 'Abre em Todos');
+  await p.locator('.agenda-lista-linha', { hasText: 'Diretor de Operações' }).click();
   ok((await p.locator('.agenda-automatica small').allTextContents()).join('|') === 'Para hoje|Programados|Todos|Sinalizados|Atrasados|Atribuídos a mim|Concluídos', 'Listas automáticas do Lembretes + Atrasados');
   ok(await p.locator('.agenda-lateral').isVisible() && await p.locator('.agenda-conteudo').isVisible(), 'Computador: listas e conteúdo lado a lado');
   ok(!(await p.locator('.agenda-voltar-listas').isVisible()), 'Computador: sem "‹ Listas"');
@@ -552,8 +554,8 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   await dialogo(p).getByRole('button', { name: 'Abrir chat (2 novas)' }).click();
   const chat = p.locator('dialog.agenda-chat-dialog[open]');
   await chat.locator('.compras-vazio').waitFor();
-  await chat.getByLabel('Mensagem', { exact: true }).fill('pode fechar às 18h?');
-  await chat.getByLabel('Mensagem', { exact: true }).press('Enter');
+  await chat.getByLabel('Mensagem (Enter envia)', { exact: true }).fill('pode fechar às 18h?');
+  await chat.getByLabel('Mensagem (Enter envia)', { exact: true }).press('Enter');
   await chat.locator('.agenda-chat-msg', { hasText: 'pode fechar às 18h?' }).waitFor();
   ok(mensagens.length === 1 && mensagens[0].texto === 'pode fechar às 18h?', 'Enter envia a mensagem');
   mensagens.push({ id: 'm-outra', autorId: 'outra-pessoa', autorNome: 'Responsável Dois', texto: 'Combinado!', criadoEm: new Date(Date.now() + 1000).toISOString() });
@@ -593,7 +595,7 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   await chat.locator('.agenda-chat-estado', { hasText: 'a API precisa ser atualizada' }).waitFor();
   const antes = pedidos;
   await p.waitForTimeout(6000);
-  ok(pedidos === antes && await chat.getByLabel('Mensagem', { exact: true }).isDisabled(), 'API antiga: o chat avisa e para de perguntar a cada 5 s');
+  ok(pedidos === antes && await chat.getByLabel('Mensagem (Enter envia)', { exact: true }).isDisabled(), 'API antiga: o chat avisa e para de perguntar a cada 5 s');
   await p.close();
 }
 
@@ -754,6 +756,68 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   await p.close();
 }
 
+/* ---------- 5b) Rotina da Agenda (P-45): configurações, desempenho, chat do grupo, tela ligada, pedido que vira tarefa ---------- */
+{
+  const p = await abrirPagina(1280, 900);
+  await limparAgenda(p);
+  // Configurações da Agenda pelo menu: o administrador configura o Responsável Um.
+  await p.evaluate(() => { const ag = document.querySelector('details[data-menu-name="Agenda/Atividades"]'); ag.open = true; });
+  await p.getByRole('button', { name: 'Configurações da Agenda', exact: true }).first().click();
+  await p.locator('#agenda-config-view .agenda-config-linha', { hasText: RESP_UM.nome }).click();
+  for (const dia of ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']) await dialogo(p).getByRole('button', { name: dia, exact: true }).click();
+  await dialogo(p).getByLabel('Início do expediente').fill('00:00');
+  await dialogo(p).getByLabel('Fim do expediente').fill('23:59');
+  await dialogo(p).getByLabel('Hora trabalhada fora do expediente').selectOption('extra');
+  await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado').fill('30');
+  await dialogo(p).locator('.people-save-control').click();
+  await p.locator('#agenda-config-view .agenda-config-linha', { hasText: 'sai em 30 min parado' }).waitFor();
+  ok((await p.locator('#agenda-config-view .agenda-config-linha', { hasText: RESP_UM.nome }).textContent()).includes('registra hora extra'), 'Configurações: o administrador salva expediente, hora extra e saída por tempo parado');
+
+  // Chat do grupo: a lista é o grupo.
+  await p.evaluate(() => { document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.estado.visao = 'listas'; CicluzAgenda.abrir('lista-gestao-pessoas'); });
+  await p.getByRole('button', { name: 'Chat do grupo' }).click();
+  await dialogo(p).getByLabel('Mensagem (Enter envia)').fill('Bom dia, grupo de teste');
+  await dialogo(p).getByLabel('Mensagem (Enter envia)').press('Enter');
+  await dialogo(p).locator('.agenda-chat-msg.minha', { hasText: 'Bom dia, grupo de teste' }).waitFor();
+  ok(await dialogo(p).locator('.agenda-chat-dia', { hasText: 'Hoje' }).count() === 1, 'Chat do grupo no jeito do WhatsApp: separador do dia e a mensagem no balão');
+  await p.keyboard.press('Escape');
+
+  // Ícone roxo em outra tela: a tarefa fica ligada a ela e "Abrir a tela" leva de volta.
+  const tela = '#/saidas-mercadorias/lancamentos/compras-solicitacao';
+  await p.evaluate((t) => CicluzRotas.abrir(t), tela);
+  await p.waitForFunction(() => document.querySelector('.view.show') && document.querySelector('.view.show').id !== 'agenda-view');
+  const agendar = p.locator('.view.show .people-agendar-control');
+  ok(await agendar.evaluate((b) => getComputedStyle(b).backgroundColor) === 'rgb(124, 58, 237)', 'Ícone de agendar é roxo mesmo numa tela verde');
+  await agendar.click();
+  ok((await dialogo(p).locator('.agenda-tela-ligada').textContent()).includes('MER - Pedido de Compra'), 'A janela já vem com a tela ligada');
+  await dialogo(p).getByLabel('Título').fill('Conferir o pedido da semana');
+  await confirmar(p);
+  const ligado = await item(p, 'Conferir o pedido da semana');
+  ok(ligado && ligado.vinculoTela === tela && ligado.vinculoTitulo === 'MER - Pedido de Compra', 'Compromisso guarda a tela ligada');
+  await p.evaluate(() => { CicluzAgenda.estado.visao = 'listas'; CicluzAgenda.abrir(''); });
+  await p.locator('.agenda-abrir-tela').first().click();
+  await p.waitForFunction((t) => location.hash === t, tela);
+  ok(true, '"Abrir a tela" leva até a tela ligada');
+
+  // Pedido agendado chegou na hora: tarefa na Agenda do responsável; enviar o pedido conclui.
+  await p.evaluate(async (r) => { CicluzAgendaRotina.tarefaDoPedidoDeCompra({ ocorrenciaId: 'oc-teste-1', grupo: 'Farinhas', data: CicluzAgendaDominio.isoData(new Date()), hora: '08:00', responsavelId: r }); }, RESP_UM.id);
+  const q = await abrirPagina(1024, 844, RESP_UM);
+  await q.waitForFunction(() => CicluzAgendaDados.dados.itens.some((i) => i.vinculoRef === 'compras:oc:oc-teste-1'), null, { timeout: 15000 }).catch(() => q.evaluate(() => CicluzAgendaDados.atualizar(true)));
+  await q.waitForFunction(() => CicluzAgendaDados.dados.itens.some((i) => i.vinculoRef === 'compras:oc:oc-teste-1'), null, { timeout: 15000 });
+  const t1 = (await dados(q)).itens.find((i) => i.vinculoRef === 'compras:oc:oc-teste-1');
+  ok(t1.titulo === 'Fazer o pedido de compra: Farinhas' && t1.listaId === 'lista-tarefas-das-telas', 'Pedido agendado vira tarefa do responsável na lista "Tarefas das telas"');
+  await q.evaluate(() => CicluzAgendaRotina.pedidoDeCompraFeito('oc-teste-1'));
+  await q.waitForFunction(() => CicluzAgendaDados.dados.itens.find((i) => i.vinculoRef === 'compras:oc:oc-teste-1').concluida, null, { timeout: 15000 });
+  ok(true, 'Enviar o pedido conclui a tarefa');
+  // Desempenho: o responsável vê o próprio cartão.
+  await q.evaluate(() => { document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.estado.visao = 'desempenho'; CicluzAgenda.abrir(''); });
+  await q.locator('.agenda-desempenho-cartao').first().waitFor();
+  ok((await q.locator('.agenda-desempenho-cartao').count()) === 1 && (await q.locator('.agenda-desempenho-cartao b').first().textContent()) === RESP_UM.nome, 'Desempenho: cada pessoa vê o seu');
+  await q.close();
+  await p.evaluate(() => { CicluzAgenda.estado.visao = 'listas'; });
+  await p.close();
+}
+
 /* ---------- 6) Matriz de layout ---------- */
 {
   // Dados de exemplo pela API (títulos e nomes compridos para forçar o layout).
@@ -786,6 +850,7 @@ const estados = [
   ['ano', (e) => { e.visao = 'calendario'; e.calendario.modo = 'ano'; }],
   ['kanban', (e) => { e.visao = 'kanban'; e.listaId = ''; e.automatica = 'todos'; }],
   ['mapa mental', (e) => { e.visao = 'mapa'; e.listaId = ''; e.automatica = 'todos'; }],
+  ['desempenho', (e) => { e.visao = 'desempenho'; e.listaId = ''; e.automatica = 'todos'; }],
 ];
 let combinacoes = 0;
 for (const largura of [320, 390, 1024, 1900]) {

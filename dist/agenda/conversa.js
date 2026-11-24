@@ -157,7 +157,7 @@
           finally { enviar.disabled = false; texto.focus(); }
         }
         // Chat: Enter envia, como no WhatsApp (exceção ao "Enter nunca salva", registrada no DESIGN_SYSTEM).
-        texto.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); mandar(); } });
+        texto.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); mandar(); } });
         buscar(true);
         timer = setInterval(() => buscar(false), INTERVALO_CHAT);
         setTimeout(() => texto.focus(), 150);

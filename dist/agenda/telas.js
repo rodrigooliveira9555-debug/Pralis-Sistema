@@ -583,7 +583,7 @@
           ic.innerHTML = svg(ICONES.tela);
           linhaTela.append(ic, el('b', null, vinculo.titulo));
           if (atual && atual.vinculoTela === vinculo.tela) linhaTela.append(botao('Abrir a tela', () => window.CicluzAgendaRotina.abrirTela(vinculo.tela), 'btn secondary'));
-          if (!soLeitura && !(atual && atual.vinculoRef)) linhaTela.append(botao('Desligar', () => { vinculo = null; desenharTela(); }, 'btn ghost'));
+          if (!soLeitura && !(atual && atual.vinculoRef)) linhaTela.append(botao('Desligar a tela', () => { vinculo = null; desenharTela(); }, 'agenda-link'));
           telaSecao.append(linhaTela);
           if (atual && atual.vinculoRef) telaSecao.append(U.nota('Criada pela própria tela: conclui sozinha quando o que ela pede é feito.'));
         };

@@ -41,8 +41,15 @@
   (histórico): listas, colunas, itens com pessoas/avaliação/repetição/localização, relações.
   Chat e arquivos: tabelas `agenda_mensagens`, `agenda_chat_leituras` e `agenda_arquivos` (0003), com a permissão lida das
   tabelas da Agenda a cada pedido (o documento não decide mais nada; G1 fechado).
+  **Rotina (0008, P-45, 24/11/2026):** colunas `vinculo_tela`, `vinculo_titulo` e `vinculo_ref` em `agenda_compromissos` (tela
+  ligada; `vinculo_ref` único = tarefa criada por uma tela, só `compras:oc:<ocorrência>` e `producao:pp:<pedido>`), lista fixa
+  `lista-tarefas-das-telas` ("Tarefas das telas", criada na primeira tarefa), `agenda_grupo_mensagens` e `agenda_grupo_leituras`
+  (chat do grupo), `agenda_config_pessoas` (expediente, bloqueio fora dele, registro da hora fora, minutos parado até sair) e
+  `agenda_horas_fora` (uma linha por compromisso concluído fora do expediente; só registro). Fuso da loja: America/Sao_Paulo.
+  Compras e Produção: o responsável é uma conta real (`CicluzComprasDados.RESPONSAVEIS` lê as contas da Agenda); `u-jose`,
+  `u-rodrigo` e `u-ana` aparecem como "Pessoa de teste (removida)".
   Código: `dist/agenda/` (regras gerado, dominio, dados, transferencia, calendario, kanban, mapa, mapa-mental, conversa,
-  telas, alertas, agenda.css); servidor `servidor/api/src/agenda/`.
+  telas, alertas, rotina, agenda.css); servidor `servidor/api/src/agenda/` (rotina.* para a rotina).
 - `producao-v1` (05/11/2026) — Produção num documento: `produtos` (configuração por `produtoId` do Compras: `formato`
   {utensilioId, colunas, linhas, exatidao, aceitaMeia}, `comEstoque`, `estoqueMin/Max`, `producaoMax`, `localEstoqueId`,
   `processoPrincipal`, `conferencia` nenhuma|1|2), `fichas` (produtoId, nome, padrao, quantidadeBase, rendimento, `etapas`

@@ -225,9 +225,11 @@ export type TransferenciaAgenda = z.infer<typeof transferenciaAgendaSchema>;
  * Tarefa criada por uma tela (ex.: agendamento de pedido do Compras chegou na hora). `vinculoRef` é única por
  * empresa: pedir de novo devolve a mesma tarefa (dois aparelhos não duplicam). Vai para a lista "Tarefas das telas".
  */
+/** Telas que criam tarefa sozinhas: ocorrência do pedido de compra agendado e pedido de produção agendado. */
+export const VINCULO_REF_TELAS = /^(compras:oc|producao:pp):[A-Za-z0-9_.-]{1,180}$/;
 export const tarefaDeTelaSchema = z.object({
   id: compromissoIdSchema,
-  vinculoRef: z.string().regex(VINCULO_REF, "Referência inválida"),
+  vinculoRef: z.string().regex(VINCULO_REF_TELAS, "Referência de tela desconhecida"),
   vinculoTela: z.string().regex(VINCULO_TELA, "Endereço de tela inválido"),
   vinculoTitulo: texto(120).min(1),
   titulo: texto(200).min(1),

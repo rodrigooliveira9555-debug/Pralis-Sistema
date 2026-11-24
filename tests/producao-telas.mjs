@@ -26,6 +26,8 @@ async function abrirPagina(largura) {
   await pagina.route('https://fonts.gstatic.com/**', (r) => r.abort());
   await pagina.goto(url, { waitUntil: 'load' });
   await pagina.waitForFunction(() => window.CicluzProducao && window.CicluzProducaoServico && window.CicluzComprasPedido);
+  // Contas fictícias da empresa (sem servidor não há Pessoas com Acesso; as pessoas de teste saíram, P-45).
+  await pagina.evaluate(() => { CicluzAgendaDados.pessoas = () => [{ id: 'conta-jose', nome: 'José (teste)' }, { id: 'conta-rodrigo', nome: 'Rodrigo (teste)' }, { id: 'conta-ana', nome: 'Ana (teste)' }]; });
   await pagina.evaluate(() => { if (document.body.classList.contains('mobile-menu-visible')) document.getElementById('toggleMenu').click(); });
   return pagina;
 }
@@ -64,9 +66,9 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
     const tela = p.locator('#producao-' + id);
     ok(await p.locator('#producao-' + id + '.show').count() === 1 && (await tela.locator('.head h2').first().textContent()).trim() === titulo && (await tela.locator('.head p').first().textContent()).includes('Saídas · Mercadorias / ' + sub + ' / ' + titulo), sub + ' → ' + titulo + ': abre a tela com o mesmo nome e a trilha certa');
   }
-  // Os agendamentos saíram do menu Agenda (Zé, 23/11/2026): a Agenda de Produção abre os Lançamentos Produção.
+  // Os agendamentos saíram do menu Agenda (Zé, 23/11/2026); o menu tem só Agenda e Configurações da Agenda (P-45, 24/11/2026).
   const agenda = await p.evaluate(() => [...document.querySelectorAll('details[data-menu-name="Agenda/Atividades"] .children button')].map((b) => b.textContent.trim()).join('|'));
-  ok(agenda === 'Lançamentos', 'Menu Agenda sem os agendamentos de compras e de produção: ' + agenda);
+  ok(agenda === 'Agenda|Configurações da Agenda', 'Menu Agenda sem os agendamentos de compras e de produção: ' + agenda);
   ok(await p.locator('#asset-view').count() === 0, 'A prévia antiga de Patrimônios (que não salvava) saiu');
 
   // Sem produto ligado, o "+" do agendamento explica o caminho e leva ao cadastro
@@ -166,6 +168,8 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   // Recarrega: tudo continua lá, e o áudio pode ser ouvido ou descartado
   await p.reload({ waitUntil: 'load' });
   await p.waitForFunction(() => window.CicluzProducao && window.CicluzProducaoServico && window.CicluzAudioNota);
+  // Recarregou: as contas fictícias da empresa entram de novo (sem servidor).
+  await p.evaluate(() => { CicluzAgendaDados.pessoas = () => [{ id: 'conta-jose', nome: 'José (teste)' }, { id: 'conta-rodrigo', nome: 'Rodrigo (teste)' }, { id: 'conta-ana', nome: 'Ana (teste)' }]; });
   await p.evaluate(() => CicluzProducao.abrir('patrimonio'));
   await p.locator('#producao-patrimonio .compras-linha', { hasText: 'MASSEIRA' }).locator('.c-nome').click();
   const ficha = (await p.locator('dialog.patrimonio-ficha[open]').innerText()).replace(/\u00a0/g, ' ');
@@ -288,7 +292,7 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   ok((await d.locator('.producao-erro').textContent()).includes('múltiplos de 18'), 'Quantidade fora do passo avisa na hora');
   await d.getByLabel('Quantidade de PÃO DE SAL', { exact: true }).fill('72');
   { const t = await d.locator('.compras-produto-celula small').allTextContents(); ok(t.some((x) => x.includes('2 × assadeira')), '72 un = 2 assadeiras: ' + t.join(' | ')); }
-  await d.getByLabel('Responsável pelo pedido *', { exact: true }).selectOption('u-jose');
+  await d.getByLabel('Responsável pelo pedido *', { exact: true }).selectOption('conta-jose');
   await salvar(p); await fechado(p);
   ok((await prod(p)).agendas.length === 1, 'Agendamento salvo');
   await p.locator('#producao-agendamento .compras-datas .compras-chip').first().click();
@@ -311,7 +315,7 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   await mais(p);
   d = dialogo(p);
   await d.getByLabel('Quantidade de PÃO DE SAL', { exact: true }).fill('18');
-  await d.getByLabel('Quem está pedindo *', { exact: true }).selectOption('u-ana');
+  await d.getByLabel('Quem está pedindo *', { exact: true }).selectOption('conta-ana');
   await salvar(p); await fechado(p);
   dados = await prod(p);
   ok(dados.pedidos.length === 2 && dados.pedidos[1].origem === 'extra' && dados.pedidos[1].status === 'enviado' && dados.ordens.length === 2, 'Pedido extra vai direto para a produção');
@@ -364,19 +368,19 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   ok(await p.locator('#producao-pedidos .compras-secao-cab h3', { hasText: 'Repor estoque' }).count() === 1, 'Estoque abaixo do mínimo aparece em "Repor estoque"');
   const ordensAntes = (await prod(p)).ordens.length;
   await p.locator('#producao-pedidos button', { hasText: 'Aprovar e produzir' }).click();
-  await dialogo(p).getByLabel('Aprovado por *', { exact: true }).selectOption('u-rodrigo');
+  await dialogo(p).getByLabel('Aprovado por *', { exact: true }).selectOption('conta-rodrigo');
   await salvar(p); await fechado(p);
   dados = await prod(p);
-  ok(dados.ordens.length === ordensAntes + 1 && dados.ordens.at(-1).origem === 'reposicao' && dados.ordens.at(-1).quantidade === 216 && dados.ordens.at(-1).aprovadoPor === 'u-rodrigo', 'Aprovada: ordem de reposição até o máximo (216)');
+  ok(dados.ordens.length === ordensAntes + 1 && dados.ordens.at(-1).origem === 'reposicao' && dados.ordens.at(-1).quantidade === 216 && dados.ordens.at(-1).aprovadoPor === 'conta-rodrigo', 'Aprovada: ordem de reposição até o máximo (216)');
   ok(await p.locator('#producao-pedidos .compras-secao-cab h3', { hasText: 'Repor estoque' }).count() === 0, 'Com a reposição em andamento, a sugestão some');
   // Pedido atendido pelo estoque: não gera ordem e já fica pronto
   const doEstoque = await p.evaluate(() => {
     CicluzComprasDados.transacao((d) => { d.produtos.find((x) => x.id === 'p-pao-teste').saldo = 100; });
     const antes = CicluzProducaoDados.producao.dados.ordens.length;
-    const r = CicluzProducaoServico.pedidoExtra({ dataEntrega: CicluzProducaoDados.hojeIso(), janelaDe: '15:00', janelaAte: '16:00', itens: [{ produtoId: 'p-pao-teste', quantidade: 36 }], responsavelId: 'u-ana' });
+    const r = CicluzProducaoServico.pedidoExtra({ dataEntrega: CicluzProducaoDados.hojeIso(), janelaDe: '15:00', janelaAte: '16:00', itens: [{ produtoId: 'p-pao-teste', quantidade: 36 }], responsavelId: 'conta-ana' });
     const ped = CicluzProducaoDados.producao.dados.pedidos.find((x) => x.id === r.id);
     const livre = CicluzProducaoServico.estoqueLivre('p-pao-teste');
-    const r2 = CicluzProducaoServico.pedidoExtra({ dataEntrega: CicluzProducaoDados.hojeIso(), janelaDe: '16:00', janelaAte: '17:00', itens: [{ produtoId: 'p-pao-teste', quantidade: 72 }], responsavelId: 'u-ana' });
+    const r2 = CicluzProducaoServico.pedidoExtra({ dataEntrega: CicluzProducaoDados.hojeIso(), janelaDe: '16:00', janelaAte: '17:00', itens: [{ produtoId: 'p-pao-teste', quantidade: 72 }], responsavelId: 'conta-ana' });
     const ped2 = CicluzProducaoDados.producao.dados.pedidos.find((x) => x.id === r2.id);
     return { status: ped.status, novas: CicluzProducaoDados.producao.dados.ordens.length - antes, livre, item2: ped2.itens[0] };
   });
@@ -401,19 +405,19 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
     const c = CicluzProducaoDados.config('p-pao-teste');
     SV.salvarConfig({ ...c, conferencia: '2', comEstoque: false });
     const hoje = CicluzProducaoDados.hojeIso();
-    const { id } = SV.pedidoExtra({ dataEntrega: hoje, janelaDe: '10:00', janelaAte: '12:00', itens: [{ produtoId: 'p-pao-teste', quantidade: 36 }], responsavelId: 'u-jose' });
+    const { id } = SV.pedidoExtra({ dataEntrega: hoje, janelaDe: '10:00', janelaAte: '12:00', itens: [{ produtoId: 'p-pao-teste', quantidade: 36 }], responsavelId: 'conta-jose' });
     const o = CicluzProducaoDados.producao.dados.ordens.find((x) => x.pedidoId === id);
     o.etapas.forEach((e) => SV.marcarEtapa(o.id, e.numero, 'concluir'));
     const semConferente = SV.abastecer(id, { 'p-pao-teste': 36 }, '');
-    const ab = SV.abastecer(id, { 'p-pao-teste': 36 }, 'u-jose');
-    const mesma = SV.conferirNaLoja(id, { 'p-pao-teste': 36 }, 'u-jose');
-    const outra = SV.conferirNaLoja(id, { 'p-pao-teste': 34 }, 'u-ana');
+    const ab = SV.abastecer(id, { 'p-pao-teste': 36 }, 'conta-jose');
+    const mesma = SV.conferirNaLoja(id, { 'p-pao-teste': 36 }, 'conta-jose');
+    const outra = SV.conferirNaLoja(id, { 'p-pao-teste': 34 }, 'conta-ana');
     const ped = CicluzProducaoDados.producao.dados.pedidos.find((x) => x.id === id);
     // Só a curva A: produto fora da curva (sem vendas) não espera a conferência na loja
-    const { id: id2 } = SV.pedidoExtra({ dataEntrega: hoje, janelaDe: '12:00', janelaAte: '13:00', itens: [{ produtoId: 'p-pao-teste', quantidade: 18 }], responsavelId: 'u-jose' });
+    const { id: id2 } = SV.pedidoExtra({ dataEntrega: hoje, janelaDe: '12:00', janelaAte: '13:00', itens: [{ produtoId: 'p-pao-teste', quantidade: 18 }], responsavelId: 'conta-jose' });
     const o2 = CicluzProducaoDados.producao.dados.ordens.find((x) => x.pedidoId === id2);
     o2.etapas.forEach((e) => SV.marcarEtapa(o2.id, e.numero, 'concluir'));
-    const curva = SV.abastecer(id2, { 'p-pao-teste': 18 }, 'u-jose', 'curva');
+    const curva = SV.abastecer(id2, { 'p-pao-teste': 18 }, 'conta-jose', 'curva');
     const ped2 = CicluzProducaoDados.producao.dados.pedidos.find((x) => x.id === id2);
     return { semConferente: semConferente.erro, ab: ab.status, mesma: mesma.erro, outra: outra.ok, status: ped.status, recebido: ped.itens[0].recebido, curva: curva.status, recebidoCurva: ped2.itens[0].recebido };
   });
@@ -459,8 +463,8 @@ async function semear(p) {
       { processo: 'pre-pesar', ingredientes: [{ produtoId: 'p-farinha', quantidade: 5, unidade: 'KG' }], recursos: [{ patrimonioId: '', tempoMin: 15, acompanhamento: 1, nivel: 'ajudante' }] },
       { processo: 'misturar', ingredientes: [], recursos: [{ patrimonioId: m.id, tempoMin: 20, acompanhamento: 0 }] },
     ] });
-    SV.salvarAgenda({ produtoIds: ['p-pao-teste'], quantidades: {}, inicio: CicluzComprasDominio.isoData(CicluzComprasDominio.somarDias(new Date(), 1)), hora: '18:00', regra: { tipo: 'diaria' }, termino: { tipo: 'nunca' }, janelaDe: '06:00', janelaAte: '08:00', entrega: 'seguinte', responsavelId: 'u-jose' });
-    SV.pedidoExtra({ dataEntrega: CicluzProducaoDados.hojeIso(), janelaDe: '06:00', janelaAte: '08:00', itens: [{ produtoId: 'p-pao-teste', quantidade: 54 }], responsavelId: 'u-jose', observacao: 'Teste' });
+    SV.salvarAgenda({ produtoIds: ['p-pao-teste'], quantidades: {}, inicio: CicluzComprasDominio.isoData(CicluzComprasDominio.somarDias(new Date(), 1)), hora: '18:00', regra: { tipo: 'diaria' }, termino: { tipo: 'nunca' }, janelaDe: '06:00', janelaAte: '08:00', entrega: 'seguinte', responsavelId: 'conta-jose' });
+    SV.pedidoExtra({ dataEntrega: CicluzProducaoDados.hojeIso(), janelaDe: '06:00', janelaAte: '08:00', itens: [{ produtoId: 'p-pao-teste', quantidade: 54 }], responsavelId: 'conta-jose', observacao: 'Teste' });
   });
 }
 const telas = ['patrimonio', 'produtos', 'fichas', 'custos', 'agendamento', 'pedidos', 'mapa', 'abastecimento', 'relatorios'];

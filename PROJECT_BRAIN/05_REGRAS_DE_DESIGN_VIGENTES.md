@@ -25,7 +25,7 @@
 
 ## Campos e formulários
 - Campo 42 px, raio 8, borda 1 px. Fonte 16 px até 1024 px (iPhone não dá zoom).
-- **Enter avança para o próximo campo e nunca salva.**
+- **Enter avança para o próximo campo e nunca salva.** Exceção única: o campo de mensagem do chat da Agenda (compromisso e grupo), onde Enter envia, como no WhatsApp (DESIGN_SYSTEM, 24/11/2026).
 - Cancelar/Voltar transparentes; Salvar/Avançar preenchidos no acento.
 - Nome passa por `formatSystemName` (exceções: PDV, 1M–4T).
 - CPF, moeda (centavos) e data validados em `field-validation.js` — nunca validar por tela.

@@ -18,6 +18,7 @@ import * as rotina from "./rotina.service.ts";
 const grupoParams = z.object({ id: compromissoIdSchema });
 const pessoaParams = z.object({ usuarioId: z.string().trim().min(1).max(200) });
 const limiteChat = { rateLimit: { max: 120, timeWindow: "1 minute" } };
+const limiteTarefas = { rateLimit: { max: 60, timeWindow: "1 minute" } };
 
 export async function registrarRotasRotina(app: FastifyInstance) {
   /* Configurações da Agenda */
@@ -35,9 +36,10 @@ export async function registrarRotasRotina(app: FastifyInstance) {
   });
 
   /* Tarefa vinda de uma tela */
-  app.post("/api/agenda/tarefas-de-tela", async (request, reply) => {
+  // Tarefa de tela: só o id volta sempre; o compromisso, só para quem participa dele. Teto próprio de pedidos.
+  app.post("/api/agenda/tarefas-de-tela", { config: limiteTarefas }, async (request, reply) => {
     const r = await rotina.criarTarefaDeTela(perfilDaRequisicao(request), tarefaDeTelaSchema.parse(request.body));
-    return reply.status(r.criado ? 201 : 200).send(ok(r.compromisso));
+    return reply.status(r.criado ? 201 : 200).send(ok({ id: r.id, compromisso: r.compromisso }));
   });
   app.post("/api/agenda/tarefas-de-tela/concluir", async (request) => {
     const { vinculoRef } = concluirPorVinculoSchema.parse(request.body);
