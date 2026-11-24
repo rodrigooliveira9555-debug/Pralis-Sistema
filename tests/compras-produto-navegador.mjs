@@ -37,6 +37,14 @@ async function paginaNaApi(api, documentos, largura = 1024) {
   await p.route('https://fonts.gstatic.com/**', (r) => r.abort());
   await p.goto(api.url + '/index.html', { waitUntil: 'load' });
   await p.waitForFunction(() => window.CicluzComprasProdutos && window.CicluzProdutoForm && CicluzProdutos.modoServidor() && CicluzComprasDados.dados.produtos.length > 0, null, { timeout: 60000 });
+  // A Agenda mora no servidor (a promoção agendada vira compromisso): na primeira vez, o administrador a leva para lá.
+  await p.waitForFunction(() => window.CicluzAgendaDados && !['carregando', 'cache'].includes(CicluzAgendaDados.situacao), null, { timeout: 30000 });
+  await p.evaluate(async () => {
+    if (CicluzAgendaDados.situacao !== 'nao-transferida') return;
+    const previa = await CicluzSync.api('/agenda/transferencia');
+    const r = await CicluzAgendaDados.transferir({ documentoVersao: previa.documento.versao, gestorSemCriador: CicluzSessao.perfil.usuarioId, dePara: {} });
+    if (r.erro) throw new Error(r.erro);
+  });
   await p.evaluate(() => { if (document.body.classList.contains('mobile-menu-visible')) document.getElementById('toggleMenu').click(); CicluzCompras.abrir('produtos'); });
   return p;
 }
