@@ -61,7 +61,7 @@ body .view>.panel>.head>.shortcut-actions>:not(.mobile-menu-open){margin-left:0!
 body .mobile-menu-open svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 /* Compact spacing for internal menus and information lists. */
 :root{--layout-item-gap:4px}
-body .view .record-grid:not([data-navigation-menu=true]),body .view #jobs-list,body .view #salary-list{gap:var(--layout-item-gap)!important}
+body .view .record-grid:not([data-navigation-menu=true]),body .view #salary-list{gap:var(--layout-item-gap)!important}
 body #sector-view.financial-groups .financial-group{margin:0!important;border:0!important}
 body #sector-view .account-list-row{min-height:52px!important;padding-top:8px!important;padding-bottom:8px!important}
 body #sector-view .financial-subgroups>.account-list-row{min-height:40px!important;padding-top:5px!important;padding-bottom:5px!important}
@@ -81,9 +81,9 @@ body .view .operator-fee-brand{margin-block:var(--layout-item-gap)!important}
 body #sector-view.financial-groups .financial-subgroups{gap:0!important;margin-top:0!important;margin-bottom:0!important}
 
 /* One continuous frame for registry lists; rows are divided without gaps. */
-body .view :is(.record-grid,#jobs-list,#salary-list){gap:0!important;border:1px solid var(--layout-line)!important;border-radius:14px!important;overflow:hidden;background:var(--theme-card,#fff)!important}
-body .view :is(.record-grid,#jobs-list,#salary-list)>:is(.record,.financial-group,.job-item,.salary-row){margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
-body .view :is(.record-grid,#jobs-list,#salary-list)>:is(.record,.financial-group,.job-item,.salary-row):not(:last-child){border-bottom:1px solid var(--layout-line)!important}
+body .view :is(.record-grid,#salary-list){gap:0!important;border:1px solid var(--layout-line)!important;border-radius:14px!important;overflow:hidden;background:var(--theme-card,#fff)!important}
+body .view :is(.record-grid,#salary-list)>:is(.record,.financial-group,.salary-row){margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+body .view :is(.record-grid,#salary-list)>:is(.record,.financial-group,.salary-row):not(:last-child){border-bottom:1px solid var(--layout-line)!important}
 body #sector-view.financial-groups .financial-group>.account-list-row,body #sector-view.financial-groups .financial-subgroups>.account-list-row{margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
 body #sector-view.financial-groups .financial-subgroups>.account-list-row{border-top:1px solid var(--layout-line)!important}
 

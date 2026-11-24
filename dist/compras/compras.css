@@ -53,7 +53,7 @@ body.dark-theme :is(.compras-view, .compras-dialog) .btn.secondary { color: #a7e
 body.dark-theme .compras-chip.ativo { color: #f2f1f6; }
 .compras-interruptor { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); cursor: pointer; }
 .compras-interruptor > small { flex-basis: 100%; margin: 0; }
-.compras-interruptor input { accent-color: var(--menu-accent); width: 20px; height: 20px; }
+.compras-interruptor input:not(.compras-selecao-bolinha) { accent-color: var(--menu-accent); width: 20px; height: 20px; }
 .compras-linha-info { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 
 /* Seções e contadores */
@@ -68,7 +68,7 @@ body.dark-theme .compras-conta { background: #34333b; color: #d4d4d8; }
 /* Linhas de lista (moldura única, divisor fino, 52px) */
 .compras-lista { display: grid; gap: 0; }
 .compras-linha {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 52px; padding: 8px 14px; width: 100%; box-sizing: border-box;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: var(--linha-lista, 52px); padding: 8px 14px; width: 100%; box-sizing: border-box;
   border: 0; border-top: 1px solid var(--layout-line, #dedee3); background: transparent; text-align: left; font: inherit; color: inherit;
 }
 .compras-lista > .compras-linha:first-child { border-top: 0; }
@@ -96,7 +96,8 @@ body:not(.dark-theme) .compras-linha.com-acoes:hover .compras-linha-texto b { co
 .compras-linha-cabecalho { min-height: 0; padding-top: 6px; padding-bottom: 6px; cursor: default; }
 .compras-linha-cabecalho .compras-celula { font: 600 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #73737a); text-transform: uppercase; letter-spacing: .04em; }
 /* A lista rola para os lados dentro dela mesma (a página não). */
-.compras-lista-grade { container-type: inline-size; container-name: lista-grade; overflow-x: auto; overscroll-behavior-x: contain; }
+.compras-lista-grade { container-type: inline-size; container-name: lista-grade; overflow: auto; max-height: var(--lista-alta, calc(100dvh - 280px)); min-height: 220px; overscroll-behavior: contain; }
+.compras-lista-grade > .compras-linha-cabecalho { position: sticky; top: 0; z-index: 5; min-height: var(--linha-cabecalho, 32px); background: var(--theme-card, #fff); }
 .compras-lista-grade.arrastando { cursor: grabbing; user-select: none; }
 /* Bolinhas do cabeçalho branco da lista (o "‹ ›" ao lado do título e o "+" na outra ponta): círculo cheio na cor do
    menu de onde se veio (--menu-accent), com o desenho na cor da superfície, como os redondos do rodapé. */
@@ -210,7 +211,12 @@ body.dark-theme .tom-negativo { background: #45201f; color: #f8b4b4; }
 .compras-tabela td.destaque { color: #8a5300; font-weight: 700; }
 body.dark-theme .compras-tabela td.destaque { color: #f6d38f; }
 .compras-tabela input:not([type=checkbox]) { min-height: 36px !important; }
-.compras-produto-celula { display: grid; gap: 2px; }
+.compras-produto-celula { display: grid; gap: 2px; min-width: 0; }
+.compras-produto-linha { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.compras-lista-grade .compras-produto-celula > .compras-produto-linha > b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.compras-lista-grade .compras-produto-celula > small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.compras-alerta-texto { color: #8a5300; font-weight: 600; }
+body.dark-theme .compras-alerta-texto { color: #f6d38f; }
 .compras-produto-celula > b { display: inline; }
 .compras-produto-celula small { color: var(--muted, #73737a); font-size: 11px; line-height: 16px; }
 
@@ -373,7 +379,7 @@ body.dark-theme .compras-texto-auto { color: #a7e8bd; }
 .compras-form > .compras-fieldset-lista, .compras-form > .compras-largo { grid-column: 1 / -1; }
 .compras-fieldset > .compras-largo, .compras-fieldset > .profiles-note { grid-column: 1 / -1; }
 .compras-dialog .compras-interruptor, .compras-content .compras-interruptor { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.compras-dialog .compras-interruptor > input { flex: 0 0 20px; margin: 0; }
+.compras-dialog .compras-interruptor > input { flex: 0 0 22px; margin: 0; }
 .compras-fieldset .profiles-controls > select { flex: 1 1 180px; width: auto; min-width: 0; }
 
 /* Cadastro de produtos (04/11/2026) */
@@ -431,7 +437,7 @@ body.dark-theme .compras-aviso-campo { color: #f6d38f; }
 /* Caixa de seleção com texto ao lado e dica embaixo. A regra .location-dialog input (width 100%, 42px)
    do S2 também atingia o checkbox e empurrava o texto. */
 .compras-dialog .compras-form > .compras-interruptor { grid-column: 1 / -1; }
-.compras-dialog .compras-interruptor { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: center; column-gap: 10px; row-gap: 4px; }
+.compras-dialog .compras-interruptor { display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: center; column-gap: 10px; row-gap: 4px; }
 
 .compras-dialog .compras-interruptor > small { grid-column: 2; margin: 0; white-space: normal; }
 
@@ -597,7 +603,11 @@ body.dark-theme .compras-objeto-origem .compras-chip.ativo{color:#f2f1f6}
 .compras-linha.grade-colab-s{grid-template-columns:64px var(--w-nome,minmax(190px,1fr)) var(--w-cpf,140px) var(--w-funcao,200px) var(--w-turno,100px) 230px 24px;--gp-estado:6}
 .compras-linha.grade-colab-c{grid-template-columns:64px var(--w-nome,minmax(190px,1fr)) var(--w-cpf,140px) var(--w-funcao,200px) 150px 24px;--gp-estado:5}
 .compras-linha.grade-cargo{grid-template-columns:84px var(--w-nome,minmax(190px,1fr)) var(--w-categoria,110px) var(--w-cbo,100px) var(--w-setor,200px) var(--w-salario,120px) 70px 24px;--gp-estado:7}
-#jobs-list .job-item.grade-cargo>.menu-item-move{grid-column:1;justify-self:start;align-self:center;z-index:3;width:18px;margin:0}
+/* Cargos: a linha começa na borda (sem recuo), para as colunas fixas e o cabeçalho ficarem alinhados; o pontinho de arrastar e o ícone não se encostam. */
+.compras-linha.grade-cargo{padding-left:0}
+#jobs-list .job-item.grade-cargo>.menu-item-move{grid-column:1;justify-self:start;align-self:center;z-index:3;width:18px;margin:0 0 0 12px;position:sticky;left:12px}
+.compras-linha.job-item.grade-cargo>.compras-linha-icones{margin-left:0;padding-left:36px}
+.compras-linha.grade-cargo>.c-nome{left:92px}
 .compras-linha.grade-cargo>.compras-linha-icones{padding-left:36px;margin-left:-12px}
 .compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo){width:max-content;min-width:100%;background:var(--theme-card,#fff)}
 .compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>*{grid-row:1}
@@ -632,9 +642,6 @@ body.dark-theme .compras-objeto-origem .compras-chip.ativo{color:#f2f1f6}
 .view:not(.gp-lista) .content>.gp-entrada{display:none}
 .compras-linha.grade-cargo>.c-nome{left:100px}
 /* Seleção de itens da lista (ex.: produtos): bolinha vazia; ao marcar, fica toda preenchida na cor do módulo. Sem o ✓ nativo. */
-input.compras-selecao-bolinha{appearance:none;-webkit-appearance:none;flex:none;box-sizing:border-box;width:22px;height:22px;min-height:0;margin:0;padding:0;border:2px solid var(--menu-accent);border-radius:50%;background:transparent;cursor:pointer;transition:background-color .12s}
-input.compras-selecao-bolinha:checked{background:var(--menu-accent)}
-input.compras-selecao-bolinha:focus-visible{outline:2px solid var(--menu-accent);outline-offset:2px}
 /* ---------- MER - Produtos (17/11/2026): mesma grade de linhas de Fornecedores. Seleção, ícone e nome fixos à esquerda;
    as outras colunas ocultam pela setinha do título (classe oculta-<chave> na lista). ---------- */
 .compras-linha.grade-produto{grid-template-columns:64px var(--w-nome,minmax(230px,1fr)) var(--w-tipo,116px) var(--w-estoque,96px) var(--w-minmax,96px) var(--w-preco,104px) var(--w-compra,300px) 72px 24px;width:max-content;min-width:100%;background:var(--theme-card,#fff)}

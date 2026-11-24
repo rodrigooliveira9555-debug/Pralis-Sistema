@@ -1,5 +1,15 @@
 # CICLUZ — referência de interface
 
+## Listas de cadastro: moldura, linha padrão, cabeçalho e primeira coluna congelados, marcação redonda (24/11/2026, REGRA PARA TODAS AS LISTAS)
+Pedido do Rodrigo, para não repetir o ajuste tela a tela. Vale para toda lista em `.compras-lista-grade` (Clientes, Fornecedores, Produtos, Cargos, Colaboradores, Tipos…) e, no que couber, para as telas de lançamento e de configuração (Acesso por Tela):
+- **Moldura única** (`.compras-secao`, cantos de 12 px) com a barra do alto (botões de ação, total e "‹ ›") **fixa** e a tabela **rolando por dentro**, para os lados e para baixo. A lista tem altura máxima (`--lista-alta`, a tela menos 280 px) e rola sozinha; o título da tela e a barra não saem do lugar.
+- **Congelados ao rolar**: o **cabeçalho das colunas** (preso no alto, `position: sticky; top: 0`) e as **duas primeiras colunas** (ícone/seleção e nome; no cargo e no colaborador, o nome do cargo ou da pessoa) presas à esquerda. Nenhuma lista nova fica sem isso; a conferência automática acusa cabeçalho que não fica preso.
+- **Altura de linha única**: `--linha-lista: 52px` em todo cadastro, lançamento e configuração (linha de escolha dentro de janelas e menus de seleção segue as variáveis `--escolha-*`); cabeçalho de colunas `--linha-cabecalho: 32px`. A linha nunca passa de 60 px: nome longo em no máximo duas linhas e informação extra em texto, não em etiqueta que cresça a linha.
+- **Produto na lista**: duas linhas (nome com as bolinhas; código · marca · grupo, com o alerta "Sem local"/"Sem grupo" em texto âmbar no fim); nome em 500, sem negrito.
+- **Cargos**: a linha começa na borda (sem recuo) para as colunas fixas alinharem com o cabeçalho; o pontinho de arrastar (12 px da borda) e o selo (36 px) não se encostam. O cartão antigo do roxo e a moldura antiga de `#jobs-list` saíram do código (cortavam a lista e impediam a rolagem).
+- **Marcação redonda com check — fonte de referência** (a mesma do Acesso por Tela): círculo de 22 px, só o contorno cinza quando desligada; ligada, enche na cor da origem com o check branco. Botão: `.acessos-marca`; caixa de marcar de formulário e seleção de lista: `input.compras-selecao-bolinha` (definida em `ui-foundation.css`). Aplicada na seleção da lista de Produtos e nas caixas do cadastro de produto. Caixa de marcar nova de cadastro nasce assim.
+- Fica de fora: DES - Atualização Salários Dissídio Coletivo (ainda com o cartão antigo) e o modo de cartões do Produto no celular.
+
 ## DES - Cargos C/Salários: a lista no padrão de VND - Clientes (24/11/2026)
 Pedido do Rodrigo (a lista estava fora do padrão). A lista de cargos usa a mesma moldura e a mesma linha de VND - Clientes e das listas de colaboradores:
 - **Moldura única** (`.compras-secao`, cantos de 12 px): a barra com o botão **Novo Cargo**, o total e o "‹ ›" fica **fixa no alto** da moldura; **só a tabela rola** para o lado. Antes a barra ficava dentro da parte que rola e o total e o "‹ ›" saíam cortados.

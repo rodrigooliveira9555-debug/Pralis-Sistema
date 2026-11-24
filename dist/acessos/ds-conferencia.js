@@ -52,6 +52,8 @@
       }
       return f; }],
     ['Botão redondo de ação com 32 px', (r) => todos(r, '.compras-redondo, .account-row-actions button').filter((b) => !b.closest('.people-bottom-header')).filter((b) => lg(b) !== 32 || px(b) !== 32).slice(0, 3).map((b) => 'botão redondo "' + nome(b) + '" com ' + lg(b) + '×' + px(b) + ' px')],
+    ['Cabeçalho da lista congelado', (r) => todos(r, '.compras-lista-grade').filter((l) => { const c = l.querySelector(':scope > .compras-linha-cabecalho'); return c && getComputedStyle(c).position !== 'sticky'; }).slice(0, 2).map(() => 'o cabeçalho das colunas da lista não fica preso no alto ao rolar')],
+    ['Marcação redonda com 22 px', (r) => todos(r, 'input.compras-selecao-bolinha').filter((b) => lg(b) !== 22 || px(b) !== 22).slice(0, 2).map((b) => 'marcação redonda "' + nome(b) + '" com ' + lg(b) + '×' + px(b) + ' px')],
     ['Ícone da linha com 30 px', (r) => todos(r, '.compras-lista > .compras-linha > .compras-linha-icone').filter((i) => !i.closest('.uniforms-options')).filter((i) => lg(i) !== 30).slice(0, 2).map((i) => 'ícone de linha com ' + lg(i) + ' px')],
   ];
 

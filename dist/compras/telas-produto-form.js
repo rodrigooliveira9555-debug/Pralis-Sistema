@@ -163,7 +163,7 @@
   }
   function interruptor(rotulo, marcado, nota) {
     const l = el('label', 'compras-interruptor');
-    const c = entrada('checkbox'); c.checked = Boolean(marcado);
+    const c = entrada('checkbox'); c.className = 'compras-selecao-bolinha'; c.checked = Boolean(marcado);
     l.append(c, el('span', null, rotulo));
     if (nota) l.append(el('small', 'profiles-note', nota));
     l.input = c;

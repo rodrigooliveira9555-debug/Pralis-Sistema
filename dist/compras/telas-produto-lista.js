@@ -139,6 +139,8 @@
     const falta = [v.semGrupo && 'Sem grupo', v.semLocal && 'Sem local'].filter(Boolean);
     return falta.length ? U.situacao(falta.join(' · '), 'atencao') : null;
   };
+  /** O alerta de vínculo em texto, para a linha fina da lista (a linha tem a altura padrão e não comporta uma etiqueta). */
+  const textoVinculo = (p) => { const v = vinculoDe(p); return [v.semGrupo && 'Sem grupo', v.semLocal && 'Sem local'].filter(Boolean).join(' · '); };
   const situacaoCompra = (p) => {
     const f = pendencias(p);
     if (p.status !== 'ativo') return U.situacao('Inativo', 'neutro');
@@ -167,8 +169,11 @@
     lista.forEach((p) => {
       const rotulo = p.nomeCatalogo || p.descricao;
       const nome = el('span', 'compras-produto-celula');
-      nome.append(el('b', null, rotulo), U.bolinhasDe(p.id, b), el('small', null, [p.codigoInterno || 'Sem código', p.marca || 'Sem marca', S.nomeGrupo(p.grupoId, p.subgrupoId)].join(' · ')));
-      const a = alertaVinculo(p); if (a) nome.append(a);
+      const linhaNome = el('span', 'compras-produto-linha');
+      linhaNome.append(el('b', null, rotulo), U.bolinhasDe(p.id, b));
+      const meta = el('small', null, [p.codigoInterno || 'Sem código', p.marca || 'Sem marca', S.nomeGrupo(p.grupoId, p.subgrupoId)].join(' · '));
+      const falta = textoVinculo(p); if (falta) meta.append(' · ', el('span', 'compras-alerta-texto', falta));
+      nome.append(linhaNome, meta);
       const r = U.linhaLista({
         icones: [{ icone: 'produto', rotulo: p.tipo === 'revenda' ? 'Revenda' : 'Transformação' }], grade: 'grade-produto',
         colunas: [

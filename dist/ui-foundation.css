@@ -430,7 +430,7 @@ body .btn.acao-com-circulo[hidden]{display:none}
    peças de uniforme) repete o desenho da lista de origem, só que proporcionalmente menor (cerca de 85%): linha de 44 px no lugar de 52,
    subnível de 36 no lugar de 40, ícone de 26 no lugar de 30, caixa de marcar de 20, nome em 13 px e detalhe em 10 px. As medidas moram
    aqui, uma vez só; lista de escolha nova usa estas variáveis em vez de inventar tamanho. */
-:root{--escolha-linha:44px;--escolha-sublinha:36px;--escolha-icone:26px;--escolha-caixa:20px;--escolha-titulo:13px;--escolha-detalhe:10px}
+:root{--linha-lista:52px;--linha-cabecalho:32px;--lista-alta:calc(100dvh - 280px);--escolha-linha:44px;--escolha-sublinha:36px;--escolha-icone:26px;--escolha-caixa:20px;--escolha-titulo:13px;--escolha-detalhe:10px}
 /* Na árvore de áreas, o tamanho do ícone e do nome é fixado por regras gerais que leem --circle-size e --ui-text; a lista de escolha
    troca o valor dessas duas variáveis só dentro das suas linhas. */
 .location-tree.unidades-arvore{--arvore-linha:var(--escolha-linha);--arvore-sublinha:var(--escolha-sublinha);--arvore-respiro:2px 10px}
@@ -505,6 +505,13 @@ dialog .escolha-barra{--cor-do-cabecalho:var(--menu-accent)}
 /* destaque por sombra interna: o fundo do campo é fixado por regra geral, a sombra pinta por cima dele e por baixo do número */
 .matriz-uniformes .matriz-tabela td>input.preenchido{--layout-ink:var(--menu-accent,#7c3aed);box-shadow:inset 0 0 0 40px color-mix(in srgb,var(--menu-accent,#7c3aed) 16%,transparent),inset 0 -2px 0 var(--menu-accent,#7c3aed);font-weight:700;color:var(--menu-accent,#7c3aed)}
 .matriz-tabela tbody tr:not(.matriz-grupo):hover :is(th,td){background:color-mix(in srgb,var(--menu-accent,#7c3aed) 4%,var(--theme-card,#fff))}
+/* MARCAÇÃO REDONDA COM CHECK (referência: Acesso por Tela, 24/11/2026): 22 px, só o contorno quando desligada; ligada, enche na cor da origem com o
+   check branco. Vale para o botão (.acessos-marca) e para o input (.compras-selecao-bolinha: seleção das listas e caixas do cadastro de produto). */
+input.compras-selecao-bolinha{appearance:none;-webkit-appearance:none;box-sizing:border-box;flex:none;width:22px;height:22px;min-height:0;margin:0;padding:0;border:1.5px solid var(--border-strong,#b9b9c0);border-radius:50%;background:transparent center/14px no-repeat;cursor:pointer;transition:background-color 120ms ease,border-color 120ms ease}
+input.compras-selecao-bolinha:checked{border-color:var(--menu-accent);background-color:var(--menu-accent);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m5 12 4.5 4.5L19 7' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+input.compras-selecao-bolinha:hover:not(:disabled){border-color:var(--menu-accent)}
+input.compras-selecao-bolinha:focus-visible{outline:2px solid var(--menu-accent);outline-offset:2px}
+input.compras-selecao-bolinha:disabled{opacity:.45;cursor:not-allowed}
 /* Relatório DES - Folha de Pagamento: barra do mês e tabela de colaboradores × reflexos (Projetado · Realizado · Diferença).
    A tabela rola por dentro do quadro (.matriz-uniformes); a coluna do colaborador e as duas linhas de título ficam presas. */
 .folha-barra{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:10px 14px;margin:0 0 8px}
