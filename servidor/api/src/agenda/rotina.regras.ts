@@ -67,15 +67,30 @@ export function situacaoNoExpediente(c: Expediente, momento: Date): Situacao {
   return noDia({ trabalha: c.expedienteDias.includes(l.diaSemana), inicio: c.expedienteInicio, fim: c.expedienteFim }, l.minutos, l.data);
 }
 
-/** Situação pelos dias vindos dos Horários/Escalas (hoje e véspera). undefined = o dia de hoje não foi enviado. */
+const passaDaMeiaNoite = (d: DiaExpediente | undefined): d is DiaExpediente =>
+  Boolean(d?.trabalha && paraMinutos(d.fim) < paraMinutos(d.inicio));
+
+/**
+ * Situação pelos dias vindos dos Horários/Escalas (hoje e véspera). undefined = nem hoje nem a véspera dizem nada.
+ * Depois de um turno da véspera que passou da meia-noite, a manhã é "depois" daquele fim (07:00 com turno 22–06 =
+ * 60 min depois, na conta do dia de ontem) — a não ser que o início de hoje esteja mais perto.
+ */
 export function situacaoNaEscala(dias: Map<string, DiaExpediente>, momento: Date): Situacao | undefined {
   const l = horaLocal(momento);
+  const ontem = diaAnterior(l.data);
   const hoje = dias.get(l.data);
-  if (!hoje) return undefined;
-  const vespera = dias.get(diaAnterior(l.data));
+  const vespera = dias.get(ontem);
   // Madrugada de um turno que começou ontem: dentro, e a hora conta para o dia de ontem.
-  if (cobreMadrugada(vespera, l.minutos)) return { onde: "dentro", minutos: 0, dia: diaAnterior(l.data) };
-  return noDia(hoje, l.minutos, l.data);
+  if (cobreMadrugada(vespera, l.minutos)) return { onde: "dentro", minutos: 0, dia: ontem };
+  if (!hoje) return undefined;
+  const s = noDia(hoje, l.minutos, l.data);
+  if (passaDaMeiaNoite(vespera) && (s.onde === "antes" || s.onde === "folga")) {
+    const depoisDeOntem = l.minutos - paraMinutos(vespera.fim);
+    // Hoje é folga: até meio-dia depois do fim de ontem ainda conta como hora a mais de ontem; depois, é folga.
+    const maisPerto = s.onde === "folga" ? depoisDeOntem <= 12 * 60 : depoisDeOntem <= (s.minutos ?? Infinity);
+    if (maisPerto) return { onde: "depois", minutos: depoisDeOntem, dia: ontem };
+  }
+  return s;
 }
 
 export function descreverExpediente(c: Expediente) {

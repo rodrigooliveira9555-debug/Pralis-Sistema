@@ -282,7 +282,7 @@ export const configPessoaSchema = z
     /** null = o padrão do sistema (INATIVIDADE_PADRAO_MINUTOS). P-46 item 4: vale para o sistema todo. */
     inatividadeMinutos: z.number().int().min(1, "Mínimo de 1 minuto").max(480, "Máximo de 480 minutos (8 horas)").nullable().default(null)
   })
-  .strict()
+  // Sem .strict(): a tela antiga (em cache depois de publicar) ainda manda "horaFora"; o campo é ignorado.
   .superRefine((c, ctx) => {
     if (Boolean(c.expedienteInicio) !== Boolean(c.expedienteFim)) ctx.addIssue({ code: "custom", message: "Informe o início e o fim do expediente, ou nenhum dos dois.", path: ["expedienteFim"] });
     else if (c.expedienteInicio && c.expedienteFim <= c.expedienteInicio) ctx.addIssue({ code: "custom", message: "O fim do expediente deve ser depois do início.", path: ["expedienteFim"] });

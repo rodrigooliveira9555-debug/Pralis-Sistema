@@ -5,9 +5,25 @@ import { listarUsuariosDaEmpresa } from "../usuarios/usuarios.repository.ts";
 
 // Quem tem qual permissão, entre as contas ATIVAS da empresa (P-46 itens 1, 2 e 3). Mesma regra da tela de
 // acessos (efetivasDe: administrador tem tudo; cargo libera; exceção libera ou bloqueia; conta antiga segue o
-// papel). Poucas contas por empresa: calcula na hora, sem guardar cópia que pudesse ficar velha.
+// papel). Poucas contas por empresa: calcula e guarda 30 s; quem muda acesso ou conta chama esquecerPermissoes.
 
-export async function permissoesDasContas(empresaId: string): Promise<Map<string, Set<ChavePermissao>>> {
+// Memória curta por empresa: a Agenda pergunta a cada 30 s por aparelho; permissão nova vale em até 30 s.
+const MEMORIA_MS = 30_000;
+const memoria = new Map<string, { em: number; valor: Promise<Map<string, Set<ChavePermissao>>> }>();
+
+export function permissoesDasContas(empresaId: string, agora = Date.now()): Promise<Map<string, Set<ChavePermissao>>> {
+  const m = memoria.get(empresaId);
+  if (m && agora - m.em < MEMORIA_MS) return m.valor;
+  const valor = calcular(empresaId);
+  memoria.set(empresaId, { em: agora, valor });
+  valor.catch(() => memoria.delete(empresaId));
+  return valor;
+}
+
+/** Esquece o cálculo guardado (testes e mudanças que precisam valer na hora). */
+export const esquecerPermissoes = (empresaId?: string) => (empresaId ? memoria.delete(empresaId) : memoria.clear());
+
+async function calcular(empresaId: string): Promise<Map<string, Set<ChavePermissao>>> {
   const contas = (await listarUsuariosDaEmpresa(empresaId)).filter((c) => c.ativo);
   const saida = new Map<string, Set<ChavePermissao>>();
   await Promise.all(

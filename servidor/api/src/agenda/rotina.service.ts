@@ -14,13 +14,12 @@ import {
 } from "@cicluz/shared";
 import { violouUnico } from "../acessos/acessos.service.ts";
 import { tem } from "../auth/permissoes.ts";
-import { banco } from "../banco/conexao.ts";
+import { banco, type TransacaoBanco } from "../banco/conexao.ts";
 import { conflito, ErroDominio, proibido } from "../erros.ts";
 import * as repo from "./compromissos.repository.ts";
 import { concluir, gravar, invalido, montar, naoEncontrado, naoTransferida, respostaDe } from "./compromissos.service.ts";
 import { contasComPermissao } from "./contas-por-permissao.ts";
 import * as gr from "./grupos.repository.ts";
-import { sincronizarAreas } from "./grupos.service.ts";
 import * as rr from "./rotina.repository.ts";
 import { exigirExpediente, expedienteAgora, horaLocal, limiteParado } from "./rotina.regras.ts";
 
@@ -172,7 +171,7 @@ export async function desempenho(perfil: PerfilSessao, de: string, ate: string, 
 export const LISTA_TAREFAS_TELAS = "lista-tarefas-das-telas";
 
 /** A lista "Tarefas das telas": criada na primeira tarefa, dona = administrador, membros = contas ativas. */
-async function garantirListaDasTelas(tx: Parameters<Parameters<typeof gravar>[1]>[0], perfil: PerfilSessao) {
+async function garantirListaDasTelas(tx: TransacaoBanco, perfil: PerfilSessao) {
   const empresaId = perfil.empresa.id;
   const g = await repo.grupo(tx, empresaId, LISTA_TAREFAS_TELAS);
   if (g && !g.excluidoEm) return;
@@ -209,7 +208,9 @@ export async function criarTarefaDeTela(perfil: PerfilSessao, e: TarefaDeTela) {
     responsaveis = await contasComPermissao(empresaId, e.paraQuemTem);
     if (!responsaveis.length) throw invalido("Ninguém tem a permissão para receber esta tarefa.");
   }
-  return gravar(perfil, async (tx) => {
+  // A tela agiu (pedido enviado, Período de Teste registrado): a tarefa nasce mesmo que quem agiu esteja fora do
+  // próprio expediente na Agenda — o bloqueio é para usar a Agenda, não para as telas (revisão de 24/11/2026).
+  return gravar(perfil, { semExpediente: true }, async (tx) => {
     await garantirListaDasTelas(tx, perfil);
     const lista = (await repo.grupo(tx, empresaId, LISTA_TAREFAS_TELAS))!;
     const pessoas = [...new Set(responsaveis)].map((id) => ({ id, responsavel: true, ver: true, editar: false, concluir: true, excluir: false }));
@@ -259,7 +260,7 @@ export async function cancelarPorVinculo(perfil: PerfilSessao, vinculoRef: strin
   if (!exigida || !tem(perfil, exigida)) throw proibido("Você não pode cancelar esta tarefa.", "INSUFFICIENT_PERMISSION");
   const c = await rr.porVinculo(banco, perfil.empresa.id, vinculoRef);
   if (!c || c.excluidoEm || c.concluida) return { resultado: "sem-mudanca" as const };
-  await gravar(perfil, async (tx) => {
+  await gravar(perfil, { semExpediente: true }, async (tx) => {
     await repo.atualizarCompromisso(tx, perfil.empresa.id, c.id, { excluidoEm: new Date(), excluidoPor: perfil.usuarioId, atualizadoPor: perfil.usuarioId });
     await repo.excluirRelacoesDe(tx, perfil.empresa.id, [c.id]);
   });
@@ -272,7 +273,6 @@ async function exigirGrupo(perfil: PerfilSessao, grupoId: string) {
   const empresaId = perfil.empresa.id;
   if (!(await repo.estado(banco, empresaId))) throw naoTransferida();
   await exigirExpediente(perfil);
-  await sincronizarAreas(empresaId);
   const g = await repo.grupo(banco, empresaId, grupoId);
   if (!g || g.excluidoEm) throw new ErroDominio("Lista não encontrada.", 404, "AGENDA_LISTA_NAO_ENCONTRADA");
   if (!admin(perfil) && g.donoId !== perfil.usuarioId && !(await repo.ehMembro(banco, empresaId, grupoId, perfil.usuarioId))) {

@@ -179,8 +179,10 @@ async function exigirTransferida(perfil: PerfilSessao) {
 /* ---------- Gravação: um caminho só ---------- */
 
 /** Abre a transação com o contador travado; sem Agenda nas tabelas, recusa. */
-export async function gravar<T>(perfil: PerfilSessao, fazer: (tx: TransacaoBanco) => Promise<T>) {
-  await exigirExpediente(perfil);
+/** Grava numa transação, subindo a versão da Agenda. semExpediente: tarefa criada/cancelada por uma tela (não é usar a Agenda). */
+export async function gravar<T>(perfil: PerfilSessao, ...args: [(tx: TransacaoBanco) => Promise<T>] | [{ semExpediente?: boolean }, (tx: TransacaoBanco) => Promise<T>]) {
+  const [opcoes, fazer] = args.length === 1 ? [{}, args[0]] : args;
+  if (!opcoes.semExpediente) await exigirExpediente(perfil);
   return banco.transaction(async (tx) => {
     if ((await repo.subirVersao(tx, perfil.empresa.id)) === null) throw naoTransferida();
     return fazer(tx);

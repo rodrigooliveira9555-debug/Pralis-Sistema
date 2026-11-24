@@ -390,7 +390,11 @@
     const hoje = D.isoData(new Date());
     const de = D.somarDias(hoje, -31), ate = D.somarDias(hoje, 62);
     try { window.CicluzJornada.load(); } catch { /* lê o que já está carregado */ }
-    const colaboradores = ligados.map((colaboradorId) => ({ colaboradorId, dias: diasDaEscala(colaboradorId, de, ate) }));
+    // Aparelho sem a escala (celular, computador: ela só mora no iPad) não manda nada — não pode apagar a do servidor.
+    const escala = window.CicluzJornada.get && window.CicluzJornada.get();
+    if (!escala || !(escala.links || []).length) return;
+    const colaboradores = ligados.map((colaboradorId) => ({ colaboradorId, dias: diasDaEscala(colaboradorId, de, ate) })).filter((c) => c.dias.length);
+    if (!colaboradores.length) return;
     const corpo = { de, ate, colaboradores };
     // Marca curta do que foi mandado (não guarda os horários de novo no aparelho).
     const marca = [...JSON.stringify(corpo)].reduce((h, ch) => (Math.imul(h, 31) + ch.charCodeAt(0)) | 0, 7).toString(36);

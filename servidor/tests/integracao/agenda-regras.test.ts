@@ -138,9 +138,20 @@ describe("agenda: expediente dos Horários/Escalas (P-46 item 5)", () => {
     ]);
     // 03h de terça (06h UTC): ainda no turno que começou segunda às 22h; a hora conta para segunda.
     expect(situacaoNaEscala(dias, new Date("2026-11-24T06:00:00Z"))).toEqual({ onde: "dentro", minutos: 0, dia: "2026-11-23" });
-    // 10h de terça: folga.
-    expect(situacaoNaEscala(dias, new Date("2026-11-24T13:00:00Z"))).toEqual({ onde: "folga", minutos: null, dia: "2026-11-24" });
-    // Quarta não foi enviada: fica para o expediente da Agenda.
+    // 07h de terça (hoje folga): 60 min depois do turno de segunda, na conta de segunda.
+    expect(situacaoNaEscala(dias, new Date("2026-11-24T10:00:00Z"))).toEqual({ onde: "depois", minutos: 60, dia: "2026-11-23" });
+    // 20h de terça: longe do fim de ontem (mais de 12 h): é folga.
+    expect(situacaoNaEscala(dias, new Date("2026-11-24T23:00:00Z"))).toEqual({ onde: "folga", minutos: null, dia: "2026-11-24" });
+    // Turno 22–06 todo dia: 07h = 60 min depois (de ontem), não 15 h antes de hoje; 21h = 60 min antes de hoje.
+    const noite = new Map<string, DiaExpediente>([
+      ["2026-11-23", { trabalha: true, inicio: "22:00", fim: "06:00" }],
+      ["2026-11-24", { trabalha: true, inicio: "22:00", fim: "06:00" }]
+    ]);
+    expect(situacaoNaEscala(noite, new Date("2026-11-24T10:00:00Z"))).toEqual({ onde: "depois", minutos: 60, dia: "2026-11-23" });
+    expect(situacaoNaEscala(noite, new Date("2026-11-25T00:00:00Z"))).toEqual({ onde: "antes", minutos: 60, dia: "2026-11-24" });
+    // Hoje não enviado, mas a madrugada é do turno de ontem: dentro.
+    expect(situacaoNaEscala(new Map([["2026-11-23", { trabalha: true, inicio: "22:00", fim: "06:00" }]]), new Date("2026-11-24T06:00:00Z"))?.onde).toBe("dentro");
+    // Quarta não foi enviada (e a véspera é folga): fica para o expediente da Agenda.
     expect(situacaoNaEscala(dias, new Date("2026-11-25T13:00:00Z"))).toBeUndefined();
     // Segunda 23h: dentro; segunda 21h: 60 min antes.
     expect(situacaoNaEscala(dias, new Date("2026-11-24T02:00:00Z"))?.onde).toBe("dentro");
@@ -186,6 +197,12 @@ describe("agenda: expediente dos Horários/Escalas (P-46 item 5)", () => {
     await ligar(resp, null);
     expect((await pedir(resp.cookie, "GET", "/api/agenda/configuracoes/minha")).json().data).toMatchObject({ origemExpediente: "agenda", bloqueadaAgora: false });
 
+    // Aparelho sem a escala (manda o colaborador sem nenhum dia): não apaga o que já estava lá.
+    await ligar(resp, "col-ficticio-a");
+    const sem = await pedir(leitor.cookie, "PUT", "/api/agenda/expedientes", { de: envio.de, ate: envio.ate, colaboradores: [{ colaboradorId: "col-ficticio-a", dias: [] }] });
+    expect(sem.statusCode, sem.body).toBe(200);
+    expect((await pool.query(`SELECT 1 FROM expedientes_colaboradores WHERE empresa_id = $1`, [admin.empresaId])).rows).toHaveLength(2);
+
     // Janela fora do aceito e dia com horário inválido.
     expect((await pedir(leitor.cookie, "PUT", "/api/agenda/expedientes", { de: somar(hoje(), -90), ate: hoje(), colaboradores: [] })).statusCode).toBe(400);
     expect((await pedir(leitor.cookie, "PUT", "/api/agenda/expedientes", { de: hoje(), ate: hoje(), colaboradores: [{ colaboradorId: "col-ficticio-a", dias: [{ dia: hoje(), trabalha: true }] }] })).statusCode).toBe(400);
@@ -201,7 +218,7 @@ describe("sair por tempo parado no servidor (P-46 item 4)", () => {
   }
   const ultima = async (id: string) => (await pool.query(`SELECT ultima_interacao_em FROM sessoes_atividade WHERE sessao_id = $1`, [id])).rows[0]?.ultima_interacao_em as Date;
 
-  it("parada além do tempo (padrão 15 min): 401 e a sessão acaba; pedido automático não conta como mexer", async () => {
+  it("parada além do tempo (padrão 15 min, com 2 min de folga no servidor): 401 e a sessão acaba; pedido automático não conta", async () => {
     const { resp, leitor } = await cenario();
     expect((await pedir(resp.cookie, "GET", "/api/sessao")).statusCode).toBe(200);
     const id = await sessaoDe(resp);
@@ -217,8 +234,11 @@ describe("sair por tempo parado no servidor (P-46 item 4)", () => {
     expect((await pedir(resp.cookie, "GET", "/api/agenda")).statusCode).toBe(200);
     expect((await ultima(id)).getTime()).toBeGreaterThan(antes.getTime());
 
-    // 16 minutos parado: sai.
+    // 16 minutos parado: ainda dentro da folga do servidor (a tela é quem sai aos 15).
     await pool.query(`UPDATE sessoes_atividade SET ultima_interacao_em = now() - interval '16 minutes' WHERE sessao_id = $1`, [id]);
+    expect((await pedir(resp.cookie, "GET", "/api/agenda")).statusCode).toBe(200);
+    // 18 minutos parado: sai.
+    await pool.query(`UPDATE sessoes_atividade SET ultima_interacao_em = now() - interval '18 minutes' WHERE sessao_id = $1`, [id]);
     const saiu = await pedir(resp.cookie, "GET", "/api/agenda");
     expect(saiu.statusCode).toBe(401);
     expect(saiu.json().code).toBe("SESSAO_PARADA");

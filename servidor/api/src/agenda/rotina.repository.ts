@@ -80,6 +80,8 @@ export async function colaboradoresLigados(empresaId: string) {
 /** Troca os dias de `de` a `ate` de cada colaborador enviado pelo que o aparelho calculou. */
 export async function substituirExpedientes(tx: TransacaoBanco, empresaId: string, por: string, e: ExpedientesEnvio) {
   for (const c of e.colaboradores) {
+    // Sem nenhum dia (aparelho sem a escala, por exemplo): não apaga o que outro aparelho mandou.
+    if (!c.dias.length) continue;
     await tx
       .delete(expedientesColaboradores)
       .where(and(eq(expedientesColaboradores.empresaId, empresaId), eq(expedientesColaboradores.colaboradorId, c.colaboradorId), gte(expedientesColaboradores.dia, e.de), lte(expedientesColaboradores.dia, e.ate)));
