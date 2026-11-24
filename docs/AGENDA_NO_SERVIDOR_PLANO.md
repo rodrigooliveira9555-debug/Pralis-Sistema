@@ -338,7 +338,7 @@ Observações do SQL:
 - **Ligação com chat e arquivos (0003):** `agenda_mensagens`, `agenda_chat_leituras` e `agenda_arquivos` continuam com
   `compromisso_id` em texto. A ligação com `agenda_compromissos` (FK) **não** vai na 0007: hoje pode haver mensagens de
   compromissos já apagados do documento, e a FK falharia. Vai numa migration depois da transferência no ar
-  (`0009_agenda_chat_ligado.sql`): `ADD CONSTRAINT … FOREIGN KEY (empresa_id, compromisso_id) REFERENCES
+  (`0010_agenda_chat_ligado.sql`; a 0009 virou a das respostas da P-46, 24/11/2026): `ADD CONSTRAINT … FOREIGN KEY (empresa_id, compromisso_id) REFERENCES
   agenda_compromissos (empresa_id, id) NOT VALID` (vale para tudo o que entrar dali em diante) e `VALIDATE CONSTRAINT`
   só depois que o Zé decidir o que fazer com as mensagens órfãs (a transferência conta quantas são).
 - **Chat do grupo (P-46 item 2):** fica para a segunda migration, `0008_agenda_chat_grupo.sql`, numa entrega própria
@@ -454,7 +454,7 @@ compromissos, 41 concluídos, 12 avaliações" e confirma. Se algo não bater, n
 `notas de avaliação`, `relações`, `itens sem criadoPor`, `ids sem conta`. Regra: **cada item do documento tem de estar
 na tabela ou na pendência, nunca em nenhum dos dois**. Se a soma não fechar, a transação é desfeita, a tentativa fica
 registrada como `recusada` com o motivo e nada muda. Também conta (só informa) as mensagens e arquivos da 0003 cujo
-compromisso não existe no documento (órfãos para a 0009).
+compromisso não existe no documento (órfãos para a 0010).
 
 ### Idempotente e sem apagar
 - Rodar de novo **não duplica** (`ON CONFLICT DO NOTHING` por `(empresa_id, id)`) e **não sobrescreve**.
@@ -499,7 +499,7 @@ compromisso não existe no documento (órfãos para a 0009).
 | **A — servidor** | A1 este plano. A2 `shared/src/agenda/regras.ts` + gerador `dist/agenda/regras.js` + teste de igualdade com os 125 casos de `tests/agenda-dominio.cjs` (sem mudar comportamento). A3 schema Drizzle + `0007_agenda_tabelas.sql` (**só depois do SQL aprovado**). A4 repository + service + rotas de compromissos e testes. A5 grupos, colunas, relações, avaliações, adiamento. A6 transferência (prévia, execução, aparelho, retransferência) e testes. A7 chat e arquivos lendo as tabelas; sai o cache do documento; `docs/BACKEND.md` atualizado. | SQL da 0007 |
 | **B — tela** | B1 `dados.js` cliente da API e cache sem internet; `entrar.js` apaga o cache ao sair. B2 telas com `await` e estados de "salvando"/erro. B3 tela de transferência (prévia, "de → para", confirmação). B4 `tests/agenda-telas.mjs` rodando com a API real (`npm run test:telas-api`), 320/390/1024 claro e escuro. B5 brain (04, 09 DT-15, 11 P-46). | — |
 | **Publicar** | API (migrate aplica a 0007) → administrador transfere logo em seguida → site. Conferência no ar: contagens, `agenda:conferir` (versão do documento × versão transferida). | com o Marco |
-| **C — limpeza** | Depois da conferência no ar: chave sai da sincronização e do código; `0009_agenda_chat_ligado.sql` (FK `NOT VALID`); apagar o documento antigo do banco só com pedido explícito. | SQL da 0009 |
+| **C — limpeza** | Depois da conferência no ar: chave sai da sincronização e do código; `0010_agenda_chat_ligado.sql` (FK `NOT VALID`); apagar o documento antigo do banco só com pedido explícito. | SQL da 0009 |
 | **D — chat do grupo** | `0008_agenda_chat_grupo.sql` + rotas + tela, depois da resposta da pergunta 1. | SQL da 0008 |
 
 Estimativa: A ~2,5 dias · B ~2 dias · C ~0,5 dia · D ~1 dia.

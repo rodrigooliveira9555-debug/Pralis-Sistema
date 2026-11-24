@@ -55,8 +55,11 @@ describe("agenda: configurações por pessoa", () => {
     const { gestor: admin, resp } = await cenario();
     expect((await pedir(resp.cookie, "GET", "/api/agenda/configuracoes")).statusCode).toBe(403);
     expect((await configurar(resp, resp, { foraExpediente: "permitir" })).statusCode).toBe(403);
-    // Sem expediente não dá para bloquear. O campo "horaFora" saiu (0009: a hora é sempre calculada) e é recusado.
-    expect((await configurar(admin, resp, { foraExpediente: "bloquear" })).statusCode).toBe(400);
+    // Bloquear sem expediente é aceito (0009: o expediente pode vir da escala), mas sem expediente nenhum não fecha.
+    // O campo "horaFora" saiu (0009: a hora é sempre calculada) e é recusado.
+    expect((await configurar(admin, resp, { foraExpediente: "bloquear" })).statusCode).toBe(200);
+    expect((await pedir(resp.cookie, "GET", "/api/agenda/configuracoes/minha")).json().data.bloqueadaAgora).toBe(false);
+    await configurar(admin, resp, { foraExpediente: "permitir" });
     expect((await configurar(admin, resp, { horaFora: "extra" })).statusCode).toBe(400);
     // Sem tempo próprio, vale o padrão de 15 minutos (P-46 item 4).
     expect((await pedir(resp.cookie, "GET", "/api/agenda/configuracoes/minha")).json().data).toMatchObject({ inatividadeMinutos: null, inatividadeEfetivaMinutos: 15, origemExpediente: "nenhum" });

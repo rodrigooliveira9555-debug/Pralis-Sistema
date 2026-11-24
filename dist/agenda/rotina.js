@@ -1,15 +1,20 @@
 /*
  * Agenda — rotina (P-46, áudios do Rodrigo de 23/11/2026). Servidor: servidor/api/src/agenda/rotina.*.
- * - Configurações da Agenda (menu Agenda › Configurações da Agenda): o administrador define, por pessoa, o
- *   expediente, se a Agenda abre fora dele, se a hora fora do expediente é registrada (comum ou extra: só
- *   registro, não vai para a folha) e em quantos minutos parado o sistema sai. Cada pessoa vê a própria regra.
+ * - Configurações da Agenda (menu Agenda › Configurações da Agenda): o administrador liga cada conta ao colaborador
+ *   do cadastro (o expediente passa a vir dos Horários/Escalas dele) e define, por pessoa, o expediente de reserva,
+ *   se a Agenda abre fora dele e em quantos minutos parado o sistema sai (padrão 15). Cada pessoa vê a própria regra.
  * - Desempenho (aba da Agenda): no prazo, fora do prazo, não feitas, em aberto, resposta média e hora fora do
- *   expediente. Cada pessoa vê o seu; o administrador vê todos.
+ *   expediente (sempre calculada, só relatório: P-46 item 6). Cada pessoa vê o seu; o administrador vê todos.
  * - Ícone roxo de agendar (barra de baixo, em toda tela): cria um compromisso ligado à tela aberta; a tarefa
  *   leva de volta a ela.
  * - Pedido agendado (Compras e Produção) que chega na hora vira tarefa na Agenda do responsável, que leva à tela
  *   do pedido; enviar o pedido conclui a tarefa.
- * - Sair do sistema depois do tempo parado configurado.
+ * - Regras por permissão (P-46 itens 1 e 2): pedido de produção enviado → "Lançar a produção" para quem tem
+ *   "Lançar pedido e ordem de produção" (fecha quando o pedido fica pronto; sai se o pedido for cancelado);
+ *   Período de Teste registrado → "Integração de <nome>" para quem cadastra colaboradores.
+ * - Horários/Escalas → servidor: o aparelho calcula o dia a dia (trabalha/folga e horário) dos colaboradores ligados
+ *   a contas e manda só isso (P-46 item 5; nada de nome nem anotação do dia).
+ * - Sair do sistema depois do tempo parado (padrão 15 min; posto do caixa não sai). Mexer avisa o servidor.
  */
 (function () {
   'use strict';
@@ -21,10 +26,13 @@
   const COR_TEXTO = '#5520ad';
   const DIAS = [[1, 'Seg'], [2, 'Ter'], [3, 'Qua'], [4, 'Qui'], [5, 'Sex'], [6, 'Sáb'], [0, 'Dom']];
   const FORA = [['permitir', 'Pode usar fora do expediente'], ['bloquear', 'Só no expediente (bloqueia fora dele)']];
-  const HORA_FORA = [['nao-registrar', 'Não registrar'], ['comum', 'Registrar como hora comum'], ['extra', 'Registrar como hora extra']];
+  const PADRAO_PARADO = 15;
   /** Telas dos pedidos (o mesmo endereço que o rotas.js grava ao abrir pelo menu). */
   const TELA_PEDIDO_COMPRA = { endereco: '#/saidas-mercadorias/lancamentos/compras-solicitacao', titulo: 'MER - Pedido de Compra' };
   const TELA_PEDIDO_PRODUCAO = { endereco: '#/saidas-mercadorias/lancamentos-producao/producao-pedidos', titulo: 'MER - Pedidos de Produção' };
+  const TELA_MAPA_PRODUCAO = { endereco: '#/saidas-mercadorias/lancamentos-producao/producao-mapa', titulo: 'MER - Mapa de Produção' };
+  const TELA_PERIODO_TESTE = { endereco: '#/saidas-despesas/lancamentos-colaboradores/trial', titulo: 'DES - Período de Teste' };
+  const SUBTAREFAS_INTEGRACAO = ['Conferir documentos', 'Entregar uniforme', 'Treinamento/integração'];
 
   const perfil = () => (window.CicluzSessao && window.CicluzSessao.perfil) || null;
   const ehAdmin = () => Boolean(perfil() && perfil().papel === 'administrador');
@@ -63,27 +71,28 @@
     const item = (t, v) => lista.append(el('dt', null, t), el('dd', null, v));
     item('Expediente', m.descricaoExpediente);
     item('Fora do expediente', m.foraExpediente === 'bloquear' ? 'A Agenda fecha fora do expediente' : 'A Agenda abre a qualquer hora');
-    item('Hora fora do expediente', HORA_FORA.find(([v]) => v === m.horaFora)[1]);
-    item('Sair sozinho', m.inatividadeMinutos ? 'Depois de ' + minutosTexto(m.inatividadeMinutos) + ' sem mexer' : 'Não sai sozinho');
+    item('Sair sozinho', m.inatividadeEfetivaMinutos ? 'Depois de ' + minutosTexto(m.inatividadeEfetivaMinutos) + ' sem mexer' : 'Não sai sozinho (posto do caixa)');
     sua.append(lista);
     if (m.bloqueadaAgora) sua.append(U.situacao('Agora você está fora do expediente: a Agenda abre de novo no horário.', 'atencao'));
     sua.append(U.nota(ehAdmin() ? 'Você é administrador: mude a sua regra na lista abaixo.' : 'Quem muda estas regras é o administrador.'));
     body.append(sua);
     if (!ehAdmin()) return;
 
-    const r = await A.configs();
+    const [r, c] = await Promise.all([A.configs(), A.contasEColaboradores()]);
     const secao = U.secao('Pessoas');
-    secao.append(U.nota('Escolha, para cada pessoa, o expediente e o que acontece fora dele. A hora fora do expediente é só registrada: não vai para a folha de pagamento.'));
-    if (r.erro) { secao.append(U.situacao(r.erro, 'negativo')); body.append(secao); return; }
+    secao.append(U.nota('Ligue cada pessoa ao colaborador do cadastro: o expediente passa a vir dos Horários/Escalas dele. Sem colaborador ligado, vale o expediente escrito aqui. A hora fora do expediente aparece no Desempenho e não vai para a folha de pagamento.'));
+    if (r.erro || c.erro) { secao.append(U.situacao(r.erro || c.erro, 'negativo')); body.append(secao); return; }
+    const colaboradorDe = new Map(c.dados.contas.map((x) => [x.usuarioId, x.colaboradorId]));
     const linhas = el('div', 'compras-lista agenda-config-pessoas');
     r.dados.pessoas.filter((p) => p.ativo).forEach((p) => {
-      const l = botao('', () => editarConfig(p), 'compras-linha agenda-config-linha');
+      const pessoa = { ...p, colaboradorId: colaboradorDe.get(p.usuarioId) || '' };
+      const l = botao('', () => editarConfig(pessoa), 'compras-linha agenda-config-linha');
       l.setAttribute('aria-label', 'Configurar a Agenda de ' + p.nome);
       const texto = el('span', 'compras-linha-texto');
-      const det = [resumoExpediente(p)];
+      const nomeColab = pessoa.colaboradorId && colaboradoresDoAparelho().find((x) => x.id === pessoa.colaboradorId);
+      const det = [pessoa.colaboradorId ? 'Escala de ' + (nomeColab ? nomeColab.name : 'colaborador ligado') : resumoExpediente(p)];
       if (p.foraExpediente === 'bloquear') det.push('bloqueia fora do expediente');
-      if (p.horaFora !== 'nao-registrar') det.push('registra hora ' + p.horaFora);
-      if (p.inatividadeMinutos) det.push('sai em ' + minutosTexto(p.inatividadeMinutos) + ' parado');
+      det.push('sai em ' + minutosTexto(p.inatividadeMinutos || PADRAO_PARADO) + ' parado');
       texto.append(el('b', null, p.nome), el('small', null, det.join(' · ')));
       const seta = el('span', 'agenda-linha-seta');
       seta.innerHTML = svg('<path d="m9 6 6 6-6 6"/>');
@@ -94,11 +103,16 @@
     body.append(secao);
   }
 
+  /** Colaboradores do cadastro deste aparelho (o cadastro não vai para o servidor: P-11). */
+  function colaboradoresDoAparelho() {
+    try { return (window.CicluzPeople && window.CicluzPeople.selectable()) || []; } catch { return []; }
+  }
+
   function editarConfig(p) {
     let dias = new Set(p.expedienteDias);
     U.dialogo({
       titulo: 'Agenda de ' + p.nome,
-      subtitulo: 'Expediente, fora do expediente e saída por tempo parado.',
+      subtitulo: 'Colaborador, expediente, fora do expediente e saída por tempo parado.',
       cor: COR,
       corTexto: COR_TEXTO,
       classe: 'agenda-dialog',
@@ -116,33 +130,45 @@
         const inicio = U.entrada('time', p.expedienteInicio || '');
         const fim = U.entrada('time', p.expedienteFim || '');
         const fora = U.seletor(FORA, p.foraExpediente);
-        const horaFora = U.seletor(HORA_FORA, p.horaFora);
-        const parado = U.entrada('number', p.inatividadeMinutos || '', { min: 1, max: 480, step: 1, inputMode: 'numeric', placeholder: 'Não sai sozinho' });
+        const parado = U.entrada('number', p.inatividadeMinutos || '', { min: 1, max: 480, step: 1, inputMode: 'numeric', placeholder: 'Padrão: ' + PADRAO_PARADO + ' min' });
         const eu = perfil() && perfil().usuarioId === p.usuarioId;
         if (eu) { fora.value = 'permitir'; fora.disabled = true; }
+        // Colaborador ligado (pelo id): só dá para escolher num aparelho que tem o cadastro de colaboradores.
+        const cadastro = colaboradoresDoAparelho().filter((x) => x.active || x.id === p.colaboradorId);
+        const opcoes = cadastro.map((x) => [x.id, x.name + (x.jobName ? ' · ' + x.jobName : '') + (x.active ? '' : ' (inativo)')]);
+        if (p.colaboradorId && !cadastro.some((x) => x.id === p.colaboradorId)) opcoes.unshift([p.colaboradorId, 'Colaborador ligado (o cadastro não está neste aparelho)']);
+        const colab = U.seletor(opcoes, p.colaboradorId, 'Nenhum: usa o expediente abaixo');
         const diasCampo = el('div', 'compras-campo');
         diasCampo.append(el('span', 'compras-rotulo', 'Dias do expediente'), grupoDias);
         const grade = el('div', 'agenda-form-grade');
         grade.append(U.campo('Início do expediente', inicio), U.campo('Fim do expediente', fim));
         form.append(
+          U.campo('Colaborador do cadastro', colab, cadastro.length
+            ? 'Com colaborador, o expediente de cada dia vem dos Horários/Escalas dele. O de baixo vale só nos dias sem escala.'
+            : 'O cadastro de colaboradores não está neste aparelho: ligue pelo aparelho que tem o cadastro (o iPad).'),
           diasCampo, grade,
           U.campo('Fora do expediente', fora, eu ? 'Você não pode bloquear a sua própria Agenda.' : 'Bloqueado: fora do horário a Agenda e o chat não abrem.'),
-          U.campo('Hora trabalhada fora do expediente', horaFora, 'Só registro, para o relatório de desempenho. Não vai para a folha de pagamento.'),
-          U.campo('Sair do sistema depois de quantos minutos parado', parado, 'Vazio = não sai sozinho. De 1 a 480 minutos.'),
+          U.campo('Sair do sistema depois de quantos minutos parado', parado, 'Vazio = o padrão de ' + PADRAO_PARADO + ' minutos. De 1 a 480. Posto do caixa não sai sozinho.'),
         );
-        return { inicio, fim, fora, horaFora, parado };
+        return { inicio, fim, fora, parado, colab };
       },
       salvar: async (c) => {
         const corpo = {
           expedienteDias: [...dias].sort(), expedienteInicio: c.inicio.value, expedienteFim: c.fim.value,
-          foraExpediente: c.fora.value, horaFora: c.horaFora.value, inatividadeMinutos: c.parado.value ? Number(c.parado.value) : null,
+          foraExpediente: c.fora.value, inatividadeMinutos: c.parado.value ? Number(c.parado.value) : null,
         };
         // As mesmas regras do servidor, com a mensagem antes de mandar.
         if (Boolean(corpo.expedienteInicio) !== Boolean(corpo.expedienteFim)) return 'Informe o início e o fim do expediente, ou nenhum dos dois.';
         if (corpo.expedienteInicio && corpo.expedienteFim <= corpo.expedienteInicio) return 'O fim do expediente deve ser depois do início.';
         if (corpo.expedienteInicio && !corpo.expedienteDias.length) return 'Marque os dias do expediente.';
-        if (!corpo.expedienteInicio && (corpo.foraExpediente === 'bloquear' || corpo.horaFora !== 'nao-registrar')) return 'Para bloquear ou registrar a hora fora do expediente, informe o expediente.';
+        if (!corpo.expedienteInicio && corpo.foraExpediente === 'bloquear' && !c.colab.value) return 'Para bloquear fora do expediente, informe o expediente ou ligue o colaborador.';
         if (corpo.inatividadeMinutos !== null && !(corpo.inatividadeMinutos >= 1 && corpo.inatividadeMinutos <= 480 && Number.isInteger(corpo.inatividadeMinutos))) return 'Minutos parado: um número inteiro de 1 a 480.';
+        if (c.colab.value !== (p.colaboradorId || '')) {
+          const l = await A.ligarColaborador(p.usuarioId, c.colab.value);
+          if (l.erro) return l.erro;
+          // Ligou agora: manda já o expediente dos Horários/Escalas (não espera o próximo envio do dia).
+          enviarEscalas(true);
+        }
         const r = await A.salvarConfig(p.usuarioId, corpo);
         if (r.erro) return r.erro;
         U.avisar('Configuração salva.');
@@ -310,11 +336,84 @@
   }
   const pedidoDeProducaoFeito = (pedidoId) => { if (A.conectado()) A.concluirPorVinculo('producao:pp:' + pedidoId); };
 
+  /* ================= Regras por permissão (P-46 itens 1 e 2) ================= */
+  // O servidor escolhe quem recebe (todas as contas ativas com a permissão) e recusa quem dispara sem ela.
+  /** Pedido de produção enviado: "Lançar a produção" para quem tem "Lançar pedido e ordem de produção". */
+  function producaoParaLancar({ pedidoId, numero, data, hora }) {
+    if (!A.conectado()) return;
+    A.tarefaDeTela({
+      vinculoRef: 'producao:lancar:' + pedidoId, vinculoTela: TELA_MAPA_PRODUCAO.endereco, vinculoTitulo: TELA_MAPA_PRODUCAO.titulo,
+      titulo: 'Lançar a produção do pedido' + (numero ? ' nº ' + numero : ''), data: data || '', hora: hora || '',
+      notas: 'Abra o Mapa de Produção e lance o que foi produzido em cima do pedido: a tarefa é concluída sozinha quando o pedido fica pronto.',
+      paraQuemTem: 'producao_lancar',
+    });
+  }
+  const producaoLancada = (pedidoId) => { if (A.conectado()) A.concluirPorVinculo('producao:lancar:' + pedidoId); };
+  const producaoCancelada = (pedidoId) => { if (A.conectado()) A.cancelarPorVinculo('producao:lancar:' + pedidoId); };
+  /** Período de Teste registrado: "Integração de <nome>" para quem cadastra colaboradores. Ligação pelo id. */
+  function integracaoDoColaborador({ colaboradorId, nome, inicio }) {
+    if (!A.conectado() || !colaboradorId) return;
+    A.tarefaDeTela({
+      vinculoRef: 'pessoas:integracao:' + colaboradorId, vinculoTela: TELA_PERIODO_TESTE.endereco, vinculoTitulo: TELA_PERIODO_TESTE.titulo,
+      titulo: 'Integração de ' + String(nome || 'colaborador novo').slice(0, 180), data: inicio || '',
+      notas: 'Colaborador novo começando o Período de Teste. Marque cada passo quando for feito.',
+      paraQuemTem: 'pessoas_editar', subtarefas: SUBTAREFAS_INTEGRACAO,
+    });
+  }
+
+  /* ================= Horários/Escalas → servidor (P-46 item 5) ================= */
+  // O cálculo do dia é o da tela de Horários/Escalas (fonte única: CicluzJornada.dayInfo/shiftFor). Vai só o
+  // resultado — trabalha ou folga e o horário — dos colaboradores ligados a contas. Dia sem escala não vai
+  // (vale o expediente das Configurações da Agenda). Só manda quando mudou (marca no aparelho).
+  const MARCA_ESCALA = 'cicluz-agenda-escala-enviada-v1';
+  const podeMandarEscala = () => ehAdmin() || Boolean(perfil() && (perfil().permissoes || []).includes('pessoas_editar'));
+  let enviandoEscala = null;
+  function diasDaEscala(colaboradorId, de, ate) {
+    const J = window.CicluzJornada;
+    const dias = [];
+    for (let dia = de; dia <= ate; dia = D.somarDias(dia, 1)) {
+      const info = J.dayInfo(colaboradorId, dia);
+      if (info.work === null || info.work === undefined) continue;
+      if (!info.work) { dias.push({ dia, trabalha: false }); continue; }
+      const t = J.shiftFor(colaboradorId, dia, info.slot);
+      const inicio = t && t.shift && t.shift.start, fim = t && t.shift && t.shift.end;
+      if (inicio && fim && inicio !== fim) dias.push({ dia, trabalha: true, inicio, fim });
+    }
+    return dias;
+  }
+  async function mandarEscalas(forcar) {
+    if (!A.conectado() || !podeMandarEscala() || !window.CicluzJornada) return;
+    const r = await A.contasEColaboradores();
+    if (r.erro) return;
+    const ligados = [...new Set(r.dados.contas.map((c) => c.colaboradorId).filter(Boolean))];
+    if (!ligados.length) return;
+    const hoje = D.isoData(new Date());
+    const de = D.somarDias(hoje, -31), ate = D.somarDias(hoje, 62);
+    try { window.CicluzJornada.load(); } catch { /* lê o que já está carregado */ }
+    const colaboradores = ligados.map((colaboradorId) => ({ colaboradorId, dias: diasDaEscala(colaboradorId, de, ate) }));
+    const corpo = { de, ate, colaboradores };
+    // Marca curta do que foi mandado (não guarda os horários de novo no aparelho).
+    const marca = [...JSON.stringify(corpo)].reduce((h, ch) => (Math.imul(h, 31) + ch.charCodeAt(0)) | 0, 7).toString(36);
+    let anterior = '';
+    try { anterior = localStorage.getItem(MARCA_ESCALA) || ''; } catch { /* sem armazenamento: manda */ }
+    if (!forcar && anterior === marca) return;
+    const e = await A.enviarExpedientes(corpo);
+    if (!e.erro) { try { localStorage.setItem(MARCA_ESCALA, marca); } catch { /* manda de novo da próxima vez */ } }
+  }
+  function enviarEscalas(forcar) {
+    if (enviandoEscala) return enviandoEscala;
+    enviandoEscala = mandarEscalas(forcar).catch(() => undefined).finally(() => { enviandoEscala = null; });
+    return enviandoEscala;
+  }
+
   /* ================= Sair do sistema depois do tempo parado ================= */
+  // Padrão de 15 minutos no sistema todo (P-46 item 4); posto do caixa não sai. A tela sai sozinha e, enquanto a
+  // pessoa mexe, avisa o servidor a cada minuto (as atualizações automáticas não contam como uso lá).
   let limiteMs = 0;
   let timer = null;
   let aviso = null;
   let ultimo = 0;
+  let ultimoSinal = Date.now();
   function sair() {
     const b = document.querySelector('[aria-label="Sair do sistema"]');
     if (b) b.click(); else location.href = 'entrar.html?sair=1';
@@ -323,6 +422,11 @@
     const agora = Date.now();
     if (agora - ultimo < 2000) return; // não refaz o relógio a cada movimento
     ultimo = agora;
+    if (agora - ultimoSinal > 60000 && window.CicluzSync && window.CicluzSync.api) {
+      ultimoSinal = agora;
+      window.CicluzSync.api('/sessao').catch(() => undefined);
+    }
+    if (!limiteMs) return;
     clearTimeout(timer);
     clearTimeout(aviso);
     if (limiteMs > 60000) aviso = setTimeout(() => U.avisar('Você vai sair do sistema em 1 minuto por falta de uso.'), limiteMs - 60000);
@@ -330,17 +434,20 @@
   }
   async function iniciarInatividade() {
     if (!A.conectado()) return;
-    const r = await A.minhaConfig();
-    if (r.erro || !r.dados.inatividadeMinutos) return;
-    limiteMs = r.dados.inatividadeMinutos * 60000;
     ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach((ev) => window.addEventListener(ev, mexeu, { passive: true, capture: true }));
+    const r = await A.minhaConfig();
+    if (!r.erro && r.dados.inatividadeEfetivaMinutos) limiteMs = r.dados.inatividadeEfetivaMinutos * 60000;
     mexeu();
+    // Horários/Escalas: confere ao abrir e a cada 10 minutos (só manda o que mudou).
+    enviarEscalas(false);
+    setInterval(() => { if (document.visibilityState === 'visible') enviarEscalas(false); }, 10 * 60000);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciarInatividade); else setTimeout(iniciarInatividade, 0);
 
   window.CicluzAgendaRotina = {
     abrirConfiguracoes, renderDesempenho, agendarDaTela, abrirTela, telaAtual,
     tarefaDoPedidoDeCompra, pedidoDeCompraFeito, tarefaDoPedidoDeProducao, pedidoDeProducaoFeito,
-    TELA_PEDIDO_COMPRA, TELA_PEDIDO_PRODUCAO,
+    producaoParaLancar, producaoLancada, producaoCancelada, integracaoDoColaborador, enviarEscalas,
+    TELA_PEDIDO_COMPRA, TELA_PEDIDO_PRODUCAO, TELA_MAPA_PRODUCAO, TELA_PERIODO_TESTE,
   };
 })();

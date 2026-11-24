@@ -287,7 +287,8 @@ export const configPessoaSchema = z
     if (Boolean(c.expedienteInicio) !== Boolean(c.expedienteFim)) ctx.addIssue({ code: "custom", message: "Informe o início e o fim do expediente, ou nenhum dos dois.", path: ["expedienteFim"] });
     else if (c.expedienteInicio && c.expedienteFim <= c.expedienteInicio) ctx.addIssue({ code: "custom", message: "O fim do expediente deve ser depois do início.", path: ["expedienteFim"] });
     if (c.expedienteInicio && !c.expedienteDias.length) ctx.addIssue({ code: "custom", message: "Marque os dias do expediente.", path: ["expedienteDias"] });
-    if (c.foraExpediente === "bloquear" && !c.expedienteInicio) ctx.addIssue({ code: "custom", message: "Para bloquear fora do expediente, informe o expediente.", path: ["foraExpediente"] });
+    // Bloquear sem expediente aqui é aceito: o expediente pode vir dos Horários/Escalas do colaborador ligado
+    // (0009). Sem expediente nenhum, a Agenda simplesmente não fecha.
   });
 /** Tempo parado padrão (P-46 item 4, Zé 24/11/2026): 15 minutos, no sistema todo. */
 export const INATIVIDADE_PADRAO_MINUTOS = 15;

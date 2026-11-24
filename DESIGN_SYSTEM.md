@@ -1,5 +1,15 @@
 # CICLUZ — referência de interface
 
+## Agenda: respostas da P-46 nas telas (24/11/2026, Zé)
+**Janela da lista** ("Editar lista" / "Nova lista"): no quadro "Membros do grupo", o campo **"Quem entra no grupo"** (seletor do
+sistema): "Escolhidos à mão" ou "Quem tem acesso a <área>" (áreas do Acesso por Tela, lidas do catálogo do servidor). Com área, o
+botão "Escolher membros" some e o resumo explica que os membros entram e saem sozinhos com o acesso. **Configurações da Agenda**
+(janela de cada pessoa): primeiro o campo **"Colaborador do cadastro"** (seletor; só lista quem está no cadastro deste aparelho;
+"Nenhum: usa o expediente abaixo"), depois dias, início e fim (o expediente de reserva), "Fora do expediente" e o tempo parado
+(vazio = **padrão de 15 min**, escrito no próprio campo). **Saiu** a escolha "Hora trabalhada fora do expediente" (comum/extra):
+a hora é sempre calculada e aparece só no Desempenho até o Rodrigo decidir o pagamento. Na lista de pessoas, cada linha diz
+"Escala de <colaborador>" ou o expediente escrito, e "sai em N min parado".
+
 ## Agenda no padrão do Design System (24/11/2026, pedido do Zé)
 Revisão de toda a Agenda (Listas, Calendário, Kanban, Mapa mental, Desempenho, janelas e alertas), na origem (`agenda/agenda.css`
 e os `agenda/*.js`), sem `!important` novo. **Ícones (só imagem)** das listas automáticas, de "Minhas listas", dos indicadores do

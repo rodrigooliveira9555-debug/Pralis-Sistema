@@ -34,7 +34,9 @@
       resposta = await fetch('/api' + caminho, {
         method: opcoes.metodo || 'GET',
         credentials: 'same-origin',
-        headers: opcoes.corpo ? { 'content-type': 'application/json' } : {},
+        // automatico: pedido que a tela faz sozinha (atualização a cada X s) — não conta como "mexeu" para o
+        // tempo parado do servidor (P-46 item 4).
+        headers: Object.assign(opcoes.corpo ? { 'content-type': 'application/json' } : {}, opcoes.automatico ? { 'X-Cicluz-Automatico': '1' } : {}),
         body: opcoes.corpo ? JSON.stringify(opcoes.corpo) : undefined,
         keepalive: Boolean(opcoes.keepalive)
       });
