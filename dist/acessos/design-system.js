@@ -151,7 +151,7 @@
       { titulo: 'Dentro do quadro ou fora dele', texto: ['Botão dentro do quadro age só naquele quadro ("Editar" num bloco, "Adicionar" numa lista).', 'Botão fora do quadro age na página inteira (Cancelar, Salvar, Avançar).'] },
       { titulo: 'Texto do botão', texto: ['Botão de página tem o nome por extenso ("Cancelar", "Salvar"), nunca só um desenho.', 'O nome diz o que acontece: "Salvar", "Excluir", "Trocar" — e não "OK" ou "Sim".', 'Em botão, vermelho é só do excluir.'] },
     ] },
-    { id: 'campos', titulo: 'Campos de Preenchimento', resumo: 'Rótulo, obrigatório, situação e o aviso de campo vazio', quadros: [
+    { id: 'campos', titulo: 'Campos de Preenchimento', resumo: 'Rótulo, obrigatório, situação, hora e o aviso de campo vazio', quadros: [
       { titulo: 'Como é um campo', texto: ['O nome do campo fica em cima, em letra de 12 px. O campo tem 42 px de altura, fundo branco, borda fina e cantos de 8 px.', 'Campo obrigatório leva um asterisco no fim do nome.', 'Quando ajuda, o campo traz um exemplo em cinza claro ("Ex.: Nome e sobrenome…") e uma dica curta embaixo.',
         'Ao tocar no campo, a borda fica na cor da origem.'],
         amostra: () => amostra(campo('Nome completo *', entrada('text', '', { placeholder: 'Ex.: Nome e sobrenome…' })), campo('Tipo', seletor([['a', 'Opção A'], ['b', 'Opção B']], '', 'Selecione')), campo('Observação', entrada('text', ''), 'Dica curta, embaixo do campo.')) },
@@ -162,6 +162,11 @@
       { titulo: 'Situação (ativo ou inativo)', texto: ['A situação é sempre um interruptor com o texto ao lado ("Ativo" / "Inativo"), nunca uma caixa de marcar nem uma lista de escolha.', 'Perguntas de sim ou não usam o mesmo interruptor, com "Sim" / "Não".'],
         amostra: () => amostra(U.quadroSituacao('Situação do cadastro', true, { dica: 'Inativo continua cadastrado.' }), U.quadroSituacao('Terá contrato?', false, { textos: ['Sim', 'Não'], dica: 'Pergunta de sim ou não.' })) },
       { titulo: 'Campo só para leitura', texto: ['Valor que vem de outro lugar e não pode ser mudado ali (por exemplo, o salário de referência do cargo) aparece no mesmo campo, travado, com uma nota dizendo de onde vem.'] },
+      { titulo: 'Campo de hora (roleta)', texto: ['A hora é um campo só, no mesmo desenho do campo de aniversário: dá para digitar HH:MM (só os números; os dois pontos entram sozinhos) ou tocar no relógio ao lado, que abre a roleta.',
+        'A roleta tem duas colunas, as horas (00 a 23) e os minutos (00 a 59). Uma única faixa, na cor da origem, fica parada no meio das duas; os números rolam por baixo dela e o que parar na faixa é o escolhido, com o campo mudando junto. Nenhum número muda de cor enquanto rola, então a roleta não pisca.',
+        'Rolar só o minuto com o campo vazio já escolhe a hora 00 (e rolar só a hora escolhe o minuto 00). Tocar numa hora leva ela para a faixa; tocar num minuto escolhe e fecha. As setas para cima e para baixo também mudam o valor, e Esc fecha.',
+        'Hora fora de 00:00 a 23:59 mostra: "Informe a hora no formato HH:MM, de 00:00 a 23:59.". Toque no relógio para ver.'],
+        amostra: () => { const h = U.campoHora({ rotulo: 'Horário', valor: '08:30' }); const no = el('div', 'compras-campo'); no.append(el('span', 'compras-rotulo', 'Horário'), h.caixa, h.painel); return amostra(no); } },
     ] },
     { id: 'mascaras', titulo: 'Máscaras', resumo: 'O formato que cada campo assume enquanto se digita', quadros: [
       { titulo: 'Formatos', texto: ['A máscara arruma o que a pessoa digita, na hora. Ninguém precisa digitar ponto, traço, barra ou símbolo.'],
