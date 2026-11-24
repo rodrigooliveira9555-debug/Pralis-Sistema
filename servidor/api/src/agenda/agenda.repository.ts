@@ -1,24 +1,6 @@
 import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
-import { agendaArquivos, agendaChatLeituras, agendaMensagens, documentos, usuarioAutenticacao } from "@cicluz/db/schema";
-import { CHAVE_AGENDA } from "@cicluz/shared";
+import { agendaArquivos, agendaChatLeituras, agendaMensagens, usuarioAutenticacao } from "@cicluz/db/schema";
 import { banco } from "../banco/conexao.ts";
-
-/** Versão do documento da agenda (barato: decide se o cache ainda vale). */
-export async function versaoAgenda(empresaId: string) {
-  const [l] = await banco
-    .select({ versao: documentos.versao })
-    .from(documentos)
-    .where(and(eq(documentos.empresaId, empresaId), eq(documentos.chave, CHAVE_AGENDA)));
-  return l?.versao ?? 0;
-}
-
-export async function documentoAgenda(empresaId: string) {
-  const [l] = await banco
-    .select({ valor: documentos.valor, versao: documentos.versao })
-    .from(documentos)
-    .where(and(eq(documentos.empresaId, empresaId), eq(documentos.chave, CHAVE_AGENDA)));
-  return l ?? null;
-}
 
 export async function listarMensagens(empresaId: string, compromissoId: string, depois?: string) {
   const filtros = [eq(agendaMensagens.empresaId, empresaId), eq(agendaMensagens.compromissoId, compromissoId)];

@@ -20,12 +20,13 @@
   const agoraIso = () => new Date().toISOString();
   const hojeIso = () => window.CicluzComprasDominio.isoData(new Date());
 
-  /* Usuários fictícios: o S2 ainda não tem cadastro de usuários nem permissões. */
-  const RESPONSAVEIS = [
-    { id: 'u-jose', nome: 'José · Compras' },
-    { id: 'u-rodrigo', nome: 'Rodrigo · Gerência' },
-    { id: 'u-ana', nome: 'Ana · Estoque' },
-  ];
+  /*
+   * Responsáveis: as contas ativas da empresa (Pessoas com Acesso), as mesmas da Agenda (agenda/dados.js carrega do
+   * servidor). As pessoas de teste "José · Compras", "Rodrigo · Gerência" e "Ana · Estoque" foram apagadas (Zé,
+   * 24/11/2026, P-46): pedido antigo que as cita mostra "Pessoa de teste (removida)" e nada é apagado do pedido.
+   */
+  const PESSOAS_TESTE_REMOVIDAS = new Set(['u-jose', 'u-rodrigo', 'u-ana']);
+  const responsaveis = () => (window.CicluzAgendaDados ? window.CicluzAgendaDados.pessoas() : []);
 
   /* ---------- Dados de exemplo (fictícios) ---------- */
   function semente() {
@@ -357,7 +358,7 @@
   /* ---------- Consultas comuns ---------- */
   const fornecedor = (id) => dados.fornecedores.find((f) => f.id === id);
   const produto = (id) => dados.produtos.find((p) => p.id === id);
-  const responsavel = (id) => (RESPONSAVEIS.find((u) => u.id === id) || { nome: 'Responsável não encontrado' }).nome;
+  const responsavel = (id) => (PESSOAS_TESTE_REMOVIDAS.has(id) ? 'Pessoa de teste (removida)' : (responsaveis().find((u) => u.id === id) || { nome: 'Responsável não encontrado' }).nome);
   /** Preço-base vigente (valido_ate nulo). */
   const referencia = (produtoId) => {
     const pb = dados.precosBase.find((p) => p.produtoId === produtoId && !p.ate);
@@ -389,7 +390,9 @@
 
   window.CicluzComprasDados = {
     normalizarProduto, locaisDeVenda, unidades,
-    KEY, RESPONSAVEIS,
+    KEY,
+    /** Contas ativas da empresa (lidas na hora: chegam do servidor depois de a tela abrir). */
+    get RESPONSAVEIS() { return responsaveis(); },
     get dados() { return dados; },
     get erroLeitura() { return erroLeitura; },
     transacao, novoId, agoraIso, hojeIso,

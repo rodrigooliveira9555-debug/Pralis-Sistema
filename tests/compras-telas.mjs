@@ -25,6 +25,8 @@ async function abrirPagina(largura) {
   await pagina.route('https://fonts.gstatic.com/**', (r) => r.abort());
   await pagina.goto(url, { waitUntil: 'load' });
   await pagina.waitForFunction(() => window.CicluzCompras && window.CicluzComprasCotacao);
+  // Contas fictícias da empresa (sem servidor não há Pessoas com Acesso; as pessoas de teste saíram, P-46).
+  await pagina.evaluate(() => { CicluzAgendaDados.pessoas = () => [{ id: 'conta-jose', nome: 'José (teste)' }, { id: 'conta-rodrigo', nome: 'Rodrigo (teste)' }, { id: 'conta-ana', nome: 'Ana (teste)' }]; });
   await pagina.evaluate(() => { if (document.body.classList.contains('mobile-menu-visible')) document.getElementById('toggleMenu').click(); });
   return pagina;
 }
@@ -35,9 +37,10 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
 {
   const p = await abrirPagina(1024);
   // Menu de Mercadorias (vídeo do Rodrigo, 06/11/2026): sem o item "Compras (revisar)"; rotina em Lançamentos,
-  // cadastros em Cadastros Geral, estoque e contagem em Estoques; o agendamento abre os Lançamentos (Zé, 23/11/2026).
+  // cadastros em Cadastros Geral, estoque e contagem em Estoques; o agendamento abre os Lançamentos (Zé, 23/11/2026);
+  // submenu API por último em todas as origens (escolha do Rodrigo, main c5df814).
   const subMercadorias = await p.evaluate(() => sections[3][1].join('|'));
-  ok(subMercadorias === 'Lançamentos|Lançamentos Produção|Relatórios|Cadastros Geral|Cadastros Geral Produção|Estoques|Pastas Documentos', 'Mercadorias sem "Compras (revisar)": ' + subMercadorias);
+  ok(subMercadorias === 'Lançamentos|Lançamentos Produção|Relatórios|Cadastros Geral|Cadastros Geral Produção|Estoques|Pastas Documentos|API', 'Mercadorias sem "Compras (revisar)": ' + subMercadorias);
   const cardsDe = async (sub) => { await p.evaluate((x) => menuBack(3, x)(), sub); return p.locator('#sector-content .section-card b').allTextContents(); };
   const lanc = await cardsDe('Lançamentos');
   ok(lanc.join('|') === 'MER - Mercadorias|MER - Agenda de Pedidos|MER - Pedido de Compra|MER - Cotação por Fornecedor|MER - Pedidos a Receber', 'Lançamentos: agenda → pede → cota → recebe: ' + lanc.join('|'));
@@ -274,7 +277,7 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await escolherNaArvore(p, d1.getByRole('button', { name: 'Grupo *', exact: true }), { grupo: 'BEBIDAS' });
   await d1.getByRole('checkbox', { name: 'Marcar REFRIGERANTE COLA 2 LT' }).check();
   await d1.getByRole('checkbox', { name: 'Marcar REFRIGERANTE GUARANÁ 2 LT' }).check();
-  await d1.locator('select[aria-label="Responsável por executar *"]').selectOption('u-jose');
+  await d1.locator('select[aria-label="Responsável por executar *"]').selectOption('conta-jose');
   // Janela simples mostra Cancelar · Salvar por extenso, à direita e fora do quadro (Rodrigo, 19/11/2026); a com etapas esconde a linha.
   ok(await d1.locator('.compras-dialog-acoes').isVisible() && (await d1.locator('.compras-dialog-acoes button').allTextContents()).map((t) => t.trim()).join('|') === 'Cancelar|Salvar', 'Janela simples com Cancelar e Salvar por extenso no fim');
   await d1.locator('.people-save-control').click();

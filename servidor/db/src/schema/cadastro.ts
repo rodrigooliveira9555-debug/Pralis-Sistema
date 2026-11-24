@@ -45,6 +45,8 @@ export const perfisUsuarios = pgTable(
       sql`(${tabela.postoPdv} is null and ${tabela.postoTurno} is null) or (${tabela.postoPdv} between 1 and 4 and ${tabela.postoTurno} in ('manha', 'tarde'))`
     ),
     index("perfis_usuarios_empresa_idx").on(tabela.empresaId),
+    // usuario_id já é único; o par existe para a Agenda ligar "pessoa" a "conta da MESMA empresa" (0007).
+    uniqueIndex("perfis_usuarios_empresa_usuario_uq").on(tabela.empresaId, tabela.usuarioId),
     uniqueIndex("perfis_usuarios_posto_uq")
       .on(tabela.empresaId, tabela.postoPdv, tabela.postoTurno)
       .where(sql`${tabela.postoPdv} is not null`)

@@ -53,6 +53,22 @@ dist/
    regras do Sistema Pralis: ver `PROJECT_BRAIN/13_LANCAMENTOS.md`. O menu "Lançamentos" do site
    abre o app; a maquete antiga foi removida.
 
+11. **Agenda nas tabelas** (migration `0007_agenda_tabelas`, plano `docs/AGENDA_NO_SERVIDOR_PLANO.md`):
+   cada compromisso é um registro e a permissão é conferida no servidor (o documento `cicluz-agenda-v1`
+   não decide mais nada). `GET /api/agenda` devolve só o que a pessoa vê, com `acesso` pronto e `ETag`
+   (304 sem mudança); gravações por compromisso com `versao` (409 `AGENDA_VERSAO` só no que mudou);
+   concluir pelo estado desejado (duplo toque não duplica). Listas, membros, colunas, avaliações (não
+   mudam: trigger no banco), soneca por pessoa e ligações do mapa têm rotas próprias. O chat e os
+   arquivos (0003) conferem a permissão nas mesmas tabelas. A regra (acesso, avaliação, validação,
+   repetição) está escrita uma vez em `servidor/shared/src/agenda/regras.ts`; a tela usa a cópia gerada
+   `dist/agenda/regras.js` (`node servidor/scripts/gerar-regras-agenda.mjs`; um teste falha se divergir).
+   **Transferência:** o administrador vê a prévia (`GET /api/agenda/transferencia`) e confirma
+   (`POST`): o servidor lê o próprio documento, grava numa transação e confere a contagem; se não
+   fechar, nada muda e a tentativa fica em `agenda_transferencias` como recusada. Rodar de novo não
+   duplica. A cópia antiga de um aparelho vai para `POST /api/agenda/transferencia/aparelho` (guardada
+   no histórico, nada aplicado sozinho). Antes da transferência, gravar na Agenda responde
+   `AGENDA_NAO_TRANSFERIDA` (409). Publicar: API → transferência logo em seguida → site.
+
 Dados que vão para o banco: a lista fechada em `servidor/shared/src/documentos.ts`. Preferências de
 tela (tema, ordem de menus) e o Cadastro completo (CPF) ficam só no aparelho (PROJECT_BRAIN/11, P-11).
 
@@ -122,7 +138,7 @@ ninguém entra.
 
 O `.vercelignore` tira `servidor/` do deploy estático.
 
-## Banco (migrations `0000_inicial`, `0001_tabelas_por_assunto`, `0002_lancamentos`)
+## Banco (migrations `0000` a `0007`)
 
 | Tabela | Para quê |
 | ------ | -------- |
@@ -141,6 +157,8 @@ O `.vercelignore` tira `servidor/` do deploy estático.
 | `organograma_posicoes`, `organograma_versoes` | organograma |
 | `icones_personalizados`, `cores_personalizadas` | identidade visual cadastrada |
 | `lancamentos`, `lancamentos_itens`, `lancamentos_recorrencias` | Lançamentos (fonte da verdade): reais numeric(14,2), conta em centavos, itens com rateio, séries |
+| `agenda_mensagens`, `agenda_chat_leituras`, `agenda_arquivos` | chat e arquivos de cada compromisso (0003) |
+| `agenda_estado`, `agenda_grupos`, `agenda_grupo_membros`, `agenda_colunas`, `agenda_compromissos`, `agenda_participantes`, `agenda_avaliacoes`, `agenda_adiamentos`, `agenda_relacoes`, `agenda_transferencias` | Agenda (0007, fonte da verdade): empresa em toda chave; pessoa = conta da mesma empresa; excluir = esconder; avaliação imutável; registro de cada transferência |
 
 ## O que este backend NÃO faz (de propósito)
 

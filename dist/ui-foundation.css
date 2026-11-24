@@ -19,6 +19,9 @@ body.dark-theme .view>.panel>.head p{color:var(--navigation-ink)!important}
 
 /* Canonical controls: includes legacy views, dynamic editors, dialogs and queries. */
 :root{--ui-label:12px;--ui-label-weight:400;--ui-label-color:#52525b;--ui-input-color:#27272a;--ui-placeholder:#71717a;--ui-control-bg:#fff;--ui-border-base:#d4d4d8;--ui-focus-ring:14%}
+/* Situação (P-46, desempenho da Agenda): cor que acompanha número e nome, nunca sozinha. */
+:root{--ui-situacao-ok:#16a34a;--ui-situacao-atencao:#d97706;--ui-situacao-erro:#b91c1c;--ui-situacao-neutro:#a1a1aa}
+body.dark-theme{--ui-situacao-ok:#4ade80;--ui-situacao-atencao:#fbbf24;--ui-situacao-erro:#f87171;--ui-situacao-neutro:#a1a1aa}
 body.dark-theme{--ui-label-color:#d4d4d8;--ui-input-color:#f4f4f5;--ui-placeholder:#a1a1aa;--ui-control-bg:#24232b;--ui-border-base:#62626b;--ui-focus-ring:24%}
 body :is(.view,dialog,.modal){--ui-control-accent:var(--navigation-ink,#a2a0aa)}
 body :is(.fee-expense-field,.fee-account-field){--ui-control-accent:var(--navigation-ink,#a2a0aa)}

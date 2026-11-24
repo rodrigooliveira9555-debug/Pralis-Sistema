@@ -240,3 +240,12 @@ body .view.app-screen-shell.show{width:100%!important;height:100%!important;marg
 
 /* The surrounding page continues each header surface, without dark corner caps. */
 body:not(.mobile-menu-visible):has(.view.app-screen-shell.show) .app{background:linear-gradient(to bottom,var(--mobile-top-fill,#fff) 0 50%,var(--theme-surface,#fff) 50% 100%)!important}
+
+/* Ícone de agendar (P-46): roxo da Agenda em toda tela, qualquer que seja a cor da tela. */
+.people-agendar-control{--menu-accent:#7c3aed}
+/* Ícone de agendar (P-46): no celular (até 600 px) os onze botões e o logotipo não cabem lado a lado; ele sai da barra e fica como primeira opção do menu rápido (toque no logotipo). No iPad e no computador, na barra. */
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tools>.people-quick-fixo{display:none}
+@media(max-width:600px){
+ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-footer-left>.people-agendar-control{display:none}
+ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tools>.people-quick-fixo{display:grid}
+}

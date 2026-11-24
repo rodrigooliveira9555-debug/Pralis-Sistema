@@ -90,7 +90,7 @@
     const campoBusca = U.entrada('text', '', { placeholder: 'Procurar endereço ou lugar', maxLength: 200, enterKeyHint: 'search' });
     campoBusca.dataset.textoLivre = '';
     campoBusca.setAttribute('aria-label', 'Procurar endereço ou lugar');
-    const procurar = botao('Procurar', () => fazerBusca(), 'compras-chip');
+    const procurar = botao('Procurar', () => fazerBusca(), 'btn secondary');
     const resultados = el('div', 'agenda-mapa-resultados');
     busca.append(campoBusca, procurar);
     campoBusca.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); fazerBusca(); } };
