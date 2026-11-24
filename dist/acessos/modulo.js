@@ -20,7 +20,7 @@
     // Diversos (19/11/2026, pedido do Rodrigo): cadastros gerais que não são da empresa nem de acesso. O Salário Mínimo Vigente saiu de Empresa e veio para cá.
     'Diversos': [['salario-minimo', 'Salário Mínimo Vigente', 'Valor e início da vigência; base dos contratos']],
     'Usuários': [['usuarios', 'Pessoas com Acesso', 'Criar contas, postos do caixa e cargos'], ['dados', 'Dados no Servidor', 'Situação de cada assunto gravado']],
-    'Permissões': [['cargos', 'Cargos de Acesso', 'O que cada cargo pode fazer'], ['pessoa', 'Acessos por Pessoa', 'Ajustar só para uma pessoa']],
+    'Permissões': [['telas', 'Acesso por Tela', 'O menu inteiro, com sete permissões por tela (esboço)']],
     'Senhas': [['senhas', 'Minha Senha', 'Trocar a sua senha'], ['senha-outra', 'Senha de Outra Pessoa', 'Quando alguém esqueceu a senha']],
     // Design System (18/11/2026; o setor se chama só "Design System", pedido do Rodrigo): um cartão por tópico do padrão visual (acessos/design-system.js). A ordem é a de leitura.
     'Design System': [['ds-letras', 'Letras', 'A fonte do sistema, os pesos e o jeito de escrever'],
@@ -143,10 +143,6 @@
     return d;
   }
 
-  function confirmar(titulo, texto, rotulo, acao) {
-    U.confirmar(titulo, texto, rotulo, acao, { cor: COR, corTexto: COR_TEXTO, classe: 'acessos-dialog' });
-  }
-
   // Sessão e catálogo: lidos de novo a cada tela aberta (um cargo pode ter mudado em outra aba).
   async function contexto() {
     const [sessao, catalogo] = await Promise.all([api('/sessao'), api('/acessos/catalogo')]);
@@ -175,7 +171,7 @@
   window.CicluzAcessos = {
     COR, COR_TEXTO, ICONE,
     cards: (setor) => (CARDS[setor] || []).map(([id, t, d]) => [t, d, 'acessos:' + id]),
-    criarTela, dialogoApi, confirmar, mensagemErro, contexto, aviso, iniciais, api, abrir, registrar,
+    criarTela, dialogoApi, mensagemErro, contexto, aviso, iniciais, api, abrir, registrar,
     grupo, campoSenha, senhaMinima,
   };
 })();

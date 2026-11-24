@@ -8,8 +8,8 @@ const iconPath=id=>CicluzIconLibrary.custom.find(x=>x.id===id)?.path||paths[id]|
    ícones, cores e contagem, só para leitura, com uma caixa de marcar à esquerda do ícone. Marcar um item marca os níveis acima dele;
    desmarcar um item desmarca tudo o que está abaixo. Item inativo só aparece se já estava marcado.
    Opções: `conjunto` (Set de quem chama, usado no lugar de um novo), `permitidos` (Set de ids que podem aparecer, além dos já marcados)
-   e `aoMudar` (chamado a cada marcação). */
-function seletorDeLocais(selecionados,{conjunto,permitidos,aoMudar}={}){let arvore=[];try{const saved=JSON.parse(localStorage.getItem(storage)||'[]');arvore=Array.isArray(saved)?saved:saved.tree||[]}catch{}
+   e `aoMudar` (chamado a cada marcação). `unico` (23/11/2026, Zé): escolhe UM item (área, setor ou local), sem cascata. */
+function seletorDeLocais(selecionados,{conjunto,permitidos,aoMudar,unico}={}){let arvore=[];try{const saved=JSON.parse(localStorage.getItem(storage)||'[]');arvore=Array.isArray(saved)?saved:saved.tree||[]}catch{}
  const botao=(label,fn,cls)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;b.onclick=fn;return b};
  const chosen=conjunto||new Set(selecionados||[]),abertos=new Set(),box=document.createElement('div');box.className='location-tree unidades-arvore';
  const abrirMarcados=(pool)=>pool.some(n=>{const dentro=abrirMarcados(n.children||[]);if(dentro)abertos.add(n.id);return dentro||chosen.has(n.id)});abrirMarcados(arvore);
@@ -27,20 +27,20 @@ function seletorDeLocais(selecionados,{conjunto,permitidos,aoMudar}={}){let arvo
  let tudoAberto=false;const alternarTudo=botao('',()=>{tudoAberto=!tudoAberto;abertos.clear();if(tudoAberto)todosComFilhos(arvore).forEach(id=>abertos.add(id));render()},'compras-redondo escolha-expandir');alternarTudo.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7-6 7 6M5 15l7 6 7-6"/></svg>';
  const pintarAlternar=()=>{const r=tudoAberto?'Recolher tudo':'Expandir tudo';alternarTudo.title=r;alternarTudo.setAttribute('aria-label',r);alternarTudo.setAttribute('aria-expanded',String(tudoAberto))};
  barra.append(contagem,alternarTudo);
- function draw(pool,container,level,branchColor,pais,inativoAcima){for(const node of pool){const inativo=!!node.inactive||inativoAcima;if(inativo&&!chosen.has(node.id))continue;if(!visivel(node))continue;const soCaminho=!!permitidos&&!permitidos.has(node.id)&&!chosen.has(node.id);
-   const wrap=document.createElement('div');wrap.className='location-node'+(level===1?' location-area-frame':'')+(inativo?' is-inactive':'');wrap.dataset.level=level;wrap.style.setProperty('--branch-color',branchColor||node.color);wrap.style.setProperty('--node-color',node.color);wrap.dataset.open=String(abertos.has(node.id));
-   const row=document.createElement('div');row.className='location-row';row.style.setProperty('--node-color',node.color);row.style.setProperty('--node-ink',ink(node.color));
+ function draw(pool,container,level,branchColor,pais,inativoAcima){for(const node of pool){const corNo=node.color||branchColor||colors[0]; /* local sem cor (ex.: importação) não quebra a janela */const inativo=!!node.inactive||inativoAcima;if(inativo&&!chosen.has(node.id))continue;if(!visivel(node))continue;const soCaminho=!!permitidos&&!permitidos.has(node.id)&&!chosen.has(node.id);
+   const wrap=document.createElement('div');wrap.className='location-node'+(level===1?' location-area-frame':'')+(inativo?' is-inactive':'');wrap.dataset.level=level;wrap.style.setProperty('--branch-color',branchColor||corNo);wrap.style.setProperty('--node-color',corNo);wrap.dataset.open=String(abertos.has(node.id));
+   const row=document.createElement('div');row.className='location-row';row.style.setProperty('--node-color',corNo);row.style.setProperty('--node-ink',ink(corNo));
    const temFilhos=(node.children||[]).some(visivel),alternar=()=>{abertos.has(node.id)?abertos.delete(node.id):abertos.add(node.id);render()};
    if(temFilhos){const expand=botao('',alternar,'location-expand');expand.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg>';expand.setAttribute('aria-label','Expandir ou recolher '+node.name);expand.setAttribute('aria-expanded',String(abertos.has(node.id)));row.append(expand)}else{const spacer=document.createElement('span');spacer.className='location-expand-spacer';spacer.setAttribute('aria-hidden','true');row.append(spacer)}
-   const c=document.createElement('input');c.type='checkbox';c.className='compras-hier-caixa';c.checked=chosen.has(node.id);c.dataset.level=level;c.setAttribute('aria-label','Marcar '+node.name);c.style.setProperty('--menu-accent',branchColor||node.color);
+   const c=document.createElement('input');c.type='checkbox';c.className='compras-hier-caixa';c.checked=chosen.has(node.id);c.dataset.level=level;c.setAttribute('aria-label','Marcar '+node.name);c.style.setProperty('--menu-accent',branchColor||corNo);
    if(soCaminho){c.disabled=true;c.style.visibility='hidden'}
-   c.onchange=()=>{if(c.checked){chosen.add(node.id);marcarAbaixo(node,inativo)}else{desmarcar(node);pais.forEach(p=>chosen.delete(p.id))}render();if(aoMudar)aoMudar()};
-   const icon=document.createElement('span');icon.className='location-icon location-initials';if(node.identityMode==='icon')icon.innerHTML='<svg viewBox="0 0 24 24">'+iconPath(node.icon||0)+'</svg>';else icon.textContent=initials(node);icon.style.background=node.color;icon.style.color=ink(node.color);icon.style.setProperty('--node-ink',ink(node.color));icon.setAttribute('aria-hidden','true');
+   c.onchange=()=>{if(unico){const sim=c.checked;chosen.clear();if(sim)chosen.add(node.id);render();if(aoMudar)aoMudar();return}if(c.checked){chosen.add(node.id);marcarAbaixo(node,inativo)}else{desmarcar(node);pais.forEach(p=>chosen.delete(p.id))}render();if(aoMudar)aoMudar()};
+   const icon=document.createElement('span');icon.className='location-icon location-initials';if(node.identityMode==='icon')icon.innerHTML='<svg viewBox="0 0 24 24">'+iconPath(node.icon||0)+'</svg>';else icon.textContent=initials(node);icon.style.background=corNo;icon.style.color=ink(corNo);icon.style.setProperty('--node-ink',ink(corNo));icon.setAttribute('aria-hidden','true');
    const title=botao(node.name,temFilhos?alternar:()=>c.click(),'location-name'),copy=document.createElement('span');copy.className='location-copy';copy.append(title);
    if(inativo){const off=document.createElement('small');off.className='pill location-inactive-pill';off.textContent='Inativo';copy.append(off)}
    if(level<4){const count=document.createElement('small');count.className='financial-count location-count';count.textContent=itemCountLabel(node);copy.append(count)}
    row.append(c,icon,copy);wrap.append(row);
-   if(temFilhos&&abertos.has(node.id)){const children=document.createElement('div');children.className='location-children';draw(node.children,children,level+1,branchColor||node.color,[...pais,node],inativo);wrap.append(children)}container.append(wrap)}}
+   if(temFilhos&&abertos.has(node.id)){const children=document.createElement('div');children.className='location-children';draw(node.children,children,level+1,branchColor||corNo,[...pais,node],inativo);wrap.append(children)}container.append(wrap)}}
  function render(){box.replaceChildren(barra);pintarAlternar();contagem.textContent=chosen.size===1?'1 selecionado':chosen.size+' selecionados';if(!arvore.length){const p=document.createElement('p');p.className='profiles-note';p.textContent='Nenhuma área cadastrada em DES - Área / Setor / Local.';box.append(p)}draw(arvore,box,1,null,[],false)}
  render();return {box,chosen}}
 /* CAMPO RECOLHIDO (19/11/2026, Rodrigo): dentro do cadastro fica só o botão "Áreas, setores e locais" e o resumo do que está marcado; a
@@ -60,7 +60,21 @@ function campoDeLocais({titulo='',selecionados,conjunto,permitidos,aoMudar}={}){
  if(titulo){const r=document.createElement('span');r.className='compras-rotulo';r.textContent=titulo;box.append(r)}
  const b=cu?cu.botaoTitulo('Áreas, setores e locais','Escolher áreas, setores e locais',abrir):document.createElement('button');if(!cu){b.type='button';b.className='btn';b.textContent='Áreas, setores e locais';b.onclick=abrir}
  box.append(b,resumo);pintar();return {box,chosen,pintar}}
-window.CicluzLocationTree={seletor:seletorDeLocais,campo:campoDeLocais};
+/* ESCOLHA ÚNICA EM JANELA (23/11/2026, Zé): a mesma árvore, para campos que guardam UM local (setor de estoque do produto, local do
+   estoque da produção). O campo é o U.campoArvore do Compras; aqui ficam a janela e o caminho do local ("Área › Setor › Local"). */
+function janelaUnica({titulo='Áreas, setores e locais',atual='',aoEscolher,cor,corTexto}={}){const cu=window.CicluzComprasUI;if(!cu)return;const temp=new Set(atual?[atual]:[]);
+ cu.dialogo({titulo,largo:true,rotuloSalvar:'Confirmar',quadro:'Áreas, setores e locais',...(cor?{cor,corTexto}:{}),
+  montar:form=>{const arv=seletorDeLocais(null,{conjunto:temp,unico:true});arv.box.classList.add('compras-largo');form.append(arv.box)},
+  salvar:()=>aoEscolher([...temp][0]||'')})}
+function caminhoDe(id){let raiz=[];try{const saved=JSON.parse(localStorage.getItem(storage)||'[]');raiz=Array.isArray(saved)?saved:saved.tree||[]}catch{}
+ const achar=(pool,antes)=>{for(const n of pool){const c=[...antes,n.name];if(n.id===id)return c;const f=achar(n.children||[],c);if(f)return f}return null};const c=id?achar(raiz,[]):null;return c?c.join(' › '):''}
+/* Nome ↔ nó (para campos que, por herança do S1, gravam o NOME do local: área do produto, filtros da contagem e do pedido).
+   A busca pelo nome ignora maiúsculas, minúsculas e acentos e fica com o primeiro nó que casar. */
+function nosPlanos(){let raiz=[];try{const saved=JSON.parse(localStorage.getItem(storage)||'[]');raiz=Array.isArray(saved)?saved:saved.tree||[]}catch{}const out=[];const andar=p=>p.forEach(n=>{out.push(n);andar(n.children||[])});andar(raiz);return out}
+const dobrarNome=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLocaleUpperCase('pt-BR');
+function idPorNome(nome){const d=dobrarNome(nome);return d?(nosPlanos().find(n=>dobrarNome(n.name)===d)||{}).id||'':''}
+function nomeDe(id){return (nosPlanos().find(n=>n.id===id)||{}).name||''}
+window.CicluzLocationTree={seletor:seletorDeLocais,campo:campoDeLocais,janelaUnica,caminhoDe,idPorNome,nomeDe,mesmoNome:(a,b)=>dobrarNome(a)===dobrarNome(b)};
 const previous=showConfig;showConfig=function(type,origin){if(type!=='area')return previous(type,origin);showLocationTree(origin)};
 function showLocationTree(origin){const view=document.getElementById('sector-view'),box=document.getElementById('sector-content');view.classList.remove('financial-groups','account-orange');view.style.setProperty('--menu-accent','var(--section-accent,#ef4444)');view.querySelector('.panel').style.setProperty('--panel-color','var(--section-accent,#ef4444)');view.querySelector('.panel').style.setProperty('--panel-text','var(--section-text,#9c1c1c)');document.getElementById('sector-title').textContent='DES - Área / Setor / Local';document.getElementById('sector-path').textContent=menuCrumb(2,origin,'DES - Área / Setor / Local');view.querySelectorAll('.view-alphabetize,.financial-expand-all,.location-tool').forEach(el=>el.remove());setSectorBack(()=>menuBack(2,'Cadastros Geral Colaboradores')());box.replaceChildren();const opened=new Set();let locationQuery='';const fold=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');const matches=node=>fold(node.name).includes(fold(locationQuery))||(node.children||[]).some(matches);
 const button=(label,fn,cls='btn secondary')=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;b.onclick=fn;return b};

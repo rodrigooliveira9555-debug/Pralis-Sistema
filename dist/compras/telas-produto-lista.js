@@ -19,7 +19,7 @@
 
   let tela = null;
   // Sem filtros na tela (pedido do Rodrigo, 17/11/2026): a busca é a lupa do rodapé; a lista mostra os ativos e o
-  // botão "Inativos" do cabeçalho da lista troca para os inativos (incluindo os arquivados do app).
+  // botão "Inativos" do cabeçalho da lista troca para os inativos (no modo servidor, buscados na API).
   const filtro = { busca: '', soAtivos: true, pagina: 1 };
   const selecionados = new Set();
 
@@ -51,18 +51,26 @@
   }
   const vinculoDe = (p) => vinculos.get(p.id) || { semGrupo: false, semLocal: false };
 
-  /** Produtos da lista: os do Compras e, com "Só ativos" desmarcado, também os inativos do arquivo (sem repetir id). */
-  function fonte() {
-    if (filtro.soAtivos) return S.dados.produtos;
-    const arq = S.arquivoAberto();
-    if (!arq) {
-      S.arquivo().then(() => { if (tela && tela.view.classList.contains('show')) render(); })
-        .catch(() => U.avisar('Não foi possível abrir os produtos arquivados neste navegador.'));
-      return S.dados.produtos;
+  /** Botão "Inativos" no modo servidor: os inativos vêm paginados da API (a busca também roda no servidor). Os ativos são
+   *  os do resumo guardado no aparelho, que funciona sem internet. */
+  let paginaServidor = null; let pedidoServidor = null;
+  const chaveServidor = () => JSON.stringify([filtro.busca, filtro.pagina]);
+  function doServidor() {
+    if (paginaServidor && paginaServidor.chave === chaveServidor()) return paginaServidor;
+    const chave = chaveServidor();
+    if (!pedidoServidor || pedidoServidor.chave !== chave) {
+      pedidoServidor = { chave };
+      window.CicluzProdutos.listar({ busca: filtro.busca, pagina: filtro.pagina, status: 'inativo', tamanho: TAMANHO_PAGINA }).then((r) => {
+        if (pedidoServidor.chave !== chave) return;
+        paginaServidor = { chave, ...r };
+        if (tela && tela.view.classList.contains('show')) render();
+      }).catch(() => U.avisar('Sem conexão com o servidor: mostrando só os produtos ativos guardados neste aparelho.'));
     }
-    const ids = new Set(S.dados.produtos.map((p) => p.id));
-    return S.dados.produtos.concat(arq.filter((p) => !ids.has(p.id)));
+    return null;
   }
+
+  /** Produtos da lista local: os ativos do resumo (os inativos, no modo servidor, vêm da API). */
+  const fonte = () => S.dados.produtos;
 
   function filtrados() {
     const termo = U.dobrar(filtro.busca);
@@ -76,8 +84,11 @@
   function render() {
     calcularVinculos();
     const b = S.bolinhas();
-    const todos = filtrados();
-    const pag = R.paginar(todos, filtro.pagina, TAMANHO_PAGINA);
+    const servidorTodos = S.emModoServidor() && !filtro.soAtivos;
+    const pagServidor = servidorTodos ? doServidor() : null;
+    if (pagServidor) pagServidor.itens.forEach((p) => vinculos.set(p.id, { semGrupo: p.semGrupo, semLocal: p.semLocal }));
+    const todos = servidorTodos ? (pagServidor ? pagServidor.itens : []) : filtrados();
+    const pag = servidorTodos ? { itens: todos, pagina: pagServidor ? pagServidor.pagina : 1, paginas: pagServidor ? pagServidor.paginas : 1 } : R.paginar(todos, filtro.pagina, TAMANHO_PAGINA);
     filtro.pagina = pag.pagina;
 
     // Busca pela lupa do rodapé (um caminho só para buscar). A caixa é criada uma vez e fica no lugar a cada desenho,
@@ -89,12 +100,12 @@
     // Cabeçalho branco da lista, igual ao de Fornecedores e Tipos de Ocorrência: botão retangular "Novo Produto" com o "+",
     // e na outra ponta a quantidade num círculo e a bolinha "‹ ›" de ocultar ou mostrar todas as colunas.
     const oQue = filtro.soAtivos ? 'ativo' : 'inativo';
-    const ponta = U.pontaDaLista(todos.length, todos.length + (todos.length === 1 ? ' produto ' + oQue : ' produtos ' + oQue + 's'));
+    const quantos = servidorTodos ? (pagServidor ? pagServidor.total : 0) : todos.length;
+    const ponta = U.pontaDaLista(quantos, (servidorTodos && !pagServidor ? 'Buscando no servidor… ' : '') + quantos + (quantos === 1 ? ' produto ' + oQue : ' produtos ' + oQue + 's'));
     const sec = U.secao('Produtos', undefined, ponta);
     // Botões do cabeçalho: cadastrar, ver os inativos (ou voltar aos ativos) e, para quem administra, importar e revincular.
-    const nArq = S.totalArquivo();
     const verInativos = filtro.soAtivos
-      ? U.botaoTitulo('Inativos', 'Ver os produtos inativos' + (nArq ? ' (' + nArq + ' arquivados do app)' : ''), () => { filtro.soAtivos = false; filtro.pagina = 1; render(); }, '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>')
+      ? U.botaoTitulo('Inativos', 'Ver os produtos inativos' + (S.emModoServidor() ? ' (busca no servidor)' : ''), () => { filtro.soAtivos = false; filtro.pagina = 1; render(); }, '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>')
       : U.botaoTitulo('Ativos', 'Voltar aos produtos ativos', () => { filtro.soAtivos = true; filtro.pagina = 1; render(); }, '<path d="m15 5-7 7 7 7"/>');
     const imp = window.CicluzProdutoImportacaoTela;
     const admin = imp && imp.podeImportar()
@@ -237,11 +248,13 @@
       salvar: (c) => {
         if (c.conf.value.trim().toUpperCase() !== frase) return 'Digite exatamente ' + frase + '.';
         let alterados = 0;
-        const ok = S.transacao((d) => d.produtos.forEach((p) => { if (ids.includes(p.id) && p.status !== 'inativo') { p.status = 'inativo'; p.liberadoCompra = false; alterados++; } }));
-        if (!ok) return 'Não foi possível salvar.';
-        ids.forEach((id) => selecionados.delete(id));
-        U.avisar(alterados + ' produto(s) inativado(s).');
-        render();
+        if (!S.emModoServidor() || !window.CicluzProdutos.conectado()) return 'Sem conexão com o servidor: inativar só funciona conectado.';
+        const alvos = S.dados.produtos.filter((p) => ids.includes(p.id) && p.status !== 'inativo');
+        (async () => {
+          for (const p of alvos) { await window.CicluzProdutos.editar({ ...p, status: 'inativo', liberadoCompra: false }); alterados++; }
+        })().then(() => { ids.forEach((id) => selecionados.delete(id)); U.avisar(alterados + ' produto(s) inativado(s).'); render(); })
+          .catch((e) => { U.avisar(alterados + ' inativado(s); parou no servidor: ' + e.message); render(); });
+        return undefined;
       },
     });
   }

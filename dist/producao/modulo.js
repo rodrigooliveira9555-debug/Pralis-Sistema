@@ -1,7 +1,7 @@
 /*
  * Produção: entrada do módulo no menu do S2.
  *  - Saídas · Mercadorias → Lançamentos Produção: pedidos, mapa e abastecimento; → Relatórios: MER - Produção.
- *  - Agenda → MER - Agenda de Produção (agendamento dos pedidos de produção).
+ *  - Lançamentos Produção → MER - Agenda de Produção (agendamento dos pedidos de produção; saiu do menu Agenda em 23/11/2026).
  *  - Saídas · Mercadorias → Cadastros Geral Produção: produtos da produção, fichas técnicas e parâmetros de custo.
  *  - Saídas · Retiradas → Cadastros Geral → RET - Patrimônios (a tela que já existia, agora salva).
  * Reaproveita as peças de tela do Compras (CicluzComprasUI); cada tela se registra com registrar().
@@ -28,17 +28,15 @@
 
   // Lugar de cada tela pela lógica do Rodrigo (vídeo de 06/11/2026), igual ao Compras:
   // Lançamentos Produção = rotina da produção; Relatórios = ver resultado; Cadastros Geral Produção = fichas e o que
-  // a produção precisa ter cadastrado; o agendamento fica na Agenda (MER - Agenda de Produção, em agenda-menu.js).
+  // a produção precisa ter cadastrado. O agendamento (MER - Agenda de Produção) abre os Lançamentos Produção (Zé, 23/11/2026).
   const CARDS = [
+    ['agendamento', 'MER - Agenda de Produção', 'Produtos, janela de demanda e repetição', 'agenda'],
     ['pedidos', 'MER - Pedidos de Produção', 'A loja pede; pedido extra pelo celular', 'lista'],
     ['mapa', 'MER - Mapa de Produção', 'Por horário, processo, setor ou produto', 'mapa'],
     ['abastecimento', 'MER - Abastecimento', 'Entrega na loja, conferência, sobra e descarte', 'entrega'],
   ];
   const RELATORIOS = [
     ['relatorios', 'MER - Produção', 'Mais produzidos, mais vendidos, sobra e descarte', 'relatorio'],
-  ];
-  const AGENDA = [
-    ['agendamento', 'MER - Agenda de Produção', 'Produtos, janela de demanda e repetição', 'agenda'],
   ];
   const CADASTROS = [
     ['produtos', 'MER - Produtos da Produção', 'Como se pede: utensílio, fornada, mínimo e máximo', 'forno'],
@@ -48,14 +46,13 @@
   ];
   const icone = (target) => {
     const nome = target.replace(/^producao:/, '');
-    const item = [...CARDS, ...RELATORIOS, ...AGENDA, ...CADASTROS].find((c) => c[0] === nome);
+    const item = [...CARDS, ...RELATORIOS, ...CADASTROS].find((c) => c[0] === nome);
     return U.svg(U.ICONES[item ? item[3] : 'forno']);
   };
 
   const voltarProducao = () => menuBack(3, 'Lançamentos Produção')();
   const voltarCadastros = () => menuBack(3, 'Cadastros Geral Produção')();
   const voltarRelatorios = () => menuBack(3, 'Relatórios')();
-  const voltarAgenda = () => returnToNavigation();
   const voltarPatrimonio = () => menuBack(4, 'Cadastros Geral')();
 
   function registrar(nome, abrir) { telas[nome] = abrir; }
@@ -69,11 +66,10 @@
     cards: () => CARDS.map(([id, t, d]) => [t, d, 'producao:' + id]),
     relatorioCards: () => RELATORIOS.map(([id, t, d]) => [t, d, 'producao:' + id]),
     cadastroCards: () => CADASTROS.map(([id, t, d]) => [t, d, 'producao:' + id]),
-    icone, abrir, registrar, voltarProducao, voltarCadastros, voltarRelatorios, voltarAgenda, voltarPatrimonio,
+    icone, abrir, registrar, voltarProducao, voltarCadastros, voltarRelatorios, voltarPatrimonio,
     COR, COR_RET, COR_RET_TEXTO,
     CAMINHO: 'Saídas · Mercadorias / Lançamentos Produção / ',
     CAMINHO_CAD: 'Saídas · Mercadorias / Cadastros Geral Produção / ',
     CAMINHO_REL: 'Saídas · Mercadorias / Relatórios / ',
-    CAMINHO_AGENDA: 'Agenda · Atividades / ',
   };
 })();

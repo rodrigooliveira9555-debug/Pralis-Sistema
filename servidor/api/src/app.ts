@@ -15,6 +15,7 @@ import { registrarRotasAuth } from "./auth/auth.controller.ts";
 import { registrarRotasConsultas } from "./consultas/consultas.controller.ts";
 import { registrarRotasDocumentos } from "./documentos/documentos.controller.ts";
 import { registrarRotasLancamentos } from "./lancamentos/lancamentos.controller.ts";
+import { registrarRotasProdutos } from "./produtos/produtos.controller.ts";
 import { env, origensWebPermitidas } from "./env.ts";
 import { ErroDominio, proibido } from "./erros.ts";
 import { registrarRotasSaude } from "./saude/saude.controller.ts";
@@ -86,7 +87,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   // Iconify: a CSP padrão do helmet quebraria a tela. Quando a API entrega o site, a CSP fica
   // desligada; nas respostas JSON ela não tem efeito.
   await app.register(helmet, { contentSecurityPolicy: false });
-  await app.register(rateLimit, { global: true, max: 300, timeWindow: "1 minute" });
+  // O teto vale para a API. Os arquivos do site (só quando SERVIR_SITE=1, no servidor único local) não contam:
+  // cada abertura do site são ~100 arquivos e algumas recargas bastariam para travar a própria pessoa.
+  await app.register(rateLimit, { global: true, max: 300, timeWindow: "1 minute", allowList: (request) => !request.url.startsWith("/api/") });
 
   // Só JSON: um formulário de outro site não consegue mandar corpo que a API aceite.
   app.removeContentTypeParser("text/plain");
@@ -114,6 +117,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registrarRotasAcessos(app);
   await registrarRotasConsultas(app);
   await registrarRotasLancamentos(app);
+  await registrarRotasProdutos(app);
   await registrarRotasAgenda(app);
 
   // App das telas novas (Nuxt gerado em web/.output/public), em /app/ no mesmo domínio do site.

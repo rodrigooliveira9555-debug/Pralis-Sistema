@@ -43,6 +43,34 @@
 
   /* ---------- Relatório ---------- */
   let telaRel = null, mes = mesHoje();
+  /** Valor da folha que abre o detalhe ao clicar (ou Enter). Só consulta: nada é criado, vinculado ou pago aqui. */
+  function clicavel(td, ctx, p, r) {
+    td.classList.add('folha-clicavel'); td.tabIndex = 0; td.setAttribute('role', 'button'); td.title = 'Ver detalhes do valor';
+    td.setAttribute('aria-label', 'Detalhes de ' + ctx.c.nome + ' de ' + ctx.g.nome);
+    const abrir = () => detalheValor(ctx.g, ctx.c, p, r);
+    td.onclick = abrir; td.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } };
+  }
+  function detalheValor(g, c, p, r) {
+    const m = dados.meses[mes], dif = p != null && r != null ? r - p : null;
+    const situacao = p == null && r == null ? 'Sem valores nesta competência' : r == null ? 'Sem realizado importado' : p == null ? 'Sem projetado (aguarda as regras da folha)' : dif === 0 ? 'Conciliado' : 'Divergente';
+    U.dialogo({
+      titulo: 'Valor da folha', subtitulo: g.nome + ' · ' + c.nome + ' · ' + rotuloMes(mes), ...cores(),
+      montar: (form) => {
+        const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, 'Identificação'));
+        const dl = el('dl', 'profiles-info compras-largo'); const par = (k, v) => dl.append(el('dt', null, k), el('dd', null, v));
+        par('Colaborador', g.nome + (g.cargo ? ' · ' + g.cargo : '')); par('Competência', rotuloMes(mes)); par('Rubrica', c.nome); par('Tipo de folha', 'Folha mensal');
+        par('Valor projetado', dinheiro(p)); par('Valor realizado', dinheiro(r)); par('Diferença', dinheiro(dif));
+        par('Origem do realizado', m ? 'Planilha da contabilidade' + (m.arquivo ? ' (' + m.arquivo + ')' : '') + ', importada em ' + new Date(m.importadoEm).toLocaleDateString('pt-BR') : 'Ainda não importado');
+        par('Origem do projetado', 'Folha gerada pela Cicluz: ainda não calculada (aguarda as regras da folha)'); par('Situação da conciliação', situacao);
+        q.append(dl); form.append(q);
+        const fin = el('fieldset', 'compras-fieldset'); fin.append(el('legend', null, 'Despesa e pagamento'));
+        fin.append(el('p', 'profiles-note compras-largo', 'Grupo de despesa desta rubrica: ' + c.nome + '. Vincular o valor a uma despesa e agendar o pagamento ainda não é possível: o sistema não tem lançamento de despesas nem agendamento de pagamento (DES - Despesas, em Lançamentos, é uma área prevista). Nada é criado, vinculado ou pago a partir desta tela, e a diferença não vira despesa.'));
+        const vinc = U.botao('Vincular a uma despesa', () => {}, 'btn secondary'), agen = U.botao('Agendar pagamento', () => {}, 'btn secondary');
+        vinc.disabled = true; agen.disabled = true; vinc.title = agen.title = 'Disponível quando existir lançamento de despesas no sistema';
+        const acoes = el('div', 'actions compras-largo'); acoes.append(vinc, agen); fin.append(acoes); form.append(fin);
+      },
+    });
+  }
   function abrirRelatorio() {
     if (!telaRel) telaRel = U.criarTela({ id: 'folha-custos', titulo: 'DES - Folha de Pagamento', caminho: 'Saídas · Despesas / Relatórios / DES - Folha de Pagamento', icone: 'cadastro', voltar: () => menuBack(2, 'Relatórios')(), ...cores() });
     telaRel.ativar(); carregar(); desenharRelatorio();
@@ -53,13 +81,15 @@
     const barra = el('div', 'folha-barra'), mesBox = el('div', 'folha-mes'), rot = el('b', null, rotuloMes(mes)); rot.setAttribute('aria-live', 'polite');
     mesBox.append(redondo('Mês anterior', 'm15 6-6 6 6 6', () => { mes = andarMes(mes, -1); desenharRelatorio(); }), rot, redondo('Próximo mês', 'm9 6 6 6-6 6', () => { mes = andarMes(mes, 1); desenharRelatorio(); }));
     const botaoColunas = U.botaoTitulo('Colunas', 'Escolher os reflexos que aparecem na tabela', () => {
-      window.CicluzContratos.seletorArvore({ titulo: 'Colunas do relatório', sigla: 'DES', cores: cores(), rotuloBusca: 'Buscar reflexo', nos: () => cols.map((c) => ({ id: c.id, nome: c.nome, ativo: true, conta: 'Reflexo da folha' })), marcados: new Set(visiveis.map((c) => c.id)),
+      window.CicluzComprasUI.seletorArvore({ titulo: 'Colunas do relatório', sigla: 'DES', cores: cores(), rotuloBusca: 'Buscar reflexo', nos: () => cols.map((c) => ({ id: c.id, nome: c.nome, ativo: true, conta: 'Reflexo da folha' })), marcados: new Set(visiveis.map((c) => c.id)),
         aoConfirmar: (s) => { try { localStorage.setItem(PREF, JSON.stringify(cols.filter((c) => !s.has(c.id)).map((c) => c.id))); } catch (e) { /* preferência do aparelho */ } desenharRelatorio(); } });
     }, '<path d="M4 5h16v14H4zM9 5v14M15 5v14"/>');
-    barra.append(mesBox, botaoColunas);
+    barra.append(mesBox);
     const nota = U.nota(m ? 'Realizado importado da contabilidade em ' + new Date(m.importadoEm).toLocaleDateString('pt-BR') + (m.arquivo ? ' (' + m.arquivo + ')' : '') + '. O Projetado fica em branco até as regras da folha serem definidas; a Diferença aparece quando houver os dois valores.'
       : 'Nenhuma importação da contabilidade para ' + rotuloMes(mes) + '. Importe em Lançamentos Colaboradores › DES - Folha de Pagamento Importação Contabilidade. O Projetado fica em branco até as regras da folha serem definidas.');
-    const sec = U.secao('Custo da folha — ' + rotuloMes(mes), undefined, U.pontaDaLista(gente.length, gente.length + (gente.length === 1 ? ' colaborador' : ' colaboradores')));
+    // O botão Colunas mora no cabeçalho da tabela, ao lado do contador (mesmo lugar do botão de colunas de VND - Clientes).
+    const ponta = U.pontaDaLista(gente.length, gente.length + (gente.length === 1 ? ' colaborador' : ' colaboradores')); ponta.append(botaoColunas);
+    const sec = U.secao('Custo da folha — ' + rotuloMes(mes), undefined, ponta);
     const caixa = el('div', 'matriz-uniformes folha-quadro');
     if (falhou) caixa.append(el('p', 'people-alert', 'Não foi possível ler os dados da folha salvos neste aparelho. Nada será gravado para não sobrescrever.'));
     else if (!visiveis.length) caixa.append(U.vazio('Nenhuma coluna à vista.', 'Use "Colunas" para escolher os reflexos.'));
@@ -70,12 +100,12 @@
       for (const c of [...visiveis, { id: '__total', nome: 'Total' }]) { const g = el('th', 'folha-grupo' + (c.id === '__total' ? ' folha-total' : ''), c.nome); g.colSpan = 3; g.scope = 'colgroup'; l1.append(g); for (const x of ['Projetado', 'Realizado', 'Diferença']) { const s = el('th', 'folha-sub', x); s.scope = 'col'; l2.append(s); } }
       th.append(l1, l2);
       const somaCol = new Map(visiveis.map((c) => [c.id, { p: null, r: null }]));
-      const celulas = (tr, p, r, extra = '') => { const d = p != null && r != null ? r - p : null; const a = el('td', 'folha-valor' + extra, dinheiro(p)), b = el('td', 'folha-valor' + extra, dinheiro(r)), c = el('td', 'folha-valor folha-dif' + extra + (d ? ' diferente' : ''), dinheiro(d)); tr.append(a, b, c); };
+      const celulas = (tr, p, r, extra = '', ctx = null) => { const d = p != null && r != null ? r - p : null; const a = el('td', 'folha-valor' + extra, dinheiro(p)), b = el('td', 'folha-valor' + extra, dinheiro(r)), c = el('td', 'folha-valor folha-dif' + extra + (d ? ' diferente' : ''), dinheiro(d)); tr.append(a, b, c); if (ctx) for (const td of [a, b, c]) clicavel(td, ctx, p, r); };
       const somar = (a, b) => (b == null ? a : (a || 0) + b);
       for (const g of gente) {
         const tr = el('tr'), nome = el('th', 'folha-pessoa'); nome.scope = 'row'; const miolo = el('div', 'folha-pessoa-miolo'); miolo.append(el('span', null, g.nome), el('small', null, g.cargo || 'Cargo não informado')); nome.append(miolo); tr.append(nome);
         let tp = null, trl = null;
-        for (const c of visiveis) { const r = valores[g.id] && Number.isInteger(valores[g.id][c.id]) ? valores[g.id][c.id] : null, p = projetado(g, c, mes); celulas(tr, p, r); tp = somar(tp, p); trl = somar(trl, r); const s = somaCol.get(c.id); s.p = somar(s.p, p); s.r = somar(s.r, r); }
+        for (const c of visiveis) { const r = valores[g.id] && Number.isInteger(valores[g.id][c.id]) ? valores[g.id][c.id] : null, p = projetado(g, c, mes); celulas(tr, p, r, '', { g, c }); tp = somar(tp, p); trl = somar(trl, r); const s = somaCol.get(c.id); s.p = somar(s.p, p); s.r = somar(s.r, r); }
         celulas(tr, tp, trl, ' folha-total'); tb.append(tr);
       }
       const rodape = el('tr'), rt = el('th', 'folha-pessoa', 'Total do mês'); rt.scope = 'row'; rodape.append(rt); let gp = null, gr = null;

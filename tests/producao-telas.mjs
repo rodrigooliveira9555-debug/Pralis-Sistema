@@ -8,6 +8,7 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { iniciar, SESSAO_LOCAL } from './servidor.mjs';
+import { escolherNaArvore } from './ajuda-arvore.mjs';
 
 const { servidor, url } = await iniciar();
 // Microfone de mentira do Chromium, para testar a observação em áudio do bem sem aparelho nem permissão.
@@ -52,21 +53,20 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   // Lugar de cada tela pela lógica do vídeo do Rodrigo (06/11), igual ao Compras
   const cardsDe = async (sub) => { await p.evaluate((x) => menuBack(3, x)(), sub); return (await p.locator('#sector-content .section-card b').allTextContents()).join('|'); };
   let c = await cardsDe('Lançamentos Produção');
-  ok(c === 'MER - Pedidos de Produção|MER - Mapa de Produção|MER - Abastecimento', 'Lançamentos Produção só com a rotina da produção: ' + c);
+  ok(c === 'MER - Agenda de Produção|MER - Pedidos de Produção|MER - Mapa de Produção|MER - Abastecimento', 'Lançamentos Produção: agenda → pedidos → mapa → abastecimento: ' + c);
   c = await cardsDe('Relatórios');
   ok(c === 'MER - Mercadorias|MER - Pedidos|MER - Produção', 'Relatórios de Mercadorias com MER - Produção: ' + c);
   c = await cardsDe('Cadastros Geral Produção');
-  ok(c === 'MER - Produtos da Produção|MER - Ficha Técnica de Produtos|MER - Parâmetros de Custo', 'Cadastros Geral Produção: ' + c);
-  for (const [sub, titulo, id] of [['Lançamentos Produção', 'MER - Pedidos de Produção', 'pedidos'], ['Lançamentos Produção', 'MER - Mapa de Produção', 'mapa'], ['Lançamentos Produção', 'MER - Abastecimento', 'abastecimento'], ['Relatórios', 'MER - Produção', 'relatorios'], ['Cadastros Geral Produção', 'MER - Produtos da Produção', 'produtos'], ['Cadastros Geral Produção', 'MER - Ficha Técnica de Produtos', 'fichas'], ['Cadastros Geral Produção', 'MER - Parâmetros de Custo', 'custos']]) {
+  ok(c === 'MER - Produtos da Produção|MER - Ficha Técnica de Produtos|MER - Parâmetros de Custo|MER - Ingredientes Ficha Técnica / Tabela TACO', 'Cadastros Geral Produção: ' + c);
+  for (const [sub, titulo, id] of [['Lançamentos Produção', 'MER - Agenda de Produção', 'agendamento'], ['Lançamentos Produção', 'MER - Pedidos de Produção', 'pedidos'], ['Lançamentos Produção', 'MER - Mapa de Produção', 'mapa'], ['Lançamentos Produção', 'MER - Abastecimento', 'abastecimento'], ['Relatórios', 'MER - Produção', 'relatorios'], ['Cadastros Geral Produção', 'MER - Produtos da Produção', 'produtos'], ['Cadastros Geral Produção', 'MER - Ficha Técnica de Produtos', 'fichas'], ['Cadastros Geral Produção', 'MER - Parâmetros de Custo', 'custos']]) {
     await p.evaluate((x) => menuBack(3, x)(), sub);
     await p.locator('#sector-content .section-card', { hasText: titulo }).click();
     const tela = p.locator('#producao-' + id);
     ok(await p.locator('#producao-' + id + '.show').count() === 1 && (await tela.locator('.head h2').first().textContent()).trim() === titulo && (await tela.locator('.head p').first().textContent()).includes('Saídas · Mercadorias / ' + sub + ' / ' + titulo), sub + ' → ' + titulo + ': abre a tela com o mesmo nome e a trilha certa');
   }
+  // Os agendamentos saíram do menu Agenda (Zé, 23/11/2026): a Agenda de Produção abre os Lançamentos Produção.
   const agenda = await p.evaluate(() => [...document.querySelectorAll('details[data-menu-name="Agenda/Atividades"] .children button')].map((b) => b.textContent.trim()).join('|'));
-  ok(agenda === 'Lançamentos|MER - Agenda de Pedidos|MER - Agenda de Produção', 'Agenda com MER - Agenda de Produção: ' + agenda);
-  await p.evaluate(() => [...document.querySelectorAll('.nav button')].find((b) => b.textContent.trim() === 'MER - Agenda de Produção').click());
-  ok(await p.locator('#producao-agendamento.show').count() === 1 && (await p.locator('#producao-agendamento .head p').first().textContent()).includes('Agenda · Atividades / MER - Agenda de Produção'), 'Agenda → MER - Agenda de Produção abre o agendamento da produção');
+  ok(agenda === 'Lançamentos', 'Menu Agenda sem os agendamentos de compras e de produção: ' + agenda);
   ok(await p.locator('#asset-view').count() === 0, 'A prévia antiga de Patrimônios (que não salvava) saiu');
 
   // Sem produto ligado, o "+" do agendamento explica o caminho e leva ao cadastro
@@ -94,9 +94,9 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   await d.getByLabel('Quantidade da capacidade', { exact: true }).fill('40');
   await d.getByLabel('Unidade de medida da capacidade', { exact: true }).selectOption('KG');
   await d.locator('.account-status:has-text("Informar especificação técnica?") .account-status-switch').click();
-  await avancar(); await avancar(); await avancar();
+  // Energia e consumo ficam na especificação técnica da 1ª etapa (reunião de 17/11/2026).
   await d.getByLabel('Tipo de Energia', { exact: true }).selectOption('gas');
-  await d.getByLabel('Consumo de Gás por Hora', { exact: true }).fill('3,5');
+  await d.getByLabel('Consumo de gás por hora', { exact: true }).fill('3,5');
   await avancar();
   ok((await erroDialogo(p)).includes('unidade do consumo de gás'), 'Gás exige a unidade do consumo (sem presumir)');
   await d.getByLabel('Unidade do consumo de gás', { exact: true }).selectOption('kg/h');
@@ -124,7 +124,7 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   };
   d = await abrirEdicao('MASSEIRA');
   ok(await d.locator('.compras-etapa').first().locator('.compras-campo').first().locator('.compras-rotulo').textContent() === 'Categoria *', 'Categoria é o primeiro campo do bem');
-  ok((await d.locator('.compras-etapa:visible .compras-fieldset legend').allTextContents()).join('|') === 'Identificação|Classificação|Quantidade|Produção|Especificação técnica', 'Blocos da primeira etapa do bem');
+  ok((await d.locator('.compras-etapa:visible .compras-fieldset legend').allTextContents()).join('|') === 'Identificação|Classificação|Quantidade|Especificação técnica|Identificação técnica|Energia e consumo|Dimensões e características físicas|Outras informações técnicas|Ficha Técnica do Equipamento|Produção', 'Blocos da primeira etapa do bem (especificação técnica na etapa 1, reunião de 17/11/2026)');
   await d.locator('.stepper-item:nth-child(4) .stepper-node').click();
   const abrirPeca = async () => { await d.locator('button', { hasText: 'Adicionar peça' }).click(); return p.locator('dialog[open]:has(h2:has-text("Nova peça"))'); };
   let pc = await abrirPeca();
@@ -191,7 +191,13 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   await p.evaluate(() => CicluzProducao.abrir('produtos'));
   await mais(p);
   d = dialogo(p);
-  await d.getByLabel('Produto *', { exact: true }).selectOption('p-pao-teste');
+  // Produto escolhido na árvore grupo › subgrupo › produto (23/11/2026, Zé); grupo e subgrupo não são marcáveis aqui.
+  await d.getByRole('button', { name: 'Produto *', exact: true }).click();
+  const jp = p.locator('dialog.compras-dialog[open]').last();
+  ok(await jp.getByRole('checkbox', { name: 'Selecionar FAB. PRÓPRIA', exact: true }).isHidden(), 'Na árvore do produto da produção, o grupo não é marcável (só o produto)');
+  await jp.locator('.people-close-control').click();
+  await escolherNaArvore(p, d.getByRole('button', { name: 'Produto *', exact: true }), { grupo: 'FAB. PRÓPRIA', subgrupo: 'PANIFICAÇÃO', item: 'PÃO DE SAL' });
+  ok((await d.getByRole('button', { name: 'Produto *', exact: true }).textContent()).trim() === 'PÃO DE SAL', 'O campo mostra o produto escolhido na árvore');
   ok((await d.getByLabel('Utensílio *', { exact: true }).locator('option').nth(1).textContent()).startsWith('ASSADEIRA'), 'Utensílios aparecem primeiro na lista');
   await d.getByLabel('Utensílio *', { exact: true }).selectOption(assadeiraId);
   await d.getByLabel('Quantos na largura *', { exact: true }).fill('5');
@@ -218,31 +224,31 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   await d.getByLabel('Nome da ficha *', { exact: true }).fill('Do zero');
   const etapa = (n) => d.locator('.producao-etapa').nth(n);
   await etapa(0).getByLabel('Processo *', { exact: true }).selectOption('pre-pesar');
-  await etapa(0).getByRole('button', { name: '+ Ingrediente' }).click();
+  await etapa(0).getByRole('button', { name: 'Ingrediente', exact: true }).click();
   await etapa(0).getByLabel('Ingrediente 1', { exact: true }).selectOption('p-farinha');
   await etapa(0).getByLabel('Quantidade do ingrediente 1', { exact: true }).fill('30');
   await etapa(0).getByLabel('Unidade do ingrediente 1', { exact: true }).selectOption('KG');
-  await etapa(0).getByRole('button', { name: '+ Equipamento / tempo' }).click();
+  await etapa(0).getByRole('button', { name: 'Equipamento / tempo', exact: true }).click();
   await etapa(0).getByLabel('Tempo em minutos 1', { exact: true }).fill('15');
   await etapa(0).getByLabel('Nível profissional 1', { exact: true }).selectOption('ajudante');
   const cargoSel = etapa(0).getByLabel('Cargo 1', { exact: true });
   const padeiro = await cargoSel.evaluate((s) => [...s.options].find((o) => /^padeiro$/i.test(o.textContent.trim()))?.value);
   ok(Boolean(padeiro), 'Lista de cargos vem do cadastro de Cargos (tem Padeiro)');
   await cargoSel.selectOption(padeiro);
-  await d.getByRole('button', { name: '+ Etapa' }).click();
+  await d.getByRole('button', { name: 'Etapa', exact: true }).click();
   await etapa(1).getByLabel('Processo *', { exact: true }).selectOption('misturar');
-  await etapa(1).getByRole('button', { name: '+ Ingrediente' }).click();
+  await etapa(1).getByRole('button', { name: 'Ingrediente', exact: true }).click();
   await etapa(1).getByLabel('Ingrediente 1', { exact: true }).selectOption('p-farinha');
   await etapa(1).getByLabel('Quantidade do ingrediente 1', { exact: true }).fill('30');
   await etapa(1).getByLabel('Unidade do ingrediente 1', { exact: true }).selectOption('KG');
-  await etapa(1).getByRole('button', { name: '+ Equipamento / tempo' }).click();
+  await etapa(1).getByRole('button', { name: 'Equipamento / tempo', exact: true }).click();
   await etapa(1).getByLabel('Equipamento ou utensílio 1', { exact: true }).selectOption(masseiraId);
   await etapa(1).getByLabel('Tempo em minutos 1', { exact: true }).fill('20');
   await etapa(1).getByLabel('Acompanhamento 1', { exact: true }).selectOption('0');
   ok((await etapa(1).locator('.producao-etapa-resumo').textContent()).includes('Tempo 20 min · equipe 0 min'), 'Masseira sem acompanhamento: tempo de equipe zero');
-  await d.getByRole('button', { name: '+ Etapa' }).click();
+  await d.getByRole('button', { name: 'Etapa', exact: true }).click();
   await etapa(2).getByLabel('Processo *', { exact: true }).selectOption('assar');
-  await etapa(2).getByRole('button', { name: '+ Equipamento / tempo' }).click();
+  await etapa(2).getByRole('button', { name: 'Equipamento / tempo', exact: true }).click();
   await etapa(2).getByLabel('Tempo em minutos 1', { exact: true }).fill('25');
   await etapa(2).getByLabel('Acompanhamento 1', { exact: true }).selectOption('0.2');
   ok((await d.locator('.compras-texto-auto').last().textContent()).includes('tempo total 1 h · tempo de equipe 20 min'), 'Resumo da ficha: 60 min no total, 20 min de equipe');
@@ -261,10 +267,12 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   ok((await erroDialogo(p)).includes('negativo'), 'Parâmetro negativo é recusado');
   await dialogo(p).getByLabel('Encargos sobre a folha (%)', { exact: true }).fill('0');
   await dialogo(p).getByLabel('Preço do kWh (R$)', { exact: true }).fill('1,00'); // máscara do S2: dígitos em centavos
+  // A masseira do teste é a gás (3,5 kg/h): desde 16/11/2026 o bem elétrico só guarda a potência (W), que não gera custo.
+  await dialogo(p).getByLabel('Preço do kg de gás (R$)', { exact: true }).fill('1,00');
   await salvar(p); await fechado(p);
   const custo = await p.evaluate(() => { const f = CicluzProducaoDados.producao.dados.fichas[0]; return CicluzProducaoServico.custoDaFicha(f); });
   ok(custo.ingredientes === 235.2, 'C1: 2 × 30 kg = 2,4 sacos × R$ 98 = R$ 235,20 (' + custo.ingredientes + ')');
-  ok(custo.energia === 1.17, 'C3: masseira 20 min × 3,5 kWh/h × R$ 1 = R$ 1,17 (' + custo.energia + ')');
+  ok(custo.energia === 1.17, 'C3: masseira a gás 20 min × 3,5 kg/h × R$ 1/kg = R$ 1,17 (' + custo.energia + ')');
   ok(custo.maoDeObra > 0 && custo.faltas.join() === 'salário do cargo ou horas por mês', 'C2 calculado para a etapa com cargo; a etapa sem cargo fica como falta');
   ok(custo.total === Math.round((custo.ingredientes + custo.maoDeObra + custo.energia) * 100) / 100 && custo.unitario === Math.round(custo.total / 36 * 100) / 100, 'C4: total e custo por unidade');
   await p.evaluate(() => CicluzProducao.abrir('fichas'));
@@ -418,6 +426,28 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
 }
 
 /* ---------- 3) Matriz de layout ---------- */
+// Bem elétrico: o consumo em kWh por hora (23/11/2026, Zé: "falta o campo") é gravado e entra no custo de energia da ficha.
+{
+  const p = await abrirPagina(1024);
+  await p.evaluate(() => CicluzProducao.abrir('patrimonio'));
+  await p.locator('#producao-patrimonio .compras-secao-cab button[aria-label="Cadastrar patrimônio"]').click();
+  const d = dialogo(p);
+  await d.getByLabel('Nome simplificado *', { exact: true }).fill('Forno elétrico teste');
+  await d.getByLabel('Categoria *', { exact: true }).selectOption('MAC');
+  await d.locator('.account-status:has-text("Informar especificação técnica?") .account-status-switch').click();
+  await d.getByLabel('Tipo de Energia', { exact: true }).selectOption('eletrica');
+  ok(await d.getByLabel('Consumo elétrico por hora (kWh)', { exact: true }).isVisible(), 'Energia elétrica mostra o campo de consumo em kWh por hora');
+  await d.getByLabel('Potência Elétrica (W)', { exact: true }).fill('2000');
+  await d.getByLabel('Consumo elétrico por hora (kWh)', { exact: true }).fill('2,5');
+  await salvar(p); await fechado(p);
+  const bem = await p.evaluate(() => JSON.parse(localStorage.getItem('cicluz-patrimonio-v1')).bens.find((b) => b.nome === 'FORNO ELÉTRICO TESTE'));
+  ok(bem && bem.energia === 'eletrica' && bem.consumoHora === 2.5 && bem.potenciaW === 2000, 'Bem elétrico grava o consumo (2,5 kWh/h) e a potência (2000 W) separados');
+  // Custo: 30 min × 2,5 kWh/h × R$ 0,80 = R$ 1,00 (a fórmula é a mesma de antes; só faltava o campo).
+  const energia = await p.evaluate((id) => CicluzProducaoDominio.custoDoPlano({ etapas: [{ ingredientes: [], recursos: [{ tempoEquipe: 0, tempo: 30, bem: CicluzProducaoDados.patrimonio.dados.bens.find((b) => b.id === id) }] }] }, { custoIngrediente: () => 0, custoMinuto: () => 0, precoEnergia: (t) => (t === 'eletrica' ? 0.8 : null) }).energia, bem.id);
+  ok(energia === 1, 'Custo de energia elétrica entra na conta: 30 min × 2,5 kWh/h × R$ 0,80 = R$ 1,00 (' + energia + ')');
+  await p.close();
+}
+
 async function semear(p) {
   await criarPao(p);
   await p.evaluate(() => {
@@ -471,15 +501,17 @@ for (const largura of [320, 390, 1024]) {
     ok(m.lateral <= 0 && m.dialogoLateral <= 1, 'Editor de ficha sem rolagem lateral: ' + largura + 'px ' + (escuro ? 'escuro' : 'claro') + ' (' + m.dialogoLateral + 'px)');
     await p.locator('dialog.compras-dialog[open] .people-close-control').click();
     await fechado(p);
-    // Cadastro do bem com peças, revisão e áudio
+    // Cadastro do bem com peças: a linha abre a ficha do bem; Editar abre o cadastro; a peça é cadastrada na sua janela (etapa 4).
     await p.evaluate(() => CicluzProducao.abrir('patrimonio'));
-    await p.locator('#producao-patrimonio .compras-linha.com-acoes').first().click();
+    await p.locator('#producao-patrimonio .compras-linha.com-acoes').first().locator('.c-nome').click();
+    await p.locator('dialog.patrimonio-ficha[open] .patrimonio-ficha-acoes button', { hasText: 'Editar' }).click();
+    await dialogo(p).locator('.stepper-item:nth-child(4) .stepper-node').click();
     await dialogo(p).locator('button', { hasText: 'Adicionar peça' }).click();
-    await dialogo(p).getByLabel('Peça 1', { exact: true }).fill('Resistência do forno de lastro');
+    await p.locator('dialog[open]:has(h2:has-text("Nova peça"))').getByLabel('Peça *', { exact: true }).fill('Resistência do forno de lastro');
     await p.waitForTimeout(150);
-    const mb = await medir(p);
-    ok(mb.lateral <= 0 && mb.dialogoLateral <= 1, 'Cadastro do bem sem rolagem lateral: ' + largura + 'px ' + (escuro ? 'escuro' : 'claro') + ' (' + mb.dialogoLateral + 'px)');
-    await p.locator('dialog.compras-dialog[open] .people-close-control').click();
+    const mb = await p.evaluate(() => ({ lateral: document.documentElement.scrollWidth - innerWidth, dialogos: [...document.querySelectorAll('dialog[open]')].map((x) => x.scrollWidth - x.clientWidth) }));
+    ok(mb.lateral <= 0 && mb.dialogos.every((x) => x <= 1), 'Cadastro do bem e janela da peça sem rolagem lateral: ' + largura + 'px ' + (escuro ? 'escuro' : 'claro') + ' (' + mb.dialogos.join('/') + 'px)');
+    await p.evaluate(() => [...document.querySelectorAll('dialog[open]')].reverse().forEach((x) => x.close()));
     await fechado(p);
   }
   await p.close();

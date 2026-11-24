@@ -384,8 +384,9 @@ body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog form{display:grid;
 .nav-tree .children .icone-sub{display:inline-flex;width:16px;height:16px;margin-right:8px;vertical-align:-3px;color:var(--item-color,currentColor)}
 .nav-tree .children .icone-sub svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .nav-tree .children .icone-revisar{width:16px;height:16px;margin-right:8px;vertical-align:-3px}
-/* Botões comuns dentro das telas seguem a cor do menu de origem, não o roxo padrão. */
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .btn:not(.standard-form-action):not(.footer-save-accent):not(.footer-cancel-accent){background:var(--menu-accent,var(--panel-color,#7c3aed));border-color:var(--menu-accent,var(--panel-color,#7c3aed));color:#fff}
+/* Botões comuns dentro das telas seguem a cor do menu de origem, não o roxo padrão. Os de excluir (.perigo, .perigo-texto) ficam
+   de fora: são vermelhos em todo o sistema (23/11/2026; antes esta regra os pintava na cor da tela). */
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .btn:not(.standard-form-action):not(.footer-save-accent):not(.footer-cancel-accent):not(.perigo):not(.perigo-texto){background:var(--menu-accent,var(--panel-color,#7c3aed));border-color:var(--menu-accent,var(--panel-color,#7c3aed));color:#fff}
 /* Botão retangular de ação (Salvar, Cancelar, Voltar, Avançar e todo .btn com ícone): texto à esquerda e o ícone em um círculo à direita, na cor do texto do botão. O círculo fica a --acao-respiro da borda de cima, de baixo e da direita (40 px de altura, 1 px de borda, 28 px de círculo). */
 .footer-action-icon,body #cadastro-completo :is(#prev-step,#next-step) svg{box-sizing:border-box;flex:none;width:var(--acao-circulo);height:var(--acao-circulo);padding:5px;border:1.5px solid currentColor;border-radius:50%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .footer-action-pair>:is(.footer-save-accent,.footer-cancel-accent){min-width:var(--acao-largura)}
@@ -503,9 +504,10 @@ dialog .escolha-barra{--cor-do-cabecalho:var(--menu-accent)}
 .matriz-tabela tbody tr:not(.matriz-grupo):hover :is(th,td){background:color-mix(in srgb,var(--menu-accent,#7c3aed) 4%,var(--theme-card,#fff))}
 /* Relatório DES - Folha de Pagamento: barra do mês e tabela de colaboradores × reflexos (Projetado · Realizado · Diferença).
    A tabela rola por dentro do quadro (.matriz-uniformes); a coluna do colaborador e as duas linhas de título ficam presas. */
-.folha-barra{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px}
-.folha-mes{display:inline-flex;align-items:center;gap:10px}
-.folha-mes>b{min-width:150px;text-align:center;font:600 var(--ui-section-title,14px)/20px var(--ui-font)}
+.folha-barra{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:10px 14px;margin:0 0 8px}
+.folha-mes{display:flex;flex:1 1 100%;align-items:center;gap:10px;min-width:0}
+/* Seletor de competência (folha e ponto): seta, o mês dentro de um retângulo (campo padrão, no tema), seta. */
+.folha-mes>b{display:flex;align-items:center;justify-content:center;box-sizing:border-box;flex:1 1 auto;min-width:0;height:var(--campo-altura,42px);padding:0 18px;border:1px solid var(--layout-line,#dedee3);border-radius:8px;background:var(--theme-field,#fff);text-align:center;font:600 var(--ui-label,12px)/16px var(--ui-font);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
 .matriz-uniformes .folha-tabela{display:table;width:max-content;min-width:100%;max-width:none;overflow:visible;margin:0;border-collapse:separate;border-spacing:0;font:400 var(--ui-label,12px)/16px var(--ui-font)}
 .folha-tabela :is(th,td){box-sizing:border-box;height:40px;padding:0 10px;border:0;border-bottom:1px solid var(--layout-line,#e5e5ea);border-right:1px solid var(--layout-line,#e5e5ea);background:var(--theme-card,#fff);white-space:nowrap;vertical-align:middle}
 .folha-tabela thead th{position:sticky;z-index:2;text-align:center}
@@ -521,7 +523,7 @@ dialog .escolha-barra{--cor-do-cabecalho:var(--menu-accent)}
 .folha-tabela td.folha-valor{text-align:right;font-variant-numeric:tabular-nums}
 .folha-tabela td.folha-dif.diferente{color:var(--menu-accent,#7c3aed);font-weight:700;background:color-mix(in srgb,var(--menu-accent,#7c3aed) 10%,var(--theme-card,#fff))}
 .folha-tabela :is(td,th).folha-total{font-weight:600;background:color-mix(in srgb,var(--menu-accent,#7c3aed) 4%,var(--theme-card,#fff))}
-.folha-tabela tfoot :is(th,td){position:sticky;bottom:0;z-index:1;border-top:2px solid var(--menu-accent,#7c3aed);font-weight:700}
+.folha-tabela tfoot :is(th,td){position:sticky;bottom:0;z-index:1;border-top:0;box-shadow:inset 0 2px 0 var(--menu-accent,#7c3aed);font-weight:700}
 .folha-tabela tfoot th.folha-pessoa{z-index:2}
 /* No celular a coluna presa do colaborador encolhe, para sobrar espaço para os valores. */
 @media (max-width:560px){.folha-tabela :is(th.folha-canto,th.folha-pessoa){min-width:128px;max-width:128px}}
@@ -529,6 +531,7 @@ dialog .escolha-barra{--cor-do-cabecalho:var(--menu-accent)}
 .ponto-barra{align-items:flex-end}
 .ponto-barra .folha-mes{min-height:var(--campo-altura,42px)}
 .ponto-filtros{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;flex:1 1 260px}
+.ponto-barra>:nth-child(2){display:flex;align-items:center;align-self:flex-end;min-height:var(--campo-altura,42px)}
 .ponto-filtros>label:first-child{flex:1 1 200px;max-width:340px}
 .ponto-filtros>label:last-child{flex:0 0 120px}
 .folha-tabela :is(td.ponto-hora,td.ponto-estado){text-align:center;font-variant-numeric:tabular-nums}
@@ -846,3 +849,16 @@ dialog .form-fields[data-quadro]::before,.modal .form-fields[data-quadro]::befor
 .form-fields>.uniforms-heading:first-child{position:absolute;top:-10px;left:12px;margin:0;padding:0 6px;background:var(--layout-gap,#f5f5f7);font:600 13px/18px var(--ui-font,inherit)}
 /* Cadastro de grupo e de conta: os campos têm 8 px entre si; os 6 px a mais deixam 14 px entre o último campo e o fecho do quadro, o mesmo respiro das laterais. */
 :is(.account-editor,#id-inexistente).form-fields:not(.form-fields .form-fields)>.actions:last-child{margin-top:6px}
+/* Valores da folha que abrem o detalhe ao clicar. */
+.folha-tabela td.folha-clicavel{cursor:pointer}
+.folha-tabela td.folha-clicavel:hover,.folha-tabela td.folha-clicavel:focus-visible{background:color-mix(in srgb,var(--menu-accent,#7c3aed) 10%,var(--theme-card,#fff));outline:none;box-shadow:inset 0 0 0 1px var(--menu-accent,#7c3aed)}
+/* DES - Ponto Eletrônico: uma tabela só com o ponto importado (Conplus) e o manual (Cicluz) lado a lado. */
+.ponto-conferencia th.folha-sub{min-width:84px;text-transform:uppercase}
+.folha-tabela :is(td,th).ponto-grupo-ini{border-left:2px solid var(--layout-line,#e5e5ea)}
+.folha-tabela td.ponto-sem-conplus{font:500 11px/14px var(--ui-font);color:var(--muted,#73737a);text-align:center}
+.folha-tabela td.ponto-manual{cursor:pointer}
+.folha-tabela td.ponto-manual:hover,.folha-tabela td.ponto-manual:focus-visible{background:color-mix(in srgb,var(--menu-accent,#7c3aed) 8%,var(--theme-card,#fff));outline:none;box-shadow:inset 0 0 0 1px var(--menu-accent,#7c3aed)}
+.folha-tabela td.ponto-estado{min-width:190px;text-align:left}
+.ponto-estado-miolo{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ponto-estado-texto{display:grid;min-width:0}
+.ponto-estado-texto>small{font:400 10px/13px var(--ui-font);color:var(--muted,#73737a);white-space:normal}

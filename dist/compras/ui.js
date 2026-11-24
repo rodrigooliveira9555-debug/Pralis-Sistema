@@ -24,6 +24,7 @@
     email: '<path d="M3 6h18v12H3zM3 7l9 6 9-6"/>',
     sms: '<path d="M4 5h16v11H9l-5 4zM8 10h.01M12 10h.01M16 10h.01"/>',
     voltar: '<path d="m15 5-7 7 7 7"/>',
+    lixo: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
   };
   const svg = (path) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + path + '</svg>';
 
@@ -937,7 +938,161 @@
     caixa.append(b, painel);
     return caixa;
   }
+  /**
+   * Remover um item dentro do cadastro (linha de conversão, promoção): botão redondo VERMELHO com a lixeira (23/11/2026, Zé), o padrão
+   * de excluir do sistema. Redondo de propósito: a regra geral que pinta os botões retangulares das janelas na cor da tela não o pega.
+   */
+  function botaoRemover(rotulo, acao) {
+    const b = el('button', 'shortcut-circle compras-redondo perigo compras-remover'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo);
+    b.innerHTML = svg(ICONES.lixo); b.onclick = acao;
+    return b;
+  }
+  /* =============== Janela de escolha em árvore (peça única) =============== */
+  /**
+   * Janela de escolha em árvore, no mesmo desenho da lista de origem (19/11/2026, Rodrigo): cada linha tem a seta de abrir, a caixa de
+   * marcar (quadrada, de cantos arredondados), o ícone com a sigla da origem (DES, MER, RET), o nome, a contagem e a situação. Serve a
+   * qualquer cadastro em níveis — grupo › subgrupo › item. Morava em contratos.js; desde 23/11/2026 é a peça única do sistema.
+   * nos: () => [{ id, nome, ativo, conta, folha, selecionavel (padrão: sim), filhos: [...] }]. marcados: Set de ids. bloqueados: Map id → motivo.
+   * Padrão (vários): marcar um nível marca tudo abaixo; ao confirmar grava só o nível mais alto marcado.
+   * unico: escolha de UM nó (o grupo, o subgrupo ou o item), sem cascata; a árvore abre já mostrando o escolhido.
+   */
+  function seletorArvore({ titulo, cores, sigla, iconeFolha, rotuloBusca = 'Buscar', vazio = 'Nada cadastrado.', nos, marcados, bloqueados = new Map(), aoConfirmar, unico = false }) {
+    const escolha = new Set(marcados); const abertos = new Set();
+    const pais = new Map(); const porId = new Map();
+    const mapear = (lista, pai) => lista.forEach((n) => { porId.set(n.id, n); if (pai) pais.set(n.id, pai.id); mapear(n.filhos || [], n); });
+    mapear(nos(), null);
+    const marcavel = (n) => n.selecionavel !== false && n.ativo !== false && !bloqueados.has(n.id);
+    const descer = (n, fn) => (n.filhos || []).forEach((f) => { fn(f); descer(f, fn); });
+    if (unico) for (const id of escolha) { let p = pais.get(id); while (p) { abertos.add(p); p = pais.get(p); } }
+    else for (const id of [...escolha]) { const n = porId.get(id); if (n) descer(n, (f) => { if (marcavel(f)) escolha.add(f.id); }); }
+    const compacta = () => (unico ? new Set(escolha) : new Set([...escolha].filter((id) => { let p = pais.get(id); while (p) { if (escolha.has(p)) return false; p = pais.get(p); } return true; })));
+    const formatar = (n) => (typeof formatSystemName === 'function' ? formatSystemName(String(n || '')) : String(n || ''));
+    const plural = (n) => n + (n === 1 ? ' item' : ' itens');
+    const c0 = typeof cores === 'function' ? cores() : cores || {};
+    dialogo({
+      titulo, ...c0, largo: true, classe: 'compras-hier-dialogo', rotuloSalvar: 'Confirmar',
+      montar: (form) => {
+        const busca = entrada('text', '', { placeholder: rotuloBusca, maxLength: 80, autocomplete: 'off' }); busca.setAttribute('aria-label', rotuloBusca);
+        busca.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
+        const resumo = el('small', 'profiles-note'); resumo.setAttribute('role', 'status'); const arvore = el('div', 'compras-hier'); arvore.setAttribute('role', 'tree');
+        const contar = () => { const q = compacta().size; resumo.textContent = (q === 1 ? '1 selecionado' : q + ' selecionados') + '.'; };
+        // Expandir / recolher tudo é UM botão só, redondo, na cor do cabeçalho: um toque expande tudo, o seguinte recolhe.
+        const barra = el('div', 'escolha-barra'); let tudoAberto = false;
+        const alternarTudo = el('button', 'compras-redondo escolha-expandir'); alternarTudo.type = 'button'; alternarTudo.innerHTML = svg('<path d="m5 9 7-6 7 6M5 15l7 6 7-6"/>');
+        const pintarAlternar = () => { const r = tudoAberto ? 'Recolher tudo' : 'Expandir tudo'; alternarTudo.title = r; alternarTudo.setAttribute('aria-label', r); alternarTudo.setAttribute('aria-expanded', String(tudoAberto)); };
+        alternarTudo.onclick = () => { tudoAberto = !tudoAberto; abertos.clear(); if (tudoAberto) porId.forEach((n, id) => { if ((n.filhos || []).length) abertos.add(id); }); pintarAlternar(); desenhar(); };
+        pintarAlternar();
+        barra.append(resumo, alternarTudo);
+        const casa = (no, caminho, termo) => !termo || dobrar(caminho + ' ' + no.nome).includes(termo) || (no.filhos || []).some((f) => casa(f, caminho + ' ' + no.nome, termo));
+        const linha = (no, nivel, caminho, termo) => {
+          const filhos = (no.filhos || []).filter((f) => casa(f, caminho + ' ' + no.nome, termo)); const aberto = Boolean(termo) || abertos.has(no.id);
+          const l = el('div', 'compras-hier-linha'); l.setAttribute('role', 'treeitem'); l.style.setProperty('--nivel', String(nivel));
+          const seta = el('button', 'compras-hier-seta' + (aberto ? ' aberto' : '')); seta.type = 'button'; seta.innerHTML = svg('<path d="m9 6 6 6-6 6"/>'); seta.disabled = !(no.filhos || []).length;
+          seta.setAttribute('aria-label', (aberto ? 'Recolher ' : 'Expandir ') + no.nome); seta.setAttribute('aria-expanded', String(aberto));
+          seta.onclick = () => { if (abertos.has(no.id)) abertos.delete(no.id); else abertos.add(no.id); desenhar(); };
+          const ativo = no.ativo !== false; const travado = bloqueados.has(no.id);
+          const c = entrada('checkbox'); c.className = 'compras-hier-caixa'; c.checked = escolha.has(no.id) || travado; c.disabled = travado || (!ativo && !escolha.has(no.id));
+          c.setAttribute('aria-label', 'Selecionar ' + no.nome);
+          c.onchange = () => {
+            if (unico) { escolha.clear(); if (c.checked) escolha.add(no.id); desenhar(); return; }
+            if (c.checked) { escolha.add(no.id); descer(no, (f) => { if (marcavel(f)) escolha.add(f.id); }); } else { escolha.delete(no.id); descer(no, (f) => { if (!bloqueados.has(f.id)) escolha.delete(f.id); }); let p = pais.get(no.id); while (p) { escolha.delete(p); p = pais.get(p); } }
+            desenhar();
+          };
+          if (no.selecionavel === false) { c.disabled = true; c.style.visibility = 'hidden'; }
+          const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); if (no.folha && iconeFolha) ic.innerHTML = svg(iconeFolha); else ic.append(el('span', 'sigla-text', sigla)); // grupo e subgrupo levam a sigla da origem; o item final leva o ícone dele
+          const tx = el('span', 'compras-hier-texto'); tx.append(el('b', null, no.folha ? no.nome : sigla + ' ' + formatar(no.nome)));
+          const conta = no.conta != null ? no.conta : (no.filhos ? plural(no.filhos.length) : ''); if (conta) tx.append(el('small', null, conta));
+          if (travado) tx.append(el('small', null, bloqueados.get(no.id)));
+          l.append(seta, c, ic, tx, el('span', 'compras-hier-estado', ativo ? 'Ativo' : 'Inativo'));
+          return [l, ...(aberto ? filhos.flatMap((f) => linha(f, nivel + 1, caminho + ' ' + no.nome, termo)) : [])];
+        };
+        const desenhar = () => {
+          const termo = dobrar(busca.value.trim()); const lista = nos().filter((n) => casa(n, '', termo));
+          arvore.replaceChildren(barra, ...lista.flatMap((n) => linha(n, 0, '', termo)));
+          if (!lista.length) arvore.append(el('p', 'profiles-note compras-hier-vazio', termo ? 'Nada encontrado.' : vazio));
+          contar();
+        };
+        busca.addEventListener('input', desenhar);
+        const box = el('div', 'compras-campo compras-largo'); box.append(busca, arvore); form.append(box); desenhar();
+      },
+      salvar: () => aoConfirmar(compacta()),
+    });
+  }
+  /**
+   * Campo de escolha única em árvore (23/11/2026, Zé: no lugar dos seletores comuns de grupo e subgrupo). Parece um campo, mostra o
+   * que foi escolhido e, ao tocar, abre a janela em árvore (seletorArvore, modo único). É um botão com .value (o id do nó, ou '') que
+   * dispara "change" quando a escolha muda. obrigatorio: Confirmar sem nada marcado é recusado.
+   * janela(atual, escolher) e texto(valor): para árvores com janela própria (áreas, setores e locais: CicluzLocationTree.janelaUnica);
+   * texto devolve o que o campo mostra, ou '' quando o valor não existe mais.
+   */
+  function campoArvore({ rotulo, titulo, sigla, cores, iconeFolha, rotuloBusca, vazio, nos, valor = '', textoVazio = 'Selecione', obrigatorio = false, janela, texto: textoDe }) {
+    const b = el('button', 'compras-arvore-campo'); b.type = 'button'; b.setAttribute('aria-haspopup', 'dialog'); b.setAttribute('aria-label', rotulo);
+    const texto = el('span', 'compras-arvore-texto'); b.append(texto); b.insertAdjacentHTML('beforeend', svg('<path d="m6 9 6 6 6-6"/>'));
+    let atual = valor || '';
+    const achar = (lista, id) => { for (const n of lista) { if (n.id === id) return n; const f = achar(n.filhos || [], id); if (f) return f; } return null; };
+    const formatar = (n) => (typeof formatSystemName === 'function' ? formatSystemName(String(n || '')) : String(n || ''));
+    const pintar = () => {
+      const n = atual && !textoDe ? achar(nos(), atual) : null;
+      const t = textoDe ? (atual ? textoDe(atual) : '') : n ? (n.folha ? n.nome : formatar(n.nome)) : '';
+      texto.textContent = t || (atual ? 'Escolha não encontrada no cadastro' : textoVazio);
+      b.classList.toggle('vazio', !t); b.title = texto.textContent;
+    };
+    const escolher = (novo) => {
+      if (!novo && obrigatorio) return 'Marque uma opção para confirmar.';
+      if (novo !== atual) { atual = novo; pintar(); b.dispatchEvent(new Event('change', { bubbles: true })); }
+      return undefined;
+    };
+    Object.defineProperty(b, 'value', { get: () => atual, set: (v) => { atual = v || ''; pintar(); } });
+    b.addEventListener('click', () => (janela ? janela(atual, escolher) : seletorArvore({
+      titulo, cores, sigla, iconeFolha, rotuloBusca, vazio, nos, unico: true, marcados: new Set(atual ? [atual] : []),
+      aoConfirmar: (escolha) => escolher([...escolha][0] || ''),
+    })));
+    pintar();
+    return b;
+  }
+  /**
+   * Campo de UM local da árvore Área › Setor › Local (23/11/2026, Zé): o mesmo campo do grupo, abrindo a janela de áreas, setores e
+   * locais (CicluzLocationTree.janelaUnica). .value = id do nó, ou "txt:nome" para o texto antigo sem nó (aparece com o aviso).
+   * Para quem grava o NOME (área do produto, filtros): campoLocal.nomeGravado(campo) devolve o nome a gravar.
+   */
+  function campoLocal({ rotulo, titulo, valor = '', textoVazio = 'Selecione' }) {
+    const LT = window.CicluzLocationTree;
+    return campoArvore({
+      rotulo, valor, textoVazio,
+      janela: (atual, escolher) => LT.janelaUnica({ titulo: titulo || rotulo, atual: atual.startsWith('txt:') ? '' : atual, aoEscolher: escolher }),
+      texto: (v) => (v.startsWith('txt:') ? v.slice(4) + ' (sem vínculo na árvore)' : LT.caminhoDe(v)),
+    });
+  }
+  /** Valor inicial de um campoLocal a partir de um NOME gravado: o nó com esse nome ou, sem nó, o texto antigo. */
+  campoLocal.doNome = (nome) => (nome ? window.CicluzLocationTree.idPorNome(nome) || 'txt:' + nome : '');
+  /** Nome a gravar a partir do campo (o do nó ou o texto antigo). */
+  campoLocal.nomeGravado = (campo) => (campo.value.startsWith('txt:') ? campo.value.slice(4) : window.CicluzLocationTree.nomeDe(campo.value));
+  /**
+   * Árvore dos grupos de mercadorias do cadastro do S2 (MER - Grupos de Mercadorias) para o campoArvore: grupo (id "g") › subgrupo
+   * (id "g|s"). Inativos só entram se forem o valor atual. produtos (opcional): lista de produtos que viram as folhas (id "prd:id");
+   * os que não têm grupo do cadastro ficam em "Produtos sem grupo". soProdutos: só o produto é marcável e os ramos sem produto somem.
+   */
+  function arvoreGruposMercadoria(grupos, { atual = '', produtos = null, soProdutos = false } = {}) {
+    const [ga, sa] = String(atual).split('|');
+    const folha = (p) => ({ id: 'prd:' + p.id, nome: p.descricao, ativo: p.status !== 'inativo', folha: true, conta: 'Produto' });
+    const nProd = (q) => (q === 1 ? '1 produto' : q + ' produtos');
+    const arvore = grupos.filter((g) => g.ativo || g.id === ga).map((g) => {
+      const subs = g.subgrupos.filter((s) => (g.ativo && s.ativo) || (g.id === ga && s.id === sa)).map((s) => {
+        const itens = produtos ? produtos.filter((p) => p.grupoId === g.id && p.subgrupoId === s.id).map(folha) : null;
+        return { id: g.id + '|' + s.id, nome: g.nome + ' › ' + s.nome, ativo: g.ativo && s.ativo, selecionavel: !soProdutos, ...(itens ? { filhos: itens, conta: nProd(itens.length) } : { conta: 'Subgrupo' }) };
+      });
+      const diretos = produtos ? produtos.filter((p) => p.grupoId === g.id && !g.subgrupos.some((s) => s.id === p.subgrupoId)).map(folha) : [];
+      const contaG = (g.subgrupos.length === 1 ? '1 subgrupo' : g.subgrupos.length + ' subgrupos') + (produtos ? ' · ' + nProd(produtos.filter((p) => p.grupoId === g.id).length) : '');
+      return { id: g.id, nome: g.nome, ativo: g.ativo, selecionavel: !soProdutos, conta: contaG, filhos: [...subs.filter((s) => !soProdutos || s.filhos.length), ...diretos] };
+    });
+    if (!produtos) return arvore;
+    const semGrupo = produtos.filter((p) => !grupos.some((g) => g.id === p.grupoId)).map(folha);
+    if (semGrupo.length) arvore.push({ id: 'sem-grupo', nome: 'Produtos sem grupo', ativo: true, selecionavel: false, conta: nProd(semGrupo.length), filhos: semGrupo });
+    return soProdutos ? arvore.filter((g) => g.filhos.length) : arvore;
+  }
+
   window.CicluzComprasUI = {
+    seletorArvore, campoArvore, campoLocal, arvoreGruposMercadoria, botaoRemover,
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
     tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,

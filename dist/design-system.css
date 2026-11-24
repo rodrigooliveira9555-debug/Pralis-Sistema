@@ -349,3 +349,8 @@ body.dark-theme .view.show>.panel>.head[data-header-standard=yes],body.dark-them
 /* Section dividers share the same rounded grey stroke, including Gestão. */
 .nav-tree>.sidebar-section-toggle::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;border-radius:999px;background:#eeedf1}
 .dark-theme .nav-tree>.sidebar-section-toggle::before{background:#3b3942}/* O título de seção do menu (GESTÃO, AGENDA, CONFIGURAÇÕES) não é um item: não ganha fundo ao passar o dedo ou o mouse, no claro nem no escuro (19/11/2026: aparecia uma faixa branca no tema escuro). */body .nav .nav-tree>.sidebar-section-toggle:hover{background:transparent}
+/* Cadastro do grupo (DES, MER, RET): botão "Subgrupos +" que aplica a Referência de Custo aos subgrupos; desabilitado quando não há o que inserir. */
+#sector-view .account-editor .financial-ref-subs{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;grid-column:1/-1}
+#sector-view .account-editor .financial-ref-subs .compras-titulo-botao{flex:none;width:240px;max-width:100%;justify-content:space-between}
+#sector-view .account-editor .financial-ref-subs .compras-titulo-botao:disabled{opacity:.45;cursor:not-allowed}
+#sector-view .account-editor .financial-ref-subs small{flex:1 1 200px;min-width:0;margin:0}

@@ -54,12 +54,19 @@
   {grupo, local}` (escolhido à mão: o Revincular não desfaz). O documento ganha `codigoInternoApp` (maior código do app
   abaixo de 700000, inclusive de inativo: o próximo código do S2 fica acima dele) e `importacaoProdutos` (data e números).
   Produto importado novo tem id `pi-<código interno>`. Reimportar casa por `appId`, senão pelo código interno. Os 19
-  produtos de exemplo (`p-…`) e os registros que citam algum deles saem na primeira importação. **Inativos** do app vão
-  para a chave nova **`cicluz-produtos-arquivo-v1`** (sincronizada e adotada do aparelho): `{ versao: 1, formato:
-  'gzip-base64', total, dados }`, a lista de produtos no mesmo formato, compactada (4.819 produtos = ~0,5 MB). Ativo do app
-  que está no arquivo volta para o Compras; produto do arquivo editado no S2 também. Inativo do app que já está no Compras
-  fica lá (inativo, não liberado). Código:
+  produtos de exemplo (`p-…`) e os registros que citam algum deles saem na primeira importação. Código:
   `dist/compras/produto-importacao.js` (regras), `telas-produto-importacao.js` (tela), SheetJS 0.20.3 em `dist/vendor/sheetjs`.
+- **Produtos no servidor (09/11/2026, docs/PRODUTOS_NO_SERVIDOR_PLANO.md) — SUBSTITUI o catálogo dentro do
+  `cicluz-compras-v1` e o arquivo `cicluz-produtos-arquivo-v1`.** O catálogo mora na tabela `produtos` (migration 0006; colunas
+  do que busca/filtra/ordena/é dinheiro + `dados` jsonb com o resto do cadastro no formato da tela; mesmo id de antes) e o
+  maior código usado em `produtos_codigo`. A tela lê pela API (`dist/compras/produtos-api.js`) e guarda o resumo dos ATIVOS
+  em `cicluz-produtos-resumo-v1` (localStorage, NÃO sincronizado; sem internet a loja usa daqui). O `cicluz-compras-v1`
+  guarda por produto só o estado da loja: `{ id, saldo, vendas3m, compras3m, lucro3m }` (só os que têm algum número).
+  Migração sem perder nada: o 1º aparelho de administrador conectado transfere os produtos do aparelho (Compras + arquivo
+  antigo, sem os 19 de exemplo; produto antigo sem código ganha o próximo do servidor); o servidor só insere o que não
+  existe; o catálogo passa a valer na conclusão, que só acontece se TODOS chegaram; aí o documento fica só com o estado e o
+  arquivo antigo é apagado. O primeiro código de produto novo é 13130 (último antes do S2: 13129), regra só no servidor.
+  **Transferência feita no ar em 23/11/2026**; depois dela a chave `cicluz-produtos-arquivo-v1` saiu da sincronização e do código.
 - **Fornecedor único (15/11/2026)**, dentro de `cicluz-compras-v1` (mesma chave e versão). Campos do fornecedor: `nome`,
   `documento`, `whatsapp` e `situacao` (já existiam), mais `razaoSocial` (texto, opcional; o `nome` é o nome fantasia, e
   continua sendo o nome exibido em todo o sistema, sem migração), `categorias` (lista com 'produto' e/ou 'servico'), `ramo`

@@ -1,9 +1,9 @@
 /*
  * Compras — entrada do módulo no menu do S2.
- * Lugar no menu (vídeo do Rodrigo, 06/11/2026): Saídas · Mercadorias → Lançamentos recebe os cards de rotina
- * (pede → cota → recebe → conta); Cadastros Geral recebe MER - Fornecedores, MER - Produtos, Unidades de Medida e
- * MER - Catálogo e Preço-Base; Estoques recebe MER - Grupo Mercadorias. O agendamento fica em Agenda →
- * MER - Agenda de Pedidos.
+ * Lugar no menu (vídeo do Rodrigo, 06/11/2026; revisto pelo Zé em 23/11/2026): Saídas · Mercadorias → Lançamentos recebe
+ * o agendamento e os cards de rotina (agenda → pede → cota → recebe); Cadastros Geral recebe MER - Fornecedores,
+ * MER - Produtos, Unidades de Medida e MER - Catálogo e Preço-Base; Estoques recebe MER - Grupo Mercadorias e
+ * MER - Contagem de Estoque. O agendamento saiu do menu Agenda (um caminho só).
  * Cada tela se registra com CicluzCompras.registrar(nome, abrir).
  */
 (function () {
@@ -12,13 +12,14 @@
   const telas = {};
 
   const CARDS = [
+    ['agendamento', 'MER - Agenda de Pedidos', 'Pedidos de compra que se repetem', 'agenda'],
     ['solicitacao', 'MER - Pedido de Compra', 'Fazer o pedido e enviar aos fornecedores', 'lista'],
     ['cotacao', 'MER - Cotação por Fornecedor', 'Produtos em cotação e decisões', 'cotacao'],
     ['pedidos', 'MER - Pedidos a Receber', 'O que foi comprado e o recebimento', 'caminhao'],
-    ['conferencias', 'MER - Contagem de Estoque', 'Contagem cega, recontagem e aprovação', 'conferencia'],
   ];
   const ESTOQUES = [
     ['estoque', 'MER - Grupo Mercadorias', '', 'estoque'],
+    ['conferencias', 'MER - Contagem de Estoque', 'Contagem cega, recontagem e aprovação', 'conferencia'],
   ];
   const CADASTROS = [
     ['fornecedores', 'MER - Fornecedores', 'Quem vende para a loja', 'fornecedor'],
@@ -34,6 +35,7 @@
 
   const voltarLancamentos = () => menuBack(3, 'Lançamentos')();
   const voltarCadastros = () => menuBack(3, 'Cadastros Geral')();
+  const voltarEstoques = () => menuBack(3, 'Estoques')();
 
   function registrar(nome, abrir) { telas[nome] = abrir; }
   function abrir(nome) {
@@ -52,6 +54,6 @@
     cards: () => CARDS.map(([id, t, d]) => [t, d, 'compras:' + id]),
     estoqueCards: () => ESTOQUES.map(([id, t, d]) => [t, d, 'compras:' + id]),
     cadastroCards: () => CADASTROS.map(([id, t, d]) => [t, d, 'compras:' + id]),
-    icone, abrir, registrar, voltarLancamentos, voltarCadastros,
+    icone, abrir, registrar, voltarLancamentos, voltarCadastros, voltarEstoques,
   };
 })();
