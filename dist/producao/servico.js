@@ -262,6 +262,7 @@
    */
   function processarAgendas(forcar) {
     let criados = 0;
+    const novos = [];
     const ok = P.transacao((d) => {
       for (const a of d.agendas.filter((x) => x.status === 'ativa')) {
         const feitas = new Set(d.ocorrencias.filter((o) => o.agendaId === a.id).map((o) => o.previsto));
@@ -279,10 +280,13 @@
             criadoEm: S.agoraIso(), eventos: [],
           });
           d.ocorrencias.push({ id: S.novoId('ocp'), agendaId: a.id, previsto: o.previsto, data: o.data, hora: o.hora, pedidoId, criadaEm: S.agoraIso() });
+          novos.push({ pedidoId, numero: d.pedidos.find((x) => x.id === pedidoId).numero, data: o.data, hora: o.hora, responsavelId: a.responsavelId });
           criados++;
         }
       }
     });
+    // Chegou na hora: vira tarefa na Agenda do responsável, que leva à tela dos pedidos (P-46).
+    if (ok && window.CicluzAgendaRotina) novos.forEach((n) => window.CicluzAgendaRotina.tarefaDoPedidoDeProducao(n));
     return ok ? criados : 0;
   }
 
@@ -350,6 +354,8 @@
       p.eventos.push({ tipo: 'enviado', em: S.agoraIso(), por: responsavelId || p.responsavelId });
       criarOrdens(d, p);
     });
+    // O pedido foi enviado à produção: a tarefa da Agenda é concluída (P-46).
+    if (ok && window.CicluzAgendaRotina) window.CicluzAgendaRotina.pedidoDeProducaoFeito(pedidoId);
     return ok ? { ok: true } : erro('Este pedido já foi enviado ou não pôde ser salvo.');
   }
   /** Pedido extra (pelo celular, durante o dia): já vai enviado. Provisório: pedido separado (pergunta 5). */

@@ -609,7 +609,16 @@
       if (salvando) return;
       salvando = true;
       let msg;
-      try { msg = await salvar(ctx); } catch (err) { console.warn(err); msg = 'Não foi possível salvar. Tente de novo.'; } finally { salvando = false; }
+      // Se salvar responde depois (servidor), mostra "Salvando…" e trava o botão até a resposta. Salvar na hora: nada muda.
+      const enviar = form.querySelector('button[type=submit]');
+      const espera = setTimeout(() => { erro.textContent = 'Salvando…'; if (enviar) enviar.disabled = true; form.setAttribute('aria-busy', 'true'); }, 0);
+      try { msg = await salvar(ctx); } catch (err) { console.warn(err); msg = 'Não foi possível salvar. Tente de novo.'; } finally {
+        salvando = false;
+        clearTimeout(espera);
+        if (erro.textContent === 'Salvando…') erro.textContent = '';
+        if (enviar) enviar.disabled = false;
+        form.removeAttribute('aria-busy');
+      }
       if (msg) { erro.textContent = msg; sinalizarObrigatorios(form); return; }
       d.close();
     };
@@ -748,7 +757,8 @@
     dialogo({
       titulo, cor, corTexto, classe,
       montar: (form) => { form.append(el('p', null, texto)); },
-      salvar: () => { const r = acao(); return typeof r === 'string' ? r : undefined; },
+      // A ação pode responder depois (gravar no servidor): a janela espera, e o erro aparece nela.
+      salvar: async () => { const r = await acao(); return typeof r === 'string' ? r : undefined; },
       rotuloSalvar: rotulo,
     });
   }

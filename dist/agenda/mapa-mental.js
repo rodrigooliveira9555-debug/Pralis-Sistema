@@ -168,7 +168,11 @@
     zoom.append(zb('Afastar', '−', () => zoomEm(1 / 1.2)), zb('Ajustar à tela', '⤢', () => { est.camera = null; desenhar(); }), zb('Aproximar', '+', () => zoomEm(1.2)));
     tela.append(desenho, zoom);
     const status = el('p', 'agenda-mm-status');
-    caixa.append(barra, acoes, tela, status);
+    // Os campos ficam num quadro com o nome na moldura (padrão das telas).
+    const quadroBarra = U.secao('Mapa mental');
+    barra.classList.add('agenda-quadro-corpo');
+    quadroBarra.append(barra);
+    caixa.append(quadroBarra, acoes, tela, status);
     body.append(caixa);
 
     let arvore = null;
@@ -255,7 +259,13 @@
       });
       // Ponta da seta
       const defs = document.createElementNS(NS, 'defs');
-      defs.innerHTML = '<marker id="agenda-mm-seta" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="' + ctx.cor + '"/></marker>';
+      const marca = document.createElementNS(NS, 'marker');
+      [['id', 'agenda-mm-seta'], ['viewBox', '0 0 10 10'], ['refX', '8'], ['refY', '5'], ['markerWidth', '7'], ['markerHeight', '7'], ['orient', 'auto-start-reverse']].forEach(([k, v]) => marca.setAttribute(k, v));
+      const ponta = document.createElementNS(NS, 'path');
+      ponta.setAttribute('d', 'M0,0 L10,5 L0,10 z');
+      ponta.setAttribute('fill', /^#[0-9a-fA-F]{6}$/.test(String(ctx.cor || '')) ? ctx.cor : '#7c3aed');
+      marca.append(ponta);
+      defs.append(marca);
       camera.prepend(defs);
 
       // Câmera: mantém ao editar; ajusta ao trocar estrutura/agrupamento/foco
@@ -445,14 +455,14 @@
         if (r) {
           acoes.append(el('span', 'agenda-mm-acoes-titulo', 'Ligação: ' + ((A.item(r.de) || {}).titulo || '') + ' → ' + ((A.item(r.para) || {}).titulo || '') + (r.rotulo ? ' (' + r.rotulo + ')' : '')),
             botao('Dar nome', () => nomearRelacao(r), 'compras-chip'),
-            botao('Excluir ligação', () => { const x = A.excluirRelacao(r.id); if (x.erro) return U.avisar(x.erro); est.relacaoSel = ''; }, 'compras-chip'));
+            botao('Excluir ligação', () => U.confirmar('Excluir ligação', 'Excluir a ligação entre os dois compromissos?', 'Excluir', async () => { const x = await A.excluirRelacao(r.id); if (x.erro) return x.erro; est.relacaoSel = ''; return undefined; }, { cor: ctx.cor, corTexto: ctx.corTexto, classe: 'agenda-dialog' }), 'compras-chip agenda-chip-perigo'));
           return;
         }
       }
       const n = escolhido();
       if (!n) return;
       const ac = n.item ? A.acesso(n.item) : { editar: true, concluir: true, excluir: true };
-      const b = (txt, f, ativo = true, dica) => { const x = botao(txt, f, 'compras-chip'); x.disabled = !ativo; if (dica) x.title = dica; return x; };
+      const b = (txt, f, ativo = true, dica, cls = 'compras-chip') => { const x = botao(txt, f, cls); x.disabled = !ativo; if (dica) x.title = dica; return x; };
       acoes.append(el('span', 'agenda-mm-acoes-titulo', n.titulo));
       if (n.tipo === 'item' || n.tipo === 'sub') acoes.append(b('Abrir', () => ctx.abrirItem(n.item.id)));
       const renomeavel = n.tipo === 'item' || n.tipo === 'sub' || (n.tipo === 'grupo' && n.grupo.lista);
@@ -463,7 +473,7 @@
       if ((n.tipo === 'grupo' || n.tipo === 'item') && est.foco !== n.id) acoes.append(b('Focar', () => { est.foco = n.id; est.selecionado = n.id; desenhar(); }));
       if (est.foco) acoes.append(b('Mapa inteiro', () => { est.foco = ''; desenhar(); }));
       if ((n.filhos || []).length) acoes.append(b(prefs.recolhidos.includes(n.id) ? 'Expandir' : 'Recolher', () => alternarRecolhido(n.id), true, 'Ctrl+/'));
-      if (n.tipo === 'item' || n.tipo === 'sub') acoes.append(b('Excluir', () => excluirNo(n), n.tipo === 'item' ? ac.excluir : ac.editar, 'Delete'));
+      if (n.tipo === 'item' || n.tipo === 'sub') acoes.append(b('Excluir', () => excluirNo(n), n.tipo === 'item' ? ac.excluir : ac.editar, 'Delete', 'compras-chip agenda-chip-perigo'));
     }
 
     const podeCriarFilho = (n) => (n.tipo === 'raiz' ? true : n.tipo === 'grupo' ? n.grupo.extra !== null : n.item ? A.acesso(n.item).editar : false);
@@ -476,15 +486,28 @@
       desenhar();
     }
 
-    function concluir(n) {
-      if (n.tipo === 'item') { const r = A.alternarConcluida(n.item.id); if (!r) U.avisar('Você não tem permissão para concluir.'); else if (r === 'repetiu') U.avisar('Feito. O próximo fica para ' + D.quando(A.item(n.item.id), new Date()) + '.'); }
-      else if (n.tipo === 'sub') { if (!A.alternarSubtarefa(n.item.id, n.sub.id)) U.avisar('Você não tem permissão para concluir.'); }
+    // Pelo estado desejado (o contrário do que está no mapa agora): o segundo toque não desfaz o primeiro.
+    async function concluir(n) {
+      if (n.tipo === 'item') {
+        const r = await A.concluir(n.item.id, !n.item.concluida);
+        if (r.erro) U.avisar(r.erro);
+        else if (r.resultado === 'repetiu') U.avisar('Feito. O próximo fica para ' + D.quando(A.item(n.item.id), new Date()) + '.');
+      } else if (n.tipo === 'sub') {
+        const r = await A.marcarSubtarefa(n.item.id, n.sub.id, !n.sub.concluida);
+        if (r.erro) U.avisar(r.erro);
+      }
     }
 
-    function excluirNo(n) {
-      if (n.tipo === 'sub') { const r = A.excluirSubtarefa(n.item.id, n.sub.id); if (r.erro) U.avisar(r.erro); else { est.selecionado = paiDe(arvore, n.id).id; U.avisar('Subtarefa excluída.'); } return; }
-      U.confirmar('Excluir compromisso', 'Excluir "' + n.item.titulo + '"? Não dá para desfazer.', 'Excluir', () => {
-        if (!A.excluirItem(n.item.id)) return 'Você não tem permissão para excluir.';
+    async function excluirNo(n) {
+      if (n.tipo === 'sub') {
+        const pai = paiDe(arvore, n.id).id;
+        const r = await A.excluirSubtarefa(n.item.id, n.sub.id);
+        if (r.erro) U.avisar(r.erro); else { est.selecionado = pai; U.avisar('Subtarefa excluída.'); }
+        return;
+      }
+      U.confirmar('Excluir compromisso', 'Excluir "' + n.item.titulo + '"? Não dá para desfazer.', 'Excluir', async () => {
+        const r = await A.excluirItem(n.item.id);
+        if (r.erro) return r.erro;
         est.selecionado = paiDe(arvore, n.id).id;
         U.avisar('Compromisso excluído.');
         return undefined;
@@ -495,7 +518,7 @@
       U.dialogo({
         titulo: 'Nome da ligação', cor: ctx.cor, corTexto: ctx.corTexto, classe: 'agenda-dialog', rotuloSalvar: 'Salvar ligação',
         montar: (form) => { form.dataset.textoLivre = ''; const i = U.entrada('text', r.rotulo || '', { maxLength: 40, placeholder: 'Ex.: depende de, antes de' }); form.append(U.campo('Nome', i)); return { i }; },
-        salvar: (c) => { const x = A.rotularRelacao(r.id, c.i.value); return x.erro || undefined; },
+        salvar: async (c) => { const x = await A.rotularRelacao(r.id, c.i.value); return x.erro || undefined; },
       });
     }
 
@@ -529,18 +552,28 @@
     function editarTexto(n) {
       const pos = caixaNaTela(n.id);
       if (!pos) return;
-      if (n.tipo === 'item') abrirEditor(pos, n.item.titulo, (v) => { const r = A.renomear(n.item.id, v); if (r.erro) U.avisar(r.erro); });
-      else if (n.tipo === 'sub') abrirEditor(pos, n.sub.titulo, (v) => { const r = A.renomearSubtarefa(n.item.id, n.sub.id, v); if (r.erro) U.avisar(r.erro); });
-      else if (n.tipo === 'grupo' && n.grupo.lista) abrirEditor(pos, n.grupo.lista.nome, (v) => { const r = A.salvarLista(n.grupo.lista.id, { nome: v }); if (r.erro) U.avisar(r.erro); });
+      const avisarErro = (r) => { if (r.erro) U.avisar(r.erro); };
+      if (n.tipo === 'item') abrirEditor(pos, n.item.titulo, (v) => A.renomear(n.item.id, v).then(avisarErro));
+      else if (n.tipo === 'sub') abrirEditor(pos, n.sub.titulo, (v) => A.renomearSubtarefa(n.item.id, n.sub.id, v).then(avisarErro));
+      else if (n.tipo === 'grupo' && n.grupo.lista) abrirEditor(pos, n.grupo.lista.nome, (v) => A.salvarLista(n.grupo.lista.id, { nome: v }).then(avisarErro));
     }
-    const listaPadrao = () => (ctx.listaId || A.dados.listas[0].id);
-    function criarCompromisso(grupo, texto) {
+    const listaPadrao = () => (ctx.listaId || (A.dados.listas[0] || { id: '' }).id);
+    async function criarCompromisso(grupo, texto) {
       const extra = { ...(grupo ? grupo.extra : {}) };
       const listaId = extra.listaId || listaPadrao();
       delete extra.listaId;
-      const r = A.criarRapido(texto, listaId, { ...ctx.padrao(), ...extra });
+      const r = await A.criarRapido(texto, listaId, { ...ctx.padrao(), ...extra });
       if (r.erro) return U.avisar(r.erro);
       if (grupo) { est.selecionado = grupo.chave + '>' + r.id; ctx.aoMudar(); }
+      return undefined;
+    }
+    /** Nova subtarefa (abaixo de outra, ou no fim): seleciona a nova quando o servidor confirma. */
+    async function novaSubtarefa(n, v, antesDe, paiId) {
+      const r = await A.adicionarSubtarefa(n.item.id, v, antesDe);
+      if (r.erro) return U.avisar(r.erro);
+      est.selecionado = paiId + '>' + r.id;
+      ctx.aoMudar();
+      return undefined;
     }
     function novoFilho(n) {
       if (!podeCriarFilho(n)) return U.avisar(n.tipo === 'grupo' ? 'Neste grupo não dá para criar (mude o agrupamento).' : 'Você não tem permissão para editar.');
@@ -551,8 +584,9 @@
         return abrirEditor(abaixo, '', (v) => criarCompromisso(g ? g.grupo : null, v));
       }
       if (n.tipo === 'grupo') return abrirEditor(abaixo, '', (v) => criarCompromisso(n.grupo, v));
-      if (n.tipo === 'item') return abrirEditor(abaixo, '', (v) => { const r = A.adicionarSubtarefa(n.item.id, v); if (r.erro) return U.avisar(r.erro); est.selecionado = n.id + '>' + r.id; ctx.aoMudar(); });
-      return abrirEditor(abaixo, '', (v) => { const r = A.adicionarSubtarefa(n.item.id, v, n.sub.id); if (r.erro) return U.avisar(r.erro); est.selecionado = paiDe(arvore, n.id).id + '>' + r.id; ctx.aoMudar(); });
+      if (n.tipo === 'item') return abrirEditor(abaixo, '', (v) => novaSubtarefa(n, v, undefined, n.id));
+      const pai = paiDe(arvore, n.id).id;
+      return abrirEditor(abaixo, '', (v) => novaSubtarefa(n, v, n.sub.id, pai));
     }
     function novoIrmao(n) {
       if (!podeCriarIrmao(n)) return U.avisar(n.tipo === 'raiz' ? 'A raiz não tem irmão: use Tab para criar um compromisso.' : 'Aqui não dá para criar.');
@@ -560,10 +594,11 @@
       const abaixo = { x: pos.x, y: pos.y + pos.h + 6, w: 200 };
       if (n.tipo === 'grupo') {
         if (prefs.agrupar !== 'lista') return U.avisar('Para criar um grupo novo, agrupe por lista (vira uma lista nova).');
-        return abrirEditor(abaixo, '', (v) => { const r = A.salvarLista('', { nome: v }); if (r.erro) U.avisar(r.erro); else { est.selecionado = 'l:' + r.id; ctx.aoMudar(); } });
+        return abrirEditor(abaixo, '', async (v) => { const r = await A.salvarLista('', { nome: v }); if (r.erro) U.avisar(r.erro); else { est.selecionado = 'l:' + r.id; ctx.aoMudar(); } });
       }
       if (n.tipo === 'item') return abrirEditor(abaixo, '', (v) => criarCompromisso(n.grupo, v));
-      return abrirEditor(abaixo, '', (v) => { const r = A.adicionarSubtarefa(n.item.id, v, n.sub.id); if (r.erro) return U.avisar(r.erro); est.selecionado = paiDe(arvore, n.id).id + '>' + r.id; ctx.aoMudar(); });
+      const pai = paiDe(arvore, n.id).id;
+      return abrirEditor(abaixo, '', (v) => novaSubtarefa(n, v, n.sub.id, pai));
     }
 
     /* ----- Teclado (como o XMind) ----- */
@@ -660,9 +695,13 @@
         tela.querySelectorAll('.agenda-mm-no.alvo').forEach((x) => x.classList.remove('alvo'));
         const alvo = achar(arvore, g.alvo);
         if (destinoValido(g.n, alvo)) {
-          const r = g.n.tipo === 'item' ? A.definir(g.n.item.id, alvo.grupo.soltar) : A.moverSubtarefa(g.n.item.id, g.n.sub.id, alvo.item.id);
-          if (r.erro) U.avisar(r.erro); else U.avisar(g.n.tipo === 'item' ? 'Levado para ' + alvo.titulo + '.' : 'Subtarefa levada para ' + alvo.titulo + '.');
-          if (!r.erro) return;
+          // Data, lista ou prioridade: o mesmo caminho do formulário no servidor (M5). Volta para o lugar se for recusado.
+          const pedido = g.n.tipo === 'item' ? A.definir(g.n.item.id, alvo.grupo.soltar) : A.moverSubtarefa(g.n.item.id, g.n.sub.id, alvo.item.id);
+          pedido.then((r) => {
+            if (r.erro) { U.avisar(r.erro); if (g.g.isConnected) g.g.setAttribute('transform', g.base); }
+            else U.avisar(g.n.tipo === 'item' ? 'Levado para ' + alvo.titulo + '.' : 'Subtarefa levada para ' + alvo.titulo + '.');
+          });
+          return;
         }
         g.g.setAttribute('transform', g.base);
         if (alvo && !destinoValido(g.n, alvo)) U.avisar(g.n.tipo === 'item' ? (alvo.tipo === 'grupo' && !alvo.grupo.soltar ? 'Arrastar não muda ' + (prefs.agrupar === 'responsavel' ? 'o responsável' : prefs.agrupar === 'etiqueta' ? 'a etiqueta' : 'esta data') + '; use o compromisso.' : 'Solte o compromisso em um grupo.') : 'Solte a subtarefa em outro compromisso.');
@@ -674,9 +713,11 @@
       if (!n) return;
       if (est.relacaoDe) {
         if (n.tipo !== 'item') return U.avisar('Toque em um compromisso.');
-        const r = A.criarRelacao(est.relacaoDe, n.item.id, '');
+        const de = est.relacaoDe;
         est.relacaoDe = '';
-        if (r.erro) { U.avisar(r.erro); desenhar(); } else { est.relacaoSel = r.id; est.selecionado = ''; ctx.aoMudar(); U.avisar('Compromissos ligados. Toque em "Dar nome" para escrever o tipo da ligação.'); }
+        A.criarRelacao(de, n.item.id, '').then((r) => {
+          if (r.erro) { U.avisar(r.erro); desenhar(); } else { est.relacaoSel = r.id; est.selecionado = ''; ctx.aoMudar(); U.avisar('Compromissos ligados. Toque em "Dar nome" para escrever o tipo da ligação.'); }
+        });
         return;
       }
       if (g.acao === 'recolher') return alternarRecolhido(n.id);
