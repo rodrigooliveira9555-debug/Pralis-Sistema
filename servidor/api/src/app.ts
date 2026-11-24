@@ -20,6 +20,7 @@ import { env, origensWebPermitidas } from "./env.ts";
 import { ErroDominio, proibido } from "./erros.ts";
 import { registrarRotasSaude } from "./saude/saude.controller.ts";
 import { registrarRotasUsuarios } from "./usuarios/usuarios.controller.ts";
+import { esquecerPermissoes } from "./agenda/contas-por-permissao.ts";
 
 // Rotas que cuidam da própria autenticação. Todo o resto de /api exige sessão ANTES do handler
 // (default-deny, como no Sistema Pralis): rota nova sem cuidado nasce protegida, nunca pública.
@@ -108,6 +109,13 @@ export async function buildApp(): Promise<FastifyInstance> {
     const rota = request.routeOptions.url;
     if (!rota || !rota.startsWith("/api/") || rotasComAutenticacaoPropria.has(rota)) return;
     await exigirAutenticacao(request);
+  });
+
+  // Mudou conta, cargo de acesso ou exceção: a Agenda esquece as permissões guardadas (lista por área, tarefas
+  // por permissão) e recalcula no próximo pedido.
+  app.addHook("onSend", async (request, reply) => {
+    if (request.method === "GET" || reply.statusCode >= 400 || !request.perfilUsuario) return;
+    if (request.url.startsWith("/api/usuarios") || request.url.startsWith("/api/cargos-acesso")) esquecerPermissoes(request.perfilUsuario.empresa.id);
   });
 
   await registrarRotasSaude(app);

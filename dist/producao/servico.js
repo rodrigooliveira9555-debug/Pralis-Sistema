@@ -342,6 +342,16 @@
     }
   }
   /** A loja envia o pedido "para fazer": as quantidades viram ordens de produção. */
+  /**
+   * Agenda (P-46 item 1): pedido enviado e ainda não pronto vira "Lançar a produção" para quem tem a permissão de
+   * lançar; fica pronto → a tarefa conclui; cancelado → a tarefa sai. Atendido todo pelo estoque já nasce pronto.
+   */
+  const agendaRotina = () => window.CicluzAgendaRotina;
+  function agendaPedidoEnviado(pedidoId) {
+    const p = P.dados.pedidos.find((x) => x.id === pedidoId);
+    if (!p || !agendaRotina()) return;
+    if (p.status === 'enviado') agendaRotina().producaoParaLancar({ pedidoId, numero: p.numero, data: p.dataEntrega, hora: p.janelaDe });
+  }
   function enviarPedido(pedidoId, itensEntrada, responsavelId) {
     const plano = planejarItens(itensEntrada.filter((i) => i.quantidade != null), pedidoId);
     if (plano.erro) return erro(plano.erro);
@@ -354,8 +364,8 @@
       p.eventos.push({ tipo: 'enviado', em: S.agoraIso(), por: responsavelId || p.responsavelId });
       criarOrdens(d, p);
     });
-    // O pedido foi enviado à produção: a tarefa da Agenda é concluída (P-46).
-    if (ok && window.CicluzAgendaRotina) window.CicluzAgendaRotina.pedidoDeProducaoFeito(pedidoId);
+    // O pedido foi enviado à produção: a tarefa da Agenda é concluída (P-46) e nasce a de lançar a produção.
+    if (ok && agendaRotina()) { agendaRotina().pedidoDeProducaoFeito(pedidoId); agendaPedidoEnviado(pedidoId); }
     return ok ? { ok: true } : erro('Este pedido já foi enviado ou não pôde ser salvo.');
   }
   /** Pedido extra (pelo celular, durante o dia): já vai enviado. Provisório: pedido separado (pergunta 5). */
@@ -372,18 +382,21 @@
       d.pedidos.push(p);
       criarOrdens(d, p);
     });
+    if (ok) agendaPedidoEnviado(id);
     return ok ? { ok: true, id } : erro(NAO_SALVOU);
   }
   function cancelarPedido(pedidoId) {
     const p = P.dados.pedidos.find((x) => x.id === pedidoId);
     if (!p || !['rascunho', 'enviado'].includes(p.status)) return erro('Só dá para cancelar pedido que ainda não ficou pronto.');
     if (P.dados.ordens.some((o) => o.pedidoId === pedidoId && D.situacaoOrdem(o) !== 'aguardando')) return erro('A produção já começou este pedido. Fale com a produção antes de cancelar.');
-    return P.transacao((d) => {
+    const ok = P.transacao((d) => {
       const x = d.pedidos.find((y) => y.id === pedidoId);
       x.status = 'cancelado';
       x.eventos.push({ tipo: 'cancelado', em: S.agoraIso() });
       d.ordens.filter((o) => o.pedidoId === pedidoId).forEach((o) => { o.status = 'cancelada'; });
-    }) ? { ok: true } : erro(NAO_SALVOU);
+    });
+    if (ok && agendaRotina()) agendaRotina().producaoCancelada(pedidoId);
+    return ok ? { ok: true } : erro(NAO_SALVOU);
   }
 
   /* =================== Mapa: etapas =================== */
@@ -407,6 +420,9 @@
     });
     if (!ok) return erro(acao === 'desfazer' ? 'O pedido já saiu da produção: não dá para desfazer.' : 'Esta etapa já foi marcada.');
     lancarEstoque();
+    // A produção do pedido foi toda lançada: a tarefa "Lançar a produção" da Agenda é concluída (P-46 item 1).
+    const pedido = o0 && P.dados.pedidos.find((x) => x.id === o0.pedidoId);
+    if (pedido && pedido.status === 'pronto' && agendaRotina()) agendaRotina().producaoLancada(pedido.id);
     return { ok: true };
   }
 

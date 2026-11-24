@@ -4,6 +4,17 @@
 Pedido do Washington. O principal cria a saída num **modal único** ("+ NOVO → Saídas", com os botões Despesa, Mercadoria e Retirada). No CICLUZ **cada categoria tem a sua tela, separada e sem janela**: os cartões **DES - Despesas**, **MER - Mercadorias** e **RET - Retiradas** de Saídas › Lançamentos agora abrem o app novo em `/app/lancamentos/despesas`, `/mercadorias` e `/retiradas` (antes eram telas vazias). Cada uma é uma **lista** (filtros, linhas, total) com o botão **"Novo lançamento"**, que leva ao **formulário em tela própria** (`/lancamentos/<categoria>/novo`; editar é `/lancamentos/<categoria>/<id>`), no padrão de tela do app: **três retângulos** (cabeçalho com o botão de voltar, ícone e título "Nova Despesa" / "Nova Mercadoria" / "Nova Retirada"; conteúdo; rodapé com a marca e os botões **Cancelar**, **Salvar e criar nova** e **Salvar**), na cor da origem. **Sem os três botões de troca do modal.**
 **Campos, em quadros com o título na borda (regra do Design System), na ordem do principal:** **Valor** (R$ grande, alinhado à direita) · **Juros** (tipo R$ ou % e valor) · **Valor Total** (somente leitura: valor + juros, já com o desconto geral); **Datas**: Data do lançamento (com o botão **Hoje**) e, em Despesa e Mercadoria, Data e Nº do documento fiscal; **Classificação**: Grupo (**só na Retirada**; em Despesa e Mercadoria o grupo é do item), Conta e Observação (obrigatória); **Pagamento** (só Despesa e Mercadoria): interruptor **Sim/Não** (Sim já põe hoje; precisa da permissão de pagar), Data do pagamento e Vencimento; **Discriminar itens** (só Despesa e Mercadoria; tabela, "Vale presente / desconto" geral e o bloqueio quando a soma não bate); **Recorrência** (só ao criar e com a permissão). **A Retirada é a versão enxuta:** Valor, Juros, Valor Total, Data do lançamento, Grupo, Conta e Observação (+ Recorrência); não tem documento fiscal, pagamento, vencimento nem discriminação (o vencimento enviado à API é a data do lançamento, e a lista da Retirada não mostra o selo "A pagar").
 **O que ainda NÃO está nesta tela (decisão e banco, P-47):** o **credor** (Tipo de credor Fornecedor / Colaborador / Sócio ou Gestor + Credor, obrigatório na Mercadoria e na Retirada do principal), as **duas fotos** (Recibo/Boleto/Nota e Nota/interno), o **item da discriminação vindo de cadastro** (Produtos, Patrimônio, Colaboradores) e a leitura por IA, a **conta vinculada ao usuário / travada pelo caixa** e o saldo. Dependem de campos novos no banco (**migration a autorizar**) e de decisões do Washington e do Rodrigo.
+
+## Agenda: respostas da P-46 nas telas (24/11/2026, Zé)
+**Janela da lista** ("Editar lista" / "Nova lista"): no quadro "Membros do grupo", o campo **"Quem entra no grupo"** (seletor do
+sistema): "Escolhidos à mão" ou "Quem tem acesso a <área>" (áreas do Acesso por Tela, lidas do catálogo do servidor). Com área, o
+botão "Escolher membros" some e o resumo explica que os membros entram e saem sozinhos com o acesso. **Configurações da Agenda**
+(janela de cada pessoa): primeiro o campo **"Colaborador do cadastro"** (seletor; só lista quem está no cadastro deste aparelho;
+"Nenhum: usa o expediente abaixo"), depois dias, início e fim (o expediente de reserva), "Fora do expediente" e o tempo parado
+(vazio = **padrão de 15 min**, escrito no próprio campo). **Saiu** a escolha "Hora trabalhada fora do expediente" (comum/extra):
+a hora é sempre calculada e aparece só no Desempenho até o Rodrigo decidir o pagamento. Na lista de pessoas, cada linha diz
+"Escala de <colaborador>" ou o expediente escrito, e "sai em N min parado".
+
 ## Agenda no padrão do Design System (24/11/2026, pedido do Zé)
 Revisão de toda a Agenda (Listas, Calendário, Kanban, Mapa mental, Desempenho, janelas e alertas), na origem (`agenda/agenda.css`
 e os `agenda/*.js`), sem `!important` novo. **Ícones (só imagem)** das listas automáticas, de "Minhas listas", dos indicadores do
@@ -26,7 +37,7 @@ claro, roxo clareado no escuro), no lugar de oito cores escuras escritas à mão
 (10, 13, 15, 18 e 20 px saíram; fica só o % em destaque do Desempenho, 22 px). **Espaços** de 12 px entre quadros. Os campos do
 Kanban e do Mapa mental ficam num quadro com o nome na moldura. A linha "Novo compromisso" tem 52 px. Local no mapa: os quatro
 botões em duas linhas em telas de até 380 px (no lugar da letra de 10 px). **Exceção mantida:** na linha "Novo compromisso" e na
-subtarefa, **Enter cria o próximo** (como no Lembretes) — a confirmar com o Rodrigo.
+subtarefa, **Enter cria o próximo** (como no Lembretes). **Confirmado pelo Zé em 24/11/2026** (P-46 item 8): é uma linha de anotação rápida, não um formulário; a regra "Enter não salva" continua valendo em todo o resto.
 
 ## Agenda: rotina (P-46, áudios do Rodrigo de 23/11/2026; feito em 24/11/2026)
 **Menu da Agenda:** só **Agenda** e **Configurações da Agenda** (Agendamento de Pedidos e de Produção ficam em Lançamentos).

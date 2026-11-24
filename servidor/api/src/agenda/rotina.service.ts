@@ -1,24 +1,32 @@
-import type {
-  ConfigPessoa,
-  ConfigPessoaResposta,
-  DesempenhoPessoa,
-  DesempenhoResposta,
-  MensagemResposta,
-  MinhaConfigResposta,
-  PerfilSessao,
-  TarefaDeTela
+import {
+  EXPEDIENTE_DIAS_ANTES,
+  EXPEDIENTE_DIAS_DEPOIS,
+  permissaoDaRegra,
+  type ConfigPessoa,
+  type ConfigPessoaResposta,
+  type DesempenhoPessoa,
+  type DesempenhoResposta,
+  type ExpedientesEnvio,
+  type MensagemResposta,
+  type MinhaConfigResposta,
+  type PerfilSessao,
+  type TarefaDeTela
 } from "@cicluz/shared";
-import { banco } from "../banco/conexao.ts";
+import { violouUnico } from "../acessos/acessos.service.ts";
+import { tem } from "../auth/permissoes.ts";
+import { banco, type TransacaoBanco } from "../banco/conexao.ts";
 import { conflito, ErroDominio, proibido } from "../erros.ts";
 import * as repo from "./compromissos.repository.ts";
 import { concluir, gravar, invalido, montar, naoEncontrado, naoTransferida, respostaDe } from "./compromissos.service.ts";
+import { contasComPermissao } from "./contas-por-permissao.ts";
 import * as gr from "./grupos.repository.ts";
 import * as rr from "./rotina.repository.ts";
-import { configDe, descreverExpediente, exigirExpediente, lerConfig, situacaoNoExpediente } from "./rotina.regras.ts";
+import { exigirExpediente, expedienteAgora, horaLocal, limiteParado } from "./rotina.regras.ts";
 
 // Rotina da Agenda (0008, P-46, áudios do Rodrigo de 23/11/2026):
-// - Configurações da Agenda por pessoa: o administrador define o expediente, se a Agenda abre fora dele, se a
-//   hora fora do expediente é registrada (como comum ou extra: só registro) e em quantos minutos parado o sistema sai.
+// - Configurações da Agenda por pessoa: o administrador define o expediente (quando a conta não está ligada a um
+//   colaborador com Horários/Escalas), se a Agenda abre fora dele e em quantos minutos parado o sistema sai
+//   (padrão 15). A hora fora do expediente é sempre calculada e só aparece no Desempenho (0009, P-46 item 6).
 // - Desempenho: no prazo, fora do prazo, não feitas, em aberto, tempo de resposta e hora fora do expediente.
 // - Tarefa vinda de uma tela (agendamento de pedido…): cai na lista "Tarefas das telas", para quem a tela escolheu.
 // - Chat do grupo: cada lista é um grupo; membro, dono e administrador conversam ali.
@@ -28,14 +36,19 @@ const soAdministrador = () => proibido("Só o administrador mexe nas configuraç
 
 /* ---------- Configurações ---------- */
 
+async function respostaConfig(empresaId: string, p: { id: string; nome: string; ativo: boolean }, atualizadoEm: Date | null): Promise<ConfigPessoaResposta> {
+  const e = await expedienteAgora(banco, empresaId, p.id);
+  return {
+    usuarioId: p.id, nome: p.nome, ativo: p.ativo, ...e.config, atualizadoEm: atualizadoEm ? atualizadoEm.toISOString() : "",
+    colaboradorLigado: e.colaboradorLigado, origemExpediente: e.origem, descricaoExpediente: e.descricao
+  };
+}
+
 export async function listarConfigs(perfil: PerfilSessao): Promise<ConfigPessoaResposta[]> {
   if (!admin(perfil)) throw soAdministrador();
   const [pessoas, linhas] = await Promise.all([rr.contas(perfil.empresa.id), rr.configs(perfil.empresa.id)]);
   const por = new Map(linhas.map((l) => [l.usuarioId, l]));
-  return pessoas.map((p) => {
-    const l = por.get(p.id);
-    return { usuarioId: p.id, nome: p.nome, ativo: p.ativo, ...configDe(l), atualizadoEm: l ? l.atualizadoEm.toISOString() : "" };
-  });
+  return Promise.all(pessoas.map((p) => respostaConfig(perfil.empresa.id, p, por.get(p.id)?.atualizadoEm ?? null)));
 }
 
 export async function salvarConfig(perfil: PerfilSessao, usuarioId: string, c: ConfigPessoa): Promise<ConfigPessoaResposta> {
@@ -45,15 +58,59 @@ export async function salvarConfig(perfil: PerfilSessao, usuarioId: string, c: C
   // Quem configura não se tranca para fora: o administrador não pode bloquear a própria Agenda.
   if (usuarioId === perfil.usuarioId && c.foraExpediente === "bloquear") throw invalido("Você não pode bloquear a sua própria Agenda fora do expediente.");
   const l = await rr.salvarConfig(perfil.empresa.id, usuarioId, c, perfil.usuarioId);
-  return { usuarioId, nome: pessoa.nome, ativo: pessoa.ativo, ...configDe(l), atualizadoEm: l.atualizadoEm.toISOString() };
+  return respostaConfig(perfil.empresa.id, pessoa, l.atualizadoEm);
 }
 
 /** A regra da própria pessoa: a tela usa para avisar e para sair sozinha depois do tempo parado. */
 export async function minhaConfig(perfil: PerfilSessao, momento = new Date()): Promise<MinhaConfigResposta> {
-  const c = await lerConfig(banco, perfil.empresa.id, perfil.usuarioId);
-  const s = situacaoNoExpediente(c, momento);
-  const dentro = s.onde === "dentro" || s.onde === "sem-expediente";
-  return { ...c, dentroDoExpediente: dentro, bloqueadaAgora: c.foraExpediente === "bloquear" && !dentro, descricaoExpediente: descreverExpediente(c) };
+  const e = await expedienteAgora(banco, perfil.empresa.id, perfil.usuarioId, momento);
+  const dentro = e.situacao.onde === "dentro" || e.situacao.onde === "sem-expediente";
+  return {
+    ...e.config, dentroDoExpediente: dentro, bloqueadaAgora: e.config.foraExpediente === "bloquear" && !dentro, descricaoExpediente: e.descricao,
+    origemExpediente: e.origem, inatividadeEfetivaMinutos: await limiteParado(banco, perfil.empresa.id, perfil.usuarioId)
+  };
+}
+
+/* ---------- Conta ligada ao colaborador e expediente dos Horários/Escalas (0009, P-46 item 5) ---------- */
+
+const podeExpedientes = (perfil: PerfilSessao) => admin(perfil) || tem(perfil, "pessoas_editar");
+const semPermissaoEscala = () => proibido("Você não tem permissão para mandar os Horários/Escalas.", "INSUFFICIENT_PERMISSION");
+
+/** Liga a conta a um colaborador do cadastro (pelo id). Só o administrador. */
+export async function ligarColaborador(perfil: PerfilSessao, usuarioId: string, colaboradorId: string | null) {
+  if (!admin(perfil)) throw proibido("Só o administrador liga a conta a um colaborador.", "ADMIN_ONLY");
+  try {
+    if (!(await rr.ligarColaborador(perfil.empresa.id, usuarioId, colaboradorId))) throw new ErroDominio("Pessoa não encontrada nesta empresa.", 404, "PESSOA_NAO_ENCONTRADA");
+  } catch (e) {
+    if (violouUnico(e, "perfis_usuarios_colaborador_uq")) throw conflito("Este colaborador já está ligado a outra conta.", "COLABORADOR_JA_LIGADO");
+    throw e;
+  }
+  return { usuarioId, colaboradorId };
+}
+
+/** Contas e o colaborador ligado a cada uma (ids). Para a tela do administrador e para o aparelho calcular. */
+export async function contasEColaboradores(perfil: PerfilSessao) {
+  if (!podeExpedientes(perfil)) throw semPermissaoEscala();
+  return (await rr.contas(perfil.empresa.id)).filter((c) => c.ativo).map((c) => ({ usuarioId: c.id, nome: c.nome, colaboradorId: c.colaboradorId ?? "" }));
+}
+
+const somarDias = (dia: string, n: number) => {
+  const d = new Date(dia + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+
+/** O aparelho manda o expediente dia a dia dos colaboradores ligados (só trabalha/folga e horário). */
+export async function receberExpedientes(perfil: PerfilSessao, e: ExpedientesEnvio, momento = new Date()) {
+  if (!podeExpedientes(perfil)) throw semPermissaoEscala();
+  const hoje = horaLocal(momento).data;
+  // Um dia a mais de cada lado: fuso e virada do dia entre o aparelho e o servidor.
+  if (e.de < somarDias(hoje, -EXPEDIENTE_DIAS_ANTES - 1) || e.ate > somarDias(hoje, EXPEDIENTE_DIAS_DEPOIS + 1)) throw invalido("Período fora da janela aceita.");
+  // Só os colaboradores ligados a uma conta: nada além do necessário sai do aparelho.
+  const ligados = new Set(await rr.colaboradoresLigados(perfil.empresa.id));
+  const colaboradores = e.colaboradores.filter((c) => ligados.has(c.colaboradorId));
+  await banco.transaction((tx) => rr.substituirExpedientes(tx, perfil.empresa.id, perfil.usuarioId, { ...e, colaboradores }));
+  return { recebidos: colaboradores.length, ignorados: e.colaboradores.length - colaboradores.length };
 }
 
 /* ---------- Desempenho ---------- */
@@ -114,7 +171,7 @@ export async function desempenho(perfil: PerfilSessao, de: string, ate: string, 
 export const LISTA_TAREFAS_TELAS = "lista-tarefas-das-telas";
 
 /** A lista "Tarefas das telas": criada na primeira tarefa, dona = administrador, membros = contas ativas. */
-async function garantirListaDasTelas(tx: Parameters<Parameters<typeof gravar>[1]>[0], perfil: PerfilSessao) {
+async function garantirListaDasTelas(tx: TransacaoBanco, perfil: PerfilSessao) {
   const empresaId = perfil.empresa.id;
   const g = await repo.grupo(tx, empresaId, LISTA_TAREFAS_TELAS);
   if (g && !g.excluidoEm) return;
@@ -144,16 +201,26 @@ export async function criarTarefaDeTela(perfil: PerfilSessao, e: TarefaDeTela) {
   const empresaId = perfil.empresa.id;
   const ja = await rr.porVinculo(banco, empresaId, e.vinculoRef);
   if (ja) return { criado: false, id: ja.id, compromisso: await seVisivel(banco, perfil, ja) };
-  return gravar(perfil, async (tx) => {
+  // Regra por permissão (P-46 itens 1 e 2): quem dispara tem a permissão; recebem todas as contas ativas com ela.
+  let responsaveis = e.responsaveis ?? [];
+  if (e.paraQuemTem) {
+    if (!tem(perfil, e.paraQuemTem)) throw proibido("Você não tem a permissão que esta tarefa exige.", "INSUFFICIENT_PERMISSION");
+    responsaveis = await contasComPermissao(empresaId, e.paraQuemTem);
+    if (!responsaveis.length) throw invalido("Ninguém tem a permissão para receber esta tarefa.");
+  }
+  // A tela agiu (pedido enviado, Período de Teste registrado): a tarefa nasce mesmo que quem agiu esteja fora do
+  // próprio expediente na Agenda — o bloqueio é para usar a Agenda, não para as telas (revisão de 24/11/2026).
+  return gravar(perfil, { semExpediente: true }, async (tx) => {
     await garantirListaDasTelas(tx, perfil);
     const lista = (await repo.grupo(tx, empresaId, LISTA_TAREFAS_TELAS))!;
-    const pessoas = [...new Set(e.responsaveis)].map((id) => ({ id, responsavel: true, ver: true, editar: false, concluir: true, excluir: false }));
+    const pessoas = [...new Set(responsaveis)].map((id) => ({ id, responsavel: true, ver: true, editar: false, concluir: true, excluir: false }));
     const contas = await repo.contasDaEmpresa(tx, empresaId, pessoas.map((p) => p.id));
     if (pessoas.some((p) => !contas.has(p.id))) throw invalido("Uma das pessoas da tarefa não é conta desta empresa.");
     const m = montar({
       grupoId: LISTA_TAREFAS_TELAS, titulo: e.titulo, notas: e.notas, url: "", local: "", localizacao: null,
       data: e.data, hora: e.hora, horaFim: "", repeticao: null, alerta: e.data && e.hora ? 0 : null, prioridade: "normal", sinalizado: false,
-      etiquetas: [], subtarefas: [], pessoas, avaliacaoTipo: "", colunaId: "", vinculoTela: e.vinculoTela, vinculoTitulo: e.vinculoTitulo
+      etiquetas: [], subtarefas: e.subtarefas.map((titulo) => ({ titulo, concluida: false })), pessoas, avaliacaoTipo: "", colunaId: "",
+      vinculoTela: e.vinculoTela, vinculoTitulo: e.vinculoTitulo
     }, null);
     const ordem = (await repo.maiorOrdem(tx, empresaId, LISTA_TAREFAS_TELAS)) + 1;
     const criou = await repo.inserirCompromisso(tx, {
@@ -182,6 +249,22 @@ export async function concluirPorVinculo(perfil: PerfilSessao, vinculoRef: strin
   if (c.concluida) return { resultado: "sem-mudanca" as const, compromisso: atual };
   const r = await concluir(perfil, c.id, c.repeticaoTipo && c.data ? { concluida: true, ocorrencia: c.data } : { concluida: true });
   return { resultado: r.resultado, compromisso: r.compromisso };
+}
+
+/**
+ * A tela desfez o que gerou a tarefa (ex.: o pedido de produção foi cancelado): a tarefa aberta sai da Agenda.
+ * Só para as regras por permissão, e só quem tem a permissão da regra. Já concluída fica como está.
+ */
+export async function cancelarPorVinculo(perfil: PerfilSessao, vinculoRef: string) {
+  const exigida = permissaoDaRegra(vinculoRef);
+  if (!exigida || !tem(perfil, exigida)) throw proibido("Você não pode cancelar esta tarefa.", "INSUFFICIENT_PERMISSION");
+  const c = await rr.porVinculo(banco, perfil.empresa.id, vinculoRef);
+  if (!c || c.excluidoEm || c.concluida) return { resultado: "sem-mudanca" as const };
+  await gravar(perfil, { semExpediente: true }, async (tx) => {
+    await repo.atualizarCompromisso(tx, perfil.empresa.id, c.id, { excluidoEm: new Date(), excluidoPor: perfil.usuarioId, atualizadoPor: perfil.usuarioId });
+    await repo.excluirRelacoesDe(tx, perfil.empresa.id, [c.id]);
+  });
+  return { resultado: "cancelada" as const };
 }
 
 /* ---------- Chat do grupo ---------- */

@@ -2,9 +2,11 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import {
   compromissoIdSchema,
+  colaboradorDaContaSchema,
   concluirPorVinculoSchema,
   configPessoaSchema,
   desempenhoQuerySchema,
+  expedientesSchema,
   listarMensagensSchema,
   mensagemSchema,
   ok,
@@ -45,6 +47,20 @@ export async function registrarRotasRotina(app: FastifyInstance) {
     const { vinculoRef } = concluirPorVinculoSchema.parse(request.body);
     return ok(await rotina.concluirPorVinculo(perfilDaRequisicao(request), vinculoRef));
   });
+  app.post("/api/agenda/tarefas-de-tela/cancelar", async (request) => {
+    const { vinculoRef } = concluirPorVinculoSchema.parse(request.body);
+    return ok(await rotina.cancelarPorVinculo(perfilDaRequisicao(request), vinculoRef));
+  });
+
+  /* Conta ligada ao colaborador e expediente dos Horários/Escalas (0009, P-46 item 5) */
+  app.get("/api/agenda/expedientes/contas", async (request) => ok({ contas: await rotina.contasEColaboradores(perfilDaRequisicao(request)) }));
+  app.put("/api/agenda/expedientes/contas/:usuarioId", async (request) => {
+    const { usuarioId } = pessoaParams.parse(request.params);
+    const { colaboradorId } = colaboradorDaContaSchema.parse(request.body);
+    return ok(await rotina.ligarColaborador(perfilDaRequisicao(request), usuarioId, colaboradorId));
+  });
+  app.put("/api/agenda/expedientes", { config: limiteTarefas }, async (request) =>
+    ok(await rotina.receberExpedientes(perfilDaRequisicao(request), expedientesSchema.parse(request.body))));
 
   /* Chat do grupo (cada lista) */
   app.get("/api/agenda/grupos/:id/mensagens", { config: limiteChat }, async (request) => {

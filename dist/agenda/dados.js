@@ -64,7 +64,7 @@
       criadoEm: c.criadoEm, criadoPor: c.gestorId, atualizadoEm: c.atualizadoEm, versao: c.versao, acesso: c.acesso || NADA,
     };
   }
-  const listaDeApi = (g) => ({ id: g.id, nome: g.nome, cor: corSegura(g.cor), icone: g.icone || 'lista', ordenacao: g.ordenacao || 'manual', ordem: g.ordem, donoId: g.donoId, membro: g.membro, podeGerir: g.podeGerir, versao: g.versao });
+  const listaDeApi = (g) => ({ id: g.id, nome: g.nome, cor: corSegura(g.cor), icone: g.icone || 'lista', ordenacao: g.ordenacao || 'manual', ordem: g.ordem, donoId: g.donoId, membro: g.membro, podeGerir: g.podeGerir, versao: g.versao, area: g.area || '' });
 
   /** Campos do formulário da tela → corpo da API. A tela não escolhe gestor, âncora nem `feitas` (são do servidor). */
   function paraFormulario(c) {
@@ -158,7 +158,8 @@
     const marca = gravacoes;
     let resp;
     try {
-      resp = await fetch('/api/agenda', { credentials: 'same-origin', headers: etag && !forcar ? { 'If-None-Match': etag } : {} });
+      // Leitura automática (a cada 30 s e depois de gravar): não conta como "mexeu" (P-46 item 4).
+      resp = await fetch('/api/agenda', { credentials: 'same-origin', headers: Object.assign({ 'X-Cicluz-Automatico': '1' }, etag && !forcar ? { 'If-None-Match': etag } : {}) });
     } catch (e) {
       return usarCache('sem-internet');
     }
@@ -530,15 +531,16 @@
   }
 
   /* ---------- Listas ---------- */
-  async function salvarLista(id, { nome, cor, icone }) {
+  /** area: área do Acesso por Tela ('' = membros escolhidos à mão). undefined = não mexe (P-46 item 3). */
+  async function salvarLista(id, { nome, cor, icone, area }) {
     const n = String(nome || '').trim();
     if (!n) return erro('Informe o nome da lista.');
     if (n.length > 40) return erro('O nome da lista passa de 40 letras.');
     const atual = id ? lista(id) : null;
     if (id && !atual) return erro('Lista não encontrada.');
     const r = atual
-      ? await enviar('/agenda/grupos/' + encodeURIComponent(id), 'PUT', { versao: atual.versao, nome: n, ...(cor ? { cor: corSegura(cor) } : {}), ...(icone ? { icone } : {}) })
-      : await enviar('/agenda/grupos', 'POST', { id: novoId('lista'), nome: n, cor: corSegura(cor || CORES_LISTA[dados.listas.length % CORES_LISTA.length]), icone: icone || 'lista' });
+      ? await enviar('/agenda/grupos/' + encodeURIComponent(id), 'PUT', { versao: atual.versao, nome: n, ...(cor ? { cor: corSegura(cor) } : {}), ...(icone ? { icone } : {}), ...(area !== undefined ? { area } : {}) })
+      : await enviar('/agenda/grupos', 'POST', { id: novoId('lista'), nome: n, cor: corSegura(cor || CORES_LISTA[dados.listas.length % CORES_LISTA.length]), icone: icone || 'lista', area: area || '' });
     if (r.erro) return r;
     const l = guardarLista(r.dados);
     gravou();
@@ -644,6 +646,26 @@
     if (r.dados.compromisso && situacao === 'servidor') { guardarItem(r.dados.compromisso); gravou(); }
     return { ok: true, resultado: r.dados.resultado };
   }
+  /** A tela desfez o que gerou a tarefa (pedido cancelado): a tarefa aberta sai (só regras por permissão). */
+  async function cancelarPorVinculo(vinculoRef) {
+    const r = await api('/agenda/tarefas-de-tela/cancelar', { metodo: 'POST', corpo: { vinculoRef } });
+    if (r.erro) return r;
+    if (r.dados.resultado === 'cancelada') { etag = ''; if (situacao === 'servidor') atualizar(true); }
+    return { ok: true, resultado: r.dados.resultado };
+  }
+  /** Áreas do Acesso por Tela (fonte única: o catálogo do servidor), para ligar uma lista a uma área. */
+  let areasCache = null;
+  async function areasAcesso() {
+    if (areasCache) return { dados: areasCache };
+    const r = await api('/acessos/catalogo');
+    if (r.erro) return r;
+    areasCache = (r.dados.areas || []).map((a) => ({ id: a.id, nome: a.nome }));
+    return { dados: areasCache };
+  }
+  /* Conta ligada ao colaborador e expediente dos Horários/Escalas (0009, P-46 item 5). */
+  const contasEColaboradores = () => api('/agenda/expedientes/contas');
+  const ligarColaborador = (usuarioId, colaboradorId) => api('/agenda/expedientes/contas/' + encodeURIComponent(usuarioId), { metodo: 'PUT', corpo: { colaboradorId: colaboradorId || null } });
+  const enviarExpedientes = (corpo) => api('/agenda/expedientes', { metodo: 'PUT', corpo });
 
   window.CicluzAgendaDados = {
     CHAVE_CACHE, CORES_LISTA, CONCLUIDO,
@@ -661,6 +683,7 @@
     moverColuna, reordenar, limparConcluidos,
     salvarLista, definirOrdenacao, excluirLista, salvarColuna, excluirColuna,
     previaTransferencia, transferir,
-    membros, definirMembros, minhaConfig, configs, salvarConfig, desempenho, tarefaDeTela, concluirPorVinculo, conectado,
+    membros, definirMembros, minhaConfig, configs, salvarConfig, desempenho, tarefaDeTela, concluirPorVinculo, cancelarPorVinculo, conectado,
+    contasEColaboradores, ligarColaborador, enviarExpedientes, areasAcesso,
   };
 })();
