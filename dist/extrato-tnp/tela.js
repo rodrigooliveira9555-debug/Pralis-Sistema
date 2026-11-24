@@ -110,7 +110,7 @@
     const s = U.secao('Hoje');
     const conta = d.contas.find((c) => c.contaId === estado.conta) || d.contas[0];
     const saldo = estado.conta && conta ? conta.saldoCentavos : d.saldoTotalCentavos;
-    const pend = d.hoje.pendentes ? d.hoje.pendentes + ' pendente(s) fora do total' : '';
+    const pend = d.hoje.pendentes ? d.hoje.pendentes + ' pendente(s), fora dos valores' : '';
     const grade = el('div', 'vendas-pdv-numeros');
     grade.append(
       numero('Saldo', moeda(saldo), conta ? 'Lido em ' + quando(conta.saldoLidoEm) : ''),
@@ -169,7 +169,8 @@
       item('Entradas no período', '+' + moeda(t.entradas), 'entrada'),
       item('Saídas no período', '−' + moeda(Math.abs(t.saidas)), 'saida'),
       item('Resultado', moeda(t.liquido)),
-      item('Lançamentos', t.quantidade + (t.pendentes ? ' + ' + t.pendentes + ' pendente(s)' : '')),
+      // quantidade do coletor já inclui os pendentes
+      item('Lançamentos', t.quantidade + (t.pendentes ? ' (' + t.pendentes + ' pendente' + (t.pendentes > 1 ? 's' : '') + ')' : '')),
     );
   }
 
