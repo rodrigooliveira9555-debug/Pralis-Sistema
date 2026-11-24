@@ -130,7 +130,7 @@
     // O nome do grupo vem de A.grupo('Cargos de acesso', …) em volta.
     const box = U.el('div', 'acessos-escolha');
     const ativos = estado.cargos.filter((c) => c.ativo || selecionados.has(c.id));
-    if (!ativos.length) box.append(U.nota('Nenhum cargo de acesso ainda. Monte em Configurações › Permissões › Cargos de Acesso.'));
+    if (!ativos.length) box.append(U.nota('Nenhum cargo de acesso cadastrado.'));
     ativos.forEach((c) => {
       const b = U.botao(c.nome, () => {
         if (selecionados.has(c.id)) selecionados.delete(c.id); else selecionados.add(c.id);

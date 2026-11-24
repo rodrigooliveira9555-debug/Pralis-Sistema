@@ -7,7 +7,7 @@
 ## Onde está
 
 - Menu **Configurações** (OUTROS, roxo #7c3aed): Usuários → *Pessoas com Acesso*, *Dados no
-  Servidor*; Permissões → *Cargos de Acesso*, *Acessos por Pessoa*; Senhas → *Minha Senha*,
+  Servidor*; Permissões → *Acesso por Tela* (as telas *Cargos de Acesso* e *Acessos por Pessoa* foram removidas em 23/11/2026, ver item 10); Senhas → *Minha Senha*,
   *Senha de Outra Pessoa*. Código em `dist/acessos/`; endereço próprio `#/configuracoes/<item>/acessos-<tela>`
   (o nome no rodapé do menu lateral abre `#/configuracoes/senhas/acessos-senhas`).
 - Servidor: `servidor/api/src/acessos/` (cargos de acesso e exceções) e `servidor/api/src/usuarios/`.
@@ -27,7 +27,7 @@
    bloqueia; o resto é negado. Sem camada de setor, sem montagem de menu, sem matriz. Uma pessoa
    pode ter vários cargos (vale a soma dos ativos).
 3. **Um caminho por ato:** os cargos da pessoa são escolhidos só em *Pessoas com Acesso*; os ajustes
-   (exceções) só em *Acessos por Pessoa*; senha de outra pessoa só em *Senhas*.
+   (exceções) estavam só em *Acessos por Pessoa* (tela removida, item 10); senha de outra pessoa só em *Senhas*.
 4. **Administrador** tem todas as permissões. Só ele cria/edita outro administrador e define a senha
    de outra pessoa (regra que já existia).
 5. **Ninguém sobe o próprio nível** (quem não é administrador): toda mudança confere o **resultado
@@ -47,7 +47,8 @@
    Diretor de Operações, Diretor Geral — inspirados em `db/src/referencia-permissoes.ts` do
    principal. **Precisa do Rodrigo:** conferir o que cada um libera.
 
-9. **Acesso por Tela (esboço, Washington, 19/11/2026):** terceiro cartão de Permissões. Menu inteiro com o nível de acesso de cada tela. **Só esboço**: dados de exemplo (`dist/acessos/telas-dados.js`), sem backend, nada gravado. Ver DESIGN_SYSTEM.md e P-41 no doc 11. Não substitui os cargos de acesso atuais.
+9. **Acesso por Tela (esboço, Washington, 19 e 23/11/2026):** terceiro cartão de Permissões. Menu inteiro (lido do próprio menu: módulo novo entra desligado) com **sete permissões por tela** (← Lançar, ← Discriminar, ← Editar, ← Visualizar, ↔ Pagar, → Editar, → Visualizar), só ícones, mais o "!" que abre as 16 ações especiais da coluna (significado do "!" por tela pendente, P-41 item 6); telas à esquerda e uma coluna para cada escolha (colaborador do DP, cargo de DES - Cargos C/Salários ou área de DES - Área / Setor / Local), aberta pelo "+". **Só esboço**: sem backend, nada gravado. Ver DESIGN_SYSTEM.md e P-41 no doc 11. Não substitui os cargos de acesso atuais.
+10. **Telas Cargos de Acesso e Acessos por Pessoa removidas (Washington, 23/11/2026):** o cartão de Permissões ficou só com *Acesso por Tela*. Saíram `cargos.js`, `pessoa.js` e o CSS delas; **o servidor (`servidor/api/src/acessos/`), as tabelas e os dados de cargos de acesso e exceções por pessoa não foram mexidos**, e *Pessoas com Acesso* ainda escolhe cargos já cadastrados. **Consequência a decidir (P-41):** hoje ninguém consegue criar ou editar um cargo de acesso nem uma exceção pela tela, e o *Acesso por Tela* ainda é só esboço sem backend; até haver o modelo novo e a conversão dos cargos, o que já está gravado continua valendo, mas não há tela para mudar.
 
 ## O que a permissão bloqueia hoje (honesto)
 
