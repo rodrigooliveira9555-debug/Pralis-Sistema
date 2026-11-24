@@ -439,8 +439,11 @@ body .btn.acao-com-circulo[hidden]{display:none}
 .location-tree.unidades-arvore .location-row .location-name{line-height:16px}
 .location-tree.unidades-arvore .location-row .location-count{font-size:var(--escolha-detalhe);line-height:14px;margin-top:0}
 .uniforms-options .uniforms-escolha{min-height:var(--escolha-linha);padding-top:4px;padding-bottom:4px;gap:8px}
-.uniforms-options .uniforms-escolha>.compras-linha-icone{flex:0 0 var(--escolha-icone);width:var(--escolha-icone);height:var(--escolha-icone)}
-.uniforms-options .uniforms-escolha>.compras-linha-icone svg{width:16px;height:16px}
+.uniforms-options .uniforms-escolha>.compras-linha-icone,.uniforms-options .uniforms-escolha>.compras-linha-icones>.compras-linha-icone{flex:0 0 var(--escolha-icone);width:var(--escolha-icone);height:var(--escolha-icone)}
+.uniforms-options .uniforms-escolha>.compras-linha-icone svg,.uniforms-options .uniforms-escolha>.compras-linha-icones>.compras-linha-icone svg{width:16px;height:16px}
+.uniforms-options .uniforms-escolha>.compras-linha-icones>.compras-linha-icone{color:#fff}
+.uniforms-options .uniforms-escolha>.compras-linha-icones>.compras-linha-icone .sigla-text{font-size:8px;color:#fff}
+.uniforms-options .uniforms-escolha.marcado{background:color-mix(in srgb,var(--menu-accent,#7c3aed) 10%,var(--theme-card,#fff))}
 .uniforms-options .uniforms-escolha .compras-linha-texto b{font-size:var(--escolha-titulo);line-height:16px}
 .uniforms-options .uniforms-escolha .compras-linha-texto small,.uniforms-options .uniforms-escolha .account-list-state{font-size:var(--escolha-detalhe);line-height:14px}
 /* A caixa de marcar das listas de escolha: o tamanho e o respiro dos campos de janela são fixados por regras gerais, que agora leem
