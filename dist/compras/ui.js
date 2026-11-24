@@ -805,9 +805,9 @@
    */
   /**
    * Campo de hora (24/11/2026, Washington): o MESMO desenho do campo de aniversário (dia e mês). Um campo com a máscara HH:MM para digitar e o botão
-   * redondo do relógio; tocar no campo ou no botão abre um painel flutuante (flutuante) com a grade das 24 horas e a dos minutos de 5 em 5, em células de
+   * redondo do relógio; tocar no campo ou no botão abre um painel flutuante (flutuante) com DUAS COLUNAS que rolam, as 24 horas e os 60 minutos, em células de
    * cantos arredondados, a escolhida cheia na cor do menu. Escolher a hora deixa o painel aberto (o minuto começa em 00); escolher o minuto fecha.
-   * Minuto que não é múltiplo de 5 se digita no campo. Devolve { caixa, painel, input }: quem usa põe a caixa na tela e o painel ao lado dela.
+   * Qualquer minuto se escolhe na coluna ou se digita no campo. Devolve { caixa, painel, input }: quem usa põe a caixa na tela e o painel ao lado dela.
    * input.value é "HH:MM" (ou vazio); hora incompleta ou fora de 00:00 a 23:59 deixa o campo inválido (setCustomValidity).
    */
   function campoHora({ valor = '', rotulo = 'Hora' } = {}) {
@@ -823,9 +823,15 @@
     const caixa = el('div', 'compras-aniv-campo compras-hora-campo'); caixa.append(input, botao);
     const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-hora-painel');
     painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', rotulo + ': hora e minuto');
-    const gradeHora = el('div', 'compras-grade-escolha em-6'); const gradeMin = el('div', 'compras-grade-escolha em-6');
-    painel.append(el('span', 'compras-rotulo', 'Hora'), gradeHora, el('span', 'compras-rotulo', 'Minuto'), gradeMin);
-    const abrir = flutuante(caixa, painel);
+    // Duas colunas que rolam (como o seletor de hora do navegador, mas no desenho do calendário): as 24 horas e os 60 minutos.
+    const gradeHora = el('div', 'compras-grade-escolha compras-hora-lista'); const gradeMin = el('div', 'compras-grade-escolha compras-hora-lista');
+    const colHora = el('div', 'compras-hora-coluna'); colHora.append(el('span', 'compras-rotulo', 'Hora'), gradeHora);
+    const colMin = el('div', 'compras-hora-coluna'); colMin.append(el('span', 'compras-rotulo', 'Minuto'), gradeMin);
+    painel.append(colHora, colMin);
+    const abrirPainel = flutuante(caixa, painel);
+    // Ao abrir, cada coluna rola até o valor marcado (no meio da janela).
+    const rolarAteMarcado = () => [gradeHora, gradeMin].forEach((lista) => { const m = lista.querySelector('[aria-pressed="true"]'); if (m) lista.scrollTop = Math.max(0, m.offsetTop - (lista.clientHeight - m.offsetHeight) / 2); });
+    const abrir = (sim) => { abrirPainel(sim); if (sim) rolarAteMarcado(); };
     const celula = (texto, marcado, nome, aoTocar) => {
       const b = el('button', 'compras-grade-celula', texto);
       b.type = 'button'; b.setAttribute('aria-pressed', String(marcado)); b.setAttribute('aria-label', nome); b.onclick = aoTocar;
@@ -839,8 +845,8 @@
         const n = String(i).padStart(2, '0');
         return celula(n, n === hora, 'Hora ' + n, () => { hora = n; if (!minuto) minuto = '00'; pintar(); });
       }));
-      gradeMin.replaceChildren(...Array.from({ length: 12 }, (_, i) => {
-        const n = String(i * 5).padStart(2, '0');
+      gradeMin.replaceChildren(...Array.from({ length: 60 }, (_, i) => {
+        const n = String(i).padStart(2, '0');
         return celula(n, n === minuto, 'Minuto ' + n, () => { minuto = n; pintar(); if (hora) fechar(); });
       }));
     }
