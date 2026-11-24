@@ -149,16 +149,41 @@
     return fora;
   }
   // Os três cabeçalhos da matriz, na ordem: cada um tem o seu "+" (abre uma coluna do tipo) e a sua seta (oculta ou mostra as colunas dele).
-  const TIPOS = ['pessoa', 'cargo', 'area'];
+  const TIPOS = ['area', 'cargo', 'pessoa'];
   const ROTULO_GRUPO = { pessoa: 'Colaborador', cargo: 'Cargo', area: 'Área' };
   const GLIFO_TIPO = {
     pessoa: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1a6 6 0 0 1 14 0v1"/>',
     cargo: '<circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/>',
     area: '<path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11Z"/><circle cx="12" cy="10" r="2.2"/>',
   };
+  /**
+   * Hierarquia Área › Cargo › Pessoa (24/11/2026): cargo e colaborador só se escolhem DENTRO das áreas já escolhidas (a área vem primeiro). As áreas
+   * escolhidas valem com tudo que está embaixo (setor e local). O cargo tem o id "ÁREA|CARGO" (o cargo configurado naquela área); o colaborador tem o
+   * id dele, e o cargo dele é um só.
+   */
+  function nosDasAreasEscolhidas() {
+    const H = window.CicluzHierarquia;
+    if (!H) return [];
+    const ids = new Set(estado.blocos.filter((b) => b.alvo && b.tipo === 'area').map((b) => b.alvo.id));
+    const out = [];
+    const andar = (n, dentro) => { const agora = dentro || ids.has(n.id); if (agora) out.push(n); n.areas.forEach((f) => andar(f, agora)); };
+    H.arvore().forEach((r) => andar(r, false));
+    return out;
+  }
+  function cargosDasAreas() {
+    const out = [];
+    nosDasAreasEscolhidas().forEach((n) => n.cargos.forEach((c) => out.push({ id: n.id + '|' + c.id, nome: c.nome, detalhe: 'em ' + n.nome, areaId: n.id, cargoId: c.id, areaNome: n.nome, caminho: n.nome })));
+    return out.sort(porNome);
+  }
+  function pessoasDasAreas() {
+    const vistos = new Map();
+    nosDasAreasEscolhidas().forEach((n) => n.cargos.forEach((c) => c.pessoas.forEach((p) => { if (!vistos.has(p.id)) vistos.set(p.id, { id: p.id, nome: p.nome, detalhe: c.nome + ' · ' + n.nome, cargoId: c.id, areaId: n.id, areaNome: n.nome, caminho: c.nome + ' ' + n.nome }); })));
+    return [...vistos.values()].sort(porNome);
+  }
+  const temAreaEscolhida = () => estado.blocos.some((b) => b.alvo && b.tipo === 'area');
   const LINHAS = [
-    ['pessoa', 'Usuário / colaborador', 'Selecionar o nome', pessoasDP, 'Nenhum colaborador ativo no DP ainda.'],
-    ['cargo', 'Cargo', 'Selecionar o cargo', cargosDES, 'Nenhum cargo cadastrado.'],
+    ['pessoa', 'Colaborador', 'Selecionar o colaborador', pessoasDasAreas, 'Nenhum colaborador ligado a um cargo destas áreas. Ligue o colaborador ao cargo no cadastro dele e o cargo à área em DES - Área / Setor / Local.'],
+    ['cargo', 'Cargo', 'Selecionar o cargo', cargosDasAreas, 'Nenhum cargo ligado a estas áreas. Ligue os cargos em DES - Área / Setor / Local.'],
     ['area', 'Área', 'Selecionar a área', areasDES, 'Nenhuma área cadastrada.'],
   ];
 
@@ -168,13 +193,33 @@
    * Primeira vez que alguém é escolhido: todas as permissões de todas as telas que existem AGORA vêm ligadas. Telas que entram
    * no menu depois não estão em "conhecidas": aparecem desligadas, com a etiqueta "Novo", até alguém ligar.
    */
+  /** A configuração de onde a personalização parte: para o cargo, a da área escolhida mais próxima; para o colaborador, a do cargo dele ou a da área dele. */
+  function modeloDe(alvo) {
+    const H = window.CicluzHierarquia;
+    const colunaDaArea = (id) => estado.blocos.find((b) => b.alvo && b.tipo === 'area' && b.alvo.id === id);
+    const doCadeia = (areaId) => { const cadeia = H && H.dominio ? H.dominio.cadeiaDaArea(H.arvore(), areaId) : [areaId]; for (const id of cadeia) { if (colunaDaArea(id)) return registros.get('area:' + id) || null; } return null; };
+    if (alvo.tipo === 'cargo') return doCadeia(alvo.areaId);
+    if (alvo.tipo === 'pessoa') {
+      const col = estado.blocos.find((b) => b.alvo && b.tipo === 'cargo' && b.alvo.cargoId === alvo.cargoId);
+      return (col && registros.get('cargo:' + col.alvo.id)) || doCadeia(alvo.areaId);
+    }
+    return null;
+  }
   function registro(menu, alvo) {
     if (!alvo) return null;
     const k = alvo.tipo + ':' + alvo.id;
     let r = registros.get(k);
     if (!r) {
       r = { telas: {}, conhecidas: new Set(), acoes: new Set() };
-      menu.forEach((g) => g.secoes.forEach((s) => s.telas.forEach((t) => { r.telas[t.chave] = new Set(TODAS); r.conhecidas.add(t.chave); })));
+      const pai = alvo.tipo === 'area' ? null : modeloDe(alvo);
+      if (pai) {
+        // Configuração própria: começa como cópia do que valia (a do cargo ou a da área) e, daqui para a frente, não segue mais a de cima.
+        Object.keys(pai.telas).forEach((c) => { r.telas[c] = new Set(pai.telas[c]); });
+        pai.conhecidas.forEach((c) => r.conhecidas.add(c));
+        pai.acoes.forEach((a) => r.acoes.add(a));
+        r.propria = true;
+      } else menu.forEach((g) => g.secoes.forEach((s) => s.telas.forEach((t) => { r.telas[t.chave] = new Set(TODAS); r.conhecidas.add(t.chave); })));
+      if (alvo.tipo !== 'area') r.propria = true;
       registros.set(k, r);
     }
     return r;
@@ -271,7 +316,7 @@
         const bt = U.linhaLista({
           icones: [seloOpcao], titulo: o.nome, detalhe: o.detalhe || '',
           direita: marcado ? el('span', 'account-list-state', 'Escolhida') : undefined,
-          aoClicar: () => { b.quem = ''; b.alvo = o.id ? { tipo: id, id: o.id, nome: o.nome } : null; desenhar(); },
+          aoClicar: () => { b.quem = ''; b.alvo = o.id ? { tipo: id, id: o.id, nome: o.nome, areaId: o.areaId, cargoId: o.cargoId, areaNome: o.areaNome } : null; desenhar(); },
         });
         bt.classList.add('uniforms-escolha');
         if (marcado) bt.classList.add('marcado');
@@ -281,7 +326,7 @@
         bt.dataset.busca = U.dobrar(o.nome + ' ' + (o.caminho || '') + ' ' + (o.detalhe || ''));
         return bt;
       });
-      if (!itens.length) lista.append(el('p', 'profiles-note acessos-telas-vazio', semItens));
+      if (!itens.length) lista.append(el('p', 'profiles-note acessos-telas-vazio', id !== 'area' && !temAreaEscolhida() ? 'Escolha primeiro a área. Cargo e colaborador se escolhem dentro dela.' : semItens));
       if (itens.length > 8) {
         const campo = U.entrada('search', '', { placeholder: 'Buscar' });
         campo.className = 'acessos-telas-busca-quem';
@@ -313,6 +358,21 @@
     return box;
   }
 
+  /** Quantas pessoas seguem cada configuração, depois de aplicar a prevalência (pessoa > cargo > área). */
+  function quemSegueAgora() {
+    const H = window.CicluzHierarquia;
+    if (!H || !H.dominio) return {};
+    const configs = {};
+    estado.blocos.forEach((b) => {
+      if (!b.alvo) return;
+      const k = b.alvo.tipo + ':' + b.alvo.id; const r = registros.get(k);
+      if (!r) return;
+      const telas = {}; Object.keys(r.telas).forEach((c) => { telas[c] = [...r.telas[c]]; });
+      configs[k] = { telas, acoes: [...r.acoes] };
+    });
+    return H.dominio.quemSegue(H.pessoas(), configs, H.arvore());
+  }
+
   function desenhar(irAoFim) {
     const antes = tela.body.querySelector('.acessos-matriz');
     const rolagem = tela.body.scrollTop;
@@ -322,7 +382,7 @@
     const menu = lerMenu();
     const regs = colunas().map((b) => registro(menu, b.alvo));
     const blocos = [];
-    blocos.push(U.nota('Esboço: nada é gravado e nenhum acesso muda. As telas são as do menu do sistema; colaboradores, cargos e áreas são os cadastrados no sistema. As três linhas do cabeçalho (Colaborador, Cargo, Área) têm cada uma o seu + para abrir uma coluna e a sua seta para ocultar ou mostrar as colunas dela; a escolha vira uma coluna ao lado, já com tudo ligado. Cada ícone é uma permissão: ← antes de pagar · ↔ pagar · → depois de pagar; o ! abre as ações especiais da coluna (passe o mouse no ícone para ver o nome).'));
+    blocos.push(U.nota('Esboço: nada é gravado e nenhum acesso muda. A hierarquia é Área › Cargo › Colaborador: escolha primeiro a área (vale com os setores e locais dela); depois, dentro dela, um cargo ou um colaborador para dar uma configuração própria. Vale sempre a mais específica: o colaborador, depois o cargo, depois a área. O colaborador tem um cargo só e pode estar em mais de uma área (valem as permissões maiores). Cada ícone é uma permissão: ← antes de pagar · ↔ pagar · → depois de pagar; o ! abre as ações especiais da coluna.'));
     let fimDoCabecalho = null;
     if (estado.modo === 'telas') {
       // O botão "‹ ›" do cabeçalho (o mesmo das listas): abre todos os menus e submenus de uma vez; com tudo aberto, recolhe tudo. Fica sempre à vista.
@@ -370,16 +430,23 @@
     mat.setAttribute('aria-label', 'Acessos por tela: o nome das telas fica à esquerda, uma coluna de interruptores para cada escolha');
     mat.tabIndex = 0;
     const resumos = [];
-    const atualizarResumos = () => resumos.forEach(([reg, alvo]) => {
+    const seguem = quemSegueAgora();
+    const atualizarResumos = () => resumos.forEach(([reg, alvo, quem]) => {
       if (estado.modo === 'acoes') { alvo.textContent = reg ? reg.acoes.size + ' de ' + ACOES.reduce((n, g) => n + g.i.length, 0) + ' ações liberadas' : 'Escolha para quem é esta coluna.'; return; }
       let com = 0; let novas = 0;
       menu.forEach((g) => g.secoes.forEach((s) => s.telas.forEach((t) => {
         if (reg && TODAS.some((id) => (reg.telas[t.chave] || new Set()).has(id))) com++;
         if (reg && !reg.conhecidas.has(t.chave)) novas++;
       })));
-      alvo.textContent = reg
-        ? com + (com === 1 ? ' tela com acesso' : ' telas com acesso') + (novas ? ' · ' + novas + (novas === 1 ? ' nova, desligada' : ' novas, desligadas') : '')
-        : 'Escolha para quem é esta coluna.';
+      const n = quem ? seguem[quem.tipo + ':' + quem.id] || 0 : 0;
+      const partes = [];
+      if (quem && quem.tipo === 'cargo' && quem.areaNome) partes.push('em ' + quem.areaNome);
+      partes.push(com + (com === 1 ? ' tela' : ' telas'));
+      if (quem && quem.tipo !== 'area') partes.push('própria');
+      if (quem && quem.tipo !== 'pessoa') partes.push(n + (n === 1 ? ' pessoa segue' : ' pessoas seguem'));
+      if (novas) partes.push(novas + (novas === 1 ? ' nova, desligada' : ' novas, desligadas'));
+      alvo.textContent = reg ? partes.join(' · ') : 'Escolha para quem é esta coluna.';
+      alvo.title = reg ? partes.join(' · ') : '';
     });
 
     // Cabeçalho (telas): três linhas de 52 px — Colaborador, Cargo e Área. Cada linha tem à esquerda o "+" (abre uma coluna do tipo), o nome, a
@@ -415,7 +482,9 @@
         const linha = el('div', 'acessos-tl acessos-quem-row');
         const e = el('div', 'acessos-tl-esq');
         const li = el('div', 'acessos-quem-linha');
-        const mais = botaoMais('Abrir uma coluna de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR'), false, () => { estado.linhas[t] = 0; estado.blocos.push(novoBloco(t)); estado.blocos.sort((x, y) => TIPOS.indexOf(x.tipo) - TIPOS.indexOf(y.tipo)); desenhar(true); });
+        const semArea = t !== 'area' && !temAreaEscolhida();
+        const mais = botaoMais(semArea ? 'Escolha primeiro a área' : 'Abrir uma coluna de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR'), false, () => { if (semArea) return; estado.linhas[t] = 0; estado.blocos.push(novoBloco(t)); estado.blocos.sort((x, y) => TIPOS.indexOf(x.tipo) - TIPOS.indexOf(y.tipo)); desenhar(true); });
+        mais.disabled = semArea;
         const fase = estado.linhas[t];
         const seta = el('button', 'acessos-gt-seta' + (fase === 0 ? ' aberta' : fase === 2 ? ' oculta' : ''));
         seta.type = 'button';
@@ -434,7 +503,7 @@
             if (b.tipo === t && estado.linhas[t] < 2 && b.alvo) w.append(nomeVertical(b));
           } else if (b.tipo === t) {
             const c = cabecaDaColuna(b);
-            resumos.push([regs[estado.blocos.indexOf(b)], c.querySelector('.acessos-bloco-resumo')]);
+            resumos.push([regs[estado.blocos.indexOf(b)], c.querySelector('.acessos-bloco-resumo'), b.alvo]);
             w.append(c);
           }
           linha.append(w);
