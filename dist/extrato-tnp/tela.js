@@ -77,7 +77,8 @@
     const conexao = d && d.conexoes[0];
     texto.replaceChildren(
       el('b', null, estado.carregando ? 'Sincronizando…' : conexao ? 'Banco lido em ' + quando(conexao.atualizadoNaPluggy) : 'Banco ainda não lido'),
-      el('span', null, 'A Pluggy lê o banco 1 vez por dia: o movimento de hoje costuma aparecer amanhã.'),
+      el('span', null, 'A Pluggy lê o banco 1 vez por dia: o movimento de hoje costuma aparecer amanhã.'
+        + (conexao && conexao.consentimentoExpira ? ' Autorização do Meu Pluggy vence em ' + quando(conexao.consentimentoExpira).split(' às')[0] + '.' : '')),
     );
     sinc.disabled = estado.carregando;
     sinc.classList.toggle('girando', estado.carregando);
@@ -114,7 +115,7 @@
     grade.append(
       numero('Saldo', moeda(saldo), conta ? 'Lido em ' + quando(conta.saldoLidoEm) : ''),
       numero('Entradas', moeda(d.hoje.entradas), d.hoje.quantidade + ' lançamento(s)' + (pend ? ' · ' + pend : ''), 'positivo'),
-      numero('Saídas', moeda(Math.abs(d.hoje.saidas)), 'Líquido do dia ' + moeda(d.hoje.liquido), 'negativo'),
+      numero('Saídas', moeda(Math.abs(d.hoje.saidas)), 'Resultado do dia ' + moeda(d.hoje.liquido), 'negativo'),
     );
     s.append(corpo(grade));
     return s;
@@ -167,7 +168,7 @@
     partes.totais.replaceChildren(
       item('Entradas no período', '+' + moeda(t.entradas), 'entrada'),
       item('Saídas no período', '−' + moeda(Math.abs(t.saidas)), 'saida'),
-      item('Líquido', moeda(t.liquido)),
+      item('Resultado', moeda(t.liquido)),
       item('Lançamentos', t.quantidade + (t.pendentes ? ' + ' + t.pendentes + ' pendente(s)' : '')),
     );
   }
