@@ -1,6 +1,8 @@
 # Agenda no servidor — plano para aprovação (Zé; Marco de acordo)
 
-> **Status (23/11/2026): Entrega A concluída (A2–A7, servidor e testes); Entrega B (tela) em andamento.** Na Entrega A,
+> **Status (23/11/2026): Entregas A (servidor) e B (tela) concluídas na branch, NÃO publicadas.** Falta: publicar (API →
+> transferência → site, com o Marco) e a entrega C. Na B: quem não é dono nem administrador muda a ordenação da lista só na
+> própria tela (não grava); a ponte promoção → Agenda (Compras) também passou a esperar o servidor. Na Entrega A,
 > escolhas de detalhe feitas seguindo as propostas da seção 9: lista visível para membro, dona, administrador ou quem vê
 > algum compromisso dela; criar compromisso exige ser membro ou dona da lista; mudar a ordenação da lista é da dona ou do
 > administrador; compromisso criado por id que não é conta fica com o gestor escolhido para os "sem criador" (o id antigo
