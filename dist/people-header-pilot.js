@@ -77,6 +77,8 @@
    home.focus();
   });position.className='people-position-control';
   const add=control('Adicionar','<path d="M12 5v14M5 12h14"/>',()=>{if(nativeAdd?.isConnected&&!nativeAdd.disabled){nativeAdd.click();syncQueries()}});add.className='people-add-control';
+  /* Ícone roxo de agendar (P-45, áudio do Rodrigo de 23/11/2026): em toda tela, agenda uma tarefa ligada à tela aberta. A Agenda (agenda/rotina.js) decide o resto. */
+  const agendar=control('Agendar tarefa desta tela','<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M12 13v6M9 16h6"/>',()=>window.CicluzAgendaRotina?.agendarDaTela());agendar.className='people-agendar-control';
   const status=document.createElement('span');status.className='people-save-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const save=control('Salvar','<path d="m5 12 4 4L19 6"/>',()=>{
    const native=head.querySelector('.header-save-circle');if(native){native.click();return}
@@ -276,7 +278,7 @@ refreshMode();action.title=label;row.append(handle,action,power,ou,pin);inner.ap
   more.onclick=()=>setChooserOpen(chooser.hidden);
   document.addEventListener('pointerdown',e=>{if(!chooser.hidden&&!chooser.contains(e.target)&&!more.contains(e.target))closeChooser()});
   footer.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!chooser.hidden){closeChooser();more.focus()}else if(!tools.hidden){setQuickOpen(false);home.focus()}});
-  left.append(start,searchToggle,sort,dateButton,add);right.append(back,close,save,more,toggle);save.classList.add('people-save-control');dateButton.classList.add('people-date-control');footer.append(tools,searchBox,left,home,right,chooser,datePanel,status,importFile);panel.append(footer);
+  left.append(start,searchToggle,sort,dateButton,add,agendar);right.append(back,close,save,more,toggle);save.classList.add('people-save-control');dateButton.classList.add('people-date-control');footer.append(tools,searchBox,left,home,right,chooser,datePanel,status,importFile);panel.append(footer);
   footer.addEventListener('click',event=>{const button=event.target.closest('button');if(!button||button.matches('.people-toolbar-choice,.people-toolbar-more'))return;button.classList.add('people-click-feedback');setTimeout(()=>button.classList.remove('people-click-feedback'),220)});
   applyPreferences();
   function readState(key,fallback){try{const value=JSON.parse(localStorage.getItem(key)||'null');return value&&typeof value==='object'?value:fallback}catch{return fallback}}

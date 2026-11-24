@@ -35,8 +35,10 @@
   const conectado = () => { const p = perfil(); return Boolean(p && p.usuarioId && p.usuarioId !== 'local' && window.CicluzSync && window.CicluzSync.api); };
 
   let dados = { listas: [], colunas: [], itens: [], relacoes: [] };
-  /** carregando | cache | servidor | sem-internet | nao-transferida | erro */
+  /** carregando | cache | servidor | sem-internet | nao-transferida | fora-expediente | erro */
   let situacao = 'carregando';
+  /** Fora do expediente com a Agenda bloqueada (Configurações da Agenda): a mensagem do servidor. */
+  let motivoBloqueio = '';
   let usuarioId = '';
   let etag = '';
   let pessoasLista = [];
@@ -56,6 +58,8 @@
       prioridade: c.prioridade, sinalizado: c.sinalizado, etiquetas: c.etiquetas || [], subtarefas: c.subtarefas || [],
       pessoas: c.pessoas || [], avaliacao: c.avaliacao || { tipo: '', notas: [] }, colunaId: c.colunaId, ordem: c.ordem,
       concluida: c.concluida, concluidaEm: c.concluidaEm, origemId: c.origemId, ocorrencia: c.ocorrencia,
+      // Tela ligada (ícone roxo de agendar / tarefa criada por uma tela): a tarefa abre essa tela.
+      vinculoTela: c.vinculoTela || '', vinculoTitulo: c.vinculoTitulo || '', vinculoRef: c.vinculoRef || '',
       // O gestor é quem criou: o nome da tela continua `criadoPor`.
       criadoEm: c.criadoEm, criadoPor: c.gestorId, atualizadoEm: c.atualizadoEm, versao: c.versao, acesso: c.acesso || NADA,
     };
@@ -84,6 +88,7 @@
       prioridade: c.prioridade || 'normal', sinalizado: Boolean(c.sinalizado), etiquetas: R.normalizarEtiquetas(c.etiquetas),
       subtarefas: (c.subtarefas || []).map((s) => ({ ...(s.id ? { id: s.id } : {}), titulo: String(s.titulo || '').trim(), concluida: Boolean(s.concluida) })),
       pessoas: R.normalizarPessoas(c.pessoas), avaliacaoTipo: (c.avaliacao && c.avaliacao.tipo) || '', colunaId: c.colunaId || '',
+      vinculoTela: c.vinculoTela || '', vinculoTitulo: c.vinculoTela ? String(c.vinculoTitulo || '').trim().slice(0, 120) : '',
     };
   }
 
@@ -164,6 +169,8 @@
       return;
     }
     if (!resp.ok) {
+      const corpo = resp.status === 403 ? await resp.json().catch(() => null) : null;
+      if (corpo && corpo.code === 'AGENDA_FORA_EXPEDIENTE') return bloquear(corpo.title || corpo.detail);
       if (situacao === 'carregando' || situacao === 'cache') usarCache('erro');
       return;
     }
@@ -178,6 +185,13 @@
       gravarCache();
       enviarCopiaAntiga();
     }
+    avisar(true);
+  }
+  /** Fora do expediente: nada fica à mostra (nem a cópia do aparelho) até o horário voltar. */
+  function bloquear(motivo) {
+    motivoBloqueio = motivo || 'Fora do seu expediente.';
+    dados = { listas: [], colunas: [], itens: [], relacoes: [] };
+    situacao = 'fora-expediente';
     avisar(true);
   }
   async function carregarPessoas() {
@@ -207,6 +221,8 @@
     const c = lerCache();
     if (c) { aplicarResposta(c.resposta); pessoasLista = c.pessoas || []; situacao = 'cache'; }
     if (!window.CicluzSessao) return;
+    // As contas da empresa servem também ao Compras e à Produção (responsável): carregam ao abrir.
+    if (conectado()) carregarPessoas().then(() => document.dispatchEvent(new Event('cicluz-pessoas-carregadas')));
     atualizar();
     setInterval(() => { if (document.visibilityState === 'visible') atualizar(); }, INTERVALO);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') atualizar(); });
@@ -218,6 +234,7 @@
   async function enviar(caminho, metodo, corpo) {
     if (situacao === 'sem-internet' || situacao === 'cache') return erro(SEM_INTERNET);
     if (situacao === 'nao-transferida') return erro(NAO_TRANSFERIDA);
+    if (situacao === 'fora-expediente') return erro(motivoBloqueio);
     if (!conectado()) return erro(SEM_INTERNET);
     emAndamento++;
     try {
@@ -229,6 +246,7 @@
         avisar(false);
       }
       if (e && e.status === 0) { situacao = 'sem-internet'; avisar(true); }
+      if (e && e.codigo === 'AGENDA_FORA_EXPEDIENTE') bloquear(e.message);
       if (e && e.codigo === 'AGENDA_COMPROMISSO_NAO_ENCONTRADO') atualizar(true);
       return erro((e && e.message) || 'Não foi possível salvar. Tente de novo.');
     } finally {
@@ -586,11 +604,48 @@
     finally { emAndamento--; }
   }
 
+  /* ---------- Membros da lista (grupo), configurações, desempenho, tarefa de tela (P-45) ---------- */
+  const api = async (caminho, opcoes) => {
+    if (!conectado()) return erro(SEM_INTERNET);
+    try { return { dados: await window.CicluzSync.api(caminho, opcoes) }; }
+    catch (e) { if (e && e.codigo === 'AGENDA_FORA_EXPEDIENTE') bloquear(e.message); return erro((e && e.message) || 'Não foi possível falar com o servidor.'); }
+  };
+  const caminhoLista = (id) => '/agenda/grupos/' + encodeURIComponent(id);
+  async function membros(listaId) {
+    const r = await api(caminhoLista(listaId) + '/membros');
+    return r.erro ? r : { ids: r.dados.usuarioIds || [] };
+  }
+  async function definirMembros(listaId, ids) {
+    const r = await enviar(caminhoLista(listaId) + '/membros', 'PUT', { usuarioIds: ids });
+    if (r.erro) return r;
+    gravou();
+    return { ids: r.dados.usuarioIds || [] };
+  }
+  const minhaConfig = () => api('/agenda/configuracoes/minha');
+  const configs = () => api('/agenda/configuracoes');
+  const salvarConfig = (usuarioId, corpo) => api('/agenda/configuracoes/' + encodeURIComponent(usuarioId), { metodo: 'PUT', corpo });
+  const desempenho = (de, ate) => api('/agenda/desempenho?de=' + encodeURIComponent(de) + '&ate=' + encodeURIComponent(ate));
+  /** Tarefa que uma tela pede (ex.: pedido de compra agendado chegou na hora). Uma por referência. */
+  async function tarefaDeTela(corpo) {
+    const r = await api('/agenda/tarefas-de-tela', { metodo: 'POST', corpo: { id: novoId('ag'), ...corpo } });
+    if (r.erro) return r;
+    if (situacao === 'servidor') { guardarItem(r.dados); gravou(); }
+    return { ok: true, id: r.dados.id };
+  }
+  /** A tela fez o que a tarefa pedia: conclui (se a pessoa pode). */
+  async function concluirPorVinculo(vinculoRef) {
+    const r = await api('/agenda/tarefas-de-tela/concluir', { metodo: 'POST', corpo: { vinculoRef } });
+    if (r.erro) return r;
+    if (r.dados.compromisso && situacao === 'servidor') { guardarItem(r.dados.compromisso); gravou(); }
+    return { ok: true, resultado: r.dados.resultado };
+  }
+
   window.CicluzAgendaDados = {
     CHAVE_CACHE, CORES_LISTA, CONCLUIDO,
     get dados() { return dados; },
-    /** carregando | cache | servidor | sem-internet | nao-transferida | erro */
+    /** carregando | cache | servidor | sem-internet | nao-transferida | fora-expediente | erro */
     get situacao() { return situacao; },
+    get motivoBloqueio() { return motivoBloqueio; },
     get somenteLeitura() { return situacao !== 'servidor'; },
     /** Pedidos ao servidor em andamento (os testes esperam chegar a zero). */
     get emAndamento() { return emAndamento; },
@@ -601,5 +656,6 @@
     moverColuna, reordenar, limparConcluidos,
     salvarLista, definirOrdenacao, excluirLista, salvarColuna, excluirColuna,
     previaTransferencia, transferir,
+    membros, definirMembros, minhaConfig, configs, salvarConfig, desempenho, tarefaDeTela, concluirPorVinculo, conectado,
   };
 })();

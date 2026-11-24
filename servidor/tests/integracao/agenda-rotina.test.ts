@@ -135,6 +135,20 @@ describe("agenda: hora fora do expediente e desempenho", () => {
     expect(todos.map((x: { usuarioId: string }) => x.usuarioId).sort()).toEqual([resp.usuarioId, leitor.usuarioId].sort());
     expect((await pedir(admin.cookie, "GET", `/api/agenda/desempenho?de=${dia(1)}&ate=${dia(-1)}`)).statusCode).toBe(400);
   });
+
+  it("a hora de início não é prazo: só o término (ou o fim do dia) conta", async () => {
+    const { gestor: admin, resp } = await cenario();
+    const hoje = horaLocal(new Date()).data;
+    const p = [{ id: resp.usuarioId, responsavel: true, concluir: true }];
+    // Começou à 00:01 e não tem término: feito agora, ainda no mesmo dia = no prazo.
+    const semTermino = await criar(admin, { data: hoje, hora: "00:01", pessoas: p });
+    // Terminava à 00:02: feito agora = fora do prazo.
+    const comTermino = await criar(admin, { data: hoje, hora: "00:01", horaFim: "00:02", pessoas: p });
+    await pedir(resp.cookie, "POST", `/api/agenda/compromissos/${semTermino.id}/conclusao`, { concluida: true });
+    await pedir(resp.cookie, "POST", `/api/agenda/compromissos/${comTermino.id}/conclusao`, { concluida: true });
+    const d = (await pedir(resp.cookie, "GET", `/api/agenda/desempenho?de=${hoje}&ate=${hoje}`)).json().data.pessoas[0];
+    expect(d).toMatchObject({ recebidas: 2, noPrazo: 1, foraDoPrazo: 1 });
+  });
 });
 
 describe("agenda: tarefa vinda de uma tela", () => {

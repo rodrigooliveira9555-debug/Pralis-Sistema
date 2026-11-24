@@ -171,7 +171,7 @@
         // Responsável
         const s3 = sec('Responsável');
         const resp = seletor(S.RESPONSAVEIS.map((u) => [u.id, u.nome]), a?.responsavelId || '', 'Selecione');
-        s3.append(campo('Responsável por executar *', resp, 'Usuários fictícios: o S2 ainda não tem cadastro de usuários.'));
+        s3.append(campo('Responsável por executar *', resp, 'Pessoas com Acesso. Na hora agendada, o pedido vira tarefa na Agenda dela.'));
         // Para o fornecedor
         const s4 = sec('Para o fornecedor');
         const prazo = entrada('number', a?.prazoHoras || 24, { min: 1, max: 720 });

@@ -80,7 +80,6 @@ export async function responsabilidades(empresaId: string, de: string, ate: stri
       usuarioId: agendaParticipantes.usuarioId,
       id: agendaCompromissos.id,
       data: agendaCompromissos.data,
-      hora: agendaCompromissos.hora,
       horaFim: agendaCompromissos.horaFim,
       concluida: agendaCompromissos.concluida,
       concluidaEm: agendaCompromissos.concluidaEm,

@@ -58,9 +58,13 @@ export async function minhaConfig(perfil: PerfilSessao, momento = new Date()): P
 
 /* ---------- Desempenho ---------- */
 
-/** Prazo de um compromisso: o dia dele, até o término (ou o início; sem hora = fim do dia), no horário da loja. */
-function prazo(data: string, hora: string | null, horaFim: string | null) {
-  const h = horaFim || hora || "23:59";
+/**
+ * Prazo de um compromisso: o dia dele, até o término; sem término, até o fim do dia (no horário da loja).
+ * A hora de início não é prazo: "pedido às 11h32" feito às 11h35 está no prazo. Provisório (P-45), até o Rodrigo
+ * dizer se algum tipo de tarefa tem prazo mais curto.
+ */
+function prazo(data: string, horaFim: string | null) {
+  const h = horaFim || "23:59";
   // Brasil sem horário de verão: -03:00 o ano inteiro.
   return new Date(`${data}T${h}:59-03:00`);
 }
@@ -81,7 +85,7 @@ export async function desempenho(perfil: PerfilSessao, de: string, ate: string, 
     const d = saida.get(l.usuarioId);
     if (!d || !l.data) continue;
     d.recebidas += 1;
-    const limite = prazo(l.data, l.hora, l.horaFim);
+    const limite = prazo(l.data, l.horaFim);
     if (l.concluida && l.concluidaEm) {
       if (l.concluidaEm <= limite) d.noPrazo += 1;
       else d.foraDoPrazo += 1;

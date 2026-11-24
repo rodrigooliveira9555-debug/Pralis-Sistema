@@ -82,6 +82,7 @@
    */
   function processarAgendas(forcar) {
     let criadas = 0;
+    const novas = [];
     const ok = S.transacao((d) => {
       for (const a of d.agendas.filter((x) => x.status === 'ativa')) {
         const feitas = new Set(d.ocorrencias.filter((o) => o.agendaId === a.id).map((o) => o.previsto));
@@ -92,11 +93,15 @@
           feitas.add(o.previsto);
           const solicitacaoId = S.novoId('sol');
           d.solicitacoes.push({ id: solicitacaoId, origem: 'agendamento', agendaId: a.id, grupoId: a.grupoId, status: 'rascunho', itens: [], criadaEm: S.agoraIso(), responsavelId: a.responsavelId });
-          d.ocorrencias.push({ id: S.novoId('oc'), agendaId: a.id, previsto: o.previsto, data: o.data, hora: o.hora, situacao: 'aguardando_conferencia', solicitacaoId, criadaEm: S.agoraIso() });
+          const oc = { id: S.novoId('oc'), agendaId: a.id, previsto: o.previsto, data: o.data, hora: o.hora, situacao: 'aguardando_conferencia', solicitacaoId, criadaEm: S.agoraIso() };
+          d.ocorrencias.push(oc);
+          novas.push({ ocorrenciaId: oc.id, grupo: S.nomeGrupo(a.grupoId), data: o.data, hora: o.hora, responsavelId: a.responsavelId });
           criadas++;
         }
       }
     });
+    // Chegou na hora: vira tarefa na Agenda do responsável, que leva à tela do pedido (P-45).
+    if (ok && window.CicluzAgendaRotina) novas.forEach((n) => window.CicluzAgendaRotina.tarefaDoPedidoDeCompra(n));
     return ok ? criadas : 0;
   }
 
@@ -155,6 +160,8 @@
       oc.situacao = 'enviada';
       d.ocorrencias.find((o) => o.id === oc.id).situacao = 'enviada';
     });
+    // O pedido foi feito: a tarefa da Agenda é concluída (P-45).
+    if (ok && window.CicluzAgendaRotina) window.CicluzAgendaRotina.pedidoDeCompraFeito(ocorrenciaId);
     return ok ? { ok: true, rodadaId } : erro('Não foi possível enviar neste navegador.');
   }
 
