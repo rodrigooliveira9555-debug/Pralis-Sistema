@@ -4,7 +4,7 @@
 Pedido do Rodrigo, três mudanças só no menu lateral:
 - **Entradas › Lançamentos** fica só com **VND - Vendas**. Saíram os cartões VND - Abertura de Caixa, Turno do Caixa, Fechamento de Caixa e Gerência de Caixas.
 - **Transferências › Lançamentos**: saiu o cartão **CNT - Tesouraria** (fica só CNT - Transferências).
-- **API**: novo submenu, sempre o **último** de cada origem (Entradas, Transferências, Saídas Despesas, Saídas Mercadorias, Saídas Retiradas e Resultados). Ícone `</>` (`subIcone.API`). Por enquanto abre a página "Área prevista", como os outros submenus ainda vazios; o conteúdo será definido depois. Configurações não ganha API.
+- **API**: novo submenu, sempre o **último** de cada origem (Entradas, Transferências, Saídas Despesas, Saídas Mercadorias, Saídas Retiradas e Resultados). Ícone de elo, dois elos de corrente (`subIcone.API`, escolhido pelo Rodrigo entre nove opções). Por enquanto abre a página "Área prevista", como os outros submenus ainda vazios; o conteúdo será definido depois. Configurações não ganha API.
 - Os módulos de caixa e tesouraria (`dist/caixa/`) continuam no código, sem cartão no menu (só **VND - Fechamentos de Caixa**, em Relatórios, segue aberto). Decisão pendente: apagar esse código ou religar em outro lugar.
 
 ## DES - Ponto Eletrônico Importação (19/11/2026)
