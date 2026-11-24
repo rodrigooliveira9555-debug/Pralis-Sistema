@@ -512,13 +512,14 @@
 
   /** Um interruptor, ligado ao conjunto de permissões da coluna (o registro de quem foi escolhido). */
   function interruptor(rotulo, ligado, desligado, aoMudar) {
-    const sw = el('button', 'account-status-switch');
+    // Marcação redonda com check (escolha do Rodrigo, 24/11/2026): vazia é só o contorno; ligada enche na cor da origem.
+    const sw = el('button', 'acessos-marca');
     sw.type = 'button';
     sw.disabled = desligado;
-    sw.setAttribute('role', 'switch');
+    sw.setAttribute('role', 'checkbox');
     sw.setAttribute('aria-checked', String(ligado));
     sw.setAttribute('aria-label', rotulo);
-    sw.append(el('span'));
+    sw.innerHTML = U.svg('<path d="m5 12 4.5 4.5L19 7"/>');
     sw.onclick = () => { const liga = sw.getAttribute('aria-checked') !== 'true'; sw.setAttribute('aria-checked', String(liga)); aoMudar(liga); };
     return sw;
   }
