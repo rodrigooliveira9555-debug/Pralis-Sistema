@@ -14,7 +14,7 @@
 > no começo e o trigger no fim, à mão). O bloco SQL abaixo é a proposta original; **vale o arquivo**. Diferença aprovada:
 > a cópia concluída de uma repetição **pode ser reaberta**, como hoje na tela (`agenda_compromissos_copia_check` só
 > exige que a cópia não repita).
-> Responde à P-45 item 1 (doc 11) e fecha G1, G4, G5, M2, M3 e M4 da `docs/REVISAO_AGENDA_2026-11-23.md` e o DT-15.
+> Responde à P-46 item 1 (doc 11) e fecha G1, G4, G5, M2, M3 e M4 da `docs/REVISAO_AGENDA_2026-11-23.md` e o DT-15.
 > Modelo seguido: `docs/PRODUTOS_NO_SERVIDOR_PLANO.md` (tabela + API + transferência com conclusão só se tudo chegou).
 
 ## 0. Resumo em uma frase por parte
@@ -73,7 +73,7 @@ CREATE TABLE "agenda_estado" (
   "versao"     bigint NOT NULL DEFAULT 0 CHECK ("versao" >= 0)
 );
 
--- 1. Grupos (as "Minhas listas", P-45 item 2)
+-- 1. Grupos (as "Minhas listas", P-46 item 2)
 CREATE TABLE "agenda_grupos" (
   "empresa_id"     uuid        NOT NULL REFERENCES "empresas"("id"),
   "id"             text        NOT NULL,
@@ -102,7 +102,7 @@ CREATE TABLE "agenda_grupos" (
 );
 CREATE UNIQUE INDEX "agenda_grupos_nome_uq" ON "agenda_grupos" ("empresa_id", lower(btrim("nome"))) WHERE "excluido_em" IS NULL;
 
--- Membros do grupo. Modelo para "escolhido à mão" (pergunta P-45 (a) em aberto; ver seção 7).
+-- Membros do grupo. Modelo para "escolhido à mão" (pergunta P-46 (a) em aberto; ver seção 7).
 CREATE TABLE "agenda_grupo_membros" (
   "empresa_id"  uuid        NOT NULL,
   "grupo_id"    text        NOT NULL,
@@ -341,7 +341,7 @@ Observações do SQL:
   (`0009_agenda_chat_ligado.sql`): `ADD CONSTRAINT … FOREIGN KEY (empresa_id, compromisso_id) REFERENCES
   agenda_compromissos (empresa_id, id) NOT VALID` (vale para tudo o que entrar dali em diante) e `VALIDATE CONSTRAINT`
   só depois que o Zé decidir o que fazer com as mensagens órfãs (a transferência conta quantas são).
-- **Chat do grupo (P-45 item 2):** fica para a segunda migration, `0008_agenda_chat_grupo.sql`, numa entrega própria
+- **Chat do grupo (P-46 item 2):** fica para a segunda migration, `0008_agenda_chat_grupo.sql`, numa entrega própria
   depois da base: `agenda_grupo_mensagens` (id, empresa, grupo_id → agenda_grupos, autor_id, texto 1–2000, criado_em) e
   `agenda_grupo_leituras` (empresa, grupo, usuário, lido_ate), com a mesma forma das tabelas da 0003. Não entra agora
   porque depende da pergunta (a) (quem é membro) e o chat atual não precisa dele para funcionar.
@@ -440,7 +440,7 @@ compromissos, 41 concluídos, 12 avaliações" e confirma. Se algo não bater, n
   administrador, o Rodrigo) e `sem_criador_original = true`. As pessoas dele continuam. Pergunta 7.
 - **`criadoPor` ou pessoa que não é conta da empresa** (ids da lista provisória `u-jose`, `u-rodrigo`, `u-ana`, que são
   pessoas de teste): ~~a prévia mostra um "de → para" para o Zé ligar a uma conta real~~ **SUPERADO em 24/11/2026 (Zé,
-  P-45):** as pessoas de teste são apagadas, não há "de → para". Ficam de fora, registradas só em
+  P-46):** as pessoas de teste são apagadas, não há "de → para". Ficam de fora, registradas só em
   `legado.pessoasSemConta` para conferência, e **não dão acesso a ninguém**. Pergunta 8.
 - `avaliacao.notas` → `agenda_avaliacoes` (inseridas como estão; nota com pessoa sem conta vai para `legado`).
 - Cópias concluídas (`origemId`) → `origem_id` + `ocorrencia` = a data da cópia. Se o duplo toque (M2) já criou duas
@@ -497,7 +497,7 @@ compromisso não existe no documento (órfãos para a 0009).
 | Entrega | Passo (um commit cada) | Para aprovação |
 |---|---|---|
 | **A — servidor** | A1 este plano. A2 `shared/src/agenda/regras.ts` + gerador `dist/agenda/regras.js` + teste de igualdade com os 125 casos de `tests/agenda-dominio.cjs` (sem mudar comportamento). A3 schema Drizzle + `0007_agenda_tabelas.sql` (**só depois do SQL aprovado**). A4 repository + service + rotas de compromissos e testes. A5 grupos, colunas, relações, avaliações, adiamento. A6 transferência (prévia, execução, aparelho, retransferência) e testes. A7 chat e arquivos lendo as tabelas; sai o cache do documento; `docs/BACKEND.md` atualizado. | SQL da 0007 |
-| **B — tela** | B1 `dados.js` cliente da API e cache sem internet; `entrar.js` apaga o cache ao sair. B2 telas com `await` e estados de "salvando"/erro. B3 tela de transferência (prévia, "de → para", confirmação). B4 `tests/agenda-telas.mjs` rodando com a API real (`npm run test:telas-api`), 320/390/1024 claro e escuro. B5 brain (04, 09 DT-15, 11 P-45). | — |
+| **B — tela** | B1 `dados.js` cliente da API e cache sem internet; `entrar.js` apaga o cache ao sair. B2 telas com `await` e estados de "salvando"/erro. B3 tela de transferência (prévia, "de → para", confirmação). B4 `tests/agenda-telas.mjs` rodando com a API real (`npm run test:telas-api`), 320/390/1024 claro e escuro. B5 brain (04, 09 DT-15, 11 P-46). | — |
 | **Publicar** | API (migrate aplica a 0007) → administrador transfere logo em seguida → site. Conferência no ar: contagens, `agenda:conferir` (versão do documento × versão transferida). | com o Marco |
 | **C — limpeza** | Depois da conferência no ar: chave sai da sincronização e do código; `0009_agenda_chat_ligado.sql` (FK `NOT VALID`); apagar o documento antigo do banco só com pedido explícito. | SQL da 0009 |
 | **D — chat do grupo** | `0008_agenda_chat_grupo.sql` + rotas + tela, depois da resposta da pergunta 1. | SQL da 0008 |
@@ -542,7 +542,7 @@ compromissos (hoje são centenas; se crescer, `GET /api/agenda` ganha "só mudan
 
 ## 9. Perguntas para o Zé e o Rodrigo
 
-1. **(P-45 a) Quem entra no grupo de uma lista:** escolhido à mão pelo dono (o modelo acima) ou quem tem certa permissão
+1. **(P-46 a) Quem entra no grupo de uma lista:** escolhido à mão pelo dono (o modelo acima) ou quem tem certa permissão
    (cargo de acesso)? O modelo aceita os dois; "por permissão" acrescentaria uma coluna no grupo.
 2. **Ser membro do grupo dá o quê?** Proposta: ver o grupo, criar compromissos nele e usar o chat do grupo; cada
    compromisso continua visível só para quem participa (P-19). Ou membro vê **todas** as tarefas do grupo, como no WhatsApp?
@@ -560,6 +560,6 @@ compromissos (hoje são centenas; se crescer, `GET /api/agenda` ganha "só mudan
 12. **Excluir e "Limpar concluídos":** com a exclusão que esconde, avaliações, chat e arquivos ficam no banco. Confirmar.
     Alguém (administrador) deve poder ver ou restaurar o que foi excluído?
 13. **Quem vê as notas:** hoje o gestor vê todas e o responsável só a própria autoavaliação. O administrador também vê
-    (relatório de desempenho do P-45)?
+    (relatório de desempenho do P-46)?
 14. **Documento antigo no banco:** apagar na entrega C, ou deixar guardado como na transferência de produtos?
 15. **Marco:** de acordo com as tabelas, as rotas e a ordem de publicação (API → transferência → site)?

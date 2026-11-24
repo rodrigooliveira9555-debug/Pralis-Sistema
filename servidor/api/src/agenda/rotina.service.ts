@@ -16,7 +16,7 @@ import * as gr from "./grupos.repository.ts";
 import * as rr from "./rotina.repository.ts";
 import { configDe, descreverExpediente, exigirExpediente, lerConfig, situacaoNoExpediente } from "./rotina.regras.ts";
 
-// Rotina da Agenda (0008, P-45, áudios do Rodrigo de 23/11/2026):
+// Rotina da Agenda (0008, P-46, áudios do Rodrigo de 23/11/2026):
 // - Configurações da Agenda por pessoa: o administrador define o expediente, se a Agenda abre fora dele, se a
 //   hora fora do expediente é registrada (como comum ou extra: só registro) e em quantos minutos parado o sistema sai.
 // - Desempenho: no prazo, fora do prazo, não feitas, em aberto, tempo de resposta e hora fora do expediente.
@@ -60,7 +60,7 @@ export async function minhaConfig(perfil: PerfilSessao, momento = new Date()): P
 
 /**
  * Prazo de um compromisso: o dia dele, até o término; sem término, até o fim do dia (no horário da loja).
- * A hora de início não é prazo: "pedido às 11h32" feito às 11h35 está no prazo. Provisório (P-45), até o Rodrigo
+ * A hora de início não é prazo: "pedido às 11h32" feito às 11h35 está no prazo. Provisório (P-46), até o Rodrigo
  * dizer se algum tipo de tarefa tem prazo mais curto.
  */
 function prazo(data: string, horaFim: string | null) {

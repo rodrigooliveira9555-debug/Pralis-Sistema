@@ -74,7 +74,7 @@ const camposCompromisso = {
   pessoas: z.array(pessoaAgendaSchema).max(100).default([]),
   avaliacaoTipo: z.enum(TIPOS_AVALIACAO_AGENDA).default(""),
   colunaId: z.union([z.literal(""), compromissoIdSchema]).default(""),
-  // Tela ligada (ícone roxo de agendar, P-45): a tarefa abre essa tela. '' = sem tela.
+  // Tela ligada (ícone roxo de agendar, P-46): a tarefa abre essa tela. '' = sem tela.
   vinculoTela: z.union([z.literal(""), z.string().regex(VINCULO_TELA, "Endereço de tela inválido")]).default(""),
   vinculoTitulo: texto(120).default("")
 };
@@ -214,12 +214,12 @@ export const transferenciaAgendaSchema = z.object({
   documentoVersao: z.number().int().min(1).nullable(),
   /** Conta que vira gestora dos compromissos sem criador (pergunta 7). */
   gestorSemCriador: z.string().trim().min(1).max(200)
-  // Pessoas que não são conta (as de teste da lista provisória) não são ligadas a ninguém: ficam de fora (P-45, 24/11/2026).
+  // Pessoas que não são conta (as de teste da lista provisória) não são ligadas a ninguém: ficam de fora (P-46, 24/11/2026).
 });
 export const copiaDoAparelhoSchema = z.object({ valor: z.string().min(2).max(LIMITE_CORPO_AGENDA) });
 export type TransferenciaAgenda = z.infer<typeof transferenciaAgendaSchema>;
 
-/* ---------- Rotina (0008, P-45): tarefa vinda de uma tela, configurações, desempenho, chat do grupo ---------- */
+/* ---------- Rotina (0008, P-46): tarefa vinda de uma tela, configurações, desempenho, chat do grupo ---------- */
 
 /**
  * Tarefa criada por uma tela (ex.: agendamento de pedido do Compras chegou na hora). `vinculoRef` é única por

@@ -24,7 +24,7 @@ await p.route('https://fonts.googleapis.com/**', (r) => r.abort());
 await p.route('https://fonts.gstatic.com/**', (r) => r.abort());
 await p.goto(url, { waitUntil: 'load' });
 await p.waitForFunction(() => window.CicluzCompras && window.CicluzComprasServico);
-// Contas fictícias da empresa (sem servidor não há Pessoas com Acesso; as pessoas de teste saíram, P-45).
+// Contas fictícias da empresa (sem servidor não há Pessoas com Acesso; as pessoas de teste saíram, P-46).
 await p.evaluate(() => { CicluzAgendaDados.pessoas = () => [{ id: 'conta-jose', nome: 'José (teste)' }, { id: 'conta-rodrigo', nome: 'Rodrigo (teste)' }, { id: 'conta-ana', nome: 'Ana (teste)' }]; });
 await p.evaluate(() => { if (document.body.classList.contains('mobile-menu-visible')) document.getElementById('toggleMenu').click(); });
 

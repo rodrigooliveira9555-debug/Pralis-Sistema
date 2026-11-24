@@ -4,8 +4,8 @@ import type { ConfigPessoa, PerfilSessao } from "@cicluz/shared";
 import { banco, type TransacaoBanco } from "../banco/conexao.ts";
 import { ErroDominio } from "../erros.ts";
 
-// Expediente da pessoa na Agenda (P-45, áudio do Rodrigo de 23/11/2026): fora do expediente a Agenda pode ser
-// bloqueada, e a hora fora do expediente pode ser registrada (só registro, sem ir para a folha: P-45 item 3).
+// Expediente da pessoa na Agenda (P-46, áudio do Rodrigo de 23/11/2026): fora do expediente a Agenda pode ser
+// bloqueada, e a hora fora do expediente pode ser registrada (só registro, sem ir para a folha: P-46 item 3).
 // O horário é o da loja (Brasil, sem horário de verão): America/Sao_Paulo.
 
 export const FUSO = "America/Sao_Paulo";

@@ -13,7 +13,7 @@ import {
 import { perfilDaRequisicao } from "../auth/guards.ts";
 import * as rotina from "./rotina.service.ts";
 
-// Rotas da rotina da Agenda (0008, P-45): configurações por pessoa, desempenho, tarefa vinda de tela, chat do grupo.
+// Rotas da rotina da Agenda (0008, P-46): configurações por pessoa, desempenho, tarefa vinda de tela, chat do grupo.
 
 const grupoParams = z.object({ id: compromissoIdSchema });
 const pessoaParams = z.object({ usuarioId: z.string().trim().min(1).max(200) });

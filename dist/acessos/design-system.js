@@ -165,7 +165,7 @@
     ] },
     { id: 'mascaras', titulo: 'Máscaras', resumo: 'O formato que cada campo assume enquanto se digita', quadros: [
       { titulo: 'Formatos', texto: ['A máscara arruma o que a pessoa digita, na hora. Ninguém precisa digitar ponto, traço, barra ou símbolo.'],
-        itens: [['CPF', '000.000.000-00'], ['CNPJ', '00.000.000/0000-00'], ['Telefone e WhatsApp', '(00) 00000-0000'], ['CEP', '00000-000'], ['Dinheiro', 'R$ 0,00'], ['Percentual', '50%'], ['Data', 'DD/MM/AA'], ['Aniversário', 'DD/MM (dia e mês)'], ['Código CBO', '0000-00']] },
+        itens: [['CPF', '000.000.000-00'], ['CNPJ', '00.000.000/0000-00'], ['Telefone e WhatsApp', '(00) 00000-0000'], ['CEP', '00000-000'], ['Dinheiro', 'R$ 0,00'], ['Percentual', '50%'], ['Data', 'DD/MM/AA'], ['Aniversário', 'DD/MM (dia e mês)'], ['Hora', 'HH:MM'], ['Código CBO', '0000-00']] },
       { titulo: 'Experimente', texto: ['Digite só os números.'],
         amostra: () => { const R = window.CicluzFieldRules || {}; const C = window.CicluzConsultas || {}; const CAD = window.CicluzComprasCadastros || {};
           const com = (rotulo, fn, extra) => { const i = entrada('text', '', { inputMode: 'numeric', ...extra }); if (fn) i.addEventListener('input', () => { i.value = fn(i.value); }); return campo(rotulo, i); };

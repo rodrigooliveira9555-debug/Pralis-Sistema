@@ -23,7 +23,7 @@
   /*
    * Responsáveis: as contas ativas da empresa (Pessoas com Acesso), as mesmas da Agenda (agenda/dados.js carrega do
    * servidor). As pessoas de teste "José · Compras", "Rodrigo · Gerência" e "Ana · Estoque" foram apagadas (Zé,
-   * 24/11/2026, P-45): pedido antigo que as cita mostra "Pessoa de teste (removida)" e nada é apagado do pedido.
+   * 24/11/2026, P-46): pedido antigo que as cita mostra "Pessoa de teste (removida)" e nada é apagado do pedido.
    */
   const PESSOAS_TESTE_REMOVIDAS = new Set(['u-jose', 'u-rodrigo', 'u-ana']);
   const responsaveis = () => (window.CicluzAgendaDados ? window.CicluzAgendaDados.pessoas() : []);

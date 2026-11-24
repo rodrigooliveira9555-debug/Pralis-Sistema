@@ -100,7 +100,7 @@
         }
       }
     });
-    // Chegou na hora: vira tarefa na Agenda do responsável, que leva à tela do pedido (P-45).
+    // Chegou na hora: vira tarefa na Agenda do responsável, que leva à tela do pedido (P-46).
     if (ok && window.CicluzAgendaRotina) novas.forEach((n) => window.CicluzAgendaRotina.tarefaDoPedidoDeCompra(n));
     return ok ? criadas : 0;
   }
@@ -160,7 +160,7 @@
       oc.situacao = 'enviada';
       d.ocorrencias.find((o) => o.id === oc.id).situacao = 'enviada';
     });
-    // O pedido foi feito: a tarefa da Agenda é concluída (P-45).
+    // O pedido foi feito: a tarefa da Agenda é concluída (P-46).
     if (ok && window.CicluzAgendaRotina) window.CicluzAgendaRotina.pedidoDeCompraFeito(ocorrenciaId);
     return ok ? { ok: true, rodadaId } : erro('Não foi possível enviar neste navegador.');
   }

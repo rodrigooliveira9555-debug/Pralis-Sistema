@@ -117,7 +117,7 @@ export const agendaEstado = pgTable(
   (t) => [check("agenda_estado_versao_check", sql`${t.versao} >= 0`)]
 );
 
-// Grupos (as "Minhas listas", P-45 item 2).
+// Grupos (as "Minhas listas", P-46 item 2).
 export const agendaGrupos = pgTable(
   "agenda_grupos",
   {
@@ -237,7 +237,7 @@ export const agendaCompromissos = pgTable(
     origemId: text("origem_id"), // cópia concluída de uma repetição
     ocorrencia: date("ocorrencia", { mode: "string" }), // data da ocorrência que essa cópia concluiu
     legado: jsonb("legado").notNull().default(sql`'{}'::jsonb`), // o que veio do documento sem lugar próprio
-    // Tela ligada (0008, P-45): endereço da tela (#/…) que a tarefa abre, o nome mostrado e, para tarefa criada
+    // Tela ligada (0008, P-46): endereço da tela (#/…) que a tarefa abre, o nome mostrado e, para tarefa criada
     // por uma tela (agendamento de pedido…), a referência única dela (não duplica a tarefa).
     vinculoTela: text("vinculo_tela"),
     vinculoTitulo: text("vinculo_titulo"),
@@ -420,9 +420,9 @@ export const agendaTransferencias = pgTable(
 );
 
 /* ======================================================================================================
- * Rotina da Agenda (0008, P-45, áudios do Rodrigo de 23/11/2026): chat do grupo (cada lista é um grupo),
+ * Rotina da Agenda (0008, P-46, áudios do Rodrigo de 23/11/2026): chat do grupo (cada lista é um grupo),
  * configurações da Agenda por pessoa e o registro da hora fora do expediente (só registro: nada vai para a
- * folha até o Rodrigo confirmar a regra de pagamento, P-45 item 3).
+ * folha até o Rodrigo confirmar a regra de pagamento, P-46 item 3).
  * ==================================================================================================== */
 
 // Chat do grupo: quem é membro (ou dono) da lista conversa ali, além do chat de cada compromisso.

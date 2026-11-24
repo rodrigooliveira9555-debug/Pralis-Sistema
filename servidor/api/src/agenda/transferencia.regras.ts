@@ -125,7 +125,7 @@ export function converter(documento: unknown, ctx: Contexto): Conversao {
   const agora = new Date();
   const autor = { criadoPor: ctx.adminId, atualizadoPor: ctx.adminId };
   const semConta = new Map<string, number>();
-  /** Id de pessoa → conta da empresa, ou null (pessoa de teste da lista provisória: fica de fora, P-45). */
+  /** Id de pessoa → conta da empresa, ou null (pessoa de teste da lista provisória: fica de fora, P-46). */
   const pessoa = (id: string): string | null => {
     if (ctx.contas.has(id)) return id;
     semConta.set(id, (semConta.get(id) ?? 0) + 1);

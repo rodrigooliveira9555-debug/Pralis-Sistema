@@ -2,7 +2,7 @@
  * Agenda — levar a Agenda antiga (documento cicluz-agenda-v1) para o servidor (plano, seções 4 e 5).
  * O administrador vê a prévia (contagens, o que vai para a pendência), escolhe o gestor dos compromissos feitos antes
  * do login e confirma. As pessoas de teste da lista provisória (José · Compras, Rodrigo · Gerência, Ana · Estoque) não
- * são contas e ficam de fora (Zé, 24/11/2026: apagar as de teste; P-45). Quem não é administrador vê o aviso de espera.
+ * são contas e ficam de fora (Zé, 24/11/2026: apagar as de teste; P-46). Quem não é administrador vê o aviso de espera.
  * O servidor lê o próprio documento, confere a contagem e não apaga o documento.
  */
 (function () {

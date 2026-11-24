@@ -4,7 +4,7 @@ import { horaLocal, situacaoNoExpediente } from "../../api/src/agenda/rotina.reg
 import { criarApp } from "./ajuda.ts";
 import { ajudaAgenda, novoId, type Conta, type Pool } from "./ajuda-agenda.ts";
 
-// Rotina da Agenda (0008, P-45): configurações por pessoa, expediente, hora fora do expediente, desempenho,
+// Rotina da Agenda (0008, P-46): configurações por pessoa, expediente, hora fora do expediente, desempenho,
 // tarefa vinda de uma tela e chat do grupo. Dados fictícios.
 
 let app: FastifyInstance;

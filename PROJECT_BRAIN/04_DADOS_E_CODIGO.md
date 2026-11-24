@@ -41,7 +41,7 @@
   (histórico): listas, colunas, itens com pessoas/avaliação/repetição/localização, relações.
   Chat e arquivos: tabelas `agenda_mensagens`, `agenda_chat_leituras` e `agenda_arquivos` (0003), com a permissão lida das
   tabelas da Agenda a cada pedido (o documento não decide mais nada; G1 fechado).
-  **Rotina (0008, P-45, 24/11/2026):** colunas `vinculo_tela`, `vinculo_titulo` e `vinculo_ref` em `agenda_compromissos` (tela
+  **Rotina (0008, P-46, 24/11/2026):** colunas `vinculo_tela`, `vinculo_titulo` e `vinculo_ref` em `agenda_compromissos` (tela
   ligada; `vinculo_ref` único = tarefa criada por uma tela, só `compras:oc:<ocorrência>` e `producao:pp:<pedido>`), lista fixa
   `lista-tarefas-das-telas` ("Tarefas das telas", criada na primeira tarefa), `agenda_grupo_mensagens` e `agenda_grupo_leituras`
   (chat do grupo), `agenda_config_pessoas` (expediente, bloqueio fora dele, registro da hora fora, minutos parado até sair) e

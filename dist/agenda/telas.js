@@ -3,7 +3,7 @@
  * à esquerda as listas automáticas (Para hoje, Programados, Todos, Sinalizados, Atrasados, Atribuídos a
  * mim, Concluídos) e "Minhas listas"; à direita a lista escolhida. No celular, a lista abre por cima,
  * com "‹ Listas" para voltar. Abas: Listas, Calendário (agenda/calendario.js), Kanban (agenda/kanban.js), Mapa mental
- * e Desempenho (agenda/rotina.js). Cada lista é um grupo (P-45): membros e chat do grupo. A tarefa pode estar ligada a
+ * e Desempenho (agenda/rotina.js). Cada lista é um grupo (P-46): membros e chat do grupo. A tarefa pode estar ligada a
  * uma tela do sistema (ícone roxo de agendar ou pedido agendado): "Abrir a tela" leva até ela.
  * Peças de tela, diálogo e abas: as mesmas do Compras (compras/ui.js), na cor roxa do menu Agenda.
  */
@@ -896,7 +896,7 @@
         const iconeCampo = el('div', 'compras-campo');
         iconeCampo.append(el('span', 'compras-rotulo', 'Ícone'), icones);
         form.append(topo, corCampo, iconeCampo);
-        // Membros do grupo (P-45): quem participa da lista e do chat do grupo. Quem criou entra sempre.
+        // Membros do grupo (P-46): quem participa da lista e do chat do grupo. Quem criou entra sempre.
         const membrosSecao = el('fieldset', 'agenda-form-secao agenda-membros');
         membrosSecao.append(el('legend', null, 'Membros do grupo'));
         const eu = A.usuarioAtual();

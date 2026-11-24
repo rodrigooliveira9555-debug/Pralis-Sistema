@@ -608,7 +608,7 @@
     finally { emAndamento--; }
   }
 
-  /* ---------- Membros da lista (grupo), configurações, desempenho, tarefa de tela (P-45) ---------- */
+  /* ---------- Membros da lista (grupo), configurações, desempenho, tarefa de tela (P-46) ---------- */
   const api = async (caminho, opcoes) => {
     if (!conectado()) return erro(SEM_INTERNET);
     try { return { dados: await window.CicluzSync.api(caminho, opcoes) }; }

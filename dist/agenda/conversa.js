@@ -1,6 +1,6 @@
 /*
  * Agenda — chat e arquivos (no servidor: servidor/api/src/agenda).
- * - Chat do compromisso: conversa de quem participa dele. Chat do grupo (P-45): cada lista é um grupo, e quem é
+ * - Chat do compromisso: conversa de quem participa dele. Chat do grupo (P-46): cada lista é um grupo, e quem é
  *   membro conversa ali. As duas conversas usam a MESMA janela, no jeito do WhatsApp (balões, dia, hora no balão).
  *   Com a janela aberta, confere novidades a cada 5 s; não lidas aparecem na linha do compromisso e na lista.
  * - Arquivos: até 10 MB (imagem, PDF, Word, Excel, PowerPoint, TXT, CSV). O responsável manda

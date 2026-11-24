@@ -26,7 +26,7 @@ async function abrirPagina(largura) {
   await pagina.route('https://fonts.gstatic.com/**', (r) => r.abort());
   await pagina.goto(url, { waitUntil: 'load' });
   await pagina.waitForFunction(() => window.CicluzProducao && window.CicluzProducaoServico && window.CicluzComprasPedido);
-  // Contas fictícias da empresa (sem servidor não há Pessoas com Acesso; as pessoas de teste saíram, P-45).
+  // Contas fictícias da empresa (sem servidor não há Pessoas com Acesso; as pessoas de teste saíram, P-46).
   await pagina.evaluate(() => { CicluzAgendaDados.pessoas = () => [{ id: 'conta-jose', nome: 'José (teste)' }, { id: 'conta-rodrigo', nome: 'Rodrigo (teste)' }, { id: 'conta-ana', nome: 'Ana (teste)' }]; });
   await pagina.evaluate(() => { if (document.body.classList.contains('mobile-menu-visible')) document.getElementById('toggleMenu').click(); });
   return pagina;
@@ -66,7 +66,7 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
     const tela = p.locator('#producao-' + id);
     ok(await p.locator('#producao-' + id + '.show').count() === 1 && (await tela.locator('.head h2').first().textContent()).trim() === titulo && (await tela.locator('.head p').first().textContent()).includes('Saídas · Mercadorias / ' + sub + ' / ' + titulo), sub + ' → ' + titulo + ': abre a tela com o mesmo nome e a trilha certa');
   }
-  // Os agendamentos saíram do menu Agenda (Zé, 23/11/2026); o menu tem só Agenda e Configurações da Agenda (P-45, 24/11/2026).
+  // Os agendamentos saíram do menu Agenda (Zé, 23/11/2026); o menu tem só Agenda e Configurações da Agenda (P-46, 24/11/2026).
   const agenda = await p.evaluate(() => [...document.querySelectorAll('details[data-menu-name="Agenda/Atividades"] .children button')].map((b) => b.textContent.trim()).join('|'));
   ok(agenda === 'Agenda|Configurações da Agenda', 'Menu Agenda sem os agendamentos de compras e de produção: ' + agenda);
   ok(await p.locator('#asset-view').count() === 0, 'A prévia antiga de Patrimônios (que não salvava) saiu');

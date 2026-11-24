@@ -76,7 +76,7 @@ describe("agenda: transferência do documento", () => {
 
   it("executa: tudo na tabela ou na pendência; cor com código neutralizada; nome repetido vira (2); lista sumida vai para a primeira", async () => {
     const { g, resp, fora } = await cenario();
-    // Pedir para ligar uma pessoa de teste não tem mais efeito: o campo nem existe (P-45, 24/11/2026).
+    // Pedir para ligar uma pessoa de teste não tem mais efeito: o campo nem existe (P-46, 24/11/2026).
     const r = await transferir(g, { dePara: { "u-jose": resp.usuarioId } });
     expect(r.statusCode, r.body).toBe(200);
     const t = r.json().data;

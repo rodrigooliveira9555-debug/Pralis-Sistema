@@ -285,7 +285,7 @@
         }
       }
     });
-    // Chegou na hora: vira tarefa na Agenda do responsável, que leva à tela dos pedidos (P-45).
+    // Chegou na hora: vira tarefa na Agenda do responsável, que leva à tela dos pedidos (P-46).
     if (ok && window.CicluzAgendaRotina) novos.forEach((n) => window.CicluzAgendaRotina.tarefaDoPedidoDeProducao(n));
     return ok ? criados : 0;
   }
@@ -354,7 +354,7 @@
       p.eventos.push({ tipo: 'enviado', em: S.agoraIso(), por: responsavelId || p.responsavelId });
       criarOrdens(d, p);
     });
-    // O pedido foi enviado à produção: a tarefa da Agenda é concluída (P-45).
+    // O pedido foi enviado à produção: a tarefa da Agenda é concluída (P-46).
     if (ok && window.CicluzAgendaRotina) window.CicluzAgendaRotina.pedidoDeProducaoFeito(pedidoId);
     return ok ? { ok: true } : erro('Este pedido já foi enviado ou não pôde ser salvo.');
   }

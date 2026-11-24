@@ -610,6 +610,8 @@ body.dark-theme .compras-objeto-origem .compras-chip.ativo{color:#f2f1f6}
 .compras-linha.gp-linha .account-row-actions>button:first-child{background:var(--menu-accent)}
 .compras-linha.gp-linha.inativo>:not(.account-action-toggle):not(.account-row-actions){opacity:.55}
 @container lista-grade (max-width:519px){.compras-linha:is(.grade-colab-s,.grade-colab-c,.grade-cargo){--w-nome:120px}}
+/* Nome longo na célula do nome: no máximo duas linhas (a linha da lista tem de 50 a 60 px); o nome inteiro fica no título. */
+.compras-linha .c-nome-texto{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-width:0;overflow-wrap:anywhere}
 .oculta-cpf{--w-cpf:24px}
 .oculta-cpf :is(.grade-colab-s,.grade-colab-c,.grade-cargo):not(.compras-linha-cabecalho)>.c-cpf,.oculta-cpf .compras-linha-cabecalho:is(.grade-colab-s,.grade-colab-c,.grade-cargo)>.c-cpf>.compras-coluna-titulo{display:none}
 .oculta-funcao{--w-funcao:24px}
@@ -717,3 +719,7 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 /* Editor do tipo de contrato: as duas listas de atividades lado a lado. */
 .compras-atividades-duas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 @media (max-width:900px){.compras-atividades-duas{grid-template-columns:minmax(0,1fr)}}
+/* Campo de hora: o painel tem duas colunas (horas e minutos); cada uma rola e mostra umas seis linhas. */
+.compras-hora-painel{width:min(232px,calc(100vw - 24px));grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 12px}
+.compras-hora-coluna{display:grid;gap:6px;align-content:start;min-width:0}
+.compras-aniv-painel .compras-grade-escolha.compras-hora-lista{grid-template-columns:minmax(0,1fr);position:relative;max-height:246px;overflow-y:auto;overscroll-behavior:contain;padding-right:4px}

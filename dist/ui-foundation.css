@@ -19,7 +19,7 @@ body.dark-theme .view>.panel>.head p{color:var(--navigation-ink)!important}
 
 /* Canonical controls: includes legacy views, dynamic editors, dialogs and queries. */
 :root{--ui-label:12px;--ui-label-weight:400;--ui-label-color:#52525b;--ui-input-color:#27272a;--ui-placeholder:#71717a;--ui-control-bg:#fff;--ui-border-base:#d4d4d8;--ui-focus-ring:14%}
-/* Situação (P-45, desempenho da Agenda): cor que acompanha número e nome, nunca sozinha. */
+/* Situação (P-46, desempenho da Agenda): cor que acompanha número e nome, nunca sozinha. */
 :root{--ui-situacao-ok:#16a34a;--ui-situacao-atencao:#d97706;--ui-situacao-erro:#b91c1c;--ui-situacao-neutro:#a1a1aa}
 body.dark-theme{--ui-situacao-ok:#4ade80;--ui-situacao-atencao:#fbbf24;--ui-situacao-erro:#f87171;--ui-situacao-neutro:#a1a1aa}
 body.dark-theme{--ui-label-color:#d4d4d8;--ui-input-color:#f4f4f5;--ui-placeholder:#a1a1aa;--ui-control-bg:#24232b;--ui-border-base:#62626b;--ui-focus-ring:24%}
@@ -442,8 +442,11 @@ body .btn.acao-com-circulo[hidden]{display:none}
 .location-tree.unidades-arvore .location-row .location-name{line-height:16px}
 .location-tree.unidades-arvore .location-row .location-count{font-size:var(--escolha-detalhe);line-height:14px;margin-top:0}
 .uniforms-options .uniforms-escolha{min-height:var(--escolha-linha);padding-top:4px;padding-bottom:4px;gap:8px}
-.uniforms-options .uniforms-escolha>.compras-linha-icone{flex:0 0 var(--escolha-icone);width:var(--escolha-icone);height:var(--escolha-icone)}
-.uniforms-options .uniforms-escolha>.compras-linha-icone svg{width:16px;height:16px}
+.uniforms-options .uniforms-escolha>.compras-linha-icone,.uniforms-options .uniforms-escolha>.compras-linha-icones>.compras-linha-icone{flex:0 0 var(--escolha-icone);width:var(--escolha-icone);height:var(--escolha-icone)}
+.uniforms-options .uniforms-escolha>.compras-linha-icone svg,.uniforms-options .uniforms-escolha>.compras-linha-icones>.compras-linha-icone svg{width:16px;height:16px}
+.uniforms-options .uniforms-escolha>.compras-linha-icones>.compras-linha-icone{color:#fff}
+.uniforms-options .uniforms-escolha>.compras-linha-icones>.compras-linha-icone .sigla-text{font-size:8px;color:#fff}
+.uniforms-options .uniforms-escolha.marcado{background:color-mix(in srgb,var(--menu-accent,#7c3aed) 10%,var(--theme-card,#fff))}
 .uniforms-options .uniforms-escolha .compras-linha-texto b{font-size:var(--escolha-titulo);line-height:16px}
 .uniforms-options .uniforms-escolha .compras-linha-texto small,.uniforms-options .uniforms-escolha .account-list-state{font-size:var(--escolha-detalhe);line-height:14px}
 /* A caixa de marcar das listas de escolha: o tamanho e o respiro dos campos de janela são fixados por regras gerais, que agora leem

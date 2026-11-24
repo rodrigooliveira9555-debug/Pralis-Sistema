@@ -1,5 +1,5 @@
 /*
- * Agenda — rotina (P-45, áudios do Rodrigo de 23/11/2026). Servidor: servidor/api/src/agenda/rotina.*.
+ * Agenda — rotina (P-46, áudios do Rodrigo de 23/11/2026). Servidor: servidor/api/src/agenda/rotina.*.
  * - Configurações da Agenda (menu Agenda › Configurações da Agenda): o administrador define, por pessoa, o
  *   expediente, se a Agenda abre fora dele, se a hora fora do expediente é registrada (comum ou extra: só
  *   registro, não vai para a folha) e em quantos minutos parado o sistema sai. Cada pessoa vê a própria regra.

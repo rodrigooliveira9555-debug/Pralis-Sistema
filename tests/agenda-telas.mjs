@@ -123,7 +123,7 @@ async function limparAgenda(p) {
   ok(await q.locator('.agenda-nova-entrada').count() === 0, 'E não consegue criar nada');
   await q.close();
 
-  // O administrador: prévia e confirmação. As pessoas de teste da lista provisória ficam de fora (P-45, 24/11/2026).
+  // O administrador: prévia e confirmação. As pessoas de teste da lista provisória ficam de fora (P-46, 24/11/2026).
   const p = await abrirPagina(1280, 900);
   await p.evaluate(() => { document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.abrir(''); });
   await p.locator('.agenda-transferencia-numero').first().waitFor();
@@ -149,7 +149,7 @@ async function limparAgenda(p) {
 {
   const p = await abrirPagina(1280, 900);
   const hoje = await hojeDe(p);
-  // Entrada pelo menu lateral: Agenda · Atividades → Agenda (P-45: o menu tem só "Agenda" e "Configurações da Agenda")
+  // Entrada pelo menu lateral: Agenda · Atividades → Agenda (P-46: o menu tem só "Agenda" e "Configurações da Agenda")
   await p.locator('summary', { hasText: 'Agenda' }).first().click();
   await p.getByRole('button', { name: 'Agenda', exact: true }).first().click();
   ok(await p.locator('#agenda-view.show').count() === 1, 'O submenu abre a Agenda');
@@ -757,7 +757,7 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   await p.close();
 }
 
-/* ---------- 5b) Rotina da Agenda (P-45): configurações, desempenho, chat do grupo, tela ligada, pedido que vira tarefa ---------- */
+/* ---------- 5b) Rotina da Agenda (P-46): configurações, desempenho, chat do grupo, tela ligada, pedido que vira tarefa ---------- */
 {
   const p = await abrirPagina(1280, 900);
   await limparAgenda(p);
