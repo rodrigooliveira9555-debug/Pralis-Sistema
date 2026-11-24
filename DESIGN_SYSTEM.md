@@ -20,7 +20,16 @@ Pedido do Rodrigo (a lista estava fora do padrão). A lista de cargos usa a mesm
 - **Nome longo**: no máximo duas linhas (`.c-nome-texto`), com o nome inteiro no título; a linha nunca passa de 60 px (no celular os nomes quebravam em três linhas e a conferência acusava 71 px).
 - Fica de fora desta entrega: DES - Atualização Salários Dissídio Coletivo (`#salary-view .salary-row`) ainda usa o cartão antigo; quando for refeita, segue este mesmo padrão.
 
-## Acesso por Tela: lista única, três linhas de escolha e menu de seleção no padrão dos cadastros (24/11/2026, VERSÃO VIGENTE)
+## Acesso por Tela: cabeçalho em três linhas, cada coluna na linha do seu tipo (24/11/2026, VERSÃO VIGENTE; vale sobre as de baixo)
+Pedido do Rodrigo, depois de ver a tela:
+- **O cabeçalho é compacto e preso no alto**, no padrão dos cabeçalhos de lista: **três linhas de 52 px** — **Colaborador**, **Cargo** e **Área** — sem bloco alto entre o título da tela e o primeiro menu (Entradas). À esquerda de cada linha: o "+" (abre uma coluna do tipo), o nome, a quantidade e a seta de ocultar ou mostrar.
+- **Cada escolha fica na linha do seu tipo**: o nome do colaborador na linha Colaborador, o cargo na linha Cargo, a área na linha Área, em cima da coluna de marcações dela, com o selo do tipo (pessoa, cargo ou pino da área), o nome e o resumo "N telas com acesso"; as outras duas linhas ficam vazias naquela coluna. Tocar no nome troca a escolha, e o × fecha a coluna.
+- **A lista de escolha abre como painel suspenso** (320 px, por cima da tabela), no padrão do menu de seleção abaixo, e some ao escolher.
+- **A seta de cada linha oculta só os nomes daquela linha**: a coluna estreita (52 px) e o nome passa para a **vertical, lido de baixo para cima (de cabeça para baixo), colado na linha de baixo do cabeçalho**; tocar nele mostra a coluna de novo. Com as três setas fechadas só aparecem esses nomes na vertical.
+- **Todas as linhas do Acesso por Tela têm a mesma altura, 52 px** (as três do cabeçalho, o menu principal, os submenus e as telas); a conferência automática acusa linha fora de 50 a 60 px.
+
+### Versão do mesmo dia (substituída pelos itens acima onde diz diferente)
+## Acesso por Tela: lista única, três linhas de escolha e menu de seleção no padrão dos cadastros (24/11/2026)
 Pedido do Rodrigo; **substitui, nesta seção, os itens abaixo que dizem o contrário** (quadros separados, três cabeçalhos em colunas, busca e botão único de expandir). O que vale:
 - **Uma lista só, ligada de ponta a ponta**: moldura única de cantos arredondados; menu principal, submenu e tela são linhas da mesma lista, separadas só por um fio. Sem vão nem quadro separado entre os menus.
 - **Altura de linha igual em todos os níveis**: 52 px no mínimo (a das listas dos cadastros); só cresce se o nome quebrar em duas linhas.

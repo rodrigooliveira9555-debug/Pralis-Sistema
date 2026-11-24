@@ -192,117 +192,97 @@
     return box;
   }
 
+  /** O nome de uma coluna ocultada: na vertical, lido de baixo para cima e colado na linha de baixo do cabeçalho; tocar nele mostra a coluna. */
+  function nomeVertical(b) {
+    const bt = el('button', 'acessos-nome-vert');
+    bt.type = 'button';
+    bt.title = 'Mostrar a coluna de ' + b.alvo.nome;
+    bt.setAttribute('aria-label', bt.title);
+    bt.setAttribute('aria-expanded', 'false');
+    bt.append(el('span', null, b.alvo ? b.alvo.nome : ROTULO_GRUPO[b.tipo]));
+    bt.onclick = () => { b.recolhida = false; desenhar(); };
+    return bt;
+  }
+
   /**
-   * O cabeçalho de uma coluna: as três linhas "+ Selecionar o nome / o cargo / a área". A lista de opções só aparece ao tocar no
-   * "+" da linha (com busca quando é longa) e some ao escolher; o escolhido vira o dono da coluna e a linha mostra o nome.
+   * A célula de uma coluna, na linha do seu tipo (Colaborador, Cargo ou Área): o selo do tipo, o nome escolhido e o resumo, com o ×
+   * para fechar. Tocar no nome troca a escolha: a lista de opções abre num painel por cima da tabela e some ao escolher.
    */
   function cabecaDaColuna(b) {
-    if (b.recolhida) {
-      const mini = el('div', 'acessos-bloco-compacto');
-      const abre = el('button', 'compras-coluna-seta');
-      abre.type = 'button';
-      abre.setAttribute('aria-expanded', 'false');
-      abre.title = 'Mostrar a coluna de ' + b.alvo.nome;
-      abre.setAttribute('aria-label', abre.title);
-      abre.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>';
-      abre.onclick = () => { b.recolhida = false; desenhar(); };
-      const nome = el('span', 'acessos-bloco-nome-vert', b.alvo.nome);
-      nome.title = b.alvo.nome;
-      const resumo = el('small', 'profiles-note acessos-bloco-resumo');
-      resumo.hidden = true;
-      mini.append(abre, nome, resumo);
-      return mini;
-    }
     const box = el('div', 'acessos-bloco-cab');
     const usados = new Set(estado.blocos.filter((x) => x !== b && x.alvo).map((x) => x.alvo.tipo + ':' + x.alvo.id));
-    {
-      // Um "+" só. Aberto, mostra a escolha entre Nome, Cargo e Área e, embaixo, a lista do tipo escolhido (b.quem guarda o tipo aberto).
-      const linha = el('div', 'acessos-telas-quem-bloco');
-      const aberto = Boolean(b.quem);
-      const l = el('div', 'acessos-telas-quem');
-      const rotulo0 = ROTULO_GRUPO[b.tipo].toLocaleLowerCase('pt-BR');
-      const valor = el('button', 'acessos-telas-trocar');
-      valor.type = 'button';
-      valor.setAttribute('aria-expanded', String(aberto));
-      valor.title = b.alvo ? 'Trocar a escolha desta coluna' : 'Escolher ' + rotulo0;
-      valor.setAttribute('aria-label', valor.title);
-      if (b.alvo) valor.append(el('span', 'acessos-telas-valor', b.alvo.nome), el('small', 'profiles-note', ROTULO_GRUPO[b.tipo]));
-      else valor.append(el('span', 'acessos-telas-valor vazio', 'Escolher ' + rotulo0));
-      valor.onclick = () => { b.quem = aberto ? '' : b.tipo; desenhar(); };
-      l.append(valor);
-      linha.append(l);
-      if (aberto) {
-        const id = b.tipo;
-        const [, rotulo, , ler, semItens] = LINHAS.find(([x]) => x === id);
-        const doTipo = b.alvo && b.alvo.tipo === id;
-        const itens = ler().filter((o) => !usados.has(id + ':' + o.id));
-        const lista = el('div', 'acessos-telas-opcoes uniforms-options');
-        lista.setAttribute('role', 'radiogroup');
-        lista.setAttribute('aria-label', rotulo);
-        const opcoes = [];
-        if (b.alvo) opcoes.push({ id: '', nome: 'Limpar a escolha', detalhe: '' });
-        opcoes.push(...itens);
-        // As opções seguem as listas dos cadastros, em tamanho menor: colaborador e cargo levam o selo vermelho de DES com o ícone do cadastro
-        // (pessoa e cargo); a área leva a sigla e a cor dela, recuada pelo nível (Área › Setor › Local), com a quantidade de itens.
-        const corDES = U.corOrigem('despesas', '#ef4444');
-        const desenho = {
-          pessoa: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1a6 6 0 0 1 14 0v1"/>',
-          cargo: '<circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/>',
-        };
-        const botoes = opcoes.map((o) => {
-          const marcado = doTipo && b.alvo.id === o.id;
-          const selo = !o.id ? { html: U.svg('<path d="M6 6l12 12M18 6 6 18"/>'), cor: corDES }
-            : id === 'area' ? { html: '<span class="sigla-text">' + o.sigla + '</span>', cor: o.cor }
-              : { html: U.svg(desenho[id]), cor: corDES };
-          const bt = U.linhaLista({
-            icones: [selo], titulo: o.nome, detalhe: o.detalhe || '',
-            direita: marcado ? el('span', 'account-list-state', 'Escolhida') : undefined,
-            aoClicar: () => { b.quem = ''; b.alvo = o.id ? { tipo: id, id: o.id, nome: o.nome } : null; desenhar(); },
-          });
-          bt.classList.add('uniforms-escolha');
-          if (marcado) bt.classList.add('marcado');
-          if (o.nivel) bt.style.setProperty('--recuo', String(o.nivel));
-          bt.setAttribute('role', 'radio');
-          bt.setAttribute('aria-checked', String(marcado));
-          bt.dataset.busca = U.dobrar(o.nome + ' ' + (o.caminho || '') + ' ' + (o.detalhe || ''));
-          return bt;
+    const id = b.tipo;
+    const aberto = Boolean(b.quem);
+    const rotulo0 = ROTULO_GRUPO[id].toLocaleLowerCase('pt-BR');
+    const corDES = U.corOrigem('despesas', '#ef4444');
+    const GLIFO = {
+      pessoa: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1a6 6 0 0 1 14 0v1"/>',
+      cargo: '<circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/>',
+      area: '<path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11Z"/><circle cx="12" cy="10" r="2.2"/>',
+    };
+    const valor = el('button', 'acessos-telas-trocar');
+    valor.type = 'button';
+    valor.setAttribute('aria-expanded', String(aberto));
+    valor.title = b.alvo ? 'Trocar a escolha desta coluna' : 'Escolher ' + rotulo0;
+    valor.setAttribute('aria-label', valor.title);
+    const selo = el('span', 'acessos-sel-selo');
+    selo.style.setProperty('--selo-cor', corDES);
+    selo.innerHTML = U.svg(GLIFO[id]);
+    const texto = el('span', 'acessos-sel-texto');
+    texto.append(el('span', 'acessos-telas-valor' + (b.alvo ? '' : ' vazio'), b.alvo ? b.alvo.nome : 'Escolher ' + rotulo0), el('small', 'profiles-note acessos-bloco-resumo'));
+    valor.append(selo, texto);
+    valor.onclick = () => { b.quem = aberto ? '' : b.tipo; desenhar(); };
+    box.append(valor);
+    if (aberto) {
+      const [, rotulo, , ler, semItens] = LINHAS.find(([x]) => x === id);
+      const doTipo = b.alvo && b.alvo.tipo === id;
+      const itens = ler().filter((o) => !usados.has(id + ':' + o.id));
+      const painel = el('div', 'acessos-telas-painel');
+      const lista = el('div', 'acessos-telas-opcoes uniforms-options');
+      lista.setAttribute('role', 'radiogroup');
+      lista.setAttribute('aria-label', rotulo);
+      const opcoes = [];
+      if (b.alvo) opcoes.push({ id: '', nome: 'Limpar a escolha', detalhe: '' });
+      opcoes.push(...itens);
+      // As opções seguem as listas dos cadastros, em tamanho menor: colaborador e cargo levam o selo vermelho de DES com o ícone do cadastro;
+      // a área leva a sigla e a cor dela, recuada pelo nível (Área › Setor › Local), com a quantidade de itens.
+      const botoes = opcoes.map((o) => {
+        const marcado = doTipo && b.alvo.id === o.id;
+        const seloOpcao = !o.id ? { html: U.svg('<path d="M6 6l12 12M18 6 6 18"/>'), cor: corDES }
+          : id === 'area' ? { html: '<span class="sigla-text">' + o.sigla + '</span>', cor: o.cor }
+            : { html: U.svg(GLIFO[id]), cor: corDES };
+        const bt = U.linhaLista({
+          icones: [seloOpcao], titulo: o.nome, detalhe: o.detalhe || '',
+          direita: marcado ? el('span', 'account-list-state', 'Escolhida') : undefined,
+          aoClicar: () => { b.quem = ''; b.alvo = o.id ? { tipo: id, id: o.id, nome: o.nome } : null; desenhar(); },
         });
-        if (!itens.length) lista.append(el('p', 'profiles-note acessos-telas-vazio', semItens));
-        if (itens.length > 8) {
-          const campo = U.entrada('search', '', { placeholder: 'Buscar' });
-          campo.className = 'acessos-telas-busca-quem';
-          campo.setAttribute('aria-label', 'Buscar em ' + rotulo.toLocaleLowerCase('pt-BR'));
-          campo.oninput = () => { const t = U.dobrar(campo.value.trim()); botoes.forEach((x) => { x.hidden = Boolean(t) && !x.dataset.busca.includes(t); }); };
-          linha.append(campo);
-        }
-        lista.append(...botoes);
-        linha.append(lista);
+        bt.classList.add('uniforms-escolha');
+        if (marcado) bt.classList.add('marcado');
+        if (o.nivel) bt.style.setProperty('--recuo', String(o.nivel));
+        bt.setAttribute('role', 'radio');
+        bt.setAttribute('aria-checked', String(marcado));
+        bt.dataset.busca = U.dobrar(o.nome + ' ' + (o.caminho || '') + ' ' + (o.detalhe || ''));
+        return bt;
+      });
+      if (!itens.length) lista.append(el('p', 'profiles-note acessos-telas-vazio', semItens));
+      if (itens.length > 8) {
+        const campo = U.entrada('search', '', { placeholder: 'Buscar' });
+        campo.className = 'acessos-telas-busca-quem';
+        campo.setAttribute('aria-label', 'Buscar em ' + rotulo.toLocaleLowerCase('pt-BR'));
+        campo.oninput = () => { const t = U.dobrar(campo.value.trim()); botoes.forEach((x) => { x.hidden = Boolean(t) && !x.dataset.busca.includes(t); }); };
+        painel.append(campo);
       }
-      box.append(linha);
+      lista.append(...botoes);
+      painel.append(lista);
+      box.append(painel);
     }
-    box.append(el('small', 'profiles-note acessos-bloco-resumo'));
-    if (b.alvo) {
-      const fecha = el('button', 'compras-coluna-seta acessos-bloco-seta');
-      fecha.type = 'button';
-      fecha.setAttribute('aria-expanded', 'true');
-      fecha.title = 'Recolher a coluna de ' + b.alvo.nome;
-      fecha.setAttribute('aria-label', fecha.title);
-      fecha.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>';
-      fecha.onclick = () => { b.recolhida = true; b.quem = ''; desenhar(); };
-      box.append(fecha);
-    }
-    {
-      const x = el('button', 'acessos-bloco-x');
-      x.type = 'button';
-      x.title = 'Fechar esta coluna';
-      x.setAttribute('aria-label', 'Fechar a coluna' + (b.alvo ? ' de ' + b.alvo.nome : ''));
-      x.innerHTML = U.svg('<path d="M6 6l12 12M18 6 6 18"/>');
-      x.onclick = () => {
-        estado.blocos = estado.blocos.filter((y) => y !== b);
-        desenhar();
-      };
-      box.append(x);
-    }
+    const x = el('button', 'acessos-bloco-x');
+    x.type = 'button';
+    x.title = 'Fechar esta coluna';
+    x.setAttribute('aria-label', 'Fechar a coluna' + (b.alvo ? ' de ' + b.alvo.nome : ''));
+    x.innerHTML = U.svg('<path d="M6 6l12 12M18 6 6 18"/>');
+    x.onclick = () => { estado.blocos = estado.blocos.filter((y) => y !== b); desenhar(); };
+    box.append(x);
     return box;
   }
 
@@ -370,11 +350,13 @@
         : 'Escolha para quem é esta coluna.';
     });
 
-    // Primeira linha: à esquerda o aviso; em seguida, os três cabeçalhos (Colaborador, Cargo, Área), cada um com o seu "+" no início, o
-    // nome, a seta que oculta ou mostra as colunas dele e, embaixo, o cabeçalho de cada coluna aberta.
-    const cab = el('div', 'acessos-tl acessos-tl-quem-lin');
-    const e = el('div', 'acessos-tl-esq');
+    // Cabeçalho (telas): três linhas de 52 px — Colaborador, Cargo e Área. Cada linha tem à esquerda o "+" (abre uma coluna do tipo), o nome, a
+    // quantidade e a seta que oculta ou mostra os nomes dela; as colunas escolhidas aparecem na linha do seu tipo, e a seta só mexe nessa linha.
+    // Coluna ocultada: estreita, com o nome na vertical (de baixo para cima) colado na linha de baixo do cabeçalho.
+    let cab;
     if (estado.modo === 'acoes') {
+      cab = el('div', 'acessos-tl acessos-tl-quem-lin');
+      const e = el('div', 'acessos-tl-esq');
       const voltar = el('button', 'shortcut-circle compras-redondo acessos-telas-mais');
       voltar.type = 'button';
       voltar.title = 'Voltar às telas';
@@ -382,28 +364,7 @@
       voltar.innerHTML = U.svg('<path d="M15 5 8 12l7 7"/>');
       voltar.onclick = () => { estado.focar = 'esp:' + estado.foco; estado.modo = 'telas'; desenhar(); };
       e.append(voltar, el('span', 'acessos-tl-esq-txt', 'Voltar às telas'));
-    } else {
-      const linhasQuem = el('div', 'acessos-quem-linhas');
-      TIPOS.forEach((t) => {
-        const bs = estado.blocos.filter((b) => b.tipo === t);
-        const li = el('div', 'acessos-quem-linha');
-        const mais = botaoMais('Abrir uma coluna de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR'), false, () => { estado.blocos.push(novoBloco(t)); estado.blocos.sort((x, y) => TIPOS.indexOf(x.tipo) - TIPOS.indexOf(y.tipo)); desenhar(true); });
-        const algumaAberta = bs.some((b) => !b.recolhida);
-        const seta = el('button', 'acessos-gt-seta' + (algumaAberta ? ' aberta' : ''));
-        seta.type = 'button';
-        seta.disabled = !bs.length;
-        seta.setAttribute('aria-expanded', String(algumaAberta));
-        seta.title = (algumaAberta ? 'Ocultar' : 'Mostrar') + ' as colunas de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR');
-        seta.setAttribute('aria-label', seta.title);
-        seta.innerHTML = U.svg('<path d="' + G.niveis + '"/>');
-        seta.onclick = () => { bs.forEach((b) => { b.recolhida = algumaAberta; if (algumaAberta) b.quem = ''; }); desenhar(); };
-        li.append(mais, el('b', null, ROTULO_GRUPO[t]), el('small', null, bs.length ? String(bs.length) : ''), seta);
-        linhasQuem.append(li);
-      });
-      e.append(linhasQuem);
-    }
-    cab.append(e);
-    if (estado.modo === 'acoes') {
+      cab.append(e);
       colunas().forEach((b, i) => {
         const w = blocoEl(b, 'acessos-tl-bloco-cab');
         const c = cabecaFixa(b);
@@ -412,16 +373,40 @@
         cab.append(w);
       });
     } else {
-      estado.blocos.forEach((b) => {
-        const w = blocoEl(b, 'acessos-tl-bloco-cab');
-        const c = cabecaDaColuna(b);
-        resumos.push([regs[estado.blocos.indexOf(b)], c.querySelector('.acessos-bloco-resumo')]);
-        w.append(c);
-        cab.append(w);
+      cab = el('div', 'acessos-cabecalho');
+      TIPOS.forEach((t, ti) => {
+        const bs = estado.blocos.filter((b) => b.tipo === t);
+        const linha = el('div', 'acessos-tl acessos-quem-row');
+        const e = el('div', 'acessos-tl-esq');
+        const li = el('div', 'acessos-quem-linha');
+        const mais = botaoMais('Abrir uma coluna de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR'), false, () => { estado.blocos.push(novoBloco(t)); estado.blocos.sort((x, y) => TIPOS.indexOf(x.tipo) - TIPOS.indexOf(y.tipo)); desenhar(true); });
+        const algumaAberta = bs.some((b) => !b.recolhida);
+        const seta = el('button', 'acessos-gt-seta' + (algumaAberta ? ' aberta' : ''));
+        seta.type = 'button';
+        seta.disabled = !bs.length;
+        seta.setAttribute('aria-expanded', String(algumaAberta));
+        seta.title = (algumaAberta ? 'Ocultar' : 'Mostrar') + ' os nomes de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR');
+        seta.setAttribute('aria-label', seta.title);
+        seta.innerHTML = U.svg('<path d="' + G.niveis + '"/>');
+        seta.onclick = () => { bs.forEach((b) => { b.recolhida = algumaAberta; if (algumaAberta) b.quem = ''; }); desenhar(); };
+        li.append(mais, el('b', null, ROTULO_GRUPO[t]), el('small', null, bs.length ? String(bs.length) : ''), seta);
+        e.append(li);
+        linha.append(e);
+        estado.blocos.forEach((b) => {
+          const w = blocoEl(b, 'acessos-tl-bloco-cab');
+          if (b.recolhida) {
+            if (ti === TIPOS.length - 1) w.append(nomeVertical(b));
+          } else if (b.tipo === t) {
+            const c = cabecaDaColuna(b);
+            resumos.push([regs[estado.blocos.indexOf(b)], c.querySelector('.acessos-bloco-resumo')]);
+            w.append(c);
+          }
+          linha.append(w);
+        });
+        if (ti === 0 && fimDoCabecalho) linha.append(fimDoCabecalho);
+        cab.append(linha);
       });
     }
-    // O total e o "‹ ›" ficam no canto do quadro do cabeçalho (presos à direita enquanto a matriz rola para o lado).
-    if (fimDoCabecalho) cab.append(fimDoCabecalho);
     mat.append(cab);
 
     if (estado.modo === 'acoes') desenharAcoes(mat, regs, atualizarResumos); else desenharTelas(mat, menu, regs, atualizarResumos);

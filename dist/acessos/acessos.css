@@ -11,7 +11,7 @@ body.dark-theme :is(.acessos-view, .acessos-dialog) .tom-marca { background: #33
 .acessos-barra > .compras-campo { flex: 1 1 260px; max-width: 420px; }
 /* O total de telas e o "‹ ›" de expandir/recolher tudo: sempre à direita do cabeçalho, como nas listas. */
 .acessos-barra { align-items: center; }
-.acessos-quem-fim { position: sticky; right: 0; z-index: 6; flex: none; margin-left: auto; box-sizing: border-box; display: inline-flex; align-items: center; align-self: flex-start; height: 56px; gap: 8px; padding: 0 12px 0 8px; background: var(--tl-bg); }
+.acessos-quem-fim { position: sticky; right: 0; z-index: 6; flex: none; margin-left: auto; box-sizing: border-box; display: inline-flex; align-items: center; align-self: flex-start; height: var(--linha-lista, 52px); gap: 8px; padding: 0 12px 0 8px; background: var(--tl-bg); }
 .acessos-quem-fim .acessos-expandir-tudo { flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: var(--theme-surface, #fff); }
 .acessos-quem-fim .acessos-expandir-tudo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .acessos-quem-fim .acessos-expandir-tudo:disabled { opacity: .4; cursor: default; }
@@ -245,9 +245,31 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 .acessos-tl-quem-lin > .acessos-tl-esq { z-index: 5; justify-content: flex-start; padding-top: 12px; }
 .acessos-tl-esq-txt { font: 400 12px/16px var(--ui-font); color: var(--muted, #73737a); }
 /* A primeira coluna do cabeçalho: três linhas (Colaborador, Cargo, Área), cada uma com o "+" no início, o nome e a seta de ocultar ou mostrar as colunas. */
+/* O cabeçalho das telas: três linhas de 52 px (Colaborador, Cargo, Área), presas no alto; cada coluna aparece na linha do seu tipo. */
+.acessos-cabecalho { position: sticky; top: 0; z-index: 4; width: max-content; min-width: 100%; box-sizing: border-box; background: var(--theme-card, #fff); border-bottom: 1px solid var(--layout-line, #dedee3); border-radius: 12px 12px 0 0; }
+.acessos-cabecalho > .acessos-tl { height: var(--linha-lista, 52px); min-height: var(--linha-lista, 52px); }
+.acessos-cabecalho > .acessos-tl:first-child { border-top: 0; }
+.acessos-cabecalho .acessos-tl-esq { padding-top: 0; padding-bottom: 0; justify-content: center; }
+.acessos-cabecalho .acessos-tl-bloco-cab { position: relative; align-items: center; padding: 0 10px; overflow: visible; }
+.acessos-cabecalho .acessos-tl-bloco.recolhida { padding: 0; }
+.acessos-cabecalho .acessos-bloco-cab { display: block; position: static; width: 100%; min-width: 0; }
+/* A célula da coluna: selo do tipo, nome e resumo; o × no canto; a lista de escolha abre num painel suspenso. */
+.acessos-cabecalho .acessos-telas-trocar { display: flex; align-items: center; gap: 8px; width: calc(100% - 28px); }
+.acessos-sel-selo { flex: none; display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 26%; background: var(--selo-cor, var(--menu-accent)); color: #fff; }
+.acessos-sel-selo svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.acessos-sel-texto { display: grid; min-width: 0; }
+.acessos-sel-texto .acessos-telas-valor { font: 500 13px/16px var(--ui-font); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acessos-sel-texto .acessos-bloco-resumo { margin: 0; font: 400 10px/14px var(--ui-font); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acessos-cabecalho .acessos-bloco-x { top: 50%; right: 0; transform: translateY(-50%); }
+.acessos-telas-painel { position: absolute; z-index: 30; top: calc(100% - 4px); left: 8px; width: min(320px, calc(100% - 16px)); padding: 6px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); box-shadow: 0 8px 24px rgba(0, 0, 0, .14); }
+.acessos-telas-painel > .acessos-telas-opcoes { max-height: 280px; }
+/* O nome de uma coluna ocultada: na vertical, de baixo para cima, colado na linha de baixo do cabeçalho (cobre as três linhas). */
+.acessos-nome-vert { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--linha-lista, 52px) * 3); display: none; align-items: flex-end; justify-content: center; padding: 0 0 8px; border: 0; background: transparent; color: var(--muted, #73737a); cursor: pointer; z-index: 2; }
+.acessos-nome-vert span { writing-mode: vertical-rl; transform: rotate(180deg); max-height: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 12px/16px var(--ui-font); }
+.acessos-nome-vert:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: -2px; }
+.acessos-tl-bloco.recolhida > .acessos-nome-vert { display: flex; }
 .acessos-quem-linhas { display: grid; width: 100%; }
-.acessos-quem-linha { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 0 0 0; border-top: 1px solid var(--layout-line, #dedee3); }
-.acessos-quem-linha:first-child { border-top: 0; }
+.acessos-quem-linha { display: flex; align-items: center; gap: 10px; width: 100%; }
 .acessos-quem-linha > b { flex: 1 1 auto; min-width: 0; font: 600 13px/18px var(--ui-font); }
 .acessos-quem-linha > small { flex: none; min-width: 16px; font: 600 11px/16px var(--ui-font); color: var(--muted, #73737a); }
 .acessos-gt-seta { flex: none; margin-left: auto; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; background: transparent; color: var(--muted, #73737a); cursor: pointer; }
@@ -259,7 +281,7 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 .acessos-tl-bloco:first-of-type { border-left: 0; }
 .acessos-bloco-seta { position: absolute; top: 0; right: 28px; }
 .acessos-tl-bloco.recolhida { width: 52px; padding: 0; justify-content: center; }
-.acessos-tl-bloco.recolhida > :not(.acessos-bloco-compacto) { display: none; }
+.acessos-tl-bloco.recolhida > :not(.acessos-bloco-compacto):not(.acessos-nome-vert) { display: none; }
 .acessos-bloco-compacto { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
 .acessos-bloco-nome-vert { writing-mode: vertical-rl; max-height: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 12px/16px var(--ui-font); color: var(--muted, #73737a); }
 .acessos-tl-bloco-cab { align-items: flex-start; padding-top: 10px; padding-bottom: 8px; }
