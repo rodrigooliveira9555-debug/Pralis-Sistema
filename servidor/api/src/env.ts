@@ -25,7 +25,12 @@ const envSchema = z.object({
   S1_VENDAS_URL: z.union([z.literal(""), z.string().url()]).default(""),
   S1_VENDAS_TOKEN: z.string().default(""),
   // A empresa do S2 que pode ver essas vendas (o token do S1 é de uma loja só). Vazio = leitura desligada.
-  S1_VENDAS_EMPRESA_ID: z.union([z.literal(""), z.string().uuid()]).default("")
+  S1_VENDAS_EMPRESA_ID: z.union([z.literal(""), z.string().uuid()]).default(""),
+  // Extrato da Caixa PJ da TNP (Open Finance pelo Meu Pluggy): o coletor da TNP (GET /api/v1/extrato) e o token
+  // dele (S2_TOKEN lá). A empresa do S2 que pode ver. Vazio = desligado.
+  TNP_EXTRATO_URL: z.union([z.literal(""), z.string().url()]).default(""),
+  TNP_EXTRATO_TOKEN: z.string().default(""),
+  TNP_EXTRATO_EMPRESA_ID: z.union([z.literal(""), z.string().uuid()]).default("")
 });
 
 const lido = envSchema.parse(process.env);
@@ -45,6 +50,9 @@ if (lido.NODE_ENV === "production") {
   // O token de leitura das vendas não pode trafegar em texto aberto.
   if (lido.S1_VENDAS_URL && !lido.S1_VENDAS_URL.startsWith("https://")) {
     throw new Error("Em produção, S1_VENDAS_URL precisa ser https");
+  }
+  if (lido.TNP_EXTRATO_URL && !lido.TNP_EXTRATO_URL.startsWith("https://")) {
+    throw new Error("Em produção, TNP_EXTRATO_URL precisa ser https");
   }
 }
 

@@ -58,6 +58,7 @@ export const PERMISSOES = [
   p("pessoas", "cargos_salarios_editar", "Editar cargos e salários do DP"),
   p("relatorios", "relatorios_visualizar", "Ver relatórios"),
   p("relatorios", "vendas_pdv_visualizar", "Ver as vendas dos PDVs (CREARE)", true),
+  p("relatorios", "extrato_bancario_visualizar", "Ver o extrato bancário (Open Finance)", true),
   p("configuracoes", "usuarios_visualizar", "Ver as pessoas com acesso", true),
   p("configuracoes", "usuarios_gerenciar", "Criar, editar e desativar usuários", true),
   p("configuracoes", "permissoes_gerenciar", "Montar cargos de acesso e acessos por pessoa", true)
@@ -80,6 +81,7 @@ const SO_ADMINISTRADOR_ANTES: readonly ChavePermissao[] = [
   "lancamentos_pagamento_retroativo",
   // Nova (24/11/2026): faturamento das lojas não aparece para conta antiga sem cargo; o administrador entrega.
   "vendas_pdv_visualizar",
+  "extrato_bancario_visualizar",
   "usuarios_visualizar",
   "usuarios_gerenciar",
   "permissoes_gerenciar"

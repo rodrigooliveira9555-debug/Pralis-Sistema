@@ -1,5 +1,15 @@
 # CICLUZ — referência de interface
 
+## Open Finance · Caixa TNP: o primeiro cartão de Resultados › API (24/11/2026)
+Pedido do Marco: o extrato da conta Caixa PJ da TNP, lido pelo coletor do Meu Pluggy (`dist/extrato-tnp/`). Por enquanto com dados simulados (falta criar a aplicação na Pluggy). O S2 não guarda extrato: pergunta à própria API, que repassa ao coletor.
+- **De cima para baixo**: faixa de atualização · avisos (se houver) · **Hoje** · **Período** · **Extrato**.
+- **Faixa de atualização** (fundo tingido de 6% da cor de Resultados): "Banco lido em 24/11 às 06:00" e, embaixo, "A Pluggy lê o banco 1 vez por dia: o movimento de hoje costuma aparecer amanhã."; à direita o botão **Sincronizar** (o mesmo de Vendas dos PDVs), que relê o que o coletor guardou.
+- **Avisos** (quadro âmbar): conexão com erro, última busca do coletor que falhou e autorização do Meu Pluggy que vence em 30 dias ou menos (ela vale 1 ano).
+- **Hoje**: três placas (as de Vendas dos PDVs): **Saldo** (com "Lido em…"), **Entradas** em verde e **Saídas** em vermelho, com a quantidade, os pendentes fora do total e o líquido do dia.
+- **Período**: atalhos Hoje / 7 dias / 15 dias / 31 dias, Data inicial e Data final no **campo de data com calendário**, a conta quando houver mais de uma; embaixo, os totais do período (entradas +, saídas −, líquido, lançamentos e pendentes). Máximo de 31 dias.
+- **Extrato**: um bloco por dia (dia da semana e data em maiúsculas na cor de Resultados, e os totais do dia), lançamentos em linhas de 52 px: descrição, "hora · operação · contraparte" (sem hora quando o banco só informa o dia), valor com sinal escrito (+ verde, − vermelho) e o saldo depois do lançamento; pendente com fundo âmbar claro e a etiqueta **Pendente**. A cor nunca é a única pista.
+- Conferido em 390 e 822 px sem rolagem para o lado. **Acesso**: permissão nova **extrato_bancario_visualizar** (Relatórios › "Ver o extrato bancário (Open Finance)"), só o administrador até ser entregue por cargo.
+
 ## VND - Vendas dos PDVs: o primeiro cartão de Entradas › API (24/11/2026)
 Pedido do Marco, para o Rodrigo acompanhar as vendas do CREARE ao vivo (o Rodrigo ainda vai refinar). Cartão **VND - Vendas dos PDVs** no submenu **API** de Entradas (`dist/vendas-pdv/`). **O S2 não guarda venda**: a tela pergunta à API do S2, que consulta o Sistema Pralis com o mesmo filtro e a mesma conta do Relatório de Vendas de lá (os números batem com os do Sistema Pralis).
 - **Pouca coisa por vez, de cima para baixo**: abas dos PDVs e Sincronizar · Filtros · Resumo · Por PDV e Por tipo de pagamento · Vendas.

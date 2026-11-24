@@ -37,5 +37,9 @@ services:
       S1_VENDAS_URL: ${S1_VENDAS_URL:-}
       S1_VENDAS_TOKEN: ${S1_VENDAS_TOKEN:-}
       S1_VENDAS_EMPRESA_ID: ${S1_VENDAS_EMPRESA_ID:-}
+      # Extrato da Caixa PJ da TNP (coletor do Meu Pluggy). Valores só no painel do Coolify.
+      TNP_EXTRATO_URL: ${TNP_EXTRATO_URL:-}
+      TNP_EXTRATO_TOKEN: ${TNP_EXTRATO_TOKEN:-}
+      TNP_EXTRATO_EMPRESA_ID: ${TNP_EXTRATO_EMPRESA_ID:-}
       PORT: 4200
       HOST: 0.0.0.0
