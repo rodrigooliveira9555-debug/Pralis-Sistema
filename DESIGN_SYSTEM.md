@@ -20,6 +20,10 @@ Pedido do Rodrigo (a lista estava fora do padrão). A lista de cargos usa a mesm
 - **Nome longo**: no máximo duas linhas (`.c-nome-texto`), com o nome inteiro no título; a linha nunca passa de 60 px (no celular os nomes quebravam em três linhas e a conferência acusava 71 px).
 - Fica de fora desta entrega: DES - Atualização Salários Dissídio Coletivo (`#salary-view .salary-row`) ainda usa o cartão antigo; quando for refeita, segue este mesmo padrão.
 
+## Acesso por Tela guardado, remoção com confirmação e aviso de quem está sem permissão (24/11/2026; vale sobre as abaixo)
+- A tela **deixou de ser esboço**: cada coluna guarda a configuração (`cicluz-acessos-telas-v1`) e as colunas voltam ao abrir. O **× da coluna remove a configuração**, com confirmação ("A configuração de X será apagada…"). Sem configuração do cargo ou do colaborador, quem a seguia volta a seguir a de cima.
+- **Colaborador só começa a usar o sistema com permissão**: a ativação pede cargo e uma configuração que libere alguma coisa (dele, do cargo ou da área). No alto da tela, um aviso vermelho lista os colaboradores **ativos** que estão sem permissão.
+
 ## Acesso por Tela: hierarquia Área › Cargo › Colaborador e configuração própria (24/11/2026; vale sobre as abaixo)
 Regras do Rodrigo (dados em `hierarquia-dominio.js`, testados):
 - **As três linhas do cabeçalho seguem a hierarquia, de cima para baixo: Área, Cargo, Colaborador.** A **área vem primeiro e é obrigatória**: o "+" de Cargo e o de Colaborador ficam apagados ("Escolha primeiro a área") até existir uma coluna de área.

@@ -55,6 +55,30 @@
   }
 
   const relatorio = () => { try { return JSON.parse(localStorage.getItem(FLAG) || 'null'); } catch (e) { return null; } };
-  window.CicluzHierarquia = { cargos, cargoIdPorNome, arvore, pessoas, migrar, relatorio, dominio: D };
+  /* Configuração do Acesso por Tela (24/11/2026): chave nova cicluz-acessos-telas-v1 = { version:1, configs: { 'area:ID' | 'cargo:ÁREA|CARGO' | 'pessoa:ID': { telas: { chave: [permissões] }, acoes: [], conhecidas: [] } } }.
+     Chave nova e opcional: sem ela ninguém tem permissão configurada. Fica neste aparelho (ainda não vai para o servidor). */
+  const KEY_ACESSOS = 'cicluz-acessos-telas-v1';
+  const lerAcessos = () => { try { const s = JSON.parse(localStorage.getItem(KEY_ACESSOS) || 'null'); if (s && s.version === 1 && s.configs && typeof s.configs === 'object') return s; } catch (e) { /* começa vazio */ } return { version: 1, configs: {} }; };
+  const gravarAcessos = (a) => { try { a.atualizadoEm = new Date().toISOString(); localStorage.setItem(KEY_ACESSOS, JSON.stringify(a)); return true; } catch (e) { return false; } };
+  const configs = () => lerAcessos().configs;
+  const salvarConfig = (chave, config) => { const a = lerAcessos(); a.configs[chave] = config; return gravarAcessos(a); };
+  const removerConfig = (chave) => { const a = lerAcessos(); delete a.configs[chave]; return gravarAcessos(a); };
+
+  /** A pessoa (inclusive candidato em admissão) com as áreas dela: as marcadas ou, sem nenhuma, as que têm o cargo dela. */
+  function pessoaPorId(id) {
+    const P = window.CicluzPeople; if (!P) return null;
+    try {
+      const p = P.byId(id); if (!p) return null;
+      const areas = window.CicluzLocationTree && window.CicluzLocationTree.areasComCargos ? window.CicluzLocationTree.areasComCargos() : [];
+      const proprias = p.orgUnitIds || [];
+      return { id: p.id, name: p.name, jobKey: p.jobKey || '', areaIds: proprias.length ? proprias : areas.filter((a) => p.jobKey && a.cargoIds.includes(p.jobKey)).map((a) => a.id) };
+    } catch (e) { return null; }
+  }
+  /** O colaborador pode começar a usar o sistema? (precisa de cargo e de permissão, do cargo, da área ou dele mesmo). */
+  const acessoDe = (id) => { const p = pessoaPorId(id); if (!p) return { ok: false, nivel: null, origens: [], motivo: 'Colaborador não encontrado.' }; return D.podeUsar(p, configs(), arvore()); };
+  /** Colaboradores ativos que hoje não têm permissão nenhuma. */
+  const semAcesso = () => pessoas().filter((p) => p.active && !D.podeUsar(p, configs(), arvore()).ok);
+
+  window.CicluzHierarquia = { configs, salvarConfig, removerConfig, acessoDe, semAcesso, cargos, cargoIdPorNome, arvore, pessoas, migrar, relatorio, dominio: D };
   try { migrar(); } catch (e) { /* a migração tenta de novo no próximo carregamento */ }
 })();

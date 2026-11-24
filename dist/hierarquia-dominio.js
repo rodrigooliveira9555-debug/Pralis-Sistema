@@ -156,5 +156,24 @@
     return cont;
   }
 
-  return { cadeiaDaArea, resolverConfig, quemSegue, dobrar, casarCargo, vincularPessoas, vinculosDasFichas, arvore, pessoasCobertas, erroDeCargo, juntarCargoIds };
+  /** A configuração libera alguma coisa? (uma configuração toda desligada não dá acesso). */
+  function temAcesso(config) {
+    if (!config) return false;
+    const telas = config.telas || {};
+    return Object.keys(telas).some((k) => (telas[k] || []).length > 0) || (config.acoes || []).length > 0;
+  }
+
+  /**
+   * Pode o colaborador começar a usar o sistema? Só com permissões: a dele própria, a do cargo ou a da área (a mais específica vale).
+   * Devolve { ok, nivel, origens, motivo } — o motivo é o texto para mostrar quando não pode.
+   */
+  function podeUsar(pessoa, configs, raizes) {
+    if (!pessoa || !pessoa.jobKey) return { ok: false, nivel: null, origens: [], motivo: 'O colaborador precisa estar ligado a um cargo.' };
+    const r = resolverConfig(pessoa, configs, raizes);
+    if (!r.nivel) return { ok: false, nivel: null, origens: [], motivo: 'Nenhuma permissão foi configurada para o colaborador, para o cargo dele ou para a área dele. Configure em Configurações › Permissões › Acesso por Tela.' };
+    if (!temAcesso(r.config)) return { ok: false, nivel: r.nivel, origens: r.origens, motivo: 'A configuração que vale para o colaborador não libera nenhuma tela. Ligue as permissões em Configurações › Permissões › Acesso por Tela.' };
+    return { ok: true, nivel: r.nivel, origens: r.origens, motivo: '' };
+  }
+
+  return { temAcesso, podeUsar, cadeiaDaArea, resolverConfig, quemSegue, dobrar, casarCargo, vincularPessoas, vinculosDasFichas, arvore, pessoasCobertas, erroDeCargo, juntarCargoIds };
 }));

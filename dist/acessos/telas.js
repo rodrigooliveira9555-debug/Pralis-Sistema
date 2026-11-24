@@ -193,6 +193,41 @@
    * Primeira vez que alguém é escolhido: todas as permissões de todas as telas que existem AGORA vêm ligadas. Telas que entram
    * no menu depois não estão em "conhecidas": aparecem desligadas, com a etiqueta "Novo", até alguém ligar.
    */
+  /** Guarda a configuração da coluna (chave nova cicluz-acessos-telas-v1). */
+  function guardar(r) {
+    const H = window.CicluzHierarquia;
+    if (!H || !r || !r.chave) return;
+    const telas = {};
+    Object.keys(r.telas).forEach((c) => { telas[c] = [...r.telas[c]]; });
+    H.salvarConfig(r.chave, { telas, acoes: [...r.acoes], conhecidas: [...r.conhecidas] });
+  }
+  function lerConfigSalva(k) {
+    const H = window.CicluzHierarquia;
+    const c = H && H.configs()[k];
+    if (!c) return null;
+    const r = { telas: {}, conhecidas: new Set(c.conhecidas || []), acoes: new Set(c.acoes || []), chave: k, propria: !k.startsWith('area:') };
+    Object.keys(c.telas || {}).forEach((t) => { r.telas[t] = new Set(c.telas[t]); });
+    return r;
+  }
+  /** As colunas que já têm configuração guardada voltam a aparecer ao abrir a tela. */
+  function hidratarColunas() {
+    const H = window.CicluzHierarquia;
+    if (!H) return;
+    const areas = new Map(areasDES().map((a) => [a.id, a.nome]));
+    const cargos = new Map(H.cargos().map((c) => [c.id, c.nome]));
+    const gente = new Map(H.pessoas().map((p) => [p.id, p.name]));
+    Object.keys(H.configs()).forEach((k) => {
+      const tipo = k.slice(0, k.indexOf(':')); const resto = k.slice(k.indexOf(':') + 1);
+      let alvo = null;
+      if (tipo === 'area' && areas.has(resto)) alvo = { tipo, id: resto, nome: areas.get(resto) };
+      else if (tipo === 'cargo') { const [areaId, cargoId] = resto.split('|'); if (areas.has(areaId) && cargos.has(cargoId)) alvo = { tipo, id: resto, nome: cargos.get(cargoId), areaId, cargoId, areaNome: areas.get(areaId) }; }
+      else if (tipo === 'pessoa' && gente.has(resto)) alvo = { tipo, id: resto, nome: gente.get(resto) };
+      if (!alvo || estado.blocos.some((b) => b.alvo && b.alvo.tipo === alvo.tipo && b.alvo.id === alvo.id)) return;
+      const b = novoBloco(tipo); b.quem = ''; b.alvo = alvo; estado.blocos.push(b);
+    });
+    estado.blocos.sort((x, y) => TIPOS.indexOf(x.tipo) - TIPOS.indexOf(y.tipo));
+  }
+
   /** A configuração de onde a personalização parte: para o cargo, a da área escolhida mais próxima; para o colaborador, a do cargo dele ou a da área dele. */
   function modeloDe(alvo) {
     const H = window.CicluzHierarquia;
@@ -210,7 +245,9 @@
     const k = alvo.tipo + ':' + alvo.id;
     let r = registros.get(k);
     if (!r) {
-      r = { telas: {}, conhecidas: new Set(), acoes: new Set() };
+      const salva = lerConfigSalva(k);
+      if (salva) { registros.set(k, salva); return salva; }
+      r = { telas: {}, conhecidas: new Set(), acoes: new Set(), chave: k };
       const pai = alvo.tipo === 'area' ? null : modeloDe(alvo);
       if (pai) {
         // Configuração própria: começa como cópia do que valia (a do cargo ou a da área) e, daqui para a frente, não segue mais a de cima.
@@ -221,6 +258,7 @@
       } else menu.forEach((g) => g.secoes.forEach((s) => s.telas.forEach((t) => { r.telas[t.chave] = new Set(TODAS); r.conhecidas.add(t.chave); })));
       if (alvo.tipo !== 'area') r.propria = true;
       registros.set(k, r);
+      guardar(r);
     }
     return r;
   }
@@ -234,6 +272,7 @@
     }
     tela.ativar();
     estado.modo = 'telas';
+    if (!estado.hidratado) { estado.hidratado = true; hidratarColunas(); }
     desenhar();
   }
 
@@ -350,10 +389,18 @@
     }
     const x = el('button', 'acessos-bloco-x');
     x.type = 'button';
-    x.title = 'Fechar esta coluna';
-    x.setAttribute('aria-label', 'Fechar a coluna' + (b.alvo ? ' de ' + b.alvo.nome : ''));
+    x.title = 'Remover esta coluna e a configuração dela';
+    x.setAttribute('aria-label', 'Remover a coluna' + (b.alvo ? ' de ' + b.alvo.nome : ''));
     x.innerHTML = U.svg('<path d="M6 6l12 12M18 6 6 18"/>');
-    x.onclick = () => { estado.blocos = estado.blocos.filter((y) => y !== b); desenhar(); };
+    x.onclick = () => {
+      const fechar = () => {
+        if (b.alvo) { const k = b.alvo.tipo + ':' + b.alvo.id; registros.delete(k); if (window.CicluzHierarquia) window.CicluzHierarquia.removerConfig(k); }
+        estado.blocos = estado.blocos.filter((y) => y !== b);
+        desenhar();
+      };
+      if (!b.alvo) { fechar(); return; }
+      U.confirmar('Remover a configuração', 'A configuração de ' + b.alvo.nome + ' será apagada. ' + (b.tipo === 'area' ? 'Quem seguia esta área fica sem permissão até ter outra configuração.' : 'Quem seguia esta configuração volta a seguir a de cima.'), 'Remover', () => { fechar(); return undefined; }, { cor: U.corOrigem('despesas', '#ef4444'), corTexto: '#a11c1c' });
+    };
     box.append(x);
     return box;
   }
@@ -382,7 +429,17 @@
     const menu = lerMenu();
     const regs = colunas().map((b) => registro(menu, b.alvo));
     const blocos = [];
-    blocos.push(U.nota('Esboço: nada é gravado e nenhum acesso muda. A hierarquia é Área › Cargo › Colaborador: escolha primeiro a área (vale com os setores e locais dela); depois, dentro dela, um cargo ou um colaborador para dar uma configuração própria. Vale sempre a mais específica: o colaborador, depois o cargo, depois a área. O colaborador tem um cargo só e pode estar em mais de uma área (valem as permissões maiores). Cada ícone é uma permissão: ← antes de pagar · ↔ pagar · → depois de pagar; o ! abre as ações especiais da coluna.'));
+    blocos.push(U.nota('A hierarquia é Área › Cargo › Colaborador: escolha primeiro a área (vale com os setores e locais dela); depois, dentro dela, um cargo ou um colaborador para dar uma configuração própria. Vale sempre a mais específica: o colaborador, depois o cargo, depois a área. O colaborador tem um cargo só e pode estar em mais de uma área (valem as permissões maiores). A configuração fica guardada neste aparelho. Colaborador sem permissão (do cargo ou da área) não é ativado e não começa a usar o sistema. Cada ícone é uma permissão: ← antes de pagar · ↔ pagar · → depois de pagar; o ! abre as ações especiais da coluna.'));
+    if (estado.modo === 'telas') {
+      // Colaboradores ativos que hoje não têm permissão nenhuma (não conseguem usar o sistema): o aviso fica no alto.
+      const H0 = window.CicluzHierarquia;
+      const sem = H0 && H0.semAcesso ? H0.semAcesso() : [];
+      if (sem.length) {
+        const aviso = el('p', 'people-alert', sem.length + (sem.length === 1 ? ' colaborador ativo está sem permissão e não consegue usar o sistema: ' : ' colaboradores ativos estão sem permissão e não conseguem usar o sistema: ') + sem.slice(0, 6).map((x) => x.name).join(', ') + (sem.length > 6 ? '…' : '') + '. Ligue o cargo ou a área deles a uma configuração aqui embaixo.');
+        aviso.setAttribute('role', 'status');
+        blocos.push(aviso);
+      }
+    }
     let fimDoCabecalho = null;
     if (estado.modo === 'telas') {
       // O botão "‹ ›" do cabeçalho (o mesmo das listas): abre todos os menus e submenus de uma vez; com tudo aberto, recolhe tudo. Fica sempre à vista.
@@ -691,6 +748,7 @@
           const conj = reg.telas[t.chave] || (reg.telas[t.chave] = new Set());
           if (liga) conj.add(p.id); else conj.delete(p.id);
           reg.conhecidas.add(t.chave);
+          guardar(reg);
           if (liga && p.id === 'esp') { abrirAcoes(colunas()[i]); return; }
           if (regs.every((r) => !r || r.conhecidas.has(t.chave))) {
             linha.classList.remove('nova');
@@ -772,6 +830,7 @@
           const quem = colunas()[i].alvo ? colunas()[i].alvo.nome : 'coluna sem escolha';
           cel.append(interruptor(rotulo + ' (' + quem + ')', Boolean(reg) && reg.acoes.has(chave), !reg, (liga) => {
             if (liga) reg.acoes.add(chave); else reg.acoes.delete(chave);
+            guardar(reg);
             atualizarResumos();
           }));
           w.append(cel);

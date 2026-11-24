@@ -89,4 +89,15 @@ ok(() => assert.equal(h.resolverConfig({ id: 'p4', jobKey: 'c-1', areaIds: [] },
 // quem segue cada configuração
 ok(() => assert.deepEqual(h.quemSegue([loc, { id: 'p2', jobKey: 'c-2', areaIds: ['L'] }, { id: 'p9', jobKey: 'c-1', areaIds: ['L'] }, { id: 'p5', jobKey: 'c-2', areaIds: ['A'] }], configs, arv), { 'cargo:A|c-1': 1, 'area:S': 1, 'pessoa:p9': 1, 'area:A': 1 }));
 
+// pode começar a usar o sistema: precisa de cargo e de permissão (própria, do cargo ou da área)
+ok(() => assert.equal(h.temAcesso({ telas: { a: [] }, acoes: [] }), false));
+ok(() => assert.equal(h.temAcesso({ telas: { a: ['ver'] }, acoes: [] }), true));
+ok(() => assert.equal(h.temAcesso({ telas: {}, acoes: ['sangria'] }), true));
+ok(() => assert.equal(h.temAcesso(null), false));
+ok(() => assert.match(h.podeUsar({ id: 'x', jobKey: '', areaIds: ['A'] }, configs, arv).motivo, /ligado a um cargo/));
+ok(() => assert.match(h.podeUsar({ id: 'x', jobKey: 'c-9', areaIds: [] }, configs, arv).motivo, /Nenhuma permissão/));
+ok(() => assert.match(h.podeUsar({ id: 'x', jobKey: 'c-9', areaIds: ['A'] }, { 'area:A': { telas: { v: [] }, acoes: [] } }, arv).motivo, /não libera nenhuma tela/));
+ok(() => { const r = h.podeUsar({ id: 'x', jobKey: 'c-9', areaIds: ['L'] }, configs, arv); assert.equal(r.ok, true); assert.equal(r.nivel, 'area'); });
+ok(() => assert.equal(h.podeUsar({ id: 'p9', jobKey: 'c-1', areaIds: [] }, configs, arv).nivel, 'pessoa'));
+
 console.log('hierarquia-dominio: ' + checks + ' grupos de verificação ok');
