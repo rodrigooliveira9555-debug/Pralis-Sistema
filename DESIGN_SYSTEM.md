@@ -6,8 +6,9 @@
 roxo da Agenda (#7c3aed), qualquer que seja a cor da tela (regra `.people-agendar-control` em `people-header-pilot.css`, só a
 variável de cor, sem `!important`). **É exceção à cor por origem**, por pedido do Rodrigo (23/11/2026). Abre "Novo compromisso"
 com a **tela ligada**; na Agenda a tarefa mostra o ícone **"Abrir a tela"** (monitor com ✓) na linha e a seção **"Tela ligada"**
-na janela (um só botão cheio, "Abrir a tela"; "Desligar a tela" é link). Em telas de **até 340 px** só cabem cinco botões de 24 px
-(mínimo de toque) à esquerda do logotipo: o de agendar **sai da barra** nessas telas (a Agenda continua com o "+").
+na janela (um só botão cheio, "Abrir a tela"; "Desligar a tela" é link). No **celular (até 600 px)** os botões
+da barra e o logotipo não cabem lado a lado: o de agendar **sai da barra e vira a primeira opção do menu rápido** (toque no
+logotipo), com o mesmo ícone roxo (24/11/2026; substitui a regra de "só até 340 px").
 **Chat no jeito do WhatsApp** (compromisso e grupo, peça única `abrirConversa` em `agenda/conversa.js`): separador do dia (Hoje,
 Ontem, DD/MM/AA), balões (os meus à direita com o roxo da Agenda clareado; os dos outros à esquerda com a bolinha das iniciais e o
 nome na primeira mensagem seguida), hora dentro do balão, campo de **uma linha** e botão redondo de enviar (44 px). **Exceção ao
@@ -17,8 +18,12 @@ lista; **"Membros do grupo"** em "Editar lista" (quem criou entra sempre).
 **Configurações da Agenda:** "A sua Agenda" (a regra da própria pessoa) e, para o administrador, a lista de pessoas; a janela de
 cada pessoa tem os dias como chips, início e fim do expediente, "Fora do expediente", "Hora trabalhada fora do expediente" (só
 registro) e "Sair do sistema depois de quantos minutos parado". Fora do expediente com bloqueio: "A Agenda está fechada agora".
-**Desempenho** (aba da Agenda): um cartão por pessoa, com % no prazo, barra (verde no prazo, âmbar fora do prazo, vermelho não
-feitas, cinza em aberto; cada parte também tem o número e o nome ao lado, a cor não é o único sinal) e os números.
+**Desempenho** (aba da Agenda, redesenhado em 24/11/2026): quadro com o nome ("Desempenho da equipe" ou "O seu desempenho"),
+atalhos de período em chips (Este mês, Mês passado, Últimos 7 dias) e as datas De/Até; abaixo, **um cartão por pessoa** (bolinha
+das iniciais, nome, "N compromissos recebidos" e o **% no prazo em destaque** à direita), a barra empilhada (cores pelos tokens
+`--ui-situacao-ok/atencao/erro/neutro` de `ui-foundation.css`) e os **quatro indicadores no mesmo desenho dos da Agenda** (Para
+hoje, Programados…): ícone quadrado na cor da situação, número e nome — a cor não é o único sinal. Embaixo, "Resposta média" e
+"Fora do expediente". Cartões em grade (um por linha no celular, dois ou mais no computador).
 
 ## Configurações → Permissões → Acesso por Tela: sete permissões por tela, em colunas (23/11/2026, substitui a versão de 19/11/2026)
 Pedido do Washington. Cartão **Acesso por Tela** em Permissões (`dist/acessos/telas.js`, ações especiais em `telas-dados.js`, estilos em `acessos.css`). **Esboço sem backend: nada é gravado e nenhum acesso muda.** O nível único por tela (os 8 níveis com $ e texto, de 19/11/2026) **foi removido**: no lugar entraram **sete permissões independentes por tela**, cada uma um interruptor, **só com o ícone (sem texto)**, em colunas fixas: **← Lançar · ← Discriminar · ← Editar · ← Visualizar · ↔ Pagar · → Editar · → Visualizar**. A **seta** substitui o $: ← antes de pagar, → depois de pagar, ↔ o próprio pagar (leitura assumida, P-41).

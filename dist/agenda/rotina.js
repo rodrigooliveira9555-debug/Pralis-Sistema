@@ -153,38 +153,61 @@
   }
 
   /* ================= Desempenho (aba da Agenda) ================= */
-  const periodo = { de: '', ate: '' };
+  // Quadro "Período" (atalhos + datas) e um cartão por pessoa: iniciais, % no prazo em destaque, barra com legenda,
+  // os quatro indicadores no desenho dos da Agenda (Para hoje, Programados…) e a linha de apoio.
+  const periodo = { de: '', ate: '', atalho: 'mes' };
+  const ICONES_DESEMPENHO = {
+    'no-prazo': '<path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM8 12l3 3 5-6"/>',
+    'fora-prazo': '<path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM12 7v5l3 2"/>',
+    'nao-feitas': '<path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM9 9l6 6M15 9l-6 6"/>',
+    'em-aberto': '<path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9"/>',
+  };
+  const iniciais = (nome) => String(nome || '?').split(/\s+/).filter((p) => /^[A-Za-zÀ-ÿ]/.test(p)).slice(0, 2).map((p) => p[0].toUpperCase()).join('') || '?';
   function mesAtual() {
     const hoje = D.isoData(new Date());
     const de = hoje.slice(0, 8) + '01';
-    const ate = D.somarDias(D.somarMeses(de, 1), -1);
-    return { de, ate };
+    return { de, ate: D.somarDias(D.somarMeses(de, 1), -1) };
+  }
+  function aplicarAtalho(v) {
+    const hoje = D.isoData(new Date());
+    if (v === 'mes') Object.assign(periodo, mesAtual());
+    else if (v === 'anterior') Object.assign(periodo, { de: D.somarMeses(mesAtual().de, -1), ate: D.somarDias(mesAtual().de, -1) });
+    else if (v === '7') Object.assign(periodo, { de: D.somarDias(hoje, -6), ate: hoje });
+    periodo.atalho = v;
   }
   function renderDesempenho(body) {
-    if (!periodo.de) Object.assign(periodo, mesAtual());
-    const box = el('section', 'compras-secao agenda-desempenho');
-    const cab = el('div', 'compras-secao-cab');
-    cab.append(el('h3', null, ehAdmin() ? 'Desempenho da equipe' : 'O seu desempenho'));
-    box.append(cab);
+    if (!periodo.de) aplicarAtalho('mes');
+    const tela = el('div', 'agenda-desempenho');
+
+    // Período
+    const quadro = U.secao(ehAdmin() ? 'Desempenho da equipe' : 'O seu desempenho');
+    const filtros = el('div', 'agenda-desempenho-periodo');
     const de = U.entrada('date', periodo.de);
     const ate = U.entrada('date', periodo.ate);
-    const filtros = el('div', 'agenda-form-grade');
-    filtros.append(U.campo('De', de), U.campo('Até', ate));
-    const atalhos = U.chips([['mes', 'Este mês'], ['anterior', 'Mês passado'], ['7', 'Últimos 7 dias']], '', (v) => {
-      const hoje = D.isoData(new Date());
-      if (v === 'mes') Object.assign(periodo, mesAtual());
-      else if (v === 'anterior') { const ini = D.somarMeses(mesAtual().de, -1); Object.assign(periodo, { de: ini, ate: D.somarDias(mesAtual().de, -1) }); }
-      else Object.assign(periodo, { de: D.somarDias(hoje, -6), ate: hoje });
-      de.value = periodo.de; ate.value = periodo.ate;
+    const atalhos = U.chips([['mes', 'Este mês'], ['anterior', 'Mês passado'], ['7', 'Últimos 7 dias']], periodo.atalho, (v) => {
+      aplicarAtalho(v);
+      de.value = periodo.de;
+      ate.value = periodo.ate;
       carregar();
     });
-    const resultado = el('div', 'agenda-desempenho-cartoes');
-    resultado.setAttribute('aria-live', 'polite');
-    box.append(filtros, atalhos, resultado, U.nota('Conta os compromissos com data no período em que a pessoa é responsável. No prazo = concluído até o término do compromisso (sem término, até o fim do dia). Hora fora do expediente: só registro, não vai para a folha.'));
-    const mudou = () => { if (de.value && ate.value) { periodo.de = de.value; periodo.ate = ate.value; carregar(); } };
+    atalhos.setAttribute('aria-label', 'Período');
+    const datas = el('div', 'agenda-desempenho-datas');
+    datas.append(U.campo('De', de), U.campo('Até', ate));
+    filtros.append(atalhos, datas);
+    quadro.append(filtros);
+    const mudou = () => {
+      if (!de.value || !ate.value) return;
+      Object.assign(periodo, { de: de.value, ate: ate.value, atalho: '' });
+      atalhos.atualizar('');
+      carregar();
+    };
     de.addEventListener('change', mudou);
     ate.addEventListener('change', mudou);
-    body.append(box);
+
+    const resultado = el('div', 'agenda-desempenho-lista');
+    resultado.setAttribute('aria-live', 'polite');
+    tela.append(quadro, resultado, U.nota('Conta os compromissos com data no período em que a pessoa é responsável. No prazo = concluído até o término do compromisso (sem término, até o fim do dia). Hora fora do expediente: só registro, não vai para a folha.'));
+    body.append(tela);
 
     async function carregar() {
       if (!A.conectado()) { resultado.replaceChildren(U.vazio('O desempenho vem do servidor.', 'Entre com seu usuário para ver.')); return; }
@@ -200,31 +223,45 @@
   }
 
   function cartao(p) {
-    const c = el('article', 'agenda-desempenho-cartao');
     const feitas = p.noPrazo + p.foraDoPrazo;
     const pct = feitas ? Math.round((p.noPrazo / feitas) * 100) : null;
-    const topo = el('div', 'agenda-desempenho-topo');
-    topo.append(el('b', null, p.nome), el('span', 'agenda-desempenho-pct', pct === null ? 'Nada concluído' : pct + '% no prazo'));
+    const sec = el('section', 'compras-secao agenda-desempenho-cartao');
+
+    const cab = el('div', 'compras-secao-cab agenda-desempenho-cab');
+    const quem = el('div', 'agenda-desempenho-quem');
+    const av = el('span', 'agenda-avatar', iniciais(p.nome));
+    av.setAttribute('aria-hidden', 'true');
+    const nome = el('div', 'agenda-desempenho-nome');
+    nome.append(el('h3', null, p.nome), el('small', null, p.recebidas + (p.recebidas === 1 ? ' compromisso recebido' : ' compromissos recebidos')));
+    quem.append(av, nome);
+    const destaque = el('div', 'agenda-desempenho-pct');
+    destaque.append(el('b', null, pct === null ? '—' : pct + '%'), el('small', null, pct === null ? 'nada concluído' : 'no prazo'));
+    cab.append(quem, destaque);
+
+    const partes = [['no-prazo', 'No prazo', p.noPrazo], ['fora-prazo', 'Fora do prazo', p.foraDoPrazo], ['nao-feitas', 'Não feitas', p.naoFeitas], ['em-aberto', 'Em aberto', p.emAberto]];
     const barra = el('div', 'agenda-desempenho-barra');
     barra.setAttribute('role', 'img');
-    barra.setAttribute('aria-label', p.noPrazo + ' no prazo, ' + p.foraDoPrazo + ' fora do prazo, ' + p.naoFeitas + ' não feitas, ' + p.emAberto + ' em aberto');
-    [['no-prazo', p.noPrazo], ['fora-prazo', p.foraDoPrazo], ['nao-feitas', p.naoFeitas], ['em-aberto', p.emAberto]].forEach(([k, n]) => {
-      if (!n) return;
-      const s = el('span', 'agenda-desempenho-parte ' + k);
-      s.style.flexGrow = String(n);
-      barra.append(s);
+    barra.setAttribute('aria-label', partes.map(([, t, n]) => n + ' ' + t.toLowerCase()).join(', '));
+    partes.forEach(([k, , n]) => { if (!n) return; const s = el('span', 'agenda-desempenho-parte ' + k); s.style.flexGrow = String(n); barra.append(s); });
+
+    const indicadores = el('div', 'compras-indicadores agenda-desempenho-indicadores');
+    partes.forEach(([k, t, n]) => {
+      const c = el('div', 'compras-indicador agenda-automatica agenda-desempenho-indicador d-' + k);
+      const i = el('span', 'agenda-automatica-icone');
+      i.innerHTML = svg(ICONES_DESEMPENHO[k]);
+      c.append(i, el('b', null, String(n)), el('small', null, t));
+      indicadores.append(c);
     });
-    const numeros = el('dl', 'agenda-desempenho-numeros');
-    const num = (t, v, k) => { const d = el('div', k ? 'n-' + k : null); d.append(el('dt', null, t), el('dd', null, String(v))); numeros.append(d); };
-    num('Recebidas', p.recebidas);
-    num('No prazo', p.noPrazo, 'no-prazo');
-    num('Fora do prazo', p.foraDoPrazo, 'fora-prazo');
-    num('Não feitas', p.naoFeitas, 'nao-feitas');
-    num('Em aberto', p.emAberto, 'em-aberto');
-    num('Resposta média', p.tempoMedioRespostaHoras === null ? '—' : String(p.tempoMedioRespostaHoras).replace('.', ',') + ' h');
-    num('Fora do expediente', minutosTexto(p.minutosForaExpediente) + (p.diasForaSemExpediente ? ' + ' + p.diasForaSemExpediente + ' dia(s) de folga' : ''));
-    c.append(topo, barra, numeros);
-    return c;
+
+    const apoio = el('dl', 'agenda-desempenho-apoio');
+    const item = (t, v) => { const d = el('div'); d.append(el('dt', null, t), el('dd', null, v)); apoio.append(d); };
+    item('Resposta média', p.tempoMedioRespostaHoras === null ? '—' : String(p.tempoMedioRespostaHoras).replace('.', ',') + ' h');
+    item('Fora do expediente', minutosTexto(p.minutosForaExpediente) + (p.diasForaSemExpediente ? ' + ' + p.diasForaSemExpediente + (p.diasForaSemExpediente === 1 ? ' dia de folga' : ' dias de folga') : ''));
+
+    const corpo = el('div', 'agenda-desempenho-corpo');
+    corpo.append(barra, indicadores, apoio);
+    sec.append(cab, corpo);
+    return sec;
   }
 
   /* ================= Ícone roxo de agendar (em toda tela) ================= */

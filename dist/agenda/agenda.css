@@ -468,21 +468,39 @@ body.dark-theme .agenda-chat-grupo.com-novas { color: color-mix(in srgb, var(--m
 @media (max-width: 520px) { .agenda-config-resumo { grid-template-columns: minmax(0, 1fr); } .agenda-config-resumo dd { margin-bottom: 6px; } }
 .agenda-config-linha .compras-linha-texto small { overflow-wrap: anywhere; }
 .agenda-dias { flex-wrap: wrap; }
-.agenda-desempenho-cartoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; margin-top: 12px; }
-.agenda-desempenho-cartao { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); min-width: 0; }
-.agenda-desempenho-topo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; }
-.agenda-desempenho-topo b { overflow-wrap: anywhere; }
-.agenda-desempenho-pct { font: 700 var(--ui-label)/var(--ui-text-line) var(--ui-font); color: var(--panel-text, #5520ad); font-variant-numeric: tabular-nums; }
-body.dark-theme .agenda-desempenho-pct { color: color-mix(in srgb, var(--menu-accent) 45%, #fff); }
+/* Desempenho (aba da Agenda): quadro "Período" e um cartão por pessoa, com os indicadores no desenho dos da Agenda. */
+.agenda-desempenho { display: grid; gap: 12px; }
+.agenda-desempenho-periodo { display: grid; gap: 10px; padding: 12px 14px 14px; }
+.agenda-desempenho-datas { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 10px 12px; }
+@media (max-width: 520px) { .agenda-desempenho-datas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.agenda-desempenho-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); gap: 12px; }
+.agenda-desempenho-lista > .compras-vazio, .agenda-desempenho-lista > .compras-situacao, .agenda-desempenho-lista > .profiles-note { grid-column: 1 / -1; }
+.agenda-desempenho-cartao { min-width: 0; }
+.agenda-desempenho-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.agenda-desempenho-quem { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.agenda-avatar { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--menu-accent) 16%, var(--theme-card, #fff)); color: var(--panel-text, #5520ad); font: 700 var(--ui-label)/1 var(--ui-font); }
+body.dark-theme .agenda-avatar { background: color-mix(in srgb, var(--menu-accent) 35%, var(--theme-card, #1f1e24)); color: #fff; }
+.agenda-desempenho-nome { display: grid; min-width: 0; }
+.agenda-desempenho-nome h3 { margin: 0; overflow-wrap: anywhere; }
+.agenda-desempenho-nome small { font: 400 var(--ui-note)/var(--ui-subtitle-line) var(--ui-font); color: var(--muted, #73737a); }
+.agenda-desempenho-pct { display: grid; justify-items: end; flex: 0 0 auto; }
+.agenda-desempenho-pct b { font: 700 22px/26px var(--ui-font); color: var(--panel-text, #5520ad); font-variant-numeric: tabular-nums; }
+.agenda-desempenho-pct small { font: 400 var(--ui-note)/var(--ui-subtitle-line) var(--ui-font); color: var(--muted, #73737a); }
+body.dark-theme .agenda-desempenho-pct b { color: color-mix(in srgb, var(--menu-accent) 45%, #fff); }
+.agenda-desempenho-corpo { display: grid; gap: 12px; padding: 12px 14px 14px; }
 .agenda-desempenho-barra { display: flex; height: 10px; border-radius: 999px; overflow: hidden; background: var(--layout-line, #dedee3); }
 .agenda-desempenho-parte { min-width: 4px; }
-.agenda-desempenho-parte.no-prazo, .agenda-desempenho-numeros .n-no-prazo dd::before { background: var(--ui-situacao-ok); }
-.agenda-desempenho-parte.fora-prazo, .agenda-desempenho-numeros .n-fora-prazo dd::before { background: var(--ui-situacao-atencao); }
-.agenda-desempenho-parte.nao-feitas, .agenda-desempenho-numeros .n-nao-feitas dd::before { background: var(--ui-situacao-erro); }
-.agenda-desempenho-parte.em-aberto, .agenda-desempenho-numeros .n-em-aberto dd::before { background: var(--ui-situacao-neutro); }
-.agenda-desempenho-numeros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin: 0; }
-.agenda-desempenho-numeros > div { min-width: 0; }
-.agenda-desempenho-numeros > div:nth-last-child(-n+2) { grid-column: 1 / -1; }
-.agenda-desempenho-numeros dt { font: 400 var(--ui-note)/16px var(--ui-font); color: var(--muted, #73737a); }
-.agenda-desempenho-numeros dd { margin: 0; display: flex; align-items: center; gap: 6px; font: 700 var(--ui-section-title)/var(--ui-section-title-line) var(--ui-font); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.agenda-desempenho-numeros [class^="n-"] dd::before { content: ""; flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%; }
+.agenda-desempenho-parte.no-prazo { background: var(--ui-situacao-ok); }
+.agenda-desempenho-parte.fora-prazo { background: var(--ui-situacao-atencao); }
+.agenda-desempenho-parte.nao-feitas { background: var(--ui-situacao-erro); }
+.agenda-desempenho-parte.em-aberto { background: var(--ui-situacao-neutro); }
+.agenda-desempenho-indicadores { grid-template-columns: repeat(auto-fit, minmax(min(100%, 124px), 1fr)); }
+.agenda-desempenho-indicador { cursor: default; }
+.agenda-desempenho-indicador.d-no-prazo { --auto-cor: var(--ui-situacao-ok); }
+.agenda-desempenho-indicador.d-fora-prazo { --auto-cor: var(--ui-situacao-atencao); }
+.agenda-desempenho-indicador.d-nao-feitas { --auto-cor: var(--ui-situacao-erro); }
+.agenda-desempenho-indicador.d-em-aberto { --auto-cor: var(--ui-situacao-neutro); }
+.agenda-desempenho-apoio { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 0; padding-top: 10px; border-top: 1px solid var(--layout-line, #dedee3); }
+.agenda-desempenho-apoio > div { display: grid; min-width: 0; }
+.agenda-desempenho-apoio dt { font: 400 var(--ui-note)/var(--ui-subtitle-line) var(--ui-font); color: var(--muted, #73737a); }
+.agenda-desempenho-apoio dd { margin: 0; font: 600 var(--ui-text)/var(--ui-text-line) var(--ui-font); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
