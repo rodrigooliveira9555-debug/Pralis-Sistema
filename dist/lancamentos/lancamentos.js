@@ -43,56 +43,13 @@
     };
   }
 
-  /* ---------------------------------------------------------------- Lista ---------------------------------------------------------------- */
-  const telas = {}; const filtros = {};
+  /* ---------------------------------------------------------------- Entrada ---------------------------------------------------------------- */
+  // O cartão (DES, MER ou RET) abre direto o formulário da categoria (pedido do Washington, 24/11/2026): sem lista no meio.
   function abrir(cat) {
-    const C = CATEGORIAS[cat]; if (!C) return console.warn('Lançamentos: categoria não encontrada', cat);
-    if (!telas[cat]) {
-      telas[cat] = U.criarTela({ id: 'lancamentos-' + cat, titulo: C.titulo, caminho: C.caminho, icone: 'lista', voltar: () => menuBack(C.indice, 'Lançamentos')(), cor: corDe(cat), corTexto: C.corTexto });
-      U.atalho(telas[cat], 'Novo lançamento', 'M12 5v14M5 12h14', () => novo(cat), { criar: true });
-      const hoje = R.diaNegocio(new Date());
-      filtros[cat] = { de: hoje.slice(0, 7) + '-01', ate: '', situacao: 'todos' };
-    }
-    telas[cat].ativar();
-    renderLista(cat);
+    if (!CATEGORIAS[cat]) return console.warn('Lançamentos: categoria não encontrada', cat);
+    return abrirFormulario(cat, null);
   }
-  async function renderLista(cat) {
-    const tela = telas[cat]; const C = CATEGORIAS[cat]; const f = filtros[cat];
-    const retirada = cat === 'retiradas';
-    const de = entrada('date', f.de); const ate = entrada('date', f.ate); const sit = seletor([['todos', 'Todos'], ['pendentes', 'A pagar'], ['pagos', 'Pagos']], f.situacao);
-    const filtrar = botao('Filtrar', () => { f.de = de.value; f.ate = ate.value; f.situacao = sit.value; renderLista(cat); }, 'btn');
-    const topo = el('div', 'profiles-controls'); topo.append(campo(retirada ? 'Lançados de' : 'Vencendo de', de), campo('até', ate), campo('Situação', sit), filtrar);
-    const lista = el('div', 'compras-lista'); const sec = U.secao(C.singular === 'Retirada' ? 'Retiradas' : C.singular + 's');
-    sec.append(lista);
-    const raiz = [U.nota('Um toque na linha abre o lançamento para ver e editar. Use o + do cabeçalho para um lançamento novo.'), topo, sec];
-    tela.body.replaceChildren(...raiz); lista.append(U.vazio('Carregando…'));
-    try {
-      const q = new URLSearchParams({ situacao: f.situacao, page: '1', pageSize: String(f.tamanho || 50) });
-      if (f.de) q.set('dataInicio', f.de); if (f.ate) q.set('dataFim', f.ate);
-      const r = await Sync.api('/lancamentos/' + cat + '?' + q);
-      lista.replaceChildren();
-      if (!r.lancamentos.length) lista.append(U.vazio('Nenhum lançamento neste período.', 'Use o + do cabeçalho para lançar ' + (cat === 'mercadorias' ? 'uma mercadoria' : cat === 'retiradas' ? 'uma retirada' : 'uma despesa') + '.'));
-      r.lancamentos.forEach((l) => lista.append(linha(cat, l)));
-      const faltam = r.total - r.lancamentos.length;
-      if (faltam > 0) lista.append(botao('Ver mais (' + faltam + ')', () => { f.tamanho = (f.tamanho || 50) + 50; renderLista(cat); }, 'btn ghost'));
-      sec.querySelector('.compras-secao-cab').append(U.pontaDaLista(r.total, r.total + ' lançamento(s) · ' + D.moeda(Number(r.valorTotal))));
-      tela.body.replaceChildren(...raiz);
-    } catch (e) {
-      lista.replaceChildren(U.vazio('Não foi possível carregar.', (e && e.message) || ''));
-    }
-  }
-  function linha(cat, l) {
-    const retirada = cat === 'retiradas';
-    const pago = Boolean(l.dataPagamento);
-    const partes = [retirada ? 'Lançado em ' + dataBR(l.dataReferencia) : 'Vence ' + dataBR(l.dataVencimento), l.grupoNome, l.contaNome].filter(Boolean);
-    const direita = [];
-    if (!retirada || pago) direita.push(U.situacao(pago ? 'Pago ' + dataBR(l.dataPagamento) : 'A pagar', pago ? 'positivo' : 'atencao'));
-    if (l.recorrenciaOrdem) direita.push(U.situacao('Série ' + l.recorrenciaOrdem, 'neutro'));
-    if (l.pendenteDiscriminacao) direita.push(U.situacao('Sem itens', 'neutro'));
-    direita.push(el('b', null, D.moeda(Number(l.valorTotal))));
-    return U.linhaLista({ icone: 'lista', titulo: l.observacao, detalhe: partes.join(' · '), direita, aoClicar: () => editar(cat, l.id) });
-  }
-  function novo(cat) { return abrirFormulario(cat, null); }
+  // Abre um lançamento já gravado (para a lista ou o relatório que vier a chamar).
   async function editar(cat, id) {
     try { const l = await Sync.api('/lancamentos/item/' + id); abrirFormulario(cat, l); } catch (e) { U.avisar((e && e.message) || 'Não foi possível abrir o lançamento.'); }
   }
@@ -240,7 +197,7 @@
           const q = quadro('Recorrência', largo(el('p', 'profiles-note', 'Este lançamento é a ocorrência ' + lanc.recorrenciaOrdem + ' de uma série.')));
           if (pode('lancamentos_cancelar_serie') && !lanc.dataPagamento) {
             q.append(largo(botao('Cancelar a série', () => U.confirmar('Cancelar a série', 'Apaga as ocorrências futuras ainda não pagas. Continuar?', 'Cancelar a série', async () => {
-              try { const r = await Sync.api('/lancamentos/series/' + lanc.recorrenciaId + '/cancelar', { metodo: 'PATCH' }); U.avisar(r.removidas + ' lançamento(s) futuro(s) da série removido(s).'); dlg.close(); renderLista(cat); } catch (e) { U.avisar(mensagemDe(e)); }
+              try { const r = await Sync.api('/lancamentos/series/' + lanc.recorrenciaId + '/cancelar', { metodo: 'PATCH' }); U.avisar(r.removidas + ' lançamento(s) futuro(s) da série removido(s).'); dlg.close(); } catch (e) { U.avisar(mensagemDe(e)); }
             }, { cor: corDe(cat), corTexto: C.corTexto }), 'btn secondary')));
           }
           form.append(q);
@@ -306,7 +263,6 @@
           } else await Sync.api('/lancamentos/item/' + lanc.id, { metodo: 'PUT', corpo });
           U.avisar(msg);
           reabrir = querCriarNova && criando;
-          if (telas[cat] && telas[cat].view.classList.contains('show')) renderLista(cat);
         } catch (e) {
           if (e && e.codigo === 'DISCRIMINACAO_DIVERGENTE' && e.detalhes && e.detalhes.linhaProvavel) estado.linhaComErro = e.detalhes.linhaProvavel;
           return mensagemDe(e);
@@ -316,5 +272,5 @@
     });
   }
 
-  window.CicluzLancamentos = { abrir, categorias: () => Object.keys(CATEGORIAS) };
+  window.CicluzLancamentos = { abrir, editar, categorias: () => Object.keys(CATEGORIAS) };
 })();
