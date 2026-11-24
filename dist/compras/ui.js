@@ -803,6 +803,61 @@
    * da tela (fixa), logo abaixo do botão, ou acima quando não cabe embaixo. Fecha no Esc (sem fechar a janela de
    * trás) e tocando fora. Devolve abrir(sim). O ouvinte de "tocar fora" só existe enquanto está aberta.
    */
+  /**
+   * Campo de hora (24/11/2026, Washington): o MESMO desenho do campo de aniversário (dia e mês). Um campo com a máscara HH:MM para digitar e o botão
+   * redondo do relógio; tocar no campo ou no botão abre um painel flutuante (flutuante) com a grade das 24 horas e a dos minutos de 5 em 5, em células de
+   * cantos arredondados, a escolhida cheia na cor do menu. Escolher a hora deixa o painel aberto (o minuto começa em 00); escolher o minuto fecha.
+   * Minuto que não é múltiplo de 5 se digita no campo. Devolve { caixa, painel, input }: quem usa põe a caixa na tela e o painel ao lado dela.
+   * input.value é "HH:MM" (ou vazio); hora incompleta ou fora de 00:00 a 23:59 deixa o campo inválido (setCustomValidity).
+   */
+  function campoHora({ valor = '', rotulo = 'Hora' } = {}) {
+    const valida = (t) => /^([01]\d|2[0-3]):[0-5]\d$/.test(t);
+    let hora = ''; let minuto = '';
+    if (valida(valor)) { hora = valor.slice(0, 2); minuto = valor.slice(3); }
+    const input = entrada('text', hora ? hora + ':' + minuto : '', { inputMode: 'numeric', placeholder: 'HH:MM', maxLength: 5, autocomplete: 'off' });
+    input.setAttribute('aria-label', rotulo);
+    input.dataset.textoLivre = '1';
+    const botao = el('button', 'shortcut-circle compras-redondo');
+    botao.type = 'button'; botao.title = 'Escolher a hora'; botao.setAttribute('aria-label', rotulo + ': escolher a hora');
+    botao.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+    const caixa = el('div', 'compras-aniv-campo compras-hora-campo'); caixa.append(input, botao);
+    const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-hora-painel');
+    painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', rotulo + ': hora e minuto');
+    const gradeHora = el('div', 'compras-grade-escolha em-6'); const gradeMin = el('div', 'compras-grade-escolha em-6');
+    painel.append(el('span', 'compras-rotulo', 'Hora'), gradeHora, el('span', 'compras-rotulo', 'Minuto'), gradeMin);
+    const abrir = flutuante(caixa, painel);
+    const celula = (texto, marcado, nome, aoTocar) => {
+      const b = el('button', 'compras-grade-celula', texto);
+      b.type = 'button'; b.setAttribute('aria-pressed', String(marcado)); b.setAttribute('aria-label', nome); b.onclick = aoTocar;
+      return b;
+    };
+    const validar = () => input.setCustomValidity(!input.value || valida(input.value) ? '' : 'Informe a hora no formato HH:MM, de 00:00 a 23:59.');
+    function pintar(escreve = true) {
+      if (escreve) input.value = hora && minuto ? hora + ':' + minuto : '';
+      validar();
+      gradeHora.replaceChildren(...Array.from({ length: 24 }, (_, i) => {
+        const n = String(i).padStart(2, '0');
+        return celula(n, n === hora, 'Hora ' + n, () => { hora = n; if (!minuto) minuto = '00'; pintar(); });
+      }));
+      gradeMin.replaceChildren(...Array.from({ length: 12 }, (_, i) => {
+        const n = String(i * 5).padStart(2, '0');
+        return celula(n, n === minuto, 'Minuto ' + n, () => { minuto = n; pintar(); if (hora) fechar(); });
+      }));
+    }
+    function fechar() { abrir(false); input.focus(); input.dispatchEvent(new Event('change', { bubbles: true })); }
+    input.addEventListener('input', () => {
+      const d = input.value.replace(/\D/g, '').slice(0, 4);
+      input.value = d.length > 2 ? d.slice(0, 2) + ':' + d.slice(2) : d;
+      hora = d.length >= 2 ? d.slice(0, 2) : ''; minuto = d.length === 4 ? d.slice(2) : '';
+      pintar(false);
+    });
+    input.addEventListener('click', () => abrir(true));
+    input.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown') { e.preventDefault(); abrir(true); } });
+    botao.addEventListener('click', () => abrir(painel.hidden));
+    pintar();
+    return { caixa, painel, input };
+  }
+
   function flutuante(ancora, painel, { foco } = {}) {
     painel.hidden = true;
     ancora.setAttribute('aria-haspopup', 'dialog');
@@ -1095,6 +1150,6 @@
     seletorArvore, campoArvore, campoLocal, arvoreGruposMercadoria, botaoRemover,
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();
