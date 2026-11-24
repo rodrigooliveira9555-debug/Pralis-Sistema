@@ -71,7 +71,7 @@ CICLUZ hoje (`servidor/web/components/lancamentos/`, `/app/lancamentos/<categori
 
 | # | Tema | Principal | CICLUZ hoje | Situação |
 |---|---|---|---|---|
-| 1 | Troca de categoria | 3 botões no topo do modal | uma tela por categoria (D6 manda listagens separadas) | falta só o **modal único com os 3 botões** |
+| 1 | Troca de categoria | 3 botões no topo de **um modal** | uma tela por categoria | **decidido: sem modal e sem os 3 botões; uma tela para cada categoria** (Washington, 24/11/2026) |
 | 2 | Credor tipado | chips Fornecedor / Colaborador / Sócio ou Gestor + lista | **não tem** | falta (fornecedor e colaborador já existem em Compras e no DP; **Sócio/Gestor não existe**, D1) |
 | 3 | Pagamento | botão Sim/Não + Data pagamento (regras de data) | "Pago em" (vazio = não pago) | equivale; faltam o Sim/Não e as regras de data mínima/só hoje |
 | 4 | Retirada | sem pagamento, vencimento, doc fiscal e fotos | mostra vencimento obrigatório, pago em e doc fiscal | **divergente**: seguir o principal? |
@@ -89,9 +89,20 @@ CICLUZ hoje (`servidor/web/components/lancamentos/`, `/app/lancamentos/<categori
 (a) **Retirada enxuta** como no principal (sem pagamento, vencimento, doc fiscal, fotos) ou manter o CICLUZ atual; (b) **Sócios e Gestores** (cadastro próprio, D1): criar agora ou depois; (c) **credor Colaborador na Despesa** liga ao DP pelo **id**; (d) **conta**: vínculo usuário × conta (D8), conta travada do caixa (R-121) e a ligação com **VND - Computadores** (o computador do PDV ↔ conta "TNP-PC-CXPDV-n"; ver P-45); (e) **fotos e NF-e / IA**: onde guardar o arquivo e se a leitura por IA entra; (f) **Patrimônio na discriminação de Despesa** (R-135): usar o cadastro de RET - Patrimônios; (g) **campos novos no banco** (credor, anexos, item vinculado): **migration a autorizar**.
 
 ## 8. Proposta de entrega em passos (a combinar)
-1. **Forma do formulário**, sem banco novo: modal único com os 3 botões e as cores, ordem e rótulos do principal, Pagamento Sim/Não, Valor Total, Retirada enxuta, "Salvar e criar nova".
+1. **Forma do formulário**, sem banco novo: **uma tela de formulário para cada categoria, sem modal** (DES - Despesas, MER - Mercadorias e RET - Retiradas), na cor da origem, com a ordem e os rótulos do principal, Pagamento Sim/Não, Valor Total, Retirada enxuta e "Salvar e criar nova".
 2. **Credor tipado** (Fornecedor e Colaborador, por id): precisa de colunas novas (migration).
 3. **Discriminação com item de cadastro** (Produtos / Patrimônio / Colaboradores), grupo do item e desconto geral/Vale Presente.
 4. **Anexos** (2 fotos) depois de decidir o armazenamento.
 5. **Conta, caixa e saldo** (D8, R-121, R-165) junto com o Caixa e os computadores.
 6. **Leitura por IA da nota**: fora por ora.
+
+## 9. Decisão do Washington e as telas de lista do principal (24/11/2026)
+**Decisão: sem modal.** O principal cria a saída num modal único aberto pelo "+ NOVO". No CICLUZ **cada categoria tem a sua tela, separada**: Saídas › Lançamentos › **DES - Despesas**, **MER - Mercadorias** e **RET - Retiradas**, sem os 3 botões de troca. Cada uma é uma lista com o botão de criar, e **o formulário abre numa tela própria (não numa janela)**, no padrão dos cadastros do CICLUZ (cabeçalho, conteúdo, rodapé). O código do formulário pode ser um só, configurado por categoria, para não haver três caminhos para o mesmo ato.
+
+**As listas do principal** (lidas em produção e no código, `components/financeiro/OperacoesPage.vue`; "Cadastro operacional."):
+- **Filtros (todas):** Data inicial · Data final · **PDV** · **Status** (Todos os status, Aprovado, Aguardando aprovação, Cancelado) · **Limpar**.
+- **Só Despesas e Mercadorias:** interruptor **"Somente pendentes de discriminação"**. **Só Mercadorias:** interruptor **"Aguardando aprovação (NF-e)"** (some o outro quando ligado).
+- **Colunas:** Data e hora · PDV · Observação · Registrado por · **Vencimento** · **Pagamento** · Status · Valor · Ações. **Retiradas não tem Vencimento nem Pagamento** (a mesma regra do formulário).
+- **Status** em chips: Aprovado (verde), Aguardando aprovação (amarelo), Cancelado (vermelho); mais o chip **"pendente de discriminação"** quando falta discriminar.
+- **Ações da linha:** ver a observação completa · **Ver anexos** (se há foto) · **Discriminar** (só quem pode e só se está pendente) · **Editar**. Lista paginada.
+- **Criar:** não há botão "novo" na lista; cria-se pelo "+ NOVO" global. (No CICLUZ a lista passa a ter o seu botão de criar.)
