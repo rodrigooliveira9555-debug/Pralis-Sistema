@@ -61,12 +61,14 @@
   function arvore({ areas, cargos, pessoas }) {
     const cargoPorId = new Map((cargos || []).map((c) => [c.id, c]));
     const gente = new Map();
+    // A pessoa tem UM cargo (jobKey) e pode estar em várias áreas (areaIds). Sem áreas marcadas, ela aparece em toda área que tem o cargo dela.
+    const linha = (p, areaId) => !(p.areaIds && p.areaIds.length) || p.areaIds.includes(areaId);
     (pessoas || []).forEach((p) => { if (p.jobKey) { if (!gente.has(p.jobKey)) gente.set(p.jobKey, []); gente.get(p.jobKey).push(p); } });
     const montar = (n, nivel) => ({
       tipo: 'area', id: n.id, nome: n.name, nivel, ativo: !n.inactive, cor: n.color, sigla: n.sigla,
       cargos: (n.cargoIds || []).filter((id) => cargoPorId.has(id)).map((id) => ({
         tipo: 'cargo', id, areaId: n.id, nome: cargoPorId.get(id).nome,
-        pessoas: (gente.get(id) || []).map((p) => ({ tipo: 'pessoa', id: p.id, cargoId: id, areaId: n.id, nome: p.name })),
+        pessoas: (gente.get(id) || []).filter((p) => linha(p, n.id)).map((p) => ({ tipo: 'pessoa', id: p.id, cargoId: id, areaId: n.id, nome: p.name })),
       })),
       areas: (n.children || []).map((f) => montar(f, nivel + 1)),
     });
@@ -101,5 +103,58 @@
     return [...new Set([...(atuais || []), ...(novos || [])])];
   }
 
-  return { dobrar, casarCargo, vincularPessoas, vinculosDasFichas, arvore, pessoasCobertas, erroDeCargo, juntarCargoIds };
+  /** Os ids da área e de todas as áreas acima dela (da mais específica para a mais geral). */
+  function cadeiaDaArea(raizes, areaId) {
+    const pai = new Map();
+    const andar = (n, p) => { pai.set(n.id, p); (n.areas || n.children || []).forEach((f) => andar(f, n.id)); };
+    (raizes || []).forEach((r) => andar(r, null));
+    const out = [];
+    for (let id = areaId, guarda = 0; id && guarda < 20; id = pai.get(id), guarda++) out.push(id);
+    return out;
+  }
+
+  const uniao = (lista) => {
+    const telas = {}; const acoes = new Set();
+    lista.forEach((c) => {
+      Object.keys(c.telas || {}).forEach((k) => { telas[k] = [...new Set([...(telas[k] || []), ...(c.telas[k] || [])])]; });
+      (c.acoes || []).forEach((a) => acoes.add(a));
+    });
+    return { telas, acoes: [...acoes] };
+  };
+
+  /**
+   * Qual configuração vale para uma pessoa (24/11/2026, regras do Rodrigo): a MAIS ESPECÍFICA vence — primeiro a da própria pessoa; sem ela, a do
+   * cargo (configurada numa área); sem ela, a da área. Dentro de um nível: em cada área da pessoa vale a configuração da área mais próxima dela
+   * (um local sem configuração segue o setor, que segue a área); se a pessoa está em várias áreas com configurações diferentes, valem as
+   * permissões MAIORES (a soma). A pessoa tem UM cargo.
+   * configs: { 'pessoa:ID': c, 'cargo:AREA|CARGO': c, 'area:ID': c }, com c = { telas: { chave: [permissões] }, acoes: [ações] }.
+   * pessoa: { id, jobKey, areaIds }. Devolve { nivel: 'pessoa' | 'cargo' | 'area' | null, origens: [chaves], config }.
+   */
+  function resolverConfig(pessoa, configs, raizes) {
+    const cfg = configs || {};
+    const propria = cfg['pessoa:' + pessoa.id];
+    if (propria) return { nivel: 'pessoa', origens: ['pessoa:' + pessoa.id], config: uniao([propria]) };
+    const cadeias = (pessoa.areaIds || []).map((a) => cadeiaDaArea(raizes, a));
+    const doNivel = (chaveDe) => {
+      const achadas = [];
+      cadeias.forEach((cadeia) => { for (const a of cadeia) { const k = chaveDe(a); if (cfg[k]) { achadas.push(k); break; } } });
+      return [...new Set(achadas)];
+    };
+    if (pessoa.jobKey) {
+      const k = doNivel((a) => 'cargo:' + a + '|' + pessoa.jobKey);
+      if (k.length) return { nivel: 'cargo', origens: k, config: uniao(k.map((x) => cfg[x])) };
+    }
+    const k = doNivel((a) => 'area:' + a);
+    if (k.length) return { nivel: 'area', origens: k, config: uniao(k.map((x) => cfg[x])) };
+    return { nivel: null, origens: [], config: { telas: {}, acoes: [] } };
+  }
+
+  /** Quantas pessoas seguem cada configuração (a que de fato vale para elas, depois de aplicar a prevalência). */
+  function quemSegue(pessoas, configs, raizes) {
+    const cont = {};
+    (pessoas || []).forEach((p) => { resolverConfig(p, configs, raizes).origens.forEach((k) => { cont[k] = (cont[k] || 0) + 1; }); });
+    return cont;
+  }
+
+  return { cadeiaDaArea, resolverConfig, quemSegue, dobrar, casarCargo, vincularPessoas, vinculosDasFichas, arvore, pessoasCobertas, erroDeCargo, juntarCargoIds };
 }));

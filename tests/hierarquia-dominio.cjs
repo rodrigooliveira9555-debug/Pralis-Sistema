@@ -53,4 +53,40 @@ ok(() => assert.match(h.erroDeCargo('c-sumiu', cargos), /não existe mais/));
 ok(() => assert.equal(h.erroDeCargo('c-1', cargos), ''));
 ok(() => assert.deepEqual(h.juntarCargoIds(['a', 'b'], ['b', 'c']), ['a', 'b', 'c']));
 
+// pessoa que aparece só nas áreas dela
+const raizes2 = h.arvore({
+  areas: [{ id: 'a1', name: 'Loja', cargoIds: ['c-1'], children: [] }, { id: 'a2', name: 'Produção', cargoIds: ['c-1'], children: [] }],
+  cargos, pessoas: [{ id: 'p1', name: 'Ana', jobKey: 'c-1', areaIds: ['a2'] }, { id: 'p2', name: 'Bia', jobKey: 'c-1', areaIds: [] }],
+});
+ok(() => assert.deepEqual(raizes2[0].cargos[0].pessoas.map((p) => p.id), ['p2']));
+ok(() => assert.deepEqual(raizes2[1].cargos[0].pessoas.map((p) => p.id), ['p1', 'p2']));
+
+// cadeia da área (da mais específica para a mais geral)
+const arv = h.arvore({ areas: [{ id: 'A', name: 'Loja', cargoIds: [], children: [{ id: 'S', name: 'Caixa', children: [{ id: 'L', name: 'PDV1', children: [] }] }] }], cargos, pessoas: [] });
+ok(() => assert.deepEqual(h.cadeiaDaArea(arv, 'L'), ['L', 'S', 'A']));
+ok(() => assert.deepEqual(h.cadeiaDaArea(arv, 'A'), ['A']));
+ok(() => assert.deepEqual(h.cadeiaDaArea(arv, 'zzz'), ['zzz']));
+
+// prevalência: pessoa > cargo > área; em cada área vale a configuração mais próxima; várias áreas somam (maiores)
+const c = (telas, acoes = []) => ({ telas, acoes });
+const configs = {
+  'area:A': c({ vendas: ['ver'] }),
+  'area:S': c({ vendas: ['ver', 'lan'] }),
+  'cargo:A|c-1': c({ vendas: ['ver', 'pag'] }, ['sangria']),
+  'pessoa:p9': c({ vendas: ['ver'] }),
+};
+const loc = { id: 'p1', jobKey: 'c-1', areaIds: ['L'] };
+// cargo configurado na área A (acima do local dela) vence a área, mesmo a do setor
+ok(() => { const r = h.resolverConfig(loc, configs, arv); assert.equal(r.nivel, 'cargo'); assert.deepEqual(r.origens, ['cargo:A|c-1']); assert.deepEqual(r.config.acoes, ['sangria']); });
+// sem configuração do cargo: vale a área mais próxima (o setor, não a área geral)
+ok(() => { const r = h.resolverConfig({ id: 'p2', jobKey: 'c-2', areaIds: ['L'] }, configs, arv); assert.equal(r.nivel, 'area'); assert.deepEqual(r.origens, ['area:S']); assert.deepEqual(r.config.telas.vendas, ['ver', 'lan']); });
+// a configuração própria da pessoa vence tudo
+ok(() => { const r = h.resolverConfig({ id: 'p9', jobKey: 'c-1', areaIds: ['L'] }, configs, arv); assert.equal(r.nivel, 'pessoa'); assert.deepEqual(r.config.telas.vendas, ['ver']); });
+// duas áreas com configurações diferentes: valem as permissões maiores
+ok(() => { const r = h.resolverConfig({ id: 'p3', jobKey: 'c-9', areaIds: ['A', 'S'] }, { 'area:A': c({ vendas: ['ver'] }), 'area:S': c({ vendas: ['lan'], caixa: ['ver'] }) }, arv); assert.equal(r.nivel, 'area'); assert.deepEqual(r.origens.sort(), ['area:A', 'area:S']); assert.deepEqual(r.config.telas.vendas.sort(), ['lan', 'ver']); assert.deepEqual(r.config.telas.caixa, ['ver']); });
+// sem nada configurado
+ok(() => assert.equal(h.resolverConfig({ id: 'p4', jobKey: 'c-1', areaIds: [] }, {}, arv).nivel, null));
+// quem segue cada configuração
+ok(() => assert.deepEqual(h.quemSegue([loc, { id: 'p2', jobKey: 'c-2', areaIds: ['L'] }, { id: 'p9', jobKey: 'c-1', areaIds: ['L'] }, { id: 'p5', jobKey: 'c-2', areaIds: ['A'] }], configs, arv), { 'cargo:A|c-1': 1, 'area:S': 1, 'pessoa:p9': 1, 'area:A': 1 }));
+
 console.log('hierarquia-dominio: ' + checks + ' grupos de verificação ok');

@@ -17,7 +17,7 @@
   const cargoIdPorNome = (nome) => D.casarCargo(nome, cargos()).id;
   const lerArvore = () => { try { const s = JSON.parse(localStorage.getItem('cicluz-location-tree-v1') || '[]'); return Array.isArray(s) ? s : s.tree || []; } catch (e) { return []; } };
   const lerFichas = () => { try { const s = JSON.parse(localStorage.getItem('cicluz-job-profiles-v1') || 'null'); return s && s.cards && typeof s.cards === 'object' ? Object.values(s.cards) : []; } catch (e) { return []; } };
-  const pessoas = () => { const P = window.CicluzPeople; if (!P) return []; try { return P.selectable().map((p) => ({ id: p.id, name: p.name, jobName: p.jobName, jobKey: p.jobKey, active: p.active })); } catch (e) { return []; } };
+  const pessoas = () => { const P = window.CicluzPeople; if (!P) return []; try { return P.selectable().map((p) => ({ id: p.id, name: p.name, jobName: p.jobName, jobKey: p.jobKey, areaIds: p.orgUnitIds || [], active: p.active })); } catch (e) { return []; } };
 
   /** Área › Cargo › Pessoa, com o que existe agora nos dados. */
   const arvore = () => D.arvore({ areas: lerArvore(), cargos: cargos(), pessoas: pessoas() });

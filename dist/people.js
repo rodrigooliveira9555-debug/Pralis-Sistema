@@ -18,7 +18,7 @@ const maskCpf=v=>{const d=String(v||'').replace(/\D/g,'');return d.length===11?'
 const admissionExams=p=>data.exams.filter(e=>e.personId===p.id&&e.type==='ADMISSIONAL'&&e.scheduleStatus!=='Cancelado').sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
 const isApto=p=>admissionExams(p).some(e=>e.result==='APTO');
 /* Who appears in uniforms and occurrences: registered collaborators, not candidates. */
-function selectable(){load();return data.people.filter(p=>p.status==='ATIVO'||p.status==='INATIVO').map(p=>({id:p.id,name:p.name,jobName:p.jobName||'',jobKey:p.jobKey||'',active:p.status==='ATIVO'}))}
+function selectable(){load();return data.people.filter(p=>p.status==='ATIVO'||p.status==='INATIVO').map(p=>({id:p.id,name:p.name,jobName:p.jobName||'',jobKey:p.jobKey||'',orgUnitIds:p.orgUnitIds||[],active:p.status==='ATIVO'}))}
 
 /* Período de Teste deadlines, computed from today's date whenever a screen renders; no background jobs. */
 const dayDiff=(a,b)=>Math.round((Date.parse(b+'T12:00:00')-Date.parse(a+'T12:00:00'))/864e5);
