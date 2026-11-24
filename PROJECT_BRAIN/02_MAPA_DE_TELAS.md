@@ -25,7 +25,7 @@ Texto fixo "reunirá os principais números".
 
 ## Entradas · Vendas/Faturamento (VND, amarelo)
 - ⬜ Caixas · ⬜ Gerência · ⬜ Financeiro
-- ✅ **Cadastros Geral · VND - Computadores** (24/11/2026, `dist/groups.js`): cadastro plano no molde do cadastro de grupo (nome, ícone, situação); a coleção `computadores` mora em `cicluz-financial-hierarchy-v1`. O que mais cadastrar e a ligação com o PDV: P-45.
+- ✅ **Cadastros Geral · VND - Computadores** (24/11/2026, `dist/groups.js`): grupo › subgrupo no molde de Grupos de Vendas (o grupo "Computadores" e os computadores como subgrupos, nome em maiúsculas); a coleção `computadores` mora em `cicluz-financial-hierarchy-v1`. O que mais cadastrar e a ligação com o PDV: P-45.
 
 ## Transferências · Contas/Locais (CNT, laranja)
 - ⬜ Tesouraria · ⬜ Financeiro · ⬜ Diretor Geral
