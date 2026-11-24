@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import {
   AgendaRegras as R,
   type AgendaResposta,
+  type AreaLista,
   type CompromissoCriacao,
   type CompromissoEdicao,
   type CompromissoMudanca,
@@ -151,7 +152,7 @@ export async function agenda(perfil: PerfilSessao): Promise<AgendaResposta> {
       .filter((g) => admin || g.donoId === u || membroDe.has(g.id) || comItem.has(g.id))
       .map((g) => ({
         id: g.id, nome: g.nome, cor: g.cor, icone: g.icone, ordenacao: g.ordenacao, ordem: g.ordem, donoId: g.donoId,
-        membro: membroDe.has(g.id), podeGerir: admin || g.donoId === u, versao: g.versao
+        membro: membroDe.has(g.id), podeGerir: admin || g.donoId === u, versao: g.versao, area: (g.area ?? "") as AreaLista
       })),
     colunas: cols.map((c) => ({ id: c.id, nome: c.nome, ordem: c.ordem })),
     compromissos,

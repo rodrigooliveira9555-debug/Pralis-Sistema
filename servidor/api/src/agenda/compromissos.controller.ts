@@ -14,6 +14,7 @@ import {
 } from "@cicluz/shared";
 import { perfilDaRequisicao } from "../auth/guards.ts";
 import * as servico from "./compromissos.service.ts";
+import { sincronizarAreas } from "./grupos.service.ts";
 
 // Rotas dos compromissos da Agenda (plano docs/AGENDA_NO_SERVIDOR_PLANO.md, seção 3). Todas exigem sessão
 // (guard global) e valem só para a empresa da sessão.
@@ -28,6 +29,8 @@ export async function registrarRotasCompromissos(app: FastifyInstance) {
   // recebe 304 com a agenda de outra conta).
   app.get("/api/agenda", { config: limiteLeitura }, async (request, reply) => {
     const perfil = perfilDaRequisicao(request);
+    // Listas ligadas a uma área: membros acompanham as permissões (P-46 item 3) antes de montar a resposta.
+    await sincronizarAreas(perfil.empresa.id);
     const dados = await servico.agenda(perfil);
     const marca = createHash("sha256").update(perfil.usuarioId).digest("hex").slice(0, 16);
     const etag = `"agenda-${dados.estado.versao}-${marca}"`;
