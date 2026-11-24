@@ -64,6 +64,13 @@
       "when": 1795530038157,
       "tag": "0008_agenda_rotina",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795548400417,
+      "tag": "0009_agenda_regras",
+      "breakpoints": true
     }
   ]
 }
