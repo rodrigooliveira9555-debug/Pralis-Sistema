@@ -20,8 +20,8 @@
   // seções abertas ('grupo|seção'). registros guarda (só na memória) o que cada pessoa, cargo ou área tem ligado.
   let modoDesenhado = 'telas';
   let seq = 0;
-  const novoBloco = () => ({ id: ++seq, alvo: null, quem: '', recolhida: false });
-  const estado = { modo: 'telas', foco: 0, busca: '', abertos: new Set(), secAbertas: new Set(), blocos: [novoBloco()] };
+  const novoBloco = (tipo) => ({ id: ++seq, alvo: null, tipo, quem: tipo, recolhida: false });
+  const estado = { modo: 'telas', foco: 0, busca: '', abertos: new Set(), secAbertas: new Set(), blocos: [] };
   const registros = new Map();
 
   /* ---------- As sete permissões ---------- */
@@ -71,6 +71,16 @@
 
   /** Uma célula de coluna (a do bloco i); recolhida, só fica a faixa estreita com a setinha para reabrir. */
   const blocoEl = (b, extra) => el('div', 'acessos-tl-bloco' + (extra ? ' ' + extra : '') + (estado.modo !== 'acoes' && b && b.recolhida ? ' recolhida' : ''));
+
+  /** Monta, em uma linha das telas, uma célula-grupo por tipo (Colaborador, Cargo, Área); fazer(b) devolve a célula da coluna b. */
+  function gruposDaLinha(linha, fazer) {
+    TIPOS.forEach((t) => {
+      const bs = estado.blocos.filter((b) => b.tipo === t);
+      const g = el('div', 'acessos-tl-gt' + (bs.length ? '' : ' vazio'));
+      bs.forEach((b) => { const c = fazer(b); if (c) g.append(c); });
+      linha.append(g);
+    });
+  }
 
   /** O botão redondo "+" do sistema (botão redondo de ação). Aberto, o "+" vira "×". */
   function botaoMais(rotulo, aberto, acao) {
@@ -136,7 +146,9 @@
     } catch (e) { return []; }
     return fora;
   }
-  const ROTULO_CURTO = { pessoa: 'Nome', cargo: 'Cargo', area: 'Área' };
+  // Os três cabeçalhos da matriz, na ordem: cada um tem o seu "+" (abre uma coluna do tipo) e a sua seta (oculta ou mostra as colunas dele).
+  const TIPOS = ['pessoa', 'cargo', 'area'];
+  const ROTULO_GRUPO = { pessoa: 'Colaborador', cargo: 'Cargo', area: 'Área' };
   const LINHAS = [
     ['pessoa', 'Usuário / colaborador', 'Selecionar o nome', pessoasDP, 'Nenhum colaborador ativo no DP ainda.'],
     ['cargo', 'Cargo', 'Selecionar o cargo', cargosDES, 'Nenhum cargo cadastrado.'],
@@ -209,15 +221,20 @@
       const linha = el('div', 'acessos-telas-quem-bloco');
       const aberto = Boolean(b.quem);
       const l = el('div', 'acessos-telas-quem');
-      const valor = el('span', 'acessos-telas-valor-box');
-      if (b.alvo) valor.append(el('span', 'acessos-telas-valor', b.alvo.nome), el('small', 'profiles-note', ROTULO_CURTO[b.alvo.tipo] || ''));
-      else valor.append(el('span', 'acessos-telas-valor vazio', 'Escolher nome, cargo ou área'));
-      l.append(botaoMais(b.alvo ? 'Trocar a escolha desta coluna' : 'Escolher para quem é a coluna: nome, cargo ou área', aberto, () => { b.quem = aberto ? '' : (b.alvo ? b.alvo.tipo : 'pessoa'); desenhar(); }), valor);
+      const rotulo0 = ROTULO_GRUPO[b.tipo].toLocaleLowerCase('pt-BR');
+      const valor = el('button', 'acessos-telas-trocar');
+      valor.type = 'button';
+      valor.setAttribute('aria-expanded', String(aberto));
+      valor.title = b.alvo ? 'Trocar a escolha desta coluna' : 'Escolher ' + rotulo0;
+      valor.setAttribute('aria-label', valor.title);
+      if (b.alvo) valor.append(el('span', 'acessos-telas-valor', b.alvo.nome), el('small', 'profiles-note', ROTULO_GRUPO[b.tipo]));
+      else valor.append(el('span', 'acessos-telas-valor vazio', 'Escolher ' + rotulo0));
+      valor.onclick = () => { b.quem = aberto ? '' : b.tipo; desenhar(); };
+      l.append(valor);
       linha.append(l);
       if (aberto) {
-        const id = b.quem;
+        const id = b.tipo;
         const [, rotulo, , ler, semItens] = LINHAS.find(([x]) => x === id);
-        linha.append(U.chips(LINHAS.map(([x]) => [x, ROTULO_CURTO[x]]), id, (x) => { b.quem = x; desenhar(); }));
         const doTipo = b.alvo && b.alvo.tipo === id;
         const itens = ler().filter((o) => !usados.has(id + ':' + o.id));
         const lista = el('div', 'acessos-telas-opcoes uniforms-options');
@@ -271,7 +288,7 @@
       fecha.onclick = () => { b.recolhida = true; b.quem = ''; desenhar(); };
       box.append(fecha);
     }
-    if (b.alvo || estado.blocos.length > 1) {
+    {
       const x = el('button', 'acessos-bloco-x');
       x.type = 'button';
       x.title = 'Fechar esta coluna';
@@ -279,7 +296,6 @@
       x.innerHTML = U.svg('<path d="M6 6l12 12M18 6 6 18"/>');
       x.onclick = () => {
         estado.blocos = estado.blocos.filter((y) => y !== b);
-        if (!estado.blocos.length) estado.blocos.push(novoBloco());
         desenhar();
       };
       box.append(x);
@@ -296,7 +312,7 @@
     const menu = lerMenu();
     const regs = colunas().map((b) => registro(menu, b.alvo));
     const blocos = [];
-    blocos.push(U.nota('Esboço: nada é gravado e nenhum acesso muda. As telas são as do menu do sistema; colaboradores, cargos e áreas são os cadastrados no sistema. Toque no + para escolher quem; cada escolha vira uma coluna ao lado, já com tudo ligado, e o + da esquerda abre a próxima. Cada ícone é uma permissão: ← antes de pagar · ↔ pagar · → depois de pagar; o ! abre as ações especiais da coluna (passe o mouse no ícone para ver o nome).'));
+    blocos.push(U.nota('Esboço: nada é gravado e nenhum acesso muda. As telas são as do menu do sistema; colaboradores, cargos e áreas são os cadastrados no sistema. Cada cabeçalho (Colaborador, Cargo, Área) tem o seu + para abrir uma coluna e a sua seta para ocultar ou mostrar as colunas dele; a escolha vira uma coluna ao lado, já com tudo ligado. Cada ícone é uma permissão: ← antes de pagar · ↔ pagar · → depois de pagar; o ! abre as ações especiais da coluna (passe o mouse no ícone para ver o nome).'));
     const barra = el('div', 'acessos-barra');
     if (estado.modo === 'telas') barra.append(U.buscaFixa('acessos-telas', 'Buscar tela', estado.busca, (v) => { estado.busca = v; desenhar(); }));
     // O "‹ ›" redondo do sistema (o mesmo das listas): recolhe todas as colunas de uma vez ou, com todas recolhidas, mostra todas.
@@ -356,36 +372,59 @@
         : 'Escolha para quem é esta coluna.';
     });
 
-    // Primeira linha: o "+" que abre a próxima coluna e, ao lado, o cabeçalho de cada coluna.
+    // Primeira linha: à esquerda o aviso; em seguida, os três cabeçalhos (Colaborador, Cargo, Área), cada um com o seu "+" no início, o
+    // nome, a seta que oculta ou mostra as colunas dele e, embaixo, o cabeçalho de cada coluna aberta.
     const cab = el('div', 'acessos-tl acessos-tl-quem-lin');
-    const aberta = estado.blocos.every((b) => b.alvo);
     const e = el('div', 'acessos-tl-esq');
-    const voltar = estado.modo === 'acoes' ? el('button', 'shortcut-circle compras-redondo acessos-telas-mais') : null;
-    if (voltar) {
+    if (estado.modo === 'acoes') {
+      const voltar = el('button', 'shortcut-circle compras-redondo acessos-telas-mais');
       voltar.type = 'button';
       voltar.title = 'Voltar às telas';
       voltar.setAttribute('aria-label', 'Voltar às telas');
       voltar.innerHTML = U.svg('<path d="M15 5 8 12l7 7"/>');
       voltar.onclick = () => { estado.focar = 'esp:' + estado.foco; estado.modo = 'telas'; desenhar(); };
       e.append(voltar, el('span', 'acessos-tl-esq-txt', 'Voltar às telas'));
-    }
-    const mais = voltar ? null : botaoMais(aberta ? 'Abrir mais uma coluna: escolher outro colaborador, cargo ou área' : 'Escolha primeiro para quem é a coluna aberta', false, () => {
-      if (!estado.blocos.every((b) => b.alvo)) return;
-      estado.blocos.push(novoBloco());
-      desenhar(true);
-    });
-    if (mais) {
-      mais.disabled = !aberta;
-      e.append(mais, el('span', 'acessos-tl-esq-txt', aberta ? 'Nova coluna' : 'Escolha para quem é a coluna aberta'));
+    } else {
+      e.append(el('span', 'acessos-tl-esq-txt', 'Toque no + de Colaborador, Cargo ou Área para abrir uma coluna.'));
     }
     cab.append(e);
-    colunas().forEach((b, i) => {
-      const w = blocoEl(b, 'acessos-tl-bloco-cab');
-      const c = estado.modo === 'acoes' ? cabecaFixa(b) : cabecaDaColuna(b);
-      resumos.push([regs[i], c.querySelector('.acessos-bloco-resumo')]);
-      w.append(c);
-      cab.append(w);
-    });
+    if (estado.modo === 'acoes') {
+      colunas().forEach((b, i) => {
+        const w = blocoEl(b, 'acessos-tl-bloco-cab');
+        const c = cabecaFixa(b);
+        resumos.push([regs[i], c.querySelector('.acessos-bloco-resumo')]);
+        w.append(c);
+        cab.append(w);
+      });
+    } else {
+      TIPOS.forEach((t) => {
+        const bs = estado.blocos.filter((b) => b.tipo === t);
+        const g = el('div', 'acessos-tl-gt acessos-tl-gt-cab' + (bs.length ? '' : ' vazio'));
+        const topo = el('div', 'acessos-gt-topo');
+        const mais = botaoMais('Abrir uma coluna de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR'), false, () => { estado.blocos.push(novoBloco(t)); desenhar(true); });
+        const algumaAberta = bs.some((b) => !b.recolhida);
+        const seta = el('button', 'acessos-gt-seta' + (algumaAberta ? ' aberta' : ''));
+        seta.type = 'button';
+        seta.disabled = !bs.length;
+        seta.setAttribute('aria-expanded', String(algumaAberta));
+        seta.title = (algumaAberta ? 'Ocultar' : 'Mostrar') + ' as colunas de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR');
+        seta.setAttribute('aria-label', seta.title);
+        seta.innerHTML = U.svg('<path d="' + G.niveis + '"/>');
+        seta.onclick = () => { bs.forEach((b) => { b.recolhida = algumaAberta; if (algumaAberta) b.quem = ''; }); desenhar(); };
+        topo.append(mais, el('b', null, ROTULO_GRUPO[t]), seta);
+        g.append(topo);
+        const cols = el('div', 'acessos-gt-cols');
+        bs.forEach((b) => {
+          const w = blocoEl(b, 'acessos-tl-bloco-cab');
+          const c = cabecaDaColuna(b);
+          resumos.push([regs[estado.blocos.indexOf(b)], c.querySelector('.acessos-bloco-resumo')]);
+          w.append(c);
+          cols.append(w);
+        });
+        g.append(cols);
+        cab.append(g);
+      });
+    }
     // O total e o "‹ ›" ficam no canto do quadro do cabeçalho (presos à direita enquanto a matriz rola para o lado).
     if (fimDoCabecalho) cab.append(fimDoCabecalho);
     mat.append(cab);
@@ -453,7 +492,7 @@
       const esqGrupo = el('div', 'acessos-tl-esq acessos-tl-esq-grupo');
       esqGrupo.append(h, nivel);
       linhaGrupo.append(esqGrupo);
-      estado.blocos.forEach((b) => {
+      gruposDaLinha(linhaGrupo, (b) => {
         const w = blocoEl(b);
         PERMS.forEach((p) => {
           if (p.id === 'esp') {
@@ -475,7 +514,7 @@
           c.append(iconePerm(p));
           w.append(c);
         });
-        linhaGrupo.append(w);
+        return w;
       });
       cab.replaceWith(linhaGrupo);
 
@@ -518,7 +557,7 @@
     };
     esq.append(b);
     linha.append(esq);
-    estado.blocos.forEach((b) => linha.append(blocoEl(b)));
+    gruposDaLinha(linha, (b) => blocoEl(b));
     return linha;
   }
 
@@ -553,6 +592,7 @@
     esq.append(nome);
     if (nova) { const et = U.situacao('Novo · desligado', 'atencao'); et.classList.add('acessos-tl-novo'); esq.append(et); }
     linha.append(esq);
+    const celulas = new Map();
     regs.forEach((reg, i) => {
       const w = blocoEl(colunas()[i]);
       PERMS.forEach((p) => {
@@ -575,8 +615,9 @@
         cel.append(sw);
         w.append(cel);
       });
-      linha.append(w);
+      celulas.set(colunas()[i], w);
     });
+    gruposDaLinha(linha, (b) => celulas.get(b));
     return linha;
   }
 

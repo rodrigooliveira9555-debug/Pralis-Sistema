@@ -151,7 +151,9 @@ body.dark-theme .ds-modelo-barra { background: var(--theme-card, #2d2b34); }
 
 /* Acesso por Tela (esboço): "para quem", legenda dos níveis e o menu inteiro com o nível de cada tela */
 .acessos-telas-quem-bloco { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
-.acessos-telas-quem { display: grid; grid-template-columns: 32px minmax(0, 1fr); align-items: center; gap: 8px 10px; min-height: 32px; }
+.acessos-telas-quem { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; gap: 8px 10px; min-height: 32px; }
+.acessos-telas-trocar { display: grid; min-width: 0; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; }
+.acessos-telas-trocar:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
 .acessos-telas-valor { font: 400 14px/20px var(--ui-font); overflow-wrap: anywhere; }
 .acessos-telas-valor-box { display: grid; min-width: 0; }
 .acessos-telas-valor-box small { margin: 0; }
@@ -187,7 +189,7 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 
 /* Cabeçalho do grupo: o mesmo símbolo do menu da tela inicial (círculo na cor da origem, com o $ e o sinal) e o botão que abre um nível
    por toque (grupo → seções → telas → recolhe). */
-.acessos-tl-marca { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--origem, var(--menu-accent)); color: #fff; }
+.acessos-tl-marca { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 26%; background: var(--origem, var(--menu-accent)); color: #fff; }
 .acessos-tl-marca svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .acessos-tl-grupo-nome { display: grid; min-width: 0; }
 .acessos-tl-grupo-nome b { font: 600 14px/18px var(--ui-font); }
@@ -217,11 +219,13 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 }
 .acessos-tl-esq {
   position: sticky; left: 0; z-index: 2; flex: none; box-sizing: border-box; width: var(--tl-nome); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 4px;
-  padding: 8px 10px 8px 14px; background: var(--tl-bg); border-right: 1px solid var(--layout-line, #dedee3); overflow: hidden;
+  padding: 12px 10px 12px 14px; background: var(--tl-bg); border-right: 1px solid var(--layout-line, #dedee3); overflow: hidden;
 }
 .acessos-tl-sec { --tl-bg: var(--theme-card, #fff); }
 .acessos-tl-tela.nova { --tl-bg: color-mix(in srgb, var(--cicluz-warning, #eab308) 10%, var(--theme-card, #fff)); }
 .acessos-tl-grupo-lin { --tl-bg: var(--theme-card, #fff); border-top: 0; }
+.acessos-tl-tela, .acessos-tl-sec { min-height: 52px; }
+.acessos-tl-grupo-lin { min-height: 60px; }
 .acessos-tl-sec:hover, .acessos-tl-grupo-lin:hover, .acessos-tl-tela:hover { --tl-bg: color-mix(in srgb, var(--origem, var(--menu-accent)) 8%, var(--theme-card, #fff)); }
 .acessos-tl-esq-grupo { flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; }
 .acessos-tl-esq-grupo h3 { flex: 1 1 auto; min-width: 0; margin: 0; display: flex; align-items: center; gap: 8px; font: var(--ui-section-title-weight, 600) var(--ui-section-title, 14px)/var(--ui-section-title-line, 20px) var(--ui-font); }
@@ -233,6 +237,18 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 .acessos-tl-quem-lin::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 16px; margin-top: 0; background: var(--layout-gap, #f5f5f7); pointer-events: none; }
 .acessos-tl-quem-lin > .acessos-tl-esq { z-index: 5; justify-content: flex-start; padding-top: 12px; }
 .acessos-tl-esq-txt { font: 400 12px/16px var(--ui-font); color: var(--muted, #73737a); }
+/* Os três cabeçalhos: cada grupo (Colaborador, Cargo, Área) é uma célula que tem a mesma largura no cabeçalho e em todas as linhas. */
+.acessos-tl-gt { flex: none; box-sizing: border-box; display: flex; align-items: stretch; min-width: 96px; border-left: 1px solid var(--layout-line, #dedee3); }
+.acessos-tl-gt.vazio { width: 176px; }
+.acessos-tl-gt-cab { flex-direction: column; align-items: stretch; }
+.acessos-gt-topo { box-sizing: border-box; width: 0; min-width: 100%; display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 8px 0 10px; border-bottom: 1px solid var(--layout-line, #dedee3); overflow: hidden; }
+.acessos-gt-topo > b { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 13px/18px var(--ui-font); }
+.acessos-gt-seta { flex: none; margin-left: auto; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; background: transparent; color: var(--muted, #73737a); cursor: pointer; }
+.acessos-gt-seta svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform 160ms ease; }
+.acessos-gt-seta.aberta svg { transform: rotate(180deg); }
+.acessos-gt-seta:disabled { opacity: .35; cursor: default; }
+.acessos-gt-seta:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
+.acessos-gt-cols { display: flex; align-items: stretch; flex: 1 1 auto; }
 .acessos-tl-bloco { flex: none; box-sizing: border-box; width: var(--tl-bloco); display: flex; align-items: center; padding: 0 10px; border-left: 1px solid var(--layout-line, #dedee3); }
 .acessos-tl-bloco:first-of-type { border-left: 0; }
 .acessos-telas button.acessos-colunas-geral { margin-left: auto; flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: var(--theme-surface, #fff); }
@@ -319,7 +335,7 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
   .acessos-tl-esq-grupo { position: sticky; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 4px; padding: 8px 6px 8px 8px; }
   .acessos-tl-esq-grupo h3 { flex-direction: column; align-items: flex-start; gap: 4px; }
   .acessos-tl-grupo-nome b { font-size: 13px; line-height: 16px; }
-  .acessos-tl-esq-grupo .acessos-telas-nivel { position: absolute; top: 8px; right: 6px; margin: 0; width: 28px; height: 28px; }
+  .acessos-tl-esq-grupo .acessos-telas-nivel { position: absolute; top: 8px; right: 6px; margin: 0; width: 32px; height: 32px; }
   .acessos-tl-sec-nome { gap: 2px; font-size: 11px; }
   .acessos-tl-sec-nome small { display: none; }
   .acessos-tl-sec-nome .acessos-tl-seta { width: 16px; height: 16px; }
