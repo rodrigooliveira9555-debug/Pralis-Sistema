@@ -21,7 +21,7 @@
   let modoDesenhado = 'telas';
   let seq = 0;
   const novoBloco = (tipo) => ({ id: ++seq, alvo: null, tipo, quem: tipo, recolhida: false });
-  const estado = { modo: 'telas', foco: 0, busca: '', abertos: new Set(), secAbertas: new Set(), blocos: [] };
+  const estado = { modo: 'telas', focus: 0, abertos: new Set(), secAbertas: new Set(), blocos: [] };
   const registros = new Map();
 
   /* ---------- As sete permissões ---------- */
@@ -36,6 +36,7 @@
     pagar: 'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
     mais: 'M12 5v14M5 12h14',
     niveis: 'm6 9 6 6 6-6',
+    niveis2: 'm5 9 7-6 7 6M5 15l7 6 7-6',
     seta: 'm6 9 6 6 6-6',
     exclama: 'M12 6.5v7M12 17.5h.01',
   };
@@ -72,14 +73,9 @@
   /** Uma célula de coluna (a do bloco i); recolhida, só fica a faixa estreita com a setinha para reabrir. */
   const blocoEl = (b, extra) => el('div', 'acessos-tl-bloco' + (extra ? ' ' + extra : '') + (estado.modo !== 'acoes' && b && b.recolhida ? ' recolhida' : ''));
 
-  /** Monta, em uma linha das telas, uma célula-grupo por tipo (Colaborador, Cargo, Área); fazer(b) devolve a célula da coluna b. */
+  /** Põe em uma linha das telas a célula de cada coluna, na ordem das colunas (Colaborador, Cargo, Área); fazer(b) devolve a célula da coluna b. */
   function gruposDaLinha(linha, fazer) {
-    TIPOS.forEach((t) => {
-      const bs = estado.blocos.filter((b) => b.tipo === t);
-      const g = el('div', 'acessos-tl-gt' + (bs.length ? '' : ' vazio'));
-      bs.forEach((b) => { const c = fazer(b); if (c) g.append(c); });
-      linha.append(g);
-    });
+    estado.blocos.forEach((b) => { const c = fazer(b); if (c) linha.append(c); });
   }
 
   /** O botão redondo "+" do sistema (botão redondo de ação). Aberto, o "+" vira "×". */
@@ -136,13 +132,16 @@
     try {
       const salvo = JSON.parse(localStorage.getItem('cicluz-location-tree-v1') || '[]');
       const arvore = Array.isArray(salvo) ? salvo : salvo.tree || [];
-      const andar = (nos, caminho) => nos.forEach((n) => {
+      // A cor de um nó sem cor própria é a do ramo (como no cadastro); a sigla é a do cadastro ou as três primeiras letras do nome.
+      const andar = (nos, caminho, corPai) => nos.forEach((n) => {
         if (n.inactive) return;
         const c = [...caminho, n.name];
-        fora.push({ id: n.id, nome: n.name, detalhe: caminho.join(' › ') });
-        andar(n.children || [], c);
+        const cor = n.color || corPai || '#7c3aed';
+        const filhos = (n.children || []).filter((x) => !x.inactive).length;
+        fora.push({ id: n.id, nome: n.name, detalhe: filhos ? filhos + (filhos === 1 ? ' item' : ' itens') : '', cor, sigla: String(n.sigla || n.name || '').slice(0, 3).toUpperCase(), nivel: caminho.length, caminho: caminho.join(' ') });
+        andar(n.children || [], c, cor);
       });
-      andar(arvore, []);
+      andar(arvore, [], '');
     } catch (e) { return []; }
     return fora;
   }
@@ -243,15 +242,18 @@
         const opcoes = [];
         if (b.alvo) opcoes.push({ id: '', nome: 'Limpar a escolha', detalhe: '' });
         opcoes.push(...itens);
-        // As opções seguem o desenho das listas dos cadastros (selo quadrado na cor da origem, nome e detalhe), no tamanho menor das
-        // listas de escolha (variáveis --escolha-*): colaborador e cargo com o desenho do cadastro; área com a sigla.
-        const cor = U.corOrigem('despesas', '#ef4444');
-        const sigla = (n) => String(n || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]/g, '').slice(0, 3).toUpperCase();
-        const desenho = { pessoa: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0', cargo: 'M3 7h18v13H3zM9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18' };
+        // As opções seguem as listas dos cadastros, em tamanho menor: colaborador e cargo levam o selo vermelho de DES com o ícone do cadastro
+        // (pessoa e cargo); a área leva a sigla e a cor dela, recuada pelo nível (Área › Setor › Local), com a quantidade de itens.
+        const corDES = U.corOrigem('despesas', '#ef4444');
+        const desenho = {
+          pessoa: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1a6 6 0 0 1 14 0v1"/>',
+          cargo: '<circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/>',
+        };
         const botoes = opcoes.map((o) => {
           const marcado = doTipo && b.alvo.id === o.id;
-          const selo = !o.id ? { html: U.svg('<path d="M6 6l12 12M18 6 6 18"/>') } : id === 'area' ? { html: '<span class="sigla-text">' + sigla(o.nome) + '</span>' } : { html: U.svg('<path d="' + desenho[id] + '"/>') };
-          selo.cor = cor;
+          const selo = !o.id ? { html: U.svg('<path d="M6 6l12 12M18 6 6 18"/>'), cor: corDES }
+            : id === 'area' ? { html: '<span class="sigla-text">' + o.sigla + '</span>', cor: o.cor }
+              : { html: U.svg(desenho[id]), cor: corDES };
           const bt = U.linhaLista({
             icones: [selo], titulo: o.nome, detalhe: o.detalhe || '',
             direita: marcado ? el('span', 'account-list-state', 'Escolhida') : undefined,
@@ -259,9 +261,10 @@
           });
           bt.classList.add('uniforms-escolha');
           if (marcado) bt.classList.add('marcado');
+          if (o.nivel) bt.style.setProperty('--recuo', String(o.nivel));
           bt.setAttribute('role', 'radio');
           bt.setAttribute('aria-checked', String(marcado));
-          bt.dataset.busca = U.dobrar(o.nome + ' ' + (o.detalhe || ''));
+          bt.dataset.busca = U.dobrar(o.nome + ' ' + (o.caminho || '') + ' ' + (o.detalhe || ''));
           return bt;
         });
         if (!itens.length) lista.append(el('p', 'profiles-note acessos-telas-vazio', semItens));
@@ -312,35 +315,22 @@
     const menu = lerMenu();
     const regs = colunas().map((b) => registro(menu, b.alvo));
     const blocos = [];
-    blocos.push(U.nota('Esboço: nada é gravado e nenhum acesso muda. As telas são as do menu do sistema; colaboradores, cargos e áreas são os cadastrados no sistema. Cada cabeçalho (Colaborador, Cargo, Área) tem o seu + para abrir uma coluna e a sua seta para ocultar ou mostrar as colunas dele; a escolha vira uma coluna ao lado, já com tudo ligado. Cada ícone é uma permissão: ← antes de pagar · ↔ pagar · → depois de pagar; o ! abre as ações especiais da coluna (passe o mouse no ícone para ver o nome).'));
-    const barra = el('div', 'acessos-barra');
-    if (estado.modo === 'telas') barra.append(U.buscaFixa('acessos-telas', 'Buscar tela', estado.busca, (v) => { estado.busca = v; desenhar(); }));
-    // O "‹ ›" redondo do sistema (o mesmo das listas): recolhe todas as colunas de uma vez ou, com todas recolhidas, mostra todas.
-    const escolhidas = estado.modo === 'acoes' ? [] : estado.blocos.filter((b) => b.alvo);
-    if (escolhidas.length) {
-      const algumaAberta = escolhidas.some((b) => !b.recolhida);
-      const geral = el('button', 'shortcut-circle compras-redondo compras-colunas-geral acessos-colunas-geral');
-      geral.type = 'button';
-      geral.innerHTML = U.svg('<path d="M4 5h16v14H4zM9 5v14M15 5v14"/>');
-      geral.setAttribute('aria-expanded', String(algumaAberta));
-      geral.title = algumaAberta ? 'Recolher todas as colunas' : 'Mostrar todas as colunas';
-      geral.setAttribute('aria-label', geral.title);
-      geral.onclick = () => { escolhidas.forEach((b) => { b.recolhida = algumaAberta; if (algumaAberta) b.quem = ''; }); desenhar(); };
-      barra.append(geral);
-    }
+    blocos.push(U.nota('Esboço: nada é gravado e nenhum acesso muda. As telas são as do menu do sistema; colaboradores, cargos e áreas são os cadastrados no sistema. As três linhas do cabeçalho (Colaborador, Cargo, Área) têm cada uma o seu + para abrir uma coluna e a sua seta para ocultar ou mostrar as colunas dela; a escolha vira uma coluna ao lado, já com tudo ligado. Cada ícone é uma permissão: ← antes de pagar · ↔ pagar · → depois de pagar; o ! abre as ações especiais da coluna (passe o mouse no ícone para ver o nome).'));
     let fimDoCabecalho = null;
     if (estado.modo === 'telas') {
       // O botão "‹ ›" do cabeçalho (o mesmo das listas): abre todos os menus e submenus de uma vez; com tudo aberto, recolhe tudo. Fica sempre à vista.
       const totalTelas = menu.reduce((n, g) => n + g.secoes.reduce((m, s) => m + s.telas.length, 0), 0);
       const tudoAberto = menu.length > 0 && menu.every((g) => estado.abertos.has(g.n) && g.secoes.every((s) => estado.secAbertas.has(g.n + '|' + s.n)));
       const fim = el('div', 'acessos-quem-fim');
+      const escolhidas = estado.blocos.filter((b) => b.alvo);
+      const algumaAberta = escolhidas.some((b) => !b.recolhida);
       const conta = el('span', 'compras-conta', String(totalTelas));
       conta.title = totalTelas + (totalTelas === 1 ? ' tela' : ' telas');
       const tudo = el('button', 'shortcut-circle compras-redondo acessos-expandir-tudo');
       tudo.type = 'button';
-      tudo.innerHTML = U.svg('<path d="m9 5-6 7 6 7M15 5l6 7-6 7"/>');
+      tudo.innerHTML = U.svg('<path d="' + G.niveis2 + '"/>');
       tudo.setAttribute('aria-expanded', String(tudoAberto));
-      tudo.title = tudoAberto ? 'Recolher todos os menus' : 'Expandir todos os menus';
+      tudo.title = tudoAberto ? 'Recolher todos os menus (para cima)' : 'Expandir todos os menus (para baixo)';
       tudo.setAttribute('aria-label', tudo.title);
       tudo.onclick = () => {
         if (tudoAberto) { estado.abertos.clear(); estado.secAbertas.clear(); }
@@ -349,10 +339,18 @@
         const volta = tela.body.querySelector('.acessos-expandir-tudo');
         if (volta) volta.focus();
       };
-      fim.append(conta, tudo);
+      // O segundo botão, na horizontal (‹ ›): recolhe ou mostra todas as colunas de uma vez.
+      const lado = el('button', 'shortcut-circle compras-redondo acessos-expandir-tudo acessos-colunas-geral');
+      lado.type = 'button';
+      lado.innerHTML = U.svg('<path d="m9 5-6 7 6 7M15 5l6 7-6 7"/>');
+      lado.disabled = !escolhidas.length;
+      lado.setAttribute('aria-expanded', String(algumaAberta));
+      lado.title = algumaAberta ? 'Recolher todas as colunas' : 'Mostrar todas as colunas';
+      lado.setAttribute('aria-label', lado.title);
+      lado.onclick = () => { escolhidas.forEach((b) => { b.recolhida = algumaAberta; if (algumaAberta) b.quem = ''; }); desenhar(); };
+      fim.append(conta, tudo, lado);
       fimDoCabecalho = fim;
     }
-    blocos.push(barra);
 
     const mat = el('div', 'acessos-matriz');
     if (estado.modo === 'acoes') mat.classList.add('acessos-matriz-acoes');
@@ -385,7 +383,24 @@
       voltar.onclick = () => { estado.focar = 'esp:' + estado.foco; estado.modo = 'telas'; desenhar(); };
       e.append(voltar, el('span', 'acessos-tl-esq-txt', 'Voltar às telas'));
     } else {
-      e.append(el('span', 'acessos-tl-esq-txt', 'Toque no + de Colaborador, Cargo ou Área para abrir uma coluna.'));
+      const linhasQuem = el('div', 'acessos-quem-linhas');
+      TIPOS.forEach((t) => {
+        const bs = estado.blocos.filter((b) => b.tipo === t);
+        const li = el('div', 'acessos-quem-linha');
+        const mais = botaoMais('Abrir uma coluna de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR'), false, () => { estado.blocos.push(novoBloco(t)); estado.blocos.sort((x, y) => TIPOS.indexOf(x.tipo) - TIPOS.indexOf(y.tipo)); desenhar(true); });
+        const algumaAberta = bs.some((b) => !b.recolhida);
+        const seta = el('button', 'acessos-gt-seta' + (algumaAberta ? ' aberta' : ''));
+        seta.type = 'button';
+        seta.disabled = !bs.length;
+        seta.setAttribute('aria-expanded', String(algumaAberta));
+        seta.title = (algumaAberta ? 'Ocultar' : 'Mostrar') + ' as colunas de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR');
+        seta.setAttribute('aria-label', seta.title);
+        seta.innerHTML = U.svg('<path d="' + G.niveis + '"/>');
+        seta.onclick = () => { bs.forEach((b) => { b.recolhida = algumaAberta; if (algumaAberta) b.quem = ''; }); desenhar(); };
+        li.append(mais, el('b', null, ROTULO_GRUPO[t]), el('small', null, bs.length ? String(bs.length) : ''), seta);
+        linhasQuem.append(li);
+      });
+      e.append(linhasQuem);
     }
     cab.append(e);
     if (estado.modo === 'acoes') {
@@ -397,32 +412,12 @@
         cab.append(w);
       });
     } else {
-      TIPOS.forEach((t) => {
-        const bs = estado.blocos.filter((b) => b.tipo === t);
-        const g = el('div', 'acessos-tl-gt acessos-tl-gt-cab' + (bs.length ? '' : ' vazio'));
-        const topo = el('div', 'acessos-gt-topo');
-        const mais = botaoMais('Abrir uma coluna de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR'), false, () => { estado.blocos.push(novoBloco(t)); desenhar(true); });
-        const algumaAberta = bs.some((b) => !b.recolhida);
-        const seta = el('button', 'acessos-gt-seta' + (algumaAberta ? ' aberta' : ''));
-        seta.type = 'button';
-        seta.disabled = !bs.length;
-        seta.setAttribute('aria-expanded', String(algumaAberta));
-        seta.title = (algumaAberta ? 'Ocultar' : 'Mostrar') + ' as colunas de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR');
-        seta.setAttribute('aria-label', seta.title);
-        seta.innerHTML = U.svg('<path d="' + G.niveis + '"/>');
-        seta.onclick = () => { bs.forEach((b) => { b.recolhida = algumaAberta; if (algumaAberta) b.quem = ''; }); desenhar(); };
-        topo.append(mais, el('b', null, ROTULO_GRUPO[t]), seta);
-        g.append(topo);
-        const cols = el('div', 'acessos-gt-cols');
-        bs.forEach((b) => {
-          const w = blocoEl(b, 'acessos-tl-bloco-cab');
-          const c = cabecaDaColuna(b);
-          resumos.push([regs[estado.blocos.indexOf(b)], c.querySelector('.acessos-bloco-resumo')]);
-          w.append(c);
-          cols.append(w);
-        });
-        g.append(cols);
-        cab.append(g);
+      estado.blocos.forEach((b) => {
+        const w = blocoEl(b, 'acessos-tl-bloco-cab');
+        const c = cabecaDaColuna(b);
+        resumos.push([regs[estado.blocos.indexOf(b)], c.querySelector('.acessos-bloco-resumo')]);
+        w.append(c);
+        cab.append(w);
       });
     }
     // O total e o "‹ ›" ficam no canto do quadro do cabeçalho (presos à direita enquanto a matriz rola para o lado).
@@ -451,8 +446,6 @@
 
   /** Visão "Telas": o menu inteiro; à esquerda o nome, e para cada coluna os sete interruptores mais o "!". */
   function desenharTelas(mat, menu, regs, atualizarResumos) {
-    const termo = U.dobrar(estado.busca);
-    let mostradas = 0;
     menu.forEach((g) => {
       const total = g.secoes.reduce((n, s) => n + s.telas.length, 0);
       const aberto = estado.abertos.has(g.n);
@@ -518,23 +511,17 @@
       });
       cab.replaceWith(linhaGrupo);
 
-      let achouNoGrupo = false;
       g.secoes.forEach((s) => {
-        const telas = s.telas.filter((t) => !termo || U.dobrar(t.rotulo + ' ' + s.n + ' ' + g.n).includes(termo));
-        if (!telas.length) return;
-        achouNoGrupo = true;
-        if (!aberto && !termo) return;
+        const telas = s.telas;
+        if (!telas.length || !aberto) return;
         const chaveSec = g.n + '|' + s.n;
-        const secAberta = estado.secAbertas.has(chaveSec) || Boolean(termo);
-        mostradas += telas.length;
+        const secAberta = estado.secAbertas.has(chaveSec);
         sec.append(cabecaSecao(g, s, telas.length, secAberta, chaveSec));
         if (secAberta) telas.forEach((t) => sec.append(linhaTela(g, s, t, regs, atualizarResumos)));
       });
-      if (termo && !achouNoGrupo) return;
-      if (!aberto && !termo) sec.classList.add('recolhido');
+      if (!aberto) sec.classList.add('recolhido');
       mat.append(sec);
     });
-    if (termo && !mostradas) mat.append(U.vazio('Nenhuma tela encontrada', 'Tente outro nome.'));
   }
 
   /** Cabeça de uma seção (Lançamentos, Relatórios…): o ícone do submenu, o nome e a contagem. Os ícones ficam na linha do grupo. */

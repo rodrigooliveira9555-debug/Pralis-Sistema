@@ -1,5 +1,15 @@
 # CICLUZ — referência de interface
 
+## Acesso por Tela: lista única, três linhas de escolha e menu de seleção no padrão dos cadastros (24/11/2026, VERSÃO VIGENTE)
+Pedido do Rodrigo; **substitui, nesta seção, os itens abaixo que dizem o contrário** (quadros separados, três cabeçalhos em colunas, busca e botão único de expandir). O que vale:
+- **Uma lista só, ligada de ponta a ponta**: moldura única de cantos arredondados; menu principal, submenu e tela são linhas da mesma lista, separadas só por um fio. Sem vão nem quadro separado entre os menus.
+- **Altura de linha igual em todos os níveis**: 52 px no mínimo (a das listas dos cadastros); só cresce se o nome quebrar em duas linhas.
+- **Selo da tela (3º nível)**: quadrado na cor da origem com a sigla ou o glifo em **branco** (nunca na cor do texto). O nível 1 é o selo do menu inicial; o 2, o ícone do submenu sem borda sob ele; o 3, recuado sob o nome do submenu.
+- **Colaborador, Cargo e Área são três LINHAS na primeira coluna do cabeçalho** (não colunas): cada linha tem o "+" no início (abre uma coluna do tipo e já mostra o menu de seleção), o nome, a quantidade de colunas e a seta de ocultar ou mostrar as colunas dela. As colunas escolhidas ficam à direita, agrupadas por tipo.
+- **Dois botões redondos no canto do cabeçalho**, com o total de telas ao lado: **vertical** (setas para cima e para baixo) expande ou recolhe todos os menus; **horizontal** (‹ ›) mostra ou recolhe todas as colunas. **Sem botão de busca no cabeçalho.**
+- **Menu de seleção** (a lista de quem é a coluna), regra para todo menu de seleção do sistema: o **layout do cadastro de origem, em tamanho menor** (linha de 36 px, selo de 22 px, nome de 12 px, detalhe de 10 px): **área** com a sigla em maiúsculas e a **cor da própria área** (herdada do ramo quando não tem), recuada pelo nível (Área › Setor › Local) e com "N itens"; **cargo** e **colaborador** com o selo vermelho de DES e o ícone do cadastro (cargo: pessoa com ombros; colaborador: pessoa). A linha escolhida fica tingida, com a etiqueta "Escolhida".
+
+### Histórico desta tela (versões anteriores no mesmo dia)
 ## Acesso por Tela em quadros, escolha única e botão de expandir tudo (24/11/2026)
 Pedido do Rodrigo, em cima da tela do Washington (`dist/acessos/telas.js`):
 - **Cada menu principal é um quadro** com moldura (borda de 1px, cantos de 12 px, 16 px de vão entre os quadros), linhas brancas separadas por fio, como as listas do sistema; passar o mouse na tela tinge a linha na cor da origem. As faixas coloridas de fundo saíram.
