@@ -20,6 +20,8 @@ import { env, origensWebPermitidas } from "./env.ts";
 import { ErroDominio, proibido } from "./erros.ts";
 import { registrarRotasSaude } from "./saude/saude.controller.ts";
 import { registrarRotasUsuarios } from "./usuarios/usuarios.controller.ts";
+import { registrarRotasVendasPdv } from "./vendas-pdv/vendas-pdv.controller.ts";
+import { registrarRotasExtratoTnp } from "./extrato-tnp/extrato-tnp.controller.ts";
 import { esquecerPermissoes } from "./agenda/contas-por-permissao.ts";
 
 // Rotas que cuidam da própria autenticação. Todo o resto de /api exige sessão ANTES do handler
@@ -127,6 +129,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registrarRotasLancamentos(app);
   await registrarRotasProdutos(app);
   await registrarRotasAgenda(app);
+  await registrarRotasVendasPdv(app);
+  await registrarRotasExtratoTnp(app);
 
   // App das telas novas (Nuxt gerado em web/.output/public), em /app/ no mesmo domínio do site.
   // Em produção o Vercel repassa /app/* e /api/* para cá; rota interna do app sem arquivo cai no

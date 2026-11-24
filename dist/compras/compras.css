@@ -732,3 +732,15 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .compras-hora-janela{height:var(--cel);overflow:hidden}
 .compras-hora-faixa-itens{display:grid;gap:var(--gap);will-change:transform}
 .compras-hora-faixa-itens>span{height:var(--cel);display:grid;place-items:center}
+/* Campo de data com calendário (U.campoData, compras/campo-data.js, 24/11/2026): o painel do campo de hora, com o mês. */
+.compras-data-painel{width:min(292px,calc(100vw - 24px));gap:8px}
+.compras-data-topo{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.compras-data-titulo{font:600 var(--ui-text,14px)/20px var(--ui-font);text-transform:capitalize}
+.compras-data-passo{display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer}
+.compras-data-passo:hover,.compras-data-passo:focus-visible{background:color-mix(in srgb,var(--menu-accent) 12%,transparent);outline:none}
+.compras-data-passo svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.compras-aniv-painel .compras-data-grade{gap:4px}
+.compras-data-semana{display:grid;place-items:center;min-height:24px;font:600 11px/16px var(--ui-font);color:var(--navigation-ink,#71717a)}
+.compras-aniv-painel .compras-data-grade .compras-grade-celula{min-height:34px}
+.compras-aniv-painel .compras-data-grade .compras-grade-celula.hoje:not([aria-pressed=true]){border-color:var(--menu-accent);font-weight:600}
+.compras-data-painel>.compras-chip{justify-self:start}
