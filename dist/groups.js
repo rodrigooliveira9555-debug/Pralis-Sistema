@@ -1582,6 +1582,10 @@ if(!localStorage.getItem('cicluz-financial-legacy-import-v1')){
 {const novoGrupo=children=>({id:'computadores-grupo',name:'Computadores',active:true,icon:0,children});let mudou=false;
  if(!Array.isArray(financialGroups.computadores)){financialGroups.computadores=[novoGrupo([])];mudou=true}
  else if(financialGroups.computadores.some(item=>!Array.isArray(item.children))){financialGroups.computadores=[novoGrupo(financialGroups.computadores.map(({children,...pc})=>pc))];mudou=true}
+ // Os quatro computadores de partida entram UMA vez por conjunto de dados (a marca mora no próprio documento, então vai junto para o servidor e um computador
+ // apagado depois não volta). Quem já tem algum com o mesmo nome fica como está.
+ if(!financialGroups._computadoresPadrao){const grupo=financialGroups.computadores.find(g=>g.id==='computadores-grupo')||financialGroups.computadores[0];
+  if(grupo){['TNP-PC-CXPDV-1','TNP-PC-CXPDV-2','TNP-PC-CXPDV-3','TNP-PC-CXPDV-4'].forEach((nome,i)=>{if(!(grupo.children||(grupo.children=[])).some(c=>normalized(c.name)===normalized(nome)))grupo.children.push({id:'computadores-pc-'+(i+1),name:nome,active:true,icon:0})});financialGroups._computadoresPadrao=true;mudou=true}}
  if(mudou){try{localStorage.setItem(groupStorage,JSON.stringify(financialGroups))}catch{}}}
 for(const key of ['tipos-venda','bandeiras','operadoras'])if(!Array.isArray(financialGroups[key])){financialGroups[key]=structuredClone(groupSeed[key]);try{localStorage.setItem(groupStorage,JSON.stringify(financialGroups))}catch{}}
 if(!localStorage.getItem('cicluz-bandeiras-import-v1')){for(const seed of groupSeed.bandeiras){if(!financialGroups.bandeiras.some(g=>g.id===seed.id||normalized(g.name)===normalized(seed.name)))financialGroups.bandeiras.push(structuredClone(seed))}try{localStorage.setItem(groupStorage,JSON.stringify(financialGroups));localStorage.setItem('cicluz-bandeiras-import-v1','1')}catch{}}
