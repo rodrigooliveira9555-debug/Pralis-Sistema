@@ -73,24 +73,33 @@ export async function existentes(ex: Executor, empresaId: string): Promise<Exist
   };
 }
 
-/** Grava a conversão. Só insere o que falta; atualiza só o que ainda está na versão 1 (ninguém mexeu pela tela nova). */
-export async function gravarConversao(tx: TransacaoBanco, empresaId: string, c: Conversao) {
+/**
+ * Grava a conversão. Só insere o que falta; atualiza só o que ainda está na versão 1 (ninguém mexeu pela tela nova).
+ * Se alguém mexeu pela tela nova entre a leitura e a gravação, o compromisso é pulado por inteiro, pessoas incluídas
+ * (senão as pessoas escolhidas na tela nova seriam trocadas pelas do documento antigo). Devolve os pulados.
+ */
+export async function gravarConversao(tx: TransacaoBanco, empresaId: string, c: Conversao): Promise<{ pulados: string[] }> {
   if (c.grupos.length) await tx.insert(agendaGrupos).values(c.grupos).onConflictDoNothing();
   if (c.membros.length) await tx.insert(agendaGrupoMembros).values(c.membros).onConflictDoNothing();
   if (c.colunas.length) await tx.insert(agendaColunas).values(c.colunas).onConflictDoNothing();
   for (const linha of c.compromissos) await tx.insert(agendaCompromissos).values(linha).onConflictDoNothing();
+  const pulados = new Set<string>();
   for (const linha of c.atualizar) {
     const id = linha.id!;
     const dados = Object.fromEntries(Object.entries(linha).filter(([k]) => !["empresaId", "id", "criadoPor"].includes(k)));
-    await tx
+    const feitos = await tx
       .update(agendaCompromissos)
       .set({ ...dados, versao: sql`${agendaCompromissos.versao} + 1` })
-      .where(and(eq(agendaCompromissos.empresaId, empresaId), eq(agendaCompromissos.id, id), eq(agendaCompromissos.versao, 1)));
+      .where(and(eq(agendaCompromissos.empresaId, empresaId), eq(agendaCompromissos.id, id), eq(agendaCompromissos.versao, 1)))
+      .returning({ id: agendaCompromissos.id });
+    if (!feitos.length) { pulados.add(id); continue; }
     await tx.delete(agendaParticipantes).where(and(eq(agendaParticipantes.empresaId, empresaId), eq(agendaParticipantes.compromissoId, id)));
   }
-  if (c.participantes.length) await tx.insert(agendaParticipantes).values(c.participantes).onConflictDoNothing();
+  const participantes = c.participantes.filter((p) => !pulados.has(p.compromissoId));
+  if (participantes.length) await tx.insert(agendaParticipantes).values(participantes).onConflictDoNothing();
   if (c.avaliacoes.length) await tx.insert(agendaAvaliacoes).values(c.avaliacoes).onConflictDoNothing();
   if (c.relacoes.length) await tx.insert(agendaRelacoes).values(c.relacoes).onConflictDoNothing();
+  return { pulados: [...pulados] };
 }
 
 /** Quantos dos ids esperados estão na tabela agora (conferência no banco, dentro da transação). */

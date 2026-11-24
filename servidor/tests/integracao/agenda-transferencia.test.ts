@@ -130,7 +130,8 @@ describe("agenda: transferência do documento", () => {
     // Mexido pela tela nova:
     await pedir(g.cookie, "PATCH", "/api/agenda/compromissos/ag-perdido", { versao: 1, titulo: "Mexido na Agenda nova" });
     // Aba antiga grava o documento depois da transferência:
-    const depois = "2026-11-24T10:00:00.000Z";
+    // A aba antiga grava depois da transferência: data no futuro, nunca uma data fixa (que vira passado).
+    const depois = new Date(Date.now() + 60_000).toISOString();
     const novo = { ...doc, itens: [...doc.itens.map((i) => (i.id === "ag-rep" || i.id === "ag-perdido" ? { ...i, titulo: i.titulo + " (aba antiga)", atualizadoEm: depois } : i)),
       { id: "ag-novo", listaId: "lista-loja", titulo: "Novo na aba antiga", criadoPor: g.usuarioId }] };
     const w = await pedir(g.cookie, "PUT", "/api/documentos", { itens: [{ chave: CHAVE, valor: JSON.stringify(novo), versaoBase: 1 }] });
@@ -150,6 +151,39 @@ describe("agenda: transferência do documento", () => {
     expect(await contar()).toBe(n + 1);
     const reg = await pool.query(`SELECT origem, situacao FROM agenda_transferencias WHERE empresa_id = $1 ORDER BY feita_em`, [g.empresaId]);
     expect(reg.rows.map((x: { origem: string }) => x.origem)).toEqual(["servidor", "retransferencia", "retransferencia"]);
+  });
+
+  it("retransferência não troca as pessoas de um compromisso mexido pela tela nova no meio dela", async () => {
+    const { g, resp, doc } = await cenario();
+    await transferir(g, {});
+    // Aba antiga muda "ag-rep" no documento depois da transferência.
+    const novo = { ...doc, itens: doc.itens.map((i) => (i.id === "ag-rep" ? { ...i, titulo: "Contar estoque (aba antiga)", atualizadoEm: new Date(Date.now() + 60_000).toISOString() } : i)) };
+    const w = await pedir(g.cookie, "PUT", "/api/documentos", { itens: [{ chave: CHAVE, valor: JSON.stringify(novo), versaoBase: 1 }] });
+    expect(w.statusCode).toBeLessThan(300);
+
+    // A retransferência lê o que existe ("ag-rep" ainda na versão 1, então entra para ser atualizado)…
+    const { banco } = await import("../../api/src/banco/conexao.ts");
+    const repo = await import("../../api/src/agenda/transferencia.repository.ts");
+    const contas = [g.usuarioId, resp.usuarioId];
+    const conv = converter(novo, {
+      empresaId: g.empresaId, adminId: g.usuarioId, gestorSemCriador: g.usuarioId, dePara: {},
+      contas: new Set(contas), contasAtivas: contas, existentes: await repo.existentes(banco, g.empresaId)
+    });
+    expect(conv.atualizar.map((l) => l.id)).toContain("ag-rep");
+
+    // …e, antes de ela gravar, alguém põe uma pessoa em "ag-rep" pela tela nova (versão 1 → 2).
+    await pool.query(`UPDATE agenda_compromissos SET versao = versao + 1 WHERE empresa_id = $1 AND id = 'ag-rep'`, [g.empresaId]);
+    await pool.query(
+      `INSERT INTO agenda_participantes (empresa_id, compromisso_id, usuario_id, ver, criado_por) VALUES ($1, 'ag-rep', $2, true, $3)`,
+      [g.empresaId, resp.usuarioId, g.usuarioId]
+    );
+
+    const r = await banco.transaction((tx) => repo.gravarConversao(tx, g.empresaId, conv));
+    expect(r.pulados).toEqual(["ag-rep"]);
+    const pessoas = await pool.query(`SELECT usuario_id FROM agenda_participantes WHERE empresa_id = $1 AND compromisso_id = 'ag-rep'`, [g.empresaId]);
+    expect(pessoas.rows.map((x: { usuario_id: string }) => x.usuario_id)).toEqual([resp.usuarioId]);
+    const linha = await pool.query(`SELECT titulo, versao FROM agenda_compromissos WHERE empresa_id = $1 AND id = 'ag-rep'`, [g.empresaId]);
+    expect(linha.rows[0]).toMatchObject({ titulo: "Contar estoque", versao: 2 });
   });
 
   it("empresa sem documento: entram as listas e colunas iniciais", async () => {

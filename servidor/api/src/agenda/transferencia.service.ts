@@ -103,8 +103,9 @@ export async function executar(perfil: PerfilSessao, entrada: TransferenciaAgend
       if (motivo) throw new Recusa(motivo, conv);
 
       await repo.criarOuSubirEstado(tx, empresaId);
+      let pulados: string[];
       try {
-        await repo.gravarConversao(tx, empresaId, conv);
+        ({ pulados } = await repo.gravarConversao(tx, empresaId, conv));
       } catch (e) {
         // O banco recusou alguma linha (regra que a conversão não previu): tudo é desfeito e fica registrado.
         throw new Recusa("o banco recusou uma linha (" + (e instanceof Error ? (e.cause instanceof Error ? e.cause.message : e.message) : String(e)).slice(0, 300) + ")", conv);
@@ -115,14 +116,22 @@ export async function executar(perfil: PerfilSessao, entrada: TransferenciaAgend
       for (const [cat, n] of Object.entries(esperado)) {
         if (noBanco[cat as keyof typeof noBanco] !== n) throw new Recusa(`${cat}: esperados ${n} na tabela, o banco tem ${noBanco[cat as keyof typeof noBanco]}`, conv);
       }
+      // Mexidos pela tela nova enquanto a transferência rodava: ficou a versão da tela nova (vão para a pendência).
+      const pendencias: Pendencia[] = [
+        ...conv.pendencias,
+        ...pulados.map((id) => ({
+          tipo: "compromisso", id, titulo: String(conv.atualizar.find((l) => l.id === id)?.titulo ?? "").slice(0, 80),
+          detalhe: "Mudou no documento antigo e também pela Agenda nova durante a transferência; ficou a versão da Agenda nova. Confira."
+        }))
+      ];
       const depois = { ...conv.destino, noBanco } as unknown as JsonValue;
       await repo.registrar(tx, {
         empresaId, origem, documentoVersao, contagemAntes: conv.antes, contagemDepois: depois,
-        pendencias: conv.pendencias, situacao: "concluida", feitaPor: perfil.usuarioId
+        pendencias, situacao: "concluida", feitaPor: perfil.usuarioId
       });
       return {
-        situacao: "concluida" as const, origem, contagens: conv.antes, destino: conv.destino, pendencias: conv.pendencias,
-        novos: { listas: conv.grupos.length, colunas: conv.colunas.length, compromissos: conv.compromissos.length, atualizados: conv.atualizar.length, ligacoes: conv.relacoes.length, notas: conv.avaliacoes.length }
+        situacao: "concluida" as const, origem, contagens: conv.antes, destino: conv.destino, pendencias,
+        novos: { listas: conv.grupos.length, colunas: conv.colunas.length, compromissos: conv.compromissos.length, atualizados: conv.atualizar.length - pulados.length, ligacoes: conv.relacoes.length, notas: conv.avaliacoes.length }
       };
     });
   } catch (erro) {
