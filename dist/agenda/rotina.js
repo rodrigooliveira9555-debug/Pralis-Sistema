@@ -85,7 +85,7 @@
       if (p.horaFora !== 'nao-registrar') det.push('registra hora ' + p.horaFora);
       if (p.inatividadeMinutos) det.push('sai em ' + minutosTexto(p.inatividadeMinutos) + ' parado');
       texto.append(el('b', null, p.nome), el('small', null, det.join(' · ')));
-      const seta = el('span', 'agenda-icone-botao');
+      const seta = el('span', 'agenda-linha-seta');
       seta.innerHTML = svg('<path d="m9 6 6 6-6 6"/>');
       l.append(texto, seta);
       linhas.append(l);

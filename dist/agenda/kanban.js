@@ -22,8 +22,12 @@
     const sel = U.seletor([['auto:todos', 'Todas as listas'], ...ctx.listas.map((l) => ['lista:' + l.id, l.nome])], ctx.selecao.listaId ? 'lista:' + ctx.selecao.listaId : 'auto:todos');
     sel.onchange = () => { const [t, v] = sel.value.split(':'); ctx.escolher(t === 'lista' ? { listaId: v } : { automatica: v }); };
     barra.append(U.campo('Quadro', sel));
-    if (!A.somenteLeitura) barra.append(botao('Editar colunas', editarColunas, 'compras-chip'));
-    body.append(barra);
+    if (!A.somenteLeitura) barra.append(botao('Editar colunas', editarColunas, 'btn secondary'));
+    // Os campos ficam num quadro com o nome na moldura (padrão das telas).
+    const quadroBarra = U.secao('Kanban');
+    barra.classList.add('agenda-quadro-corpo');
+    quadroBarra.append(barra);
+    body.append(quadroBarra);
 
     const quadro = el('div', 'agenda-kanban');
     const colunas = [...A.dados.colunas.map((c) => ({ id: c.id, nome: c.nome })), { id: A.CONCLUIDO, nome: 'Concluído' }];
@@ -108,7 +112,7 @@
         const desenhar = () => {
           box.replaceChildren(...A.dados.colunas.map((c) => {
             const qtd = A.dados.itens.filter((i) => !i.concluida && A.colunaDe(i) === c.id).length;
-            return U.linhaLista({ titulo: c.nome, detalhe: qtd + ' cartão(ões)', direita: [botao('Renomear', () => nomeColuna(c, desenhar)), botao('Excluir', async () => { const r = await A.excluirColuna(c.id); if (r.erro) return U.avisar(r.erro); desenhar(); U.avisar('Coluna excluída.'); return undefined; }, 'btn secondary perigo-texto')] });
+            return U.linhaLista({ titulo: c.nome, detalhe: qtd + ' cartão(ões)', direita: [botao('Renomear', () => nomeColuna(c, desenhar)), U.botaoRemover('Excluir a coluna ' + c.nome, () => U.confirmar('Excluir coluna', 'Excluir a coluna "' + c.nome + '"? Não dá para desfazer.', 'Excluir', async () => { const r = await A.excluirColuna(c.id); if (r.erro) return r.erro; desenhar(); U.avisar('Coluna excluída.'); return undefined; }, { cor: window.CicluzAgenda.COR, corTexto: window.CicluzAgenda.COR_TEXTO, classe: 'agenda-dialog' }))] });
           }));
         };
         desenhar();

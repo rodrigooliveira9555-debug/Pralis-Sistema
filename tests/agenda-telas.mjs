@@ -265,7 +265,8 @@ async function limparAgenda(p) {
   await p.locator('.agenda-lista-linha', { hasText: 'Gestão de Pessoas' }).click();
   await p.getByRole('button', { name: 'Editar lista' }).click();
   await dialogo(p).getByRole('button', { name: 'Excluir lista' }).click();
-  await quieto(p);
+  ok((await dialogo(p).textContent()).includes('Não dá para desfazer'), 'Excluir lista pede confirmação');
+  await confirmar(p);
   ok((await p.locator('#compras-aviso').textContent()).includes('Mova ou exclua'), 'Lista com compromisso não é excluída (o servidor confere)');
   await p.keyboard.press('Escape');
 
@@ -786,7 +787,9 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   const tela = '#/saidas-mercadorias/lancamentos/compras-solicitacao';
   await p.evaluate((t) => CicluzRotas.abrir(t), tela);
   await p.waitForFunction(() => document.querySelector('.view.show') && document.querySelector('.view.show').id !== 'agenda-view');
-  const agendar = p.locator('.view.show .people-agendar-control');
+  // O da barra (iPad e computador); o do menu rápido (.people-quick-fixo) só aparece no celular.
+  const agendar = p.locator('.view.show .people-footer-left > .people-agendar-control');
+  ok(await p.locator('.view.show .people-quick-fixo').evaluate((b) => getComputedStyle(b).display) === 'none', 'Fora do celular, o agendar do menu rápido fica escondido');
   ok(await agendar.evaluate((b) => getComputedStyle(b).backgroundColor) === 'rgb(124, 58, 237)', 'Ícone de agendar é roxo mesmo numa tela verde');
   await agendar.click();
   ok((await dialogo(p).locator('.agenda-tela-ligada').textContent()).includes('MER - Pedido de Compra'), 'A janela já vem com a tela ligada');
@@ -812,7 +815,8 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   // Desempenho: o responsável vê o próprio cartão.
   await q.evaluate(() => { document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.estado.visao = 'desempenho'; CicluzAgenda.abrir(''); });
   await q.locator('.agenda-desempenho-cartao').first().waitFor();
-  ok((await q.locator('.agenda-desempenho-cartao').count()) === 1 && (await q.locator('.agenda-desempenho-cartao b').first().textContent()) === RESP_UM.nome, 'Desempenho: cada pessoa vê o seu');
+  ok((await q.locator('.agenda-desempenho-cartao').count()) === 1 && (await q.locator('.agenda-desempenho-nome h3').first().textContent()) === RESP_UM.nome, 'Desempenho: cada pessoa vê o seu');
+  ok(await q.locator('.agenda-desempenho-cartao .agenda-desempenho-indicador').count() === 4, 'Desempenho: os quatro indicadores no cartão');
   await q.close();
   await p.evaluate(() => { CicluzAgenda.estado.visao = 'listas'; });
   await p.close();

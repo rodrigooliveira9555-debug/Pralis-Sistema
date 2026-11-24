@@ -1,5 +1,29 @@
 # CICLUZ — referência de interface
 
+## Agenda no padrão do Design System (24/11/2026, pedido do Zé)
+Revisão de toda a Agenda (Listas, Calendário, Kanban, Mapa mental, Desempenho, janelas e alertas), na origem (`agenda/agenda.css`
+e os `agenda/*.js`), sem `!important` novo. **Ícones (só imagem)** das listas automáticas, de "Minhas listas", dos indicadores do
+Desempenho, da escolha de ícone da lista e dos arquivos: **quadrado de cantos arredondados** (`--row-icon-radius`), desenho de 18 px
+na cor da superfície (`--theme-surface`). **Botões de ícone** (endereço, "Abrir a tela", bandeira, mostrar subtarefas, ‹ › do
+calendário, "+" do Kanban, "×" do alerta): **redondo de ação** de 32 px cheio na cor do menu, desenho de 18 px, alvo de toque de 44 px;
+a bandeira ligada fica laranja (a cor de "Sinalizados"). A seta do fim da linha de Configurações da Agenda é a seta das linhas
+(só desenho, na cor do menu). **Caixas de marcar saíram:** "Sinalizar" é o interruptor do sistema com Sim/Não (`quadroSituacao`);
+a subtarefa na janela usa o **círculo de concluir** das linhas; "Membros do grupo" é um resumo ("3 membros: …") com o botão
+**Escolher membros**, que abre a **janela padrão de escolha** (`seletorDeItens`; quem criou a lista vem travado). **Excluir é
+vermelho e pede confirmação:** Excluir lista, Excluir coluna (botão redondo vermelho com a lixeira, `botaoRemover`), Excluir
+ligação e Excluir do Mapa mental (chip com texto vermelho); "Tirar pessoa" e "Tirar subtarefa" usam o mesmo redondo vermelho.
+**Chip é para escolher, botão é para agir:** "Editar lista", "Chat do grupo", "Editar colunas", "Hoje" e "Procurar" viraram botões
+(`btn secondary`); no alerta, Adiar 15 min / 1 h / Amanhã continuam chips (escolha do adiamento), Abrir e Concluir são botões e
+Fechar é o "×" redondo do canto. A barra de ferramentas do Mapa mental continua em chips (é um editor com muitas ações curtas).
+**Cores de situação** pelos tokens `--ui-situacao-*`: Atrasados e a hora atrasada em erro; **Programados deixou de ser vermelho**
+(roxo da Agenda); no Kanban, ponto da primeira coluna neutro, colunas do meio em atenção e **Concluído em ok (verde; era vermelho)**.
+**Texto de destaque** (links, etiquetas, contagens, "Voltar às listas") numa variável só, `--agenda-destaque` (roxo do texto no
+claro, roxo clareado no escuro), no lugar de oito cores escuras escritas à mão. **Letras** pelos tokens de `ui-foundation.css`
+(10, 13, 15, 18 e 20 px saíram; fica só o % em destaque do Desempenho, 22 px). **Espaços** de 12 px entre quadros. Os campos do
+Kanban e do Mapa mental ficam num quadro com o nome na moldura. A linha "Novo compromisso" tem 52 px. Local no mapa: os quatro
+botões em duas linhas em telas de até 380 px (no lugar da letra de 10 px). **Exceção mantida:** na linha "Novo compromisso" e na
+subtarefa, **Enter cria o próximo** (como no Lembretes) — a confirmar com o Rodrigo.
+
 ## Agenda: rotina (P-45, áudios do Rodrigo de 23/11/2026; feito em 24/11/2026)
 **Menu da Agenda:** só **Agenda** e **Configurações da Agenda** (Agendamento de Pedidos e de Produção ficam em Lançamentos).
 **Ícone roxo de agendar:** botão **"Agendar tarefa desta tela"** na barra de baixo de **toda** tela, logo depois do "+", sempre no

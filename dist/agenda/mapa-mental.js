@@ -168,7 +168,11 @@
     zoom.append(zb('Afastar', '−', () => zoomEm(1 / 1.2)), zb('Ajustar à tela', '⤢', () => { est.camera = null; desenhar(); }), zb('Aproximar', '+', () => zoomEm(1.2)));
     tela.append(desenho, zoom);
     const status = el('p', 'agenda-mm-status');
-    caixa.append(barra, acoes, tela, status);
+    // Os campos ficam num quadro com o nome na moldura (padrão das telas).
+    const quadroBarra = U.secao('Mapa mental');
+    barra.classList.add('agenda-quadro-corpo');
+    quadroBarra.append(barra);
+    caixa.append(quadroBarra, acoes, tela, status);
     body.append(caixa);
 
     let arvore = null;
@@ -451,14 +455,14 @@
         if (r) {
           acoes.append(el('span', 'agenda-mm-acoes-titulo', 'Ligação: ' + ((A.item(r.de) || {}).titulo || '') + ' → ' + ((A.item(r.para) || {}).titulo || '') + (r.rotulo ? ' (' + r.rotulo + ')' : '')),
             botao('Dar nome', () => nomearRelacao(r), 'compras-chip'),
-            botao('Excluir ligação', async () => { const x = await A.excluirRelacao(r.id); if (x.erro) return U.avisar(x.erro); est.relacaoSel = ''; return undefined; }, 'compras-chip'));
+            botao('Excluir ligação', () => U.confirmar('Excluir ligação', 'Excluir a ligação entre os dois compromissos?', 'Excluir', async () => { const x = await A.excluirRelacao(r.id); if (x.erro) return x.erro; est.relacaoSel = ''; return undefined; }, { cor: ctx.cor, corTexto: ctx.corTexto, classe: 'agenda-dialog' }), 'compras-chip agenda-chip-perigo'));
           return;
         }
       }
       const n = escolhido();
       if (!n) return;
       const ac = n.item ? A.acesso(n.item) : { editar: true, concluir: true, excluir: true };
-      const b = (txt, f, ativo = true, dica) => { const x = botao(txt, f, 'compras-chip'); x.disabled = !ativo; if (dica) x.title = dica; return x; };
+      const b = (txt, f, ativo = true, dica, cls = 'compras-chip') => { const x = botao(txt, f, cls); x.disabled = !ativo; if (dica) x.title = dica; return x; };
       acoes.append(el('span', 'agenda-mm-acoes-titulo', n.titulo));
       if (n.tipo === 'item' || n.tipo === 'sub') acoes.append(b('Abrir', () => ctx.abrirItem(n.item.id)));
       const renomeavel = n.tipo === 'item' || n.tipo === 'sub' || (n.tipo === 'grupo' && n.grupo.lista);
@@ -469,7 +473,7 @@
       if ((n.tipo === 'grupo' || n.tipo === 'item') && est.foco !== n.id) acoes.append(b('Focar', () => { est.foco = n.id; est.selecionado = n.id; desenhar(); }));
       if (est.foco) acoes.append(b('Mapa inteiro', () => { est.foco = ''; desenhar(); }));
       if ((n.filhos || []).length) acoes.append(b(prefs.recolhidos.includes(n.id) ? 'Expandir' : 'Recolher', () => alternarRecolhido(n.id), true, 'Ctrl+/'));
-      if (n.tipo === 'item' || n.tipo === 'sub') acoes.append(b('Excluir', () => excluirNo(n), n.tipo === 'item' ? ac.excluir : ac.editar, 'Delete'));
+      if (n.tipo === 'item' || n.tipo === 'sub') acoes.append(b('Excluir', () => excluirNo(n), n.tipo === 'item' ? ac.excluir : ac.editar, 'Delete', 'compras-chip agenda-chip-perigo'));
     }
 
     const podeCriarFilho = (n) => (n.tipo === 'raiz' ? true : n.tipo === 'grupo' ? n.grupo.extra !== null : n.item ? A.acesso(n.item).editar : false);

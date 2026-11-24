@@ -40,7 +40,7 @@
     const prox = botao('', () => passo(1), 'agenda-icone-botao');
     prox.innerHTML = svg('<path d="m9 6 6 6-6 6"/>');
     prox.setAttribute('aria-label', nomes[1]);
-    const hj = botao('Hoje', () => { est.ref = hoje; ctx.aoMudar(); }, 'compras-chip');
+    const hj = botao('Hoje', () => { est.ref = hoje; ctx.aoMudar(); }, 'btn secondary');
     const titulo = el('h3', 'agenda-cal-titulo', est.modo === 'ano' ? est.ref.slice(0, 4) : est.modo === 'mes' ? D.tituloMes(est.ref) : est.modo === 'semana' ? D.tituloSemana(est.ref) : D.tituloDia(est.ref));
     titulo.setAttribute('aria-live', 'polite');
     nav.append(ant, hj, prox, titulo);

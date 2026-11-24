@@ -264,14 +264,11 @@
       // Chat do grupo: a lista é o grupo; conversam os membros, quem criou e o administrador.
       if ((l.membro || l.podeGerir) && A.situacao === 'servidor') {
         const n = window.CicluzAgendaConversa ? window.CicluzAgendaConversa.naoLidasGrupos()[l.id] || 0 : 0;
-        const chat = botao(n ? 'Chat do grupo (' + n + ')' : 'Chat do grupo', () => window.CicluzAgendaConversa.abrirChatGrupo(l), 'compras-chip agenda-chat-grupo' + (n ? ' com-novas' : ''));
-        const ic = el('span', 'agenda-com-icone');
-        ic.innerHTML = svg(ICONES.grupo);
-        chat.prepend(ic);
+        const chat = botao(n ? 'Chat do grupo (' + n + ')' : 'Chat do grupo', () => window.CicluzAgendaConversa.abrirChatGrupo(l), 'btn secondary agenda-chat-grupo' + (n ? ' com-novas' : ''));
         ferramentas.append(chat);
       }
       // Mudar a lista é de quem a criou ou do administrador (o servidor confere).
-      if (l.podeGerir && !A.somenteLeitura) ferramentas.append(botao('Editar lista', () => editarLista(l), 'compras-chip'));
+      if (l.podeGerir && !A.somenteLeitura) ferramentas.append(botao('Editar lista', () => editarLista(l), 'btn secondary'));
     }
     cab.append(ferramentas);
     box.append(cab);
@@ -563,10 +560,8 @@
         const colunaSel = U.seletor(A.dados.colunas.map((c) => [c.id, c.nome]), A.coluna(v.colunaId) ? v.colunaId : (A.dados.colunas[0] || { id: '' }).id);
         let prioridade = v.prioridade || 'normal';
         const prio = U.chips(D.PRIORIDADES, prioridade, (p) => { prioridade = p; });
-        const sinal = el('label', 'compras-interruptor');
-        const sinalBox = U.entrada('checkbox');
-        sinalBox.checked = Boolean(v.sinalizado);
-        sinal.append(sinalBox, document.createTextNode('Sinalizar'));
+        // Sinalizar: o interruptor do sistema com Sim/Não (regra do quadro de situação), não caixa de marcar.
+        const sinal = U.quadroSituacao('Sinalizar', Boolean(v.sinalizado), { textos: ['Sim', 'Não'] });
         const etiquetas = U.entrada('text', (v.etiquetas || []).join(', '), { placeholder: 'Ex.: Loja, Estoque' });
         const local = U.entrada('text', v.local || '', { maxLength: 200, placeholder: 'Endereço ou nome do lugar (opcional)' });
         // Lugar no mapa: Atual, Ao entrar, Ao sair, Personalizada (agenda/mapa.js).
@@ -622,14 +617,14 @@
         }
         // Só leitura: tudo travado, menos a avaliação (o responsável se autoavalia).
         if (soLeitura) form.querySelectorAll('input, select, textarea, button').forEach((x) => { if (!x.closest('.agenda-avaliacao-painel, .agenda-conversa, .agenda-form-rodape, .compras-dialog-acoes')) x.disabled = true; });
-        return { titulo, notas, url, local, lugar, data, hora, horaFim, alerta, repeticao, listaSel, colunaSel, pessoas, tipoAvaliacao, sinalBox, etiquetas, subtarefas, prio: () => prioridade, vinculo: () => vinculo };
+        return { titulo, notas, url, local, lugar, data, hora, horaFim, alerta, repeticao, listaSel, colunaSel, pessoas, tipoAvaliacao, sinal, etiquetas, subtarefas, prio: () => prioridade, vinculo: () => vinculo };
       },
       salvar: soLeitura ? undefined : async (c) => {
         const r = await A.salvarItem(atual ? atual.id : '', {
           titulo: c.titulo.value, notas: c.notas.value, url: c.url.value, local: c.local.value, localizacao: c.lugar ? c.lugar.valor() : (atual && atual.localizacao),
           data: c.data.value, hora: c.hora.value, horaFim: c.horaFim.value, alerta: c.alerta.value,
           repeticao: c.repeticao.valor(atual && atual.repeticao), listaId: c.listaSel.value, colunaId: c.colunaSel.value,
-          pessoas: c.pessoas.valor(), avaliacao: { tipo: c.tipoAvaliacao.value }, prioridade: c.prio(), sinalizado: c.sinalBox.checked,
+          pessoas: c.pessoas.valor(), avaliacao: { tipo: c.tipoAvaliacao.value }, prioridade: c.prio(), sinalizado: c.sinal.ativo,
           etiquetas: c.etiquetas.value, subtarefas: c.subtarefas.valor(),
           vinculoTela: c.vinculo() ? c.vinculo().tela : '', vinculoTitulo: c.vinculo() ? c.vinculo().titulo : '',
         });
@@ -673,10 +668,7 @@
         });
         r.append(chips);
         if (podeMudar) {
-          const tirar = botao('', () => { lista.splice(n, 1); desenhar(); }, 'agenda-icone-botao');
-          tirar.innerHTML = svg(ICONES.lixeira);
-          tirar.setAttribute('aria-label', 'Tirar ' + A.nomePessoa(p.id) + ' do compromisso');
-          r.append(tirar);
+          r.append(U.botaoRemover('Tirar ' + A.nomePessoa(p.id) + ' do compromisso', () => { lista.splice(n, 1); desenhar(); }));
         }
         return r;
       }) : [U.nota('Ninguém além do gestor. Adicione o responsável abaixo.')]));
@@ -828,19 +820,15 @@
     function desenhar(foco) {
       lista.replaceChildren(...subs.map((s, n) => {
         const r = el('div', 'agenda-subtarefa-edicao');
-        const c = U.entrada('checkbox');
-        c.checked = Boolean(s.concluida);
+        // O mesmo círculo de concluir das linhas (como no Lembretes), não caixa de marcar.
+        const c = botao('', () => { s.concluida = !s.concluida; c.setAttribute('aria-pressed', String(s.concluida)); }, 'agenda-circulo pequeno');
+        c.setAttribute('aria-pressed', String(Boolean(s.concluida)));
         c.setAttribute('aria-label', 'Subtarefa ' + (n + 1) + ' concluída');
-        c.onchange = () => { s.concluida = c.checked; };
         const t = U.entrada('text', s.titulo, { maxLength: 200, placeholder: 'Subtarefa' });
         t.setAttribute('aria-label', 'Subtarefa ' + (n + 1));
         t.oninput = () => { s.titulo = t.value; };
         t.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); subs.splice(n + 1, 0, { titulo: '', concluida: false }); desenhar(n + 1); } };
-        const tirar = botao('', () => { subs.splice(n, 1); desenhar(); }, 'agenda-icone-botao');
-        tirar.innerHTML = svg(ICONES.lixeira);
-        tirar.title = 'Tirar subtarefa';
-        tirar.setAttribute('aria-label', 'Tirar subtarefa ' + (n + 1));
-        r.append(c, t, tirar);
+        r.append(c, t, U.botaoRemover('Tirar subtarefa ' + (n + 1), () => { subs.splice(n, 1); desenhar(); }));
         return r;
       }));
       if (foco !== undefined) { const alvo = lista.querySelectorAll('input[type=text]')[foco]; if (alvo) alvo.focus(); }
@@ -911,37 +899,46 @@
         // Membros do grupo (P-45): quem participa da lista e do chat do grupo. Quem criou entra sempre.
         const membrosSecao = el('fieldset', 'agenda-form-secao agenda-membros');
         membrosSecao.append(el('legend', null, 'Membros do grupo'));
-        const caixas = new Map();
         const eu = A.usuarioAtual();
         const dono = lista ? lista.donoId : eu;
+        const escolhidos = new Set(dono ? [dono] : []);
+        // Só grava os membros depois de conhecer os de agora: salvar antes de eles chegarem do servidor apagaria os que já existem.
+        let membrosProntos = false;
         if (A.situacao === 'servidor') {
-          const grade = el('div', 'agenda-membros-lista');
-          A.pessoas().forEach((p) => {
-            const c = U.interruptor(p.nome + (p.id === dono ? ' (criou a lista)' : ''), !lista && p.id === eu);
-            c.input.dataset.id = p.id;
-            if (p.id === dono) { c.input.checked = true; c.input.disabled = true; }
-            caixas.set(p.id, c.input);
-            grade.append(c);
-          });
-          membrosSecao.append(U.nota('Os membros conversam no chat do grupo e podem criar compromissos nesta lista. Cada compromisso continua visível só para quem participa dele.'), grade);
-          if (lista) A.membros(lista.id).then((r) => { if (r.erro) return membrosSecao.append(U.situacao(r.erro, 'negativo')); caixas.forEach((inp, id) => { inp.checked = id === dono || r.ids.includes(id); }); });
+          membrosProntos = !lista;
+          const resumo = el('p', 'agenda-membros-resumo');
+          resumo.setAttribute('aria-live', 'polite');
+          const pintar = () => {
+            const nomes = [...escolhidos].map((id) => A.nomePessoa(id) + (id === dono ? ' (criou a lista)' : ''));
+            resumo.textContent = (nomes.length === 1 ? '1 membro: ' : nomes.length + ' membros: ') + nomes.join(', ') + '.';
+          };
+          const escolher = botao('Escolher membros', () => U.seletorDeItens({
+            titulo: 'Membros do grupo', rotuloBusca: 'Procurar pessoa', cor: COR, corTexto: COR_TEXTO,
+            itens: A.pessoas().map((p) => ({ id: p.id, rotulo: p.nome, busca: p.nome, travado: p.id === dono, dica: p.id === dono ? 'Criou a lista: entra sempre.' : '' })),
+            marcados: escolhidos,
+            aoConfirmar: (s) => { escolhidos.clear(); s.forEach((id) => escolhidos.add(id)); if (dono) escolhidos.add(dono); pintar(); },
+          }), 'btn secondary');
+          escolher.disabled = !membrosProntos;
+          pintar();
+          membrosSecao.append(U.nota('Os membros conversam no chat do grupo e podem criar compromissos nesta lista. Cada compromisso continua visível só para quem participa dele.'), resumo, escolher);
+          if (lista) A.membros(lista.id).then((r) => { if (r.erro) return membrosSecao.append(U.situacao(r.erro, 'negativo')); r.ids.forEach((id) => escolhidos.add(id)); membrosProntos = true; escolher.disabled = false; pintar(); return undefined; });
           form.append(membrosSecao);
         }
         if (lista) {
           const qtd = A.visiveis().filter((i) => i.listaId === lista.id).length;
           const rodape = el('div', 'agenda-form-rodape');
-          const botaoExcluir = botao('Excluir lista', async () => {
-            const r = await comBotao(botaoExcluir, A.excluirLista(lista.id));
-            if (r.erro) return U.avisar(r.erro);
+          const botaoExcluir = botao('Excluir lista', () => U.confirmar('Excluir lista', 'Excluir a lista "' + lista.nome + '"? Não dá para desfazer.', 'Excluir', async () => {
+            const r = await A.excluirLista(lista.id);
+            if (r.erro) { U.avisar(r.erro); return undefined; }
             if (estado.listaId === lista.id) { estado.listaId = ''; estado.automatica = 'todos'; }
             document.querySelectorAll('dialog.agenda-dialog[open]').forEach((d) => d.close());
             U.avisar('Lista excluída.');
             return undefined;
-          }, 'btn secondary perigo-texto');
+          }, { cor: COR, corTexto: COR_TEXTO, classe: 'agenda-dialog' }), 'btn secondary perigo-texto');
           rodape.append(U.nota(qtd + ' compromisso(s) nesta lista.'), botaoExcluir);
           form.append(rodape);
         }
-        return { nome, membros: () => [...caixas].filter(([, inp]) => inp.checked).map(([id]) => id) };
+        return { nome, membros: () => (membrosProntos ? [...escolhidos] : []) };
       },
       salvar: async (c) => {
         const r = await A.salvarLista(lista ? lista.id : '', { nome: c.nome.value, cor, icone });

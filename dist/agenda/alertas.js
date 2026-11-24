@@ -13,7 +13,7 @@
   const U = window.CicluzComprasUI;
   const D = window.CicluzAgendaDominio;
   const A = window.CicluzAgendaDados;
-  const { el, botao } = U;
+  const { el, botao, svg } = U;
   const CHAVE = 'cicluz-agenda-alertas-mostrados';
   const JANELA_MS = 12 * 60 * 60 * 1000; // alerta com mais de 12 h de atraso não aparece (evita enxurrada)
 
@@ -94,17 +94,22 @@
       adiar(Math.max(1, Math.round((d - Date.now()) / 60000)));
     };
     cartao.append(el('small', null, 'Agenda · ' + (lst ? lst.nome : '')), el('b', null, item.titulo), el('span', null, texto || D.quando(item, new Date()) || 'Sem data'));
+    // Fechar: o redondo do canto, como o "×" das janelas. Adiar: três escolhas rápidas (chips). Concluir e Abrir: botões.
+    const x = botao('', fechar, 'agenda-icone-botao agenda-alerta-fechar');
+    x.innerHTML = svg('<path d="M6 6l12 12M18 6 6 18"/>');
+    x.title = 'Fechar';
+    x.setAttribute('aria-label', 'Fechar');
+    const adiamento = el('div', 'compras-chips agenda-alerta-adiar');
+    adiamento.setAttribute('role', 'group');
+    adiamento.setAttribute('aria-label', 'Adiar');
+    adiamento.append(botao('Adiar 15 min', () => adiar(15), 'compras-chip'), botao('Adiar 1 h', () => adiar(60), 'compras-chip'), botao('Amanhã', amanha, 'compras-chip'));
     const acoes = el('div', 'agenda-alerta-acoes');
     acoes.append(
+      botao('Abrir', () => { fechar(); window.CicluzAgenda.abrir(); window.CicluzAgenda.editar(item.id); }, 'btn secondary'),
       // Estado desejado "concluída", da ocorrência deste cartão: cartão velho nunca reabre nem conclui a próxima (M4).
-      botao('Concluir', async () => { fechar(); const r = await A.concluir(item.id, true, item.data); if (r.erro) U.avisar(r.erro); }, 'compras-chip ativo'),
-      botao('Adiar 15 min', () => adiar(15), 'compras-chip'),
-      botao('Adiar 1 h', () => adiar(60), 'compras-chip'),
-      botao('Amanhã', amanha, 'compras-chip'),
-      botao('Abrir', () => { fechar(); window.CicluzAgenda.abrir(); window.CicluzAgenda.editar(item.id); }, 'compras-chip'),
-      botao('Fechar', fechar, 'compras-chip'),
+      botao('Concluir', async () => { fechar(); const r = await A.concluir(item.id, true, item.data); if (r.erro) U.avisar(r.erro); }, 'btn'),
     );
-    cartao.append(acoes);
+    cartao.append(x, adiamento, acoes);
     painel().append(cartao);
     if (suportado() && Notification.permission === 'granted') {
       try {
