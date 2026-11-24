@@ -181,7 +181,7 @@ async function salvar(criarNova = false) {
         </fieldset>
 
         <fieldset v-if="!retirada" class="quadro" :disabled="somenteLeitura">
-          <legend>Discriminar itens</legend>
+          <legend>Discriminação</legend>
           <v-switch v-model="form.discriminar" color="primary" label="Discriminar itens" hide-details class="mb-2" />
           <template v-if="form.discriminar">
             <ItensDiscriminacao
@@ -259,6 +259,6 @@ async function salvar(criarNova = false) {
 .erro:empty { margin: 0; }
 
 @media (max-width: 600px) {
-  .par { grid-template-columns: 96px minmax(0, 1fr); }
+  .par { grid-template-columns: minmax(0, 1fr); }
 }
 </style>

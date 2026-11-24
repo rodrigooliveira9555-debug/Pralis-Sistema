@@ -187,6 +187,8 @@ button:focus-visible {
 @media (max-width: 600px) {
   :root { --recuo: 8px; }
   .quadro-grade { grid-template-columns: minmax(0, 1fr); }
+  /* No celular os botões do rodapé quebram de linha em vez de sair da tela. */
+  .tela-rodape .acoes { flex: 1; flex-wrap: wrap; justify-content: flex-end; overflow-x: visible; }
 }
 
 @media (prefers-reduced-motion: reduce) {
