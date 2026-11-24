@@ -220,22 +220,31 @@
         linha.append(U.chips(LINHAS.map(([x]) => [x, ROTULO_CURTO[x]]), id, (x) => { b.quem = x; desenhar(); }));
         const doTipo = b.alvo && b.alvo.tipo === id;
         const itens = ler().filter((o) => !usados.has(id + ':' + o.id));
-        const lista = el('div', 'acessos-telas-opcoes');
+        const lista = el('div', 'acessos-telas-opcoes uniforms-options');
         lista.setAttribute('role', 'radiogroup');
         lista.setAttribute('aria-label', rotulo);
         const opcoes = [];
         if (b.alvo) opcoes.push({ id: '', nome: 'Limpar a escolha', detalhe: '' });
         opcoes.push(...itens);
+        // As opções seguem o desenho das listas dos cadastros (selo quadrado na cor da origem, nome e detalhe), no tamanho menor das
+        // listas de escolha (variáveis --escolha-*): colaborador e cargo com o desenho do cadastro; área com a sigla.
+        const cor = U.corOrigem('despesas', '#ef4444');
+        const sigla = (n) => String(n || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]/g, '').slice(0, 3).toUpperCase();
+        const desenho = { pessoa: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0', cargo: 'M3 7h18v13H3zM9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18' };
         const botoes = opcoes.map((o) => {
           const marcado = doTipo && b.alvo.id === o.id;
-          const bt = el('button', 'acessos-telas-opcao' + (marcado ? ' marcado' : ''));
-          bt.type = 'button';
+          const selo = !o.id ? { html: U.svg('<path d="M6 6l12 12M18 6 6 18"/>') } : id === 'area' ? { html: '<span class="sigla-text">' + sigla(o.nome) + '</span>' } : { html: U.svg('<path d="' + desenho[id] + '"/>') };
+          selo.cor = cor;
+          const bt = U.linhaLista({
+            icones: [selo], titulo: o.nome, detalhe: o.detalhe || '',
+            direita: marcado ? el('span', 'account-list-state', 'Escolhida') : undefined,
+            aoClicar: () => { b.quem = ''; b.alvo = o.id ? { tipo: id, id: o.id, nome: o.nome } : null; desenhar(); },
+          });
+          bt.classList.add('uniforms-escolha');
+          if (marcado) bt.classList.add('marcado');
           bt.setAttribute('role', 'radio');
           bt.setAttribute('aria-checked', String(marcado));
-          bt.append(el('span', null, o.nome));
-          if (o.detalhe) bt.append(el('small', null, o.detalhe));
           bt.dataset.busca = U.dobrar(o.nome + ' ' + (o.detalhe || ''));
-          bt.onclick = () => { b.quem = ''; b.alvo = o.id ? { tipo: id, id: o.id, nome: o.nome } : null; desenhar(); };
           return bt;
         });
         if (!itens.length) lista.append(el('p', 'profiles-note acessos-telas-vazio', semItens));
