@@ -148,6 +148,11 @@
   // Os três cabeçalhos da matriz, na ordem: cada um tem o seu "+" (abre uma coluna do tipo) e a sua seta (oculta ou mostra as colunas dele).
   const TIPOS = ['pessoa', 'cargo', 'area'];
   const ROTULO_GRUPO = { pessoa: 'Colaborador', cargo: 'Cargo', area: 'Área' };
+  const GLIFO_TIPO = {
+    pessoa: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1a6 6 0 0 1 14 0v1"/>',
+    cargo: '<circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/>',
+    area: '<path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11Z"/><circle cx="12" cy="10" r="2.2"/>',
+  };
   const LINHAS = [
     ['pessoa', 'Usuário / colaborador', 'Selecionar o nome', pessoasDP, 'Nenhum colaborador ativo no DP ainda.'],
     ['cargo', 'Cargo', 'Selecionar o cargo', cargosDES, 'Nenhum cargo cadastrado.'],
@@ -187,8 +192,14 @@
   /** Cabeça da coluna nas Ações especiais: o dono vem da coluna aberta (não se troca aqui). */
   function cabecaFixa(b) {
     const box = el('div', 'acessos-bloco-cab');
-    const linha = LINHAS.find(([id]) => id === b.alvo.tipo);
-    box.append(el('small', 'profiles-note', linha ? linha[1] : ''), el('b', 'acessos-bloco-dono', b.alvo.nome), el('small', 'profiles-note acessos-bloco-resumo'));
+    const fixo = el('div', 'acessos-telas-trocar acessos-sel-fixo');
+    const selo = el('span', 'acessos-sel-selo');
+    selo.style.setProperty('--selo-cor', U.corOrigem('despesas', '#ef4444'));
+    selo.innerHTML = U.svg(GLIFO_TIPO[b.alvo.tipo]);
+    const texto = el('span', 'acessos-sel-texto');
+    texto.append(el('span', 'acessos-telas-valor', b.alvo.nome), el('small', 'profiles-note acessos-bloco-resumo'));
+    fixo.append(selo, texto);
+    box.append(fixo);
     return box;
   }
 
@@ -215,11 +226,7 @@
     const aberto = Boolean(b.quem);
     const rotulo0 = ROTULO_GRUPO[id].toLocaleLowerCase('pt-BR');
     const corDES = U.corOrigem('despesas', '#ef4444');
-    const GLIFO = {
-      pessoa: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1a6 6 0 0 1 14 0v1"/>',
-      cargo: '<circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/>',
-      area: '<path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11Z"/><circle cx="12" cy="10" r="2.2"/>',
-    };
+    const GLIFO = GLIFO_TIPO;
     const valor = el('button', 'acessos-telas-trocar');
     valor.type = 'button';
     valor.setAttribute('aria-expanded', String(aberto));
@@ -355,23 +362,27 @@
     // Coluna ocultada: estreita, com o nome na vertical (de baixo para cima) colado na linha de baixo do cabeçalho.
     let cab;
     if (estado.modo === 'acoes') {
-      cab = el('div', 'acessos-tl acessos-tl-quem-lin');
+      cab = el('div', 'acessos-cabecalho');
+      const linha = el('div', 'acessos-tl acessos-quem-row');
       const e = el('div', 'acessos-tl-esq');
+      const li = el('div', 'acessos-quem-linha');
       const voltar = el('button', 'shortcut-circle compras-redondo acessos-telas-mais');
       voltar.type = 'button';
       voltar.title = 'Voltar às telas';
       voltar.setAttribute('aria-label', 'Voltar às telas');
       voltar.innerHTML = U.svg('<path d="M15 5 8 12l7 7"/>');
       voltar.onclick = () => { estado.focar = 'esp:' + estado.foco; estado.modo = 'telas'; desenhar(); };
-      e.append(voltar, el('span', 'acessos-tl-esq-txt', 'Voltar às telas'));
-      cab.append(e);
+      li.append(voltar, el('b', null, 'Voltar às telas'));
+      e.append(li);
+      linha.append(e);
       colunas().forEach((b, i) => {
         const w = blocoEl(b, 'acessos-tl-bloco-cab');
         const c = cabecaFixa(b);
         resumos.push([regs[i], c.querySelector('.acessos-bloco-resumo')]);
         w.append(c);
-        cab.append(w);
+        linha.append(w);
       });
+      cab.append(linha);
     } else {
       cab = el('div', 'acessos-cabecalho');
       TIPOS.forEach((t, ti) => {
@@ -593,28 +604,62 @@
     return linha;
   }
 
+  /** Cada grupo de ações leva o ícone e a cor da origem a que pertence (a mesma do menu): Lançamentos é o lápis neutro (roxo). */
+  function origemDoGrupo(nome) {
+    const M = window.CicluzMenu;
+    const marca = (i) => M.marcaOrigem(i);
+    const lapis = '<svg viewBox="0 0 24 24" aria-hidden="true">' + (M.subIcone['Lançamentos'] || '') + '</svg>';
+    const caixa = () => { try { return window.CicluzCaixa.icone(); } catch (e) { return marca(0); } };
+    const mapa = {
+      'Lançamentos': [M.cores[5], lapis],
+      'Caixa': [M.cores[0], caixa()],
+      'Transferências e lacres': [M.cores[1], marca(1)],
+      'Compras e estoque': [M.cores[3], marca(3)],
+      'Pessoas e DP': [M.cores[2], marca(2)],
+      'Administração': [M.cores[6], marca(6)],
+    };
+    return mapa[nome] || [M.cores[6], marca(6)];
+  }
+
   /**
-   * Visão "Ações especiais" (aberta pelo "!" de uma coluna): as permissões que não são lançar, discriminar, editar, visualizar nem pagar. Uma linha por ação, em grupos
-   * por área, com um interruptor por coluna (valem para a área inteira, como hoje). "Administração" fica separada, com aviso.
+   * Visão "Ações especiais" (aberta pelo "!" de uma coluna): as permissões que não são lançar, discriminar, editar, visualizar nem pagar.
+   * Mesmo desenho das telas: o grupo é uma linha com o ícone quadrado da origem; cada ação é uma linha de 52 px (nome e descrição em uma
+   * linha cada, "Sensível" em texto âmbar), com a marcação redonda por coluna. Valem para a ÁREA inteira, como hoje. "Administração" tem aviso.
    */
   function desenharAcoes(mat, regs, atualizarResumos) {
     ACOES.forEach((g) => {
-      const sec = U.secao(g.n, g.i.length);
+      const [cor, glifo] = origemDoGrupo(g.n);
+      const sec = U.secao('', undefined);
       prenderAEsquerda(sec);
-      const cab = sec.querySelector('.compras-secao-cab');
-      const e = el('div', 'acessos-tl-cab-esq');
-      e.append(cab.querySelector('h3'));
-      cab.replaceChildren(e);
+      sec.style.setProperty('--origem', cor);
+      sec.style.setProperty('--menu-accent', cor);
+      sec.style.setProperty('--nivel-cor', cor);
+      const linhaGrupo = el('div', 'acessos-tl acessos-tl-grupo-lin');
+      const esqGrupo = el('div', 'acessos-tl-esq acessos-tl-esq-grupo');
+      const h = el('h3');
+      const marca = el('span', 'acessos-tl-marca');
+      marca.innerHTML = glifo;
+      const nomeG = el('span', 'acessos-tl-grupo-nome');
+      nomeG.append(el('b', null, g.n));
+      h.append(marca, nomeG, el('span', 'compras-conta', String(g.i.length)));
+      esqGrupo.append(h);
+      linhaGrupo.append(esqGrupo);
+      regs.forEach((reg, i) => linhaGrupo.append(blocoEl(colunas()[i])));
+      sec.querySelector('.compras-secao-cab').replaceWith(linhaGrupo);
       if (g.aviso) sec.append(U.nota(g.aviso));
       g.i.forEach(([chave, rotulo, desc, sensivel]) => {
         const linha = el('div', 'acessos-tl acessos-tl-tela');
         const esq = el('div', 'acessos-tl-esq acessos-tl-esq-acao');
         const nome = el('span', 'acessos-tl-nome acessos-tl-nome-acao');
         const txt = el('span', 'acessos-tl-acao-txt');
-        txt.append(el('b', null, rotulo), el('small', null, desc));
+        const topo = el('b', null, rotulo);
+        const sub = el('small');
+        if (sensivel) { const s = el('span', 'compras-alerta-texto', 'Sensível'); s.title = 'Mexe em dinheiro já registrado, em dado do DP ou no acesso dos outros'; sub.append(s, ' · '); }
+        sub.append(desc);
+        sub.title = (sensivel ? 'Sensível: mexe em dinheiro já registrado, em dado do DP ou no acesso dos outros. ' : '') + desc;
+        txt.append(topo, sub);
         nome.append(txt);
         esq.append(nome);
-        if (sensivel) { const s = U.situacao('Sensível', 'atencao'); s.title = 'Mexe em dinheiro já registrado, em dado do DP ou no acesso dos outros'; esq.append(s); }
         linha.append(esq);
         regs.forEach((reg, i) => {
           const w = blocoEl(colunas()[i]);
