@@ -57,8 +57,11 @@ async function pedirAoS1(caminho: string, params?: URLSearchParams): Promise<unk
 
 function paramsDaConsulta(consulta: ConsultaVendasPdv, comPaginacao: boolean): URLSearchParams {
   const params = new URLSearchParams({ dataInicio: consulta.dataInicio, dataFim: consulta.dataFim });
-  if (consulta.horaInicio) params.set("horaDoDiaInicio", consulta.horaInicio);
-  if (consulta.horaFim) params.set("horaDoDiaFim", consulta.horaFim);
+  // Hora junto da data: instante exato em Brasília (o fim inclui o minuto inteiro).
+  if (consulta.horaInicio) params.set("dataHoraInicio", `${consulta.dataInicio}T${consulta.horaInicio}:00-03:00`);
+  if (consulta.horaFim) params.set("dataHoraFim", `${consulta.dataFim}T${consulta.horaFim}:59-03:00`);
+  if (consulta.janelaInicio) params.set("horaDoDiaInicio", consulta.janelaInicio);
+  if (consulta.janelaFim) params.set("horaDoDiaFim", consulta.janelaFim);
   for (const chave of ["pdvId", "formaPagamentoId", "turnoId", "status", "idVenda", "produto"] as const) {
     const valor = consulta[chave];
     if (valor) params.set(chave, valor);

@@ -14,10 +14,14 @@ export const consultaVendasPdvSchema = z
   .object({
     dataInicio: dia,
     dataFim: dia,
-    // Janela que se repete em cada dia do período, na hora de Brasília. Início maior que o fim cruza a
-    // meia-noite (turno da noite).
+    // Hora junto da data (hora de Brasília): o período vai de dataInicio+horaInicio até dataFim+horaFim,
+    // contínuo, como no Relatório de Vendas do Sistema Pralis. Sem hora, vale o dia inteiro.
     horaInicio: hora.optional(),
     horaFim: hora.optional(),
+    // Janela que se repete em cada dia (vem do Grupo de vendas: o turno do PDV). Início maior que o fim
+    // cruza a meia-noite.
+    janelaInicio: hora.optional(),
+    janelaFim: hora.optional(),
     pdvId: id.optional(),
     formaPagamentoId: id.optional(),
     turnoId: id.optional(),
@@ -28,8 +32,8 @@ export const consultaVendasPdvSchema = z
     page: z.coerce.number().int().min(1).max(10_000).default(1),
     pageSize: z.coerce.number().int().min(1).max(100).default(50)
   })
-  .refine((consulta) => consulta.dataInicio <= consulta.dataFim, {
-    message: "A data inicial é depois da final",
+  .refine((consulta) => `${consulta.dataInicio}T${consulta.horaInicio ?? "00:00"}` <= `${consulta.dataFim}T${consulta.horaFim ?? "23:59"}`, {
+    message: "O início é depois do fim",
     path: ["dataFim"]
   })
   .refine((consulta) => {

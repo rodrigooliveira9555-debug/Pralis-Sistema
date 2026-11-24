@@ -5,14 +5,29 @@
 .vendas-pdv-resultados[aria-busy="true"] .vendas-pdv-barras,
 .vendas-pdv-resultados[aria-busy="true"] .compras-tabela-box { opacity: .55; transition: opacity .2s ease; }
 
-/* Filtros: quatro grupos com título, cada um numa faixa, campos lado a lado. */
-.vendas-pdv-grupo { display: grid; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--layout-line, #dedee3); }
-.vendas-pdv-grupo-titulo { font: 600 12px/16px var(--ui-font); color: var(--panel-text, #785600); text-transform: uppercase; letter-spacing: .04em; }
-body.dark-theme .vendas-pdv-grupo-titulo { color: var(--menu-accent, #eab308); }
+/* Topo: abas dos PDVs à esquerda, Sincronizar à direita. As abas rolam de lado no celular (nunca a página). */
+.vendas-pdv-topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.vendas-pdv-abas { display: flex; gap: 4px; padding: 4px; min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: none; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); }
+.vendas-pdv-abas::-webkit-scrollbar { display: none; }
+.vendas-pdv-aba { flex: none; min-height: 36px; padding: 0 16px; border: 0; border-radius: 8px; background: transparent; color: var(--ui-label-color, #52525b); font: 500 var(--ui-text)/20px var(--ui-font); cursor: pointer; transition: background-color .15s ease, color .15s ease; }
+.vendas-pdv-aba:hover { background: color-mix(in srgb, var(--menu-accent, #eab308) 10%, transparent); }
+.vendas-pdv-aba:focus-visible { outline: 2px solid var(--menu-accent, #eab308); outline-offset: 1px; }
+.vendas-pdv-aba.ativa { background: var(--menu-accent, #eab308); color: #fff; font-weight: 600; }
+.vendas-pdv-sincronia { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.vendas-pdv-sincronizar { display: inline-flex; align-items: center; gap: 6px; }
+.vendas-pdv-sincronizar svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.vendas-pdv-sincronizar.girando svg { animation: vendas-pdv-girar .9s linear infinite; }
+@keyframes vendas-pdv-girar { to { transform: rotate(360deg); } }
+
+/* Filtros: o período numa linha (atalhos, início e fim com data e hora); o resto em "Mais filtros". */
+.vendas-pdv-periodo { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); gap: 10px 16px; align-items: end; }
+.vendas-pdv-periodo > .compras-chips { align-self: end; padding-bottom: 4px; }
+.vendas-pdv-ponta { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 8px; }
 .vendas-pdv-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 12px; align-items: end; }
-.vendas-pdv-campos > .compras-chips { grid-column: 1 / -1; }
+.vendas-pdv-mais { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--layout-line, #dedee3); }
+.vendas-pdv-mais[hidden] { display: none; }
 .vendas-pdv-acoes { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
-.vendas-pdv-aviso { margin: -4px 0 0; }
+.vendas-pdv-aviso { margin: 0; }
 
 /* Resumo: números grandes e calmos, algarismos de largura fixa. */
 .vendas-pdv-vivo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -26,6 +41,7 @@ body.dark-theme .vendas-pdv-grupo-titulo { color: var(--menu-accent, #eab308); }
 
 /* Por PDV e por tipo: lado a lado na tela larga, um embaixo do outro no estreito. */
 .vendas-pdv-lado { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.vendas-pdv-lado.so-um { grid-template-columns: minmax(0, 1fr); }
 .vendas-pdv-barras { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .vendas-pdv-barra { display: grid; gap: 6px; width: 100%; min-height: 52px; padding: 8px 10px; border: 1px solid transparent; border-radius: var(--ui-field-radius, 8px); background: transparent; color: inherit; font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); text-align: left; cursor: pointer; transition: background-color .15s ease, border-color .15s ease; }
 .vendas-pdv-barra:disabled { cursor: default; }
@@ -43,15 +59,24 @@ body.dark-theme .vendas-pdv-grupo-titulo { color: var(--menu-accent, #eab308); }
 .vendas-pdv-paginacao { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 12px 14px; border-top: 1px solid var(--layout-line, #dedee3); font: 400 var(--ui-note, 11px)/16px var(--ui-font); font-variant-numeric: tabular-nums; }
 .vendas-pdv-view .compras-tabela .caixa-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-@media (max-width: 1023px) { .vendas-pdv-lado { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1023px) {
+  .vendas-pdv-lado { grid-template-columns: minmax(0, 1fr); }
+  .vendas-pdv-periodo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .vendas-pdv-periodo > .compras-chips { grid-column: 1 / -1; }
+}
 @media (max-width: 600px) {
   .vendas-pdv-numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .vendas-pdv-numero:first-child { grid-column: 1 / -1; }
   .vendas-pdv-campos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; }
+  .vendas-pdv-periodo { grid-template-columns: minmax(0, 1fr); }
+  .vendas-pdv-topo { flex-direction: column; align-items: stretch; }
+  .vendas-pdv-aba { flex: 1 1 auto; padding: 0 8px; }
+  .vendas-pdv-sincronia { margin-left: 0; justify-content: space-between; }
   .vendas-pdv-numero strong { font-size: 20px; line-height: 26px; }
   .vendas-pdv-paginacao { justify-content: space-between; }
 }
 @media (prefers-reduced-motion: reduce) {
   .vendas-pdv-cheio { animation: none; transform: scaleX(var(--parte, 0)); }
-  .vendas-pdv-barra, .vendas-pdv-resultados[aria-busy="true"] * { transition: none; }
+  .vendas-pdv-barra, .vendas-pdv-aba, .vendas-pdv-resultados[aria-busy="true"] * { transition: none; }
+  .vendas-pdv-sincronizar.girando svg { animation: none; }
 }

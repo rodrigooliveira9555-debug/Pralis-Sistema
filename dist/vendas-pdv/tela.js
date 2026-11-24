@@ -1,127 +1,88 @@
 /*
- * Vendas dos PDVs (CREARE) — a tela, em Entradas › API. Cinco quadros, sempre nesta ordem, para cada coisa ter
- * o seu lugar: Filtros · Resumo · Por PDV · Por tipo de pagamento · Vendas. O quadro de filtros é montado uma
- * vez (não perde o foco nem o painel de hora aberto); os quatro de resultado são redesenhados a cada consulta.
- * Ao vivo: refaz a consulta a cada minuto enquanto a tela está à vista. Dados em dados.js.
+ * Vendas dos PDVs (CREARE) — a tela, em Entradas › API. De cima para baixo, pouca coisa por vez:
+ *   1. Abas dos PDVs (Todos · PDV 1 · PDV 2 · PDV 3 · PDV 4) e o botão Sincronizar, com a hora da última leitura.
+ *   2. Filtros (filtros.js): período com data no calendário e hora; o resto em "Mais filtros".
+ *   3. Resumo: total vendido, ticket médio e canceladas.
+ *   4. Por PDV (só em Todos) e Por tipo de pagamento.
+ *   5. Vendas: a tabela.
+ * Sincronizar lê de novo do Sistema Pralis na hora; sozinha, a tela lê a cada minuto enquanto está à vista. Dados em dados.js.
  */
 (function () {
   'use strict';
   const U = window.CicluzComprasUI;
   const D = window.CicluzVendasPdvDados;
-  const { el, botao, campo, entrada, seletor } = U;
+  const FILTROS = window.CicluzVendasPdvFiltros;
+  const { el, botao } = U;
   const { estado, moeda, numero } = D;
   const COR = '#eab308';
   const COR_TEXTO = '#785600';
   const INTERVALO_AO_VIVO = 60_000;
   U.ICONES.vendasPdv = '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>';
+  const ICONE_SINCRONIZAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"/></svg>';
 
   let tela = null;
-  let quadros = null;
+  let partes = null;
   let relogio = null;
-  let aoVivo = true;
 
   const corpo = (...nos) => { const c = el('div', 'compras-corpo'); c.append(...nos); return c; };
-  const grupoFiltro = (titulo, ...campos) => {
-    const g = el('div', 'vendas-pdv-grupo');
-    g.setAttribute('role', 'group');
-    g.setAttribute('aria-label', titulo);
-    const grade = el('div', 'vendas-pdv-campos');
-    grade.append(...campos);
-    g.append(el('span', 'vendas-pdv-grupo-titulo', titulo), grade);
-    return g;
-  };
 
-  /* ---------- Filtros ---------- */
+  /* ---------- Topo: abas dos PDVs e Sincronizar ---------- */
 
-  function montarFiltros() {
-    const f = estado.filtro;
-    const s = U.secao('Filtros');
-    const aplicar = () => { estado.pagina = 1; consultar(); };
-
-    const de = entrada('date', f.dataInicio);
-    const ate = entrada('date', f.dataFim);
-    const hoje = D.hojeIso();
-    const faixas = { hoje: [hoje, hoje], ontem: [D.somarDias(hoje, -1), D.somarDias(hoje, -1)], 7: [D.somarDias(hoje, -6), hoje], mes: [hoje.slice(0, 8) + '01', hoje] };
-    const chipAtual = Object.keys(faixas).find((k) => faixas[k][0] === f.dataInicio && faixas[k][1] === f.dataFim) || '';
-    const periodo = U.chips([['hoje', 'Hoje'], ['ontem', 'Ontem'], ['7', '7 dias'], ['mes', 'Este mês']], chipAtual, (v) => {
-      const faixa = faixas[v];
-      [f.dataInicio, f.dataFim] = faixa; de.value = faixa[0]; ate.value = faixa[1];
-      aplicar();
+  function topo() {
+    const barra = el('div', 'vendas-pdv-topo');
+    const abas = el('div', 'vendas-pdv-abas');
+    abas.setAttribute('role', 'tablist');
+    abas.setAttribute('aria-label', 'PDV');
+    const lista = [{ id: '', rotulo: 'Todos', nome: 'Todos os PDVs' }, ...D.abasPdv()];
+    lista.forEach((a) => {
+      const marcada = estado.filtro.pdvId === a.id;
+      const b = el('button', 'vendas-pdv-aba' + (marcada ? ' ativa' : ''), a.rotulo);
+      b.type = 'button';
+      b.title = a.nome;
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(marcada));
+      b.tabIndex = marcada ? 0 : -1;
+      b.onclick = () => escolherPdv(a.id);
+      abas.append(b);
     });
-    const aoMudarData = () => { f.dataInicio = de.value; f.dataFim = ate.value; periodo.atualizar(''); if (f.dataInicio && f.dataFim) aplicar(); };
-    de.onchange = aoMudarData; ate.onchange = aoMudarData;
+    // Setas trocam de aba (padrão de abas acessível).
+    abas.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      const bs = [...abas.children];
+      const i = bs.indexOf(document.activeElement);
+      const prox = bs[(i + (e.key === 'ArrowRight' ? 1 : -1) + bs.length) % bs.length];
+      prox.click();
+      requestAnimationFrame(() => { const nova = document.querySelector('#vendas-pdv-view .vendas-pdv-aba.ativa'); if (nova) nova.focus(); });
+    });
+    const lado = el('div', 'vendas-pdv-sincronia');
+    const quando = el('span', 'vendas-pdv-vivo-texto');
+    quando.setAttribute('aria-live', 'polite');
+    const sinc = el('button', 'btn vendas-pdv-sincronizar');
+    sinc.type = 'button';
+    sinc.innerHTML = ICONE_SINCRONIZAR + '<span>Sincronizar</span>';
+    sinc.title = 'Ler agora as vendas do Sistema Pralis';
+    sinc.onclick = () => consultar();
+    lado.append(quando, sinc);
+    barra.append(abas, lado);
+    return { barra, quando, sinc };
+  }
 
-    const horaDe = U.campoHora({ valor: f.horaInicio, rotulo: 'Hora inicial' });
-    const horaAte = U.campoHora({ valor: f.horaFim, rotulo: 'Hora final' });
-    const turno = seletor(estado.opcoes.turnos.filter((t) => t.ativo).map((t) => [t.id, t.nome + ' (' + t.horaInicio.slice(0, 5) + '–' + t.horaFim.slice(0, 5) + ')']), f.turnoId, 'Todos');
-    const pdv = seletor(estado.opcoes.pdvs.map((p) => [p.id, p.nome + (p.ativo ? '' : ' (inativo)')]), f.pdvId, 'Todos');
-    const grupos = D.gruposDeVendas();
-    const grupo = seletor(grupos.map((g) => [g.id, g.nome + ' · ' + g.computador + ' · ' + g.inicio + '–' + g.fim]), f.grupoId, grupos.length ? 'Todos' : 'Sem grupos com computador');
-    grupo.disabled = !grupos.length;
-    const forma = seletor(estado.opcoes.formasPagamento.map((x) => [x.id, x.nome]), f.formaPagamentoId, 'Todas');
-    const status = seletor([['aprovado', 'Aprovadas'], ['aguardando_aprovacao', 'Aguardando aprovação'], ['cancelado', 'Canceladas']], f.status, 'Todas');
-    const produto = entrada('text', f.produto, { placeholder: 'Nome do produto' });
-    const avisoGrupo = el('p', 'profiles-note vendas-pdv-aviso');
-    avisoGrupo.hidden = true;
+  function pintarSincronia() {
+    if (!partes) return;
+    const { quando, sinc } = partes.topo;
+    quando.textContent = estado.carregando ? 'Sincronizando…' : estado.atualizadoEm ? 'Atualizado às ' + D.hora(estado.atualizadoEm.toISOString()) : '';
+    sinc.disabled = estado.carregando;
+    sinc.classList.toggle('girando', estado.carregando);
+  }
 
-    const validaHora = (t) => !t || /^([01]\d|2[0-3]):[0-5]\d$/.test(t);
-    const aoMudarHora = () => {
-      if (!validaHora(horaDe.input.value) || !validaHora(horaAte.input.value)) return;
-      f.horaInicio = horaDe.input.value; f.horaFim = horaAte.input.value;
-      if (f.grupoId) { f.grupoId = ''; grupo.value = ''; avisoGrupo.hidden = true; }
-      aplicar();
-    };
-    horaDe.input.addEventListener('change', aoMudarHora);
-    horaAte.input.addEventListener('change', aoMudarHora);
-    turno.onchange = () => { f.turnoId = turno.value; aplicar(); };
-    pdv.onchange = () => { f.pdvId = pdv.value; if (f.grupoId) { f.grupoId = ''; grupo.value = ''; avisoGrupo.hidden = true; } aplicar(); };
-    // O grupo de vendas preenche PDV e horário à vista de quem usa (nada escondido): mexer neles depois solta o grupo.
-    grupo.onchange = () => {
-      const g = grupos.find((x) => x.id === grupo.value);
-      f.grupoId = grupo.value;
-      avisoGrupo.hidden = true;
-      if (g) {
-        f.horaInicio = g.inicio; f.horaFim = g.fim;
-        horaDe.input.value = g.inicio; horaAte.input.value = g.fim;
-        f.pdvId = g.pdv ? g.pdv.id : '';
-        pdv.value = f.pdvId;
-        if (!g.pdv) { avisoGrupo.textContent = 'O computador ' + g.computador + ' não existe no Sistema Pralis: o filtro usa só o horário do grupo.'; avisoGrupo.hidden = false; }
-      }
-      aplicar();
-    };
-    forma.onchange = () => { f.formaPagamentoId = forma.value; aplicar(); };
-    status.onchange = () => { f.status = status.value; aplicar(); };
-    let espera = null;
-    produto.oninput = () => { clearTimeout(espera); espera = setTimeout(() => { f.produto = produto.value.trim(); aplicar(); }, 500); };
-
-    const limpar = botao('Limpar filtros', () => { D.reiniciarFiltro(); abrirRelatorio(); }, 'btn secondary');
-    const atualizar = botao('Atualizar', () => consultar(), 'btn');
-    const acoes = el('div', 'vendas-pdv-acoes');
-    acoes.append(limpar, atualizar);
-
-    s.append(corpo(
-      grupoFiltro('Período', periodo, campo('Data inicial', de), campo('Data final', ate)),
-      grupoFiltro('Horário', campo('Hora inicial', horaDe.caixa), campo('Hora final', horaAte.caixa), campo('Turno', turno)),
-      grupoFiltro('Origem da venda', campo('PDV', pdv), campo('Grupo de vendas', grupo)),
-      avisoGrupo,
-      grupoFiltro('Tipo de venda', campo('Forma de pagamento', forma), campo('Situação', status), campo('Produto', produto)),
-      acoes,
-    ), horaDe.painel, horaAte.painel);
-    return s;
+  function escolherPdv(id) {
+    if (estado.filtro.pdvId === id) return;
+    estado.filtro.pdvId = id;
+    estado.pagina = 1;
+    montar();
   }
 
   /* ---------- Resultados ---------- */
-
-  function cabecalhoAoVivo() {
-    const caixa = el('div', 'vendas-pdv-vivo');
-    const texto = el('span', 'vendas-pdv-vivo-texto', estado.carregando ? 'Atualizando…' : estado.atualizadoEm ? 'Atualizado às ' + D.hora(estado.atualizadoEm.toISOString()) : '');
-    texto.setAttribute('aria-live', 'polite');
-    const chave = botao(aoVivo ? 'Ao vivo: ligado' : 'Ao vivo: desligado', () => { aoVivo = !aoVivo; programar(); desenharResultados(); }, 'compras-chip' + (aoVivo ? ' ativo' : ''));
-    chave.setAttribute('aria-pressed', String(aoVivo));
-    chave.title = 'Atualiza sozinho a cada minuto';
-    caixa.append(texto, chave);
-    return caixa;
-  }
 
   function numeroGrande(rotulo, valor, detalhe, tom) {
     const n = el('div', 'vendas-pdv-numero' + (tom ? ' tom-' + tom : ''));
@@ -131,44 +92,41 @@
   }
 
   function resumo() {
-    const s = U.secao('Resumo', undefined, cabecalhoAoVivo());
+    const s = U.secao('Resumo');
     const t = estado.totais || { totalGeral: 0, quantidade: 0 };
-    const ticket = t.quantidade ? t.totalGeral / t.quantidade : 0;
     const grade = el('div', 'vendas-pdv-numeros');
     grade.append(
       numeroGrande('Total vendido', moeda(t.totalGeral), numero(t.quantidade) + (t.quantidade === 1 ? ' venda' : ' vendas')),
-      numeroGrande('Ticket médio', moeda(ticket), 'Total ÷ quantidade de vendas'),
+      numeroGrande('Ticket médio', moeda(t.quantidade ? t.totalGeral / t.quantidade : 0)),
     );
     if (estado.canceladas) {
       const c = estado.canceladas;
-      grade.append(numeroGrande('Canceladas', numero(c.quantidade), c.quantidade ? moeda(c.totalGeral) + ' já incluído no total' : 'Nenhuma no filtro', c.quantidade ? 'negativo' : ''));
+      grade.append(numeroGrande('Canceladas', numero(c.quantidade), c.quantidade ? moeda(c.totalGeral) + ' dentro do total' : '', c.quantidade ? 'negativo' : ''));
     }
     s.append(corpo(grade));
-    if (estado.filtro.formaPagamentoId) s.append(corpo(U.nota('Com forma de pagamento escolhida, o total é só a parte paga nessa forma (como no Sistema Pralis).')));
+    if (estado.filtro.formaPagamentoId) s.append(corpo(U.nota('Com um tipo de pagamento escolhido, o total é só a parte paga nele (como no Sistema Pralis).')));
     return s;
   }
 
-  /** Lista de barras (PDV ou tipo): cada linha mostra o nome, a quantidade, o valor e a parte do total. */
+  /** Barras: nome, valor, a parte do total e "N vendas". Tocar filtra (de novo, solta). */
   function barras(linhas, { total, marcado, aoTocar, vazio }) {
     if (!linhas.length) return U.vazio(vazio);
     const lista = el('ul', 'vendas-pdv-barras');
     linhas.forEach((l) => {
       const parte = total > 0 ? Math.max(0, Math.min(100, (l.total / total) * 100)) : 0;
-      const item = el('li');
       const b = el('button', 'vendas-pdv-barra' + (marcado === l.id ? ' marcada' : ''));
       b.type = 'button';
-      b.disabled = !l.id || !aoTocar;
+      b.disabled = !l.id;
       b.setAttribute('aria-pressed', String(marcado === l.id));
-      b.title = l.id && aoTocar ? (marcado === l.id ? 'Tocar para ver todos' : 'Tocar para filtrar por ' + l.nome) : '';
-      const topo = el('span', 'vendas-pdv-barra-topo');
-      topo.append(el('b', null, l.nome), el('span', 'vendas-pdv-barra-valor', moeda(l.total)));
+      const cima = el('span', 'vendas-pdv-barra-topo');
+      cima.append(el('b', null, l.nome), el('span', 'vendas-pdv-barra-valor', moeda(l.total)));
       const trilho = el('span', 'vendas-pdv-trilho');
       const cheio = el('span', 'vendas-pdv-cheio');
       cheio.style.setProperty('--parte', (parte / 100).toFixed(4));
       trilho.append(cheio);
-      const rodape = el('span', 'vendas-pdv-barra-rodape', numero(l.quantidade) + (l.quantidade === 1 ? ' venda' : ' vendas') + ' · ' + parte.toFixed(1).replace('.', ',') + '%');
-      b.append(topo, trilho, rodape);
-      if (l.id && aoTocar) b.onclick = () => aoTocar(l.id);
+      b.append(cima, trilho, el('span', 'vendas-pdv-barra-rodape', numero(l.quantidade) + (l.quantidade === 1 ? ' venda' : ' vendas') + ' · ' + parte.toFixed(1).replace('.', ',') + '%'));
+      if (l.id) b.onclick = () => aoTocar(l.id);
+      const item = el('li');
       item.append(b);
       lista.append(item);
     });
@@ -176,30 +134,24 @@
   }
 
   function porPdv() {
-    const f = estado.filtro;
-    const s = U.secao('Por PDV');
-    if (f.pdvId) {
-      const p = estado.opcoes.pdvs.find((x) => x.id === f.pdvId);
-      s.append(corpo(U.nota('Mostrando só o PDV ' + (p ? p.nome : '') + '.'), botao('Ver todos os PDVs', () => { f.pdvId = ''; f.grupoId = ''; abrirRelatorio(); }, 'btn secondary')));
-      return s;
-    }
+    const rotulos = new Map(D.abasPdv().map((a) => [a.id, a.rotulo]));
     const linhas = estado.porPdv.filter((x) => x.totais.quantidade > 0)
-      .map((x) => ({ id: x.pdv.id, nome: x.pdv.nome, total: x.totais.totalGeral, quantidade: x.totais.quantidade }))
+      .map((x) => ({ id: x.pdv.id, nome: rotulos.get(x.pdv.id) || x.pdv.nome, total: x.totais.totalGeral, quantidade: x.totais.quantidade }))
       .sort((a, b) => b.total - a.total);
-    const total = estado.totais ? estado.totais.totalGeral : 0;
-    s.append(corpo(barras(linhas, { total, aoTocar: (id) => { f.pdvId = id; f.grupoId = ''; abrirRelatorio(); }, vazio: 'Nenhum PDV vendeu neste filtro.' })));
+    const s = U.secao('Por PDV');
+    s.append(corpo(barras(linhas, { total: estado.totais ? estado.totais.totalGeral : 0, aoTocar: escolherPdv, vazio: 'Nenhum PDV vendeu neste filtro.' })));
     return s;
   }
 
   function porTipo() {
     const f = estado.filtro;
+    const linhas = (estado.totais ? estado.totais.porFormaPagamento : [])
+      .map((x) => ({ id: x.formaPagamentoId, nome: x.formaPagamento, total: x.total, quantidade: x.quantidade }))
+      .sort((a, b) => b.total - a.total);
     const s = U.secao('Por tipo de pagamento');
-    const formas = estado.totais ? estado.totais.porFormaPagamento : [];
-    const linhas = formas.map((x) => ({ id: x.formaPagamentoId, nome: x.formaPagamento, total: x.total, quantidade: x.quantidade })).sort((a, b) => b.total - a.total);
-    const total = linhas.reduce((t, l) => t + l.total, 0);
     s.append(corpo(barras(linhas, {
-      total, marcado: f.formaPagamentoId,
-      aoTocar: (id) => { f.formaPagamentoId = f.formaPagamentoId === id ? '' : id; abrirRelatorio(); },
+      total: linhas.reduce((t, l) => t + l.total, 0), marcado: f.formaPagamentoId,
+      aoTocar: (id) => { f.formaPagamentoId = f.formaPagamentoId === id ? '' : id; estado.pagina = 1; montar(); },
       vazio: 'Nenhum pagamento neste filtro.',
     })));
     return s;
@@ -207,22 +159,22 @@
 
   function vendas() {
     const v = estado.vendas;
+    const f = estado.filtro;
     const ordem = botao(estado.ordem === 'desc' ? 'Mais recentes primeiro' : 'Mais antigas primeiro', () => { estado.ordem = estado.ordem === 'desc' ? 'asc' : 'desc'; estado.pagina = 1; consultar(); }, 'compras-chip');
     ordem.title = 'Trocar a ordem';
     const s = U.secao('Vendas', v.total, ordem);
-    const pagamentos = (x) => (x.pagamentos.length ? x.pagamentos.map(D.nomePagamento).join(' + ') : '—');
-    const itens = (x) => numero(x.itensVenda.reduce((t, i) => t + (Number(i.quantidade) || 0), 0));
+    const umDia = f.dataInicio === f.dataFim;
+    const rotulos = new Map(D.abasPdv().map((a) => [a.id, a.rotulo]));
     const situacao = (x) => { const [t, tom] = D.ROTULO_STATUS[x.status] || [x.status, 'neutro']; return U.situacao(t, tom); };
-    s.append(U.tabela([
-      ['Data', (x) => D.dataCurta(x.dataReferencia)],
-      ['Hora', (x) => D.hora(x.dataVenda), 'caixa-num'],
-      ['PDV', (x) => x.pdvNome || '—'],
+    const colunas = [
+      ['Hora', (x) => (umDia ? '' : D.dataCurta(x.dataReferencia) + ' ') + D.hora(x.dataVenda), 'caixa-num vendas-pdv-hora'],
+      ...(f.pdvId ? [] : [['PDV', (x) => rotulos.get(x.pdvId) || x.pdvNome || '—']]),
       ['Operador', (x) => x.colaboradorNome || '—'],
-      ['Pagamento', pagamentos],
-      ['Itens', itens, 'caixa-num'],
+      ['Pagamento', (x) => (x.pagamentos.length ? x.pagamentos.map(D.nomePagamento).join(' + ') : '—')],
       ['Valor', (x) => moeda(x.valorLiquido), 'caixa-num'],
       ['Situação', situacao],
-    ], v.itens, { aoClicar: detalhe, vazioTexto: 'Nenhuma venda neste filtro.' }));
+    ];
+    s.append(U.tabela(colunas, v.itens, { aoClicar: detalhe, vazioTexto: 'Nenhuma venda neste filtro.' }));
     const paginas = Math.max(1, Math.ceil(v.total / estado.porPagina));
     if (v.total > estado.porPagina) {
       const inicio = (estado.pagina - 1) * estado.porPagina + 1;
@@ -263,47 +215,52 @@
   }
 
   function desenharResultados() {
-    if (!quadros) return;
-    const lado = el('div', 'vendas-pdv-lado');
-    lado.append(porPdv(), porTipo());
-    const erro = estado.erro ? [corpo(el('p', 'profiles-error vendas-pdv-erro', estado.erro), botao('Tentar de novo', () => consultar(), 'btn secondary'))] : [];
-    quadros.erro.replaceChildren(...erro);
-    quadros.resultados.replaceChildren(resumo(), lado, vendas());
-    quadros.resultados.setAttribute('aria-busy', String(estado.carregando));
+    if (!partes) return;
+    pintarSincronia();
+    const lado = el('div', 'vendas-pdv-lado' + (estado.filtro.pdvId ? ' so-um' : ''));
+    if (!estado.filtro.pdvId) lado.append(porPdv());
+    lado.append(porTipo());
+    const erro = estado.erro ? [corpo(el('p', 'profiles-error', estado.erro), botao('Tentar de novo', () => consultar(), 'btn secondary'))] : [];
+    partes.erro.replaceChildren(...erro);
+    partes.resultados.replaceChildren(resumo(), lado, vendas());
+    partes.resultados.setAttribute('aria-busy', String(estado.carregando));
   }
 
   async function consultar() {
     if (estado.carregando) return;
     const pedido = D.consultar(); // marca "carregando" antes do primeiro await
-    desenharResultados();
+    if (estado.atualizadoEm) pintarSincronia(); else desenharResultados();
     await pedido;
     desenharResultados();
   }
 
   function programar() {
     clearInterval(relogio);
-    relogio = null;
-    if (!aoVivo) return;
     relogio = setInterval(() => {
       const aVista = tela && tela.view.classList.contains('show') && document.visibilityState === 'visible';
       if (!aVista) { clearInterval(relogio); relogio = null; return; }
-      if (!estado.carregando) consultar();
+      consultar();
     }, INTERVALO_AO_VIVO);
+  }
+
+  /** Monta topo + filtros + resultados (abrir, trocar de aba, limpar filtros) e consulta. */
+  function montar() {
+    partes = { topo: topo(), erro: el('div'), resultados: el('div', 'vendas-pdv-resultados') };
+    const filtros = FILTROS.montar({ aoMudar: (o) => (o && o.remontar ? montar() : consultar()), aoEscolherPdv: (id) => { estado.filtro.pdvId = ''; escolherPdv(id); } });
+    tela.body.replaceChildren(partes.topo.barra, filtros, partes.erro, partes.resultados);
+    consultar();
+    programar();
   }
 
   /* ---------- Abrir ---------- */
 
-  function garantirTela() {
-    if (tela) return tela;
-    tela = U.criarTela({
-      id: 'vendas-pdv-view', titulo: 'VND - Vendas dos PDVs', caminho: 'Entradas · Vendas / Faturamento / API / VND - Vendas dos PDVs',
-      icone: 'vendasPdv', voltar: () => openSection(sections[0][0], 'API', 'tree', COR), cor: COR, corTexto: COR_TEXTO, classe: 'vendas-pdv-view',
-    });
-    return tela;
-  }
-
   async function abrirRelatorio() {
-    garantirTela();
+    if (!tela) {
+      tela = U.criarTela({
+        id: 'vendas-pdv-view', titulo: 'VND - Vendas dos PDVs', caminho: 'Entradas · Vendas / Faturamento / API / VND - Vendas dos PDVs',
+        icone: 'vendasPdv', voltar: () => openSection(sections[0][0], 'API', 'tree', COR), cor: COR, corTexto: COR_TEXTO, classe: 'vendas-pdv-view',
+      });
+    }
     tela.ativar();
     tela.body.replaceChildren(U.vazio('Carregando…'));
     try {
@@ -317,13 +274,10 @@
       tela.body.replaceChildren(U.vazio('Não foi possível abrir as vendas', D.mensagemErro(erro)), botao('Tentar de novo', () => { estado.configurada = null; abrirRelatorio(); }, 'btn secondary'));
       return;
     }
-    quadros = { erro: el('div'), resultados: el('div', 'vendas-pdv-resultados') };
-    tela.body.replaceChildren(montarFiltros(), quadros.erro, quadros.resultados);
-    await consultar();
-    programar();
+    montar();
   }
 
-  const CARDS = [['VND - Vendas dos PDVs', 'Vendas do CREARE ao vivo, por PDV, horário e tipo de venda', 'vendas-pdv:relatorio']];
+  const CARDS = [['VND - Vendas dos PDVs', 'Vendas do CREARE ao vivo, por PDV, horário e tipo de pagamento', 'vendas-pdv:relatorio']];
   window.CicluzVendasPdv = {
     cards: () => CARDS.map((c) => [...c]),
     abrir: (id) => { if (id === 'relatorio') abrirRelatorio(); },

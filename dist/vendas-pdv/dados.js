@@ -14,7 +14,7 @@
     return d.toISOString().slice(0, 10);
   };
 
-  const FILTRO_VAZIO = () => ({ dataInicio: hojeIso(), dataFim: hojeIso(), horaInicio: '', horaFim: '', pdvId: '', grupoId: '', formaPagamentoId: '', turnoId: '', status: '', produto: '' });
+  const FILTRO_VAZIO = () => ({ dataInicio: hojeIso(), dataFim: hojeIso(), horaInicio: '', horaFim: '', janelaInicio: '', janelaFim: '', pdvId: '', grupoId: '', formaPagamentoId: '', turnoId: '', status: '', produto: '' });
 
   const estado = {
     filtro: FILTRO_VAZIO(),
@@ -32,11 +32,11 @@
     configurada: null,
   };
 
-  /** Parâmetros que vão à API (o grupo de vendas já virou PDV + horário ao ser escolhido). */
+  /** Parâmetros que vão à API (o grupo de vendas já virou PDV + janela diária ao ser escolhido). */
   function params(extra = {}) {
     const f = estado.filtro;
     const p = new URLSearchParams({ dataInicio: f.dataInicio, dataFim: f.dataFim });
-    ['horaInicio', 'horaFim', 'pdvId', 'formaPagamentoId', 'turnoId', 'status', 'produto'].forEach((k) => { if (f[k]) p.set(k, f[k]); });
+    ['horaInicio', 'horaFim', 'janelaInicio', 'janelaFim', 'pdvId', 'formaPagamentoId', 'turnoId', 'status', 'produto'].forEach((k) => { if (f[k]) p.set(k, f[k]); });
     Object.entries(extra).forEach(([k, v]) => { if (v === null) p.delete(k); else p.set(k, String(v)); });
     return p;
   }
@@ -126,10 +126,18 @@
   const nomePagamento = (p) => (p.formaPagamentoNome || '').trim() || (p.tipoPagamentoAutomacao || '').trim() || 'Sem forma';
   const ROTULO_STATUS = { aprovado: ['Aprovada', 'positivo'], aguardando_aprovacao: ['Aguardando', 'atencao'], cancelado: ['Cancelada', 'negativo'] };
 
-  function reiniciarFiltro() { estado.filtro = FILTRO_VAZIO(); estado.pagina = 1; }
+  function reiniciarFiltro() { const pdvId = estado.filtro.pdvId; estado.filtro = { ...FILTRO_VAZIO(), pdvId }; estado.pagina = 1; }
+
+  /** Abas do topo: os PDVs de caixa da loja (…CXPDV-N vira "PDV N"), em ordem; sem esse padrão, todos os ativos. */
+  function abasPdv() {
+    const ativos = estado.opcoes.pdvs.filter((p) => p.ativo);
+    const caixa = ativos.map((p) => ({ p, n: /CXPDV-?(\d+)$/i.exec(String(p.nome).trim()) })).filter((x) => x.n);
+    if (!caixa.length) return ativos.map((p) => ({ id: p.id, rotulo: p.nome, nome: p.nome }));
+    return caixa.sort((a, b) => Number(a.n[1]) - Number(b.n[1])).map(({ p, n }) => ({ id: p.id, rotulo: 'PDV ' + Number(n[1]), nome: p.nome }));
+  }
 
   window.CicluzVendasPdvDados = {
-    estado, situacao, carregarOpcoes, consultar, gruposDeVendas, reiniciarFiltro, mensagemErro,
+    estado, situacao, carregarOpcoes, consultar, gruposDeVendas, reiniciarFiltro, abasPdv, mensagemErro,
     hojeIso, somarDias, moeda, numero, hora, dataCurta, nomePagamento, ROTULO_STATUS,
   };
 })();
