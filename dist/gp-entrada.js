@@ -35,7 +35,7 @@
     function linha(i, linhas) {
       const row = U.linhaLista({
         icones: [{ icone: i.icone, rotulo: i.rotuloIcone || '' }], grade,
-        colunas: [{ chave: 'nome', conteudo: i.nome }, ...colunas.filter((c) => c.chave !== 'nome' && c.chave !== 'estado').map((c) => ({ chave: c.chave, conteudo: (i.celulas || {})[c.chave] || '' }))],
+        colunas: [{ chave: 'nome', conteudo: U.el('span', 'c-nome-texto', i.nome) }, ...colunas.filter((c) => c.chave !== 'nome' && c.chave !== 'estado').map((c) => ({ chave: c.chave, conteudo: (i.celulas || {})[c.chave] || '' }))],
         estado: i.estado,
         acoes: { rotulo: i.nome, lista: linhas, aoEditar: i.aoAbrir, aoExcluir: () => {} },
       });

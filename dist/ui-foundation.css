@@ -430,7 +430,7 @@ body .btn.acao-com-circulo[hidden]{display:none}
    peças de uniforme) repete o desenho da lista de origem, só que proporcionalmente menor (cerca de 85%): linha de 44 px no lugar de 52,
    subnível de 36 no lugar de 40, ícone de 26 no lugar de 30, caixa de marcar de 20, nome em 13 px e detalhe em 10 px. As medidas moram
    aqui, uma vez só; lista de escolha nova usa estas variáveis em vez de inventar tamanho. */
-:root{--linha-lista:52px;--linha-cabecalho:32px;--lista-alta:calc(100dvh - 280px);--escolha-linha:44px;--escolha-sublinha:36px;--escolha-icone:26px;--escolha-caixa:20px;--escolha-titulo:13px;--escolha-detalhe:10px}
+:root{--lista-controle-gap:8px;--linha-lista:52px;--linha-cabecalho:32px;--lista-alta:calc(100dvh - 280px);--escolha-linha:44px;--escolha-sublinha:36px;--escolha-icone:26px;--escolha-caixa:20px;--escolha-titulo:13px;--escolha-detalhe:10px}
 /* Na árvore de áreas, o tamanho do ícone e do nome é fixado por regras gerais que leem --circle-size e --ui-text; a lista de escolha
    troca o valor dessas duas variáveis só dentro das suas linhas. */
 .location-tree.unidades-arvore{--arvore-linha:var(--escolha-linha);--arvore-sublinha:var(--escolha-sublinha);--arvore-respiro:2px 10px}
