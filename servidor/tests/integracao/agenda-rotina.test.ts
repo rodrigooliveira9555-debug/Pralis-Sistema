@@ -55,19 +55,26 @@ describe("agenda: configurações por pessoa", () => {
     const { gestor: admin, resp } = await cenario();
     expect((await pedir(resp.cookie, "GET", "/api/agenda/configuracoes")).statusCode).toBe(403);
     expect((await configurar(resp, resp, { foraExpediente: "permitir" })).statusCode).toBe(403);
-    // Sem expediente não dá para bloquear nem registrar a hora fora.
-    expect((await configurar(admin, resp, { foraExpediente: "bloquear" })).statusCode).toBe(400);
-    expect((await configurar(admin, resp, { horaFora: "extra" })).statusCode).toBe(400);
+    // Bloquear sem expediente é aceito (0009: o expediente pode vir da escala), mas sem expediente nenhum não fecha.
+    // O campo "horaFora" saiu (0009: a hora é sempre calculada): a tela antiga ainda pode mandar, e é ignorado.
+    expect((await configurar(admin, resp, { foraExpediente: "bloquear" })).statusCode).toBe(200);
+    expect((await pedir(resp.cookie, "GET", "/api/agenda/configuracoes/minha")).json().data.bloqueadaAgora).toBe(false);
+    await configurar(admin, resp, { foraExpediente: "permitir" });
+    const antiga = await configurar(admin, resp, { horaFora: "extra" });
+    expect(antiga.statusCode).toBe(200);
+    expect(antiga.json().data).not.toHaveProperty("horaFora");
+    // Sem tempo próprio, vale o padrão de 15 minutos (P-46 item 4).
+    expect((await pedir(resp.cookie, "GET", "/api/agenda/configuracoes/minha")).json().data).toMatchObject({ inatividadeMinutos: null, inatividadeEfetivaMinutos: 15, origemExpediente: "nenhum" });
     expect((await configurar(admin, resp, { expedienteDias: [1], expedienteInicio: "17:00", expedienteFim: "08:00" })).statusCode).toBe(400);
     expect((await configurar(admin, admin, { expedienteDias: TODOS_OS_DIAS, ...diaInteiro, foraExpediente: "bloquear" })).statusCode).toBe(400);
 
-    const ok = await configurar(admin, resp, { expedienteDias: [5, 1, 1, 2], expedienteInicio: "08:00", expedienteFim: "17:00", horaFora: "comum", inatividadeMinutos: 15 });
+    const ok = await configurar(admin, resp, { expedienteDias: [5, 1, 1, 2], expedienteInicio: "08:00", expedienteFim: "17:00", inatividadeMinutos: 30 });
     expect(ok.statusCode, ok.body).toBe(200);
-    expect(ok.json().data).toMatchObject({ usuarioId: resp.usuarioId, expedienteDias: [1, 2, 5], horaFora: "comum", inatividadeMinutos: 15, foraExpediente: "permitir" });
+    expect(ok.json().data).toMatchObject({ usuarioId: resp.usuarioId, expedienteDias: [1, 2, 5], inatividadeMinutos: 30, foraExpediente: "permitir", origemExpediente: "agenda", colaboradorLigado: false });
     const lista = (await pedir(admin.cookie, "GET", "/api/agenda/configuracoes")).json().data.pessoas;
-    expect(lista.find((p: { usuarioId: string }) => p.usuarioId === resp.usuarioId).inatividadeMinutos).toBe(15);
+    expect(lista.find((p: { usuarioId: string }) => p.usuarioId === resp.usuarioId).inatividadeMinutos).toBe(30);
     const minha = (await pedir(resp.cookie, "GET", "/api/agenda/configuracoes/minha")).json().data;
-    expect(minha).toMatchObject({ inatividadeMinutos: 15, bloqueadaAgora: false, descricaoExpediente: "seg, ter, sex, das 08:00 às 17:00" });
+    expect(minha).toMatchObject({ inatividadeMinutos: 30, inatividadeEfetivaMinutos: 30, bloqueadaAgora: false, descricaoExpediente: "seg, ter, sex, das 08:00 às 17:00", origemExpediente: "agenda" });
   });
 
   it("fora do expediente com 'bloquear': a Agenda, o chat e gravar são recusados; dentro, abre", async () => {
@@ -89,18 +96,19 @@ describe("agenda: configurações por pessoa", () => {
 });
 
 describe("agenda: hora fora do expediente e desempenho", () => {
-  it("concluir fora do expediente registra os minutos; dentro não registra; o desempenho soma", async () => {
+  it("concluir fora do expediente registra os minutos (sem tipo: só relatório); dentro não registra; o desempenho soma", async () => {
     const { gestor: admin, resp, leitor } = await cenario();
     const hoje = horaLocal(new Date()).data;
     const fora = await criar(admin, { data: hoje, pessoas: [{ id: resp.usuarioId, responsavel: true, concluir: true }] });
     const dentro = await criar(admin, { data: hoje, pessoas: [{ id: leitor.usuarioId, responsavel: true, concluir: true }] });
-    await configurar(admin, resp, { expedienteDias: TODOS_OS_DIAS, ...janelaFora(), horaFora: "extra" });
-    await configurar(admin, leitor, { expedienteDias: TODOS_OS_DIAS, ...diaInteiro, horaFora: "extra" });
+    // Sem ligar nada: quem tem expediente tem a hora fora calculada (P-46 item 6).
+    await configurar(admin, resp, { expedienteDias: TODOS_OS_DIAS, ...janelaFora() });
+    await configurar(admin, leitor, { expedienteDias: TODOS_OS_DIAS, ...diaInteiro });
     expect((await pedir(resp.cookie, "POST", `/api/agenda/compromissos/${fora.id}/conclusao`, { concluida: true })).statusCode).toBe(200);
     expect((await pedir(leitor.cookie, "POST", `/api/agenda/compromissos/${dentro.id}/conclusao`, { concluida: true })).statusCode).toBe(200);
     const { rows } = await pool.query(`SELECT usuario_id, minutos, tipo FROM agenda_horas_fora WHERE empresa_id = $1`, [admin.empresaId]);
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ usuario_id: resp.usuarioId, tipo: "extra" });
+    expect(rows[0]).toMatchObject({ usuario_id: resp.usuarioId, tipo: null });
     expect(rows[0].minutos).toBeGreaterThan(0);
     // Concluir de novo (reabrir e concluir) não duplica o registro.
     await pedir(resp.cookie, "POST", `/api/agenda/compromissos/${fora.id}/conclusao`, { concluida: false });

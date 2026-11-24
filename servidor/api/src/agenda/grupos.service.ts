@@ -1,10 +1,11 @@
-import type { GrupoAgendaResposta, GrupoCriacao, GrupoEdicao, JsonValue, PerfilSessao, PessoaAgendaResposta } from "@cicluz/shared";
+import { AREAS_PERMISSAO, type AreaLista, type AreaPermissao, type GrupoAgendaResposta, type GrupoCriacao, type GrupoEdicao, type JsonValue, type PerfilSessao, type PessoaAgendaResposta } from "@cicluz/shared";
 import { violouUnico } from "../acessos/acessos.service.ts";
 import { banco, type TransacaoBanco } from "../banco/conexao.ts";
 import { conflito, ErroDominio, proibido } from "../erros.ts";
 import * as repo from "./compromissos.repository.ts";
 import * as gr from "./grupos.repository.ts";
 import { gravar, invalido } from "./compromissos.service.ts";
+import { contasDaArea } from "./contas-por-permissao.ts";
 
 // Listas (grupos), membros e colunas do Kanban (plano docs/AGENDA_NO_SERVIDOR_PLANO.md, seção 3; perguntas 1 a 4
 // e 11 com a proposta padrão): criar lista = qualquer pessoa logada (vira dona e membro); mudar, excluir e escolher
@@ -32,8 +33,35 @@ const podeGerir = (perfil: PerfilSessao, g: LinhaGrupo) => perfil.papel === "adm
 function respostaGrupo(perfil: PerfilSessao, g: LinhaGrupo, membro: boolean): GrupoAgendaResposta {
   return {
     id: g.id, nome: g.nome, cor: g.cor, icone: g.icone, ordenacao: g.ordenacao, ordem: g.ordem, donoId: g.donoId,
-    membro, podeGerir: podeGerir(perfil, g), versao: g.versao
+    membro, podeGerir: podeGerir(perfil, g), versao: g.versao, area: (g.area ?? "") as AreaLista
   };
+}
+
+/* ---------- Lista ligada a uma área (P-46 item 3) ---------- */
+
+const nomeDaArea = (area: string) => AREAS_PERMISSAO.find(([a]) => a === area)?.[1] ?? area;
+const iguais = (a: string[], b: string[]) => a.length === b.length && [...a].sort().join("|") === [...b].sort().join("|");
+
+/** Membros de uma lista ligada à área: as contas ativas com alguma permissão dela, e a dona. */
+async function membrosDaArea(empresaId: string, g: Pick<LinhaGrupo, "donoId">, area: string) {
+  return [...new Set([g.donoId, ...(await contasDaArea(empresaId, area as AreaPermissao))])];
+}
+
+/**
+ * Refaz os membros das listas ligadas a uma área quando as permissões mudaram (alguém ganhou ou perdeu acesso,
+ * conta desativada). Roda nas leituras da Agenda: sem lista ligada a área, custa uma consulta.
+ */
+export async function sincronizarAreas(empresaId: string) {
+  const comArea = (await repo.gruposAtivos(empresaId)).filter((g) => g.area);
+  for (const g of comArea) {
+    const alvo = await membrosDaArea(empresaId, g, g.area!);
+    if (iguais(alvo, await gr.membrosDe(banco, empresaId, g.id))) continue;
+    await banco.transaction(async (tx) => {
+      // Sobe a versão da Agenda (quem está com a tela aberta recarrega) e troca os membros.
+      if ((await repo.subirVersao(tx, empresaId)) === null) return;
+      await gr.trocarMembros(tx, empresaId, g.id, alvo, g.donoId, "area");
+    });
+  }
 }
 
 /* ---------- Pessoas (substitui a lista provisória do Compras, P-18) ---------- */
@@ -68,9 +96,10 @@ export async function criarGrupo(perfil: PerfilSessao, e: GrupoCriacao) {
     const ordem = (await gr.maiorOrdemGrupo(tx, empresaId)) + 1;
     await gr.inserirGrupo(tx, {
       empresaId, id: e.id, nome: e.nome, cor: e.cor, icone: e.icone, ordenacao: "manual", ordem, donoId: perfil.usuarioId,
-      criadoPor: perfil.usuarioId, atualizadoPor: perfil.usuarioId
+      area: e.area || null, criadoPor: perfil.usuarioId, atualizadoPor: perfil.usuarioId
     });
-    await gr.trocarMembros(tx, empresaId, e.id, [perfil.usuarioId], perfil.usuarioId);
+    if (e.area) await gr.trocarMembros(tx, empresaId, e.id, await membrosDaArea(empresaId, { donoId: perfil.usuarioId }, e.area), perfil.usuarioId, "area");
+    else await gr.trocarMembros(tx, empresaId, e.id, [perfil.usuarioId], perfil.usuarioId);
     return { criado: true, grupo: respostaGrupo(perfil, (await repo.grupo(tx, empresaId, e.id))!, true) };
   }), "agenda_grupos_nome_uq", nomeListaEmUso);
 }
@@ -80,8 +109,13 @@ export async function editarGrupo(perfil: PerfilSessao, id: string, e: GrupoEdic
   return comNomeUnico(() => gravar(perfil, async (tx) => {
     const g = await grupoParaGerir(tx, perfil, id);
     conferirVersaoGrupo(perfil, g, e.versao);
-    const dados = Object.fromEntries(Object.entries(e).filter(([k, v]) => k !== "versao" && v !== undefined));
-    const linha = await gr.atualizarGrupo(tx, empresaId, id, { ...dados, atualizadoPor: perfil.usuarioId });
+    const { area, ...resto } = e;
+    const dados = Object.fromEntries(Object.entries(resto).filter(([k, v]) => k !== "versao" && v !== undefined));
+    const mudaArea = area !== undefined && area !== (g.area ?? "");
+    const linha = await gr.atualizarGrupo(tx, empresaId, id, { ...dados, ...(mudaArea ? { area: area || null } : {}), atualizadoPor: perfil.usuarioId });
+    // Ligou a uma área: os membros passam a ser os da área. Desligou: os membros de agora ficam, escolhidos à mão.
+    if (mudaArea && area) await gr.trocarMembros(tx, empresaId, id, await membrosDaArea(empresaId, g, area), perfil.usuarioId, "area");
+    else if (mudaArea) await gr.trocarMembros(tx, empresaId, id, await gr.membrosDe(tx, empresaId, id), perfil.usuarioId);
     return respostaGrupo(perfil, linha, await repo.ehMembro(tx, empresaId, id, perfil.usuarioId));
   }), "agenda_grupos_nome_uq", nomeListaEmUso);
 }
@@ -101,6 +135,7 @@ export async function excluirGrupo(perfil: PerfilSessao, id: string, versao: num
 }
 
 export async function membros(perfil: PerfilSessao, id: string) {
+  await sincronizarAreas(perfil.empresa.id);
   const g = await repo.grupo(banco, perfil.empresa.id, id);
   if (!g || g.excluidoEm) throw listaNaoEncontrada();
   return gr.membrosDe(banco, perfil.empresa.id, id);
@@ -111,6 +146,7 @@ export async function definirMembros(perfil: PerfilSessao, id: string, usuarioId
   const empresaId = perfil.empresa.id;
   return gravar(perfil, async (tx) => {
     const g = await grupoParaGerir(tx, perfil, id);
+    if (g.area) throw conflito(`Os membros desta lista vêm da área ${nomeDaArea(g.area)} do Acesso por Tela. Para escolher à mão, tire a área da lista.`, "AGENDA_LISTA_POR_AREA");
     const ids = [...new Set([g.donoId, ...usuarioIds])];
     const contas = await repo.contasDaEmpresa(tx, empresaId, ids);
     if (ids.some((x) => !contas.has(x))) throw invalido("Uma das pessoas escolhidas não é conta desta empresa.");

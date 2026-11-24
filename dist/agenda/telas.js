@@ -896,9 +896,11 @@
         const iconeCampo = el('div', 'compras-campo');
         iconeCampo.append(el('span', 'compras-rotulo', 'Ícone'), icones);
         form.append(topo, corCampo, iconeCampo);
-        // Membros do grupo (P-46): quem participa da lista e do chat do grupo. Quem criou entra sempre.
+        // Membros do grupo (P-46): quem participa da lista e do chat do grupo. Quem criou entra sempre. A lista pode
+        // ser ligada a uma área do Acesso por Tela (P-46 item 3): aí os membros são as contas com acesso a ela.
         const membrosSecao = el('fieldset', 'agenda-form-secao agenda-membros');
         membrosSecao.append(el('legend', null, 'Membros do grupo'));
+        let area = lista ? lista.area || '' : '';
         const eu = A.usuarioAtual();
         const dono = lista ? lista.donoId : eu;
         const escolhidos = new Set(dono ? [dono] : []);
@@ -908,10 +910,24 @@
           membrosProntos = !lista;
           const resumo = el('p', 'agenda-membros-resumo');
           resumo.setAttribute('aria-live', 'polite');
+          let nomesAreas = new Map();
           const pintar = () => {
+            escolher.hidden = Boolean(area);
+            if (area) { resumo.textContent = 'Entram sozinhos todos que têm acesso a ' + (nomesAreas.get(area) || area) + ' no Acesso por Tela, e quem criou a lista. Quem ganha ou perde o acesso entra ou sai do grupo.'; return; }
             const nomes = [...escolhidos].map((id) => A.nomePessoa(id) + (id === dono ? ' (criou a lista)' : ''));
             resumo.textContent = (nomes.length === 1 ? '1 membro: ' : nomes.length + ' membros: ') + nomes.join(', ') + '.';
           };
+          const quem = U.seletor([['', 'Escolhidos à mão']], area);
+          quem.disabled = true;
+          quem.addEventListener('change', () => { area = quem.value; pintar(); });
+          A.areasAcesso().then((r) => {
+            if (r.erro) return;
+            nomesAreas = new Map(r.dados.map((a) => [a.id, a.nome]));
+            quem.replaceChildren(...[['', 'Escolhidos à mão'], ...r.dados.map((a) => [a.id, 'Quem tem acesso a ' + a.nome])].map(([v, t]) => { const o = el('option', null, t); o.value = v; return o; }));
+            quem.value = area;
+            quem.disabled = Boolean(lista && !lista.podeGerir);
+            pintar();
+          });
           const escolher = botao('Escolher membros', () => U.seletorDeItens({
             titulo: 'Membros do grupo', rotuloBusca: 'Procurar pessoa', cor: COR, corTexto: COR_TEXTO,
             itens: A.pessoas().map((p) => ({ id: p.id, rotulo: p.nome, busca: p.nome, travado: p.id === dono, dica: p.id === dono ? 'Criou a lista: entra sempre.' : '' })),
@@ -920,7 +936,7 @@
           }), 'btn secondary');
           escolher.disabled = !membrosProntos;
           pintar();
-          membrosSecao.append(U.nota('Os membros conversam no chat do grupo e podem criar compromissos nesta lista. Cada compromisso continua visível só para quem participa dele.'), resumo, escolher);
+          membrosSecao.append(U.campo('Quem entra no grupo', quem), U.nota('Os membros conversam no chat do grupo e podem criar compromissos nesta lista. Cada compromisso continua visível só para quem participa dele.'), resumo, escolher);
           if (lista) A.membros(lista.id).then((r) => { if (r.erro) return membrosSecao.append(U.situacao(r.erro, 'negativo')); r.ids.forEach((id) => escolhidos.add(id)); membrosProntos = true; escolher.disabled = false; pintar(); return undefined; });
           form.append(membrosSecao);
         }
@@ -938,10 +954,11 @@
           rodape.append(U.nota(qtd + ' compromisso(s) nesta lista.'), botaoExcluir);
           form.append(rodape);
         }
-        return { nome, membros: () => (membrosProntos ? [...escolhidos] : []) };
+        // Lista ligada a uma área: os membros vêm da área (o servidor monta); não manda a escolha à mão.
+        return { nome, area: () => area, membros: () => (membrosProntos && !area ? [...escolhidos] : []) };
       },
       salvar: async (c) => {
-        const r = await A.salvarLista(lista ? lista.id : '', { nome: c.nome.value, cor, icone });
+        const r = await A.salvarLista(lista ? lista.id : '', { nome: c.nome.value, cor, icone, area: A.situacao === 'servidor' ? c.area() : undefined });
         if (r.erro) return r.erro;
         const ids = c.membros();
         if (ids.length) {

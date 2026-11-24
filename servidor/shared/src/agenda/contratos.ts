@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AREAS_PERMISSAO } from "../acessos.ts";
 import { compromissoIdSchema } from "../agenda.ts";
 import type { Acesso, Nota, Pessoa } from "./regras.ts";
 
@@ -154,6 +155,8 @@ export type CompromissoResposta = {
 export type GrupoAgendaResposta = {
   id: string; nome: string; cor: string; icone: string; ordenacao: string; ordem: number;
   donoId: string; membro: boolean; podeGerir: boolean; versao: number;
+  /** Área do Acesso por Tela ligada à lista ('' = membros escolhidos à mão). P-46 item 3. */
+  area: AreaLista;
 };
 export type ColunaAgendaResposta = { id: string; nome: string; ordem: number };
 export type RelacaoAgendaResposta = { id: string; de: string; para: string; rotulo: string };
@@ -174,13 +177,20 @@ const corLista = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida");
 const iconeLista = z.string().regex(/^[a-z0-9-]{1,30}$/, "Ícone inválido");
 export const ORDENACOES_AGENDA = ["manual", "data", "criacao", "prioridade", "titulo"] as const;
 
-export const grupoCriacaoSchema = z.object({ id: compromissoIdSchema, nome: nomeLista, cor: corLista, icone: iconeLista.default("lista") });
+/** Área do Acesso por Tela (P-46 item 3): lista ligada a uma área tem como membros as contas com permissão nela. */
+export const AREAS_LISTA = AREAS_PERMISSAO.map(([area]) => area);
+const areaLista = z.enum(["", ...AREAS_LISTA]);
+export type AreaLista = z.infer<typeof areaLista>;
+export const grupoCriacaoSchema = z.object({
+  id: compromissoIdSchema, nome: nomeLista, cor: corLista, icone: iconeLista.default("lista"), area: areaLista.default("")
+});
 export const grupoEdicaoSchema = z.object({
   versao: z.number().int().min(1),
   nome: nomeLista.optional(),
   cor: corLista.optional(),
   icone: iconeLista.optional(),
-  ordenacao: z.enum(ORDENACOES_AGENDA).optional()
+  ordenacao: z.enum(ORDENACOES_AGENDA).optional(),
+  area: areaLista.optional()
 }).strict();
 export const grupoMembrosSchema = z.object({ usuarioIds: z.array(z.string().trim().min(1).max(200)).max(500) });
 
@@ -225,8 +235,21 @@ export type TransferenciaAgenda = z.infer<typeof transferenciaAgendaSchema>;
  * Tarefa criada por uma tela (ex.: agendamento de pedido do Compras chegou na hora). `vinculoRef` é única por
  * empresa: pedir de novo devolve a mesma tarefa (dois aparelhos não duplicam). Vai para a lista "Tarefas das telas".
  */
-/** Telas que criam tarefa sozinhas: ocorrência do pedido de compra agendado e pedido de produção agendado. */
-export const VINCULO_REF_TELAS = /^(compras:oc|producao:pp):[A-Za-z0-9_.-]{1,180}$/;
+/**
+ * Telas que criam tarefa sozinhas: ocorrência do pedido de compra agendado, pedido de produção agendado,
+ * lançar a produção de um pedido enviado e integração de colaborador novo (P-46 itens 1 e 2).
+ */
+export const VINCULO_REF_TELAS = /^(compras:oc|producao:pp|producao:lancar|pessoas:integracao):[A-Za-z0-9_.-]{1,180}$/;
+/**
+ * Regra automática por permissão (P-46 itens 1 e 2): a tarefa vai para TODAS as contas ativas com a permissão, e
+ * quem dispara precisa ter a mesma permissão. Cada tipo de referência só aceita a sua permissão.
+ */
+export const REGRAS_POR_PERMISSAO = { "producao:lancar": "producao_lancar", "pessoas:integracao": "pessoas_editar" } as const;
+export type PermissaoDeRegra = (typeof REGRAS_POR_PERMISSAO)[keyof typeof REGRAS_POR_PERMISSAO];
+const tipoDeVinculo = (ref: string) => ref.split(":").slice(0, 2).join(":");
+/** A permissão que a referência exige (regra automática) ou undefined (tarefa com responsáveis escolhidos). */
+export const permissaoDaRegra = (ref: string): PermissaoDeRegra | undefined =>
+  (REGRAS_POR_PERMISSAO as Record<string, PermissaoDeRegra>)[tipoDeVinculo(ref)];
 export const tarefaDeTelaSchema = z.object({
   id: compromissoIdSchema,
   vinculoRef: z.string().regex(VINCULO_REF_TELAS, "Referência de tela desconhecida"),
@@ -236,8 +259,15 @@ export const tarefaDeTelaSchema = z.object({
   notas: texto(2000).default(""),
   data: dataOuVazio.default(""),
   hora: horaOuVazio.default(""),
-  /** Contas que recebem a tarefa (responsáveis: veem e concluem). */
-  responsaveis: z.array(z.string().trim().min(1).max(200)).min(1).max(50)
+  /** Contas que recebem a tarefa (responsáveis: veem e concluem). Ou isto, ou `paraQuemTem`. */
+  responsaveis: z.array(z.string().trim().min(1).max(200)).min(1).max(50).optional(),
+  /** Regra por permissão: o servidor resolve quem recebe (P-46 itens 1 e 2). */
+  paraQuemTem: z.enum(["producao_lancar", "pessoas_editar"]).optional(),
+  /** Subtarefas que já nascem com a tarefa (ex.: integração de colaborador novo). */
+  subtarefas: z.array(texto(200).min(1)).max(10).default([])
+}).superRefine((t, ctx) => {
+  if (Boolean(t.responsaveis) === Boolean(t.paraQuemTem)) ctx.addIssue({ code: "custom", message: "Informe quem recebe a tarefa.", path: ["responsaveis"] });
+  if (permissaoDaRegra(t.vinculoRef) !== t.paraQuemTem) ctx.addIssue({ code: "custom", message: "Esta tela não cria tarefa para esse grupo de pessoas.", path: ["paraQuemTem"] });
 });
 export const concluirPorVinculoSchema = z.object({ vinculoRef: z.string().regex(VINCULO_REF, "Referência inválida") });
 export type TarefaDeTela = z.infer<typeof tarefaDeTelaSchema>;
@@ -249,21 +279,64 @@ export const configPessoaSchema = z
     expedienteInicio: horaOuVazio.default(""),
     expedienteFim: horaOuVazio.default(""),
     foraExpediente: z.enum(["permitir", "bloquear"]).default("permitir"),
-    horaFora: z.enum(["nao-registrar", "comum", "extra"]).default("nao-registrar"),
-    /** null = nunca sai sozinho. */
+    /** null = o padrão do sistema (INATIVIDADE_PADRAO_MINUTOS). P-46 item 4: vale para o sistema todo. */
     inatividadeMinutos: z.number().int().min(1, "Mínimo de 1 minuto").max(480, "Máximo de 480 minutos (8 horas)").nullable().default(null)
   })
+  // Sem .strict(): a tela antiga (em cache depois de publicar) ainda manda "horaFora"; o campo é ignorado.
   .superRefine((c, ctx) => {
     if (Boolean(c.expedienteInicio) !== Boolean(c.expedienteFim)) ctx.addIssue({ code: "custom", message: "Informe o início e o fim do expediente, ou nenhum dos dois.", path: ["expedienteFim"] });
     else if (c.expedienteInicio && c.expedienteFim <= c.expedienteInicio) ctx.addIssue({ code: "custom", message: "O fim do expediente deve ser depois do início.", path: ["expedienteFim"] });
     if (c.expedienteInicio && !c.expedienteDias.length) ctx.addIssue({ code: "custom", message: "Marque os dias do expediente.", path: ["expedienteDias"] });
-    if (c.foraExpediente === "bloquear" && !c.expedienteInicio) ctx.addIssue({ code: "custom", message: "Para bloquear fora do expediente, informe o expediente.", path: ["foraExpediente"] });
-    if (c.horaFora !== "nao-registrar" && !c.expedienteInicio) ctx.addIssue({ code: "custom", message: "Para registrar a hora fora do expediente, informe o expediente.", path: ["horaFora"] });
+    // Bloquear sem expediente aqui é aceito: o expediente pode vir dos Horários/Escalas do colaborador ligado
+    // (0009). Sem expediente nenhum, a Agenda simplesmente não fecha.
   });
+/** Tempo parado padrão (P-46 item 4, Zé 24/11/2026): 15 minutos, no sistema todo. */
+export const INATIVIDADE_PADRAO_MINUTOS = 15;
 export type ConfigPessoa = z.infer<typeof configPessoaSchema>;
-export type ConfigPessoaResposta = ConfigPessoa & { usuarioId: string; nome: string; ativo: boolean; atualizadoEm: string };
+/** De onde vem o expediente: Horários/Escalas do colaborador ligado à conta, ou o das Configurações da Agenda. */
+export type OrigemExpediente = "escala" | "agenda" | "nenhum";
+export type ConfigPessoaResposta = ConfigPessoa & {
+  usuarioId: string; nome: string; ativo: boolean; atualizadoEm: string;
+  /** Conta ligada a um colaborador (P-46 item 5): o expediente vem dos Horários/Escalas dele. */
+  colaboradorLigado: boolean; origemExpediente: OrigemExpediente; descricaoExpediente: string;
+};
 /** O que a própria pessoa recebe ao entrar: a regra dela e se agora está dentro do expediente. */
-export type MinhaConfigResposta = ConfigPessoa & { dentroDoExpediente: boolean; bloqueadaAgora: boolean; descricaoExpediente: string };
+export type MinhaConfigResposta = ConfigPessoa & {
+  dentroDoExpediente: boolean; bloqueadaAgora: boolean; descricaoExpediente: string; origemExpediente: OrigemExpediente;
+  /** Tempo parado que vale para a pessoa (o dela ou o padrão); null = não sai sozinho (conta de posto do caixa). */
+  inatividadeEfetivaMinutos: number | null;
+};
+
+/* ---------- Expediente vindo dos Horários/Escalas (0009, P-46 item 5) ---------- */
+
+/** Janela que o aparelho manda: de 31 dias atrás até 62 dias à frente. */
+export const EXPEDIENTE_DIAS_ANTES = 31;
+export const EXPEDIENTE_DIAS_DEPOIS = 62;
+const colaboradorId = z.string().regex(/^[A-Za-z0-9_.:-]{1,100}$/, "Colaborador inválido");
+const diaExpediente = z
+  .object({ dia: z.string().regex(DATA, "Data inválida"), trabalha: z.boolean(), inicio: horaOuVazio.default(""), fim: horaOuVazio.default("") })
+  .strict()
+  .superRefine((d, ctx) => {
+    if (d.trabalha && (!d.inicio || !d.fim || d.inicio === d.fim)) ctx.addIssue({ code: "custom", message: "Dia de trabalho sem horário.", path: ["inicio"] });
+    if (!d.trabalha && (d.inicio || d.fim)) ctx.addIssue({ code: "custom", message: "Folga não tem horário.", path: ["inicio"] });
+  });
+/**
+ * O aparelho manda, para cada colaborador ligado a uma conta, o resultado dia a dia dos Horários/Escalas (só
+ * trabalha/folga e o horário). Os dias de `de` a `ate` de cada colaborador enviado são substituídos.
+ */
+export const expedientesSchema = z
+  .object({
+    de: z.string().regex(DATA, "Data inválida"),
+    ate: z.string().regex(DATA, "Data inválida"),
+    colaboradores: z.array(z.object({ colaboradorId, dias: z.array(diaExpediente).max(120) }).strict()).max(500)
+  })
+  .strict()
+  .refine((e) => e.ate >= e.de, { message: "O fim do período deve ser depois do início.", path: ["ate"] })
+  .superRefine((e, ctx) => {
+    for (const c of e.colaboradores) if (c.dias.some((d) => d.dia < e.de || d.dia > e.ate)) ctx.addIssue({ code: "custom", message: "Dia fora do período enviado.", path: ["colaboradores"] });
+  });
+export type ExpedientesEnvio = z.infer<typeof expedientesSchema>;
+export const colaboradorDaContaSchema = z.object({ colaboradorId: colaboradorId.nullable() }).strict();
 
 export const desempenhoQuerySchema = z.object({
   de: z.string().regex(DATA, "Data inválida"),

@@ -64,10 +64,11 @@ export async function membrosDe(ex: typeof banco | TransacaoBanco, empresaId: st
     .where(and(eq(agendaGrupoMembros.empresaId, empresaId), eq(agendaGrupoMembros.grupoId, grupoId)));
   return r.map((x) => x.id);
 }
-export async function trocarMembros(tx: TransacaoBanco, empresaId: string, grupoId: string, ids: string[], criadoPor: string) {
+/** Troca todos os membros. origem 'area' = vieram da permissão na área ligada à lista (P-46 item 3). */
+export async function trocarMembros(tx: TransacaoBanco, empresaId: string, grupoId: string, ids: string[], criadoPor: string, origem: "manual" | "area" = "manual") {
   await tx.delete(agendaGrupoMembros).where(and(eq(agendaGrupoMembros.empresaId, empresaId), eq(agendaGrupoMembros.grupoId, grupoId)));
   if (!ids.length) return;
-  await tx.insert(agendaGrupoMembros).values(ids.map((usuarioId) => ({ empresaId, grupoId, usuarioId, criadoPor, origem: "manual" })));
+  await tx.insert(agendaGrupoMembros).values(ids.map((usuarioId) => ({ empresaId, grupoId, usuarioId, criadoPor, origem })));
 }
 
 /* ---------- Colunas ---------- */
