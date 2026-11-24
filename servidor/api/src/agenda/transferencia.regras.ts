@@ -45,8 +45,6 @@ export type Contexto = {
   adminId: string;
   /** Gestor dos compromissos sem criador (feitos antes do login) e dos criados por id que não é conta (pergunta 7). */
   gestorSemCriador: string;
-  /** "de → para" dos ids que não são conta (lista provisória u-jose, u-rodrigo, u-ana…). null = fica sem ligação. */
-  dePara: Record<string, string | null>;
   /** Todas as contas da empresa (pessoa = conta da mesma empresa). */
   contas: Set<string>;
   /** Membros iniciais das listas: todas as contas ativas (pergunta 4). */
@@ -127,12 +125,11 @@ export function converter(documento: unknown, ctx: Contexto): Conversao {
   const agora = new Date();
   const autor = { criadoPor: ctx.adminId, atualizadoPor: ctx.adminId };
   const semConta = new Map<string, number>();
-  /** Id de pessoa → conta da empresa (ou null). Conta = ela mesma; senão o "de → para". */
+  /** Id de pessoa → conta da empresa, ou null (pessoa de teste da lista provisória: fica de fora, P-45). */
   const pessoa = (id: string): string | null => {
     if (ctx.contas.has(id)) return id;
     semConta.set(id, (semConta.get(id) ?? 0) + 1);
-    const para = ctx.dePara[id];
-    return para && ctx.contas.has(para) ? para : null;
+    return null;
   };
 
   /* Listas */
@@ -318,7 +315,7 @@ export function converter(documento: unknown, ctx: Contexto): Conversao {
     }
     if (semContaAqui.length) {
       legado["pessoasSemConta"] = semContaAqui;
-      p.push({ tipo: "compromisso", id, titulo: titulo.slice(0, 80), detalhe: `${semContaAqui.length} pessoa(s) sem conta (ou repetidas depois da ligação) guardadas à parte, sem acesso.` });
+      p.push({ tipo: "compromisso", id, titulo: titulo.slice(0, 80), detalhe: `${semContaAqui.length} pessoa(s) de teste (sem conta) ou repetida(s) ficaram de fora, sem acesso a nada.` });
     }
     // Notas
     const notasDoc = lista(av["notas"]);

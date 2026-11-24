@@ -61,7 +61,7 @@ async function cenario() {
   return { g, resp, fora, doc };
 }
 
-const transferir = (g: Conta, corpo: object) => pedir(g.cookie, "POST", "/api/agenda/transferencia", { documentoVersao: 1, gestorSemCriador: g.usuarioId, dePara: {}, ...corpo });
+const transferir = (g: Conta, corpo: object) => pedir(g.cookie, "POST", "/api/agenda/transferencia", { documentoVersao: 1, gestorSemCriador: g.usuarioId, ...corpo });
 
 describe("agenda: transferência do documento", () => {
   it("prévia só para o administrador, com contagens, ids sem conta e itens sem criador", async () => {
@@ -76,6 +76,7 @@ describe("agenda: transferência do documento", () => {
 
   it("executa: tudo na tabela ou na pendência; cor com código neutralizada; nome repetido vira (2); lista sumida vai para a primeira", async () => {
     const { g, resp, fora } = await cenario();
+    // Pedir para ligar uma pessoa de teste não tem mais efeito: o campo nem existe (P-45, 24/11/2026).
     const r = await transferir(g, { dePara: { "u-jose": resp.usuarioId } });
     expect(r.statusCode, r.body).toBe(200);
     const t = r.json().data;
@@ -93,8 +94,10 @@ describe("agenda: transferência do documento", () => {
     const ag1 = a.compromissos.find((x: { id: string }) => x.id === "ag-1");
     expect(ag1.adiadoPara).toBe(""); // a soneca antiga não volta
     expect(ag1.avaliacao.notas).toHaveLength(1);
-    // u-jose ligado à conta do responsável: as duas linhas viram uma (a primeira vale).
+    // u-jose (pessoa de teste) fica de fora; só a conta real continua.
     expect(ag1.pessoas.map((p: { id: string }) => p.id)).toEqual([resp.usuarioId]);
+    const ag1Banco = await pool.query(`SELECT legado FROM agenda_compromissos WHERE empresa_id = $1 AND id = 'ag-1'`, [g.empresaId]);
+    expect(ag1Banco.rows[0].legado.pessoasSemConta.map((x: { id: string }) => x.id)).toEqual(["u-jose"]);
     expect(a.compromissos.find((x: { id: string }) => x.id === "ag-perdido").grupoId).toBe("lista-gestao-pessoas");
     expect(a.compromissos.filter((x: { origemId: string }) => x.origemId === "ag-rep").map((x: { ocorrencia: string }) => x.ocorrencia).sort()).toEqual(["", "2026-11-05"]);
     expect(a.relacoes).toEqual([{ id: "rel-1", de: "ag-1", para: "ag-rep", rotulo: "antes de" }]);
@@ -103,7 +106,7 @@ describe("agenda: transferência do documento", () => {
     const antigo = a.compromissos.find((x: { id: string }) => x.id === "ag-antigo");
     expect(antigo.gestorId).toBe(g.usuarioId);
     expect((await agenda(fora)).compromissos.map((x: { id: string }) => x.id)).not.toContain("ag-antigo");
-    // u-ana não foi ligada: guardada à parte, sem acesso.
+    // u-ana (pessoa de teste): fora, sem acesso; registrada à parte só para conferência.
     const { rows } = await pool.query(`SELECT legado, sem_criador_original FROM agenda_compromissos WHERE empresa_id = $1 AND id = 'ag-antigo'`, [g.empresaId]);
     expect(rows[0].sem_criador_original).toBe(true);
     expect(rows[0].legado.pessoasSemConta[0].id).toBe("u-ana");
@@ -166,7 +169,7 @@ describe("agenda: transferência do documento", () => {
     const repo = await import("../../api/src/agenda/transferencia.repository.ts");
     const contas = [g.usuarioId, resp.usuarioId];
     const conv = converter(novo, {
-      empresaId: g.empresaId, adminId: g.usuarioId, gestorSemCriador: g.usuarioId, dePara: {},
+      empresaId: g.empresaId, adminId: g.usuarioId, gestorSemCriador: g.usuarioId,
       contas: new Set(contas), contasAtivas: contas, existentes: await repo.existentes(banco, g.empresaId)
     });
     expect(conv.atualizar.map((l) => l.id)).toContain("ag-rep");
@@ -199,7 +202,6 @@ describe("agenda: transferência do documento", () => {
     const { g, resp } = await cenario();
     const outra = await logado("usuario");
     expect((await transferir(g, { gestorSemCriador: outra.usuarioId })).statusCode).toBe(400);
-    expect((await transferir(g, { dePara: { "u-jose": outra.usuarioId } })).statusCode).toBe(400);
     expect((await pedir(resp.cookie, "POST", "/api/agenda/transferencia", { documentoVersao: 1, gestorSemCriador: resp.usuarioId })).statusCode).toBe(403);
     expect((await agenda(g)).estado.noServidor).toBe(false);
   });
@@ -222,7 +224,7 @@ describe("agenda: cópia antiga do aparelho", () => {
 
 describe("agenda: conferência da soma", () => {
   it("se a soma não fecha, a conversão diz o motivo", () => {
-    const ctx = { empresaId: "e", adminId: "a", gestorSemCriador: "a", dePara: {}, contas: new Set(["a"]), contasAtivas: ["a"], existentes: nadaExistente() };
+    const ctx = { empresaId: "e", adminId: "a", gestorSemCriador: "a", contas: new Set(["a"]), contasAtivas: ["a"], existentes: nadaExistente() };
     const c = converter({ listas: [{ id: "lista-1", nome: "L", cor: "#000000" }], itens: [{ id: "ag-1", listaId: "lista-1", titulo: "x", criadoPor: "a" }] }, ctx);
     expect(somaFecha(c)).toBe("");
     c.destino["itens"]!.tabela -= 1;

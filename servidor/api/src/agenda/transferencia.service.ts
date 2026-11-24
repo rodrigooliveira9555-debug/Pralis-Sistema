@@ -42,7 +42,7 @@ export async function previa(perfil: PerfilSessao) {
   const dados = lerDocumento(doc);
   const [contas, ex, est] = [await repo.contas(banco, empresaId), await repo.existentes(banco, empresaId), await estado(banco, empresaId)];
   const conv = converter(dados, {
-    empresaId, adminId: perfil.usuarioId, gestorSemCriador: perfil.usuarioId, dePara: {},
+    empresaId, adminId: perfil.usuarioId, gestorSemCriador: perfil.usuarioId,
     contas: new Set(contas.map((c) => c.id)), contasAtivas: contas.filter((c) => c.ativo).map((c) => c.id), existentes: ex
   });
   const idsDoc = itensDe(dados).map((i) => String(i["id"]));
@@ -79,9 +79,6 @@ export async function executar(perfil: PerfilSessao, entrada: TransferenciaAgend
   const ativas = new Set(todas.filter((c) => c.ativo).map((c) => c.id));
   if (!ativas.has(entrada.gestorSemCriador)) throw new ErroDominio("Escolha uma conta ativa da empresa para os compromissos sem criador.", 400, "AGENDA_INVALIDO");
   const contas = new Set(todas.map((c) => c.id));
-  if (Object.values(entrada.dePara).some((para) => para !== null && !contas.has(para))) {
-    throw new ErroDominio("Uma das ligações aponta para uma conta que não é desta empresa.", 400, "AGENDA_INVALIDO");
-  }
 
   let origem: "servidor" | "retransferencia" = "servidor";
   let documentoVersao: number | null = null;
@@ -96,7 +93,7 @@ export async function executar(perfil: PerfilSessao, entrada: TransferenciaAgend
       const dados = lerDocumento(doc);
       if (await estado(tx, empresaId)) origem = "retransferencia";
       const conv = converter(dados, {
-        empresaId, adminId: perfil.usuarioId, gestorSemCriador: entrada.gestorSemCriador, dePara: entrada.dePara,
+        empresaId, adminId: perfil.usuarioId, gestorSemCriador: entrada.gestorSemCriador,
         contas, contasAtivas: [...ativas], existentes: origem === "servidor" ? nadaExistente() : await repo.existentes(tx, empresaId)
       });
       const motivo = somaFecha(conv);

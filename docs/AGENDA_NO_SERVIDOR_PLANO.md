@@ -436,11 +436,12 @@ compromissos, 41 concluídos, 12 avaliações" e confirma. Se algo não bater, n
   `adiadoPara` não é copiado (a soneca era temporária; o alerta volta ao normal) e fica em `legado`. Campos que a tabela
   não tem ficam em `legado` (nada se perde).
 - **Item sem `criadoPor`** (feito antes do login; hoje fica aberto a **todos**, inclusive chat e arquivos): recebe
-  `gestor_id` = conta que o Zé escolher na prévia (padrão proposto: a do Rodrigo, dono do iPad) e
-  `sem_criador_original = true`. As pessoas dele continuam. Pergunta 7.
-- **`criadoPor` ou pessoa que não é conta da empresa** (ids da lista provisória `u-jose`, `u-rodrigo`, `u-ana`): a prévia
-  mostra um "de → para" para o Zé ligar a uma conta real; o que ficar sem ligação vai para `legado.pessoasSemConta`
-  (com as permissões) e **não dá acesso a ninguém**. Pergunta 8.
+  `gestor_id` = conta escolhida na prévia (padrão: o administrador que transfere; decidido em 24/11/2026: o
+  administrador, o Rodrigo) e `sem_criador_original = true`. As pessoas dele continuam. Pergunta 7.
+- **`criadoPor` ou pessoa que não é conta da empresa** (ids da lista provisória `u-jose`, `u-rodrigo`, `u-ana`, que são
+  pessoas de teste): ~~a prévia mostra um "de → para" para o Zé ligar a uma conta real~~ **SUPERADO em 24/11/2026 (Zé,
+  P-45):** as pessoas de teste são apagadas, não há "de → para". Ficam de fora, registradas só em
+  `legado.pessoasSemConta` para conferência, e **não dão acesso a ninguém**. Pergunta 8.
 - `avaliacao.notas` → `agenda_avaliacoes` (inseridas como estão; nota com pessoa sem conta vai para `legado`).
 - Cópias concluídas (`origemId`) → `origem_id` + `ocorrencia` = a data da cópia. Se o duplo toque (M2) já criou duas
   cópias da mesma ocorrência, só a primeira recebe `ocorrencia`; as outras entram com `ocorrencia` vazia e aparecem na

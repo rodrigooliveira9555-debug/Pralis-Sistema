@@ -1,8 +1,9 @@
 /*
  * Agenda — levar a Agenda antiga (documento cicluz-agenda-v1) para o servidor (plano, seções 4 e 5).
- * O administrador vê a prévia (contagens, o que vai para a pendência), liga as pessoas da lista provisória a contas
- * reais ("de → para"), escolhe o gestor dos compromissos feitos antes do login e confirma. Quem não é administrador
- * vê o aviso de espera. O servidor lê o próprio documento, confere a contagem e não apaga nada.
+ * O administrador vê a prévia (contagens, o que vai para a pendência), escolhe o gestor dos compromissos feitos antes
+ * do login e confirma. As pessoas de teste da lista provisória (José · Compras, Rodrigo · Gerência, Ana · Estoque) não
+ * são contas e ficam de fora (Zé, 24/11/2026: apagar as de teste; P-45). Quem não é administrador vê o aviso de espera.
+ * O servidor lê o próprio documento, confere a contagem e não apaga o documento.
  */
 (function () {
   'use strict';
@@ -11,8 +12,6 @@
   const { el, botao } = U;
 
   const ehAdministrador = () => Boolean(window.CicluzSessao && window.CicluzSessao.perfil && window.CicluzSessao.perfil.papel === 'administrador');
-  /** Nome da lista provisória (José · Compras…), só para reconhecer na tela. */
-  const nomeProvisorio = (id) => ((window.CicluzComprasDados && window.CicluzComprasDados.RESPONSAVEIS) || []).find((p) => p.id === id);
 
   function render(body, { aoConcluir }) {
     if (A.situacao === 'carregando') { body.append(U.vazio('Carregando a Agenda…', '')); return; }
@@ -50,16 +49,11 @@
     decisoes.append(U.campo('Gestor dos compromissos sem criador', gestor,
       (p.itensSemCriador || 0) + ' compromisso(s) foram feitos antes do login e hoje ficam abertos a todos. Escolha quem passa a ser o gestor deles.'));
 
-    // "De → para": ids da lista provisória (não são contas) ligados a contas reais.
-    const dePara = {};
-    (p.idsSemConta || []).forEach((x) => {
-      const prov = nomeProvisorio(x.id);
-      const sel = U.seletor([['', 'Deixar sem ligação (guardado, sem acesso)'], ...contas], '');
-      sel.onchange = () => { dePara[x.id] = sel.value || null; };
-      dePara[x.id] = null;
-      decisoes.append(U.campo((prov ? prov.nome : x.id) + ' → conta', sel, 'Aparece ' + x.usos + ' vez(es). Sem ligação, fica guardado no compromisso e não dá acesso a ninguém.'));
-    });
-    if (!(p.idsSemConta || []).length) decisoes.append(U.nota('Todas as pessoas dos compromissos já são contas da empresa.'));
+    // Pessoas de teste (lista provisória, não são contas): ficam de fora, sem acesso a nada.
+    const usosTeste = (p.idsSemConta || []).reduce((n, x) => n + (x.usos || 0), 0);
+    decisoes.append(U.nota(usosTeste
+      ? 'As pessoas de teste (José · Compras, Rodrigo · Gerência, Ana · Estoque) aparecem ' + usosTeste + ' vez(es) nos compromissos e ficam de fora: não viram pessoas da Agenda nem dão acesso a nada.'
+      : 'Todas as pessoas dos compromissos já são contas da empresa.'));
     caixa.append(decisoes);
 
     // O que vai para a pendência (ajustado e guardado à parte) e o que só é informado.
@@ -83,7 +77,7 @@
     const acoes = el('div', 'agenda-form-rodape');
     const levar = botao('Levar a Agenda para o servidor', () => {
       U.confirmar('Levar a Agenda para o servidor', 'Confirmar? ' + (c.itens || 0) + ' compromisso(s) e ' + (c.listas || 0) + ' lista(s) vão para o servidor. Se a conferência não fechar, nada muda.', 'Levar', async () => {
-        const r = await A.transferir({ documentoVersao: p.documento ? p.documento.versao : null, gestorSemCriador: gestor.value, dePara });
+        const r = await A.transferir({ documentoVersao: p.documento ? p.documento.versao : null, gestorSemCriador: gestor.value });
         if (r.erro) return r.erro;
         U.avisar('A Agenda está no servidor.');
         aoConcluir();

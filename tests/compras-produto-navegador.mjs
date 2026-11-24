@@ -42,7 +42,7 @@ async function paginaNaApi(api, documentos, largura = 1024) {
   await p.evaluate(async () => {
     if (CicluzAgendaDados.situacao !== 'nao-transferida') return;
     const previa = await CicluzSync.api('/agenda/transferencia');
-    const r = await CicluzAgendaDados.transferir({ documentoVersao: previa.documento.versao, gestorSemCriador: CicluzSessao.perfil.usuarioId, dePara: {} });
+    const r = await CicluzAgendaDados.transferir({ documentoVersao: previa.documento.versao, gestorSemCriador: CicluzSessao.perfil.usuarioId });
     if (r.erro) throw new Error(r.erro);
   });
   await p.evaluate(() => { if (document.body.classList.contains('mobile-menu-visible')) document.getElementById('toggleMenu').click(); CicluzCompras.abrir('produtos'); });

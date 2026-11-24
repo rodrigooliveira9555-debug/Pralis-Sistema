@@ -123,14 +123,14 @@ async function limparAgenda(p) {
   ok(await q.locator('.agenda-nova-entrada').count() === 0, 'E não consegue criar nada');
   await q.close();
 
-  // O administrador: prévia, "de → para" e confirmação.
+  // O administrador: prévia e confirmação. As pessoas de teste da lista provisória ficam de fora (P-45, 24/11/2026).
   const p = await abrirPagina(1280, 900);
   await p.evaluate(() => { document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.abrir(''); });
   await p.locator('.agenda-transferencia-numero').first().waitFor();
   const numeros = await p.locator('.agenda-transferencia-numero').allTextContents();
   ok(numeros.includes('2Listas') && numeros.includes('2Compromissos'), 'Prévia com as contagens: ' + numeros.join(' | '));
-  ok(await p.getByLabel('José · Compras → conta').count() === 1 && await p.getByLabel('Ana · Estoque → conta').count() === 1, 'Pessoas da lista provisória aparecem com o nome que tinham');
-  await p.getByLabel('José · Compras → conta').selectOption({ label: RESP_UM.nome });
+  ok((await p.locator('#agenda-view').textContent()).includes('As pessoas de teste (José · Compras, Rodrigo · Gerência, Ana · Estoque) aparecem 2 vez(es)'), 'Prévia avisa que as pessoas de teste ficam de fora');
+  ok(await p.locator('#agenda-view select').count() === 1, 'Só se escolhe o gestor dos sem criador (não há ligação de pessoas de teste)');
   await p.getByRole('button', { name: 'Levar a Agenda para o servidor' }).click();
   ok((await dialogo(p).textContent()).includes('2 compromisso(s) e 2 lista(s)'), 'Confirmação diz o que vai');
   await confirmar(p);
@@ -138,8 +138,8 @@ async function limparAgenda(p) {
   ok(await p.locator('.agenda-automatica').count() === 7, 'Depois de levar, a Agenda abre normalmente');
   const d = await dados(p);
   const antigo = d.itens.find((i) => i.id === 'ag-antigo-1');
-  ok(antigo && antigo.criadoPor !== '' && antigo.pessoas.map((x) => x.id).join() === RESP_UM.id, 'José · Compras virou a conta escolhida; o sem criador ganhou gestor');
-  ok(d.itens.find((i) => i.id === 'ag-antigo-2').pessoas.length === 0, 'Ana sem ligação: guardada no servidor, sem acesso');
+  ok(antigo && antigo.criadoPor !== '' && antigo.pessoas.length === 0, 'José · Compras (de teste) ficou de fora; o sem criador ganhou gestor');
+  ok(d.itens.find((i) => i.id === 'ag-antigo-2').pessoas.length === 0, 'Ana · Estoque (de teste) ficou de fora, sem acesso');
   await p.waitForFunction(() => localStorage.getItem('cicluz-agenda-transferida-v1'), null, { timeout: 10000 });
   ok(await p.evaluate(() => Boolean(localStorage.getItem('cicluz-agenda-v1'))), 'A cópia antiga do aparelho foi enviada para conferência e NÃO foi apagada');
   await p.close();

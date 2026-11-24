@@ -205,9 +205,8 @@ export const transferenciaAgendaSchema = z.object({
   /** A versão do documento que o administrador viu na prévia (mudou depois → refazer a prévia). null = não havia documento. */
   documentoVersao: z.number().int().min(1).nullable(),
   /** Conta que vira gestora dos compromissos sem criador (pergunta 7). */
-  gestorSemCriador: z.string().trim().min(1).max(200),
-  /** "de → para" dos ids que não são conta (pergunta 8). null = fica guardado sem dar acesso. */
-  dePara: z.record(z.string().max(200), z.string().max(200).nullable()).default({})
+  gestorSemCriador: z.string().trim().min(1).max(200)
+  // Pessoas que não são conta (as de teste da lista provisória) não são ligadas a ninguém: ficam de fora (P-45, 24/11/2026).
 });
 export const copiaDoAparelhoSchema = z.object({ valor: z.string().min(2).max(LIMITE_CORPO_AGENDA) });
 export type TransferenciaAgenda = z.infer<typeof transferenciaAgendaSchema>;
