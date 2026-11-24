@@ -425,3 +425,11 @@ body.dark-theme .agenda-chat-autor { color: #c4b0f7; }
 .agenda-chat-envio { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
 .agenda-chat-envio textarea { resize: none; }
 .agenda-chat-estado:empty { display: none; }
+
+/* Levar a Agenda para o servidor (agenda/transferencia.js): números da prévia e lista do que conferir. */
+.agenda-transferencia { display: grid; gap: 12px; }
+.agenda-transferencia-numeros { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+.agenda-transferencia-numero { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--ui-border-base); background: var(--theme-card, #fff); }
+.agenda-transferencia-numero b { font-size: 20px; color: var(--ui-text); }
+.agenda-transferencia-numero small { color: var(--layout-muted, #6b6b76); }
+.agenda-transferencia-pendencias { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; overflow-wrap: anywhere; }
