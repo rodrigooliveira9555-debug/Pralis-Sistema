@@ -165,7 +165,15 @@
     const s = U.secao('Vendas', v.total, ordem);
     const umDia = f.dataInicio === f.dataFim;
     const rotulos = new Map(D.abasPdv().map((a) => [a.id, a.rotulo]));
-    const situacao = (x) => { const [t, tom] = D.ROTULO_STATUS[x.status] || [x.status, 'neutro']; return U.situacao(t, tom); };
+    // Situação e, ao lado, o botão Detalhes (abre o popup da venda). É o único jeito de abrir o detalhe.
+    const situacao = (x) => {
+      const [t, tom] = D.ROTULO_STATUS[x.status] || [x.status, 'neutro'];
+      const c = el('span', 'vendas-pdv-situacao');
+      const b = botao('Detalhes', () => detalhe(x), 'btn secondary vendas-pdv-detalhes');
+      b.setAttribute('aria-label', 'Detalhes da venda das ' + D.hora(x.dataVenda));
+      c.append(U.situacao(t, tom), b);
+      return c;
+    };
     const colunas = [
       ['Hora', (x) => (umDia ? '' : D.dataCurta(x.dataReferencia) + ' ') + D.hora(x.dataVenda), 'caixa-num vendas-pdv-hora'],
       ...(f.pdvId ? [] : [['PDV', (x) => rotulos.get(x.pdvId) || x.pdvNome || '—']]),
@@ -174,7 +182,7 @@
       ['Valor', (x) => moeda(x.valorLiquido), 'caixa-num'],
       ['Situação', situacao],
     ];
-    s.append(U.tabela(colunas, v.itens, { aoClicar: detalhe, vazioTexto: 'Nenhuma venda neste filtro.' }));
+    s.append(U.tabela(colunas, v.itens, { vazioTexto: 'Nenhuma venda neste filtro.' }));
     const paginas = Math.max(1, Math.ceil(v.total / estado.porPagina));
     if (v.total > estado.porPagina) {
       const inicio = (estado.pagina - 1) * estado.porPagina + 1;
@@ -189,27 +197,36 @@
     return s;
   }
 
+  /** Popup da venda: o essencial em cima (valor, situação, PDV, operador e hora) e embaixo os itens, o pagamento e os valores. */
   function detalhe(x) {
-    U.dialogo({
-      titulo: 'Venda · ' + D.dataCurta(x.dataReferencia) + ' ' + D.hora(x.dataVenda),
-      subtitulo: (x.pdvNome || 'PDV não informado') + (x.colaboradorNome ? ' · ' + x.colaboradorNome : ''),
-      cor: COR, corTexto: COR_TEXTO, largo: true, quadro: 'Venda',
+    const rotulos = new Map(D.abasPdv().map((a) => [a.id, a.rotulo]));
+    const [st, tom] = D.ROTULO_STATUS[x.status] || [x.status, 'neutro'];
+    const bloco = (titulo, ...nos) => { const b = el('section', 'vendas-pdv-detalhe-bloco'); b.append(el('h3', null, titulo), ...nos); return b; };
+    const linhas = (pares) => {
+      const dl = el('dl', 'vendas-pdv-detalhe-linhas');
+      pares.forEach(([t, v, forte]) => { const d = el('div', forte ? 'forte' : null); d.append(el('dt', null, t), el('dd', null, v)); dl.append(d); });
+      return dl;
+    };
+    window.CicluzVendasPdvPopup.abrir({
+      titulo: 'Detalhes da venda',
+      subtitulo: D.dataCurta(x.dataReferencia) + ' às ' + D.hora(x.dataVenda),
+      cor: COR, corTexto: COR_TEXTO,
       montar(form) {
-        form.append(U.tabela([
-          ['Produto', (i) => i.descricaoProduto],
-          ['Qtd.', (i) => numero(i.quantidade), 'caixa-num'],
-          ['Unitário', (i) => moeda(i.valorUnitario), 'caixa-num'],
-          ['Total', (i) => moeda(i.valorTotal), 'caixa-num'],
-        ], x.itensVenda, { vazioTexto: 'A venda veio sem itens.' }));
-        const dl = el('dl', 'caixa-declarado');
-        const par = (t, v) => { const d = el('div'); d.append(el('dt', null, t), el('dd', null, v)); dl.append(d); };
-        par('Subtotal', moeda(x.valorOriginal));
-        par('Desconto', moeda(x.valorDesconto));
-        par('Acréscimo', moeda(x.valorAcrescimo));
-        par('Total', moeda(x.valorLiquido));
-        x.pagamentos.forEach((p) => par(D.nomePagamento(p), moeda(p.totalPago)));
-        if (x.status === 'cancelado') par('Cancelamento', [x.cancelamentoMotivo, x.cancelamentoJustificativa].filter(Boolean).join(' · ') || 'Sem motivo informado');
-        form.append(dl);
+        const topo = el('div', 'vendas-pdv-detalhe-topo');
+        const valor = el('div');
+        valor.append(el('span', 'vendas-pdv-numero-rotulo', 'Total'), el('strong', null, moeda(x.valorLiquido)));
+        topo.append(valor, U.situacao(st, tom));
+        const quem = el('p', 'vendas-pdv-detalhe-quem', [rotulos.get(x.pdvId) || x.pdvNome || 'PDV não informado', x.colaboradorNome].filter(Boolean).join(' · '));
+        const itens = x.itensVenda.length
+          ? linhas(x.itensVenda.map((i) => [numero(i.quantidade) + ' × ' + i.descricaoProduto, moeda(i.valorTotal)]))
+          : U.nota('A venda veio sem itens.');
+        const pagos = x.pagamentos.length ? linhas(x.pagamentos.map((p) => [D.nomePagamento(p), moeda(p.totalPago)])) : U.nota('Sem pagamento informado.');
+        const valores = [['Subtotal', moeda(x.valorOriginal)]];
+        if (Number(x.valorDesconto)) valores.push(['Desconto', '− ' + moeda(x.valorDesconto)]);
+        if (Number(x.valorAcrescimo)) valores.push(['Acréscimo', moeda(x.valorAcrescimo)]);
+        valores.push(['Total', moeda(x.valorLiquido), true]);
+        form.append(topo, quem, bloco('Itens', itens), bloco('Pagamento', pagos), bloco('Valores', linhas(valores)));
+        if (x.status === 'cancelado') form.append(bloco('Cancelamento', U.nota([x.cancelamentoMotivo, x.cancelamentoJustificativa].filter(Boolean).join(' · ') || 'Sem motivo informado.')));
       },
     });
   }

@@ -36,5 +36,6 @@ services:
       # Vendas dos PDVs lidas do Sistema Pralis (S1). Os valores ficam só no painel do Coolify.
       S1_VENDAS_URL: ${S1_VENDAS_URL:-}
       S1_VENDAS_TOKEN: ${S1_VENDAS_TOKEN:-}
+      S1_VENDAS_EMPRESA_ID: ${S1_VENDAS_EMPRESA_ID:-}
       PORT: 4200
       HOST: 0.0.0.0

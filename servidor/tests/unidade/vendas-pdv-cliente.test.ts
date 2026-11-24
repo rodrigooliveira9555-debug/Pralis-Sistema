@@ -11,11 +11,13 @@ afterEach(() => {
   vi.unstubAllGlobals();
   env.S1_VENDAS_URL = "";
   env.S1_VENDAS_TOKEN = "";
+  env.S1_VENDAS_EMPRESA_ID = "";
 });
 
 function configurar() {
   env.S1_VENDAS_URL = "https://s1.exemplo.test";
   env.S1_VENDAS_TOKEN = TOKEN;
+  env.S1_VENDAS_EMPRESA_ID = "22222222-2222-4222-8222-222222222222";
 }
 
 function respostaJson(status: number, corpo: unknown) {
@@ -46,7 +48,7 @@ describe("vendas dos PDVs - cliente do S1", () => {
   it("Deve_MandarOTokenNoCabecalho_OPeriodoComHora_E_AJanelaDoGrupo", async () => {
     configurar();
     const fetchFalso = vi.fn(async () =>
-      respostaJson(200, { ok: true, data: [{ id: "v1", pagamentos: null }], meta: { pagination: { total: 7, page: 1, pageSize: 50 } } })
+      respostaJson(200, { ok: true, data: [{ id: "v1", status: "aprovado", pagamentos: null, clienteNome: "Fulano", cpf: "000" }], meta: { pagination: { total: 7, page: 1, pageSize: 50 } } })
     );
     vi.stubGlobal("fetch", fetchFalso);
     const pagina = await cliente.buscarVendas(consulta);
@@ -59,8 +61,12 @@ describe("vendas dos PDVs - cliente do S1", () => {
     expect(url.searchParams.get("pdvId")).toBe(consulta.pdvId);
     expect(url.toString()).not.toContain(TOKEN);
     expect((opcoes.headers as Record<string, string>)["authorization"]).toBe(`Bearer ${TOKEN}`);
+    expect(opcoes.redirect).toBe("error");
     expect(pagina).toMatchObject({ total: 7, page: 1, pageSize: 50 });
     expect(pagina.itens[0]).toMatchObject({ id: "v1", pagamentos: [], itensVenda: [] });
+    // Lista branca: o que o S1 mandar a mais não chega ao navegador.
+    expect(pagina.itens[0]).not.toHaveProperty("clienteNome");
+    expect(pagina.itens[0]).not.toHaveProperty("cpf");
   });
 
   it("Deve_TraduzirAsFalhasDoS1_SemVazarOToken", async () => {

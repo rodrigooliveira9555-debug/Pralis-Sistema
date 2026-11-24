@@ -23,7 +23,9 @@ const envSchema = z.object({
   // (S2_LEITURA_TOKEN lá). Sem os dois, a tela avisa que a integração não está configurada.
   // Vazio = desligado (o compose do Coolify entrega "" quando a variável não está no painel).
   S1_VENDAS_URL: z.union([z.literal(""), z.string().url()]).default(""),
-  S1_VENDAS_TOKEN: z.string().default("")
+  S1_VENDAS_TOKEN: z.string().default(""),
+  // A empresa do S2 que pode ver essas vendas (o token do S1 é de uma loja só). Vazio = leitura desligada.
+  S1_VENDAS_EMPRESA_ID: z.union([z.literal(""), z.string().uuid()]).default("")
 });
 
 const lido = envSchema.parse(process.env);

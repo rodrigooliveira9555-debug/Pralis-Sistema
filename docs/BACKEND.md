@@ -63,8 +63,9 @@ O S2 **não guarda venda**. A tela VND - Vendas dos PDVs (Entradas › API) cham
 token de leitura no cabeçalho. O Sistema Pralis recebe o robô do CREARE na loja: o S2 vê o que ele já tem, com a mesma
 conta do Relatório de Vendas de lá. Variáveis da API (só no painel do Coolify):
 - `S1_VENDAS_URL`: endereço https da API do Sistema Pralis.
-- `S1_VENDAS_TOKEN`: o mesmo valor de `S2_LEITURA_TOKEN` configurado no Sistema Pralis (32 caracteres ou mais).
-Sem as duas, a tela mostra "A leitura das vendas ainda não foi ligada". Permissão: `vendas_pdv_visualizar`.
+- `S1_VENDAS_TOKEN`: o mesmo valor de `S2_LEITURA_TOKEN` configurado no Sistema Pralis (gerar com `openssl rand -hex 32`).
+- `S1_VENDAS_EMPRESA_ID`: o id da empresa do S2 que pode ver essas vendas (o token é de uma loja só; outra empresa do S2 recebe 403).
+Sem as três, a tela mostra "A leitura das vendas ainda não foi ligada". Permissão: `vendas_pdv_visualizar`.
 
 ## Rodar no computador
 

@@ -59,6 +59,37 @@
 .vendas-pdv-paginacao { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 12px 14px; border-top: 1px solid var(--layout-line, #dedee3); font: 400 var(--ui-note, 11px)/16px var(--ui-font); font-variant-numeric: tabular-nums; }
 .vendas-pdv-view .compras-tabela .caixa-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
+/* Tabela: a situação e o botão Detalhes lado a lado. */
+.vendas-pdv-situacao { display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; }
+.vendas-pdv-view .btn.vendas-pdv-detalhes { min-height: 30px; padding: 0 12px; }
+
+/* Popup Detalhes da venda: valor e situação em cima, depois itens, pagamento e valores, separados por fio. */
+/* Popup só de leitura (popup.js): camada escura por cima da lista, caixa de 480 px no centro. */
+.vendas-pdv-popup-fundo { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgb(24 24 27 / .42); animation: vendas-pdv-fundo .18s ease-out; }
+.vendas-pdv-popup { display: grid; grid-template-rows: auto minmax(0, 1fr); width: min(480px, 100%); max-height: min(640px, calc(100dvh - 32px)); border-radius: 14px; background: var(--theme-surface, #fff); color: var(--layout-ink, #3f3f46); box-shadow: 0 18px 48px rgb(0 0 0 / .22); font-family: var(--ui-font); overflow: hidden; animation: vendas-pdv-popup .18s cubic-bezier(.2, .8, .2, 1); }
+.vendas-pdv-popup-cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 16px 12px 20px; border-bottom: 1px solid var(--layout-line, #dedee3); }
+.vendas-pdv-popup-cab h2 { margin: 0; font: var(--ui-title-weight, 600) var(--ui-title, 16px)/var(--ui-title-line, 20px) var(--ui-font); }
+.vendas-pdv-popup-cab p { margin: 2px 0 0; font: 400 var(--ui-subtitle, 11px)/var(--ui-subtitle-line, 14px) var(--ui-font); color: var(--navigation-ink, #71717a); font-variant-numeric: tabular-nums; }
+.vendas-pdv-popup-fechar { flex: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: var(--menu-accent, #eab308); color: #fff; cursor: pointer; }
+.vendas-pdv-popup-fechar:focus-visible { outline: 2px solid var(--menu-accent, #eab308); outline-offset: 2px; }
+.vendas-pdv-popup-fechar svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.vendas-pdv-popup-corpo { display: grid; gap: 12px; align-content: start; padding: 16px 20px 20px; overflow-y: auto; overscroll-behavior: contain; }
+body.dark-theme .vendas-pdv-popup { background: var(--theme-surface, #1d1c22); color: var(--layout-ink, #f4f4f5); }
+@keyframes vendas-pdv-fundo { from { opacity: 0; } }
+@keyframes vendas-pdv-popup { from { opacity: 0; transform: translateY(8px); } }
+.vendas-pdv-detalhe-topo { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.vendas-pdv-detalhe-topo > div { display: grid; gap: 2px; }
+.vendas-pdv-detalhe-topo strong { font: 600 26px/32px var(--ui-font); font-variant-numeric: tabular-nums; }
+.vendas-pdv-detalhe-quem { margin: -6px 0 0; font: 500 var(--ui-text)/20px var(--ui-font); color: var(--ui-label-color, #52525b); }
+.vendas-pdv-detalhe-bloco { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--layout-line, #dedee3); }
+.vendas-pdv-detalhe-bloco h3 { margin: 0; font: 600 12px/16px var(--ui-font); text-transform: uppercase; letter-spacing: .04em; color: var(--panel-text, #785600); }
+body.dark-theme .vendas-pdv-detalhe-bloco h3 { color: var(--menu-accent, #eab308); }
+.vendas-pdv-detalhe-linhas { display: grid; gap: 4px; margin: 0; }
+.vendas-pdv-detalhe-linhas > div { display: flex; justify-content: space-between; gap: 16px; font: 400 var(--ui-text)/20px var(--ui-font); }
+.vendas-pdv-detalhe-linhas dt { min-width: 0; overflow-wrap: anywhere; }
+.vendas-pdv-detalhe-linhas dd { margin: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vendas-pdv-detalhe-linhas > .forte { font-weight: 600; }
+
 @media (max-width: 1023px) {
   .vendas-pdv-lado { grid-template-columns: minmax(0, 1fr); }
   .vendas-pdv-periodo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
@@ -79,4 +110,5 @@
   .vendas-pdv-cheio { animation: none; transform: scaleX(var(--parte, 0)); }
   .vendas-pdv-barra, .vendas-pdv-aba, .vendas-pdv-resultados[aria-busy="true"] * { transition: none; }
   .vendas-pdv-sincronizar.girando svg { animation: none; }
+  .vendas-pdv-popup-fundo, .vendas-pdv-popup { animation: none; }
 }
