@@ -786,7 +786,8 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   await p.waitForFunction(() => (CicluzAgendaDados.lista('lista-diretor-operacoes') || {}).area === 'producao', null, { timeout: 15000 });
   const porArea = await p.evaluate(async () => (await CicluzAgendaDados.membros('lista-diretor-operacoes')).ids);
   const eu = await p.evaluate(() => CicluzAgendaDados.usuarioAtual());
-  ok(porArea.includes(eu) && porArea.includes(RESP_UM.id), 'Lista por área: membros montados pelo servidor (quem tem acesso à Produção)');
+  // As contas de teste nascem sem cargo de acesso: só o administrador (que tem tudo) tem acesso à Produção.
+  ok(porArea.includes(eu) && !porArea.includes(RESP_UM.id), 'Lista por área: membros montados pelo servidor (só quem tem acesso à Produção)');
   await p.evaluate(async () => { const l = CicluzAgendaDados.lista('lista-diretor-operacoes'); await CicluzAgendaDados.salvarLista(l.id, { nome: l.nome, area: '' }); });
 
   // Regras por permissão (P-46 itens 1 e 2): o administrador tem as permissões e recebe as duas tarefas.
@@ -828,7 +829,7 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   const ligado = await item(p, 'Conferir o pedido da semana');
   ok(ligado && ligado.vinculoTela === tela && ligado.vinculoTitulo === 'MER - Pedido de Compra', 'Compromisso guarda a tela ligada');
   await p.evaluate(() => { CicluzAgenda.estado.visao = 'listas'; CicluzAgenda.abrir(''); });
-  await p.locator('.agenda-abrir-tela').first().click();
+  await p.locator('.agenda-item', { hasText: 'Conferir o pedido da semana' }).locator('.agenda-abrir-tela').first().click();
   await p.waitForFunction((t) => location.hash === t, tela);
   ok(true, '"Abrir a tela" leva até a tela ligada');
 
