@@ -39,3 +39,5 @@
   contas do site não tem.
 - Caixa/PDV, NF-e, foto da nota e leitura por IA.
 - Fonte das Entradas: robô do CREARE ou a API em avaliação (endereço ainda não existe no DNS).
+
+> **Mapa completo do formulário do principal e quadro de diferenças (24/11/2026):** `16_MAPA_LANCAMENTOS_PRINCIPAL.md`; decisões em aberto no P-47 (doc 11).
