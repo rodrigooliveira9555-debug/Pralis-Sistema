@@ -2,9 +2,9 @@
 
 ## Acesso por Tela em quadros, escolha única e botão de expandir tudo (24/11/2026)
 Pedido do Rodrigo, em cima da tela do Washington (`dist/acessos/telas.js`):
-- **Cada menu principal é um quadro** com moldura (borda de 1px, cantos de 12 px, 12 px de vão entre os quadros), linhas brancas separadas por fio, como as listas do sistema; passar o mouse na tela tinge a linha na cor da origem. As faixas coloridas de fundo saíram.
-- **Expandir para baixo**: o botão do quadro é uma seta para baixo que gira ao abrir; abre os submenus e as telas daquele menu. Cada submenu tem a sua seta.
-- **Expandir e recolher tudo**: o botão redondo "‹ ›" fica sempre no cabeçalho, à direita, com o total de telas ao lado (como nas listas de cadastro). O botão de recolher as colunas passou a ter o ícone de colunas.
+- **Cada menu principal é um quadro** com moldura (borda de 1px, cantos de 12 px, 16 px de vão entre os quadros), linhas brancas separadas por fio, como as listas do sistema; passar o mouse na tela tinge a linha na cor da origem. As faixas coloridas de fundo saíram.
+- **Expandir** (padrão da referência do Rodrigo): só a seta cinza, sem botão colorido, alinhada à direita da linha — para baixo quando fechado, para cima quando aberto. Vale para o menu principal e para cada submenu. Linhas de menu e submenu tingem na cor da origem ao passar o mouse.
+- **Expandir e recolher tudo**: o botão redondo "‹ ›" fica no canto do quadro do cabeçalho (preso à direita), com o total de telas ao lado. O botão de recolher as colunas passou a ter o ícone de colunas.
 - **Quem**: um "+" só por coluna. Aberto, mostra a escolha **Nome · Cargo · Área** e, embaixo, a lista do tipo escolhido. Saíram as três linhas "Selecionar o nome / o cargo / a área".
 - O cabeçalho da primeira linha (as escolhas) é preso no alto e tem uma faixa na cor da página embaixo, para as linhas que rolam não aparecerem no vão.
 - **Marcação das permissões** (escolha do Rodrigo, opção A): círculo de 22 px (`.acessos-marca`, role checkbox). Desligada é só o contorno; ligada enche na cor da origem com o check branco. Substitui o interruptor nas telas e nas Ações especiais (18 px no celular, 16 px abaixo de 360 px, com área de toque maior).

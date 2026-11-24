@@ -36,7 +36,7 @@
     pagar: 'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
     mais: 'M12 5v14M5 12h14',
     niveis: 'm6 9 6 6 6-6',
-    seta: 'm9 6 6 6-6 6',
+    seta: 'm6 9 6 6 6-6',
     exclama: 'M12 6.5v7M12 17.5h.01',
   };
   const SETA = { esq: 'M19 12H6m5-5-5 5 5 5', dir: 'M5 12h13m-5-5 5 5-5 5', ambas: 'M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4' };
@@ -303,11 +303,12 @@
       geral.onclick = () => { escolhidas.forEach((b) => { b.recolhida = algumaAberta; if (algumaAberta) b.quem = ''; }); desenhar(); };
       barra.append(geral);
     }
+    let fimDoCabecalho = null;
     if (estado.modo === 'telas') {
       // O botão "‹ ›" do cabeçalho (o mesmo das listas): abre todos os menus e submenus de uma vez; com tudo aberto, recolhe tudo. Fica sempre à vista.
       const totalTelas = menu.reduce((n, g) => n + g.secoes.reduce((m, s) => m + s.telas.length, 0), 0);
       const tudoAberto = menu.length > 0 && menu.every((g) => estado.abertos.has(g.n) && g.secoes.every((s) => estado.secAbertas.has(g.n + '|' + s.n)));
-      const fim = el('div', 'acessos-barra-fim');
+      const fim = el('div', 'acessos-quem-fim');
       const conta = el('span', 'compras-conta', String(totalTelas));
       conta.title = totalTelas + (totalTelas === 1 ? ' tela' : ' telas');
       const tudo = el('button', 'shortcut-circle compras-redondo acessos-expandir-tudo');
@@ -324,7 +325,7 @@
         if (volta) volta.focus();
       };
       fim.append(conta, tudo);
-      barra.append(fim);
+      fimDoCabecalho = fim;
     }
     blocos.push(barra);
 
@@ -376,6 +377,8 @@
       w.append(c);
       cab.append(w);
     });
+    // O total e o "‹ ›" ficam no canto do quadro do cabeçalho (presos à direita enquanto a matriz rola para o lado).
+    if (fimDoCabecalho) cab.append(fimDoCabecalho);
     mat.append(cab);
 
     if (estado.modo === 'acoes') desenharAcoes(mat, regs, atualizarResumos); else desenharTelas(mat, menu, regs, atualizarResumos);
@@ -499,7 +502,7 @@
     ic.innerHTML = desenho ? '<svg viewBox="0 0 24 24" aria-hidden="true">' + desenho + '</svg>' : U.svg(U.ICONES.lista);
     const seta = el('span', 'acessos-tl-seta' + (aberta ? ' aberta' : ''));
     seta.innerHTML = U.svg('<path d="' + G.seta + '"/>');
-    b.append(seta, ic, el('span', null, s.n), el('small', null, String(qtd)));
+    b.append(ic, el('span', null, s.n), el('small', null, String(qtd)), seta);
     b.onclick = () => {
       if (estado.secAbertas.has(chaveSec)) estado.secAbertas.delete(chaveSec); else estado.secAbertas.add(chaveSec);
       desenhar();

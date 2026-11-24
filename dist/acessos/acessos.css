@@ -11,10 +11,10 @@ body.dark-theme :is(.acessos-view, .acessos-dialog) .tom-marca { background: #33
 .acessos-barra > .compras-campo { flex: 1 1 260px; max-width: 420px; }
 /* O total de telas e o "‹ ›" de expandir/recolher tudo: sempre à direita do cabeçalho, como nas listas. */
 .acessos-barra { align-items: center; }
-.acessos-barra-fim { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; }
-.acessos-barra .acessos-expandir-tudo { flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: var(--theme-surface, #fff); }
-.acessos-barra .acessos-expandir-tudo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.acessos-barra .acessos-expandir-tudo:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
+.acessos-quem-fim { position: sticky; right: 0; z-index: 6; flex: none; margin-left: auto; box-sizing: border-box; display: inline-flex; align-items: center; align-self: flex-start; height: 56px; gap: 10px; padding: 0 12px 0 8px; background: var(--tl-bg); }
+.acessos-quem-fim .acessos-expandir-tudo { flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: var(--theme-surface, #fff); }
+.acessos-quem-fim .acessos-expandir-tudo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.acessos-quem-fim .acessos-expandir-tudo:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
 .acessos-barra > .acessos-novo { margin-left: auto; }
 @media (max-width: 480px) { .acessos-barra > .acessos-novo { width: 100%; } }
 .acessos-lista-box { display: grid; gap: 12px; }
@@ -202,7 +202,8 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
   border: 0; background: transparent;
 }
 .acessos-matriz:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
-.acessos-matriz > .compras-secao { box-sizing: border-box; display: block; width: max-content; max-width: none; min-width: 100%; margin: 0 0 12px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); box-shadow: none; overflow: visible; }
+.acessos-matriz > .compras-secao { box-sizing: border-box; display: block; width: max-content; max-width: none; min-width: 100%; margin: 0 0 16px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); box-shadow: none; overflow: visible; }
+.acessos-matriz > .compras-secao + .compras-secao { margin-top: 4px; }
 .acessos-matriz .compras-secao-cab, .acessos-matriz > .compras-secao > .profiles-note, .acessos-matriz > .profiles-note { position: sticky; left: 0; box-sizing: border-box; width: 100cqw; }
 .acessos-tl-cab-esq { display: flex; align-items: center; gap: 10px; min-width: 0; width: 100%; }
 .acessos-tl-cab-esq h3 { flex: 1 1 auto; min-width: 0; }
@@ -218,15 +219,15 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 .acessos-tl-sec { --tl-bg: var(--theme-card, #fff); }
 .acessos-tl-tela.nova { --tl-bg: color-mix(in srgb, var(--cicluz-warning, #eab308) 10%, var(--theme-card, #fff)); }
 .acessos-tl-grupo-lin { --tl-bg: var(--theme-card, #fff); border-top: 0; }
-.acessos-tl-tela:hover { --tl-bg: color-mix(in srgb, var(--origem, var(--menu-accent)) 8%, var(--theme-card, #fff)); }
+.acessos-tl-sec:hover, .acessos-tl-grupo-lin:hover, .acessos-tl-tela:hover { --tl-bg: color-mix(in srgb, var(--origem, var(--menu-accent)) 8%, var(--theme-card, #fff)); }
 .acessos-tl-esq-grupo { flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; }
 .acessos-tl-esq-grupo h3 { flex: 1 1 auto; min-width: 0; margin: 0; display: flex; align-items: center; gap: 8px; font: var(--ui-section-title-weight, 600) var(--ui-section-title, 14px)/var(--ui-section-title-line, 20px) var(--ui-font); }
-.acessos-tl-esq-grupo .acessos-telas-nivel { flex: none; margin-left: auto; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: var(--theme-surface, #fff); }
+.acessos-tl-esq-grupo .acessos-telas-nivel { flex: none; margin-left: auto; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: transparent; color: var(--muted, #73737a); }
 .acessos-tl-esq-grupo .acessos-telas-nivel[aria-expanded="true"] svg { transform: rotate(180deg); }
-.acessos-tl-esq-grupo .acessos-telas-nivel svg { transition: transform 160ms ease; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.acessos-tl-quem-lin { position: sticky; top: 0; z-index: 4; --tl-bg: var(--theme-card, #fff); box-sizing: border-box; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; margin-bottom: 12px; }
+.acessos-tl-esq-grupo .acessos-telas-nivel svg { transition: transform 160ms ease; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.acessos-tl-quem-lin { position: sticky; top: 0; z-index: 4; --tl-bg: var(--theme-card, #fff); box-sizing: border-box; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; margin-bottom: 16px; }
 /* A faixa do vão de baixo do cabeçalho preso: sem ela, as linhas que rolam aparecem entre o cabeçalho e o quadro seguinte. */
-.acessos-tl-quem-lin::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 12px; margin-top: 0; background: var(--layout-gap, #f5f5f7); pointer-events: none; }
+.acessos-tl-quem-lin::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 16px; margin-top: 0; background: var(--layout-gap, #f5f5f7); pointer-events: none; }
 .acessos-tl-quem-lin > .acessos-tl-esq { z-index: 5; justify-content: flex-start; padding-top: 12px; }
 .acessos-tl-esq-txt { font: 400 12px/16px var(--ui-font); color: var(--muted, #73737a); }
 .acessos-tl-bloco { flex: none; box-sizing: border-box; width: var(--tl-bloco); display: flex; align-items: center; padding: 0 10px; border-left: 1px solid var(--layout-line, #dedee3); }
@@ -256,9 +257,10 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 .acessos-tl-sec-nome small { font: 600 11px/16px var(--ui-font); color: var(--muted, #73737a); }
 .acessos-tl-subic { flex: none; display: inline-grid; place-items: center; width: 24px; height: 24px; color: var(--origem, var(--menu-accent)); }
 .acessos-tl-subic svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.acessos-tl-seta { flex: none; display: inline-grid; place-items: center; width: 16px; height: 16px; color: var(--muted, #73737a); transition: transform 160ms ease; }
-.acessos-tl-seta.aberta { transform: rotate(90deg); }
-.acessos-tl-seta svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.acessos-tl-seta { flex: none; margin-left: auto; display: inline-grid; place-items: center; width: 20px; height: 20px; color: var(--muted, #73737a); transition: transform 160ms ease; }
+.acessos-tl-seta.aberta { transform: rotate(180deg); }
+.acessos-tl-sec .acessos-tl-sec-nome { width: 100%; }
+.acessos-tl-seta svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .acessos-tl-nome { display: flex; align-items: center; gap: 10px; min-width: 0; font: 500 13px/18px var(--ui-font); }
 .acessos-tl-nome b { font-weight: 500; overflow-wrap: anywhere; }
 .acessos-tl-nome .compras-linha-icones { flex: none; }
@@ -317,7 +319,8 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
   .acessos-tl-esq-grupo .acessos-telas-nivel { position: absolute; top: 8px; right: 6px; margin: 0; width: 28px; height: 28px; }
   .acessos-tl-sec-nome { gap: 2px; font-size: 11px; }
   .acessos-tl-sec-nome small { display: none; }
-  .acessos-tl-sec-nome .acessos-tl-seta { width: 12px; }
+  .acessos-tl-sec-nome .acessos-tl-seta { width: 16px; height: 16px; }
+  .acessos-tl-sec-nome .acessos-tl-seta svg { width: 16px; height: 16px; }
   .acessos-tl-sec-nome .acessos-tl-subic { width: 18px; height: 18px; }
   .acessos-tl-sec-nome .acessos-tl-subic svg { width: 16px; height: 16px; }
   .acessos-bloco-cab .acessos-telas-valor { font-size: 12px; }
