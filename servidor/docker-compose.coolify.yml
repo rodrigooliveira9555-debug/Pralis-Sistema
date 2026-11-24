@@ -33,5 +33,8 @@ services:
       # Proxies na frente da API (Vercel → Traefik do Coolify = 2). Ver docs/BACKEND.md.
       PROXIES_CONFIAVEIS: ${PROXIES_CONFIAVEIS:-2}
       SERVIR_SITE: "0"
+      # Vendas dos PDVs lidas do Sistema Pralis (S1). Os valores ficam só no painel do Coolify.
+      S1_VENDAS_URL: ${S1_VENDAS_URL:-}
+      S1_VENDAS_TOKEN: ${S1_VENDAS_TOKEN:-}
       PORT: 4200
       HOST: 0.0.0.0

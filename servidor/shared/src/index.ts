@@ -6,3 +6,4 @@ export * from "./acessos.ts";
 export * from "./lancamentos/index.ts";
 export * from "./agenda.ts";
 export * from "./produtos.ts";
+export * from "./vendas-pdv.ts";
