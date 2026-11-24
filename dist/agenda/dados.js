@@ -1,203 +1,312 @@
 /*
- * Agenda — armazenamento e operações. Uma chave só no localStorage (cicluz-agenda-v1), que com login
- * vai para o banco pela sincronização do S2 (servidor/shared/src/documentos.ts).
- *
- * Abrir a Agenda não grava nada: listas e colunas iniciais existem só na memória até a primeira
- * alteração (com ids fixos, para dois aparelhos novos não criarem listas repetidas).
- * Campos acrescentados depois (repetição, alerta, término, URL, local, coluna, ordem, ícone da lista)
- * são opcionais: dado antigo sem eles continua válido e recebe o padrão só na memória.
+ * Agenda — a ÚNICA porta da tela para a API da Agenda (plano docs/AGENDA_NO_SERVIDOR_PLANO.md, seção 5).
+ * O servidor guarda cada compromisso e confere a permissão; a tela recebe só o que a pessoa vê, com `acesso`
+ * pronto (a tela não calcula permissão). Gravar é sempre pelo servidor e devolve Promise.
+ * - Atualiza ao abrir, ao voltar para a aba e a cada 30 s, perguntando "mudou algo?" (If-None-Match → 304).
+ * - Sem internet: mostra a última cópia (cicluz-agenda-cache-v1, só neste aparelho, com o usuário dentro; apagada
+ *   no "Sair") e não grava.
+ * - Antes da transferência (situacao 'nao-transferida'): nada para mostrar; o administrador leva a Agenda.
+ * - Documento antigo (cicluz-agenda-v1): não é lido nem gravado aqui. A cópia que o aparelho ainda tiver vai UMA vez
+ *   para o servidor (guardada para conferência) e fica marcada em cicluz-agenda-transferida-v1. Nada é apagado.
+ * Conversão API ↔ tela num lugar só (deApi / paraFormulario).
  */
 (function () {
   'use strict';
-  const KEY = 'cicluz-agenda-v1';
-  const D = window.CicluzAgendaDominio;
-
-  /* As duas listas iniciais são os submenus de Agenda · Atividades no menu lateral. */
-  const LISTAS_INICIAIS = [
-    { id: 'lista-gestao-pessoas', nome: 'Gestão de Pessoas', cor: '#7c3aed', icone: 'pessoas', ordenacao: 'manual' },
-    { id: 'lista-diretor-operacoes', nome: 'Diretor de Operações', cor: '#2563eb', icone: 'operacao', ordenacao: 'manual' },
-  ];
-  /* Colunas do Kanban (como o protótipo: A fazer, Em progresso; "Concluído" é fixa e marca como feito). */
-  const COLUNAS_INICIAIS = [
-    { id: 'col-a-fazer', nome: 'A fazer' },
-    { id: 'col-em-progresso', nome: 'Em progresso' },
-  ];
+  const R = window.CicluzAgendaRegras;
+  const CHAVE_CACHE = 'cicluz-agenda-cache-v1';
+  const CHAVE_ANTIGA = 'cicluz-agenda-v1';
+  const MARCA_TRANSFERIDA = 'cicluz-agenda-transferida-v1';
+  const INTERVALO = 30000;
   const CONCLUIDO = 'concluido';
   const CORES_LISTA = ['#7c3aed', '#2563eb', '#16a34a', '#ea580c', '#dc2626', '#db2777', '#0891b2', '#ca8a04', '#52525b'];
+  // Cor só #rrggbb entra no desenho (G2); qualquer outra vira a primeira cor.
+  const corSegura = (c) => (/^#[0-9a-fA-F]{6}$/.test(String(c || '')) ? c : CORES_LISTA[0]);
+  const NADA = { ver: false, editar: false, concluir: false, excluir: false, gestor: false, responsavel: false };
+  const SEM = {
+    editar: 'Você não tem permissão para editar este compromisso.',
+    concluir: 'Você não tem permissão para concluir este compromisso.',
+    excluir: 'Você não tem permissão para excluir este compromisso.',
+  };
+  const SEM_INTERNET = 'Sem internet: a Agenda mostra a última cópia. Para criar ou alterar, conecte.';
+  const NAO_TRANSFERIDA = 'A Agenda está sendo levada para o servidor. Volte em alguns minutos.';
 
   const novoId = (prefixo) => prefixo + '-' + (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
-  const agoraIso = () => new Date().toISOString();
-  const inicial = () => ({ versao: 1, listas: structuredClone(LISTAS_INICIAIS), colunas: structuredClone(COLUNAS_INICIAIS), itens: [], relacoes: [] });
-  const valido = (x) => x && Array.isArray(x.listas) && Array.isArray(x.itens);
-  /** Completa, na memória, o que dado antigo não tem. Não grava. */
-  function completar(x) {
-    if (!Array.isArray(x.colunas) || !x.colunas.length) x.colunas = structuredClone(COLUNAS_INICIAIS);
-    // Relações entre compromissos (mapa mental), acrescentadas depois: dado antigo recebe lista vazia.
-    if (!Array.isArray(x.relacoes)) x.relacoes = [];
-    // Responsável único (primeira versão de 05/11/2026) vira a lista de pessoas: o mesmo id, como
-    // responsável. Feito na memória; o formato novo só é gravado na próxima alteração.
-    x.itens.forEach((i) => {
-      if (!Array.isArray(i.pessoas)) i.pessoas = i.responsavelId ? [D.pessoaResponsavel(i.responsavelId)] : [];
-      delete i.responsavelId;
-      if (!i.avaliacao) i.avaliacao = { tipo: '', notas: [] };
-    });
-    x.listas.forEach((l) => { if (!l.icone) l.icone = 'lista'; if (!l.ordenacao) l.ordenacao = 'manual'; });
-    return x;
+  const perfil = () => (window.CicluzSessao && window.CicluzSessao.perfil) || null;
+  const conectado = () => { const p = perfil(); return Boolean(p && p.usuarioId && p.usuarioId !== 'local' && window.CicluzSync && window.CicluzSync.api); };
+
+  let dados = { listas: [], colunas: [], itens: [], relacoes: [] };
+  /** carregando | cache | servidor | sem-internet | nao-transferida | fora-expediente | erro */
+  let situacao = 'carregando';
+  /** Fora do expediente com a Agenda bloqueada (Configurações da Agenda): a mensagem do servidor. */
+  let motivoBloqueio = '';
+  let usuarioId = '';
+  let etag = '';
+  let pessoasLista = [];
+  let ultimaResposta = null;
+  /** Pedidos ao servidor em andamento (leitura ou gravação). */
+  let emAndamento = 0;
+  /** Sobe a cada gravação que termina: leitura que começou antes dela é descartada (não volta a versão velha). */
+  let gravacoes = 0;
+
+  const avisar = (externo) => document.dispatchEvent(new CustomEvent('cicluz-agenda-mudou', { detail: { externo: Boolean(externo) } }));
+
+  /* ---------- Conversão ---------- */
+  function deApi(c) {
+    return {
+      id: c.id, listaId: c.grupoId, titulo: c.titulo, notas: c.notas, url: c.url, local: c.local, localizacao: c.localizacao,
+      data: c.data, hora: c.hora, horaFim: c.horaFim, repeticao: c.repeticao, alerta: c.alerta, adiadoPara: c.adiadoPara,
+      prioridade: c.prioridade, sinalizado: c.sinalizado, etiquetas: c.etiquetas || [], subtarefas: c.subtarefas || [],
+      pessoas: c.pessoas || [], avaliacao: c.avaliacao || { tipo: '', notas: [] }, colunaId: c.colunaId, ordem: c.ordem,
+      concluida: c.concluida, concluidaEm: c.concluidaEm, origemId: c.origemId, ocorrencia: c.ocorrencia,
+      // Tela ligada (ícone roxo de agendar / tarefa criada por uma tela): a tarefa abre essa tela.
+      vinculoTela: c.vinculoTela || '', vinculoTitulo: c.vinculoTitulo || '', vinculoRef: c.vinculoRef || '',
+      // O gestor é quem criou: o nome da tela continua `criadoPor`.
+      criadoEm: c.criadoEm, criadoPor: c.gestorId, atualizadoEm: c.atualizadoEm, versao: c.versao, acesso: c.acesso || NADA,
+    };
+  }
+  const listaDeApi = (g) => ({ id: g.id, nome: g.nome, cor: corSegura(g.cor), icone: g.icone || 'lista', ordenacao: g.ordenacao || 'manual', ordem: g.ordem, donoId: g.donoId, membro: g.membro, podeGerir: g.podeGerir, versao: g.versao });
+
+  /** Campos do formulário da tela → corpo da API. A tela não escolhe gestor, âncora nem `feitas` (são do servidor). */
+  function paraFormulario(c) {
+    const rep = c.repeticao && c.repeticao.tipo && c.repeticao.tipo !== 'nunca' ? c.repeticao : null;
+    const fim = (rep && rep.fim) || {};
+    const loc = c.localizacao && (Number.isFinite(c.localizacao.lat) || c.localizacao.aviso) ? c.localizacao : null;
+    return {
+      grupoId: c.listaId,
+      titulo: String(c.titulo || '').trim(), notas: String(c.notas || '').trim(), url: String(c.url || '').trim(), local: String(c.local || '').trim(),
+      localizacao: loc ? {
+        ...(Number.isFinite(loc.lat) ? { lat: +loc.lat.toFixed(6) } : {}), ...(Number.isFinite(loc.lng) ? { lng: +loc.lng.toFixed(6) } : {}),
+        aviso: loc.aviso || '', raio: Number(loc.raio) || 200,
+      } : null,
+      data: c.data || '', hora: c.hora || '', horaFim: c.horaFim || '',
+      repeticao: rep ? {
+        tipo: rep.tipo, intervalo: Math.max(1, Number(rep.intervalo) || 1), unidade: rep.unidade || 'semana',
+        diasSemana: [...new Set((rep.diasSemana || []).map(Number))].sort(),
+        fim: { tipo: fim.tipo || 'nunca', data: fim.data || '', vezes: Number(fim.vezes) || 0 },
+      } : null,
+      alerta: c.alerta === '' || c.alerta === null || c.alerta === undefined ? null : Number(c.alerta),
+      prioridade: c.prioridade || 'normal', sinalizado: Boolean(c.sinalizado), etiquetas: R.normalizarEtiquetas(c.etiquetas),
+      subtarefas: (c.subtarefas || []).map((s) => ({ ...(s.id ? { id: s.id } : {}), titulo: String(s.titulo || '').trim(), concluida: Boolean(s.concluida) })),
+      pessoas: R.normalizarPessoas(c.pessoas), avaliacaoTipo: (c.avaliacao && c.avaliacao.tipo) || '', colunaId: c.colunaId || '',
+      vinculoTela: c.vinculoTela || '', vinculoTitulo: c.vinculoTela ? String(c.vinculoTitulo || '').trim().slice(0, 120) : '',
+    };
   }
 
-  let dados = inicial();
-  let erroLeitura = false;
-  function ler() {
-    try {
-      const bruto = localStorage.getItem(KEY);
-      if (!bruto) return inicial();
-      const salvo = JSON.parse(bruto);
-      if (!valido(salvo)) throw new Error('formato');
-      return completar(salvo);
-    } catch (e) {
-      // Dado ilegível: não sobrescreve (nada é gravado enquanto erroLeitura for verdadeiro).
-      erroLeitura = true;
-      console.warn('Agenda: dado salvo ilegível; nada será gravado por cima', e);
-      return inicial();
+  /* ---------- Estado em memória ---------- */
+  function aplicarResposta(r) {
+    ultimaResposta = r;
+    usuarioId = r.usuarioId || '';
+    if (!r.estado || !r.estado.noServidor) {
+      dados = { listas: [], colunas: [], itens: [], relacoes: [] };
+      return;
     }
+    dados = {
+      listas: (r.grupos || []).map(listaDeApi),
+      colunas: (r.colunas || []).map((c) => ({ id: c.id, nome: c.nome, ordem: c.ordem })),
+      itens: (r.compromissos || []).map(deApi),
+      relacoes: (r.relacoes || []).map((x) => ({ id: x.id, de: x.de, para: x.para, rotulo: x.rotulo })),
+    };
   }
-  dados = ler();
+  function guardarItem(c) {
+    const novo = deApi(c);
+    const n = dados.itens.findIndex((i) => i.id === novo.id);
+    if (n >= 0) dados.itens[n] = novo; else dados.itens.push(novo);
+    return novo;
+  }
+  function guardarLista(g) {
+    const nova = listaDeApi(g);
+    const n = dados.listas.findIndex((l) => l.id === nova.id);
+    if (n >= 0) dados.listas[n] = nova; else dados.listas.push(nova);
+    return nova;
+  }
+  /** Gravou: a próxima pergunta "mudou algo?" já traz a versão nova inteira. */
+  const gravou = () => { etag = ''; avisar(false); };
 
-  /** Executa a mudança e grava só se algo mudou; se falhar, desfaz e devolve false. */
-  function transacao(mudanca) {
-    if (!erroLeitura) { const atual = ler(); if (!erroLeitura) dados = atual; }
-    const antes = JSON.stringify(dados);
+  /* ---------- Cópia sem internet ---------- */
+  function lerCache() {
     try {
-      if (erroLeitura) throw new Error('leitura');
-      const r = mudanca(dados);
-      const depois = JSON.stringify(dados);
-      if (depois !== antes) {
-        localStorage.setItem(KEY, depois);
-        document.dispatchEvent(new CustomEvent('cicluz-agenda-mudou'));
+      const c = JSON.parse(localStorage.getItem(CHAVE_CACHE) || 'null');
+      const p = perfil();
+      // Cópia de outra conta (iPad compartilhado) é ignorada.
+      return c && p && c.usuarioId === p.usuarioId && c.resposta ? c : null;
+    } catch (e) { return null; }
+  }
+  function gravarCache() {
+    const p = perfil();
+    if (!p || !ultimaResposta) return;
+    try { localStorage.setItem(CHAVE_CACHE, JSON.stringify({ usuarioId: p.usuarioId, salvoEm: new Date().toISOString(), resposta: ultimaResposta, pessoas: pessoasLista })); }
+    catch (e) { /* aparelho cheio: segue só na memória */ }
+  }
+  function usarCache(motivo) {
+    const c = lerCache();
+    if (c) { aplicarResposta(c.resposta); pessoasLista = c.pessoas || []; }
+    situacao = motivo;
+    avisar(true);
+  }
+
+  /* ---------- Leitura ---------- */
+  let buscando = null;
+  /** Pergunta ao servidor. Sem mudança (304) não custa nada. forcar: busca inteira (sem If-None-Match). */
+  function atualizar(forcar) {
+    if (buscando) return buscando;
+    emAndamento++;
+    buscando = buscar(forcar).finally(() => { buscando = null; emAndamento--; });
+    return buscando;
+  }
+  async function buscar(forcar) {
+    if (!conectado()) return usarCache('sem-internet');
+    const marca = gravacoes;
+    let resp;
+    try {
+      resp = await fetch('/api/agenda', { credentials: 'same-origin', headers: etag && !forcar ? { 'If-None-Match': etag } : {} });
+    } catch (e) {
+      return usarCache('sem-internet');
+    }
+    // Uma gravação terminou enquanto esta leitura andava: a resposta pode ser de antes dela. Busca de novo.
+    if (marca !== gravacoes) { etag = ''; setTimeout(() => atualizar(true), 0); return; }
+    if (resp.status === 304) {
+      if (situacao !== 'servidor') { situacao = 'servidor'; avisar(true); }
+      return;
+    }
+    if (!resp.ok) {
+      const corpo = resp.status === 403 ? await resp.json().catch(() => null) : null;
+      if (corpo && corpo.code === 'AGENDA_FORA_EXPEDIENTE') return bloquear(corpo.title || corpo.detail);
+      if (situacao === 'carregando' || situacao === 'cache') usarCache('erro');
+      return;
+    }
+    const json = await resp.json().catch(() => null);
+    const r = json && json.data;
+    if (!r || !r.estado) return usarCache('erro');
+    etag = resp.headers.get('ETag') || '';
+    aplicarResposta(r);
+    situacao = r.estado.noServidor ? 'servidor' : 'nao-transferida';
+    if (r.estado.noServidor) {
+      // Pessoa que a tela ainda não conhece (conta criada depois de a página abrir): busca as contas de novo.
+      const conhecidas = new Set(pessoasLista.map((x) => x.id));
+      const faltaAlguem = (r.compromissos || []).some((c) => c.gestorId && !conhecidas.has(c.gestorId) || (c.pessoas || []).some((x) => !conhecidas.has(x.id)));
+      if (!pessoasLista.length || faltaAlguem) { await carregarPessoas(); document.dispatchEvent(new Event('cicluz-pessoas-carregadas')); }
+      gravarCache();
+      enviarCopiaAntiga();
+    }
+    avisar(true);
+  }
+  /** Fora do expediente: nada fica à mostra (nem a cópia do aparelho) até o horário voltar. */
+  function bloquear(motivo) {
+    motivoBloqueio = motivo || 'Fora do seu expediente.';
+    dados = { listas: [], colunas: [], itens: [], relacoes: [] };
+    try { localStorage.removeItem(CHAVE_CACHE); } catch (e) { /* sem acesso ao armazenamento */ }
+    situacao = 'fora-expediente';
+    avisar(true);
+  }
+  async function carregarPessoas() {
+    try { pessoasLista = (await window.CicluzSync.api('/agenda/pessoas')).pessoas || []; } catch (e) { /* fica a lista anterior */ }
+  }
+
+  /** A cópia antiga que ainda está neste aparelho vai uma vez para o servidor (guardada para conferência). */
+  let enviandoCopia = false;
+  function enviarCopiaAntiga() {
+    if (enviandoCopia) return;
+    let valor = null;
+    try {
+      if (localStorage.getItem(MARCA_TRANSFERIDA)) return;
+      valor = localStorage.getItem(CHAVE_ANTIGA);
+    } catch (e) { return; }
+    const marcar = () => { try { localStorage.setItem(MARCA_TRANSFERIDA, new Date().toISOString()); } catch (e) { /* tenta de novo na próxima vez */ } };
+    if (!valor) return marcar();
+    enviandoCopia = true;
+    window.CicluzSync.api('/agenda/transferencia/aparelho', { metodo: 'POST', corpo: { valor } })
+      .then(marcar)
+      .catch(() => { /* sem conexão: tenta na próxima abertura */ })
+      .finally(() => { enviandoCopia = false; });
+  }
+
+  // Ao abrir, ao voltar para a aba e a cada 30 s.
+  (function iniciar() {
+    const c = lerCache();
+    if (c) { aplicarResposta(c.resposta); pessoasLista = c.pessoas || []; situacao = 'cache'; }
+    if (!window.CicluzSessao) return;
+    // As contas da empresa servem também ao Compras e à Produção (responsável): carregam ao abrir.
+    if (conectado()) carregarPessoas().then(() => document.dispatchEvent(new Event('cicluz-pessoas-carregadas')));
+    atualizar();
+    setInterval(() => { if (document.visibilityState === 'visible') atualizar(); }, INTERVALO);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') atualizar(); });
+  })();
+
+  /* ---------- Gravação: um caminho só ---------- */
+  const erro = (texto) => ({ erro: texto });
+  /** Chama a API. Devolve { dados } ou { erro }. Conflito de versão: a tela fica com a versão atual. */
+  async function enviar(caminho, metodo, corpo) {
+    if (situacao === 'sem-internet' || situacao === 'cache') return erro(SEM_INTERNET);
+    if (situacao === 'nao-transferida') return erro(NAO_TRANSFERIDA);
+    if (situacao === 'fora-expediente') return erro(motivoBloqueio);
+    if (!conectado()) return erro(SEM_INTERNET);
+    emAndamento++;
+    try {
+      return { dados: await window.CicluzSync.api(caminho, { metodo, ...(corpo === undefined ? {} : { corpo }) }) };
+    } catch (e) {
+      if (e && e.codigo === 'AGENDA_VERSAO' && e.detalhes) {
+        if (e.detalhes.compromisso) guardarItem(e.detalhes.compromisso);
+        if (e.detalhes.grupo) guardarLista(e.detalhes.grupo);
+        avisar(false);
       }
-      return r === undefined ? true : r;
-    } catch (e) {
-      dados = JSON.parse(antes);
-      console.warn('Agenda: alteração não salva', e);
-      return false;
+      if (e && e.status === 0) { situacao = 'sem-internet'; avisar(true); }
+      if (e && e.codigo === 'AGENDA_FORA_EXPEDIENTE') bloquear(e.message);
+      if (e && e.codigo === 'AGENDA_COMPROMISSO_NAO_ENCONTRADO') atualizar(true);
+      return erro((e && e.message) || 'Não foi possível salvar. Tente de novo.');
+    } finally {
+      gravacoes++;
+      emAndamento--;
     }
   }
-
-  // Outra aba (ou a sincronização) gravou: atualiza a memória e avisa a tela.
-  window.addEventListener('storage', (e) => {
-    if (e.key !== KEY) return;
-    try {
-      const novo = e.newValue ? JSON.parse(e.newValue) : inicial();
-      if (valido(novo)) { dados = completar(novo); document.dispatchEvent(new CustomEvent('cicluz-agenda-mudou', { detail: { externo: true } })); }
-    } catch (err) { /* ignora valor inválido */ }
-  });
+  const caminhoItem = (id) => '/agenda/compromissos/' + encodeURIComponent(id);
 
   /* ---------- Pessoas ---------- */
-  // O S2 ainda não tem cadastro de usuários: vale quem está logado e a lista provisória de
-  // responsáveis do S2 (a mesma do Compras, fonte única até existir o cadastro). PROJECT_BRAIN/11, P-18.
+  // Contas ativas da empresa (do servidor; a lista provisória do Compras saiu, P-18).
   function pessoas() {
-    const lista = [];
-    const perfil = window.CicluzSessao && window.CicluzSessao.perfil;
-    if (perfil && perfil.usuarioId && perfil.usuarioId !== 'local') lista.push({ id: perfil.usuarioId, nome: perfil.nome || 'Eu' });
-    const provisorios = (window.CicluzComprasDados && window.CicluzComprasDados.RESPONSAVEIS) || [];
-    provisorios.forEach((p) => { if (!lista.some((x) => x.id === p.id)) lista.push({ id: p.id, nome: p.nome }); });
+    const p = perfil();
+    const lista = pessoasLista.slice();
+    if (p && p.usuarioId && !lista.some((x) => x.id === p.usuarioId)) lista.unshift({ id: p.usuarioId, nome: p.nome || 'Eu' });
     return lista;
   }
   const nomePessoa = (id) => (id ? (pessoas().find((p) => p.id === id) || { nome: 'Pessoa não encontrada' }).nome : '');
-  const usuarioAtual = () => { const p = window.CicluzSessao && window.CicluzSessao.perfil; return p && p.usuarioId && p.usuarioId !== 'local' ? p.usuarioId : ''; };
-  const acesso = (i) => D.acesso(i, usuarioAtual());
-  /** Compromissos que o usuário pode ver (quem não participa não vê). */
+  const usuarioAtual = () => usuarioId || ((perfil() && perfil().usuarioId !== 'local' && perfil().usuarioId) || '');
+  /** O que a pessoa pode fazer: vem pronto do servidor. */
+  const acesso = (i) => (i && i.acesso) || NADA;
   const visiveis = () => dados.itens.filter((i) => acesso(i).ver);
-  const SEM_PERMISSAO = { editar: 'Você não tem permissão para editar este compromisso.', concluir: 'Você não tem permissão para concluir este compromisso.', excluir: 'Você não tem permissão para excluir este compromisso.' };
 
   /* ---------- Consultas ---------- */
   const lista = (id) => dados.listas.find((l) => l.id === id);
   const item = (id) => dados.itens.find((i) => i.id === id);
   const coluna = (id) => dados.colunas.find((c) => c.id === id);
   /** Coluna do Kanban em que o compromisso está ("concluido" quando feito). */
-  const colunaDe = (i) => (i.concluida ? CONCLUIDO : coluna(i.colunaId) ? i.colunaId : dados.colunas[0].id);
+  const colunaDe = (i) => (i.concluida ? CONCLUIDO : coluna(i.colunaId) ? i.colunaId : (dados.colunas[0] || { id: '' }).id);
+  const relacoesVisiveis = () => { const ids = new Set(visiveis().map((i) => i.id)); return dados.relacoes.filter((r) => ids.has(r.de) && ids.has(r.para)); };
 
-  /* ---------- Operações (devolvem { ok, id } ou { erro }) ---------- */
-  const erro = (texto) => ({ erro: texto });
-  const vazioOuNumero = (v) => (v === '' || v === null || v === undefined ? null : Number(v));
-
-  function limpar(campos) {
-    const r = campos.repeticao && campos.repeticao.tipo && campos.repeticao.tipo !== 'nunca' ? {
-      tipo: campos.repeticao.tipo,
-      intervalo: Math.max(1, Number(campos.repeticao.intervalo) || 1),
-      unidade: campos.repeticao.unidade || 'semana',
-      diasSemana: [...new Set((campos.repeticao.diasSemana || []).map(Number))].sort(),
-      fim: { tipo: (campos.repeticao.fim && campos.repeticao.fim.tipo) || 'nunca', data: (campos.repeticao.fim && campos.repeticao.fim.data) || '', vezes: Number(campos.repeticao.fim && campos.repeticao.fim.vezes) || 0 },
-      feitas: Number(campos.repeticao.feitas) || 0,
-      ancora: campos.repeticao.ancora || campos.data || '',
-    } : null;
-    return {
-      listaId: campos.listaId,
-      titulo: String(campos.titulo || '').trim(),
-      notas: String(campos.notas || '').trim(),
-      url: String(campos.url || '').trim(),
-      local: String(campos.local || '').trim(),
-      localizacao: campos.localizacao && (Number.isFinite(campos.localizacao.lat) || campos.localizacao.aviso) ? {
-        lat: Number.isFinite(campos.localizacao.lat) ? +campos.localizacao.lat.toFixed(6) : undefined,
-        lng: Number.isFinite(campos.localizacao.lng) ? +campos.localizacao.lng.toFixed(6) : undefined,
-        aviso: campos.localizacao.aviso || '',
-        raio: Number(campos.localizacao.raio) || 200,
-      } : null,
-      data: campos.data || '',
-      // Hora sem data não é apagada em silêncio: a validação avisa.
-      hora: campos.hora || '',
-      horaFim: campos.hora ? (campos.horaFim || '') : (campos.horaFim || ''),
-      repeticao: r,
-      alerta: vazioOuNumero(campos.alerta),
-      prioridade: campos.prioridade || 'normal',
-      sinalizado: Boolean(campos.sinalizado),
-      etiquetas: D.normalizarEtiquetas(campos.etiquetas),
-      pessoas: D.normalizarPessoas(campos.pessoas),
-      avaliacao: { tipo: (campos.avaliacao && campos.avaliacao.tipo) || '', notas: [] },
-      colunaId: campos.colunaId || '',
-      subtarefas: (campos.subtarefas || []).map((s) => ({
-        id: s.id || novoId('sub'), titulo: String(s.titulo || '').trim(),
-        concluida: Boolean(s.concluida), concluidaEm: s.concluida ? (s.concluidaEm || agoraIso()) : '',
-      })),
-    };
-  }
-
-  function salvarItem(id, campos) {
-    const limpo = limpar(campos);
-    const msg = D.validar(limpo);
+  /* ---------- Compromissos ---------- */
+  async function salvarItem(id, campos) {
+    const corpo = paraFormulario(campos);
+    const msg = R.validar({ ...campos, titulo: corpo.titulo, url: corpo.url, alerta: corpo.alerta, subtarefas: corpo.subtarefas, repeticao: corpo.repeticao });
     if (msg) return erro(msg);
-    if (!lista(limpo.listaId)) return erro('Escolha a lista do compromisso.');
-    if (id && item(id) && !acesso(item(id)).editar) return erro(SEM_PERMISSAO.editar);
-    let novo = id;
-    const feito = transacao((d) => {
-      const agora = agoraIso();
-      if (id) {
-        const atual = d.itens.find((i) => i.id === id);
-        if (!atual) throw new Error('não encontrado');
-        const ac = D.acesso(atual, usuarioAtual());
-        if (!ac.editar) throw new Error('permissão');
-        // Só o gestor muda quem participa e o tipo de avaliação; nota já dada não muda nem some.
-        if (!ac.gestor) limpo.pessoas = atual.pessoas;
-        const notas = (atual.avaliacao && atual.avaliacao.notas) || [];
-        limpo.avaliacao = { tipo: !ac.gestor || notas.length ? (atual.avaliacao && atual.avaliacao.tipo) || '' : limpo.avaliacao.tipo, notas };
-        // Mudou quando ou o alerta: a soneca antiga deixa de valer.
-        if (atual.data !== limpo.data || atual.hora !== limpo.hora || atual.alerta !== limpo.alerta) atual.adiadoPara = '';
-        Object.assign(atual, limpo, { atualizadoEm: agora });
-      } else {
-        novo = novoId('ag');
-        const ordem = d.itens.reduce((m, i) => Math.max(m, i.ordem || 0), 0) + 1;
-        d.itens.push({ id: novo, ...limpo, ordem, adiadoPara: '', concluida: false, concluidaEm: '', criadoEm: agora, criadoPor: usuarioAtual(), atualizadoEm: agora });
-      }
-    });
-    return feito ? { ok: true, id: novo } : erro('Não foi possível salvar. Tente de novo.');
+    if (!lista(corpo.grupoId)) return erro('Escolha a lista do compromisso.');
+    const atual = id ? item(id) : null;
+    if (id && !atual) return erro('Compromisso não encontrado.');
+    if (atual && !acesso(atual).editar) return erro(SEM.editar);
+    const novo = atual ? atual.id : novoId('ag');
+    const r = atual
+      ? await enviar(caminhoItem(novo), 'PUT', { versao: atual.versao, ...corpo })
+      : await enviar('/agenda/compromissos', 'POST', { id: novo, ...corpo });
+    if (r.erro) return r;
+    guardarItem(r.dados);
+    gravou();
+    return { ok: true, id: novo };
   }
 
   /**
-   * Criação rápida, como a linha "Novo" do Lembretes. O texto é interpretado: "amanhã às 10",
-   * "sexta", "dia 20", "#etiqueta" e "!" viram data, hora, etiqueta e prioridade.
+   * Criação rápida, como a linha "Novo" do Lembretes. O texto é interpretado: "amanhã às 10", "sexta", "dia 20",
+   * "#etiqueta" e "!" viram data, hora, etiqueta e prioridade.
    */
   function criarRapido(texto, listaId, extra = {}) {
-    const f = D.interpretar(texto, new Date());
+    const f = window.CicluzAgendaDominio.interpretar(texto, new Date());
     return salvarItem('', {
       ...extra, titulo: f.titulo, listaId,
       data: f.data || extra.data || '', hora: f.hora || extra.hora || '',
@@ -208,271 +317,350 @@
   }
 
   /**
-   * Concluir. Se repete, como no Lembretes: fica uma cópia concluída (histórico) e o compromisso passa
-   * para a próxima data, com as subtarefas desmarcadas. Na última vez, ele mesmo é concluído.
-   * Reabrir uma cópia concluída só desmarca a cópia.
+   * Concluir ou reabrir pelo ESTADO desejado (o segundo toque pede o mesmo estado e não muda nada; M2/M4).
+   * Se repete, o servidor deixa uma cópia concluída e passa o compromisso para a próxima data.
+   * ocorrencia: a data que se está concluindo (o cartão de alerta manda a dele; padrão: a data atual).
+   * Devolve { resultado: 'repetiu' | 'concluiu' | 'reabriu' | 'sem-mudanca' } ou { erro }.
    */
-  function alternarConcluida(id) {
-    if (item(id) && !acesso(item(id)).concluir) return '';
-    let resultado = '';
-    const ok = transacao((d) => {
-      const i = d.itens.find((x) => x.id === id);
-      if (!i) return false;
-      const agora = agoraIso();
-      if (!i.concluida && D.temRepeticao(i)) {
-        const p = D.proxima(i);
-        if (p) {
-          d.itens.push({ ...structuredClone(i), id: novoId('ag'), repeticao: null, alerta: null, adiadoPara: '', concluida: true, concluidaEm: agora, origemId: i.id, atualizadoEm: agora, avaliacao: { tipo: (i.avaliacao && i.avaliacao.tipo) || '', notas: [] } });
-          i.repeticao.feitas = (i.repeticao.feitas || 0) + 1;
-          i.data = p.data;
-          i.hora = p.hora;
-          i.adiadoPara = '';
-          i.subtarefas.forEach((s) => { s.concluida = false; s.concluidaEm = ''; });
-          i.atualizadoEm = agora;
-          resultado = 'repetiu';
-          return true;
-        }
-      }
-      i.concluida = !i.concluida;
-      i.concluidaEm = i.concluida ? agora : '';
-      i.adiadoPara = '';
-      i.atualizadoEm = agora;
-      resultado = i.concluida ? 'concluiu' : 'reabriu';
-      return true;
-    });
-    return ok ? resultado : '';
-  }
-  function alternarSubtarefa(id, subId) {
-    if (item(id) && !acesso(item(id)).concluir) return false;
-    return transacao((d) => {
-      const s = (d.itens.find((x) => x.id === id) || { subtarefas: [] }).subtarefas.find((x) => x.id === subId);
-      if (!s) return false;
-      s.concluida = !s.concluida;
-      s.concluidaEm = s.concluida ? agoraIso() : '';
-      return true;
-    });
-  }
-  function alternarSinalizado(id) {
-    if (item(id) && !acesso(item(id)).editar) return false;
-    return transacao((d) => { const i = d.itens.find((x) => x.id === id); if (!i) return false; i.sinalizado = !i.sinalizado; i.atualizadoEm = agoraIso(); return true; });
-  }
-  const excluirItem = (id) => (item(id) && !acesso(item(id)).excluir ? false : transacao((d) => { const n = d.itens.length; d.itens = d.itens.filter((i) => i.id !== id); d.relacoes = (d.relacoes || []).filter((r) => r.de !== id && r.para !== id); return d.itens.length < n; }));
-
-  /** Leva para outro dia (e hora, na grade de horas), mantendo a duração. */
-  function moverPara(id, data, hora) {
-    if (!D.dataValida(data) || (hora && !D.horaValida(hora))) return false;
-    if (item(id) && !acesso(item(id)).editar) return false;
-    return transacao((d) => {
-      const i = d.itens.find((x) => x.id === id);
-      if (!i || i.concluida) return false;
-      if (hora !== undefined && hora !== null) {
-        const dur = i.hora && i.horaFim ? D.minutos(i.horaFim) - D.minutos(i.hora) : 0;
-        i.hora = hora;
-        i.horaFim = hora && dur ? D.paraHora(Math.min(1439, D.minutos(hora) + dur)) : '';
-        if (i.horaFim && i.horaFim <= i.hora) i.horaFim = '';
-      }
-      if (i.repeticao && (!i.repeticao.ancora || i.repeticao.ancora === i.data)) i.repeticao.ancora = data;
-      i.data = data;
-      i.adiadoPara = '';
-      i.atualizadoEm = agoraIso();
-      return true;
-    });
-  }
-
-  /** Soneca do alerta: avisar de novo daqui a N minutos. */
-  const adiar = (id, minutosDepois) => transacao((d) => { const i = d.itens.find((x) => x.id === id); if (!i) return false; i.adiadoPara = new Date(Date.now() + minutosDepois * 60000).toISOString(); return true; });
-
-  /** Kanban: muda de coluna. Para "Concluído", conclui; para fora dela, reabre. */
-  function moverColuna(id, colunaId) {
+  async function concluir(id, desejado, ocorrencia) {
     const i = item(id);
-    if (!i) return false;
-    if (colunaId === CONCLUIDO) return i.concluida ? true : Boolean(alternarConcluida(id));
-    if (!acesso(i).editar || (i.concluida && !acesso(i).concluir)) return false;
-    return transacao((d) => {
-      const x = d.itens.find((y) => y.id === id);
-      if (x.concluida) { x.concluida = false; x.concluidaEm = ''; }
-      x.colunaId = colunaId;
-      x.atualizadoEm = agoraIso();
-      return true;
-    });
+    if (!i) return erro('Compromisso não encontrado.');
+    if (!acesso(i).concluir) return erro(SEM.concluir);
+    const corpo = desejado ? { concluida: true, ...(R.temRepeticao(i) && (ocorrencia || i.data) ? { ocorrencia: ocorrencia || i.data } : {}) } : { concluida: false };
+    const r = await enviar(caminhoItem(id) + '/conclusao', 'POST', corpo);
+    if (r.erro) return r;
+    guardarItem(r.dados.compromisso);
+    if (r.dados.copia) guardarItem(r.dados.copia);
+    gravou();
+    return { resultado: r.dados.resultado };
   }
 
-  /** Ordem manual: põe o compromisso antes de outro (ou no fim, sem "antesDe"). */
-  function reordenar(id, antesDeId) {
-    if (item(id) && !acesso(item(id)).editar) return false;
-    return transacao((d) => {
-      const i = d.itens.find((x) => x.id === id);
-      if (!i || id === antesDeId) return false;
-      const daLista = d.itens.filter((x) => x.listaId === i.listaId && x.id !== id).sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
-      const pos = antesDeId ? daLista.findIndex((x) => x.id === antesDeId) : -1;
-      daLista.splice(pos < 0 ? daLista.length : pos, 0, i);
-      daLista.forEach((x, n) => { x.ordem = n + 1; });
-      return true;
-    });
+  /** Subtarefa pelo estado desejado. */
+  async function marcarSubtarefa(id, subId, desejado) {
+    const i = item(id);
+    if (!i) return erro('Compromisso não encontrado.');
+    if (!acesso(i).concluir) return erro(SEM.concluir);
+    const r = await enviar(caminhoItem(id) + '/subtarefas/' + encodeURIComponent(subId), 'PUT', { concluida: Boolean(desejado) });
+    if (r.erro) return r;
+    guardarItem(r.dados);
+    gravou();
+    return { ok: true };
   }
 
-  /** "Limpar" do Lembretes: apaga os concluídos de uma lista (ou de todas, sem listaId). */
-  function limparConcluidos(listaId) {
-    let n = 0;
-    const ok = transacao((d) => { const antes = d.itens.length; d.itens = d.itens.filter((i) => !(i.concluida && (!listaId || i.listaId === listaId) && D.acesso(i, usuarioAtual()).excluir)); n = antes - d.itens.length; });
-    return ok ? n : 0;
+  async function excluirItem(id) {
+    const i = item(id);
+    if (!i) return erro('Compromisso não encontrado.');
+    if (!acesso(i).excluir) return erro(SEM.excluir);
+    const r = await enviar(caminhoItem(id) + '?versao=' + i.versao, 'DELETE');
+    if (r.erro) return r;
+    dados.itens = dados.itens.filter((x) => x.id !== id);
+    dados.relacoes = dados.relacoes.filter((x) => x.de !== id && x.para !== id);
+    gravou();
+    return { ok: true };
   }
 
   /**
-   * Avaliação da execução (depois de concluído): o gestor avalia cada responsável; o responsável se
-   * autoavalia. Uma vez registrada, não muda.
+   * Mudança parcial: o servidor passa pela MESMA função do formulário (uma validação, uma regra de âncora; M5).
+   * mudar(copia) altera a cópia; vão só os campos que mudaram.
    */
-  function avaliar(id, avaliadoId, valor, comentario) {
+  async function alterar(id, mudar, permissao = 'editar') {
     const i = item(id);
     if (!i) return erro('Compromisso não encontrado.');
-    const pode = D.podeAvaliar(i, usuarioAtual(), avaliadoId);
-    if (pode.erro) return erro(pode.erro);
-    const v = Number(valor);
-    if (!D.valorValido(i.avaliacao.tipo, v)) return erro('Escolha a nota.');
-    const feito = transacao((d) => {
-      const x = d.itens.find((y) => y.id === id);
-      const p = D.podeAvaliar(x, usuarioAtual(), avaliadoId);
-      if (p.erro) throw new Error(p.erro);
-      x.avaliacao.notas.push({ avaliadoId, porId: usuarioAtual(), papel: p.papel, valor: v, comentario: String(comentario || '').trim().slice(0, 500), em: agoraIso() });
-    });
-    return feito ? { ok: true } : erro('Não foi possível registrar a avaliação.');
-  }
-
-  /* ---------- Edição direta (mapa mental) ---------- */
-
-  /** Muda campos de um compromisso com a mesma validação e permissão do formulário. */
-  function alterar(id, mudar, permissao = 'editar') {
-    const i = item(id);
-    if (!i) return erro('Compromisso não encontrado.');
-    if (!acesso(i)[permissao]) return erro(SEM_PERMISSAO[permissao]);
-    const copia = structuredClone(i);
-    const msg = mudar(copia);
+    if (!acesso(i)[permissao]) return erro(SEM[permissao]);
+    const c = structuredClone(i);
+    const msg = mudar(c);
     if (typeof msg === 'string') return erro(msg);
-    const v = D.validar(copia);
+    const tirouData = i.data && !c.data;
+    // Tirar a data: o servidor tira junto hora, repetição e alerta (a cópia só imita para conferir antes).
+    if (tirouData) Object.assign(c, { hora: '', horaFim: '', repeticao: null, alerta: null });
+    const v = R.validar(c);
     if (v) return erro(v);
-    if (copia.listaId !== i.listaId && !lista(copia.listaId)) return erro('Lista não encontrada.');
-    const ok = transacao((d) => {
-      const x = d.itens.find((y) => y.id === id);
-      Object.assign(x, copia, { atualizadoEm: agoraIso() });
-    });
-    return ok ? { ok: true } : erro('Não foi possível salvar.');
+    if (c.listaId !== i.listaId && !lista(c.listaId)) return erro('Lista não encontrada.');
+    const patch = { versao: i.versao };
+    if (c.titulo !== i.titulo) patch.titulo = String(c.titulo || '').trim();
+    if (c.listaId !== i.listaId) patch.grupoId = c.listaId;
+    if (c.prioridade !== i.prioridade) patch.prioridade = c.prioridade;
+    if (c.sinalizado !== i.sinalizado) patch.sinalizado = Boolean(c.sinalizado);
+    if (c.data !== i.data) patch.data = c.data || '';
+    if (!tirouData && c.hora !== i.hora) patch.hora = c.hora || '';
+    if (!tirouData && c.horaFim !== i.horaFim) patch.horaFim = c.horaFim || '';
+    if (c.colunaId !== i.colunaId) patch.colunaId = c.colunaId || '';
+    if (JSON.stringify(c.subtarefas) !== JSON.stringify(i.subtarefas)) patch.subtarefas = c.subtarefas.map((s) => ({ id: s.id, titulo: String(s.titulo || '').trim(), concluida: Boolean(s.concluida) }));
+    if (c.antesDe !== undefined) patch.antesDe = c.antesDe;
+    if (Object.keys(patch).length === 1) return { ok: true };
+    const r = await enviar(caminhoItem(id), 'PATCH', patch);
+    if (r.erro) return r;
+    guardarItem(r.dados);
+    gravou();
+    return { ok: true };
   }
   const renomear = (id, titulo) => alterar(id, (c) => { c.titulo = String(titulo || '').trim(); });
-  /** Leva para outra lista, prioridade ou data (arrastar no mapa). */
+  const alternarSinalizado = (id) => alterar(id, (c) => { c.sinalizado = !c.sinalizado; });
+
+  /** Kanban: muda de coluna. Para "Concluído", conclui; para fora dela, o servidor reabre (precisa de "Concluir"). */
+  function moverColuna(id, colunaId) {
+    const i = item(id);
+    if (!i) return Promise.resolve(erro('Compromisso não encontrado.'));
+    if (colunaId === CONCLUIDO) return i.concluida ? Promise.resolve({ ok: true }) : concluir(id, true);
+    if (i.concluida && !acesso(i).concluir) return Promise.resolve(erro(SEM.concluir));
+    if (i.concluida && i.colunaId === colunaId) {
+      // Mesma coluna de antes: só reabre.
+      return concluir(id, false);
+    }
+    return alterar(id, (c) => { c.colunaId = colunaId; });
+  }
+
+  /** Leva para outro dia (e hora, na grade de horas), mantendo a duração. O servidor cuida da âncora da repetição. */
+  function moverPara(id, data, hora) {
+    if (!R.dataValida(data) || (hora && !R.horaValida(hora))) return Promise.resolve(erro('Data ou hora inválida.'));
+    const i = item(id);
+    if (i && i.concluida) return Promise.resolve(erro('Compromisso concluído não muda de dia.'));
+    const D = window.CicluzAgendaDominio;
+    return alterar(id, (c) => {
+      if (hora !== undefined && hora !== null) {
+        const dur = c.hora && c.horaFim ? D.minutos(c.horaFim) - D.minutos(c.hora) : 0;
+        c.hora = hora;
+        c.horaFim = hora && dur ? D.paraHora(Math.min(1439, D.minutos(hora) + dur)) : '';
+        if (c.horaFim && c.horaFim <= c.hora) c.horaFim = '';
+      }
+      c.data = data;
+    });
+  }
+
+  /** Leva para outra lista, prioridade, data ou coluna (arrastar no mapa). */
   function definir(id, campos) {
-    if (campos.colunaId !== undefined) return moverColuna(id, campos.colunaId) ? { ok: true } : erro(SEM_PERMISSAO.editar);
+    if (campos.colunaId !== undefined) return moverColuna(id, campos.colunaId);
     return alterar(id, (c) => {
       if (campos.listaId !== undefined) c.listaId = campos.listaId;
       if (campos.prioridade !== undefined) c.prioridade = campos.prioridade;
-      if (campos.data !== undefined) { c.data = campos.data; if (!c.data) { c.hora = ''; c.horaFim = ''; c.repeticao = null; c.alerta = null; } c.adiadoPara = ''; }
+      if (campos.data !== undefined) c.data = campos.data;
     });
   }
-  function adicionarSubtarefa(id, titulo, antesDe) {
+
+  /** Ordem manual: põe o compromisso antes de outro (ou no fim). Muda só ele no servidor. */
+  const reordenar = (id, antesDeId) => alterar(id, (c) => { c.antesDe = antesDeId || null; });
+
+  /** Soneca do alerta: só para quem adiou. */
+  async function adiar(id, minutosDepois) {
+    if (!item(id)) return erro('Compromisso não encontrado.');
+    const r = await enviar(caminhoItem(id) + '/adiamento', 'PUT', { ate: new Date(Date.now() + minutosDepois * 60000).toISOString() });
+    if (r.erro) return r;
+    guardarItem(r.dados);
+    gravou();
+    return { ok: true };
+  }
+
+  /** "Limpar" do Lembretes: esconde os concluídos (de uma lista ou de todas) que a pessoa pode excluir. */
+  async function limparConcluidos(listaId) {
+    const r = await enviar('/agenda/limpar-concluidos', 'POST', listaId ? { grupoId: listaId } : {});
+    if (r.erro) return r;
+    await atualizar(true);
+    gravou();
+    return { ok: true, excluidos: r.dados.excluidos };
+  }
+
+  /** Avaliação: confere no servidor; registrada não muda. */
+  async function avaliar(id, avaliadoId, valor, comentario) {
+    const i = item(id);
+    if (!i) return erro('Compromisso não encontrado.');
+    const v = Number(valor);
+    if (!R.valorValido(i.avaliacao.tipo, v)) return erro('Escolha a nota.');
+    const r = await enviar(caminhoItem(id) + '/avaliacoes', 'POST', { avaliadoId, valor: v, comentario: String(comentario || '').trim().slice(0, 500) });
+    if (r.erro) return r;
+    guardarItem(r.dados);
+    gravou();
+    return { ok: true };
+  }
+
+  /* ---------- Subtarefas (mapa mental) ---------- */
+  async function adicionarSubtarefa(id, titulo, antesDe) {
     const t = String(titulo || '').trim();
     if (!t) return erro('Escreva a subtarefa.');
-    let novo = '';
-    const r = alterar(id, (c) => {
-      novo = novoId('sub');
+    const novo = novoId('sub');
+    const r = await alterar(id, (c) => {
       const pos = antesDe ? c.subtarefas.findIndex((x) => x.id === antesDe) : -1;
       c.subtarefas.splice(pos < 0 ? c.subtarefas.length : pos + 1, 0, { id: novo, titulo: t.slice(0, 200), concluida: false, concluidaEm: '' });
     });
     return r.ok ? { ok: true, id: novo } : r;
   }
-  const renomearSubtarefa = (id, subId, titulo) => alterar(id, (c) => { const x = c.subtarefas.find((y) => y.id === subId); if (!x) return 'Subtarefa não encontrada.'; x.titulo = String(titulo || '').trim(); });
-  const excluirSubtarefa = (id, subId) => alterar(id, (c) => { const n = c.subtarefas.length; c.subtarefas = c.subtarefas.filter((y) => y.id !== subId); if (c.subtarefas.length === n) return 'Subtarefa não encontrada.'; });
-  /** Leva uma subtarefa para outro compromisso (as duas pontas precisam de "Editar"). */
-  function moverSubtarefa(deId, subId, paraId) {
+  const renomearSubtarefa = (id, subId, titulo) => alterar(id, (c) => { const x = c.subtarefas.find((y) => y.id === subId); if (!x) return 'Subtarefa não encontrada.'; x.titulo = String(titulo || '').trim(); return undefined; });
+  const excluirSubtarefa = (id, subId) => alterar(id, (c) => { const n = c.subtarefas.length; c.subtarefas = c.subtarefas.filter((y) => y.id !== subId); return c.subtarefas.length === n ? 'Subtarefa não encontrada.' : undefined; });
+  /** Leva uma subtarefa para outro compromisso: primeiro entra no destino, depois sai da origem (nada se perde). */
+  async function moverSubtarefa(deId, subId, paraId) {
     if (deId === paraId) return { ok: true };
     const de = item(deId);
     const para = item(paraId);
     if (!de || !para) return erro('Compromisso não encontrado.');
-    if (!acesso(de).editar || !acesso(para).editar) return erro(SEM_PERMISSAO.editar);
+    if (!acesso(de).editar || !acesso(para).editar) return erro(SEM.editar);
     const sub = de.subtarefas.find((x) => x.id === subId);
     if (!sub) return erro('Subtarefa não encontrada.');
-    const ok = transacao((d) => {
-      const a = d.itens.find((x) => x.id === deId);
-      const b = d.itens.find((x) => x.id === paraId);
-      a.subtarefas = a.subtarefas.filter((x) => x.id !== subId);
-      b.subtarefas.push(structuredClone(sub));
-      a.atualizadoEm = b.atualizadoEm = agoraIso();
-    });
-    return ok ? { ok: true } : erro('Não foi possível mover.');
+    const r1 = await alterar(paraId, (c) => { c.subtarefas.push({ ...structuredClone(sub), id: novoId('sub') }); });
+    if (r1.erro) return r1;
+    const r2 = await excluirSubtarefa(deId, subId);
+    return r2.erro ? erro('A subtarefa foi copiada para "' + para.titulo + '", mas não saiu de "' + de.titulo + '": ' + r2.erro) : { ok: true };
   }
 
-  /* Relações entre compromissos (as linhas do mapa mental, como no XMind): "depende de", "antes de"… */
-  function criarRelacao(de, para, rotulo) {
+  /* ---------- Ligações do mapa mental ---------- */
+  async function criarRelacao(de, para, rotulo) {
     if (!de || !para || de === para) return erro('Escolha dois compromissos diferentes.');
     if (!item(de) || !item(para)) return erro('Compromisso não encontrado.');
-    if (!acesso(item(de)).editar) return erro(SEM_PERMISSAO.editar);
-    if (dados.relacoes.some((r) => (r.de === de && r.para === para) || (r.de === para && r.para === de))) return erro('Esses compromissos já estão ligados.');
-    let novo = '';
-    const ok = transacao((d) => { novo = novoId('rel'); d.relacoes.push({ id: novo, de, para, rotulo: String(rotulo || '').trim().slice(0, 40) }); });
-    return ok ? { ok: true, id: novo } : erro('Não foi possível ligar.');
+    if (!acesso(item(de)).editar) return erro(SEM.editar);
+    const r = await enviar('/agenda/relacoes', 'POST', { id: novoId('rel'), de, para, rotulo: String(rotulo || '').trim().slice(0, 40) });
+    if (r.erro) return r;
+    dados.relacoes.push(r.dados);
+    gravou();
+    return { ok: true, id: r.dados.id };
   }
-  function rotularRelacao(id, rotulo) {
-    const r = dados.relacoes.find((x) => x.id === id);
-    if (!r) return erro('Ligação não encontrada.');
-    if (item(r.de) && !acesso(item(r.de)).editar) return erro(SEM_PERMISSAO.editar);
-    return transacao((d) => { d.relacoes.find((x) => x.id === id).rotulo = String(rotulo || '').trim().slice(0, 40); }) ? { ok: true } : erro('Não foi possível salvar.');
+  async function rotularRelacao(id, rotulo) {
+    const atual = dados.relacoes.find((x) => x.id === id);
+    if (!atual) return erro('Ligação não encontrada.');
+    const r = await enviar('/agenda/relacoes/' + encodeURIComponent(id), 'PATCH', { rotulo: String(rotulo || '').trim().slice(0, 40) });
+    if (r.erro) return r;
+    Object.assign(atual, { rotulo: r.dados.rotulo });
+    gravou();
+    return { ok: true };
   }
-  function excluirRelacao(id) {
-    const r = dados.relacoes.find((x) => x.id === id);
-    if (!r) return erro('Ligação não encontrada.');
-    if (item(r.de) && !acesso(item(r.de)).editar) return erro(SEM_PERMISSAO.editar);
-    return transacao((d) => { d.relacoes = d.relacoes.filter((x) => x.id !== id); }) ? { ok: true } : erro('Não foi possível excluir.');
+  async function excluirRelacao(id) {
+    if (!dados.relacoes.some((x) => x.id === id)) return erro('Ligação não encontrada.');
+    const r = await enviar('/agenda/relacoes/' + encodeURIComponent(id), 'DELETE');
+    if (r.erro) return r;
+    dados.relacoes = dados.relacoes.filter((x) => x.id !== id);
+    gravou();
+    return { ok: true };
   }
-  /** Ligações que o usuário pode ver (as duas pontas visíveis). */
-  const relacoesVisiveis = () => { const ids = new Set(visiveis().map((i) => i.id)); return dados.relacoes.filter((r) => ids.has(r.de) && ids.has(r.para)); };
 
   /* ---------- Listas ---------- */
-  function salvarLista(id, { nome, cor, icone }) {
+  async function salvarLista(id, { nome, cor, icone }) {
     const n = String(nome || '').trim();
     if (!n) return erro('Informe o nome da lista.');
     if (n.length > 40) return erro('O nome da lista passa de 40 letras.');
-    if (dados.listas.some((l) => l.id !== id && l.nome.toLocaleLowerCase('pt-BR') === n.toLocaleLowerCase('pt-BR'))) return erro('Já existe uma lista com esse nome.');
-    let novo = id;
-    const feito = transacao((d) => {
-      if (id) { const l = d.listas.find((x) => x.id === id); if (!l) throw new Error('não encontrada'); Object.assign(l, { nome: n, cor: cor || l.cor, icone: icone || l.icone }); }
-      else { novo = novoId('lista'); d.listas.push({ id: novo, nome: n, cor: cor || CORES_LISTA[d.listas.length % CORES_LISTA.length], icone: icone || 'lista', ordenacao: 'manual' }); }
-    });
-    return feito ? { ok: true, id: novo } : erro('Não foi possível salvar a lista.');
+    const atual = id ? lista(id) : null;
+    if (id && !atual) return erro('Lista não encontrada.');
+    const r = atual
+      ? await enviar('/agenda/grupos/' + encodeURIComponent(id), 'PUT', { versao: atual.versao, nome: n, ...(cor ? { cor: corSegura(cor) } : {}), ...(icone ? { icone } : {}) })
+      : await enviar('/agenda/grupos', 'POST', { id: novoId('lista'), nome: n, cor: corSegura(cor || CORES_LISTA[dados.listas.length % CORES_LISTA.length]), icone: icone || 'lista' });
+    if (r.erro) return r;
+    const l = guardarLista(r.dados);
+    gravou();
+    return { ok: true, id: l.id };
   }
-  const definirOrdenacao = (listaId, ordenacao) => transacao((d) => { const l = d.listas.find((x) => x.id === listaId); if (l) l.ordenacao = ordenacao; });
+  /** Ordenação: a dona ou o administrador grava para todos; os outros mudam só na própria tela. */
+  async function definirOrdenacao(listaId, ordenacao) {
+    const l = lista(listaId);
+    if (!l) return erro('Lista não encontrada.');
+    if (!l.podeGerir) { l.ordenacao = ordenacao; avisar(false); return { ok: true, local: true }; }
+    const r = await enviar('/agenda/grupos/' + encodeURIComponent(listaId), 'PUT', { versao: l.versao, ordenacao });
+    if (r.erro) return r;
+    guardarLista(r.dados);
+    gravou();
+    return { ok: true };
+  }
   /** Exclui a lista só quando vazia: compromisso nunca some junto com a lista. */
-  function excluirLista(id) {
-    if (dados.itens.some((i) => i.listaId === id)) return erro('Mova ou exclua os compromissos desta lista antes de excluí-la.');
-    if (dados.listas.length <= 1) return erro('A agenda precisa de pelo menos uma lista.');
-    return transacao((d) => { d.listas = d.listas.filter((l) => l.id !== id); }) ? { ok: true } : erro('Não foi possível excluir a lista.');
+  async function excluirLista(id) {
+    const l = lista(id);
+    if (!l) return erro('Lista não encontrada.');
+    const r = await enviar('/agenda/grupos/' + encodeURIComponent(id) + '?versao=' + l.versao, 'DELETE');
+    if (r.erro) return r;
+    dados.listas = dados.listas.filter((x) => x.id !== id);
+    gravou();
+    return { ok: true };
   }
 
   /* ---------- Colunas do Kanban ---------- */
-  function salvarColuna(id, nome) {
+  async function salvarColuna(id, nome) {
     const n = String(nome || '').trim();
     if (!n) return erro('Informe o nome da coluna.');
     if (n.length > 30) return erro('O nome da coluna passa de 30 letras.');
-    if (n.toLocaleLowerCase('pt-BR') === 'concluído' || dados.colunas.some((c) => c.id !== id && c.nome.toLocaleLowerCase('pt-BR') === n.toLocaleLowerCase('pt-BR'))) return erro('Já existe uma coluna com esse nome.');
-    let novo = id;
-    const feito = transacao((d) => {
-      if (id) { const c = d.colunas.find((x) => x.id === id); if (!c) throw new Error('não encontrada'); c.nome = n; }
-      else { novo = novoId('col'); d.colunas.push({ id: novo, nome: n }); }
-    });
-    return feito ? { ok: true, id: novo } : erro('Não foi possível salvar a coluna.');
+    const r = id
+      ? await enviar('/agenda/colunas/' + encodeURIComponent(id), 'PUT', { nome: n })
+      : await enviar('/agenda/colunas', 'POST', { id: novoId('col'), nome: n });
+    if (r.erro) return r;
+    const c = coluna(r.dados.id);
+    if (c) c.nome = r.dados.nome; else dados.colunas.push({ id: r.dados.id, nome: r.dados.nome, ordem: r.dados.ordem });
+    gravou();
+    return { ok: true, id: r.dados.id };
   }
-  function excluirColuna(id) {
-    if (dados.colunas.length <= 1) return erro('O quadro precisa de pelo menos uma coluna além de Concluído.');
-    if (dados.itens.some((i) => !i.concluida && colunaDe(i) === id)) return erro('Mova os cartões desta coluna antes de excluí-la.');
-    return transacao((d) => { d.colunas = d.colunas.filter((c) => c.id !== id); }) ? { ok: true } : erro('Não foi possível excluir a coluna.');
+  async function excluirColuna(id) {
+    const r = await enviar('/agenda/colunas/' + encodeURIComponent(id), 'DELETE');
+    if (r.erro) return r;
+    dados.colunas = dados.colunas.filter((c) => c.id !== id);
+    dados.itens.forEach((i) => { if (i.colunaId === id) i.colunaId = ''; });
+    gravou();
+    return { ok: true };
+  }
+
+  /* ---------- Transferência (administrador) ---------- */
+  async function previaTransferencia() {
+    try { return { dados: await window.CicluzSync.api('/agenda/transferencia') }; }
+    catch (e) { return erro((e && e.message) || 'Não foi possível ler a prévia.'); }
+  }
+  async function transferir(corpo) {
+    emAndamento++;
+    try {
+      const r = await window.CicluzSync.api('/agenda/transferencia', { metodo: 'POST', corpo });
+      // Uma leitura que começou antes (ainda "não transferida") não vale: espera ela e busca de novo.
+      gravacoes++;
+      if (buscando) await buscando.catch(() => undefined);
+      etag = '';
+      await atualizar(true);
+      return { dados: r };
+    } catch (e) { return erro((e && e.message) || 'Não foi possível levar a Agenda.'); }
+    finally { emAndamento--; }
+  }
+
+  /* ---------- Membros da lista (grupo), configurações, desempenho, tarefa de tela (P-46) ---------- */
+  const api = async (caminho, opcoes) => {
+    if (!conectado()) return erro(SEM_INTERNET);
+    try { return { dados: await window.CicluzSync.api(caminho, opcoes) }; }
+    catch (e) { if (e && e.codigo === 'AGENDA_FORA_EXPEDIENTE') bloquear(e.message); return erro((e && e.message) || 'Não foi possível falar com o servidor.'); }
+  };
+  const caminhoLista = (id) => '/agenda/grupos/' + encodeURIComponent(id);
+  async function membros(listaId) {
+    const r = await api(caminhoLista(listaId) + '/membros');
+    return r.erro ? r : { ids: r.dados.usuarioIds || [] };
+  }
+  async function definirMembros(listaId, ids) {
+    const r = await enviar(caminhoLista(listaId) + '/membros', 'PUT', { usuarioIds: ids });
+    if (r.erro) return r;
+    gravou();
+    return { ids: r.dados.usuarioIds || [] };
+  }
+  const minhaConfig = () => api('/agenda/configuracoes/minha');
+  const configs = () => api('/agenda/configuracoes');
+  const salvarConfig = (usuarioId, corpo) => api('/agenda/configuracoes/' + encodeURIComponent(usuarioId), { metodo: 'PUT', corpo });
+  const desempenho = (de, ate) => api('/agenda/desempenho?de=' + encodeURIComponent(de) + '&ate=' + encodeURIComponent(ate));
+  /** Tarefa que uma tela pede (ex.: pedido de compra agendado chegou na hora). Uma por referência. */
+  async function tarefaDeTela(corpo) {
+    const r = await api('/agenda/tarefas-de-tela', { metodo: 'POST', corpo: { id: novoId('ag'), ...corpo } });
+    if (r.erro) return r;
+    // O compromisso só volta para quem participa dele (quem só disparou a tela recebe o id).
+    if (r.dados.compromisso && situacao === 'servidor') { guardarItem(r.dados.compromisso); gravou(); }
+    return { ok: true, id: r.dados.id };
+  }
+  /** A tela fez o que a tarefa pedia: conclui (se a pessoa pode). */
+  async function concluirPorVinculo(vinculoRef) {
+    const r = await api('/agenda/tarefas-de-tela/concluir', { metodo: 'POST', corpo: { vinculoRef } });
+    if (r.erro) return r;
+    if (r.dados.compromisso && situacao === 'servidor') { guardarItem(r.dados.compromisso); gravou(); }
+    return { ok: true, resultado: r.dados.resultado };
   }
 
   window.CicluzAgendaDados = {
-    KEY, LISTAS_INICIAIS, CORES_LISTA, CONCLUIDO,
+    CHAVE_CACHE, CORES_LISTA, CONCLUIDO,
     get dados() { return dados; },
-    get erroLeitura() { return erroLeitura; },
-    transacao, novoId, pessoas, nomePessoa, usuarioAtual, acesso, visiveis, lista, item, coluna, colunaDe, avaliar,
+    /** carregando | cache | servidor | sem-internet | nao-transferida | fora-expediente | erro */
+    get situacao() { return situacao; },
+    get motivoBloqueio() { return motivoBloqueio; },
+    get somenteLeitura() { return situacao !== 'servidor'; },
+    /** Pedidos ao servidor em andamento (os testes esperam chegar a zero). */
+    get emAndamento() { return emAndamento; },
+    atualizar, novoId, pessoas, nomePessoa, usuarioAtual, acesso, visiveis, lista, item, coluna, colunaDe, avaliar,
     alterar, renomear, definir, adicionarSubtarefa, renomearSubtarefa, excluirSubtarefa, moverSubtarefa,
     criarRelacao, rotularRelacao, excluirRelacao, relacoesVisiveis,
-    salvarItem, criarRapido, alternarConcluida, alternarSubtarefa, alternarSinalizado, excluirItem, moverPara, adiar,
+    salvarItem, criarRapido, concluir, marcarSubtarefa, alternarSinalizado, excluirItem, moverPara, adiar,
     moverColuna, reordenar, limparConcluidos,
     salvarLista, definirOrdenacao, excluirLista, salvarColuna, excluirColuna,
+    previaTransferencia, transferir,
+    membros, definirMembros, minhaConfig, configs, salvarConfig, desempenho, tarefaDeTela, concluirPorVinculo, conectado,
   };
 })();

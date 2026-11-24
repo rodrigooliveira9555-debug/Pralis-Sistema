@@ -24,6 +24,8 @@ await p.route('https://fonts.googleapis.com/**', (r) => r.abort());
 await p.route('https://fonts.gstatic.com/**', (r) => r.abort());
 await p.goto(url, { waitUntil: 'load' });
 await p.waitForFunction(() => window.CicluzCompras && window.CicluzComprasServico);
+// Contas fictícias da empresa (sem servidor não há Pessoas com Acesso; as pessoas de teste saíram, P-46).
+await p.evaluate(() => { CicluzAgendaDados.pessoas = () => [{ id: 'conta-jose', nome: 'José (teste)' }, { id: 'conta-rodrigo', nome: 'Rodrigo (teste)' }, { id: 'conta-ana', nome: 'Ana (teste)' }]; });
 await p.evaluate(() => { if (document.body.classList.contains('mobile-menu-visible')) document.getElementById('toggleMenu').click(); });
 
 const dialogo = () => p.locator('dialog.compras-dialog[open]').last();
@@ -141,7 +143,7 @@ async function fecharDialogos() {
 {
   const gerar = () => p.evaluate(() => {
     const SV = CicluzComprasServico, S = CicluzComprasDados;
-    const r = SV.salvarAgendaConferencia({ filtro: { grupoId: 'g3', subgrupoId: 'g3s0', area: '', setor: '', localVenda: '', ranking: [] }, responsavelId: 'u-ana', inicio: CicluzComprasDominio.isoData(new Date(Date.now() + 864e5)), hora: '07:00', regra: { tipo: 'nunca' }, termino: { tipo: 'nunca' }, orientacao: '' });
+    const r = SV.salvarAgendaConferencia({ filtro: { grupoId: 'g3', subgrupoId: 'g3s0', area: '', setor: '', localVenda: '', ranking: [] }, responsavelId: 'conta-ana', inicio: CicluzComprasDominio.isoData(new Date(Date.now() + 864e5)), hora: '07:00', regra: { tipo: 'nunca' }, termino: { tipo: 'nunca' }, orientacao: '' });
     if (r.erro) return r;
     const a = S.dados.conferenciaAgendas[S.dados.conferenciaAgendas.length - 1];
     SV.processarConferencias({ agendaId: a.id, previsto: SV.proximasConferencias(a)[0].previsto });
@@ -202,7 +204,7 @@ async function fecharDialogos() {
     const SV = CicluzComprasServico, S = CicluzComprasDados;
     const c = S.dados.conferencias.find((x) => x.id === id);
     const res = SV.resumoConferencia(c);
-    const propria = SV.aprovarConferencia(id, 'u-ana');
+    const propria = SV.aprovarConferencia(id, 'conta-ana');
     const semQuem = SV.aprovarConferencia(id, '');
     const antes = S.produto('p-coca2l').saldo;
     return { res: { faltas: res.faltas, liquido: res.liquido, n: res.divergentes.length }, propria, semQuem, antes };
@@ -218,17 +220,17 @@ async function fecharDialogos() {
   await dialogo().waitFor();
   ok((await dialogo().locator('th').allTextContents()).some((t) => /sistema/i.test(t)), 'Concluída: agora mostra o sistema');
   ok(await dialogo().getByText('Duas garrafas quebradas').count() >= 1, 'Concluída: mostra o motivo');
-  ok(await dialogo().locator('select option[value=u-ana]').count() === 0, 'Quem contou não aparece em "Quem aprova"');
-  await dialogo().locator('select').selectOption('u-rodrigo');
+  ok(await dialogo().locator('select option[value=conta-ana]').count() === 0, 'Quem contou não aparece em "Quem aprova"');
+  await dialogo().locator('select').selectOption('conta-rodrigo');
   await dialogo().locator('.people-save-control').click();
   await p.waitForFunction((id) => CicluzComprasDados.dados.conferencias.find((c) => c.id === id).status === 'aprovada', g.id);
   const r3 = await p.evaluate((id) => {
     const S = CicluzComprasDados;
     const mov = S.dados.movimentos.filter((m) => m.conferenciaId === id);
-    return { saldo: S.produto('p-coca2l').saldo, mov: mov.map((m) => [m.produtoId, m.entrada, m.saldoAnterior, m.saldoPosterior, m.aprovadorId, m.motivo]), de2: CicluzComprasServico.aprovarConferencia(id, 'u-rodrigo') };
+    return { saldo: S.produto('p-coca2l').saldo, mov: mov.map((m) => [m.produtoId, m.entrada, m.saldoAnterior, m.saldoPosterior, m.aprovadorId, m.motivo]), de2: CicluzComprasServico.aprovarConferencia(id, 'conta-rodrigo') };
   }, g.id);
   ok(r3.saldo === 16, 'Aprovada: estoque da Coca ajustado de 18 para 16');
-  ok(JSON.stringify(r3.mov) === JSON.stringify([['p-coca2l', -2, 18, 16, 'u-rodrigo', 'Duas garrafas quebradas']]), 'Um movimento de ajuste só para o que divergiu, com aprovador e motivo');
+  ok(JSON.stringify(r3.mov) === JSON.stringify([['p-coca2l', -2, 18, 16, 'conta-rodrigo', 'Duas garrafas quebradas']]), 'Um movimento de ajuste só para o que divergiu, com aprovador e motivo');
   ok(/concluída e ainda não aprovada/.test(r3.de2.erro || ''), 'Não aprova duas vezes');
 
   // Recusa: estoque não muda e o motivo é obrigatório.
@@ -239,8 +241,8 @@ async function fecharDialogos() {
     SV.salvarContagem(id, v, true);
     SV.salvarContagem(id, v, true, Object.fromEntries(itens.map((i) => [i.produtoId, 'Sobra'])));
     const antes = itens.map((i) => S.produto(i.produtoId).saldo);
-    const semMotivo = SV.recusarConferencia(id, 'u-jose', ' ');
-    const r = SV.recusarConferencia(id, 'u-jose', 'Contagem feita fora do horário');
+    const semMotivo = SV.recusarConferencia(id, 'conta-jose', ' ');
+    const r = SV.recusarConferencia(id, 'conta-jose', 'Contagem feita fora do horário');
     return { semMotivo, r, status: S.dados.conferencias.find((c) => c.id === id).status, igual: JSON.stringify(antes) === JSON.stringify(itens.map((i) => S.produto(i.produtoId).saldo)), movs: S.dados.movimentos.filter((m) => m.conferenciaId === id).length };
   }, g2);
   ok(/Explique por que/.test(r4.semMotivo.erro || ''), 'Recusar exige motivo');

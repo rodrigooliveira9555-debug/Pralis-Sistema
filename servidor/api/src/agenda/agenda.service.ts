@@ -1,43 +1,33 @@
 import { createHash } from "node:crypto";
 import {
-  acessoAgenda,
   TAMANHO_MAXIMO_ARQUIVO,
   type ArquivoEnvio,
   type ArquivoResposta,
-  type CompromissoAgenda,
   type MensagemResposta,
   type PapelArquivo,
   type PerfilSessao
 } from "@cicluz/shared";
+import { banco } from "../banco/conexao.ts";
 import { ErroDominio, proibido } from "../erros.ts";
 import * as repo from "./agenda.repository.ts";
 import { tipoDoArquivo } from "./agenda.regras.ts";
+import * as compromissos from "./compromissos.repository.ts";
+import { acessoDe, naoEncontrado, naoTransferida } from "./compromissos.service.ts";
+import { exigirExpediente } from "./rotina.regras.ts";
 
-// A permissão vem do compromisso no documento da agenda. Cache por empresa, trocado quando a versão
-// do documento muda (o chat confere a cada 5 s; não precisa ler 4 MB de JSON toda vez).
-const cache = new Map<string, { versao: number; itens: Map<string, CompromissoAgenda> }>();
-
-async function compromissos(empresaId: string) {
-  const versao = await repo.versaoAgenda(empresaId);
-  const guardado = cache.get(empresaId);
-  if (guardado && guardado.versao === versao) return guardado.itens;
-  const doc = await repo.documentoAgenda(empresaId);
-  const itens = new Map<string, CompromissoAgenda>();
-  try {
-    const dados = doc ? (JSON.parse(doc.valor) as { itens?: CompromissoAgenda[] }) : null;
-    (dados?.itens ?? []).forEach((i) => { if (i && typeof i.id === "string") itens.set(i.id, i); });
-  } catch {
-    // Documento ilegível: ninguém acessa (melhor negar do que liberar sem conferir).
-  }
-  if (cache.size > 500) cache.clear();
-  cache.set(empresaId, { versao: doc?.versao ?? versao, itens });
-  return itens;
-}
+// Chat e arquivos de cada compromisso. A permissão vem das tabelas da Agenda (0007), conferida a cada pedido:
+// o documento "cicluz-agenda-v1" não decide mais nada (G1). Compromisso excluído não tem chat nem arquivos.
 
 async function exigirAcesso(perfil: PerfilSessao, compromissoId: string) {
-  const item = (await compromissos(perfil.empresa.id)).get(compromissoId);
-  if (!item) throw new ErroDominio("Compromisso não encontrado. Se acabou de criar, espere alguns segundos para ele chegar ao servidor.", 404, "AGENDA_COMPROMISSO_NAO_ENCONTRADO");
-  const acesso = acessoAgenda(item, perfil.usuarioId);
+  const empresaId = perfil.empresa.id;
+  await exigirExpediente(perfil);
+  const item = await compromissos.compromisso(banco, empresaId, compromissoId);
+  if (!item || item.excluidoEm) {
+    if (!(await compromissos.estado(banco, empresaId))) throw naoTransferida();
+    throw naoEncontrado();
+  }
+  const participantes = await compromissos.participantesDe(banco, empresaId, [compromissoId]);
+  const acesso = acessoDe(item, participantes.map((p) => ({ id: p.usuarioId, responsavel: p.responsavel, ver: p.ver, editar: p.editar, concluir: p.concluir, excluir: p.excluir })), perfil.usuarioId);
   if (!acesso.ver) throw proibido("Você não participa deste compromisso.", "AGENDA_SEM_ACESSO");
   return { item, acesso };
 }
@@ -63,11 +53,11 @@ export async function marcarLido(perfil: PerfilSessao, compromissoId: string) {
 
 /** Não lidas de cada compromisso que a pessoa pode ver. */
 export async function naoLidas(perfil: PerfilSessao) {
-  const itens = await compromissos(perfil.empresa.id);
+  // Só dos compromissos que a pessoa vê (a mesma consulta do GET /api/agenda).
+  const visiveis = new Set((await compromissos.compromissosVisiveis(perfil.empresa.id, perfil.usuarioId)).map((c) => c.id));
   const saida: Record<string, number> = {};
   for (const l of await repo.contarNaoLidas(perfil.empresa.id, perfil.usuarioId)) {
-    const item = itens.get(l.compromissoId);
-    if (item && acessoAgenda(item, perfil.usuarioId).ver) saida[l.compromissoId] = l.total;
+    if (visiveis.has(l.compromissoId)) saida[l.compromissoId] = l.total;
   }
   return saida;
 }

@@ -1,5 +1,53 @@
 # CICLUZ — referência de interface
 
+## Agenda no padrão do Design System (24/11/2026, pedido do Zé)
+Revisão de toda a Agenda (Listas, Calendário, Kanban, Mapa mental, Desempenho, janelas e alertas), na origem (`agenda/agenda.css`
+e os `agenda/*.js`), sem `!important` novo. **Ícones (só imagem)** das listas automáticas, de "Minhas listas", dos indicadores do
+Desempenho, da escolha de ícone da lista e dos arquivos: **quadrado de cantos arredondados** (`--row-icon-radius`), desenho de 18 px
+na cor da superfície (`--theme-surface`). **Botões de ícone** (endereço, "Abrir a tela", bandeira, mostrar subtarefas, ‹ › do
+calendário, "+" do Kanban, "×" do alerta): **redondo de ação** de 32 px cheio na cor do menu, desenho de 18 px, alvo de toque de 44 px;
+a bandeira ligada fica laranja (a cor de "Sinalizados"). A seta do fim da linha de Configurações da Agenda é a seta das linhas
+(só desenho, na cor do menu). **Caixas de marcar saíram:** "Sinalizar" é o interruptor do sistema com Sim/Não (`quadroSituacao`);
+a subtarefa na janela usa o **círculo de concluir** das linhas; "Membros do grupo" é um resumo ("3 membros: …") com o botão
+**Escolher membros**, que abre a **janela padrão de escolha** (`seletorDeItens`; quem criou a lista vem travado). **Excluir é
+vermelho e pede confirmação:** Excluir lista, Excluir coluna (botão redondo vermelho com a lixeira, `botaoRemover`), Excluir
+ligação e Excluir do Mapa mental (chip com texto vermelho); "Tirar pessoa" e "Tirar subtarefa" usam o mesmo redondo vermelho.
+**Chip é para escolher, botão é para agir:** "Editar lista", "Chat do grupo", "Editar colunas", "Hoje" e "Procurar" viraram botões
+(`btn secondary`); no alerta, Adiar 15 min / 1 h / Amanhã continuam chips (escolha do adiamento), Abrir e Concluir são botões e
+Fechar é o "×" redondo do canto. A barra de ferramentas do Mapa mental continua em chips (é um editor com muitas ações curtas).
+**Cores de situação** pelos tokens `--ui-situacao-*`: Atrasados e a hora atrasada em erro; **Programados deixou de ser vermelho**
+(roxo da Agenda); no Kanban, ponto da primeira coluna neutro, colunas do meio em atenção e **Concluído em ok (verde; era vermelho)**.
+**Texto de destaque** (links, etiquetas, contagens, "Voltar às listas") numa variável só, `--agenda-destaque` (roxo do texto no
+claro, roxo clareado no escuro), no lugar de oito cores escuras escritas à mão. **Letras** pelos tokens de `ui-foundation.css`
+(10, 13, 15, 18 e 20 px saíram; fica só o % em destaque do Desempenho, 22 px). **Espaços** de 12 px entre quadros. Os campos do
+Kanban e do Mapa mental ficam num quadro com o nome na moldura. A linha "Novo compromisso" tem 52 px. Local no mapa: os quatro
+botões em duas linhas em telas de até 380 px (no lugar da letra de 10 px). **Exceção mantida:** na linha "Novo compromisso" e na
+subtarefa, **Enter cria o próximo** (como no Lembretes) — a confirmar com o Rodrigo.
+
+## Agenda: rotina (P-46, áudios do Rodrigo de 23/11/2026; feito em 24/11/2026)
+**Menu da Agenda:** só **Agenda** e **Configurações da Agenda** (Agendamento de Pedidos e de Produção ficam em Lançamentos).
+**Ícone roxo de agendar:** botão **"Agendar tarefa desta tela"** na barra de baixo de **toda** tela, logo depois do "+", sempre no
+roxo da Agenda (#7c3aed), qualquer que seja a cor da tela (regra `.people-agendar-control` em `people-header-pilot.css`, só a
+variável de cor, sem `!important`). **É exceção à cor por origem**, por pedido do Rodrigo (23/11/2026). Abre "Novo compromisso"
+com a **tela ligada**; na Agenda a tarefa mostra o ícone **"Abrir a tela"** (monitor com ✓) na linha e a seção **"Tela ligada"**
+na janela (um só botão cheio, "Abrir a tela"; "Desligar a tela" é link). No **celular (até 600 px)** os botões
+da barra e o logotipo não cabem lado a lado: o de agendar **sai da barra e vira a primeira opção do menu rápido** (toque no
+logotipo), com o mesmo ícone roxo (24/11/2026; substitui a regra de "só até 340 px").
+**Chat no jeito do WhatsApp** (compromisso e grupo, peça única `abrirConversa` em `agenda/conversa.js`): separador do dia (Hoje,
+Ontem, DD/MM/AA), balões (os meus à direita com o roxo da Agenda clareado; os dos outros à esquerda com a bolinha das iniciais e o
+nome na primeira mensagem seguida), hora dentro do balão, campo de **uma linha** e botão redondo de enviar (44 px). **Exceção ao
+"Enter nunca salva": no chat, Enter envia a mensagem** (como no WhatsApp).
+**Grupo = lista:** botão **"Chat do grupo"** no cabeçalho da lista (com o número de mensagens novas) e contador roxo na linha da
+lista; **"Membros do grupo"** em "Editar lista" (quem criou entra sempre).
+**Configurações da Agenda:** "A sua Agenda" (a regra da própria pessoa) e, para o administrador, a lista de pessoas; a janela de
+cada pessoa tem os dias como chips, início e fim do expediente, "Fora do expediente", "Hora trabalhada fora do expediente" (só
+registro) e "Sair do sistema depois de quantos minutos parado". Fora do expediente com bloqueio: "A Agenda está fechada agora".
+**Desempenho** (aba da Agenda, redesenhado em 24/11/2026): quadro com o nome ("Desempenho da equipe" ou "O seu desempenho"),
+atalhos de período em chips (Este mês, Mês passado, Últimos 7 dias) e as datas De/Até; abaixo, **um cartão por pessoa** (bolinha
+das iniciais, nome, "N compromissos recebidos" e o **% no prazo em destaque** à direita), a barra empilhada (cores pelos tokens
+`--ui-situacao-ok/atencao/erro/neutro` de `ui-foundation.css`) e os **quatro indicadores no mesmo desenho dos da Agenda** (Para
+hoje, Programados…): ícone quadrado na cor da situação, número e nome — a cor não é o único sinal. Embaixo, "Resposta média" e
+"Fora do expediente". Cartões em grade (um por linha no celular, dois ou mais no computador).
 ## DES - Cargos C/Salários: a lista no padrão de VND - Clientes (24/11/2026)
 Pedido do Rodrigo (a lista estava fora do padrão). A lista de cargos usa a mesma moldura e a mesma linha de VND - Clientes e das listas de colaboradores:
 - **Moldura única** (`.compras-secao`, cantos de 12 px): a barra com o botão **Novo Cargo**, o total e o "‹ ›" fica **fixa no alto** da moldura; **só a tabela rola** para o lado. Antes a barra ficava dentro da parte que rola e o total e o "‹ ›" saíam cortados.

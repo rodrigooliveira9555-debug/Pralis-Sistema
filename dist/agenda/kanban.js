@@ -21,8 +21,13 @@
     const barra = el('div', 'agenda-kanban-barra');
     const sel = U.seletor([['auto:todos', 'Todas as listas'], ...ctx.listas.map((l) => ['lista:' + l.id, l.nome])], ctx.selecao.listaId ? 'lista:' + ctx.selecao.listaId : 'auto:todos');
     sel.onchange = () => { const [t, v] = sel.value.split(':'); ctx.escolher(t === 'lista' ? { listaId: v } : { automatica: v }); };
-    barra.append(U.campo('Quadro', sel), botao('Editar colunas', editarColunas, 'compras-chip'));
-    body.append(barra);
+    barra.append(U.campo('Quadro', sel));
+    if (!A.somenteLeitura) barra.append(botao('Editar colunas', editarColunas, 'btn secondary'));
+    // Os campos ficam num quadro com o nome na moldura (padrão das telas).
+    const quadroBarra = U.secao('Kanban');
+    barra.classList.add('agenda-quadro-corpo');
+    quadroBarra.append(barra);
+    body.append(quadroBarra);
 
     const quadro = el('div', 'agenda-kanban');
     const colunas = [...A.dados.colunas.map((c) => ({ id: c.id, nome: c.nome })), { id: A.CONCLUIDO, nome: 'Concluído' }];
@@ -48,13 +53,14 @@
       col.append(cab, lista);
       col.ondragover = (e) => { if ([...e.dataTransfer.types].includes('text/agenda-cartao')) { e.preventDefault(); col.classList.add('recebendo'); } };
       col.ondragleave = (e) => { if (!col.contains(e.relatedTarget)) col.classList.remove('recebendo'); };
-      col.ondrop = (e) => {
+      col.ondrop = async (e) => {
         e.preventDefault();
         col.classList.remove('recebendo');
         const id = e.dataTransfer.getData('text/agenda-cartao');
         if (!id) return;
-        const antes = A.item(id);
-        if (A.moverColuna(id, c.id) && antes) U.avisar(c.id === A.CONCLUIDO ? 'Concluído.' : 'Movido para ' + c.nome + '.');
+        const r = await A.moverColuna(id, c.id);
+        if (r.erro) return U.avisar(r.erro);
+        U.avisar(c.id === A.CONCLUIDO ? 'Concluído.' : 'Movido para ' + c.nome + '.');
       };
       quadro.append(col);
     });
@@ -64,7 +70,7 @@
   function cartao(i, ctx, agora) {
     const b = botao('', () => ctx.abrirItem(i.id), 'agenda-cartao' + (i.concluida ? ' concluida' : '') + (D.atrasado(i, agora) ? ' atrasada' : ''));
     b.style.setProperty('--lista-cor', ctx.corDaLista(i.listaId));
-    b.draggable = A.acesso(i).editar || A.acesso(i).concluir;
+    b.draggable = !A.somenteLeitura && (A.acesso(i).editar || A.acesso(i).concluir);
     b.ondragstart = (e) => { e.dataTransfer.setData('text/agenda-cartao', i.id); e.dataTransfer.effectAllowed = 'move'; b.classList.add('arrastando'); };
     b.ondragend = () => b.classList.remove('arrastando');
     const topo = el('span', 'agenda-cartao-topo');
@@ -106,7 +112,7 @@
         const desenhar = () => {
           box.replaceChildren(...A.dados.colunas.map((c) => {
             const qtd = A.dados.itens.filter((i) => !i.concluida && A.colunaDe(i) === c.id).length;
-            return U.linhaLista({ titulo: c.nome, detalhe: qtd + ' cartão(ões)', direita: [botao('Renomear', () => nomeColuna(c, desenhar)), botao('Excluir', () => { const r = A.excluirColuna(c.id); if (r.erro) return U.avisar(r.erro); desenhar(); U.avisar('Coluna excluída.'); }, 'btn secondary perigo-texto')] });
+            return U.linhaLista({ titulo: c.nome, detalhe: qtd + ' cartão(ões)', direita: [botao('Renomear', () => nomeColuna(c, desenhar)), U.botaoRemover('Excluir a coluna ' + c.nome, () => U.confirmar('Excluir coluna', 'Excluir a coluna "' + c.nome + '"? Não dá para desfazer.', 'Excluir', async () => { const r = await A.excluirColuna(c.id); if (r.erro) return r.erro; desenhar(); U.avisar('Coluna excluída.'); return undefined; }, { cor: window.CicluzAgenda.COR, corTexto: window.CicluzAgenda.COR_TEXTO, classe: 'agenda-dialog' }))] });
           }));
         };
         desenhar();
@@ -123,7 +129,7 @@
       classe: 'agenda-dialog',
       rotuloSalvar: 'Salvar coluna',
       montar: (form) => { const nome = U.entrada('text', c ? c.nome : '', { maxLength: 30, required: true }); form.append(U.campo('Nome', nome)); return { nome }; },
-      salvar: (x) => { const r = A.salvarColuna(c ? c.id : '', x.nome.value); if (r.erro) return r.erro; depois(); U.avisar('Coluna salva.'); return undefined; },
+      salvar: async (x) => { const r = await A.salvarColuna(c ? c.id : '', x.nome.value); if (r.erro) return r.erro; depois(); U.avisar('Coluna salva.'); return undefined; },
     });
   }
 
