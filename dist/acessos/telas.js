@@ -35,7 +35,7 @@
     olho: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',
     pagar: 'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
     mais: 'M12 5v14M5 12h14',
-    niveis: 'm5 9 7-6 7 6M5 15l7 6 7-6',
+    niveis: 'm6 9 6 6 6-6',
     seta: 'm9 6 6 6-6 6',
     exclama: 'M12 6.5v7M12 17.5h.01',
   };
@@ -136,6 +136,7 @@
     } catch (e) { return []; }
     return fora;
   }
+  const ROTULO_CURTO = { pessoa: 'Nome', cargo: 'Cargo', area: 'Área' };
   const LINHAS = [
     ['pessoa', 'Usuário / colaborador', 'Selecionar o nome', pessoasDP, 'Nenhum colaborador ativo no DP ainda.'],
     ['cargo', 'Cargo', 'Selecionar o cargo', cargosDES, 'Nenhum cargo cadastrado.'],
@@ -203,23 +204,27 @@
     }
     const box = el('div', 'acessos-bloco-cab');
     const usados = new Set(estado.blocos.filter((x) => x !== b && x.alvo).map((x) => x.alvo.tipo + ':' + x.alvo.id));
-    LINHAS.forEach(([id, rotulo, vazio, ler, semItens]) => {
+    {
+      // Um "+" só. Aberto, mostra a escolha entre Nome, Cargo e Área e, embaixo, a lista do tipo escolhido (b.quem guarda o tipo aberto).
       const linha = el('div', 'acessos-telas-quem-bloco');
-      const aberto = b.quem === id;
-      const doTipo = b.alvo && b.alvo.tipo === id;
+      const aberto = Boolean(b.quem);
       const l = el('div', 'acessos-telas-quem');
-      l.append(
-        botaoMais('Escolher: ' + rotulo.toLocaleLowerCase('pt-BR'), aberto, () => { b.quem = aberto ? '' : id; desenhar(); }),
-        el('span', 'acessos-telas-valor' + (doTipo ? '' : ' vazio'), doTipo ? b.alvo.nome : vazio),
-      );
+      const valor = el('span', 'acessos-telas-valor-box');
+      if (b.alvo) valor.append(el('span', 'acessos-telas-valor', b.alvo.nome), el('small', 'profiles-note', ROTULO_CURTO[b.alvo.tipo] || ''));
+      else valor.append(el('span', 'acessos-telas-valor vazio', 'Escolher nome, cargo ou área'));
+      l.append(botaoMais(b.alvo ? 'Trocar a escolha desta coluna' : 'Escolher para quem é a coluna: nome, cargo ou área', aberto, () => { b.quem = aberto ? '' : (b.alvo ? b.alvo.tipo : 'pessoa'); desenhar(); }), valor);
       linha.append(l);
       if (aberto) {
+        const id = b.quem;
+        const [, rotulo, , ler, semItens] = LINHAS.find(([x]) => x === id);
+        linha.append(U.chips(LINHAS.map(([x]) => [x, ROTULO_CURTO[x]]), id, (x) => { b.quem = x; desenhar(); }));
+        const doTipo = b.alvo && b.alvo.tipo === id;
         const itens = ler().filter((o) => !usados.has(id + ':' + o.id));
         const lista = el('div', 'acessos-telas-opcoes');
         lista.setAttribute('role', 'radiogroup');
         lista.setAttribute('aria-label', rotulo);
         const opcoes = [];
-        if (doTipo) opcoes.push({ id: '', nome: 'Limpar a escolha', detalhe: '' });
+        if (b.alvo) opcoes.push({ id: '', nome: 'Limpar a escolha', detalhe: '' });
         opcoes.push(...itens);
         const botoes = opcoes.map((o) => {
           const marcado = doTipo && b.alvo.id === o.id;
@@ -245,7 +250,7 @@
         linha.append(lista);
       }
       box.append(linha);
-    });
+    }
     box.append(el('small', 'profiles-note acessos-bloco-resumo'));
     if (b.alvo) {
       const fecha = el('button', 'compras-coluna-seta acessos-bloco-seta');
@@ -291,12 +296,35 @@
       const algumaAberta = escolhidas.some((b) => !b.recolhida);
       const geral = el('button', 'shortcut-circle compras-redondo compras-colunas-geral acessos-colunas-geral');
       geral.type = 'button';
-      geral.innerHTML = U.svg('<path d="m9 5-6 7 6 7M15 5l6 7-6 7"/>');
+      geral.innerHTML = U.svg('<path d="M4 5h16v14H4zM9 5v14M15 5v14"/>');
       geral.setAttribute('aria-expanded', String(algumaAberta));
       geral.title = algumaAberta ? 'Recolher todas as colunas' : 'Mostrar todas as colunas';
       geral.setAttribute('aria-label', geral.title);
       geral.onclick = () => { escolhidas.forEach((b) => { b.recolhida = algumaAberta; if (algumaAberta) b.quem = ''; }); desenhar(); };
       barra.append(geral);
+    }
+    if (estado.modo === 'telas') {
+      // O botão "‹ ›" do cabeçalho (o mesmo das listas): abre todos os menus e submenus de uma vez; com tudo aberto, recolhe tudo. Fica sempre à vista.
+      const totalTelas = menu.reduce((n, g) => n + g.secoes.reduce((m, s) => m + s.telas.length, 0), 0);
+      const tudoAberto = menu.length > 0 && menu.every((g) => estado.abertos.has(g.n) && g.secoes.every((s) => estado.secAbertas.has(g.n + '|' + s.n)));
+      const fim = el('div', 'acessos-barra-fim');
+      const conta = el('span', 'compras-conta', String(totalTelas));
+      conta.title = totalTelas + (totalTelas === 1 ? ' tela' : ' telas');
+      const tudo = el('button', 'shortcut-circle compras-redondo acessos-expandir-tudo');
+      tudo.type = 'button';
+      tudo.innerHTML = U.svg('<path d="m9 5-6 7 6 7M15 5l6 7-6 7"/>');
+      tudo.setAttribute('aria-expanded', String(tudoAberto));
+      tudo.title = tudoAberto ? 'Recolher todos os menus' : 'Expandir todos os menus';
+      tudo.setAttribute('aria-label', tudo.title);
+      tudo.onclick = () => {
+        if (tudoAberto) { estado.abertos.clear(); estado.secAbertas.clear(); }
+        else menu.forEach((g) => { estado.abertos.add(g.n); g.secoes.forEach((s) => estado.secAbertas.add(g.n + '|' + s.n)); });
+        desenhar();
+        const volta = tela.body.querySelector('.acessos-expandir-tudo');
+        if (volta) volta.focus();
+      };
+      fim.append(conta, tudo);
+      barra.append(fim);
     }
     blocos.push(barra);
 

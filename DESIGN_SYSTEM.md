@@ -1,5 +1,14 @@
 # CICLUZ — referência de interface
 
+## Acesso por Tela em quadros, escolha única e botão de expandir tudo (24/11/2026)
+Pedido do Rodrigo, em cima da tela do Washington (`dist/acessos/telas.js`):
+- **Cada menu principal é um quadro** com moldura (borda de 1px, cantos de 12 px, 12 px de vão entre os quadros), linhas brancas separadas por fio, como as listas do sistema; passar o mouse na tela tinge a linha na cor da origem. As faixas coloridas de fundo saíram.
+- **Expandir para baixo**: o botão do quadro é uma seta para baixo que gira ao abrir; abre os submenus e as telas daquele menu. Cada submenu tem a sua seta.
+- **Expandir e recolher tudo**: o botão redondo "‹ ›" fica sempre no cabeçalho, à direita, com o total de telas ao lado (como nas listas de cadastro). O botão de recolher as colunas passou a ter o ícone de colunas.
+- **Quem**: um "+" só por coluna. Aberto, mostra a escolha **Nome · Cargo · Área** e, embaixo, a lista do tipo escolhido. Saíram as três linhas "Selecionar o nome / o cargo / a área".
+- O cabeçalho da primeira linha (as escolhas) é preso no alto e tem uma faixa na cor da página embaixo, para as linhas que rolam não aparecerem no vão.
+- **Pendente**: a marcação (interruptor) das sete permissões; o Rodrigo vai escolher entre redondo com check, quadrado de cantos arredondados com check, só o check ou o próprio ícone aceso.
+
 ## Menu: Lançamentos enxuto e submenu API (24/11/2026)
 Pedido do Rodrigo, três mudanças só no menu lateral:
 - **Entradas › Lançamentos** fica só com **VND - Vendas**. Saíram os cartões VND - Abertura de Caixa, Turno do Caixa, Fechamento de Caixa e Gerência de Caixas.
