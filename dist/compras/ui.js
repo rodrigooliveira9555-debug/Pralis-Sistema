@@ -806,8 +806,9 @@
   /**
    * Campo de hora (24/11/2026, Washington): o MESMO desenho do campo de aniversário (dia e mês). Um campo com a máscara HH:MM para digitar e o botão
    * redondo do relógio; tocar no campo ou no botão abre um painel flutuante (flutuante) com DUAS COLUNAS em forma de ROLETA, as 24 horas e os 60 minutos, em células de
-   * cantos arredondados. Uma FAIXA cheia na cor do menu fica PARADA no meio de cada coluna e os números rolam por baixo dela (uma cópia em branco anda junto, sem
-   * trocar a cor de célula nenhuma, então não pisca); rolar ou arrastar encaixa um número na faixa e o campo atualiza na hora. Tocar numa hora a leva ao meio; tocar num minuto leva, escolhe e fecha; setas para cima e para baixo mudam o valor; Esc fecha.
+   * cantos arredondados. UMA faixa cheia na cor do menu, contínua, atravessa as duas colunas e fica PARADA no meio; os números rolam por baixo dela (uma cópia em branco anda
+   * junto, sem trocar a cor de célula nenhuma, então não pisca); rolar ou arrastar qualquer coluna encaixa um número na faixa e o campo atualiza na hora
+   * (a hora que estava vazia vira 00, como o minuto). Tocar numa hora a leva ao meio; tocar num minuto leva, escolhe e fecha; setas para cima e para baixo mudam o valor; Esc fecha.
    * Qualquer minuto se escolhe na coluna ou se digita no campo. Devolve { caixa, painel, input }: quem usa põe a caixa na tela e o painel ao lado dela.
    * input.value é "HH:MM" (ou vazio); hora incompleta ou fora de 00:00 a 23:59 deixa o campo inválido (setCustomValidity).
    */
@@ -832,24 +833,26 @@
       lista.setAttribute('role', 'group'); lista.setAttribute('aria-label', titulo + ' (use as setas para cima e para baixo)');
       const celulas = Array.from({ length: total }, (_, i) => celula(pad(i), nomeCelula + ' ' + pad(i)));
       lista.append(...celulas);
-      // A FAIXA cheia na cor do menu fica parada no meio; dentro dela anda uma cópia dos números (em branco), no ritmo da lista. Nenhuma célula
-      // troca de classe ou de cor enquanto se rola, então não pisca.
-      const faixa = el('div', 'compras-hora-faixa'); faixa.setAttribute('aria-hidden', 'true');
-      const itens = el('div', 'compras-hora-faixa-itens'); itens.append(...Array.from({ length: total }, (_, i) => el('span', null, pad(i)))); faixa.append(itens);
-      const roda = el('div', 'compras-hora-roda'); roda.append(lista, faixa);
-      const coluna = el('div', 'compras-hora-coluna'); coluna.append(el('span', 'compras-rotulo', titulo), roda);
-      return { coluna, lista, celulas, faixa, itens, pegar, por };
+      // Dentro da FAIXA (uma só, parada no meio) anda uma cópia dos números desta coluna, em branco, no ritmo da lista (janela = o pedaço da faixa
+      // que mostra esta coluna). Nenhuma célula troca de classe ou de cor enquanto se rola, então não pisca.
+      const itens = el('div', 'compras-hora-faixa-itens'); itens.append(...Array.from({ length: total }, (_, i) => el('span', null, pad(i))));
+      const janela = el('div', 'compras-hora-janela'); janela.append(itens);
+      return { titulo, lista, celulas, janela, itens, pegar, por };
     };
     const colHora = montarColuna('Hora', 24, 'Hora', () => hora, (v) => { hora = v; if (!minuto) minuto = '00'; });
-    const colMin = montarColuna('Minuto', 60, 'Minuto', () => minuto, (v) => { minuto = v; });
+    const colMin = montarColuna('Minuto', 60, 'Minuto', () => minuto, (v) => { minuto = v; if (!hora) hora = '00'; });
     const colunas = [colHora, colMin];
-    painel.append(colHora.coluna, colMin.coluna);
+    // Os títulos, e embaixo as duas listas com UMA faixa contínua por cima das duas (hora e minuto sempre cheios, nunca esmaecidos).
+    const cabecalho = el('div', 'compras-hora-cabecalho'); cabecalho.append(el('span', 'compras-rotulo', 'Hora'), el('span', 'compras-rotulo', 'Minuto'));
+    const faixa = el('div', 'compras-hora-faixa'); faixa.setAttribute('aria-hidden', 'true'); faixa.append(colHora.janela, colMin.janela);
+    const rodas = el('div', 'compras-hora-rodas'); rodas.append(colHora.lista, colMin.lista, faixa);
+    painel.append(cabecalho, rodas);
     const abrirPainel = flutuante(caixa, painel);
     const validar = () => input.setCustomValidity(!input.value || valida(input.value) ? '' : 'Informe a hora no formato HH:MM, de 00:00 a 23:59.');
     function marcar(escreve = true) {
       if (escreve) input.value = hora && minuto ? hora + ':' + minuto : '';
       validar();
-      colunas.forEach((c) => { c.faixa.classList.toggle('sem-valor', !c.pegar()); c.lista.dataset.valor = c.pegar(); });
+      colunas.forEach((c) => { c.lista.dataset.valor = c.pegar(); });
     }
     // Rolagem feita por nós (abrir, tocar, setas) não pode escolher de novo: ignora os eventos de rolagem por um instante.
     let ignoraAte = 0;
