@@ -21,7 +21,8 @@
   let modoDesenhado = 'telas';
   let seq = 0;
   const novoBloco = (tipo) => ({ id: ++seq, alvo: null, tipo, quem: tipo, recolhida: false });
-  const estado = { modo: 'telas', focus: 0, abertos: new Set(), secAbertas: new Set(), blocos: [] };
+  const estado = { modo: 'telas', focus: 0, abertos: new Set(), secAbertas: new Set(), blocos: [], linhas: { pessoa: 0, cargo: 0, area: 0 } };
+  const ocultaCol = (b) => estado.linhas[b.tipo] >= 1 || b.recolhida;
   const registros = new Map();
 
   /* ---------- As sete permissões ---------- */
@@ -71,7 +72,7 @@
   const abrirAcoes = (b) => { estado.modo = 'acoes'; estado.foco = b.id; estado.focar = 'voltar'; desenhar(); };
 
   /** Uma célula de coluna (a do bloco i); recolhida, só fica a faixa estreita com a setinha para reabrir. */
-  const blocoEl = (b, extra) => el('div', 'acessos-tl-bloco' + (extra ? ' ' + extra : '') + (estado.modo !== 'acoes' && b && b.recolhida ? ' recolhida' : ''));
+  const blocoEl = (b, extra) => el('div', 'acessos-tl-bloco' + (extra ? ' ' + extra : '') + (estado.modo !== 'acoes' && b && ocultaCol(b) ? ' recolhida' : ''));
 
   /** Põe em uma linha das telas a célula de cada coluna, na ordem das colunas (Colaborador, Cargo, Área); fazer(b) devolve a célula da coluna b. */
   function gruposDaLinha(linha, fazer) {
@@ -203,15 +204,22 @@
     return box;
   }
 
-  /** O nome de uma coluna ocultada: na vertical, lido de baixo para cima e colado na linha de baixo do cabeçalho; tocar nele mostra a coluna. */
+  /** Coluna recolhida: o selo do tipo e, acima dele, o nome na vertical (lido de baixo para cima). A linha do tipo cresce para caber os dois; tocar mostra a coluna. */
   function nomeVertical(b) {
     const bt = el('button', 'acessos-nome-vert');
     bt.type = 'button';
     bt.title = 'Mostrar a coluna de ' + b.alvo.nome;
     bt.setAttribute('aria-label', bt.title);
     bt.setAttribute('aria-expanded', 'false');
-    bt.append(el('span', null, b.alvo ? b.alvo.nome : ROTULO_GRUPO[b.tipo]));
-    bt.onclick = () => { b.recolhida = false; desenhar(); };
+    const selo = el('span', 'acessos-sel-selo');
+    selo.style.setProperty('--selo-cor', U.corOrigem('despesas', '#ef4444'));
+    selo.innerHTML = U.svg(GLIFO_TIPO[b.tipo]);
+    bt.append(selo, el('span', 'acessos-nome-vert-txt', b.alvo.nome));
+    bt.onclick = () => {
+      const irmaos = estado.blocos.filter((x) => x.tipo === b.tipo);
+      if (estado.linhas[b.tipo] >= 1) { estado.linhas[b.tipo] = 0; irmaos.forEach((x) => { x.recolhida = x !== b; }); } else b.recolhida = false;
+      desenhar();
+    };
     return bt;
   }
 
@@ -283,6 +291,16 @@
       painel.append(lista);
       box.append(painel);
     }
+    if (b.alvo) {
+      const rec = el('button', 'compras-coluna-seta acessos-bloco-seta');
+      rec.type = 'button';
+      rec.title = 'Recolher a coluna de ' + b.alvo.nome;
+      rec.setAttribute('aria-label', rec.title);
+      rec.setAttribute('aria-expanded', 'true');
+      rec.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>';
+      rec.onclick = () => { b.recolhida = true; b.quem = ''; desenhar(); };
+      box.append(rec);
+    }
     const x = el('button', 'acessos-bloco-x');
     x.type = 'button';
     x.title = 'Fechar esta coluna';
@@ -310,7 +328,7 @@
       const tudoAberto = menu.length > 0 && menu.every((g) => estado.abertos.has(g.n) && g.secoes.every((s) => estado.secAbertas.has(g.n + '|' + s.n)));
       const fim = el('div', 'acessos-quem-fim');
       const escolhidas = estado.blocos.filter((b) => b.alvo);
-      const algumaAberta = escolhidas.some((b) => !b.recolhida);
+      const algumaAberta = escolhidas.some((b) => !ocultaCol(b));
       const conta = el('span', 'compras-conta', String(totalTelas));
       conta.title = totalTelas + (totalTelas === 1 ? ' tela' : ' telas');
       const tudo = el('button', 'shortcut-circle compras-redondo acessos-expandir-tudo');
@@ -334,7 +352,12 @@
       lado.setAttribute('aria-expanded', String(algumaAberta));
       lado.title = algumaAberta ? 'Recolher todas as colunas' : 'Mostrar todas as colunas';
       lado.setAttribute('aria-label', lado.title);
-      lado.onclick = () => { escolhidas.forEach((b) => { b.recolhida = algumaAberta; if (algumaAberta) b.quem = ''; }); desenhar(); };
+      lado.onclick = () => {
+        if (algumaAberta) TIPOS.forEach((t) => { estado.linhas[t] = 1; });
+        else { TIPOS.forEach((t) => { estado.linhas[t] = 0; }); escolhidas.forEach((b) => { b.recolhida = false; }); }
+        escolhidas.forEach((b) => { b.quem = ''; });
+        desenhar();
+      };
       fim.append(conta, tudo, lado);
       fimDoCabecalho = fim;
     }
@@ -390,23 +413,23 @@
         const linha = el('div', 'acessos-tl acessos-quem-row');
         const e = el('div', 'acessos-tl-esq');
         const li = el('div', 'acessos-quem-linha');
-        const mais = botaoMais('Abrir uma coluna de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR'), false, () => { estado.blocos.push(novoBloco(t)); estado.blocos.sort((x, y) => TIPOS.indexOf(x.tipo) - TIPOS.indexOf(y.tipo)); desenhar(true); });
-        const algumaAberta = bs.some((b) => !b.recolhida);
-        const seta = el('button', 'acessos-gt-seta' + (algumaAberta ? ' aberta' : ''));
+        const mais = botaoMais('Abrir uma coluna de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR'), false, () => { estado.linhas[t] = 0; estado.blocos.push(novoBloco(t)); estado.blocos.sort((x, y) => TIPOS.indexOf(x.tipo) - TIPOS.indexOf(y.tipo)); desenhar(true); });
+        const fase = estado.linhas[t];
+        const seta = el('button', 'acessos-gt-seta' + (fase === 0 ? ' aberta' : fase === 2 ? ' oculta' : ''));
         seta.type = 'button';
         seta.disabled = !bs.length;
-        seta.setAttribute('aria-expanded', String(algumaAberta));
-        seta.title = (algumaAberta ? 'Ocultar' : 'Mostrar') + ' os nomes de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR');
+        seta.setAttribute('aria-expanded', String(fase === 0));
+        seta.title = [ 'Contrair', 'Ocultar', 'Mostrar' ][fase] + ' os nomes de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR');
         seta.setAttribute('aria-label', seta.title);
         seta.innerHTML = U.svg('<path d="' + G.niveis + '"/>');
-        seta.onclick = () => { bs.forEach((b) => { b.recolhida = algumaAberta; if (algumaAberta) b.quem = ''; }); desenhar(); };
+        seta.onclick = () => { estado.linhas[t] = (fase + 1) % 3; if (estado.linhas[t] === 0) bs.forEach((b) => { b.recolhida = false; }); bs.forEach((b) => { b.quem = ''; }); desenhar(); };
         li.append(mais, el('b', null, ROTULO_GRUPO[t]), el('small', null, bs.length ? String(bs.length) : ''), seta);
         e.append(li);
         linha.append(e);
         estado.blocos.forEach((b) => {
           const w = blocoEl(b, 'acessos-tl-bloco-cab');
-          if (b.recolhida) {
-            if (ti === TIPOS.length - 1) w.append(nomeVertical(b));
+          if (ocultaCol(b)) {
+            if (b.tipo === t && estado.linhas[t] < 2 && b.alvo) w.append(nomeVertical(b));
           } else if (b.tipo === t) {
             const c = cabecaDaColuna(b);
             resumos.push([regs[estado.blocos.indexOf(b)], c.querySelector('.acessos-bloco-resumo')]);

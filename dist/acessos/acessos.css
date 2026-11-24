@@ -247,14 +247,15 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 /* A primeira coluna do cabeçalho: três linhas (Colaborador, Cargo, Área), cada uma com o "+" no início, o nome e a seta de ocultar ou mostrar as colunas. */
 /* O cabeçalho das telas: três linhas de 52 px (Colaborador, Cargo, Área), presas no alto; cada coluna aparece na linha do seu tipo. */
 .acessos-cabecalho { position: sticky; top: 0; z-index: 4; width: max-content; min-width: 100%; box-sizing: border-box; background: var(--theme-card, #fff); border-bottom: 1px solid var(--layout-line, #dedee3); border-radius: 12px 12px 0 0; }
-.acessos-cabecalho > .acessos-tl { height: var(--linha-lista, 52px); min-height: var(--linha-lista, 52px); }
+.acessos-cabecalho > .acessos-tl { min-height: var(--linha-lista, 52px); }
 .acessos-cabecalho > .acessos-tl:first-child { border-top: 0; }
 .acessos-cabecalho .acessos-tl-esq { padding-top: 0; padding-bottom: 0; justify-content: center; }
 .acessos-cabecalho .acessos-tl-bloco-cab { position: relative; align-items: center; padding: 0 10px; overflow: visible; }
 .acessos-cabecalho .acessos-tl-bloco.recolhida { padding: 0; }
 .acessos-cabecalho .acessos-bloco-cab { display: block; position: static; width: 100%; min-width: 0; }
 /* A célula da coluna: selo do tipo, nome e resumo; o × no canto; a lista de escolha abre num painel suspenso. */
-.acessos-cabecalho .acessos-telas-trocar { display: flex; align-items: center; gap: 8px; width: calc(100% - 28px); }
+.acessos-cabecalho .acessos-telas-trocar { display: flex; align-items: center; gap: 8px; width: calc(100% - 60px); }
+.acessos-cabecalho .acessos-bloco-seta { position: absolute; top: 50%; right: 30px; transform: translateY(-50%); }
 .acessos-sel-selo { flex: none; display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 26%; background: var(--selo-cor, var(--menu-accent)); color: #fff; }
 .acessos-sel-selo svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .acessos-sel-texto { display: grid; min-width: 0; }
@@ -264,9 +265,10 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 .acessos-telas-painel { position: absolute; z-index: 30; top: calc(100% - 4px); left: 8px; width: min(320px, calc(100% - 16px)); padding: 6px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); box-shadow: 0 8px 24px rgba(0, 0, 0, .14); }
 .acessos-telas-painel > .acessos-telas-opcoes { max-height: 280px; }
 /* O nome de uma coluna ocultada: na vertical, de baixo para cima, colado na linha de baixo do cabeçalho (cobre as três linhas). */
-.acessos-nome-vert { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--linha-lista, 52px) * 3); display: none; align-items: flex-end; justify-content: center; padding: 0 0 8px; border: 0; background: transparent; color: var(--muted, #73737a); cursor: pointer; z-index: 2; }
-.acessos-nome-vert span { writing-mode: vertical-rl; transform: rotate(180deg); max-height: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 12px/16px var(--ui-font); }
+.acessos-nome-vert { display: none; flex-direction: column-reverse; align-items: center; justify-content: flex-start; gap: 6px; width: 100%; padding: 8px 0; border: 0; background: transparent; color: var(--muted, #73737a); cursor: pointer; }
+.acessos-nome-vert-txt { writing-mode: vertical-rl; transform: rotate(180deg); max-height: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 12px/16px var(--ui-font); }
 .acessos-nome-vert:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: -2px; }
+.acessos-cabecalho .acessos-tl-bloco.recolhida { align-items: flex-end; }
 .acessos-tl-bloco.recolhida > .acessos-nome-vert { display: flex; }
 .acessos-quem-linhas { display: grid; width: 100%; }
 .acessos-quem-linha { display: flex; align-items: center; gap: 10px; width: 100%; }
@@ -275,6 +277,7 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 .acessos-gt-seta { flex: none; margin-left: auto; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; background: transparent; color: var(--muted, #73737a); cursor: pointer; }
 .acessos-gt-seta svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform 160ms ease; }
 .acessos-gt-seta.aberta svg { transform: rotate(180deg); }
+.acessos-gt-seta.oculta { opacity: .5; }
 .acessos-gt-seta:disabled { opacity: .35; cursor: default; }
 .acessos-gt-seta:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
 .acessos-tl-bloco { flex: none; box-sizing: border-box; width: var(--tl-bloco); display: flex; align-items: center; padding: 0 10px; border-left: 1px solid var(--layout-line, #dedee3); }
