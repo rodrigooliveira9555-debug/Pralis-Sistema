@@ -1,5 +1,9 @@
 /*
- * Agenda — regras puras (sem tela e sem armazenamento). Testadas em tests/agenda-dominio.cjs.
+ * Agenda — regras de exibição (listas automáticas, ordem, grupos, calendário, alertas, frases), sem tela e sem
+ * armazenamento. Testadas em tests/agenda-dominio.cjs.
+ * A regra de negócio (quem pode o quê, pessoas, avaliação, validação, repetição e datas) NÃO mora aqui: vem de
+ * dist/agenda/regras.js (window.CicluzAgendaRegras), gerado de servidor/shared/src/agenda/regras.ts, e é
+ * reexportada abaixo com o mesmo nome (uma implementação só, a mesma do servidor).
  * Referência de funcionamento: Lembretes e Calendário do iPhone/macOS (o protótipo do Figma fica em
  * Pralis-Especificacao-Prototipo/Agenda). O visual segue o S2, não o protótipo.
  *
@@ -17,16 +21,10 @@
  */
 (function (root) {
   'use strict';
+  const R = typeof module !== 'undefined' && module.exports ? require('./regras.js') : root.CicluzAgendaRegras;
+  const { isoData, somarDias, somarMeses, diaDaSemana, dataValida, inicioDaSemana, dobrar, responsaveis, temRepeticao, proxima, temPonto } = R;
 
-  /* Cinco níveis, como no protótipo (Muito baixa … Muito alta). Padrão: Normal. */
-  const PRIORIDADES = [
-    ['muito-baixa', 'Muito baixa'],
-    ['baixa', 'Baixa'],
-    ['normal', 'Normal'],
-    ['alta', 'Alta'],
-    ['muito-alta', 'Muito alta'],
-  ];
-  const PESO_PRIORIDADE = Object.fromEntries(PRIORIDADES.map(([id], i) => [id, i]));
+  const PESO_PRIORIDADE = Object.fromEntries(R.PRIORIDADES.map(([id], i) => [id, i]));
 
   /* Listas automáticas: as do Lembretes (Hoje, Programados, Todos, Sinalizados, Concluídos,
      Atribuídos a mim) mais Atrasados, que está no protótipo. */
@@ -40,21 +38,6 @@
     ['concluidos', 'Concluídos'],
   ];
 
-  /* Repetição: as opções do Lembretes/Calendário. */
-  const REPETICOES = [
-    ['nunca', 'Nunca'],
-    ['hora', 'De hora em hora'],
-    ['dia', 'Todo dia'],
-    ['dias-uteis', 'Dias úteis (seg. a sex.)'],
-    ['fins-de-semana', 'Fins de semana'],
-    ['semana', 'Toda semana'],
-    ['quinzena', 'A cada 2 semanas'],
-    ['mes', 'Todo mês'],
-    ['trimestre', 'A cada 3 meses'],
-    ['semestre', 'A cada 6 meses'],
-    ['ano', 'Todo ano'],
-    ['personalizada', 'Personalizada'],
-  ];
   /* Alerta: as opções do Calendário (minutos antes). */
   const ALERTAS = [
     ['', 'Nenhum'],
@@ -74,44 +57,16 @@
   /* Raio do aviso por lugar (o iPhone começa em ~100 m). */
   const RAIOS = [['100', '100 m'], ['200', '200 m'], ['500', '500 m'], ['1000', '1 km'], ['2000', '2 km'], ['5000', '5 km']];
 
-  const ORDENACOES = [
-    ['manual', 'Manual'],
-    ['data', 'Data'],
-    ['criacao', 'Criação'],
-    ['prioridade', 'Prioridade'],
-    ['titulo', 'Título'],
-  ];
-
   const DIAS_CURTOS = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
   const DIAS_LONGOS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
   const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 
   const doisDigitos = (n) => String(n).padStart(2, '0');
-  /** Data local (não UTC) no formato AAAA-MM-DD. */
-  const isoData = (d) => d.getFullYear() + '-' + doisDigitos(d.getMonth() + 1) + '-' + doisDigitos(d.getDate());
   const horaAgora = (d) => doisDigitos(d.getHours()) + ':' + doisDigitos(d.getMinutes());
   const paraData = (iso) => { const [a, m, d] = iso.split('-').map(Number); return new Date(a, m - 1, d, 12); };
-  function somarDias(iso, n) { const d = paraData(iso); d.setDate(d.getDate() + n); return isoData(d); }
-  const ultimoDia = (ano, mes0) => new Date(ano, mes0 + 1, 0).getDate();
-  /** Soma meses mantendo o dia (ou o último dia do mês, se faltar). diaAlvo: o dia original da repetição. */
-  function somarMeses(iso, n, diaAlvo) {
-    const d = paraData(iso);
-    const alvo = new Date(d.getFullYear(), d.getMonth() + n, 1, 12);
-    alvo.setDate(Math.min(diaAlvo || d.getDate(), ultimoDia(alvo.getFullYear(), alvo.getMonth())));
-    return isoData(alvo);
-  }
-  const diaDaSemana = (iso) => paraData(iso).getDay();
   const minutos = (h) => (h ? +h.slice(0, 2) * 60 + +h.slice(3, 5) : 0);
   const paraHora = (m) => doisDigitos(Math.floor(m / 60)) + ':' + doisDigitos(m % 60);
   const diasEntre = (a, b) => Math.round((paraData(b) - paraData(a)) / 86400000);
-
-  const dataValida = (iso) => {
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
-    if (!m) return false;
-    const d = paraData(iso);
-    return d.getFullYear() === +m[1] && d.getMonth() + 1 === +m[2] && d.getDate() === +m[3];
-  };
-  const horaValida = (h) => /^([01]\d|2[0-3]):[0-5]\d$/.test(h || '');
 
   /* ---------- Situação ---------- */
 
@@ -137,8 +92,6 @@
       default: return false;
     }
   }
-
-  const dobrar = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLocaleLowerCase('pt-BR');
 
   /** Busca por título, notas, local, etiquetas e subtarefas (sem acento e sem maiúscula). */
   function combinaBusca(item, termo) {
@@ -234,53 +187,6 @@
 
   /* ---------- Repetição ---------- */
 
-  const temRepeticao = (item) => Boolean(item.repeticao && item.repeticao.tipo && item.repeticao.tipo !== 'nunca');
-
-  /** Próxima data (e hora) depois de { data, hora }, ou null quando a repetição terminou. */
-  function proxima(item, de = { data: item.data, hora: item.hora }) {
-    const r = item.repeticao;
-    if (!temRepeticao(item) || !de.data) return null;
-    const ancora = r.ancora || item.data || de.data;
-    const diaAlvo = +ancora.slice(8, 10);
-    const n = Math.max(1, +r.intervalo || 1);
-    let data = de.data;
-    let hora = de.hora;
-    const proximoDiaEm = (dias) => { let d = somarDias(data, 1); while (!dias.includes(diaDaSemana(d))) d = somarDias(d, 1); return d; };
-    switch (r.tipo) {
-      case 'hora':
-        if (!hora) { data = somarDias(data, 1); break; }
-        if (minutos(hora) + 60 >= 1440) { data = somarDias(data, 1); hora = paraHora(minutos(hora) + 60 - 1440); } else hora = paraHora(minutos(hora) + 60);
-        break;
-      case 'dia': data = somarDias(data, 1); break;
-      case 'dias-uteis': data = proximoDiaEm([1, 2, 3, 4, 5]); break;
-      case 'fins-de-semana': data = proximoDiaEm([0, 6]); break;
-      case 'semana': data = somarDias(data, 7); break;
-      case 'quinzena': data = somarDias(data, 14); break;
-      case 'mes': data = somarMeses(data, 1, diaAlvo); break;
-      case 'trimestre': data = somarMeses(data, 3, diaAlvo); break;
-      case 'semestre': data = somarMeses(data, 6, diaAlvo); break;
-      case 'ano': data = somarMeses(data, 12, diaAlvo); break;
-      case 'personalizada': {
-        const u = r.unidade || 'semana';
-        if (u === 'dia') data = somarDias(data, n);
-        else if (u === 'mes') data = somarMeses(data, n, diaAlvo);
-        else if (u === 'ano') data = somarMeses(data, 12 * n, diaAlvo);
-        else {
-          const dias = (r.diasSemana && r.diasSemana.length ? r.diasSemana : [diaDaSemana(ancora)]).slice().sort();
-          const resto = dias.filter((d) => d > diaDaSemana(data));
-          // Ainda nesta semana; senão, o primeiro dia escolhido daqui a n semanas.
-          data = resto.length ? somarDias(data, resto[0] - diaDaSemana(data)) : somarDias(inicioDaSemana(data), 7 * n + dias[0]);
-        }
-        break;
-      }
-      default: return null;
-    }
-    const fim = r.fim || { tipo: 'nunca' };
-    if (fim.tipo === 'data' && fim.data && data > fim.data) return null;
-    if (fim.tipo === 'vezes' && (r.feitas || 0) + 1 >= Math.max(1, +fim.vezes || 1)) return null;
-    return { data, hora };
-  }
-
   /** Datas do compromisso entre ini e fim (inclusive), contando as repetições futuras. */
   function ocorrencias(item, ini, fim, limite = 500) {
     if (!item.data) return [];
@@ -302,7 +208,7 @@
   /** Texto curto da repetição ("Toda semana", "A cada 2 semanas: seg, qua"…). */
   function resumoRepeticao(r) {
     if (!r || !r.tipo || r.tipo === 'nunca') return '';
-    let t = (REPETICOES.find(([k]) => k === r.tipo) || [, ''])[1];
+    let t = (R.REPETICOES.find(([k]) => k === r.tipo) || [, ''])[1];
     if (r.tipo === 'personalizada') {
       const n = Math.max(1, +r.intervalo || 1);
       const nomes = { dia: ['dia', 'dias'], semana: ['semana', 'semanas'], mes: ['mês', 'meses'], ano: ['ano', 'anos'] }[r.unidade || 'semana'];
@@ -339,7 +245,6 @@
     const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
     return 2 * r * Math.asin(Math.sqrt(h));
   }
-  const temPonto = (loc) => Boolean(loc && Number.isFinite(loc.lat) && Number.isFinite(loc.lng));
   /**
    * Aviso por lugar, como o "Personalizado" do iPhone: dispara ao cruzar o raio no sentido escolhido.
    * antes: estava dentro? (undefined = primeira leitura: não dispara, como no iPhone).
@@ -353,47 +258,9 @@
     return { dentro, disparar };
   }
 
-  /* ---------- Pessoas e permissões ---------- */
-  // Gestor = quem criou. Ele escolhe quem participa (responsáveis e outros) e o que cada um pode:
-  // ver, editar, concluir, excluir. Quem não participa não vê. Não depende de cargo nem de papel no login.
-  // Sem usuário logado (revisão local) ou compromisso sem criador (feito antes do login): sem controle.
-  const PERMISSOES = [['ver', 'Ver'], ['editar', 'Editar'], ['concluir', 'Concluir'], ['excluir', 'Excluir']];
-  const TUDO = { ver: true, editar: true, concluir: true, excluir: true };
-
-  /** Lista de pessoas limpa: sem repetir, e quem pode fazer algo também pode ver. */
-  function normalizarPessoas(lista) {
-    const vistos = new Set();
-    return (lista || []).filter((p) => p && p.id && !vistos.has(p.id) && vistos.add(p.id)).map((p) => {
-      const x = { id: String(p.id), responsavel: Boolean(p.responsavel), ver: Boolean(p.ver), editar: Boolean(p.editar), concluir: Boolean(p.concluir), excluir: Boolean(p.excluir) };
-      if (x.responsavel || x.editar || x.concluir || x.excluir) x.ver = true;
-      return x;
-    });
-  }
-  /** Permissões iniciais de quem é posto como responsável (o gestor pode mudar). */
-  const pessoaResponsavel = (id) => ({ id, responsavel: true, ver: true, editar: true, concluir: true, excluir: false });
-  const responsaveis = (item) => (item.pessoas || []).filter((p) => p.responsavel).map((p) => p.id);
-
-  /** O que o usuário pode fazer no compromisso. */
-  function acesso(item, usuarioId) {
-    if (!usuarioId || !item.criadoPor) return { ...TUDO, gestor: true, responsavel: responsaveis(item).includes(usuarioId) };
-    if (item.criadoPor === usuarioId) return { ...TUDO, gestor: true, responsavel: responsaveis(item).includes(usuarioId) };
-    const p = (item.pessoas || []).find((x) => x.id === usuarioId);
-    if (!p) return { ver: false, editar: false, concluir: false, excluir: false, gestor: false, responsavel: false };
-    return { ver: p.ver || p.editar || p.concluir || p.excluir || p.responsavel, editar: p.editar, concluir: p.concluir, excluir: p.excluir, gestor: false, responsavel: p.responsavel };
-  }
-
   /* ---------- Avaliação ---------- */
-  // Depois de concluído, o gestor avalia a execução de cada responsável e cada responsável se autoavalia;
-  // o gestor vê a comparação. Nota registrada não muda. Por enquanto, só registro.
-  const TIPOS_AVALIACAO = [['', 'Sem avaliação'], ['estrelas', 'Estrelas (1 a 5)'], ['niveis', '5 níveis'], ['nps', 'NPS (0 a 10)'], ['feito', 'Feito (sim ou não)']];
+  // Quem avalia, quando e o que cada um vê: regra única (podeAvaliar, comparativo). Aqui só o texto da nota.
   const NIVEIS = ['Muito abaixo do esperado', 'Abaixo do esperado', 'Como esperado', 'Acima do esperado', 'Muito acima do esperado'];
-  function valorValido(tipo, v) {
-    if (!Number.isInteger(v)) return false;
-    if (tipo === 'estrelas' || tipo === 'niveis') return v >= 1 && v <= 5;
-    if (tipo === 'nps') return v >= 0 && v <= 10;
-    if (tipo === 'feito') return v === 0 || v === 1;
-    return false;
-  }
   function textoNota(tipo, v) {
     if (tipo === 'estrelas') return '★'.repeat(v) + '☆'.repeat(5 - v) + ' (' + v + '/5)';
     if (tipo === 'niveis') return NIVEIS[v - 1] || '';
@@ -401,32 +268,6 @@
     if (tipo === 'feito') return v ? 'Feito' : 'Não feito';
     return '';
   }
-  /** Pode avaliar a execução de avaliadoId? Devolve { papel } ou { erro }. */
-  function podeAvaliar(item, usuarioId, avaliadoId) {
-    const tipo = item.avaliacao && item.avaliacao.tipo;
-    if (!tipo) return { erro: 'Este compromisso não tem avaliação.' };
-    if (!item.concluida) return { erro: 'A avaliação é feita depois de concluído.' };
-    if (!usuarioId) return { erro: 'Entre com seu usuário para avaliar.' };
-    if (!responsaveis(item).includes(avaliadoId)) return { erro: 'Só a execução dos responsáveis é avaliada.' };
-    const papel = item.criadoPor === usuarioId ? 'gestor' : usuarioId === avaliadoId ? 'auto' : '';
-    if (!papel) return { erro: 'Só o gestor e o próprio responsável avaliam.' };
-    if ((item.avaliacao.notas || []).some((n) => n.avaliadoId === avaliadoId && n.papel === papel)) return { erro: 'Avaliação já registrada; ela não muda.' };
-    return { papel };
-  }
-  /**
-   * Comparação por responsável { id, gestor, auto } que o usuário pode ver:
-   * o gestor vê as duas; o responsável vê só a própria autoavaliação.
-   */
-  function comparativo(item, usuarioId) {
-    const notas = (item.avaliacao && item.avaliacao.notas) || [];
-    const gestor = !usuarioId || !item.criadoPor || item.criadoPor === usuarioId;
-    return responsaveis(item).filter((id) => gestor || id === usuarioId).map((id) => ({
-      id,
-      gestor: gestor ? notas.find((n) => n.avaliadoId === id && n.papel === 'gestor') || null : null,
-      auto: notas.find((n) => n.avaliadoId === id && n.papel === 'auto') || null,
-    }));
-  }
-
   /* ---------- Escrever do jeito que se fala ---------- */
 
   const DIAS_FALADOS = [['domingo', 0], ['segunda', 1], ['terca', 2], ['quarta', 3], ['quinta', 4], ['sexta', 5], ['sabado', 6]];
@@ -482,57 +323,8 @@
     return saida;
   }
 
-  /* ---------- Entrada ---------- */
-
-  /** Etiquetas: sem "#", sem espaços nas pontas, sem repetir (ignorando maiúsculas), até 30 letras. */
-  function normalizarEtiquetas(lista) {
-    const vistas = new Set();
-    const saida = [];
-    [].concat(lista || []).forEach((bruta) => {
-      String(bruta || '').split(/[,;]/).forEach((parte) => {
-        const t = parte.trim().replace(/^#+/, '').replace(/\s+/g, ' ').slice(0, 30);
-        const k = dobrar(t);
-        if (t && !vistas.has(k)) { vistas.add(k); saida.push(t); }
-      });
-    });
-    return saida;
-  }
-
-  /** Erro de preenchimento (texto) ou '' quando está tudo certo. */
-  function validar(item) {
-    if (!String(item.titulo || '').trim()) return 'Informe o título do compromisso.';
-    if (String(item.titulo).trim().length > 200) return 'O título passa de 200 letras.';
-    if (item.data && !dataValida(item.data)) return 'Informe uma data válida (DD/MM/AA).';
-    if (item.hora && !horaValida(item.hora)) return 'Informe uma hora válida (HH:MM).';
-    if (item.hora && !item.data) return 'Para marcar a hora, informe também a data.';
-    if (item.horaFim && !horaValida(item.horaFim)) return 'Informe uma hora de término válida (HH:MM).';
-    if (item.horaFim && !item.hora) return 'Para marcar o término, informe a hora de início.';
-    if (item.horaFim && item.horaFim <= item.hora) return 'O término precisa ser depois do início.';
-    if (item.prioridade && !(item.prioridade in PESO_PRIORIDADE)) return 'Prioridade inválida.';
-    if ((item.subtarefas || []).some((s) => !String(s.titulo || '').trim())) return 'Há subtarefa sem nome.';
-    if (item.url && !/^https?:\/\/[^\s]+\.[^\s]+/i.test(item.url)) return 'Informe o endereço completo, começando com http:// ou https://.';
-    const r = item.repeticao;
-    if (r && r.tipo && r.tipo !== 'nunca') {
-      if (!item.data) return 'Para repetir, informe a data.';
-      if (r.tipo === 'hora' && !item.hora) return 'Para repetir de hora em hora, informe a hora.';
-      if (r.tipo === 'personalizada' && !(+r.intervalo >= 1 && +r.intervalo <= 99)) return 'Informe de quanto em quanto tempo repete (1 a 99).';
-      if (r.fim && r.fim.tipo === 'data' && (!dataValida(r.fim.data) || r.fim.data < item.data)) return 'O fim da repetição precisa ser uma data a partir do primeiro dia.';
-      if (r.fim && r.fim.tipo === 'vezes' && !(+r.fim.vezes >= 1 && +r.fim.vezes <= 999)) return 'Informe quantas vezes repete (1 a 999).';
-    }
-    if (item.alerta !== null && item.alerta !== undefined && item.alerta !== '' && !item.data) return 'Para o alerta, informe a data.';
-    const loc = item.localizacao;
-    if (loc && (loc.lat !== undefined || loc.lng !== undefined) && !(temPonto(loc) && Math.abs(loc.lat) <= 90 && Math.abs(loc.lng) <= 180)) return 'O ponto marcado no mapa é inválido.';
-    if (loc && loc.aviso && !temPonto(loc)) return 'Para avisar ao entrar ou sair, marque o lugar no mapa.';
-    if (loc && loc.aviso && !['entrar', 'sair'].includes(loc.aviso)) return 'Aviso por lugar inválido.';
-    if (loc && loc.aviso && !(+loc.raio >= 50 && +loc.raio <= 50000)) return 'Informe o raio do aviso.';
-    if (item.avaliacao && item.avaliacao.tipo && !TIPOS_AVALIACAO.some(([k]) => k === item.avaliacao.tipo)) return 'Tipo de avaliação inválido.';
-    return '';
-  }
-
   /* ---------- Calendário ---------- */
 
-  /** Domingo da semana do dia (a semana começa no domingo, como no protótipo). */
-  function inicioDaSemana(iso) { return somarDias(iso, -diaDaSemana(iso)); }
   const semana = (iso) => { const ini = inicioDaSemana(iso); return [0, 1, 2, 3, 4, 5, 6].map((n) => somarDias(ini, n)); };
   /** 6 semanas (42 dias) que cobrem o mês do dia informado. */
   function gradeDoMes(iso) {
@@ -609,13 +401,14 @@
   }
 
   const api = {
-    PERMISSOES, TIPOS_AVALIACAO, NIVEIS, normalizarPessoas, pessoaResponsavel, responsaveis, acesso, valorValido, textoNota, podeAvaliar, comparativo,
-    PRIORIDADES, LISTAS_AUTOMATICAS, REPETICOES, ALERTAS, RAIOS, ORDENACOES, distancia, temPonto, cruzouLugar, HORA_ALERTA_DIA_TODO, DIAS_CURTOS, DIAS_LONGOS, MESES,
-    isoData, horaAgora, somarDias, somarMeses, diaDaSemana, dataValida, horaValida, minutos, paraHora, diasEntre,
+    // A regra única (mesmo objeto de função do servidor): permissões, pessoas, avaliação, validação, repetição e datas.
+    ...R,
+    NIVEIS, textoNota,
+    LISTAS_AUTOMATICAS, ALERTAS, RAIOS, distancia, cruzouLugar, HORA_ALERTA_DIA_TODO, DIAS_CURTOS, DIAS_LONGOS, MESES,
+    horaAgora, minutos, paraHora, diasEntre,
     atrasado, naLista, combinaBusca, comparar, comparador, filtrar, contagens, progresso, agrupar,
-    temRepeticao, proxima, ocorrencias, resumoRepeticao, momentoAlerta, interpretar,
-    normalizarEtiquetas, validar,
-    inicioDaSemana, semana, gradeDoMes, porDia, doDia, blocosDoDia,
+    ocorrencias, resumoRepeticao, momentoAlerta, interpretar,
+    semana, gradeDoMes, porDia, doDia, blocosDoDia,
     dataCurta, rotuloData, quando, tituloMes, tituloDia, tituloSemana,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

@@ -285,7 +285,8 @@ export function validar(item: Compromisso): string {
 
 // Sem acento e sem maiúscula, para comparar (U+0300 a U+036F: marcas de acento depois do NFD).
 const MARCAS = new RegExp("[" + String.fromCharCode(0x300) + "-" + String.fromCharCode(0x36f) + "]", "g");
-const dobrar = (s: unknown) => String(s || "").normalize("NFD").replace(MARCAS, "").toLocaleLowerCase("pt-BR");
+/** Sem acento e sem maiúscula (busca e comparação de nomes). */
+export const dobrar = (s: unknown) => String(s || "").normalize("NFD").replace(MARCAS, "").toLocaleLowerCase("pt-BR");
 
 /** Etiquetas: sem "#", sem espaços nas pontas, sem repetir (ignorando maiúsculas), até 30 letras. */
 export function normalizarEtiquetas(lista: unknown): string[] {

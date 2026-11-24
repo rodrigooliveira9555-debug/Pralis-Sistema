@@ -37,6 +37,7 @@ var regras = (() => {
     comparativo: () => comparativo,
     dataValida: () => dataValida,
     diaDaSemana: () => diaDaSemana,
+    dobrar: () => dobrar,
     horaValida: () => horaValida,
     inicioDaSemana: () => inicioDaSemana,
     isoData: () => isoData,

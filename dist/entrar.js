@@ -377,6 +377,8 @@
     }
     try { await S.api('/auth/sign-out', { metodo: 'POST', corpo: {} }); } catch (e) { /* já sem sessão */ }
     (chaves || []).forEach(function (chave) { S.removeOriginal.call(localStorage, chave); });
+    // Cópia da Agenda para ver sem internet: é de uma pessoa só e o iPad pode ser compartilhado.
+    S.removeOriginal.call(localStorage, 'cicluz-agenda-cache-v1');
     S.remover(localStorage, S.META.dono);
     S.remover(sessionStorage, S.META.aba);
     history.replaceState(null, '', 'entrar.html');
