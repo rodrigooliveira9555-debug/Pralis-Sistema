@@ -67,17 +67,49 @@
   const tituloVisao = () => (estado.listaId ? (A.lista(estado.listaId) || { nome: 'Lista' }).nome : nomeAuto[estado.automatica]);
   const caminho = () => 'Agenda · Atividades / ' + tituloVisao();
 
+  /** A pessoa está escrevendo na tela (Novo compromisso, busca, texto do mapa mental)? */
+  function digitando() {
+    const a = document.activeElement;
+    return Boolean(a && tela && tela.view.contains(a) && a.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]), textarea'));
+  }
+  let redesenhoPendente = false;
+  /** Redesenho que vem de fora (servidor a cada 30 s, relógio, chat): nunca apaga o que se está digitando (G3). */
+  function renderQuandoLivre() {
+    if (!tela.view.classList.contains('show')) return;
+    if (digitando() || document.querySelector('dialog[open]')) { redesenhoPendente = true; return; }
+    redesenhoPendente = false;
+    render();
+  }
+
   function garantirTela() {
     if (tela) return tela;
     tela = U.criarTela({ id: 'agenda-view', titulo: 'Agenda', caminho: caminho(), icone: 'agenda', voltar, cor: COR, corTexto: COR_TEXTO, classe: 'agenda-view' });
-    U.atalho(tela, 'Novo compromisso', PATH_MAIS, () => editar(null, padraoNovo()), { criar: true });
-    document.addEventListener('cicluz-agenda-mudou', () => { if (tela.view.classList.contains('show')) render(); });
-    // Mensagens novas no chat: a linha do compromisso mostra (sem redesenhar com diálogo aberto).
-    document.addEventListener('cicluz-agenda-conversa', () => { if (tela.view.classList.contains('show') && !document.querySelector('dialog[open]')) render(); });
+    U.atalho(tela, 'Novo compromisso', PATH_MAIS, () => (A.somenteLeitura ? U.avisar(avisoLeitura()) : editar(null, padraoNovo())), { criar: true });
+    // Mudança feita aqui redesenha na hora; a que vem do servidor espera a pessoa parar de digitar.
+    document.addEventListener('cicluz-agenda-mudou', (e) => {
+      if (!tela.view.classList.contains('show')) return;
+      if (e.detail && e.detail.externo) renderQuandoLivre(); else render();
+    });
+    // Mensagens novas no chat: a linha do compromisso mostra.
+    document.addEventListener('cicluz-agenda-conversa', renderQuandoLivre);
     // Virada do dia ou da hora com a tela aberta: "Para hoje" e "Atrasados" mudam sozinhos.
-    setInterval(() => { if (tela.view.classList.contains('show') && !document.querySelector('dialog[open]')) render(); }, 60000);
+    setInterval(renderQuandoLivre, 60000);
+    // Saiu do campo (ou fechou o diálogo): faz o redesenho que ficou esperando.
+    const talvez = () => setTimeout(() => { if (redesenhoPendente) renderQuandoLivre(); }, 0);
+    tela.view.addEventListener('focusout', talvez);
+    document.addEventListener('close', talvez, true);
     return tela;
   }
+
+  /** Trava o botão enquanto o servidor responde (segunda barreira contra o duplo toque). */
+  async function comBotao(b, promessa) {
+    if (b) { b.disabled = true; b.setAttribute('aria-busy', 'true'); }
+    try { return await promessa; }
+    finally { if (b && b.isConnected) { b.disabled = false; b.removeAttribute('aria-busy'); } }
+  }
+  const avisoLeitura = () => (A.situacao === 'nao-transferida' ? 'A Agenda está sendo levada para o servidor.' : 'Sem internet: a Agenda mostra a última cópia. Para criar ou alterar, conecte.');
+  /** Mostra o erro do servidor, se houver. */
+  const seErro = (r) => { if (r && r.erro) U.avisar(r.erro); return r; };
 
   /** Abre a Agenda; listaId (opcional) vem do submenu do menu lateral. */
   function abrir(listaId) {
@@ -103,7 +135,7 @@
   /** Valores de um compromisso novo, conforme o que está aberto (lista, Para hoje, Sinalizados, dia do calendário). */
   function padraoNovo(extra = {}) {
     const hoje = D.isoData(new Date());
-    const base = { listaId: estado.listaId || A.dados.listas[0].id, prioridade: 'normal', alerta: null };
+    const base = { listaId: estado.listaId || (A.dados.listas[0] || { id: '' }).id, prioridade: 'normal', alerta: null };
     if (estado.visao === 'calendario') base.data = estado.calendario.ref;
     else if (estado.automatica === 'hoje') base.data = hoje;
     if (estado.visao !== 'calendario' && estado.automatica === 'sinalizados') base.sinalizado = true;
@@ -121,7 +153,12 @@
     if (crumb && tela.view.classList.contains('show')) crumb.textContent = caminho();
     const rolagem = body.scrollTop;
     body.replaceChildren();
-    if (A.erroLeitura) body.append(U.situacao('O dado salvo da Agenda não pôde ser lido. Nada será gravado até corrigir.', 'negativo'));
+    if (A.situacao === 'nao-transferida' || (A.situacao === 'carregando' && !A.dados.listas.length)) {
+      if (window.CicluzAgendaTransferencia) window.CicluzAgendaTransferencia.render(body, { aoConcluir: render });
+      return;
+    }
+    if (A.situacao === 'sem-internet') body.append(U.situacao('Sem internet: mostrando a última cópia da Agenda. Para criar ou alterar, conecte.', 'atencao'));
+    if (A.situacao === 'erro') body.append(U.situacao('O servidor não respondeu. A Agenda mostra a última cópia; tente de novo em instantes.', 'negativo'));
 
     const abas = U.chips([['listas', 'Listas'], ['calendario', 'Calendário'], ['kanban', 'Kanban'], ['mapa', 'Mapa mental']], estado.visao, (v) => { estado.visao = v; render(); });
     abas.classList.add('compras-abas');
@@ -208,8 +245,10 @@
     ferramentas.append(busca);
     if (l) {
       const ord = U.seletor(D.ORDENACOES, l.ordenacao);
-      ord.onchange = () => A.definirOrdenacao(l.id, ord.value);
-      ferramentas.append(U.campo('Ordenar por', ord), botao('Editar lista', () => editarLista(l), 'compras-chip'));
+      ord.onchange = () => A.definirOrdenacao(l.id, ord.value).then(seErro);
+      ferramentas.append(U.campo('Ordenar por', ord));
+      // Mudar a lista é de quem a criou ou do administrador (o servidor confere).
+      if (l.podeGerir && !A.somenteLeitura) ferramentas.append(botao('Editar lista', () => editarLista(l), 'compras-chip'));
     }
     cab.append(ferramentas);
     box.append(cab);
@@ -220,7 +259,7 @@
       const barra = el('div', 'agenda-concluidos-barra');
       barra.append(el('span', null, feitos + (feitos === 1 ? ' concluído' : ' concluídos')));
       if (feitos) {
-        barra.append(botao('Limpar', () => U.confirmar('Limpar concluídos', 'Apagar os ' + feitos + ' compromisso(s) concluído(s)' + (l ? ' de "' + l.nome + '"' : '') + '? Não dá para desfazer.', 'Limpar', () => { const n = A.limparConcluidos(l ? l.id : ''); U.avisar(n + ' concluído(s) apagado(s).'); }, { cor: COR, corTexto: COR_TEXTO, classe: 'agenda-dialog' }), 'agenda-link'));
+        barra.append(botao('Limpar', () => U.confirmar('Limpar concluídos', 'Apagar os ' + feitos + ' compromisso(s) concluído(s)' + (l ? ' de "' + l.nome + '"' : '') + '? Não dá para desfazer.', 'Limpar', async () => { const r = await A.limparConcluidos(l ? l.id : ''); if (r.erro) return r.erro; U.avisar(r.excluidos + ' concluído(s) apagado(s).'); return undefined; }, { cor: COR, corTexto: COR_TEXTO, classe: 'agenda-dialog' }), 'agenda-link'));
         barra.append(botao(estado.mostrarConcluidos ? 'Ocultar' : 'Mostrar', () => { estado.mostrarConcluidos = !estado.mostrarConcluidos; render(); }, 'agenda-link'));
       }
       box.append(barra);
@@ -258,7 +297,7 @@
       if (g.titulo) lista.append(el('div', 'agenda-grupo-hora' + (g.titulo === 'Atrasados' ? ' atrasados' : ''), g.titulo));
       g.itens.forEach((i) => lista.append(linha(i, agora, { arrastavel: manual && !i.concluida })));
     });
-    if (estado.automatica !== 'concluidos' && estado.automatica !== 'atrasados') lista.append(linhaNova());
+    if (estado.automatica !== 'concluidos' && estado.automatica !== 'atrasados' && !A.somenteLeitura) lista.append(linhaNova());
   }
 
   /** Linha de um compromisso: círculo para concluir, texto, detalhes, bandeira e subtarefas. */
@@ -278,17 +317,20 @@
       caixa.ondragend = () => caixa.classList.remove('arrastando');
       caixa.ondragover = (e) => { if ([...e.dataTransfer.types].includes('text/agenda-ordem')) { e.preventDefault(); caixa.classList.add('recebendo'); } };
       caixa.ondragleave = () => caixa.classList.remove('recebendo');
-      caixa.ondrop = (e) => { e.preventDefault(); caixa.classList.remove('recebendo'); const id = e.dataTransfer.getData('text/agenda-ordem'); if (id && id !== item.id) A.reordenar(id, item.id); };
+      caixa.ondrop = (e) => { e.preventDefault(); caixa.classList.remove('recebendo'); const id = e.dataTransfer.getData('text/agenda-ordem'); if (id && id !== item.id) A.reordenar(id, item.id).then(seErro); };
       r.append(alca);
     }
-    const circulo = botao('', () => {
-      const res = A.alternarConcluida(item.id);
-      if (res === 'repetiu') U.avisar('Feito. O próximo fica para ' + D.quando(A.item(item.id), new Date()) + '.');
-      else if (res) U.avisar(res === 'concluiu' ? 'Compromisso concluído.' : 'Compromisso reaberto.');
+    const circulo = botao('', async () => {
+      // Estado desejado: o contrário do que está na tela agora (o segundo toque não desfaz o primeiro).
+      const r = await comBotao(circulo, A.concluir(item.id, !item.concluida));
+      if (r.erro) return U.avisar(r.erro);
+      if (r.resultado === 'repetiu') U.avisar('Feito. O próximo fica para ' + D.quando(A.item(item.id), new Date()) + '.');
+      else if (r.resultado === 'concluiu' || r.resultado === 'reabriu') U.avisar(r.resultado === 'concluiu' ? 'Compromisso concluído.' : 'Compromisso reaberto.');
+      return undefined;
     }, 'agenda-circulo');
     circulo.setAttribute('aria-label', (item.concluida ? 'Reabrir ' : 'Concluir ') + item.titulo);
     circulo.setAttribute('aria-pressed', String(Boolean(item.concluida)));
-    circulo.disabled = !ac.concluir;
+    circulo.disabled = !ac.concluir || A.somenteLeitura;
     if (lst) circulo.style.setProperty('--lista-cor', lst.cor);
 
     const texto = botao('', () => editar(item.id), 'agenda-linha-texto');
@@ -321,7 +363,7 @@
 
     const direita = el('span', 'compras-linha-direita');
     if (TOM_PRIORIDADE[item.prioridade]) direita.append(U.situacao(nomePrioridade[item.prioridade], TOM_PRIORIDADE[item.prioridade]));
-    if (item.url) {
+    if (/^https?:\/\//i.test(item.url || '')) {
       const a = el('a', 'agenda-icone-botao');
       a.href = item.url;
       a.target = '_blank';
@@ -331,12 +373,12 @@
       a.setAttribute('aria-label', 'Abrir o endereço de ' + item.titulo);
       direita.append(a);
     }
-    const flag = botao('', () => A.alternarSinalizado(item.id), 'agenda-icone-botao agenda-bandeira' + (item.sinalizado ? ' ligada' : ''));
+    const flag = botao('', () => comBotao(flag, A.alternarSinalizado(item.id)).then(seErro), 'agenda-icone-botao agenda-bandeira' + (item.sinalizado ? ' ligada' : ''));
     flag.innerHTML = svg(ICONES.bandeira);
     flag.title = item.sinalizado ? 'Tirar sinalização' : 'Sinalizar';
     flag.setAttribute('aria-label', flag.title + ': ' + item.titulo);
     flag.setAttribute('aria-pressed', String(Boolean(item.sinalizado)));
-    flag.disabled = !ac.editar;
+    flag.disabled = !ac.editar || A.somenteLeitura;
     direita.append(flag);
     if (pr.total) {
       const aberto = estado.abertos.has(item.id);
@@ -354,8 +396,8 @@
       const subs = el('div', 'agenda-subtarefas');
       item.subtarefas.forEach((s) => {
         const sl = el('div', 'agenda-subtarefa' + (s.concluida ? ' concluida' : ''));
-        const c = botao('', () => A.alternarSubtarefa(item.id, s.id), 'agenda-circulo pequeno');
-        c.disabled = !ac.concluir;
+        const c = botao('', () => comBotao(c, A.marcarSubtarefa(item.id, s.id, !s.concluida)).then(seErro), 'agenda-circulo pequeno');
+        c.disabled = !ac.concluir || A.somenteLeitura;
         if (lst) c.style.setProperty('--lista-cor', lst.cor);
         c.setAttribute('aria-label', (s.concluida ? 'Reabrir ' : 'Concluir ') + s.titulo);
         c.setAttribute('aria-pressed', String(s.concluida));
@@ -385,15 +427,20 @@
       if (f.prioridade) partes.push('Prioridade ' + nomePrioridade[f.prioridade]);
       dica.textContent = partes.length ? 'Vai criar: ' + partes.join(' · ') : '';
     };
-    i.onkeydown = (e) => {
+    i.onkeydown = async (e) => {
       if (e.key !== 'Enter') return;
       e.preventDefault();
       const texto = i.value.trim();
-      if (!texto) return;
+      if (!texto || i.readOnly) return;
       const base = padraoNovo();
-      const r2 = A.criarRapido(texto, base.listaId, base);
-      if (r2.erro) return U.avisar(r2.erro);
+      // Enquanto o servidor responde, a linha fica travada ("Salvando…"): Enter de novo não cria outro.
+      i.readOnly = true;
+      dica.textContent = 'Salvando…';
+      const r2 = await A.criarRapido(texto, base.listaId, base);
+      i.readOnly = false;
+      if (r2.erro) { dica.textContent = ''; return U.avisar(r2.erro); }
       setTimeout(() => { const n = tela.body.querySelector('.agenda-nova-entrada'); if (n) n.focus(); }, 0);
+      return undefined;
     };
     const meio = el('span', 'agenda-nova-meio');
     meio.append(i, dica);
@@ -411,7 +458,7 @@
       linha: (item) => linha(item, new Date(), { compacta: true }),
       abrirItem: (id) => editar(id),
       novoEm: (data, hora) => editar(null, padraoNovo({ data, hora: hora || '', horaFim: hora ? D.paraHora(Math.min(1439, D.minutos(hora) + 60)) : '', alerta: 0 })),
-      mover: (id, data, hora) => { if (A.moverPara(id, data, hora)) U.avisar('Compromisso levado para ' + D.dataCurta(data) + (hora ? ' às ' + hora : '') + '.'); },
+      mover: async (id, data, hora) => { const r = await A.moverPara(id, data, hora); if (r.erro) return U.avisar(r.erro); U.avisar('Compromisso levado para ' + D.dataCurta(data) + (hora ? ' às ' + hora : '') + '.'); return undefined; },
       corDaLista: (id) => (A.lista(id) || {}).cor || COR,
     });
   }
@@ -460,7 +507,7 @@
     const ac = atual ? A.acesso(atual) : { ver: true, editar: true, concluir: true, excluir: true, gestor: true };
     if (atual && !ac.ver) return U.avisar('Você não participa deste compromisso.');
     const v = structuredClone(atual || { titulo: '', notas: '', url: '', local: '', etiquetas: [], subtarefas: [], pessoas: [], avaliacao: { tipo: '', notas: [] }, hora: '', horaFim: '', repeticao: null, alerta: null, colunaId: '', ...base });
-    const soLeitura = !ac.editar;
+    const soLeitura = !ac.editar || A.somenteLeitura;
     U.dialogo({
       titulo: !atual ? 'Novo compromisso' : soLeitura ? 'Compromisso' : 'Editar compromisso',
       subtitulo: soLeitura ? 'Você pode ver' + (ac.concluir ? ' e concluir' : '') + ' este compromisso; editar é com o gestor.' : undefined,
@@ -483,7 +530,7 @@
         const alerta = U.seletor(D.ALERTAS, v.alerta === null || v.alerta === undefined ? '' : String(v.alerta));
         const repeticao = editorRepeticao(v.repeticao, () => data.value);
         const listaSel = U.seletor(A.dados.listas.map((l) => [l.id, l.nome]), v.listaId);
-        const colunaSel = U.seletor(A.dados.colunas.map((c) => [c.id, c.nome]), A.coluna(v.colunaId) ? v.colunaId : A.dados.colunas[0].id);
+        const colunaSel = U.seletor(A.dados.colunas.map((c) => [c.id, c.nome]), A.coluna(v.colunaId) ? v.colunaId : (A.dados.colunas[0] || { id: '' }).id);
         let prioridade = v.prioridade || 'normal';
         const prio = U.chips(D.PRIORIDADES, prioridade, (p) => { prioridade = p; });
         const sinal = el('label', 'compras-interruptor');
@@ -530,8 +577,8 @@
         if (soLeitura) form.querySelectorAll('input, select, textarea, button').forEach((x) => { if (!x.closest('.agenda-avaliacao-painel, .agenda-conversa, .agenda-form-rodape, .compras-dialog-acoes')) x.disabled = true; });
         return { titulo, notas, url, local, lugar, data, hora, horaFim, alerta, repeticao, listaSel, colunaSel, pessoas, tipoAvaliacao, sinalBox, etiquetas, subtarefas, prio: () => prioridade };
       },
-      salvar: soLeitura ? undefined : (c) => {
-        const r = A.salvarItem(atual ? atual.id : '', {
+      salvar: soLeitura ? undefined : async (c) => {
+        const r = await A.salvarItem(atual ? atual.id : '', {
           titulo: c.titulo.value, notas: c.notas.value, url: c.url.value, local: c.local.value, localizacao: c.lugar ? c.lugar.valor() : (atual && atual.localizacao),
           data: c.data.value, hora: c.hora.value, horaFim: c.horaFim.value, alerta: c.alerta.value,
           repeticao: c.repeticao.valor(atual && atual.repeticao), listaId: c.listaSel.value, colunaId: c.colunaSel.value,
@@ -655,8 +702,8 @@
     comentario.setAttribute('aria-label', 'Comentário da avaliação');
     const registrar = botao('Registrar avaliação', () => {
       if (valor === null) return U.avisar('Escolha a nota.');
-      U.confirmar('Registrar avaliação', 'Depois de registrada, a avaliação não muda. Confirmar ' + D.textoNota(tipo, valor) + '?', 'Registrar', () => {
-        const r = A.avaliar(item.id, avaliadoId, valor, comentario.value);
+      U.confirmar('Registrar avaliação', 'Depois de registrada, a avaliação não muda. Confirmar ' + D.textoNota(tipo, valor) + '?', 'Registrar', async () => {
+        const r = await A.avaliar(item.id, avaliadoId, valor, comentario.value);
         if (r.erro) return r.erro;
         U.avisar('Avaliação registrada.');
         depois();
@@ -697,6 +744,7 @@
     linhaTipo.append(U.campo('Repetir', tipo), campoFimTipo, campoFimData, campoFimVezes);
     const resumo = el('small', 'profiles-note');
     no.append(linhaTipo, personal, resumo);
+    // A âncora e quantas vezes já foi feita são do servidor (uma regra só, M5); aqui só para o resumo.
     function valor(anterior) {
       if (tipo.value === 'nunca') return null;
       return {
@@ -755,8 +803,9 @@
   }
 
   function excluir(item) {
-    U.confirmar('Excluir compromisso', 'Excluir "' + item.titulo + '"?' + (D.temRepeticao(item) ? ' As próximas repetições também deixam de existir.' : '') + ' Não dá para desfazer.', 'Excluir', () => {
-      if (!A.excluirItem(item.id)) return 'Não foi possível excluir.';
+    U.confirmar('Excluir compromisso', 'Excluir "' + item.titulo + '"?' + (D.temRepeticao(item) ? ' As próximas repetições também deixam de existir.' : '') + ' Não dá para desfazer.', 'Excluir', async () => {
+      const r = await A.excluirItem(item.id);
+      if (r.erro) return r.erro;
       document.querySelectorAll('dialog.agenda-dialog[open]').forEach((d) => d.close());
       U.avisar('Compromisso excluído.');
       return undefined;
@@ -814,19 +863,21 @@
         if (lista) {
           const qtd = A.visiveis().filter((i) => i.listaId === lista.id).length;
           const rodape = el('div', 'agenda-form-rodape');
-          rodape.append(U.nota(qtd + ' compromisso(s) nesta lista.'), botao('Excluir lista', () => {
-            const r = A.excluirLista(lista.id);
+          const botaoExcluir = botao('Excluir lista', async () => {
+            const r = await comBotao(botaoExcluir, A.excluirLista(lista.id));
             if (r.erro) return U.avisar(r.erro);
             if (estado.listaId === lista.id) { estado.listaId = ''; estado.automatica = 'todos'; }
             document.querySelectorAll('dialog.agenda-dialog[open]').forEach((d) => d.close());
             U.avisar('Lista excluída.');
-          }, 'btn secondary perigo-texto'));
+            return undefined;
+          }, 'btn secondary perigo-texto');
+          rodape.append(U.nota(qtd + ' compromisso(s) nesta lista.'), botaoExcluir);
           form.append(rodape);
         }
         return { nome };
       },
-      salvar: (c) => {
-        const r = A.salvarLista(lista ? lista.id : '', { nome: c.nome.value, cor, icone });
+      salvar: async (c) => {
+        const r = await A.salvarLista(lista ? lista.id : '', { nome: c.nome.value, cor, icone });
         if (r.erro) return r.erro;
         if (!lista) { estado.listaId = r.id; estado.automatica = ''; estado.detalhe = true; }
         render();

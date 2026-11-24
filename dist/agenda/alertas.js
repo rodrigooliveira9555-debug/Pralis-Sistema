@@ -87,7 +87,8 @@
     const lst = A.lista(item.listaId);
     if (lst) cartao.style.setProperty('--lista-cor', lst.cor);
     const fechar = () => { cartao.remove(); };
-    const adiar = (min) => { A.adiar(item.id, min); fechar(); U.avisar('Vou avisar de novo.'); };
+    // Soneca só para quem adiou (o servidor guarda por pessoa).
+    const adiar = async (min) => { fechar(); const r = await A.adiar(item.id, min); U.avisar(r.erro || 'Vou avisar de novo.'); };
     const amanha = () => {
       const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0);
       adiar(Math.max(1, Math.round((d - Date.now()) / 60000)));
@@ -95,7 +96,8 @@
     cartao.append(el('small', null, 'Agenda · ' + (lst ? lst.nome : '')), el('b', null, item.titulo), el('span', null, texto || D.quando(item, new Date()) || 'Sem data'));
     const acoes = el('div', 'agenda-alerta-acoes');
     acoes.append(
-      botao('Concluir', () => { A.alternarConcluida(item.id); fechar(); }, 'compras-chip ativo'),
+      // Estado desejado "concluída", da ocorrência deste cartão: cartão velho nunca reabre nem conclui a próxima (M4).
+      botao('Concluir', async () => { fechar(); const r = await A.concluir(item.id, true, item.data); if (r.erro) U.avisar(r.erro); }, 'compras-chip ativo'),
       botao('Adiar 15 min', () => adiar(15), 'compras-chip'),
       botao('Adiar 1 h', () => adiar(60), 'compras-chip'),
       botao('Amanhã', amanha, 'compras-chip'),
