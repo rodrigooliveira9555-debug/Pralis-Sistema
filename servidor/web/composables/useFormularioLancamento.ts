@@ -107,7 +107,8 @@ export function corpoParaApi(form: FormLancamento, categoria: CategoriaLancament
   const discriminando = categoria !== "retiradas" && form.discriminar && form.itens.length > 0;
   return {
     dataReferencia: form.dataReferencia,
-    dataVencimento: form.dataVencimento,
+    // Retirada não tem Vencimento na tela (como no principal): vale a data do lançamento. O pagamento que um registro antigo já tinha é mantido.
+    dataVencimento: categoria === "retiradas" ? form.dataReferencia : form.dataVencimento,
     dataPagamento: form.dataPagamento,
     observacao: form.observacao.trim(),
     valorOriginal: dinheiroParaApi(form.valorOriginal) ?? "",

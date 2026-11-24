@@ -6,7 +6,7 @@
 > antigas (HTML) continuam até serem refeitas uma a uma no app, cada uma removendo a versão HTML.
 
 ## Onde está
-- Tela: `servidor/web/pages/lancamentos/` (Despesas, Mercadorias, Retiradas; Entradas = consulta).
+- Tela: `servidor/web/pages/lancamentos/` (Despesas, Mercadorias, Retiradas; Entradas = consulta). **Desde 24/11/2026 o formulário é uma tela própria por categoria, sem modal** (`[categoria]/novo.vue` e `[categoria]/[id].vue`, componente `FormularioLancamentoTela.vue`), e os cartões DES - Despesas, MER - Mercadorias e RET - Retiradas de Saídas › Lançamentos abrem essas telas.
 - API: `servidor/api/src/lancamentos/` (`/api/lancamentos/:categoria`, `/api/lancamentos/item/:id`,
   `/discriminar`, `/api/lancamentos/series/:id/cancelar`).
 - Banco: `lancamentos`, `lancamentos_itens`, `lancamentos_recorrencias` (migration 0002). Aqui o

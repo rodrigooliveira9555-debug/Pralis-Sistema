@@ -35,7 +35,10 @@ const valorTotal = ref("0");
 const pagina = ref(1);
 const carregando = ref(false);
 const erro = ref("");
-const aviso = ref("");
+// Mensagem deixada pela tela do formulário ao salvar (aparece uma vez aqui e some).
+const avisoDeFora = useState<string>("lancamento-aviso", () => "");
+const aviso = ref(avisoDeFora.value);
+avisoDeFora.value = "";
 
 async function carregar(adicionar = false) {
   carregando.value = true;
@@ -67,38 +70,13 @@ function carregarMais() {
   carregar(true);
 }
 
-const formularioAberto = ref(false);
-const emEdicao = ref<LancamentoResposta | null>(null);
-
-// O foco volta para quem abriu a janela (o Vuetify só devolve quando há activator).
-let quemAbriu: HTMLElement | null = null;
-function lembrarFoco() {
-  quemAbriu = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-}
-function devolverFoco() {
-  quemAbriu?.focus();
-}
-
+// O formulário abre em tela própria (sem janela): /lancamentos/<categoria>/novo e /lancamentos/<categoria>/<id>.
 function novo() {
-  lembrarFoco();
-  emEdicao.value = null;
-  formularioAberto.value = true;
+  return navigateTo(`/lancamentos/${categoria.value}/novo`);
 }
 
-async function abrir(item: LancamentoResposta) {
-  lembrarFoco();
-  try {
-    emEdicao.value = await chamarApi<LancamentoResposta>(`/lancamentos/item/${item.id}`);
-    formularioAberto.value = true;
-  } catch (e) {
-    erro.value = e instanceof Error ? e.message : "Não foi possível abrir.";
-  }
-}
-
-function aoSalvar(mensagem: string) {
-  aviso.value = mensagem;
-  pagina.value = 1;
-  carregar();
+function abrir(item: LancamentoResposta) {
+  return navigateTo(`/lancamentos/${categoria.value}/${item.id}`);
 }
 
 async function cancelarSerie(item: LancamentoResposta) {
@@ -146,7 +124,7 @@ async function cancelarSerie(item: LancamentoResposta) {
               <small class="texto-suave">{{ [item.grupoNome, item.contaNome].filter(Boolean).join(" · ") || "Sem grupo e sem conta" }}</small>
             </span>
             <span class="linha-selos">
-              <v-chip size="small" :color="item.dataPagamento ? 'success' : 'warning'" variant="tonal">
+              <v-chip v-if="categoria !== 'retiradas' || item.dataPagamento" size="small" :color="item.dataPagamento ? 'success' : 'warning'" variant="tonal">
                 {{ item.dataPagamento ? `Pago ${formatarData(item.dataPagamento)}` : "A pagar" }}
               </v-chip>
               <v-chip v-if="item.pendenteDiscriminacao" size="small" variant="outlined">Sem itens</v-chip>
@@ -183,13 +161,6 @@ async function cancelarSerie(item: LancamentoResposta) {
       </div>
     </footer>
 
-    <FormularioLancamento
-      v-model="formularioAberto"
-      :categoria="categoria"
-      :lancamento="emEdicao"
-      @salvo="aoSalvar"
-      @fechado="devolverFoco"
-    />
   </div>
 </template>
 

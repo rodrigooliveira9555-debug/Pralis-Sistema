@@ -18,10 +18,10 @@ export function formatarData(data: string | null | undefined) {
   return `${dia}/${mes}/${ano?.slice(2)}`;
 }
 
-export type InfoCategoria = { titulo: string; subtitulo: string; origem: CategoriaLancamento };
+export type InfoCategoria = { titulo: string; singular: string; subtitulo: string; origem: CategoriaLancamento };
 
 export const CATEGORIAS: Record<CategoriaLancamento, InfoCategoria> = {
-  despesas: { titulo: "Despesas", subtitulo: "Saídas / Despesas e custos", origem: "despesas" },
-  mercadorias: { titulo: "Mercadorias", subtitulo: "Saídas / Mercadorias e CMV", origem: "mercadorias" },
-  retiradas: { titulo: "Retiradas", subtitulo: "Saídas / Retiradas e investimentos", origem: "retiradas" }
+  despesas: { titulo: "Despesas", singular: "Despesa", subtitulo: "Saídas / Despesas e custos", origem: "despesas" },
+  mercadorias: { titulo: "Mercadorias", singular: "Mercadoria", subtitulo: "Saídas / Mercadorias e CMV", origem: "mercadorias" },
+  retiradas: { titulo: "Retiradas", singular: "Retirada", subtitulo: "Saídas / Retiradas e investimentos", origem: "retiradas" }
 };
