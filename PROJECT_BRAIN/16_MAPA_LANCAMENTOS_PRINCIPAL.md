@@ -96,13 +96,7 @@ CICLUZ hoje (`servidor/web/components/lancamentos/`, `/app/lancamentos/<categori
 5. **Conta, caixa e saldo** (D8, R-121, R-165) junto com o Caixa e os computadores.
 6. **Leitura por IA da nota**: fora por ora.
 
-## 9. Decisão do Washington e as telas de lista do principal (24/11/2026)
-**Decisão: sem modal.** O principal cria a saída num modal único aberto pelo "+ NOVO". No CICLUZ **cada categoria tem a sua tela, separada**: Saídas › Lançamentos › **DES - Despesas**, **MER - Mercadorias** e **RET - Retiradas**, sem os 3 botões de troca. Cada uma é uma lista com o botão de criar, e **o formulário abre numa tela própria (não numa janela)**, no padrão dos cadastros do CICLUZ (cabeçalho, conteúdo, rodapé). O código do formulário pode ser um só, configurado por categoria, para não haver três caminhos para o mesmo ato.
-
-**As listas do principal** (lidas em produção e no código, `components/financeiro/OperacoesPage.vue`; "Cadastro operacional."):
-- **Filtros (todas):** Data inicial · Data final · **PDV** · **Status** (Todos os status, Aprovado, Aguardando aprovação, Cancelado) · **Limpar**.
-- **Só Despesas e Mercadorias:** interruptor **"Somente pendentes de discriminação"**. **Só Mercadorias:** interruptor **"Aguardando aprovação (NF-e)"** (some o outro quando ligado).
-- **Colunas:** Data e hora · PDV · Observação · Registrado por · **Vencimento** · **Pagamento** · Status · Valor · Ações. **Retiradas não tem Vencimento nem Pagamento** (a mesma regra do formulário).
-- **Status** em chips: Aprovado (verde), Aguardando aprovação (amarelo), Cancelado (vermelho); mais o chip **"pendente de discriminação"** quando falta discriminar.
-- **Ações da linha:** ver a observação completa · **Ver anexos** (se há foto) · **Discriminar** (só quem pode e só se está pendente) · **Editar**. Lista paginada.
-- **Criar:** não há botão "novo" na lista; cria-se pelo "+ NOVO" global. (No CICLUZ a lista passa a ter o seu botão de criar.)
+## 9. Decisão do Washington (24/11/2026): sem modal, uma tela por categoria
+O que se quer reproduzir é **o formulário que abre em "+ NOVO → Saídas"** (os campos do §3 e §4), **não** as listas do menu Lançamentos do principal (essas não fazem parte do pedido; o CICLUZ já tem as suas listas).
+**Decisão:** o principal mostra o formulário num **modal único** com 3 botões de troca. No CICLUZ **cada categoria tem o seu formulário, separado e sem modal**: o formulário de **Despesa** em **DES - Despesas**, o de **Mercadoria** em **MER - Mercadorias** e o de **Retirada** em **RET - Retiradas** (Saídas › Lançamentos), cada um **numa tela própria**, no padrão dos cadastros do CICLUZ (cabeçalho, conteúdo, rodapé) e na cor da origem, **sem os 3 botões de troca**. O código pode ser um componente só, configurado por categoria, para não haver três caminhos para o mesmo ato.
+**Em aberto:** ao tocar no cartão (DES - Despesas etc.), a tela abre **direto no formulário de lançar** ou na **lista** dos lançamentos já feitos, com um botão de criar que leva ao formulário? (hoje o CICLUZ abre a lista e usa uma janela para o formulário).
