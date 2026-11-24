@@ -28,6 +28,21 @@ Pedido do Marco, para o Rodrigo acompanhar as vendas do CREARE ao vivo (o Rodrig
 **Campo de data com calendário (regra nova, 24/11/2026).** Até aqui a data era só o campo com máscara DD/MM/AA (`date-fields.js`), sem calendário. Agora existe a peça **`U.campoData`** (`compras/campo-data.js`), **no mesmo desenho do campo de hora**: o campo com a máscara DD/MM/AA e o **botão redondo do calendário** (32 px, cor do menu); tocar no campo ou no botão abre o **painel flutuante** com o mês (‹ novembro 2026 ›), a linha D S T Q Q S S e os dias em células de cantos de 8 px; o escolhido fica **cheio na cor do menu**, o dia de hoje tem **contorno** na cor do menu, e o botão **Hoje** fica embaixo. Escolher o dia fecha o painel e devolve o foco ao campo; Esc fecha; digitar continua valendo. O valor é ISO (AAAA-MM-DD). **Onde já vale:** Início e Fim de VND - Vendas dos PDVs. **Onde ainda não vale:** os outros campos de data do sistema continuam só com a máscara; trocá-los pela peça é o próximo passo, sem mudar o dado.
 
 
+## Saídas › Lançamentos: Despesa, Mercadoria e Retirada no padrão do site (24/11/2026)
+Pedido do Washington. O principal cria a saída num **modal único** ("+ NOVO → Saídas", com os botões Despesa, Mercadoria e Retirada). No CICLUZ **cada categoria tem a sua tela, separada, sem os botões de troca**: os cartões **DES - Despesas**, **MER - Mercadorias** e **RET - Retiradas** de Saídas › Lançamentos abrem **direto o formulário** da categoria (sem lista no meio, pedido do Washington): a **janela de edição** da cor da origem (a mesma de Fornecedores e Clientes: cabeçalho colorido com título e caminho, quadros com o título na borda, campos com o rótulo na borda, Cancelar · Salvar). Ver e editar lançamentos já gravados fica para a lista/relatório (a função `CicluzLancamentos.editar` já abre um). **É tela do site** (`dist/lancamentos/lancamentos.js`), não do app novo: o app novo tem outro visual e menu lateral, e o pedido foi seguir o padrão do projeto (supera a decisão de 03/11 só para estas três; o app novo fica com Entradas, consulta).
+**Campos, em quadros, na ordem do principal:** **Valor** (Valor *, Tipo do juros R$ ou %, Juros, **Valor Total** somente leitura = valor + juros); **Datas**: Data do lançamento * e, em Despesa e Mercadoria, Data e Nº do documento fiscal; **Classificação**: Grupo (**só na Retirada**; em Despesa e Mercadoria o grupo é do item), Conta e Observação * (obrigatória); **Pagamento** (só Despesa e Mercadoria): interruptor **Sim/Não** (Sim já põe hoje; precisa da permissão de pagar), Data do pagamento e Vencimento *; **Discriminação** (só Despesa e Mercadoria): interruptor Sim/Não, linhas (Descrição *, Quantidade, Valor unitário, desconto unitário e no total em R$ ou %, Grupo, Total da linha), **Vale presente / desconto no total** e o aviso, que **bloqueia o Salvar**, quando a soma dos itens não bate com o valor; **Recorrência** (só ao criar e com a permissão). Rodapé: **Cancelar**, **Salvar e criar nova** (só ao criar) e **Salvar**. **A Retirada é a versão enxuta:** Valor, Juros, Valor Total, Data do lançamento, Grupo, Conta, Observação (+ Recorrência); sem documento fiscal, pagamento, vencimento nem discriminação (o vencimento enviado à API é a data do lançamento).
+**O que ainda NÃO está nestas telas (decisão e banco, P-47):** o **credor** (Fornecedor / Colaborador / Sócio ou Gestor), as **duas fotos**, o **item da discriminação vindo de cadastro** e a leitura por IA, a **conta vinculada ao usuário / travada pelo caixa** e o saldo. Dependem de campos novos no banco (**migration a autorizar**) e de decisões do Washington e do Rodrigo.
+
+## Agenda: respostas da P-46 nas telas (24/11/2026, Zé)
+**Janela da lista** ("Editar lista" / "Nova lista"): no quadro "Membros do grupo", o campo **"Quem entra no grupo"** (seletor do
+sistema): "Escolhidos à mão" ou "Quem tem acesso a <área>" (áreas do Acesso por Tela, lidas do catálogo do servidor). Com área, o
+botão "Escolher membros" some e o resumo explica que os membros entram e saem sozinhos com o acesso. **Configurações da Agenda**
+(janela de cada pessoa): primeiro o campo **"Colaborador do cadastro"** (seletor; só lista quem está no cadastro deste aparelho;
+"Nenhum: usa o expediente abaixo"), depois dias, início e fim (o expediente de reserva), "Fora do expediente" e o tempo parado
+(vazio = **padrão de 15 min**, escrito no próprio campo). **Saiu** a escolha "Hora trabalhada fora do expediente" (comum/extra):
+a hora é sempre calculada e aparece só no Desempenho até o Rodrigo decidir o pagamento. Na lista de pessoas, cada linha diz
+"Escala de <colaborador>" ou o expediente escrito, e "sai em N min parado".
+
 ## Agenda no padrão do Design System (24/11/2026, pedido do Zé)
 Revisão de toda a Agenda (Listas, Calendário, Kanban, Mapa mental, Desempenho, janelas e alertas), na origem (`agenda/agenda.css`
 e os `agenda/*.js`), sem `!important` novo. **Ícones (só imagem)** das listas automáticas, de "Minhas listas", dos indicadores do
@@ -50,7 +65,7 @@ claro, roxo clareado no escuro), no lugar de oito cores escuras escritas à mão
 (10, 13, 15, 18 e 20 px saíram; fica só o % em destaque do Desempenho, 22 px). **Espaços** de 12 px entre quadros. Os campos do
 Kanban e do Mapa mental ficam num quadro com o nome na moldura. A linha "Novo compromisso" tem 52 px. Local no mapa: os quatro
 botões em duas linhas em telas de até 380 px (no lugar da letra de 10 px). **Exceção mantida:** na linha "Novo compromisso" e na
-subtarefa, **Enter cria o próximo** (como no Lembretes) — a confirmar com o Rodrigo.
+subtarefa, **Enter cria o próximo** (como no Lembretes). **Confirmado pelo Zé em 24/11/2026** (P-46 item 8): é uma linha de anotação rápida, não um formulário; a regra "Enter não salva" continua valendo em todo o resto.
 
 ## Agenda: rotina (P-46, áudios do Rodrigo de 23/11/2026; feito em 24/11/2026)
 **Menu da Agenda:** só **Agenda** e **Configurações da Agenda** (Agendamento de Pedidos e de Produção ficam em Lançamentos).

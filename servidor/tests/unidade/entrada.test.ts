@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dataParaIso, dinheiroParaApi, mascararData, numeroParaApi } from "../../web/utils/entrada.ts";
+import { dataParaIso, dinheiroParaApi, mascararData, numeroParaApi } from "@cicluz/shared";
 
 // O que a pessoa digita na tela do app → o que vai para a API. Nunca mandar valor diferente do
 // digitado: o que não dá para ler sem adivinhar volta null (o campo mostra o erro).

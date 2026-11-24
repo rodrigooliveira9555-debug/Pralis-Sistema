@@ -131,6 +131,9 @@ export const agendaGrupos = pgTable(
     ordenacao: text("ordenacao").notNull().default("manual"),
     ordem: integer("ordem").notNull().default(0),
     donoId: text("dono_id").notNull(),
+    // Área do Acesso por Tela ligada à lista (0009, P-46 item 3): os membros passam a ser as contas com alguma
+    // permissão dessa área (origem 'area'), refeitos pela API quando as permissões mudam. Nulo: membros à mão.
+    area: text("area"),
     excluidoEm: timestamp("excluido_em", { withTimezone: true }),
     excluidoPor: text("excluido_por").references(() => usuarioAutenticacao.id),
     versao: integer("versao").notNull().default(1),
@@ -138,6 +141,10 @@ export const agendaGrupos = pgTable(
   },
   (t) => [
     primaryKey({ name: "agenda_grupos_pk", columns: [t.empresaId, t.id] }),
+    check(
+      "agenda_grupos_area_check",
+      sql`${t.area} is null or ${t.area} in ('lancamentos', 'caixa', 'transferencias', 'compras', 'producao', 'pessoas', 'relatorios', 'configuracoes')`
+    ),
     pessoaDaEmpresa("agenda_grupos_dono_fk", t.empresaId, t.donoId),
     check("agenda_grupos_id_check", sql`${t.id} ~ ${ID_AGENDA}`),
     check("agenda_grupos_nome_check", sql`char_length(btrim(${t.nome})) between 1 and 40`),
@@ -167,7 +174,7 @@ export const agendaGrupoMembros = pgTable(
     primaryKey({ name: "agenda_grupo_membros_pk", columns: [t.empresaId, t.grupoId, t.usuarioId] }),
     foreignKey({ name: "agenda_grupo_membros_grupo_fk", columns: [t.empresaId, t.grupoId], foreignColumns: [agendaGrupos.empresaId, agendaGrupos.id] }),
     pessoaDaEmpresa("agenda_grupo_membros_usuario_fk", t.empresaId, t.usuarioId),
-    check("agenda_grupo_membros_origem_check", sql`${t.origem} in ('manual', 'transferencia')`),
+    check("agenda_grupo_membros_origem_check", sql`${t.origem} in ('manual', 'transferencia', 'area')`),
     index("agenda_grupo_membros_usuario_idx").on(t.empresaId, t.usuarioId)
   ]
 );
@@ -506,13 +513,15 @@ export const agendaHorasFora = pgTable(
     dia: date("dia", { mode: "string" }).notNull(),
     concluidaEm: timestamp("concluida_em", { withTimezone: true }).notNull(),
     minutos: integer("minutos"),
-    tipo: text("tipo").notNull(),
+    // 'comum'/'extra' só nas linhas de antes da 0009. Desde a 0009 (P-46 item 6) a hora é só calculada e mostrada:
+    // se paga e como (comum ou extra) é decisão pendente do Rodrigo, então a linha nova não tem tipo.
+    tipo: text("tipo"),
     criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow()
   },
   (t) => [
     pessoaDaEmpresa("agenda_horas_fora_usuario_fk", t.empresaId, t.usuarioId),
     foreignKey({ name: "agenda_horas_fora_compromisso_fk", columns: [t.empresaId, t.compromissoId], foreignColumns: [agendaCompromissos.empresaId, agendaCompromissos.id] }),
-    check("agenda_horas_fora_tipo_check", sql`${t.tipo} in ('comum', 'extra')`),
+    check("agenda_horas_fora_tipo_check", sql`${t.tipo} is null or ${t.tipo} in ('comum', 'extra')`),
     check("agenda_horas_fora_minutos_check", sql`${t.minutos} is null or ${t.minutos} between 0 and 1440`),
     uniqueIndex("agenda_horas_fora_uq").on(t.empresaId, t.compromissoId, t.usuarioId),
     index("agenda_horas_fora_pessoa_idx").on(t.empresaId, t.usuarioId, t.dia)

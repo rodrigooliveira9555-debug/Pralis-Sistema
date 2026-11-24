@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// A entrada do app é Lançamentos (a primeira tela nova).
-await navigateTo("/lancamentos/despesas", { replace: true });
+// A entrada do app é Entradas › Vendas (consulta). Despesas, Mercadorias e Retiradas vivem no site.
+await navigateTo("/lancamentos/vendas", { replace: true });
 </script>
 
 <template>

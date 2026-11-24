@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lte, ne, sql } from "drizzle-orm";
 import {
   agendaCompromissos,
   agendaConfigPessoas,
@@ -6,10 +6,11 @@ import {
   agendaGrupoMensagens,
   agendaHorasFora,
   agendaParticipantes,
+  expedientesColaboradores,
   perfisUsuarios,
   usuarioAutenticacao
 } from "@cicluz/db/schema";
-import type { ConfigPessoa } from "@cicluz/shared";
+import type { ConfigPessoa, ExpedientesEnvio } from "@cicluz/shared";
 import { banco, type TransacaoBanco } from "../banco/conexao.ts";
 
 // Consultas da rotina da Agenda (0008): configurações por pessoa, desempenho, tarefas vindas de tela e chat do grupo.
@@ -20,7 +21,7 @@ type Executor = typeof banco | TransacaoBanco;
 
 export async function contas(empresaId: string) {
   return banco
-    .select({ id: perfisUsuarios.usuarioId, nome: perfisUsuarios.nome, ativo: perfisUsuarios.ativo, papel: perfisUsuarios.papel })
+    .select({ id: perfisUsuarios.usuarioId, nome: perfisUsuarios.nome, ativo: perfisUsuarios.ativo, papel: perfisUsuarios.papel, colaboradorId: perfisUsuarios.colaboradorId })
     .from(perfisUsuarios)
     .where(eq(perfisUsuarios.empresaId, empresaId))
     .orderBy(asc(perfisUsuarios.nome));
@@ -36,7 +37,6 @@ export async function salvarConfig(empresaId: string, usuarioId: string, c: Conf
     expedienteInicio: c.expedienteInicio || null,
     expedienteFim: c.expedienteFim || null,
     foraExpediente: c.foraExpediente,
-    horaFora: c.horaFora,
     inatividadeMinutos: c.inatividadeMinutos,
     atualizadoEm: new Date(),
     atualizadoPor: por
@@ -47,6 +47,70 @@ export async function salvarConfig(empresaId: string, usuarioId: string, c: Conf
     .onConflictDoUpdate({ target: [agendaConfigPessoas.empresaId, agendaConfigPessoas.usuarioId], set: valores })
     .returning();
   return l!;
+}
+
+/* ---------- Expediente vindo dos Horários/Escalas (0009, P-46 item 5) ---------- */
+
+export async function colaboradorDaConta(ex: Executor, empresaId: string, usuarioId: string) {
+  const [l] = await ex
+    .select({ colaboradorId: perfisUsuarios.colaboradorId })
+    .from(perfisUsuarios)
+    .where(and(eq(perfisUsuarios.empresaId, empresaId), eq(perfisUsuarios.usuarioId, usuarioId)))
+    .limit(1);
+  return l?.colaboradorId ?? null;
+}
+
+/** Os dias pedidos do colaborador (só os que o aparelho já mandou). */
+export async function diasDoColaborador(ex: Executor, empresaId: string, colaboradorId: string, dias: string[]) {
+  return ex
+    .select({ dia: expedientesColaboradores.dia, trabalha: expedientesColaboradores.trabalha, inicio: expedientesColaboradores.inicio, fim: expedientesColaboradores.fim })
+    .from(expedientesColaboradores)
+    .where(and(eq(expedientesColaboradores.empresaId, empresaId), eq(expedientesColaboradores.colaboradorId, colaboradorId), inArray(expedientesColaboradores.dia, dias)));
+}
+
+/** Ids dos colaboradores ligados a contas ativas (o aparelho só calcula e manda estes). Sem nomes. */
+export async function colaboradoresLigados(empresaId: string) {
+  const r = await banco
+    .select({ colaboradorId: perfisUsuarios.colaboradorId })
+    .from(perfisUsuarios)
+    .where(and(eq(perfisUsuarios.empresaId, empresaId), eq(perfisUsuarios.ativo, true), isNotNull(perfisUsuarios.colaboradorId)));
+  return r.map((x) => x.colaboradorId!);
+}
+
+/** Troca os dias de `de` a `ate` de cada colaborador enviado pelo que o aparelho calculou. */
+export async function substituirExpedientes(tx: TransacaoBanco, empresaId: string, por: string, e: ExpedientesEnvio) {
+  for (const c of e.colaboradores) {
+    // Sem nenhum dia (aparelho sem a escala, por exemplo): não apaga o que outro aparelho mandou.
+    if (!c.dias.length) continue;
+    await tx
+      .delete(expedientesColaboradores)
+      .where(and(eq(expedientesColaboradores.empresaId, empresaId), eq(expedientesColaboradores.colaboradorId, c.colaboradorId), gte(expedientesColaboradores.dia, e.de), lte(expedientesColaboradores.dia, e.ate)));
+    const dias = [...new Map(c.dias.map((d) => [d.dia, d])).values()];
+    if (!dias.length) continue;
+    await tx.insert(expedientesColaboradores).values(
+      dias.map((d) => ({ empresaId, colaboradorId: c.colaboradorId, dia: d.dia, trabalha: d.trabalha, inicio: d.trabalha ? d.inicio : null, fim: d.trabalha ? d.fim : null, atualizadoPor: por }))
+    );
+  }
+}
+
+/** Liga (ou desliga, com null) a conta a um colaborador. Devolve false se outra conta já tem esse colaborador. */
+export async function ligarColaborador(empresaId: string, usuarioId: string, colaboradorId: string | null) {
+  const r = await banco
+    .update(perfisUsuarios)
+    .set({ colaboradorId, atualizadoEm: new Date() })
+    .where(and(eq(perfisUsuarios.empresaId, empresaId), eq(perfisUsuarios.usuarioId, usuarioId)))
+    .returning({ id: perfisUsuarios.usuarioId });
+  return r.length > 0;
+}
+
+/** Conta de posto do caixa (PDV × turno): fica de fora do tempo parado (Zé, 24/11/2026). */
+export async function ehPosto(ex: Executor, empresaId: string, usuarioId: string) {
+  const [l] = await ex
+    .select({ pdv: perfisUsuarios.postoPdv })
+    .from(perfisUsuarios)
+    .where(and(eq(perfisUsuarios.empresaId, empresaId), eq(perfisUsuarios.usuarioId, usuarioId)))
+    .limit(1);
+  return l?.pdv != null;
 }
 
 /** Primeiro administrador ativo da empresa (dono da lista "Tarefas das telas"). */

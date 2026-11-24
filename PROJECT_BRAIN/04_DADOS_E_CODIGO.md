@@ -44,8 +44,17 @@
   **Rotina (0008, P-46, 24/11/2026):** colunas `vinculo_tela`, `vinculo_titulo` e `vinculo_ref` em `agenda_compromissos` (tela
   ligada; `vinculo_ref` único = tarefa criada por uma tela, só `compras:oc:<ocorrência>` e `producao:pp:<pedido>`), lista fixa
   `lista-tarefas-das-telas` ("Tarefas das telas", criada na primeira tarefa), `agenda_grupo_mensagens` e `agenda_grupo_leituras`
-  (chat do grupo), `agenda_config_pessoas` (expediente, bloqueio fora dele, registro da hora fora, minutos parado até sair) e
+  (chat do grupo), `agenda_config_pessoas` (expediente, bloqueio fora dele, minutos parado até sair; a coluna `hora_fora` não é mais usada desde a 0009) e
   `agenda_horas_fora` (uma linha por compromisso concluído fora do expediente; só registro). Fuso da loja: America/Sao_Paulo.
+  **Respostas da P-46 (0009, 24/11/2026):** `agenda_grupos.area` (lista ligada a uma área do Acesso por Tela; membros com
+  origem `area`, refeitos pela API quando as permissões mudam); `perfis_usuarios.colaborador_id` (conta ligada ao colaborador
+  do cadastro, por id; um por conta); `expedientes_colaboradores` (dia a dia: trabalha/folga e horário, só dos colaboradores
+  ligados; o aparelho calcula com os Horários/Escalas e manda — nada de nome nem anotação do dia); `sessoes_atividade` (última
+  vez que a pessoa mexeu, por sessão: tempo parado no servidor, padrão 15 min, posto do caixa fora); `agenda_horas_fora.tipo`
+  passa a nulo (hora sempre calculada, só relatório; o campo "hora fora" saiu de `agenda_config_pessoas` na tela e na API).
+  Tarefas por permissão: `producao:lancar:<pedido>` (quem tem `producao_lancar`) e `pessoas:integracao:<colaborador>` (quem
+  tem `pessoas_editar`). Chave nova só no aparelho: `cicluz-agenda-escala-enviada-v1` (marca curta do último envio da escala;
+  não sincroniza, pode ser apagada sem perda).
   Compras e Produção: o responsável é uma conta real (`CicluzComprasDados.RESPONSAVEIS` lê as contas da Agenda); `u-jose`,
   `u-rodrigo` e `u-ana` aparecem como "Pessoa de teste (removida)".
   Código: `dist/agenda/` (regras gerado, dominio, dados, transferencia, calendario, kanban, mapa, mapa-mental, conversa,
