@@ -36,6 +36,16 @@
 - Data nova: 00–49 → 2000–2049; 50–99 → 1950–1999. Data existente mantém o século.
 - Calendário do rodapé só filtra registros com data explícita; bloqueia intervalo invertido.
 
+## Hora (24/11/2026, Washington)
+- Hora é a peça única `U.campoHora` (`dist/compras/ui.js`), no desenho do campo de aniversário: máscara `HH:MM` + botão redondo do relógio + roleta
+  de duas colunas (horas 00–23, minutos 00–59). Valor guardado `HH:MM`; fora de 00:00–23:59 o campo fica inválido.
+- **Uma única faixa** na cor do menu, contínua nas duas colunas, fica parada no meio; os números rolam por baixo e nenhuma célula troca de cor ao rolar
+  (sem piscar). Rolar só o minuto com o campo vazio escolhe a hora 00 (e o inverso). Detalhe e histórico no `DESIGN_SYSTEM.md` (seção "Campo de hora")
+  e no Manual de Design (Campos de Preenchimento).
+- **Ainda não vale nos outros campos de hora** (seguem com o seletor nativo do navegador): Horário / Escala e vínculo (`schedules.js`), Hora Extra
+  (`overtime.js`), Ponto (`ponto.js`), Agenda, Compras (conferência, pedido, produto, prazo da cotação), Produção (pedidos) e Caixa (início das vendas).
+  A troca não muda o dado; está à espera da decisão do Washington.
+
 ## Layout
 - Três retângulos independentes — cabeçalho, conteúdo, rodapé — raio 12, separados por 6 px,
   largura integral. **Só o centro rola.**
