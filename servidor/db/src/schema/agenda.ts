@@ -88,6 +88,8 @@ export const agendaArquivos = pgTable(
 const ID_AGENDA = sql.raw(`'^[A-Za-z0-9_-]{1,100}$'`);
 const HORA = sql.raw(`'^([01][0-9]|2[0-3]):[0-5][0-9]$'`);
 const URL_COMPLETA = sql.raw(String.raw`'^https?://\S+\.\S+'`);
+const VINCULO_TELA = sql.raw(`'^#/[A-Za-z0-9%/_.-]+$'`);
+const VINCULO_REF = sql.raw(`'^[A-Za-z0-9:_.-]{1,200}$'`);
 const criadoAtualizado = () => ({
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
   criadoPor: text("criado_por")
@@ -235,6 +237,11 @@ export const agendaCompromissos = pgTable(
     origemId: text("origem_id"), // cópia concluída de uma repetição
     ocorrencia: date("ocorrencia", { mode: "string" }), // data da ocorrência que essa cópia concluiu
     legado: jsonb("legado").notNull().default(sql`'{}'::jsonb`), // o que veio do documento sem lugar próprio
+    // Tela ligada (0008, P-45): endereço da tela (#/…) que a tarefa abre, o nome mostrado e, para tarefa criada
+    // por uma tela (agendamento de pedido…), a referência única dela (não duplica a tarefa).
+    vinculoTela: text("vinculo_tela"),
+    vinculoTitulo: text("vinculo_titulo"),
+    vinculoRef: text("vinculo_ref"),
     excluidoEm: timestamp("excluido_em", { withTimezone: true }),
     excluidoPor: text("excluido_por").references(() => usuarioAutenticacao.id),
     versao: integer("versao").notNull().default(1),
@@ -275,6 +282,14 @@ export const agendaCompromissos = pgTable(
     uniqueIndex("agenda_compromissos_ocorrencia_uq")
       .on(t.empresaId, t.origemId, t.ocorrencia)
       .where(sql`${t.origemId} is not null and ${t.ocorrencia} is not null`),
+    check(
+      "agenda_compromissos_vinculo_check",
+      sql`(${t.vinculoTela} is null or (${t.vinculoTela} ~ ${VINCULO_TELA} and char_length(${t.vinculoTela}) <= 302)) and (${t.vinculoTitulo} is null or char_length(${t.vinculoTitulo}) between 1 and 120) and (${t.vinculoRef} is null or ${t.vinculoRef} ~ ${VINCULO_REF}) and (${t.vinculoTitulo} is null or ${t.vinculoTela} is not null)`
+    ),
+    // Uma tarefa por referência de tela (a cópia concluída de uma repetição herda a referência e fica de fora).
+    uniqueIndex("agenda_compromissos_vinculo_uq")
+      .on(t.empresaId, t.vinculoRef)
+      .where(sql`${t.vinculoRef} is not null and ${t.origemId} is null`),
     index("agenda_compromissos_grupo_idx").on(t.empresaId, t.grupoId).where(sql`${t.excluidoEm} is null`),
     index("agenda_compromissos_gestor_idx").on(t.empresaId, t.gestorId).where(sql`${t.excluidoEm} is null`),
     index("agenda_compromissos_data_idx").on(t.empresaId, t.data).where(sql`${t.excluidoEm} is null`)
@@ -401,5 +416,105 @@ export const agendaTransferencias = pgTable(
     check("agenda_transferencias_origem_check", sql`${t.origem} in ('servidor', 'aparelho', 'retransferencia')`),
     check("agenda_transferencias_situacao_check", sql`${t.situacao} in ('concluida', 'recusada')`),
     index("agenda_transferencias_empresa_idx").on(t.empresaId, t.feitaEm)
+  ]
+);
+
+/* ======================================================================================================
+ * Rotina da Agenda (0008, P-45, áudios do Rodrigo de 23/11/2026): chat do grupo (cada lista é um grupo),
+ * configurações da Agenda por pessoa e o registro da hora fora do expediente (só registro: nada vai para a
+ * folha até o Rodrigo confirmar a regra de pagamento, P-45 item 3).
+ * ==================================================================================================== */
+
+// Chat do grupo: quem é membro (ou dono) da lista conversa ali, além do chat de cada compromisso.
+export const agendaGrupoMensagens = pgTable(
+  "agenda_grupo_mensagens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    empresaId: uuid("empresa_id").notNull(),
+    grupoId: text("grupo_id").notNull(),
+    autorId: text("autor_id")
+      .notNull()
+      .references(() => usuarioAutenticacao.id),
+    texto: text("texto").notNull(),
+    criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow()
+  },
+  (t) => [
+    foreignKey({ name: "agenda_grupo_mensagens_grupo_fk", columns: [t.empresaId, t.grupoId], foreignColumns: [agendaGrupos.empresaId, agendaGrupos.id] }),
+    check("agenda_grupo_mensagens_texto_check", sql`char_length(${t.texto}) between 1 and 2000`),
+    index("agenda_grupo_mensagens_grupo_idx").on(t.empresaId, t.grupoId, t.criadoEm)
+  ]
+);
+
+// Até onde cada pessoa leu o chat de cada grupo.
+export const agendaGrupoLeituras = pgTable(
+  "agenda_grupo_leituras",
+  {
+    empresaId: uuid("empresa_id").notNull(),
+    grupoId: text("grupo_id").notNull(),
+    usuarioId: text("usuario_id").notNull(),
+    lidoAte: timestamp("lido_ate", { withTimezone: true }).notNull()
+  },
+  (t) => [
+    primaryKey({ name: "agenda_grupo_leituras_pk", columns: [t.empresaId, t.grupoId, t.usuarioId] }),
+    foreignKey({ name: "agenda_grupo_leituras_grupo_fk", columns: [t.empresaId, t.grupoId], foreignColumns: [agendaGrupos.empresaId, agendaGrupos.id] }),
+    pessoaDaEmpresa("agenda_grupo_leituras_usuario_fk", t.empresaId, t.usuarioId)
+  ]
+);
+
+// Configurações da Agenda de cada pessoa (o administrador define). Sem linha = sem restrição.
+// Expediente: dias da semana (0 = domingo) e horário. Fora dele: permitir ou bloquear a Agenda; a hora fora
+// do expediente é registrada como "comum" ou "extra" (só registro) ou não é registrada. Inatividade: sai do
+// sistema depois de N minutos sem mexer (nulo = nunca).
+export const agendaConfigPessoas = pgTable(
+  "agenda_config_pessoas",
+  {
+    empresaId: uuid("empresa_id").notNull(),
+    usuarioId: text("usuario_id").notNull(),
+    expedienteDias: smallint("expediente_dias").array().notNull().default(sql`'{}'::smallint[]`),
+    expedienteInicio: text("expediente_inicio"),
+    expedienteFim: text("expediente_fim"),
+    foraExpediente: text("fora_expediente").notNull().default("permitir"),
+    horaFora: text("hora_fora").notNull().default("nao-registrar"),
+    inatividadeMinutos: smallint("inatividade_minutos"),
+    atualizadoEm: timestamp("atualizado_em", { withTimezone: true }).notNull().defaultNow(),
+    atualizadoPor: text("atualizado_por")
+      .notNull()
+      .references(() => usuarioAutenticacao.id)
+  },
+  (t) => [
+    primaryKey({ name: "agenda_config_pessoas_pk", columns: [t.empresaId, t.usuarioId] }),
+    pessoaDaEmpresa("agenda_config_pessoas_usuario_fk", t.empresaId, t.usuarioId),
+    check(
+      "agenda_config_pessoas_expediente_check",
+      sql`${t.expedienteDias} <@ '{0,1,2,3,4,5,6}'::smallint[] and (${t.expedienteInicio} is null) = (${t.expedienteFim} is null) and (${t.expedienteInicio} is null or (${t.expedienteInicio} ~ ${HORA} and ${t.expedienteFim} ~ ${HORA} and ${t.expedienteFim} > ${t.expedienteInicio}))`
+    ),
+    check("agenda_config_pessoas_fora_check", sql`${t.foraExpediente} in ('permitir', 'bloquear')`),
+    check("agenda_config_pessoas_hora_fora_check", sql`${t.horaFora} in ('nao-registrar', 'comum', 'extra')`),
+    check("agenda_config_pessoas_inatividade_check", sql`${t.inatividadeMinutos} is null or ${t.inatividadeMinutos} between 1 and 480`)
+  ]
+);
+
+// Hora fora do expediente: uma linha por compromisso concluído fora do expediente por quem tem o registro ligado.
+// minutos = regra simplificada do áudio (terminou às 19h, expediente até 17h = 120 min); nulo = dia sem expediente.
+export const agendaHorasFora = pgTable(
+  "agenda_horas_fora",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    empresaId: uuid("empresa_id").notNull(),
+    usuarioId: text("usuario_id").notNull(),
+    compromissoId: text("compromisso_id").notNull(),
+    dia: date("dia", { mode: "string" }).notNull(),
+    concluidaEm: timestamp("concluida_em", { withTimezone: true }).notNull(),
+    minutos: integer("minutos"),
+    tipo: text("tipo").notNull(),
+    criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow()
+  },
+  (t) => [
+    pessoaDaEmpresa("agenda_horas_fora_usuario_fk", t.empresaId, t.usuarioId),
+    foreignKey({ name: "agenda_horas_fora_compromisso_fk", columns: [t.empresaId, t.compromissoId], foreignColumns: [agendaCompromissos.empresaId, agendaCompromissos.id] }),
+    check("agenda_horas_fora_tipo_check", sql`${t.tipo} in ('comum', 'extra')`),
+    check("agenda_horas_fora_minutos_check", sql`${t.minutos} is null or ${t.minutos} between 0 and 1440`),
+    uniqueIndex("agenda_horas_fora_uq").on(t.empresaId, t.compromissoId, t.usuarioId),
+    index("agenda_horas_fora_pessoa_idx").on(t.empresaId, t.usuarioId, t.dia)
   ]
 );

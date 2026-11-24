@@ -7,6 +7,9 @@ import type { Acesso, Nota, Pessoa } from "./regras.ts";
 
 const DATA = /^\d{4}-\d{2}-\d{2}$/;
 const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
+/** Endereço de tela do site (#/setor/item/tela…), o mesmo que o rotas.js grava. */
+export const VINCULO_TELA = /^#\/[A-Za-z0-9%/_.-]{1,300}$/;
+const VINCULO_REF = /^[A-Za-z0-9:_.-]{1,200}$/;
 /** '' ou 'AAAA-MM-DD' (a data inválida de calendário é recusada por regras.validar, com a mensagem da tela). */
 const dataOuVazio = z.union([z.literal(""), z.string().regex(DATA, "Data inválida")]);
 const horaOuVazio = z.union([z.literal(""), z.string().regex(HORA, "Hora inválida")]);
@@ -70,7 +73,10 @@ const camposCompromisso = {
   subtarefas: z.array(subtarefaSchema).max(200).default([]),
   pessoas: z.array(pessoaAgendaSchema).max(100).default([]),
   avaliacaoTipo: z.enum(TIPOS_AVALIACAO_AGENDA).default(""),
-  colunaId: z.union([z.literal(""), compromissoIdSchema]).default("")
+  colunaId: z.union([z.literal(""), compromissoIdSchema]).default(""),
+  // Tela ligada (ícone roxo de agendar, P-45): a tarefa abre essa tela. '' = sem tela.
+  vinculoTela: z.union([z.literal(""), z.string().regex(VINCULO_TELA, "Endereço de tela inválido")]).default(""),
+  vinculoTitulo: texto(120).default("")
 };
 
 /** Criar: o id vem do aparelho (ag-<uuid>), para repetir o pedido sem duplicar. */
@@ -138,6 +144,8 @@ export type CompromissoResposta = {
   colunaId: string; ordem: number;
   concluida: boolean; concluidaEm: string;
   origemId: string; ocorrencia: string;
+  /** Tela que a tarefa abre ('' = nenhuma), o nome dela e a referência de quem criou pela tela ('' = criada à mão). */
+  vinculoTela: string; vinculoTitulo: string; vinculoRef: string;
   criadoEm: string; atualizadoEm: string;
   versao: number;
   /** Calculado no servidor: a tela não calcula permissão. */
@@ -210,3 +218,62 @@ export const transferenciaAgendaSchema = z.object({
 });
 export const copiaDoAparelhoSchema = z.object({ valor: z.string().min(2).max(LIMITE_CORPO_AGENDA) });
 export type TransferenciaAgenda = z.infer<typeof transferenciaAgendaSchema>;
+
+/* ---------- Rotina (0008, P-45): tarefa vinda de uma tela, configurações, desempenho, chat do grupo ---------- */
+
+/**
+ * Tarefa criada por uma tela (ex.: agendamento de pedido do Compras chegou na hora). `vinculoRef` é única por
+ * empresa: pedir de novo devolve a mesma tarefa (dois aparelhos não duplicam). Vai para a lista "Tarefas das telas".
+ */
+export const tarefaDeTelaSchema = z.object({
+  id: compromissoIdSchema,
+  vinculoRef: z.string().regex(VINCULO_REF, "Referência inválida"),
+  vinculoTela: z.string().regex(VINCULO_TELA, "Endereço de tela inválido"),
+  vinculoTitulo: texto(120).min(1),
+  titulo: texto(200).min(1),
+  notas: texto(2000).default(""),
+  data: dataOuVazio.default(""),
+  hora: horaOuVazio.default(""),
+  /** Contas que recebem a tarefa (responsáveis: veem e concluem). */
+  responsaveis: z.array(z.string().trim().min(1).max(200)).min(1).max(50)
+});
+export const concluirPorVinculoSchema = z.object({ vinculoRef: z.string().regex(VINCULO_REF, "Referência inválida") });
+export type TarefaDeTela = z.infer<typeof tarefaDeTelaSchema>;
+
+export const DIAS_EXPEDIENTE = [0, 1, 2, 3, 4, 5, 6] as const;
+export const configPessoaSchema = z
+  .object({
+    expedienteDias: z.array(z.number().int().min(0).max(6)).max(7).default([]),
+    expedienteInicio: horaOuVazio.default(""),
+    expedienteFim: horaOuVazio.default(""),
+    foraExpediente: z.enum(["permitir", "bloquear"]).default("permitir"),
+    horaFora: z.enum(["nao-registrar", "comum", "extra"]).default("nao-registrar"),
+    /** null = nunca sai sozinho. */
+    inatividadeMinutos: z.number().int().min(1, "Mínimo de 1 minuto").max(480, "Máximo de 480 minutos (8 horas)").nullable().default(null)
+  })
+  .superRefine((c, ctx) => {
+    if (Boolean(c.expedienteInicio) !== Boolean(c.expedienteFim)) ctx.addIssue({ code: "custom", message: "Informe o início e o fim do expediente, ou nenhum dos dois.", path: ["expedienteFim"] });
+    else if (c.expedienteInicio && c.expedienteFim <= c.expedienteInicio) ctx.addIssue({ code: "custom", message: "O fim do expediente deve ser depois do início.", path: ["expedienteFim"] });
+    if (c.expedienteInicio && !c.expedienteDias.length) ctx.addIssue({ code: "custom", message: "Marque os dias do expediente.", path: ["expedienteDias"] });
+    if (c.foraExpediente === "bloquear" && !c.expedienteInicio) ctx.addIssue({ code: "custom", message: "Para bloquear fora do expediente, informe o expediente.", path: ["foraExpediente"] });
+    if (c.horaFora !== "nao-registrar" && !c.expedienteInicio) ctx.addIssue({ code: "custom", message: "Para registrar a hora fora do expediente, informe o expediente.", path: ["horaFora"] });
+  });
+export type ConfigPessoa = z.infer<typeof configPessoaSchema>;
+export type ConfigPessoaResposta = ConfigPessoa & { usuarioId: string; nome: string; ativo: boolean; atualizadoEm: string };
+/** O que a própria pessoa recebe ao entrar: a regra dela e se agora está dentro do expediente. */
+export type MinhaConfigResposta = ConfigPessoa & { dentroDoExpediente: boolean; bloqueadaAgora: boolean; descricaoExpediente: string };
+
+export const desempenhoQuerySchema = z.object({
+  de: z.string().regex(DATA, "Data inválida"),
+  ate: z.string().regex(DATA, "Data inválida")
+}).refine((q) => q.ate >= q.de, { message: "O fim do período deve ser depois do início.", path: ["ate"] });
+export type DesempenhoPessoa = {
+  usuarioId: string; nome: string;
+  /** Compromissos com data no período em que a pessoa é responsável. */
+  recebidas: number; noPrazo: number; foraDoPrazo: number; naoFeitas: number; emAberto: number;
+  /** Média, em horas, entre a criação e a conclusão (só as concluídas). null = nenhuma concluída. */
+  tempoMedioRespostaHoras: number | null;
+  /** Hora fora do expediente registrada no período (soma do maior registro de cada dia) e dias sem expediente com tarefa feita. */
+  minutosForaExpediente: number; diasForaSemExpediente: number;
+};
+export type DesempenhoResposta = { de: string; ate: string; pessoas: DesempenhoPessoa[] };

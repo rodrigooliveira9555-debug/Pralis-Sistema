@@ -13,12 +13,14 @@ import * as repo from "./agenda.repository.ts";
 import { tipoDoArquivo } from "./agenda.regras.ts";
 import * as compromissos from "./compromissos.repository.ts";
 import { acessoDe, naoEncontrado, naoTransferida } from "./compromissos.service.ts";
+import { exigirExpediente } from "./rotina.regras.ts";
 
 // Chat e arquivos de cada compromisso. A permissão vem das tabelas da Agenda (0007), conferida a cada pedido:
 // o documento "cicluz-agenda-v1" não decide mais nada (G1). Compromisso excluído não tem chat nem arquivos.
 
 async function exigirAcesso(perfil: PerfilSessao, compromissoId: string) {
   const empresaId = perfil.empresa.id;
+  await exigirExpediente(perfil);
   const item = await compromissos.compromisso(banco, empresaId, compromissoId);
   if (!item || item.excluidoEm) {
     if (!(await compromissos.estado(banco, empresaId))) throw naoTransferida();

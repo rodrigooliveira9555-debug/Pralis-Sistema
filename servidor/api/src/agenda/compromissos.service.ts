@@ -13,6 +13,7 @@ import {
 import { banco, type TransacaoBanco } from "../banco/conexao.ts";
 import { conflito, ErroDominio, proibido } from "../erros.ts";
 import * as repo from "./compromissos.repository.ts";
+import { exigirExpediente, registrarHoraFora } from "./rotina.regras.ts";
 import type { LinhaAvaliacao, LinhaCompromisso, LinhaParticipante, NovoCompromisso } from "./compromissos.repository.ts";
 
 // Compromissos da Agenda nas tabelas (plano docs/AGENDA_NO_SERVIDOR_PLANO.md, seção 3).
@@ -98,6 +99,7 @@ function resposta(c: LinhaCompromisso, participantes: LinhaParticipante[], notas
     colunaId: c.colunaId ?? "", ordem: Number(c.ordem),
     concluida: c.concluida, concluidaEm: c.concluidaEm ? c.concluidaEm.toISOString() : "",
     origemId: c.origemId ?? "", ocorrencia: c.ocorrencia ?? "",
+    vinculoTela: c.vinculoTela ?? "", vinculoTitulo: c.vinculoTitulo ?? "", vinculoRef: c.vinculoRef ?? "",
     criadoEm: c.criadoEm.toISOString(), atualizadoEm: c.atualizadoEm.toISOString(),
     versao: c.versao, acesso
   };
@@ -120,6 +122,7 @@ export async function agenda(perfil: PerfilSessao): Promise<AgendaResposta> {
   const u = perfil.usuarioId;
   const est = await repo.estado(banco, empresaId);
   if (!est) return { estado: { noServidor: false, versao: 0 }, usuarioId: u, grupos: [], colunas: [], compromissos: [], relacoes: [] };
+  await exigirExpediente(perfil);
 
   const itens = await repo.compromissosVisiveis(empresaId, u);
   const ids = itens.map((c) => c.id);
@@ -175,6 +178,7 @@ async function exigirTransferida(perfil: PerfilSessao) {
 
 /** Abre a transação com o contador travado; sem Agenda nas tabelas, recusa. */
 export async function gravar<T>(perfil: PerfilSessao, fazer: (tx: TransacaoBanco) => Promise<T>) {
+  await exigirExpediente(perfil);
   return banco.transaction(async (tx) => {
     if ((await repo.subirVersao(tx, perfil.empresa.id)) === null) throw naoTransferida();
     return fazer(tx);
@@ -213,7 +217,8 @@ function formularioDe(c: LinhaCompromisso, pessoas: Pessoa[]): Formulario {
     repeticao: r ? { tipo: r.tipo as never, intervalo: r.intervalo, unidade: r.unidade as never, diasSemana: r.diasSemana, fim: { tipo: r.fim.tipo as never, data: r.fim.data, vezes: r.fim.vezes } } : null,
     alerta: c.alertaMinutos, prioridade: c.prioridade as Formulario["prioridade"], sinalizado: c.sinalizado, etiquetas: c.etiquetas,
     subtarefas: subtarefasDe(c).map((s) => ({ id: s.id, titulo: s.titulo, concluida: s.concluida })),
-    pessoas, avaliacaoTipo: c.avaliacaoTipo as Formulario["avaliacaoTipo"], colunaId: c.colunaId ?? ""
+    pessoas, avaliacaoTipo: c.avaliacaoTipo as Formulario["avaliacaoTipo"], colunaId: c.colunaId ?? "",
+    vinculoTela: c.vinculoTela ?? "", vinculoTitulo: c.vinculoTitulo ?? ""
   };
 }
 
@@ -224,7 +229,7 @@ function formularioDe(c: LinhaCompromisso, pessoas: Pessoa[]): Formulario {
  *   `feitas` é do servidor (a tela não escolhe);
  * - mudou data, hora ou alerta: a soneca de todos deixa de valer.
  */
-function montar(f: Formulario, atual: { c: LinhaCompromisso; pessoas: Pessoa[]; acesso: R.Acesso; notas: number } | null) {
+export function montar(f: Formulario, atual: { c: LinhaCompromisso; pessoas: Pessoa[]; acesso: R.Acesso; notas: number } | null) {
   const c = atual?.c;
   const gestor = !atual || atual.acesso.gestor;
   const pessoas = gestor ? R.normalizarPessoas(f.pessoas) : atual.pessoas;
@@ -262,7 +267,9 @@ function montar(f: Formulario, atual: { c: LinhaCompromisso; pessoas: Pessoa[]; 
     repeticaoFeitas: r && c?.repeticaoTipo ? c.repeticaoFeitas : 0,
     repeticaoAncora: ancora,
     alertaMinutos: f.alerta, prioridade: f.prioridade, sinalizado: f.sinalizado,
-    etiquetas: R.normalizarEtiquetas(f.etiquetas), subtarefas, avaliacaoTipo, colunaId: nuloSeVazio(f.colunaId)
+    etiquetas: R.normalizarEtiquetas(f.etiquetas), subtarefas, avaliacaoTipo, colunaId: nuloSeVazio(f.colunaId),
+    // Tela ligada: o nome só vale com o endereço; sem nome, mostra "Abrir a tela".
+    vinculoTela: nuloSeVazio(f.vinculoTela), vinculoTitulo: f.vinculoTela ? nuloSeVazio(f.vinculoTitulo.trim()) : null
   } satisfies Partial<NovoCompromisso>;
 
   const erro = R.validar({
@@ -429,12 +436,14 @@ export async function concluir(perfil: PerfilSessao, id: string, pedido: Conclus
           subtarefas: subtarefasDe(c).map((s) => ({ ...s, concluida: false, concluidaEm: "" })), atualizadoPor: perfil.usuarioId
         });
         await repo.limparAdiamentos(tx, empresaId, id);
+        await registrarHoraFora(tx, perfil, copiaId, agora);
         const copia = (await repo.compromisso(tx, empresaId, copiaId))!;
         return { resultado: "repetiu" as const, compromisso: await respostaDe(tx, perfil, linha), copia: await respostaDe(tx, perfil, copia) };
       }
     }
     const linha = await repo.atualizarCompromisso(tx, empresaId, id, { concluida: true, concluidaEm: agora, concluidaPor: perfil.usuarioId, atualizadoPor: perfil.usuarioId });
     await repo.limparAdiamentos(tx, empresaId, id);
+    await registrarHoraFora(tx, perfil, id, agora);
     return { resultado: "concluiu" as const, compromisso: await respostaDe(tx, perfil, linha), copia: null };
   });
 }
