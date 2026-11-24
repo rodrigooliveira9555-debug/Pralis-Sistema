@@ -22,7 +22,7 @@ claro, roxo clareado no escuro), no lugar de oito cores escuras escritas à mão
 (10, 13, 15, 18 e 20 px saíram; fica só o % em destaque do Desempenho, 22 px). **Espaços** de 12 px entre quadros. Os campos do
 Kanban e do Mapa mental ficam num quadro com o nome na moldura. A linha "Novo compromisso" tem 52 px. Local no mapa: os quatro
 botões em duas linhas em telas de até 380 px (no lugar da letra de 10 px). **Exceção mantida:** na linha "Novo compromisso" e na
-subtarefa, **Enter cria o próximo** (como no Lembretes) — a confirmar com o Rodrigo.
+subtarefa, **Enter cria o próximo** (como no Lembretes). **Confirmado pelo Zé em 24/11/2026** (P-46 item 8): é uma linha de anotação rápida, não um formulário; a regra "Enter não salva" continua valendo em todo o resto.
 
 ## Agenda: rotina (P-46, áudios do Rodrigo de 23/11/2026; feito em 24/11/2026)
 **Menu da Agenda:** só **Agenda** e **Configurações da Agenda** (Agendamento de Pedidos e de Produção ficam em Lançamentos).
