@@ -1,5 +1,15 @@
 # CICLUZ — referência de interface
 
+## Agenda: respostas da P-46 nas telas (24/11/2026, Zé)
+**Janela da lista** ("Editar lista" / "Nova lista"): no quadro "Membros do grupo", o campo **"Quem entra no grupo"** (seletor do
+sistema): "Escolhidos à mão" ou "Quem tem acesso a <área>" (áreas do Acesso por Tela, lidas do catálogo do servidor). Com área, o
+botão "Escolher membros" some e o resumo explica que os membros entram e saem sozinhos com o acesso. **Configurações da Agenda**
+(janela de cada pessoa): primeiro o campo **"Colaborador do cadastro"** (seletor; só lista quem está no cadastro deste aparelho;
+"Nenhum: usa o expediente abaixo"), depois dias, início e fim (o expediente de reserva), "Fora do expediente" e o tempo parado
+(vazio = **padrão de 15 min**, escrito no próprio campo). **Saiu** a escolha "Hora trabalhada fora do expediente" (comum/extra):
+a hora é sempre calculada e aparece só no Desempenho até o Rodrigo decidir o pagamento. Na lista de pessoas, cada linha diz
+"Escala de <colaborador>" ou o expediente escrito, e "sai em N min parado".
+
 ## Agenda no padrão do Design System (24/11/2026, pedido do Zé)
 Revisão de toda a Agenda (Listas, Calendário, Kanban, Mapa mental, Desempenho, janelas e alertas), na origem (`agenda/agenda.css`
 e os `agenda/*.js`), sem `!important` novo. **Ícones (só imagem)** das listas automáticas, de "Minhas listas", dos indicadores do
@@ -22,7 +32,7 @@ claro, roxo clareado no escuro), no lugar de oito cores escuras escritas à mão
 (10, 13, 15, 18 e 20 px saíram; fica só o % em destaque do Desempenho, 22 px). **Espaços** de 12 px entre quadros. Os campos do
 Kanban e do Mapa mental ficam num quadro com o nome na moldura. A linha "Novo compromisso" tem 52 px. Local no mapa: os quatro
 botões em duas linhas em telas de até 380 px (no lugar da letra de 10 px). **Exceção mantida:** na linha "Novo compromisso" e na
-subtarefa, **Enter cria o próximo** (como no Lembretes) — a confirmar com o Rodrigo.
+subtarefa, **Enter cria o próximo** (como no Lembretes). **Confirmado pelo Zé em 24/11/2026** (P-46 item 8): é uma linha de anotação rápida, não um formulário; a regra "Enter não salva" continua valendo em todo o resto.
 
 ## Agenda: rotina (P-46, áudios do Rodrigo de 23/11/2026; feito em 24/11/2026)
 **Menu da Agenda:** só **Agenda** e **Configurações da Agenda** (Agendamento de Pedidos e de Produção ficam em Lançamentos).

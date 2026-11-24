@@ -81,3 +81,13 @@ export const contaAutenticacaoRelations = relations(contaAutenticacao, ({ one })
     references: [usuarioAutenticacao.id]
   })
 }));
+
+// Última vez que a pessoa mexeu no sistema, por sessão (0009, P-46 item 4). Só os pedidos que a tela marca como
+// "houve toque, tecla ou rolagem" contam; a atualização automática (a cada 60 s) não conta. Passado o tempo
+// parado da pessoa (padrão 15 min), a API encerra a sessão.
+export const sessoesAtividade = pgTable("sessoes_atividade", {
+  sessaoId: text("sessao_id")
+    .primaryKey()
+    .references(() => sessaoAutenticacao.id, { onDelete: "cascade" }),
+  ultimaInteracaoEm: timestamp("ultima_interacao_em", { withTimezone: true }).notNull()
+});

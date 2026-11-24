@@ -53,7 +53,8 @@
     if (!online() || A.situacao !== 'servidor' || (!forcar && Date.now() - ultimaConsulta < INTERVALO_NAO_LIDAS - 1000)) return;
     ultimaConsulta = Date.now();
     try {
-      const [r, g] = await Promise.all([api('/agenda/chat/nao-lidas'), api('/agenda/grupos-chat/nao-lidas').catch(() => ({ naoLidas: naoLidasGrupos }))]);
+      const auto = { automatico: true };
+      const [r, g] = await Promise.all([api('/agenda/chat/nao-lidas', auto), api('/agenda/grupos-chat/nao-lidas', auto).catch(() => ({ naoLidas: naoLidasGrupos }))]);
       const novo = r.naoLidas || {};
       const novoGrupos = g.naoLidas || {};
       if (JSON.stringify(novo) !== JSON.stringify(naoLidas) || JSON.stringify(novoGrupos) !== JSON.stringify(naoLidasGrupos)) {
@@ -135,9 +136,11 @@
         };
         async function buscar(primeira) {
           try {
-            const r = await api(base + '/mensagens' + (ultima ? '?depois=' + encodeURIComponent(ultima) : ''));
+            // Só a primeira leitura é da pessoa; as seguintes (a cada X s) são automáticas.
+            const auto = primeira ? {} : { automatico: true };
+            const r = await api(base + '/mensagens' + (ultima ? '?depois=' + encodeURIComponent(ultima) : ''), auto);
             if (primeira && !r.mensagens.length) lista.replaceChildren(U.vazio('Nenhuma mensagem ainda.', 'Comece a conversa abaixo.'));
-            if (r.mensagens.length || primeira) { desenhar(r.mensagens); api(base + '/leitura', { metodo: 'POST', corpo: {} }).catch(() => {}); }
+            if (r.mensagens.length || primeira) { desenhar(r.mensagens); api(base + '/leitura', Object.assign({ metodo: 'POST', corpo: {} }, auto)).catch(() => {}); }
             estado.textContent = '';
           } catch (e) {
             estado.textContent = mensagemErro(e);

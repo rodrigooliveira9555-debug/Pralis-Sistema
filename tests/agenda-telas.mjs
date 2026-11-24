@@ -768,11 +768,42 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   for (const dia of ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']) await dialogo(p).getByRole('button', { name: dia, exact: true }).click();
   await dialogo(p).getByLabel('Início do expediente').fill('00:00');
   await dialogo(p).getByLabel('Fim do expediente').fill('23:59');
-  await dialogo(p).getByLabel('Hora trabalhada fora do expediente').selectOption('extra');
+  // A hora fora do expediente saiu daqui (0009: sempre calculada, só no Desempenho); vazio = padrão de 15 min.
+  ok(await dialogo(p).getByLabel('Hora trabalhada fora do expediente').count() === 0, 'Configurações: sem a escolha de "hora comum/extra" (decisão pendente com o Rodrigo)');
+  ok((await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado').getAttribute('placeholder')).includes('15'), 'Configurações: tempo parado vazio = padrão de 15 min');
+  ok(await dialogo(p).getByLabel('Colaborador do cadastro').count() === 1, 'Configurações: ligar a conta ao colaborador do cadastro');
   await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado').fill('30');
   await dialogo(p).locator('.people-save-control').click();
   await p.locator('#agenda-config-view .agenda-config-linha', { hasText: 'sai em 30 min parado' }).waitFor();
-  ok((await p.locator('#agenda-config-view .agenda-config-linha', { hasText: RESP_UM.nome }).textContent()).includes('registra hora extra'), 'Configurações: o administrador salva expediente, hora extra e saída por tempo parado');
+  ok((await p.locator('#agenda-config-view .agenda-config-linha', { hasText: RESP_UM.nome }).textContent()).includes('todos os dias, das 00:00 às 23:59'), 'Configurações: o administrador salva expediente e saída por tempo parado');
+
+  // Lista ligada a uma área (P-46 item 3): na janela da lista, "Quem entra no grupo"; os membros vêm da área.
+  await p.evaluate(() => { document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.estado.visao = 'listas'; CicluzAgenda.abrir('lista-diretor-operacoes'); });
+  await p.getByRole('button', { name: 'Editar lista' }).click();
+  await dialogo(p).getByLabel('Quem entra no grupo').selectOption('producao');
+  ok(await dialogo(p).getByRole('button', { name: 'Escolher membros' }).isHidden(), 'Lista por área: some a escolha à mão');
+  await dialogo(p).locator('.people-save-control').click();
+  await p.waitForFunction(() => (CicluzAgendaDados.lista('lista-diretor-operacoes') || {}).area === 'producao', null, { timeout: 15000 });
+  const porArea = await p.evaluate(async () => (await CicluzAgendaDados.membros('lista-diretor-operacoes')).ids);
+  const eu = await p.evaluate(() => CicluzAgendaDados.usuarioAtual());
+  // As contas de teste nascem sem cargo de acesso: só o administrador (que tem tudo) tem acesso à Produção.
+  ok(porArea.includes(eu) && !porArea.includes(RESP_UM.id), 'Lista por área: membros montados pelo servidor (só quem tem acesso à Produção)');
+  await p.evaluate(async () => { const l = CicluzAgendaDados.lista('lista-diretor-operacoes'); await CicluzAgendaDados.salvarLista(l.id, { nome: l.nome, area: '' }); });
+
+  // Regras por permissão (P-46 itens 1 e 2): o administrador tem as permissões e recebe as duas tarefas.
+  await p.evaluate(() => CicluzAgendaRotina.producaoParaLancar({ pedidoId: 'pp-teste-1', numero: 7, data: CicluzAgendaDominio.isoData(new Date()), hora: '06:00' }));
+  await p.waitForFunction(() => CicluzAgendaDados.dados.itens.some((i) => i.vinculoRef === 'producao:lancar:pp-teste-1'), null, { timeout: 15000 }).catch(() => p.evaluate(() => CicluzAgendaDados.atualizar(true)));
+  await p.waitForFunction(() => CicluzAgendaDados.dados.itens.some((i) => i.vinculoRef === 'producao:lancar:pp-teste-1'), null, { timeout: 15000 });
+  const lancar = (await dados(p)).itens.find((i) => i.vinculoRef === 'producao:lancar:pp-teste-1');
+  ok(lancar.titulo === 'Lançar a produção do pedido nº 7' && lancar.vinculoTitulo === 'MER - Mapa de Produção', 'Pedido de produção enviado vira "Lançar a produção" (leva ao Mapa de Produção)');
+  await p.evaluate(() => CicluzAgendaRotina.producaoLancada('pp-teste-1'));
+  await p.waitForFunction(() => CicluzAgendaDados.dados.itens.find((i) => i.vinculoRef === 'producao:lancar:pp-teste-1').concluida, null, { timeout: 15000 });
+  ok(true, 'Produção lançada conclui a tarefa');
+  await p.evaluate(() => CicluzAgendaRotina.integracaoDoColaborador({ colaboradorId: 'col-teste-1', nome: 'Pessoa Fictícia', inicio: CicluzAgendaDominio.isoData(new Date()) }));
+  await p.waitForFunction(() => CicluzAgendaDados.dados.itens.some((i) => i.vinculoRef === 'pessoas:integracao:col-teste-1'), null, { timeout: 15000 }).catch(() => p.evaluate(() => CicluzAgendaDados.atualizar(true)));
+  await p.waitForFunction(() => CicluzAgendaDados.dados.itens.some((i) => i.vinculoRef === 'pessoas:integracao:col-teste-1'), null, { timeout: 15000 });
+  const integ = (await dados(p)).itens.find((i) => i.vinculoRef === 'pessoas:integracao:col-teste-1');
+  ok(integ.titulo === 'Integração de Pessoa Fictícia' && integ.subtarefas.map((s) => s.titulo).join('|') === 'Conferir documentos|Entregar uniforme|Treinamento/integração', 'Período de Teste registrado vira "Integração de <nome>" com as três subtarefas');
 
   // Chat do grupo: a lista é o grupo.
   await p.evaluate(() => { document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.estado.visao = 'listas'; CicluzAgenda.abrir('lista-gestao-pessoas'); });
@@ -798,7 +829,7 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   const ligado = await item(p, 'Conferir o pedido da semana');
   ok(ligado && ligado.vinculoTela === tela && ligado.vinculoTitulo === 'MER - Pedido de Compra', 'Compromisso guarda a tela ligada');
   await p.evaluate(() => { CicluzAgenda.estado.visao = 'listas'; CicluzAgenda.abrir(''); });
-  await p.locator('.agenda-abrir-tela').first().click();
+  await p.locator('.agenda-item', { hasText: 'Conferir o pedido da semana' }).locator('.agenda-abrir-tela').first().click();
   await p.waitForFunction((t) => location.hash === t, tela);
   ok(true, '"Abrir a tela" leva até a tela ligada');
 
