@@ -806,8 +806,8 @@
   /**
    * Campo de hora (24/11/2026, Washington): o MESMO desenho do campo de aniversário (dia e mês). Um campo com a máscara HH:MM para digitar e o botão
    * redondo do relógio; tocar no campo ou no botão abre um painel flutuante (flutuante) com DUAS COLUNAS em forma de ROLETA, as 24 horas e os 60 minutos, em células de
-   * cantos arredondados. A escolhida (cheia na cor do menu) fica SEMPRE no meio de cada coluna: a lista é que anda por baixo (rolar ou arrastar encaixa uma célula
-   * no meio e o campo atualiza na hora). Tocar numa hora a leva ao meio; tocar num minuto leva, escolhe e fecha; setas para cima e para baixo mudam o valor; Esc fecha.
+   * cantos arredondados. Uma FAIXA cheia na cor do menu fica PARADA no meio de cada coluna e os números rolam por baixo dela (uma cópia em branco anda junto, sem
+   * trocar a cor de célula nenhuma, então não pisca); rolar ou arrastar encaixa um número na faixa e o campo atualiza na hora. Tocar numa hora a leva ao meio; tocar num minuto leva, escolhe e fecha; setas para cima e para baixo mudam o valor; Esc fecha.
    * Qualquer minuto se escolhe na coluna ou se digita no campo. Devolve { caixa, painel, input }: quem usa põe a caixa na tela e o painel ao lado dela.
    * input.value é "HH:MM" (ou vazio); hora incompleta ou fora de 00:00 a 23:59 deixa o campo inválido (setCustomValidity).
    */
@@ -826,14 +826,19 @@
     const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-hora-painel');
     painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', rotulo + ': hora e minuto');
     // Roleta: duas colunas que rolam e encaixam; a escolhida é sempre a do MEIO (a cor cheia não anda, quem anda é a lista).
-    const celula = (texto, nome) => { const b = el('button', 'compras-grade-celula', texto); b.type = 'button'; b.tabIndex = -1; b.setAttribute('aria-label', nome); b.setAttribute('aria-pressed', 'false'); return b; };
+    const celula = (texto, nome) => { const b = el('button', 'compras-grade-celula', texto); b.type = 'button'; b.tabIndex = -1; b.setAttribute('aria-label', nome); return b; };
     const montarColuna = (titulo, total, nomeCelula, pegar, por) => {
       const lista = el('div', 'compras-grade-escolha compras-hora-lista'); lista.tabIndex = 0;
       lista.setAttribute('role', 'group'); lista.setAttribute('aria-label', titulo + ' (use as setas para cima e para baixo)');
       const celulas = Array.from({ length: total }, (_, i) => celula(pad(i), nomeCelula + ' ' + pad(i)));
       lista.append(...celulas);
-      const coluna = el('div', 'compras-hora-coluna'); coluna.append(el('span', 'compras-rotulo', titulo), lista);
-      return { coluna, lista, celulas, pegar, por };
+      // A FAIXA cheia na cor do menu fica parada no meio; dentro dela anda uma cópia dos números (em branco), no ritmo da lista. Nenhuma célula
+      // troca de classe ou de cor enquanto se rola, então não pisca.
+      const faixa = el('div', 'compras-hora-faixa'); faixa.setAttribute('aria-hidden', 'true');
+      const itens = el('div', 'compras-hora-faixa-itens'); itens.append(...Array.from({ length: total }, (_, i) => el('span', null, pad(i)))); faixa.append(itens);
+      const roda = el('div', 'compras-hora-roda'); roda.append(lista, faixa);
+      const coluna = el('div', 'compras-hora-coluna'); coluna.append(el('span', 'compras-rotulo', titulo), roda);
+      return { coluna, lista, celulas, faixa, itens, pegar, por };
     };
     const colHora = montarColuna('Hora', 24, 'Hora', () => hora, (v) => { hora = v; if (!minuto) minuto = '00'; });
     const colMin = montarColuna('Minuto', 60, 'Minuto', () => minuto, (v) => { minuto = v; });
@@ -844,18 +849,20 @@
     function marcar(escreve = true) {
       if (escreve) input.value = hora && minuto ? hora + ':' + minuto : '';
       validar();
-      colunas.forEach((c) => c.celulas.forEach((b) => b.setAttribute('aria-pressed', String(b.textContent === c.pegar()))));
+      colunas.forEach((c) => { c.faixa.classList.toggle('sem-valor', !c.pegar()); c.lista.dataset.valor = c.pegar(); });
     }
     // Rolagem feita por nós (abrir, tocar, setas) não pode escolher de novo: ignora os eventos de rolagem por um instante.
     let ignoraAte = 0;
     const passo = (c) => (c.celulas[1].offsetTop - c.celulas[0].offsetTop) || 42;
-    const levarAoMeio = (c, i, suave) => { ignoraAte = Date.now() + (suave ? 450 : 150); c.lista.scrollTo({ top: i * passo(c), behavior: suave ? 'smooth' : 'auto' }); };
+    const sincronizar = (c) => { c.itens.style.transform = 'translateY(' + (-c.lista.scrollTop) + 'px)'; };
+    const levarAoMeio = (c, i, suave) => { ignoraAte = Date.now() + (suave ? 450 : 150); c.lista.scrollTo({ top: i * passo(c), behavior: suave ? 'smooth' : 'auto' }); if (!suave) sincronizar(c); };
     const posicionar = () => colunas.forEach((c) => levarAoMeio(c, c.pegar() ? Number(c.pegar()) : 0, false));
     const abrir = (sim) => { abrirPainel(sim); if (sim) posicionar(); };
     function fechar() { abrir(false); input.focus(); input.dispatchEvent(new Event('change', { bubbles: true })); }
     colunas.forEach((c, k) => {
       let quadro = 0;
       c.lista.addEventListener('scroll', () => {
+        sincronizar(c);
         if (Date.now() < ignoraAte) return;
         cancelAnimationFrame(quadro);
         quadro = requestAnimationFrame(() => {
