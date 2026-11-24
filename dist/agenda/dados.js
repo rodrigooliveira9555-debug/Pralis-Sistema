@@ -181,7 +181,10 @@
     aplicarResposta(r);
     situacao = r.estado.noServidor ? 'servidor' : 'nao-transferida';
     if (r.estado.noServidor) {
-      if (!pessoasLista.length) await carregarPessoas();
+      // Pessoa que a tela ainda não conhece (conta criada depois de a página abrir): busca as contas de novo.
+      const conhecidas = new Set(pessoasLista.map((x) => x.id));
+      const faltaAlguem = (r.compromissos || []).some((c) => c.gestorId && !conhecidas.has(c.gestorId) || (c.pessoas || []).some((x) => !conhecidas.has(x.id)));
+      if (!pessoasLista.length || faltaAlguem) { await carregarPessoas(); document.dispatchEvent(new Event('cicluz-pessoas-carregadas')); }
       gravarCache();
       enviarCopiaAntiga();
     }
