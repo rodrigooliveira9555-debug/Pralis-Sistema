@@ -172,3 +172,12 @@ agenda, lançamento, caixa operacional, usuário/login.
   **manuais** com iframe (320/375/390/1024, claro/escuro).
 
 Rodar: `node tests/date-fields.cjs && node tests/field-validation.cjs`.
+
+## Hierarquia Área › Cargo › Pessoa (24/11/2026, pedido do Rodrigo)
+A área (Área / Setor / Local) tem cargos; o cargo tem pessoas. **Vínculo sempre por ID**, uma só cópia de cada vínculo:
+- **Cargo**: id fixo. Os de referência já tinham o id estável `ref:N`; os cadastrados (`cicluz-cargos-v1`) ganharam o campo `id` (UUID) na primeira carga, sem mudar nome nem valor. O antigo `local:N` era a posição na lista e mudava a cada cargo novo, por isso não serve de vínculo. `jobsCurrent()` devolve `id` em cada cargo.
+- **Área ↔ Cargo**: cada nó da árvore (`cicluz-location-tree-v1`) tem `cargoIds` (ids dos cargos que existem nele). Editado em Área / Setor / Local › editar › "Cargos desta área". API: `CicluzLocationTree.cargosDaArea / definirCargosDaArea / areasComCargos`.
+- **Pessoa ↔ Cargo**: `jobKey` (id do cargo) no colaborador (`cicluz-pessoas-v1`), **junto** do `jobName` (o nome continua, nunca é apagado). O cadastro grava os dois; a função continua obrigatória.
+- **Código**: `dist/hierarquia-dominio.js` (regras puras, testadas em `tests/hierarquia-dominio.cjs`) e `dist/hierarquia.js` (cola nos dados: `CicluzHierarquia.cargos / cargoIdPorNome / arvore / migrar / relatorio`).
+- **Migração** (uma vez, marca `cicluz-hierarquia-v1`, sem apagar nada): põe o `jobKey` nas pessoas pelo nome do cargo (só quando há UM cargo com o nome) e copia para as áreas os vínculos que já existiam nas Fichas de Cargos (`unitIds` por nome). O que não casa fica no relatório (`CicluzHierarquia.relatorio()`). A migração passa pelo código de cada módulo (location-tree e people), para não ser desfeita por dado velho em memória.
+- **Ainda por fazer**: vínculo pelo Organograma; seleção em três níveis na tela Acesso por Tela; aviso ao excluir cargo que tem pessoas ou áreas (hoje o id órfão é só ignorado na árvore).
