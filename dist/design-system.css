@@ -354,3 +354,7 @@ body.dark-theme .view.show>.panel>.head[data-header-standard=yes],body.dark-them
 #sector-view .account-editor .financial-ref-subs .compras-titulo-botao{flex:none;width:240px;max-width:100%;justify-content:space-between}
 #sector-view .account-editor .financial-ref-subs .compras-titulo-botao:disabled{opacity:.45;cursor:not-allowed}
 #sector-view .account-editor .financial-ref-subs small{flex:1 1 200px;min-width:0;margin:0}
+/* Subgrupo de Grupos de Vendas: Computador, Horário inicial e Horário final na mesma linha (no celular o computador ocupa a linha e os dois horários dividem a de baixo). */
+#sector-view .account-editor .financial-pc-linha{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:12px 16px;align-items:start;grid-column:1/-1}
+#sector-view .account-editor .financial-pc-linha>label{min-width:0}
+@media (max-width:600px){#sector-view .account-editor .financial-pc-linha{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#sector-view .account-editor .financial-pc-linha>label:first-child{grid-column:1/-1}}
