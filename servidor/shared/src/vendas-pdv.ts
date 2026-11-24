@@ -8,7 +8,7 @@ const dia = z.string().regex(/^\d{4}-\d{2}-\d{2}$/u, "Data inválida");
 const hora = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/u, "Hora inválida");
 const id = z.string().uuid();
 
-export const STATUS_VENDA_PDV = ["aprovado", "cancelado"] as const;
+export const STATUS_VENDA_PDV = ["aprovado", "aguardando_aprovacao", "cancelado"] as const;
 
 export const consultaVendasPdvSchema = z
   .object({

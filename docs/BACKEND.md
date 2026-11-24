@@ -56,6 +56,16 @@ dist/
 Dados que vão para o banco: a lista fechada em `servidor/shared/src/documentos.ts`. Preferências de
 tela (tema, ordem de menus) e o Cadastro completo (CPF) ficam só no aparelho (PROJECT_BRAIN/11, P-11).
 
+## Vendas dos PDVs (lidas do Sistema Pralis, 24/11/2026)
+
+O S2 **não guarda venda**. A tela VND - Vendas dos PDVs (Entradas › API) chama `GET /api/vendas-pdv`, `/totais`,
+`/opcoes` e `/situacao` (módulo `api/src/vendas-pdv/`), que repassam ao Sistema Pralis (`GET /api/s2/vendas*`) com o
+token de leitura no cabeçalho. O Sistema Pralis recebe o robô do CREARE na loja: o S2 vê o que ele já tem, com a mesma
+conta do Relatório de Vendas de lá. Variáveis da API (só no painel do Coolify):
+- `S1_VENDAS_URL`: endereço https da API do Sistema Pralis.
+- `S1_VENDAS_TOKEN`: o mesmo valor de `S2_LEITURA_TOKEN` configurado no Sistema Pralis (32 caracteres ou mais).
+Sem as duas, a tela mostra "A leitura das vendas ainda não foi ligada". Permissão: `vendas_pdv_visualizar`.
+
 ## Rodar no computador
 
 ```bash
