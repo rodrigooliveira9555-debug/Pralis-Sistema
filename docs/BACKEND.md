@@ -72,6 +72,28 @@ dist/
 Dados que vão para o banco: a lista fechada em `servidor/shared/src/documentos.ts`. Preferências de
 tela (tema, ordem de menus) e o Cadastro completo (CPF) ficam só no aparelho (PROJECT_BRAIN/11, P-11).
 
+## Vendas dos PDVs (lidas do Sistema Pralis, 24/11/2026)
+
+O S2 **não guarda venda**. A tela VND - Vendas dos PDVs (Entradas › API) chama `GET /api/vendas-pdv`, `/totais`,
+`/opcoes` e `/situacao` (módulo `api/src/vendas-pdv/`), que repassam ao Sistema Pralis (`GET /api/s2/vendas*`) com o
+token de leitura no cabeçalho. O Sistema Pralis recebe o robô do CREARE na loja: o S2 vê o que ele já tem, com a mesma
+conta do Relatório de Vendas de lá. Variáveis da API (só no painel do Coolify):
+- `S1_VENDAS_URL`: endereço https da API do Sistema Pralis.
+- `S1_VENDAS_TOKEN`: o mesmo valor de `S2_LEITURA_TOKEN` configurado no Sistema Pralis (gerar com `openssl rand -hex 32`).
+- `S1_VENDAS_EMPRESA_ID`: o id da empresa do S2 que pode ver essas vendas (o token é de uma loja só; outra empresa do S2 recebe 403).
+Sem as três, a tela mostra "A leitura das vendas ainda não foi ligada". Permissão: `vendas_pdv_visualizar`.
+
+## Extrato da Caixa PJ da TNP (Open Finance, 24/11/2026)
+
+A tela Open Finance · Caixa TNP (Resultados › API) chama `GET /api/extrato-tnp?desde=&ate=&conta=` e
+`/api/extrato-tnp/situacao` (módulo `api/src/extrato-tnp/`), que repassam ao coletor do Meu Pluggy da TNP
+(`D:\TNP-Extrato-Pluggy`, `GET /api/v1/extrato`) com o token no cabeçalho; o coletor não libera CORS, então o token
+nunca vai ao navegador. Período de até 31 dias; dinheiro em centavos; pendente fora dos totais. Variáveis (só no Coolify):
+- `TNP_EXTRATO_URL`: endereço https do coletor.
+- `TNP_EXTRATO_TOKEN`: o mesmo valor de `S2_TOKEN` do coletor (32 caracteres ou mais).
+- `TNP_EXTRATO_EMPRESA_ID`: o id da empresa do S2 que pode ver o extrato (outra empresa recebe 403).
+Sem as três, a tela mostra "O extrato ainda não foi ligado". Permissão: `extrato_bancario_visualizar`.
+
 ## Rodar no computador
 
 ```bash

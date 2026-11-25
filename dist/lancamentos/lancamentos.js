@@ -27,6 +27,12 @@
   const reais = (centavos) => D.moeda(centavos / 100);
   const quadro = (titulo, ...filhos) => { const f = el('fieldset', 'compras-fieldset'); f.append(el('legend', null, titulo), ...filhos); return f; };
   const largo = (no) => { no.classList.add('compras-largo'); return no; };
+  // Campo de data: a peça única é U.campoData (compras/campo-data.js); aqui só entra o rótulo e o painel no campo.
+  function campoDeData(rotulo, valor) {
+    const d = U.campoData({ rotulo, valor });
+    d.no = el('div', 'compras-campo compras-data'); d.no.append(el('span', 'compras-rotulo', rotulo), d.caixa, d.painel);
+    return d;
+  }
 
   /* ---------------------------------------------------------------- API ---------------------------------------------------------------- */
   const mensagemDe = (e) => {
@@ -90,14 +96,14 @@
         const jurosTipo = seletor(TIPOS, (lanc && lanc.jurosTipo) || '', 'Sem juros');
         const jurosValor = entrada('text', lanc && lanc.jurosTipo ? R.apiParaDinheiro(lanc.jurosValorInformado) : '', { inputMode: 'decimal', placeholder: '0,00' });
         const total = entrada('text', '', { readOnly: true });
-        const dataRef = U.campoData({ rotulo: 'Data do lançamento *', valor: (lanc && lanc.dataReferencia) || hoje });
-        const docData = U.campoData({ rotulo: 'Data do documento fiscal', valor: (lanc && lanc.dataDocumentoFiscal) || '' });
+        const dataRef = campoDeData('Data do lançamento *', (lanc && lanc.dataReferencia) || hoje);
+        const docData = campoDeData('Data do documento fiscal', (lanc && lanc.dataDocumentoFiscal) || '');
         const docNumero = entrada('text', (lanc && lanc.numeroDocumentoFiscal) || '', { maxLength: 60 });
         const grupo = seletor(comAtual(cadastros.grupos, lanc && lanc.grupoId), (lanc && lanc.grupoId) || '', 'Sem grupo');
         const conta = seletor(comAtual(cadastros.contas, lanc && lanc.contaNome), (lanc && lanc.contaNome) || '', 'Sem conta');
         const obs = el('textarea'); obs.value = (lanc && lanc.observacao) || ''; obs.rows = 3; obs.maxLength = 500;
-        const venc = U.campoData({ rotulo: 'Vencimento *', valor: (lanc && lanc.dataVencimento) || hoje });
-        const dataPag = U.campoData({ rotulo: 'Data do pagamento', valor: (lanc && lanc.dataPagamento) || '' });
+        const venc = campoDeData('Vencimento *', (lanc && lanc.dataVencimento) || hoje);
+        const dataPag = campoDeData('Data do pagamento', (lanc && lanc.dataPagamento) || '');
         const rotJuros = campo('Juros', jurosValor);
         const campoJurosTipo = campo('Tipo do juros', jurosTipo);
         const campoTotal = campo('Valor Total', total, 'Valor + juros');

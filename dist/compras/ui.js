@@ -908,118 +908,6 @@
     return { caixa, painel, input };
   }
 
-  /**
-   * Campo de data com calendário (25/11/2026, Washington): o MESMO desenho dos campos de aniversário e de hora. Um campo com a máscara DD/MM/AA para digitar e
-   * o botão redondo do calendário; tocar no campo ou no botão abre um painel flutuante (flutuante) com o CALENDÁRIO DO MÊS: título ("novembro de 2026"), setas para
-   * o mês anterior e o seguinte, os dias da semana (D S T Q Q S S) e a grade de dias em células de cantos arredondados; o dia escolhido fica na cor do menu e o de
-   * hoje leva um contorno. Embaixo, Limpar e Hoje. Tocar no título troca a grade pelo Mês e o Ano (12 anos de cada vez, com setas) para ir longe; escolher o mês volta
-   * à grade. Tocar num dia escolhe e fecha (um dia de outro mês, que aparece esmaecido, também). O valor guardado é ISO (AAAA-MM-DD); data impossível (31/02) deixa o
-   * campo inválido (setCustomValidity). Século da data digitada: 00–49 = 2000–2049, 50–99 = 1950–1999 (regra do date-fields.js).
-   * Devolve { no, input, valor(), definir(iso) }: "no" é o campo pronto (rótulo, caixa e painel); valor() é o ISO ou ''.
-   */
-  function campoData({ valor = '', rotulo = 'Data' } = {}) {
-    const DF = window.CicluzDateFields;
-    const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-    const LONGOS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
-    const SEMANA = [['D', 'domingo'], ['S', 'segunda'], ['T', 'terça'], ['Q', 'quarta'], ['Q', 'quinta'], ['S', 'sexta'], ['S', 'sábado']];
-    const pad = (n) => String(n).padStart(2, '0');
-    const paraIso = (a, m, d) => a + '-' + pad(m) + '-' + pad(d);
-    const hojeIso = () => { const n = new Date(); return paraIso(n.getFullYear(), n.getMonth() + 1, n.getDate()); };
-    const diasNoMes = (a, m) => new Date(a, m, 0).getDate();
-    const nomeCampo = rotulo.endsWith(' *') ? rotulo.slice(0, -2) : rotulo;
-    let iso = DF.valid(valor) ? valor : '';
-    // Mês que o calendário mostra (não é o valor: navegar não muda a data) e a janela de anos da escolha de mês e ano.
-    let vistaA = Number((iso || hojeIso()).slice(0, 4)); let vistaM = Number((iso || hojeIso()).slice(5, 7));
-    let anoBase = vistaA - 5; let modoMesAno = false;
-    const input = entrada('text', iso ? DF.display(iso) : '', { inputMode: 'numeric', placeholder: 'DD/MM/AA', maxLength: 8, autocomplete: 'off' });
-    input.setAttribute('aria-label', nomeCampo);
-    input.dataset.textoLivre = '1';
-    const botaoPainel = el('button', 'shortcut-circle compras-redondo');
-    botaoPainel.type = 'button'; botaoPainel.title = 'Escolher a data'; botaoPainel.setAttribute('aria-label', nomeCampo + ': escolher a data');
-    botaoPainel.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/></svg>';
-    const caixa = el('div', 'compras-aniv-campo'); caixa.append(input, botaoPainel);
-    const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-data-painel'); painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', nomeCampo + ': calendário');
-    const titulo = el('button', 'compras-data-titulo'); titulo.type = 'button';
-    const anterior = el('button', 'compras-grade-celula compras-data-seta'); anterior.type = 'button'; anterior.textContent = '‹';
-    const seguinte = el('button', 'compras-grade-celula compras-data-seta'); seguinte.type = 'button'; seguinte.textContent = '›';
-    const cabecalho = el('div', 'compras-data-cab'); const setas = el('div', 'compras-data-setas'); setas.append(anterior, seguinte); cabecalho.append(titulo, setas);
-    const semana = el('div', 'compras-data-semana'); semana.setAttribute('aria-hidden', 'true');
-    SEMANA.forEach(([letra]) => semana.append(el('span', null, letra)));
-    const gradeDia = el('div', 'compras-grade-escolha em-7');
-    const gradeMes = el('div', 'compras-grade-escolha em-4'); const gradeAno = el('div', 'compras-grade-escolha em-4');
-    const vistaDias = el('div', 'compras-data-vista'); vistaDias.append(semana, gradeDia);
-    const vistaMesAno = el('div', 'compras-data-vista'); vistaMesAno.append(el('span', 'compras-rotulo', 'Mês'), gradeMes, el('span', 'compras-rotulo', 'Ano'), gradeAno);
-    const limpar = el('button', 'compras-data-acao', 'Limpar'); limpar.type = 'button';
-    const hoje = el('button', 'compras-data-acao', 'Hoje'); hoje.type = 'button';
-    const pe = el('div', 'compras-data-pe'); pe.append(limpar, hoje);
-    painel.append(cabecalho, vistaDias, vistaMesAno, pe);
-    const abrirPainel = flutuante(caixa, painel);
-    const resumo = el('small', 'profiles-note'); resumo.setAttribute('aria-live', 'polite');
-    const no = el('div', 'compras-campo compras-data');
-    no.append(el('span', 'compras-rotulo', rotulo), caixa, painel, resumo);
-    const celula = (texto, marcado, nome, aoTocar) => {
-      const b = el('button', 'compras-grade-celula', texto);
-      b.type = 'button'; b.setAttribute('aria-pressed', String(marcado)); b.setAttribute('aria-label', nome); b.onclick = aoTocar;
-      return b;
-    };
-    const validar = () => input.setCustomValidity(!input.value || iso ? '' : 'Informe uma data válida no formato DD/MM/AA.');
-    const aviso = (tipo) => input.dispatchEvent(new Event(tipo, { bubbles: true }));
-    function pintar() {
-      resumo.textContent = iso ? Number(iso.slice(8)) + ' de ' + LONGOS[Number(iso.slice(5, 7)) - 1] + ' de ' + iso.slice(0, 4) : '';
-      vistaDias.hidden = modoMesAno; vistaMesAno.hidden = !modoMesAno;
-      titulo.textContent = LONGOS[vistaM - 1] + ' de ' + vistaA + (modoMesAno ? ' ▴' : ' ▾');
-      titulo.setAttribute('aria-expanded', String(modoMesAno)); titulo.title = modoMesAno ? 'Voltar aos dias' : 'Escolher o mês e o ano';
-      anterior.setAttribute('aria-label', modoMesAno ? 'Anos anteriores' : 'Mês anterior'); seguinte.setAttribute('aria-label', modoMesAno ? 'Próximos anos' : 'Mês seguinte');
-      if (modoMesAno) {
-        gradeMes.replaceChildren(...MESES.map((n, i) => celula(n, vistaM === i + 1, LONGOS[i], () => { vistaM = i + 1; modoMesAno = false; pintar(); })));
-        gradeAno.replaceChildren(...Array.from({ length: 12 }, (_, i) => celula(String(anoBase + i), vistaA === anoBase + i, 'Ano ' + (anoBase + i), () => { vistaA = anoBase + i; pintar(); })));
-        return;
-      }
-      // 6 semanas sempre (altura fixa); os dias que sobram do mês anterior e do seguinte aparecem esmaecidos e também se escolhem.
-      const primeiro = new Date(vistaA, vistaM - 1, 1).getDay(); const hojeI = hojeIso();
-      gradeDia.replaceChildren(...Array.from({ length: 42 }, (_, i) => {
-        const d = new Date(vistaA, vistaM - 1, 1 - primeiro + i); const v = paraIso(d.getFullYear(), d.getMonth() + 1, d.getDate());
-        const b = celula(String(d.getDate()), v === iso, d.getDate() + ' de ' + LONGOS[d.getMonth()] + ' de ' + d.getFullYear(), () => escolher(v));
-        if (d.getMonth() !== vistaM - 1) b.classList.add('fora');
-        if (v === hojeI) b.setAttribute('aria-current', 'date');
-        return b;
-      }));
-    }
-    function escolher(v) {
-      iso = v; vistaA = Number(v.slice(0, 4)); vistaM = Number(v.slice(5, 7));
-      input.value = v ? DF.display(v) : ''; validar(); pintar();
-      aviso('input'); abrirPainel(false); input.focus(); aviso('change');
-    }
-    const navegar = (passo) => {
-      if (modoMesAno) { anoBase += 12 * passo; pintar(); return; }
-      const d = new Date(vistaA, vistaM - 1 + passo, 1); vistaA = d.getFullYear(); vistaM = d.getMonth() + 1; pintar();
-    };
-    anterior.onclick = () => navegar(-1); seguinte.onclick = () => navegar(1);
-    titulo.onclick = () => { modoMesAno = !modoMesAno; if (modoMesAno) anoBase = vistaA - 5; pintar(); };
-    hoje.onclick = () => escolher(hojeIso());
-    limpar.onclick = () => escolher('');
-    const abrir = (sim) => {
-      if (sim) { const ref = iso || hojeIso(); vistaA = Number(ref.slice(0, 4)); vistaM = Number(ref.slice(5, 7)); modoMesAno = false; pintar(); }
-      abrirPainel(sim);
-    };
-    input.addEventListener('input', (e) => {
-      input.value = DF.mask(input.value);
-      iso = DF.parse(input.value, iso) || '';
-      validar();
-      // Só a digitação leva o calendário ao mês digitado; escolher no painel não pode fazer a grade pular.
-      if (iso && e.isTrusted) { vistaA = Number(iso.slice(0, 4)); vistaM = Number(iso.slice(5, 7)); }
-      pintar();
-    });
-    input.addEventListener('click', () => abrir(true));
-    input.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown') { e.preventDefault(); abrir(true); } });
-    botaoPainel.addEventListener('click', () => abrir(painel.hidden));
-    validar(); pintar();
-    return {
-      no, input, valor: () => iso,
-      definir: (v) => { iso = DF.valid(v) ? v : ''; input.value = iso ? DF.display(iso) : ''; if (iso) { vistaA = Number(iso.slice(0, 4)); vistaM = Number(iso.slice(5, 7)); } validar(); pintar(); },
-    };
-  }
-
   function flutuante(ancora, painel, { foco } = {}) {
     painel.hidden = true;
     ancora.setAttribute('aria-haspopup', 'dialog');
@@ -1312,6 +1200,6 @@
     seletorArvore, campoArvore, campoLocal, arvoreGruposMercadoria, botaoRemover,
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, campoData, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();
