@@ -258,6 +258,22 @@ describe("sair por tempo parado no servidor (P-46 item 4)", () => {
     expect((await pedir(resp.cookie, "GET", "/api/agenda")).statusCode).toBe(200);
   });
 
+  it("'nunca sai sozinho' escolhido pelo administrador: a sessão não cai; voltar a 'sim' faz valer o tempo", async () => {
+    const { gestor: admin, resp } = await cenario();
+    const r = await pedir(admin.cookie, "PUT", `/api/agenda/configuracoes/${resp.usuarioId}`, { saiPorTempoParado: false });
+    expect(r.statusCode, r.body).toBe(200);
+    expect(r.json().data.saiPorTempoParado).toBe(false);
+    expect((await pedir(resp.cookie, "GET", "/api/agenda/configuracoes/minha")).json().data).toMatchObject({ saiPorTempoParado: false, inatividadeEfetivaMinutos: null });
+    const id = await sessaoDe(resp);
+    await pool.query(`UPDATE sessoes_atividade SET ultima_interacao_em = now() - interval '5 hours' WHERE sessao_id = $1`, [id]);
+    expect((await pedir(resp.cookie, "GET", "/api/agenda")).statusCode).toBe(200);
+    // Só o administrador escolhe.
+    expect((await pedir(resp.cookie, "PUT", `/api/agenda/configuracoes/${resp.usuarioId}`, { saiPorTempoParado: false })).statusCode).toBe(403);
+    await pedir(admin.cookie, "PUT", `/api/agenda/configuracoes/${resp.usuarioId}`, { saiPorTempoParado: true });
+    await pool.query(`UPDATE sessoes_atividade SET ultima_interacao_em = now() - interval '5 hours' WHERE sessao_id = $1`, [id]);
+    expect((await pedir(resp.cookie, "GET", "/api/agenda")).statusCode).toBe(401);
+  });
+
   it("o tempo da pessoa (Configurações da Agenda) vale no lugar do padrão", async () => {
     const { gestor: admin, resp } = await cenario();
     await pedir(admin.cookie, "PUT", `/api/agenda/configuracoes/${resp.usuarioId}`, { inatividadeMinutos: 60 });

@@ -78,6 +78,13 @@
       "when": 1795631633537,
       "tag": "0010_colaboradores_e_acessos_por_tela",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795640439736,
+      "tag": "0011_agenda_nunca_sair",
+      "breakpoints": true
     }
   ]
 }
