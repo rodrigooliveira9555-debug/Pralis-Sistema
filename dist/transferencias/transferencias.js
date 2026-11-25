@@ -1,38 +1,41 @@
 /*
- * Transferências › Lançamentos › CNT - Transferências (25/11/2026, pedido do Washington): o formulário "Nova Transferência" do sistema principal
- * (OperacaoTransferenciaForm.vue, PROJECT_BRAIN/19 do principal: R-031, R-035, R-127, R-188, R-231), no padrão das telas do site (peças de
- * compras/ui.js: janela na cor da origem, quadros com o título na borda, campos com o rótulo na borda, interruptor Sim/Não, campo de data e de hora).
+ * Transferências › Lançamentos › CNT - Transferências (25/11/2026, pedido do Washington): o formulário "Nova Transferência", refeito pelo esboço
+ * dele (1ª fase, só estes campos): Valor (calculadora), Data, Origem / Saída, Destino / Entrada, Múltiplo destino e Transferência com lacre (+).
+ * Peças de compras/ui.js: janela na cor da origem (cabeçalho arredondado só aqui: classe transferencia-tela), campo de data com calendário,
+ * interruptor Sim/Não, chips de escolha única e remover redondo.
  *
- * TELA EM CONSTRUÇÃO: o CICLUZ ainda não tem servidor de transferências, então o Salvar só CONFERE o preenchimento (as mesmas mensagens do principal)
- * e avisa que não gravou. Ficam para depois, e dependem de decisão e de banco (migration a autorizar): gravar a transferência, saldo da conta de origem,
- * contas vinculadas ao usuário, PDV com caixa aberto, confirmação de recebimento pelo destinatário, lacre já usado, lacres de retorno e sangria.
- * As contas vêm de /api/contas (ativas); sem a regra de "contas candidatas" do principal, o destino lista todas menos a origem (provisório).
+ * Regras desta tela (pedido do Washington):
+ *  - Valor: uma calculadora de teclas (0 a 9 e "=") no lugar do campo de digitar. Os números entram como centavos (digitar 1, 0, 0, 0, 0 = 100,00).
+ *    Cada valor digitado é de Notas ou de Moedas (duas escolhas logo abaixo do teclado); tocar numa delas já soma o valor ao acumulado e abre o próximo; o "=" fecha. No fim fica só o
+ *    TOTAL, sem distinguir nota de moeda (por dentro a tela guarda a soma de cada tipo, para quando a gravação existir).
+ *  - Múltiplo destino = Sim: a caixa de Destino some e entra, na própria tela (sem abrir janela), a lista de TODAS as contas ativas (menos a de
+ *    origem) com o ícone, para marcar várias.
+ *  - Transferência com lacre: o "+" acrescenta uma linha de lacre embaixo do destino. O 1º clique cria a "Transferência final"; cada clique
+ *    seguinte cria a "2ª", "3ª", "4ª transferência" ACIMA da final (a final sempre fica por último). Máximo de 4 (as quatro do esboço).
+ *
+ * TELA EM CONSTRUÇÃO: o CICLUZ ainda não tem servidor de transferências (PROJECT_BRAIN/11, P-48), então o Salvar só CONFERE o preenchimento
+ * e avisa que não gravou. As contas vêm de /api/contas (ativas). Ficaram fora desta fase (saíram da tela, não estão escondidas):
+ * transferência sem lacre, agendamento, tempo de confirmação.
  */
 (function () {
   'use strict';
-  const U = window.CicluzComprasUI; const R = window.CicluzLancamentosRegras; const D = window.CicluzComprasDominio; const Sync = window.CicluzSync;
-  if (!U || !R || !D || !Sync) return;
+  const U = window.CicluzComprasUI; const R = window.CicluzLancamentosRegras; const Sync = window.CicluzSync;
+  if (!U || !R || !Sync) return;
   const { el, botao, campo, entrada, seletor } = U;
 
   const CAMINHO = 'Transferências · Contas / Locais / Lançamentos / CNT - Transferências';
   const COR_TEXTO = '#9a3412';
-  const TEMPOS = [['5min', '5 minutos'], ['10min', '10 minutos'], ['30min', '30 minutos'], ['1h', '1 hora'], ['1dia', '1 dia'], ['10dias', '10 dias'], ['30dias', '30 dias']];
+  const MAX_LACRES = 4;
+  const MAX_DIGITOS = 11;
   const cor = () => (typeof menuColor !== 'undefined' && menuColor[1]) || '#f97316';
-  const quadro = (titulo, ...filhos) => { const f = el('fieldset', 'compras-fieldset'); f.append(el('legend', null, titulo), ...filhos); return f; };
-  const largo = (no) => { no.classList.add('compras-largo'); return no; };
-  const centavos = (txt) => { const v = R.dinheiroParaApi(txt); return v === null ? null : R.paraCentavos(v); };
-  const reais = (c) => D.moeda(c / 100);
+  const reais = (c) => 'R$ ' + (c / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const MARCA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
 
-  // Data e hora no padrão do site, com o rótulo e o painel dentro do campo.
+  // Data no padrão do site, com o rótulo e o painel dentro do campo.
   function campoDeData(rotulo, valor = '') {
     const d = U.campoData({ rotulo, valor });
     d.no = el('div', 'compras-campo compras-data'); d.no.append(el('span', 'compras-rotulo', rotulo), d.caixa, d.painel);
     return d;
-  }
-  function campoDeHora(rotulo) {
-    const h = U.campoHora({ rotulo });
-    h.no = el('div', 'compras-campo'); h.no.append(el('span', 'compras-rotulo', rotulo), h.caixa, h.painel);
-    return h;
   }
 
   async function abrir() {
@@ -41,95 +44,215 @@
     formulario(contas);
   }
 
+  /** Rótulo da linha de lacre pela posição: a última é a final; as outras são a 2ª, 3ª, 4ª, na ordem. */
+  const rotuloDoLacre = (i, total) => (i === total - 1 ? 'Transferência final' : (i + 2) + 'ª transferência');
+
+  /**
+   * A calculadora do valor. Estado: parcelas já somadas ({ c: centavos, t: 'notas' | 'moedas' }), o número que está sendo digitado (só dígitos, em
+   * centavos), o tipo dele e se já foi fechado com "=". Devolve { no, finalizar() }: finalizar() dá { erro } ou { total, notas, moedas } em centavos.
+   */
+  function calculadora(rotulo) {
+    const est = { parcelas: [], atual: '', tipo: '', fechado: false };
+    const centavos = (s) => (s ? parseInt(s, 10) : 0);
+    const soma = () => est.parcelas.reduce((n, p) => n + p.c, 0);
+    const tela = entrada('text', '', { readOnly: true, placeholder: 'Toque para digitar o valor', inputMode: 'none', autocomplete: 'off' });
+    tela.classList.add('transferencia-calc-tela'); tela.setAttribute('aria-label', rotulo); tela.setAttribute('aria-expanded', 'false');
+    const resumo = el('p', 'transferencia-calc-resumo'); resumo.setAttribute('role', 'status');
+    const aviso = el('small', 'transferencia-calc-aviso'); aviso.setAttribute('role', 'alert');
+    const tipos = U.chips([['notas', 'Notas'], ['moedas', 'Moedas']], '', (v) => escolherTipo(v));
+    const por = (t) => est.parcelas.filter((p) => p.t === t).reduce((n, p) => n + p.c, 0);
+    let botaoIgual;
+    // O acumulado por tipo vai ficando embaixo: "R$ 100,00 notas   R$ 50,00 moedas   = R$ 150,00".
+    const mostrar = () => {
+      tela.value = est.atual ? reais(centavos(est.atual)) : soma() > 0 ? reais(soma()) : '';
+      const partes = [['notas', 'notas'], ['moedas', 'moedas']].filter(([t]) => por(t) > 0).map(([t, nome]) => reais(por(t)) + ' ' + nome);
+      resumo.textContent = partes.length ? partes.join('   ') + '   = ' + reais(soma()) : '';
+      tipos.atualizar(est.tipo);
+      // Notas e Moedas só valem com um valor digitado (tocar numa delas já joga o valor no acumulado). Com um número digitado e sem tipo, o "=" fica bloqueado.
+      tipos.querySelectorAll('button').forEach((b) => { b.disabled = !centavos(est.atual); });
+      if (botaoIgual) botaoIgual.disabled = est.fechado || Boolean(est.atual) || est.parcelas.length === 0;
+    };
+    const avisar = (t) => { aviso.textContent = t; };
+    const digito = (d) => {
+      aviso.textContent = '';
+      est.fechado = false; // digitar depois do "=" reabre a conta e continua somando
+      if (est.atual.length >= MAX_DIGITOS) return;
+      est.atual = (est.atual + d).replace(/^0+/, '');
+      mostrar();
+    };
+    const apagar = () => {
+      aviso.textContent = '';
+      if (est.fechado) est.fechado = false; // o 1º ⌫ depois do "=" só reabre a conta
+      else if (est.atual) est.atual = est.atual.slice(0, -1);
+      else if (est.parcelas.length) { const p = est.parcelas.pop(); est.atual = String(p.c); est.tipo = ''; }
+      mostrar();
+    };
+    // Guarda o número digitado como parcela; devolve false (com aviso) se faltar valor ou o tipo.
+    const guardar = () => {
+      if (!centavos(est.atual)) { avisar('Digite um valor antes.'); return false; }
+      if (!est.tipo) { avisar('Escolha Notas ou Moedas para este valor.'); return false; }
+      est.parcelas.push({ c: centavos(est.atual), t: est.tipo }); est.atual = ''; est.tipo = ''; aviso.textContent = '';
+      return true;
+    };
+    // Tocar em Notas ou Moedas com um valor digitado joga esse valor no acumulado e deixa a caixa pronta para o próximo.
+    function escolherTipo(v) {
+      if (est.fechado || !centavos(est.atual)) { mostrar(); return; }
+      est.tipo = v; guardar(); mostrar();
+    }
+    const igual = () => {
+      if (est.fechado) return;
+      if (est.atual) { avisar('Escolha Notas ou Moedas para este valor.'); return; }
+      if (!est.parcelas.length) { avisar('Digite um valor antes.'); return; }
+      est.fechado = true; aviso.textContent = ''; mostrar(); mostrarPainel(false);
+    };
+    const tecla = (texto, acao, classe, rotuloAria) => {
+      const b = el('button', 'transferencia-tecla' + (classe ? ' ' + classe : ''), texto); b.type = 'button'; b.onclick = acao;
+      if (rotuloAria) { b.title = rotuloAria; b.setAttribute('aria-label', rotuloAria); }
+      return b;
+    };
+    const teclado = el('div', 'transferencia-teclado');
+    const d = (n) => tecla(String(n), () => digito(String(n)));
+    botaoIgual = tecla('=', igual, 'igual', 'Fechar o total');
+    teclado.append(d(7), d(8), d(9), d(4), d(5), d(6), d(1), d(2), d(3), botaoIgual, tecla('⌫', apagar, 'apagar', 'Apagar'), d(0));
+    // A calculadora só aparece quando se toca na caixa do valor; fecha ao fechar a conta com "=", no Esc ou tocando de novo na caixa.
+    const painel = el('div', 'transferencia-calc-painel'); painel.hidden = true; painel.id = 'transferencia-calc-painel';
+    painel.append(teclado, el('span', 'transferencia-calc-legenda', 'O valor digitado é de:'), tipos, aviso);
+    tela.setAttribute('aria-controls', painel.id);
+    const mostrarPainel = (sim) => { painel.hidden = !sim; tela.setAttribute('aria-expanded', String(sim)); };
+    tela.addEventListener('click', () => mostrarPainel(painel.hidden));
+    // Teclado do computador: números, Backspace, N e M (Notas e Moedas) e "=" (ou Enter, que não envia o formulário). Digitar com a calculadora fechada abre.
+    tela.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === 'Escape' && !painel.hidden) { mostrarPainel(false); e.preventDefault(); e.stopPropagation(); return; }
+      if (e.key === ' ' || (e.key === 'Enter' && painel.hidden)) { mostrarPainel(painel.hidden); e.preventDefault(); return; }
+      if (/^[0-9]$/.test(e.key)) { mostrarPainel(true); digito(e.key); }
+      else if (e.key === 'Backspace') apagar();
+      else if (e.key === 'n' || e.key === 'N') escolherTipo('notas');
+      else if (e.key === 'm' || e.key === 'M') escolherTipo('moedas');
+      else if (e.key === '=' || e.key === 'Enter') { if (!botaoIgual.disabled) igual(); }
+      else return;
+      e.preventDefault();
+    });
+    const no = el('div', 'compras-campo transferencia-valor');
+    const calc = el('div', 'transferencia-calc');
+    calc.append(tela, resumo, painel);
+    no.append(el('span', 'compras-rotulo', rotulo), calc);
+    mostrar();
+    return {
+      no,
+      tela,
+      // Só vale o valor FECHADO com "=" (o que está sendo digitado, sem fechar, não conta).
+      finalizar() {
+        if (!est.fechado) return est.atual || est.parcelas.length ? { erro: 'Clique em = para fechar o valor.' } : { total: 0 };
+        return { total: soma(), notas: por('notas'), moedas: por('moedas') };
+      },
+    };
+  }
+
   function formulario(contas) {
-    const estado = { sem: false, agendamento: false, multiplo: false, tempo: false };
+    const estado = { multiplo: false, lacres: [] };
     U.dialogo({
-      titulo: 'Nova Transferência', subtitulo: CAMINHO, largo: true, classe: 'compras-form-padrao', cor: cor(), corTexto: COR_TEXTO, rotuloSalvar: 'Salvar',
+      titulo: 'Nova Transferência', subtitulo: CAMINHO, largo: true, classe: 'compras-form-padrao transferencia-tela', cor: cor(), corTexto: COR_TEXTO, rotuloSalvar: 'Salvar',
       montar: (form, dlg) => {
-        /* Campos */
+        /* Valor (calculadora) e data */
+        const calc = calculadora('Valor da transferência *');
+        const dataTransf = campoDeData('Data da transferência *', R.diaNegocio(new Date()));
+
+        /* Origem e destino (um só, ou várias contas com Múltiplo destino) */
         const origem = seletor(contas.map((n) => [n, n]), '', '—');
         const destino = seletor([], '', '—');
-        const destinosLista = el('div', 'compras-largo'); destinosLista.setAttribute('role', 'group'); destinosLista.setAttribute('aria-label', 'Destino / Entrada: contas candidatas');
-        const marcados = new Set();
-        const fisico = entrada('text', '', { inputMode: 'decimal', placeholder: '0,00' });
-        const moedas = entrada('text', '', { inputMode: 'decimal', placeholder: '0,00' });
-        const total = entrada('text', '', { readOnly: true });
-        const lacre = entrada('text', '', { placeholder: 'Ex.: 001', maxLength: 100 });
-        const dataTransf = campoDeData('Data da transferência *', R.diaNegocio(new Date()));
-        const dataAgend = campoDeData('Data do agendamento *'); const horaAgend = campoDeHora('Hora do agendamento');
-        const tempo = seletor(TEMPOS, '5min');
-        const obs = entrada('text', '', { placeholder: 'Ex.: Suprimento CX1 — reforço de troco', maxLength: 500 });
-
-        /* Origem e destino */
-        const nota = largo(U.nota('Tela em construção: a transferência ainda não é gravada. O Salvar confere o preenchimento.'));
-        const q1 = quadro('1 · Origem e destino');
-        const campoOrigem = campo('Origem / Saída *', origem); const campoDestino = campo('Destino / Entrada *', destino);
-        const campoDestinos = el('div', 'compras-campo compras-largo'); campoDestinos.append(el('span', 'compras-rotulo', 'Destino / Entrada *'), destinosLista);
-        q1.append(campoOrigem, campoDestino, campoDestinos);
-        if (!contas.length) q1.append(largo(el('p', 'profiles-error', 'Nenhuma conta ativa cadastrada. Cadastre as contas em Transferências › Cadastros Geral.')));
+        const campoDestino = campo('Destino / Entrada *', destino);
+        const marcadas = new Set();
+        const contagem = el('small', 'profiles-note'); contagem.setAttribute('role', 'status');
+        const listaContas = el('div', 'transferencia-contas'); listaContas.setAttribute('role', 'group'); listaContas.setAttribute('aria-label', 'Destino / Entrada: contas');
+        const campoContas = el('div', 'compras-campo'); campoContas.append(el('span', 'compras-rotulo', 'Destino / Entrada *'), listaContas, contagem);
         const candidatas = () => contas.filter((n) => n !== origem.value);
+        function contarContas() {
+          const total = candidatas().length;
+          contagem.textContent = marcadas.size === 0 ? 'Toque nas contas que vão receber (' + total + ' disponíveis).' : 'Marcadas: ' + marcadas.size + ' de ' + total + '.';
+        }
         function desenharDestinos() {
-          const lista = candidatas();
-          const atual = destino.value;
+          const lista = candidatas(); const atual = destino.value;
           destino.replaceChildren(new Option('—', ''), ...lista.map((n) => new Option(n, n))); destino.value = lista.includes(atual) ? atual : '';
-          [...marcados].forEach((n) => { if (!lista.includes(n)) marcados.delete(n); });
-          destinosLista.replaceChildren(...lista.map((n) => { const i = U.interruptor(n, marcados.has(n)); i.input.addEventListener('change', () => { if (i.input.checked) marcados.add(n); else marcados.delete(n); }); return i; }));
+          [...marcadas].forEach((n) => { if (!lista.includes(n)) marcadas.delete(n); });
+          listaContas.replaceChildren(...lista.map((nome) => {
+            const b = el('button', 'transferencia-conta'); b.type = 'button'; b.setAttribute('role', 'checkbox');
+            const icone = el('span', 'compras-hier-icone'); icone.setAttribute('aria-hidden', 'true'); icone.append(el('span', 'sigla-text', 'CNT'));
+            const marca = el('span', 'transferencia-conta-marca'); marca.innerHTML = MARCA;
+            b.append(icone, el('span', 'transferencia-conta-nome', nome), marca);
+            const pintar = () => b.setAttribute('aria-checked', String(marcadas.has(nome)));
+            b.onclick = () => { if (marcadas.has(nome)) marcadas.delete(nome); else marcadas.add(nome); pintar(); contarContas(); };
+            pintar();
+            return b;
+          }));
+          contarContas();
         }
         origem.addEventListener('change', desenharDestinos);
 
-        /* Valor transferido */
-        const recalcular = () => {
-          const f = centavos(fisico.value); const m = centavos(moedas.value);
-          const soma = (f || 0) + (m || 0);
-          total.value = reais(soma);
-        };
-        [fisico, moedas].forEach((i) => i.addEventListener('input', recalcular));
-        const q2 = quadro('2 · Valor transferido', largo(U.nota('Informe o dinheiro físico e as moedas transferidos. O total é a soma dos dois.')), campo('Dinheiro físico', fisico), campo('Moedas', moedas), largo(campo('Total da transferência', total)));
+        /* Opções: Múltiplo destino e Transferência com lacre (+) */
+        const multiplo = U.quadroSituacao('Múltiplo destino', false, { textos: ['Sim', 'Não'], aoMudar: (v) => { estado.multiplo = v; mostrar(); } });
+        const mais = el('button', 'shortcut-circle compras-redondo'); mais.type = 'button';
+        mais.innerHTML = U.svg('<path d="M12 5v14M5 12h14"/>');
+        const situacaoLacre = el('span', 'account-status-text');
+        const linhaLacre = el('div', 'account-status-row'); linhaLacre.append(mais, situacaoLacre);
+        const quadroLacre = el('div', 'account-status compras-situacao-quadro'); quadroLacre.append(el('span', null, 'Transferência com lacre'), linhaLacre);
+        const lacresBox = el('div', 'transferencia-lacres');
 
-        /* Lacres (some inteira quando é transferência sem lacre, R-231) */
-        const q3 = quadro('3 · Lacres', largo(campo('Lacre do malote *', lacre, 'Identifica o malote que será entregue ao Caixa.')));
-
-        /* Opções */
-        const sw = (titulo, chave, dica) => { const q = U.quadroSituacao(titulo, false, { textos: ['Sim', 'Não'], dica, aoMudar: (v) => { estado[chave] = v; atualizar(); } }); return largo(q); };
-        const swSem = sw('Transferência sem lacre', 'sem');
-        const avisoSem = largo(el('p', 'profiles-note', 'Vai sem malote e sem lacre. Para PDV, o operador confirma o recebimento no Caixa; para outra conta, entra direto.'));
-        const swAgend = sw('Agendamento', 'agendamento');
-        const swMulti = sw('Múltiplo destino', 'multiplo');
-        const swTempo = sw('Tempo de confirmação', 'tempo');
-        const campoTempo = campo('Tempo de confirmação', tempo);
-        const q4 = quadro('Opções', swSem, avisoSem, swAgend, dataAgend.no, horaAgend.no, swMulti, swTempo, campoTempo);
-        const chaveDe = (q) => q.querySelector('button.account-status-switch');
-        function atualizar() {
-          const com = !estado.sem; // R-231: sem lacre não é malote, não tem agendamento, múltiplo destino nem tempo de confirmação
-          q3.style.display = com ? '' : 'none'; avisoSem.style.display = estado.sem ? '' : 'none';
-          [swAgend, swMulti, swTempo].forEach((q) => { q.style.display = com ? '' : 'none'; });
-          dataAgend.no.style.display = com && estado.agendamento ? '' : 'none'; horaAgend.no.style.display = com && estado.agendamento ? '' : 'none';
-          campoTempo.style.display = com && estado.tempo ? '' : 'none';
-          const multi = com && estado.multiplo;
-          campoDestino.style.display = multi ? 'none' : ''; campoDestinos.style.display = multi ? '' : 'none';
-          // R-188/R-035: Múltiplo destino e Tempo de confirmação não andam juntos.
-          chaveDe(swMulti).disabled = estado.tempo; chaveDe(swTempo).disabled = estado.multiplo;
+        function desenharLacres(focar) {
+          const n = estado.lacres.length;
+          mais.disabled = n >= MAX_LACRES;
+          mais.title = mais.disabled ? 'No máximo ' + MAX_LACRES + ' transferências com lacre' : 'Acrescentar transferência com lacre';
+          mais.setAttribute('aria-label', mais.title);
+          situacaoLacre.textContent = n === 0 ? 'Sem lacre' : n === 1 ? '1 lacre' : n + ' lacres';
+          lacresBox.replaceChildren(...estado.lacres.map((v, i) => {
+            const rotulo = rotuloDoLacre(i, n);
+            const campoLacre = entrada('text', v, { placeholder: 'Ex.: 001', maxLength: 100 });
+            campoLacre.addEventListener('input', () => { estado.lacres[i] = campoLacre.value; });
+            const linha = el('div', 'transferencia-lacre-linha');
+            linha.append(campo(rotulo + ' *', campoLacre), U.botaoRemover('Remover ' + rotulo.toLowerCase(), () => { estado.lacres.splice(i, 1); desenharLacres(); }));
+            linha.entrada = campoLacre;
+            return linha;
+          }));
+          if (focar !== undefined && lacresBox.children[focar]) lacresBox.children[focar].entrada.focus();
         }
-        desenharDestinos(); recalcular(); atualizar();
+        // O 1º clique cria a final; os seguintes entram acima dela (a final desce e fica sempre por último).
+        mais.addEventListener('click', () => {
+          if (estado.lacres.length >= MAX_LACRES) return;
+          const posicao = estado.lacres.length ? estado.lacres.length - 1 : 0;
+          estado.lacres.splice(posicao, 0, '');
+          desenharLacres(posicao);
+        });
 
-        form.append(nota, quadro('Data', dataTransf.no), q4, q1, q2, q3, quadro('Observação', largo(campo('Observação', obs))), largo(el('p', 'profiles-note', 'Recebimento: aguardando confirmação do destinatário')));
-        // "Salvar e criar nova": ao lado do Salvar, como no principal (por ora só confere, como o Salvar).
+        function mostrar() {
+          campoDestino.style.display = estado.multiplo ? 'none' : ''; campoContas.style.display = estado.multiplo ? '' : 'none';
+        }
+
+        const corpo = el('div', 'transferencia-corpo');
+        const opcoes = el('div', 'transferencia-opcoes'); opcoes.append(multiplo, quadroLacre);
+        const obs = entrada('text', '', { placeholder: 'Ex.: Suprimento CX1 — reforço de troco', maxLength: 500 });
+        corpo.append(calc.no, dataTransf.no, campo('Origem / Saída *', origem), campoDestino, campoContas, opcoes, lacresBox, campo('Observação', obs));
+        if (!contas.length) corpo.append(el('p', 'profiles-error', 'Nenhuma conta ativa cadastrada. Cadastre as contas em Transferências › Cadastros Geral.'));
+        corpo.append(U.nota('Tela em construção: a transferência ainda não é gravada. O Salvar confere o preenchimento.'));
+        form.append(corpo);
+        desenharDestinos(); desenharLacres(); mostrar();
+
+        // "Salvar e criar nova": ao lado do Salvar, como no esboço (por ora só confere, como o Salvar).
         setTimeout(() => {
           const acoes = dlg.querySelector('.compras-dialog-acoes'); const salvarBtn = acoes && acoes.querySelector('button[type=submit]');
           if (salvarBtn) salvarBtn.before(botao('Salvar e criar nova', () => form.requestSubmit(), 'btn secondary'));
         }, 0);
-        return { dataTransf, origem, destino, marcados, fisico, moedas, lacre, dataAgend, estado };
+        return { dataTransf, origem, destino, marcadas, calc, estado, obs };
       },
       salvar: async (c) => {
         const e = c.estado;
         if (!c.dataTransf.valor()) return c.dataTransf.input.value ? 'Data da transferência inválida. Use DD/MM/AA.' : 'Informe a data da transferência.';
-        // As mesmas mensagens do principal (useTransferenciaFormulario.ts).
-        if (!c.origem.value || (!e.sem && e.multiplo ? !c.marcados.size : !c.destino.value)) return 'Escolha a origem e o destino.';
-        const f = centavos(c.fisico.value); const m = centavos(c.moedas.value);
-        if ((c.fisico.value.trim() && f === null) || (c.moedas.value.trim() && m === null)) return 'Valor em formato inválido. Use 1.234,56 (no máximo 2 casas).';
-        if ((f || 0) + (m || 0) <= 0) return 'Informe o dinheiro físico ou as moedas.';
-        if (!e.sem && !c.lacre.value.trim()) return 'Informe o lacre do malote.';
-        if (!e.sem && e.agendamento && !c.dataAgend.valor()) return 'Informe a data do agendamento.';
+        if (!c.origem.value || (e.multiplo ? !c.marcadas.size : !c.destino.value)) return 'Escolha a origem e o destino.';
+        const v = c.calc.finalizar();
+        if (v.erro) return v.erro;
+        if (!v.total) return 'Informe o valor da transferência.';
+        const lacres = e.lacres.map((x) => x.trim());
+        if (lacres.some((x) => !x)) return 'Informe o lacre de cada transferência.';
+        if (new Set(lacres.map((x) => x.toLowerCase())).size !== lacres.length) return 'Os lacres precisam ser diferentes entre si.';
         return 'Conferido, mas NÃO gravado: a gravação das transferências ainda está em construção.';
       },
     });
