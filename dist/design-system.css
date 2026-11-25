@@ -367,3 +367,15 @@ body.dark-theme .view.show>.panel>.head[data-header-standard=yes],body.dark-them
 .operator-machine{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;margin-bottom:12px}
 .operator-machine.inativo{opacity:.7}
 @media(max-width:600px){.operadora-etapa-dados,.operator-machine{grid-template-columns:1fr;gap:18px}}
+/* Custo das máquinas (etapa 3): linhas de custo em grade de duas colunas, botões de início rápido e quadro de máquinas. */
+.operator-cost-rapido{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+#sector-view .operator-fees .operator-cost{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-bottom:12px}
+.operator-cost-resumo{margin:0;font-weight:600;font-size:12px;line-height:1.5}
+.operator-cost-campos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+.operator-cost-campos [hidden]{display:none}
+.operator-cost-aplica{grid-column:1/-1;border:1px solid var(--line,#e4e4e7);border-radius:10px;padding:8px 12px;margin:0;min-width:0}
+.operator-cost-aplica legend{font-size:12px;padding:0 6px}
+.operator-cost-check{display:flex;align-items:center;gap:8px;min-height:32px;font-size:13px}
+.operator-cost-outras{margin-top:12px}
+@media(max-width:600px){.operator-cost-campos{grid-template-columns:1fr}}
+#sector-view .operator-fees .operator-cost>*{grid-column:1/-1;min-width:0}
