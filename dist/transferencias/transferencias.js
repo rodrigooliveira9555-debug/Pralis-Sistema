@@ -224,6 +224,7 @@
     clipe: '<path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/>',
     fechar: '<path d="M6 6l12 12M18 6 6 18"/>',
     baixo: '<path d="m6 9 6 6 6-6"/>',
+    mais: '<path d="M12 5v14M5 12h14"/>',
   };
   const selo = (nome) => { const s = el('span', 'transferencia-linha-icone'); s.setAttribute('aria-hidden', 'true'); s.innerHTML = U.svg(ICONE[nome]); return s; };
   const tamanho = (b) => (b < 1024 * 1024 ? Math.max(1, Math.round(b / 1024)) + ' KB' : (b / 1024 / 1024).toFixed(1).replace('.', ',') + ' MB');
@@ -288,7 +289,7 @@
   }
 
   function formulario(contas) {
-    const estado = { multiplo: false, lacre: { com: false, numero: '' }, retornos: [] };
+    const estado = { multiplo: false, lacre: { com: false, numero: '' }, retornos: [], padraoLacre: false };
     U.dialogo({
       titulo: 'Nova Transferência', subtitulo: CAMINHO, largo: true, classe: 'compras-form-padrao transferencia-tela', cor: cor(), corTexto: COR_TEXTO, rotuloSalvar: 'Salvar',
       montar: (form, dlg) => {
@@ -349,8 +350,10 @@
 
         /* Transferência de retorno: um bloco à parte; o "+" acrescenta (até 4) e cada uma é Com lacre ou Sem lacre. */
         const retornosBox = el('div', 'transferencia-retornos');
-        const maisRetorno = el('button', 'transferencia-linha transferencia-linha-acao'); maisRetorno.type = 'button';
-        const pontaMais = el('span', 'transferencia-linha-ponta', '+'); maisRetorno.append(el('span', 'transferencia-linha-rotulo', 'Adicionar transferência de retorno'), pontaMais);
+        // A própria linha de adicionar já diz se os retornos novos são Com lacre ou Sem lacre (cada um ainda pode ser mudado depois).
+        const maisRetorno = el('button', 'transferencia-circulo'); maisRetorno.type = 'button'; maisRetorno.innerHTML = U.svg(ICONE.mais);
+        const linhaAdd = linha('Adicionar transferência de retorno', chave('Retornos novos', false, ['Com lacre', 'Sem lacre'], (v) => { estado.padraoLacre = v; }), maisRetorno);
+        linhaAdd.classList.add('transferencia-linha-add');
         function desenharRetornos(focar) {
           const n = estado.retornos.length;
           maisRetorno.disabled = n >= MAX_LACRES;
@@ -370,7 +373,7 @@
           }));
           if (focar !== undefined && retornosBox.children[focar] && retornosBox.children[focar].entrada) retornosBox.children[focar].entrada.focus();
         }
-        maisRetorno.addEventListener('click', () => { if (estado.retornos.length >= MAX_LACRES) return; estado.retornos.push({ com: false, numero: '' }); desenharRetornos(); });
+        maisRetorno.addEventListener('click', () => { if (estado.retornos.length >= MAX_LACRES) return; estado.retornos.push({ com: estado.padraoLacre, numero: '' }); desenharRetornos(estado.padraoLacre ? estado.retornos.length - 1 : undefined); });
 
         /* Opções: Múltiplo destino e Tempo de aceite */
         const linhaMultiplo = linha('Múltiplo destino (+) / CNT', chave('Múltiplo destino', false, ['Sim', 'Não'], (v) => { estado.multiplo = v; mostrar(); }));
@@ -387,7 +390,7 @@
         // Valor em cima (quadro laranja fixo); depois, um assunto por vez: a transferência, a transferência de retorno, as opções e a observação.
         corpo.append(calc.no,
           secao('Transferência', quadro(linhaData, linhaDe('Origem (−) / CNT *', origem), campoDestino, campoContas, lacreNormal)),
-          secao('Transferência de retorno', quadro(retornosBox, maisRetorno)),
+          secao('Transferência de retorno', quadro(retornosBox, linhaAdd)),
           secao('Opções', quadro(linhaMultiplo, aceite.no)),
           secao('Observação', quadro(linhaDe('Observação', obs), anexos.no)));
         if (!contas.length) corpo.append(el('p', 'profiles-error', 'Nenhuma conta ativa cadastrada. Cadastre as contas em Transferências › Cadastros Geral.'));
