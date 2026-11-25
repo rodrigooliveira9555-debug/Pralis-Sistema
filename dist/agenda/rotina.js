@@ -27,6 +27,7 @@
   const DIAS = [[1, 'Seg'], [2, 'Ter'], [3, 'Qua'], [4, 'Qui'], [5, 'Sex'], [6, 'Sáb'], [0, 'Dom']];
   const FORA = [['permitir', 'Pode usar fora do expediente'], ['bloquear', 'Só no expediente (bloqueia fora dele)']];
   const PADRAO_PARADO = 15;
+  const SAI_PARADO = [['sim', 'Sim, depois do tempo parado'], ['nao', 'Nunca sai sozinho']];
   /** Telas dos pedidos (o mesmo endereço que o rotas.js grava ao abrir pelo menu). */
   const TELA_PEDIDO_COMPRA = { endereco: '#/saidas-mercadorias/lancamentos/compras-solicitacao', titulo: 'MER - Pedido de Compra' };
   const TELA_PEDIDO_PRODUCAO = { endereco: '#/saidas-mercadorias/lancamentos-producao/producao-pedidos', titulo: 'MER - Pedidos de Produção' };
@@ -71,7 +72,7 @@
     const item = (t, v) => lista.append(el('dt', null, t), el('dd', null, v));
     item('Expediente', m.descricaoExpediente);
     item('Fora do expediente', m.foraExpediente === 'bloquear' ? 'A Agenda fecha fora do expediente' : 'A Agenda abre a qualquer hora');
-    item('Sair sozinho', m.inatividadeEfetivaMinutos ? 'Depois de ' + minutosTexto(m.inatividadeEfetivaMinutos) + ' sem mexer' : 'Não sai sozinho (posto do caixa)');
+    item('Sair sozinho', m.inatividadeEfetivaMinutos ? 'Depois de ' + minutosTexto(m.inatividadeEfetivaMinutos) + ' sem mexer' : 'Nunca sai sozinho');
     sua.append(lista);
     if (m.bloqueadaAgora) sua.append(U.situacao('Agora você está fora do expediente: a Agenda abre de novo no horário.', 'atencao'));
     sua.append(U.nota(ehAdmin() ? 'Você é administrador: mude a sua regra na lista abaixo.' : 'Quem muda estas regras é o administrador.'));
@@ -92,7 +93,7 @@
       const nomeColab = pessoa.colaboradorId && colaboradoresDoAparelho().find((x) => x.id === pessoa.colaboradorId);
       const det = [pessoa.colaboradorId ? 'Escala de ' + (nomeColab ? nomeColab.name : 'colaborador ligado') : resumoExpediente(p)];
       if (p.foraExpediente === 'bloquear') det.push('bloqueia fora do expediente');
-      det.push('sai em ' + minutosTexto(p.inatividadeMinutos || PADRAO_PARADO) + ' parado');
+      det.push(p.saiPorTempoParado === false ? 'nunca sai sozinho' : 'sai em ' + minutosTexto(p.inatividadeMinutos || PADRAO_PARADO) + ' parado');
       texto.append(el('b', null, p.nome), el('small', null, det.join(' · ')));
       const seta = el('span', 'agenda-linha-seta');
       seta.innerHTML = svg('<path d="m9 6 6 6-6 6"/>');
@@ -131,6 +132,12 @@
         const fim = U.entrada('time', p.expedienteFim || '');
         const fora = U.seletor(FORA, p.foraExpediente);
         const parado = U.entrada('number', p.inatividadeMinutos || '', { min: 1, max: 480, step: 1, inputMode: 'numeric', placeholder: 'Padrão: ' + PADRAO_PARADO + ' min' });
+        // Quem o administrador escolhe que nunca sai sozinho (Zé, 25/11/2026): o tempo fica guardado, sem efeito.
+        const sai = U.seletor(SAI_PARADO, p.saiPorTempoParado === false ? 'nao' : 'sim');
+        const campoParado = U.campo('Sair do sistema depois de quantos minutos parado', parado, 'Vazio = o padrão de ' + PADRAO_PARADO + ' minutos. De 1 a 480.');
+        const mostrarParado = () => { campoParado.hidden = sai.value === 'nao'; };
+        sai.addEventListener('change', mostrarParado);
+        mostrarParado();
         const eu = perfil() && perfil().usuarioId === p.usuarioId;
         if (eu) { fora.value = 'permitir'; fora.disabled = true; }
         // Colaborador ligado (pelo id): só dá para escolher num aparelho que tem o cadastro de colaboradores.
@@ -148,14 +155,15 @@
             : 'O cadastro de colaboradores não está neste aparelho: ligue pelo aparelho que tem o cadastro (o iPad).'),
           diasCampo, grade,
           U.campo('Fora do expediente', fora, eu ? 'Você não pode bloquear a sua própria Agenda.' : 'Bloqueado: fora do horário a Agenda e o chat não abrem.'),
-          U.campo('Sair do sistema depois de quantos minutos parado', parado, 'Vazio = o padrão de ' + PADRAO_PARADO + ' minutos. De 1 a 480. Posto do caixa não sai sozinho.'),
+          U.campo('Sair sozinho por tempo parado', sai, 'Posto do caixa nunca sai sozinho.'),
+          campoParado,
         );
-        return { inicio, fim, fora, parado, colab };
+        return { inicio, fim, fora, parado, colab, sai };
       },
       salvar: async (c) => {
         const corpo = {
           expedienteDias: [...dias].sort(), expedienteInicio: c.inicio.value, expedienteFim: c.fim.value,
-          foraExpediente: c.fora.value, inatividadeMinutos: c.parado.value ? Number(c.parado.value) : null,
+          foraExpediente: c.fora.value, inatividadeMinutos: c.parado.value ? Number(c.parado.value) : null, saiPorTempoParado: c.sai.value !== 'nao',
         };
         // As mesmas regras do servidor, com a mensagem antes de mandar.
         if (Boolean(corpo.expedienteInicio) !== Boolean(corpo.expedienteFim)) return 'Informe o início e o fim do expediente, ou nenhum dos dois.';
