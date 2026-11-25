@@ -42,7 +42,7 @@
   }
 
   function formulario(contas) {
-    const estado = { sem: false, agendamento: false, multiplo: false, tempo: false, valoresVisiveis: true };
+    const estado = { sem: false, agendamento: false, multiplo: false, tempo: false };
     U.dialogo({
       titulo: 'Nova Transferência', subtitulo: CAMINHO, largo: true, classe: 'compras-form-padrao', cor: cor(), corTexto: COR_TEXTO, rotuloSalvar: 'Salvar',
       montar: (form, dlg) => {
@@ -54,19 +54,11 @@
         const fisico = entrada('text', '', { inputMode: 'decimal', placeholder: '0,00' });
         const moedas = entrada('text', '', { inputMode: 'decimal', placeholder: '0,00' });
         const total = entrada('text', '', { readOnly: true });
-        const saida = entrada('text', '', { readOnly: true }); saida.classList.add('campo-valor');
         const lacre = entrada('text', '', { placeholder: 'Ex.: 001', maxLength: 100 });
         const dataTransf = campoDeData('Data da transferência *', R.diaNegocio(new Date()));
         const dataAgend = campoDeData('Data do agendamento *'); const horaAgend = campoDeHora('Hora do agendamento');
         const tempo = seletor(TEMPOS, '5min');
         const obs = entrada('text', '', { placeholder: 'Ex.: Suprimento CX1 — reforço de troco', maxLength: 500 });
-
-        /* Resumo no topo: o que isto faz com o dinheiro (com o olho que esconde o valor) */
-        const olho = el('button', 'shortcut-circle compras-redondo'); olho.type = 'button';
-        const pintarOlho = () => { olho.title = estado.valoresVisiveis ? 'Ocultar valores' : 'Mostrar valores'; olho.setAttribute('aria-label', olho.title); olho.setAttribute('aria-pressed', String(!estado.valoresVisiveis));
-          olho.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>' + (estado.valoresVisiveis ? '' : '<path d="M4 4l16 16"/>') + '</svg>'; };
-        const caixaSaida = el('div', 'compras-aniv-campo'); caixaSaida.append(saida, olho);
-        const campoSaida = el('div', 'compras-campo'); campoSaida.append(el('span', 'compras-rotulo', 'Saída (−)'), caixaSaida);
 
         /* Origem e destino */
         const nota = largo(U.nota('Tela em construção: a transferência ainda não é gravada. O Salvar confere o preenchimento.'));
@@ -89,10 +81,8 @@
         const recalcular = () => {
           const f = centavos(fisico.value); const m = centavos(moedas.value);
           const soma = (f || 0) + (m || 0);
-          total.value = estado.valoresVisiveis ? reais(soma) : 'R$ ••••';
-          saida.value = estado.valoresVisiveis ? reais(soma) : 'R$ ••••';
+          total.value = reais(soma);
         };
-        olho.onclick = () => { estado.valoresVisiveis = !estado.valoresVisiveis; pintarOlho(); recalcular(); };
         [fisico, moedas].forEach((i) => i.addEventListener('input', recalcular));
         const q2 = quadro('2 · Valor transferido', largo(U.nota('Informe o dinheiro físico e as moedas transferidos. O total é a soma dos dois.')), campo('Dinheiro físico', fisico), campo('Moedas', moedas), largo(campo('Total da transferência', total)));
 
@@ -120,9 +110,9 @@
           // R-188/R-035: Múltiplo destino e Tempo de confirmação não andam juntos.
           chaveDe(swMulti).disabled = estado.tempo; chaveDe(swTempo).disabled = estado.multiplo;
         }
-        pintarOlho(); desenharDestinos(); recalcular(); atualizar();
+        desenharDestinos(); recalcular(); atualizar();
 
-        form.append(nota, quadro('Data', dataTransf.no), quadro('Resumo', campoSaida), q1, q2, q3, q4, quadro('Observação', largo(campo('Observação', obs))), largo(el('p', 'profiles-note', 'Recebimento: aguardando confirmação do destinatário')));
+        form.append(nota, quadro('Data', dataTransf.no), q4, q1, q2, q3, quadro('Observação', largo(campo('Observação', obs))), largo(el('p', 'profiles-note', 'Recebimento: aguardando confirmação do destinatário')));
         // "Salvar e criar nova": ao lado do Salvar, como no principal (por ora só confere, como o Salvar).
         setTimeout(() => {
           const acoes = dlg.querySelector('.compras-dialog-acoes'); const salvarBtn = acoes && acoes.querySelector('button[type=submit]');
