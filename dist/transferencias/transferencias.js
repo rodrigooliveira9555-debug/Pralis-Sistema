@@ -24,8 +24,8 @@
   const reais = (c) => D.moeda(c / 100);
 
   // Data e hora no padrão do site, com o rótulo e o painel dentro do campo.
-  function campoDeData(rotulo) {
-    const d = U.campoData({ rotulo, valor: '' });
+  function campoDeData(rotulo, valor = '') {
+    const d = U.campoData({ rotulo, valor });
     d.no = el('div', 'compras-campo compras-data'); d.no.append(el('span', 'compras-rotulo', rotulo), d.caixa, d.painel);
     return d;
   }
@@ -56,6 +56,7 @@
         const total = entrada('text', '', { readOnly: true });
         const saida = entrada('text', '', { readOnly: true }); saida.classList.add('campo-valor');
         const lacre = entrada('text', '', { placeholder: 'Ex.: 001', maxLength: 100 });
+        const dataTransf = campoDeData('Data da transferência *', R.diaNegocio(new Date()));
         const dataAgend = campoDeData('Data do agendamento *'); const horaAgend = campoDeHora('Hora do agendamento');
         const tempo = seletor(TEMPOS, '5min');
         const obs = entrada('text', '', { placeholder: 'Ex.: Suprimento CX1 — reforço de troco', maxLength: 500 });
@@ -121,16 +122,17 @@
         }
         pintarOlho(); desenharDestinos(); recalcular(); atualizar();
 
-        form.append(nota, quadro('Resumo', campoSaida), q1, q2, q3, q4, quadro('Observação', largo(campo('Observação', obs))), largo(el('p', 'profiles-note', 'Recebimento: aguardando confirmação do destinatário')));
+        form.append(nota, quadro('Data', dataTransf.no), quadro('Resumo', campoSaida), q1, q2, q3, q4, quadro('Observação', largo(campo('Observação', obs))), largo(el('p', 'profiles-note', 'Recebimento: aguardando confirmação do destinatário')));
         // "Salvar e criar nova": ao lado do Salvar, como no principal (por ora só confere, como o Salvar).
         setTimeout(() => {
           const acoes = dlg.querySelector('.compras-dialog-acoes'); const salvarBtn = acoes && acoes.querySelector('button[type=submit]');
           if (salvarBtn) salvarBtn.before(botao('Salvar e criar nova', () => form.requestSubmit(), 'btn secondary'));
         }, 0);
-        return { origem, destino, marcados, fisico, moedas, lacre, dataAgend, estado };
+        return { dataTransf, origem, destino, marcados, fisico, moedas, lacre, dataAgend, estado };
       },
       salvar: async (c) => {
         const e = c.estado;
+        if (!c.dataTransf.valor()) return c.dataTransf.input.value ? 'Data da transferência inválida. Use DD/MM/AA.' : 'Informe a data da transferência.';
         // As mesmas mensagens do principal (useTransferenciaFormulario.ts).
         if (!c.origem.value || (!e.sem && e.multiplo ? !c.marcados.size : !c.destino.value)) return 'Escolha a origem e o destino.';
         const f = centavos(c.fisico.value); const m = centavos(c.moedas.value);
