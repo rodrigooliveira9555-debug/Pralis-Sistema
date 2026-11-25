@@ -61,13 +61,14 @@
   function duracao(segundos) {
     if (segundos === null || segundos === undefined) return '—';
     const s = Math.max(0, Math.round(segundos));
-    if (s < 60) return s + ' s';
+    const u = (n, unidade) => n + ' ' + unidade; // número e unidade nunca se separam na quebra de linha
+    if (s < 60) return u(s, 's');
     const min = Math.floor(s / 60);
-    if (min < 60) return min + ' min';
+    if (min < 60) return u(min, 'min');
     const h = Math.floor(min / 60);
-    if (h < 24) return h + ' h ' + String(min % 60).padStart(2, '0') + ' min';
+    if (h < 24) return u(h, 'h') + ' ' + u(String(min % 60).padStart(2, '0'), 'min');
     const dias = Math.floor(h / 24);
-    return dias + (dias === 1 ? ' dia' : ' dias') + (h % 24 ? ' ' + (h % 24) + ' h' : '');
+    return u(dias, dias === 1 ? 'dia' : 'dias') + (h % 24 ? ' ' + u(h % 24, 'h') : '');
   }
 
   /**
@@ -128,7 +129,7 @@
       estado.indicadores = indicadores;
       estado.contagem.abertas = indicadores.abertasAgora;
       estado.contagem.fechadas = indicadores.fechadasNoDia;
-      if (estado.aba === 'status4' && !estado.filtro.numero && !estado.filtro.funcionario) estado.contagem.status4 = estado.lista.total;
+      estado.contagem.status4 = indicadores.status4;
       estado.atualizadoEm = new Date();
     } catch (erro) {
       estado.erro = mensagemErro(erro);

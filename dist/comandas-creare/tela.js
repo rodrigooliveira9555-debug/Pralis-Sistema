@@ -25,6 +25,8 @@
   let tela = null;
   let partes = null;
   let relogio = null;
+  // Linhas e réguas só animam ao abrir ou trocar de aba; a leitura de cada minuto troca os dados sem piscar.
+  let animar = false;
 
   const corpo = (...nos) => { const c = el('div', 'compras-corpo'); c.append(...nos); return c; };
 
@@ -182,12 +184,18 @@
   }
 
   function situacaoCelula(c) {
-    const [rotulo, tom] = SITUACAO[c.situacao] || [c.situacao, 'neutro'];
-    const box = el('span', 'vendas-pdv-situacao');
-    const b = botao('Detalhes', () => abrirDetalhe(c, b), 'btn secondary vendas-pdv-detalhes');
+    // Selo do tamanho do botão Detalhes, numa linha só, com um ponto da cor da situação (o texto diz a situação).
+    const [rotulo, tom, explica] = SITUACAO[c.situacao] || [c.situacao, 'neutro', ''];
+    const selo = U.situacao(rotulo, tom);
+    selo.classList.add('comandas-selo');
+    if (explica) selo.title = explica;
+    return selo;
+  }
+
+  function botaoDetalhes(c) {
+    const b = botao('Detalhes', () => abrirDetalhe(c, b), 'btn secondary vendas-pdv-detalhes comandas-detalhes');
     b.setAttribute('aria-label', 'Detalhes da comanda ' + c.numero);
-    box.append(U.situacao(rotulo, tom), b);
-    return box;
+    return b;
   }
 
   async function abrirDetalhe(c, botaoQueAbriu) {
@@ -221,30 +229,59 @@
   function colunas() {
     if (estado.aba === 'fechadas') {
       return [
-        ['Comanda', comanda],
-        ['Situação', situacaoCelula],
-        ['Abriu', (c) => quando(c.abertaEm), 'caixa-num'],
-        ['Fechou', (c) => quando(c.fechadaEm), 'caixa-num'],
-        ['Ficou aberta', regua],
-        ['Itens', itens, 'caixa-num'],
-        ['Valor', valor, 'caixa-num'],
+        ['Comanda', comanda, 'comandas-c-numero'],
+        ['Situação', situacaoCelula, 'comandas-c-situacao'],
+        ['Abriu', (c) => quando(c.abertaEm), 'comandas-hora'],
+        ['Fechou', (c) => quando(c.fechadaEm), 'comandas-hora'],
+        ['Ficou aberta', regua, 'comandas-c-regua'],
+        ['Itens', itens, 'comandas-num'],
+        ['Valor', valor, 'comandas-num'],
         ['Lançou', (c) => c.lancadoPor || '—'],
       ];
     }
     return [
-      ['Comanda', comanda],
-      ['Situação', situacaoCelula],
-      ['Abriu', (c) => quando(c.abertaEm), 'caixa-num'],
-      ['Tempo aberta', regua],
-      ['Itens', itens, 'caixa-num'],
-      ['Valor', valor, 'caixa-num'],
+      ['Comanda', comanda, 'comandas-c-numero'],
+      ['Situação', situacaoCelula, 'comandas-c-situacao'],
+      ['Abriu', (c) => quando(c.abertaEm), 'comandas-hora'],
+      ['Tempo aberta', regua, 'comandas-c-regua'],
+      ['Itens', itens, 'comandas-num'],
+      ['Valor', valor, 'comandas-num'],
       ['Lançou', (c) => c.lancadoPor || '—'],
-      ['Último item', (c) => quando(c.ultimoLancamentoEm), 'caixa-num'],
+      ['Último item', (c) => quando(c.ultimoLancamentoEm), 'comandas-hora'],
     ];
   }
 
-  // Destaque da linha: abandonada (vermelho) e mais de 1 dia aberta (âmbar). O texto da situação também diz.
-  const classeLinha = (c) => (c.situacao === 'abandonada' ? 'comandas-linha alerta' : (c.segundosAberta || 0) > 86400 && estado.aba !== 'fechadas' ? 'comandas-linha velha' : 'comandas-linha');
+  // Destaque da linha: abandonada (vermelho) e mais de 1 dia aberta (âmbar; a "conta" fica fora, R-248). O texto da
+  // situação também diz.
+  const classeLinha = (c) => (c.situacao === 'abandonada' ? 'comandas-linha alerta' : (c.segundosAberta || 0) > 86400 && estado.aba !== 'fechadas' && c.situacao !== 'conta' ? 'comandas-linha velha' : 'comandas-linha');
+
+  /**
+   * Linhas em grade (não <table>): colunas na tela larga e cartão empilhado abaixo de 1024 px, sem rolar de lado.
+   * Cada campo leva o rótulo (escondido na tela larga, onde o cabeçalho mostra; sempre lido pelo leitor de tela).
+   */
+  function linhas(cols, itens, vazio) {
+    if (!itens.length) return corpo(U.vazio(vazio));
+    const box = el('div', 'comandas-lista aba-' + estado.aba + (animar ? ' animar' : ''));
+    const cab = el('div', 'comandas-cab');
+    cab.setAttribute('aria-hidden', 'true');
+    cols.forEach(([titulo, , classe]) => cab.append(el('span', classe || null, titulo)));
+    cab.append(el('span'));
+    const ul = el('ul', 'comandas-linhas');
+    ul.setAttribute('aria-label', 'Comandas');
+    itens.forEach((c) => {
+      const li = el('li', classeLinha(c));
+      cols.forEach(([titulo, valorDe, classe]) => {
+        const cel = el('div', 'comandas-cel' + (classe ? ' ' + classe : ''));
+        const v = valorDe(c);
+        cel.append(el('span', 'comandas-rotulo', titulo + ': '), typeof v === 'string' ? el('span', null, v) : v);
+        li.append(cel);
+      });
+      li.append(botaoDetalhes(c));
+      ul.append(li);
+    });
+    box.append(cab, ul);
+    return box;
+  }
 
   function lista() {
     const v = estado.lista;
@@ -252,7 +289,7 @@
     const s = U.secao(titulos[estado.aba], v.total);
     if (estado.aba === 'status4') s.append(corpo(U.nota('O CREARE nunca fechou estas comandas e não diz o que o status 4 significa. Ficam separadas para conferência.')));
     const vazios = { abertas: 'Nenhuma comanda em aberto agora.', fechadas: 'Nenhuma comanda fechada neste dia.', status4: 'Nenhuma comanda em status 4.' };
-    s.append(U.tabela(colunas(), v.itens, { vazioTexto: vazios[estado.aba], classeLinha }));
+    s.append(linhas(colunas(), v.itens, vazios[estado.aba]));
     if (v.total > estado.porPagina) {
       const paginas = Math.ceil(v.total / estado.porPagina);
       const inicio = (estado.pagina - 1) * estado.porPagina + 1;
@@ -275,6 +312,7 @@
     partes.erro.replaceChildren(...(estado.erro ? [corpo(el('p', 'profiles-error', estado.erro), botao('Tentar de novo', () => consultar(), 'btn secondary'))] : []));
     partes.indicadores.replaceChildren(indicadores());
     partes.resultados.replaceChildren(lista());
+    if (estado.lista.itens.length) animar = false;
     partes.resultados.setAttribute('aria-busy', String(estado.carregando));
   }
 
@@ -297,6 +335,7 @@
   }
 
   function montar() {
+    animar = true;
     partes = { topo: topo(), erro: el('div'), indicadores: el('div'), resultados: el('div', 'vendas-pdv-resultados comandas-resultados') };
     tela.body.replaceChildren(partes.topo.barra, partes.topo.aviso, partes.erro, partes.indicadores, filtros(), partes.resultados);
     consultar();

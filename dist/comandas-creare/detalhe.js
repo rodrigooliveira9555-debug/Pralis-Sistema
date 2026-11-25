@@ -20,7 +20,9 @@
     const dl = el('dl', 'vendas-pdv-detalhe-linhas');
     pares.forEach(([t, v, classe]) => {
       const d = el('div', classe || null);
-      d.append(el('dt', null, t), el('dd', null, v));
+      // Texto ou nó pronto (o item cancelado traz o produto riscado e o motivo).
+      const celula = (tag, x) => { const n = el(tag); if (x instanceof Node) n.append(x); else n.textContent = x; return n; };
+      d.append(celula('dt', t), celula('dd', v));
       dl.append(d);
     });
     return dl;
@@ -55,11 +57,12 @@
       ])));
     }
     if (cancelados.length) {
-      const dl = linhas(cancelados.map((i) => [
-        numero(i.quantidade) + ' × ' + i.descricao + ' — cancelado' + (i.motivoCancelamento ? ': ' + i.motivoCancelamento : ''),
-        moeda(i.valorTotalCentavos),
-        'comandas-item-cancelado',
-      ]));
+      // Só o produto fica riscado; o motivo continua legível.
+      const dl = linhas(cancelados.map((i) => {
+        const t = el('span');
+        t.append(el('s', null, numero(i.quantidade) + ' × ' + i.descricao), el('span', 'comandas-motivo', ' — cancelado' + (i.motivoCancelamento ? ': ' + i.motivoCancelamento : '')));
+        return [t, el('s', null, moeda(i.valorTotalCentavos)), 'comandas-item-cancelado'];
+      }));
       dl.setAttribute('aria-label', 'Itens cancelados');
       nos.push(el('p', 'comandas-subtitulo', cancelados.length === 1 ? '1 item cancelado' : cancelados.length + ' itens cancelados'), dl);
     }

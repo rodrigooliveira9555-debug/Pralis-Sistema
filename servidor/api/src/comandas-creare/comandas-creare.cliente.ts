@@ -87,6 +87,7 @@ export async function buscarIndicadores(diaPedido?: string) {
     abandonadas: inteiro(d["abandonadas"]),
     contas: inteiro(d["contas"]),
     esquecidas: inteiro(d["esquecidas"]),
+    status4: inteiro(d["status4"]),
     valorEmAbertoCentavos: inteiro(d["valorEmAbertoCentavos"]),
     dia: texto(d["dia"]),
     fechadasNoDia: inteiro(d["fechadasNoDia"]),

@@ -3,10 +3,10 @@
    assinatura da tela), o destaque das linhas paradas e a linha do tempo do detalhe. Tons pelos tokens do S2:
    --ui-valor-saida (alerta) e o âmbar das notas; a situação sempre vem escrita, a cor nunca é a única pista. */
 .comandas-resultados { display: grid; gap: 12px; }
-.comandas-resultados[aria-busy="true"] .compras-tabela-box { opacity: .55; transition: opacity .2s ease; }
+.comandas-resultados[aria-busy="true"] .comandas-lista { opacity: .55; transition: opacity .2s ease; }
 
 /* Abas com contador. */
-.comandas-creare-view .vendas-pdv-aba { display: inline-flex; align-items: center; gap: 8px; }
+.comandas-creare-view .vendas-pdv-aba { display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; }
 .comandas-aba-contador { min-width: 22px; padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, var(--menu-accent, #eab308) 16%, transparent); font: 600 var(--ui-note, 11px)/18px var(--ui-font); font-variant-numeric: tabular-nums; text-align: center; }
 .comandas-aba-contador[hidden] { display: none; }
 .vendas-pdv-aba.ativa .comandas-aba-contador { background: rgb(255 255 255 / .28); }
@@ -17,6 +17,7 @@
 
 /* Indicadores: cinco placas. */
 .comandas-numeros { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.comandas-numeros .vendas-pdv-numero strong { overflow-wrap: normal; white-space: nowrap; font-size: clamp(18px, 2.2vw, 24px); }
 .comandas-creare-view .vendas-pdv-numero.tom-alerta strong { color: var(--ui-valor-saida, #b91c1c); }
 .comandas-creare-view .vendas-pdv-numero.tom-atencao strong { color: #92400e; }
 body.dark-theme .comandas-creare-view .vendas-pdv-numero.tom-atencao strong { color: #fbbf24; }
@@ -36,19 +37,60 @@ body.dark-theme .comandas-diferenca { color: #fbbf24; }
 .comandas-regua-celula { display: grid; gap: 4px; min-width: 112px; }
 .comandas-regua-texto { font: 500 var(--ui-text)/18px var(--ui-font); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .comandas-regua { display: block; height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--menu-accent, #eab308) 14%, var(--theme-card, #fff)); overflow: hidden; }
-.comandas-regua-cheio { display: block; height: 100%; width: 100%; border-radius: inherit; background: var(--menu-accent, #eab308); transform: scaleX(var(--parte, 0)); transform-origin: left center; animation: comandas-encher .6s cubic-bezier(.2, .8, .2, 1) both; }
+.comandas-regua-cheio { display: block; height: 100%; width: 100%; border-radius: inherit; background: var(--menu-accent, #eab308); transform: scaleX(var(--parte, 0)); transform-origin: left center; }
+.comandas-lista.animar .comandas-regua-cheio { animation: comandas-encher .6s cubic-bezier(.2, .8, .2, 1) both; }
 .comandas-regua.tom-atencao .comandas-regua-cheio { background: #d97706; }
 .comandas-regua.tom-alerta .comandas-regua-cheio { background: var(--ui-valor-saida, #b91c1c); }
 .comandas-regua.tom-neutro .comandas-regua-cheio { background: var(--navigation-ink, #71717a); }
 @keyframes comandas-encher { from { transform: scaleX(0); } }
 
-/* Linhas paradas: abandonada (fio vermelho à esquerda) e aberta há mais de 1 dia (fio âmbar). */
-.comandas-creare-view .compras-tabela tr.comandas-linha.alerta td:first-child { box-shadow: inset 3px 0 0 var(--ui-valor-saida, #b91c1c); }
-.comandas-creare-view .compras-tabela tr.comandas-linha.alerta { background: color-mix(in srgb, var(--ui-valor-saida, #b91c1c) 5%, transparent); }
-.comandas-creare-view .compras-tabela tr.comandas-linha.velha td:first-child { box-shadow: inset 3px 0 0 #d97706; }
-/* Linhas entram com fade + 4 px (180 ms); nada se move com prefers-reduced-motion. */
-.comandas-creare-view .compras-tabela tr.comandas-linha { animation: comandas-entrar .18s ease-out both; }
+/* Movimento: só na primeira pintura (classe .animar); linhas entram com fade + 4 px e a régua enche.
+   Lista em grade: cabeçalho + uma linha por comanda. A lista decide pela própria largura (container query):
+   colunas a partir de 1100 px; abaixo disso, cartão empilhado, sem rolar de lado. */
+.comandas-lista { container: comandas-lista / inline-size; --grade: minmax(72px, .6fr) minmax(124px, .9fr) 92px minmax(150px, 1.4fr) 88px 112px minmax(84px, .8fr) 92px auto; }
+.comandas-lista.aba-fechadas { --grade: minmax(72px, .6fr) minmax(104px, .8fr) 92px 92px minmax(140px, 1.3fr) 88px 112px minmax(84px, .8fr) auto; }
+.comandas-cab, .comandas-linhas > li { display: grid; grid-template-columns: var(--grade); align-items: center; column-gap: 20px; }
+.comandas-cab { padding: 10px 14px; border-bottom: 1px solid var(--layout-line, #dedee3); font: 600 var(--ui-note, 11px)/16px var(--ui-font); text-transform: uppercase; letter-spacing: .04em; color: var(--layout-ink, #606066); }
+.comandas-linhas { list-style: none; margin: 0; padding: 0; }
+.comandas-linhas > li { position: relative; min-height: 60px; padding: 10px 14px; border-bottom: 1px solid var(--layout-line, #dedee3); font: 400 var(--ui-text)/20px var(--ui-font); }
+.comandas-lista.animar .comandas-linhas > li { animation: comandas-entrar .18s ease-out both; }
+.comandas-linhas > li:last-child { border-bottom: 0; }
+.comandas-cel { min-width: 0; }
+.comandas-num, .comandas-cab .comandas-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.comandas-hora { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.comandas-rotulo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Selo da situação: mesma altura e cantos do botão Detalhes, uma linha só, ponto da cor da situação à esquerda. */
+.comandas-creare-view .compras-situacao.comandas-selo { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 12px; border-radius: var(--ui-field-radius, 8px); font: 600 13px/18px var(--ui-font); white-space: nowrap; overflow-wrap: normal; justify-self: start; }
+.comandas-selo::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.comandas-creare-view .btn.comandas-detalhes { min-height: 32px; padding: 0 12px; justify-self: end; }
 @keyframes comandas-entrar { from { opacity: 0; transform: translateY(4px); } }
+
+/* Linhas paradas: abandonada (fio vermelho à esquerda, fundo tingido) e aberta há mais de 1 dia (fio âmbar). */
+.comandas-linhas > li.alerta { background: color-mix(in srgb, var(--ui-valor-saida, #b91c1c) 5%, transparent); box-shadow: inset 3px 0 0 var(--ui-valor-saida, #b91c1c); }
+.comandas-linhas > li.velha { box-shadow: inset 3px 0 0 #d97706; }
+
+@container comandas-lista (max-width: 1099px) {
+  .comandas-cab { display: none; }
+  .comandas-linhas > li { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 8px; padding: 14px 16px; }
+  .comandas-rotulo { position: static; width: auto; height: auto; clip: auto; display: block; font: 500 var(--ui-note, 11px)/16px var(--ui-font); color: var(--layout-ink, #606066); }
+  .comandas-c-numero .comandas-rotulo, .comandas-c-situacao .comandas-rotulo { position: absolute; width: 1px; height: 1px; clip: rect(0 0 0 0); }
+  .comandas-c-situacao { justify-self: end; }
+  .comandas-creare-view .compras-situacao.comandas-selo { min-height: 36px; }
+  /* No cartão: número e selo em cima, os dados em grade, a régua inteira embaixo e o Detalhes no canto. */
+  .comandas-c-regua { grid-column: 1 / -1; order: 10; }
+  .comandas-num { text-align: left; }
+  .comandas-creare-view .btn.comandas-detalhes { order: 11; grid-column: 1 / -1; justify-self: end; min-height: 44px; min-width: 140px; }
+}
+@container comandas-lista (min-width: 560px) and (max-width: 1099px) {
+  .comandas-linhas > li { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .comandas-c-numero { grid-column: span 2; }
+  .comandas-c-situacao { grid-column: span 2; }
+}
+/* Cartão largo (tablet deitado, 1024): os cinco dados numa linha só. */
+@container comandas-lista (min-width: 800px) and (max-width: 1099px) {
+  .comandas-linhas > li { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .comandas-c-numero { grid-column: span 3; }
+}
 
 /* Linha do tempo do detalhe: a régua na vertical, um ponto por acontecimento. */
 .comandas-tempo { list-style: none; margin: 0; padding: 0 0 0 4px; display: grid; gap: 0; }
@@ -63,7 +105,8 @@ body.dark-theme .comandas-diferenca { color: #fbbf24; }
 .comandas-tempo-hora { font-variant-numeric: tabular-nums; color: var(--layout-ink, #606066); white-space: nowrap; }
 .comandas-tempo-texto { min-width: 0; overflow-wrap: anywhere; }
 .comandas-subtitulo { margin: 6px 0 0; font: 600 var(--ui-note, 11px)/16px var(--ui-font); color: var(--layout-ink, #606066); }
-.vendas-pdv-detalhe-linhas > .comandas-item-cancelado dt { text-decoration: line-through; color: var(--layout-ink, #606066); }
+.vendas-pdv-detalhe-linhas > .comandas-item-cancelado { color: var(--layout-ink, #606066); }
+.comandas-motivo { font-style: italic; }
 .vendas-pdv-detalhe-linhas > .comandas-diferenca dd { color: #92400e; }
 body.dark-theme .vendas-pdv-detalhe-linhas > .comandas-diferenca dd { color: #fbbf24; }
 
@@ -71,9 +114,9 @@ body.dark-theme .vendas-pdv-detalhe-linhas > .comandas-diferenca dd { color: #fb
   .comandas-numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .comandas-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .comandas-tempo-passo { grid-template-columns: 64px minmax(0, 1fr); }
-  .comandas-creare-view .btn.vendas-pdv-detalhes, .comandas-creare-view .vendas-pdv-aba { min-height: 44px; }
+  .comandas-creare-view .vendas-pdv-aba { min-height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .comandas-regua-cheio, .comandas-creare-view .compras-tabela tr.comandas-linha { animation: none; }
-  .comandas-resultados[aria-busy="true"] .compras-tabela-box { transition: none; }
+  .comandas-lista.animar .comandas-regua-cheio, .comandas-lista.animar .comandas-linhas > li { animation: none; }
+  .comandas-resultados[aria-busy="true"] .comandas-lista { transition: none; }
 }
