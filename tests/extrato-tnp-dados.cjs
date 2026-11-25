@@ -47,5 +47,10 @@ assert.equal(D.nomeConta({ tipo: 'CREDIT', nome: 'CAIXA VISA EMPRESARIAL', detal
 const csv = D.csv(D.todos(dados), [{ contaId: 'c1', tipo: 'BANK', subtipo: 'CHECKING_ACCOUNT', detalhes: {} }]);
 assert.ok(csv.startsWith('﻿Data;Hora;Conta;'));
 assert.ok(csv.includes('24/11/26;;Corrente;LANC b;Boleto;Energia elétrica;;11.222.333/0001-44;;;-25,00;Lançado'));
+// Texto do banco que parece fórmula sai com apóstrofo (não roda no Excel); o valor negativo continua número.
+const perigoso = D.csv([l('x', -100, { descricao: '=HYPERLINK("http://mal")', contraparte: '+55 golpe' })], []);
+assert.ok(perigoso.includes(`;"'=HYPERLINK(""http://mal"")";`));
+assert.ok(perigoso.includes(";'+55 golpe;"));
+assert.ok(perigoso.includes(';-1,00;'));
 
 console.log('extrato-tnp-dados: ok');

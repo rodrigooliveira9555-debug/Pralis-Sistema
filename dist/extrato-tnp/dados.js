@@ -143,7 +143,12 @@
 
   function csv(lista, contas) {
     const nomes = new Map(contas.map((c) => [c.contaId, nomeConta(c)]));
-    const campo = (v) => { const t = String(v == null ? '' : v); return /[";\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
+    // Texto que começa com = + - @ viraria fórmula no Excel: ganha um apóstrofo na frente (o valor em reais fica número).
+    const campo = (v, numero = false) => {
+      let t = String(v == null ? '' : v);
+      if (!numero && /^[=+\-@\t\r]/.test(t)) t = "'" + t;
+      return /[";\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+    };
     const linhas = [['Data', 'Hora', 'Conta', 'Descrição', 'Operação', 'Categoria', 'Quem pagou/recebeu', 'Documento', 'Estabelecimento', 'Parcela', 'Valor', 'Situação']];
     lista.forEach((l) => {
       const d = l.detalhes;
@@ -152,7 +157,8 @@
         d.cartao && d.cartao.parcelas ? d.cartao.parcela + '/' + d.cartao.parcelas : '',
         (l.valorCentavos / 100).toFixed(2).replace('.', ','), l.situacao === 'PENDING' ? 'Pendente' : 'Lançado']);
     });
-    return '﻿' + linhas.map((l) => l.map(campo).join(';')).join('\r\n');
+    const COLUNA_VALOR = 10;
+    return '﻿' + linhas.map((l, i) => l.map((v, c) => campo(v, i > 0 && c === COLUNA_VALOR)).join(';')).join('\r\n');
   }
 
   function baixarCsv(lista, contas) {
