@@ -55,15 +55,23 @@
     const est = { parcelas: [], atual: '', tipo: '', fechado: false };
     const centavos = (s) => (s ? parseInt(s, 10) : 0);
     const soma = () => est.parcelas.reduce((n, p) => n + p.c, 0);
-    const tela = entrada('text', '', { readOnly: true, placeholder: 'R$ 0,00', inputMode: 'none', autocomplete: 'off' });
-    tela.classList.add('transferencia-calc-tela'); tela.setAttribute('aria-label', rotulo);
+    const tela = entrada('text', '', { readOnly: true, placeholder: 'Toque para digitar o valor', inputMode: 'none', autocomplete: 'off' });
+    tela.classList.add('transferencia-calc-tela'); tela.setAttribute('aria-label', rotulo); tela.setAttribute('aria-expanded', 'false');
     const resumo = el('p', 'transferencia-calc-resumo'); resumo.setAttribute('role', 'status');
     const aviso = el('small', 'transferencia-calc-aviso'); aviso.setAttribute('role', 'alert');
-    const tipos = U.chips([['notas', 'Notas'], ['moedas', 'Moedas']], '', (v) => { est.tipo = v; aviso.textContent = ''; });
+    const tipos = U.chips([['notas', 'Notas'], ['moedas', 'Moedas']], '', (v) => { est.tipo = v; aviso.textContent = ''; mostrar(); });
+    const por = (t) => est.parcelas.filter((p) => p.t === t).reduce((n, p) => n + p.c, 0);
+    let botaoSoma; let botaoIgual;
+    // O acumulado por tipo vai ficando embaixo: "R$ 100,00 notas   R$ 50,00 moedas   = R$ 150,00".
     const mostrar = () => {
       tela.value = est.atual ? reais(centavos(est.atual)) : soma() > 0 ? reais(soma()) : '';
-      resumo.textContent = est.fechado ? 'Total da transferência' : est.parcelas.length ? 'Soma até agora: ' + reais(soma()) + ' — digite o próximo valor' : '';
+      const partes = [['notas', 'notas'], ['moedas', 'moedas']].filter(([t]) => por(t) > 0).map(([t, nome]) => reais(por(t)) + ' ' + nome);
+      resumo.textContent = partes.length ? partes.join('   ') + '   = ' + reais(soma()) : '';
       tipos.atualizar(est.tipo);
+      // "+" só vale com um valor digitado e Notas ou Moedas escolhido (ou depois do "=", para continuar somando); "=" também, ou sem número novo e já com parcelas.
+      const pronto = centavos(est.atual) > 0 && Boolean(est.tipo);
+      if (botaoSoma) botaoSoma.disabled = !(pronto || est.fechado);
+      if (botaoIgual) botaoIgual.disabled = est.fechado || !(pronto || (!est.atual && est.parcelas.length > 0));
     };
     const avisar = (t) => { aviso.textContent = t; };
     const recomecar = () => { est.parcelas = []; est.atual = ''; est.tipo = ''; est.fechado = false; };
@@ -96,7 +104,7 @@
       if (est.fechado) return;
       if (est.atual) { if (!guardar()) return; }
       else if (!est.parcelas.length) { avisar('Digite um valor antes.'); return; }
-      est.fechado = true; aviso.textContent = ''; mostrar();
+      est.fechado = true; aviso.textContent = ''; mostrar(); mostrarPainel(false);
     };
     const tecla = (texto, acao, classe, rotuloAria) => {
       const b = el('button', 'transferencia-tecla' + (classe ? ' ' + classe : ''), texto); b.type = 'button'; b.onclick = acao;
@@ -105,32 +113,39 @@
     };
     const teclado = el('div', 'transferencia-teclado');
     const d = (n) => tecla(String(n), () => digito(String(n)));
-    teclado.append(d(7), d(8), d(9), tecla('+', somar, 'soma', 'Somar o próximo valor'), d(4), d(5), d(6), d(1), d(2), d(3), tecla('=', igual, 'igual', 'Fechar o total'),
-      tecla('⌫', apagar, 'apagar', 'Apagar'), d(0));
-    // Teclado do computador: números, Backspace, "+" e "=" (ou Enter, que não envia o formulário).
+    botaoSoma = tecla('+', somar, 'soma', 'Somar o próximo valor');
+    botaoIgual = tecla('=', igual, 'igual', 'Fechar o total');
+    teclado.append(d(7), d(8), d(9), botaoSoma, d(4), d(5), d(6), d(1), d(2), d(3), botaoIgual, tecla('⌫', apagar, 'apagar', 'Apagar'), d(0));
+    // A calculadora só aparece quando se toca na caixa do valor; fecha ao fechar a conta com "=", no Esc ou tocando de novo na caixa.
+    const painel = el('div', 'transferencia-calc-painel'); painel.hidden = true; painel.id = 'transferencia-calc-painel';
+    painel.append(teclado, el('span', 'transferencia-calc-legenda', 'O valor digitado é de:'), tipos, aviso);
+    tela.setAttribute('aria-controls', painel.id);
+    const mostrarPainel = (sim) => { painel.hidden = !sim; tela.setAttribute('aria-expanded', String(sim)); };
+    tela.addEventListener('click', () => mostrarPainel(painel.hidden));
+    // Teclado do computador: números, Backspace, "+" e "=" (ou Enter, que não envia o formulário). Digitar com a calculadora fechada abre.
     tela.addEventListener('keydown', (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
-      if (/^[0-9]$/.test(e.key)) digito(e.key);
+      if (e.key === 'Escape' && !painel.hidden) { mostrarPainel(false); e.preventDefault(); e.stopPropagation(); return; }
+      if (e.key === ' ' || (e.key === 'Enter' && painel.hidden)) { mostrarPainel(painel.hidden); e.preventDefault(); return; }
+      if (/^[0-9]$/.test(e.key)) { mostrarPainel(true); digito(e.key); }
       else if (e.key === 'Backspace') apagar();
-      else if (e.key === '+') somar();
-      else if (e.key === '=' || e.key === 'Enter') igual();
+      else if (e.key === '+') { if (!botaoSoma.disabled) somar(); }
+      else if (e.key === '=' || e.key === 'Enter') { if (!botaoIgual.disabled) igual(); }
       else return;
       e.preventDefault();
     });
     const no = el('div', 'compras-campo transferencia-valor');
     const calc = el('div', 'transferencia-calc');
-    calc.append(tela, resumo, teclado, el('span', 'transferencia-calc-legenda', 'O valor digitado é de:'), tipos, aviso);
+    calc.append(tela, resumo, painel);
     no.append(el('span', 'compras-rotulo', rotulo), calc);
     mostrar();
     return {
       no,
       tela,
-      // O que ainda está sendo digitado conta, desde que tenha o tipo escolhido.
+      // Só vale o valor FECHADO com "=" (o que está sendo digitado, sem fechar, não conta).
       finalizar() {
-        if (centavos(est.atual) && !est.tipo) return { erro: 'Escolha Notas ou Moedas para o valor digitado.' };
-        const todas = est.parcelas.concat(centavos(est.atual) ? [{ c: centavos(est.atual), t: est.tipo }] : []);
-        const por = (t) => todas.filter((p) => p.t === t).reduce((n, p) => n + p.c, 0);
-        return { total: por('notas') + por('moedas'), notas: por('notas'), moedas: por('moedas') };
+        if (!est.fechado) return est.atual || est.parcelas.length ? { erro: 'Clique em = para fechar o valor.' } : { total: 0 };
+        return { total: soma(), notas: por('notas'), moedas: por('moedas') };
       },
     };
   }
