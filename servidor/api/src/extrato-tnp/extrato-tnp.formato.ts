@@ -12,7 +12,90 @@ import type {
 // Lista branca da resposta do coletor (GET /api/v1/extrato): cada campo que vai para a tela é escolhido aqui, um
 // por um, com o tipo certo. O que o coletor mandar a mais é ignorado. Dinheiro em CENTAVOS inteiros.
 
-type Bruto = Record<string, unknown>;
+// Os campos do contrato do coletor (o resto do que vier é ignorado).
+type Campo =
+  | "aplicadoAutomaticoCentavos"
+  | "ate"
+  | "atualizadoNaPluggy"
+  | "bandeira"
+  | "cartao"
+  | "cartoesAdicionais"
+  | "categoria"
+  | "chequeEspecialLimiteCentavos"
+  | "chequeEspecialNaoContratadoCentavos"
+  | "chequeEspecialUsadoCentavos"
+  | "cnae"
+  | "cnpj"
+  | "conexoes"
+  | "consentimentoExpira"
+  | "contaId"
+  | "contas"
+  | "contraparte"
+  | "data"
+  | "dataCompra"
+  | "descricao"
+  | "descricaoBanco"
+  | "desde"
+  | "detalhes"
+  | "dia"
+  | "dias"
+  | "disponivelCentavos"
+  | "documento"
+  | "em"
+  | "emissor"
+  | "encargosCentavos"
+  | "entradas"
+  | "erro"
+  | "estabelecimento"
+  | "faturaId"
+  | "faturas"
+  | "fechamento"
+  | "final"
+  | "forma"
+  | "geradoEm"
+  | "hoje"
+  | "instituicao"
+  | "investimentoId"
+  | "investimentos"
+  | "lancamentos"
+  | "lidoEm"
+  | "limiteCentavos"
+  | "liquido"
+  | "mcc"
+  | "minimoCentavos"
+  | "motivo"
+  | "nome"
+  | "numero"
+  | "ok"
+  | "operacao"
+  | "operacaoDetalhe"
+  | "pagamentoMinimoCentavos"
+  | "pagoCentavos"
+  | "parcela"
+  | "parcelas"
+  | "parcelavel"
+  | "pendentes"
+  | "periodo"
+  | "quantidade"
+  | "ramo"
+  | "rentabilidade12m"
+  | "saidas"
+  | "saldoCentavos"
+  | "saldoContabilCentavos"
+  | "saldoLidoEm"
+  | "saldoTotalCentavos"
+  | "situacao"
+  | "subtipo"
+  | "tarifa"
+  | "tipo"
+  | "tipoPagamento"
+  | "todasAsContas"
+  | "totalCentavos"
+  | "transacaoId"
+  | "ultimaBusca"
+  | "valorCentavos"
+  | "vencimento";
+type Bruto = Partial<Record<Campo, unknown>>;
 const texto = (v: unknown) =>
   v === null || v === undefined ? null : String(v);
 // Texto opcional curto: some quando vazio (o banco nem sempre informa) e nunca passa de 200 caracteres.
@@ -32,10 +115,11 @@ const lista = (v: unknown): Bruto[] =>
 const objeto = (v: unknown): Bruto =>
   v && typeof v === "object" && !Array.isArray(v) ? (v as Bruto) : {};
 /** Tira os campos undefined (o JSON fica só com o que o banco informou). */
-const limpo = <T extends object>(o: T): T =>
+type SemVazios<T> = { [K in keyof T]?: Exclude<T[K], undefined> };
+const limpo = <T extends object>(o: T): SemVazios<T> =>
   Object.fromEntries(
     Object.entries(o).filter(([, v]) => v !== undefined),
-  ) as T;
+  ) as SemVazios<T>;
 
 // Sem o campo (coletor antigo), a conta é bancária: era o único tipo antes do cartão.
 const tipoConta = (v: unknown): "BANK" | "CREDIT" =>

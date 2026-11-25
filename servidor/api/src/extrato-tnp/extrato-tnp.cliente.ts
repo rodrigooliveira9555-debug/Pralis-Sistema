@@ -23,7 +23,7 @@ const indisponivel = (motivo: string) =>
     { motivo },
   );
 
-type Bruto = Record<string, unknown>;
+type Bruto = Partial<Record<"ok" | "mensagem", unknown>>;
 const objeto = (v: unknown): Bruto =>
   v && typeof v === "object" ? (v as Bruto) : {};
 
