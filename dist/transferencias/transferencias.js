@@ -222,7 +222,7 @@
         const campoDestino = campo('Destino / Entrada *', destino);
         const marcadas = new Set();
         const contagem = el('small', 'profiles-note'); contagem.setAttribute('role', 'status');
-        const listaContas = el('div', 'transferencia-contas'); listaContas.setAttribute('role', 'group'); listaContas.setAttribute('aria-label', 'Destino / Entrada: contas');
+        const listaContas = el('div', 'compras-hier transferencia-contas'); listaContas.setAttribute('role', 'group'); listaContas.setAttribute('aria-label', 'Destino / Entrada: contas');
         const campoContas = el('div', 'compras-campo'); campoContas.append(el('span', 'compras-rotulo', 'Destino / Entrada *'), listaContas, contagem);
         const candidatas = () => contas.filter((n) => n !== origem.value);
         function contarContas() {
@@ -234,10 +234,13 @@
           destino.replaceChildren(new Option('—', ''), ...lista.map((n) => new Option(n, n))); destino.value = lista.includes(atual) ? atual : '';
           [...marcadas].forEach((n) => { if (!lista.includes(n)) marcadas.delete(n); });
           listaContas.replaceChildren(...lista.map((nome) => {
-            const b = el('button', 'transferencia-conta'); b.type = 'button'; b.setAttribute('role', 'checkbox');
+            const b = el('button', 'compras-hier-linha transferencia-conta'); b.type = 'button'; b.setAttribute('role', 'checkbox');
             const icone = el('span', 'compras-hier-icone'); icone.setAttribute('aria-hidden', 'true'); icone.append(el('span', 'sigla-text', 'CNT'));
             const marca = el('span', 'transferencia-conta-marca'); marca.innerHTML = MARCA;
-            b.append(icone, el('span', 'transferencia-conta-nome', nome), marca);
+            // Mesmo desenho da lista em árvore (seta, caixa, ícone, nome e detalhe), com a marca redonda no lugar da caixa de marcar; a seta fica apagada (conta não tem níveis abaixo).
+            const seta = el('span', 'compras-hier-seta'); seta.setAttribute('aria-hidden', 'true'); seta.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+            const texto = el('span', 'compras-hier-texto'); texto.append(el('b', null, nome), el('small', null, 'Conta ativa'));
+            b.append(seta, marca, icone, texto);
             const pintar = () => b.setAttribute('aria-checked', String(marcadas.has(nome)));
             b.onclick = () => { if (marcadas.has(nome)) marcadas.delete(nome); else marcadas.add(nome); pintar(); contarContas(); };
             pintar();
