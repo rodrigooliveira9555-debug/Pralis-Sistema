@@ -371,6 +371,9 @@ body.dark-theme .compras-texto-auto { color: #a7e8bd; }
 
 /* Formulários largos: blocos de lista ocupam a largura toda do diálogo. */
 .compras-form > .compras-fieldset-lista, .compras-form > .compras-largo { grid-column: 1 / -1; }
+/* Lançamentos: linhas da discriminação, botão Adicionar item e Vale presente, com o mesmo respiro dos quadros (12 px). */
+.compras-discriminacao { display: grid; gap: 12px; }
+.compras-discriminacao > :empty { display: none; }
 .compras-fieldset > .compras-largo, .compras-fieldset > .profiles-note { grid-column: 1 / -1; }
 .compras-dialog .compras-interruptor, .compras-content .compras-interruptor { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .compras-dialog .compras-interruptor > input { flex: 0 0 20px; margin: 0; }
