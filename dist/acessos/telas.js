@@ -294,13 +294,14 @@
   function nomeVertical(b) {
     const bt = el('button', 'acessos-nome-vert');
     bt.type = 'button';
-    bt.title = 'Mostrar a coluna de ' + b.alvo.nome;
+    const nome = b.alvo ? b.alvo.nome : 'Escolher ' + ROTULO_GRUPO[b.tipo].toLocaleLowerCase('pt-BR');
+    bt.title = 'Mostrar a coluna: ' + nome;
     bt.setAttribute('aria-label', bt.title);
     bt.setAttribute('aria-expanded', 'false');
     const selo = el('span', 'acessos-sel-selo');
     selo.style.setProperty('--selo-cor', U.corOrigem('despesas', '#ef4444'));
     selo.innerHTML = U.svg(GLIFO_TIPO[b.tipo]);
-    bt.append(selo, el('span', 'acessos-nome-vert-txt', b.alvo.nome));
+    bt.append(selo, el('span', 'acessos-nome-vert-txt', nome));
     bt.onclick = () => {
       const irmaos = estado.blocos.filter((x) => x.tipo === b.tipo);
       if (estado.linhas[b.tipo] >= 1) { estado.linhas[b.tipo] = 0; irmaos.forEach((x) => { x.recolhida = x !== b; }); } else b.recolhida = false;
@@ -447,7 +448,8 @@
       const tudoAberto = menu.length > 0 && menu.every((g) => estado.abertos.has(g.n) && g.secoes.every((s) => estado.secAbertas.has(g.n + '|' + s.n)));
       const fim = el('div', 'acessos-quem-fim');
       const escolhidas = estado.blocos.filter((b) => b.alvo);
-      const algumaAberta = escolhidas.some((b) => !ocultaCol(b));
+      const todasAsColunas = estado.blocos;
+      const algumaAberta = todasAsColunas.some((b) => !ocultaCol(b));
       const conta = el('span', 'compras-conta', String(totalTelas));
       conta.title = totalTelas + (totalTelas === 1 ? ' tela' : ' telas');
       const tudo = el('button', 'shortcut-circle compras-redondo acessos-expandir-tudo');
@@ -467,13 +469,13 @@
       const lado = el('button', 'shortcut-circle compras-redondo acessos-expandir-tudo acessos-colunas-geral');
       lado.type = 'button';
       lado.innerHTML = U.svg('<path d="m9 5-6 7 6 7M15 5l6 7-6 7"/>');
-      lado.disabled = !escolhidas.length;
+      lado.disabled = !todasAsColunas.length;
       lado.setAttribute('aria-expanded', String(algumaAberta));
       lado.title = algumaAberta ? 'Recolher todas as colunas' : 'Mostrar todas as colunas';
       lado.setAttribute('aria-label', lado.title);
       lado.onclick = () => {
         if (algumaAberta) TIPOS.forEach((t) => { estado.linhas[t] = 1; });
-        else { TIPOS.forEach((t) => { estado.linhas[t] = 0; }); escolhidas.forEach((b) => { b.recolhida = false; }); }
+        else { TIPOS.forEach((t) => { estado.linhas[t] = 0; }); todasAsColunas.forEach((b) => { b.recolhida = false; }); }
         escolhidas.forEach((b) => { b.quem = ''; });
         desenhar();
       };
@@ -557,7 +559,7 @@
         estado.blocos.forEach((b) => {
           const w = blocoEl(b, 'acessos-tl-bloco-cab');
           if (ocultaCol(b)) {
-            if (b.tipo === t && estado.linhas[t] < 2 && b.alvo) w.append(nomeVertical(b));
+            if (b.tipo === t && estado.linhas[t] < 2) w.append(nomeVertical(b));
           } else if (b.tipo === t) {
             const c = cabecaDaColuna(b);
             resumos.push([regs[estado.blocos.indexOf(b)], c.querySelector('.acessos-bloco-resumo'), b.alvo]);
