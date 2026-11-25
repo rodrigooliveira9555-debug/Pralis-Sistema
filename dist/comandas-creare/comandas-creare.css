@@ -1,0 +1,79 @@
+/* Sistema comandas (Entradas › API). Reaproveita abas, placas, popup e tabela de Vendas dos PDVs (vendas-pdv.css) e do
+   Compras; aqui só o que é desta tela: o contador das abas, o aviso do retrato, a régua de tempo de cada comanda (a
+   assinatura da tela), o destaque das linhas paradas e a linha do tempo do detalhe. Tons pelos tokens do S2:
+   --ui-valor-saida (alerta) e o âmbar das notas; a situação sempre vem escrita, a cor nunca é a única pista. */
+.comandas-resultados { display: grid; gap: 12px; }
+.comandas-resultados[aria-busy="true"] .compras-tabela-box { opacity: .55; transition: opacity .2s ease; }
+
+/* Abas com contador. */
+.comandas-creare-view .vendas-pdv-aba { display: inline-flex; align-items: center; gap: 8px; }
+.comandas-aba-contador { min-width: 22px; padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, var(--menu-accent, #eab308) 16%, transparent); font: 600 var(--ui-note, 11px)/18px var(--ui-font); font-variant-numeric: tabular-nums; text-align: center; }
+.comandas-aba-contador[hidden] { display: none; }
+.vendas-pdv-aba.ativa .comandas-aba-contador { background: rgb(255 255 255 / .28); }
+
+/* Aviso de retrato velho: o robô da loja pode estar parado. */
+.comandas-aviso-retrato { margin: 0; padding: 10px 14px; border-radius: 10px; border: 1px solid color-mix(in srgb, #f59e0b 45%, transparent); background: color-mix(in srgb, #f59e0b 10%, var(--theme-card, #fff)); font: 500 var(--ui-text)/20px var(--ui-font); }
+.comandas-aviso-retrato[hidden] { display: none; }
+
+/* Indicadores: cinco placas. */
+.comandas-numeros { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.comandas-creare-view .vendas-pdv-numero.tom-alerta strong { color: var(--ui-valor-saida, #b91c1c); }
+.comandas-creare-view .vendas-pdv-numero.tom-atencao strong { color: #92400e; }
+body.dark-theme .comandas-creare-view .vendas-pdv-numero.tom-atencao strong { color: #fbbf24; }
+.comandas-creare-view .vendas-pdv-numero small { color: var(--layout-ink, #606066); }
+.comandas-filtros { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+
+/* Célula da comanda: número em destaque; mesa e cliente embaixo. */
+.comandas-numero { display: grid; gap: 0; min-width: 64px; }
+.comandas-numero b { font: 600 15px/20px var(--ui-font); font-variant-numeric: tabular-nums; }
+.comandas-numero small { font: 400 var(--ui-note, 11px)/14px var(--ui-font); color: var(--layout-ink, #606066); }
+.comandas-valor-duplo { display: inline-grid; justify-items: end; gap: 0; }
+.comandas-diferenca { font: 500 var(--ui-note, 11px)/14px var(--ui-font); color: #92400e; }
+body.dark-theme .comandas-diferenca { color: #fbbf24; }
+
+/* Régua de tempo: o texto da duração e, embaixo, um fio que enche até o limite da situação
+   (puxada: 1 h; aberta: 24 h sem lançamento; fechada: 2 h de referência). Enche uma vez ao aparecer. */
+.comandas-regua-celula { display: grid; gap: 4px; min-width: 112px; }
+.comandas-regua-texto { font: 500 var(--ui-text)/18px var(--ui-font); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.comandas-regua { display: block; height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--menu-accent, #eab308) 14%, var(--theme-card, #fff)); overflow: hidden; }
+.comandas-regua-cheio { display: block; height: 100%; width: 100%; border-radius: inherit; background: var(--menu-accent, #eab308); transform: scaleX(var(--parte, 0)); transform-origin: left center; animation: comandas-encher .6s cubic-bezier(.2, .8, .2, 1) both; }
+.comandas-regua.tom-atencao .comandas-regua-cheio { background: #d97706; }
+.comandas-regua.tom-alerta .comandas-regua-cheio { background: var(--ui-valor-saida, #b91c1c); }
+.comandas-regua.tom-neutro .comandas-regua-cheio { background: var(--navigation-ink, #71717a); }
+@keyframes comandas-encher { from { transform: scaleX(0); } }
+
+/* Linhas paradas: abandonada (fio vermelho à esquerda) e aberta há mais de 1 dia (fio âmbar). */
+.comandas-creare-view .compras-tabela tr.comandas-linha.alerta td:first-child { box-shadow: inset 3px 0 0 var(--ui-valor-saida, #b91c1c); }
+.comandas-creare-view .compras-tabela tr.comandas-linha.alerta { background: color-mix(in srgb, var(--ui-valor-saida, #b91c1c) 5%, transparent); }
+.comandas-creare-view .compras-tabela tr.comandas-linha.velha td:first-child { box-shadow: inset 3px 0 0 #d97706; }
+/* Linhas entram com fade + 4 px (180 ms); nada se move com prefers-reduced-motion. */
+.comandas-creare-view .compras-tabela tr.comandas-linha { animation: comandas-entrar .18s ease-out both; }
+@keyframes comandas-entrar { from { opacity: 0; transform: translateY(4px); } }
+
+/* Linha do tempo do detalhe: a régua na vertical, um ponto por acontecimento. */
+.comandas-tempo { list-style: none; margin: 0; padding: 0 0 0 4px; display: grid; gap: 0; }
+.comandas-tempo-passo { position: relative; display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; padding: 0 0 10px 18px; font: 400 var(--ui-text)/20px var(--ui-font); }
+.comandas-tempo-passo::before { content: ""; position: absolute; left: 3px; top: 14px; bottom: -6px; width: 2px; background: color-mix(in srgb, var(--menu-accent, #eab308) 30%, var(--theme-card, #fff)); }
+.comandas-tempo-passo:last-child::before { display: none; }
+.comandas-tempo-passo::after { content: ""; position: absolute; left: 0; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--menu-accent, #eab308); }
+.comandas-tempo-passo.marca-inicio::after, .comandas-tempo-passo.marca-fim::after { width: 10px; height: 10px; left: -1px; top: 5px; box-shadow: 0 0 0 3px color-mix(in srgb, var(--menu-accent, #eab308) 22%, transparent); }
+.comandas-tempo-passo.marca-caixa::after { background: var(--panel-text, #785600); }
+.comandas-tempo-passo.marca-cancelado::after { background: var(--navigation-ink, #71717a); }
+.comandas-tempo-passo.marca-cancelado .comandas-tempo-texto { text-decoration: line-through; color: var(--layout-ink, #606066); }
+.comandas-tempo-hora { font-variant-numeric: tabular-nums; color: var(--layout-ink, #606066); white-space: nowrap; }
+.comandas-tempo-texto { min-width: 0; overflow-wrap: anywhere; }
+.comandas-subtitulo { margin: 6px 0 0; font: 600 var(--ui-note, 11px)/16px var(--ui-font); color: var(--layout-ink, #606066); }
+.vendas-pdv-detalhe-linhas > .comandas-item-cancelado dt { text-decoration: line-through; color: var(--layout-ink, #606066); }
+.vendas-pdv-detalhe-linhas > .comandas-diferenca dd { color: #92400e; }
+body.dark-theme .vendas-pdv-detalhe-linhas > .comandas-diferenca dd { color: #fbbf24; }
+
+@media (max-width: 600px) {
+  .comandas-numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .comandas-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .comandas-tempo-passo { grid-template-columns: 64px minmax(0, 1fr); }
+  .comandas-creare-view .btn.vendas-pdv-detalhes, .comandas-creare-view .vendas-pdv-aba { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .comandas-regua-cheio, .comandas-creare-view .compras-tabela tr.comandas-linha { animation: none; }
+  .comandas-resultados[aria-busy="true"] .compras-tabela-box { transition: none; }
+}
