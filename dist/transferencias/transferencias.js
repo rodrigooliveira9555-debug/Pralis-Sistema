@@ -5,9 +5,9 @@
  * interruptor Sim/Não, chips de escolha única e remover redondo.
  *
  * Regras desta tela (pedido do Washington):
- *  - Valor: uma calculadora de teclas (0 a 9 e "=") no lugar do campo de digitar. Os números entram como centavos (digitar 1, 0, 0, 0, 0 = 100,00).
- *    Cada valor digitado é de Notas ou de Moedas (duas escolhas logo abaixo do teclado); tocar numa delas já soma o valor ao acumulado e abre o próximo; o "=" fecha. No fim fica só o
- *    TOTAL, sem distinguir nota de moeda (por dentro a tela guarda a soma de cada tipo, para quando a gravação existir).
+ *  - Valor: uma calculadora de teclas (0 a 9, + − × ÷ e "=") no lugar do campo de digitar. Os números entram como centavos (digitar 1, 0, 0, 0, 0 = 100,00).
+ *    Cada valor (que pode ser × ou ÷ por um número inteiro) é de Notas ou de Moedas: tocar numa das duas escolhas já soma o valor ao acumulado; "+", "−" e "=" fecham o valor
+ *    como Notas (sem escolha, é nota); o "=" está sempre ligado e fecha a conta. No fim fica só o TOTAL, sem distinguir nota de moeda (por dentro a tela guarda a soma de cada tipo, para quando a gravação existir).
  *  - Múltiplo destino = Sim: a caixa de Destino some e entra, na própria tela (sem abrir janela), a lista de TODAS as contas ativas (menos a de
  *    origem) com o ícone, para marcar várias.
  *  - Transferência com lacre: o "+" acrescenta uma linha de lacre embaixo do destino. O 1º clique cria a "Transferência final"; cada clique
@@ -27,8 +27,10 @@
   const COR_TEXTO = '#9a3412';
   const MAX_LACRES = 4;
   const MAX_DIGITOS = 11;
+  const MAX_FATOR = 6; // o número depois de × ou ÷ é uma quantidade inteira
+  const LIMITE = 99999999999; // centavos (R$ 999 milhões): trava o × que estouraria
   const cor = () => (typeof menuColor !== 'undefined' && menuColor[1]) || '#f97316';
-  const reais = (c) => 'R$ ' + (c / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const reais = (c) => (c < 0 ? '−' : '') + 'R$ ' + (Math.abs(c) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const MARCA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
 
   // Data no padrão do site, com o rótulo e o painel dentro do campo.
@@ -48,35 +50,74 @@
   const rotuloDoLacre = (i, total) => (i === total - 1 ? 'Transferência final' : (i + 2) + 'ª transferência');
 
   /**
-   * A calculadora do valor. Estado: parcelas já somadas ({ c: centavos, t: 'notas' | 'moedas' }), o número que está sendo digitado (só dígitos, em
-   * centavos), o tipo dele e se já foi fechado com "=". Devolve { no, finalizar() }: finalizar() dá { erro } ou { total, notas, moedas } em centavos.
+   * A calculadora do valor. Um TERMO é um valor em dinheiro (digitado em centavos) seguido, se quiser, de × ou ÷ por números inteiros
+   * (ex.: R$ 20,00 × 5). Os termos se juntam com + e −. Cada termo fechado vira uma PARCELA { c: centavos com sinal, t: 'notas' | 'moedas' }.
+   * Fecham o termo: tocar em Notas ou Moedas (vale o escolhido), "+" ou "−" e "=" (valem Notas: sem escolha, é nota). O "=" fecha a conta toda.
+   * Devolve { no, tela, finalizar() }: finalizar() dá { erro } ou { total, notas, moedas } em centavos.
    */
   function calculadora(rotulo) {
-    const est = { parcelas: [], atual: '', tipo: '', fechado: false };
-    const centavos = (s) => (s ? parseInt(s, 10) : 0);
+    // base: dígitos do valor quando já se apertou × ou ÷ (senão o valor está em atual); fatores: [{ op, n }] já digitados; op: × ou ÷ esperando o número em atual.
+    const est = { parcelas: [], base: null, fatores: [], op: '', atual: '', sinal: 1, fechado: false };
+    const inteiro = (s) => (s ? parseInt(s, 10) : 0);
     const soma = () => est.parcelas.reduce((n, p) => n + p.c, 0);
+    const por = (t) => est.parcelas.filter((p) => p.t === t).reduce((n, p) => n + p.c, 0);
+    const SIMBOLO = { '*': '×', '/': '÷' };
     const tela = entrada('text', '', { readOnly: true, placeholder: 'Toque para digitar o valor', inputMode: 'none', autocomplete: 'off' });
     tela.classList.add('transferencia-calc-tela'); tela.setAttribute('aria-label', rotulo); tela.setAttribute('aria-expanded', 'false');
     const resumo = el('p', 'transferencia-calc-resumo'); resumo.setAttribute('role', 'status');
     const aviso = el('small', 'transferencia-calc-aviso'); aviso.setAttribute('role', 'alert');
-    const tipos = U.chips([['notas', 'Notas'], ['moedas', 'Moedas']], '', (v) => escolherTipo(v));
-    const por = (t) => est.parcelas.filter((p) => p.t === t).reduce((n, p) => n + p.c, 0);
-    let botaoIgual;
-    // O acumulado por tipo vai ficando embaixo: "R$ 100,00 notas   R$ 50,00 moedas   = R$ 150,00".
-    const mostrar = () => {
-      tela.value = est.atual ? reais(centavos(est.atual)) : soma() > 0 ? reais(soma()) : '';
-      const partes = [['notas', 'notas'], ['moedas', 'moedas']].filter(([t]) => por(t) > 0).map(([t, nome]) => reais(por(t)) + ' ' + nome);
-      resumo.textContent = partes.length ? partes.join('   ') + '   = ' + reais(soma()) : '';
-      tipos.atualizar(est.tipo);
-      // Notas e Moedas só valem com um valor digitado (tocar numa delas já joga o valor no acumulado). Com um número digitado e sem tipo, o "=" fica bloqueado.
-      tipos.querySelectorAll('button').forEach((b) => { b.disabled = !centavos(est.atual); });
-      if (botaoIgual) botaoIgual.disabled = est.fechado || Boolean(est.atual) || est.parcelas.length === 0;
-    };
     const avisar = (t) => { aviso.textContent = t; };
+    const tipos = U.chips([['notas', 'Notas'], ['moedas', 'Moedas']], '', (v) => escolherTipo(v));
+
+    // O termo que está sendo digitado: { vazio } sem nada, { incompleto } com × ou ÷ sem o número, { erro }, ou { c } (centavos, sem sinal).
+    function termo() {
+      const dig = est.base !== null ? est.base : est.atual;
+      if (!dig) return { vazio: true };
+      const fatores = est.op ? (est.atual ? est.fatores.concat([{ op: est.op, n: est.atual }]) : null) : est.fatores;
+      if (!fatores) return { incompleto: true };
+      let c = inteiro(dig);
+      for (const f of fatores) {
+        const n = inteiro(f.n);
+        if (f.op === '/') { if (!n) return { erro: 'Não é possível dividir por zero.' }; c = Math.round(c / n); } else c *= n;
+        if (c > LIMITE) return { erro: 'Valor grande demais.' };
+      }
+      return { c };
+    }
+    const limparTermo = () => { est.base = null; est.fatores = []; est.op = ''; est.atual = ''; };
+    // Fecha o termo como parcela do tipo dado. Devolve false (com aviso) se não der; true se fechou ou se não havia termo.
+    function comprometer(tipo) {
+      const t = termo();
+      if (t.vazio) return true;
+      if (t.incompleto) { avisar('Digite o número depois do ' + SIMBOLO[est.op] + '.'); return false; }
+      if (t.erro) { avisar(t.erro); return false; }
+      if (!t.c) { avisar('O valor não pode ser zero.'); return false; }
+      est.parcelas.push({ c: est.sinal * t.c, t: tipo }); limparTermo(); est.sinal = 1; aviso.textContent = '';
+      return true;
+    }
+    // O que a caixa mostra: o termo em andamento (ex.: "R$ 20,00 × 5"); sem termo, o total já somado.
+    function textoDoTermo() {
+      const dig = est.base !== null ? est.base : est.atual;
+      if (!dig) return '';
+      let txt = reais(inteiro(dig));
+      est.fatores.forEach((f) => { txt += ' ' + SIMBOLO[f.op] + ' ' + f.n; });
+      if (est.op) txt += ' ' + SIMBOLO[est.op] + ' ' + est.atual;
+      return txt;
+    }
+    const mostrar = () => {
+      const txt = textoDoTermo();
+      const sinal = est.sinal < 0 ? '− ' : '';
+      tela.value = txt ? sinal + txt : est.sinal < 0 ? '−' : est.parcelas.length ? reais(soma()) : '';
+      const partes = [['notas', 'notas'], ['moedas', 'moedas']].filter(([t]) => por(t) !== 0).map(([t, nome]) => reais(por(t)) + ' ' + nome);
+      resumo.textContent = est.parcelas.length ? (partes.length ? partes.join('   ') + '   = ' : '= ') + reais(soma()) : '';
+      tipos.atualizar('');
+      // Notas e Moedas fecham o termo: só valem com um termo completo.
+      const completo = Boolean(termo().c);
+      tipos.querySelectorAll('button').forEach((b) => { b.disabled = !completo; });
+    };
     const digito = (d) => {
       aviso.textContent = '';
-      est.fechado = false; // digitar depois do "=" reabre a conta e continua somando
-      if (est.atual.length >= MAX_DIGITOS) return;
+      if (est.fechado) est.fechado = false; // digitar depois do "=" reabre a conta e continua
+      if (est.atual.length >= (est.op ? MAX_FATOR : MAX_DIGITOS)) return;
       est.atual = (est.atual + d).replace(/^0+/, '');
       mostrar();
     };
@@ -84,26 +125,41 @@
       aviso.textContent = '';
       if (est.fechado) est.fechado = false; // o 1º ⌫ depois do "=" só reabre a conta
       else if (est.atual) est.atual = est.atual.slice(0, -1);
-      else if (est.parcelas.length) { const p = est.parcelas.pop(); est.atual = String(p.c); est.tipo = ''; }
+      else if (est.op) { // tira o × ou ÷ e devolve o número anterior para edição
+        if (est.fatores.length) { const f = est.fatores.pop(); est.op = f.op; est.atual = f.n; } else { est.atual = est.base; est.base = null; est.op = ''; }
+      } else if (est.sinal < 0) est.sinal = 1;
+      else if (est.parcelas.length) { const p = est.parcelas.pop(); est.atual = String(Math.abs(p.c)); est.sinal = p.c < 0 ? -1 : 1; }
       mostrar();
     };
-    // Guarda o número digitado como parcela; devolve false (com aviso) se faltar valor ou o tipo.
-    const guardar = () => {
-      if (!centavos(est.atual)) { avisar('Digite um valor antes.'); return false; }
-      if (!est.tipo) { avisar('Escolha Notas ou Moedas para este valor.'); return false; }
-      est.parcelas.push({ c: centavos(est.atual), t: est.tipo }); est.atual = ''; est.tipo = ''; aviso.textContent = '';
-      return true;
-    };
-    // Tocar em Notas ou Moedas com um valor digitado joga esse valor no acumulado e deixa a caixa pronta para o próximo.
+    // Tocar em Notas ou Moedas fecha o termo como parcela desse tipo e deixa a caixa pronta para o próximo.
     function escolherTipo(v) {
-      if (est.fechado || !centavos(est.atual)) { mostrar(); return; }
-      est.tipo = v; guardar(); mostrar();
+      if (!est.fechado && termo().c) comprometer(v);
+      mostrar();
     }
+    // + e −: fecham o termo (como notas, se nada foi escolhido) e dizem se o próximo termo soma ou subtrai.
+    const mais = (sinal) => {
+      aviso.textContent = '';
+      if (est.fechado) est.fechado = false;
+      else if (!termo().vazio) { if (!comprometer('notas')) return; }
+      else if (!est.parcelas.length) { avisar('Digite um valor antes.'); return; }
+      est.sinal = sinal; mostrar();
+    };
+    // × e ÷: o termo continua, agora com um número inteiro (a quantidade) depois do sinal.
+    const vezes = (op) => {
+      aviso.textContent = '';
+      if (est.fechado) est.fechado = false;
+      if (!est.op && est.atual) { est.base = est.atual; est.atual = ''; est.op = op; }
+      else if (est.op && est.atual) { est.fatores.push({ op: est.op, n: est.atual }); est.atual = ''; est.op = op; }
+      else if (est.op) est.op = op; // trocou de × para ÷ antes de digitar o número
+      else { avisar('Digite um valor antes.'); return; }
+      mostrar();
+    };
+    // "=" fecha a conta toda (o termo que está aberto entra como notas). Fica sempre ligado.
     const igual = () => {
       if (est.fechado) return;
-      if (est.atual) { avisar('Escolha Notas ou Moedas para este valor.'); return; }
+      if (!comprometer('notas')) return;
       if (!est.parcelas.length) { avisar('Digite um valor antes.'); return; }
-      est.fechado = true; aviso.textContent = ''; mostrar(); mostrarPainel(false);
+      est.sinal = 1; est.fechado = true; aviso.textContent = ''; mostrar(); mostrarPainel(false);
     };
     const tecla = (texto, acao, classe, rotuloAria) => {
       const b = el('button', 'transferencia-tecla' + (classe ? ' ' + classe : ''), texto); b.type = 'button'; b.onclick = acao;
@@ -112,24 +168,26 @@
     };
     const teclado = el('div', 'transferencia-teclado');
     const d = (n) => tecla(String(n), () => digito(String(n)));
-    botaoIgual = tecla('=', igual, 'igual', 'Fechar o total');
-    teclado.append(d(7), d(8), d(9), d(4), d(5), d(6), d(1), d(2), d(3), botaoIgual, tecla('⌫', apagar, 'apagar', 'Apagar'), d(0));
+    const op = (texto, acao, nome) => tecla(texto, acao, 'operador', nome);
+    teclado.append(d(7), d(8), d(9), op('÷', () => vezes('/'), 'Dividir'), d(4), d(5), d(6), op('×', () => vezes('*'), 'Multiplicar'), d(1), d(2), d(3), op('−', () => mais(-1), 'Subtrair'),
+      tecla('⌫', apagar, 'apagar', 'Apagar'), d(0), tecla('=', igual, 'igual', 'Fechar o total'), op('+', () => mais(1), 'Somar'));
     // A calculadora só aparece quando se toca na caixa do valor; fecha ao fechar a conta com "=", no Esc ou tocando de novo na caixa.
     const painel = el('div', 'transferencia-calc-painel'); painel.hidden = true; painel.id = 'transferencia-calc-painel';
-    painel.append(teclado, el('span', 'transferencia-calc-legenda', 'O valor digitado é de:'), tipos, aviso);
+    painel.append(teclado, el('span', 'transferencia-calc-legenda', 'Sem escolha, o valor conta como Notas. Fechar o valor como:'), tipos, aviso);
     tela.setAttribute('aria-controls', painel.id);
     const mostrarPainel = (sim) => { painel.hidden = !sim; tela.setAttribute('aria-expanded', String(sim)); };
     tela.addEventListener('click', () => mostrarPainel(painel.hidden));
-    // Teclado do computador: números, Backspace, N e M (Notas e Moedas) e "=" (ou Enter, que não envia o formulário). Digitar com a calculadora fechada abre.
+    // Teclado do computador: números, Backspace, + − * / (x também multiplica), N e M (Notas e Moedas) e "=" (ou Enter, que não envia o formulário).
+    // Digitar com a calculadora fechada abre.
+    const ATALHOS = { '+': () => mais(1), '-': () => mais(-1), '*': () => vezes('*'), x: () => vezes('*'), X: () => vezes('*'), '/': () => vezes('/'), n: () => escolherTipo('notas'), N: () => escolherTipo('notas'), m: () => escolherTipo('moedas'), M: () => escolherTipo('moedas') };
     tela.addEventListener('keydown', (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === 'Escape' && !painel.hidden) { mostrarPainel(false); e.preventDefault(); e.stopPropagation(); return; }
       if (e.key === ' ' || (e.key === 'Enter' && painel.hidden)) { mostrarPainel(painel.hidden); e.preventDefault(); return; }
       if (/^[0-9]$/.test(e.key)) { mostrarPainel(true); digito(e.key); }
       else if (e.key === 'Backspace') apagar();
-      else if (e.key === 'n' || e.key === 'N') escolherTipo('notas');
-      else if (e.key === 'm' || e.key === 'M') escolherTipo('moedas');
-      else if (e.key === '=' || e.key === 'Enter') { if (!botaoIgual.disabled) igual(); }
+      else if (e.key === '=' || e.key === 'Enter') igual();
+      else if (ATALHOS[e.key]) ATALHOS[e.key]();
       else return;
       e.preventDefault();
     });
@@ -143,7 +201,7 @@
       tela,
       // Só vale o valor FECHADO com "=" (o que está sendo digitado, sem fechar, não conta).
       finalizar() {
-        if (!est.fechado) return est.atual || est.parcelas.length ? { erro: 'Clique em = para fechar o valor.' } : { total: 0 };
+        if (!est.fechado) return est.atual || est.base !== null || est.parcelas.length ? { erro: 'Clique em = para fechar o valor.' } : { total: 0 };
         return { total: soma(), notas: por('notas'), moedas: por('moedas') };
       },
     };
@@ -249,7 +307,7 @@
         if (!c.origem.value || (e.multiplo ? !c.marcadas.size : !c.destino.value)) return 'Escolha a origem e o destino.';
         const v = c.calc.finalizar();
         if (v.erro) return v.erro;
-        if (!v.total) return 'Informe o valor da transferência.';
+        if (!(v.total > 0)) return 'Informe o valor da transferência.';
         const lacres = e.lacres.map((x) => x.trim());
         if (lacres.some((x) => !x)) return 'Informe o lacre de cada transferência.';
         if (new Set(lacres.map((x) => x.toLowerCase())).size !== lacres.length) return 'Os lacres precisam ser diferentes entre si.';
