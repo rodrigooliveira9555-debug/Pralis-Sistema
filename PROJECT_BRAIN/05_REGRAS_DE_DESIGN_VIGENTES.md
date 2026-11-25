@@ -35,6 +35,7 @@
 - Exibição **DD/MM/AA**, **sem ícone de calendário**. Valor guardado em ISO.
 - Data nova: 00–49 → 2000–2049; 50–99 → 1950–1999. Data existente mantém o século.
 - Calendário do rodapé só filtra registros com data explícita; bloqueia intervalo invertido.
+- **Campo de data com calendário (24 e 25/11/2026):** peça única `U.campoData` (`dist/compras/campo-data.js`): máscara `DD/MM/AA` + botão redondo do calendário + painel do mês (título "novembro de 2026" que abre Mês e Ano, setas ‹ ›, D S T Q Q S S, dia escolhido na cor da origem, hoje com contorno, Limpar e Hoje). Valor ISO. Vale em Vendas dos PDVs, Extrato TNP e nas telas de Lançamentos de Saídas; **os demais campos de data seguem só com a máscara**, à espera da decisão do Washington. Detalhe no `DESIGN_SYSTEM.md`.
 
 ## Hora (24/11/2026, Washington)
 - Hora é a peça única `U.campoHora` (`dist/compras/ui.js`), no desenho do campo de aniversário: máscara `HH:MM` + botão redondo do relógio + roleta
