@@ -5,8 +5,8 @@
  * interruptor Sim/Não, chips de escolha única e remover redondo.
  *
  * Regras desta tela (pedido do Washington):
- *  - Valor: uma calculadora de teclas (0 a 9, "+" e "=") no lugar do campo de digitar. Os números entram como centavos (digitar 1, 0, 0, 0, 0 = 100,00).
- *    Cada valor digitado é de Notas ou de Moedas (duas escolhas logo abaixo do teclado); o "+" soma e abre o próximo; o "=" fecha. No fim fica só o
+ *  - Valor: uma calculadora de teclas (0 a 9 e "=") no lugar do campo de digitar. Os números entram como centavos (digitar 1, 0, 0, 0, 0 = 100,00).
+ *    Cada valor digitado é de Notas ou de Moedas (duas escolhas logo abaixo do teclado); tocar numa delas já soma o valor ao acumulado e abre o próximo; o "=" fecha. No fim fica só o
  *    TOTAL, sem distinguir nota de moeda (por dentro a tela guarda a soma de cada tipo, para quando a gravação existir).
  *  - Múltiplo destino = Sim: a caixa de Destino some e entra, na própria tela (sem abrir janela), a lista de TODAS as contas ativas (menos a de
  *    origem) com o ícone, para marcar várias.
@@ -61,7 +61,7 @@
     const aviso = el('small', 'transferencia-calc-aviso'); aviso.setAttribute('role', 'alert');
     const tipos = U.chips([['notas', 'Notas'], ['moedas', 'Moedas']], '', (v) => escolherTipo(v));
     const por = (t) => est.parcelas.filter((p) => p.t === t).reduce((n, p) => n + p.c, 0);
-    let botaoSoma; let botaoIgual;
+    let botaoIgual;
     // O acumulado por tipo vai ficando embaixo: "R$ 100,00 notas   R$ 50,00 moedas   = R$ 150,00".
     const mostrar = () => {
       tela.value = est.atual ? reais(centavos(est.atual)) : soma() > 0 ? reais(soma()) : '';
@@ -69,23 +69,20 @@
       resumo.textContent = partes.length ? partes.join('   ') + '   = ' + reais(soma()) : '';
       tipos.atualizar(est.tipo);
       // Notas e Moedas só valem com um valor digitado (tocar numa delas já joga o valor no acumulado). Com um número digitado e sem tipo, o "=" fica bloqueado.
-      // O "+" serve para continuar somando depois do "=".
       tipos.querySelectorAll('button').forEach((b) => { b.disabled = !centavos(est.atual); });
-      if (botaoSoma) botaoSoma.disabled = !est.fechado;
       if (botaoIgual) botaoIgual.disabled = est.fechado || Boolean(est.atual) || est.parcelas.length === 0;
     };
     const avisar = (t) => { aviso.textContent = t; };
-    const recomecar = () => { est.parcelas = []; est.atual = ''; est.tipo = ''; est.fechado = false; };
     const digito = (d) => {
       aviso.textContent = '';
-      if (est.fechado) recomecar();
+      est.fechado = false; // digitar depois do "=" reabre a conta e continua somando
       if (est.atual.length >= MAX_DIGITOS) return;
       est.atual = (est.atual + d).replace(/^0+/, '');
       mostrar();
     };
     const apagar = () => {
       aviso.textContent = '';
-      if (est.fechado) recomecar();
+      if (est.fechado) est.fechado = false; // o 1º ⌫ depois do "=" só reabre a conta
       else if (est.atual) est.atual = est.atual.slice(0, -1);
       else if (est.parcelas.length) { const p = est.parcelas.pop(); est.atual = String(p.c); est.tipo = ''; }
       mostrar();
@@ -97,14 +94,11 @@
       est.parcelas.push({ c: centavos(est.atual), t: est.tipo }); est.atual = ''; est.tipo = ''; aviso.textContent = '';
       return true;
     };
-    // Tocar em Notas ou Moedas com um valor digitado joga esse valor no acumulado (sem precisar do "+") e deixa a caixa pronta para o próximo.
+    // Tocar em Notas ou Moedas com um valor digitado joga esse valor no acumulado e deixa a caixa pronta para o próximo.
     function escolherTipo(v) {
       if (est.fechado || !centavos(est.atual)) { mostrar(); return; }
       est.tipo = v; guardar(); mostrar();
     }
-    const somar = () => {
-      if (est.fechado) { est.fechado = false; mostrar(); }
-    };
     const igual = () => {
       if (est.fechado) return;
       if (est.atual) { avisar('Escolha Notas ou Moedas para este valor.'); return; }
@@ -118,23 +112,21 @@
     };
     const teclado = el('div', 'transferencia-teclado');
     const d = (n) => tecla(String(n), () => digito(String(n)));
-    botaoSoma = tecla('+', somar, 'soma', 'Somar o próximo valor');
     botaoIgual = tecla('=', igual, 'igual', 'Fechar o total');
-    teclado.append(d(7), d(8), d(9), botaoSoma, d(4), d(5), d(6), d(1), d(2), d(3), botaoIgual, tecla('⌫', apagar, 'apagar', 'Apagar'), d(0));
+    teclado.append(d(7), d(8), d(9), d(4), d(5), d(6), d(1), d(2), d(3), botaoIgual, tecla('⌫', apagar, 'apagar', 'Apagar'), d(0));
     // A calculadora só aparece quando se toca na caixa do valor; fecha ao fechar a conta com "=", no Esc ou tocando de novo na caixa.
     const painel = el('div', 'transferencia-calc-painel'); painel.hidden = true; painel.id = 'transferencia-calc-painel';
     painel.append(teclado, el('span', 'transferencia-calc-legenda', 'O valor digitado é de:'), tipos, aviso);
     tela.setAttribute('aria-controls', painel.id);
     const mostrarPainel = (sim) => { painel.hidden = !sim; tela.setAttribute('aria-expanded', String(sim)); };
     tela.addEventListener('click', () => mostrarPainel(painel.hidden));
-    // Teclado do computador: números, Backspace, "+" e "=" (ou Enter, que não envia o formulário). Digitar com a calculadora fechada abre.
+    // Teclado do computador: números, Backspace, N e M (Notas e Moedas) e "=" (ou Enter, que não envia o formulário). Digitar com a calculadora fechada abre.
     tela.addEventListener('keydown', (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === 'Escape' && !painel.hidden) { mostrarPainel(false); e.preventDefault(); e.stopPropagation(); return; }
       if (e.key === ' ' || (e.key === 'Enter' && painel.hidden)) { mostrarPainel(painel.hidden); e.preventDefault(); return; }
       if (/^[0-9]$/.test(e.key)) { mostrarPainel(true); digito(e.key); }
       else if (e.key === 'Backspace') apagar();
-      else if (e.key === '+') { if (!botaoSoma.disabled) somar(); }
       else if (e.key === 'n' || e.key === 'N') escolherTipo('notas');
       else if (e.key === 'm' || e.key === 'M') escolherTipo('moedas');
       else if (e.key === '=' || e.key === 'Enter') { if (!botaoIgual.disabled) igual(); }
