@@ -9,7 +9,8 @@ const SEM_ACESSO = "Você não tem acesso às vendas dos PDVs.";
 // Permissão E empresa: o token do S1 é de uma loja só; outra empresa do S2 nunca vê essas vendas.
 function exigirAcesso(perfil: PerfilSessao) {
   exigirPermissao(perfil, "vendas_pdv_visualizar", SEM_ACESSO);
-  if (perfil.empresa.id !== env.S1_VENDAS_EMPRESA_ID) throw proibido(SEM_ACESSO, "INSUFFICIENT_PERMISSION");
+  // Sem empresa configurada a leitura está desligada (situação diz "não ligada"), não é falta de acesso da pessoa.
+  if (env.S1_VENDAS_EMPRESA_ID && perfil.empresa.id !== env.S1_VENDAS_EMPRESA_ID) throw proibido(SEM_ACESSO, "INSUFFICIENT_PERMISSION");
 }
 
 export async function listarVendas(perfil: PerfilSessao, consulta: ConsultaVendasPdv) {

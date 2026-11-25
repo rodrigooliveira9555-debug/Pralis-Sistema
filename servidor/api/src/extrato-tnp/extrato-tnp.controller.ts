@@ -15,7 +15,9 @@ import { buscarExtrato, extratoConfigurado } from "./extrato-tnp.cliente.ts";
 const SEM_ACESSO = "Você não tem acesso ao extrato bancário.";
 function exigirAcesso(perfil: PerfilSessao) {
   exigirPermissao(perfil, "extrato_bancario_visualizar", SEM_ACESSO);
-  if (perfil.empresa.id !== env.TNP_EXTRATO_EMPRESA_ID)
+  // Sem empresa configurada a leitura está desligada (situação diz "não ligado" e a busca nem sai daqui):
+  // não é falta de acesso da pessoa.
+  if (env.TNP_EXTRATO_EMPRESA_ID && perfil.empresa.id !== env.TNP_EXTRATO_EMPRESA_ID)
     throw proibido(SEM_ACESSO, "INSUFFICIENT_PERMISSION");
 }
 const chaveDoUsuario = (request: FastifyRequest) =>
