@@ -682,7 +682,6 @@ input.compras-selecao-bolinha:focus-visible{outline:2px solid var(--menu-accent)
 .compras-grade-escolha{display:grid;max-width:420px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff);overflow:hidden}
 .compras-grade-escolha.em-7{grid-template-columns:repeat(7,minmax(0,1fr))}
 .compras-grade-escolha.em-4{grid-template-columns:repeat(4,minmax(0,1fr))}
-.compras-grade-escolha.em-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .compras-grade-escolha .compras-grade-celula{min-height:44px;padding:0;border:0;border-radius:0;box-shadow:inset -1px -1px 0 var(--layout-line,#dedee3);background:var(--theme-card,#fff);color:inherit;font:400 var(--ui-text,14px)/18px var(--ui-font);cursor:pointer}
 .compras-grade-escolha .compras-grade-celula[aria-pressed=true]{background:var(--menu-accent);color:var(--theme-surface,#fff);font-weight:600}
 .compras-grade-escolha .compras-grade-celula:focus-visible{outline:2px solid var(--menu-accent);outline-offset:-2px}
@@ -691,6 +690,21 @@ input.compras-selecao-bolinha:focus-visible{outline:2px solid var(--menu-accent)
 .compras-aniv-campo{display:flex;align-items:center;gap:8px}
 .compras-aniv-campo>input{flex:1;min-width:0}
 .compras-aniv-painel{width:min(320px,calc(100vw - 24px));gap:6px;padding:12px;background:var(--layout-gap,#f5f5f7)}
+/* Campo de data (calendário do mês): título e setas, dias da semana, grade, Limpar e Hoje. */
+.compras-data-painel{width:min(320px,calc(100vw - 24px))}
+.compras-data-cab{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.compras-data-titulo{padding:6px 8px;border:0;border-radius:8px;background:transparent;color:inherit;font:600 var(--ui-text,14px)/18px var(--ui-font);cursor:pointer}
+.compras-data-titulo:focus-visible,.compras-data-acao:focus-visible{outline:2px solid var(--menu-accent);outline-offset:1px}
+.compras-data-setas{display:flex;gap:6px}
+.compras-aniv-painel .compras-data-seta{width:36px;min-height:36px;padding:0;border:1px solid var(--layout-line,#dedee3);border-radius:8px;background:var(--theme-card,#fff);color:inherit;font:600 18px/1 var(--ui-font);cursor:pointer}
+.compras-data-semana{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-bottom:6px;text-align:center;font:600 12px/18px var(--ui-font);color:var(--muted,#73737a)}
+.compras-data-vista{display:grid;gap:6px}
+.compras-data-vista[hidden]{display:none}
+.compras-aniv-painel .compras-grade-escolha .compras-grade-celula.fora{opacity:.45}
+.compras-aniv-painel .compras-grade-escolha .compras-grade-celula[aria-current=date]{border-color:var(--menu-accent);color:var(--menu-accent);font-weight:600}
+.compras-aniv-painel .compras-grade-escolha .compras-grade-celula[aria-pressed=true]{border-color:var(--menu-accent);color:var(--theme-surface,#fff)}
+.compras-data-pe{display:flex;justify-content:space-between;gap:8px;margin-top:2px}
+.compras-data-acao{padding:6px 8px;border:0;border-radius:8px;background:transparent;color:var(--menu-accent);font:600 var(--ui-text,14px)/18px var(--ui-font);cursor:pointer}
 /* Painel no cinza do fundo das telas; cada opção é um quadro branco, separado; a escolhida fica cheia na cor do menu. */
 .compras-aniv-painel .compras-grade-escolha{max-width:none;gap:6px;border:0;border-radius:0;background:transparent;overflow:visible}
 .compras-aniv-painel .compras-grade-escolha .compras-grade-celula{min-height:36px;border:1px solid var(--layout-line,#dedee3);border-radius:8px;box-shadow:none}

@@ -909,10 +909,11 @@
   }
 
   /**
-   * Campo de data com calendário (24/11/2026, Washington): o MESMO desenho dos campos de aniversário e de hora. Um campo com a máscara DD/MM/AA para digitar e
-   * o botão redondo do calendário; tocar no campo ou no botão abre um painel flutuante (flutuante) com o Dia (1 a 31, só os que o mês tem), o Mês (jan a dez) e o
-   * Ano (12 de cada vez, com setas), em células de cantos arredondados; o escolhido fica na cor do menu. Tocar num dia escolhe e fecha; mês e ano ficam abertos
-   * para ajustar. Se o campo estava vazio, o primeiro toque completa o que falta com hoje. O valor guardado é ISO (AAAA-MM-DD); data impossível (31/02) deixa o
+   * Campo de data com calendário (25/11/2026, Washington): o MESMO desenho dos campos de aniversário e de hora. Um campo com a máscara DD/MM/AA para digitar e
+   * o botão redondo do calendário; tocar no campo ou no botão abre um painel flutuante (flutuante) com o CALENDÁRIO DO MÊS: título ("novembro de 2026"), setas para
+   * o mês anterior e o seguinte, os dias da semana (D S T Q Q S S) e a grade de dias em células de cantos arredondados; o dia escolhido fica na cor do menu e o de
+   * hoje leva um contorno. Embaixo, Limpar e Hoje. Tocar no título troca a grade pelo Mês e o Ano (12 anos de cada vez, com setas) para ir longe; escolher o mês volta
+   * à grade. Tocar num dia escolhe e fecha (um dia de outro mês, que aparece esmaecido, também). O valor guardado é ISO (AAAA-MM-DD); data impossível (31/02) deixa o
    * campo inválido (setCustomValidity). Século da data digitada: 00–49 = 2000–2049, 50–99 = 1950–1999 (regra do date-fields.js).
    * Devolve { no, input, valor(), definir(iso) }: "no" é o campo pronto (rótulo, caixa e painel); valor() é o ISO ou ''.
    */
@@ -920,12 +921,16 @@
     const DF = window.CicluzDateFields;
     const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
     const LONGOS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+    const SEMANA = [['D', 'domingo'], ['S', 'segunda'], ['T', 'terça'], ['Q', 'quarta'], ['Q', 'quinta'], ['S', 'sexta'], ['S', 'sábado']];
     const pad = (n) => String(n).padStart(2, '0');
-    const hojeIso = () => { const n = new Date(); return n.getFullYear() + '-' + pad(n.getMonth() + 1) + '-' + pad(n.getDate()); };
+    const paraIso = (a, m, d) => a + '-' + pad(m) + '-' + pad(d);
+    const hojeIso = () => { const n = new Date(); return paraIso(n.getFullYear(), n.getMonth() + 1, n.getDate()); };
     const diasNoMes = (a, m) => new Date(a, m, 0).getDate();
     const nomeCampo = rotulo.endsWith(' *') ? rotulo.slice(0, -2) : rotulo;
     let iso = DF.valid(valor) ? valor : '';
-    let anoBase = Number((iso || hojeIso()).slice(0, 4)) - 5;
+    // Mês que o calendário mostra (não é o valor: navegar não muda a data) e a janela de anos da escolha de mês e ano.
+    let vistaA = Number((iso || hojeIso()).slice(0, 4)); let vistaM = Number((iso || hojeIso()).slice(5, 7));
+    let anoBase = vistaA - 5; let modoMesAno = false;
     const input = entrada('text', iso ? DF.display(iso) : '', { inputMode: 'numeric', placeholder: 'DD/MM/AA', maxLength: 8, autocomplete: 'off' });
     input.setAttribute('aria-label', nomeCampo);
     input.dataset.textoLivre = '1';
@@ -933,10 +938,21 @@
     botaoPainel.type = 'button'; botaoPainel.title = 'Escolher a data'; botaoPainel.setAttribute('aria-label', nomeCampo + ': escolher a data');
     botaoPainel.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/></svg>';
     const caixa = el('div', 'compras-aniv-campo'); caixa.append(input, botaoPainel);
-    const painel = el('div', 'compras-escolha-painel compras-aniv-painel'); painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', nomeCampo + ': dia, mês e ano');
-    const gradeDia = el('div', 'compras-grade-escolha em-7'); const gradeMes = el('div', 'compras-grade-escolha em-4');
-    const gradeAno = el('div', 'compras-grade-escolha em-4'); const setasAno = el('div', 'compras-grade-escolha em-2');
-    painel.append(el('span', 'compras-rotulo', 'Dia'), gradeDia, el('span', 'compras-rotulo', 'Mês'), gradeMes, el('span', 'compras-rotulo', 'Ano'), gradeAno, setasAno);
+    const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-data-painel'); painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', nomeCampo + ': calendário');
+    const titulo = el('button', 'compras-data-titulo'); titulo.type = 'button';
+    const anterior = el('button', 'compras-grade-celula compras-data-seta'); anterior.type = 'button'; anterior.textContent = '‹';
+    const seguinte = el('button', 'compras-grade-celula compras-data-seta'); seguinte.type = 'button'; seguinte.textContent = '›';
+    const cabecalho = el('div', 'compras-data-cab'); const setas = el('div', 'compras-data-setas'); setas.append(anterior, seguinte); cabecalho.append(titulo, setas);
+    const semana = el('div', 'compras-data-semana'); semana.setAttribute('aria-hidden', 'true');
+    SEMANA.forEach(([letra]) => semana.append(el('span', null, letra)));
+    const gradeDia = el('div', 'compras-grade-escolha em-7');
+    const gradeMes = el('div', 'compras-grade-escolha em-4'); const gradeAno = el('div', 'compras-grade-escolha em-4');
+    const vistaDias = el('div', 'compras-data-vista'); vistaDias.append(semana, gradeDia);
+    const vistaMesAno = el('div', 'compras-data-vista'); vistaMesAno.append(el('span', 'compras-rotulo', 'Mês'), gradeMes, el('span', 'compras-rotulo', 'Ano'), gradeAno);
+    const limpar = el('button', 'compras-data-acao', 'Limpar'); limpar.type = 'button';
+    const hoje = el('button', 'compras-data-acao', 'Hoje'); hoje.type = 'button';
+    const pe = el('div', 'compras-data-pe'); pe.append(limpar, hoje);
+    painel.append(cabecalho, vistaDias, vistaMesAno, pe);
     const abrirPainel = flutuante(caixa, painel);
     const resumo = el('small', 'profiles-note'); resumo.setAttribute('aria-live', 'polite');
     const no = el('div', 'compras-campo compras-data');
@@ -947,31 +963,51 @@
       return b;
     };
     const validar = () => input.setCustomValidity(!input.value || iso ? '' : 'Informe uma data válida no formato DD/MM/AA.');
+    const aviso = (tipo) => input.dispatchEvent(new Event(tipo, { bubbles: true }));
     function pintar() {
-      const [a, m, d] = (iso || hojeIso()).split('-');
-      resumo.textContent = iso ? Number(d) + ' de ' + LONGOS[Number(m) - 1] + ' de ' + a : '';
-      gradeDia.replaceChildren(...Array.from({ length: diasNoMes(Number(a), Number(m)) }, (_, i) => celula(String(i + 1), Boolean(iso) && Number(d) === i + 1, 'Dia ' + (i + 1), () => escolher('d', pad(i + 1), true))));
-      gradeMes.replaceChildren(...MESES.map((n, i) => celula(n, Boolean(iso) && Number(m) === i + 1, LONGOS[i], () => escolher('m', pad(i + 1), false))));
-      gradeAno.replaceChildren(...Array.from({ length: 12 }, (_, i) => celula(String(anoBase + i), Boolean(iso) && Number(a) === anoBase + i, 'Ano ' + (anoBase + i), () => escolher('a', String(anoBase + i), false))));
-      setasAno.replaceChildren(celula('‹ Anos anteriores', false, 'Anos anteriores', () => { anoBase -= 12; pintar(); }), celula('Próximos anos ›', false, 'Próximos anos', () => { anoBase += 12; pintar(); }));
+      resumo.textContent = iso ? Number(iso.slice(8)) + ' de ' + LONGOS[Number(iso.slice(5, 7)) - 1] + ' de ' + iso.slice(0, 4) : '';
+      vistaDias.hidden = modoMesAno; vistaMesAno.hidden = !modoMesAno;
+      titulo.textContent = LONGOS[vistaM - 1] + ' de ' + vistaA + (modoMesAno ? ' ▴' : ' ▾');
+      titulo.setAttribute('aria-expanded', String(modoMesAno)); titulo.title = modoMesAno ? 'Voltar aos dias' : 'Escolher o mês e o ano';
+      anterior.setAttribute('aria-label', modoMesAno ? 'Anos anteriores' : 'Mês anterior'); seguinte.setAttribute('aria-label', modoMesAno ? 'Próximos anos' : 'Mês seguinte');
+      if (modoMesAno) {
+        gradeMes.replaceChildren(...MESES.map((n, i) => celula(n, vistaM === i + 1, LONGOS[i], () => { vistaM = i + 1; modoMesAno = false; pintar(); })));
+        gradeAno.replaceChildren(...Array.from({ length: 12 }, (_, i) => celula(String(anoBase + i), vistaA === anoBase + i, 'Ano ' + (anoBase + i), () => { vistaA = anoBase + i; pintar(); })));
+        return;
+      }
+      // 6 semanas sempre (altura fixa); os dias que sobram do mês anterior e do seguinte aparecem esmaecidos e também se escolhem.
+      const primeiro = new Date(vistaA, vistaM - 1, 1).getDay(); const hojeI = hojeIso();
+      gradeDia.replaceChildren(...Array.from({ length: 42 }, (_, i) => {
+        const d = new Date(vistaA, vistaM - 1, 1 - primeiro + i); const v = paraIso(d.getFullYear(), d.getMonth() + 1, d.getDate());
+        const b = celula(String(d.getDate()), v === iso, d.getDate() + ' de ' + LONGOS[d.getMonth()] + ' de ' + d.getFullYear(), () => escolher(v));
+        if (d.getMonth() !== vistaM - 1) b.classList.add('fora');
+        if (v === hojeI) b.setAttribute('aria-current', 'date');
+        return b;
+      }));
     }
-    function escolher(parte, v, fecha) {
-      let [a, m, d] = (iso || hojeIso()).split('-');
-      if (parte === 'a') a = v; else if (parte === 'm') m = v; else d = v;
-      const max = diasNoMes(Number(a), Number(m)); if (Number(d) > max) d = pad(max);
-      iso = a + '-' + m + '-' + d;
-      input.value = DF.display(iso);
-      validar(); pintar();
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      if (fecha) { abrirPainel(false); input.focus(); input.dispatchEvent(new Event('change', { bubbles: true })); }
+    function escolher(v) {
+      iso = v; vistaA = Number(v.slice(0, 4)); vistaM = Number(v.slice(5, 7));
+      input.value = v ? DF.display(v) : ''; validar(); pintar();
+      aviso('input'); abrirPainel(false); input.focus(); aviso('change');
     }
-    const abrir = (sim) => { if (sim) { anoBase = Number((iso || hojeIso()).slice(0, 4)) - 5; pintar(); } abrirPainel(sim); };
+    const navegar = (passo) => {
+      if (modoMesAno) { anoBase += 12 * passo; pintar(); return; }
+      const d = new Date(vistaA, vistaM - 1 + passo, 1); vistaA = d.getFullYear(); vistaM = d.getMonth() + 1; pintar();
+    };
+    anterior.onclick = () => navegar(-1); seguinte.onclick = () => navegar(1);
+    titulo.onclick = () => { modoMesAno = !modoMesAno; if (modoMesAno) anoBase = vistaA - 5; pintar(); };
+    hoje.onclick = () => escolher(hojeIso());
+    limpar.onclick = () => escolher('');
+    const abrir = (sim) => {
+      if (sim) { const ref = iso || hojeIso(); vistaA = Number(ref.slice(0, 4)); vistaM = Number(ref.slice(5, 7)); modoMesAno = false; pintar(); }
+      abrirPainel(sim);
+    };
     input.addEventListener('input', (e) => {
       input.value = DF.mask(input.value);
       iso = DF.parse(input.value, iso) || '';
       validar();
-      // Só a digitação recentra os anos; escolher no painel não pode fazer a grade pular.
-      if (iso && e.isTrusted) anoBase = Number(iso.slice(0, 4)) - 5;
+      // Só a digitação leva o calendário ao mês digitado; escolher no painel não pode fazer a grade pular.
+      if (iso && e.isTrusted) { vistaA = Number(iso.slice(0, 4)); vistaM = Number(iso.slice(5, 7)); }
       pintar();
     });
     input.addEventListener('click', () => abrir(true));
@@ -980,7 +1016,7 @@
     validar(); pintar();
     return {
       no, input, valor: () => iso,
-      definir: (v) => { iso = DF.valid(v) ? v : ''; input.value = iso ? DF.display(iso) : ''; validar(); pintar(); },
+      definir: (v) => { iso = DF.valid(v) ? v : ''; input.value = iso ? DF.display(iso) : ''; if (iso) { vistaA = Number(iso.slice(0, 4)); vistaM = Number(iso.slice(5, 7)); } validar(); pintar(); },
     };
   }
 
