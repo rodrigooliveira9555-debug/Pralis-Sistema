@@ -1,7 +1,8 @@
 /*
- * Agenda — chat e arquivos de cada compromisso (no servidor: servidor/api/src/agenda).
- * - Chat: conversa de quem participa do compromisso; com a janela aberta, confere novidades a cada
- *   5 s; mensagens não lidas aparecem na linha do compromisso.
+ * Agenda — chat e arquivos (no servidor: servidor/api/src/agenda).
+ * - Chat do compromisso: conversa de quem participa dele. Chat do grupo (P-46): cada lista é um grupo, e quem é
+ *   membro conversa ali. As duas conversas usam a MESMA janela, no jeito do WhatsApp (balões, dia, hora no balão).
+ *   Com a janela aberta, confere novidades a cada 5 s; não lidas aparecem na linha do compromisso e na lista.
  * - Arquivos: até 10 MB (imagem, PDF, Word, Excel, PowerPoint, TXT, CSV). O responsável manda
  *   "evidência" (o que fez); o gestor e quem pode editar mandam "material". Só quem enviou ou o gestor
  *   exclui. O servidor confere tudo isso pelo compromisso (quem não participa não vê).
@@ -18,6 +19,7 @@
   const INTERVALO_CHAT = 5000;
   const INTERVALO_NAO_LIDAS = 30000;
   const ICONE_CHAT = '<path d="M4 5h16v11H8l-4 4z"/>';
+  const ICONE_ENVIAR = '<path d="M4 12 20 4l-4 16-4-7zM12 13l8-9"/>';
   const ICONE_ARQUIVO = '<path d="M14 3H6v18h12V7zM14 3v4h4"/>';
 
   const api = (caminho, opcoes) => window.CicluzSync.api(caminho, opcoes);
@@ -32,31 +34,53 @@
     return (e && e.message) || 'Não foi possível falar com o servidor.';
   }
   const hora = (iso) => { const d = new Date(iso); return D.rotuloData(D.isoData(d), new Date()) + ' ' + D.horaAgora(d); };
+  /** Separador de dia do chat: Hoje, Ontem ou DD/MM/AA. */
+  function rotuloDia(iso) {
+    const dia = D.isoData(new Date(iso));
+    const hoje = D.isoData(new Date());
+    if (dia === hoje) return 'Hoje';
+    if (dia === D.somarDias(hoje, -1)) return 'Ontem';
+    return D.dataCurta(dia);
+  }
+  const iniciais = (nome) => String(nome || '?').split(/\s+/).filter((p) => /^[A-Za-zÀ-ÿ]/.test(p)).slice(0, 2).map((p) => p[0].toUpperCase()).join('') || '?';
   const tamanho = (n) => (n < 1024 ? n + ' B' : n < 1048576 ? Math.round(n / 1024) + ' KB' : (n / 1048576).toFixed(1).replace('.', ',') + ' MB');
 
   /* ---------- Não lidas (para a linha do compromisso) ---------- */
   let naoLidas = {};
+  let naoLidasGrupos = {};
   let ultimaConsulta = 0;
   async function atualizarNaoLidas(forcar) {
-    if (!online() || (!forcar && Date.now() - ultimaConsulta < INTERVALO_NAO_LIDAS - 1000)) return;
+    if (!online() || A.situacao !== 'servidor' || (!forcar && Date.now() - ultimaConsulta < INTERVALO_NAO_LIDAS - 1000)) return;
     ultimaConsulta = Date.now();
     try {
-      const r = await api('/agenda/chat/nao-lidas');
+      const auto = { automatico: true };
+      const [r, g] = await Promise.all([api('/agenda/chat/nao-lidas', auto), api('/agenda/grupos-chat/nao-lidas', auto).catch(() => ({ naoLidas: naoLidasGrupos }))]);
       const novo = r.naoLidas || {};
-      if (JSON.stringify(novo) !== JSON.stringify(naoLidas)) { naoLidas = novo; document.dispatchEvent(new CustomEvent('cicluz-agenda-conversa')); }
+      const novoGrupos = g.naoLidas || {};
+      if (JSON.stringify(novo) !== JSON.stringify(naoLidas) || JSON.stringify(novoGrupos) !== JSON.stringify(naoLidasGrupos)) {
+        naoLidas = novo;
+        naoLidasGrupos = novoGrupos;
+        document.dispatchEvent(new CustomEvent('cicluz-agenda-conversa'));
+      }
     } catch (e) { /* sem servidor agora: tenta na próxima */ }
   }
   setInterval(() => { const v = document.getElementById('agenda-view'); if (v && v.classList.contains('show')) atualizarNaoLidas(); }, INTERVALO_NAO_LIDAS);
 
-  /* ---------- Chat ---------- */
-  function abrirChat(item) {
+  /* ---------- Chat (compromisso ou grupo), no jeito do WhatsApp ---------- */
+  /**
+   * base: '/agenda/compromissos/<id>' ou '/agenda/grupos/<id>' (as duas têm /mensagens e /leitura).
+   * mostrarAutor: no grupo, o nome de quem escreveu aparece sempre (como num grupo do WhatsApp).
+   */
+  function abrirConversa({ titulo, subtitulo, base, mostrarAutor = true }) {
     if (!online()) return U.avisar('O chat precisa do servidor: entre com seu usuário.');
     let ultima = '';
+    let ultimoDia = '';
+    let ultimoAutor = '';
     let timer = null;
     const eu = A.usuarioAtual();
     U.dialogo({
-      titulo: 'Chat · ' + item.titulo,
-      subtitulo: 'Quem participa do compromisso vê esta conversa.',
+      titulo,
+      subtitulo,
       ...cor(),
       classe: 'agenda-dialog agenda-chat-dialog',
       aoFechar: () => { clearInterval(timer); atualizarNaoLidas(true); },
@@ -68,12 +92,18 @@
         lista.setAttribute('aria-label', 'Mensagens');
         const estado = el('p', 'profiles-note agenda-chat-estado', 'Carregando…');
         const linha = el('div', 'agenda-chat-envio');
-        const texto = el('textarea');
-        texto.rows = 2;
+        // Campo de uma linha, como o do WhatsApp (a caixa de várias linhas do sistema tem 84 px no mínimo).
+        const texto = el('input');
+        texto.type = 'text';
         texto.maxLength = 2000;
-        texto.placeholder = 'Escreva a mensagem (Enter envia, Shift+Enter quebra a linha)';
-        texto.setAttribute('aria-label', 'Mensagem');
-        const enviar = botao('Enviar', () => mandar(), 'btn');
+        texto.placeholder = 'Mensagem';
+        texto.autocomplete = 'off';
+        texto.enterKeyHint = 'send';
+        texto.setAttribute('aria-label', 'Mensagem (Enter envia)');
+        const enviar = botao('', () => mandar(), 'agenda-chat-enviar');
+        enviar.innerHTML = svg(ICONE_ENVIAR);
+        enviar.title = 'Enviar';
+        enviar.setAttribute('aria-label', 'Enviar mensagem');
         linha.append(texto, enviar);
         form.append(lista, estado, linha);
 
@@ -82,21 +112,35 @@
           if (lista.querySelector('.compras-vazio')) lista.replaceChildren();
           mensagens.forEach((m) => {
             if (lista.querySelector('[data-id="' + m.id + '"]')) return;
+            const dia = rotuloDia(m.criadoEm);
+            if (dia !== ultimoDia) { lista.append(el('div', 'agenda-chat-dia', dia)); ultimoDia = dia; ultimoAutor = ''; }
             const minha = m.autorId === eu;
-            const b = el('div', 'agenda-chat-msg' + (minha ? ' minha' : ''));
+            const seguida = m.autorId === ultimoAutor;
+            const b = el('div', 'agenda-chat-msg' + (minha ? ' minha' : '') + (seguida ? ' seguida' : ''));
             b.dataset.id = m.id;
-            if (!minha) b.append(el('small', 'agenda-chat-autor', m.autorNome));
-            b.append(el('span', 'agenda-chat-texto', m.texto), el('small', 'agenda-chat-hora', hora(m.criadoEm)));
+            if (!minha && !seguida) {
+              const av = el('span', 'agenda-chat-avatar', iniciais(m.autorNome));
+              av.setAttribute('aria-hidden', 'true');
+              b.append(av);
+            }
+            const balao = el('div', 'agenda-chat-balao');
+            if (!minha && !seguida && mostrarAutor) balao.append(el('small', 'agenda-chat-autor', m.autorNome));
+            balao.append(el('span', 'agenda-chat-texto', m.texto), el('small', 'agenda-chat-hora', D.horaAgora(new Date(m.criadoEm))));
+            b.append(balao);
+            b.title = (minha ? 'Você' : m.autorNome) + ' · ' + hora(m.criadoEm);
             lista.append(b);
             ultima = m.criadoEm;
+            ultimoAutor = m.autorId;
           });
           lista.scrollTop = lista.scrollHeight;
         };
         async function buscar(primeira) {
           try {
-            const r = await api('/agenda/compromissos/' + encodeURIComponent(item.id) + '/mensagens' + (ultima ? '?depois=' + encodeURIComponent(ultima) : ''));
+            // Só a primeira leitura é da pessoa; as seguintes (a cada X s) são automáticas.
+            const auto = primeira ? {} : { automatico: true };
+            const r = await api(base + '/mensagens' + (ultima ? '?depois=' + encodeURIComponent(ultima) : ''), auto);
             if (primeira && !r.mensagens.length) lista.replaceChildren(U.vazio('Nenhuma mensagem ainda.', 'Comece a conversa abaixo.'));
-            if (r.mensagens.length || primeira) { desenhar(r.mensagens); api('/agenda/compromissos/' + encodeURIComponent(item.id) + '/leitura', { metodo: 'POST', corpo: {} }).catch(() => {}); }
+            if (r.mensagens.length || primeira) { desenhar(r.mensagens); api(base + '/leitura', Object.assign({ metodo: 'POST', corpo: {} }, auto)).catch(() => {}); }
             estado.textContent = '';
           } catch (e) {
             estado.textContent = mensagemErro(e);
@@ -108,14 +152,15 @@
           if (!t) return;
           enviar.disabled = true;
           try {
-            const m = await api('/agenda/compromissos/' + encodeURIComponent(item.id) + '/mensagens', { metodo: 'POST', corpo: { texto: t } });
+            const m = await api(base + '/mensagens', { metodo: 'POST', corpo: { texto: t } });
             texto.value = '';
             desenhar([m]);
             estado.textContent = '';
           } catch (e) { estado.textContent = mensagemErro(e); }
           finally { enviar.disabled = false; texto.focus(); }
         }
-        texto.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); mandar(); } });
+        // Chat: Enter envia, como no WhatsApp (exceção ao "Enter nunca salva", registrada no DESIGN_SYSTEM).
+        texto.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); mandar(); } });
         buscar(true);
         timer = setInterval(() => buscar(false), INTERVALO_CHAT);
         setTimeout(() => texto.focus(), 150);
@@ -123,6 +168,9 @@
       },
     });
   }
+  const abrirChat = (item) => abrirConversa({ titulo: 'Chat · ' + item.titulo, subtitulo: 'Quem participa do compromisso vê esta conversa.', base: '/agenda/compromissos/' + encodeURIComponent(item.id) });
+  /** Chat do grupo: a lista é o grupo; conversam os membros, quem criou a lista e o administrador. */
+  const abrirChatGrupo = (lista) => abrirConversa({ titulo: 'Grupo · ' + lista.nome, subtitulo: 'Conversa de quem é membro da lista "' + lista.nome + '".', base: '/agenda/grupos/' + encodeURIComponent(lista.id) });
 
   /* ---------- Seção do compromisso: chat + arquivos ---------- */
   function secao(item) {
@@ -199,5 +247,5 @@
     return s;
   }
 
-  window.CicluzAgendaConversa = { secao, abrirChat, atualizarNaoLidas, naoLidas: () => naoLidas, ICONE_CHAT };
+  window.CicluzAgendaConversa = { secao, abrirChat, abrirChatGrupo, atualizarNaoLidas, naoLidas: () => naoLidas, naoLidasGrupos: () => naoLidasGrupos, ICONE_CHAT };
 })();

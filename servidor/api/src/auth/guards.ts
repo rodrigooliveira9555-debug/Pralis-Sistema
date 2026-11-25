@@ -2,6 +2,7 @@ import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyRequest } from "fastify";
 import type { PerfilSessao } from "@cicluz/shared";
 import { naoAutenticado, proibido } from "../erros.ts";
+import { conferirAtividade } from "./atividade.ts";
 import { auth } from "./config.ts";
 import { conferirPermissaoDaConta, erroSemPermissao } from "../acessos-por-tela/acessos-por-tela.service.ts";
 import { buscarPerfilUsuario } from "./perfil.service.ts";
@@ -22,6 +23,8 @@ export async function exigirAutenticacao(request: FastifyRequest): Promise<Perfi
 
   const perfil = await buscarPerfilUsuario(sessao.user.id);
   if (!perfil) throw proibido("Acesso desativado. Fale com o administrador.", "PROFILE_INACTIVE");
+  // Tempo parado (P-46 item 4): sessão largada além do tempo da pessoa é encerrada aqui.
+  await conferirAtividade(sessao.session.id, perfil, request.headers["x-cicluz-automatico"] === "1");
 
   // Conta ligada a um colaborador (Acesso por Tela): sem permissão a pessoa até entra (a sessão abre), mas nada abre. O administrador nunca é barrado.
   if (perfil.papel !== "administrador") {

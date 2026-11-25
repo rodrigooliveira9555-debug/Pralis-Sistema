@@ -379,6 +379,9 @@ body.dark-theme .compras-texto-auto { color: #a7e8bd; }
 
 /* Formulários largos: blocos de lista ocupam a largura toda do diálogo. */
 .compras-form > .compras-fieldset-lista, .compras-form > .compras-largo { grid-column: 1 / -1; }
+/* Lançamentos: linhas da discriminação, botão Adicionar item e Vale presente, com o mesmo respiro dos quadros (12 px). */
+.compras-discriminacao { display: grid; gap: 12px; }
+.compras-discriminacao > :empty { display: none; }
 .compras-fieldset > .compras-largo, .compras-fieldset > .profiles-note { grid-column: 1 / -1; }
 .compras-dialog .compras-interruptor, .compras-content .compras-interruptor { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .compras-dialog .compras-interruptor > input { flex: 0 0 22px; margin: 0; }
@@ -729,3 +732,38 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 /* Editor do tipo de contrato: as duas listas de atividades lado a lado. */
 .compras-atividades-duas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 @media (max-width:900px){.compras-atividades-duas{grid-template-columns:minmax(0,1fr)}}
+/* Campo de hora: o painel tem duas colunas (horas e minutos); cada uma rola e mostra umas seis linhas. */
+.compras-hora-painel{width:min(232px,calc(100vw - 24px));gap:6px}
+.compras-hora-cabecalho{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.compras-aniv-painel .compras-grade-escolha.compras-hora-lista{grid-template-columns:minmax(0,1fr);gap:var(--gap);position:relative;box-sizing:border-box;height:calc(var(--cel)*5 + var(--gap)*4);padding:calc((var(--cel)*4 + var(--gap)*4)/2) 4px;overflow-y:auto;overscroll-behavior:contain;scroll-snap-type:y mandatory;scrollbar-width:none}
+.compras-hora-lista::-webkit-scrollbar{display:none}
+.compras-hora-lista:focus-visible{outline:2px solid var(--menu-accent);outline-offset:2px}
+.compras-aniv-painel .compras-hora-lista .compras-grade-celula{height:var(--cel);min-height:var(--cel);scroll-snap-align:center;scroll-snap-stop:always}
+/* Roleta do campo de hora: uma faixa contínua fica parada no meio das duas colunas; dentro dela anda a cópia dos números de cada coluna (translateY = -scrollTop, ajustado pelo JS a cada rolagem). */
+.compras-hora-rodas{--cel:36px;--gap:6px;position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 12px}
+.compras-hora-faixa{position:absolute;z-index:1;left:4px;right:4px;top:calc(var(--cel)*2 + var(--gap)*2);height:var(--cel);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;pointer-events:none;border-radius:8px;background:var(--menu-accent);color:var(--theme-surface,#fff);font:600 var(--ui-text,14px)/18px var(--ui-font)}
+.compras-hora-janela{height:var(--cel);overflow:hidden}
+.compras-hora-faixa-itens{display:grid;gap:var(--gap);will-change:transform}
+.compras-hora-faixa-itens>span{height:var(--cel);display:grid;place-items:center}
+/* Campo de data com calendário (U.campoData, compras/campo-data.js, 24/11/2026): o painel do campo de hora, com o mês. */
+.compras-data-painel{width:min(292px,calc(100vw - 24px));gap:8px}
+.compras-data-topo{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.compras-data-titulo{font:600 var(--ui-text,14px)/20px var(--ui-font);text-transform:capitalize}
+.compras-data-passo{display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer}
+.compras-data-passo:hover,.compras-data-passo:focus-visible{background:color-mix(in srgb,var(--menu-accent) 12%,transparent);outline:none}
+.compras-data-passo svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.compras-aniv-painel .compras-data-grade{gap:4px}
+.compras-data-semana{display:grid;place-items:center;min-height:24px;font:600 11px/16px var(--ui-font);color:var(--navigation-ink,#71717a)}
+.compras-aniv-painel .compras-data-grade .compras-grade-celula{min-height:34px}
+.compras-aniv-painel .compras-data-grade .compras-grade-celula.hoje:not([aria-pressed=true]){border-color:var(--menu-accent);font-weight:600}
+.compras-data-painel>.compras-chip{justify-self:start}
+.compras-data-pe{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.compras-data-pe>.compras-chip{justify-self:auto}
+/* Lançamentos: bloco da leitura por IA (desativado por ora). */
+.compras-ia{display:grid;gap:6px}
+.compras-ia button:disabled{opacity:.5;cursor:not-allowed}
+.compras-data-titulo.compras-data-titulo-botao{text-transform:none;padding:6px 8px;border:0;border-radius:8px;background:transparent;color:inherit;font:600 var(--ui-text,14px)/20px var(--ui-font);cursor:pointer}
+.compras-data-titulo-botao:hover,.compras-data-titulo-botao:focus-visible{background:color-mix(in srgb,var(--menu-accent) 12%,transparent);outline:none}
+.compras-data-vista[hidden]{display:none}
+.compras-data-vista{display:grid;gap:6px}
+.compras-aniv-painel .compras-data-vista .compras-grade-escolha{gap:6px}

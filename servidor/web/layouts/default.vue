@@ -48,8 +48,9 @@ function alternarTema() {
     <h2 id="secao-lancamentos" class="menu-secao">Lançamentos</h2>
     <ul class="menu-lista" aria-labelledby="secao-lancamentos">
       <li v-for="item in MENU_LANCAMENTOS" :key="item.rota">
-        <NuxtLink
-          :to="item.rota"
+        <component
+          :is="item.site ? 'a' : 'NuxtLink'"
+          v-bind="item.site ? { href: item.site } : { to: item.rota }"
           class="menu-item"
           :class="{ ativo: route.path.startsWith(item.rota) }"
           :style="{ '--cor-item': CORES[item.origem].forte }"
@@ -60,7 +61,7 @@ function alternarTema() {
             <strong>{{ item.titulo }}</strong>
             <small>{{ item.subtitulo }}</small>
           </span>
-        </NuxtLink>
+        </component>
       </li>
     </ul>
 

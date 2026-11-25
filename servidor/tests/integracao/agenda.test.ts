@@ -38,7 +38,10 @@ async function cenario() {
   };
   const r = await app.inject({ method: "POST", url: "/api/documentos/importacao", headers: comSessao(gestor.cookie), payload: { itens: [{ chave: CHAVE, valor: JSON.stringify(agenda) }] } });
   expect(r.statusCode).toBe(201);
-  return { gestor, resp, leitor, fora };
+  // A permissão do chat e dos arquivos vem das tabelas: o documento é levado para elas antes (passo A6).
+  const t = await app.inject({ method: "POST", url: "/api/agenda/transferencia", headers: comSessao(gestor.cookie), payload: { documentoVersao: 1, gestorSemCriador: gestor.usuarioId } });
+  expect(t.statusCode, t.body).toBe(200);
+  return { gestor, resp, leitor, fora, agenda };
 }
 
 const pedir = (cookie: string, method: "GET" | "POST" | "DELETE", url: string, payload?: object) =>
@@ -67,8 +70,29 @@ describe("agenda: chat", () => {
     expect(negado.statusCode).toBe(403);
     expect(negado.json().code).toBe("AGENDA_SEM_ACESSO");
     expect((await pedir(fora.cookie, "POST", "/api/agenda/compromissos/ag-1/mensagens", { texto: "oi" })).statusCode).toBe(403);
-    // Compromisso sem criador (feito antes do login): sem controle, como na tela
-    expect((await pedir(fora.cookie, "POST", "/api/agenda/compromissos/ag-antigo/mensagens", { texto: "oi" })).statusCode).toBe(201);
+    // Compromisso sem criador (feito antes do login): era aberto a qualquer um; depois da transferência o gestor é a
+    // conta escolhida pelo administrador e quem não participa não entra no chat.
+    expect((await pedir(fora.cookie, "POST", "/api/agenda/compromissos/ag-antigo/mensagens", { texto: "oi" })).statusCode).toBe(403);
+    expect((await pedir(gestor.cookie, "POST", "/api/agenda/compromissos/ag-antigo/mensagens", { texto: "oi" })).statusCode).toBe(201);
+  });
+
+  it("documento forjado não abre o chat nem os arquivos (G1)", async () => {
+    const { fora, agenda } = await cenario();
+    const forjado = { ...agenda, itens: agenda.itens.map((i) => ({ ...i, criadoPor: fora.usuarioId })) };
+    const w = await app.inject({ method: "PUT", url: "/api/documentos", headers: comSessao(fora.cookie), payload: { itens: [{ chave: CHAVE, valor: JSON.stringify(forjado), versaoBase: 1 }] } });
+    expect(w.statusCode).toBeLessThan(300);
+    expect((await pedir(fora.cookie, "GET", "/api/agenda/compromissos/ag-1/mensagens")).statusCode).toBe(403);
+    expect((await pedir(fora.cookie, "GET", "/api/agenda/compromissos/ag-1/arquivos")).statusCode).toBe(403);
+    expect((await pedir(fora.cookie, "GET", "/api/agenda/chat/nao-lidas")).json().data.naoLidas).toEqual({});
+  });
+
+  it("compromisso excluído não tem chat; empresa sem Agenda nas tabelas recebe AGENDA_NAO_TRANSFERIDA", async () => {
+    const { gestor } = await cenario();
+    await app.inject({ method: "DELETE", url: "/api/agenda/compromissos/ag-1?versao=1", headers: comSessao(gestor.cookie) });
+    expect((await pedir(gestor.cookie, "GET", "/api/agenda/compromissos/ag-1/mensagens")).statusCode).toBe(404);
+    const outra = await logado("administrador");
+    const r = await pedir(outra.cookie, "GET", "/api/agenda/compromissos/ag-1/mensagens");
+    expect(r.json().code).toBe("AGENDA_NAO_TRANSFERIDA");
   });
 
   it("mensagem vazia ou longa é recusada; compromisso inexistente dá 404", async () => {
@@ -96,6 +120,8 @@ describe("agenda: chat", () => {
     const { gestor } = await cenario();
     await pedir(gestor.cookie, "POST", "/api/agenda/compromissos/ag-1/mensagens", { texto: "segredo" });
     const outra = await logado("administrador");
+    // A outra empresa também já está com a Agenda nas tabelas (sem documento: listas iniciais).
+    await app.inject({ method: "POST", url: "/api/agenda/transferencia", headers: comSessao(outra.cookie), payload: { documentoVersao: null, gestorSemCriador: outra.usuarioId } });
     const r = await pedir(outra.cookie, "GET", "/api/agenda/compromissos/ag-1/mensagens");
     expect(r.statusCode).toBe(404);
   });
@@ -158,12 +184,11 @@ describe("agenda: arquivos", () => {
   it("tirar a pessoa do compromisso tira o acesso na hora", async () => {
     const { gestor, resp } = await cenario();
     expect((await pedir(resp.cookie, "GET", "/api/agenda/compromissos/ag-1/mensagens")).statusCode).toBe(200);
-    const docs = (await pedir(gestor.cookie, "GET", "/api/documentos")).json().data.documentos as Array<{ chave: string; valor: string; versao: number }>;
-    const doc = docs.find((d) => d.chave === CHAVE)!;
-    const dados = JSON.parse(doc.valor);
-    dados.itens[0].pessoas = [];
-    const g = await app.inject({ method: "PUT", url: "/api/documentos", headers: comSessao(gestor.cookie), payload: { itens: [{ chave: CHAVE, valor: JSON.stringify(dados), versaoBase: doc.versao }] } });
-    expect(g.statusCode).toBe(200);
+    // O gestor tira as pessoas pelo formulário (a Agenda nova); o chat confere nas tabelas a cada pedido.
+    const atual = (await pedir(gestor.cookie, "GET", "/api/agenda/compromissos/ag-1")).json().data;
+    const g = await app.inject({ method: "PUT", url: "/api/agenda/compromissos/ag-1", headers: comSessao(gestor.cookie),
+      payload: { versao: atual.versao, grupoId: atual.grupoId, titulo: atual.titulo, pessoas: [] } });
+    expect(g.statusCode, g.body).toBe(200);
     expect((await pedir(resp.cookie, "GET", "/api/agenda/compromissos/ag-1/mensagens")).statusCode).toBe(403);
   });
 });

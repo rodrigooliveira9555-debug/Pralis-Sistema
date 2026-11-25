@@ -29,8 +29,7 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .card-inheri
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .shortcut-circle,body .side :is(.money-icon,.menu-icon-circle){aspect-ratio:1;flex-shrink:0!important;border-radius:var(--icon-radius,50%)!important;box-sizing:border-box!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view>.panel>.head .shortcut-circle:is(:hover,:active,:focus-visible){color:var(--menu-accent,#7c3aed)!important;background:#fff!important;border-color:#fff!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view .content p{color:var(--layout-ink)}
-body :is(#people,#process) :is(.panel,.card,.process){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important;border-radius:14px}
-body #people .dashboard-intro{background:var(--menu-accent,var(--panel-color,#7c3aed));border-radius:20px;padding:20px;color:#fff}
+body #process :is(.panel,.card,.process){background:#fff!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important;border-radius:14px}
 
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view).view :is(.account-list-state,.financial-count,.job-item small,.salary-row small){color:var(--layout-ink)!important}
 /* Information blocks remain white in either theme; gray is only the shared spacing surface. */

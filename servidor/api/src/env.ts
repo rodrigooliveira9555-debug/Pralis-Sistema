@@ -18,7 +18,19 @@ const envSchema = z.object({
   // Quantos proxies ficam na frente da API (ex.: Vercel → Traefik = 2). É o que define de onde sai o
   // IP real do cliente para o limite de tentativas. 0 = sem proxy: X-Forwarded-For é ignorado (um
   // atacante não consegue trocar de "IP" a cada tentativa só mudando o cabeçalho).
-  PROXIES_CONFIAVEIS: z.coerce.number().int().min(0).max(5).default(0)
+  PROXIES_CONFIAVEIS: z.coerce.number().int().min(0).max(5).default(0),
+  // Vendas dos PDVs: o S2 lê do Sistema Pralis (S1) ao vivo, com o token de leitura que o S1 aceita
+  // (S2_LEITURA_TOKEN lá). Sem os dois, a tela avisa que a integração não está configurada.
+  // Vazio = desligado (o compose do Coolify entrega "" quando a variável não está no painel).
+  S1_VENDAS_URL: z.union([z.literal(""), z.string().url()]).default(""),
+  S1_VENDAS_TOKEN: z.string().default(""),
+  // A empresa do S2 que pode ver essas vendas (o token do S1 é de uma loja só). Vazio = leitura desligada.
+  S1_VENDAS_EMPRESA_ID: z.union([z.literal(""), z.string().uuid()]).default(""),
+  // Extrato da Caixa PJ da TNP (Open Finance pelo Meu Pluggy): o coletor da TNP (GET /api/v1/extrato) e o token
+  // dele (S2_TOKEN lá). A empresa do S2 que pode ver. Vazio = desligado.
+  TNP_EXTRATO_URL: z.union([z.literal(""), z.string().url()]).default(""),
+  TNP_EXTRATO_TOKEN: z.string().default(""),
+  TNP_EXTRATO_EMPRESA_ID: z.union([z.literal(""), z.string().uuid()]).default("")
 });
 
 const lido = envSchema.parse(process.env);
@@ -34,6 +46,13 @@ if (lido.NODE_ENV === "production") {
   // Sem https o cookie de sessão sai sem Secure.
   if (![lido.AUTH_BASE_URL, ...origensWebPermitidas].every((url) => url.startsWith("https://"))) {
     throw new Error("Em produção, AUTH_BASE_URL e WEB_ORIGINS precisam ser https");
+  }
+  // O token de leitura das vendas não pode trafegar em texto aberto.
+  if (lido.S1_VENDAS_URL && !lido.S1_VENDAS_URL.startsWith("https://")) {
+    throw new Error("Em produção, S1_VENDAS_URL precisa ser https");
+  }
+  if (lido.TNP_EXTRATO_URL && !lido.TNP_EXTRATO_URL.startsWith("https://")) {
+    throw new Error("Em produção, TNP_EXTRATO_URL precisa ser https");
   }
 }
 

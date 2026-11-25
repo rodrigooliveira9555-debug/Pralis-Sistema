@@ -144,7 +144,7 @@
   async function conferirVersoes() {
     if (suspensa || document.hidden) return;
     try {
-      var dados = await S.api('/documentos/versoes');
+      var dados = await S.api('/documentos/versoes', { automatico: true });
       var pend = S.pendentes() || { itens: {} };
       var novas = dados.versoes.some(function (v) { return v.versao > (versoes[v.chave] || 0) && !pend.itens[v.chave]; });
       if (novas) mostrarAviso('novos', 'Há dados novos salvos em outro aparelho.', 'Atualizar', S.irParaEntrada);

@@ -138,7 +138,7 @@
         s2.append(campo('Janela de demanda: de *', de), campo('Até *', ate), campo('Entrega', entrega));
         const s3 = sec('Quem pede');
         const resp = seletor(S.RESPONSAVEIS.map((u) => [u.id, u.nome]), a?.responsavelId || '', 'Selecione');
-        s3.append(campo('Responsável pelo pedido *', resp, 'Usuários fictícios: o S2 ainda não tem cadastro de usuários.'));
+        s3.append(campo('Responsável pelo pedido *', resp, 'Pessoas com Acesso. Na hora agendada, o pedido vira tarefa na Agenda dela.'));
         const s4 = sec('Produtos');
         s4.classList.add('compras-fieldset-lista');
         const caixa = el('div', 'compras-largo');

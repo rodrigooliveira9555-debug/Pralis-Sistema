@@ -55,16 +55,18 @@ describe("Acesso por Tela no servidor", () => {
     expect(semPermissao.statusCode).toBe(403);
     const invalido = await enviar(admin.cookie, { colaboradores: [], areaPais: {}, configs: { "qualquer:coisa": configTudoLigado } });
     expect(invalido.statusCode).toBe(400);
+    const idComEspaco = await enviar(admin.cookie, { colaboradores: [{ id: "com espaco", nome: "X", cargoId: null, areaIds: [], ativo: true }], areaPais: {}, configs: {} });
+    expect(idComEspaco.statusCode).toBe(400);
   });
 
   it("a conta ligada ao colaborador só abre com permissão; o administrador nunca é barrado", async () => {
     const admin = await adminLogado();
     await enviar(admin.cookie, {
-      colaboradores: [{ id: `colab-${admin.empresaNome}`, nome: "Caixa Um", cargoId: "ref:16", areaIds: ["loja"], ativo: true }],
+      colaboradores: [{ id: `colab-${admin.empresaNome.slice(-12)}`, nome: "Caixa Um", cargoId: "ref:16", areaIds: ["loja"], ativo: true }],
       areaPais: { loja: null },
       configs: {}
     });
-    const colabId = `colab-${admin.empresaNome}`;
+    const colabId = `colab-${admin.empresaNome.slice(-12)}`;
     const criada = await app.inject({
       method: "POST",
       url: "/api/usuarios",
@@ -98,7 +100,7 @@ describe("Acesso por Tela no servidor", () => {
 
   it("a configuração própria da pessoa vence a da área, e o colaborador só tem uma conta", async () => {
     const admin = await adminLogado();
-    const colabId = `colab-p-${admin.empresaNome}`;
+    const colabId = `colab-p-${admin.empresaNome.slice(-12)}`;
     await enviar(admin.cookie, {
       colaboradores: [{ id: colabId, nome: "Dina", cargoId: "ref:9", areaIds: ["loja"], ativo: true }],
       areaPais: { loja: null },

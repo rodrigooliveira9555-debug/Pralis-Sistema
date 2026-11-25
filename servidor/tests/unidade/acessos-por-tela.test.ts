@@ -37,8 +37,8 @@ describe("Acesso por Tela: quem pode usar o sistema", () => {
   it("em mais de uma área com configurações diferentes valem as permissões maiores", () => {
     const r = resolverConfig({ id: "p3", cargoId: "c-9", areaIds: ["A", "S"] }, { "area:A": c({ vendas: ["ver"] }), "area:S": c({ vendas: ["lan"], caixa: ["ver"] }) }, pais);
     expect(r.origens.sort()).toEqual(["area:A", "area:S"]);
-    expect([...(r.config.telas.vendas ?? [])].sort()).toEqual(["lan", "ver"]);
-    expect(r.config.telas.caixa).toEqual(["ver"]);
+    expect([...(r.config.telas["vendas"] ?? [])].sort()).toEqual(["lan", "ver"]);
+    expect(r.config.telas["caixa"]).toEqual(["ver"]);
   });
 
   it("sem cargo, sem configuração ou com tudo desligado a pessoa não usa o sistema", () => {

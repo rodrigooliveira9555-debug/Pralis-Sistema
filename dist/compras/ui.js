@@ -609,7 +609,16 @@
       if (salvando) return;
       salvando = true;
       let msg;
-      try { msg = await salvar(ctx); } catch (err) { console.warn(err); msg = 'Não foi possível salvar. Tente de novo.'; } finally { salvando = false; }
+      // Se salvar responde depois (servidor), mostra "Salvando…" e trava o botão até a resposta. Salvar na hora: nada muda.
+      const enviar = form.querySelector('button[type=submit]');
+      const espera = setTimeout(() => { erro.textContent = 'Salvando…'; if (enviar) enviar.disabled = true; form.setAttribute('aria-busy', 'true'); }, 0);
+      try { msg = await salvar(ctx); } catch (err) { console.warn(err); msg = 'Não foi possível salvar. Tente de novo.'; } finally {
+        salvando = false;
+        clearTimeout(espera);
+        if (erro.textContent === 'Salvando…') erro.textContent = '';
+        if (enviar) enviar.disabled = false;
+        form.removeAttribute('aria-busy');
+      }
       if (msg) { erro.textContent = msg; sinalizarObrigatorios(form); return; }
       d.close();
     };
@@ -748,7 +757,8 @@
     dialogo({
       titulo, cor, corTexto, classe,
       montar: (form) => { form.append(el('p', null, texto)); },
-      salvar: () => { const r = acao(); return typeof r === 'string' ? r : undefined; },
+      // A ação pode responder depois (gravar no servidor): a janela espera, e o erro aparece nela.
+      salvar: async () => { const r = await acao(); return typeof r === 'string' ? r : undefined; },
       rotuloSalvar: rotulo,
     });
   }
@@ -803,6 +813,101 @@
    * da tela (fixa), logo abaixo do botão, ou acima quando não cabe embaixo. Fecha no Esc (sem fechar a janela de
    * trás) e tocando fora. Devolve abrir(sim). O ouvinte de "tocar fora" só existe enquanto está aberta.
    */
+  /**
+   * Campo de hora (24/11/2026, Washington): o MESMO desenho do campo de aniversário (dia e mês). Um campo com a máscara HH:MM para digitar e o botão
+   * redondo do relógio; tocar no campo ou no botão abre um painel flutuante (flutuante) com DUAS COLUNAS em forma de ROLETA, as 24 horas e os 60 minutos, em células de
+   * cantos arredondados. UMA faixa cheia na cor do menu, contínua, atravessa as duas colunas e fica PARADA no meio; os números rolam por baixo dela (uma cópia em branco anda
+   * junto, sem trocar a cor de célula nenhuma, então não pisca); rolar ou arrastar qualquer coluna encaixa um número na faixa e o campo atualiza na hora
+   * (a hora que estava vazia vira 00, como o minuto). Tocar numa hora a leva ao meio; tocar num minuto leva, escolhe e fecha; setas para cima e para baixo mudam o valor; Esc fecha.
+   * Qualquer minuto se escolhe na coluna ou se digita no campo. Devolve { caixa, painel, input }: quem usa põe a caixa na tela e o painel ao lado dela.
+   * input.value é "HH:MM" (ou vazio); hora incompleta ou fora de 00:00 a 23:59 deixa o campo inválido (setCustomValidity).
+   */
+  function campoHora({ valor = '', rotulo = 'Hora' } = {}) {
+    const valida = (t) => /^([01]\d|2[0-3]):[0-5]\d$/.test(t);
+    const pad = (n) => String(n).padStart(2, '0');
+    let hora = ''; let minuto = '';
+    if (valida(valor)) { hora = valor.slice(0, 2); minuto = valor.slice(3); }
+    const input = entrada('text', hora ? hora + ':' + minuto : '', { inputMode: 'numeric', placeholder: 'HH:MM', maxLength: 5, autocomplete: 'off' });
+    input.setAttribute('aria-label', rotulo);
+    input.dataset.textoLivre = '1';
+    const botao = el('button', 'shortcut-circle compras-redondo');
+    botao.type = 'button'; botao.title = 'Escolher a hora'; botao.setAttribute('aria-label', rotulo + ': escolher a hora');
+    botao.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+    const caixa = el('div', 'compras-aniv-campo compras-hora-campo'); caixa.append(input, botao);
+    const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-hora-painel');
+    painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', rotulo + ': hora e minuto');
+    // Roleta: duas colunas que rolam e encaixam; a escolhida é sempre a do MEIO (a cor cheia não anda, quem anda é a lista).
+    const celula = (texto, nome) => { const b = el('button', 'compras-grade-celula', texto); b.type = 'button'; b.tabIndex = -1; b.setAttribute('aria-label', nome); return b; };
+    const montarColuna = (titulo, total, nomeCelula, pegar, por) => {
+      const lista = el('div', 'compras-grade-escolha compras-hora-lista'); lista.tabIndex = 0;
+      lista.setAttribute('role', 'group'); lista.setAttribute('aria-label', titulo + ' (use as setas para cima e para baixo)');
+      const celulas = Array.from({ length: total }, (_, i) => celula(pad(i), nomeCelula + ' ' + pad(i)));
+      lista.append(...celulas);
+      // Dentro da FAIXA (uma só, parada no meio) anda uma cópia dos números desta coluna, em branco, no ritmo da lista (janela = o pedaço da faixa
+      // que mostra esta coluna). Nenhuma célula troca de classe ou de cor enquanto se rola, então não pisca.
+      const itens = el('div', 'compras-hora-faixa-itens'); itens.append(...Array.from({ length: total }, (_, i) => el('span', null, pad(i))));
+      const janela = el('div', 'compras-hora-janela'); janela.append(itens);
+      return { titulo, lista, celulas, janela, itens, pegar, por };
+    };
+    const colHora = montarColuna('Hora', 24, 'Hora', () => hora, (v) => { hora = v; if (!minuto) minuto = '00'; });
+    const colMin = montarColuna('Minuto', 60, 'Minuto', () => minuto, (v) => { minuto = v; if (!hora) hora = '00'; });
+    const colunas = [colHora, colMin];
+    // Os títulos, e embaixo as duas listas com UMA faixa contínua por cima das duas (hora e minuto sempre cheios, nunca esmaecidos).
+    const cabecalho = el('div', 'compras-hora-cabecalho'); cabecalho.append(el('span', 'compras-rotulo', 'Hora'), el('span', 'compras-rotulo', 'Minuto'));
+    const faixa = el('div', 'compras-hora-faixa'); faixa.setAttribute('aria-hidden', 'true'); faixa.append(colHora.janela, colMin.janela);
+    const rodas = el('div', 'compras-hora-rodas'); rodas.append(colHora.lista, colMin.lista, faixa);
+    painel.append(cabecalho, rodas);
+    const abrirPainel = flutuante(caixa, painel);
+    const validar = () => input.setCustomValidity(!input.value || valida(input.value) ? '' : 'Informe a hora no formato HH:MM, de 00:00 a 23:59.');
+    function marcar(escreve = true) {
+      if (escreve) input.value = hora && minuto ? hora + ':' + minuto : '';
+      validar();
+      colunas.forEach((c) => { c.lista.dataset.valor = c.pegar(); });
+    }
+    // Rolagem feita por nós (abrir, tocar, setas) não pode escolher de novo: ignora os eventos de rolagem por um instante.
+    let ignoraAte = 0;
+    const passo = (c) => (c.celulas[1].offsetTop - c.celulas[0].offsetTop) || 42;
+    const sincronizar = (c) => { c.itens.style.transform = 'translateY(' + (-c.lista.scrollTop) + 'px)'; };
+    const levarAoMeio = (c, i, suave) => { ignoraAte = Date.now() + (suave ? 450 : 150); c.lista.scrollTo({ top: i * passo(c), behavior: suave ? 'smooth' : 'auto' }); if (!suave) sincronizar(c); };
+    const posicionar = () => colunas.forEach((c) => levarAoMeio(c, c.pegar() ? Number(c.pegar()) : 0, false));
+    const abrir = (sim) => { abrirPainel(sim); if (sim) posicionar(); };
+    function fechar() { abrir(false); input.focus(); input.dispatchEvent(new Event('change', { bubbles: true })); }
+    colunas.forEach((c, k) => {
+      let quadro = 0;
+      c.lista.addEventListener('scroll', () => {
+        sincronizar(c);
+        if (Date.now() < ignoraAte) return;
+        cancelAnimationFrame(quadro);
+        quadro = requestAnimationFrame(() => {
+          const i = Math.max(0, Math.min(c.celulas.length - 1, Math.round(c.lista.scrollTop / passo(c))));
+          if (pad(i) !== c.pegar()) { c.por(pad(i)); marcar(); }
+        });
+      });
+      c.celulas.forEach((b, i) => { b.onclick = () => { c.por(pad(i)); marcar(); if (k === 1 && hora) { fechar(); return; } levarAoMeio(c, i, true); }; });
+      c.lista.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); fechar(); return; }
+        const d = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
+        if (!d) return;
+        e.preventDefault();
+        const atual = c.pegar() ? Number(c.pegar()) : -1;
+        const i = Math.max(0, Math.min(c.celulas.length - 1, (atual < 0 ? (d > 0 ? 0 : c.celulas.length - 1) : atual + d)));
+        c.por(pad(i)); marcar(); levarAoMeio(c, i, true);
+      });
+    });
+    input.addEventListener('input', () => {
+      const d = input.value.replace(/\D/g, '').slice(0, 4);
+      input.value = d.length > 2 ? d.slice(0, 2) + ':' + d.slice(2) : d;
+      hora = d.length >= 2 ? d.slice(0, 2) : ''; minuto = d.length === 4 ? d.slice(2) : '';
+      marcar(false);
+      if (!painel.hidden) posicionar();
+    });
+    input.addEventListener('click', () => abrir(true));
+    input.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown') { e.preventDefault(); abrir(true); } });
+    botao.addEventListener('click', () => abrir(painel.hidden));
+    marcar();
+    return { caixa, painel, input };
+  }
+
   function flutuante(ancora, painel, { foco } = {}) {
     painel.hidden = true;
     ancora.setAttribute('aria-haspopup', 'dialog');
@@ -1095,6 +1200,6 @@
     seletorArvore, campoArvore, campoLocal, arvoreGruposMercadoria, botaoRemover,
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();

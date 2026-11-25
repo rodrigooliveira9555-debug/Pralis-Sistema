@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+// Mesmo formato que o banco aceita no vínculo conta↔colaborador (CHECK da 0009): letras, números e _ . : -
+export const idColaboradorSchema = z.string().trim().regex(/^[A-Za-z0-9_.:-]{1,100}$/, "Identificador de colaborador inválido.");
+
 // Acesso por Tela (24/11/2026, regras do Rodrigo; espelho de dist/hierarquia-dominio.js, que roda no aparelho):
 //  - vale a configuração MAIS ESPECÍFICA: a da própria pessoa, depois a do cargo (configurada numa área), depois a da área;
 //  - em cada área da pessoa vale a configuração da área mais próxima (um local sem configuração segue o setor, que segue a área);
@@ -25,7 +28,7 @@ export const sincronizarAcessosSchema = z.object({
   colaboradores: z
     .array(
       z.object({
-        id: z.string().trim().min(1).max(80),
+        id: idColaboradorSchema,
         nome: z.string().trim().min(1).max(120),
         cargoId: z.string().trim().max(80).nullable(),
         areaIds: z.array(z.string().trim().min(1).max(80)).max(60),

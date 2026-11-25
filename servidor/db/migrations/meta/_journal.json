@@ -54,8 +54,29 @@
     {
       "idx": 7,
       "version": "7",
-      "when": 1795622552291,
-      "tag": "0007_colaboradores_e_acessos_por_tela",
+      "when": 1795462787359,
+      "tag": "0007_agenda_tabelas",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795530038157,
+      "tag": "0008_agenda_rotina",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795548400417,
+      "tag": "0009_agenda_regras",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795631633537,
+      "tag": "0010_colaboradores_e_acessos_por_tela",
       "breakpoints": true
     }
   ]

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { postoSchema, type Posto } from "./acessos.ts";
+import { idColaboradorSchema } from "./acessos-por-tela.ts";
 import { PAPEIS, type Papel } from "./sessao.ts";
 
 // Configurações → Usuários: contas da própria empresa. Quem tem `usuarios_gerenciar` cria e edita;
@@ -15,7 +16,7 @@ export const novoUsuarioSchema = z.object({
   // Conta de posto do caixa (PDV × turno). Nulo: conta de uma pessoa.
   posto: postoSchema.nullable().default(null),
   // O colaborador dono da conta (usuário e colaborador são o mesmo cadastro). Nulo: conta sem colaborador (administrador, posto ou conta de antes).
-  colaboradorId: z.string().trim().min(1).max(80).nullable().default(null)
+  colaboradorId: idColaboradorSchema.nullable().default(null)
 });
 
 export const editarUsuarioSchema = z
@@ -25,7 +26,7 @@ export const editarUsuarioSchema = z
     ativo: z.boolean().optional(),
     posto: postoSchema.nullable().optional(),
     cargos: z.array(z.string().uuid()).max(20).optional(),
-    colaboradorId: z.string().trim().min(1).max(80).nullable().optional()
+    colaboradorId: idColaboradorSchema.nullable().optional()
   })
   .refine((dados) => Object.keys(dados).length > 0, "Nada para alterar");
 

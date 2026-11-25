@@ -96,42 +96,45 @@
    * agendada e com data de início tem os seus compromissos criados ou atualizados na lista "Promoções" da Agenda; o
    * vínculo é pelo id do compromisso, guardado na promoção (agendaItemIds). Promoção removida, desligada, encerrada ou
    * de produto inativo tem os compromissos apagados. Devolve quantos compromissos ficaram e as falhas, se houver.
+   * A Agenda mora no servidor (docs/AGENDA_NO_SERVIDOR_PLANO.md): cada gravação espera a resposta, uma de cada vez.
    */
-  function sincronizarAgenda(produto, promocoesAntes) {
+  async function sincronizarAgenda(produto, promocoesAntes) {
     const A = window.CicluzAgendaDados;
-    if (!A) return { total: 0, falhas: [] };
+    if (!A) return { total: 0, falhas: [], promocoes: produto.promocoes || [] };
     const sobram = new Set((promocoesAntes || []).flatMap((pr) => pr.agendaItemIds || []));
     const falhas = [];
     let listaId = '';
-    const listaPromocoes = () => {
+    const listaPromocoes = async () => {
       if (listaId) return listaId;
       const ja = A.dados.listas.find((l) => l.nome.toLocaleLowerCase('pt-BR') === 'promoções');
-      const r = ja ? { ok: true, id: ja.id } : A.salvarLista('', { nome: 'Promoções', cor: '#16a34a' });
+      const r = ja ? { ok: true, id: ja.id } : await A.salvarLista('', { nome: 'Promoções', cor: '#16a34a' });
+      if (r.erro) falhas.push(r.erro);
       listaId = r.ok ? r.id : '';
       return listaId;
     };
     const nomeProduto = produto.nomeCatalogo || produto.descricao;
-    const idsPorPromocao = (produto.promocoes || []).map((pr) => {
+    const idsPorPromocao = [];
+    for (const pr of produto.promocoes || []) {
       const quer = produto.status === 'ativo' ? R.compromissosDaPromocao(pr) : [];
       const tem = (pr.agendaItemIds || []).filter((id) => A.item(id));
       tem.forEach((id) => sobram.delete(id));
       const oferta = pr.tipo === 'desconto' ? 'desconto de ' + D.numero((pr.descontoFracao || 0) * 100, 2) + '%' : 'por ' + D.moeda(pr.valor || 0);
       const ids = [];
-      quer.forEach((c, k) => {
+      for (const [k, c] of quer.entries()) {
         const atual = tem[k] ? A.item(tem[k]) : null;
-        const r = A.salvarItem(atual ? atual.id : '', {
+        const r = await A.salvarItem(atual ? atual.id : '', {
           ...(atual || { etiquetas: ['promoção'], alerta: null, prioridade: 'normal' }),
-          listaId: atual ? atual.listaId : listaPromocoes(),
+          listaId: atual ? atual.listaId : await listaPromocoes(),
           titulo: ('Promoção: ' + nomeProduto + ' ' + oferta).slice(0, 200),
           notas: R.resumoRepeticaoPromocao(pr) + ' Criado pelo cadastro do produto (MER - Produtos, código ' + (produto.codigoInterno || 'sem código') + '). Para mudar, altere a promoção no produto.',
           data: c.data, hora: c.hora, horaFim: c.horaFim, repeticao: c.repeticao,
         });
         if (r.ok) ids.push(r.id); else falhas.push(r.erro);
-      });
-      tem.slice(quer.length).forEach((id) => A.excluirItem(id));
-      return ids;
-    });
-    sobram.forEach((id) => { if (A.item(id)) A.excluirItem(id); });
+      }
+      for (const id of tem.slice(quer.length)) { const x = await A.excluirItem(id); if (x.erro) falhas.push(x.erro); }
+      idsPorPromocao.push(ids);
+    }
+    for (const id of sobram) { if (A.item(id)) { const x = await A.excluirItem(id); if (x.erro) falhas.push(x.erro); } }
     // A ligação promoção → compromissos volta como promoções novas: quem chama grava no produto (no servidor, o produto não
     // mora no documento do Compras, então gravar em d.produtos se perderia).
     const promocoes = (produto.promocoes || []).map((pr, i) => {
@@ -790,13 +793,13 @@
           ? P.criar({ ...campos, codigoBarras: eanDig || null, unidade: campos.medidaCompra || campos.unidadeIndividual || 'UN', criadoEm: S.agoraIso(), fiscal: fiscalDerivado(eanDig) })
           : P.editar({ ...p, ...campos, codigoBarras: eanDig || p.codigoBarras, fiscal: p.appId ? anteriorFiscal : fiscalDerivado(eanDig || p.codigoBarras) });
       } catch (e) { return mostrarErro(c, e.message); }
-      pedido.then((salvo) => {
+      pedido.then(async (salvo) => {
         if (!novo && campos.nomeCatalogo != null && campos.nomeCatalogo !== nomeAntes) {
           S.transacao((d) => { d.historicoNomes.push({ id: S.novoId('hn'), produtoId: salvo.id, nomeAnterior: nomeAntes, nomeNovo: campos.nomeCatalogo, alteradoPor: 'José · Compras', alteradoEm: S.agoraIso() }); });
         }
         // Promoção agendada vira compromisso na Agenda (17/11/2026, Rodrigo). A ligação (agendaItemIds) é gravada no produto
         // do servidor numa segunda gravação, só quando mudou; se ela falhar, o produto já está salvo e o aviso diz o que faltou.
-        const agenda = sincronizarAgenda(salvo, p ? p.promocoes : []);
+        const agenda = await sincronizarAgenda(salvo, p ? p.promocoes : []);
         const ligacaoMudou = JSON.stringify(agenda.promocoes) !== JSON.stringify(salvo.promocoes || []);
         return (ligacaoMudou ? P.editar({ ...salvo, promocoes: agenda.promocoes }).catch((e) => { agenda.falhas.push('a ligação com a Agenda não foi gravada no servidor (' + (e.message || 'erro') + ')'); return salvo; }) : Promise.resolve(salvo))
           .then((final) => {
