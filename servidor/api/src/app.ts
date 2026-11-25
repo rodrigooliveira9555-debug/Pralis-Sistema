@@ -10,6 +10,7 @@ import { ZodError } from "zod";
 import { problema } from "@cicluz/shared";
 import { exigirAutenticacao } from "./auth/guards.ts";
 import { registrarRotasAcessos } from "./acessos/acessos.controller.ts";
+import { registrarRotasAcessosPorTela } from "./acessos-por-tela/acessos-por-tela.controller.ts";
 import { registrarRotasAgenda } from "./agenda/agenda.controller.ts";
 import { registrarRotasAuth } from "./auth/auth.controller.ts";
 import { registrarRotasConsultas } from "./consultas/consultas.controller.ts";
@@ -115,6 +116,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registrarRotasDocumentos(app);
   await registrarRotasUsuarios(app);
   await registrarRotasAcessos(app);
+  await registrarRotasAcessosPorTela(app);
   await registrarRotasConsultas(app);
   await registrarRotasLancamentos(app);
   await registrarRotasProdutos(app);

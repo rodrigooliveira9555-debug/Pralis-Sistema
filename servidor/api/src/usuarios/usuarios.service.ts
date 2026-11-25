@@ -27,6 +27,7 @@ import {
   travarAdministradoresAtivos
 } from "./usuarios.repository.ts";
 import { banco } from "../banco/conexao.ts";
+import { colaboradorDaEmpresa } from "../acessos-por-tela/acessos-por-tela.repository.ts";
 
 function erroSenhaCurta() {
   return new ErroDominio(`A senha precisa ter pelo menos ${senhaMinimaAutenticacao} caracteres`, 400, "PASSWORD_TOO_SHORT");
@@ -34,6 +35,14 @@ function erroSenhaCurta() {
 
 const erroPostoEmUso = (posto: Posto, dono?: string) =>
   conflito(`O posto ${rotuloPosto(posto)} já é da conta ${dono ?? "de outra pessoa"}.`, "POSTO_IN_USE");
+
+const erroColaboradorEmUso = () => conflito("Este colaborador já tem uma conta de acesso.", "COLABORADOR_IN_USE");
+
+// O colaborador da conta precisa existir na empresa (foi enviado pelo aparelho). Administrador e conta de posto não têm colaborador.
+async function exigirColaboradorDaEmpresa(empresaId: string, colaboradorId: string | null | undefined) {
+  if (!colaboradorId) return;
+  if (!(await colaboradorDaEmpresa(empresaId, colaboradorId))) throw new ErroDominio("Colaborador não encontrado. Envie os colaboradores em Acesso por Tela e tente de novo.", 404, "COLABORADOR_NOT_FOUND");
+}
 
 async function exigirPostoLivre(empresaId: string, posto: Posto | null | undefined, excetoUsuarioId?: string) {
   if (!posto) return;
@@ -51,6 +60,7 @@ async function criarConta(dados: {
   papel: NovoUsuario["papel"];
   posto?: Posto | null;
   configurada?: boolean;
+  colaboradorId?: string | null;
 }) {
   if (dados.senha.length < senhaMinimaAutenticacao) throw erroSenhaCurta();
   if (await emailJaCadastrado(dados.email)) throw conflito("Este e-mail já tem conta.", "EMAIL_ALREADY_EXISTS");
@@ -74,12 +84,14 @@ async function criarConta(dados: {
       nome: dados.nome,
       papel: dados.papel,
       posto: dados.posto ?? null,
+      colaboradorId: dados.colaboradorId ?? null,
       configurada: dados.configurada === true
     });
   } catch (erro) {
     // Sem perfil a conta não serve: desfaz o login criado, para o e-mail não ficar preso.
     await contexto.internalAdapter.deleteUser(usuario.id);
     if (dados.posto && violouUnico(erro, "perfis_usuarios_posto_uq")) throw erroPostoEmUso(dados.posto);
+    if (violouUnico(erro, "perfis_usuarios_colaborador_uq")) throw erroColaboradorEmUso();
     throw erro;
   }
   return { usuarioId: usuario.id, empresaId: dados.empresaId };
@@ -119,7 +131,9 @@ function paraResposta(linha: LinhaUsuario, cargos: { id: string; nome: string }[
     criadoEm: linha.criadoEm.toISOString(),
     posto: linha.postoPdv && linha.postoTurno ? { pdv: linha.postoPdv, turno: linha.postoTurno as Posto["turno"] } : null,
     cargos,
-    legado: linha.papel !== "administrador" && linha.acessosConfiguradosEm === null
+    legado: linha.papel !== "administrador" && linha.acessosConfiguradosEm === null,
+    colaboradorId: linha.colaboradorId ?? null,
+    colaboradorNome: linha.colaboradorNome ?? null
   };
 }
 
@@ -148,6 +162,7 @@ export async function adicionarUsuario(perfil: PerfilSessao, dados: NovoUsuario)
   // autor tem: ninguém cria uma conta mais forte que a própria para usar depois.
   exigirQuePossaConceder(perfil, linhasCargos.flatMap((cargo) => cargo.permissoes));
   const cargos = linhasCargos.map((cargo) => cargo.id);
+  await exigirColaboradorDaEmpresa(perfil.empresa.id, dados.colaboradorId);
   const criado = await criarConta({ ...dados, empresaId: perfil.empresa.id, configurada: true });
   await banco.transaction(async (tx) => {
     if (cargos.length) await substituirCargosUsuario(tx, criado.usuarioId, cargos);
@@ -156,7 +171,7 @@ export async function adicionarUsuario(perfil: PerfilSessao, dados: NovoUsuario)
       atorId: perfil.usuarioId,
       alvoId: criado.usuarioId,
       acao: "criou",
-      detalhe: { papel: dados.papel, cargos, posto: dados.posto }
+      detalhe: { papel: dados.papel, cargos, posto: dados.posto, colaboradorId: dados.colaboradorId }
     });
   });
   return resposta(perfil, criado.usuarioId);
@@ -175,6 +190,7 @@ export async function editarUsuario(perfil: PerfilSessao, usuarioId: string, dad
     throw conflito("Você não pode tirar o seu próprio acesso de administrador.", "SELF_LOCKOUT");
   }
   if (dados.posto) await exigirPostoLivre(perfil.empresa.id, dados.posto, usuarioId);
+  await exigirColaboradorDaEmpresa(perfil.empresa.id, dados.colaboradorId);
   // Quem não é administrador: não mexe nos próprios cargos, nem em quem tem acesso que ele não tem,
   // e a pessoa não pode sair da mudança com acesso que ele não tem.
   if (proprio && dados.cargos && perfil.papel !== "administrador") {
@@ -194,7 +210,7 @@ export async function editarUsuario(perfil: PerfilSessao, usuarioId: string, dad
       if (perdeAdministrador && (await travarAdministradoresAtivos(tx, perfil.empresa.id)) <= 1) {
         throw conflito("A empresa precisa de pelo menos um administrador ativo.", "LAST_ADMIN");
       }
-      await atualizarPerfil(tx, perfil.empresa.id, usuarioId, { nome: dados.nome, papel: dados.papel, ativo: dados.ativo, posto: dados.posto });
+      await atualizarPerfil(tx, perfil.empresa.id, usuarioId, { nome: dados.nome, papel: dados.papel, ativo: dados.ativo, posto: dados.posto, colaboradorId: dados.colaboradorId });
       if (cargos) {
         await substituirCargosUsuario(tx, usuarioId, cargos);
         await marcarAcessosConfigurados(tx, perfil.empresa.id, usuarioId);
@@ -209,6 +225,7 @@ export async function editarUsuario(perfil: PerfilSessao, usuarioId: string, dad
     });
   } catch (erro) {
     if (dados.posto && violouUnico(erro, "perfis_usuarios_posto_uq")) throw erroPostoEmUso(dados.posto);
+    if (violouUnico(erro, "perfis_usuarios_colaborador_uq")) throw erroColaboradorEmUso();
     throw erro;
   }
   if (dados.ativo === false) await (await auth.$context).internalAdapter.deleteUserSessions(usuarioId);

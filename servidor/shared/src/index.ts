@@ -3,6 +3,7 @@ export * from "./documentos.ts";
 export * from "./sessao.ts";
 export * from "./usuarios.ts";
 export * from "./acessos.ts";
+export * from "./acessos-por-tela.ts";
 export * from "./lancamentos/index.ts";
 export * from "./agenda.ts";
 export * from "./produtos.ts";

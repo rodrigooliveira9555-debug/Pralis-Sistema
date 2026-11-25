@@ -1,4 +1,5 @@
 import * as acessos from "./acessos.ts";
+import * as acessosPorTela from "./acessos-por-tela.ts";
 import * as agenda from "./agenda.ts";
 import * as autenticacao from "./autenticacao.ts";
 import * as cadastro from "./cadastro.ts";
@@ -10,6 +11,7 @@ import * as produtos from "./produtos.ts";
 import * as projecoes from "./projecoes.ts";
 
 export * from "./acessos.ts";
+export * from "./acessos-por-tela.ts";
 export * from "./agenda.ts";
 export * from "./autenticacao.ts";
 export * from "./cadastro.ts";
@@ -20,5 +22,5 @@ export * from "./lancamentos.ts";
 export * from "./produtos.ts";
 export * from "./projecoes.ts";
 
-export const schema = { ...acessos, ...agenda, ...autenticacao, ...cadastro, ...documentos, ...estrutura, ...financeiro, ...lancamentos, ...produtos, ...projecoes };
+export const schema = { ...acessos, ...acessosPorTela, ...agenda, ...autenticacao, ...cadastro, ...documentos, ...estrutura, ...financeiro, ...lancamentos, ...produtos, ...projecoes };
 export type Schema = typeof schema;

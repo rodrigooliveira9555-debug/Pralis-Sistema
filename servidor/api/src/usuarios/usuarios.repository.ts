@@ -1,5 +1,5 @@
 import { and, asc, eq, sql } from "drizzle-orm";
-import { empresas, perfisUsuarios, usuarioAutenticacao, usuariosAuditoria } from "@cicluz/db/schema";
+import { colaboradoresAcesso, empresas, perfisUsuarios, usuarioAutenticacao, usuariosAuditoria } from "@cicluz/db/schema";
 import type { Papel, Posto } from "@cicluz/shared";
 import { banco, type TransacaoBanco } from "../banco/conexao.ts";
 
@@ -34,12 +34,14 @@ export async function inserirPerfil(dados: {
   papel: Papel;
   posto?: Posto | null;
   configurada?: boolean;
+  colaboradorId?: string | null;
 }) {
-  const { posto, configurada, ...perfil } = dados;
+  const { posto, configurada, colaboradorId, ...perfil } = dados;
   await banco.insert(perfisUsuarios).values({
     ...perfil,
     postoPdv: posto?.pdv ?? null,
     postoTurno: posto?.turno ?? null,
+    colaboradorId: colaboradorId ?? null,
     acessosConfiguradosEm: configurada ? new Date() : null
   });
 }
@@ -61,6 +63,8 @@ const colunasUsuario = {
   postoPdv: perfisUsuarios.postoPdv,
   postoTurno: perfisUsuarios.postoTurno,
   acessosConfiguradosEm: perfisUsuarios.acessosConfiguradosEm,
+  colaboradorId: perfisUsuarios.colaboradorId,
+  colaboradorNome: colaboradoresAcesso.nome,
   criadoEm: perfisUsuarios.criadoEm
 };
 
@@ -69,6 +73,7 @@ export async function listarUsuariosDaEmpresa(empresaId: string) {
     .select(colunasUsuario)
     .from(perfisUsuarios)
     .innerJoin(usuarioAutenticacao, eq(usuarioAutenticacao.id, perfisUsuarios.usuarioId))
+    .leftJoin(colaboradoresAcesso, eq(colaboradoresAcesso.id, perfisUsuarios.colaboradorId))
     .where(eq(perfisUsuarios.empresaId, empresaId))
     .orderBy(asc(perfisUsuarios.nome));
 }
@@ -79,6 +84,7 @@ export async function obterUsuarioDaEmpresa(empresaId: string, usuarioId: string
     .select(colunasUsuario)
     .from(perfisUsuarios)
     .innerJoin(usuarioAutenticacao, eq(usuarioAutenticacao.id, perfisUsuarios.usuarioId))
+    .leftJoin(colaboradoresAcesso, eq(colaboradoresAcesso.id, perfisUsuarios.colaboradorId))
     .where(and(eq(perfisUsuarios.empresaId, empresaId), eq(perfisUsuarios.usuarioId, usuarioId)))
     .limit(1);
   return linha ?? null;
@@ -113,7 +119,13 @@ export async function atualizarPerfil(
   executor: Executor,
   empresaId: string,
   usuarioId: string,
-  dados: { nome?: string | undefined; papel?: Papel | undefined; ativo?: boolean | undefined; posto?: Posto | null | undefined }
+  dados: {
+    nome?: string | undefined;
+    papel?: Papel | undefined;
+    ativo?: boolean | undefined;
+    posto?: Posto | null | undefined;
+    colaboradorId?: string | null | undefined;
+  }
 ) {
   const { posto, ...resto } = dados;
   const mudancas: Record<string, unknown> = Object.fromEntries(Object.entries(resto).filter(([, valor]) => valor !== undefined));

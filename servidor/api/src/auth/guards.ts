@@ -3,6 +3,7 @@ import type { FastifyRequest } from "fastify";
 import type { PerfilSessao } from "@cicluz/shared";
 import { naoAutenticado, proibido } from "../erros.ts";
 import { auth } from "./config.ts";
+import { conferirPermissaoDaConta, erroSemPermissao } from "../acessos-por-tela/acessos-por-tela.service.ts";
 import { buscarPerfilUsuario } from "./perfil.service.ts";
 
 declare module "fastify" {
@@ -21,6 +22,12 @@ export async function exigirAutenticacao(request: FastifyRequest): Promise<Perfi
 
   const perfil = await buscarPerfilUsuario(sessao.user.id);
   if (!perfil) throw proibido("Acesso desativado. Fale com o administrador.", "PROFILE_INACTIVE");
+
+  // Conta ligada a um colaborador (Acesso por Tela): sem permissão a pessoa até entra (a sessão abre), mas nada abre. O administrador nunca é barrado.
+  if (perfil.papel !== "administrador") {
+    const acesso = await conferirPermissaoDaConta(perfil.usuarioId, perfil.empresa.id);
+    if (acesso && !acesso.ok) throw erroSemPermissao(acesso.motivo);
+  }
 
   request.perfilUsuario = perfil;
   return perfil;

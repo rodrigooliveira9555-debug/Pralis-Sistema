@@ -13,7 +13,9 @@ export const novoUsuarioSchema = z.object({
   // Cargos de acesso já na criação (sem cargo, vale o acesso de antes: ver acessos.ts).
   cargos: z.array(z.string().uuid()).max(20).default([]),
   // Conta de posto do caixa (PDV × turno). Nulo: conta de uma pessoa.
-  posto: postoSchema.nullable().default(null)
+  posto: postoSchema.nullable().default(null),
+  // O colaborador dono da conta (usuário e colaborador são o mesmo cadastro). Nulo: conta sem colaborador (administrador, posto ou conta de antes).
+  colaboradorId: z.string().trim().min(1).max(80).nullable().default(null)
 });
 
 export const editarUsuarioSchema = z
@@ -22,7 +24,8 @@ export const editarUsuarioSchema = z
     papel: z.enum(PAPEIS).optional(),
     ativo: z.boolean().optional(),
     posto: postoSchema.nullable().optional(),
-    cargos: z.array(z.string().uuid()).max(20).optional()
+    cargos: z.array(z.string().uuid()).max(20).optional(),
+    colaboradorId: z.string().trim().min(1).max(80).nullable().optional()
   })
   .refine((dados) => Object.keys(dados).length > 0, "Nada para alterar");
 
@@ -46,4 +49,7 @@ export type UsuarioResposta = {
   cargos: { id: string; nome: string }[];
   // Conta de antes dos cargos de acesso, ainda não configurada: mantém o acesso de antes.
   legado: boolean;
+  // Colaborador ligado à conta (só com ele a conta passa a depender do Acesso por Tela).
+  colaboradorId: string | null;
+  colaboradorNome: string | null;
 };
