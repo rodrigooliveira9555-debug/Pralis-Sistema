@@ -5,6 +5,8 @@
  * principal (PROJECT_BRAIN/16); a Retirada é a versão enxuta (sem documento fiscal, pagamento, vencimento nem discriminação).
  * Dados: API do servidor (/api/lancamentos/...), não o localStorage. A conta de dinheiro é a do servidor (regras.js, gerado de
  * servidor/shared/src/lancamentos): o que a tela mostra é o que o servidor grava.
+ * CAMPOS SÓ DE TELA (25/11/2026, pedido do Washington; falta onde guardar, migration a autorizar, PROJECT_BRAIN/11 P-47): Tipo de credor e Credor, as duas
+ * fotos e o bloco "Discriminar com a Octad Lumi". A tela mostra, avisa que não grava e o Salvar repete o aviso quando algum deles foi preenchido.
  */
 (function () {
   'use strict';
@@ -21,6 +23,32 @@
   const corDe = (cat) => (typeof menuColor !== 'undefined' && menuColor[CATEGORIAS[cat].indice]) || '#7c3aed';
   const pode = (chave) => Boolean(window.CicluzSessao && window.CicluzSessao.perfil && (window.CicluzSessao.perfil.permissoes || []).includes(chave));
   const TIPOS = [['valor', 'R$'], ['percentual', '%']];
+  // Tipos de credor de cada categoria (principal: utils/credor-categoria.ts). Despesa: credor opcional; Mercadoria e Retirada: obrigatório no principal.
+  const CREDORES = {
+    despesas: [['fornecedor', 'Fornecedor'], ['colaborador', 'Colaborador']],
+    mercadorias: [['fornecedor', 'Fornecedor']],
+    retiradas: [['fornecedor', 'Fornecedor'], ['socio', 'Sócio ou Gestor']],
+  };
+  const porNome = (a, b) => a[1].localeCompare(b[1], 'pt-BR');
+  // Fornecedor: cadastro de Compras (por id). Colaborador: cadastro de pessoas deste aparelho (por id). Sócio ou Gestor: o cadastro ainda não existe (P-47).
+  function listaDeCredores(tipo) {
+    try {
+      if (tipo === 'fornecedor') return window.CicluzComprasDados.dados.fornecedores.filter((f) => f.situacao !== 'inativo').map((f) => [f.id, f.nome]).sort(porNome);
+      if (tipo === 'colaborador') return window.CicluzPeople.selectable().filter((p) => p.active !== false).map((p) => [p.id, p.name]).sort(porNome);
+    } catch (e) { /* sem o cadastro neste aparelho */ }
+    return [];
+  }
+  const AVISO_NAO_GRAVA = 'Credor, fotos e leitura por IA ainda não são gravados (em construção). O resto do lançamento é salvo normalmente.';
+  const AVISO_NAO_GRAVA_RETIRADA = 'O credor ainda não é gravado (em construção). O resto do lançamento é salvo normalmente.';
+  // Escolha de arquivo no padrão do site (input escondido + botão + nome do arquivo, como em compras/telas-produto-extras.js).
+  function campoArquivo(rotulo) {
+    const input = entrada('file'); input.accept = 'image/*,application/pdf,.xml'; input.hidden = true;
+    const nome = el('small', 'profiles-note', 'Nenhum arquivo escolhido');
+    input.addEventListener('change', () => { nome.textContent = input.files.length ? input.files[0].name : 'Nenhum arquivo escolhido'; });
+    const linha = el('div', 'compras-chips'); linha.append(botao('Escolher arquivo', () => input.click(), 'btn secondary'), nome);
+    const no = el('div', 'compras-campo'); no.append(el('span', 'compras-rotulo', rotulo), linha, input);
+    return { no, input };
+  }
   const FREQUENCIAS = [['dia', 'Todo dia'], ['semana', 'Toda semana'], ['quinzena', 'A cada 15 dias'], ['mes', 'Todo mês'], ['trimestre', 'A cada 3 meses'], ['ano', 'Todo ano']];
   const DIAS = [[1, 'Sg', 'Segunda'], [2, 'Te', 'Terça'], [3, 'Qa', 'Quarta'], [4, 'Qi', 'Quinta'], [5, 'Sx', 'Sexta'], [6, 'Sa', 'Sábado']];
   const casas = (tipo) => (tipo === 'percentual' ? 4 : 2); // R$ = 2; % = 4 (como no principal)
@@ -83,6 +111,7 @@
     const itens = (lanc && lanc.itens ? lanc.itens : []).map(itemDeApi);
     const estado = { discriminar: itens.length > 0, itens, descontoTipo: (lanc && lanc.descontoGeralTipo) || '', descontoValor: lanc ? R.apiParaDinheiro(lanc.descontoGeralValor) : '', linhaComErro: null };
     let reabrir = false; let criarNova = false;
+    let fotoA = null; let fotoB = null; let credorEscolhido = null;
     // Registro antigo com conta ou grupo que saiu da lista: continua aparecendo para não perder o vínculo.
     const comAtual = (lista, v) => (v && !lista.some(([x]) => x === v) ? [...lista, [v, v]] : lista);
 
@@ -144,7 +173,20 @@
         const q3 = quadro('Classificação');
         if (retirada) q3.append(campo('Grupo', grupo));
         q3.append(campo('Conta', conta), largo(campo('Observação *', obs)));
-        form.append(q1, q2, q3);
+        /* Credor: só tela (ainda não grava) */
+        const estadoCredor = { tipo: CREDORES[cat][0][0] };
+        const credor = seletor([], '', '—');
+        const notaCredor = el('small', 'profiles-note');
+        const pintarCredor = () => {
+          const lista = listaDeCredores(estadoCredor.tipo);
+          credor.replaceChildren(new Option('—', ''), ...lista.map(([v, t]) => new Option(t, v))); credor.value = '';
+          notaCredor.textContent = lista.length ? '' : estadoCredor.tipo === 'socio' ? 'O cadastro de Sócios e Gestores ainda não existe.' : 'Nenhum cadastro encontrado neste aparelho.';
+        };
+        const tipoCredor = el('div', 'compras-campo compras-largo');
+        tipoCredor.append(el('span', 'compras-rotulo', 'Tipo de credor'), U.chips(CREDORES[cat], estadoCredor.tipo, (v) => { estadoCredor.tipo = v; pintarCredor(); }));
+        const qCredor = quadro('Credor', tipoCredor, largo(campo('Credor', credor)), largo(notaCredor));
+        pintarCredor();
+        form.append(largo(U.nota(retirada ? AVISO_NAO_GRAVA_RETIRADA : AVISO_NAO_GRAVA)), q1, q2, qCredor, q3);
 
         if (!retirada) {
           const campoPag = dataPag.no;
@@ -153,6 +195,9 @@
           sw.classList.add('compras-largo'); pintarPag(pago0);
           if (!pode('lancamentos_pagar')) { sw.querySelector('button').disabled = true; sw.append(el('small', 'profiles-note', 'Você não tem permissão para registrar pagamento.')); }
           form.append(quadro('Pagamento', sw, campoPag, venc.no));
+          /* Fotos: só tela (ainda não grava nem envia o arquivo) */
+          fotoA = campoArquivo('Foto (Recibo / Boleto / Nota)'); fotoB = campoArquivo('Foto (Nota / interno)');
+          form.append(quadro('Fotos', fotoA.no, fotoB.no));
 
           /* Discriminação dos itens */
           const itensBox = el('div', 'compras-largo compras-discriminacao');
@@ -182,7 +227,12 @@
           };
           const discSw = U.quadroSituacao('Discriminar itens', estado.discriminar, { textos: ['Sim', 'Não'], aoMudar: (sim) => { estado.discriminar = sim; if (sim && !estado.itens.length) estado.itens.push(novoItem()); desenhar(); } });
           discSw.classList.add('compras-largo');
-          form.append(quadro('Discriminação', discSw, itensBox));
+          const ia = el('div', 'compras-largo compras-ia');
+          const iaTitulo = el('b', null, 'Discriminar com a Octad Lumi (IA)');
+          const iaBotoes = el('div', 'compras-chips'); const iaFoto = botao('Tirar foto', () => {}, 'btn secondary'); const iaArq = botao('Escolher arquivo', () => {}, 'btn secondary');
+          iaFoto.disabled = true; iaArq.disabled = true; iaBotoes.append(iaFoto, iaArq);
+          ia.append(iaTitulo, el('small', 'profiles-note', 'A IA sugere os itens a partir da foto da nota. Leitura por IA: em construção.'), iaBotoes);
+          form.append(quadro('Discriminação', ia, discSw, itensBox));
           desenhar();
         } else recalcular();
 
@@ -216,7 +266,7 @@
           const acoes = dlg.querySelector('.compras-dialog-acoes'); const salvarBtn = acoes && acoes.querySelector('button[type=submit]');
           if (salvarBtn) salvarBtn.before(botao('Salvar e criar nova', () => { criarNova = true; form.requestSubmit(); }, 'btn secondary'));
         }, 0);
-        return { cat, valor, jurosTipo, jurosValor, dataRef, docData, docNumero, grupo, conta, obs, venc, dataPag, rec };
+        credorEscolhido = credor; return { cat, valor, jurosTipo, jurosValor, dataRef, docData, docNumero, grupo, conta, obs, venc, dataPag, rec };
       },
       salvar: somenteLeitura ? null : async (c) => {
         const querCriarNova = criarNova; criarNova = false;
@@ -268,7 +318,8 @@
             const r = await Sync.api('/lancamentos/' + cat, { metodo: 'POST', corpo });
             msg = r && r.serie ? 'Série criada com ' + r.serie + ' lançamentos' + (r.serieLimitada ? ' (limitada a 12 meses).' : '.') : 'Lançamento salvo.';
           } else await Sync.api('/lancamentos/item/' + lanc.id, { metodo: 'PUT', corpo });
-          U.avisar(msg);
+          const usouCampoDeTela = (credorEscolhido && credorEscolhido.value) || (fotoA && fotoA.input.files.length) || (fotoB && fotoB.input.files.length);
+          U.avisar(usouCampoDeTela ? msg + (retirada ? ' O credor ainda não é gravado.' : ' Credor e fotos ainda não são gravados.') : msg);
           reabrir = querCriarNova && criando;
         } catch (e) {
           if (e && e.codigo === 'DISCRIMINACAO_DIVERGENTE' && e.detalhes && e.detalhes.linhaProvavel) estado.linhaComErro = e.detalhes.linhaProvavel;
