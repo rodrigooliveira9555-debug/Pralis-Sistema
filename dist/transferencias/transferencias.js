@@ -59,7 +59,7 @@
     tela.classList.add('transferencia-calc-tela'); tela.setAttribute('aria-label', rotulo); tela.setAttribute('aria-expanded', 'false');
     const resumo = el('p', 'transferencia-calc-resumo'); resumo.setAttribute('role', 'status');
     const aviso = el('small', 'transferencia-calc-aviso'); aviso.setAttribute('role', 'alert');
-    const tipos = U.chips([['notas', 'Notas'], ['moedas', 'Moedas']], '', (v) => { est.tipo = v; aviso.textContent = ''; mostrar(); });
+    const tipos = U.chips([['notas', 'Notas'], ['moedas', 'Moedas']], '', (v) => escolherTipo(v));
     const por = (t) => est.parcelas.filter((p) => p.t === t).reduce((n, p) => n + p.c, 0);
     let botaoSoma; let botaoIgual;
     // O acumulado por tipo vai ficando embaixo: "R$ 100,00 notas   R$ 50,00 moedas   = R$ 150,00".
@@ -68,10 +68,11 @@
       const partes = [['notas', 'notas'], ['moedas', 'moedas']].filter(([t]) => por(t) > 0).map(([t, nome]) => reais(por(t)) + ' ' + nome);
       resumo.textContent = partes.length ? partes.join('   ') + '   = ' + reais(soma()) : '';
       tipos.atualizar(est.tipo);
-      // "+" só vale com um valor digitado e Notas ou Moedas escolhido (ou depois do "=", para continuar somando); "=" também, ou sem número novo e já com parcelas.
-      const pronto = centavos(est.atual) > 0 && Boolean(est.tipo);
-      if (botaoSoma) botaoSoma.disabled = !(pronto || est.fechado);
-      if (botaoIgual) botaoIgual.disabled = est.fechado || !(pronto || (!est.atual && est.parcelas.length > 0));
+      // Notas e Moedas só valem com um valor digitado (tocar numa delas já joga o valor no acumulado). Com um número digitado e sem tipo, o "=" fica bloqueado.
+      // O "+" serve para continuar somando depois do "=".
+      tipos.querySelectorAll('button').forEach((b) => { b.disabled = !centavos(est.atual); });
+      if (botaoSoma) botaoSoma.disabled = !est.fechado;
+      if (botaoIgual) botaoIgual.disabled = est.fechado || Boolean(est.atual) || est.parcelas.length === 0;
     };
     const avisar = (t) => { aviso.textContent = t; };
     const recomecar = () => { est.parcelas = []; est.atual = ''; est.tipo = ''; est.fechado = false; };
@@ -86,7 +87,7 @@
       aviso.textContent = '';
       if (est.fechado) recomecar();
       else if (est.atual) est.atual = est.atual.slice(0, -1);
-      else if (est.parcelas.length) { const p = est.parcelas.pop(); est.atual = String(p.c); est.tipo = p.t; }
+      else if (est.parcelas.length) { const p = est.parcelas.pop(); est.atual = String(p.c); est.tipo = ''; }
       mostrar();
     };
     // Guarda o número digitado como parcela; devolve false (com aviso) se faltar valor ou o tipo.
@@ -96,14 +97,18 @@
       est.parcelas.push({ c: centavos(est.atual), t: est.tipo }); est.atual = ''; est.tipo = ''; aviso.textContent = '';
       return true;
     };
+    // Tocar em Notas ou Moedas com um valor digitado joga esse valor no acumulado (sem precisar do "+") e deixa a caixa pronta para o próximo.
+    function escolherTipo(v) {
+      if (est.fechado || !centavos(est.atual)) { mostrar(); return; }
+      est.tipo = v; guardar(); mostrar();
+    }
     const somar = () => {
-      if (est.fechado) { est.fechado = false; mostrar(); return; }
-      if (guardar()) mostrar();
+      if (est.fechado) { est.fechado = false; mostrar(); }
     };
     const igual = () => {
       if (est.fechado) return;
-      if (est.atual) { if (!guardar()) return; }
-      else if (!est.parcelas.length) { avisar('Digite um valor antes.'); return; }
+      if (est.atual) { avisar('Escolha Notas ou Moedas para este valor.'); return; }
+      if (!est.parcelas.length) { avisar('Digite um valor antes.'); return; }
       est.fechado = true; aviso.textContent = ''; mostrar(); mostrarPainel(false);
     };
     const tecla = (texto, acao, classe, rotuloAria) => {
@@ -130,6 +135,8 @@
       if (/^[0-9]$/.test(e.key)) { mostrarPainel(true); digito(e.key); }
       else if (e.key === 'Backspace') apagar();
       else if (e.key === '+') { if (!botaoSoma.disabled) somar(); }
+      else if (e.key === 'n' || e.key === 'N') escolherTipo('notas');
+      else if (e.key === 'm' || e.key === 'M') escolherTipo('moedas');
       else if (e.key === '=' || e.key === 'Enter') { if (!botaoIgual.disabled) igual(); }
       else return;
       e.preventDefault();
