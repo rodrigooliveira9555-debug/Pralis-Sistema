@@ -14,7 +14,7 @@
  *    seguinte cria a "2ª", "3ª", "4ª transferência" ACIMA da final (a final sempre fica por último). Máximo de 4 (as quatro do esboço).
  *
  * TELA EM CONSTRUÇÃO: o CICLUZ ainda não tem servidor de transferências (PROJECT_BRAIN/11, P-48), então o Salvar só CONFERE o preenchimento
- * e avisa que não gravou. As contas vêm de /api/contas (ativas). Ficaram fora desta fase (saíram da tela, não estão escondidas): observação,
+ * e avisa que não gravou. As contas vêm de /api/contas (ativas). Ficaram fora desta fase (saíram da tela, não estão escondidas):
  * transferência sem lacre, agendamento, tempo de confirmação.
  */
 (function () {
@@ -229,7 +229,8 @@
 
         const corpo = el('div', 'transferencia-corpo');
         const opcoes = el('div', 'transferencia-opcoes'); opcoes.append(multiplo, quadroLacre);
-        corpo.append(calc.no, dataTransf.no, campo('Origem / Saída *', origem), campoDestino, campoContas, opcoes, lacresBox);
+        const obs = entrada('text', '', { placeholder: 'Ex.: Suprimento CX1 — reforço de troco', maxLength: 500 });
+        corpo.append(calc.no, dataTransf.no, campo('Origem / Saída *', origem), campoDestino, campoContas, opcoes, lacresBox, campo('Observação', obs));
         if (!contas.length) corpo.append(el('p', 'profiles-error', 'Nenhuma conta ativa cadastrada. Cadastre as contas em Transferências › Cadastros Geral.'));
         corpo.append(U.nota('Tela em construção: a transferência ainda não é gravada. O Salvar confere o preenchimento.'));
         form.append(corpo);
@@ -240,7 +241,7 @@
           const acoes = dlg.querySelector('.compras-dialog-acoes'); const salvarBtn = acoes && acoes.querySelector('button[type=submit]');
           if (salvarBtn) salvarBtn.before(botao('Salvar e criar nova', () => form.requestSubmit(), 'btn secondary'));
         }, 0);
-        return { dataTransf, origem, destino, marcadas, calc, estado };
+        return { dataTransf, origem, destino, marcadas, calc, estado, obs };
       },
       salvar: async (c) => {
         const e = c.estado;
