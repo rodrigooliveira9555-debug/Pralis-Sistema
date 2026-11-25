@@ -35,6 +35,7 @@
 - Exibição **DD/MM/AA**, **sem ícone de calendário**. Valor guardado em ISO.
 - Data nova: 00–49 → 2000–2049; 50–99 → 1950–1999. Data existente mantém o século.
 - Calendário do rodapé só filtra registros com data explícita; bloqueia intervalo invertido.
+- **Campo de data com calendário (25/11/2026, Washington) — vale só em Saídas › Lançamentos (Despesa, Mercadoria e Retirada)**, e **supera ali** o "sem ícone de calendário": peça `U.campoData` (`dist/compras/ui.js`), no desenho dos campos de aniversário e de hora: máscara `DD/MM/AA` + **botão redondo do calendário** + painel com **Dia**, **Mês** e **Ano** em células de cantos arredondados, o escolhido na **cor da origem** (vermelho, verde ou azul). Dia escolhido fecha; valor ISO; 31/02 é inválido. **Os demais campos de data do site seguem como estão** (digitação DD/MM/AA pelo `date-fields.js`), à espera da decisão do Washington.
 
 ## Hora (24/11/2026, Washington)
 - Hora é a peça única `U.campoHora` (`dist/compras/ui.js`), no desenho do campo de aniversário: máscara `HH:MM` + botão redondo do relógio + roleta

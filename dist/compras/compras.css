@@ -682,6 +682,7 @@ input.compras-selecao-bolinha:focus-visible{outline:2px solid var(--menu-accent)
 .compras-grade-escolha{display:grid;max-width:420px;border:1px solid var(--layout-line,#dedee3);border-radius:12px;background:var(--theme-card,#fff);overflow:hidden}
 .compras-grade-escolha.em-7{grid-template-columns:repeat(7,minmax(0,1fr))}
 .compras-grade-escolha.em-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.compras-grade-escolha.em-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .compras-grade-escolha .compras-grade-celula{min-height:44px;padding:0;border:0;border-radius:0;box-shadow:inset -1px -1px 0 var(--layout-line,#dedee3);background:var(--theme-card,#fff);color:inherit;font:400 var(--ui-text,14px)/18px var(--ui-font);cursor:pointer}
 .compras-grade-escolha .compras-grade-celula[aria-pressed=true]{background:var(--menu-accent);color:var(--theme-surface,#fff);font-weight:600}
 .compras-grade-escolha .compras-grade-celula:focus-visible{outline:2px solid var(--menu-accent);outline-offset:-2px}

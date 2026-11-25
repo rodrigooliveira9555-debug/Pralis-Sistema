@@ -908,6 +908,82 @@
     return { caixa, painel, input };
   }
 
+  /**
+   * Campo de data com calendário (24/11/2026, Washington): o MESMO desenho dos campos de aniversário e de hora. Um campo com a máscara DD/MM/AA para digitar e
+   * o botão redondo do calendário; tocar no campo ou no botão abre um painel flutuante (flutuante) com o Dia (1 a 31, só os que o mês tem), o Mês (jan a dez) e o
+   * Ano (12 de cada vez, com setas), em células de cantos arredondados; o escolhido fica na cor do menu. Tocar num dia escolhe e fecha; mês e ano ficam abertos
+   * para ajustar. Se o campo estava vazio, o primeiro toque completa o que falta com hoje. O valor guardado é ISO (AAAA-MM-DD); data impossível (31/02) deixa o
+   * campo inválido (setCustomValidity). Século da data digitada: 00–49 = 2000–2049, 50–99 = 1950–1999 (regra do date-fields.js).
+   * Devolve { no, input, valor(), definir(iso) }: "no" é o campo pronto (rótulo, caixa e painel); valor() é o ISO ou ''.
+   */
+  function campoData({ valor = '', rotulo = 'Data' } = {}) {
+    const DF = window.CicluzDateFields;
+    const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+    const LONGOS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+    const pad = (n) => String(n).padStart(2, '0');
+    const hojeIso = () => { const n = new Date(); return n.getFullYear() + '-' + pad(n.getMonth() + 1) + '-' + pad(n.getDate()); };
+    const diasNoMes = (a, m) => new Date(a, m, 0).getDate();
+    const nomeCampo = rotulo.endsWith(' *') ? rotulo.slice(0, -2) : rotulo;
+    let iso = DF.valid(valor) ? valor : '';
+    let anoBase = Number((iso || hojeIso()).slice(0, 4)) - 5;
+    const input = entrada('text', iso ? DF.display(iso) : '', { inputMode: 'numeric', placeholder: 'DD/MM/AA', maxLength: 8, autocomplete: 'off' });
+    input.setAttribute('aria-label', nomeCampo);
+    input.dataset.textoLivre = '1';
+    const botaoPainel = el('button', 'shortcut-circle compras-redondo');
+    botaoPainel.type = 'button'; botaoPainel.title = 'Escolher a data'; botaoPainel.setAttribute('aria-label', nomeCampo + ': escolher a data');
+    botaoPainel.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/></svg>';
+    const caixa = el('div', 'compras-aniv-campo'); caixa.append(input, botaoPainel);
+    const painel = el('div', 'compras-escolha-painel compras-aniv-painel'); painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', nomeCampo + ': dia, mês e ano');
+    const gradeDia = el('div', 'compras-grade-escolha em-7'); const gradeMes = el('div', 'compras-grade-escolha em-4');
+    const gradeAno = el('div', 'compras-grade-escolha em-4'); const setasAno = el('div', 'compras-grade-escolha em-2');
+    painel.append(el('span', 'compras-rotulo', 'Dia'), gradeDia, el('span', 'compras-rotulo', 'Mês'), gradeMes, el('span', 'compras-rotulo', 'Ano'), gradeAno, setasAno);
+    const abrirPainel = flutuante(caixa, painel);
+    const resumo = el('small', 'profiles-note'); resumo.setAttribute('aria-live', 'polite');
+    const no = el('div', 'compras-campo compras-data');
+    no.append(el('span', 'compras-rotulo', rotulo), caixa, painel, resumo);
+    const celula = (texto, marcado, nome, aoTocar) => {
+      const b = el('button', 'compras-grade-celula', texto);
+      b.type = 'button'; b.setAttribute('aria-pressed', String(marcado)); b.setAttribute('aria-label', nome); b.onclick = aoTocar;
+      return b;
+    };
+    const validar = () => input.setCustomValidity(!input.value || iso ? '' : 'Informe uma data válida no formato DD/MM/AA.');
+    function pintar() {
+      const [a, m, d] = (iso || hojeIso()).split('-');
+      resumo.textContent = iso ? Number(d) + ' de ' + LONGOS[Number(m) - 1] + ' de ' + a : '';
+      gradeDia.replaceChildren(...Array.from({ length: diasNoMes(Number(a), Number(m)) }, (_, i) => celula(String(i + 1), Boolean(iso) && Number(d) === i + 1, 'Dia ' + (i + 1), () => escolher('d', pad(i + 1), true))));
+      gradeMes.replaceChildren(...MESES.map((n, i) => celula(n, Boolean(iso) && Number(m) === i + 1, LONGOS[i], () => escolher('m', pad(i + 1), false))));
+      gradeAno.replaceChildren(...Array.from({ length: 12 }, (_, i) => celula(String(anoBase + i), Boolean(iso) && Number(a) === anoBase + i, 'Ano ' + (anoBase + i), () => escolher('a', String(anoBase + i), false))));
+      setasAno.replaceChildren(celula('‹ Anos anteriores', false, 'Anos anteriores', () => { anoBase -= 12; pintar(); }), celula('Próximos anos ›', false, 'Próximos anos', () => { anoBase += 12; pintar(); }));
+    }
+    function escolher(parte, v, fecha) {
+      let [a, m, d] = (iso || hojeIso()).split('-');
+      if (parte === 'a') a = v; else if (parte === 'm') m = v; else d = v;
+      const max = diasNoMes(Number(a), Number(m)); if (Number(d) > max) d = pad(max);
+      iso = a + '-' + m + '-' + d;
+      input.value = DF.display(iso);
+      validar(); pintar();
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      if (fecha) { abrirPainel(false); input.focus(); input.dispatchEvent(new Event('change', { bubbles: true })); }
+    }
+    const abrir = (sim) => { if (sim) { anoBase = Number((iso || hojeIso()).slice(0, 4)) - 5; pintar(); } abrirPainel(sim); };
+    input.addEventListener('input', (e) => {
+      input.value = DF.mask(input.value);
+      iso = DF.parse(input.value, iso) || '';
+      validar();
+      // Só a digitação recentra os anos; escolher no painel não pode fazer a grade pular.
+      if (iso && e.isTrusted) anoBase = Number(iso.slice(0, 4)) - 5;
+      pintar();
+    });
+    input.addEventListener('click', () => abrir(true));
+    input.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown') { e.preventDefault(); abrir(true); } });
+    botaoPainel.addEventListener('click', () => abrir(painel.hidden));
+    validar(); pintar();
+    return {
+      no, input, valor: () => iso,
+      definir: (v) => { iso = DF.valid(v) ? v : ''; input.value = iso ? DF.display(iso) : ''; validar(); pintar(); },
+    };
+  }
+
   function flutuante(ancora, painel, { foco } = {}) {
     painel.hidden = true;
     ancora.setAttribute('aria-haspopup', 'dialog');
@@ -1200,6 +1276,6 @@
     seletorArvore, campoArvore, campoLocal, arvoreGruposMercadoria, botaoRemover,
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, campoData, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();

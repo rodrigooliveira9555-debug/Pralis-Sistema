@@ -24,7 +24,6 @@
   const FREQUENCIAS = [['dia', 'Todo dia'], ['semana', 'Toda semana'], ['quinzena', 'A cada 15 dias'], ['mes', 'Todo mês'], ['trimestre', 'A cada 3 meses'], ['ano', 'Todo ano']];
   const DIAS = [[1, 'Sg', 'Segunda'], [2, 'Te', 'Terça'], [3, 'Qa', 'Quarta'], [4, 'Qi', 'Quinta'], [5, 'Sx', 'Sexta'], [6, 'Sa', 'Sábado']];
   const casas = (tipo) => (tipo === 'percentual' ? 4 : 2); // R$ = 2; % = 4 (como no principal)
-  const dataBR = (iso) => (iso ? window.CicluzDateFields.display(iso) : '');
   const reais = (centavos) => D.moeda(centavos / 100);
   const quadro = (titulo, ...filhos) => { const f = el('fieldset', 'compras-fieldset'); f.append(el('legend', null, titulo), ...filhos); return f; };
   const largo = (no) => { no.classList.add('compras-largo'); return no; };
@@ -91,14 +90,14 @@
         const jurosTipo = seletor(TIPOS, (lanc && lanc.jurosTipo) || '', 'Sem juros');
         const jurosValor = entrada('text', lanc && lanc.jurosTipo ? R.apiParaDinheiro(lanc.jurosValorInformado) : '', { inputMode: 'decimal', placeholder: '0,00' });
         const total = entrada('text', '', { readOnly: true });
-        const dataRef = entrada('date', (lanc && lanc.dataReferencia) || hoje);
-        const docData = entrada('date', (lanc && lanc.dataDocumentoFiscal) || '');
+        const dataRef = U.campoData({ rotulo: 'Data do lançamento *', valor: (lanc && lanc.dataReferencia) || hoje });
+        const docData = U.campoData({ rotulo: 'Data do documento fiscal', valor: (lanc && lanc.dataDocumentoFiscal) || '' });
         const docNumero = entrada('text', (lanc && lanc.numeroDocumentoFiscal) || '', { maxLength: 60 });
         const grupo = seletor(comAtual(cadastros.grupos, lanc && lanc.grupoId), (lanc && lanc.grupoId) || '', 'Sem grupo');
         const conta = seletor(comAtual(cadastros.contas, lanc && lanc.contaNome), (lanc && lanc.contaNome) || '', 'Sem conta');
         const obs = el('textarea'); obs.value = (lanc && lanc.observacao) || ''; obs.rows = 3; obs.maxLength = 500;
-        const venc = entrada('date', (lanc && lanc.dataVencimento) || hoje);
-        const dataPag = entrada('date', (lanc && lanc.dataPagamento) || '');
+        const venc = U.campoData({ rotulo: 'Vencimento *', valor: (lanc && lanc.dataVencimento) || hoje });
+        const dataPag = U.campoData({ rotulo: 'Data do pagamento', valor: (lanc && lanc.dataPagamento) || '' });
         const rotJuros = campo('Juros', jurosValor);
         const campoJurosTipo = campo('Tipo do juros', jurosTipo);
         const campoTotal = campo('Valor Total', total, 'Valor + juros');
@@ -134,20 +133,20 @@
 
         /* Quadros */
         const q1 = quadro('Valor', largo(campoValor), campoJurosTipo, rotJuros, largo(campoTotal));
-        const q2 = quadro('Datas', campo('Data do lançamento *', dataRef));
-        if (!retirada) q2.append(campo('Data do documento fiscal', docData), campo('Nº do documento fiscal', docNumero));
+        const q2 = quadro('Datas', dataRef.no);
+        if (!retirada) q2.append(docData.no, campo('Nº do documento fiscal', docNumero));
         const q3 = quadro('Classificação');
         if (retirada) q3.append(campo('Grupo', grupo));
         q3.append(campo('Conta', conta), largo(campo('Observação *', obs)));
         form.append(q1, q2, q3);
 
         if (!retirada) {
-          const campoPag = campo('Data do pagamento', dataPag);
+          const campoPag = dataPag.no;
           const pintarPag = (sim) => { campoPag.style.display = sim ? '' : 'none'; };
-          const sw = U.quadroSituacao('Pagamento realizado', pago0, { textos: ['Sim', 'Não'], aoMudar: (sim) => { dataPag.value = sim ? (dataPag.value || hoje) : ''; pintarPag(sim); } });
+          const sw = U.quadroSituacao('Pagamento realizado', pago0, { textos: ['Sim', 'Não'], aoMudar: (sim) => { dataPag.definir(sim ? (dataPag.valor() || hoje) : ''); pintarPag(sim); } });
           sw.classList.add('compras-largo'); pintarPag(pago0);
           if (!pode('lancamentos_pagar')) { sw.querySelector('button').disabled = true; sw.append(el('small', 'profiles-note', 'Você não tem permissão para registrar pagamento.')); }
-          form.append(quadro('Pagamento', sw, campoPag, campo('Vencimento *', venc)));
+          form.append(quadro('Pagamento', sw, campoPag, venc.no));
 
           /* Discriminação dos itens */
           const itensBox = el('div', 'compras-largo compras-discriminacao');
@@ -218,8 +217,10 @@
         const numero = (txt, n) => !String(txt || '').trim() || R.numeroParaApi(txt, n) !== null;
         if (!R.dinheiroParaApi(c.valor.value)) return c.valor.value.trim() ? 'Valor em formato inválido. Use 1.234,56 (no máximo 2 casas).' : 'Informe o valor.';
         if (c.jurosTipo.value && !numero(c.jurosValor.value, casas(c.jurosTipo.value))) return c.jurosTipo.value === 'percentual' ? 'Juros inválido. Use até 4 casas.' : 'Juros inválido. Use 1.234,56 (no máximo 2 casas).';
-        if (!c.dataRef.value) return 'Informe a data do lançamento.';
-        if (!retirada && !c.venc.value) return 'Informe o vencimento.';
+        if (!c.dataRef.valor()) return c.dataRef.input.value ? 'Data do lançamento inválida. Use DD/MM/AA.' : 'Informe a data do lançamento.';
+        if (!retirada && !c.venc.valor()) return c.venc.input.value ? 'Vencimento inválido. Use DD/MM/AA.' : 'Informe o vencimento.';
+        if (!retirada && c.docData.input.value && !c.docData.valor()) return 'Data do documento fiscal inválida. Use DD/MM/AA.';
+        if (!retirada && c.dataPag.input.value && !c.dataPag.valor()) return 'Data do pagamento inválida. Use DD/MM/AA.';
         if (!c.obs.value.trim()) return 'Informe a observação.';
         const disc = !retirada && estado.discriminar && estado.itens.length > 0;
         if (disc) {
@@ -237,10 +238,10 @@
           if (calc.totalItensCentavos !== R.paraCentavos(v)) return 'A soma dos itens não bate com o valor. Ajuste e salve de novo.';
         }
         const corpo = {
-          dataReferencia: c.dataRef.value || null,
+          dataReferencia: c.dataRef.valor() || null,
           // Retirada não tem Vencimento na tela (como no principal): vale a data do lançamento.
-          dataVencimento: retirada ? (c.dataRef.value || null) : (c.venc.value || null),
-          dataPagamento: retirada ? ((lanc && lanc.dataPagamento) || null) : (c.dataPag.value || null),
+          dataVencimento: retirada ? (c.dataRef.valor() || null) : (c.venc.valor() || null),
+          dataPagamento: retirada ? ((lanc && lanc.dataPagamento) || null) : (c.dataPag.valor() || null),
           observacao: c.obs.value.trim(),
           valorOriginal: R.dinheiroParaApi(c.valor.value),
           jurosTipo: c.jurosTipo.value || null,
@@ -248,7 +249,7 @@
           contaNome: c.conta.value || null,
           grupoId: retirada ? (c.grupo.value || null) : ((lanc && lanc.grupoId) || null),
           numeroDocumentoFiscal: retirada ? ((lanc && lanc.numeroDocumentoFiscal) || null) : (c.docNumero.value.trim() || null),
-          dataDocumentoFiscal: retirada ? ((lanc && lanc.dataDocumentoFiscal) || null) : (c.docData.value || null),
+          dataDocumentoFiscal: retirada ? ((lanc && lanc.dataDocumentoFiscal) || null) : (c.docData.valor() || null),
           itens: disc ? itensParaApi(estado.itens) : [],
           descontoGeralTipo: disc ? (estado.descontoTipo || null) : null,
           descontoGeralValor: disc && estado.descontoTipo ? R.numeroParaApi(estado.descontoValor, casas(estado.descontoTipo)) : null,
