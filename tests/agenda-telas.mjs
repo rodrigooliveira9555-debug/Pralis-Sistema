@@ -852,8 +852,10 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   ok(true, 'Enviar o pedido conclui a tarefa');
   // Desempenho: o responsável vê o próprio cartão.
   await q.evaluate(() => { document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.estado.visao = 'desempenho'; CicluzAgenda.abrir(''); });
-  await q.locator('.agenda-desempenho-cartao').first().waitFor();
-  ok((await q.locator('.agenda-desempenho-cartao').count()) === 1 && (await q.locator('.agenda-desempenho-nome h3').first().textContent()) === RESP_UM.nome, 'Desempenho: cada pessoa vê o seu');
+  // A aba se redesenha quando a Agenda atualiza: espera o cartão da pessoa (não só "algum cartão").
+  await q.locator('.agenda-desempenho-nome h3', { hasText: RESP_UM.nome }).waitFor();
+  const cartoes = await q.locator('.agenda-desempenho-nome h3').allTextContents();
+  ok(cartoes.length === 1 && cartoes[0] === RESP_UM.nome, 'Desempenho: cada pessoa vê o seu (veio: ' + JSON.stringify(cartoes) + ')');
   ok(await q.locator('.agenda-desempenho-cartao .agenda-desempenho-indicador').count() === 4, 'Desempenho: os quatro indicadores no cartão');
   await q.close();
   await p.evaluate(() => { CicluzAgenda.estado.visao = 'listas'; });
