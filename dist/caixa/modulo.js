@@ -25,14 +25,13 @@
   // [grupo, id, título, subtítulo]. Grupo "caixa" = Entradas → Lançamentos; "relatorios" = Entradas → Relatórios;
   // "tesouraria" = Transferências → Lançamentos.
   const CARDS = [
-    ['caixa', 'abertura', 'VND - Abertura de Caixa', 'Conferir o malote e abrir o turno'],
-    ['caixa', 'turno', 'VND - Turno do Caixa', 'Resumo, sangria, PDV e vendas'],
-    ['caixa', 'fechamento', 'VND - Fechamento de Caixa', 'Contagem, folha, maquininha e lacre'],
     ['caixa', 'gerencia', 'VND - Gerência de Caixas', 'Monitor, recebimento e mensagens'],
     ['relatorios', 'fechamentos', 'VND - Fechamentos de Caixa', 'Fila, histórico, dossiê e conferência'],
     ['tesouraria', 'tesouraria', 'CNT - Tesouraria', 'Transferências, lacres, conferência e saldo das contas'],
   ];
   const voltar = () => menuBack(0, 'Lançamentos')();
+  // Abertura, Turno e Fechamento são etapas de VND - Vendas: o Voltar delas traz de volta para a tela de Vendas.
+  const voltarVendas = () => window.CicluzCaixa.abrir('vendas');
 
   /* ---------- Formatação (dinheiro sempre em centavos) ---------- */
 
@@ -356,6 +355,6 @@
     reiniciar, aoReiniciar, situacaoDe, ROTULO_SITUACAO, TOM_SITUACAO,
     cards: (grupo = 'caixa') => CARDS.filter((c) => c[0] === grupo).map(([, id, t, d]) => [t, d, 'caixa:' + id]),
     icone: () => U.svg(ICONE),
-    voltar,
+    voltar, voltarLancamentos: voltar, voltarVendas,
   };
 })();

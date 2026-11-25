@@ -17,7 +17,7 @@
   const { moeda, centavos } = C;
 
   const Dlg = window.CicluzCaixaTurnoDialogos;
-  const CAMINHO = 'Entradas · Vendas / Faturamento / Lançamentos / VND - Turno do Caixa';
+  const CAMINHO = 'Entradas · Vendas / Faturamento / Lançamentos / VND - Vendas / Turno do Caixa';
   const MOTIVOS = [
     'Falta de energia na loja', 'Oscilação ou pane elétrica', 'Internet caiu', 'Esbarrão em fio / cabo desconectado',
     'Computador travou, tive que reiniciar', 'Limpeza ou manutenção na loja', 'Atualização do sistema (Windows)', 'Outro',
@@ -30,7 +30,7 @@
   Dlg.aoMudar(() => atualizar());
 
   function abrir() {
-    if (!tela) tela = C.criarTela({ id: 'caixa-turno', titulo: 'VND - Turno do Caixa', caminho: CAMINHO });
+    if (!tela) tela = C.criarTela({ id: 'caixa-turno', titulo: 'VND - Turno do Caixa', caminho: CAMINHO, voltar: C.voltarVendas });
     tela.ativar();
     montar();
   }

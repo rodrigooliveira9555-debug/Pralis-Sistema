@@ -27,7 +27,7 @@ function indisponivel(detalhe: string) {
   );
 }
 
-async function pedirAoS1(caminho: string, params?: URLSearchParams): Promise<unknown> {
+export async function pedirAoS1(caminho: string, params?: URLSearchParams): Promise<unknown> {
   if (!leituraConfigurada()) throw naoConfigurada();
   const url = new URL(caminho, env.S1_VENDAS_URL);
   if (params) url.search = params.toString();

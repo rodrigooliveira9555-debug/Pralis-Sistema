@@ -16,7 +16,7 @@
   const { ctx: K, corpoSecao, dl } = window.CicluzCaixaFechamentoComum;
   const P = window.CicluzCaixaFechamentoPartes;
 
-  const CAMINHO = 'Entradas · Vendas / Faturamento / Lançamentos / VND - Fechamento de Caixa';
+  const CAMINHO = 'Entradas · Vendas / Faturamento / Lançamentos / VND - Vendas / Fechamento de Caixa';
   const ETAPAS = ['Vendas', 'Maquininha', 'Relatório final', 'Fechamento'];
 
   let tela = null;
@@ -24,7 +24,7 @@
   let gerenteDialogoVisto = false;
 
   function abrir() {
-    if (!tela) tela = C.criarTela({ id: 'caixa-fechamento', titulo: 'VND - Fechamento de Caixa', caminho: CAMINHO });
+    if (!tela) tela = C.criarTela({ id: 'caixa-fechamento', titulo: 'VND - Fechamento de Caixa', caminho: CAMINHO, voltar: C.voltarVendas });
     tela.ativar();
     montar();
     const f = C.estado.fechamento;
