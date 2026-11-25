@@ -303,7 +303,8 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 }
 .acessos-bloco-x svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
 .acessos-bloco-x:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
-.acessos-telas button.acessos-telas-mais:disabled { opacity: .45; cursor: not-allowed; }
+.acessos-telas button.acessos-telas-mais:disabled, .acessos-telas button.acessos-telas-mais[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+.acessos-nome-vert.so-icone { justify-content: center; padding: 0; min-height: 52px; }
 .acessos-tl-sec-nome {
   display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 36px; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; text-align: left;
   font: 600 13px/18px var(--ui-font);
