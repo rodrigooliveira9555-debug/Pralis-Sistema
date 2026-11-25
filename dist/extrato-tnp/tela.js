@@ -71,11 +71,13 @@
     if (bancarias.length > 1) lista.unshift({ id: '', rotulo: 'Contas', dica: 'Conta corrente e poupança somadas' });
     // Com uma conta só, a aba dela é a visão "sem filtro" (o coletor já soma só as bancárias).
     else if (bancarias.length === 1) lista.find((a) => a.id === bancarias[0].contaId).id = '';
+    // Nenhuma aba casou com a escolha (ex.: só cartão, sem conta): a primeira fica marcada e alcançável pelo teclado.
+    const marcadaId = lista.some((a) => a.id === estado.conta) ? estado.conta : lista[0] && lista[0].id;
     const caixa = el('div', 'vendas-pdv-abas');
     caixa.setAttribute('role', 'tablist');
     caixa.setAttribute('aria-label', 'Conta');
     lista.forEach((a) => {
-      const marcada = estado.conta === a.id;
+      const marcada = marcadaId === a.id;
       const b = el('button', 'vendas-pdv-aba' + (marcada ? ' ativa' : ''), a.rotulo);
       b.type = 'button';
       b.title = a.dica;
@@ -90,15 +92,24 @@
       const bs = [...caixa.children];
       const i = bs.indexOf(document.activeElement);
       bs[(i + (e.key === 'ArrowRight' ? 1 : -1) + bs.length) % bs.length].click();
-      requestAnimationFrame(() => { const nova = document.querySelector('#extrato-tnp-view .vendas-pdv-aba.ativa'); if (nova) nova.focus(); });
     });
     return caixa;
   }
 
+  /** Refaz as abas e, se o foco estava nelas, devolve o foco à aba marcada. */
+  function pintarAbas() {
+    const tinhaFoco = partes.topo.lugarAbas.contains(document.activeElement);
+    partes.topo.lugarAbas.replaceChildren(abas());
+    if (tinhaFoco) focar('#extrato-tnp-view .vendas-pdv-aba.ativa');
+  }
+  const focar = (seletor) => { const n = document.querySelector(seletor); if (n) n.focus(); };
+
+  /** A aba muda na hora (e fica com o foco); o extrato da conta anterior fica esmaecido até o novo chegar. */
   function escolherConta(id) {
     if (estado.conta === id) return;
     estado.conta = id;
     D.reiniciarFiltro();
+    pintarAbas();
     consultar();
   }
 
@@ -125,7 +136,7 @@
     const { quando, sinc } = partes.topo;
     const d = estado.dados;
     const conexao = d && d.conexoes[0];
-    quando.textContent = estado.carregando ? 'Sincronizando…' : estado.atualizadoEm ? 'Atualizado às ' + D.quando(estado.atualizadoEm.toISOString()).split(' às ')[1] : '';
+    quando.textContent = estado.carregando ? 'Sincronizando…' : estado.atualizadoEm ? 'Lido do coletor às ' + D.quando(estado.atualizadoEm.toISOString()).split(' às ')[1] : '';
     sinc.disabled = estado.carregando;
     sinc.classList.toggle('girando', estado.carregando);
     partes.faixa.replaceChildren(
@@ -141,7 +152,7 @@
       if (c.erro) lista.push('A conexão ' + c.instituicao + ' está com erro: ' + c.erro);
       if (c.consentimentoExpira) {
         const faltam = Math.ceil((Date.parse(c.consentimentoExpira) - Date.now()) / 86_400_000);
-        if (faltam <= 30) lista.push('A autorização do Meu Pluggy vence em ' + Math.max(0, faltam) + ' dia(s). Renove para o extrato não parar.');
+        if (faltam <= 30) lista.push('A autorização do Meu Pluggy vence em ' + D.plural(Math.max(0, faltam), 'dia', 'dias') + '. Renove para o extrato não parar.');
       }
     });
     if (d.ultimaBusca && d.ultimaBusca.ok === false) lista.push('A última busca do coletor falhou (' + D.quando(d.ultimaBusca.em) + ').');
@@ -187,7 +198,7 @@
       if (mostrados >= limite) break;
       const bloco = el('section', 'extrato-tnp-dia');
       const cab = el('header', 'extrato-tnp-dia-cab');
-      cab.append(el('h4', null, D.diaLongo(dia.dia)), el('span', null, '+' + moeda(dia.entradas) + '  ·  −' + moeda(Math.abs(dia.saidas))));
+      cab.append(el('h4', null, D.diaLongo(dia.dia)), el('span', null, 'Entradas +' + moeda(dia.entradas) + ' · Saídas −' + moeda(Math.abs(dia.saidas))));
       const ul = el('ul', 'extrato-tnp-lancamentos');
       dia.lancamentos.slice(0, limite - mostrados).forEach((l) => ul.append(linhaLancamento(l, d)));
       mostrados += ul.children.length;
@@ -198,7 +209,14 @@
     if (lista.length > mostrados) {
       const rodape = el('div', 'vendas-pdv-paginacao');
       rodape.append(el('span', null, 'Mostrando ' + mostrados + ' de ' + lista.length),
-        botao('Mostrar mais ' + Math.min(POR_VEZ, lista.length - mostrados), () => { limite += POR_VEZ; redesenharResultados(); }, 'btn secondary'));
+        botao('Mostrar mais ' + Math.min(POR_VEZ, lista.length - mostrados), () => {
+          // O foco vai para o primeiro lançamento que apareceu (o botão some ou muda de lugar).
+          const primeiro = mostrados;
+          limite += POR_VEZ;
+          redesenharResultados();
+          const botoes = document.querySelectorAll('#extrato-tnp-view .extrato-tnp-detalhes');
+          if (botoes[primeiro]) botoes[primeiro].focus();
+        }, 'btn secondary'));
       s.append(rodape);
     }
     return s;
@@ -211,17 +229,19 @@
     if (!d) return;
     const lista = D.filtrados(d);
     const conta = estado.conta ? d.todasAsContas.find((c) => c.contaId === estado.conta) : null;
-    const cartao = conta && conta.tipo === 'CREDIT';
+    const cartao = Boolean(conta && conta.tipo === 'CREDIT');
+    // Primeiro o que se confere (resumo e lançamentos); depois as faturas, a análise e as aplicações.
     partes.resultados.replaceChildren(...[
       P.resumo(d, lista, conta),
-      P.analise(lista, { aoFiltrar: filtrar, cartao }),
-      cartao ? P.faturas(d) : !estado.conta ? P.aplicacoes(d) : null,
       extrato(d, lista, cartao),
+      cartao ? P.faturas(d) : null,
+      P.analise(lista, { aoFiltrar: filtrarPelaBarra, cartao }),
+      !estado.conta ? P.aplicacoes(d) : null,
     ].filter(Boolean));
   }
 
   function montarFiltros() {
-    const novo = F.filtros({ aoFiltrar: soResultados, aoLimpar: filtrar });
+    const novo = F.filtros({ aoFiltrar: soResultados, aoLimpar: limpar });
     partes.filtros.replaceWith(novo);
     partes.filtros = novo;
   }
@@ -232,10 +252,20 @@
     redesenharResultados();
   }
 
-  /** Filtro mudou por fora (barra tocada, Limpar): o resultado e o quadro de Filtros, que acompanha. */
-  function filtrar() {
+  /** Barra tocada: o resultado e o quadro de Filtros acompanham; o foco volta para a mesma barra. */
+  function filtrarPelaBarra(chave, id) {
     soResultados();
     montarFiltros();
+    const barra = [...document.querySelectorAll('#extrato-tnp-view .vendas-pdv-barra')].find((b) => b.dataset.chave === chave && b.dataset.id === id);
+    if (barra) barra.focus();
+  }
+
+  /** Limpar filtros: tudo volta e o foco fica no Limpar do quadro novo. */
+  function limpar() {
+    soResultados();
+    montarFiltros();
+    const botao = [...partes.filtros.querySelectorAll('button')].find((b) => b.textContent === 'Limpar filtros');
+    if (botao) botao.focus();
   }
 
   function desenhar() {
@@ -243,15 +273,22 @@
     pintarSincronia();
     const d = estado.dados;
     if (estado.erro) {
-      partes.resultados.replaceChildren(corpo(el('p', 'profiles-error', estado.erro), botao('Tentar de novo', () => consultar(), 'btn secondary')));
+      const aviso = el('p', 'profiles-error', estado.erro);
+      aviso.setAttribute('role', 'alert');
+      // Erro: nada da conta ou do período anterior fica à vista como se fosse o atual.
+      partes.avisos.replaceChildren();
+      partes.resultados.replaceChildren(corpo(aviso, botao('Tentar de novo', () => consultar(), 'btn secondary')));
       return;
     }
     if (!d) return;
-    partes.topo.lugarAbas.replaceChildren(abas());
+    pintarAbas();
     partes.avisos.replaceChildren(...avisos(d));
     montarFiltros();
     redesenharResultados();
   }
+
+  /** Período digitado inválido: o resultado fica esmaecido até o período voltar a valer. */
+  const marcarDesatualizado = (sim) => partes.resultados.classList.toggle('desatualizado', sim);
 
   async function abrir() {
     if (!tela) {
@@ -272,14 +309,16 @@
       tela.body.replaceChildren(U.vazio('O extrato ainda não foi ligado', 'O S2 lê o extrato do coletor do Meu Pluggy da TNP. Falta configurar a ligação no servidor.'));
       return;
     }
+    // Sem aria-live na faixa: o "Sincronizando…" ao lado do botão já avisa; a faixa inteira não precisa ser relida.
     const faixa = el('div', 'extrato-tnp-faixa-texto');
-    faixa.setAttribute('aria-live', 'polite');
     const moldura = el('div', 'extrato-tnp-faixa');
     moldura.append(faixa);
     partes = {
       topo: topo(), faixa, avisos: el('div', 'extrato-tnp-avisos'),
-      periodo: F.periodo({ aoMudar: consultar }), filtros: el('div'), resultados: el('div', 'vendas-pdv-resultados'),
+      periodo: F.periodo({ aoMudar: () => { marcarDesatualizado(false); consultar(); }, aoInvalido: () => marcarDesatualizado(true) }),
+      filtros: el('div'), resultados: el('div', 'vendas-pdv-resultados'),
     };
+    partes.resultados.replaceChildren(el('p', 'extrato-tnp-carregando', 'Carregando o extrato…'));
     tela.body.replaceChildren(partes.topo.barra, moldura, partes.avisos, partes.periodo, partes.filtros, partes.resultados);
     await consultar();
   }

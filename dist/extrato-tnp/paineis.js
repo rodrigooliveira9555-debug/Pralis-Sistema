@@ -29,6 +29,8 @@
     caixa.setAttribute('aria-valuemin', '0');
     caixa.setAttribute('aria-valuemax', String(limite));
     caixa.setAttribute('aria-valuenow', String(Math.max(0, usado)));
+    // O leitor de tela fala em reais, não em centavos.
+    caixa.setAttribute('aria-valuetext', moeda(Math.max(0, usado)) + ' de ' + moeda(limite) + ' (' + Math.round(parte * 100) + '%)');
     const trilho = el('span', 'vendas-pdv-trilho');
     const cheio = el('span', 'vendas-pdv-cheio' + (parte >= 0.8 ? ' alto' : ''));
     cheio.style.setProperty('--parte', parte.toFixed(4));
@@ -37,33 +39,39 @@
     return caixa;
   }
 
+  /** "17/11 a 24/11" (ou só "24/11" quando é um dia). */
+  const periodoCurto = () => (estado.desde === estado.ate ? D.dataCurta(estado.ate).slice(0, 5) : D.dataCurta(estado.desde).slice(0, 5) + ' a ' + D.dataCurta(estado.ate).slice(0, 5));
+
   function resumo(d, lista, conta) {
     const cartao = Boolean(conta && conta.tipo === 'CREDIT');
     const t = D.somar(lista, cartao);
     const filtrando = Boolean(D.filtrosEmUso() || estado.filtro.busca || estado.filtro.tipo);
     const sufixo = filtrando ? ' (filtrado)' : '';
-    const pend = !t.pendentes ? '' : cartao ? ' · ' + t.pendentes + ' na fatura aberta' : ' · ' + t.pendentes + ' pendente' + (t.pendentes > 1 ? 's' : '') + ' fora';
     const grade = el('div', 'vendas-pdv-numeros extrato-tnp-numeros');
     const det = (conta && conta.detalhes) || {};
+    const conta_ = (sinal, tambemPendente) => lista.filter((l) => (sinal < 0 ? l.valorCentavos < 0 : l.valorCentavos >= 0) && (tambemPendente || l.situacao !== 'PENDING')).length;
     if (cartao) {
       const limite = det.limiteCentavos;
       const disponivel = det.disponivelCentavos;
-      const fatura = numero('Fatura em aberto', moeda(conta.saldoCentavos), 'Lida em ' + D.quando(conta.saldoLidoEm), 'negativo');
+      const abertas = lista.filter((l) => l.situacao === 'PENDING' && l.valorCentavos < 0).length;
       const lim = numero('Limite disponível', disponivel != null ? moeda(disponivel) : '—', limite != null ? 'de ' + moeda(limite) : '');
       if (limite > 0 && disponivel != null) lim.append(uso(limite - disponivel, limite, 'Limite do cartão usado'));
       grade.append(
-        fatura,
+        numero('Fatura em aberto', moeda(conta.saldoCentavos), 'Lida em ' + D.quando(conta.saldoLidoEm), 'negativo'),
         lim,
         numero('Vencimento', det.vencimento ? D.dataCurta(det.vencimento) : '—', det.pagamentoMinimoCentavos != null ? 'Mínimo ' + moeda(det.pagamentoMinimoCentavos) : ''),
-        numero('Compras no período' + sufixo, moeda(Math.abs(t.saidas)), t.quantidade + ' lançamento(s)' + pend, 'negativo'),
+        numero('Compras' + sufixo, '−' + moeda(Math.abs(t.saidas)), D.plural(conta_(-1, true), 'compra', 'compras') + (abertas ? ' · ' + abertas + ' na fatura aberta' : ''), 'negativo'),
       );
     } else {
       const saldo = conta ? conta.saldoCentavos : d.saldoTotalCentavos;
       const lido = conta ? conta.saldoLidoEm : d.contas[0] && d.contas[0].saldoLidoEm;
+      const fora = t.pendentes ? ' · ' + D.plural(t.pendentes, 'pendente fora do total', 'pendentes fora do total') : '';
       grade.append(
-        numero('Saldo', moeda(saldo), (conta ? '' : 'Corrente e poupança · ') + 'lido em ' + D.quando(lido), saldo < 0 ? 'negativo' : ''),
-        numero('Entradas' + sufixo, '+' + moeda(t.entradas), t.quantidade + ' lançamento(s)' + pend, 'positivo'),
-        numero('Saídas' + sufixo, '−' + moeda(Math.abs(t.saidas)), 'Resultado ' + D.comSinal(t.liquido), 'negativo'),
+        // O saldo é o de agora (o banco não informa o saldo de um dia passado).
+        numero('Saldo atual', moeda(saldo), (conta ? '' : 'Corrente e poupança · ') + 'lido em ' + D.quando(lido), saldo < 0 ? 'negativo' : ''),
+        numero('Entradas' + sufixo, '+' + moeda(t.entradas), D.plural(conta_(1), 'lançamento', 'lançamentos') + fora, 'positivo'),
+        numero('Saídas' + sufixo, '−' + moeda(Math.abs(t.saidas)), D.plural(conta_(-1), 'lançamento', 'lançamentos'), 'negativo'),
+        numero('Resultado' + sufixo, D.comSinal(t.liquido), 'Entradas menos saídas', t.liquido < 0 ? 'negativo' : 'positivo'),
       );
       const especial = (conta ? [conta] : d.contas).map((c) => c.detalhes || {}).find((x) => x.chequeEspecialLimiteCentavos > 0);
       if (especial) {
@@ -73,19 +81,22 @@
         grade.append(n);
       }
     }
-    const s = U.secao('Resumo do período');
+    const s = U.secao('Resumo de ' + periodoCurto());
     s.append(corpo(grade, filtrando ? U.nota('Os números seguem os filtros. Limpe os filtros para ver o período inteiro.') : null));
     return s;
   }
 
-  /** Barras que filtram: [{id, nome, total, quantidade}]. */
-  function barras(linhas, { total, marcado, aoTocar, vazio }) {
+  /** Barras que filtram: [{id, nome, total, quantidade}]. Sem id ("Outras", "Sem categoria") não filtra: fica desligada. */
+  function barras(linhas, { total, marcado, aoTocar, vazio, chave }) {
     if (!linhas.length) return U.vazio(vazio);
     const ul = el('ul', 'vendas-pdv-barras');
     linhas.forEach((l) => {
       const parte = total > 0 ? Math.max(0, Math.min(100, (l.total / total) * 100)) : 0;
       const b = el('button', 'vendas-pdv-barra' + (marcado === l.id ? ' marcada' : ''));
       b.type = 'button';
+      b.disabled = !l.id;
+      b.dataset.chave = chave;
+      b.dataset.id = l.id || '';
       b.setAttribute('aria-pressed', String(marcado === l.id));
       const cima = el('span', 'vendas-pdv-barra-topo');
       cima.append(el('b', null, l.nome), el('span', 'vendas-pdv-barra-valor', moeda(l.total)));
@@ -93,8 +104,8 @@
       const cheio = el('span', 'vendas-pdv-cheio');
       cheio.style.setProperty('--parte', (parte / 100).toFixed(4));
       trilho.append(cheio);
-      b.append(cima, trilho, el('span', 'vendas-pdv-barra-rodape', l.quantidade + (l.quantidade === 1 ? ' lançamento' : ' lançamentos') + ' · ' + parte.toFixed(1).replace('.', ',') + '%'));
-      b.onclick = () => aoTocar(l.id);
+      b.append(cima, trilho, el('span', 'vendas-pdv-barra-rodape', D.plural(l.quantidade, 'lançamento', 'lançamentos') + ' · ' + parte.toFixed(1).replace('.', ',') + '%'));
+      if (l.id) b.onclick = () => aoTocar(l.id);
       const li = el('li');
       li.append(b);
       ul.append(li);
@@ -110,17 +121,17 @@
     return linhas;
   }
 
+  /** aoFiltrar(chave, id) é chamado depois de mudar o filtro (a tela redesenha e devolve o foco à barra). */
   function analise(lista, { aoFiltrar, cartao = false }) {
     const f = estado.filtro;
     const saidas = D.agrupar(lista, 'categoria', -1, cartao);
     const entradas = D.agrupar(lista, 'operacao', 1, cartao);
     const operacoes = D.agrupar(lista, 'operacao', -1, cartao);
-    const alternar = (chave) => (id) => { if (id === null) return; f[chave] = f[chave] === id ? '' : id; aoFiltrar(); };
+    const alternar = (chave) => (id) => { f[chave] = f[chave] === id ? '' : id; aoFiltrar(chave, id); };
     const soma = (g) => g.reduce((s, x) => s + x.total, 0);
     const coluna = (titulo, grupos, chave, nome, vazio) => {
       const s = U.secao(titulo);
-      const linhas = top(grupos, nome);
-      s.append(corpo(barras(linhas, { total: soma(grupos), marcado: f[chave] || null, aoTocar: alternar(chave), vazio })));
+      s.append(corpo(barras(top(grupos, nome), { total: soma(grupos), marcado: f[chave] || null, aoTocar: alternar(chave), vazio, chave })));
       return s;
     };
     const lado = el('div', 'vendas-pdv-lado extrato-tnp-analise');

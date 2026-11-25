@@ -14,6 +14,8 @@
   const reais = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
   const moeda = (centavos) => reais.format((Number(centavos) || 0) / 100);
   const comSinal = (centavos) => (centavos < 0 ? '−' : '+') + moeda(Math.abs(centavos));
+  /** "1 lançamento", "3 lançamentos" (nada de "lançamento(s)"). */
+  const plural = (n, um, varios) => n + ' ' + (n === 1 ? um : varios);
   const quando = (iso) => (iso ? new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(iso)).replace(',', ' às') : '—');
   const dataComAno = (iso) => (iso ? new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(iso)) : '—');
   // Data sem hora (vencimento, fechamento, data da compra): o dia como veio, sem passar por fuso.
@@ -173,7 +175,7 @@
   }
 
   window.CicluzExtratoTnpDados = {
-    FUSO, estado, hojeIso, somarDias, moeda, comSinal, quando, dataComAno, dataCurta, hora, diaLongo,
+    FUSO, estado, hojeIso, somarDias, moeda, comSinal, plural, quando, dataComAno, dataCurta, hora, diaLongo,
     nomeOperacao, nomeCategoria, nomeForma, nomeConta, reiniciarFiltro, filtrosEmUso, lerValor,
     todos, filtrados, somar, porDia, agrupar, opcoes, csv, baixarCsv,
   };

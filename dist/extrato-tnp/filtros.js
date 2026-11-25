@@ -14,8 +14,11 @@
   const { estado } = D;
   let maisAberto = false;
 
-  /** O período. aoMudar() busca de novo. */
-  function periodo({ aoMudar }) {
+  /** U.chips refaz os botões ao escolher: o foco volta para o atalho escolhido (teclado não se perde). */
+  const focarEscolhido = (caixa) => requestAnimationFrame(() => { const b = caixa.querySelector('[aria-pressed="true"]'); if (b) b.focus(); });
+
+  /** O período. aoMudar() busca de novo; aoInvalido() avisa a tela para esmaecer o resultado antigo. */
+  function periodo({ aoMudar, aoInvalido }) {
     const s = U.secao('Período');
     const ini = U.campoData({ valor: estado.desde, rotulo: 'Data inicial' });
     const fim = U.campoData({ valor: estado.ate, rotulo: 'Data final' });
@@ -35,6 +38,7 @@
       [estado.desde, estado.ate] = faixas[v];
       ini.definir(estado.desde); fim.definir(estado.ate);
       aviso.hidden = true;
+      focarEscolhido(atalhos);
       aoMudar();
     });
     const aviso = el('p', 'profiles-error extrato-tnp-aviso-periodo');
@@ -44,9 +48,10 @@
       const [di, df] = [ini.valor(), fim.valor()];
       if (!di || !df) return;
       const dias = (Date.parse(df + 'T00:00:00Z') - Date.parse(di + 'T00:00:00Z')) / 86_400_000;
-      const erro = di > df ? 'A data inicial está depois da final.' : dias > 30 ? 'O período vai até 31 dias.' : '';
-      aviso.textContent = erro; aviso.hidden = !erro;
-      if (erro) return;
+      const erro = di > df ? 'A data inicial está depois da final.' : dias > 30 ? 'O período pode ter no máximo 31 dias.' : '';
+      aviso.textContent = erro ? erro + ' Os números abaixo ainda são do período anterior.' : '';
+      aviso.hidden = !erro;
+      if (erro) { if (aoInvalido) aoInvalido(); return; }
       estado.desde = di; estado.ate = df; atalhos.atualizar(chipDe());
       aoMudar();
     };
@@ -68,7 +73,7 @@
     const aplicar = () => { rotular(); aoFiltrar(); };
 
     const buscaCampo = U.buscaFixa('extrato-tnp', 'Descrição, quem pagou ou recebeu, CNPJ, categoria…', f.busca, (v) => { f.busca = v; aplicar(); });
-    const tipo = U.chips([['', 'Tudo'], ['entrada', 'Entradas'], ['saida', 'Saídas']], f.tipo, (v) => { f.tipo = v; aplicar(); });
+    const tipo = U.chips([['', 'Tudo'], ['entrada', 'Entradas'], ['saida', 'Saídas']], f.tipo, (v) => { f.tipo = v; focarEscolhido(tipo); aplicar(); });
     tipo.setAttribute('aria-label', 'Entradas ou saídas');
 
     const operacao = seletor(D.opcoes(d, 'operacao', D.nomeOperacao), f.operacao, 'Todas');
