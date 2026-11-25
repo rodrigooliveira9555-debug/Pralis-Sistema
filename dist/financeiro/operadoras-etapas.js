@@ -100,7 +100,7 @@
   const rot = (lista, v) => (lista.find((x) => x[0] === v) || ['', v])[1];
 
   /** Painel "Custo das máquinas": cada linha é um custo (aluguel, mensalidade…) com a base de cobrança, o valor, a faixa de faturamento e a vigência. */
-  function painelCustos(item, listarMaquinas, rotuloOutras, opcoesDespesa) {
+  function painelCustos(item, listarMaquinas, rotuloOutras, opcoesDespesa, iconeDespesa) {
     const painel = el('section', 'operator-fees operator-costs');
     painel.append(el('p', null, 'Registre os custos que a operadora cobra pelas máquinas: aluguel, mensalidade, adesão, instalação e outros. Cada custo diz quanto é, se é por máquina ou da operadora toda, de quanto em quanto tempo e, se for o caso, em que faixa de faturamento vale (ex.: aluguel isento acima de certo faturamento). Para valores diferentes por faixa, adicione uma linha por faixa. Aqui é só o cadastro: nenhum cálculo do sistema usa estes custos ainda.'));
     const rapido = el('div', 'operator-cost-rapido');
@@ -119,9 +119,18 @@
       const tipo = select('Tipo de custo *', TIPOS, dados.tipo || TIPOS[0]);
       // Todo custo se liga a um Grupo de Despesa (ou subgrupo), como as taxas das bandeiras: é o que classifica o gasto.
       const opcoesDes = opcoesDespesa ? opcoesDespesa(dados.expenseId) : [];
-      const grupoDes = select('Grupo de Despesa *', [['', 'Selecione o grupo ou subgrupo de despesa'], ...opcoesDes], '');
-      if (dados.expenseId && !opcoesDes.some((o) => o[0] === dados.expenseId)) grupoDes.s.add(new Option('Grupo indisponível — selecione outro', dados.expenseId));
-      grupoDes.s.value = dados.expenseId || '';
+      // Mesmo quadro vermelho das taxas das bandeiras (fee-classification): título com o selo "−$" e a lista de grupos embaixo.
+      const sGrupo = el('select'); sGrupo.setAttribute('aria-label', 'Grupo de Despesa'); sGrupo.add(new Option('Selecione o grupo ou subgrupo de despesa', ''));
+      opcoesDes.forEach(([v, t]) => sGrupo.add(new Option(t, v)));
+      if (dados.expenseId && !opcoesDes.some((o) => o[0] === dados.expenseId)) sGrupo.add(new Option('Grupo indisponível — selecione outro', dados.expenseId));
+      sGrupo.value = dados.expenseId || '';
+      const rotuloDes = el('label', 'fee-expense-field');
+      const cabecaDes = el('span', 'fee-classification-heading');
+      const seloDes = el('span', 'fee-classification-icon'); seloDes.setAttribute('aria-hidden', 'true'); seloDes.innerHTML = iconeDespesa || '';
+      const tituloDes = el('span', 'fee-classification-title', 'Grupo de Despesa');
+      cabecaDes.append(seloDes, tituloDes); rotuloDes.append(cabecaDes, sGrupo);
+      const quadroDes = el('div', 'fee-classification'); quadroDes.append(rotuloDes);
+      const grupoDes = { s: sGrupo, l: quadroDes };
       const descricao = entrada('Qual é o custo? *', 'text', dados.descricao, { max: 80, placeholder: 'Ex.: Taxa de reposição de chip' });
       const cobrado = select('Quem paga', COBRADO, dados.cobrado || 'maquina');
       const aplica = el('fieldset', 'operator-cost-aplica'); aplica.append(el('legend', null, 'Máquinas que pagam'));
@@ -241,12 +250,12 @@
    * form: o formulário já montado; painelTaxas: a seção "Taxas por bandeira"; rotuloCustos: o campo de texto "Custos fixos da operadora" (vai para a etapa 3);
    * acoes: a linha com Salvar e Cancelar; nome: o campo de nome (volta para a etapa 1 quando é recusado); item: a operadora em edição (ou nulo).
    */
-  function montar({ form, painelTaxas, rotuloCustos, opcoesDespesa, acoes, nome, item }) {
+  function montar({ form, painelTaxas, rotuloCustos, opcoesDespesa, iconeDespesa, acoes, nome, item }) {
     const etapa1 = el('div', 'operadora-etapa operadora-etapa-dados');
     [...form.children].filter((c) => c !== painelTaxas && c !== acoes).forEach((c) => etapa1.append(c));
     const maq = painelMaquinas(item);
     const etapa2 = el('div', 'operadora-etapa'); etapa2.append(maq.painel);
-    const custos = painelCustos(item, maq.listar, rotuloCustos, opcoesDespesa);
+    const custos = painelCustos(item, maq.listar, rotuloCustos, opcoesDespesa, iconeDespesa);
     const etapa3 = el('div', 'operadora-etapa'); etapa3.append(custos.painel);
     const etapa4 = el('div', 'operadora-etapa'); etapa4.append(painelTaxas);
     const etapas = [etapa1, etapa2, etapa3, etapa4];

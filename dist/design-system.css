@@ -379,3 +379,4 @@ body.dark-theme .view.show>.panel>.head[data-header-standard=yes],body.dark-them
 .operator-cost-outras{margin-top:12px}
 @media(max-width:600px){.operator-cost-campos{grid-template-columns:1fr}}
 #sector-view .operator-fees .operator-cost>*{grid-column:1/-1;min-width:0}
+#sector-view .operator-fees .operator-cost .fee-classification{grid-template-columns:minmax(0,1fr)}
