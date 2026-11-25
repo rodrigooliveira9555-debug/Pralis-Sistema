@@ -74,7 +74,33 @@ export async function buscarExtrato(
     );
   }
   if (!resposta.ok) throw indisponivel(`status ${resposta.status}`);
-  const corpo = objeto(await resposta.json().catch(() => null));
+  const corpo = objeto(await lerJsonLimitado(resposta));
   if (corpo.ok !== true) throw indisponivel("resposta inválida");
   return extratoDoColetor(corpo);
+}
+
+// 31 dias de extrato cabem com folga em 5 MB; acima disso a resposta é recusada sem ser lida inteira na memória.
+const LIMITE_BYTES = 5 * 1024 * 1024;
+async function lerJsonLimitado(resposta: Response): Promise<unknown> {
+  if (Number(resposta.headers.get("content-length") ?? 0) > LIMITE_BYTES)
+    throw indisponivel("resposta grande demais");
+  if (!resposta.body) return null;
+  const leitor = resposta.body.getReader();
+  const partes: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await leitor.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > LIMITE_BYTES) {
+      await leitor.cancel();
+      throw indisponivel("resposta grande demais");
+    }
+    partes.push(value);
+  }
+  try {
+    return JSON.parse(Buffer.concat(partes).toString("utf8"));
+  } catch {
+    return null;
+  }
 }

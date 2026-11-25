@@ -195,6 +195,31 @@ describe("extrato da TNP - cliente do coletor", () => {
     });
   });
 
+  it("Deve_MascararDocumentoAberto_DescartarItemNulo_CortarTexto_E_RecusarRespostaGigante", async () => {
+    configurar();
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      resposta(200, {
+        ok: true,
+        contas: [null, { contaId: "c1", nome: "X".repeat(500) }],
+        dias: [{ dia: "2026-11-24", lancamentos: [null, {
+          transacaoId: "t1", contaId: "c1", data: "2026-11-24T00:00:00.000Z", dia: "2026-11-24", descricao: "D".repeat(500), valorCentavos: 1,
+          detalhes: { documento: { tipo: "CPF", numero: "123.456.789-00" } },
+        }] }],
+      }),
+    ));
+    const extrato = await buscarExtrato(consulta);
+    expect(extrato.contas).toHaveLength(1);
+    expect(extrato.contas[0]?.nome).toHaveLength(200);
+    expect(extrato.dias[0]?.lancamentos).toHaveLength(1);
+    expect(extrato.dias[0]?.lancamentos[0]?.descricao).toHaveLength(200);
+    expect(extrato.dias[0]?.lancamentos[0]?.detalhes.documento).toEqual({ tipo: "CPF", numero: "***" });
+
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response("x", { status: 200, headers: { "content-length": String(6 * 1024 * 1024) } }),
+    ));
+    await expect(buscarExtrato(consulta)).rejects.toMatchObject({ status: 503, code: "EXTRATO_INDISPONIVEL" });
+  });
+
   it("Deve_TraduzirAsFalhasDoColetor", async () => {
     configurar();
     vi.stubGlobal(

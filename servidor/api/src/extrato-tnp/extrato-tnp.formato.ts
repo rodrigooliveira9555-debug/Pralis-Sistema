@@ -96,8 +96,9 @@ type Campo =
   | "valorCentavos"
   | "vencimento";
 type Bruto = Partial<Record<Campo, unknown>>;
+// Todo texto que vai à tela tem no máximo 200 caracteres.
 const texto = (v: unknown) =>
-  v === null || v === undefined ? null : String(v);
+  v === null || v === undefined ? null : String(v).slice(0, 200);
 // Texto opcional curto: some quando vazio (o banco nem sempre informa) e nunca passa de 200 caracteres.
 const opcional = (v: unknown) =>
   v === null || v === undefined || String(v).trim() === ""
@@ -110,8 +111,25 @@ const inteiroOuNulo = (v: unknown) =>
     ? null
     : Math.trunc(Number(v));
 const inteiroOpcional = (v: unknown) => inteiroOuNulo(v) ?? undefined;
+// Item nulo ou que não é objeto é descartado (não derruba a rota).
 const lista = (v: unknown): Bruto[] =>
-  Array.isArray(v) ? (v as Bruto[]) : [];
+  Array.isArray(v)
+    ? (v.filter((x) => x && typeof x === "object" && !Array.isArray(x)) as Bruto[])
+    : [];
+/**
+ * Segunda proteção do documento (a primeira é o coletor): só CNPJ com 14 dígitos passa inteiro; o resto sai
+ * mascarado, mesmo se o coletor mandar um CPF aberto por engano.
+ */
+function documentoSeguro(v: unknown) {
+  const doc = objeto(v);
+  const numero = opcional(doc.numero);
+  if (numero === undefined) return undefined;
+  const digitos = numero.replace(/\D/gu, "");
+  const tipo = opcional(doc.tipo) ?? "";
+  if (digitos.length === 14 && tipo !== "CPF") return { tipo: "CNPJ", numero };
+  if (/^\*{3}\.\d{3}\.\d{3}-\*{2}$/u.test(numero)) return { tipo: "CPF", numero };
+  return { tipo: tipo || "DOCUMENTO", numero: "***" };
+}
 const objeto = (v: unknown): Bruto =>
   v && typeof v === "object" && !Array.isArray(v) ? (v as Bruto) : {};
 /** Tira os campos undefined (o JSON fica só com o que o banco informou). */
@@ -138,7 +156,6 @@ function totais(v: unknown): TotaisExtratoTnp {
 
 function detalhesLancamento(v: unknown): DetalhesLancamentoExtratoTnp {
   const d = objeto(v);
-  const doc = objeto(d.documento);
   const loja = objeto(d.estabelecimento);
   const cartao = objeto(d.cartao);
   const estabelecimento = limpo({
@@ -162,11 +179,7 @@ function detalhesLancamento(v: unknown): DetalhesLancamentoExtratoTnp {
     forma: opcional(d.forma),
     operacaoDetalhe: opcional(d.operacaoDetalhe),
     motivo: opcional(d.motivo),
-    // O coletor já manda o CPF mascarado; aqui só passa adiante o que veio.
-    documento:
-      opcional(doc.numero) !== undefined
-        ? { tipo: String(doc.tipo ?? ""), numero: String(doc.numero) }
-        : undefined,
+    documento: documentoSeguro(d.documento),
     estabelecimento: Object.keys(estabelecimento).length
       ? estabelecimento
       : undefined,
@@ -176,14 +189,14 @@ function detalhesLancamento(v: unknown): DetalhesLancamentoExtratoTnp {
 
 function lancamento(l: Bruto): LancamentoExtratoTnp {
   return {
-    transacaoId: String(l.transacaoId),
-    contaId: String(l.contaId),
-    data: String(l.data),
-    dia: String(l.dia),
-    descricao: String(l.descricao ?? ""),
+    transacaoId: (texto(l.transacaoId) ?? ""),
+    contaId: (texto(l.contaId) ?? ""),
+    data: (texto(l.data) ?? ""),
+    dia: (texto(l.dia) ?? ""),
+    descricao: (texto(l.descricao) ?? ""),
     valorCentavos: inteiro(l.valorCentavos),
     tipo: l.tipo === "DEBIT" ? "DEBIT" : "CREDIT",
-    situacao: String(l.situacao ?? ""),
+    situacao: (texto(l.situacao) ?? ""),
     saldoCentavos: inteiroOuNulo(l.saldoCentavos),
     operacao: texto(l.operacao),
     categoria: texto(l.categoria),
@@ -217,10 +230,10 @@ function detalhesConta(v: unknown): DetalhesContaExtratoTnp {
 
 function conta(c: Bruto): ContaExtratoTnp {
   return {
-    contaId: String(c.contaId),
+    contaId: (texto(c.contaId) ?? ""),
     tipo: tipoConta(c.tipo),
     subtipo: texto(c.subtipo),
-    nome: String(c.nome ?? ""),
+    nome: (texto(c.nome) ?? ""),
     numero: texto(c.numero),
     saldoCentavos: inteiroOuNulo(c.saldoCentavos),
     saldoLidoEm: texto(c.saldoLidoEm),
@@ -229,7 +242,7 @@ function conta(c: Bruto): ContaExtratoTnp {
 }
 
 const fatura = (f: Bruto): FaturaExtratoTnp => ({
-  faturaId: String(f.faturaId),
+  faturaId: (texto(f.faturaId) ?? ""),
   vencimento: texto(f.vencimento),
   fechamento: texto(f.fechamento),
   totalCentavos: inteiro(f.totalCentavos),
@@ -240,8 +253,8 @@ const fatura = (f: Bruto): FaturaExtratoTnp => ({
 });
 
 const investimento = (i: Bruto): InvestimentoExtratoTnp => ({
-  investimentoId: String(i.investimentoId),
-  nome: String(i.nome ?? ""),
+  investimentoId: (texto(i.investimentoId) ?? ""),
+  nome: (texto(i.nome) ?? ""),
   tipo: texto(i.tipo),
   subtipo: texto(i.subtipo),
   saldoCentavos: inteiro(i.saldoCentavos),
@@ -264,8 +277,8 @@ export function extratoDoColetor(corpo: Bruto): ExtratoTnp {
       ? { em: texto(ultima.em), ok: Boolean(ultima.ok) }
       : null,
     conexoes: lista(corpo.conexoes).map((c) => ({
-      instituicao: String(c.instituicao ?? ""),
-      situacao: String(c.situacao ?? ""),
+      instituicao: (texto(c.instituicao) ?? ""),
+      situacao: (texto(c.situacao) ?? ""),
       atualizadoNaPluggy: texto(c.atualizadoNaPluggy),
       consentimentoExpira: texto(c.consentimentoExpira),
       erro: texto(c.erro),
@@ -275,14 +288,14 @@ export function extratoDoColetor(corpo: Bruto): ExtratoTnp {
     saldoTotalCentavos: inteiro(corpo.saldoTotalCentavos),
     faturas: lista(corpo.faturas).map(fatura),
     investimentos: lista(corpo.investimentos).map(investimento),
-    hoje: { ...totais(hoje), dia: String(hoje.dia ?? "") },
+    hoje: { ...totais(hoje), dia: (texto(hoje.dia) ?? "") },
     periodo: {
       ...totais(periodo),
-      desde: String(periodo.desde ?? ""),
-      ate: String(periodo.ate ?? ""),
+      desde: (texto(periodo.desde) ?? ""),
+      ate: (texto(periodo.ate) ?? ""),
     },
     dias: lista(corpo.dias).map((d) => ({
-      dia: String(d.dia),
+      dia: (texto(d.dia) ?? ""),
       entradas: inteiro(d.entradas),
       saidas: inteiro(d.saidas),
       lancamentos: lista(d.lancamentos).map(lancamento),
