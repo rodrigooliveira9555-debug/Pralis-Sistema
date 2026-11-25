@@ -872,6 +872,11 @@
     const posicionar = () => colunas.forEach((c) => levarAoMeio(c, c.pegar() ? Number(c.pegar()) : 0, false));
     const abrir = (sim) => { abrirPainel(sim); if (sim) posicionar(); };
     function fechar() { abrir(false); input.focus(); input.dispatchEvent(new Event('change', { bubbles: true })); }
+    // Pé do painel, no mesmo padrão do calendário (Limpar e Hoje): Limpar esvazia o campo e Agora põe a hora e o minuto de agora.
+    const chip = (texto, acao) => { const c = el('button', 'compras-chip', texto); c.type = 'button'; c.onclick = acao; return c; };
+    const pe = el('div', 'compras-data-pe');
+    pe.append(chip('Limpar', () => { hora = ''; minuto = ''; marcar(); posicionar(); fechar(); }), chip('Agora', () => { const n = new Date(); hora = pad(n.getHours()); minuto = pad(n.getMinutes()); marcar(); posicionar(); fechar(); }));
+    painel.append(pe);
     colunas.forEach((c, k) => {
       let quadro = 0;
       c.lista.addEventListener('scroll', () => {

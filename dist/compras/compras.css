@@ -785,11 +785,11 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .panel { position: relative; }
 .transferencia-tela .panel > .head { --shell-radius: 0; }
 /* As duas curvas "para baixo" ficam no painel (o cabeçalho corta o que passa da borda dele): dois quadrados de 16 px laranja, com um quarto de círculo vazado, logo abaixo do cabeçalho. */
-.transferencia-tela .panel::before { content: ''; position: absolute; top: var(--shell-head-min, 58px); left: 0; right: 0; height: 16px; z-index: 6; pointer-events: none;
+.transferencia-tela:not(.people-top-hidden) .panel::before { content: ''; position: absolute; top: var(--shell-head-min, 58px); left: 0; right: 0; height: 16px; z-index: 6; pointer-events: none;
   background: radial-gradient(circle at 100% 100%, transparent 15.5px, var(--menu-accent) 16px) left top / 16px 16px no-repeat, radial-gradient(circle at 0 100%, transparent 15.5px, var(--menu-accent) 16px) right top / 16px 16px no-repeat; }
 /* Telas baixas: as teclas encolhem para o quadro fixo do valor, com o teclado aberto, deixar espaço para rolar o resto. */
 @media (max-height: 700px) { .transferencia-tela .transferencia-teclado { grid-auto-rows: 38px; } }
-.transferencia-tela .transferencia-valor-cab { position: sticky; top: -10px; z-index: 4; display: grid; gap: 6px; padding: 8px 16px 12px; border-radius: 16px; box-shadow: 0 -10px 0 0 var(--layout-gap, #f5f5f7); background: var(--menu-accent); color: #fff; }
+.transferencia-tela .transferencia-valor-cab { position: sticky; top: -10px; margin-top: -10px; z-index: 4; display: grid; gap: 6px; padding: 8px 16px 12px; border-radius: 16px; box-shadow: 0 -10px 0 0 var(--layout-gap, #f5f5f7); background: var(--menu-accent); color: #fff; }
 .transferencia-tela .transferencia-valor-rotulo { font: 600 13px/18px var(--ui-font); color: rgba(255, 255, 255, .9); }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela { width: 100%; min-height: 40px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: #fff; text-align: left; font: 700 34px/1.15 var(--ui-font); cursor: pointer; }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela::placeholder { color: rgba(255, 255, 255, .78); font-weight: 600; font-size: 22px; }
@@ -863,3 +863,17 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .transferencia-linha-topo { display: flex; align-items: center; gap: 12px; }
 .transferencia-tela .transferencia-audio .people-banner-tools { display: flex; flex-wrap: wrap; gap: 8px; }
 .transferencia-tela .transferencia-audio audio { width: 100%; }
+
+/* Chaves ligadas em laranja, linhas que abrem para baixo (Destino, Anexos) e o bloco de retorno. */
+.transferencia-tela .transferencia-linha .account-status-switch[aria-checked="true"] { background: var(--menu-accent); border-color: var(--menu-accent); }
+.transferencia-tela .transferencia-linha-valor { flex: 1 1 auto; text-align: right; color: var(--muted, #8e8e93); font: 400 15px/20px var(--ui-font); }
+.transferencia-tela .transferencia-seta { flex: none; display: grid; place-items: center; width: 20px; height: 20px; color: var(--muted, #8e8e93); transition: transform .15s; }
+.transferencia-tela .transferencia-seta svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.transferencia-tela .transferencia-linha-acao.aberto .transferencia-seta { transform: rotate(180deg); }
+.transferencia-tela .transferencia-multi-painel, .transferencia-tela .transferencia-anexos-painel { border-top: 1px solid var(--layout-line, #dedee3); }
+.transferencia-tela .transferencia-multi-painel .compras-hier { border: 0; border-radius: 0; }
+.transferencia-tela .transferencia-multi-painel > small { display: block; padding: 8px 14px 10px; }
+.transferencia-tela .transferencia-retornos { display: grid; }
+.transferencia-tela .transferencia-retornos:empty { display: none; }
+.transferencia-tela .transferencia-retorno-cab .account-status-row { margin-left: auto; }
+@media (prefers-reduced-motion: reduce) { .transferencia-tela .transferencia-seta { transition: none; } }

@@ -1505,3 +1505,12 @@ Só nesta tela, para testar antes de valer para as outras (desenho do Rodrigo em
 - **Rótulos:** **Origem (−) / CNT** e **Destino (+) / CNT** (CNT = a conta); o sinal mostra de onde sai e para onde entra.
 - **Opções:** além de Múltiplo destino e Transferência com lacre, **Tempo de retorno** e **Tempo de aceite**: cada um é Sim/Não e, com **Sim**, abre logo embaixo a linha da hora (campo de hora com o relógio). Com Sim e sem hora, o Salvar recusa e leva ao campo.
 - **Observação (padrão Apple):** quadro do texto e, sob o título **Anexos**, um quadro com **Gravar áudio** (a peça única de gravação do sistema, `audio-nota.js`), **Anexar áudio**, **Anexar vídeo** e **Anexar imagem** (seletor de arquivos filtrado pelo tipo); cada anexo vira uma linha com ícone ou miniatura, nome, tamanho e o remover redondo. Por enquanto fica só na tela (a transferência ainda não grava).
+
+### Nova Transferência: terceira rodada (25/11/2026, Rodrigo) — substitui a ordem e as Opções da rodada anterior
+- **Ordem dos blocos:** **Transferência** (data, Origem (−) / CNT, Destino (+) / CNT e a chave **Lacre: Com lacre / Sem lacre**, que pede o número quando é Com lacre) › **Transferência de retorno** (um bloco à parte) › **Opções** (**Múltiplo destino (+) / CNT** e **Tempo de aceite**; **Tempo de retorno saiu**) › **Observação** (texto e **Anexos**).
+- **Transferência de retorno:** linha cinza "Adicionar transferência de retorno" com **+ cinza**; cada retorno (Retorno 1 a 4) tem a chave **Com lacre / Sem lacre**, o número do lacre (só quando é Com lacre) e o remover. Substitui o antigo "Transferência com lacre" com 2ª, 3ª e "final".
+- **Chaves ligadas em laranja** (Sim/Não e Com/Sem lacre), na cor do cabeçalho.
+- **Destino com Múltiplo destino:** vira uma linha que **expande para baixo** (resumo "Escolher" ou "2 contas" e a seta) com as contas para marcar; **tocar fora ou Esc fecha**.
+- **Anexos:** uma linha que **expande para baixo** (resumo "Nenhum" ou "2 anexos"); aberta mostra Gravar áudio, Anexar áudio, Anexar vídeo, Anexar imagem e os anexos já escolhidos.
+- **Hora e data no mesmo padrão:** o painel da **hora** (`campoHora`, ui.js) ganhou o pé **Limpar** e **Agora**, igual ao pé **Limpar** e **Hoje** do calendário.
+- **Quadro do valor fixo de verdade:** é o primeiro item do conteúdo (a linha do caminho, repetida do cabeçalho, saiu) e fica sempre no mesmo lugar (68 px, 10 px abaixo do cabeçalho), com o conteúdo rolando por baixo. **Ocultar cabeçalho superior** não quebra mais: a curva só existe com o cabeçalho à vista e o quadro sobe para o topo.
