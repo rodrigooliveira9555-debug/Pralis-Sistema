@@ -218,6 +218,61 @@
   const quadro = (...linhas) => { const q = el('div', 'transferencia-quadro'); q.append(...linhas); return q; };
   const secao = (titulo, ...filhos) => { const s = el('section', 'transferencia-secao'); s.append(el('h4', 'transferencia-secao-titulo', titulo), ...filhos); return s; };
 
+  /* Relógio, microfone, som, vídeo e imagem, no traço fino dos ícones do sistema. */
+  const ICONE = {
+    mic: '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3ZM5 11a7 7 0 0 0 14 0M12 18v3"/>',
+    audio: '<path d="M9 18V6l10-2v12M9 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3Zm10-2a3 3 0 1 1-3-3 3 3 0 0 1 3 3Z"/>',
+    video: '<path d="M3 7h12v10H3zM15 11l6-3v8l-6-3"/>',
+    imagem: '<path d="M4 5h16v14H4zM4 16l4-4 4 4 3-3 5 5M9 9h.01"/>',
+    mais: '<path d="M12 5v14M5 12h14"/>',
+    fechar: '<path d="M6 6l12 12M18 6 6 18"/>',
+  };
+  const selo = (nome) => { const s = el('span', 'transferencia-linha-icone'); s.setAttribute('aria-hidden', 'true'); s.innerHTML = U.svg(ICONE[nome]); return s; };
+  const tamanho = (b) => (b < 1024 * 1024 ? Math.max(1, Math.round(b / 1024)) + ' KB' : (b / 1024 / 1024).toFixed(1).replace('.', ',') + ' MB');
+
+  /** Opção Sim/Não; com Sim, a linha da hora (campo de hora com o relógio) abre logo embaixo. valor() dá { sim, hora }. */
+  function opcaoComHora(titulo, rotuloHora) {
+    const hora = U.campoHora({ rotulo: rotuloHora, valor: '' });
+    const linhaHora = linha(rotuloHora, hora.caixa, hora.painel);
+    const caixa = el('div', 'transferencia-opcao');
+    let sim = false;
+    const chave = U.quadroSituacao(titulo, false, { textos: ['Sim', 'Não'], aoMudar: (v) => { sim = v; if (v) { caixa.append(linhaHora); hora.input.focus(); } else linhaHora.remove(); } });
+    caixa.append(linha(titulo, chave.querySelector('.account-status-row')));
+    return { no: caixa, valor: () => ({ sim, hora: hora.input.value }), campo: hora.input };
+  }
+
+  /**
+   * Observação (padrão das listas agrupadas): o texto e, em outro quadro, os anexos. Gravar áudio usa a peça única de gravação do sistema
+   * (audio-nota.js); Anexar áudio, vídeo ou imagem abre o seletor de arquivos. Cada anexo vira uma linha com o nome, o tamanho e o remover.
+   * Tudo fica só na tela por enquanto (a transferência ainda não é gravada).
+   */
+  function blocoObservacao() {
+    const obs = entrada('text', '', { placeholder: 'Ex.: Suprimento CX1 — reforço de troco', maxLength: 500 });
+    const anexos = [];
+    const lista = el('div', 'transferencia-anexos');
+    const audio = window.CicluzAudioNota ? window.CicluzAudioNota.criar({ rotulo: '', classe: 'transferencia-audio', aoSalvar: 'a transferência' }) : null;
+    const quadroAnexos = quadro();
+    const acao = (icone, titulo, aoToque) => { const b = el('button', 'transferencia-linha transferencia-linha-acao'); b.type = 'button'; b.append(selo(icone), el('span', 'transferencia-linha-rotulo', titulo), el('span', 'transferencia-linha-ponta', '+')); b.onclick = aoToque; return b; };
+    function escolher(tipo, icone) {
+      const entradaArq = el('input'); entradaArq.type = 'file'; entradaArq.accept = tipo + '/*'; entradaArq.multiple = true;
+      entradaArq.onchange = () => { [...entradaArq.files].forEach((f) => adicionar(f, icone)); };
+      entradaArq.click();
+    }
+    function adicionar(arquivo, icone) {
+      const item = { arquivo, url: URL.createObjectURL(arquivo) };
+      const l = el('div', 'transferencia-linha transferencia-anexo');
+      const miniatura = icone === 'imagem' ? el('img', 'transferencia-anexo-img') : selo(icone);
+      if (icone === 'imagem') { miniatura.src = item.url; miniatura.alt = ''; }
+      const nome = el('span', 'transferencia-anexo-nome', arquivo.name); const peso = el('small', null, tamanho(arquivo.size)); nome.append(peso);
+      const remover = el('button', 'transferencia-anexo-remover'); remover.type = 'button'; remover.setAttribute('aria-label', 'Remover ' + arquivo.name); remover.innerHTML = U.svg(ICONE.fechar);
+      remover.onclick = () => { URL.revokeObjectURL(item.url); anexos.splice(anexos.indexOf(item), 1); l.remove(); };
+      l.append(miniatura, nome, remover); anexos.push(item); lista.append(l);
+    }
+    quadroAnexos.append(...(audio ? [(() => { const l = el('div', 'transferencia-linha transferencia-linha-audio'); const topo = el('div', 'transferencia-linha-topo'); topo.append(selo('mic'), el('span', 'transferencia-linha-rotulo', 'Gravar áudio')); l.append(topo, audio.no); return l; })()] : []),
+      acao('audio', 'Anexar áudio', () => escolher('audio', 'audio')), acao('video', 'Anexar vídeo', () => escolher('video', 'video')), acao('imagem', 'Anexar imagem', () => escolher('image', 'imagem')), lista);
+    return { no: secao('Observação', quadro(linhaDe('Observação', obs)), el('h4', 'transferencia-secao-titulo', 'Anexos'), quadroAnexos), obs, audio, anexos };
+  }
+
   function formulario(contas) {
     const estado = { multiplo: false, lacres: [] };
     U.dialogo({
@@ -230,11 +285,11 @@
         /* Origem e destino (um só, ou várias contas com Múltiplo destino) */
         const origem = seletor(contas.map((n) => [n, n]), '', '—');
         const destino = seletor([], '', '—');
-        const campoDestino = linhaDe('Destino / Entrada *', destino);
+        const campoDestino = linhaDe('Destino (+) / CNT *', destino);
         const marcadas = new Set();
         const contagem = el('small', 'profiles-note'); contagem.setAttribute('role', 'status');
-        const listaContas = el('div', 'compras-hier transferencia-contas'); listaContas.setAttribute('role', 'group'); listaContas.setAttribute('aria-label', 'Destino / Entrada: contas');
-        const campoContas = secao('Destino / Entrada *', quadro(listaContas), contagem);
+        const listaContas = el('div', 'compras-hier transferencia-contas'); listaContas.setAttribute('role', 'group'); listaContas.setAttribute('aria-label', 'Destino (+) / CNT: contas');
+        const campoContas = secao('Destino (+) / CNT *', quadro(listaContas), contagem);
         const candidatas = () => contas.filter((n) => n !== origem.value);
         function contarContas() {
           const total = candidatas().length;
@@ -269,6 +324,8 @@
         const situacaoLacre = el('span', 'account-status-text');
         const linhaLacre = el('div', 'account-status-row'); linhaLacre.append(mais, situacaoLacre);
         const linhaDoLacre = linha('Transferência com lacre', linhaLacre);
+        const retorno = opcaoComHora('Tempo de retorno', 'Retorna em (hh:mm)');
+        const aceite = opcaoComHora('Tempo de aceite', 'Aceite em (hh:mm)');
         const lacresBox = el('div', 'transferencia-lacres');
         const secaoLacres = secao('Lacres', quadro(lacresBox));
 
@@ -303,13 +360,13 @@
         }
 
         const corpo = el('div', 'transferencia-corpo');
-        const obs = entrada('text', '', { placeholder: 'Ex.: Suprimento CX1 — reforço de troco', maxLength: 500 });
+        const observacao = blocoObservacao();
         const linhaData = linha('Data da transferência *', dataTransf.caixa, dataTransf.painel);
         // Valor em cima (cabeçalho laranja); depois um assunto por vez: a transferência, as opções, os lacres e a observação.
         corpo.append(calc.no,
-          secao('Transferência', quadro(linhaData, linhaDe('Origem / Saída *', origem), campoDestino)), campoContas,
-          secao('Opções', quadro(linhaMultiplo, linhaDoLacre)), secaoLacres,
-          secao('Observação', quadro(linhaDe('Observação', obs))));
+          secao('Transferência', quadro(linhaData, linhaDe('Origem (−) / CNT *', origem), campoDestino)), campoContas,
+          secao('Opções', quadro(linhaMultiplo, linhaDoLacre, retorno.no, aceite.no)), secaoLacres,
+          observacao.no);
         if (!contas.length) corpo.append(el('p', 'profiles-error', 'Nenhuma conta ativa cadastrada. Cadastre as contas em Transferências › Cadastros Geral.'));
         corpo.append(U.nota('Tela em construção: a transferência ainda não é gravada. O Salvar confere o preenchimento.'));
         form.append(corpo);
@@ -320,7 +377,7 @@
           const acoes = dlg.querySelector('.compras-dialog-acoes'); const salvarBtn = acoes && acoes.querySelector('button[type=submit]');
           if (salvarBtn) salvarBtn.before(botao('Salvar e criar nova', () => form.requestSubmit(), 'btn secondary'));
         }, 0);
-        return { dataTransf, origem, destino, marcadas, calc, estado, obs };
+        return { dataTransf, origem, destino, marcadas, calc, estado, obs: observacao.obs, retorno, aceite, observacao };
       },
       salvar: async (c) => {
         const e = c.estado;
@@ -329,6 +386,11 @@
         const v = c.calc.finalizar();
         if (v.erro) return v.erro;
         if (!(v.total > 0)) return 'Informe o valor da transferência.';
+        const horaOk = (t) => /^([01]\d|2[0-3]):[0-5]\d$/.test(t);
+        const ret = c.retorno.valor(); const ace = c.aceite.valor();
+        if (ret.sim && !horaOk(ret.hora)) { c.retorno.campo.focus(); return 'Informe o tempo de retorno (hh:mm).'; }
+        if (ace.sim && !horaOk(ace.hora)) { c.aceite.campo.focus(); return 'Informe o tempo de aceite (hh:mm).'; }
+        if (c.observacao.audio && c.observacao.audio.gravando()) return 'Pare a gravação do áudio antes de salvar.';
         const lacres = e.lacres.map((x) => x.trim());
         if (lacres.some((x) => !x)) return 'Informe o lacre de cada transferência.';
         if (new Set(lacres.map((x) => x.toLowerCase())).size !== lacres.length) return 'Os lacres precisam ser diferentes entre si.';

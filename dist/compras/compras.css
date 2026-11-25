@@ -789,7 +789,7 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
   background: radial-gradient(circle at 100% 100%, transparent 15.5px, var(--menu-accent) 16px) left top / 16px 16px no-repeat, radial-gradient(circle at 0 100%, transparent 15.5px, var(--menu-accent) 16px) right top / 16px 16px no-repeat; }
 /* Telas baixas: as teclas encolhem para o quadro fixo do valor, com o teclado aberto, deixar espaço para rolar o resto. */
 @media (max-height: 700px) { .transferencia-tela .transferencia-teclado { grid-auto-rows: 38px; } }
-.transferencia-tela .transferencia-valor-cab { position: sticky; top: -20px; z-index: 4; display: grid; gap: 6px; padding: 8px 16px 12px; border-radius: 0 0 16px 16px; background: var(--menu-accent); color: #fff; }
+.transferencia-tela .transferencia-valor-cab { position: sticky; top: -10px; z-index: 4; display: grid; gap: 6px; padding: 8px 16px 12px; border-radius: 16px; box-shadow: 0 -10px 0 0 var(--layout-gap, #f5f5f7); background: var(--menu-accent); color: #fff; }
 .transferencia-tela .transferencia-valor-rotulo { font: 600 13px/18px var(--ui-font); color: rgba(255, 255, 255, .9); }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela { width: 100%; min-height: 40px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: #fff; text-align: left; font: 700 34px/1.15 var(--ui-font); cursor: pointer; }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela::placeholder { color: rgba(255, 255, 255, .78); font-weight: 600; font-size: 22px; }
@@ -839,3 +839,27 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-conta-marca { flex: none; display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid var(--ui-border-base, #d4d4d8); border-radius: 50%; color: transparent; transition: background .15s, border-color .15s; }
 .transferencia-conta[aria-checked=true] .transferencia-conta-marca { background: var(--menu-accent); border-color: var(--menu-accent); color: #fff; }
 .transferencia-conta-marca svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Nova Transferência: relógio e calendário em cinza, linhas de ação e de anexo, e o áudio gravado dentro de uma linha (padrão das listas agrupadas). */
+.transferencia-tela .transferencia-linha .compras-aniv-campo button { background: transparent; border: 0; box-shadow: none; color: var(--muted, #8e8e93); }
+.transferencia-tela .transferencia-linha .compras-aniv-campo button svg { stroke: currentColor; }
+.transferencia-tela .transferencia-opcao { display: grid; min-width: 0; }
+.transferencia-tela .transferencia-quadro > :last-child .transferencia-linha:last-child { border-bottom: 0; }
+.transferencia-tela .transferencia-linha-icone { flex: none; display: grid; place-items: center; width: 28px; height: 28px; color: var(--muted, #8e8e93); }
+.transferencia-tela .transferencia-linha-icone svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.transferencia-tela .transferencia-linha-acao { width: 100%; margin: 0; border-left: 0; border-right: 0; border-top: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.transferencia-tela .transferencia-linha-acao .transferencia-linha-rotulo { flex: 1 1 auto; max-width: none; }
+.transferencia-tela .transferencia-linha-ponta { flex: none; font: 400 22px/1 var(--ui-font); color: var(--muted, #8e8e93); }
+.transferencia-tela .transferencia-linha-acao:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+.transferencia-tela .transferencia-linha-acao:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: -2px; }
+.transferencia-tela .transferencia-anexos { display: grid; }
+.transferencia-tela .transferencia-anexos:empty { display: none; }
+.transferencia-tela .transferencia-anexo-img { flex: none; width: 36px; height: 36px; border-radius: 8px; object-fit: cover; }
+.transferencia-tela .transferencia-anexo-nome { flex: 1 1 auto; min-width: 0; display: grid; font: 500 14px/18px var(--ui-font); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.transferencia-tela .transferencia-anexo-nome small { color: var(--muted, #8e8e93); font-weight: 400; }
+.transferencia-tela .transferencia-anexo-remover { flex: none; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); color: var(--muted, #8e8e93); cursor: pointer; }
+.transferencia-tela .transferencia-anexo-remover svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.transferencia-tela .transferencia-linha-audio { display: grid; align-items: start; gap: 8px; }
+.transferencia-tela .transferencia-linha-topo { display: flex; align-items: center; gap: 12px; }
+.transferencia-tela .transferencia-audio .people-banner-tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.transferencia-tela .transferencia-audio audio { width: 100%; }
