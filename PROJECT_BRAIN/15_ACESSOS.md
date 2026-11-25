@@ -70,3 +70,14 @@
   comum com senha inicial que ele mesmo define (a conta nasce com no máximo o acesso dele)?
 - `servidor/web/dist/` é um build antigo versionado que ainda cita `/usuarios.html`; não é servido
   (a imagem refaz o build), mas pode ser apagado do git numa limpeza.
+
+## Usuário = colaborador e trava de acesso (24–25/11/2026)
+- **Decidido (Rodrigo):** usuário e colaborador são o mesmo cadastro. Ao servidor vão só nome, cargo, áreas e situação do
+  colaborador (nunca CPF, filiação ou salário) mais as configurações do Acesso por Tela e o pai de cada área.
+- Servidor: tabelas `colaboradores_acesso` e `acessos_por_tela` (migration 0007, só acrescenta; plano de volta em
+  `servidor/db/rollback/0007_*.sql`). `PUT /api/acessos-por-tela/sincronizar`, `GET /api/acessos-por-tela`.
+- Conta ligada a colaborador sem permissão (dele, do cargo ou da área) recebe 403 `NO_PERMISSIONS`; administrador nunca é barrado;
+  conta sem colaborador (posto ou de antes) segue como estava.
+- Aparelho: em "Pessoas com Acesso" a conta escolhe o colaborador e, ao salvar, `enviarAcessos()` manda o mínimo ao servidor.
+- **Falta:** mapear as permissões do Acesso por Tela para as chaves de permissão da API (trava fina por tela); envio automático
+  ao mudar uma configuração; colaborador desligado barrar a conta (confirmar com o Rodrigo).

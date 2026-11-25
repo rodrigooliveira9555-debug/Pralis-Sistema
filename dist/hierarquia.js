@@ -79,6 +79,15 @@
   /** Colaboradores ativos que hoje não têm permissão nenhuma. */
   const semAcesso = () => pessoas().filter((p) => p.active && !D.podeUsar(p, configs(), arvore()).ok);
 
-  window.CicluzHierarquia = { configs, salvarConfig, removerConfig, acessoDe, semAcesso, cargos, cargoIdPorNome, arvore, pessoas, migrar, relatorio, dominio: D };
+  /** O mínimo que o servidor recebe (sem CPF, filiação ou salário): colaborador (id, nome, cargo, áreas, situação), pai de cada área e as configurações. */
+  function paraServidor() {
+    const areaPais = {};
+    const andar = (n, pai) => { areaPais[n.id] = pai; (n.areas || n.children || []).forEach((f) => andar(f, n.id)); };
+    arvore().forEach((r) => andar(r, null));
+    const colaboradores = pessoas().map((p) => ({ id: String(p.id), nome: String(p.name || '').slice(0, 120) || 'Sem nome', cargoId: p.jobKey || null, areaIds: (p.areaIds || []).map(String), ativo: p.active !== false }));
+    return { colaboradores, areaPais, configs: configs() };
+  }
+
+  window.CicluzHierarquia = { paraServidor, configs, salvarConfig, removerConfig, acessoDe, semAcesso, cargos, cargoIdPorNome, arvore, pessoas, migrar, relatorio, dominio: D };
   try { migrar(); } catch (e) { /* a migração tenta de novo no próximo carregamento */ }
 })();

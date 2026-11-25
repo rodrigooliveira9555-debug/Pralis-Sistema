@@ -144,6 +144,13 @@
     return box;
   }
 
+  /** Manda ao servidor os colaboradores (só nome, cargo, áreas e situação) e as configurações do Acesso por Tela. */
+  function enviarAcessos() {
+    const H = window.CicluzHierarquia;
+    if (!H || !H.paraServidor) return Promise.resolve();
+    return A.api('/acessos-por-tela/sincronizar', { metodo: 'PUT', corpo: H.paraServidor() });
+  }
+
   function editar(u, postoInicial) {
     const perfil = estado.ctx.perfil;
     const admin = perfil.papel === 'administrador';
@@ -154,6 +161,7 @@
       posto: u && u.posto ? { ...u.posto } : postoInicial ? { ...postoInicial } : { pdv: pdvs()[0], turno: turnos()[0].id },
       papel: u ? u.papel : 'usuario',
       ativo: u ? u.ativo : true,
+      colaboradorId: u && u.colaboradorId ? u.colaboradorId : '',
       cargos: new Set(u ? u.cargos.map((c) => c.id) : []),
     };
     if (!u && postoInicial) {
@@ -202,6 +210,15 @@
           grade.append(A.grupo('Acesso ao sistema', U.chips([['sim', 'Entra no sistema'], ['nao', 'Sem acesso']], v.ativo ? 'sim' : 'nao', (x) => { v.ativo = x === 'sim'; }),
             'Sem acesso, a conta sai dos aparelhos na hora. Nada é apagado.'));
         }
+        const gente = (window.CicluzHierarquia ? window.CicluzHierarquia.pessoas() : []).filter((p) => p.active !== false || p.id === v.colaboradorId);
+        ctx.colaborador = U.seletor([['', 'Escolha o colaborador']].concat(gente.map((p) => [String(p.id), p.name + (p.jobName ? ' · ' + p.jobName : '')])), v.colaboradorId);
+        ctx.colaborador.onchange = () => {
+          v.colaboradorId = ctx.colaborador.value;
+          const p = gente.find((x) => String(x.id) === v.colaboradorId);
+          if (p && !u && (!ctx.nome.value || ctx.nome.dataset.auto)) { ctx.nome.value = p.name; ctx.nome.dataset.auto = '1'; }
+        };
+        const blocoColab = A.grupo('Colaborador', ctx.colaborador, 'Usuário e colaborador são o mesmo cadastro. Sem permissão (do cargo ou da área) a conta entra, mas não abre nada.');
+        grade.insertBefore(blocoColab, campoNome);
         form.append(grade);
         function conferirPosto() {
           const dono = donoDoPosto();
@@ -213,6 +230,7 @@
         }
         function mostrar() {
           blocoPosto.hidden = v.tipo !== 'posto';
+          blocoColab.hidden = v.tipo === 'posto' || v.papel === 'administrador';
           avisoPosto.hidden = v.tipo !== 'posto';
           dicaNome.hidden = v.tipo !== 'posto';
           blocoCargos.hidden = v.papel === 'administrador';
@@ -230,11 +248,15 @@
         const dono = posto && donoDoPosto();
         if (dono) return 'O posto ' + rotuloPosto(posto, turnos()) + ' já é da conta ' + dono.nome + '. Escolha outro ou edite a conta dele.';
         const cargos = v.papel === 'administrador' ? [] : [...v.cargos];
+        const precisaColab = v.tipo !== 'posto' && v.papel !== 'administrador' && !(u && !u.colaboradorId && !v.colaboradorId);
+        if (precisaColab && !v.colaboradorId) return 'Escolha o colaborador dono desta conta.';
+        const colaboradorId = v.tipo === 'posto' || v.papel === 'administrador' ? null : (v.colaboradorId || null);
+        const gravar = (chamada) => (colaboradorId ? enviarAcessos().then(chamada) : chamada());
         if (!u) {
           const minimo = A.senhaMinima(estado.ctx);
           if (!/^\S+@\S+\.\S+$/.test(ctx.email.value.trim())) { ctx.email.focus(); return 'Informe um e-mail válido.'; }
           if (ctx.senha.value.length < minimo) { ctx.senha.focus(); return 'A senha inicial precisa ter pelo menos ' + minimo + ' caracteres.'; }
-          return A.api('/usuarios', { metodo: 'POST', corpo: { nome, email: ctx.email.value.trim(), papel: v.papel, senha: ctx.senha.value, cargos, posto } });
+          return gravar(() => A.api('/usuarios', { metodo: 'POST', corpo: { nome, email: ctx.email.value.trim(), papel: v.papel, senha: ctx.senha.value, cargos, posto, colaboradorId } }));
         }
         const mudou = {};
         if (nome !== u.nome) mudou.nome = nome;
@@ -242,8 +264,9 @@
         if (v.ativo !== u.ativo) mudou.ativo = v.ativo;
         if (JSON.stringify(posto) !== JSON.stringify(u.posto)) mudou.posto = posto;
         if (v.papel !== 'administrador' && [...v.cargos].sort().join() !== u.cargos.map((c) => c.id).sort().join()) mudou.cargos = cargos;
+        if (colaboradorId !== (u.colaboradorId || null)) mudou.colaboradorId = colaboradorId;
         if (!Object.keys(mudou).length) return Promise.resolve(null);
-        return A.api('/usuarios/' + encodeURIComponent(u.id), { metodo: 'PATCH', corpo: mudou });
+        return gravar(() => A.api('/usuarios/' + encodeURIComponent(u.id), { metodo: 'PATCH', corpo: mudou }));
       },
       aoSalvar: (salvo) => {
         if (salvo) U.avisar(u ? 'Conta de ' + salvo.nome + ' atualizada.' : salvo.nome + ' já pode entrar no sistema.');

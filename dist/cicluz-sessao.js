@@ -114,6 +114,12 @@
       mostrarAviso('conflito', 'Outro aparelho salvou antes de você. Suas alterações foram guardadas no histórico do servidor. Atualize para continuar com a versão atual.', 'Atualizar', S.irParaEntrada);
       return;
     }
+    if (erro.codigo === 'NO_PERMISSIONS') {
+      // Conta sem permissões liberadas (Acesso por Tela): nada é enviado, e nada se perde neste aparelho.
+      suspensa = true;
+      mostrarAviso('erro', erro.message || 'Você ainda não tem permissões liberadas para usar o sistema. Fale com o administrador.');
+      return;
+    }
     if (erro.status === 401 || erro.status === 403) {
       suspensa = true;
       mostrarAviso('sessao', 'Sua sessão terminou. As alterações estão guardadas neste aparelho e serão enviadas quando você entrar de novo.', 'Entrar', S.irParaEntrada);
