@@ -291,8 +291,8 @@
   }
 
   /** Coluna recolhida: o selo do tipo e, acima dele, o nome na vertical (lido de baixo para cima). A linha do tipo cresce para caber os dois; tocar mostra a coluna. */
-  function nomeVertical(b) {
-    const bt = el('button', 'acessos-nome-vert');
+  function nomeVertical(b, soIcone) {
+    const bt = el('button', 'acessos-nome-vert' + (soIcone ? ' so-icone' : ''));
     bt.type = 'button';
     const nome = b.alvo ? b.alvo.nome : 'Escolher ' + ROTULO_GRUPO[b.tipo].toLocaleLowerCase('pt-BR');
     bt.title = 'Mostrar a coluna: ' + nome;
@@ -301,7 +301,7 @@
     const selo = el('span', 'acessos-sel-selo');
     selo.style.setProperty('--selo-cor', U.corOrigem('despesas', '#ef4444'));
     selo.innerHTML = U.svg(GLIFO_TIPO[b.tipo]);
-    bt.append(selo, el('span', 'acessos-nome-vert-txt', nome));
+    if (soIcone) bt.append(selo); else bt.append(selo, el('span', 'acessos-nome-vert-txt', nome));
     bt.onclick = () => {
       const irmaos = estado.blocos.filter((x) => x.tipo === b.tipo);
       if (estado.linhas[b.tipo] >= 1) { estado.linhas[b.tipo] = 0; irmaos.forEach((x) => { x.recolhida = x !== b; }); } else b.recolhida = false;
@@ -542,8 +542,11 @@
         const e = el('div', 'acessos-tl-esq');
         const li = el('div', 'acessos-quem-linha');
         const semArea = t !== 'area' && !temAreaEscolhida();
-        const mais = botaoMais(semArea ? 'Escolha primeiro a área' : 'Abrir uma coluna de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR'), false, () => { if (semArea) return; estado.linhas[t] = 0; estado.blocos.push(novoBloco(t)); estado.blocos.sort((x, y) => TIPOS.indexOf(x.tipo) - TIPOS.indexOf(y.tipo)); desenhar(true); });
-        mais.disabled = semArea;
+        const linhaDef = LINHAS.find((x) => x[0] === t);
+        const semOpcao = !semArea && t !== 'area' && !linhaDef[3]().length;
+        const motivo = semArea ? 'Escolha primeiro a área.' : semOpcao ? linhaDef[4] : '';
+        const mais = botaoMais(motivo || 'Abrir uma coluna de ' + ROTULO_GRUPO[t].toLocaleLowerCase('pt-BR'), false, () => { if (motivo) { U.avisar(motivo); return; } estado.linhas[t] = 0; estado.blocos.push(novoBloco(t)); estado.blocos.sort((x, y) => TIPOS.indexOf(x.tipo) - TIPOS.indexOf(y.tipo)); desenhar(true); });
+        if (motivo) mais.setAttribute('aria-disabled', 'true');
         const fase = estado.linhas[t];
         const seta = el('button', 'acessos-gt-seta' + (fase === 0 ? ' aberta' : fase === 2 ? ' oculta' : ''));
         seta.type = 'button';
@@ -559,7 +562,7 @@
         estado.blocos.forEach((b) => {
           const w = blocoEl(b, 'acessos-tl-bloco-cab');
           if (ocultaCol(b)) {
-            if (b.tipo === t && estado.linhas[t] < 2) w.append(nomeVertical(b));
+            if (b.tipo === t) w.append(nomeVertical(b, estado.linhas[t] === 2));
           } else if (b.tipo === t) {
             const c = cabecaDaColuna(b);
             resumos.push([regs[estado.blocos.indexOf(b)], c.querySelector('.acessos-bloco-resumo'), b.alvo]);
