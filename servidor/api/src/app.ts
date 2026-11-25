@@ -22,6 +22,7 @@ import { ErroDominio, proibido } from "./erros.ts";
 import { registrarRotasSaude } from "./saude/saude.controller.ts";
 import { registrarRotasUsuarios } from "./usuarios/usuarios.controller.ts";
 import { registrarRotasVendasPdv } from "./vendas-pdv/vendas-pdv.controller.ts";
+import { registrarRotasComandasCreare } from "./comandas-creare/comandas-creare.controller.ts";
 import { registrarRotasExtratoTnp } from "./extrato-tnp/extrato-tnp.controller.ts";
 import { esquecerPermissoes } from "./agenda/contas-por-permissao.ts";
 
@@ -132,6 +133,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registrarRotasProdutos(app);
   await registrarRotasAgenda(app);
   await registrarRotasVendasPdv(app);
+  await registrarRotasComandasCreare(app);
   await registrarRotasExtratoTnp(app);
 
   // App das telas novas (Nuxt gerado em web/.output/public), em /app/ no mesmo domínio do site.
