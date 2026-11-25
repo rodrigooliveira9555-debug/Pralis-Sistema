@@ -44,6 +44,8 @@
     if (nome === 'fornecedores-des') return window.CicluzComprasCadastros.abrirFornecedores('des');
     // VND - Clientes (Entradas · Vendas): cadastro próprio, na cor de Entradas.
     if (nome === 'clientes-vnd') return window.CicluzComprasClientes.abrir();
+    // VND - Horário de Funcionamento (Entradas · Vendas · Cadastros Geral).
+    if (nome === 'horario-funcionamento') return window.CicluzHorarioFuncionamento.abrir();
     if (nome === 'produtos') return window.CicluzComprasProdutos.abrir();
     const t = telas[nome];
     if (t) return t();
