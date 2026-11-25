@@ -280,7 +280,9 @@ export const configPessoaSchema = z
     expedienteFim: horaOuVazio.default(""),
     foraExpediente: z.enum(["permitir", "bloquear"]).default("permitir"),
     /** null = o padrão do sistema (INATIVIDADE_PADRAO_MINUTOS). P-46 item 4: vale para o sistema todo. */
-    inatividadeMinutos: z.number().int().min(1, "Mínimo de 1 minuto").max(480, "Máximo de 480 minutos (8 horas)").nullable().default(null)
+    inatividadeMinutos: z.number().int().min(1, "Mínimo de 1 minuto").max(480, "Máximo de 480 minutos (8 horas)").nullable().default(null),
+    /** false = nunca sai sozinho por tempo parado (o administrador escolhe quem; Zé, 25/11/2026). */
+    saiPorTempoParado: z.boolean().default(true)
   })
   // Sem .strict(): a tela antiga (em cache depois de publicar) ainda manda "horaFora"; o campo é ignorado.
   .superRefine((c, ctx) => {

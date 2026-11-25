@@ -38,6 +38,7 @@ export async function salvarConfig(empresaId: string, usuarioId: string, c: Conf
     expedienteFim: c.expedienteFim || null,
     foraExpediente: c.foraExpediente,
     inatividadeMinutos: c.inatividadeMinutos,
+    saiPorTempoParado: c.saiPorTempoParado,
     atualizadoEm: new Date(),
     atualizadoPor: por
   };

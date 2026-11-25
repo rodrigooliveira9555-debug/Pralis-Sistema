@@ -483,6 +483,8 @@ export const agendaConfigPessoas = pgTable(
     foraExpediente: text("fora_expediente").notNull().default("permitir"),
     horaFora: text("hora_fora").notNull().default("nao-registrar"),
     inatividadeMinutos: smallint("inatividade_minutos"),
+    // false = esta pessoa nunca sai sozinha por tempo parado (o administrador escolhe; Zé, 25/11/2026). 0010.
+    saiPorTempoParado: boolean("sai_por_tempo_parado").notNull().default(true),
     atualizadoEm: timestamp("atualizado_em", { withTimezone: true }).notNull().defaultNow(),
     atualizadoPor: text("atualizado_por")
       .notNull()
