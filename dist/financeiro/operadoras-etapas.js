@@ -5,7 +5,7 @@
  * repartidos em etapas — nenhum campo ou regra de taxa das bandeiras mudou.
  * Dados (só neste aparelho), dentro da operadora:
  *   maquinas:      [{ id, apelido, modelo, serie, ativa }]
- *   custosMaquina: [{ id, tipo, descricao, cobrado, aplicaA, calculo, valor, periodicidade, faixa, faixaDe, faixaAte, faixaMedida, inicio, fim, obs }]
+ *   custosMaquina: [{ id, expenseId, tipo, descricao, cobrado, aplicaA, calculo, valor, periodicidade, faixa, faixaDe, faixaAte, faixaMedida, inicio, fim, obs }]
  * Operadora antiga sem esses campos abre com listas vazias; nada é apagado. Máquina já salva não se exclui (turnos e fechamentos podem citá-la):
  * inativa-se. O custo da máquina é só CADASTRO: nenhum relatório ou cálculo do sistema o usa ainda (regra de uso pendente, doc 11 P-50).
  */
@@ -100,7 +100,7 @@
   const rot = (lista, v) => (lista.find((x) => x[0] === v) || ['', v])[1];
 
   /** Painel "Custo das máquinas": cada linha é um custo (aluguel, mensalidade…) com a base de cobrança, o valor, a faixa de faturamento e a vigência. */
-  function painelCustos(item, listarMaquinas, rotuloOutras) {
+  function painelCustos(item, listarMaquinas, rotuloOutras, opcoesDespesa) {
     const painel = el('section', 'operator-fees operator-costs');
     painel.append(el('p', null, 'Registre os custos que a operadora cobra pelas máquinas: aluguel, mensalidade, adesão, instalação e outros. Cada custo diz quanto é, se é por máquina ou da operadora toda, de quanto em quanto tempo e, se for o caso, em que faixa de faturamento vale (ex.: aluguel isento acima de certo faturamento). Para valores diferentes por faixa, adicione uma linha por faixa. Aqui é só o cadastro: nenhum cálculo do sistema usa estes custos ainda.'));
     const rapido = el('div', 'operator-cost-rapido');
@@ -117,6 +117,11 @@
       const entrada = (rotulo, tipo, valor, extra = {}) => { const l = el('label', null, rotulo); const i = el('input'); i.type = tipo; i.value = valor == null ? '' : valor; if (extra.money) { i.type = 'text'; i.dataset.money = 'true'; i.inputMode = 'numeric'; } if (extra.placeholder) i.placeholder = extra.placeholder; if (extra.max) i.maxLength = extra.max; i.setAttribute('aria-label', rotulo); l.append(i); return { l, i }; };
 
       const tipo = select('Tipo de custo *', TIPOS, dados.tipo || TIPOS[0]);
+      // Todo custo se liga a um Grupo de Despesa (ou subgrupo), como as taxas das bandeiras: é o que classifica o gasto.
+      const opcoesDes = opcoesDespesa ? opcoesDespesa(dados.expenseId) : [];
+      const grupoDes = select('Grupo de Despesa *', [['', 'Selecione o grupo ou subgrupo de despesa'], ...opcoesDes], '');
+      if (dados.expenseId && !opcoesDes.some((o) => o[0] === dados.expenseId)) grupoDes.s.add(new Option('Grupo indisponível — selecione outro', dados.expenseId));
+      grupoDes.s.value = dados.expenseId || '';
       const descricao = entrada('Qual é o custo? *', 'text', dados.descricao, { max: 80, placeholder: 'Ex.: Taxa de reposição de chip' });
       const cobrado = select('Quem paga', COBRADO, dados.cobrado || 'maquina');
       const aplica = el('fieldset', 'operator-cost-aplica'); aplica.append(el('legend', null, 'Máquinas que pagam'));
@@ -134,7 +139,7 @@
       let mostraAplica = false;
       const montarCampos = () => {
         const perc = calculo.s.value === 'percentual'; const comFaixa = faixa.s.value !== 'sem';
-        campos.replaceChildren(...[tipo.l, tipo.s.value === 'Outro custo' && descricao.l, cobrado.l, mostraAplica && aplica, calculo.l, perc ? valorPerc.l : valorReais.l, periodo.l, faixa.l,
+        campos.replaceChildren(...[tipo.l, tipo.s.value === 'Outro custo' && descricao.l, grupoDes.l, cobrado.l, mostraAplica && aplica, calculo.l, perc ? valorPerc.l : valorReais.l, periodo.l, faixa.l,
           comFaixa && faixaDe.l, comFaixa && faixaAte.l, comFaixa && medida.l, inicio.l, fim.l, obs.l].filter(Boolean));
       };
 
@@ -166,7 +171,7 @@
         if (inicio.i.value) partes.push('desde ' + dataBR(inicio.i.value) + (fim.i.value ? ' até ' + dataBR(fim.i.value) : ''));
         resumo.textContent = partes.join(' · ');
       }
-      [tipo.s, cobrado.s, calculo.s, faixa.s, medida.s, periodo.s].forEach((s) => s.addEventListener('change', () => { if (s === cobrado.s) pintarAplica(); atualizar(); }));
+      [tipo.s, grupoDes.s, cobrado.s, calculo.s, faixa.s, medida.s, periodo.s].forEach((s) => s.addEventListener('change', () => { if (s === cobrado.s) pintarAplica(); atualizar(); }));
       [descricao.i, valorReais.i, valorPerc.i, faixaDe.i, faixaAte.i, inicio.i, fim.i].forEach((i) => i.addEventListener('input', atualizar));
       [inicio.i, fim.i].forEach((i) => i.addEventListener('change', atualizar));
 
@@ -175,7 +180,7 @@
         card.remove(); cartoes.splice(cartoes.indexOf(reg), 1); vazia.hidden = cartoes.length > 0;
       }, 'btn fee-action');
       card.append(resumo, campos, remover);
-      const reg = { c, card, tipo: tipo.s, descricao: descricao.i, cobrado: cobrado.s, calculo: calculo.s, valorReais: valorReais.i, valorPerc: valorPerc.i, periodo: periodo.s, faixa: faixa.s, faixaDe: faixaDe.i, faixaAte: faixaAte.i, medida: medida.s, inicio: inicio.i, fim: fim.i, obs: obs.i, pintarAplica };
+      const reg = { c, card, tipo: tipo.s, grupoDes: grupoDes.s, descricao: descricao.i, cobrado: cobrado.s, calculo: calculo.s, valorReais: valorReais.i, valorPerc: valorPerc.i, periodo: periodo.s, faixa: faixa.s, faixaDe: faixaDe.i, faixaAte: faixaAte.i, medida: medida.s, inicio: inicio.i, fim: fim.i, obs: obs.i, pintarAplica };
       cartoes.push(reg); lista.append(card); vazia.hidden = true;
       pintarAplica(); atualizar();
       return reg;
@@ -195,6 +200,7 @@
         const descricao = e.descricao.value.trim();
         if (tipo === 'Outro custo' && !descricao) { e.descricao.focus(); return { erro: 'Diga qual é o custo em "Outro custo".' }; }
         const nome = tipo === 'Outro custo' ? descricao : tipo;
+        if (!e.grupoDes.value) { e.grupoDes.focus(); return { erro: nome + ': selecione o Grupo de Despesa para classificar o custo.' }; }
         const valor = perc ? percentual(e.valorPerc.value) : numero(e.valorReais.value);
         if (valor == null || Number.isNaN(valor) || valor < 0) { (perc ? e.valorPerc : e.valorReais).focus(); return { erro: nome + ': informe o valor (zero significa isento).' }; }
         if (perc && valor > 100) { e.valorPerc.focus(); return { erro: nome + ': o percentual não pode passar de 100%.' }; }
@@ -208,7 +214,7 @@
           if (de != null && ate != null && ate < de) { e.faixaAte.focus(); return { erro: nome + ': o faturamento "até" deve ser maior ou igual ao "a partir de".' }; }
         }
         saida.push({
-          id: e.c.id, tipo, descricao: tipo === 'Outro custo' ? descricao : '', cobrado: e.cobrado.value, aplicaA: e.cobrado.value === 'maquina' ? (e.c.aplicaA === 'todas' ? 'todas' : e.c.aplicaA.slice()) : 'todas',
+          id: e.c.id, expenseId: e.grupoDes.value, tipo, descricao: tipo === 'Outro custo' ? descricao : '', cobrado: e.cobrado.value, aplicaA: e.cobrado.value === 'maquina' ? (e.c.aplicaA === 'todas' ? 'todas' : e.c.aplicaA.slice()) : 'todas',
           calculo: e.calculo.value, valor, periodicidade: e.periodo.value, faixa: e.faixa.value, faixaDe: de, faixaAte: ate, faixaMedida: e.faixa.value === 'sem' ? 'mes' : e.medida.value,
           inicio: e.inicio.value, fim: e.fim.value, obs: e.obs.value.trim(),
         });
@@ -235,12 +241,12 @@
    * form: o formulário já montado; painelTaxas: a seção "Taxas por bandeira"; rotuloCustos: o campo de texto "Custos fixos da operadora" (vai para a etapa 3);
    * acoes: a linha com Salvar e Cancelar; nome: o campo de nome (volta para a etapa 1 quando é recusado); item: a operadora em edição (ou nulo).
    */
-  function montar({ form, painelTaxas, rotuloCustos, acoes, nome, item }) {
+  function montar({ form, painelTaxas, rotuloCustos, opcoesDespesa, acoes, nome, item }) {
     const etapa1 = el('div', 'operadora-etapa operadora-etapa-dados');
     [...form.children].filter((c) => c !== painelTaxas && c !== acoes).forEach((c) => etapa1.append(c));
     const maq = painelMaquinas(item);
     const etapa2 = el('div', 'operadora-etapa'); etapa2.append(maq.painel);
-    const custos = painelCustos(item, maq.listar, rotuloCustos);
+    const custos = painelCustos(item, maq.listar, rotuloCustos, opcoesDespesa);
     const etapa3 = el('div', 'operadora-etapa'); etapa3.append(custos.painel);
     const etapa4 = el('div', 'operadora-etapa'); etapa4.append(painelTaxas);
     const etapas = [etapa1, etapa2, etapa3, etapa4];
