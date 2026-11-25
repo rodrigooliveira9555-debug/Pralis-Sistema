@@ -488,8 +488,8 @@ body.dark-theme .compras-escolha-opcao.ativo { color: #f2f1f6; }
 @media (max-width: 560px) { .compras-sm { grid-template-columns: minmax(0, 1fr); } }
 .compras-valor-resumo:empty { display: none; }
 .compras-doc-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.compras-doc-acoes .compras-redondo, .compras-recorr-pers .compras-redondo, .compras-aniv-campo .compras-redondo, .compras-atividade-acoes .compras-redondo, .compras-modelo-clausula .compras-redondo, .compras-modelo-campo .compras-redondo, .folha-mes .compras-redondo { flex: none; width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: #fff; }
-.compras-doc-acoes .compras-redondo svg, .compras-recorr-pers .compras-redondo svg, .compras-aniv-campo .compras-redondo svg, .compras-atividade-acoes .compras-redondo svg, .compras-modelo-clausula .compras-redondo svg, .compras-modelo-campo .compras-redondo svg, .folha-mes .compras-redondo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.compras-doc-acoes .compras-redondo, .compras-recorr-pers .compras-redondo, .compras-aniv-campo .compras-redondo, .compras-atividade-acoes .compras-redondo, .compras-modelo-clausula .compras-redondo, .compras-modelo-campo .compras-redondo, .folha-mes .compras-redondo, .transferencia-opcoes .compras-redondo { flex: none; width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: #fff; }
+.compras-doc-acoes .compras-redondo svg, .compras-recorr-pers .compras-redondo svg, .compras-aniv-campo .compras-redondo svg, .compras-atividade-acoes .compras-redondo svg, .compras-modelo-clausula .compras-redondo svg, .compras-modelo-campo .compras-redondo svg, .folha-mes .compras-redondo svg, .transferencia-opcoes .compras-redondo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .compras-doc-previa img, .compras-doc-previa iframe { display: block; width: 100%; max-width: 100%; min-height: 320px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; }
 
 /* ---------- VND - Clientes (17/11/2026): mesma grade de linhas de Fornecedores, com as colunas do cliente ---------- */
@@ -767,3 +767,18 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .compras-data-vista[hidden]{display:none}
 .compras-data-vista{display:grid;gap:6px}
 .compras-aniv-painel .compras-data-vista .compras-grade-escolha{gap:6px}
+/* Transferências › Nova Transferência (25/11/2026, esboço do Washington): campos soltos em coluna, sem quadro; Múltiplo destino e Transferência com lacre lado a lado
+   (um embaixo do outro no celular); as linhas de lacre entram embaixo, cada uma com o remover redondo na ponta. O cabeçalho arredondado e o espaço em volta
+   vêm da classe transferencia-tela (variável --shell-head-top, lida pela regra do cabeçalho em people-header-pilot.css). */
+.transferencia-tela { --shell-head-top: 12px; }
+.transferencia-tela.app-screen-shell > .panel { padding: 8px 8px 0; }
+.transferencia-corpo { display: grid; gap: 12px; grid-column: 1 / -1; min-width: 0; }
+.transferencia-opcoes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.transferencia-opcoes > .compras-situacao-quadro { grid-column: auto; }
+.transferencia-opcoes .account-status-row { gap: 10px; }
+.transferencia-opcoes .compras-redondo:disabled { opacity: .4; cursor: default; }
+.transferencia-lacres { display: grid; gap: 12px; }
+.transferencia-lacres:empty { display: none; }
+.transferencia-lacre-linha { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.transferencia-lacre-linha > .compras-remover { margin-bottom: 5px; }
+@media (max-width: 600px) { .transferencia-opcoes { grid-template-columns: minmax(0, 1fr); } }
