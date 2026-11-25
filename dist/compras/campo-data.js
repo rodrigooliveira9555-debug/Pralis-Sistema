@@ -20,6 +20,7 @@
 
   function campoData({ valor = '', rotulo = 'Data' } = {}) {
     let atual = F.valid(valor) ? valor : '';
+    let ultimo = atual; // última data válida: só serve de referência para o século de um ano digitado com dois números
     let mes = (atual || hojeIso()).slice(0, 7); // AAAA-MM à vista no painel
     const input = U.entrada('text', F.display(atual), { inputMode: 'numeric', placeholder: 'DD/MM/AA', maxLength: 8, autocomplete: 'off' });
     input.setAttribute('aria-label', rotulo);
@@ -59,7 +60,7 @@
     const abrir = U.flutuante(caixa, painel);
 
     function escolher(iso) {
-      atual = iso; mes = (iso || hojeIso()).slice(0, 7);
+      atual = iso; if (iso) ultimo = iso; mes = (iso || hojeIso()).slice(0, 7);
       input.value = iso ? F.display(iso) : '';
       input.setCustomValidity('');
       input.removeAttribute('aria-invalid');
@@ -96,8 +97,10 @@
     // Digitar continua valendo (máscara DD/MM/AA); data incompleta ou impossível deixa o campo inválido.
     input.addEventListener('input', () => {
       input.value = F.mask(input.value);
-      const iso = F.parse(input.value, atual);
-      if (iso) { atual = iso; mes = iso.slice(0, 7); }
+      const iso = F.parse(input.value, ultimo);
+      // Texto apagado ou incompleto não pode deixar a data antiga valendo (valor() devolve '' até a data ficar completa).
+      atual = iso || '';
+      if (iso) { ultimo = iso; mes = iso.slice(0, 7); }
       input.setCustomValidity(!input.value || iso ? '' : 'Informe uma data válida no formato DD/MM/AA.');
       if (input.value && !iso) input.setAttribute('aria-invalid', 'true'); else input.removeAttribute('aria-invalid');
       if (iso) input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -110,7 +113,7 @@
     return {
       caixa, painel, input,
       valor: () => atual,
-      definir: (iso) => { atual = F.valid(iso) ? iso : ''; mes = (atual || hojeIso()).slice(0, 7); input.value = F.display(atual); pintar(); },
+      definir: (iso) => { atual = F.valid(iso) ? iso : ''; if (atual) ultimo = atual; mes = (atual || hojeIso()).slice(0, 7); input.value = F.display(atual); pintar(); },
     };
   }
 
