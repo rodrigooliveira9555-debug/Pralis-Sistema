@@ -41,7 +41,9 @@
           el('strong', l.valorCentavos < 0 ? 'extrato-tnp-saida' : 'extrato-tnp-entrada', D.comSinal(l.valorCentavos)));
         topo.append(valor, l.situacao === 'PENDING' ? U.situacao('Pendente', 'atencao') : U.situacao('Lançado', 'positivo'));
         corpo.append(topo);
-        if (l.situacao === 'PENDING') corpo.append(U.nota('Pendente não entra nos totais: o banco ainda não confirmou (no cartão, compra da fatura que está aberta).'));
+        if (l.situacao === 'PENDING') corpo.append(U.nota(conta && conta.tipo === 'CREDIT'
+          ? 'Compra da fatura que ainda está aberta: entra nas compras do cartão.'
+          : 'Pendente: o banco ainda não confirmou, por isso fica fora dos totais da conta.'));
         [
           bloco(quem, [
             ['Nome', l.contraparte],

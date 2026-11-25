@@ -15,6 +15,7 @@
   const moeda = (centavos) => reais.format((Number(centavos) || 0) / 100);
   const comSinal = (centavos) => (centavos < 0 ? '−' : '+') + moeda(Math.abs(centavos));
   const quando = (iso) => (iso ? new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(iso)).replace(',', ' às') : '—');
+  const dataComAno = (iso) => (iso ? new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(iso)) : '—');
   // Data sem hora (vencimento, fechamento, data da compra): o dia como veio, sem passar por fuso.
   const dataCurta = (iso) => (iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(2, 4) : '—');
   // Banco que só informa o dia manda meia-noite UTC: aí não há hora (mostrar 21:00 do dia anterior seria falso).
@@ -49,7 +50,8 @@
   const nomeOperacao = (v) => (v ? OPERACOES[v] || v.replaceAll('_', ' ').toLocaleLowerCase('pt-BR').replace(/^./, (c) => c.toUpperCase()) : 'Sem operação');
   const nomeCategoria = (v) => (v ? CATEGORIAS[v] || v : 'Sem categoria');
   const nomeForma = (v) => (v ? FORMAS[v] || v : '');
-  const nomeConta = (c) => (c.tipo === 'CREDIT' ? 'Cartão ' + (c.detalhes.bandeira || c.nome).toString().replace(/^CAIXA\s+/i, '') : c.subtipo === 'SAVINGS_ACCOUNT' ? 'Poupança' : 'Conta corrente');
+  // Curto, para caber nas abas do celular; o nome do banco e o número ficam na dica da aba.
+  const nomeConta = (c) => (c.tipo === 'CREDIT' ? 'Cartão ' + (c.detalhes.bandeira || c.nome).toString().replace(/^CAIXA\s+/i, '') : c.subtipo === 'SAVINGS_ACCOUNT' ? 'Poupança' : 'Corrente');
 
   /* ---------- Estado ---------- */
 
@@ -93,11 +95,14 @@
     });
   }
 
-  /** Totais dos lançamentos (lançados entram; pendentes só contam). */
-  function somar(lista) {
+  /**
+   * Totais dos lançamentos. Na conta, pendente só conta (o banco ainda não confirmou). No cartão (cartao = true),
+   * pendente é compra da fatura que está aberta: gasto de verdade, entra no total.
+   */
+  function somar(lista, cartao = false) {
     const t = { entradas: 0, saidas: 0, liquido: 0, quantidade: lista.length, pendentes: 0 };
     lista.forEach((l) => {
-      if (l.situacao === 'PENDING') { t.pendentes += 1; return; }
+      if (l.situacao === 'PENDING') { t.pendentes += 1; if (!cartao) return; }
       if (l.valorCentavos >= 0) t.entradas += l.valorCentavos; else t.saidas += l.valorCentavos;
     });
     t.liquido = t.entradas + t.saidas;
@@ -105,19 +110,19 @@
   }
 
   /** Por dia, mais novo primeiro, com os totais do dia. */
-  function porDia(lista) {
+  function porDia(lista, cartao = false) {
     const dias = new Map();
     lista.forEach((l) => {
       if (!dias.has(l.dia)) dias.set(l.dia, []);
       dias.get(l.dia).push(l);
     });
-    return [...dias.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(([dia, lancamentos]) => ({ dia, lancamentos, ...somar(lancamentos) }));
+    return [...dias.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(([dia, lancamentos]) => ({ dia, lancamentos, ...somar(lancamentos, cartao) }));
   }
 
   /** Agrupa por categoria ou operação: total (das saídas ou das entradas) e quantidade, maior primeiro. */
-  function agrupar(lista, chave, sinal) {
+  function agrupar(lista, chave, sinal, cartao = false) {
     const grupos = new Map();
-    lista.filter((l) => l.situacao !== 'PENDING' && (sinal < 0 ? l.valorCentavos < 0 : l.valorCentavos >= 0)).forEach((l) => {
+    lista.filter((l) => (cartao || l.situacao !== 'PENDING') && (sinal < 0 ? l.valorCentavos < 0 : l.valorCentavos >= 0)).forEach((l) => {
       const id = l[chave] || '';
       const g = grupos.get(id) || { id, total: 0, quantidade: 0 };
       g.total += Math.abs(l.valorCentavos);
@@ -162,7 +167,7 @@
   }
 
   window.CicluzExtratoTnpDados = {
-    FUSO, estado, hojeIso, somarDias, moeda, comSinal, quando, dataCurta, hora, diaLongo,
+    FUSO, estado, hojeIso, somarDias, moeda, comSinal, quando, dataComAno, dataCurta, hora, diaLongo,
     nomeOperacao, nomeCategoria, nomeForma, nomeConta, reiniciarFiltro, filtrosEmUso, lerValor,
     todos, filtrados, somar, porDia, agrupar, opcoes, csv, baixarCsv,
   };

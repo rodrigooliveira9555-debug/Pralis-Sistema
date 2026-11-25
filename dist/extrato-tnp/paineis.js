@@ -38,13 +38,14 @@
   }
 
   function resumo(d, lista, conta) {
-    const t = D.somar(lista);
+    const cartao = Boolean(conta && conta.tipo === 'CREDIT');
+    const t = D.somar(lista, cartao);
     const filtrando = Boolean(D.filtrosEmUso() || estado.filtro.busca || estado.filtro.tipo);
     const sufixo = filtrando ? ' (filtrado)' : '';
-    const pend = t.pendentes ? ' · ' + t.pendentes + ' pendente' + (t.pendentes > 1 ? 's' : '') + ' fora' : '';
+    const pend = !t.pendentes ? '' : cartao ? ' · ' + t.pendentes + ' na fatura aberta' : ' · ' + t.pendentes + ' pendente' + (t.pendentes > 1 ? 's' : '') + ' fora';
     const grade = el('div', 'vendas-pdv-numeros extrato-tnp-numeros');
     const det = (conta && conta.detalhes) || {};
-    if (conta && conta.tipo === 'CREDIT') {
+    if (cartao) {
       const limite = det.limiteCentavos;
       const disponivel = det.disponivelCentavos;
       const fatura = numero('Fatura em aberto', moeda(conta.saldoCentavos), 'Lida em ' + D.quando(conta.saldoLidoEm), 'negativo');
@@ -109,11 +110,11 @@
     return linhas;
   }
 
-  function analise(lista, { aoFiltrar }) {
+  function analise(lista, { aoFiltrar, cartao = false }) {
     const f = estado.filtro;
-    const saidas = D.agrupar(lista, 'categoria', -1);
-    const entradas = D.agrupar(lista, 'operacao', 1);
-    const operacoes = D.agrupar(lista, 'operacao', -1);
+    const saidas = D.agrupar(lista, 'categoria', -1, cartao);
+    const entradas = D.agrupar(lista, 'operacao', 1, cartao);
+    const operacoes = D.agrupar(lista, 'operacao', -1, cartao);
     const alternar = (chave) => (id) => { if (id === null) return; f[chave] = f[chave] === id ? '' : id; aoFiltrar(); };
     const soma = (g) => g.reduce((s, x) => s + x.total, 0);
     const coluna = (titulo, grupos, chave, nome, vazio) => {

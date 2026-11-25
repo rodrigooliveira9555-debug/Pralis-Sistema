@@ -131,7 +131,7 @@
     partes.faixa.replaceChildren(
       el('b', null, conexao ? 'Banco lido em ' + D.quando(conexao.atualizadoNaPluggy) : 'Banco ainda não lido'),
       el('span', null, 'A Pluggy lê o banco 1 vez por dia: o movimento de hoje costuma aparecer amanhã.'
-        + (conexao && conexao.consentimentoExpira ? ' Autorização do Meu Pluggy vale até ' + D.quando(conexao.consentimentoExpira).split(' às')[0] + '.' : '')),
+        + (conexao && conexao.consentimentoExpira ? ' Autorização do Meu Pluggy vale até ' + D.dataComAno(conexao.consentimentoExpira) + '.' : '')),
     );
   }
 
@@ -170,7 +170,7 @@
     return li;
   }
 
-  function extrato(d, lista) {
+  function extrato(d, lista, cartao) {
     const exportar = botao('Exportar CSV', () => D.baixarCsv(lista, d.todasAsContas), 'btn secondary');
     exportar.disabled = !lista.length;
     exportar.title = 'Baixar os lançamentos filtrados (abre no Excel)';
@@ -183,7 +183,7 @@
     }
     const caixa = el('div', 'extrato-tnp-dias');
     let mostrados = 0;
-    for (const dia of D.porDia(lista)) {
+    for (const dia of D.porDia(lista, cartao)) {
       if (mostrados >= limite) break;
       const bloco = el('section', 'extrato-tnp-dia');
       const cab = el('header', 'extrato-tnp-dia-cab');
@@ -214,9 +214,9 @@
     const cartao = conta && conta.tipo === 'CREDIT';
     partes.resultados.replaceChildren(...[
       P.resumo(d, lista, conta),
-      P.analise(lista, { aoFiltrar: filtrar }),
+      P.analise(lista, { aoFiltrar: filtrar, cartao }),
       cartao ? P.faturas(d) : !estado.conta ? P.aplicacoes(d) : null,
-      extrato(d, lista),
+      extrato(d, lista, cartao),
     ].filter(Boolean));
   }
 
