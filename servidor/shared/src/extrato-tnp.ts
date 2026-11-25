@@ -37,6 +37,29 @@ export type TotaisExtratoTnp = {
   pendentes: number;
 };
 
+// Documento de quem pagou/recebeu: CNPJ inteiro; CPF já chega MASCARADO do coletor (***.456.789-**).
+export type DocumentoExtratoTnp = { tipo: string; numero: string };
+
+// O que mais a Pluggy trouxe no lançamento. Tudo opcional: o banco nem sempre informa.
+export type DetalhesLancamentoExtratoTnp = {
+  descricaoBanco?: string;
+  forma?: string;
+  operacaoDetalhe?: string;
+  motivo?: string;
+  documento?: DocumentoExtratoTnp;
+  estabelecimento?: { nome?: string; cnpj?: string; ramo?: string; cnae?: string };
+  cartao?: {
+    final?: string;
+    parcela?: number;
+    parcelas?: number;
+    dataCompra?: string;
+    faturaId?: string;
+    tipoPagamento?: string;
+    tarifa?: string;
+    mcc?: number;
+  };
+};
+
 export type LancamentoExtratoTnp = {
   transacaoId: string;
   contaId: string;
@@ -48,7 +71,60 @@ export type LancamentoExtratoTnp = {
   situacao: string;
   saldoCentavos: number | null;
   operacao: string | null;
+  categoria: string | null;
   contraparte: string | null;
+  detalhes: DetalhesLancamentoExtratoTnp;
+};
+
+// Limites. Conta: cheque especial e aplicado automático. Cartão: limite, disponível, vencimento e mínimo.
+export type DetalhesContaExtratoTnp = {
+  saldoContabilCentavos?: number | null;
+  aplicadoAutomaticoCentavos?: number | null;
+  chequeEspecialLimiteCentavos?: number | null;
+  chequeEspecialUsadoCentavos?: number | null;
+  chequeEspecialNaoContratadoCentavos?: number | null;
+  bandeira?: string | null;
+  limiteCentavos?: number | null;
+  disponivelCentavos?: number | null;
+  vencimento?: string | null;
+  fechamento?: string | null;
+  pagamentoMinimoCentavos?: number | null;
+  situacao?: string | null;
+  cartoesAdicionais?: number | null;
+};
+
+export type ContaExtratoTnp = {
+  contaId: string;
+  tipo: TipoContaExtratoTnp;
+  subtipo: string | null;
+  nome: string;
+  numero: string | null;
+  saldoCentavos: number | null;
+  saldoLidoEm: string | null;
+  detalhes: DetalhesContaExtratoTnp;
+};
+
+export type FaturaExtratoTnp = {
+  faturaId: string;
+  vencimento: string | null;
+  fechamento: string | null;
+  totalCentavos: number;
+  minimoCentavos: number | null;
+  encargosCentavos: number;
+  pagoCentavos: number;
+  parcelavel: boolean;
+};
+
+export type InvestimentoExtratoTnp = {
+  investimentoId: string;
+  nome: string;
+  tipo: string | null;
+  subtipo: string | null;
+  saldoCentavos: number;
+  rentabilidade12m: number | null;
+  emissor: string | null;
+  data: string | null;
+  lidoEm: string | null;
 };
 
 // BANK = conta bancária (corrente, poupança); CREDIT = cartão de crédito.
@@ -66,18 +142,13 @@ export type ExtratoTnp = {
   }>;
   // As contas escolhidas: sem filtro, só as bancárias (corrente e poupança); com o filtro do cartão, só ele
   // (aí saldoCentavos é a fatura em aberto e saldoTotalCentavos é 0).
-  contas: Array<{
-    contaId: string;
-    tipo: TipoContaExtratoTnp;
-    subtipo: string | null;
-    nome: string;
-    numero: string | null;
-    saldoCentavos: number | null;
-    saldoLidoEm: string | null;
-  }>;
-  // Todas as contas da conexão, para o filtro de conta (inclui o cartão).
-  todasAsContas: Array<{ contaId: string; tipo: TipoContaExtratoTnp; subtipo: string | null; nome: string; numero: string | null }>;
+  contas: ContaExtratoTnp[];
+  // Todas as contas da conexão (inclui o cartão), com saldo e limites: são as abas da tela.
+  todasAsContas: ContaExtratoTnp[];
   saldoTotalCentavos: number;
+  // Faturas do cartão escolhido (vazio sem cartão no filtro) e as aplicações da conexão.
+  faturas: FaturaExtratoTnp[];
+  investimentos: InvestimentoExtratoTnp[];
   hoje: TotaisExtratoTnp & { dia: string };
   periodo: TotaisExtratoTnp & { desde: string; ate: string };
   dias: Array<{

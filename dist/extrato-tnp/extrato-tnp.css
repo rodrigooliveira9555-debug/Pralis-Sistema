@@ -1,29 +1,33 @@
-/* Open Finance · Caixa TNP (Resultados › API). Reaproveita os números e quadros de Vendas dos PDVs (vendas-pdv.css) e do
-   Compras; aqui só a faixa de atualização, os totais do período e o extrato por dia. Entrada em verde, saída em vermelho,
-   sempre com o sinal escrito (a cor nunca é a única pista). */
-.extrato-tnp-view .vendas-pdv-numero.tom-positivo strong, .extrato-tnp-total-entrada b, .extrato-tnp-lanc-valor .entrada { color: #15803d; }
-.extrato-tnp-view .vendas-pdv-numero.tom-negativo strong, .extrato-tnp-total-saida b, .extrato-tnp-lanc-valor .saida { color: var(--cicluz-danger, #e34343); }
-body.dark-theme .extrato-tnp-view .vendas-pdv-numero.tom-positivo strong, body.dark-theme .extrato-tnp-total-entrada b, body.dark-theme .extrato-tnp-lanc-valor .entrada { color: #4ade80; }
+/* Open Finance · Caixa TNP (Resultados › API). Reaproveita abas, números, barras, popup e tabela de Vendas dos PDVs
+   (vendas-pdv.css) e do Compras; aqui só o que é desta tela: a faixa de atualização, a linha de filtros, a barra de
+   uso do limite e o extrato por dia. Entrada em verde, saída em vermelho, sempre com o sinal escrito (a cor nunca é a
+   única pista). */
+.extrato-tnp-view .vendas-pdv-numero.tom-positivo strong, .extrato-tnp-entrada { color: #15803d; }
+.extrato-tnp-view .vendas-pdv-numero.tom-negativo strong, .extrato-tnp-saida { color: var(--cicluz-danger, #e34343); }
+body.dark-theme .extrato-tnp-view .vendas-pdv-numero.tom-positivo strong, body.dark-theme .extrato-tnp-entrada { color: #4ade80; }
+.extrato-tnp-abas { min-width: 0; max-width: 100%; }
 
-/* Faixa de atualização: quando o banco foi lido e o aviso de 1x por dia, com o Sincronizar à direita. */
-.extrato-tnp-faixa { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: color-mix(in srgb, var(--menu-accent, #7c3aed) 6%, var(--theme-card, #fff)); }
+/* Faixa de atualização: quando o banco foi lido e o aviso de 1x por dia. */
+.extrato-tnp-faixa { padding: 12px 14px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: color-mix(in srgb, var(--menu-accent, #7c3aed) 6%, var(--theme-card, #fff)); }
 .extrato-tnp-faixa-texto { display: grid; gap: 2px; min-width: 0; font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--navigation-ink, #71717a); }
 .extrato-tnp-faixa-texto b { font: 600 var(--ui-text)/20px var(--ui-font); color: var(--layout-ink, #3f3f46); font-variant-numeric: tabular-nums; }
-.extrato-tnp-sincronizar { display: inline-flex; align-items: center; gap: 6px; }
-.extrato-tnp-sincronizar svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.extrato-tnp-sincronizar.girando svg { animation: vendas-pdv-girar .9s linear infinite; }
 .extrato-tnp-avisos { display: grid; gap: 8px; }
 .extrato-tnp-avisos:empty { display: none; }
 .extrato-tnp-aviso { margin: 0; padding: 10px 14px; border-radius: 10px; border: 1px solid color-mix(in srgb, #f59e0b 45%, transparent); background: color-mix(in srgb, #f59e0b 10%, var(--theme-card, #fff)); font: 500 var(--ui-text)/20px var(--ui-font); }
 
-/* Período: atalhos e as duas datas; embaixo, os totais do período numa linha. */
+/* Período e filtros. */
 .extrato-tnp-periodo { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 16px; align-items: end; }
 .extrato-tnp-periodo > .compras-chips { grid-column: 1 / -1; }
 .extrato-tnp-aviso-periodo { margin: 0; }
-.extrato-tnp-totais { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 16px; padding-top: 12px; border-top: 1px solid var(--layout-line, #dedee3); }
-.extrato-tnp-totais > div { display: grid; gap: 2px; }
-.extrato-tnp-totais span { font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--navigation-ink, #71717a); }
-.extrato-tnp-totais b { font: 600 16px/22px var(--ui-font); font-variant-numeric: tabular-nums; }
+.extrato-tnp-filtro-linha { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px; align-items: center; }
+.extrato-tnp-filtro-linha .compras-busca { width: 100%; }
+
+/* Resumo: quatro números na tela larga; barra de uso do limite e do cheque especial. */
+.extrato-tnp-numeros { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.extrato-tnp-uso { display: grid; gap: 4px; margin-top: 6px; }
+.extrato-tnp-uso .vendas-pdv-cheio.alto { background: var(--cicluz-danger, #e34343); }
+.extrato-tnp-uso small { font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--navigation-ink, #71717a); font-variant-numeric: tabular-nums; }
+.extrato-tnp-analise { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 
 /* Extrato: um bloco por dia (título com o dia da semana e os totais), lançamentos em linhas de 52 px. */
 .extrato-tnp-dias { display: grid; }
@@ -33,16 +37,21 @@ body.dark-theme .extrato-tnp-view .vendas-pdv-numero.tom-positivo strong, body.d
 body.dark-theme .extrato-tnp-dia-cab h4 { color: #c4b5fd; }
 .extrato-tnp-dia-cab span { font: 500 var(--ui-note, 11px)/16px var(--ui-font); color: var(--navigation-ink, #71717a); font-variant-numeric: tabular-nums; white-space: pre; }
 .extrato-tnp-lancamentos { list-style: none; margin: 0; padding: 0; }
-.extrato-tnp-lancamento { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 52px; padding: 8px 14px; border-top: 1px solid var(--layout-line, #dedee3); }
+.extrato-tnp-lancamento { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px 16px; min-height: 52px; padding: 8px 14px; border-top: 1px solid var(--layout-line, #dedee3); }
 .extrato-tnp-lancamento.pendente { background: color-mix(in srgb, #f59e0b 6%, transparent); }
-.extrato-tnp-lanc-texto { display: grid; gap: 2px; min-width: 0; }
+.extrato-tnp-lanc-texto { display: grid; gap: 2px; min-width: 0; justify-items: start; }
 .extrato-tnp-lanc-texto b { font: 500 var(--ui-text)/20px var(--ui-font); overflow-wrap: anywhere; }
-.extrato-tnp-lanc-texto small, .extrato-tnp-lanc-valor small { font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--navigation-ink, #71717a); font-variant-numeric: tabular-nums; }
-.extrato-tnp-lanc-valor { display: grid; justify-items: end; gap: 2px; flex: none; }
+.extrato-tnp-lanc-texto small { font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--navigation-ink, #71717a); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.extrato-tnp-categoria { padding: 0 8px; border-radius: 999px; background: color-mix(in srgb, var(--menu-accent, #7c3aed) 10%, transparent); font: 500 var(--ui-note, 11px)/18px var(--ui-font); color: var(--panel-text, #5520ad); }
+body.dark-theme .extrato-tnp-categoria { color: #c4b5fd; }
+.extrato-tnp-lanc-valor { display: grid; justify-items: end; gap: 2px; }
 .extrato-tnp-lanc-valor b { font: 600 var(--ui-text)/20px var(--ui-font); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.extrato-tnp-view .btn.extrato-tnp-detalhes { min-height: 30px; padding: 0 12px; }
+/* No popup, nome, CNPJ e descrição longos quebram a linha (o valor em dinheiro do popup de vendas não quebra). */
+.vendas-pdv-detalhe-linhas dd.extrato-tnp-detalhe-valor { white-space: normal; text-align: right; overflow-wrap: anywhere; }
 
 @media (max-width: 600px) {
-  .extrato-tnp-periodo { grid-template-columns: minmax(0, 1fr); }
-  .extrato-tnp-faixa { flex-direction: column; align-items: stretch; }
+  .extrato-tnp-periodo, .extrato-tnp-filtro-linha { grid-template-columns: minmax(0, 1fr); }
+  .extrato-tnp-lancamento { grid-template-columns: minmax(0, 1fr) auto; }
+  .extrato-tnp-lancamento .extrato-tnp-detalhes { grid-column: 1 / -1; justify-self: end; }
 }
-@media (prefers-reduced-motion: reduce) { .extrato-tnp-sincronizar.girando svg { animation: none; } }

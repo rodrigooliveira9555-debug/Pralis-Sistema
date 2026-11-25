@@ -138,6 +138,61 @@ describe("extrato da TNP - cliente do coletor", () => {
       operacao: null,
     });
     expect(extrato.dias[0]?.lancamentos[0]).not.toHaveProperty("idNoBanco");
+    expect(extrato.dias[0]?.lancamentos[0]?.detalhes).toEqual({});
+    expect(extrato.faturas).toEqual([]);
+    expect(extrato.investimentos).toEqual([]);
+  });
+
+  it("Deve_PassarLimitesFaturasAplicacoesEDetalhes_SoComOsCamposConhecidos", async () => {
+    configurar();
+    const cartao = {
+      contaId: "k1",
+      tipo: "CREDIT",
+      subtipo: "CREDIT_CARD",
+      nome: "CAIXA VISA EMPRESARIAL",
+      numero: "7347",
+      saldoCentavos: 416543,
+      detalhes: { bandeira: "VISA", limiteCentavos: 2000000, disponivelCentavos: 1583457, vencimento: "2026-12-10", segredo: "x" },
+    };
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      resposta(200, {
+        ok: true,
+        conexoes: [],
+        contas: [cartao],
+        todasAsContas: [cartao],
+        faturas: [{ faturaId: "f1", vencimento: "2026-12-10", totalCentavos: 416543, minimoCentavos: 62481, encargosCentavos: 0, pagoCentavos: 0, parcelavel: true, extra: 1 }],
+        investimentos: [{ investimentoId: "i1", nome: "POUPANÇA", saldoCentavos: 250050, rentabilidade12m: 6.8, cnpjEmissor: "x" }],
+        dias: [{
+          dia: "2026-11-24",
+          entradas: 0,
+          saidas: -8990,
+          lancamentos: [{
+            transacaoId: "t1", contaId: "k1", data: "2026-11-24T00:00:00.000Z", dia: "2026-11-24", descricao: "MERCADO", valorCentavos: -8990,
+            tipo: "DEBIT", situacao: "POSTED", categoria: "Groceries",
+            detalhes: {
+              forma: "PIX",
+              documento: { tipo: "CPF", numero: "***.456.789-**" },
+              estabelecimento: { nome: "MERCADO LTDA", cnpj: "11.222.333/0001-44", ramo: "Groceries", desconhecido: "x" },
+              cartao: { final: "7347", parcela: 2, parcelas: 6, mcc: "5411", outra: "x" },
+              payload: { cru: true },
+            },
+          }],
+        }],
+      }),
+    ));
+    const extrato = await buscarExtrato(consulta);
+    expect(extrato.contas[0]?.detalhes).toEqual({ bandeira: "VISA", limiteCentavos: 2000000, disponivelCentavos: 1583457, vencimento: "2026-12-10" });
+    expect(extrato.faturas[0]).toEqual({ faturaId: "f1", vencimento: "2026-12-10", fechamento: null, totalCentavos: 416543, minimoCentavos: 62481, encargosCentavos: 0, pagoCentavos: 0, parcelavel: true });
+    expect(extrato.investimentos[0]).not.toHaveProperty("cnpjEmissor");
+    expect(extrato.investimentos[0]?.rentabilidade12m).toBe(6.8);
+    const l = extrato.dias[0]?.lancamentos[0];
+    expect(l?.categoria).toBe("Groceries");
+    expect(l?.detalhes).toEqual({
+      forma: "PIX",
+      documento: { tipo: "CPF", numero: "***.456.789-**" },
+      estabelecimento: { nome: "MERCADO LTDA", cnpj: "11.222.333/0001-44", ramo: "Groceries" },
+      cartao: { final: "7347", parcela: 2, parcelas: 6, mcc: 5411 },
+    });
   });
 
   it("Deve_TraduzirAsFalhasDoColetor", async () => {
