@@ -749,6 +749,9 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .compras-data-painel>.compras-chip{justify-self:start}
 .compras-data-pe{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .compras-data-pe>.compras-chip{justify-self:auto}
+/* Lançamentos: bloco da leitura por IA (desativado por ora). */
+.compras-ia{display:grid;gap:6px}
+.compras-ia button:disabled{opacity:.5;cursor:not-allowed}
 .compras-data-titulo.compras-data-titulo-botao{text-transform:none;padding:6px 8px;border:0;border-radius:8px;background:transparent;color:inherit;font:600 var(--ui-text,14px)/20px var(--ui-font);cursor:pointer}
 .compras-data-titulo-botao:hover,.compras-data-titulo-botao:focus-visible{background:color-mix(in srgb,var(--menu-accent) 12%,transparent);outline:none}
 .compras-data-vista[hidden]{display:none}
