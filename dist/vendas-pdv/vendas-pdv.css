@@ -11,8 +11,11 @@
 .vendas-pdv-abas::-webkit-scrollbar { display: none; }
 .vendas-pdv-aba { flex: none; min-height: 36px; padding: 0 16px; border: 0; border-radius: 8px; background: transparent; color: var(--ui-label-color, #52525b); font: 500 var(--ui-text)/20px var(--ui-font); cursor: pointer; transition: background-color .15s ease, color .15s ease; }
 .vendas-pdv-aba:hover { background: color-mix(in srgb, var(--menu-accent, #eab308) 10%, transparent); }
-.vendas-pdv-aba:focus-visible { outline: 2px solid var(--menu-accent, #eab308); outline-offset: 1px; }
+.vendas-pdv-aba:focus-visible { outline: 2px solid var(--panel-text, #785600); outline-offset: 1px; }
 .vendas-pdv-aba.ativa { background: var(--menu-accent, #eab308); color: #fff; font-weight: 600; }
+/* Nas telas amarelas (Vendas dos PDVs e Sistema comandas) o texto da aba ativa é escuro: branco daria 1,9:1.
+   No Open Finance (roxo) o branco passa do AA e fica. */
+.vendas-pdv-view .vendas-pdv-aba.ativa { color: #1c1600; }
 .vendas-pdv-sincronia { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 .vendas-pdv-sincronizar { display: inline-flex; align-items: center; gap: 6px; }
 .vendas-pdv-sincronizar svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -46,7 +49,7 @@
 .vendas-pdv-barra { display: grid; gap: 6px; width: 100%; min-height: 52px; padding: 8px 10px; border: 1px solid transparent; border-radius: var(--ui-field-radius, 8px); background: transparent; color: inherit; font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); text-align: left; cursor: pointer; transition: background-color .15s ease, border-color .15s ease; }
 .vendas-pdv-barra:disabled { cursor: default; }
 .vendas-pdv-barra:not(:disabled):hover { background: color-mix(in srgb, var(--menu-accent, #eab308) 8%, transparent); }
-.vendas-pdv-barra:focus-visible { outline: 2px solid var(--menu-accent, #eab308); outline-offset: 2px; }
+.vendas-pdv-barra:focus-visible { outline: 2px solid var(--panel-text, #785600); outline-offset: 2px; }
 .vendas-pdv-barra.marcada { border-color: var(--menu-accent, #eab308); background: color-mix(in srgb, var(--menu-accent, #eab308) 12%, transparent); }
 .vendas-pdv-barra-topo { display: flex; justify-content: space-between; gap: 12px; min-width: 0; }
 .vendas-pdv-barra-topo b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -71,7 +74,7 @@
 .vendas-pdv-popup-cab h2 { margin: 0; font: var(--ui-title-weight, 600) var(--ui-title, 16px)/var(--ui-title-line, 20px) var(--ui-font); }
 .vendas-pdv-popup-cab p { margin: 2px 0 0; font: 400 var(--ui-subtitle, 11px)/var(--ui-subtitle-line, 14px) var(--ui-font); color: var(--navigation-ink, #71717a); font-variant-numeric: tabular-nums; }
 .vendas-pdv-popup-fechar { flex: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: var(--menu-accent, #eab308); color: #fff; cursor: pointer; }
-.vendas-pdv-popup-fechar:focus-visible { outline: 2px solid var(--menu-accent, #eab308); outline-offset: 2px; }
+.vendas-pdv-popup-fechar:focus-visible { outline: 2px solid var(--panel-text, #785600); outline-offset: 2px; }
 .vendas-pdv-popup-fechar svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .vendas-pdv-popup-corpo { display: grid; gap: 12px; align-content: start; padding: 16px 20px 20px; overflow-y: auto; overscroll-behavior: contain; }
 body.dark-theme .vendas-pdv-popup { background: var(--theme-surface, #1d1c22); color: var(--layout-ink, #f4f4f5); }

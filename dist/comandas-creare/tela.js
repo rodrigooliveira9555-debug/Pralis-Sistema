@@ -43,6 +43,8 @@
       b.type = 'button';
       b.setAttribute('role', 'tab');
       b.setAttribute('aria-selected', String(marcada));
+      b.setAttribute('aria-controls', 'comandas-painel');
+      b.id = 'comandas-aba-' + id;
       b.tabIndex = marcada ? 0 : -1;
       const contador = el('span', 'comandas-aba-contador');
       contador.dataset.aba = id;
@@ -51,15 +53,17 @@
       abas.append(b);
     });
     abas.addEventListener('keydown', (e) => {
-      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
+      e.preventDefault();
       const i = ABAS.findIndex(([id]) => id === estado.aba);
-      const prox = ABAS[(i + (e.key === 'ArrowRight' ? 1 : -1) + ABAS.length) % ABAS.length][0];
+      const j = e.key === 'Home' ? 0 : e.key === 'End' ? ABAS.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + ABAS.length) % ABAS.length;
+      const prox = ABAS[j][0];
       escolherAba(prox);
       requestAnimationFrame(() => { const nova = document.querySelector('#comandas-creare-view .vendas-pdv-aba.ativa'); if (nova) nova.focus(); });
     });
     const lado = el('div', 'vendas-pdv-sincronia');
+    // Sem aria-live: a hora muda a cada minuto e o leitor de tela repetiria. Quem fala é o aviso de retrato velho.
     const quandoEl = el('span', 'vendas-pdv-vivo-texto');
-    quandoEl.setAttribute('aria-live', 'polite');
     const sinc = el('button', 'btn vendas-pdv-sincronizar');
     sinc.type = 'button';
     sinc.innerHTML = ICONE_SINCRONIZAR + '<span>Sincronizar</span>';
@@ -88,9 +92,10 @@
     sinc.classList.toggle('girando', estado.carregando);
     const velho = estado.indicadores && (!retrato || Date.now() - Date.parse(retrato) > RETRATO_VELHO_MS);
     aviso.hidden = !velho;
-    if (velho) aviso.textContent = retrato
+    const texto = !velho ? '' : retrato
       ? 'O último retrato do CREARE é de ' + quando(retrato) + '. O robô da loja pode estar parado: os números abaixo podem estar atrasados.'
       : 'O robô da loja ainda não mandou nenhuma comanda. Assim que ele rodar com a versão nova, elas aparecem aqui.';
+    if (aviso.textContent !== texto) aviso.textContent = texto; // reescrever igual faria o leitor de tela repetir
   }
 
   function escolherAba(id) {
@@ -193,19 +198,22 @@
   }
 
   function botaoDetalhes(c) {
-    const b = botao('Detalhes', () => abrirDetalhe(c, b), 'btn secondary vendas-pdv-detalhes comandas-detalhes');
+    const b = botao('Detalhes', () => abrirDetalhe(c), 'btn secondary vendas-pdv-detalhes comandas-detalhes');
     b.setAttribute('aria-label', 'Detalhes da comanda ' + c.numero);
     return b;
   }
 
-  async function abrirDetalhe(c, botaoQueAbriu) {
-    botaoQueAbriu.disabled = true;
+  // O botão não é desativado: o popup guarda quem abriu e devolve o foco a ele. Clique duplo é barrado pela marca.
+  let abrindo = false;
+  async function abrirDetalhe(c) {
+    if (abrindo) return;
+    abrindo = true;
     try {
       window.CicluzComandasDetalhe.abrir(await D.detalhe(c.idComanda), { cor: COR, corTexto: COR_TEXTO });
     } catch (erro) {
       U.avisar(D.mensagemErro(erro));
     } finally {
-      botaoQueAbriu.disabled = false;
+      abrindo = false;
     }
   }
 
@@ -309,34 +317,50 @@
   function desenharResultados() {
     if (!partes) return;
     pintarSincronia();
-    partes.erro.replaceChildren(...(estado.erro ? [corpo(el('p', 'profiles-error', estado.erro), botao('Tentar de novo', () => consultar(), 'btn secondary'))] : []));
+    const erroTexto = el('p', 'profiles-error', estado.erro);
+    erroTexto.setAttribute('role', 'alert');
+    partes.erro.replaceChildren(...(estado.erro ? [corpo(erroTexto, botao('Tentar de novo', () => consultar(), 'btn secondary'))] : []));
     partes.indicadores.replaceChildren(indicadores());
     partes.resultados.replaceChildren(lista());
     if (estado.lista.itens.length) animar = false;
     partes.resultados.setAttribute('aria-busy', String(estado.carregando));
   }
 
+  // Uma leitura por vez. Pedido no meio de outra (trocou aba, filtro ou página) fica pendente e roda logo depois:
+  // a resposta velha nunca pinta a lista de outra aba.
+  let pendente = false;
   async function consultar() {
-    if (estado.carregando) return;
+    if (estado.carregando) { pendente = true; return; }
+    pendente = false;
     const pedido = D.consultar();
     pintarSincronia();
     if (partes) partes.resultados.setAttribute('aria-busy', 'true');
     await pedido;
+    if (pendente) { consultar(); return; }
     desenharResultados();
   }
 
+  const aVista = () => tela && tela.view.classList.contains('show') && document.visibilityState === 'visible';
   function programar() {
     clearInterval(relogio);
     relogio = setInterval(() => {
-      const aVista = tela && tela.view.classList.contains('show') && document.visibilityState === 'visible';
-      if (!aVista) { clearInterval(relogio); relogio = null; return; }
+      if (!aVista()) { clearInterval(relogio); relogio = null; return; }
+      // Com o detalhe aberto a lista não é redesenhada: o foco volta ao botão Detalhes certo ao fechar.
+      if (document.querySelector('.vendas-pdv-popup-fundo')) return;
       consultar();
     }, INTERVALO_AO_VIVO);
   }
+  // Voltou para a aba do navegador com a tela aberta: lê na hora e religa o relógio.
+  document.addEventListener('visibilitychange', () => {
+    if (!relogio && partes && aVista()) { consultar(); programar(); }
+  });
 
   function montar() {
     animar = true;
     partes = { topo: topo(), erro: el('div'), indicadores: el('div'), resultados: el('div', 'vendas-pdv-resultados comandas-resultados') };
+    partes.resultados.id = 'comandas-painel';
+    partes.resultados.setAttribute('role', 'tabpanel');
+    partes.resultados.setAttribute('aria-labelledby', 'comandas-aba-' + estado.aba);
     tela.body.replaceChildren(partes.topo.barra, partes.topo.aviso, partes.erro, partes.indicadores, filtros(), partes.resultados);
     consultar();
     programar();

@@ -73,7 +73,7 @@
 
   /**
    * Régua de tempo: quanto do limite da situação já passou (0 a 1) e o tom.
-   * Puxada: limite 1 h (abandonada). Aberta: 24 h sem lançamento (esquecida). Fechada: 2 h de referência.
+   * Puxada: limite 1 h (abandonada). Aberta: tempo aberta contra 24 h. Fechada: 2 h de referência.
    */
   function regua(c) {
     const agora = Date.now();
@@ -88,8 +88,8 @@
       return { parte, tom: parte >= 1 ? 'alerta' : parte >= 0.5 ? 'atencao' : 'ok', texto: 'no caixa há ' + duracao(s) + (c.puxadaAproximada ? ' (aprox.)' : '') };
     }
     if (c.situacao === 'conta') return { parte: 1, tom: 'neutro', texto: duracao(c.segundosAberta) };
-    const s = desde(c.ultimoLancamentoEm || c.abertaEm);
-    const parte = s === null ? 0 : Math.min(1, s / 86400);
+    // Aberta e esquecida: a barra mede o mesmo tempo que o texto (tempo aberta) contra 24 h.
+    const parte = Math.min(1, (c.segundosAberta || 0) / 86400);
     return { parte, tom: c.situacao === 'esquecida' ? 'alerta' : parte >= 0.5 ? 'atencao' : 'ok', texto: duracao(c.segundosAberta) };
   }
 
