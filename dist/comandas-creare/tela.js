@@ -369,7 +369,7 @@
   async function abrirPainel() {
     if (!tela) {
       tela = U.criarTela({
-        id: 'comandas-creare-view', titulo: 'VND - Sistema comandas', caminho: 'Entradas · Vendas / Faturamento / API / VND - Sistema comandas',
+        id: 'comandas-creare-view', titulo: 'VND - Vendas / Sistema comandas', caminho: 'Entradas · Vendas / Faturamento / API / VND - Vendas / Sistema comandas',
         icone: 'comandasCreare', voltar: () => openSection(sections[0][0], 'API', 'tree', COR), cor: COR, corTexto: COR_TEXTO, classe: 'vendas-pdv-view comandas-creare-view',
       });
     }
@@ -389,7 +389,7 @@
     montar();
   }
 
-  const CARDS = [['VND - Sistema comandas', 'Comandas do CREARE ao vivo: abertas, puxadas no caixa, abandonadas e pagas', 'comandas-creare:painel']];
+  const CARDS = [['VND - Vendas / Sistema comandas', 'Comandas do CREARE ao vivo: abertas, puxadas no caixa, abandonadas e pagas', 'comandas-creare:painel']];
   window.CicluzComandasCreare = {
     cards: () => CARDS.map((c) => [...c]),
     abrir: (id) => { if (id === 'painel') abrirPainel(); },
