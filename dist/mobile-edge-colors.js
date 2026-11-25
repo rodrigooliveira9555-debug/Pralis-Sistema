@@ -19,10 +19,12 @@
   }
   if(root.style.getPropertyValue('--mobile-top-fill')!==value)root.style.setProperty('--mobile-top-fill',value);
   document.querySelectorAll('meta[name="theme-color"]').forEach(meta=>{meta.removeAttribute('media');if(meta.getAttribute('content')!==value)meta.setAttribute('content',value)});
-  if(mobile.matches&&root.style.getPropertyValue('background-color')!==value)root.style.setProperty('background-color',value,'important');
+  // Com uma janela de tela cheia aberta (dialog.shell-dialog), o fundo da página que aparece por fresta (borda, barra de rolagem) é o do painel da janela, não a cor do cabeçalho de trás: assim não surge faixa colorida na lateral.
+  const janela=document.querySelector('dialog.shell-dialog[open]'),fundo=janela?colour(janela.querySelector(':scope>.panel')||janela):value;
+  if(mobile.matches&&root.style.getPropertyValue('background-color')!==fundo)root.style.setProperty('background-color',fundo,'important');
  }
  let scheduled=false;function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;update()})}
- new MutationObserver(schedule).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden']});
+ new MutationObserver(schedule).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','open']});
  new MutationObserver(schedule).observe(document.head,{subtree:true,childList:true,attributes:true,attributeFilter:['content','media']});
  mobile.addEventListener('change',schedule);window.addEventListener('resize',schedule);window.addEventListener('pageshow',schedule);document.addEventListener('visibilitychange',schedule);document.addEventListener('cicluz-menu-visibility',schedule);document.addEventListener('transitionend',schedule,true);
  update();
