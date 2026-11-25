@@ -1,0 +1,1 @@
+ALTER TABLE "agenda_config_pessoas" ADD COLUMN "sai_por_tempo_parado" boolean DEFAULT true NOT NULL;

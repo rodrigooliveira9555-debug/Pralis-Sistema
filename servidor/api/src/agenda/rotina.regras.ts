@@ -100,14 +100,14 @@ export function descreverExpediente(c: Expediente) {
 }
 const descreverDia = (d: DiaExpediente) => (d.trabalha ? `Hoje, das ${d.inicio} às ${d.fim} (Horários/Escalas)` : "Hoje é folga (Horários/Escalas)");
 
-export const CONFIG_PADRAO: ConfigPessoa = { expedienteDias: [], expedienteInicio: "", expedienteFim: "", foraExpediente: "permitir", inatividadeMinutos: null };
+export const CONFIG_PADRAO: ConfigPessoa = { expedienteDias: [], expedienteInicio: "", expedienteFim: "", foraExpediente: "permitir", inatividadeMinutos: null, saiPorTempoParado: true };
 
 type Linha = typeof agendaConfigPessoas.$inferSelect;
 export const configDe = (l: Linha | undefined): ConfigPessoa =>
   l
     ? {
         expedienteDias: [...l.expedienteDias].sort((a, b) => a - b), expedienteInicio: l.expedienteInicio ?? "", expedienteFim: l.expedienteFim ?? "",
-        foraExpediente: l.foraExpediente as ConfigPessoa["foraExpediente"], inatividadeMinutos: l.inatividadeMinutos
+        foraExpediente: l.foraExpediente as ConfigPessoa["foraExpediente"], inatividadeMinutos: l.inatividadeMinutos, saiPorTempoParado: l.saiPorTempoParado
       }
     : { ...CONFIG_PADRAO };
 
@@ -122,7 +122,10 @@ type Executor = typeof banco | TransacaoBanco;
  */
 export async function limiteParado(ex: Executor, empresaId: string, usuarioId: string): Promise<number | null> {
   if (await ehPosto(ex, empresaId, usuarioId)) return null;
-  return inatividadeEfetiva(await lerConfig(ex, empresaId, usuarioId));
+  const c = await lerConfig(ex, empresaId, usuarioId);
+  // O administrador marcou "nunca sai sozinho" para esta pessoa (Zé, 25/11/2026).
+  if (!c.saiPorTempoParado) return null;
+  return inatividadeEfetiva(c);
 }
 
 export async function lerConfig(ex: Executor, empresaId: string, usuarioId: string) {

@@ -776,6 +776,13 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   await dialogo(p).locator('.people-save-control').click();
   await p.locator('#agenda-config-view .agenda-config-linha', { hasText: 'sai em 30 min parado' }).waitFor();
   ok((await p.locator('#agenda-config-view .agenda-config-linha', { hasText: RESP_UM.nome }).textContent()).includes('todos os dias, das 00:00 às 23:59'), 'Configurações: o administrador salva expediente e saída por tempo parado');
+  // "Nunca sai sozinho" (Zé, 25/11/2026): o campo dos minutos some e a linha diz que não sai.
+  await p.locator('#agenda-config-view .agenda-config-linha', { hasText: RESP_UM.nome }).click();
+  await dialogo(p).getByLabel('Sair sozinho por tempo parado').selectOption('nao');
+  ok(await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado').isHidden(), 'Nunca sai sozinho: o campo dos minutos some');
+  await dialogo(p).locator('.people-save-control').click();
+  await p.locator('#agenda-config-view .agenda-config-linha', { hasText: 'nunca sai sozinho' }).waitFor();
+  ok(true, 'O administrador escolhe quem nunca sai sozinho');
 
   // Lista ligada a uma área (P-46 item 3): na janela da lista, "Quem entra no grupo"; os membros vêm da área.
   await p.evaluate(() => { document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.estado.visao = 'listas'; CicluzAgenda.abrir('lista-diretor-operacoes'); });
