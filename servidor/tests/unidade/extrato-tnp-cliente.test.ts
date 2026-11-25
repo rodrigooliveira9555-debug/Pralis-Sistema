@@ -57,11 +57,17 @@ describe("extrato da TNP - cliente do coletor", () => {
         contas: [
           {
             contaId: "c1",
+            tipo: "BANK",
+            subtipo: "CHECKING_ACCOUNT",
             nome: "CAIXA PJ",
             numero: "1234/567-8",
             titular: "EMPRESA",
             saldoCentavos: 152035,
           },
+        ],
+        todasAsContas: [
+          { contaId: "c1", tipo: "BANK", subtipo: "CHECKING_ACCOUNT", nome: "CAIXA PJ", numero: "1234/567-8" },
+          { contaId: "k1", tipo: "CREDIT", subtipo: "CREDIT_CARD", nome: "CAIXA VISA EMPRESARIAL", numero: "7347", limite: 1 },
         ],
         saldoTotalCentavos: 152035,
         hoje: {
@@ -122,6 +128,9 @@ describe("extrato da TNP - cliente do coletor", () => {
     });
     expect(extrato.conexoes[0]).not.toHaveProperty("segredo");
     expect(extrato.contas[0]).not.toHaveProperty("titular");
+    expect(extrato.contas[0]).toMatchObject({ tipo: "BANK", subtipo: "CHECKING_ACCOUNT" });
+    expect(extrato.todasAsContas.map((c) => c.tipo)).toEqual(["BANK", "CREDIT"]);
+    expect(extrato.todasAsContas[1]).not.toHaveProperty("limite");
     expect(extrato.dias[0]?.lancamentos[0]).toMatchObject({
       valorCentavos: 64000,
       situacao: "PENDING",

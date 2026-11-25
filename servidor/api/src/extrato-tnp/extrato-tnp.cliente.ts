@@ -40,6 +40,8 @@ type Campo =
   | "consentimentoExpira"
   | "erro"
   | "contas"
+  | "todasAsContas"
+  | "subtipo"
   | "contaId"
   | "nome"
   | "numero"
@@ -78,6 +80,9 @@ const inteiroOuNulo = (v: unknown) =>
 const lista = (v: unknown): Bruto[] => (Array.isArray(v) ? (v as Bruto[]) : []);
 const objeto = (v: unknown): Bruto =>
   v && typeof v === "object" ? (v as Bruto) : {};
+
+// Sem o campo (coletor antigo), a conta é bancária: era o único tipo antes do cartão.
+const tipoConta = (v: unknown): "BANK" | "CREDIT" => (v === "CREDIT" ? "CREDIT" : "BANK");
 
 function totais(v: unknown): TotaisExtratoTnp {
   const t = objeto(v);
@@ -124,10 +129,19 @@ function extrato(corpo: Bruto): ExtratoTnp {
     })),
     contas: lista(corpo.contas).map((c) => ({
       contaId: String(c.contaId),
+      tipo: tipoConta(c.tipo),
+      subtipo: texto(c.subtipo),
       nome: String(c.nome ?? ""),
       numero: texto(c.numero),
       saldoCentavos: inteiroOuNulo(c.saldoCentavos),
       saldoLidoEm: texto(c.saldoLidoEm),
+    })),
+    todasAsContas: lista(corpo.todasAsContas).map((c) => ({
+      contaId: String(c.contaId),
+      tipo: tipoConta(c.tipo),
+      subtipo: texto(c.subtipo),
+      nome: String(c.nome ?? ""),
+      numero: texto(c.numero),
     })),
     saldoTotalCentavos: inteiro(corpo.saldoTotalCentavos),
     hoje: { ...totais(hoje), dia: String(hoje.dia ?? "") },

@@ -51,6 +51,9 @@ export type LancamentoExtratoTnp = {
   contraparte: string | null;
 };
 
+// BANK = conta bancária (corrente, poupança); CREDIT = cartão de crédito.
+export type TipoContaExtratoTnp = "BANK" | "CREDIT";
+
 export type ExtratoTnp = {
   geradoEm: string;
   ultimaBusca: { em: string | null; ok: boolean } | null;
@@ -61,13 +64,19 @@ export type ExtratoTnp = {
     consentimentoExpira: string | null;
     erro: string | null;
   }>;
+  // As contas escolhidas: sem filtro, só as bancárias (corrente e poupança); com o filtro do cartão, só ele
+  // (aí saldoCentavos é a fatura em aberto e saldoTotalCentavos é 0).
   contas: Array<{
     contaId: string;
+    tipo: TipoContaExtratoTnp;
+    subtipo: string | null;
     nome: string;
     numero: string | null;
     saldoCentavos: number | null;
     saldoLidoEm: string | null;
   }>;
+  // Todas as contas da conexão, para o filtro de conta (inclui o cartão).
+  todasAsContas: Array<{ contaId: string; tipo: TipoContaExtratoTnp; subtipo: string | null; nome: string; numero: string | null }>;
   saldoTotalCentavos: number;
   hoje: TotaisExtratoTnp & { dia: string };
   periodo: TotaisExtratoTnp & { desde: string; ate: string };

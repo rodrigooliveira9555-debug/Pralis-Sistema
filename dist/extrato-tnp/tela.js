@@ -106,16 +106,25 @@
     return lista.map((t) => el('p', 'extrato-tnp-aviso', t));
   }
 
+  /** A conta escolhida no filtro (ou nenhuma: as bancárias somadas). */
+  const contaEscolhida = (d) => (estado.conta ? (d.todasAsContas.find((c) => c.contaId === estado.conta) || d.contas.find((c) => c.contaId === estado.conta)) : null);
+
   function resumo(d) {
     const s = U.secao('Hoje');
-    const conta = d.contas.find((c) => c.contaId === estado.conta) || d.contas[0];
-    const saldo = estado.conta && conta ? conta.saldoCentavos : d.saldoTotalCentavos;
+    const escolhida = contaEscolhida(d);
+    const cartao = escolhida && escolhida.tipo === 'CREDIT';
+    const conta = escolhida ? d.contas.find((c) => c.contaId === escolhida.contaId) : d.contas[0];
     const pend = d.hoje.pendentes ? d.hoje.pendentes + ' pendente(s), fora dos valores' : '';
     const grade = el('div', 'vendas-pdv-numeros');
+    // Cartão: o valor é a fatura em aberto (dívida), nunca "saldo". Sem filtro: só corrente e poupança somadas.
+    const primeiro = cartao
+      ? numero('Fatura em aberto', moeda(conta ? conta.saldoCentavos : 0), conta ? 'Lida em ' + quando(conta.saldoLidoEm) : '', 'negativo')
+      : numero('Saldo', moeda(escolhida && conta ? conta.saldoCentavos : d.saldoTotalCentavos),
+        escolhida ? (conta ? 'Lido em ' + quando(conta.saldoLidoEm) : '') : 'Corrente e poupança' + (d.contas[0] ? ' · lido em ' + quando(d.contas[0].saldoLidoEm) : ''));
     grade.append(
-      numero('Saldo', moeda(saldo), conta ? 'Lido em ' + quando(conta.saldoLidoEm) : ''),
-      numero('Entradas', moeda(d.hoje.entradas), d.hoje.quantidade + ' lançamento(s)' + (pend ? ' · ' + pend : ''), 'positivo'),
-      numero('Saídas', moeda(Math.abs(d.hoje.saidas)), 'Resultado do dia ' + moeda(d.hoje.liquido), 'negativo'),
+      primeiro,
+      numero(cartao ? 'Pagamentos' : 'Entradas', moeda(d.hoje.entradas), d.hoje.quantidade + ' lançamento(s)' + (pend ? ' · ' + pend : ''), 'positivo'),
+      numero(cartao ? 'Compras' : 'Saídas', moeda(Math.abs(d.hoje.saidas)), 'Resultado do dia ' + moeda(d.hoje.liquido), 'negativo'),
     );
     s.append(corpo(grade));
     return s;
@@ -149,9 +158,11 @@
     fim.input.addEventListener('change', aoMudar);
     const linha = el('div', 'extrato-tnp-periodo');
     linha.append(chips, campo('Data inicial', ini.caixa), campo('Data final', fim.caixa));
-    const contas = estado.dados ? estado.dados.contas : [];
+    const d0 = estado.dados;
+    const contas = d0 ? (d0.todasAsContas.length ? d0.todasAsContas : d0.contas) : [];
+    const rotuloConta = (c) => (c.tipo === 'CREDIT' ? 'Cartão · ' : c.subtipo === 'SAVINGS_ACCOUNT' ? 'Poupança · ' : 'Conta · ') + c.nome + (c.numero ? ' · ' + c.numero : '');
     if (contas.length > 1) {
-      const sel = seletor(contas.map((c) => [c.contaId, c.nome + (c.numero ? ' · ' + c.numero : '')]), estado.conta, 'Todas as contas');
+      const sel = seletor(contas.map((c) => [c.contaId, rotuloConta(c)]), estado.conta, 'Contas bancárias (corrente e poupança)');
       sel.onchange = () => { estado.conta = sel.value; consultar(); };
       linha.append(campo('Conta', sel));
     }
