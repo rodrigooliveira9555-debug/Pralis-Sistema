@@ -173,7 +173,7 @@
       tecla('⌫', apagar, 'apagar', 'Apagar'), d(0), tecla('=', igual, 'igual', 'Fechar o total'), op('+', () => mais(1), 'Somar'));
     // A calculadora só aparece quando se toca na caixa do valor; fecha ao fechar a conta com "=", no Esc ou tocando de novo na caixa.
     const painel = el('div', 'transferencia-calc-painel'); painel.hidden = true; painel.id = 'transferencia-calc-painel';
-    painel.append(teclado, aviso);
+    painel.append(el('span', 'transferencia-calc-legenda', 'Toque em Notas ou Moedas para fechar o valor. Sem escolha, conta como Notas.'), teclado, aviso);
     tela.setAttribute('aria-controls', painel.id);
     const mostrarPainel = (sim) => { painel.hidden = !sim; tela.setAttribute('aria-expanded', String(sim)); };
     tela.addEventListener('click', () => mostrarPainel(painel.hidden));
@@ -193,7 +193,7 @@
     });
     // Cabeçalho do valor: todo laranja, grande. O valor (ligado à calculadora), Notas e Moedas ficam à vista; o teclado abre ao tocar no valor.
     const no = el('div', 'transferencia-valor-cab');
-    no.append(el('span', 'transferencia-valor-rotulo', rotulo), tela, resumo, tipos, el('span', 'transferencia-calc-legenda', 'Toque em Notas ou Moedas para fechar o valor. Sem escolha, conta como Notas.'), painel);
+    no.append(el('span', 'transferencia-valor-rotulo', rotulo), tela, resumo, tipos, painel);
     mostrar();
     return {
       no,

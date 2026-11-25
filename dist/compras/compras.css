@@ -779,9 +779,19 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-lacres:empty { display: none; }
 /* Transferências › Nova Transferência: a calculadora do valor (teclas 0 a 9, "+" e "="; Notas ou Moedas embaixo) e a lista de contas do Múltiplo destino. */
 /* Cabeçalho do valor: quadro todo laranja, grande, com o valor da calculadora, Notas e Moedas; o teclado abre embaixo, dentro dele. */
-.transferencia-tela .transferencia-valor-cab { display: grid; gap: 10px; padding: 16px; border-radius: 16px; background: var(--menu-accent); color: #fff; }
+/* Teste só nesta tela (25/11/2026, Rodrigo): o cabeçalho ocupa a borda toda e o conteúdo sobe por cima dele com os cantos de cima arredondados (a curva "para baixo"); o quadro do valor fica fixo, logo abaixo, e é um pouco menor. */
+/* O prefixo com :is(#sector-view, dialog) dá a mesma força das regras fixas do cabeçalho (people-header-pilot.css), sem !important. */
+/* As regras fixas do cabeçalho (people-header-pilot.css) dão 6 px de vão entre o cabeçalho e o conteúdo e 14 px de respiro no topo, os dois com !important; por isso o quadro do valor fixa em -20 px (6 + 14) para ficar colado no cabeçalho. */
+.transferencia-tela .panel { position: relative; }
+.transferencia-tela .panel > .head { --shell-radius: 0; }
+/* As duas curvas "para baixo" ficam no painel (o cabeçalho corta o que passa da borda dele): dois quadrados de 16 px laranja, com um quarto de círculo vazado, logo abaixo do cabeçalho. */
+.transferencia-tela .panel::before { content: ''; position: absolute; top: var(--shell-head-min, 58px); left: 0; right: 0; height: 16px; z-index: 6; pointer-events: none;
+  background: radial-gradient(circle at 100% 100%, transparent 15.5px, var(--menu-accent) 16px) left top / 16px 16px no-repeat, radial-gradient(circle at 0 100%, transparent 15.5px, var(--menu-accent) 16px) right top / 16px 16px no-repeat; }
+/* Telas baixas: as teclas encolhem para o quadro fixo do valor, com o teclado aberto, deixar espaço para rolar o resto. */
+@media (max-height: 700px) { .transferencia-tela .transferencia-teclado { grid-auto-rows: 38px; } }
+.transferencia-tela .transferencia-valor-cab { position: sticky; top: -20px; z-index: 4; display: grid; gap: 6px; padding: 8px 16px 12px; border-radius: 0 0 16px 16px; background: var(--menu-accent); color: #fff; }
 .transferencia-tela .transferencia-valor-rotulo { font: 600 13px/18px var(--ui-font); color: rgba(255, 255, 255, .9); }
-.transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela { width: 100%; min-height: 52px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: #fff; text-align: left; font: 700 34px/1.15 var(--ui-font); cursor: pointer; }
+.transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela { width: 100%; min-height: 40px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: #fff; text-align: left; font: 700 34px/1.15 var(--ui-font); cursor: pointer; }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela::placeholder { color: rgba(255, 255, 255, .78); font-weight: 600; font-size: 22px; }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 8px; }
 .transferencia-tela .transferencia-valor-cab .transferencia-calc-resumo, .transferencia-tela .transferencia-valor-cab .transferencia-calc-legenda { color: rgba(255, 255, 255, .92); }
@@ -792,7 +802,7 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .transferencia-valor-cab .transferencia-calc-aviso:empty { display: none; }
 /* Os campos do sistema têm regras fixas de altura, borda e fundo (index.html e ui-foundation.css); aqui o que muda é só o valor das variáveis que elas leem, sem !important novo. */
 .transferencia-tela .transferencia-linha { --campo-altura: 34px; --campo-respiro: 0; --ui-control-bg: transparent; --ui-border-base: transparent; --ui-input-color: var(--muted, #71717a); }
-.transferencia-tela .transferencia-valor-cab { --campo-altura: 56px; --campo-respiro: 0; --ui-control-bg: transparent; --ui-border-base: transparent; --ui-input-color: #fff; --ui-input-size: 32px; }
+.transferencia-tela .transferencia-valor-cab { --campo-altura: 44px; --campo-respiro: 0; --ui-control-bg: transparent; --ui-border-base: transparent; --ui-input-color: #fff; --ui-input-size: 28px; }
 /* Listas agrupadas (padrão Apple): título do assunto, quadro com uma linha por campo (nome à esquerda, valor à direita). */
 .transferencia-tela .transferencia-secao { display: grid; gap: 6px; min-width: 0; }
 .transferencia-tela .transferencia-secao-titulo { margin: 0; padding: 0 4px; font: 600 13px/18px var(--ui-font); color: var(--muted, #71717a); }
