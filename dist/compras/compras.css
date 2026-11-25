@@ -771,21 +771,43 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 /* Transferências › Nova Transferência (25/11/2026, esboço do Washington): campos soltos em coluna, sem quadro; Múltiplo destino e Transferência com lacre lado a lado
    (um embaixo do outro no celular); as linhas de lacre entram embaixo, cada uma com o remover redondo na ponta. O cabeçalho arredondado e o espaço em volta
    vêm da classe transferencia-tela (variável --shell-head-top, lida pela regra do cabeçalho em people-header-pilot.css). */
-.transferencia-tela { --shell-head-top: 12px; --shell-head-min: 76px; --shell-head-pad: 14px; }
-.transferencia-tela.app-screen-shell > .panel { padding: 8px 8px 0; }
+/* 25/11/2026 (Rodrigo): o cabeçalho da janela volta ao padrão de todos os cabeçalhos; o laranja grande agora é o quadro do valor (.transferencia-valor-cab). */
 .transferencia-corpo { display: grid; gap: 12px; grid-column: 1 / -1; min-width: 0; }
-.transferencia-opcoes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.transferencia-opcoes > .compras-situacao-quadro { grid-column: auto; }
-.transferencia-opcoes .account-status-row { gap: 10px; }
-.transferencia-opcoes .compras-redondo:disabled { opacity: .4; cursor: default; }
-.transferencia-lacres { display: grid; gap: 12px; }
+.transferencia-linha .account-status-row { gap: 10px; }
+.transferencia-linha .compras-redondo:disabled { opacity: .4; cursor: default; }
+.transferencia-lacres { display: grid; gap: 0; }
 .transferencia-lacres:empty { display: none; }
-.transferencia-lacre-linha { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
-.transferencia-lacre-linha > .compras-remover { margin-bottom: 5px; }
-@media (max-width: 600px) { .transferencia-opcoes { grid-template-columns: minmax(0, 1fr); } }
 /* Transferências › Nova Transferência: a calculadora do valor (teclas 0 a 9, "+" e "="; Notas ou Moedas embaixo) e a lista de contas do Múltiplo destino. */
-.transferencia-calc { display: grid; gap: 8px; max-width: 320px; }
-.transferencia-calc-tela { text-align: right; font-weight: 600; cursor: pointer; }
+/* Cabeçalho do valor: quadro todo laranja, grande, com o valor da calculadora, Notas e Moedas; o teclado abre embaixo, dentro dele. */
+.transferencia-tela .transferencia-valor-cab { display: grid; gap: 10px; padding: 16px; border-radius: 16px; background: var(--menu-accent); color: #fff; }
+.transferencia-tela .transferencia-valor-rotulo { font: 600 13px/18px var(--ui-font); color: rgba(255, 255, 255, .9); }
+.transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela { width: 100%; min-height: 52px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: #fff; text-align: left; font: 700 34px/1.15 var(--ui-font); cursor: pointer; }
+.transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela::placeholder { color: rgba(255, 255, 255, .78); font-weight: 600; font-size: 22px; }
+.transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 8px; }
+.transferencia-tela .transferencia-valor-cab .transferencia-calc-resumo, .transferencia-tela .transferencia-valor-cab .transferencia-calc-legenda { color: rgba(255, 255, 255, .92); }
+.transferencia-tela .transferencia-valor-cab .compras-chips { gap: 8px; }
+.transferencia-tela .transferencia-valor-cab .compras-chip { background: rgba(255, 255, 255, .18); border-color: rgba(255, 255, 255, .55); color: #fff; }
+.transferencia-tela .transferencia-valor-cab .compras-chip.ativo { background: #fff; border-color: #fff; color: var(--panel-text, #9a3412); }
+.transferencia-tela .transferencia-valor-cab .transferencia-calc-aviso { color: #fff; font-weight: 600; }
+.transferencia-tela .transferencia-valor-cab .transferencia-calc-aviso:empty { display: none; }
+/* Os campos do sistema têm regras fixas de altura, borda e fundo (index.html e ui-foundation.css); aqui o que muda é só o valor das variáveis que elas leem, sem !important novo. */
+.transferencia-tela .transferencia-linha { --campo-altura: 34px; --campo-respiro: 0; --ui-control-bg: transparent; --ui-border-base: transparent; --ui-input-color: var(--muted, #71717a); }
+.transferencia-tela .transferencia-valor-cab { --campo-altura: 56px; --campo-respiro: 0; --ui-control-bg: transparent; --ui-border-base: transparent; --ui-input-color: #fff; --ui-input-size: 32px; }
+/* Listas agrupadas (padrão Apple): título do assunto, quadro com uma linha por campo (nome à esquerda, valor à direita). */
+.transferencia-tela .transferencia-secao { display: grid; gap: 6px; min-width: 0; }
+.transferencia-tela .transferencia-secao-titulo { margin: 0; padding: 0 4px; font: 600 13px/18px var(--ui-font); color: var(--muted, #71717a); }
+.transferencia-tela .transferencia-quadro { display: grid; min-width: 0; border: 1px solid var(--layout-line, #dedee3); border-radius: 14px; background: var(--theme-card, #fff); overflow: hidden; }
+.transferencia-tela .transferencia-linha, .transferencia-tela label.transferencia-linha { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 14px; border-bottom: 1px solid var(--layout-line, #dedee3); min-width: 0; }
+.transferencia-tela .transferencia-quadro > :last-child { border-bottom: 0; }
+.transferencia-tela .transferencia-linha-rotulo { flex: none; max-width: 48%; font: 500 15px/20px var(--ui-font); color: var(--layout-ink, #27272a); }
+.transferencia-tela label.transferencia-linha > .transferencia-linha-controle, .transferencia-tela .transferencia-linha .transferencia-linha-controle { flex: 1 1 auto; min-width: 0; width: auto; min-height: 0; height: 100%; padding: 0; border: 0; background: transparent; box-shadow: none; text-align: right; text-align-last: right; font: 500 15px/20px var(--ui-font); color: var(--muted, #71717a); }
+.transferencia-tela .transferencia-linha .transferencia-linha-controle { --layout-line: transparent; }
+.transferencia-tela .transferencia-linha .compras-aniv-campo { flex: 1 1 auto; justify-content: flex-end; margin-left: auto; }
+.transferencia-tela .transferencia-linha .account-status-row { margin-left: auto; }
+.transferencia-tela label.transferencia-linha > .compras-remover { flex: none; }
+.transferencia-tela .transferencia-quadro .transferencia-lacres { display: grid; gap: 0; }
+.transferencia-tela .transferencia-quadro .transferencia-lacres .transferencia-linha:last-child { border-bottom: 0; }
+.transferencia-tela .transferencia-quadro .transferencia-hier, .transferencia-tela .transferencia-quadro .transferencia-contas { border: 0; border-radius: 0; }
 .transferencia-calc-painel { display: grid; gap: 8px; }
 .transferencia-calc-painel[hidden] { display: none; }
 .transferencia-calc-resumo { margin: 0; min-height: 16px; font: 600 12px/16px var(--ui-font); white-space: pre-wrap; }

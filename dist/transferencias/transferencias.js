@@ -62,7 +62,7 @@
     const soma = () => est.parcelas.reduce((n, p) => n + p.c, 0);
     const por = (t) => est.parcelas.filter((p) => p.t === t).reduce((n, p) => n + p.c, 0);
     const SIMBOLO = { '*': '×', '/': '÷' };
-    const tela = entrada('text', '', { readOnly: true, placeholder: 'Toque para digitar o valor', inputMode: 'none', autocomplete: 'off' });
+    const tela = entrada('text', '', { readOnly: true, placeholder: 'R$ 0,00', inputMode: 'none', autocomplete: 'off' });
     tela.classList.add('transferencia-calc-tela'); tela.setAttribute('aria-label', rotulo); tela.setAttribute('aria-expanded', 'false');
     const resumo = el('p', 'transferencia-calc-resumo'); resumo.setAttribute('role', 'status');
     const aviso = el('small', 'transferencia-calc-aviso'); aviso.setAttribute('role', 'alert');
@@ -173,7 +173,7 @@
       tecla('⌫', apagar, 'apagar', 'Apagar'), d(0), tecla('=', igual, 'igual', 'Fechar o total'), op('+', () => mais(1), 'Somar'));
     // A calculadora só aparece quando se toca na caixa do valor; fecha ao fechar a conta com "=", no Esc ou tocando de novo na caixa.
     const painel = el('div', 'transferencia-calc-painel'); painel.hidden = true; painel.id = 'transferencia-calc-painel';
-    painel.append(teclado, el('span', 'transferencia-calc-legenda', 'Sem escolha, o valor conta como Notas. Fechar o valor como:'), tipos, aviso);
+    painel.append(teclado, aviso);
     tela.setAttribute('aria-controls', painel.id);
     const mostrarPainel = (sim) => { painel.hidden = !sim; tela.setAttribute('aria-expanded', String(sim)); };
     tela.addEventListener('click', () => mostrarPainel(painel.hidden));
@@ -191,10 +191,9 @@
       else return;
       e.preventDefault();
     });
-    const no = el('div', 'compras-campo transferencia-valor');
-    const calc = el('div', 'transferencia-calc');
-    calc.append(tela, resumo, painel);
-    no.append(el('span', 'compras-rotulo', rotulo), calc);
+    // Cabeçalho do valor: todo laranja, grande. O valor (ligado à calculadora), Notas e Moedas ficam à vista; o teclado abre ao tocar no valor.
+    const no = el('div', 'transferencia-valor-cab');
+    no.append(el('span', 'transferencia-valor-rotulo', rotulo), tela, resumo, tipos, el('span', 'transferencia-calc-legenda', 'Toque em Notas ou Moedas para fechar o valor. Sem escolha, conta como Notas.'), painel);
     mostrar();
     return {
       no,
@@ -206,6 +205,18 @@
       },
     };
   }
+
+  /* Padrão de listas agrupadas: um título por assunto e, embaixo, um quadro com uma linha por campo (nome à esquerda, valor à direita). */
+  const linha = (rotulo, ...controles) => { const l = el('div', 'transferencia-linha'); l.append(el('span', 'transferencia-linha-rotulo', rotulo), ...controles); return l; };
+  // Linha com um campo: o nome fica dentro da linha (à esquerda) e tocar nele leva ao campo. É uma div (o rótulo padrão do sistema força espaçamento e fonte).
+  const linhaDe = (rotulo, controle) => {
+    const l = el('div', 'transferencia-linha'); const nome = el('span', 'transferencia-linha-rotulo', rotulo);
+    controle.classList.add('transferencia-linha-controle'); controle.setAttribute('aria-label', rotulo.replace(' *', ''));
+    l.onclick = (e) => { if (e.target === l || e.target === nome) controle.focus(); };
+    l.append(nome, controle); return l;
+  };
+  const quadro = (...linhas) => { const q = el('div', 'transferencia-quadro'); q.append(...linhas); return q; };
+  const secao = (titulo, ...filhos) => { const s = el('section', 'transferencia-secao'); s.append(el('h4', 'transferencia-secao-titulo', titulo), ...filhos); return s; };
 
   function formulario(contas) {
     const estado = { multiplo: false, lacres: [] };
@@ -219,11 +230,11 @@
         /* Origem e destino (um só, ou várias contas com Múltiplo destino) */
         const origem = seletor(contas.map((n) => [n, n]), '', '—');
         const destino = seletor([], '', '—');
-        const campoDestino = campo('Destino / Entrada *', destino);
+        const campoDestino = linhaDe('Destino / Entrada *', destino);
         const marcadas = new Set();
         const contagem = el('small', 'profiles-note'); contagem.setAttribute('role', 'status');
         const listaContas = el('div', 'compras-hier transferencia-contas'); listaContas.setAttribute('role', 'group'); listaContas.setAttribute('aria-label', 'Destino / Entrada: contas');
-        const campoContas = el('div', 'compras-campo'); campoContas.append(el('span', 'compras-rotulo', 'Destino / Entrada *'), listaContas, contagem);
+        const campoContas = secao('Destino / Entrada *', quadro(listaContas), contagem);
         const candidatas = () => contas.filter((n) => n !== origem.value);
         function contarContas() {
           const total = candidatas().length;
@@ -252,12 +263,14 @@
 
         /* Opções: Múltiplo destino e Transferência com lacre (+) */
         const multiplo = U.quadroSituacao('Múltiplo destino', false, { textos: ['Sim', 'Não'], aoMudar: (v) => { estado.multiplo = v; mostrar(); } });
+        const linhaMultiplo = linha('Múltiplo destino', multiplo.querySelector('.account-status-row'));
         const mais = el('button', 'shortcut-circle compras-redondo'); mais.type = 'button';
         mais.innerHTML = U.svg('<path d="M12 5v14M5 12h14"/>');
         const situacaoLacre = el('span', 'account-status-text');
         const linhaLacre = el('div', 'account-status-row'); linhaLacre.append(mais, situacaoLacre);
-        const quadroLacre = el('div', 'account-status compras-situacao-quadro'); quadroLacre.append(el('span', null, 'Transferência com lacre'), linhaLacre);
+        const linhaDoLacre = linha('Transferência com lacre', linhaLacre);
         const lacresBox = el('div', 'transferencia-lacres');
+        const secaoLacres = secao('Lacres', quadro(lacresBox));
 
         function desenharLacres(focar) {
           const n = estado.lacres.length;
@@ -269,11 +282,12 @@
             const rotulo = rotuloDoLacre(i, n);
             const campoLacre = entrada('text', v, { placeholder: 'Ex.: 001', maxLength: 100 });
             campoLacre.addEventListener('input', () => { estado.lacres[i] = campoLacre.value; });
-            const linha = el('div', 'transferencia-lacre-linha');
-            linha.append(campo(rotulo + ' *', campoLacre), U.botaoRemover('Remover ' + rotulo.toLowerCase(), () => { estado.lacres.splice(i, 1); desenharLacres(); }));
-            linha.entrada = campoLacre;
-            return linha;
+            const l = linhaDe(rotulo + ' *', campoLacre); l.classList.add('transferencia-lacre-linha');
+            l.append(U.botaoRemover('Remover ' + rotulo.toLowerCase(), () => { estado.lacres.splice(i, 1); desenharLacres(); }));
+            l.entrada = campoLacre;
+            return l;
           }));
+          secaoLacres.style.display = n ? '' : 'none';
           if (focar !== undefined && lacresBox.children[focar]) lacresBox.children[focar].entrada.focus();
         }
         // O 1º clique cria a final; os seguintes entram acima dela (a final desce e fica sempre por último).
@@ -289,9 +303,13 @@
         }
 
         const corpo = el('div', 'transferencia-corpo');
-        const opcoes = el('div', 'transferencia-opcoes'); opcoes.append(multiplo, quadroLacre);
         const obs = entrada('text', '', { placeholder: 'Ex.: Suprimento CX1 — reforço de troco', maxLength: 500 });
-        corpo.append(calc.no, dataTransf.no, campo('Origem / Saída *', origem), campoDestino, campoContas, opcoes, lacresBox, campo('Observação', obs));
+        const linhaData = linha('Data da transferência *', dataTransf.caixa, dataTransf.painel);
+        // Valor em cima (cabeçalho laranja); depois um assunto por vez: a transferência, as opções, os lacres e a observação.
+        corpo.append(calc.no,
+          secao('Transferência', quadro(linhaData, linhaDe('Origem / Saída *', origem), campoDestino)), campoContas,
+          secao('Opções', quadro(linhaMultiplo, linhaDoLacre)), secaoLacres,
+          secao('Observação', quadro(linhaDe('Observação', obs))));
         if (!contas.length) corpo.append(el('p', 'profiles-error', 'Nenhuma conta ativa cadastrada. Cadastre as contas em Transferências › Cadastros Geral.'));
         corpo.append(U.nota('Tela em construção: a transferência ainda não é gravada. O Salvar confere o preenchimento.'));
         form.append(corpo);
