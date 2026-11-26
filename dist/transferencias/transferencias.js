@@ -107,9 +107,6 @@
       const partes = [['notas', 'notas'], ['moedas', 'moedas']].filter(([t]) => por(t) !== 0).map(([t, nome]) => reais(por(t)) + ' ' + nome);
       resumo.textContent = est.parcelas.length ? (partes.length ? partes.join('   ') + '   = ' : '= ') + reais(soma()) : '';
       tipos.atualizar('');
-      // Notas e Moedas fecham o termo: só valem com um termo completo.
-      const completo = Boolean(termo().c);
-      tipos.querySelectorAll('button').forEach((b) => { b.disabled = !completo; });
     };
     const digito = (d) => {
       aviso.textContent = '';
@@ -129,9 +126,11 @@
       mostrar();
     };
     // Tocar em Notas ou Moedas fecha o termo como parcela desse tipo e deixa a caixa pronta para o próximo.
+    // Notas e Moedas: com um termo completo, somam o valor como notas ou moedas; em qualquer caso abrem a calculadora (tocar neles já entra nela).
     function escolherTipo(v) {
       if (!est.fechado && termo().c) comprometer(v);
       mostrar();
+      mostrarPainel(true);
     }
     // + e −: fecham o termo (como notas, se nada foi escolhido) e dizem se o próximo termo soma ou subtrai.
     const mais = (sinal) => {
