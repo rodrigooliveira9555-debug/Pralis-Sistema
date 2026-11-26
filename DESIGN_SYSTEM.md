@@ -1560,3 +1560,6 @@ Ao passar o mouse, **só o miolo** é sombreado (14%, 24% no escuro); a **borda 
 ### Contas em linha que abre e barra de baixo de vidro de verdade (26/11/2026, Rodrigo)
 - Origem e Destino (um só): mesma linha que se abre para baixo do Múltiplo destino — resumo e seta; embaixo, contas com marca redonda, ícone CNT, nome e situação. Tocar numa conta escolhe e recolhe; fora ou Esc recolhe. Substitui o painel flutuante.
 - Nas janelas (`shell-dialog`), a barra de baixo flutua sobre o conteúdo, que passa por trás dela com desfoque; o conteúdo ganha folga no fim. Ainda não aplicada nas telas de setor (`#sector-view`).
+
+### Barra de baixo no vidro da Apple (26/11/2026, Rodrigo)
+Película clara uniforme (degradê suave de branco translúcido; no escuro, de cinza-azulado), desfoque forte (34 px, saturação 1,8), fio de luz no topo e na base e sombra macia. Variáveis `--vidro-fundo`, `--vidro-borda`, `--vidro-sombra`. Botões mantêm o padrão (transparentes com fio fino; cheios na cor do cabeçalho ao passar).

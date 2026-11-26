@@ -261,14 +261,14 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tool
  body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-home-logo:hover{background:color-mix(in srgb,var(--menu-accent,#7c3aed) 22%,transparent)!important}
 }
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-home-logo .people-footer-symbol{width:100%;height:100%}
-body.dark-theme{--vidro-fundo:rgba(40,38,48,.45);--vidro-borda:rgba(255,255,255,.12);--vidro-borda-botao:rgba(255,255,255,.24)}
+body.dark-theme{--vidro-fundo:linear-gradient(135deg,rgba(70,68,84,.55),rgba(30,28,40,.42));--vidro-borda:rgba(255,255,255,.16);--vidro-borda-botao:rgba(255,255,255,.24);--vidro-sombra:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(255,255,255,.05)}
 /* Menu rápido (Configurar menu rápido) no mesmo padrão dos painéis flutuantes (data, hora, anexos): cartão cinza do fundo das telas, borda fina, cantos de 14 px, sombra de painel e respiro de 12 px. */
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options{background:var(--layout-gap,#f5f5f7);border:1px solid var(--layout-line,#dedee3);border-radius:14px;box-shadow:0 8px 24px rgb(0 0 0 / .14);padding:12px;gap:8px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options .people-options-heading{background:transparent;padding:2px 4px 10px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options .people-options-inner{background:var(--theme-card,#fff);border:1px solid var(--layout-line,#dedee3);border-radius:12px;overflow:hidden}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options .people-options-heading::after{background:transparent}
 /* O desfoque do vidro fica numa camada atrás (::before) e não na barra: um filtro na própria barra faria dela o referencial dos painéis de posição fixa que moram dentro dela (o painel de datas, por exemplo), e eles abririam fora do lugar. */
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;pointer-events:none;-webkit-backdrop-filter:blur(20px) saturate(1.7);backdrop-filter:blur(20px) saturate(1.7)}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;pointer-events:none;-webkit-backdrop-filter:blur(34px) saturate(1.8) brightness(1.04);backdrop-filter:blur(34px) saturate(1.8) brightness(1.04)}
 /* Menu rápido: o miolo é um quadro branco de linhas brancas separadas por fio cinza (mesmo desenho dos painéis de data e hora). */
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options .people-toolbar-row{background:transparent;border-top:1px solid var(--layout-line,#dedee3)}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options .people-toolbar-row:first-child{border-top:0}
@@ -290,3 +290,6 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-head
 /* Barra de baixo toda de vidro de verdade (26/11/2026, Rodrigo): nas janelas a barra flutua SOBRE o conteúdo (em vez de ocupar uma faixa embaixo), que passa por trás dela com o desfoque; o conteúdo ganha folga no fim para o último item não ficar escondido. */
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.shell-dialog:not(.people-bar-top) .panel>.people-bottom-header{position:absolute;left:0;right:0;bottom:0}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell.shell-dialog:not(.people-bar-top) .panel>.content{padding-bottom:calc(60px + 2 * var(--margem-lateral,14px))}
+/* Vidro no estilo Apple (Liquid Glass), 26/11/2026: película clara e uniforme (degradê suave de branco translúcido), desfoque forte que dilui o que passa por trás, fio de luz no topo e na base e sombra macia. */
+:root{--vidro-fundo:linear-gradient(135deg,rgba(255,255,255,.66),rgba(255,255,255,.42));--vidro-borda:rgba(255,255,255,.75);--vidro-sombra:0 10px 30px rgba(29,29,31,.12),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.35)}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header{box-shadow:var(--vidro-sombra)}
