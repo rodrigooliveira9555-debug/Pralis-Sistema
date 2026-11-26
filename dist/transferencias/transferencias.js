@@ -168,11 +168,13 @@
     const op = (texto, acao, nome) => tecla(texto, acao, 'operador', nome);
     teclado.append(d(7), d(8), d(9), op('÷', () => vezes('/'), 'Dividir'), d(4), d(5), d(6), op('×', () => vezes('*'), 'Multiplicar'), d(1), d(2), d(3), op('−', () => mais(-1), 'Subtrair'),
       (() => { const t = tecla('', apagar, 'apagar', 'Apagar'); t.innerHTML = U.svg('<path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1ZM12.5 9.5l5 5M17.5 9.5l-5 5"/>'); return t; })(), d(0), tecla('=', igual, 'igual', 'Fechar o total'), op('+', () => mais(1), 'Somar'));
-    // A calculadora só aparece quando se toca na caixa do valor; fecha ao fechar a conta com "=", no Esc ou tocando de novo na caixa.
+    // A calculadora só aparece quando se toca na caixa do valor; fecha ao fechar a conta com "=", no Esc, tocando de novo na caixa ou tocando fora.
     const painel = el('div', 'transferencia-calc-painel'); painel.hidden = true; painel.id = 'transferencia-calc-painel';
     painel.append(el('span', 'transferencia-calc-legenda', 'Toque em Notas ou Moedas para fechar o valor. Sem escolha, conta como Notas.'), teclado, aviso);
     tela.setAttribute('aria-controls', painel.id);
-    const mostrarPainel = (sim) => { painel.hidden = !sim; tela.setAttribute('aria-expanded', String(sim)); };
+    // Tocar fora do quadro do valor também fecha a calculadora (o que já foi digitado fica como está).
+    const fora = (e) => { if (!no.isConnected) document.removeEventListener('pointerdown', fora); else if (!no.contains(e.target)) mostrarPainel(false); };
+    const mostrarPainel = (sim) => { painel.hidden = !sim; tela.setAttribute('aria-expanded', String(sim)); document.removeEventListener('pointerdown', fora); if (sim) document.addEventListener('pointerdown', fora); };
     tela.addEventListener('click', () => mostrarPainel(painel.hidden));
     // Teclado do computador: números, Backspace, + − * / (x também multiplica), N e M (Notas e Moedas) e "=" (ou Enter, que não envia o formulário).
     // Digitar com a calculadora fechada abre.

@@ -945,5 +945,10 @@ body.dark-theme { --mascara-fundo: 24%; }
 .transferencia-tela input.compras-selecao-bolinha:checked { border-color: var(--menu-accent); }
 .transferencia-tela input.compras-selecao-bolinha:not(:checked) { background-color: transparent; }
 /* Notas e Moedas no quadro laranja: a mesma máscara dos outros botões (miolo no sombreado da cor da tela, borda como está); o texto passa à cor escura da tela para continuar legível. */
-@media (hover: hover) { .transferencia-tela .transferencia-valor-cab .compras-chip:not(.ativo):not(:disabled):hover { background: color-mix(in srgb, var(--menu-accent) var(--mascara-fundo, 14%), var(--theme-card, #fff)); color: var(--panel-text, #9a3412); } }
+@media (hover: hover) { .transferencia-tela .transferencia-valor-cab .compras-chip:not(.ativo):hover { background: color-mix(in srgb, var(--menu-accent) var(--mascara-fundo, 14%), var(--theme-card, #fff)); color: var(--panel-text, #9a3412); } }
 .transferencia-tela .transferencia-valor-cab .compras-chip:not(.ativo):not(:disabled):active { background: #fff; border-color: #fff; color: var(--panel-text, #9a3412); }
+/* A caixa do valor também reage ao mouse (a máscara única): miolo sombreado, texto escuro; a borda continua a mesma. */
+@media (hover: hover) {
+  .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:hover { background: color-mix(in srgb, var(--menu-accent) var(--mascara-fundo, 14%), var(--theme-card, #fff)); color: var(--panel-text, #9a3412); }
+  .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:hover::placeholder { color: color-mix(in srgb, var(--panel-text, #9a3412) 65%, transparent); }
+}
