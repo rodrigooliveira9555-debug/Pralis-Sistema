@@ -13,7 +13,6 @@ body.dark-theme :is(.agenda-view, .agenda-dialog, .agenda-alertas) { --agenda-de
 /* No escuro, o texto de destaque segue o roxo (as peças do Compras trazem o verde). */
 body.dark-theme :is(.agenda-view, .agenda-dialog) .btn.secondary:not(.perigo-texto) { color: var(--agenda-destaque); }
 body.dark-theme :is(.agenda-view, .agenda-dialog) .tom-marca { background: color-mix(in srgb, var(--menu-accent) 30%, var(--theme-card)); color: var(--agenda-destaque); }
-body.dark-theme :is(.agenda-view, .agenda-dialog) .compras-chip.ativo { color: #f2f1f6; }
 
 .agenda-ponto { width: 8px; height: 8px; border-radius: 50%; background: var(--lista-cor, var(--menu-accent)); flex: 0 0 auto; display: inline-block; }
 .agenda-ponto.apagado { opacity: .3; }

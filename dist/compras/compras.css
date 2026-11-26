@@ -46,12 +46,13 @@ body.dark-theme :is(.compras-view, .compras-dialog) .btn.secondary { color: #a7e
 .compras-filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
 .compras-grupo-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .compras-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+/* CHIPS (Rodrigo, 26/11/2026): em repouso, cinza como os botões redondos; ao passar o mouse, o sombreado da cor do cabeçalho (ui-foundation.css,
+   "BOTÕES DE RODAPÉ AO PASSAR O MOUSE"); marcado, a cor CHEIA do cabeçalho com o texto branco, como a chave ligada. */
 .compras-chip {
   font: 500 12px/16px var(--ui-font); padding: 6px 12px; border-radius: 999px; cursor: pointer;
-  border: 1px solid var(--layout-line, #dedee3); background: var(--theme-card, #fff); color: var(--layout-ink, #606066);
+  border: 1px solid transparent; background: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); color: var(--muted, #71717a);
 }
-.compras-chip.ativo { border-color: var(--layout-line, #dedee3); background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); color: var(--panel-text, #12672e); font-weight: 600; }
-body.dark-theme .compras-chip.ativo { color: #f2f1f6; }
+.compras-chip.ativo { border-color: var(--menu-accent); background: var(--menu-accent); color: #fff; font-weight: 600; }
 .compras-interruptor { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); cursor: pointer; }
 .compras-interruptor > small { flex-basis: 100%; margin: 0; }
 .compras-interruptor input:not(.compras-selecao-bolinha) { accent-color: var(--menu-accent); width: 20px; height: 20px; }
@@ -102,8 +103,8 @@ body:not(.dark-theme) .compras-linha.com-acoes:hover .compras-linha-texto b { co
 /* A divisória fina que fecha a coluna fixa do nome: o texto da coluna seguinte (e o título dela) começa a 12 px da linha, nunca encostado. */
 .compras-lista-grade > .compras-linha > .c-nome + .compras-celula { padding-left: 12px; box-sizing: border-box; }
 .compras-lista-grade.arrastando { cursor: grabbing; user-select: none; }
-/* Bolinhas do cabeçalho branco da lista (o "‹ ›" ao lado do título e o "+" na outra ponta): círculo cheio na cor do
-   menu de onde se veio (--menu-accent), com o desenho na cor da superfície, como os redondos do rodapé. */
+/* Bolinhas do cabeçalho branco da lista ("‹ ›", "!", "+"): tamanho e forma aqui; a cor segue a regra única dos botões redondos
+   (cinza em repouso, cor do cabeçalho ao passar; "DUAS REAÇÕES DIFERENTES", mais abaixo). */
 .compras-secao-cab .compras-redondo { flex: none; width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--menu-accent); color: var(--theme-surface, #fff); }
 /* Quantidade da lista: círculo do mesmo diâmetro da bolinha "+", ao lado dela, mas só com contorno e fundo claro na cor
    do menu, para não parecer botão. Com mais dígitos vira pílula. */
@@ -560,8 +561,6 @@ body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-sea
 /* Objeto do contrato: os três botões (Grupo de produtos, Grupo de despesas, Grupo de patrimônios) têm o mesmo tamanho. */
 .compras-objeto-origem .compras-titulo-botao{width:240px;max-width:100%;justify-content:space-between}
 /* Objeto do contrato: o texto do chip acompanha a cor da origem daquela lista. */
-.compras-objeto-origem .compras-chip.ativo{color:color-mix(in srgb,var(--menu-accent) 70%,#000)}
-body.dark-theme .compras-objeto-origem .compras-chip.ativo{color:#f2f1f6}
 .compras-atividade-vazia{border:0;padding:4px 0}
 /* Joinha (19/11/2026, Rodrigo): para cima é sempre azul (incluso, sim, aprovado) e para baixo é sempre vermelho (não incluso, não, reprovado), em qualquer origem. */
 .compras-atividades.incluidas :is(.compras-atividades-icone,.compras-atividade-marca),.joinha-cima{color:#2563eb}
@@ -1080,10 +1079,10 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell > .panel > .head[da
 @media (hover: hover) {
   .people-complete-pickbox > label:hover, .transferencia-tela .transferencia-quadro > :is(button, label, div):not(.transferencia-valor-cab):hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
 }
-/* DUAS REAÇÕES DIFERENTES (Rodrigo, 26/11/2026): (1) passar o mouse na LINHA sombreia a linha inteira; (2) passar o mouse no BOTÃO REDONDO da linha pinta só o botão com a cor do cabeçalho. Em repouso todo botão redondo de linha é um círculo cinza com o ícone cinza (o de excluir fica vermelho só ao passar). Vale para toda linha de qualquer tela. */
-body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferencia-linha, .compras-fieldset, .form-fields[data-quadro], .grupo-quadro, .people-complete-pickbox, .doc-capture-actions) :is(.compras-redondo, .shortcut-circle, .transferencia-circulo, .local-search-toggle):not(.x1):not(.x2) { --busca-fundo: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); --busca-borda: transparent; --busca-texto: var(--muted, #71717a); background: var(--busca-fundo); color: var(--busca-texto); border-color: transparent; box-shadow: none; }
-body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferencia-linha, .compras-fieldset, .form-fields[data-quadro], .grupo-quadro, .people-complete-pickbox, .doc-capture-actions) :is(.compras-redondo, .shortcut-circle, .transferencia-circulo, .local-search-toggle):not(.x1):not(.x2):not(:disabled):is(:hover, :active, :focus-visible) { --busca-fundo: var(--menu-accent); --busca-texto: #fff; background: var(--busca-fundo); color: var(--busca-texto); }
-body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferencia-linha, .compras-fieldset, .form-fields[data-quadro], .grupo-quadro) :is(.compras-redondo.perigo, .transferencia-circulo-excluir):not(.x1):not(:disabled):is(:hover, :active, :focus-visible) { --busca-fundo: var(--cicluz-danger, #e34343); background: var(--busca-fundo); }
+/* DUAS REAÇÕES DIFERENTES (Rodrigo, 26/11/2026; desde a mesma data vale também para os redondos do cabeçalho da lista — "‹ ›", "!" — e da linha de explicação): (1) passar o mouse na LINHA sombreia a linha inteira; (2) passar o mouse no BOTÃO REDONDO da linha pinta só o botão com a cor do cabeçalho. Em repouso todo botão redondo de linha é um círculo cinza com o ícone cinza (o de excluir fica vermelho só ao passar). Vale para toda linha de qualquer tela. */
+body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferencia-linha, .compras-fieldset, .form-fields[data-quadro], .grupo-quadro, .people-complete-pickbox, .doc-capture-actions, .compras-secao-cab, .compras-info-linha, .escolha-barra) :is(.compras-redondo, .shortcut-circle, .transferencia-circulo, .local-search-toggle, .escolha-expandir):not(.x1):not(.x2) { --busca-fundo: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); --busca-borda: transparent; --busca-texto: var(--muted, #71717a); background: var(--busca-fundo); color: var(--busca-texto); border-color: transparent; box-shadow: none; }
+body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferencia-linha, .compras-fieldset, .form-fields[data-quadro], .grupo-quadro, .people-complete-pickbox, .doc-capture-actions, .compras-secao-cab, .compras-info-linha, .escolha-barra) :is(.compras-redondo, .shortcut-circle, .transferencia-circulo, .local-search-toggle, .escolha-expandir):not(.x1):not(.x2):not(:disabled):is(:hover, :active, :focus-visible) { --busca-fundo: var(--menu-accent); --busca-texto: #fff; background: var(--busca-fundo); color: var(--busca-texto); }
+body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferencia-linha, .compras-fieldset, .form-fields[data-quadro], .grupo-quadro, .compras-secao-cab) :is(.compras-redondo.perigo, .transferencia-circulo-excluir):not(.x1):not(:disabled):is(:hover, :active, :focus-visible) { --busca-fundo: var(--cicluz-danger, #e34343); background: var(--busca-fundo); }
 /* LINHAS DE LISTA EM COLUNAS NA ALTURA PADRÃO (Rodrigo, 26/11/2026): a lista em grade não estica as linhas para encher a caixa (davam 100 e 120 px); cada linha tem 52 px (--linha-altura) e o cabeçalho das colunas, a altura própria dele. */
 .compras-lista-grade { align-content: start; grid-auto-rows: max-content; }
 .compras-lista-grade > .compras-linha:not(.compras-linha-cabecalho) { min-height: var(--linha-altura, 52px); align-items: center; }
@@ -1122,5 +1121,4 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .compras-info-icone { flex: none; display: inline-flex; align-items: center; justify-content: center; width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); border-radius: 999px; background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); color: var(--menu-accent); }
 .compras-info-icone svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .compras-info-texto { flex: 1 1 auto; min-width: 0; margin: 0; font: 500 13px/18px var(--ui-font, inherit); color: var(--muted, #71717a); }
-.compras-secao > .compras-info-linha .compras-info-fechar { flex: none; --busca-fundo: var(--layout-line, #e4e4e7); --busca-texto: var(--muted, #71717a); background: var(--busca-fundo); color: var(--busca-texto); border-color: transparent; }
-.compras-secao > .compras-info-linha .compras-info-fechar:is(:hover, :active, :focus-visible) { --busca-fundo: var(--menu-accent); --busca-texto: #fff; }
+.compras-secao > .compras-info-linha .compras-info-fechar { flex: none; }

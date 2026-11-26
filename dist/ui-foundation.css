@@ -424,7 +424,10 @@ body .btn.acao-com-circulo[hidden]{display:none}
 
 /* Ocorrências (06/11/2026): day stepper/shortcuts and the category model line. */
 .occurrences-day-tools,.occurrences-day-chips,.occurrences-model{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.occurrences-day-chips .btn.is-selected{border-color:var(--menu-accent,#7c3aed);background:color-mix(in srgb,var(--menu-accent,#7c3aed) 12%,transparent)}
+/* Dias das Ocorrências no padrão dos chips (Rodrigo, 26/11/2026): cinza em repouso, sombreado da cor do cabeçalho ao passar, cor cheia quando marcado. */
+.occurrences-day-chips .btn{--botao-fundo:color-mix(in srgb,var(--muted,#8e8e93) 18%,transparent);--botao-borda:transparent;--texto-vazado:var(--muted,#71717a)}
+@media (hover:hover){.occurrences-day-chips .btn:not(.is-selected):not(:disabled):hover{--botao-fundo:color-mix(in srgb,var(--menu-accent,#7c3aed) 30%,var(--theme-card,#fff));--texto-vazado:var(--layout-ink,#27272a)}}
+.occurrences-day-chips .btn.is-selected{--botao-fundo:var(--menu-accent,#7c3aed);--botao-borda:var(--menu-accent,#7c3aed);--texto-vazado:#fff}
 
 /* Estrutura organizacional (06/11/2026): inactive nodes stay visible, dimmed, with their history. */
 .location-node.is-inactive>.location-row{opacity:.6}.location-inactive-pill{margin-left:6px;background:var(--layout-line,#e5e5ea);color:var(--muted,#73737a)}
@@ -458,8 +461,7 @@ body .btn.acao-com-circulo[hidden]{display:none}
 .escolha-barra>.profiles-note{margin:0}
 /* Expandir / recolher tudo: um botão só, redondo e preenchido na cor do cabeçalho da janela. */
 /* A cor do cabeçalho da janela é a --menu-accent posta no próprio <dialog>; a barra a guarda antes que uma linha da árvore a troque. */
-dialog .escolha-barra{--cor-do-cabecalho:var(--menu-accent)}
-.escolha-barra .escolha-expandir{box-sizing:border-box;flex:0 0 32px;width:32px;min-width:32px;height:32px;min-height:32px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:var(--cor-do-cabecalho,var(--menu-accent,#7c3aed));color:#fff}
+.escolha-barra .escolha-expandir{box-sizing:border-box;flex:0 0 32px;width:32px;min-width:32px;height:32px;min-height:32px;padding:0;border:0;border-radius:50%;display:grid;place-items:center}
 .escolha-barra .escolha-expandir svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 /* A sigla de três letras cabe inteira no ícone menor (não quebra em duas linhas). */
 .location-tree.unidades-arvore .location-row>.location-icon{white-space:nowrap;letter-spacing:0;overflow:hidden}
@@ -865,7 +867,8 @@ dialog .form-fields[data-quadro]::before,.modal .form-fields[data-quadro]::befor
 @media (hover:hover){
  body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button.footer-save-accent:not(:disabled):hover{--botao-fundo:color-mix(in srgb,#000 18%,var(--menu-accent,var(--panel-color,#7c3aed)));--botao-borda:color-mix(in srgb,#000 18%,var(--menu-accent,var(--panel-color,#7c3aed)))}
  body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button:is(.footer-cancel-accent,.form-back-action):not(:disabled):hover{--botao-fundo:color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) var(--mascara-fundo,14%),var(--theme-card,#fff))}
- .compras-chip:not(.ativo):not(:disabled):hover{background:color-mix(in srgb,var(--menu-accent) var(--mascara-fundo,14%),var(--theme-card,#fff))}
+ /* Chip ao passar: o cinza de repouso dá lugar ao sombreado da cor do cabeçalho, mais forte que a máscara de linha para não parecer que o chip sumiu. */
+ .compras-chip:not(.ativo):not(:disabled):hover{background:color-mix(in srgb,var(--menu-accent) 30%,var(--theme-card,#fff));color:var(--layout-ink,#27272a)}
 }
 body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button.footer-save-accent:not(:disabled):active{--botao-fundo:color-mix(in srgb,#000 30%,var(--menu-accent,var(--panel-color,#7c3aed)))}
 body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button:is(.footer-cancel-accent,.form-back-action):not(:disabled):active{--botao-fundo:var(--menu-accent,var(--panel-color,#7c3aed));--botao-texto:#fff}
