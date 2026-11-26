@@ -273,7 +273,7 @@
     const lista = el('div', 'transferencia-anexos');
     const resumo = el('span', 'transferencia-linha-valor');
     // A seta diz que a linha abre outra área (um submenu); lá dentro estão os botões que ativam cada função.
-    const seta = el('span', 'transferencia-seta'); seta.setAttribute('aria-hidden', 'true'); seta.innerHTML = U.svg(ICONE.baixo);
+    const seta = el('span', 'transferencia-seta'); seta.setAttribute('aria-hidden', 'true'); seta.innerHTML = U.svg('<path d="m9 6 6 6-6 6"/>');
     const abre = el('button', 'transferencia-linha transferencia-linha-acao'); abre.type = 'button';
     abre.append(el('span', 'transferencia-linha-rotulo', 'Anexos'), resumo, seta);
     const audio = window.CicluzAudioNota ? window.CicluzAudioNota.criar({ rotulo: '', classe: 'transferencia-audio', aoSalvar: 'a transferência' }) : null;
@@ -347,8 +347,12 @@
         const dataTransf = campoDeData('Data da transferência *', R.diaNegocio(new Date()));
 
         /* Origem e destino (um só, ou várias contas com Múltiplo destino) */
-        const origem = seletor(contas.map((n) => [n, n]), '', '—');
-        const destino = seletor([], '', '—');
+        // Mesmo campo de escolha do cadastro (campoArvore): mostra a conta escolhida e, ao tocar, abre a janela com a lista de contas.
+        const coresJanela = () => ({ cor: cor(), corTexto: COR_TEXTO });
+        const escolhaDeConta = (rotulo, lista) => U.campoArvore({ rotulo, titulo: rotulo.replace(/ \*$/, ''), sigla: 'CNT', cores: coresJanela, rotuloBusca: 'Buscar conta', vazio: 'Nenhuma conta disponível.', textoVazio: '—', nos: () => lista().map((n) => ({ id: n, nome: n, ativo: true, folha: false, conta: 'Conta ativa' })) });
+        let origem; let destino;
+        origem = escolhaDeConta('Origem (−) / CNT *', () => contas);
+        destino = escolhaDeConta('Destino (+) / CNT *', () => candidatas());
         const campoDestino = linhaDe('Destino (+) / CNT *', destino);
         const marcadas = new Set();
         const contagem = el('small', 'profiles-note'); contagem.setAttribute('role', 'status');
@@ -368,7 +372,7 @@
         }
         function desenharDestinos() {
           const lista = candidatas(); const atual = destino.value;
-          destino.replaceChildren(new Option('—', ''), ...lista.map((n) => new Option(n, n))); destino.value = lista.includes(atual) ? atual : '';
+          destino.value = lista.includes(atual) ? atual : '';
           [...marcadas].forEach((n) => { if (!lista.includes(n)) marcadas.delete(n); });
           listaContas.replaceChildren(...lista.map((nome) => {
             const b = el('button', 'compras-hier-linha transferencia-conta'); b.type = 'button'; b.setAttribute('role', 'checkbox');

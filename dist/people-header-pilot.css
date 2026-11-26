@@ -40,7 +40,7 @@ body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view,.view,dialog,.dialog).ap
 /* The upper contour follows both upward corners, using the lower edge token. */
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel{border-bottom-width:0!important}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header button[hidden]{display:none!important}
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-home-logo{border:1px solid var(--vidro-borda-botao,rgba(110,110,125,.35))!important;box-shadow:none;background:transparent!important;padding:0}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-home-logo{border:0!important;box-shadow:none;background:transparent!important;padding:0}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .sort-az{font:600 11px/1 var(--ui-font);letter-spacing:0}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .sort-az[data-sort-mode="original"]{font-size:20px;padding:0}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-order-dots{display:flex;align-items:center;justify-content:center;width:100%;max-width:18px;height:100%;max-height:24px;margin:0;font:400 20px/1 var(--ui-font);letter-spacing:0}
@@ -269,3 +269,10 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-head
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options .people-options-heading::after{background:transparent}
 /* O desfoque do vidro fica numa camada atrás (::before) e não na barra: um filtro na própria barra faria dela o referencial dos painéis de posição fixa que moram dentro dela (o painel de datas, por exemplo), e eles abririam fora do lugar. */
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;pointer-events:none;-webkit-backdrop-filter:blur(20px) saturate(1.7);backdrop-filter:blur(20px) saturate(1.7)}
+/* Menu rápido: o miolo é um quadro branco de linhas brancas separadas por fio cinza (mesmo desenho dos painéis de data e hora). */
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options .people-toolbar-row{background:transparent;border-top:1px solid var(--layout-line,#dedee3)}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options .people-toolbar-row:first-child{border-top:0}
+/* Menu rápido: cabeçalho do painel no padrão dos painéis de data e hora — só o título em negrito, sem o círculo laranja. */
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options .people-options-heading{min-height:0;margin:0;color:var(--layout-ink,#606066)}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options .people-options-heading-icon{display:none}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options .people-options-heading b{color:var(--layout-ink,#606066);font:600 var(--ui-text,14px)/20px var(--ui-font)}

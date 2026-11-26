@@ -1533,3 +1533,10 @@ Só nesta tela, para testar antes de valer para as outras (desenho do Rodrigo em
 - **Linha que abre outra área leva seta, não +:** a linha **Anexos** (e o Destino do Múltiplo destino) mostra a **seta para baixo** (`.transferencia-seta`), porque abre um submenu; os botões que ativam cada função ficam lá dentro. O **+ em círculo** fica só onde o toque **cria** algo (adicionar retorno).
 - **Tema escuro da Nova Transferência:** campos sem caixa (a regra do tema pinta o campo com `--theme-field` e `--layout-line`; dentro das linhas esses dois valem `transparent`), a **seta do select** volta (entra dentro de `--theme-field`, porque o tema usa `background: var(--theme-field) !important`, que apaga a imagem), a **chave desligada** tem trilho cinza escuro (#5f6573) e a ligada, o laranja do cabeçalho.
 - **Barra de baixo toda de vidro (claro e escuro):** fundo bem translúcido (42 % no claro, 45 % no escuro) com desfoque; os **botões e a logomarca são transparentes, com uma borda fina cinza e o ícone cinza** (`--vidro-borda-botao`); **só ficam cheios na cor do cabeçalho ao passar o mouse**, e a cor é a de cada origem (amarelo em Entradas, laranja em Transferências…). Botão ligado (`aria-pressed`/`aria-expanded`) continua cheio.
+
+### Menu rápido, logomarca, Anexos e contas (26/11/2026, Rodrigo)
+- Menu rápido (Configurar): cabeçalho só com o título em negrito (sem círculo laranja); miolo é quadro branco de linhas brancas com fio cinza, igual aos painéis de data e hora.
+- Logomarca do meio da barra de baixo: sozinha, sem círculo nem contorno.
+- Linha que abre outro menu de escolha (Anexos) termina em seta para a **direita**; o + só onde o toque cria algo.
+- Origem e Destino da Nova Transferência usam o campo de escolha do cadastro (`U.campoArvore`, lista de contas em janela).
+- Tema escuro: texto dos botões cheios é "vazado" (cor do fundo da tela) via `--texto-vazado`; por ora só na Nova Transferência. Atenção: sobre azul e roxo o contraste cai (~3:1) — decidir se vale para todo o sistema.

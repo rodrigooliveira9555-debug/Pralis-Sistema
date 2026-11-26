@@ -912,3 +912,8 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 body.dark-theme .transferencia-tela .transferencia-linha select { --theme-field: transparent var(--ui-select-down) no-repeat right 12px center / 18px 18px; }
 body.dark-theme .transferencia-tela .account-status-switch { --theme-surface: #5f6573; }
 body.dark-theme .transferencia-tela .account-status-switch[aria-checked="true"] { --theme-surface: var(--menu-accent); }
+/* Origem e destino: o campo de escolha do cadastro dentro da linha, liso como os outros campos da linha. */
+.transferencia-tela .transferencia-linha .compras-arvore-campo { border-color: transparent; background: transparent; box-shadow: none; }
+.transferencia-tela .transferencia-linha .compras-arvore-campo:hover { border-color: transparent; }
+/* Escuro: o texto dos botões cheios é vazado — mostra a cor do fundo da tela (preto no escuro, branco no claro). */
+body.dark-theme .transferencia-tela { --texto-vazado: var(--theme-surface, #222128); }
