@@ -49,7 +49,7 @@
     const tx = el('div', 'ds-modelo-cab-texto'); const t = el('b', null, 'Título da tela'); const s = el('small', null, 'Origem / Submenu / Nome da tela'); t.append(marca(2)); s.append(marca(3)); tx.append(t, s);
     const i1 = el('span', 'ds-modelo-cab-ponto'); i1.append(ic, marca(1)); cab.append(i1, tx);
     const leg = el('dl', 'profiles-info'); [['1 — Ícone', 'Caixa de 30 px, desenho de 21 px. É o ícone do item que abriu a tela.'], ['2 — Título', '16 px, peso 600, branco.'], ['3 — Subtítulo', '11 px, branco: o caminho até a tela.'], ['A faixa', '58 px de altura, na cor da origem, com a curva "para baixo" nos cantos (duas curvas de 16 px logo abaixo) e 14 px de respiro nas laterais.']].forEach(([k, v]) => leg.append(el('dt', null, k), el('dd', null, v)));
-    const fundo = el('div', 'ds-modelo-fundo'); fundo.append(cab, el('div', 'ds-modelo-curva')); caixa.append(fundo, leg); return caixa;
+    const fundo = el('div', 'ds-modelo-fundo'); const corpo = el('div', 'ds-modelo-corpo'); corpo.append(el('span')); fundo.append(cab, el('div', 'ds-modelo-curva'), corpo); caixa.append(fundo, leg); return caixa;
   }
   function modeloBarra() {
     const caixa = el('div', 'ds-modelo compras-largo'); const barra = el('div', 'ds-modelo-barra');

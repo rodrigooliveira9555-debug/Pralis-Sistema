@@ -1706,3 +1706,6 @@ Todo exemplo de campo da tela Design System (Campos, Máscaras, Quadros e Moldur
 
 ### 23. Modelos do cabeçalho e da barra na tela Design System (26/11/2026, Rodrigo)
 O modelo do cabeçalho mostra o padrão atual: faixa reta no alto (sem cantos arredondados em volta) e a curva "para baixo" nos cantos de baixo, sobre o fundo cinza da tela. O modelo da barra de baixo é de vidro (película translúcida, botões transparentes com fio cinza, logomarca sem círculo) sobre uma faixa colorida para mostrar a transparência. O desenho antigo (cabeçalho com todos os cantos arredondados, barra branca com botões coloridos) não existe mais.
+
+### 24. Cantos do cabeçalho sem tarja e modelo com o quadro abaixo (26/11/2026, Rodrigo)
+O fio de 1 px do cabeçalho padrão (cor clara) aparecia como uma tarja branca nos dois cantos da curva em todas as telas; agora ele vale a cor do cabeçalho (`--layout-line: var(--menu-accent)` no `.head[data-header-standard]`). O modelo do cabeçalho na tela Design System mostra, abaixo da curva, a tela cinza com o primeiro quadro branco a 14 px dos lados, para a curva acompanhar o contorno do quadro como no app.
