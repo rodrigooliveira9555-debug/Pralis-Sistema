@@ -272,9 +272,10 @@
     const anexos = [];
     const lista = el('div', 'transferencia-anexos');
     const resumo = el('span', 'transferencia-linha-valor');
-    const mais = el('span', 'transferencia-circulo'); mais.setAttribute('aria-hidden', 'true'); mais.innerHTML = U.svg(ICONE.mais);
+    // A seta diz que a linha abre outra área (um submenu); lá dentro estão os botões que ativam cada função.
+    const seta = el('span', 'transferencia-seta'); seta.setAttribute('aria-hidden', 'true'); seta.innerHTML = U.svg(ICONE.baixo);
     const abre = el('button', 'transferencia-linha transferencia-linha-acao'); abre.type = 'button';
-    abre.append(el('span', 'transferencia-linha-rotulo', 'Anexos'), resumo, mais);
+    abre.append(el('span', 'transferencia-linha-rotulo', 'Anexos'), resumo, seta);
     const audio = window.CicluzAudioNota ? window.CicluzAudioNota.criar({ rotulo: '', classe: 'transferencia-audio', aoSalvar: 'a transferência' }) : null;
     const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-data-painel transferencia-anexos-painel');
     const vistaMenu = el('div', 'transferencia-anexos-vista'); const vistaAudio = el('div', 'transferencia-anexos-vista');
