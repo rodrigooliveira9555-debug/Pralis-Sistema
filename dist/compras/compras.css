@@ -1088,8 +1088,31 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .compras-lista-grade { align-content: start; grid-auto-rows: max-content; }
 .compras-lista-grade > .compras-linha:not(.compras-linha-cabecalho) { min-height: var(--linha-altura, 52px); align-items: center; }
 @media (max-width: 600px) {
-  :is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > .compras-rotulo { flex: 0 1 60%; max-width: 60%; }
+  :is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > .compras-rotulo { flex: 0 1 auto; max-width: 60%; }
   :is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > :not(.compras-rotulo):not(small) { flex: 1 1 0; min-width: 0; }
 }
 /* Linha de lista com 52 px também no celular: nome e subtítulo em UMA linha cada, com reticências (o nome completo abre ao tocar na linha). */
 .compras-lista > .compras-linha.com-acoes .compras-linha-texto :is(b, small) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }
+/* VND - Horário de Funcionamento (26/11/2026): painel de ícones do identificador e a coluna "Dias e horas" com uma faixa por linha. */
+.compras-icone-painel { width: min(340px, calc(100vw - 32px)); }
+.compras-icone-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; max-height: 260px; overflow-y: auto; padding: 4px; }
+.compras-icone-opcao { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); color: var(--layout-ink, #27272a); cursor: pointer; }
+.compras-icone-opcao svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.compras-icone-opcao:hover { background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); }
+.compras-icone-opcao[aria-pressed="true"] { border-color: var(--menu-accent); background: var(--menu-accent); color: var(--panel-text, #fff); }
+.compras-horario-faixas { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Lista de horários: a mesma grade de Clientes (ícone ou sigla, nome fixo à esquerda, Dias e horas, Situação, seta). */
+.compras-linha.grade-horario-funcionamento{grid-template-columns:64px var(--w-nome,minmax(170px,1fr)) var(--w-faixas,minmax(260px,2fr)) 72px 24px;width:max-content;min-width:100%;background:var(--theme-card,#fff)}
+.compras-linha.grade-horario-funcionamento>*{grid-row:1;min-width:0}
+.compras-linha.grade-horario-funcionamento>.compras-linha-icones{grid-column:1;position:sticky;left:0;z-index:2;align-self:stretch;align-items:center;background:inherit;padding-left:12px;margin-left:-12px}
+.compras-linha.grade-horario-funcionamento>.c-nome{grid-column:2;position:sticky;left:76px;z-index:1;align-self:stretch;display:flex;align-items:center;background:inherit;box-shadow:1px 0 0 var(--layout-line,#dedee3);padding-right:8px}
+.compras-linha.grade-horario-funcionamento>.c-faixas{grid-column:3;overflow:hidden}
+.compras-linha.grade-horario-funcionamento>.account-list-state,.compras-linha.grade-horario-funcionamento>.c-estado{grid-column:4}
+.oculta-faixas{--w-faixas:24px}
+.oculta-faixas .grade-horario-funcionamento:not(.compras-linha-cabecalho)>.c-faixas,.oculta-faixas .compras-linha-cabecalho.grade-horario-funcionamento>.c-faixas>.compras-coluna-titulo{display:none}
+.compras-linha.grade-horario-funcionamento>.account-action-toggle{grid-column:5;position:sticky;right:0;z-index:2;align-self:stretch;height:auto;background:inherit}
+.compras-linha.grade-horario-funcionamento>.account-row-actions:not([hidden]){grid-column:4;grid-row:1;justify-self:end;position:sticky;right:32px;z-index:2;background:inherit}
+.compras-linha.grade-horario-funcionamento:has(>.account-row-actions:not([hidden]))>.account-list-state{visibility:hidden}
+@container lista-grade (max-width:519px){.compras-linha.grade-horario-funcionamento{--w-nome:120px;--w-faixas:200px}}
+/* Botão redondo sozinho na linha (Ícone do identificador, Remover faixa): fica na ponta direita, como o relógio das horas. */
+.compras-fieldset > .compras-campo > :is(.compras-icone-escolhido, .compras-remover) { margin-left: auto; margin-right: 0; }
