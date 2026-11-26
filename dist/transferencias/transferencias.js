@@ -255,74 +255,76 @@
   }
 
   /**
-   * Anexos: uma linha ("Anexos", o resumo e o + em círculo cinza) que abre, de baixo para cima, um MENU INFERIOR com as opções: Gravar áudio, Gravar vídeo,
-   * Anexar áudio, Anexar vídeo, Anexar imagem e Anexar documento. Cada opção é uma linha com o nome e o ícone redondo à direita; ao passar o dedo ou o mouse
-   * o círculo fica laranja. Tocar fora, Cancelar ou Esc fecha. Gravar áudio usa a peça única de gravação do sistema (audio-nota.js) e abre o gravador embaixo
-   * da linha; Gravar vídeo abre a câmera no celular (no computador, o seletor de arquivos). Cada anexo vira uma linha com ícone ou miniatura, nome, tamanho e remover.
+   * Anexos: uma linha ("Anexos", o resumo e o + em círculo cinza) que, ao tocar, abre um painel flutuante no MESMO padrão do calendário e da hora
+   * (mesma largura, mesma caixa, fecha tocando fora ou com Esc). O painel tem as opções (Gravar áudio, Gravar vídeo, Anexar áudio, Anexar vídeo,
+   * Anexar imagem e Anexar documento), cada uma com o nome à esquerda e o ícone redondo à direita; ao tocar ou passar, o círculo fica laranja.
+   * Gravar áudio troca o painel pelo gravador do sistema (audio-nota.js), dentro do próprio anexo; "Anexar gravação" põe o áudio na lista.
+   * Gravar vídeo abre a câmera no celular (no computador, o seletor de arquivos). Cada anexo vira uma linha com ícone ou miniatura, nome, tamanho e remover.
    * Tudo fica só na tela por enquanto (a transferência ainda não é gravada).
    */
-  function blocoAnexos(dlg) {
+  function blocoAnexos() {
     const anexos = [];
     const lista = el('div', 'transferencia-anexos');
     const resumo = el('span', 'transferencia-linha-valor');
     const mais = el('span', 'transferencia-circulo'); mais.setAttribute('aria-hidden', 'true'); mais.innerHTML = U.svg(ICONE.mais);
-    const abre = el('button', 'transferencia-linha transferencia-linha-acao'); abre.type = 'button'; abre.setAttribute('aria-haspopup', 'dialog');
+    const abre = el('button', 'transferencia-linha transferencia-linha-acao'); abre.type = 'button';
     abre.append(el('span', 'transferencia-linha-rotulo', 'Anexos'), resumo, mais);
     const audio = window.CicluzAudioNota ? window.CicluzAudioNota.criar({ rotulo: '', classe: 'transferencia-audio', aoSalvar: 'a transferência' }) : null;
-    const gravador = el('div', 'transferencia-linha transferencia-linha-audio'); gravador.hidden = true;
-    if (audio) { const topo = el('div', 'transferencia-linha-topo'); topo.append(selo('mic'), el('span', 'transferencia-linha-rotulo', 'Gravar áudio')); gravador.append(topo, audio.no); }
+    const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-data-painel transferencia-anexos-painel');
+    const vistaMenu = el('div', 'transferencia-anexos-vista'); const vistaAudio = el('div', 'transferencia-anexos-vista');
+    painel.append(vistaMenu, vistaAudio);
+    const abrirPainel = U.flutuante(abre, painel);
     const resumir = () => { resumo.textContent = anexos.length ? anexos.length + (anexos.length === 1 ? ' anexo' : ' anexos') : 'Nenhum'; };
+    function vista(qual) { vistaMenu.hidden = qual !== 'menu'; vistaAudio.hidden = qual !== 'audio'; if (!painel.hidden) abrirPainel(true); }
 
+    function adicionar(item, icone, nomeArquivo, detalhe) {
+      const l = el('div', 'transferencia-linha transferencia-anexo');
+      const miniatura = icone === 'imagem' && item.url ? el('img', 'transferencia-anexo-img') : selo(icone);
+      if (icone === 'imagem' && item.url) { miniatura.src = item.url; miniatura.alt = ''; }
+      const nome = el('span', 'transferencia-anexo-nome', nomeArquivo); nome.append(el('small', null, detalhe));
+      const remover = el('button', 'transferencia-anexo-remover'); remover.type = 'button'; remover.setAttribute('aria-label', 'Remover ' + nomeArquivo); remover.innerHTML = U.svg(ICONE.fechar);
+      remover.onclick = () => { if (item.url) URL.revokeObjectURL(item.url); if (item.gravacao && audio) audio.limpar(); anexos.splice(anexos.indexOf(item), 1); l.remove(); resumir(); };
+      item.linha = l; l.append(miniatura, nome, remover); anexos.push(item); lista.append(l); resumir();
+    }
     function escolher(aceita, icone, camera) {
       const entradaArq = el('input'); entradaArq.type = 'file'; entradaArq.accept = aceita; entradaArq.multiple = !camera;
       if (camera) entradaArq.setAttribute('capture', 'environment');
-      entradaArq.onchange = () => { [...entradaArq.files].forEach((f) => adicionar(f, icone)); };
+      entradaArq.onchange = () => { [...entradaArq.files].forEach((f) => adicionar({ arquivo: f, url: URL.createObjectURL(f) }, icone, f.name, tamanho(f.size))); };
       entradaArq.click();
     }
-    function adicionar(arquivo, icone) {
-      const item = { arquivo, url: URL.createObjectURL(arquivo) };
-      const l = el('div', 'transferencia-linha transferencia-anexo');
-      const miniatura = icone === 'imagem' ? el('img', 'transferencia-anexo-img') : selo(icone);
-      if (icone === 'imagem') { miniatura.src = item.url; miniatura.alt = ''; }
-      const nome = el('span', 'transferencia-anexo-nome', arquivo.name); nome.append(el('small', null, tamanho(arquivo.size)));
-      const remover = el('button', 'transferencia-anexo-remover'); remover.type = 'button'; remover.setAttribute('aria-label', 'Remover ' + arquivo.name); remover.innerHTML = U.svg(ICONE.fechar);
-      remover.onclick = () => { URL.revokeObjectURL(item.url); anexos.splice(anexos.indexOf(item), 1); l.remove(); resumir(); };
-      l.append(miniatura, nome, remover); anexos.push(item); lista.append(l); resumir();
-    }
 
-    // As opções, na ordem pedida.
+    // Vista do menu: o título e as opções, na ordem pedida.
     const OPCOES = [
-      ['mic', 'Gravar áudio', () => { if (audio) { gravador.hidden = false; gravador.scrollIntoView({ block: 'nearest' }); } }],
+      ['mic', 'Gravar áudio', () => { vista('audio'); }, true],
       ['camera', 'Gravar vídeo', () => escolher('video/*', 'video', true)],
       ['audio', 'Anexar áudio', () => escolher('audio/*', 'audio')],
       ['video', 'Anexar vídeo', () => escolher('video/*', 'video')],
       ['imagem', 'Anexar imagem', () => escolher('image/*', 'imagem')],
       ['documento', 'Anexar documento', () => escolher('.pdf,.doc,.docx,.xls,.xlsx,.ods,.odt,.csv,.txt,application/pdf', 'documento')],
     ];
-    let folha = null;
-    function fechar() { if (!folha) return; const f = folha; folha = null; f.classList.remove('aberta'); setTimeout(() => f.remove(), 180); document.removeEventListener('keydown', esc, true); abre.focus(); }
-    function esc(e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fechar(); } }
-    function abrir() {
-      if (folha) return;
-      folha = el('div', 'transferencia-folha'); folha.setAttribute('role', 'dialog'); folha.setAttribute('aria-modal', 'true'); folha.setAttribute('aria-label', 'Anexar');
-      const fundo = el('div', 'transferencia-folha-fundo'); fundo.onclick = fechar;
-      const corpo = el('div', 'transferencia-folha-corpo');
-      const grupo = quadro(...OPCOES.map(([icone, titulo, acao]) => {
-        const b = el('button', 'transferencia-linha transferencia-folha-op'); b.type = 'button';
-        const c = el('span', 'transferencia-circulo transferencia-circulo-grande'); c.setAttribute('aria-hidden', 'true'); c.innerHTML = U.svg(ICONE[icone]);
-        b.append(el('span', 'transferencia-linha-rotulo', titulo), c);
-        b.onclick = () => { fechar(); acao(); };
-        return b;
-      }));
-      const cancelar = el('button', 'transferencia-folha-cancelar', 'Cancelar'); cancelar.type = 'button'; cancelar.onclick = fechar;
-      corpo.append(el('p', 'transferencia-folha-titulo', 'Anexar'), grupo, cancelar);
-      folha.append(fundo, corpo); dlg.append(folha);
-      corpo.tabIndex = -1; requestAnimationFrame(() => { folha.classList.add('aberta'); corpo.focus({ preventScroll: true }); });
-      document.addEventListener('keydown', esc, true);
-    }
-    abre.onclick = abrir;
+    vistaMenu.append(el('p', 'transferencia-folha-titulo', 'Anexar'), quadro(...OPCOES.map(([icone, titulo, acao, ficaAberto]) => {
+      const b = el('button', 'transferencia-linha transferencia-folha-op'); b.type = 'button';
+      const c = el('span', 'transferencia-circulo transferencia-circulo-grande'); c.setAttribute('aria-hidden', 'true'); c.innerHTML = U.svg(ICONE[icone]);
+      b.append(el('span', 'transferencia-linha-rotulo', titulo), c);
+      b.onclick = () => { if (!ficaAberto) abrirPainel(false); acao(); };
+      return b;
+    })));
+
+    // Vista do gravador: voltar, o gravador do sistema e o botão que põe a gravação na lista.
+    const voltar = el('button', 'transferencia-folha-titulo transferencia-anexos-voltar'); voltar.type = 'button'; voltar.textContent = '‹ Anexar'; voltar.onclick = () => vista('menu');
+    const anexarGravacao = botao('Anexar gravação', () => {
+      if (!audio) return;
+      if (audio.gravando()) return U.avisar('Pare a gravação antes de anexar.');
+      if (!audio.temNovo()) return U.avisar('Grave um áudio antes de anexar.');
+      const antiga = anexos.find((x) => x.gravacao); if (antiga) { antiga.linha.remove(); anexos.splice(anexos.indexOf(antiga), 1); }
+      adicionar({ gravacao: true }, 'mic', 'Gravação de áudio', 'gravada agora');
+      abrirPainel(false); vista('menu');
+    }, 'btn');
+    vistaAudio.append(voltar, el('p', 'transferencia-folha-titulo', 'Gravar áudio'), ...(audio ? [audio.no, anexarGravacao] : [el('p', 'profiles-note', 'Gravação indisponível neste navegador.')]));
+    vista('menu');
+    abre.onclick = () => { if (painel.hidden) vista('menu'); abrirPainel(painel.hidden); };
     resumir();
-    const no = el('div', 'transferencia-opcao'); no.append(abre, gravador, lista);
+    const no = el('div', 'transferencia-opcao'); no.append(abre, painel, lista);
     return { no, audio, anexos };
   }
 
@@ -421,7 +423,7 @@
           if (!estado.multiplo) abrirMulti(false);
         }
 
-        const anexos = blocoAnexos(dlg);
+        const anexos = blocoAnexos();
         const obs = entrada('text', '', { placeholder: 'Ex.: Suprimento CX1 — reforço de troco', maxLength: 500 });
         const linhaData = linha('Data da transferência *', dataTransf.caixa, dataTransf.painel);
         const corpo = el('div', 'transferencia-corpo');

@@ -789,7 +789,7 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
   background: radial-gradient(circle at 100% 100%, transparent 15.5px, var(--menu-accent) 16px) left top / 16px 16px no-repeat, radial-gradient(circle at 0 100%, transparent 15.5px, var(--menu-accent) 16px) right top / 16px 16px no-repeat; }
 /* Telas baixas: as teclas encolhem para o quadro fixo do valor, com o teclado aberto, deixar espaço para rolar o resto. */
 @media (max-height: 700px) { .transferencia-tela .transferencia-teclado { grid-auto-rows: 38px; } }
-.transferencia-tela .transferencia-valor-cab { position: sticky; top: -10px; margin-top: -10px; z-index: 4; display: grid; gap: 6px; padding: 8px 16px 12px; border-radius: 16px; box-shadow: 0 -10px 0 0 var(--layout-gap, #f5f5f7); background: var(--menu-accent); color: #fff; }
+.transferencia-tela .transferencia-valor-cab { position: sticky; top: -6px; margin-top: -6px; z-index: 4; display: grid; gap: 6px; padding: 8px 16px 12px; border-radius: 16px; box-shadow: 0 -14px 0 0 var(--layout-gap, #f5f5f7); background: var(--menu-accent); color: #fff; }
 .transferencia-tela .transferencia-valor-rotulo { font: 600 13px/18px var(--ui-font); color: rgba(255, 255, 255, .9); }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela { width: 100%; min-height: 40px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: #fff; text-align: left; font: 700 34px/1.15 var(--ui-font); cursor: pointer; }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela::placeholder { color: rgba(255, 255, 255, .78); font-weight: 600; font-size: 22px; }
@@ -884,12 +884,13 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .transferencia-circulo:disabled { opacity: .4; cursor: default; }
 .transferencia-tela .transferencia-circulo:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
 .transferencia-tela .transferencia-linha-add .account-status-row { margin-left: auto; }
-/* Menu inferior dos anexos: sobe de baixo, dentro da janela, com as opções em linhas (nome à esquerda, ícone redondo à direita; ao tocar ou passar o círculo fica laranja). */
-.transferencia-tela .transferencia-folha { position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; justify-content: flex-end; }
-.transferencia-tela .transferencia-folha-fundo { position: absolute; inset: 0; background: rgba(0, 0, 0, .38); opacity: 0; transition: opacity .18s; }
-.transferencia-tela .transferencia-folha.aberta .transferencia-folha-fundo { opacity: 1; }
-.transferencia-tela .transferencia-folha-corpo { position: relative; display: grid; gap: 8px; padding: 14px var(--margem-lateral, 14px) max(14px, env(safe-area-inset-bottom, 0px)); border-radius: 16px 16px 0 0; background: var(--layout-gap, #f5f5f7); transform: translateY(100%); transition: transform .18s ease-out; max-height: 90%; overflow-y: auto; }
-.transferencia-tela .transferencia-folha.aberta .transferencia-folha-corpo { transform: none; }
+/* Painel dos anexos: o mesmo painel flutuante do calendário e da hora; as opções são linhas (nome à esquerda, ícone redondo à direita; ao tocar ou passar o círculo fica laranja). */
+.transferencia-tela .transferencia-anexos-painel { gap: 8px; }
+.transferencia-tela .transferencia-anexos-vista { display: grid; gap: 8px; min-width: 0; }
+.transferencia-tela .transferencia-anexos-vista[hidden] { display: none; }
+.transferencia-tela .transferencia-anexos-painel .transferencia-linha { min-height: 48px; padding: 4px 12px; }
+.transferencia-tela .transferencia-anexos-voltar { justify-self: start; border: 0; background: transparent; color: var(--menu-accent); cursor: pointer; }
+.transferencia-tela .transferencia-anexos-painel .transferencia-audio { display: grid; gap: 8px; }
 .transferencia-tela .transferencia-folha-titulo { margin: 0; padding: 0 4px; font: 600 13px/18px var(--ui-font); color: var(--muted, #71717a); }
 .transferencia-tela .transferencia-folha-op { width: 100%; margin: 0; border-left: 0; border-right: 0; border-top: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; font: inherit; }
 .transferencia-tela .transferencia-folha-op .transferencia-linha-rotulo { flex: 1 1 auto; max-width: none; }
@@ -897,7 +898,6 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .transferencia-circulo-grande svg { width: 18px; height: 18px; }
 .transferencia-tela .transferencia-folha-op:is(:hover, :active, :focus-visible) { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); outline: none; }
 .transferencia-tela .transferencia-folha-op:is(:hover, :active, :focus-visible) .transferencia-circulo { background: var(--menu-accent); color: #fff; }
-.transferencia-tela .transferencia-folha-cancelar { min-height: 48px; border: 0; border-radius: 14px; background: var(--theme-card, #fff); color: var(--menu-accent); font: 600 15px/20px var(--ui-font); cursor: pointer; }
-.transferencia-tela .transferencia-folha-cancelar:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
 .transferencia-tela .transferencia-linha-acao:is(:hover, :focus-visible) .transferencia-circulo { background: var(--menu-accent); color: #fff; }
-@media (prefers-reduced-motion: reduce) { .transferencia-tela .transferencia-folha-fundo, .transferencia-tela .transferencia-folha-corpo { transition: none; } }
+/* Sem o cabeçalho (Ocultar cabeçalho superior) o quadro do valor fica a 14 px do topo, a mesma margem das laterais e do fim da tela. */
+.transferencia-tela.people-top-hidden .transferencia-valor-cab { top: 0; margin-top: 0; }
