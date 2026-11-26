@@ -213,6 +213,18 @@
     l.onclick = (e) => { if (e.target === l || e.target === nome) controle.focus(); };
     l.append(nome, controle); return l;
   };
+  // Tocar em QUALQUER ponto da linha (data, hora, dias) abre o painel do campo, não só na caixinha. Se o painel já estava aberto, o toque na linha só o fecha (o fechamento por toque fora acontece antes do clique).
+  function abreAoTocarNaLinha(linhaEl, input, painel) {
+    let estavaAberto = false;
+    linhaEl.addEventListener('pointerdown', (e) => { estavaAberto = !painel.hidden && !painel.contains(e.target); });
+    linhaEl.addEventListener('click', (e) => {
+      if (e.target.closest('input, button, .compras-escolha-painel')) return;
+      if (estavaAberto) { estavaAberto = false; return; }
+      input.focus(); input.click();
+    });
+    linhaEl.classList.add('transferencia-linha-abre');
+    return linhaEl;
+  }
   const quadro = (...linhas) => { const q = el('div', 'transferencia-quadro'); q.append(...linhas); return q; };
   const secao = (titulo, ...filhos) => { const s = el('section', 'transferencia-secao'); s.append(...(titulo ? [el('h4', 'transferencia-secao-titulo', titulo)] : []), ...filhos); return s; };
 
@@ -262,11 +274,11 @@
     const MAX_DIAS = 365;
     const estadoAc = { sim: false, modo: 'dias', dias: '1' };
     const hora = U.campoHora({ rotulo: 'Horas (hh:mm)', valor: '' });
-    const linhaHora = linha('Horas (hh:mm)', hora.caixa, hora.painel);
+    const linhaHora = abreAoTocarNaLinha(linha('Horas (hh:mm)', hora.caixa, hora.painel), hora.input, hora.painel);
     // Dias: − e + ou, tocando no campo, a roleta (o mesmo painel da hora) que rola e mostra a quantidade de dias.
     const roleta = U.roletaNumero({ rotulo: 'Dias', titulo: 'Dias', min: 1, max: MAX_DIAS, valor: '1' });
     const diasInput = roleta.input;
-    const linhaDias = linhaDe('Dias', diasInput); linhaDias.append(roleta.painel);
+    const linhaDias = linhaDe('Dias', diasInput); linhaDias.append(roleta.painel); abreAoTocarNaLinha(linhaDias, diasInput, roleta.painel);
     const passo = (rotulo, icone, delta) => { const b = el('button', 'transferencia-circulo'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = U.svg(icone); b.onclick = () => { roleta.definir((roleta.valor() || 0) + delta); }; return b; };
     linhaDias.append(passo('Menos um dia', '<path d="M5 12h14"/>', -1), passo('Mais um dia', ICONE.mais, 1));
     diasInput.addEventListener('input', () => { estadoAc.dias = diasInput.value; resumir(); });
@@ -508,7 +520,7 @@
 
         const anexos = blocoAnexos();
         const obs = entrada('text', '', { placeholder: 'Ex.: Suprimento CX1 — reforço de troco', maxLength: 500 });
-        const linhaData = linha('Data da transferência *', dataTransf.caixa, dataTransf.painel);
+        const linhaData = abreAoTocarNaLinha(linha('Data da transferência *', dataTransf.caixa, dataTransf.painel), dataTransf.input, dataTransf.painel);
         const corpo = el('div', 'transferencia-corpo');
         // Valor em cima (quadro laranja fixo); depois, um assunto por vez: a transferência, a transferência de retorno, as opções e a observação.
         corpo.append(calc.no,
