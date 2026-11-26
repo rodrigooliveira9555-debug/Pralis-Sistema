@@ -204,7 +204,8 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-head
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header>.fixed-header-tools [hidden]{display:none!important}
 /* Regra de 15/11/2026: toda janela abre na tela inteira, sem moldura e sem fundo sombreado. */
 body dialog.shell-dialog,body .dialog.shell-dialog{padding:0!important;overflow:hidden!important;max-height:100dvh!important;background:#fff!important;border:0!important;border-radius:0!important;min-width:0}
-body dialog.shell-dialog::backdrop{background:transparent}
+/* O pano de fundo do diálogo modal cobre a janela toda: com a cor do painel (e não transparente), qualquer fresta nas bordas mostra o cinza da tela, nunca o laranja da página de trás. */
+body dialog.shell-dialog::backdrop{background:var(--layout-gap,#f5f5f7)}
 body :is(dialog,.dialog).app-screen-shell>.panel{display:flex!important;flex-direction:column;max-height:100dvh!important;height:100%!important;margin:0!important;border:0!important;border-radius:0!important}
 body :is(dialog,.dialog).app-screen-shell>.panel>.content{min-height:0;overflow-y:auto!important;flex:1 1 auto!important}
 /* Diálogos têm altura automática: a regra das telas (flex 1 1 0, especificidade de id) zerava o conteúdo. */

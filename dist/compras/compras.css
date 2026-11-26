@@ -783,7 +783,8 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 /* O prefixo com :is(#sector-view, dialog) dá a mesma força das regras fixas do cabeçalho (people-header-pilot.css), sem !important. */
 /* As regras fixas do cabeçalho (people-header-pilot.css) dão 6 px de vão entre o cabeçalho e o conteúdo e 14 px de respiro no topo, os dois com !important; por isso o quadro do valor fixa em -20 px (6 + 14) para ficar colado no cabeçalho. */
 .transferencia-tela .panel { position: relative; }
-.transferencia-tela .panel > .head { --shell-radius: 0; }
+/* O fio claro de 1 px que o cabeçalho padrão tem embaixo aparecia como dois riscos brancos nos cantos da curva: aqui ele fica na cor do cabeçalho. */
+.transferencia-tela .panel > .head { --shell-radius: 0; border-bottom-color: var(--menu-accent); }
 /* As duas curvas "para baixo" ficam no painel (o cabeçalho corta o que passa da borda dele): dois quadrados de 16 px laranja, com um quarto de círculo vazado, logo abaixo do cabeçalho. */
 .transferencia-tela:not(.people-top-hidden) .panel::before { content: ''; position: absolute; top: var(--shell-head-min, 58px); left: 0; right: 0; height: 16px; z-index: 6; pointer-events: none;
   background: radial-gradient(circle at 100% 100%, transparent 15.5px, var(--menu-accent) 16px) left top / 16px 16px no-repeat, radial-gradient(circle at 0 100%, transparent 15.5px, var(--menu-accent) 16px) right top / 16px 16px no-repeat; }
