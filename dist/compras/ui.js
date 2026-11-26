@@ -1001,7 +1001,9 @@
       let y; let altura = natural;
       // Altura padrão (Rodrigo escolheu a opção B, 26/11/2026): na Nova Transferência TODOS os painéis (data, hora, dias, anexos) começam na mesma altura da tela — 6 px abaixo do quadro laranja do valor, que fica fixo no topo — e rolam por dentro se passarem da barra de baixo.
       const quadroFixo = ancora.closest('.transferencia-tela') && ancora.closest('.transferencia-tela').querySelector('.transferencia-valor-cab');
-      const topoPadrao = quadroFixo ? Math.round(quadroFixo.getBoundingClientRect().bottom + 6) : 0;
+      // Nas demais telas (Rodrigo, 26/11/2026, opção B): 6 px abaixo do cabeçalho da tela (ou 14 px do alto, com o cabeçalho oculto).
+      let topoPadrao = quadroFixo ? Math.round(quadroFixo.getBoundingClientRect().bottom + 6) : 0;
+      if (!topoPadrao) { const casca = ancora.closest('.app-screen-shell'); if (casca) { const cab = casca.querySelector(':scope > .panel > .head'); const rc = cab ? cab.getBoundingClientRect() : null; topoPadrao = rc && rc.height > 0 ? Math.round(rc.bottom + 6) : Math.round(casca.getBoundingClientRect().top + 14); } }
       if (topoPadrao && base - topoPadrao >= 160) { y = topoPadrao; altura = Math.min(natural, base - topoPadrao); }
       else if (natural <= abaixo) y = r.bottom + 6;
       else if (natural <= acima) y = r.top - 6 - natural;

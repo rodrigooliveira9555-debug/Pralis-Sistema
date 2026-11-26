@@ -1591,7 +1591,7 @@ Tocar no título "mês de ano" mostra **dias, mês e ano ao mesmo tempo**; escol
 ## PADRÃO CONSOLIDADO — layout novo "Vidro" (26/11/2026, Rodrigo) — REFERÊNCIA ÚNICA PARA TODAS AS TELAS
 
 > Esta seção junta, em um só lugar, **tudo** o que foi decidido e implementado na Nova Transferência (25 e 26/11/2026). As rodadas incrementais acima (de "Nova Transferência: cabeçalho padrão…" até "Calendário: tocar no mês e ano…") ficam como **histórico**; **em qualquer conflito vale esta seção**. Ela é o modelo para aplicar em todas as abas, campos e formulários.
-> Status de aplicação: **feito só na Nova Transferência** (`dist/transferencias/`) e nos componentes compartilhados (`ui.js`, `campo-data.js`, `people-header-pilot.*`, `ui-foundation.css`, `unified-layout.css`, `theme-surfaces.css`, `compras.css`). O que falta aplicar nas demais telas está no fim ("Lista de aplicação").
+> Status de aplicação (26/11/2026, após as respostas do Rodrigo): **vidro da barra, texto vazado, máscara das células e altura dos painéis já valem em TODAS as abas** (CSS/JS compartilhados); o restante do layout (listas agrupadas, linhas que abrem, quadro do valor) está na Nova Transferência e nos componentes compartilhados (`ui.js`, `campo-data.js`, `people-header-pilot.*`, `ui-foundation.css`, `unified-layout.css`, `theme-surfaces.css`, `compras.css`). O que falta aplicar nas demais telas está no fim ("Lista de aplicação").
 
 ### 1. Espaçamento e estrutura da tela
 - **Margem lateral única: 14 px** (`--margem-lateral`, `ui-foundation.css`) — laterais, topo do conteúdo (sob o cabeçalho, ou do alto quando o cabeçalho está oculto), fim da tela e respiro da barra de baixo. Nada de 20/22/24 px soltos.
@@ -1602,8 +1602,8 @@ Tocar no título "mês de ano" mostra **dias, mês e ano ao mesmo tempo**; escol
 ### 2. Cores, tema claro e escuro
 - A cor de destaque é a **cor da origem** da tela (`--menu-accent`): laranja em Transferências, amarelo em Entradas, vermelho em Despesas… Nada de cor fixa.
 - **Tema escuro**: fundo `--theme-surface`/`--layout-gap`, cartões `--theme-card`, campos transparentes dentro das linhas, setas dos seletores preservadas; chave desligada cinza `#5f6573`, ligada na cor da origem.
-- **Texto "vazado"** dos botões cheios: no escuro, o texto do botão cheio usa a cor do fundo da tela (`--texto-vazado`, hoje só na Nova Transferência; ver pendências).
-- **Contraste**: sobre azul e roxo o texto escuro cai a ~3:1 — decidir antes de generalizar o "vazado".
+- **Texto "vazado" em TODAS as abas (decisão do Rodrigo, 26/11/2026)**: no tema escuro, o texto de **todo botão cheio** (`.btn`, Salvar, Avançar, perigo/excluir, janelas de Compras e Caixa) usa a cor do fundo da tela (`--texto-vazado`, definido em `body.dark-theme` no `ui-foundation.css`); no claro continua branco. Vale para laranja, amarelo, verde, vermelho, azul e roxo.
+- **Contraste (aviso)**: sobre azul e roxo o texto escuro cai a ~3:1; o Rodrigo decidiu manter assim em todas as cores.
 
 ### 3. MÁSCARA ÚNICA DE PASSAR O MOUSE (regra para tudo que reage ao mouse)
 - **Só o miolo muda**: ao passar o mouse, o **miolo** ganha um sombreado da cor da tela (**14 %** no claro, **24 %** no escuro: `--mascara-fundo`); a **borda fica exatamente a mesma** de quando o mouse não está em cima. **Nunca** borda laranja só por causa do mouse.
@@ -1623,7 +1623,7 @@ Tocar no título "mês de ano" mostra **dias, mês e ano ao mesmo tempo**; escol
 ### 5. PAINÉIS FLUTUANTES (data, hora, dias, anexo, qualquer seleção em painel) — `U.flutuante` (`compras/ui.js`)
 - **Modelo único**: cartão cinza do fundo, borda fina, cantos 14 px, sombra de painel, respiro de 12 px, título pequeno em cima, conteúdo em quadro branco, rodapé com chips (Limpar/Hoje, Limpar/Agora, Fechar). Largura 292 px (hora 232 px; dias 150 px).
 - **Alinhamento lateral**: a **borda direita do painel é a borda de fora do quadro** que guarda a linha (não a da caixinha do campo).
-- **Altura padrão (opção B)**: na Nova Transferência, **todos** começam na **mesma altura da tela: 6 px abaixo do quadro laranja do valor**. Se passar do espaço acima da barra de baixo, **rola por dentro** (`max-height` + `overflow-y:auto`). Em telas sem quadro de valor o painel abre **6 px abaixo da linha** (ou 6 px acima, se não couber embaixo) — **pendente decidir a altura padrão** dessas telas (ver dúvidas).
+- **Altura padrão (opção B, em TODAS as telas)**: todos os painéis começam na **mesma altura**: na Nova Transferência, **6 px abaixo do quadro laranja do valor**; nas demais telas, **6 px abaixo do cabeçalho da tela** (ou 14 px do alto, com o cabeçalho oculto). Se passar do espaço acima da barra de baixo, **rola por dentro** (`max-height` + `overflow-y:auto`). Só se não houver nem 160 px de espaço, cai para "colado na linha".
 - A **barra de baixo conta como borda da tela** (o painel nunca fica escondido embaixo dela); se o conteúdo do painel muda de altura aberto (calendário em mês/ano), ele **reposiciona sozinho** (`ResizeObserver`).
 - **Abrir/fechar**: tocar em qualquer ponto da linha abre (`abreAoTocarNaLinha`); tocar de novo fecha; tocar fora ou Esc fecha; escolher o item final fecha.
 
@@ -1655,7 +1655,7 @@ Tocar no título "mês de ano" mostra **dias, mês e ano ao mesmo tempo**; escol
 - Chave **Sim/Não**; com Sim: **Contar em** `Dias | Horas | Dias e horas`; dias (1–365, item 8), horas (item 7) ou os dois juntos; linha de **resumo** ("Aceite em 1 dia e 04:30."). Confere ao salvar. Regra de negócio em aberto: `PROJECT_BRAIN/11` (P-51).
 
 ### 13. BARRA DE BAIXO — "Vidro" (estilo Apple / Liquid Glass)
-- Nas janelas (`shell-dialog`), a barra **flutua sobre o conteúdo**, que passa por trás dela com desfoque; card com **cantos 12 px**, **margem de 14 px** dos lados e de baixo.
+- Em **todas as abas** (janelas e telas de setor; `:is(#sector-view,.view,dialog,.dialog).app-screen-shell:not(.people-bar-top)`), a barra **flutua sobre o conteúdo**, que passa por trás dela com desfoque; card com **cantos 12 px**, **margem de 14 px** dos lados e de baixo.
 - **Película**: degradê suave de branco translúcido (`--vidro-fundo`: 66 % → 42 %; **no escuro**, cinza-azulado 34 % → 22 %, **sem fundo sólido**), **desfoque 34 px**, saturação 1,8, brilho 1,04; **fio de luz** no topo e na base (`--vidro-sombra`) e **sombra macia**. O desfoque fica na camada `::before` (um filtro na própria barra quebraria os painéis `position:fixed` de dentro dela). A regra do tema escuro que pintava a barra de cinza sólido **saiu** de `theme-surfaces.css`.
 - **Botões da barra**: transparentes, **fio fino cinza** (`--vidro-borda-botao`), ícone cinza (`--navigation-ink`), 32 px; ao passar, **cheios na cor da origem** com ícone claro.
 - **Logomarca do meio**: sozinha, **sem círculo nem contorno**, ocupando os **32 px** do diâmetro dos botões; ao passar, tom leve da cor.
@@ -1667,9 +1667,9 @@ Tocar no título "mês de ano" mostra **dias, mês e ano ao mesmo tempo**; escol
 - CSS: `ui-foundation.css` (tokens, máscara, rodapé, chips, bolinha), `unified-layout.css` (botões de rodapé por variáveis), `theme-surfaces.css`, `people-header-pilot.css` (barra, vidro, menu rápido), `compras/compras.css` (`.transferencia-*`, painéis, roleta).
 
 ### 15. LISTA DE APLICAÇÃO nas demais telas (o que falta, na ordem sugerida)
-1. **Barra de baixo em vidro** (item 13) em todas as janelas e nas telas de setor (`#sector-view`), com a folga no fim do conteúdo.
-2. **Máscara única** (item 3) em campos, chips, bolinhas, teclas e linhas de **todas** as telas e formulários; chip selecionado sem borda colorida; botões de rodapé conforme item 3.
-3. **Painéis** (itens 5–8): todo campo de **data** e **hora** do sistema usa os mesmos painéis e o alinhamento/altura padrão.
-4. **Margem única de 14 px**, listas agrupadas e cabeçalho padrão nos formulários que ainda têm outros espaçamentos.
-5. **Texto vazado no escuro** nos botões cheios (depois de decidir o contraste).
-6. Conferir cada tela em **320/390/1024, claro e escuro**, sem rolagem horizontal.
+1. **FEITO (26/11/2026)** — barra de baixo em vidro em todas as abas, com folga no fim do conteúdo.
+2. **FEITO** — texto vazado no escuro nos botões cheios de todas as telas.
+3. **FEITO** — altura padrão (B) e borda direita dos painéis em todas as telas; máscara de passar o mouse em campos, chips, bolinhas e células de escolha de todo o sistema.
+4. **PENDENTE** — conferir tela a tela (320/390/1024, claro e escuro, sem rolagem horizontal) e ajustar exceções que usam cores/bordas próprias (`!important` de telas antigas).
+5. **PENDENTE** — listas agrupadas (estilo Apple), margem de 14 px e linhas que abrem nos formulários que ainda têm outros espaçamentos: exige redesenho tela a tela, a fazer por lote com o Rodrigo.
+6. **PENDENTE** — o painel de data/hora dos demais formulários ainda alinha a borda direita ao **próprio campo** (só a Nova Transferência alinha ao quadro das linhas).
