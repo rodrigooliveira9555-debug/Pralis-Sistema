@@ -1033,3 +1033,6 @@ body :is(#sector-view,.view,dialog,.modal).compras-dialog:not(.transferencia-tel
 #sector-view .panel > .content > form:not(:has(*)) { margin: 0; }
 /* Tela Design System: as peças reais da Transferência ocupam a largura toda do quadro. */
 .ds-amostra > .ds-transferencia { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
+/* ALTURA ÚNICA DAS LINHAS (Rodrigo, 26/11/2026): o campo dentro da linha não tem altura nem respiro próprios; quem manda é a linha (52 px). As regras gerais de campo (com #sector-view dentro de :is()) só cedem pelas variáveis, repetindo o mesmo prefixo. */
+body :is(#sector-view,.view,dialog,.modal).compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-campo :is(input, select, textarea) { --campo-altura: 34px; --campo-respiro: 0px; }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-campo > small:empty { display: none; }
