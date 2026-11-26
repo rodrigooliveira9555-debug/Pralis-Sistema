@@ -29,7 +29,8 @@ export async function acaoFeita(perfil: PerfilSessao, acao: string, n: number, m
     if (!r.acesso.ver || !r.acesso.concluir) continue;
     const ocorrencia = c.data ?? c.criadoEm.toISOString().slice(0, 10);
     const quantidade = c.acaoQuantidade ?? 1;
-    const feitas = await banco.transaction((tx) => repo.somarProgresso(tx, empresaId, c.id, ocorrencia, n));
+    // Sobe a versão da Agenda junto: os outros aparelhos veem o progresso na próxima atualização.
+    const feitas = await banco.transaction(async (tx) => { await repo.subirVersao(tx, empresaId); return repo.somarProgresso(tx, empresaId, c.id, ocorrencia, n); });
     let concluiu = false;
     if (feitas >= quantidade) {
       const fim = await concluir(perfil, c.id, c.repeticaoTipo && c.data ? { concluida: true, ocorrencia: c.data } : { concluida: true }, { semExpediente: true });
