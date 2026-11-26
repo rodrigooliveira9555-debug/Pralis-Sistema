@@ -259,6 +259,20 @@ Separado por quem destrava. Detalhes das perguntas no fim de cada item.
 - Leitor de tela (foco e teclado só conferidos por comportamento).
 - O sistema principal **não foi executado**: tudo vem de leitura de código, de 04/11/2026.
 
+## Nome real do PDV (26/11/2026, Washington)
+Em toda tela do Caixa (Entradas › Vendas/Faturamento › Lançamentos e Relatórios, Gerência, Tesouraria), o PDV deixou de ser "PDV 1 a 4" e passou a mostrar o **nome da máquina no CREARE** (`dispositivo.DESCRICAO`): **TNP-PC-CXPDV-1, -2, -3 e -4**. A lista **não é do Caixa**: vem do cadastro **VND - Computadores** (Entradas › Cadastros Geral): os computadores ativos cujo nome termina em `CXPDV-n`, em ordem (a mesma regra das abas de Vendas dos PDVs). `dados.js` só lê (`CicluzCaixa.pdvs()`); as telas e os filtros leem dele.
+- **Por que o nome:** o levantamento do CREARE (26/11/2026) mostrou que o ID do dispositivo muda a cada troca de computador e que o nome da máquina carrega o número do PDV. Os nomes `DESKTOP-…` (clonados, repetidos) não são PDV.
+- **O que é texto genérico continua "PDV"** (ex.: "Vendas do PDV", "PDV ligado"); só o **identificador** da máquina mostra o nome real.
+- **Ainda é casca:** o Caixa guarda o nome (texto) nos dados de demonstração, que somem ao recarregar. Quando existir o vínculo real, ele terá vigência por `ID_DISPOSITIVO` (P-52) e o nome mostrado virá do vínculo vigente; vínculo é por ID, nunca por nome.
+- **Fora desta entrega:** Configurações › Acessos (contas de posto, "PDV1 · Manhã") ainda mostra o número; a conta de posto continua por número de PDV.
+
+## Maquininha da abertura vem do cadastro das operadoras (26/11/2026, Washington)
+Na Abertura de Caixa, a escolha da maquininha deixou de ser uma lista fictícia no código e lê o cadastro que já existia: **VND - Tipos de Operadoras Cartões › etapa Cadastro das máquinas** (operadora → máquinas com apelido, modelo, número de série e ativa; `operadoras-etapas.js`, 25/11/2026). Mostra só máquinas ativas de operadoras ativas, como "Operadora · apelido · modelo · série …". O vínculo guarda o id da operadora + da máquina (`maquininhaId`).
+- **Quem escolhe:** o operador, na abertura (decisão do Washington). A máquina não é fixa do PDV.
+- **Sem máquina cadastrada:** a linha mostra "Nenhuma cadastrada" e a abertura é barrada com a mensagem de onde cadastrar.
+- **Manhã e tarde:** a mesma máquina serve aos dois turnos do PDV; o fechamento da tarde usará "acumulado − manhã" (R-227/228/229). **Isso é fórmula de dinheiro e não foi alterado** nesta entrega: falta confirmar o desenho antes (P-52).
+- Não foi criado um cadastro novo: seria um segundo caminho para o mesmo dado.
+
 ## Desenvolvimento
 
 `npm run dev` em `servidor` serve o site em http://localhost:4200. Em `npm run dev:web` (:3100), o

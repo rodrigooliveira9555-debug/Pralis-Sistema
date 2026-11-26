@@ -59,7 +59,7 @@
     const itens = [U.nota('Fotografe ou anexe a folha impressa do PDV. No principal, uma IA lê os valores e eles ficam travados; aqui a leitura é simulada.')];
     const acoes = el('div', 'caixa-acoes caixa-acoes-esq');
     acoes.append(botao(fo.anexo ? 'Trocar folha (simulado)' : 'Anexar folha (simulado)', () => {
-      fo.anexo = 'folha-creare-' + a.pdv.replace(' ', '').toLowerCase() + '.jpg';
+      fo.anexo = 'folha-creare-' + a.pdv.toLowerCase() + '.jpg';
       fo.campos = null; fo.travados = true; fo.correcao = ''; fo.periodoDe = '';
       f.relatorioGerado = false; // anexar nova folha invalida o relatório já gerado
       K.atualizar();
