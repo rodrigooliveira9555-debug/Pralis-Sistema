@@ -276,3 +276,8 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-head
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options .people-options-heading{min-height:0;margin:0;color:var(--layout-ink,#606066)}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options .people-options-heading-icon{display:none}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options .people-options-heading b{color:var(--layout-ink,#606066);font:600 var(--ui-text,14px)/20px var(--ui-font)}
+/* Menu rápido compacto: só os ícones, sem quadro nem fio em volta. */
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options.people-options-compact{padding:14px;gap:14px;background:var(--theme-card,#fff)}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options.people-options-compact .people-options-heading{background:transparent;min-height:32px;padding:0}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options.people-options-compact .people-options-inner{border:0;background:transparent;border-radius:0}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options.people-options-compact .people-toolbar-row{border:0;background:transparent}

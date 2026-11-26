@@ -917,3 +917,6 @@ body.dark-theme .transferencia-tela .account-status-switch[aria-checked="true"] 
 .transferencia-tela .transferencia-linha .compras-arvore-campo:hover { border-color: transparent; }
 /* Escuro: o texto dos botões cheios é vazado — mostra a cor do fundo da tela (preto no escuro, branco no claro). */
 body.dark-theme .transferencia-tela { --texto-vazado: var(--theme-surface, #222128); }
+/* Calculadora: teclas dos números na cor do cartão (branco no claro, escuro no escuro); operadores em cinza para dar contraste sobre o laranja; o = em laranja mais fechado. */
+.transferencia-tela .transferencia-tecla.operador { background: color-mix(in srgb, var(--layout-ink, #606066) 22%, var(--theme-card, #fff)); border-color: transparent; color: var(--layout-ink, #606066); }
+.transferencia-tela .transferencia-tecla.igual { background: color-mix(in srgb, #000 20%, var(--menu-accent)); border-color: transparent; color: #fff; }
