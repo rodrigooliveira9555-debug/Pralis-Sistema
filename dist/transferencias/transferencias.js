@@ -559,5 +559,5 @@
     });
   }
 
-  window.CicluzTransferencias = { abrir };
+  window.CicluzTransferencias = { abrir, pecas: { linha, linhaDe, quadro, secao, chave, linhaQueAbre, abreAoTocarNaLinha, blocoAnexos, opcaoAceite, campoDeData, ICONE } };
 })();

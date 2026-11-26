@@ -23,7 +23,8 @@
     'Permissões': [['telas', 'Acesso por Tela', 'O menu inteiro, com sete permissões por tela (esboço)']],
     'Senhas': [['senhas', 'Minha Senha', 'Trocar a sua senha'], ['senha-outra', 'Senha de Outra Pessoa', 'Quando alguém esqueceu a senha']],
     // Design System (18/11/2026; o setor se chama só "Design System", pedido do Rodrigo): um cartão por tópico do padrão visual (acessos/design-system.js). A ordem é a de leitura.
-    'Design System': [['ds-letras', 'Letras', 'A fonte do sistema, os pesos e o jeito de escrever'],
+    'Design System': [['ds-padrao', 'Formulário linha por linha (padrão da Transferência)', 'O padrão Apple: grupo com título, linhas de 52 px, data, hora, dias, anexo e a máscara ao passar o mouse'],
+      ['ds-letras', 'Letras', 'A fonte do sistema, os pesos e o jeito de escrever'],
       ['ds-tamanhos', 'Tamanho das Letras', 'O tamanho de cada tipo de texto, do título à nota'],
       ['ds-cores', 'Cores', 'A cor de cada origem do menu e as cores fixas'],
       ['ds-espacamento', 'Espaçamento', 'As distâncias entre quadros, campos e linhas'],
@@ -32,7 +33,7 @@
       ['ds-botoes', 'Botões', 'A biblioteca de botões: todos os tipos, medidas e onde usar'],
       ['ds-campos', 'Campos de Preenchimento', 'Rótulo, obrigatório, situação e o aviso de campo vazio'],
       ['ds-mascaras', 'Máscaras', 'O formato que cada campo assume enquanto se digita'],
-      ['ds-quadros', 'Quadros e Molduras', 'Tudo dentro de quadro, com o título na borda'],
+      ['ds-quadros', 'Quadros e Molduras', 'Tudo dentro de quadro, com o título do grupo acima'],
       ['ds-listas', 'Listas', 'O formato das telas de lista e o que cada toque faz'],
       ['ds-menu', 'Menu e Cartões', 'O menu principal, o submenu e os cartões de cada setor'],
       ['ds-janelas', 'Janelas e Painéis', 'A janela de cadastro, a de confirmação e o painel flutuante'],

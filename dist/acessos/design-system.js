@@ -35,7 +35,7 @@
     const caixa = el('div', 'ds-modelo compras-largo'); const cab = el('div', 'ds-modelo-cab'); const ic = el('span', 'ds-modelo-cab-icone'); ic.innerHTML = U.svg('<path d="M8 4H6a1 1 0 0 0-1 1v15a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-2M9 3h6v3H9zM9 11h6M9 15h6"/>');
     const tx = el('div', 'ds-modelo-cab-texto'); const t = el('b', null, 'Título da tela'); const s = el('small', null, 'Origem / Submenu / Nome da tela'); t.append(marca(2)); s.append(marca(3)); tx.append(t, s);
     const i1 = el('span', 'ds-modelo-cab-ponto'); i1.append(ic, marca(1)); cab.append(i1, tx);
-    const leg = el('dl', 'profiles-info'); [['1 — Ícone', 'Caixa de 30 px, desenho de 21 px. É o ícone do item que abriu a tela.'], ['2 — Título', '16 px, peso 600, branco.'], ['3 — Subtítulo', '11 px, branco: o caminho até a tela.'], ['A faixa', '58 px de altura, na cor da origem, com os cantos de baixo arredondados (12 px) e 14 px de respiro nas laterais.']].forEach(([k, v]) => leg.append(el('dt', null, k), el('dd', null, v)));
+    const leg = el('dl', 'profiles-info'); [['1 — Ícone', 'Caixa de 30 px, desenho de 21 px. É o ícone do item que abriu a tela.'], ['2 — Título', '16 px, peso 600, branco.'], ['3 — Subtítulo', '11 px, branco: o caminho até a tela.'], ['A faixa', '58 px de altura, na cor da origem, com a curva "para baixo" nos cantos (duas curvas de 16 px logo abaixo) e 14 px de respiro nas laterais.']].forEach(([k, v]) => leg.append(el('dt', null, k), el('dd', null, v)));
     caixa.append(cab, leg); return caixa;
   }
   function modeloBarra() {
@@ -44,7 +44,7 @@
     const grupo = (ks) => { const g = el('div', 'ds-modelo-grupo'); g.append(...ks.map(bola)); return g; };
     barra.append(grupo([0, 1, 2, 3, 4]), grupo([5]), grupo([6, 7, 8, 9, 10]));
     const leg = el('dl', 'profiles-info'); DESENHOS_DA_BARRA.forEach(([, nome], k) => leg.append(el('dt', null, (k + 1) + ' — ' + nome), el('dd', null, k < 5 ? 'Esquerda: navegação.' : k === 5 ? 'Meio: abre o menu rápido.' : 'Direita: ações da tela.')));
-    leg.append(el('dt', null, 'A faixa'), el('dd', null, '59 px de altura, fundo branco, 14 px de respiro nas laterais; cada botão é um círculo de 32 px na cor da origem.'));
+    leg.append(el('dt', null, 'A faixa'), el('dd', null, '60 px de altura, vidro (película clara translúcida com desfoque), 14 px de margem; cada botão é um círculo de 32 px transparente com fio cinza, que enche na cor da origem ao passar o mouse; o símbolo do meio tem 32 px, sem círculo.'));
     caixa.append(barra, leg); return caixa;
   }
   const LAPIS = '<path d="m4 20 4-.8L19 8l-3-3L5 16zM14.5 6.5l3 3"/>'; const LIXO = '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>';
@@ -80,8 +80,8 @@
     ] },
     { id: 'espacamento', titulo: 'Espaçamento', resumo: 'As distâncias entre quadros, campos e linhas', quadros: [
       { titulo: 'Medidas', texto: ['As distâncias são sempre as mesmas, para as telas parecerem uma só.'],
-        itens: [['Entre um quadro e outro', '12 px'], ['Respiro dentro do quadro', '14 px nas laterais e embaixo'], ['Entre os campos', '8 a 12 px'], ['Altura do campo', '42 px'], ['Altura da linha de lista', '52 px'], ['Altura da linha de menu (cartão)', '51 px'],
-          ['Altura do cabeçalho de cima', '58 px'], ['Altura da barra de baixo', '59 px'], ['Respiro lateral da tela', '14 px'], ['Entre o quadro e os botões da página', '24 px'], ['Entre um botão e outro', '10 px'], ['Canto do quadro', 'Arredondado, 12 px'], ['Canto do campo', 'Arredondado, 8 px'], ['Canto do botão', 'Arredondado, 10 px']] },
+        itens: [['Primeiro quadro, abaixo do cabeçalho', '14 px'], ['Entre um quadro e outro', 'Título do grupo (12 px) + 16 px abaixo do quadro'], ['Respiro dentro do quadro', '14 px nas laterais'], ['Altura da linha de campo (formulário)', '52 px, igual em todas'], ['Altura da linha de lista', '52 px'], ['Altura da linha de menu (cartão)', '51 px'],
+          ['Altura do cabeçalho de cima', '58 px'], ['Altura da barra de baixo', '60 px (vidro)'], ['Respiro lateral da tela', '14 px'], ['Entre o quadro e os botões da página', '24 px'], ['Entre um botão e outro', '10 px'], ['Canto do quadro', 'Arredondado, 14 px'], ['Campo', 'Sem caixa: é só o texto na linha'], ['Canto do botão', 'Arredondado, 10 px']] },
       { titulo: 'Regras de uso', texto: ['O último campo do quadro não encosta na borda: sobra o mesmo respiro das laterais.', 'Nenhum campo, botão ou texto encosta na borda da tela ou do quadro.',
         'Linha de lista com duas linhas de texto (nome em cima, detalhe embaixo) continua com a altura padrão: diminui o respiro, não aumenta a linha.'] },
     ] },
@@ -111,21 +111,40 @@
     ] },
     { id: 'cabecalho', titulo: 'Cabeçalho e Barra de Baixo', resumo: 'O cabeçalho de cima e a barra de baixo, com medidas e botões', quadros: [
       { titulo: 'Cabeçalho de cima — modelo', texto: ['O cabeçalho em tamanho real, com cada parte numerada.'], amostra: () => modeloCabecalho() },
-      { titulo: 'Cabeçalho de cima — o que tem', texto: ['É a faixa colorida no alto da tela, na cor da origem, com os cantos de baixo arredondados. Tem três coisas, nesta ordem.'],
+      { titulo: 'Cabeçalho de cima — o que tem', texto: ['É a faixa colorida no alto da tela, na cor da origem, com a curva "para baixo" (duas curvas de 16 px, na cor da origem, logo abaixo dos cantos). Tem três coisas, nesta ordem.'],
         itens: [['Ícone', 'À esquerda: o ícone do item que abriu a tela (ou a sigla).'], ['Título', 'O nome da tela, ou o que a janela faz ("Novo cliente", "Editar área").'], ['Subtítulo', 'Embaixo do título: o caminho até a tela.']] },
       { titulo: 'Cabeçalho de cima — medidas', itens: [['Altura', '58 px'], ['Respiro', '8 px em cima e embaixo, 14 px nas laterais'], ['Entre o ícone e o título', '10 px'], ['Ícone', 'Caixa de 30 px, desenho de 21 px (sigla: letra de 11 px)'], ['Título', '16 px, linha de 20 px, peso 600'],
-        ['Subtítulo', '11 px, linha de 14 px'], ['Cor do fundo', 'A cor da origem'], ['Cor do texto e do ícone', 'Branco'], ['Cantos', 'Só os de baixo, arredondados em 12 px']],
+        ['Subtítulo', '11 px, linha de 14 px'], ['Cor do fundo', 'A cor da origem'], ['Cor do texto e do ícone', 'Branco'], ['Curva', 'Duas curvas de 16 px na cor da origem logo abaixo do cabeçalho (em todas as abas; some com o cabeçalho oculto)'], ['Fio de baixo', 'Na cor do cabeçalho']],
         texto: ['Estas medidas são as mesmas em todas as telas e janelas do sistema.'] },
       { titulo: 'Cabeçalho de cima — regras', texto: ['Tela e janela têm o mesmo cabeçalho. Toda janela mostra, no subtítulo, o caminho da tela de onde foi aberta.', 'O ícone nunca é maior que o das outras telas, nem fica colado no título.',
         'O cabeçalho de cima não tem botões: os atalhos ficam na barra de baixo. Ele pode ser recolhido pelo último botão da barra de baixo, para sobrar mais tela.'] },
       { titulo: 'Barra de baixo — modelo', texto: ['A barra em tamanho real, com cada botão numerado.'], amostra: () => modeloBarra() },
-      { titulo: 'Barra de baixo — o que é', texto: ['É a faixa branca fixa no pé da tela, com os atalhos. Fica sempre no mesmo lugar, em telas e janelas, para o dedo achar sem procurar.', 'Tem três partes: os atalhos de navegação à esquerda, o símbolo do sistema no meio e as ações da tela à direita.'],
-        itens: [['Altura', '59 px'], ['Cor do fundo', 'Branco'], ['Respiro lateral', '14 px'], ['Botões', 'Círculos de 32 px, na cor da origem, com o desenho branco']] },
+      { titulo: 'Barra de baixo — o que é', texto: ['É um cartão de vidro (película clara e translúcida, com desfoque forte, fio de luz e sombra macia) que flutua sobre o conteúdo, no pé da tela, com os atalhos. Fica sempre no mesmo lugar, em telas e janelas, para o dedo achar sem procurar.', 'Tem três partes: os atalhos de navegação à esquerda, o símbolo do sistema no meio e as ações da tela à direita.'],
+        itens: [['Altura', '60 px'], ['Fundo', 'Vidro: degradê branco translúcido (no escuro, cinza-azulado) com desfoque de 34 px'], ['Margem', '14 px dos lados e de baixo'], ['Botões', 'Círculos de 32 px, transparentes, com fio fino cinza e ícone cinza; ao passar o mouse enchem na cor da origem'], ['Logomarca do meio', '32 px, sozinha, sem círculo'], ['Conteúdo', 'Passa por trás da barra; o fim da tela tem folga para o último item não ficar escondido']] },
       { titulo: 'Barra de baixo — botões da esquerda', itens: [['Menu inicial (casa)', 'Volta para o menu principal.'], ['Busca (lupa)', 'Abre o campo de busca da tela.'], ['Ordem', 'Coloca a lista em ordem alfabética ou volta à ordem original.'], ['Período (calendário)', 'Escolhe as datas "de … a …" quando a tela tem filtro por data.'],
         ['Novo (+)', 'Cria um registro novo, o mesmo do botão "Novo…" da lista. Fica apagado na tela que não cria nada.']] },
       { titulo: 'Barra de baixo — meio e direita', itens: [['Símbolo do sistema (meio)', 'Mostra o menu rápido.'], ['Voltar (seta)', 'Volta para a tela anterior.'], ['Fechar (✕)', 'Fecha a tela ou a janela sem salvar.'], ['Salvar (✓)', 'Salva, quando a tela tem o que salvar.'], ['Mais atalhos (…)', 'Mostra os atalhos que não couberam.'],
         ['Recolher (seta para cima)', 'Esconde ou mostra o cabeçalho de cima.']],
         texto: ['Voltar, Fechar e Salvar da barra de baixo fazem o mesmo que os botões por extenso da página; são o atalho para o polegar.'] },
+    ] },
+    { id: 'padrao', titulo: 'Formulário linha por linha (padrão da Transferência)', resumo: 'O padrão Apple: grupo com título, linhas de 52 px, data, hora, dias, anexo e a máscara ao passar o mouse', quadros: [
+      { titulo: 'A regra', texto: ['Este é o padrão de TODO formulário do sistema, e a Nova Transferência é a referência. Os quadros abaixo são as peças reais dela (não são desenhos).', 'O formulário é feito de grupos. Cada grupo tem o título pequeno em cima e um quadro branco com as linhas de campo. Cada linha tem o nome à esquerda e o valor à direita; tocar em qualquer ponto da linha age sobre o campo.'],
+        itens: [['Título do grupo', '12 px, peso 600, cinza, acima do quadro'], ['Quadro', 'Branco, borda fina cinza, cantos de 14 px'], ['Linha de campo', '52 px de altura (todas iguais), respiro de 14 px nas laterais, fio cinza de ponta a ponta entre as linhas'], ['Nome do campo', 'À esquerda, 15 px, peso 500'], ['Valor', 'À direita, 15 px, peso 500, cinza; sem caixa, sem borda e sem fundo'], ['Obrigatório', 'Asterisco no fim do nome'], ['Primeiro quadro', 'A 14 px do cabeçalho; 14 px nas laterais'], ['Entre grupos', 'Título do grupo + 16 px abaixo do quadro']] },
+      { titulo: 'Grupo, linha, seleção e chave', texto: ['Linha de texto, linha de seleção (valor e seta para baixo) e chave Sim/Não ou Ativo/Inativo, todas com a mesma altura.'],
+        amostra: () => pecaTransferencia((P) => { const nome = P.linhaDe('Nome *', entrada('text', '', { placeholder: 'Ex.: Nome…' })); const sel = P.linhaDe('Tipo', seletor([['a', 'Opção A'], ['b', 'Opção B']], '', 'Selecione')); const sit = P.linha('Situação', P.chave('Situação', true, ['Ativo', 'Inativo'], () => undefined)); return P.secao('Dados do exemplo', P.quadro(nome, sel, sit)); }) },
+      { titulo: 'Data e hora', texto: ['A linha inteira abre o painel; o painel tem a mesma borda direita do quadro e começa na mesma altura da tela (6 px abaixo do quadro fixo do alto, ou do cabeçalho). Na data, tocar no mês e ano mostra dias, mês e ano juntos.', 'Data: DD/MM/AA com o ícone de calendário cinza. Hora: roleta de horas e minutos com a faixa colorida no meio. Os dois têm Limpar e Hoje/Agora.'],
+        amostra: () => pecaTransferencia((P) => { const d = P.campoDeData('Data *', ''); const ld = P.abreAoTocarNaLinha(P.linha('Data *', d.caixa, d.painel), d.input, d.painel); const h = U.campoHora({ rotulo: 'Hora', valor: '' }); const lh = P.abreAoTocarNaLinha(P.linha('Hora', h.caixa, h.painel), h.input, h.painel); return P.secao('Data e hora', P.quadro(ld, lh)); }) },
+      { titulo: 'Dias (e qualquer número inteiro)', texto: ['Campo numérico com − e + ao lado; tocar no campo abre a roleta de uma coluna (1 a 365), no mesmo painel da hora. Rolar mostra e escolhe a quantidade. Aqui, o Tempo de aceite: Sim/Não, depois Dias, Horas ou Dias e horas.'],
+        amostra: () => pecaTransferencia((P) => P.secao('Tempo de aceite', P.quadro(P.opcaoAceite('Tempo de aceite').no))) },
+      { titulo: 'Anexar (foto, vídeo, áudio, documento)', texto: ['Todo lugar que pede imagem, foto, vídeo, áudio ou documento usa a linha "Anexos": o resumo e a seta para a direita. Tocar abre o painel Anexar com Gravar áudio, Gravar vídeo, Anexar áudio, Anexar vídeo, Anexar imagem e Anexar documento (nome à esquerda, ícone em círculo cinza à direita, que fica na cor da origem ao passar). O que foi anexado aparece embaixo da linha, com o nome, o tamanho e o excluir.', 'Não se usa botão solto de "Tirar foto" ou "Galeria" no meio do formulário.'],
+        amostra: () => pecaTransferencia((P) => P.secao('Observação', P.quadro(P.blocoAnexos().no))) },
+      { titulo: 'Linha que abre uma lista', texto: ['Escolha de uma ou mais contas, itens ou grupos: a linha mostra o resumo e uma seta para baixo; abre a lista logo embaixo, com marca redonda, ícone, nome e situação.'],
+        amostra: () => pecaTransferencia((P) => { const l = P.linhaQueAbre('Conta *', () => { l.resumo.textContent = l.resumo.textContent ? '' : 'Cofre (exemplo)'; }); return P.secao('Contas', P.quadro(l.no)); }) },
+      { titulo: 'Máscara ao passar o mouse', texto: ['Em formulário, passar o mouse ou focar sombreia a LINHA INTEIRA (6 % da cor da origem). O campo nunca ganha sombreado ou borda só dele.', 'Botões e células (chips, teclas, dias do calendário): só o miolo muda (14 %, 24 % no escuro) e a borda continua a mesma; escolhido = cheio. Botões cheios de rodapé fecham um pouco a cor; o de contorno ganha sombreado; os ícones não mudam de cor.'],
+        itens: [['Linha de formulário', 'Sombreado 6 %'], ['Botão, chip, tecla, célula', 'Miolo 14 % (24 % no escuro), borda igual'], ['Escolhido', 'Cheio na cor da origem'], ['Excluir (círculo)', 'Cinza; vermelho ao passar'], ['Quadro do valor (laranja)', 'Miolo branco translúcido, sem moldura']] },
+      { titulo: 'Painéis flutuantes', texto: ['Data, hora, dias e anexo abrem sempre iguais: borda direita igual à do quadro da linha, começo na mesma altura da tela e, se passarem da barra de baixo, rolam por dentro. Fecham tocando fora, na linha de novo ou no Esc.'],
+        itens: [['Largura', '292 px (hora 232 px, dias 150 px)'], ['Altura de partida', '6 px abaixo do quadro fixo do alto (ou do cabeçalho da tela)'], ['Alinhamento', 'Borda direita = borda do quadro'], ['Rodapé', 'Limpar e Hoje/Agora/Fechar']] },
+      { titulo: 'Texto escuro nos botões cheios (tema escuro)', texto: ['No tema escuro, o texto de todo botão cheio (Salvar, Avançar, Novo…, Excluir) usa a cor do fundo da tela (escuro): o texto parece vazado. No claro continua branco.'] },
     ] },
     { id: 'botoes', titulo: 'Botões', resumo: 'A biblioteca de botões: todos os tipos, medidas e onde usar', quadros: [
       { titulo: 'Botões da página', texto: ['Ficam no fim da tela, fora dos quadros, sempre na mesma ordem. Têm o nome por extenso e um círculo com o desenho na ponta.'],
@@ -152,7 +171,7 @@
       { titulo: 'Texto do botão', texto: ['Botão de página tem o nome por extenso ("Cancelar", "Salvar"), nunca só um desenho.', 'O nome diz o que acontece: "Salvar", "Excluir", "Trocar" — e não "OK" ou "Sim".', 'Em botão, vermelho é só do excluir.'] },
     ] },
     { id: 'campos', titulo: 'Campos de Preenchimento', resumo: 'Rótulo, obrigatório, situação, data, hora e o aviso de campo vazio', quadros: [
-      { titulo: 'Como é um campo', texto: ['O nome do campo fica em cima, em letra de 12 px. O campo tem 42 px de altura, fundo branco, borda fina e cantos de 8 px.', 'Campo obrigatório leva um asterisco no fim do nome.', 'Quando ajuda, o campo traz um exemplo em cinza claro ("Ex.: Nome e sobrenome…") e uma dica curta embaixo.',
+      { titulo: 'Como é um campo (padrão antigo — ver o tópico "Formulário linha por linha")', texto: ['ATENÇÃO: o padrão vigente é o do tópico "Formulário linha por linha (padrão da Transferência)". O que está neste quadro é o desenho antigo, em extinção.', 'O nome do campo fica em cima, em letra de 12 px. O campo tem 42 px de altura, fundo branco, borda fina e cantos de 8 px.', 'Campo obrigatório leva um asterisco no fim do nome.', 'Quando ajuda, o campo traz um exemplo em cinza claro ("Ex.: Nome e sobrenome…") e uma dica curta embaixo.',
         'Ao tocar no campo, a borda fica na cor da origem.'],
         amostra: () => amostra(campo('Nome completo *', entrada('text', '', { placeholder: 'Ex.: Nome e sobrenome…' })), campo('Tipo', seletor([['a', 'Opção A'], ['b', 'Opção B']], '', 'Selecione')), campo('Observação', entrada('text', ''), 'Dica curta, embaixo do campo.')) },
       { titulo: 'Campo obrigatório vazio', texto: ['Ao tentar avançar ou salvar com um campo obrigatório vazio, a borda do campo fica na cor do cabeçalho e aparece a mensagem embaixo: "Preencha este campo." ou "Selecione uma opção.".',
@@ -185,9 +204,9 @@
       { titulo: 'Buscas automáticas', texto: ['Ao completar o CEP, o sistema busca rua, bairro, cidade e UF. Ao completar o CNPJ, busca razão social, nome fantasia e endereço.', 'A busca só preenche o que está vazio; se o CEP ou o CNPJ for trocado por outro, os dados do novo substituem os antigos.'] },
     ] },
     { id: 'quadros', titulo: 'Quadros e Molduras', resumo: 'Tudo dentro de quadro, com o título na borda', quadros: [
-      { titulo: 'A regra', texto: ['Nada fica solto na tela: todo campo, pergunta ou lista fica dentro de um quadro com borda fina e cantos arredondados.', 'O nome do quadro fica escrito em cima da borda, como uma legenda ("Dados da empresa", "Endereço").',
-        'Cada assunto tem o seu quadro. Um cadastro com vários assuntos tem vários quadros, com 12 px entre eles.'],
-        itens: [['Borda', 'Fina, cinza claro'], ['Cantos', 'Arredondados, 12 px'], ['Respiro interno', '14 px'], ['Título na moldura', '13 px, peso 600'], ['Fundo do quadro', 'O da página; os campos dentro são brancos']] },
+      { titulo: 'A regra', texto: ['Nada fica solto na tela: todo campo, pergunta ou lista fica dentro de um quadro com borda fina e cantos arredondados.', 'O nome do quadro (o título do grupo) fica ACIMA do quadro, em letra pequena cinza ("Dados da empresa", "Endereço").',
+        'Cada assunto tem o seu quadro. Um cadastro com vários assuntos tem vários quadros, cada um com o título em cima.'],
+        itens: [['Borda', 'Fina, cinza claro'], ['Cantos', 'Arredondados, 14 px'], ['Respiro interno', '14 px nas laterais'], ['Título do grupo', '12 px, peso 600, cinza, acima do quadro'], ['Fundo do quadro', 'Branco (cartão); cada linha tem 52 px, separadas por fio cinza de ponta a ponta']] },
       { titulo: 'Cadastro em etapas', texto: ['Cadastro grande é dividido em etapas, com a barra de evolução no alto: uma bolinha numerada por etapa e o nome embaixo.', 'A última etapa é sempre a "Revisão dos dados": um bloco por etapa, só para leitura, com o botão "Editar" em cada bloco e o "Salvar" no fim.',
         'Cadastro novo começa na primeira etapa. Cadastro já gravado abre na Revisão.', 'Uma pergunta pode mudar as etapas: com "Terá contrato?" em Não, a etapa Contrato some.'] },
       { titulo: 'Exemplo', amostra: () => { const q = el('fieldset', 'compras-fieldset compras-largo'); q.append(el('legend', null, 'Dados do exemplo'), campo('Nome', entrada('text', '')), campo('Telefone', entrada('text', ''))); return q; } },
@@ -210,7 +229,7 @@
       { titulo: 'Janela de cadastro', texto: ['O cadastro abre numa janela que ocupa a tela inteira, com o mesmo cabeçalho de cima e a mesma barra de baixo das telas.', 'Fecha pelo Cancelar, pelo ✕ da barra de baixo ou pelo Voltar. Com alteração não salva, o sistema pergunta antes.'] },
       { titulo: 'Janela de confirmação', texto: ['Pequena, com o título dizendo a ação, uma frase explicando o que vai acontecer e o botão com o nome da ação ("Excluir", "Trocar", "Desativar").', 'Aparece antes de qualquer ação sem volta.'],
         amostra: () => amostra(botao('Ver a confirmação', () => U.confirmar('Excluir exemplo', 'É só um exemplo: nada será apagado.', 'Excluir', () => undefined, cores), 'btn secondary')) },
-      { titulo: 'Painel flutuante', texto: ['Abre colado no botão que o chamou, sem cobrir a tela (por exemplo, o painel do Enviar, com o prazo, a mensagem e os canais).', 'Fecha ao tocar fora ou na setinha de voltar do próprio painel.'] },
+      { titulo: 'Painel flutuante', texto: ['Painéis de data, hora, dias e anexo seguem a regra do tópico "Formulário linha por linha": mesma altura na tela, borda direita na borda do quadro. Os demais painéis abrem colados no botão que os chamou, sem cobrir a tela (por exemplo, o painel do Enviar, com o prazo, a mensagem e os canais).', 'Fecha ao tocar fora ou na setinha de voltar do próprio painel.'] },
       { titulo: 'Janela de escolha', texto: ['Para escolher itens de um cadastro (produtos, grupos de despesa, patrimônios): busca no alto, a lista com caixas de marcar e o botão "Confirmar". Mostra quantos estão marcados.'] },
     ] },
     { id: 'mensagens', titulo: 'Mensagens e Avisos', resumo: 'Como o sistema avisa, confirma e mostra erro', quadros: [
@@ -228,6 +247,12 @@
     ] },
   ];
 
+  // As peças reais da Nova Transferência (linha, quadro, data, hora, dias, anexos), dentro do contêiner que carrega o estilo dela.
+  function pecaTransferencia(monta) {
+    const T = window.CicluzTransferencias; const caixa = el('div', 'transferencia-tela ds-transferencia compras-largo');
+    if (!T || !T.pecas) { caixa.append(el('p', 'profiles-note', 'Amostra indisponível: a tela de Transferências não foi carregada.')); return amostra(caixa); }
+    caixa.append(monta(T.pecas)); return amostra(caixa);
+  }
   const telas = {}; // uma tela por tópico, criada na primeira abertura
   function abrirTopico(t) {
     const tela = telas[t.id] || (telas[t.id] = A.criarTela({ id: 'acessos-ds-' + t.id, titulo: t.titulo, tela: 'ds-' + t.id }));
