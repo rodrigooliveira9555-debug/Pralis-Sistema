@@ -949,10 +949,12 @@ body.dark-theme { --mascara-fundo: 24%; }
 .transferencia-tela .transferencia-valor-cab .compras-chip:not(.ativo):not(:disabled):active { background: #fff; border-color: #fff; color: var(--panel-text, #9a3412); }
 /* A caixa do valor também reage ao mouse (a máscara única): miolo sombreado, texto escuro; a borda continua a mesma. */
 @media (hover: hover) {
-  .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:hover { --ui-control-bg: rgba(255, 255, 255, .22); --ui-input-color: #fff; }
+  .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:hover { --ui-control-bg: rgba(255, 255, 255, .22); --theme-field: rgba(255, 255, 255, .22); --ui-input-color: #fff; }
   .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:hover { --ui-placeholder: rgba(255, 255, 255, .95); }
 }
 /* Número e nome do valor bem legíveis nos dois temas (o cinza do tema escuro apagava o "R$ 0,00") e Notas/Moedas no escuro com sombra clara em vez do marrom. */
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela { --ui-placeholder: rgba(255, 255, 255, .95); }
 @media (hover: hover) {
 }
+/* Caixa do valor sem moldura: só o sombreado ao passar o mouse, igual nos dois temas. */
+.transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela, .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:hover, .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:focus { --ui-border-base: transparent; --ui-control-accent: transparent; border-color: transparent; }
