@@ -803,8 +803,9 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .transferencia-valor-cab .transferencia-calc-aviso { color: #fff; font-weight: 600; }
 .transferencia-tela .transferencia-valor-cab .transferencia-calc-aviso:empty { display: none; }
 /* Quadro de etapa do Patrimônio (experimento de 26/11/2026): o nome da etapa em destaque e a barra de seis segmentos, no quadro do valor. O contêiner só dá o escopo transferencia-tela (display: contents), então o quadro fixo continua preso ao formulário inteiro. */
-.transferencia-contexto { display: contents; }
-.transferencia-contexto > * { grid-column: 1 / -1; min-width: 0; }
+.transferencia-contexto { position: sticky; top: 0; z-index: 4; display: grid; gap: 8px; grid-column: 1 / -1; min-width: 0; padding-bottom: 6px; background: var(--layout-gap, #f5f5f7); box-shadow: 0 -14px 0 0 var(--layout-gap, #f5f5f7); }
+.transferencia-contexto > * { min-width: 0; }
+.transferencia-contexto .transferencia-multi-painel { max-height: 60vh; overflow-y: auto; }
 .transferencia-tela .patrimonio-etapa-titulo { display: block; margin: 0; font: 700 24px/1.2 var(--ui-font); color: #fff; overflow-wrap: anywhere; }
 .transferencia-tela .patrimonio-etapa-barra { display: flex; gap: 4px; margin: 2px 0 0; padding: 0; list-style: none; }
 .transferencia-tela .patrimonio-etapa-barra li { flex: 1 1 0; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .35); }

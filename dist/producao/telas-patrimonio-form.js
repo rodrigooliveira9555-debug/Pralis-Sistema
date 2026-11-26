@@ -681,7 +681,7 @@
         const erroEtapa = el('p', 'profiles-error'); erroEtapa.setAttribute('role', 'alert');
         /* Quadro da etapa (padrão da Nova Transferência): o quadro azul fixo no topo diz "Etapa N de 6", o nome da etapa e uma barra de seis
            segmentos; abaixo, a linha "Ir para a etapa" abre a lista das seis. As peças vêm da Transferência (CicluzTransferencias.pecas); o
-           contêiner transferencia-contexto (display: contents) só dá o escopo transferencia-tela a estas duas peças, sem mudar o resto do formulário. */
+           contêiner transferencia-contexto dá o escopo transferencia-tela a estas duas peças e as prende juntas ao topo (quadro azul + Ir para a etapa). */
         const { quadro: quadroT, secao: secaoT, linhaQueAbre } = window.CicluzTransferencias.pecas;
         const repetido = dlg.querySelector('.compras-dialog-sub'); if (repetido) repetido.remove(); // o caminho já está no cabeçalho
         const nomes = PD.etapas();
