@@ -1717,3 +1717,6 @@ O fio de 1 px do cabeçalho padrão (cor clara) aparecia como uma tarja branca n
 - **Campo obrigatório vazio** marca a LINHA (sombreado + faixa na cor do cabeçalho), pois o campo não tem borda.
 - As regras de formulário linha por linha agora valem também nas **telas de setor** (\`#sector-view\`), não só nas janelas.
 - **Pendente (famílias com estrutura própria):** formulários da Gestão de Pessoas e Colaboradores (títulos internos, rótulos empilhados), Produção, Caixa e telas de API (dependem do servidor).
+
+### 26. Formulários planos de Pessoas e Colaboradores agrupados (26/11/2026)
+Os formulários antigos de Pessoas/Colaboradores (\`.form-fields.uniforms-form\`: uma lista plana com título \`h3.uniforms-heading\` seguido dos campos) passam a ter **um grupo por título**: título acima e quadro com as linhas (nome à esquerda, valor à direita, 52 px). O agrupamento é feito uma vez por formulário (\`data-agrupado\`) por \`agruparFormularios\` em \`people-header-pilot.js\`, dentro do \`sync\` que a tela já tem (sem observador novo); só move os campos de lugar. Vale para Exames, Contratos, Documentos, Avaliações, Folhas, Escalas e as demais telas dessa família.

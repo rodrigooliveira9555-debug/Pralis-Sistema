@@ -340,7 +340,7 @@ refreshMode();action.title=label;row.append(handle,action,power,ou,pin);inner.ap
     button.dataset.nativeDisabled=String(source.disabled);button.disabled=source.disabled;for(const attr of ['aria-expanded','aria-pressed']){const value=source.getAttribute(attr);if(value!==null)button.setAttribute(attr,value);else button.removeAttribute(attr)}
     controls.set(key,{button,label});
    }
-   syncQueries();if(sortMode===0)originalOrders=new WeakMap();rememberOriginalRows();applyPreferences();if(sortMode!==0&&enabled('sort'))sortRows(sortDirection);if(!chooser.hidden&&chooserSignature!==choicesFingerprint())renderChoices();
+   agruparFormularios(view);syncQueries();if(sortMode===0)originalOrders=new WeakMap();rememberOriginalRows();applyPreferences();if(sortMode!==0&&enabled('sort'))sortRows(sortDirection);if(!chooser.hidden&&chooserSignature!==choicesFingerprint())renderChoices();
   }
   content.addEventListener('pointerdown',e=>{if(e.target.closest('.menu-item-move,.account-move,.location-move')){sortDirection=null;sortMode=0;originalOrders=new WeakMap();updateSortLabel()}},true);
   mounted.set(view,{sync,footer,head,reset:()=>{if(nativeSearchButton?.getAttribute('aria-expanded')==='true')nativeSearchButton.click();for(const [input] of adoptedInputs){input.hidden=true;const host=profileSearchHosts.get(input);if(host)host.hidden=true}previousActive=false;sync()}});
@@ -350,6 +350,18 @@ refreshMode();action.title=label;row.append(handle,action,power,ou,pin);inner.ap
    if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;sync()});
   }).observe(view,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','hidden','aria-label','aria-expanded','aria-pressed','disabled','open']});
   sync();
+ }
+ /* FORMULÁRIOS PLANOS (Rodrigo, 26/11/2026): os formulários antigos de Pessoas/Colaboradores são uma lista plana — título (h3.uniforms-heading) seguido dos campos. Cada título passa a abrir um GRUPO (título acima e quadro com as linhas), uma vez por formulário (data-agrupado). Só move os campos; não muda o que fazem. */
+ function agruparFormularios(raiz){
+  raiz.querySelectorAll('.form-fields.uniforms-form:not([data-agrupado])').forEach(f=>{
+   if(!f.querySelector(':scope>h3.uniforms-heading'))return;
+   f.dataset.agrupado='sim';let caixa=null;
+   [...f.children].forEach(c=>{
+    if(c.matches('h3.uniforms-heading')){c.classList.add('grupo-titulo');caixa=document.createElement('div');caixa.className='grupo-quadro';c.after(caixa)}
+    else if(caixa&&!c.matches('.actions,.footer-action-pair,.grupo-quadro,.uniforms-history'))caixa.append(c);
+   });
+   [...f.querySelectorAll(':scope>.grupo-quadro')].forEach(q=>{if(!q.children.length)q.remove()});
+  });
  }
  function scan(){document.querySelectorAll('.view.show').forEach(mount);document.querySelectorAll('dialog[open],.modal.show>.dialog').forEach(dialog=>{if(!mounted.has(dialog)){prepareDialog(dialog);mount(dialog)}})}
  function prepareDialog(dialog){
