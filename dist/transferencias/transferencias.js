@@ -347,47 +347,40 @@
         const dataTransf = campoDeData('Data da transferência *', R.diaNegocio(new Date()));
 
         /* Origem e destino (um só, ou várias contas com Múltiplo destino) */
-        // Escolha de UMA conta: campo no padrão do cadastro (mostra a conta e uma seta) que abre, para baixo, o mesmo painel flutuante da data e da hora, com a lista compacta de contas.
+        // Escolha de UMA conta: a mesma linha que se abre para baixo do Múltiplo destino (resumo e seta; embaixo, as contas com marca redonda, ícone CNT, nome e situação).
+        // Tocar numa conta escolhe e recolhe; tocar fora (ou Esc) também recolhe.
         const escolhaDeConta = (rotulo, lista) => {
-          const abre = el('button', 'compras-arvore-campo'); abre.type = 'button';
-          const texto = el('span', 'compras-arvore-texto', '—'); abre.append(texto); abre.insertAdjacentHTML('beforeend', U.svg(ICONE.baixo));
-          const painel = el('div', 'compras-escolha-painel compras-aniv-painel transferencia-contas-painel');
-          const abrirPainel = U.flutuante(abre, painel);
           let atual = '';
-          const pintar = () => { texto.textContent = atual || '—'; abre.classList.toggle('vazio', !atual); };
-          // Mesmas linhas da lista em árvore do cadastro (caixa, ícone com a sigla, nome, situação), numa janela menor; escolher uma conta fecha o painel.
-          const desenhar = () => {
-            const busca = entrada('text', '', { placeholder: 'Buscar conta', maxLength: 80, autocomplete: 'off' }); busca.setAttribute('aria-label', 'Buscar conta');
-            busca.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
-            const arvore = el('div', 'compras-hier'); arvore.setAttribute('role', 'listbox');
-            const montar = () => {
-              const termo = busca.value.trim().toLowerCase();
-              const itens = lista().filter((n) => !termo || n.toLowerCase().includes(termo));
-              arvore.replaceChildren(...itens.map((n) => {
-                const l = el('div', 'compras-hier-linha transferencia-conta-escolha'); l.setAttribute('role', 'option'); l.setAttribute('aria-selected', String(n === atual));
-                const seta = el('span', 'compras-hier-seta'); seta.setAttribute('aria-hidden', 'true'); seta.style.visibility = 'hidden';
-                const c = entrada('checkbox'); c.className = 'compras-selecao-bolinha'; c.checked = n === atual; // a mesma marcação redonda do cadastro de produto c.tabIndex = -1; c.setAttribute('aria-label', 'Escolher ' + n);
-                const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); ic.append(el('span', 'sigla-text', 'CNT'));
-                const tx = el('span', 'compras-hier-texto'); tx.append(el('b', null, n), el('small', null, 'Conta ativa'));
-                l.append(seta, c, ic, tx, el('span', 'compras-hier-estado', 'Ativo'));
-                const escolher = () => { abre.value = n; abrirPainel(false); abre.focus(); };
-                l.addEventListener('click', escolher);
-                return l;
-              }));
-              if (!itens.length) arvore.append(el('p', 'profiles-note compras-hier-vazio', termo ? 'Nada encontrado.' : 'Nenhuma conta disponível.'));
-            };
-            busca.addEventListener('input', montar); montar();
-            painel.replaceChildren(el('p', 'transferencia-folha-titulo', rotulo.replace(/ *$/, '')), busca, arvore);
-          };
-          Object.defineProperty(abre, 'value', { get: () => atual, set: (v) => { const novo = v || ''; if (novo === atual) return; atual = novo; pintar(); abre.dispatchEvent(new Event('change', { bubbles: true })); } });
-          abre.addEventListener('click', () => { if (painel.hidden) { desenhar(); abrirPainel(true); } });
-          abre.painel = painel; pintar();
-          return abre;
+          const abre = linhaQueAbre(rotulo, () => abrirLista(painel.hidden));
+          const painel = el('div', 'transferencia-multi-painel'); painel.hidden = true;
+          const arvore = el('div', 'compras-hier transferencia-contas'); arvore.setAttribute('role', 'radiogroup'); arvore.setAttribute('aria-label', rotulo.replace(/ *$/, '') + ': contas');
+          painel.append(arvore);
+          const caixa = el('div', 'transferencia-opcao'); caixa.append(abre.no, painel);
+          const pintar = () => { abre.resumo.textContent = atual || '—'; };
+          function abrirLista(sim) { if (sim) desenhar(); painel.hidden = !sim; abre.abrir(sim); }
+          function desenhar() {
+            const itens = lista();
+            arvore.replaceChildren(...itens.map((nome) => {
+              const b = el('button', 'compras-hier-linha transferencia-conta'); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(nome === atual));
+              const icone = el('span', 'compras-hier-icone'); icone.setAttribute('aria-hidden', 'true'); icone.append(el('span', 'sigla-text', 'CNT'));
+              const marca = el('span', 'transferencia-conta-marca'); marca.innerHTML = MARCA;
+              const seta = el('span', 'compras-hier-seta'); seta.setAttribute('aria-hidden', 'true'); seta.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+              const texto = el('span', 'compras-hier-texto'); texto.append(el('b', null, nome), el('small', null, 'Conta ativa'));
+              b.append(seta, marca, icone, texto);
+              b.onclick = () => { caixa.value = nome; abrirLista(false); abre.no.focus(); };
+              return b;
+            }));
+            if (!itens.length) arvore.append(el('p', 'profiles-note compras-hier-vazio', 'Nenhuma conta disponível.'));
+          }
+          dlg.addEventListener('click', (e) => { if (!painel.hidden && !caixa.contains(e.target)) abrirLista(false); });
+          caixa.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !painel.hidden) { abrirLista(false); e.stopPropagation(); e.preventDefault(); abre.no.focus(); } });
+          Object.defineProperty(caixa, 'value', { get: () => atual, set: (v) => { const novo = v || ''; if (novo === atual) return; atual = novo; pintar(); caixa.dispatchEvent(new Event('change', { bubbles: true })); } });
+          pintar();
+          return caixa;
         };
         const origem = escolhaDeConta('Origem (−) / CNT *', () => contas);
         const destino = escolhaDeConta('Destino (+) / CNT *', () => candidatas());
-        const campoDestino = linhaDe('Destino (+) / CNT *', destino);
-        const campoOrigem = linhaDe('Origem (−) / CNT *', origem);
+        const campoDestino = destino; const campoOrigem = origem;
         const marcadas = new Set();
         const contagem = el('small', 'profiles-note'); contagem.setAttribute('role', 'status');
         const listaContas = el('div', 'compras-hier transferencia-contas'); listaContas.setAttribute('role', 'group'); listaContas.setAttribute('aria-label', 'Destino (+) / CNT: contas');
@@ -473,7 +466,7 @@
         const corpo = el('div', 'transferencia-corpo');
         // Valor em cima (quadro laranja fixo); depois, um assunto por vez: a transferência, a transferência de retorno, as opções e a observação.
         corpo.append(calc.no,
-          secao('Transferência', quadro(linhaData, campoOrigem, campoDestino, campoContas, lacreNormal), origem.painel, destino.painel),
+          secao('Transferência', quadro(linhaData, campoOrigem, campoDestino, campoContas, lacreNormal)),
           secao('Transferência de retorno', quadro(retornosBox, linhaAdd)),
           secao('Opções', quadro(linhaMultiplo, aceite.no)),
           secao('Observação', quadro(linhaDe('Observação', obs), anexos.no)));

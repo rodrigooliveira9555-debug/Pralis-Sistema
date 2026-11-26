@@ -1556,3 +1556,7 @@ Botões de rodapé: só ficam um pouco mais evidentes ao passar (cheio fecha o l
 
 ### Máscara de passar o mouse: só o miolo (26/11/2026, Rodrigo, revisão)
 Ao passar o mouse, **só o miolo** é sombreado (14%, 24% no escuro); a **borda continua a mesma de quando o mouse não está em cima** (substitui "sombreado + fio"). Vale para calendário, hora, teclas, chips, bolinhas, caixas e campos. Ao escolher, enche de cor cheia (aí a borda acompanha).
+
+### Contas em linha que abre e barra de baixo de vidro de verdade (26/11/2026, Rodrigo)
+- Origem e Destino (um só): mesma linha que se abre para baixo do Múltiplo destino — resumo e seta; embaixo, contas com marca redonda, ícone CNT, nome e situação. Tocar numa conta escolhe e recolhe; fora ou Esc recolhe. Substitui o painel flutuante.
+- Nas janelas (`shell-dialog`), a barra de baixo flutua sobre o conteúdo, que passa por trás dela com desfoque; o conteúdo ganha folga no fim. Ainda não aplicada nas telas de setor (`#sector-view`).
