@@ -1,7 +1,7 @@
 // Servidor estático mínimo para revisar o S2 localmente (sem dependências).
 // Uso: node tests/servidor.mjs [porta]  → http://localhost:8000/local.html
 // /local.html existe só aqui (não está em dist/ nem no deploy): prepara uma sessão de aba de teste
-// para o porteiro (dist/cicluz-sessao.js) liberar as telas sem o backend. Chamadas a /api/ respondem 503 (exceto GET /api/contas, com contas de demonstração para revisar a Nova Transferência);
+// para o porteiro (dist/cicluz-sessao.js) liberar as telas sem o backend. Chamadas a /api/ respondem 503 (exceto GET /api/contas e GET /api/financeiro/grupos, com contas e grupos de demonstração para revisar a Nova Transferência e os Lançamentos de Saídas);
 // nada é enviado a servidor nenhum.
 import http from 'node:http';
 import fs from 'node:fs';
@@ -27,6 +27,11 @@ export function iniciar(porta = 0) {
     if (p === '/api/contas' && req.method === 'GET') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ contas: ['Cofre (demonstração)', 'Caixa 1M (demonstração)', 'Caixa 2T (demonstração)', 'Banco (demonstração)'].map((nome) => ({ nome, situacao: 'ATIVA' })) }));
+    }
+    // Só para REVISAR os Lançamentos de Saídas (Despesas, Mercadorias, Retiradas): dois grupos de demonstração (um pai e um filho), sem dado real.
+    if (p === '/api/financeiro/grupos' && req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ grupos: [{ itemId: 'demo-1', nome: 'Grupo de demonstração', paiId: null, ativo: true }, { itemId: 'demo-2', nome: 'Subgrupo de demonstração', paiId: 'demo-1', ativo: true }] }));
     }
     if (p.startsWith('/api/')) {
       res.writeHead(503, { 'Content-Type': 'application/json' });
