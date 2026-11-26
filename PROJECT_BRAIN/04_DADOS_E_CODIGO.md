@@ -50,7 +50,10 @@
   `produtos:excluir`, e quantas vezes por repetição); `agenda_acoes_progresso` (quantas feitas por compromisso e data da
   repetição; ao chegar, conclui); `agenda_telas_icone` (só as exceções de tela do ícone de agendar); `agenda_mensagens.arquivo_id`
   (foto ou áudio do chat, guardado em `agenda_arquivos`; áudio WebM/Ogg/M4A/MP3 aceito pelo conteúdo). Catálogo das ações por tela:
-  `ACOES_POR_TELA` em `dist/agenda/rotina.js`; a camada de produtos (`compras/produtos-api.js`) avisa a Agenda. `rotas.js` avisa a
+  `ACOES_POR_TELA` em `dist/agenda/rotina.js` (chave: último pedaço do endereço da tela); a camada de produtos
+  (`compras/produtos-api.js`) e os serviços de Compras e Produção (`contarSe`) avisam a Agenda. Ação geral de toda tela
+  (`tela:salvar`, 26/11/2026): `cicluz-sync.js` dispara `cicluz-dado-salvo` (escrita no servidor ou dado de negócio editado
+  no aparelho, via `cicluz-sessao.js`); a API só conta essa ação para a tarefa ligada à tela enviada. `rotas.js` avisa a
   troca de tela com o evento `cicluz-rota-mudou`.
   **Respostas da P-46 (0009, 24/11/2026):** `agenda_grupos.area` (lista ligada a uma área do Acesso por Tela; membros com
   origem `area`, refeitos pela API quando as permissões mudam); `perfis_usuarios.colaborador_id` (conta ligada ao colaborador

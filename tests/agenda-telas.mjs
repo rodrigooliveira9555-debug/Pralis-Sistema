@@ -890,6 +890,65 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   await p.close();
 }
 
+/* ---------- 5c) Ações programadas em todas as telas (P-53, Zé 26/11/2026) ---------- */
+// Toda tela do menu conta "Salvar algo nesta tela"; Compras e Produção contam também os atos com nome.
+{
+  const p = await abrirPagina(1280, 900);
+  // O rotas.js é o último script da página: a lista de telas do menu depende dele.
+  await p.waitForFunction(() => window.CicluzRotas && CicluzAgendaRotina.telasDoMenu().length > 0);
+  await limparAgenda(p);
+  const cat = await p.evaluate(() => {
+    const R = CicluzAgendaRotina;
+    const telas = R.telasDoMenu().filter((t) => !t.endereco.startsWith('#/agenda/'));
+    return {
+      total: telas.length,
+      semGeral: telas.filter((t) => !R.acoesDaTela(t.endereco).some((a) => a.id === R.ACAO_GERAL)).map((t) => t.endereco),
+      comNome: telas.filter((t) => R.acoesDaTela(t.endereco).length > 1).map((t) => t.endereco.split('/').pop()),
+      agenda: R.acoesDaTela('#/agenda/agenda').length,
+    };
+  });
+  ok(cat.total > 20 && cat.semGeral.length === 0, 'Todas as ' + cat.total + ' telas do menu oferecem "Salvar algo nesta tela" (sem: ' + cat.semGeral.join(', ') + ')');
+  const NOMEADAS = ['compras-produtos', 'compras-agendamento', 'compras-solicitacao', 'compras-cotacao', 'compras-pedidos', 'compras-conferencias', 'compras-cadastro',
+    'producao-agendamento', 'producao-pedidos', 'producao-mapa', 'producao-abastecimento', 'producao-fichas', 'producao-produtos', 'producao-custos'];
+  ok(NOMEADAS.every((x) => cat.comNome.includes(x)), 'Cada tela de Compras e Produção com ato nomeado existe no menu (achadas: ' + cat.comNome.join(', ') + ')');
+  ok(cat.agenda === 0, 'A própria Agenda não oferece ação');
+
+  // Parâmetros de Custo: uma tarefa espera o ato nomeado, outra a ação geral; uma terceira é de outra tela.
+  const CUSTOS = await p.evaluate(() => CicluzAgendaRotina.telasDoMenu().find((t) => t.endereco.endsWith('/producao-custos')).endereco);
+  const FICHAS = await p.evaluate(() => CicluzAgendaRotina.telasDoMenu().find((t) => t.endereco.endsWith('/producao-fichas')).endereco);
+  const criados = await p.evaluate(async ([custos, fichas]) => {
+    const A = CicluzAgendaDados;
+    const h = CicluzAgendaDominio.isoData(new Date());
+    const base = { listaId: 'lista-diretor-operacoes', data: h, vinculoTitulo: 'Tela de teste', acaoQuantidade: 1 };
+    const r = [];
+    r.push(await A.salvarItem('', { ...base, titulo: 'Atualizar os parâmetros', vinculoTela: custos, acaoTela: 'producao:parametros' }));
+    r.push(await A.salvarItem('', { ...base, titulo: 'Salvar algo nos custos', vinculoTela: custos, acaoTela: 'tela:salvar' }));
+    r.push(await A.salvarItem('', { ...base, titulo: 'Salvar algo nas fichas', vinculoTela: fichas, acaoTela: 'tela:salvar' }));
+    return r.map((x) => x.erro || 'ok');
+  }, [CUSTOS, FICHAS]);
+  ok(criados.join() === 'ok,ok,ok', 'Três tarefas com ação criadas: ' + criados.join());
+  const pendentes = async () => (await dados(p)).itens.filter((i) => ['Atualizar os parâmetros', 'Salvar algo nos custos', 'Salvar algo nas fichas'].includes(i.titulo) && !i.concluida).map((i) => i.titulo).sort().join('|');
+
+  // Só abrir a tela (e o que ela grava sozinha) não conta.
+  await p.evaluate((t) => CicluzAgendaRotina.abrirTela(t), CUSTOS);
+  await p.locator('#producao-custos.show').waitFor();
+  await p.locator('.agenda-aviso-tela').waitFor();
+  ok((await p.locator('.agenda-aviso-tela').textContent()).includes('Salvar algo nos custos'), 'O aviso da tela mostra as tarefas dela');
+  await p.evaluate(() => CicluzSync.avisarSalvo());
+  await p.waitForTimeout(2500);
+  ok(await pendentes() === 'Atualizar os parâmetros|Salvar algo nas fichas|Salvar algo nos custos', 'Salvamento sem toque da pessoa na tela não conta');
+
+  // A pessoa edita e salva: o ato nomeado e a ação geral desta tela concluem; a tarefa da outra tela continua.
+  await p.locator('#producao-custos button', { hasText: 'Editar' }).click();
+  const janela = p.locator('dialog[open]').last(); // a janela é da Produção, não da Agenda
+  await janela.getByLabel('Horas de trabalho por mês (h)', { exact: true }).fill('220');
+  await janela.getByRole('button', { name: 'Salvar parâmetros' }).click();
+  await p.waitForFunction(() => CicluzAgendaDados.dados.itens.filter((i) => ['Atualizar os parâmetros', 'Salvar algo nos custos'].includes(i.titulo) && i.concluida).length === 2, null, { timeout: 20000 });
+  ok(await pendentes() === 'Salvar algo nas fichas', 'Salvar os parâmetros conclui o ato nomeado e a ação geral desta tela; a da outra tela continua');
+  await limparAgenda(p);
+  await p.close();
+}
+
 /* ---------- 6) Matriz de layout ---------- */
 {
   // Dados de exemplo pela API (títulos e nomes compridos para forçar o layout).
