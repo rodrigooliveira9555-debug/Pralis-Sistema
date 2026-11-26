@@ -1576,3 +1576,6 @@ O campo de dias tem as duas formas: **− e +** ao lado, ou **tocar no campo** e
 
 ### Painéis flutuantes: alinhamento único (26/11/2026, Rodrigo)
 Data, hora, dias e anexos abrem sempre com a **borda direita do painel igual à borda de fora do quadro** que guarda a linha, e a **face de cima 6 px abaixo da linha** (ou 6 px acima, se não couber embaixo). O painel se alinha à LINHA inteira, não à caixinha do campo. Regra em `U.flutuante` (`ui.js`); fora das linhas da Nova Transferência vale o próprio campo.
+
+### Altura padrão dos painéis flutuantes — opção B (26/11/2026, Rodrigo)
+Na Nova Transferência, data, hora, dias e anexos começam **sempre na mesma altura da tela**: face de cima **6 px abaixo do quadro laranja do valor** (fixo no topo), borda direita na borda do quadro das linhas; passando da barra de baixo, rolam por dentro. Consequência: o painel pode cobrir linhas logo abaixo do valor (ex.: a própria Data); a linha continua clicável por inteiro. Substitui "6 px abaixo da linha" do ajuste anterior nessa tela.

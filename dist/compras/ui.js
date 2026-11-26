@@ -999,7 +999,11 @@
       const natural = painel.scrollHeight + (painel.offsetHeight - painel.clientHeight);
       const abaixo = base - (r.bottom + 6); const acima = r.top - 6 - topo;
       let y; let altura = natural;
-      if (natural <= abaixo) y = r.bottom + 6;
+      // Altura padrão (Rodrigo escolheu a opção B, 26/11/2026): na Nova Transferência TODOS os painéis (data, hora, dias, anexos) começam na mesma altura da tela — 6 px abaixo do quadro laranja do valor, que fica fixo no topo — e rolam por dentro se passarem da barra de baixo.
+      const quadroFixo = ancora.closest('.transferencia-tela') && ancora.closest('.transferencia-tela').querySelector('.transferencia-valor-cab');
+      const topoPadrao = quadroFixo ? Math.round(quadroFixo.getBoundingClientRect().bottom + 6) : 0;
+      if (topoPadrao && base - topoPadrao >= 160) { y = topoPadrao; altura = Math.min(natural, base - topoPadrao); }
+      else if (natural <= abaixo) y = r.bottom + 6;
       else if (natural <= acima) y = r.top - 6 - natural;
       else if (abaixo >= acima) { altura = Math.max(120, abaixo); y = r.bottom + 6; }
       else { altura = Math.max(120, acima); y = r.top - 6 - altura; }
