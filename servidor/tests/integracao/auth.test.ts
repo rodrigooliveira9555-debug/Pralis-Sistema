@@ -159,8 +159,9 @@ describe("login", () => {
       app.inject({
         method: "POST",
         url: "/api/auth/change-password",
-        headers: { ...comSessao(cookie), "content-type": "application/json" },
-        // IP diferente a cada pedido: trocar de IP não pode zerar a contagem.
+        // IP e cookie inventado diferentes a cada pedido: nenhum dos dois pode zerar a contagem
+        // (antes a chave saía do texto do cookie e "x_session_token=..." na frente a trocava).
+        headers: { ...comSessao(`x_session_token=lixo-${i}; ${cookie}`), "content-type": "application/json" },
         remoteAddress: `10.1.${i}.${i}`,
         payload: { currentPassword: senhaAtual, newPassword: "senha-nova-forte-123" }
       });
