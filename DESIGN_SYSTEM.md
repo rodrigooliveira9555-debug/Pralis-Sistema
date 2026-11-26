@@ -1731,3 +1731,12 @@ O bloco "Documento / Foto / Arquivo" (\`doc-capture\`, usado no cadastro complet
 - Causa que escondia a máscara nos formulários antigos: `.single-field-block` fixava `background: transparent !important`; agora lê `--linha-fundo`, que a linha define ao passar o mouse. Regra nova de linha: nunca fixar fundo transparente com `!important`.
 - Botão de busca (lupa) dentro de linha: círculo cinza, na cor do cabeçalho ao passar o mouse (variáveis `--busca-fundo/-borda/-texto`).
 - **Duas reações diferentes, sempre juntas (Rodrigo, 26/11/2026):** (1) passar o mouse na **linha** sombreia a linha inteira (6% da cor do cabeçalho); (2) passar o mouse no **botão redondo** da linha pinta só o botão com a cor do cabeçalho e o ícone fica branco. Com o mouse no botão, a linha também fica sombreada (o botão está dentro dela). Em repouso todo botão redondo de linha é círculo cinza com ícone cinza; o de excluir fica vermelho só ao passar. Vale para toda linha de toda tela (Compras, cadastros, Pessoas, documento, Transferência). A Nova Transferência é a referência. Conferido com o mouse no cadastro de cliente (linha de e-mail e botão da data de aniversário).
+
+### 29. Máscara de passar o mouse em todo botão e cartão clicável (26/11/2026, Rodrigo) — REGRA FIXA
+Referência: **Cancelar / Avançar / Salvar do rodapé**. Sem exceção de tela:
+- **Botão cheio** (Avançar, Salvar, botões de título como Novo Cliente): ao passar o mouse a cor fecha, 18% mais escura (`--botao-fundo`/`--botao-borda`); ícone e texto não mudam.
+- **Botão de contorno** (Cancelar, Voltar): ganha o sombreado da máscara única no miolo; a **borda não muda**.
+- **Etapas do cadastro (stepper)**: o quadradinho da etapa ganha a máscara (etapa atual: fecha 18%); borda igual.
+- **Cartões de escolha** (PF/PJ e semelhantes): o miolo ganha a máscara; a borda não muda; o cartão marcado só intensifica.
+- **Chave Sim/Não**: escurece levemente (no escuro, clareia). **Recolher do cabeçalho**: máscara no botão.
+- Regra de código: todo botão cheio lê `--botao-fundo/--botao-borda` (com a cor do cabeçalho de reserva); nunca fixar `background` com `!important` sem variável. Conferido com o mouse: Avançar (vermelho → vermelho mais escuro), etapa 2 e cartão PJ; 320/390 px e tema escuro sem rolagem horizontal; linhas de 52 px (três rótulos muito longos chegam a 54 px a 320 px).

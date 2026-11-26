@@ -389,7 +389,7 @@ body:is(.dark-theme,:not(.dark-theme)) dialog.docs-pdf-dialog form{display:grid;
 .nav-tree .children .icone-revisar{width:16px;height:16px;margin-right:8px;vertical-align:-3px}
 /* Botões comuns dentro das telas seguem a cor do menu de origem, não o roxo padrão. Os de excluir (.perigo, .perigo-texto) ficam
    de fora: são vermelhos em todo o sistema (23/11/2026; antes esta regra os pintava na cor da tela). */
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .btn:not(.standard-form-action):not(.footer-save-accent):not(.footer-cancel-accent):not(.perigo):not(.perigo-texto){background:var(--menu-accent,var(--panel-color,#7c3aed));border-color:var(--menu-accent,var(--panel-color,#7c3aed));color:var(--texto-vazado,#fff)}
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .btn:not(.standard-form-action):not(.footer-save-accent):not(.footer-cancel-accent):not(.perigo):not(.perigo-texto){background:var(--botao-fundo,var(--menu-accent,var(--panel-color,#7c3aed)));border-color:var(--botao-borda,var(--menu-accent,var(--panel-color,#7c3aed)));color:var(--texto-vazado,#fff)}
 /* Botão retangular de ação (Salvar, Cancelar, Voltar, Avançar e todo .btn com ícone): texto à esquerda e o ícone em um círculo à direita, na cor do texto do botão. O círculo fica a --acao-respiro da borda de cima, de baixo e da direita (40 px de altura, 1 px de borda, 28 px de círculo). */
 .footer-action-icon,body #cadastro-completo :is(#prev-step,#next-step) svg{box-sizing:border-box;flex:none;width:var(--acao-circulo);height:var(--acao-circulo);padding:5px;border:1.5px solid currentColor;border-radius:50%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .footer-action-pair>:is(.footer-save-accent,.footer-cancel-accent){min-width:var(--acao-largura)}
@@ -969,3 +969,16 @@ body :is(.view,dialog,.modal,#sector-view) .people-complete-pickbox .local-searc
 body :is(.view,dialog,.modal,#sector-view) .people-complete-pickbox .local-search-toggle:is(:hover, :focus-visible) { --busca-fundo: var(--menu-accent); --busca-borda: transparent; --busca-texto: #fff; }
 /* Máscara da linha também nas linhas que usam .single-field-block (que fixava fundo transparente): a linha inteira recebe o sombreado ao passar o mouse ou focar. */
 body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset, .transferencia-quadro) > .single-field-block:is(:hover, :focus-within) { --linha-fundo: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+/* MÁSCARA DE PASSAR O MOUSE EM TODO BOTÃO E CARTÃO CLICÁVEL (Rodrigo, 26/11/2026; referência: Cancelar/Avançar do rodapé): botão cheio fecha a cor (18% mais escura), botão de contorno e cartão ganham o sombreado da máscara única no miolo e a borda NÃO muda; ícones não trocam de cor. Cobre botões cheios de título e de avançar, etapas do cadastro, cartões de escolha (PF/PJ…), chaves Sim/Não e o recolher do cabeçalho. */
+@media (hover: hover) {
+  body :is(.view,dialog,.modal,#sector-view) :is(button.form-next-action, .btn:not(.standard-form-action):not(.footer-save-accent):not(.footer-cancel-accent):not(.perigo):not(.perigo-texto)):not(:disabled):hover { --botao-fundo: color-mix(in srgb, #000 18%, var(--menu-accent, var(--panel-color, #7c3aed))); --botao-borda: color-mix(in srgb, #000 18%, var(--menu-accent, var(--panel-color, #7c3aed))); }
+  .stepper-item:not(.is-current) .stepper-node:hover .stepper-mark { background: color-mix(in srgb, var(--menu-accent, #7c3aed) var(--mascara-fundo, 14%), var(--theme-card, #fff)); }
+  .stepper-item.is-current .stepper-node:hover .stepper-mark { background: color-mix(in srgb, #000 18%, var(--stepper-accent, var(--menu-accent, #7c3aed))); }
+  .compras-tipo-cartao:not([data-marcado=true]):hover { background: color-mix(in srgb, var(--menu-accent, #7c3aed) var(--mascara-fundo, 14%), var(--theme-card, #fff)); }
+  .compras-tipo-cartao[data-marcado=true]:hover { background: color-mix(in srgb, var(--cartao-cor) 16%, var(--theme-card, #fff)); }
+  .account-status-switch:not(:disabled):hover { filter: brightness(.92); }
+  body.dark-theme .account-status-switch:not(:disabled):hover { filter: brightness(1.18); }
+  body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header button.people-header-toggle:hover { background: color-mix(in srgb, var(--menu-accent, #7c3aed) var(--mascara-fundo, 14%), transparent); }
+}
+@media (max-width: 600px) { body .people-complete-pickbox > label.uniforms-enum.people-complete-pick { grid-template-columns: 50% minmax(0, 1fr) auto; column-gap: 8px; font-size: 13px; line-height: 16px; } body .people-complete-pickbox > label.uniforms-enum > select { font-size: 13px; } }
+@media (max-width: 400px) { body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label { font-size: 14px; line-height: 16px; } body .people-complete-pickbox > label.uniforms-enum.people-complete-pick { font-size: 12px; line-height: 15px; } }
