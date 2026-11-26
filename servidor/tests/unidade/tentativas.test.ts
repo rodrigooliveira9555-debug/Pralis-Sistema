@@ -43,4 +43,19 @@ describe("contador de tentativas de senha", () => {
     contador.esgotou("email:b", JANELA + 30);
     expect(contador.esgotou("email:b", JANELA + 40)).toBe(true);
   });
+
+  // Revisão de 26/11: quem está a uma tentativa do bloqueio também não pode ser despejado pela inundação.
+  it("conta perto do bloqueio fica; saem antes as de 1 tentativa", () => {
+    const contador = novo(50);
+    for (let i = 0; i < 2; i += 1) contador.esgotou("email:vitima", 0);
+    for (let i = 0; i < 5_000; i += 1) contador.esgotou(`email:lixo-${i}`, 10);
+    expect(contador.esgotou("email:vitima", 20)).toBe(false);
+    expect(contador.esgotou("email:vitima", 30)).toBe(true);
+  });
+
+  it("mesmo com todas bloqueadas, o mapa não passa de 2x a capacidade", () => {
+    const contador = novo(10);
+    for (let i = 0; i < 500; i += 1) for (let j = 0; j < 4; j += 1) contador.esgotou(`email:x-${i}`, i);
+    expect(contador.tamanho).toBeLessThanOrEqual(20);
+  });
 });

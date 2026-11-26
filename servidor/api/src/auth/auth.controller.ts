@@ -10,15 +10,19 @@ import { ContadorTentativas } from "./tentativas.ts";
 // roubada não testa a senha atual sem fim). Ver tentativas.ts: encher o contador não zera bloqueios.
 const tentativas = new ContadorTentativas({ janelaMs: 15 * 60 * 1000, maximo: 10, capacidade: 10_000 });
 
-async function chaveDeTentativa(request: FastifyRequest): Promise<string | null> {
-  if (request.url.startsWith("/api/auth/sign-in/")) {
+// Decide pelo caminho JÁ NORMALIZADO (o mesmo que o better-auth recebe). Antes olhava o texto cru:
+// "/api/auth/./sign-in/email" ou "%2e" não batia com o startsWith, nada era contado, e o better-auth
+// normalizava e entrava igual (B5, achado na revisão de 26/11/2026).
+async function chaveDeTentativa(request: FastifyRequest, caminho: string): Promise<string | null> {
+  if (caminho.startsWith("/api/auth/sign-in/")) {
     const email = (request.body as { email?: unknown } | null)?.email;
     return typeof email === "string" ? `email:${email.trim().toLowerCase()}` : null;
   }
-  if (request.url.startsWith("/api/auth/change-password")) {
+  if (caminho.startsWith("/api/auth/change-password")) {
     // A sessão conferida pelo better-auth, e não o texto do cookie (que dava para variar à vontade).
     // Sem sessão válida a troca já é recusada pela biblioteca; não há o que contar.
-    const sessao = await auth.api.getSession({ headers: fromNodeHeaders(request.headers) });
+    // disableRefresh: só consultar; renovar aqui gravaria um vencimento novo sem devolver o cookie.
+    const sessao = await auth.api.getSession({ headers: fromNodeHeaders(request.headers), query: { disableRefresh: true } });
     return sessao ? `sessao:${sessao.session.id}` : null;
   }
   return null;
@@ -39,11 +43,13 @@ export async function registrarRotasAuth(app: FastifyInstance) {
     url: "/api/auth/*",
     config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
     async handler(request, reply) {
-      if (tentativas.esgotou(await chaveDeTentativa(request))) {
+      // Uma URL só, normalizada, para a contagem e para o better-auth: não há como uma ver um caminho
+      // e o outro, outro.
+      const url = new URL(request.url, env.AUTH_BASE_URL);
+      if (tentativas.esgotou(await chaveDeTentativa(request, url.pathname))) {
         return reply.status(429).send(problema(429, "Muitas tentativas nesta conta; aguarde 15 minutos", "RATE_LIMITED"));
       }
       try {
-        const url = new URL(request.url, env.AUTH_BASE_URL);
         const cabecalhos = fromNodeHeaders(request.headers);
         // Sobrescreve qualquer valor mandado pelo cliente: o IP é o que o Fastify apurou.
         cabecalhos.set(CABECALHO_IP_CLIENTE, request.ip);
