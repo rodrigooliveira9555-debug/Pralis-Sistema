@@ -259,6 +259,13 @@ Separado por quem destrava. Detalhes das perguntas no fim de cada item.
 - Leitor de tela (foco e teclado só conferidos por comportamento).
 - O sistema principal **não foi executado**: tudo vem de leitura de código, de 04/11/2026.
 
+## Nome real do PDV (26/11/2026, Washington)
+Em toda tela do Caixa (Entradas › Vendas/Faturamento › Lançamentos e Relatórios, Gerência, Tesouraria), o PDV deixou de ser "PDV 1 a 4" e passou a mostrar o **nome da máquina no CREARE** (`dispositivo.DESCRICAO`): **TNP-PC-CXPDV-1, -2, -3 e -4**. A lista mora num lugar só (`dados.js` → `CicluzCaixa.PDVS`); as telas e os filtros leem dela.
+- **Por que o nome:** o levantamento do CREARE (26/11/2026) mostrou que o ID do dispositivo muda a cada troca de computador e que o nome da máquina carrega o número do PDV. Os nomes `DESKTOP-…` (clonados, repetidos) não são PDV.
+- **O que é texto genérico continua "PDV"** (ex.: "Vendas do PDV", "PDV ligado"); só o **identificador** da máquina mostra o nome real.
+- **Ainda é casca:** a lista é fixa. Quando existir o vínculo real, ele terá vigência por `ID_DISPOSITIVO` (P-52) e o nome mostrado virá do vínculo vigente, não de texto; vínculo é por ID, nunca por nome.
+- **Fora desta entrega:** Configurações › Acessos (contas de posto, "PDV1 · Manhã") ainda mostra o número; a conta de posto continua por número de PDV.
+
 ## Desenvolvimento
 
 `npm run dev` em `servidor` serve o site em http://localhost:4200. Em `npm run dev:web` (:3100), o

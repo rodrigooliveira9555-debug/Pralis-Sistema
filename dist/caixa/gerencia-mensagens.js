@@ -58,7 +58,7 @@
         const opcoes = el('div', 'caixa-alvos');
         const renderAlvo = () => {
           opcoes.replaceChildren();
-          if (ctx.alvo === 'pdvs') ['PDV 1', 'PDV 2', 'PDV 3', 'PDV 4'].forEach((p) => opcoes.append(marcar(p, ctx.pdvs)));
+          if (ctx.alvo === 'pdvs') C.PDVS.forEach((p) => opcoes.append(marcar(p, ctx.pdvs)));
           if (ctx.alvo === 'operadores') abertos().forEach((a) => opcoes.append(marcar(a.operador + ' (' + a.pdv + ')', ctx.ops, a.operador)));
         };
         const alvo = U.chips(ALVOS, ctx.alvo, (v) => { ctx.alvo = v; renderAlvo(); });

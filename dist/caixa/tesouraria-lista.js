@@ -66,7 +66,7 @@
     g.append(
       sel('status', 'Status', [['pendente', 'Pendente'], ['recebida', 'Recebido'], ['cancelada', 'Cancelada'], ['divergente', 'Divergente']], 'Todos os status'),
       dt('de', 'Data inicial'), dt('ate', 'Data final'),
-      sel('pdv', 'PDV', ['PDV 1', 'PDV 2', 'PDV 3', 'PDV 4'], 'Todos os PDVs')
+      sel('pdv', 'PDV', C.PDVS, 'Todos os PDVs')
     );
     const itens = [g, botao(mais ? 'Menos filtros' : 'Mais filtros', () => { mais = !mais; atualizar(); }, 'btn secondary')];
     if (mais) {

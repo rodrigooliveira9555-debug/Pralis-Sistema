@@ -10,8 +10,8 @@
   const C = window.CicluzCaixa;
   const { el, botao, entrada, seletor } = U;
 
-  // Login de posto: cada conta de operador é um PDV + turno (PDV 1-4 × Manhã/Tarde).
-  const POSTO = { pdv: 'PDV 1', turno: 'Manhã', usuario: 'pdv1.manha' };
+  // Login de posto: cada conta de operador é um PDV + turno (uma das 4 máquinas, C.PDVS, × Manhã/Tarde).
+  const POSTO = { pdv: C.PDVS[0], turno: 'Manhã', usuario: 'pdv1.manha' };
   // Malote que a Tesouraria declarou para o lacre digitado (vem de C.estado.malotes; o 001 já existe de início).
   const MALOTE = { lacre: '', dinheiro: 0, moedas: 0, lacresSangria: [], lacreFechamento: '', rota: 'Malote Cofre → Conta do PDV' };
   /** Consulta o lacre como o servidor: inexistente, já rompido ou de outro PDV recusam com a mensagem do principal. */
@@ -73,7 +73,7 @@
 
   function render() {
     if (C.estado.status !== 'fechado') return renderAberto();
-    const aviso = U.nota('Demonstração: dados fictícios, nada é gravado. Use um lacre criado em "Malote da Tesouraria" (o 001 do PDV 1 já existe).');
+    const aviso = U.nota('Demonstração: dados fictícios, nada é gravado. Use um lacre criado em "Malote da Tesouraria" (o 001 do ' + POSTO.pdv + ' já existe).');
     aviso.classList.add('caixa-aviso');
     const intro = U.nota('Preencha os grupos abaixo. A abertura só é confirmada depois da conferência do malote.');
 
