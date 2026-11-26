@@ -347,13 +347,33 @@
         const dataTransf = campoDeData('Data da transferência *', R.diaNegocio(new Date()));
 
         /* Origem e destino (um só, ou várias contas com Múltiplo destino) */
-        // Mesmo campo de escolha do cadastro (campoArvore): mostra a conta escolhida e, ao tocar, abre a janela com a lista de contas.
-        const coresJanela = () => ({ cor: cor(), corTexto: COR_TEXTO });
-        const escolhaDeConta = (rotulo, lista) => U.campoArvore({ rotulo, titulo: rotulo.replace(/ \*$/, ''), sigla: 'CNT', cores: coresJanela, rotuloBusca: 'Buscar conta', vazio: 'Nenhuma conta disponível.', textoVazio: '—', nos: () => lista().map((n) => ({ id: n, nome: n, ativo: true, folha: false, conta: 'Conta ativa' })) });
-        let origem; let destino;
-        origem = escolhaDeConta('Origem (−) / CNT *', () => contas);
-        destino = escolhaDeConta('Destino (+) / CNT *', () => candidatas());
-        const campoDestino = linhaDe('Destino (+) / CNT *', destino);
+        // Escolha de UMA conta: campo no padrão do cadastro (mostra a conta e uma seta) que abre, para baixo, o mesmo painel flutuante da data e da hora, com a lista compacta de contas.
+        const escolhaDeConta = (rotulo, lista) => {
+          const abre = el('button', 'compras-arvore-campo'); abre.type = 'button';
+          const texto = el('span', 'compras-arvore-texto', '—'); abre.append(texto); abre.insertAdjacentHTML('beforeend', U.svg(ICONE.baixo));
+          const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-data-painel transferencia-anexos-painel');
+          const abrirPainel = U.flutuante(abre, painel);
+          let atual = '';
+          const pintar = () => { texto.textContent = atual || '—'; abre.classList.toggle('vazio', !atual); };
+          const desenhar = () => {
+            painel.replaceChildren(el('p', 'transferencia-folha-titulo', rotulo.replace(/ *$/, '')), quadro(...lista().map((n) => {
+              const b = el('button', 'transferencia-linha transferencia-linha-acao'); b.type = 'button'; b.setAttribute('role', 'option'); b.setAttribute('aria-selected', String(n === atual));
+              const marca = el('span', 'transferencia-seta transferencia-conta-ok'); marca.setAttribute('aria-hidden', 'true'); marca.innerHTML = n === atual ? U.svg('<path d="m5 12 5 5 9-10"/>') : '';
+              b.append(el('span', 'transferencia-linha-rotulo', n), marca);
+              b.onclick = () => { abre.value = n; abrirPainel(false); abre.focus(); };
+              return b;
+            })));
+            if (!lista().length) painel.append(el('p', 'profiles-note', 'Nenhuma conta disponível.'));
+          };
+          Object.defineProperty(abre, 'value', { get: () => atual, set: (v) => { const novo = v || ''; if (novo === atual) return; atual = novo; pintar(); abre.dispatchEvent(new Event('change', { bubbles: true })); } });
+          abre.addEventListener('click', () => { if (painel.hidden) { desenhar(); abrirPainel(true); } });
+          abre.painel = painel; pintar();
+          return abre;
+        };
+        const origem = escolhaDeConta('Origem (−) / CNT *', () => contas);
+        const destino = escolhaDeConta('Destino (+) / CNT *', () => candidatas());
+        const campoDestino = linhaDe('Destino (+) / CNT *', destino); campoDestino.append(destino.painel);
+        const campoOrigem = linhaDe('Origem (−) / CNT *', origem); campoOrigem.append(origem.painel);
         const marcadas = new Set();
         const contagem = el('small', 'profiles-note'); contagem.setAttribute('role', 'status');
         const listaContas = el('div', 'compras-hier transferencia-contas'); listaContas.setAttribute('role', 'group'); listaContas.setAttribute('aria-label', 'Destino (+) / CNT: contas');
@@ -439,7 +459,7 @@
         const corpo = el('div', 'transferencia-corpo');
         // Valor em cima (quadro laranja fixo); depois, um assunto por vez: a transferência, a transferência de retorno, as opções e a observação.
         corpo.append(calc.no,
-          secao('Transferência', quadro(linhaData, linhaDe('Origem (−) / CNT *', origem), campoDestino, campoContas, lacreNormal)),
+          secao('Transferência', quadro(linhaData, campoOrigem, campoDestino, campoContas, lacreNormal)),
           secao('Transferência de retorno', quadro(retornosBox, linhaAdd)),
           secao('Opções', quadro(linhaMultiplo, aceite.no)),
           secao('Observação', quadro(linhaDe('Observação', obs), anexos.no)));

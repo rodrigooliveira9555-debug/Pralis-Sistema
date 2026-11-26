@@ -1538,5 +1538,5 @@ Só nesta tela, para testar antes de valer para as outras (desenho do Rodrigo em
 - Menu rápido (Configurar): cabeçalho só com o título em negrito (sem círculo laranja); miolo é quadro branco de linhas brancas com fio cinza, igual aos painéis de data e hora.
 - Logomarca do meio da barra de baixo: sozinha, sem círculo nem contorno.
 - Linha que abre outro menu de escolha (Anexos) termina em seta para a **direita**; o + só onde o toque cria algo.
-- Origem e Destino da Nova Transferência usam o campo de escolha do cadastro (`U.campoArvore`, lista de contas em janela).
+- Origem e Destino da Nova Transferência: campo no padrão do cadastro que abre, para baixo, o painel flutuante compacto (como data e hora) com a lista de contas; o Destino não oferece a conta da Origem.
 - Tema escuro: texto dos botões cheios é "vazado" (cor do fundo da tela) via `--texto-vazado`; por ora só na Nova Transferência. Atenção: sobre azul e roxo o contraste cai (~3:1) — decidir se vale para todo o sistema.
