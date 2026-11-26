@@ -961,7 +961,7 @@ body.dark-theme { --mascara-fundo: 24%; }
 .transferencia-tela .transferencia-linha-resumo { min-height: 40px; }
 .transferencia-tela .transferencia-aceite-resumo { margin: 0; color: var(--muted, #8e8e93); font: 500 13px/18px var(--ui-font); }
 .transferencia-tela .transferencia-linha .compras-chips { justify-content: flex-end; flex-wrap: wrap; }
-.transferencia-tela .transferencia-linha input[inputmode="numeric"] { text-align: right; max-width: 90px; }
+.transferencia-tela .transferencia-linha input.transferencia-dias-input { text-align: right; max-width: 90px; }
 /* Caixa do valor sem moldura também com a calculadora aberta e em foco: nada de contorno nem anel de foco; o sombreado é o sinal. */
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:focus, .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:focus-visible, .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela[aria-expanded="true"] { outline: none; box-shadow: none; border-color: transparent; --ui-border-base: transparent; --ui-control-accent: transparent; --ui-control-bg: rgba(255, 255, 255, .22); --theme-field: rgba(255, 255, 255, .22); --ui-input-color: #fff; }
 /* Sem moldura em nenhum estado (parada, mouse, foco, calculadora aberta; claro e escuro): as regras gerais de campo têm #sector-view dentro de :is(), então esta usa o mesmo prefixo para valer por cima delas, só trocando as variáveis (sem !important). */

@@ -277,7 +277,7 @@
     const linhaHora = abreAoTocarNaLinha(linha('Horas (hh:mm)', hora.caixa, hora.painel), hora.input, hora.painel);
     // Dias: − e + ou, tocando no campo, a roleta (o mesmo painel da hora) que rola e mostra a quantidade de dias.
     const roleta = U.roletaNumero({ rotulo: 'Dias', titulo: 'Dias', min: 1, max: MAX_DIAS, valor: '1' });
-    const diasInput = roleta.input;
+    const diasInput = roleta.input; diasInput.classList.add('transferencia-dias-input');
     const linhaDias = linhaDe('Dias', diasInput); linhaDias.append(roleta.painel); abreAoTocarNaLinha(linhaDias, diasInput, roleta.painel);
     const passo = (rotulo, icone, delta) => { const b = el('button', 'transferencia-circulo'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = U.svg(icone); b.onclick = () => { roleta.definir((roleta.valor() || 0) + delta); }; return b; };
     linhaDias.append(passo('Menos um dia', '<path d="M5 12h14"/>', -1), passo('Mais um dia', ICONE.mais, 1));

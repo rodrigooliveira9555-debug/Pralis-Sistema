@@ -11,11 +11,24 @@
   'use strict';
   const A = window.CicluzAcessos; const U = window.CicluzComprasUI;
   if (!A || !U) return;
-  const { el, campo, entrada, seletor, botao } = U;
+  const { el, entrada, seletor, botao } = U;
+  // Todo campo de exemplo desta tela é a LINHA do padrão da Transferência (o desenho antigo, nome em cima e caixa embaixo, não se usa mais).
+  const campo = (rotulo, no, dica) => {
+    const P = window.CicluzTransferencias && window.CicluzTransferencias.pecas;
+    if (!P) return U.campo(rotulo, no, dica);
+    const l = P.linhaDe(rotulo, no);
+    if (dica) { l.style.flexWrap = 'wrap'; l.append(Object.assign(el('small', 'profiles-note'), { textContent: dica })); l.lastChild.style.cssText = 'flex:0 0 100%;text-align:right'; }
+    return l;
+  };
   const cores = { cor: A.COR, corTexto: A.COR_TEXTO };
   const cor = (hex) => { const b = el('span', 'ds-cor'); b.style.background = hex; b.setAttribute('aria-hidden', 'true'); return b; };
   const comCor = (hex, texto) => { const s = el('span', 'ds-linha-cor'); s.append(cor(hex), document.createTextNode(texto)); return s; };
-  const amostra = (...nos) => { const a = el('div', 'ds-amostra compras-largo'); a.append(...nos); return a; };
+  const amostra = (...nos) => {
+    const a = el('div', 'ds-amostra compras-largo');
+    const linhas = nos.filter((n) => n && n.classList && n.classList.contains('transferencia-linha')); const resto = nos.filter((n) => !linhas.includes(n));
+    if (linhas.length) { const T = el('div', 'transferencia-tela ds-transferencia'); const q = el('div', 'transferencia-quadro'); q.append(...linhas); T.append(q); a.append(T); }
+    a.append(...resto); return a;
+  };
   const letra = (texto, px, peso, linha) => { const p = el('p', 'ds-letra', texto); p.style.font = peso + ' ' + px + 'px/' + linha + 'px var(--ui-font)'; return p; };
   const redondo = (rotulo, desenho, perigo) => { const b = el('button', 'shortcut-circle compras-redondo' + (perigo ? ' perigo' : '')); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = U.svg(desenho); return b; };
   const comLegenda = (no, texto) => { const c = el('div', 'ds-peca'); c.append(no, el('small', 'profiles-note', texto)); return c; };
@@ -171,8 +184,7 @@
       { titulo: 'Texto do botão', texto: ['Botão de página tem o nome por extenso ("Cancelar", "Salvar"), nunca só um desenho.', 'O nome diz o que acontece: "Salvar", "Excluir", "Trocar" — e não "OK" ou "Sim".', 'Em botão, vermelho é só do excluir.'] },
     ] },
     { id: 'campos', titulo: 'Campos de Preenchimento', resumo: 'Rótulo, obrigatório, situação, data, hora e o aviso de campo vazio', quadros: [
-      { titulo: 'Como é um campo (padrão antigo — ver o tópico "Formulário linha por linha")', texto: ['ATENÇÃO: o padrão vigente é o do tópico "Formulário linha por linha (padrão da Transferência)". O que está neste quadro é o desenho antigo, em extinção.', 'O nome do campo fica em cima, em letra de 12 px. O campo tem 42 px de altura, fundo branco, borda fina e cantos de 8 px.', 'Campo obrigatório leva um asterisco no fim do nome.', 'Quando ajuda, o campo traz um exemplo em cinza claro ("Ex.: Nome e sobrenome…") e uma dica curta embaixo.',
-        'Ao tocar no campo, a borda fica na cor da origem.'],
+      { titulo: 'Como é um campo', texto: ['Campo é uma LINHA do formulário (padrão da Transferência): o nome à esquerda, em 15 px, e o valor à direita, em 15 px cinza. Não há caixa, borda nem fundo no campo; a linha tem 52 px.', 'Campo obrigatório leva um asterisco no fim do nome. Quando ajuda, o campo traz um exemplo em cinza claro ("Ex.: Nome e sobrenome…") e uma dica curta embaixo, à direita.', 'Passar o mouse ou tocar sombreia a linha inteira, no tom da cor da origem (a mesma cor do cabeçalho). Campo de seleção abre um painel com as opções em linhas.'],
         amostra: () => amostra(campo('Nome completo *', entrada('text', '', { placeholder: 'Ex.: Nome e sobrenome…' })), campo('Tipo', seletor([['a', 'Opção A'], ['b', 'Opção B']], '', 'Selecione')), campo('Observação', entrada('text', ''), 'Dica curta, embaixo do campo.')) },
       { titulo: 'Campo obrigatório vazio', texto: ['Ao tentar avançar ou salvar com um campo obrigatório vazio, a borda do campo fica na cor do cabeçalho e aparece a mensagem embaixo: "Preencha este campo." ou "Selecione uma opção.".',
         'Todos os campos que faltam são marcados de uma vez, e a tela rola até o primeiro.', 'Toque no botão para ver.'],
@@ -209,7 +221,7 @@
         itens: [['Borda', 'Fina, cinza claro'], ['Cantos', 'Arredondados, 14 px'], ['Respiro interno', '14 px nas laterais'], ['Título do grupo', '13 px, linha de 18 px, peso 600, cinza, a 6 px acima do quadro'], ['Fundo do quadro', 'Branco (cartão); cada linha tem 52 px, separadas por fio cinza de ponta a ponta']] },
       { titulo: 'Cadastro em etapas', texto: ['Cadastro grande é dividido em etapas, com a barra de evolução no alto: uma bolinha numerada por etapa e o nome embaixo.', 'A última etapa é sempre a "Revisão dos dados": um bloco por etapa, só para leitura, com o botão "Editar" em cada bloco e o "Salvar" no fim.',
         'Cadastro novo começa na primeira etapa. Cadastro já gravado abre na Revisão.', 'Uma pergunta pode mudar as etapas: com "Terá contrato?" em Não, a etapa Contrato some.'] },
-      { titulo: 'Exemplo', amostra: () => { const q = el('fieldset', 'compras-fieldset compras-largo'); q.append(el('legend', null, 'Dados do exemplo'), campo('Nome', entrada('text', '')), campo('Telefone', entrada('text', ''))); return q; } },
+      { titulo: 'Exemplo', amostra: () => pecaTransferencia((P) => P.secao('Dados do exemplo', P.quadro(P.linhaDe('Nome', entrada('text', '', { placeholder: 'Ex.: Nome…' })), P.linhaDe('Telefone', entrada('text', '', { placeholder: '(00) 00000-0000', inputMode: 'numeric' }))))) },
     ] },
     { id: 'listas', titulo: 'Listas', resumo: 'O formato das telas de lista e o que cada toque faz', quadros: [
       { titulo: 'Lista de escolha (onde se marca um item)', texto: ['Quando a lista serve para marcar itens — grupos e produtos no contrato, áreas e setores, peças de uniforme — ela tem o mesmo desenho da lista de origem, só que proporcionalmente menor, e ganha a caixa de marcar à esquerda do ícone.', 'Medidas da lista de escolha: linha de 44 px (a lista de origem tem 52), subnível de 36 px (origem 40), ícone de 26 px (origem 30), caixa de marcar de 20 px, nome em 13 px (origem 14) e detalhe em 10 px (origem 11).', 'A caixa marcada fica preenchida na cor do item. Tocar na linha também marca, quando a linha não abre subníveis.', 'As medidas ficam num lugar só (variáveis --escolha-*). Lista de escolha nova usa essas medidas; não se inventa outro tamanho.', 'Quando a lista tem níveis: marcar um nível marca tudo o que está abaixo dele e nada acima. Marcar um nível de baixo fica só nele. Desmarcar um nível desmarca o que está abaixo e os níveis acima.', 'No topo do quadro fica uma barra parada, com a contagem de selecionados e UM botão redondo de expandir / recolher tudo, na cor do cabeçalho da janela, com a seta para cima e para baixo. A lista rola só para cima e para baixo, sem rolagem para o lado.', 'A janela de escolha tem Cancelar e Salvar por extenso, à direita, como toda janela.', 'Onde vale hoje: árvore do Objeto do contrato e dos grupos de despesa das atividades (fornecedor e cliente); árvore de Áreas, setores e locais (Horário / Escala, Ficha de Cargos e cadastro do colaborador); peças no Lançamento de Uniforme.'] },
