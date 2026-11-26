@@ -1550,3 +1550,6 @@ Botões e células (calendário, hora, teclas da calculadora) ao passar o mouse:
 
 ### Botões de rodapé e chips ao passar o mouse (26/11/2026, Rodrigo aprovou a opção A)
 Salvar (cheio): fecha o laranja e o círculo do ícone acende (cheio, com o sinal na cor do botão). Cancelar/Voltar (contorno): sombreado de 14% (24% no escuro) e círculo cheio; ao tocar, enche de vez. Chips (Limpar, Hoje…): máscara única, sombreado + fio; ao tocar, cheios. Variáveis `--botao-fundo`, `--botao-borda`, `--botao-texto` (sem novo `!important`).
+
+### Ajuste (26/11/2026, Rodrigo): rodapé sem troca de cor nos ícones; máscara também em marcações e campos
+Botões de rodapé: só ficam um pouco mais evidentes ao passar (cheio fecha o laranja; contorno sombreia), **ícones não mudam de cor**. Bolinhas e caixas de marcar e campos (texto, seleção, área de texto) ao passar: miolo sombreado + borda na cor da tela; dentro das linhas agrupadas da Nova Transferência quem reage é a linha.
