@@ -85,7 +85,7 @@ async function abrirPagina(largura, altura = 844, c = ADMIN) {
   return pagina;
 }
 const dialogo = (p) => p.locator('dialog.agenda-dialog[open]').last();
-/** Janela do compromisso no padrão linha por linha (P-52): Pessoas, Subtarefas, Local, Mensagens e Arquivos abrem por dentro. */
+/** Janela do compromisso no padrão linha por linha (P-53): Pessoas, Subtarefas, Local, Mensagens e Arquivos abrem por dentro. */
 const abrirLinha = (p, nome) => dialogo(p).locator('.agenda-linha-leva', { hasText: nome }).first().click();
 /** Espera o servidor responder tudo o que a tela pediu. */
 const quieto = (p) => p.waitForFunction(() => CicluzAgendaDados.emAndamento === 0, null, { timeout: 15000 });
@@ -268,7 +268,7 @@ async function limparAgenda(p) {
   // Listas: criar com cor e ícone; excluir só vazia
   await p.locator('.agenda-lista-nova').click();
   await dialogo(p).getByLabel('Nome').fill('Loja Centro');
-  // Cor e ícone abrem por dentro (padrão linha por linha, P-52).
+  // Cor e ícone abrem por dentro (padrão linha por linha, P-53).
   await abrirLinha(p, 'Cor e ícone');
   await dialogo(p).getByRole('radio', { name: 'Ícone pao' }).click();
   await confirmar(p);
@@ -586,7 +586,7 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   ok(Object.keys(naoLidas).length === 0, 'Abrir o chat marca como lido');
   await chat.locator('.people-close-control, .people-cancel-control').first().click().catch(() => p.keyboard.press('Escape'));
   if (await chat.count()) await p.keyboard.press('Escape');
-  // Arquivos e evidências abrem por dentro (padrão linha por linha, P-52).
+  // Arquivos e evidências abrem por dentro (padrão linha por linha, P-53).
   await abrirLinha(p, 'Arquivos e evidências');
   await dialogo(p).locator('.agenda-conversa input[type=file]').setInputFiles([{ name: 'foto.png', mimeType: 'image/png', buffer: PNG }, { name: 'nota.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') }]);
   await dialogo(p).locator('.agenda-arquivo', { hasText: 'nota.pdf' }).waitFor();

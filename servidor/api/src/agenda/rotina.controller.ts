@@ -55,7 +55,7 @@ export async function registrarRotasRotina(app: FastifyInstance) {
     return ok(await rotina.cancelarPorVinculo(perfilDaRequisicao(request), vinculoRef));
   });
 
-  /* Ações programadas por tela (0012, P-52): a tela avisa a ação feita; o administrador escolhe as telas do ícone */
+  /* Ações programadas por tela (0012, P-53): a tela avisa a ação feita; o administrador escolhe as telas do ícone */
   app.post("/api/agenda/acoes-de-tela", { config: limiteTarefas }, async (request) => {
     const { acao, quantidade } = acaoFeitaSchema.parse(request.body);
     return ok({ tarefas: await acoes.acaoFeita(perfilDaRequisicao(request), acao, quantidade) });

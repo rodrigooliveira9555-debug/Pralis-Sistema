@@ -59,7 +59,7 @@
     renderConfiguracoes();
   }
 
-  /* Configurações no padrão "linha por linha" da Nova Transferência (P-52): grupos com título pequeno e quadro de linhas. */
+  /* Configurações no padrão "linha por linha" da Nova Transferência (P-53): grupos com título pequeno e quadro de linhas. */
   const pecas = () => window.CicluzTransferencias.pecas;
   const SETA = '<path d="m9 6 6 6-6 6"/>';
   function linhaQueLeva(rotulo, resumo, aoToque, classe = '') {
@@ -111,7 +111,7 @@
     });
     corpo.append(P.secao('Pessoas', P.quadro(...linhas), U.nota('Ligue cada pessoa ao colaborador do cadastro: o expediente passa a vir dos Horários/Escalas dele. Sem colaborador ligado, vale o expediente escrito aqui. A hora fora do expediente aparece no Desempenho e não vai para a folha de pagamento.')));
 
-    // Telas em que o ícone roxo de agendar aparece (P-52): o administrador decide.
+    // Telas em que o ícone roxo de agendar aparece (P-53): o administrador decide.
     await carregarTelasIcone();
     const todas = telasDoMenu();
     const ligadas = todas.filter((t) => iconeLigado(t.endereco)).length;
@@ -475,7 +475,7 @@
   }
 
 
-  /* ================= Ações programadas por tela (P-52, áudio do Rodrigo de 25/11/2026) ================= */
+  /* ================= Ações programadas por tela (P-53, áudio do Rodrigo de 25/11/2026) ================= */
   // Cada tela que sabe contar declara as suas ações. A tarefa ligada à tela pode esperar uma delas (e a quantidade):
   // ao chegar na quantidade, conclui sozinha. As outras telas entram aqui uma a uma, conforme forem pedidas.
   const TELA_PRODUTOS = '#/saidas-mercadorias/cadastros-geral/compras-produtos';
@@ -533,7 +533,7 @@
     return saida;
   }
 
-  /* Aviso na tela (P-52): tarefas de hoje ligadas à tela aberta, com "Feito" (e o progresso, quando há ação que conta). */
+  /* Aviso na tela (P-53): tarefas de hoje ligadas à tela aberta, com "Feito" (e o progresso, quando há ação que conta). */
   const avisoFechado = new Set();
   let aviso = null;
   function tarefasDaTela(endereco) {
@@ -617,7 +617,7 @@
     mexeu();
     // Horários/Escalas: confere ao abrir e a cada 10 minutos (só manda o que mudou).
     enviarEscalas(false);
-    // Ações programadas (P-52): telas do ícone de agendar e o aviso da tela aberta.
+    // Ações programadas (P-53): telas do ícone de agendar e o aviso da tela aberta.
     carregarTelasIcone();
     pintarAviso();
     setInterval(() => { if (document.visibilityState === 'visible') enviarEscalas(false); }, 10 * 60000);

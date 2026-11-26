@@ -33,7 +33,7 @@ function detectar(b: Buffer, ext: string): Detectado | null {
   if (ascii(b, 0, 4) === "RIFF" && ascii(b, 8, 12) === "WEBP") return { tipo: "image/webp", extensoes: ["webp"] };
   if (ascii(b, 4, 8) === "ftyp" && /^(heic|heix|mif1|msf1|hevc)$/.test(ascii(b, 8, 12))) return { tipo: "image/heic", extensoes: ["heic", "heif"] };
   if (ascii(b, 0, 5) === "%PDF-") return { tipo: "application/pdf", extensoes: ["pdf"] };
-  // Áudio do chat (0012, P-52): gravação do navegador (WebM/Ogg; no iPhone, MP4/M4A) e MP3. Só toca, nunca vira página.
+  // Áudio do chat (0012, P-53): gravação do navegador (WebM/Ogg; no iPhone, MP4/M4A) e MP3. Só toca, nunca vira página.
   if (comeca(b, [0x1a, 0x45, 0xdf, 0xa3]) && ["webm", "weba"].includes(ext)) return { tipo: "audio/webm", extensoes: ["webm", "weba"] };
   if (ascii(b, 0, 4) === "OggS") return { tipo: "audio/ogg", extensoes: ["ogg", "oga", "opus"] };
   if (ascii(b, 4, 8) === "ftyp" && /^(M4A |isom|mp42|mp41|iso5|iso6|dash)$/.test(ascii(b, 8, 12)) && ["m4a", "mp4"].includes(ext)) return { tipo: "audio/mp4", extensoes: ["m4a", "mp4"] };

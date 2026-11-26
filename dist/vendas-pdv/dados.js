@@ -128,12 +128,12 @@
 
   function reiniciarFiltro() { const pdvId = estado.filtro.pdvId; estado.filtro = { ...FILTRO_VAZIO(), pdvId }; estado.pagina = 1; }
 
-  /** Abas do topo: os PDVs de caixa da loja (…CXPDV-N vira "PDV N"), em ordem; sem esse padrão, todos os ativos. */
+  /** Abas do topo: os PDVs de caixa da loja (nome terminando em CXPDV-N), em ordem do número e com o NOME REAL da máquina (TNP-PC-CXPDV-1); sem esse padrão, todos os ativos. */
   function abasPdv() {
     const ativos = estado.opcoes.pdvs.filter((p) => p.ativo);
     const caixa = ativos.map((p) => ({ p, n: /CXPDV-?(\d+)$/i.exec(String(p.nome).trim()) })).filter((x) => x.n);
     if (!caixa.length) return ativos.map((p) => ({ id: p.id, rotulo: p.nome, nome: p.nome }));
-    return caixa.sort((a, b) => Number(a.n[1]) - Number(b.n[1])).map(({ p, n }) => ({ id: p.id, rotulo: 'PDV ' + Number(n[1]), nome: p.nome }));
+    return caixa.sort((a, b) => Number(a.n[1]) - Number(b.n[1])).map(({ p, n }) => ({ id: p.id, rotulo: String(p.nome).trim(), nome: p.nome }));
   }
 
   window.CicluzVendasPdvDados = {

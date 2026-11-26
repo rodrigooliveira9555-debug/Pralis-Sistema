@@ -497,7 +497,7 @@ body.dark-theme .agenda-avatar { background: color-mix(in srgb, var(--menu-accen
 .agenda-desempenho-apoio dt { font: 400 var(--ui-note)/var(--ui-subtitle-line) var(--ui-font); color: var(--muted, #73737a); }
 .agenda-desempenho-apoio dd { margin: 0; font: 600 var(--ui-text)/var(--ui-text-line) var(--ui-font); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 
-/* ===== Áudio do Rodrigo de 25/11/2026 (P-52): Agenda no padrão "linha por linha" da Nova Transferência ===== */
+/* ===== Áudio do Rodrigo de 25/11/2026 (P-53): Agenda no padrão "linha por linha" da Nova Transferência ===== */
 /* A janela usa as peças e o CSS da referência (.transferencia-tela, .transferencia-secao/-quadro/-linha), sem regra
    paralela; aqui só o que é da Agenda. */
 .agenda-form .agenda-linha-perigo .transferencia-linha-rotulo { color: var(--cicluz-danger, #dc2626); }
@@ -509,7 +509,7 @@ body.dark-theme .agenda-avatar { background: color-mix(in srgb, var(--menu-accen
 .agenda-form .agenda-dias { gap: 6px; flex-wrap: nowrap; }
 .agenda-form .agenda-dias .compras-chip { min-width: 30px; padding: 0 8px; }
 
-/* Aviso na tela (P-52): tarefas de hoje da tela aberta, com "Feito". Cartão flutuante no canto, acima da barra de baixo,
+/* Aviso na tela (P-53): tarefas de hoje da tela aberta, com "Feito". Cartão flutuante no canto, acima da barra de baixo,
    no modelo dos painéis (cartão cinza do fundo, quadro branco de linhas). */
 .agenda-aviso-tela {
   position: fixed; right: var(--margem-lateral, 14px); bottom: calc(var(--margem-lateral, 14px) * 2 + 60px); z-index: 40;
@@ -531,7 +531,7 @@ body.dark-theme .agenda-avatar { background: color-mix(in srgb, var(--menu-accen
 .agenda-aviso-feito { flex: 0 0 auto; }
 .agenda-aviso-mais { margin: 0; padding: 8px 14px; border-top: 1px solid var(--layout-line, #e4e4e7); font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #71717a); }
 
-/* Chat: foto e áudio dentro do balão (P-52) */
+/* Chat: foto e áudio dentro do balão (P-53) */
 .agenda-chat-anexo-foto { display: block; max-width: min(240px, 100%); max-height: 240px; border-radius: 10px; margin-bottom: 4px; }
 .agenda-chat-anexo-audio { display: block; width: min(240px, 100%); height: 36px; margin-bottom: 4px; }
 .agenda-chat-mais { width: 36px; height: 36px; flex: 0 0 36px; border-radius: 50%; border: 1px solid var(--layout-line, #e4e4e7); background: transparent; color: var(--muted, #71717a); display: grid; place-items: center; cursor: pointer; }

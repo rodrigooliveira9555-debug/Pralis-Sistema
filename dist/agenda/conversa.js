@@ -106,7 +106,7 @@
         enviar.innerHTML = svg(ICONE_ENVIAR);
         enviar.title = 'Enviar';
         enviar.setAttribute('aria-label', 'Enviar mensagem');
-        // Foto e áudio (P-52, áudio do Rodrigo de 25/11/2026): só no chat do compromisso (o arquivo fica nos arquivos dele).
+        // Foto e áudio (P-53, áudio do Rodrigo de 25/11/2026): só no chat do compromisso (o arquivo fica nos arquivos dele).
         const doCompromisso = base.startsWith('/agenda/compromissos/');
         if (doCompromisso) {
           const foto = el('input');

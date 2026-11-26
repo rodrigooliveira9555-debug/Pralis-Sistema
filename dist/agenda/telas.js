@@ -531,7 +531,7 @@
 
   /*
    * Janela do compromisso no padrão "linha por linha" da Nova Transferência (DESIGN_SYSTEM.md, PADRÃO CONSOLIDADO;
-   * P-52, áudio do Rodrigo de 25/11/2026): grupos com título pequeno e quadro branco, nome à esquerda e valor à
+   * P-53, áudio do Rodrigo de 25/11/2026): grupos com título pequeno e quadro branco, nome à esquerda e valor à
    * direita, data e hora em painel que expande, menos rolagem. Pessoas, subtarefas, local e arquivos abrem por
    * dentro (uma janela sobre a outra), com o resumo na linha. As peças são as da Transferência (CicluzTransferencias.pecas).
    */
@@ -656,7 +656,7 @@
         const resumirLocal = () => linhaLocal.resumo(local || (localizacao && Number.isFinite(localizacao.lat) ? 'No mapa' : 'Nenhum'));
         resumirLocal();
 
-        /* Tela ligada e ação programada (P-52): a tarefa leva à tela; com ação, conclui sozinha ao chegar na quantidade */
+        /* Tela ligada e ação programada (P-53): a tarefa leva à tela; com ação, conclui sozinha ao chegar na quantidade */
         let vinculo = v.vinculoTela ? { tela: v.vinculoTela, titulo: v.vinculoTitulo || 'Tela do sistema' } : null;
         const telaQuadro = el('div', 'agenda-tela-ligada');
         const acoesDaTela = (tela) => (window.CicluzAgendaRotina && tela ? window.CicluzAgendaRotina.acoesDaTela(tela) : []);

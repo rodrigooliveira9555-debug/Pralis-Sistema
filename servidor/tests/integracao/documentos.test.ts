@@ -215,3 +215,20 @@ describe("gravação em lote", () => {
     expect(igual.json().data.guardadas).toBe(0);
   });
 });
+
+// B4 (26/11/2026): o teto por pessoa não pode ser driblado com um cookie inventado na frente do
+// cookie de verdade (antes a regex pegava "x_session_token=..." e cada pedido ganhava balde novo).
+describe("teto de cópias por pessoa", () => {
+  it("cookie 'x_session_token=' diferente a cada pedido não dá balde novo: o 11º é barrado", async () => {
+    const admin = await contaLogada("administrador");
+    const copiar = (i: number) =>
+      app.inject({
+        method: "POST",
+        url: "/api/documentos/copias",
+        headers: comSessao(`x_session_token=lixo-${i}; ${admin.cookie}`),
+        payload: { itens: [] }
+      });
+    for (let i = 0; i < 10; i += 1) expect((await copiar(i)).statusCode).not.toBe(429);
+    expect((await copiar(10)).statusCode).toBe(429);
+  });
+});

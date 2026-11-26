@@ -4,7 +4,7 @@ import { horaLocal } from "../../api/src/agenda/rotina.regras.ts";
 import { criarApp } from "./ajuda.ts";
 import { ajudaAgenda, novoId, type Conta, type Pool } from "./ajuda-agenda.ts";
 
-// Áudio do Rodrigo de 25/11/2026 (P-52, migration 0012): ação programada por tela que conclui sozinha (ação +
+// Áudio do Rodrigo de 25/11/2026 (P-53, migration 0012): ação programada por tela que conclui sozinha (ação +
 // quantidade, por repetição), telas do ícone de agendar escolhidas pelo administrador, e foto/áudio no chat.
 // Dados fictícios.
 
@@ -33,7 +33,7 @@ async function criar(c: Conta, extra: object) {
 }
 const fazer = (c: Conta, acao: string, quantidade = 1) => pedir(c.cookie, "POST", "/api/agenda/acoes-de-tela", { acao, quantidade });
 
-describe("agenda: ação programada por tela (P-52)", () => {
+describe("agenda: ação programada por tela (P-53)", () => {
   it("conta a ação do responsável e conclui sozinha na quantidade; quem não participa não conta", async () => {
     const { gestor: admin, resp, fora } = await cenario();
     const t = await criar(admin, { data: hoje(), acaoTela: "produtos:excluir", acaoQuantidade: 3, pessoas: [{ id: resp.usuarioId, responsavel: true, concluir: true }] });
@@ -76,7 +76,7 @@ describe("agenda: ação programada por tela (P-52)", () => {
   });
 });
 
-describe("agenda: telas do ícone de agendar (P-52)", () => {
+describe("agenda: telas do ícone de agendar (P-53)", () => {
   it("o administrador liga e desliga; todos leem; quem não é administrador não muda", async () => {
     const { gestor: admin, resp } = await cenario();
     expect((await pedir(resp.cookie, "GET", "/api/agenda/telas-icone")).json().data.telas).toEqual({});
@@ -90,7 +90,7 @@ describe("agenda: telas do ícone de agendar (P-52)", () => {
   });
 });
 
-describe("agenda: foto e áudio no chat do compromisso (P-52)", () => {
+describe("agenda: foto e áudio no chat do compromisso (P-53)", () => {
   it("áudio (Ogg) vira arquivo e a mensagem aponta para ele; arquivo de outro compromisso é recusado", async () => {
     const { gestor: admin, resp } = await cenario();
     const p = [{ id: resp.usuarioId, responsavel: true, concluir: true }];

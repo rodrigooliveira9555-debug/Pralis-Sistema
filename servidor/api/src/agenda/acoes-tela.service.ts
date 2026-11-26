@@ -7,7 +7,7 @@ import * as repo from "./compromissos.repository.ts";
 import { concluir, naoTransferida, respostaDe } from "./compromissos.service.ts";
 import { horaLocal } from "./rotina.regras.ts";
 
-// Ações programadas por tela (0012, P-52, áudio do Rodrigo de 25/11/2026; Zé: "se a pessoa apenas entrar na tela e
+// Ações programadas por tela (0012, P-53, áudio do Rodrigo de 25/11/2026; Zé: "se a pessoa apenas entrar na tela e
 // excluir os produtos, o sistema tem que entender que a tarefa foi feita").
 // - A tarefa (compromisso ligado a uma tela) guarda a ação que conta e a quantidade.
 // - A tela avisa cada ação feita; o servidor soma na repetição pendente (a data do compromisso) e, ao chegar na

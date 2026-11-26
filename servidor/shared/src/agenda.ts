@@ -15,7 +15,7 @@ export const compromissoIdSchema = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/, "C
 
 export const mensagemSchema = z.object({
   texto: z.string().trim().min(1, "Escreva a mensagem").max(2000, "A mensagem passa de 2000 letras"),
-  // Foto ou áudio do chat (0012, P-52): o arquivo já enviado ao compromisso (POST .../arquivos).
+  // Foto ou áudio do chat (0012, P-53): o arquivo já enviado ao compromisso (POST .../arquivos).
   arquivoId: z.string().uuid().optional()
 });
 export const listarMensagensSchema = z.object({

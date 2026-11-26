@@ -24,7 +24,7 @@ export const agendaMensagens = pgTable(
       .notNull()
       .references(() => usuarioAutenticacao.id),
     texto: text("texto").notNull(),
-    // Foto ou áudio mandado no chat (0012, P-52): o arquivo fica em agenda_arquivos, do mesmo compromisso.
+    // Foto ou áudio mandado no chat (0012, P-53): o arquivo fica em agenda_arquivos, do mesmo compromisso.
     arquivoId: uuid("arquivo_id").references((): AnyPgColumn => agendaArquivos.id, { onDelete: "set null" }),
     criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow()
   },
@@ -251,7 +251,7 @@ export const agendaCompromissos = pgTable(
     vinculoTela: text("vinculo_tela"),
     vinculoTitulo: text("vinculo_titulo"),
     vinculoRef: text("vinculo_ref"),
-    // Ação programada (0012, P-52): a ação da tela que conta (ex.: produtos:excluir) e quantas vezes, em cada
+    // Ação programada (0012, P-53): a ação da tela que conta (ex.: produtos:excluir) e quantas vezes, em cada
     // repetição, para a tarefa concluir sozinha. Nulo: conclui com "Feito" (ou pela própria tela).
     acaoTela: text("acao_tela"),
     acaoQuantidade: smallint("acao_quantidade"),
@@ -540,7 +540,7 @@ export const agendaHorasFora = pgTable(
   ]
 );
 
-// Progresso da ação programada (0012, P-52): quantas vezes a ação da tela foi feita na repetição pendente
+// Progresso da ação programada (0012, P-53): quantas vezes a ação da tela foi feita na repetição pendente
 // (ocorrencia = a data da repetição). Ao chegar na quantidade, a tarefa conclui sozinha.
 export const agendaAcoesProgresso = pgTable(
   "agenda_acoes_progresso",
@@ -558,7 +558,7 @@ export const agendaAcoesProgresso = pgTable(
   ]
 );
 
-// Em quais telas o ícone roxo de agendar aparece (0012, P-52): o administrador decide. Só as exceções ficam
+// Em quais telas o ícone roxo de agendar aparece (0012, P-53): o administrador decide. Só as exceções ficam
 // aqui; sem linha, vale o padrão (ligado em todas, menos nos formulários de lançamento).
 export const agendaTelasIcone = pgTable(
   "agenda_telas_icone",

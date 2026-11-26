@@ -46,7 +46,7 @@
   `lista-tarefas-das-telas` ("Tarefas das telas", criada na primeira tarefa), `agenda_grupo_mensagens` e `agenda_grupo_leituras`
   (chat do grupo), `agenda_config_pessoas` (expediente, bloqueio fora dele, minutos parado até sair; a coluna `hora_fora` não é mais usada desde a 0009) e
   `agenda_horas_fora` (uma linha por compromisso concluído fora do expediente; só registro). Fuso da loja: America/Sao_Paulo.
-  **Áudio de 25/11 (0012, P-52, 26/11/2026):** `agenda_compromissos.acao_tela`/`acao_quantidade` (ação da tela que conta, ex.:
+  **Áudio de 25/11 (0012, P-53, 26/11/2026):** `agenda_compromissos.acao_tela`/`acao_quantidade` (ação da tela que conta, ex.:
   `produtos:excluir`, e quantas vezes por repetição); `agenda_acoes_progresso` (quantas feitas por compromisso e data da
   repetição; ao chegar, conclui); `agenda_telas_icone` (só as exceções de tela do ícone de agendar); `agenda_mensagens.arquivo_id`
   (foto ou áudio do chat, guardado em `agenda_arquivos`; áudio WebM/Ogg/M4A/MP3 aceito pelo conteúdo). Catálogo das ações por tela:

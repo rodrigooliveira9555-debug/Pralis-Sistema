@@ -90,7 +90,7 @@
       subtarefas: (c.subtarefas || []).map((s) => ({ ...(s.id ? { id: s.id } : {}), titulo: String(s.titulo || '').trim(), concluida: Boolean(s.concluida) })),
       pessoas: R.normalizarPessoas(c.pessoas), avaliacaoTipo: (c.avaliacao && c.avaliacao.tipo) || '', colunaId: c.colunaId || '',
       vinculoTela: c.vinculoTela || '', vinculoTitulo: c.vinculoTela ? String(c.vinculoTitulo || '').trim().slice(0, 120) : '',
-      // Ação programada (P-52): só com tela ligada.
+      // Ação programada (P-53): só com tela ligada.
       acaoTela: c.vinculoTela && c.acaoTela ? c.acaoTela : '', acaoQuantidade: c.vinculoTela && c.acaoTela ? Math.min(365, Math.max(1, Number(c.acaoQuantidade) || 1)) : null,
     };
   }
@@ -669,7 +669,7 @@
   const contasEColaboradores = () => api('/agenda/expedientes/contas');
   const ligarColaborador = (usuarioId, colaboradorId) => api('/agenda/expedientes/contas/' + encodeURIComponent(usuarioId), { metodo: 'PUT', corpo: { colaboradorId: colaboradorId || null } });
   const enviarExpedientes = (corpo) => api('/agenda/expedientes', { metodo: 'PUT', corpo });
-  /* Ações programadas por tela (0012, P-52). */
+  /* Ações programadas por tela (0012, P-53). */
   const acaoFeita = (acao, quantidade) => api('/agenda/acoes-de-tela', { metodo: 'POST', corpo: { acao, quantidade } });
   const telasIcone = () => api('/agenda/telas-icone');
   const definirTelaIcone = (tela, mostrar) => api('/agenda/telas-icone', { metodo: 'PUT', corpo: { tela, mostrar } });

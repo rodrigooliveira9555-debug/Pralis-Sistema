@@ -63,7 +63,7 @@ export async function compromisso(ex: Executor, empresaId: string, id: string, t
   return linha ?? null;
 }
 
-/* ---------- Ação programada (0012, P-52) ---------- */
+/* ---------- Ação programada (0012, P-53) ---------- */
 
 /** Progresso das ações programadas dos compromissos (todas as ocorrências guardadas). */
 export async function progressoDe(ex: Executor, empresaId: string, ids: string[]) {

@@ -10,7 +10,7 @@ const DATA = /^\d{4}-\d{2}-\d{2}$/;
 const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 /** Endereço de tela do site (#/setor/item/tela…), o mesmo que o rotas.js grava. */
 export const VINCULO_TELA = /^#\/[A-Za-z0-9%/_.-]{1,300}$/;
-/** Ação que uma tela sabe contar (P-52): "<tela>:<ação>", ex.: produtos:excluir. */
+/** Ação que uma tela sabe contar (P-53): "<tela>:<ação>", ex.: produtos:excluir. */
 export const ACAO_TELA = /^[a-z]{1,30}:[a-z-]{1,30}$/;
 const VINCULO_REF = /^[A-Za-z0-9:_.-]{1,200}$/;
 /** '' ou 'AAAA-MM-DD' (a data inválida de calendário é recusada por regras.validar, com a mensagem da tela). */
@@ -80,7 +80,7 @@ const camposCompromisso = {
   // Tela ligada (ícone roxo de agendar, P-46): a tarefa abre essa tela. '' = sem tela.
   vinculoTela: z.union([z.literal(""), z.string().regex(VINCULO_TELA, "Endereço de tela inválido")]).default(""),
   vinculoTitulo: texto(120).default(""),
-  // Ação programada (0012, P-52): a ação da tela que conta e quantas vezes, para concluir sozinha. '' = sem ação.
+  // Ação programada (0012, P-53): a ação da tela que conta e quantas vezes, para concluir sozinha. '' = sem ação.
   acaoTela: z.union([z.literal(""), z.string().regex(ACAO_TELA, "Ação de tela inválida")]).default(""),
   acaoQuantidade: z.number().int().min(1, "Quantidade de 1 a 365").max(365, "Quantidade de 1 a 365").nullable().default(null)
 };
@@ -277,9 +277,9 @@ export const tarefaDeTelaSchema = z.object({
   if (permissaoDaRegra(t.vinculoRef) !== t.paraQuemTem) ctx.addIssue({ code: "custom", message: "Esta tela não cria tarefa para esse grupo de pessoas.", path: ["paraQuemTem"] });
 });
 export const concluirPorVinculoSchema = z.object({ vinculoRef: z.string().regex(VINCULO_REF, "Referência inválida") });
-/** A tela avisa: a ação foi feita n vezes (P-52). */
+/** A tela avisa: a ação foi feita n vezes (P-53). */
 export const acaoFeitaSchema = z.object({ acao: z.string().regex(ACAO_TELA, "Ação de tela inválida"), quantidade: z.number().int().min(1).max(500).default(1) }).strict();
-/** O administrador liga ou desliga o ícone de agendar numa tela (P-52). */
+/** O administrador liga ou desliga o ícone de agendar numa tela (P-53). */
 export const telaIconeSchema = z.object({ tela: z.string().regex(VINCULO_TELA, "Endereço de tela inválido"), mostrar: z.boolean() }).strict();
 export type TarefaDeTela = z.infer<typeof tarefaDeTelaSchema>;
 

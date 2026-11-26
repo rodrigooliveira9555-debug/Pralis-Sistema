@@ -93,7 +93,7 @@
   const obter = async (id) => deApi(await api('/produtos/item/' + encodeURIComponent(id)));
 
   /* ---------- Gravação ---------- */
-  /** Agenda (P-52): conta a ação feita na tela de Produtos para a tarefa programada que espera por ela. */
+  /** Agenda (P-53): conta a ação feita na tela de Produtos para a tarefa programada que espera por ela. */
   const contarNaAgenda = (acao, n = 1) => { if (window.CicluzAgendaRotina) window.CicluzAgendaRotina.acaoFeita(acao, n); };
   async function criar(p) {
     const r = deApi(await api('/produtos', { metodo: 'POST', corpo: paraApi(p) }));

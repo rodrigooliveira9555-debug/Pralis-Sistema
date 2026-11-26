@@ -280,7 +280,7 @@ export function montar(f: Formulario, atual: { c: LinhaCompromisso; pessoas: Pes
     etiquetas: R.normalizarEtiquetas(f.etiquetas), subtarefas, avaliacaoTipo, colunaId: nuloSeVazio(f.colunaId),
     // Tela ligada: o nome só vale com o endereço; sem nome, mostra "Abrir a tela".
     vinculoTela: nuloSeVazio(f.vinculoTela), vinculoTitulo: f.vinculoTela ? nuloSeVazio(f.vinculoTitulo.trim()) : null,
-    // Ação programada só com tela ligada (P-52); sem quantidade, uma vez.
+    // Ação programada só com tela ligada (P-53); sem quantidade, uma vez.
     acaoTela: f.vinculoTela && f.acaoTela ? f.acaoTela : null,
     acaoQuantidade: f.vinculoTela && f.acaoTela ? f.acaoQuantidade ?? 1 : null
   } satisfies Partial<NovoCompromisso>;
@@ -415,7 +415,7 @@ function horaFimCom(hora: string | null | undefined, dur: number) {
  * ocorrência) e ele passa para a próxima data, subtarefas desmarcadas. Na última vez, ele mesmo é concluído.
  * Pedido repetido ou cartão velho (ocorrência que já passou) não muda nada.
  */
-/** semExpediente: a conclusão veio de uma ação feita numa tela (P-52), não de usar a Agenda. */
+/** semExpediente: a conclusão veio de uma ação feita numa tela (P-53), não de usar a Agenda. */
 export async function concluir(perfil: PerfilSessao, id: string, pedido: Conclusao, opcoes: { semExpediente?: boolean } = {}) {
   const empresaId = perfil.empresa.id;
   return gravar(perfil, { semExpediente: Boolean(opcoes.semExpediente) }, async (tx) => {
