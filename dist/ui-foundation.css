@@ -512,7 +512,7 @@ dialog .escolha-barra{--cor-do-cabecalho:var(--menu-accent)}
    check branco. Vale para o botão (.acessos-marca) e para o input (.compras-selecao-bolinha: seleção das listas e caixas do cadastro de produto). */
 input.compras-selecao-bolinha{appearance:none;-webkit-appearance:none;box-sizing:border-box;flex:none;width:22px;height:22px;min-height:0;margin:0;padding:0;border:1.5px solid var(--border-strong,#b9b9c0);border-radius:50%;background:transparent center/14px no-repeat;cursor:pointer;transition:background-color 120ms ease,border-color 120ms ease}
 input.compras-selecao-bolinha:checked{border-color:var(--menu-accent);background-color:var(--menu-accent);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m5 12 4.5 4.5L19 7' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
-input.compras-selecao-bolinha:hover:not(:disabled){border-color:var(--menu-accent)}
+input.compras-selecao-bolinha:hover:not(:disabled):checked{border-color:var(--menu-accent)}
 input.compras-selecao-bolinha:focus-visible{outline:2px solid var(--menu-accent);outline-offset:2px}
 input.compras-selecao-bolinha:disabled{opacity:.45;cursor:not-allowed}
 /* Relatório DES - Folha de Pagamento: barra do mês e tabela de colaboradores × reflexos (Projetado · Realizado · Diferença).
@@ -879,15 +879,15 @@ dialog .form-fields[data-quadro]::before,.modal .form-fields[data-quadro]::befor
 @media (hover:hover){
  body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button.footer-save-accent:not(:disabled):hover{--botao-fundo:color-mix(in srgb,#000 18%,var(--menu-accent,var(--panel-color,#7c3aed)));--botao-borda:color-mix(in srgb,#000 18%,var(--menu-accent,var(--panel-color,#7c3aed)))}
  body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button:is(.footer-cancel-accent,.form-back-action):not(:disabled):hover{--botao-fundo:color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) var(--mascara-fundo,14%),var(--theme-card,#fff))}
- .compras-chip:not(.ativo):not(:disabled):hover{background:color-mix(in srgb,var(--menu-accent) var(--mascara-fundo,14%),var(--theme-card,#fff));border-color:var(--menu-accent)}
+ .compras-chip:not(.ativo):not(:disabled):hover{background:color-mix(in srgb,var(--menu-accent) var(--mascara-fundo,14%),var(--theme-card,#fff))}
 }
 body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button.footer-save-accent:not(:disabled):active{--botao-fundo:color-mix(in srgb,#000 30%,var(--menu-accent,var(--panel-color,#7c3aed)))}
 body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button:is(.footer-cancel-accent,.form-back-action):not(:disabled):active{--botao-fundo:var(--menu-accent,var(--panel-color,#7c3aed));--botao-texto:#fff}
 .compras-chip:not(.ativo):not(:disabled):active{background:var(--menu-accent);border-color:var(--menu-accent);color:#fff}
-/* Máscara única também nas marcações e nos campos: ao passar o mouse, miolo sombreado na cor da tela E borda na cor da tela. */
+/* Máscara única também nas marcações e nos campos: ao passar o mouse, só o miolo é sombreado; a borda não muda. */
 @media (hover:hover){
- input.compras-selecao-bolinha:hover:not(:disabled):not(:checked){background-color:color-mix(in srgb,var(--menu-accent) var(--mascara-fundo,14%),var(--theme-card,#fff))}
+ input.compras-selecao-bolinha:hover:not(:disabled):not(:checked){border-color:var(--border-strong,#b9b9c0);background-color:color-mix(in srgb,var(--menu-accent) var(--mascara-fundo,14%),var(--theme-card,#fff))}
  body input[type=checkbox]:not(.compras-selecao-bolinha):hover:not(:disabled):not(:checked){background-color:color-mix(in srgb,var(--menu-accent) var(--mascara-fundo,14%),var(--theme-card,#fff))}
- body :is(.view,dialog,.modal) :is(input:not([type=checkbox],[type=radio],[type=range],[type=color],[type=file],[readonly]),select,textarea):hover:not(:disabled):not(:focus){--ui-control-bg:color-mix(in srgb,var(--menu-accent) var(--mascara-fundo,14%),var(--theme-card,#fff));--ui-border-base:var(--menu-accent)}
+ body :is(.view,dialog,.modal) :is(input:not([type=checkbox],[type=radio],[type=range],[type=color],[type=file],[readonly]),select,textarea):hover:not(:disabled):not(:focus){--ui-control-bg:color-mix(in srgb,var(--menu-accent) var(--mascara-fundo,14%),var(--theme-card,#fff));}
  .compras-arvore-campo:hover{background:color-mix(in srgb,var(--menu-accent) var(--mascara-fundo,14%),var(--theme-card,#fff))}
 }

@@ -570,7 +570,7 @@ body.dark-theme .compras-objeto-origem .compras-chip.ativo{color:#f2f1f6}
    quadrado com a sigla na cor da origem, nome com a contagem embaixo, situação à direita e a caixa de marcar antes do ícone. */
 /* Campo de escolha em árvore (23/11/2026, Zé): parece um seletor e abre a janela em árvore. Mesmos tokens dos campos. */
 .compras-arvore-campo{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-width:0;min-height:var(--ui-field-height,42px);box-sizing:border-box;padding:0 12px;margin:0;border:1px solid var(--ui-border-base,#d4d4d8);border-radius:var(--ui-field-radius,8px);background:var(--ui-control-bg,#fff);color:var(--ui-input-color,#27272a);font:400 var(--ui-input-size,15px)/20px var(--ui-font,inherit);text-align:left;cursor:pointer;box-shadow:none}
-.compras-arvore-campo:hover{border-color:var(--menu-accent,#7c3aed)}
+.compras-arvore-campo:hover{border-color:var(--ui-border-base,#d4d4d8)}
 .compras-arvore-campo:focus-visible{outline:2px solid var(--menu-accent,#7c3aed);outline-offset:2px}
 .compras-arvore-campo svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.7}
 .compras-arvore-texto{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -826,7 +826,7 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-calc-aviso { min-height: 14px; color: var(--cicluz-danger, #ef4444); }
 .transferencia-teclado { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 48px; gap: 6px; }
 .transferencia-tecla { display: grid; place-items: center; padding: 0; border: 1px solid var(--ui-border-base, #d4d4d8); border-radius: var(--ui-field-radius, 8px); background: var(--theme-card, #fff); color: var(--layout-ink, #3f3f46); font: 600 18px/1 var(--ui-font); cursor: pointer; }
-.transferencia-tecla:hover { border-color: var(--menu-accent); }
+.transferencia-tecla:hover { border-color: var(--ui-border-base, #d4d4d8); }
 .transferencia-tecla:active { background: color-mix(in srgb, var(--menu-accent) 16%, var(--theme-card, #fff)); }
 .transferencia-tecla:focus-visible { outline: 2px solid var(--menu-accent); outline-offset: 2px; }
 .transferencia-tecla.operador { background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); border-color: color-mix(in srgb, var(--menu-accent) 40%, transparent); color: var(--menu-accent); font-size: 22px; }
@@ -924,13 +924,13 @@ body.dark-theme .transferencia-tela { --texto-vazado: var(--theme-surface, #2221
 .transferencia-tela .transferencia-contas-painel { width: min(380px, calc(100vw - 24px)); gap: 8px; }
 .transferencia-tela .transferencia-contas-painel .compras-hier { max-height: min(46vh, 320px); overflow-y: auto; }
 .transferencia-tela .transferencia-conta-escolha { cursor: pointer; }
-/* MÁSCARA ÚNICA DE PASSAR O MOUSE (decisão de 26/11/2026): botões e células ganham o sombreado na cor da tela E um fio fino da mesma cor; ao escolher, enchem com a cor cheia.
-   Linhas inteiras de lista levam só o sombreado (o fio brigaria com as divisórias). Vale para calendário, hora, calculadora e chips. */
+/* MÁSCARA ÚNICA DE PASSAR O MOUSE (decisão de 26/11/2026, revista no mesmo dia): ao passar, só o MIOLO ganha o sombreado na cor da tela; a BORDA fica como está sem o mouse. Ao escolher, enche com a cor cheia.
+   Linhas inteiras de lista levam o sombreado mais leve. Vale para calendário, hora, calculadora e chips. */
 :root { --mascara-fundo: 14%; }
 body.dark-theme { --mascara-fundo: 24%; }
 @media (hover: hover) {
   .compras-aniv-painel .compras-grade-celula:not([aria-pressed="true"]):hover,
-  .transferencia-tela .transferencia-tecla:not(.igual):hover { background: color-mix(in srgb, var(--menu-accent) var(--mascara-fundo), var(--theme-card, #fff)); border-color: var(--menu-accent); }
+  .transferencia-tela .transferencia-tecla:not(.igual):hover { background: color-mix(in srgb, var(--menu-accent) var(--mascara-fundo), var(--theme-card, #fff)); }
   .compras-hier-linha:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
 }
 .transferencia-tela .transferencia-tecla:not(.igual):active { background: color-mix(in srgb, #000 20%, var(--menu-accent)); border-color: transparent; color: #fff; }

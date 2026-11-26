@@ -1553,3 +1553,6 @@ Salvar (cheio): fecha o laranja e o círculo do ícone acende (cheio, com o sina
 
 ### Ajuste (26/11/2026, Rodrigo): rodapé sem troca de cor nos ícones; máscara também em marcações e campos
 Botões de rodapé: só ficam um pouco mais evidentes ao passar (cheio fecha o laranja; contorno sombreia), **ícones não mudam de cor**. Bolinhas e caixas de marcar e campos (texto, seleção, área de texto) ao passar: miolo sombreado + borda na cor da tela; dentro das linhas agrupadas da Nova Transferência quem reage é a linha.
+
+### Máscara de passar o mouse: só o miolo (26/11/2026, Rodrigo, revisão)
+Ao passar o mouse, **só o miolo** é sombreado (14%, 24% no escuro); a **borda continua a mesma de quando o mouse não está em cima** (substitui "sombreado + fio"). Vale para calendário, hora, teclas, chips, bolinhas, caixas e campos. Ao escolher, enche de cor cheia (aí a borda acompanha).
