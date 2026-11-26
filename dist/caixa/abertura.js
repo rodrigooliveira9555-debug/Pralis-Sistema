@@ -1,5 +1,5 @@
 /*
- * Caixa — Abertura (casca). Três blocos como no sistema principal (CaixaResumoMaloteAbertura +
+ * Caixa — Abertura (casca), em formulário linha por linha (padrão da Nova Transferência: grupo, quadro, linhas). Três grupos como no sistema principal (CaixaResumoMaloteAbertura +
  * CaixaAberturaConfirmacaoDialog): onde operar, conferir o malote de abertura pelo lacre e
  * responsáveis/terminal. A abertura só é confirmada depois da conferência do malote.
  * Dados FICTÍCIOS, em centavos; nada é gravado e tudo some ao recarregar.
@@ -8,7 +8,7 @@
   'use strict';
   const U = window.CicluzComprasUI;
   const C = window.CicluzCaixa;
-  const { el, botao, campo, entrada, seletor } = U;
+  const { el, botao, entrada, seletor } = U;
 
   // Login de posto: cada conta de operador é um PDV + turno (PDV 1-4 × Manhã/Tarde).
   const POSTO = { pdv: 'PDV 1', turno: 'Manhã', usuario: 'pdv1.manha' };
@@ -42,16 +42,19 @@
     render();
   }
 
-  function bloco(numero, titulo, texto, situacao) {
-    const s = el('section', 'compras-secao caixa-bloco');
-    const cab = el('div', 'caixa-bloco-cab');
-    cab.append(el('span', 'caixa-bloco-num ' + situacao, String(numero)));
-    const t = el('div');
-    t.append(el('h3', null, titulo), el('p', null, texto));
-    cab.append(t);
-    s.append(cab);
-    return s;
-  }
+  // Peças do formulário linha por linha (a Nova Transferência é a referência): grupo com título, quadro e linhas.
+  const { linha, linhaDe, quadro, secao } = window.CicluzTransferencias.pecas;
+  const valorDa = (texto) => el('span', 'transferencia-linha-valor', texto);
+  /** Tela do formulário: o contêiner leva a classe da referência (transferencia-tela) para valer as mesmas medidas, sem CSS paralelo. */
+  const formulario = (...filhos) => { const f = el('div', 'transferencia-tela transferencia-corpo caixa-formulario'); f.append(...filhos); return f; };
+  /** Linha de leitura (nome à esquerda, valor à direita, sem caixa). */
+  const linhaLeitura = (rotulo, texto) => linha(rotulo, valorDa(texto));
+  const escolha = (rotulo, opcoes, chave) => {
+    const s = seletor(opcoes, estado[chave], 'Escolha…');
+    s.required = true;
+    s.onchange = () => { estado[chave] = s.value; };
+    return linhaDe(rotulo + ' *', s);
+  };
 
   function bloqueios() {
     const lista = [];
@@ -72,32 +75,21 @@
     if (C.estado.status !== 'fechado') return renderAberto();
     const aviso = U.nota('Demonstração: dados fictícios, nada é gravado. Use um lacre criado em "Malote da Tesouraria" (o 001 do PDV 1 já existe).');
     aviso.classList.add('caixa-aviso');
-    const intro = U.nota('Preencha os três blocos. A abertura só é confirmada depois da conferência do malote.');
-    const passo = !estado.encontrado || estado.conferido === null ? 2 : 3;
+    const intro = U.nota('Preencha os grupos abaixo. A abertura só é confirmada depois da conferência do malote.');
 
-    const b1 = bloco(1, 'Onde você vai operar', 'O posto do caixa deste login.', 'feito');
-    const g1 = el('div', 'caixa-grade');
-    g1.append(campo('Ponto de venda', entrada('text', POSTO.pdv, { readOnly: true }), 'Travado pelo login do posto.'), campo('Turno do caixa', entrada('text', POSTO.turno, { readOnly: true })));
-    b1.append(g1);
+    const g1 = secao('Onde você vai operar',
+      quadro(linhaDe('Ponto de venda', entrada('text', POSTO.pdv, { readOnly: true })), linhaDe('Turno do caixa', entrada('text', POSTO.turno, { readOnly: true }))),
+      U.nota('O posto do caixa deste login. Travado pelo login do posto.'));
 
-    const b2 = bloco(2, 'Conferir malote de abertura', MALOTE.rota, passo > 2 ? 'feito' : 'ativo');
-    b2.append(blocoMalote());
+    const g2 = secao('Conferir malote de abertura', ...blocoMalote());
 
-    const b3 = bloco(3, 'Responsáveis e terminal', 'Quem responde pelo caixa e qual maquininha vai usar.', passo === 3 ? 'ativo' : '');
-    const g3 = el('div', 'caixa-grade');
-    const escolha = (rotulo, opcoes, chave, dica) => {
-      const s = seletor(opcoes, estado[chave], 'Escolha…');
-      s.required = true;
-      s.onchange = () => { estado[chave] = s.value; };
-      return campo(rotulo, s, dica);
-    };
-    g3.append(
-      escolha('Responsável pelo caixa', RESPONSAVEIS, 'responsavel'),
-      escolha('Supervisor responsável', SUPERVISORES, 'supervisor'),
-      escolha('Maquininha de cartão', MAQUININHAS, 'maquininha', 'Obrigatória para o relatório final deste turno.'),
-      campo('Usuário logado', entrada('text', POSTO.usuario, { readOnly: true })),
-    );
-    b3.append(g3);
+    const g3 = secao('Responsáveis e terminal',
+      quadro(
+        escolha('Responsável pelo caixa', RESPONSAVEIS, 'responsavel'),
+        escolha('Supervisor responsável', SUPERVISORES, 'supervisor'),
+        escolha('Maquininha de cartão', MAQUININHAS, 'maquininha'),
+        linhaDe('Usuário logado', entrada('text', POSTO.usuario, { readOnly: true }))),
+      U.nota('Quem responde pelo caixa e qual maquininha vai usar. A maquininha é obrigatória para o relatório final deste turno.'));
 
     const pend = el('div', 'caixa-pendencias');
     pend.setAttribute('role', 'alert');
@@ -111,11 +103,11 @@
 
     const acoes = el('div', 'caixa-acoes');
     acoes.append(el('small', null, 'Abra somente quando estiver no PDV.'), botao('Conferir e abrir caixa', tentarAbrir, 'btn'));
-    tela.body.replaceChildren(aviso, intro, b1, b2, b3, pend, acoes);
+    tela.body.replaceChildren(formulario(aviso, intro, g1, g2, ...blocoComposicao(), g3, pend, acoes));
   }
 
+  /** Grupo do lacre: a linha do lacre, a rota do malote e o resultado da consulta. Devolve os filhos do grupo. */
   function blocoMalote() {
-    const box = el('div', 'caixa-malote');
     const lacre = entrada('text', estado.lacre, { placeholder: 'Ex.: 001', autocomplete: 'off', required: true });
     const status = el('small', 'caixa-status');
     status.setAttribute('role', 'status');
@@ -134,61 +126,52 @@
         estado.encontrado = !r.erro;
         estado.erroLacre = r.erro || '';
         render();
-        const novo = tela.body.querySelector('.caixa-malote input');
+        const novo = tela.body.querySelector('.caixa-malote-lacre input');
         if (novo) { novo.focus(); novo.setSelectionRange(novo.value.length, novo.value.length); }
       }, 500);
     };
-    const g = el('div', 'caixa-grade');
-    g.append(campo('Lacre do malote de abertura', lacre, 'Use o lacre do malote recebido da Tesouraria. Ele é diferente do lacre de fechamento.'));
-    box.append(g, status);
-    if (!estado.encontrado) return box;
-
-    const dl = el('dl', 'caixa-declarado');
-    [['Malote declarado', moeda(MALOTE.dinheiro + MALOTE.moedas)], ['Dinheiro', moeda(MALOTE.dinheiro)], ['Moedas', moeda(MALOTE.moedas)],
-      ['Lacres para sangria', MALOTE.lacresSangria.join(' · ')], ['Lacre reservado para fechar este caixa', MALOTE.lacreFechamento]]
-      .forEach(([t, v]) => { const d = el('div'); d.append(el('dt', null, t), el('dd', null, v)); dl.append(d); });
-
-    const conf = el('fieldset', 'caixa-conferencia');
-    conf.append(el('legend', null, 'O valor e a composição conferem com o que foi recebido?'));
-    const opcoes = el('div', 'compras-chips');
-    [[true, 'Sim, confere'], [false, 'Não confere']].forEach(([v, t]) => {
-      const b = botao(t, () => { estado.conferido = v; render(); }, 'compras-chip' + (estado.conferido === v ? ' ativo' : ''));
-      b.setAttribute('aria-pressed', String(estado.conferido === v));
-      opcoes.append(b);
-    });
-    conf.append(opcoes);
-    if (estado.conferido === false) conf.append(contagem());
-    box.append(dl, conf);
-    return box;
+    const linhaLacre = linhaDe('Lacre do malote de abertura *', lacre);
+    linhaLacre.classList.add('caixa-malote-lacre');
+    return [quadro(linhaLacre), U.nota(MALOTE.rota + '. Use o lacre do malote recebido da Tesouraria; ele é diferente do lacre de fechamento.'), status];
   }
 
-  /** "Não confere": conta dinheiro e moedas; havendo diferença, o motivo é obrigatório. */
+  /** Grupo da composição declarada e da conferência (só depois de achar o lacre). Devolve uma lista de grupos (vazia sem lacre). */
+  function blocoComposicao() {
+    if (!estado.encontrado) return [];
+    const declarado = secao('Composição declarada do malote', quadro(
+      linhaLeitura('Malote declarado', moeda(MALOTE.dinheiro + MALOTE.moedas)),
+      linhaLeitura('Dinheiro', moeda(MALOTE.dinheiro)),
+      linhaLeitura('Moedas', moeda(MALOTE.moedas)),
+      linhaLeitura('Lacres para sangria', MALOTE.lacresSangria.join(' · ')),
+      linhaLeitura('Lacre para fechar o caixa', MALOTE.lacreFechamento)));
+    const opcoes = U.chips([['sim', 'Sim, confere'], ['nao', 'Não confere']], estado.conferido === null ? '' : estado.conferido ? 'sim' : 'nao', (v) => { estado.conferido = v === 'sim'; render(); });
+    const linhas = [linha('Confere com o recebido? *', opcoes)];
+    if (estado.conferido === false) linhas.push(...contagem());
+    return [declarado, secao('Conferência', quadro(...linhas))];
+  }
+
+  /** "Não confere": conta dinheiro e moedas; havendo diferença, o motivo é obrigatório. Linhas sempre presentes (sem aparecer e sumir). */
   function contagem() {
-    const g = el('div', 'caixa-grade');
-    const linha = el('p', 'caixa-diferenca');
-    linha.setAttribute('role', 'status');
-    const motivo = el('textarea');
-    motivo.rows = 2;
-    motivo.value = estado.motivo;
+    const resumo = el('p', 'caixa-diferenca');
+    resumo.setAttribute('role', 'status');
+    const linhaResumo = el('div', 'transferencia-linha transferencia-linha-resumo');
+    linhaResumo.append(resumo);
+    const motivo = entrada('text', estado.motivo, { placeholder: 'Obrigatório se houver diferença', maxLength: 500 });
     motivo.oninput = () => { estado.motivo = motivo.value; };
-    const campoMotivo = campo('Motivo da divergência', motivo);
-    campoMotivo.classList.add('caixa-largo');
     const atualizar = () => {
       const d = centavos(estado.dinheiro), m = centavos(estado.moedas);
-      const dif = d === null || m === null ? 0 : d + m - (MALOTE.dinheiro + MALOTE.moedas);
-      linha.hidden = campoMotivo.hidden = !dif;
-      linha.className = 'caixa-diferenca ' + (dif < 0 ? 'falta' : 'sobra');
-      linha.textContent = dif ? (dif < 0 ? '▼ Falta de ' : '▲ Sobra de ') + moeda(Math.abs(dif)) + ' em relação ao declarado.' : '';
+      if (d === null || m === null) { resumo.className = 'caixa-diferenca'; resumo.textContent = 'Informe o dinheiro e as moedas contados.'; return; }
+      const dif = d + m - (MALOTE.dinheiro + MALOTE.moedas);
+      resumo.className = 'caixa-diferenca ' + (dif < 0 ? 'falta' : dif > 0 ? 'sobra' : 'bateu');
+      resumo.textContent = dif ? (dif < 0 ? '▼ Falta de ' : '▲ Sobra de ') + moeda(Math.abs(dif)) + ' em relação ao declarado.' : '✓ Sem diferença em relação ao declarado.';
     };
     const dinheiro = (rotulo, chave) => {
       const i = entrada('text', estado[chave], { inputMode: 'decimal', placeholder: '0,00', required: true });
       i.oninput = () => { estado[chave] = i.value; atualizar(); };
-      return campo(rotulo, i);
+      return linhaDe(rotulo + ' *', i);
     };
-    g.append(dinheiro('Dinheiro físico contado (R$)', 'dinheiro'), dinheiro('Moedas contadas (R$)', 'moedas'), linha, campoMotivo);
-    linha.classList.add('caixa-largo');
     atualizar();
-    return g;
+    return [dinheiro('Dinheiro físico contado (R$)', 'dinheiro'), dinheiro('Moedas contadas (R$)', 'moedas'), linhaResumo, linhaDe('Motivo da divergência', motivo)];
   }
 
   function tentarAbrir() {
@@ -202,10 +185,8 @@
       rotuloSalvar: 'Confirmar e abrir',
       montar: (form) => {
         form.append(el('p', 'caixa-alerta', 'A primeira venda já começa a contar neste turno.'));
-        const dl = el('dl', 'caixa-declarado');
-        [['PDV', POSTO.pdv], ['Turno', POSTO.turno], ['Lacre do malote', estado.lacre.trim()], ['Maquininha', maq], ['Responsável do caixa', estado.responsavel], ['Supervisor', estado.supervisor]]
-          .forEach(([t, v]) => { const d = el('div'); d.append(el('dt', null, t), el('dd', null, v)); dl.append(d); });
-        form.append(dl);
+        form.append(formulario(secao('Resumo da abertura', quadro(
+          ...[['PDV', POSTO.pdv], ['Turno', POSTO.turno], ['Lacre do malote', estado.lacre.trim()], ['Maquininha', maq], ['Responsável do caixa', estado.responsavel], ['Supervisor', estado.supervisor]].map(([t, v]) => linhaLeitura(t, v))))));
         form.append(estado.conferido
           ? el('p', 'caixa-diferenca bateu', '✓ Composição confirmada: dinheiro ' + moeda(MALOTE.dinheiro) + ' · moedas ' + moeda(MALOTE.moedas) + '.')
           : el('p', 'caixa-diferenca falta', 'Contagem informada: ' + moeda(contado) + ' para ' + moeda(MALOTE.dinheiro + MALOTE.moedas) + ' declarado.' + (estado.motivo.trim() ? ' Motivo: ' + estado.motivo.trim() : '')));
@@ -234,17 +215,16 @@
   function renderAberto() {
     const e = C.estado;
     const a = e.abertura;
-    const s = el('section', 'compras-secao caixa-bloco');
-    const cab = el('div', 'compras-secao-cab');
     const fechando = e.status === 'em_fechamento';
-    cab.append(el('h3', null, (fechando ? 'Vendas encerradas · ' : 'Caixa aberto · ') + a.pdv + ' · ' + a.turno),
-      U.situacao(fechando ? 'Aguardando conferência' : 'Aberto às ' + a.abertoEm, fechando ? 'atencao' : 'positivo'));
-    s.append(cab, U.nota('Responsável: ' + a.responsavel + ' · Supervisor: ' + a.supervisor + ' · Lacre ' + a.lacre + '.'),
+    const situacao = el('span', 'transferencia-linha-valor');
+    situacao.append(U.situacao(fechando ? 'Aguardando conferência' : 'Aberto às ' + a.abertoEm, fechando ? 'atencao' : 'positivo'));
+    const grupo = secao((fechando ? 'Vendas encerradas · ' : 'Caixa aberto · ') + a.pdv + ' · ' + a.turno,
+      quadro(linha('Situação', situacao), linhaLeitura('Responsável', a.responsavel), linhaLeitura('Supervisor', a.supervisor), linhaLeitura('Lacre do malote', a.lacre)),
       U.nota(fechando ? 'O fechamento será a próxima tela da casca.' : 'Próximo passo: acompanhar o turno (resumo, sangria, PDV e vendas).'));
     const acoes = el('div', 'caixa-acoes');
     acoes.append(botao('Recomeçar a demonstração', () => { C.reiniciar(); render(); }, 'btn secondary'));
     if (!fechando) acoes.append(botao('Ir para o turno', () => C.abrir('turno'), 'btn'));
-    tela.body.replaceChildren(s, acoes);
+    tela.body.replaceChildren(formulario(grupo, acoes));
   }
 
   C.aoReiniciar(() => { estado = novoEstado(); });
