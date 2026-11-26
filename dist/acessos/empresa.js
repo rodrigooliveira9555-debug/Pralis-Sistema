@@ -424,7 +424,7 @@
         const cancelar = botao('Cancelar', () => d.close(), 'btn secondary footer-cancel-accent');
         const nav = el('div', 'compras-form-rodape compras-etapas-nav compras-largo');
         // Na ficha nova só se anda para a frente pelo Avançar; com dados gravados, qualquer etapa abre pelo toque na barra.
-        const barra = window.CicluzStepper.create({ steps: ETAPAS.map((label) => ({ label })), current: atual, label: 'Etapas dos dados da empresa', onSelect: (i) => { if (jaTemDados || i <= atual) ir(i); } });
+        const barra = window.CicluzStepper.create({ steps: ETAPAS.map((label) => ({ label })), current: atual, label: 'Etapas dos dados da empresa', podeIr: (i) => jaTemDados || i <= atual, onSelect: ir });
         const nomeDe = (lista, id) => (lista.find(([x]) => x === id) || [])[1] || '';
         function pintarRevisao() {
           const x = ler(); const en = x.endereco;

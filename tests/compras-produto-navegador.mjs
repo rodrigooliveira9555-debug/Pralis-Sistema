@@ -64,7 +64,7 @@ async function esperarFechar(p) {
 }
 const sec = (p, legenda) => dlg(p).locator('fieldset', { has: p.locator('legend', { hasText: legenda }) });
 // O cadastro tem 6 etapas (a 6ª é a Revisão dos dados); a barra de etapas leva direto à etapa pedida.
-const etapa = (p, n) => dlg(p).locator('.stepper-node').nth(n - 1).click();
+const etapa = async (p, n) => { await dlg(p).locator('.stepper-wrap--etapa .transferencia-linha-acao').first().click(); await dlg(p).locator('.stepper-wrap--etapa .transferencia-multi-painel button').nth(n - 1).click(); };
 
 /* ---------- 1) Criar produto com os campos novos, salvar, reabrir e conferir ---------- */
 {
