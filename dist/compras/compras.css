@@ -924,17 +924,23 @@ body.dark-theme .transferencia-tela { --texto-vazado: var(--theme-surface, #2221
 .transferencia-tela .transferencia-contas-painel { width: min(380px, calc(100vw - 24px)); gap: 8px; }
 .transferencia-tela .transferencia-contas-painel .compras-hier { max-height: min(46vh, 320px); overflow-y: auto; }
 .transferencia-tela .transferencia-conta-escolha { cursor: pointer; }
-/* Máscara única ao passar o mouse: o botão fica na cor da tela (tom suave) e, ao escolher, enche com a cor cheia — vale para as teclas da calculadora e as células de data e hora. */
+/* MÁSCARA ÚNICA DE PASSAR O MOUSE (decisão de 26/11/2026): botões e células ganham o sombreado na cor da tela E um fio fino da mesma cor; ao escolher, enchem com a cor cheia.
+   Linhas inteiras de lista levam só o sombreado (o fio brigaria com as divisórias). Vale para calendário, hora, calculadora e chips. */
+:root { --mascara-fundo: 14%; }
+body.dark-theme { --mascara-fundo: 24%; }
 @media (hover: hover) {
-  .compras-aniv-painel .compras-grade-celula:not([aria-pressed="true"]):hover { background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); border-color: var(--menu-accent); }
+  .compras-aniv-painel .compras-grade-celula:not([aria-pressed="true"]):hover,
+  .transferencia-tela .transferencia-tecla:not(.igual):hover { background: color-mix(in srgb, var(--menu-accent) var(--mascara-fundo), var(--theme-card, #fff)); border-color: var(--menu-accent); }
   .compras-hier-linha:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
-  .transferencia-tela .transferencia-tecla:not(.igual):hover { background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); border-color: var(--menu-accent); }
 }
 .transferencia-tela .transferencia-tecla:not(.igual):active { background: color-mix(in srgb, #000 20%, var(--menu-accent)); border-color: transparent; color: #fff; }
 /* Apagar com ícone próprio; o = também tem a máscara (mais fechado ao passar e ao tocar); a marca das contas é redonda, como no cadastro de produto. */
 .transferencia-tela .transferencia-tecla svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 @media (hover: hover) { .transferencia-tela .transferencia-tecla.igual:hover { background: color-mix(in srgb, #000 32%, var(--menu-accent)); } }
 .transferencia-tela .transferencia-tecla.igual:active { background: color-mix(in srgb, #000 42%, var(--menu-accent)); }
-.transferencia-tela .transferencia-conta-escolha .compras-hier-caixa { border-radius: 50%; }
 /* No modo mês e ano, os dias somem de verdade (o display da grade vencia o atributo hidden e as duas vistas apareciam juntas). */
 .compras-data-painel .compras-data-grade[hidden] { display: none; }
+/* Marcação redonda das contas: a regra geral do diálogo (.location-dialog input) vencia a bolinha do cadastro de produto; aqui ela volta ao desenho de 22 px redondo. */
+.transferencia-tela input.compras-selecao-bolinha { --caixa-de-marcar: 22px; --campo-altura: 22px; --campo-respiro: 0px; width: 22px; min-width: 22px; height: 22px; min-height: 0; border-radius: 50%; border: 1.5px solid var(--border-strong, #b9b9c0); }
+.transferencia-tela input.compras-selecao-bolinha:checked { border-color: var(--menu-accent); }
+.transferencia-tela input.compras-selecao-bolinha:not(:checked) { background-color: transparent; }

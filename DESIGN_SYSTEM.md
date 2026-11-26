@@ -1544,3 +1544,6 @@ Só nesta tela, para testar antes de valer para as outras (desenho do Rodrigo em
 ### Máscara única de passar o mouse e contas no padrão do cadastro (26/11/2026, Rodrigo)
 - Ao passar o mouse, teclas da calculadora e células de data/hora ficam num tom suave da cor da tela; ao escolher/tocar, enchem com a cor cheia. Linhas de lista ganham tom de 6%.
 - Origem e Destino: painel flutuante para baixo com as mesmas linhas da lista em árvore do cadastro (caixa, ícone CNT, nome, situação) e busca, em janela menor que a do cadastro.
+
+### Máscara única de passar o mouse (26/11/2026, Rodrigo pediu sugestão; adotada)
+Botões e células (calendário, hora, teclas da calculadora) ao passar o mouse: **sombreado na cor da tela (14%, 24% no escuro) + fio fino da mesma cor**; ao escolher, enchem com a cor cheia. Linhas inteiras de lista: só sombreado (6%), sem fio, para não brigar com as divisórias. Motivo: no escuro o sombreado sozinho fica marrom e fraco; o fio garante o contraste e distingue de "escolhido" (cheio). Variável `--mascara-fundo`.

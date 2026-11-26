@@ -366,7 +366,7 @@
               arvore.replaceChildren(...itens.map((n) => {
                 const l = el('div', 'compras-hier-linha transferencia-conta-escolha'); l.setAttribute('role', 'option'); l.setAttribute('aria-selected', String(n === atual));
                 const seta = el('span', 'compras-hier-seta'); seta.setAttribute('aria-hidden', 'true'); seta.style.visibility = 'hidden';
-                const c = entrada('checkbox'); c.className = 'compras-hier-caixa'; c.checked = n === atual; c.tabIndex = -1; c.setAttribute('aria-label', 'Escolher ' + n);
+                const c = entrada('checkbox'); c.className = 'compras-selecao-bolinha'; c.checked = n === atual; // a mesma marcação redonda do cadastro de produto c.tabIndex = -1; c.setAttribute('aria-label', 'Escolher ' + n);
                 const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); ic.append(el('span', 'sigla-text', 'CNT'));
                 const tx = el('span', 'compras-hier-texto'); tx.append(el('b', null, n), el('small', null, 'Conta ativa'));
                 l.append(seta, c, ic, tx, el('span', 'compras-hier-estado', 'Ativo'));
