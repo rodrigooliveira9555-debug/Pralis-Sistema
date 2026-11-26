@@ -1,6 +1,6 @@
 /*
  * Vendas dos PDVs (CREARE) — a tela, em Entradas › API. De cima para baixo, pouca coisa por vez:
- *   1. Abas dos PDVs (Todos · PDV 1 · PDV 2 · PDV 3 · PDV 4) e o botão Sincronizar, com a hora da última leitura.
+ *   1. Abas dos PDVs (Todos · TNP-PC-CXPDV-1 a 4) e o botão Sincronizar, com a hora da última leitura.
  *   2. Filtros (filtros.js): período com data no calendário e hora; o resto em "Mais filtros".
  *   3. Resumo: total vendido, ticket médio e canceladas.
  *   4. Por PDV (só em Todos) e Por tipo de pagamento.
