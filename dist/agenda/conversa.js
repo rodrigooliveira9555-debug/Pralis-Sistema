@@ -15,12 +15,14 @@
   const A = window.CicluzAgendaDados;
   const { el, botao, svg } = U;
   const TAMANHO_MAXIMO = 10 * 1024 * 1024;
-  const ACEITOS = '.jpg,.jpeg,.png,.webp,.gif,.heic,.heif,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv';
+  const ACEITOS = '.jpg,.jpeg,.png,.webp,.gif,.heic,.heif,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.webm,.ogg,.m4a,.mp3';
   const INTERVALO_CHAT = 5000;
   const INTERVALO_NAO_LIDAS = 30000;
   const ICONE_CHAT = '<path d="M4 5h16v11H8l-4 4z"/>';
   const ICONE_ENVIAR = '<path d="M4 12 20 4l-4 16-4-7zM12 13l8-9"/>';
   const ICONE_ARQUIVO = '<path d="M14 3H6v18h12V7zM14 3v4h4"/>';
+  const ICONE_FOTO = '<path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="3.5"/>';
+  const ICONE_MIC = '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3ZM5 11a7 7 0 0 0 14 0M12 18v3"/>';
 
   const api = (caminho, opcoes) => window.CicluzSync.api(caminho, opcoes);
   const online = () => Boolean(A.usuarioAtual() && window.CicluzSync && window.CicluzSync.api);
@@ -104,6 +106,52 @@
         enviar.innerHTML = svg(ICONE_ENVIAR);
         enviar.title = 'Enviar';
         enviar.setAttribute('aria-label', 'Enviar mensagem');
+        // Foto e áudio (P-52, áudio do Rodrigo de 25/11/2026): só no chat do compromisso (o arquivo fica nos arquivos dele).
+        const doCompromisso = base.startsWith('/agenda/compromissos/');
+        if (doCompromisso) {
+          const foto = el('input');
+          foto.type = 'file';
+          foto.accept = 'image/*';
+          foto.hidden = true;
+          foto.setAttribute('aria-label', 'Escolher foto');
+          const botaoFoto = botao('', () => foto.click(), 'agenda-chat-mais');
+          botaoFoto.innerHTML = svg(ICONE_FOTO);
+          botaoFoto.title = 'Mandar foto';
+          botaoFoto.setAttribute('aria-label', 'Mandar foto');
+          foto.onchange = () => { const f = foto.files[0]; foto.value = ''; if (f) mandarArquivo(f, 'Foto'); };
+          const botaoAudio = botao('', () => gravarOuParar(), 'agenda-chat-mais');
+          botaoAudio.innerHTML = svg(ICONE_MIC);
+          botaoAudio.title = 'Gravar áudio';
+          botaoAudio.setAttribute('aria-label', 'Gravar áudio');
+          linha.append(foto, botaoFoto, botaoAudio);
+          let gravador = null;
+          async function gravarOuParar() {
+            if (gravador) { gravador.stop(); return; }
+            if (!navigator.mediaDevices || !window.MediaRecorder) { estado.textContent = 'Este aparelho não grava áudio pelo navegador.'; return; }
+            try {
+              const fluxo = await navigator.mediaDevices.getUserMedia({ audio: true });
+              const tipo = ['audio/webm', 'audio/mp4', 'audio/ogg'].find((t) => MediaRecorder.isTypeSupported(t)) || '';
+              const partes = [];
+              gravador = new MediaRecorder(fluxo, tipo ? { mimeType: tipo } : undefined);
+              gravador.ondataavailable = (e) => { if (e.data.size) partes.push(e.data); };
+              gravador.onstop = () => {
+                fluxo.getTracks().forEach((t) => t.stop());
+                const real = gravador.mimeType || tipo || 'audio/webm';
+                gravador = null;
+                botaoAudio.classList.remove('gravando');
+                botaoAudio.setAttribute('aria-label', 'Gravar áudio');
+                estado.textContent = '';
+                const ext = /mp4/.test(real) ? 'm4a' : /ogg/.test(real) ? 'ogg' : 'webm';
+                const blob = new Blob(partes, { type: real });
+                if (blob.size) mandarArquivo(new File([blob], 'audio-' + Date.now() + '.' + ext, { type: real }), 'Áudio');
+              };
+              gravador.start();
+              botaoAudio.classList.add('gravando');
+              botaoAudio.setAttribute('aria-label', 'Parar e mandar o áudio');
+              estado.textContent = 'Gravando… toque de novo para parar e mandar.';
+            } catch (e) { estado.textContent = 'Não foi possível usar o microfone.'; gravador = null; }
+          }
+        }
         linha.append(texto, enviar);
         form.append(lista, estado, linha);
 
@@ -125,6 +173,11 @@
             }
             const balao = el('div', 'agenda-chat-balao');
             if (!minha && !seguida && mostrarAutor) balao.append(el('small', 'agenda-chat-autor', m.autorNome));
+            if (m.arquivo) {
+              const url = '/api/agenda/arquivos/' + encodeURIComponent(m.arquivo.id);
+              if (m.arquivo.tipo.startsWith('audio/')) { const a = el('audio', 'agenda-chat-anexo-audio'); a.controls = true; a.preload = 'none'; a.src = url; balao.append(a); }
+              else if (m.arquivo.tipo.startsWith('image/') && m.arquivo.tipo !== 'image/heic') { const im = el('img', 'agenda-chat-anexo-foto'); im.src = url; im.alt = m.arquivo.nome; im.loading = 'lazy'; balao.append(im); }
+            }
             balao.append(el('span', 'agenda-chat-texto', m.texto), el('small', 'agenda-chat-hora', D.horaAgora(new Date(m.criadoEm))));
             b.append(balao);
             b.title = (minha ? 'Você' : m.autorNome) + ' · ' + hora(m.criadoEm);
@@ -158,6 +211,18 @@
             estado.textContent = '';
           } catch (e) { estado.textContent = mensagemErro(e); }
           finally { enviar.disabled = false; texto.focus(); }
+        }
+        /** Foto ou áudio: vai para os arquivos do compromisso e a mensagem aponta para ele. */
+        async function mandarArquivo(f, rotulo) {
+          if (f.size > TAMANHO_MAXIMO) { estado.textContent = 'O arquivo passa de 10 MB.'; return; }
+          estado.textContent = 'Enviando ' + rotulo.toLowerCase() + '…';
+          try {
+            const base64 = await new Promise((ok, falha) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => falha(new Error('leitura')); r.readAsDataURL(f); });
+            const arq = await api(base + '/arquivos', { metodo: 'POST', corpo: { nome: f.name, conteudoBase64: base64 } });
+            const m = await api(base + '/mensagens', { metodo: 'POST', corpo: { texto: rotulo, arquivoId: arq.id } });
+            desenhar([m]);
+            estado.textContent = '';
+          } catch (e) { estado.textContent = mensagemErro(e); }
         }
         // Chat: Enter envia, como no WhatsApp (exceção ao "Enter nunca salva", registrada no DESIGN_SYSTEM).
         texto.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); mandar(); } });
@@ -194,7 +259,7 @@
     entrada.setAttribute('aria-label', 'Escolher arquivos');
     const anexar = botao(ac.responsavel && !ac.gestor ? 'Enviar evidência' : 'Adicionar arquivos', () => entrada.click(), 'btn secondary');
     anexar.hidden = !podeEnviar;
-    s.append(lista, estado, anexar, entrada, U.nota('Até 10 MB cada: imagem, PDF, Word, Excel, PowerPoint, TXT ou CSV.' + (ac.responsavel && !ac.gestor ? ' O que você enviar fica marcado como evidência do responsável.' : '')));
+    s.append(lista, estado, anexar, entrada, U.nota('Até 10 MB cada: imagem, áudio, PDF, Word, Excel, PowerPoint, TXT ou CSV.' + (ac.responsavel && !ac.gestor ? ' O que você enviar fica marcado como evidência do responsável.' : '')));
 
     async function carregar() {
       try {

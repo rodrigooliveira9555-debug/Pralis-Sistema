@@ -50,7 +50,8 @@
   function marcarGrades() {
     document.querySelectorAll('.record-grid').forEach((g) => { if (visivel(g) && g.dataset.rota === undefined) g.dataset.rota = rota.join('/'); });
   }
-  function depois() { setTimeout(() => { marcarGrades(); titulo(); }, 0); }
+  // Avisa quem precisa saber da tela aberta (a Agenda: ícone de agendar e aviso de tarefa da tela, P-52).
+  function depois() { setTimeout(() => { marcarGrades(); titulo(); document.dispatchEvent(new Event('cicluz-rota-mudou')); }, 0); }
 
   function gravar(nova) {
     if (reabrindo || nova.join('/') === rota.join('/')) return;

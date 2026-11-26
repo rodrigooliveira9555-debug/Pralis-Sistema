@@ -85,6 +85,8 @@ async function abrirPagina(largura, altura = 844, c = ADMIN) {
   return pagina;
 }
 const dialogo = (p) => p.locator('dialog.agenda-dialog[open]').last();
+/** Janela do compromisso no padrão linha por linha (P-52): Pessoas, Subtarefas, Local, Mensagens e Arquivos abrem por dentro. */
+const abrirLinha = (p, nome) => dialogo(p).locator('.agenda-linha-leva', { hasText: nome }).first().click();
 /** Espera o servidor responder tudo o que a tela pediu. */
 const quieto = (p) => p.waitForFunction(() => CicluzAgendaDados.emAndamento === 0, null, { timeout: 15000 });
 const dados = async (p) => { await quieto(p); return p.evaluate(() => JSON.parse(JSON.stringify(CicluzAgendaDados.dados))); };
@@ -195,23 +197,33 @@ async function limparAgenda(p) {
   await dialogo(p).getByRole('button', { name: 'quinta-feira' }).click();
   await dialogo(p).getByLabel('Fim da repetição').selectOption('vezes');
   await dialogo(p).getByLabel('Quantas vezes').fill('3');
-  ok((await dialogo(p).locator('.agenda-repeticao .profiles-note').textContent()).includes('A cada 2 semanas: seg, qui, 3 vez(es)'), 'Resumo da repetição');
+  ok((await dialogo(p).locator('.agenda-repeticao-resumo').textContent()).includes('A cada 2 semanas: seg, qui, 3 vez(es)'), 'Resumo da repetição');
   await dialogo(p).getByLabel('Alerta').selectOption('15');
-  await dialogo(p).getByLabel('Endereço na internet (URL)').fill('cicluz');
+  await dialogo(p).getByLabel('Endereço na internet').fill('cicluz');
+  // Local abre por dentro (padrão linha por linha): o endereço pode ser escrito sem marcar no mapa.
+  await abrirLinha(p, 'Local');
   await dialogo(p).getByLabel('Endereço', { exact: true }).fill('Loja Centro');
   ok(await dialogo(p).getByLabel('Endereço', { exact: true }).inputValue() === 'Loja Centro', 'Endereço pode ser escrito sem marcar no mapa');
   await confirmar(p);
+  ok((await dialogo(p).locator('.agenda-linha-leva', { hasText: 'Local' }).textContent()).includes('Loja Centro'), 'A linha Local mostra o endereço');
+  await confirmar(p);
   ok((await dialogo(p).locator('.profiles-error').textContent()).includes('http'), 'URL sem http é recusada');
-  await dialogo(p).getByLabel('Endereço na internet (URL)').fill('https://cicluz.com.br');
-  ok(await dialogo(p).locator('input[data-date-native][aria-label="Data"]').inputValue() === hoje, 'Em "Para hoje", o + já vem com a data de hoje');
-  await dialogo(p).locator('.compras-chip', { hasText: /^Alta$/ }).click();
-  await dialogo(p).getByLabel('Adicionar pessoa').selectOption({ label: RESP_UM.nome });
-  await dialogo(p).getByRole('button', { name: 'Adicionar como responsável' }).click();
+  await dialogo(p).getByLabel('Endereço na internet').fill('https://cicluz.com.br');
+  const hojeCurto = hoje.slice(8, 10) + '/' + hoje.slice(5, 7) + '/' + hoje.slice(2, 4);
+  ok(await dialogo(p).getByLabel('Data', { exact: true }).inputValue() === hojeCurto, 'Em "Para hoje", o + já vem com a data de hoje');
+  await dialogo(p).getByLabel('Prioridade').selectOption('alta');
+  await abrirLinha(p, 'Pessoas');
+  await dialogo(p).getByLabel('Adicionar como responsável').selectOption({ label: RESP_UM.nome });
+  await confirmar(p);
+  ok((await dialogo(p).locator('.agenda-linha-leva', { hasText: 'Pessoas' }).textContent()).includes(RESP_UM.nome), 'A linha Pessoas mostra o responsável');
   await dialogo(p).getByLabel('Notas').fill('levar a planilha de horários');
+  await abrirLinha(p, 'Subtarefas');
   await dialogo(p).getByRole('button', { name: 'Adicionar subtarefa' }).click();
   await dialogo(p).getByLabel('Subtarefa 1', { exact: true }).fill('imprimir escala');
   await dialogo(p).getByLabel('Subtarefa 1', { exact: true }).press('Enter');
   await dialogo(p).getByLabel('Subtarefa 2', { exact: true }).fill('avisar a equipe');
+  await confirmar(p);
+  ok((await dialogo(p).locator('.agenda-linha-leva', { hasText: 'Subtarefas' }).textContent()).includes('0 de 2 feitas'), 'A linha Subtarefas mostra a contagem');
   await confirmar(p);
   ok(await p.locator('dialog.agenda-dialog[open]').count() === 0, 'O ✓ salva e fecha');
   i = await item(p, 'reunião semanal da equipe');
@@ -295,6 +307,7 @@ async function limparAgenda(p) {
   await p.getByRole('button', { name: 'Listas', exact: true }).click();
   await p.locator('.view.show .people-add-control').click();
   await dialogo(p).getByLabel('Título').fill('Buscar encomenda');
+  await abrirLinha(p, 'Local');
   await p.waitForFunction(() => document.querySelector('dialog.agenda-dialog[open] .agenda-mapa .leaflet-tile-pane'));
   ok((await dialogo(p).locator('.agenda-mapa-botao small').allTextContents()).join('|') === 'Atual|Ao entrar|Ao sair|Personalizada', 'Botões do protótipo: Atual, Ao entrar, Ao sair, Personalizada');
   const mapaCaixa = dialogo(p).locator('.agenda-mapa');
@@ -308,10 +321,12 @@ async function limparAgenda(p) {
   ok(await dialogo(p).locator('path.leaflet-interactive').count() === 1 && await dialogo(p).getByLabel('Raio do aviso').isVisible(), 'Ao entrar desenha o raio e mostra o tamanho');
   await dialogo(p).getByLabel('Raio do aviso').selectOption('500');
   await confirmar(p);
+  await confirmar(p);
   i = await item(p, 'Buscar encomenda');
   ok(Number.isFinite(i.localizacao.lat) && i.localizacao.aviso === 'entrar' && i.localizacao.raio === 500 && i.local.startsWith('Rua de Teste'), 'Ponto, aviso, raio e endereço salvos');
   ok((await p.locator('.agenda-item', { hasText: 'Buscar encomenda' }).locator('.agenda-detalhes').textContent()).includes('ao entrar'), 'A linha mostra o aviso por lugar');
   await p.locator('.agenda-linha-texto', { hasText: 'Buscar encomenda' }).click();
+  await abrirLinha(p, 'Local');
   await p.waitForFunction(() => document.querySelector('dialog.agenda-dialog[open] .agenda-mapa .leaflet-tile-pane'));
   await dialogo(p).locator('.agenda-mapa-botao[data-modo="personalizada"]').click();
   await dialogo(p).getByLabel('Procurar endereço ou lugar').fill('padaria teste');
@@ -320,6 +335,7 @@ async function limparAgenda(p) {
   ok((await dialogo(p).getByLabel('Endereço', { exact: true }).inputValue()).startsWith('Padaria de Teste - Avenida de Teste, 50'), 'Escolher um resultado preenche o endereço');
   await dialogo(p).locator('.agenda-mapa-botao[data-modo="atual"]').click();
   await p.waitForFunction(() => document.querySelector('dialog.agenda-dialog[open] input[aria-label="Endereço"]').value.includes('Rua de Teste'));
+  await confirmar(p);
   await confirmar(p);
   i = await item(p, 'Buscar encomenda');
   ok(Math.abs(i.localizacao.lat - PRACA.latitude) < 1e-6 && Math.abs(i.localizacao.lng - PRACA.longitude) < 1e-6, '"Atual" marca a posição do aparelho');
@@ -552,7 +568,8 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   await p.waitForFunction(() => document.querySelector('.agenda-chat-novas'));
   ok((await p.locator('.agenda-item', { hasText: 'Fechar o caixa' }).locator('.agenda-chat-novas').textContent()).includes('2 mensagens novas'), 'A linha mostra as mensagens novas');
   await p.locator('.agenda-linha-texto', { hasText: 'Fechar o caixa' }).click();
-  await dialogo(p).getByRole('button', { name: 'Abrir chat (2 novas)' }).click();
+  ok((await dialogo(p).locator('.agenda-linha-leva', { hasText: 'Mensagens' }).textContent()).includes('2 novas'), 'A linha Mensagens mostra as novas');
+  await abrirLinha(p, 'Mensagens');
   const chat = p.locator('dialog.agenda-chat-dialog[open]');
   await chat.locator('.compras-vazio').waitFor();
   await chat.getByLabel('Mensagem (Enter envia)', { exact: true }).fill('pode fechar às 18h?');
@@ -588,6 +605,7 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
     return r.fulfill({ status: 404, json: { type: 'about:blank', title: 'Não encontrado', status: 404, code: 'NOT_FOUND' } });
   });
   await p.evaluate(async () => { const r = await CicluzAgendaDados.salvarItem('', { titulo: 'API antiga', listaId: 'lista-gestao-pessoas' }); document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.abrir(''); CicluzAgenda.editar(r.id); });
+  await abrirLinha(p, 'Arquivos e evidências');
   await p.waitForFunction(() => (document.querySelector('dialog.agenda-dialog[open] .agenda-conversa [role=status]') || {}).textContent);
   ok((await dialogo(p).locator('.agenda-conversa [role=status]').textContent()).includes('a API precisa ser atualizada'), 'API antiga: arquivos explicam que o servidor precisa ser atualizado');
   ok(!(await dialogo(p).getByRole('button', { name: 'Adicionar arquivos' }).isVisible()), 'API antiga: não oferece enviar arquivo');
@@ -608,12 +626,12 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   let p = await abrir(GESTORA);
   await p.locator('.view.show .people-add-control').click();
   await dialogo(p).getByLabel('Título').fill('Fechar o caixa da loja');
-  ok((await dialogo(p).locator('.agenda-pessoas .profiles-note').first().textContent()).includes('Gestor: ' + GESTORA.nome), 'Gestor é quem cria');
-  await dialogo(p).getByLabel('Adicionar pessoa').selectOption({ label: RESP_UM.nome });
-  await dialogo(p).getByRole('button', { name: 'Adicionar como responsável' }).click();
-  await dialogo(p).getByLabel('Adicionar pessoa').selectOption({ label: RESP_DOIS.nome });
-  await dialogo(p).getByRole('button', { name: 'Adicionar como responsável' }).click();
+  await abrirLinha(p, 'Pessoas');
+  ok((await dialogo(p).locator('.agenda-pessoas .transferencia-linha').first().textContent()).includes(GESTORA.nome), 'Gestor é quem cria');
+  await dialogo(p).getByLabel('Adicionar como responsável').selectOption({ label: RESP_UM.nome });
+  await dialogo(p).getByLabel('Adicionar como responsável').selectOption({ label: RESP_DOIS.nome });
   await dialogo(p).getByRole('group', { name: 'Permissões de ' + RESP_UM.nome }).getByRole('button', { name: 'Editar' }).click();
+  await confirmar(p);
   await dialogo(p).getByLabel('Tipo de avaliação').selectOption('estrelas');
   await confirmar(p);
   let t = await item(p, 'Fechar o caixa da loja');

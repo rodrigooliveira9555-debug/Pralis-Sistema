@@ -60,6 +60,7 @@
       concluida: c.concluida, concluidaEm: c.concluidaEm, origemId: c.origemId, ocorrencia: c.ocorrencia,
       // Tela ligada (ícone roxo de agendar / tarefa criada por uma tela): a tarefa abre essa tela.
       vinculoTela: c.vinculoTela || '', vinculoTitulo: c.vinculoTitulo || '', vinculoRef: c.vinculoRef || '',
+      acaoTela: c.acaoTela || '', acaoQuantidade: c.acaoQuantidade || null, acaoFeitas: c.acaoFeitas || 0,
       // O gestor é quem criou: o nome da tela continua `criadoPor`.
       criadoEm: c.criadoEm, criadoPor: c.gestorId, atualizadoEm: c.atualizadoEm, versao: c.versao, acesso: c.acesso || NADA,
     };
@@ -89,6 +90,8 @@
       subtarefas: (c.subtarefas || []).map((s) => ({ ...(s.id ? { id: s.id } : {}), titulo: String(s.titulo || '').trim(), concluida: Boolean(s.concluida) })),
       pessoas: R.normalizarPessoas(c.pessoas), avaliacaoTipo: (c.avaliacao && c.avaliacao.tipo) || '', colunaId: c.colunaId || '',
       vinculoTela: c.vinculoTela || '', vinculoTitulo: c.vinculoTela ? String(c.vinculoTitulo || '').trim().slice(0, 120) : '',
+      // Ação programada (P-52): só com tela ligada.
+      acaoTela: c.vinculoTela && c.acaoTela ? c.acaoTela : '', acaoQuantidade: c.vinculoTela && c.acaoTela ? Math.min(365, Math.max(1, Number(c.acaoQuantidade) || 1)) : null,
     };
   }
 
@@ -666,6 +669,10 @@
   const contasEColaboradores = () => api('/agenda/expedientes/contas');
   const ligarColaborador = (usuarioId, colaboradorId) => api('/agenda/expedientes/contas/' + encodeURIComponent(usuarioId), { metodo: 'PUT', corpo: { colaboradorId: colaboradorId || null } });
   const enviarExpedientes = (corpo) => api('/agenda/expedientes', { metodo: 'PUT', corpo });
+  /* Ações programadas por tela (0012, P-52). */
+  const acaoFeita = (acao, quantidade) => api('/agenda/acoes-de-tela', { metodo: 'POST', corpo: { acao, quantidade } });
+  const telasIcone = () => api('/agenda/telas-icone');
+  const definirTelaIcone = (tela, mostrar) => api('/agenda/telas-icone', { metodo: 'PUT', corpo: { tela, mostrar } });
 
   window.CicluzAgendaDados = {
     CHAVE_CACHE, CORES_LISTA, CONCLUIDO,
@@ -684,6 +691,6 @@
     salvarLista, definirOrdenacao, excluirLista, salvarColuna, excluirColuna,
     previaTransferencia, transferir,
     membros, definirMembros, minhaConfig, configs, salvarConfig, desempenho, tarefaDeTela, concluirPorVinculo, cancelarPorVinculo, conectado,
-    contasEColaboradores, ligarColaborador, enviarExpedientes, areasAcesso,
+    contasEColaboradores, ligarColaborador, enviarExpedientes, areasAcesso, acaoFeita, telasIcone, definirTelaIcone,
   };
 })();

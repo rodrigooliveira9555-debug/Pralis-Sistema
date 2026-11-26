@@ -294,3 +294,5 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell:not(.people-bar-top
 :root{--vidro-fundo:linear-gradient(135deg,rgba(255,255,255,.66),rgba(255,255,255,.42));--vidro-borda:rgba(255,255,255,.75);--vidro-sombra:0 10px 30px rgba(29,29,31,.12),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.35)}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header{box-shadow:var(--vidro-sombra)}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell:not(.people-bar-top)>.panel{position:relative}
+/* Ícone de agendar desligado nesta tela pelo administrador (P-52, Configurações da Agenda). */
+body.agendar-desligado :is(#sector-view,.view,dialog,.dialog).app-screen-shell :is(.people-footer-left>.people-agendar-control,.people-bottom-tools>.people-quick-fixo){display:none}

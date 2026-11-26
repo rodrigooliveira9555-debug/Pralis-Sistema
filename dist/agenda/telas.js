@@ -16,6 +16,7 @@
   const COR = '#7c3aed';
   const COR_TEXTO = '#5520ad';
   const PATH_MAIS = 'M12 5v14M5 12h14';
+  const PATH_MAIS_SVG = '<path d="M12 5v14M5 12h14"/>';
   const ICONES = {
     hoje: '<path d="M4 5h16v16H4zM4 10h16M8 3v4m8-4v4"/><path d="M12 13v4"/>',
     programados: '<path d="M4 5h16v16H4zM4 10h16M8 3v4m8-4v4M8 14h2m4 0h2M8 18h2"/>',
@@ -528,105 +529,239 @@
 
   /* ---------- Editar ---------- */
 
+  /*
+   * Janela do compromisso no padrão "linha por linha" da Nova Transferência (DESIGN_SYSTEM.md, PADRÃO CONSOLIDADO;
+   * P-52, áudio do Rodrigo de 25/11/2026): grupos com título pequeno e quadro branco, nome à esquerda e valor à
+   * direita, data e hora em painel que expande, menos rolagem. Pessoas, subtarefas, local e arquivos abrem por
+   * dentro (uma janela sobre a outra), com o resumo na linha. As peças são as da Transferência (CicluzTransferencias.pecas).
+   */
+  const pecas = () => window.CicluzTransferencias.pecas;
+  const SETA_DIREITA = '<path d="m9 6 6 6-6 6"/>';
+  /** Linha que abre outra janela: nome, resumo à direita e a seta (padrão "Anexos"). */
+  function linhaQueLeva(rotulo, aoToque) {
+    const b = el('button', 'transferencia-linha transferencia-linha-acao agenda-linha-leva');
+    b.type = 'button';
+    const resumo = el('span', 'transferencia-linha-valor');
+    const seta = el('span', 'transferencia-seta');
+    seta.setAttribute('aria-hidden', 'true');
+    seta.innerHTML = svg(SETA_DIREITA);
+    b.append(el('span', 'transferencia-linha-rotulo', rotulo), resumo, seta);
+    b.onclick = aoToque;
+    return { no: b, resumo: (t) => { resumo.textContent = t; } };
+  }
+  /** Linha com um texto só de leitura à direita. */
+  function linhaLeitura(rotulo, valor) {
+    const P = pecas();
+    return P.linha(rotulo, el('span', 'transferencia-linha-valor', valor));
+  }
+  /** Janela sobre a janela do compromisso (subtarefas, pessoas, local, arquivos): "Salvar" devolve o que mudou. */
+  function subJanela({ titulo, subtitulo, montar, aplicar, soLeitura }) {
+    U.dialogo({
+      titulo, subtitulo, cor: COR, corTexto: COR_TEXTO, classe: 'agenda-dialog agenda-sub-janela', rotuloSalvar: 'Salvar',
+      montar: (form, dlg) => {
+        const repetido = dlg.querySelector('.compras-dialog-sub');
+        if (repetido && !subtitulo) repetido.remove();
+        form.dataset.textoLivre = '';
+        const corpo = el('div', 'transferencia-tela transferencia-corpo agenda-form');
+        form.append(corpo);
+        return montar(corpo) || {};
+      },
+      salvar: soLeitura || !aplicar ? undefined : (c) => aplicar(c),
+    });
+  }
+
   function editar(id, base) {
     const atual = id ? A.item(id) : null;
     if (id && !atual) return U.avisar('Compromisso não encontrado.');
     const ac = atual ? A.acesso(atual) : { ver: true, editar: true, concluir: true, excluir: true, gestor: true };
     if (atual && !ac.ver) return U.avisar('Você não participa deste compromisso.');
-    const v = structuredClone(atual || { titulo: '', notas: '', url: '', local: '', etiquetas: [], subtarefas: [], pessoas: [], avaliacao: { tipo: '', notas: [] }, hora: '', horaFim: '', repeticao: null, alerta: null, colunaId: '', ...base });
+    const v = structuredClone(atual || { titulo: '', notas: '', url: '', local: '', etiquetas: [], subtarefas: [], pessoas: [], avaliacao: { tipo: '', notas: [] }, hora: '', horaFim: '', repeticao: null, alerta: null, colunaId: '', acaoTela: '', acaoQuantidade: null, ...base });
     const soLeitura = !ac.editar || A.somenteLeitura;
+    const P = pecas();
     U.dialogo({
       titulo: !atual ? 'Novo compromisso' : soLeitura ? 'Compromisso' : 'Editar compromisso',
       subtitulo: soLeitura ? 'Você pode ver' + (ac.concluir ? ' e concluir' : '') + ' este compromisso; editar é com o gestor.' : undefined,
       largo: true,
       cor: COR,
       corTexto: COR_TEXTO,
-      classe: 'agenda-dialog',
+      classe: 'agenda-dialog agenda-compromisso-dialog',
       rotuloSalvar: atual ? 'Salvar compromisso' : 'Salvar · Criar compromisso',
-      montar: (form) => {
+      montar: (form, dlg) => {
+        // O caminho já está no cabeçalho (padrão da Nova Transferência): tira a linha repetida.
+        if (!soLeitura) { const repetido = dlg.querySelector('.compras-dialog-sub'); if (repetido) repetido.remove(); }
         // Texto livre: o S2 não troca as letras para maiúsculas (index.html, regra do focusout).
         form.dataset.textoLivre = '';
-        const titulo = U.entrada('text', v.titulo, { maxLength: 200, required: true });
-        const notas = el('textarea');
-        notas.value = v.notas || '';
-        notas.rows = 3;
+        const corpo = el('div', 'transferencia-tela transferencia-corpo agenda-form');
+        form.append(corpo);
+
+        /* O quê */
+        const titulo = U.entrada('text', v.titulo, { maxLength: 200, required: true, placeholder: 'Ex.: Conferir o estoque' });
+        const notas = U.entrada('text', v.notas || '', { maxLength: 2000, placeholder: 'Opcional' });
         const url = U.entrada('text', v.url || '', { placeholder: 'https://', maxLength: 500, inputMode: 'url', autocomplete: 'url' });
-        const data = U.entrada('date', v.data || '');
-        const hora = U.entrada('time', v.hora || '');
-        const horaFim = U.entrada('time', v.horaFim || '');
+
+        /* Quando: data e hora em painel (U.campoData / U.campoHora), como na Nova Transferência */
+        const data = U.campoData({ rotulo: 'Data', valor: v.data || '' });
+        const hora = U.campoHora({ rotulo: 'Início', valor: v.hora || '' });
+        const horaFim = U.campoHora({ rotulo: 'Término', valor: v.horaFim || '' });
         const alerta = U.seletor(D.ALERTAS, v.alerta === null || v.alerta === undefined ? '' : String(v.alerta));
-        const repeticao = editorRepeticao(v.repeticao, () => data.value);
+        const repeticao = editorRepeticao(v.repeticao, () => data.valor());
+
+        /* Organização */
         const listaSel = U.seletor(A.dados.listas.filter((l) => l.membro || l.podeGerir || l.id === v.listaId).map((l) => [l.id, l.nome]), v.listaId);
         const colunaSel = U.seletor(A.dados.colunas.map((c) => [c.id, c.nome]), A.coluna(v.colunaId) ? v.colunaId : (A.dados.colunas[0] || { id: '' }).id);
-        let prioridade = v.prioridade || 'normal';
-        const prio = U.chips(D.PRIORIDADES, prioridade, (p) => { prioridade = p; });
-        // Sinalizar: o interruptor do sistema com Sim/Não (regra do quadro de situação), não caixa de marcar.
-        const sinal = U.quadroSituacao('Sinalizar', Boolean(v.sinalizado), { textos: ['Sim', 'Não'] });
+        const prioSel = U.seletor(D.PRIORIDADES, v.prioridade || 'normal');
         const etiquetas = U.entrada('text', (v.etiquetas || []).join(', '), { placeholder: 'Ex.: Loja, Estoque' });
-        const local = U.entrada('text', v.local || '', { maxLength: 200, placeholder: 'Endereço ou nome do lugar (opcional)' });
-        // Lugar no mapa: Atual, Ao entrar, Ao sair, Personalizada (agenda/mapa.js).
-        const lugar = soLeitura ? null : window.CicluzAgendaMapa.seletor({ localizacao: v.localizacao, local: v.local }, local);
-        const subtarefas = editorSubtarefas(v.subtarefas || []);
-        // Tela ligada (ícone roxo de agendar ou pedido agendado): a tarefa leva até ela.
-        let vinculo = v.vinculoTela ? { tela: v.vinculoTela, titulo: v.vinculoTitulo || 'Tela do sistema' } : null;
-        const telaSecao = el('fieldset', 'agenda-form-secao agenda-tela-ligada');
-        const desenharTela = () => {
-          telaSecao.replaceChildren(el('legend', null, 'Tela ligada'));
-          if (!vinculo) { telaSecao.append(U.nota('Nenhuma tela ligada. Para ligar, abra a tela e use o ícone roxo de agendar na barra de baixo.')); return; }
-          const linhaTela = el('div', 'agenda-tela-linha');
-          const ic = el('span', 'agenda-com-icone');
-          ic.innerHTML = svg(ICONES.tela);
-          linhaTela.append(ic, el('b', null, vinculo.titulo));
-          if (atual && atual.vinculoTela === vinculo.tela) linhaTela.append(botao('Abrir a tela', () => window.CicluzAgendaRotina.abrirTela(vinculo.tela), 'btn secondary'));
-          if (!soLeitura && !(atual && atual.vinculoRef)) linhaTela.append(botao('Desligar a tela', () => { vinculo = null; desenharTela(); }, 'agenda-link'));
-          telaSecao.append(linhaTela);
-          if (atual && atual.vinculoRef) telaSecao.append(U.nota('Criada pela própria tela: conclui sozinha quando o que ela pede é feito.'));
+        let sinalizado = Boolean(v.sinalizado);
+        const sinal = P.chave('Sinalizar', sinalizado, ['Sim', 'Não'], (x) => { sinalizado = x; });
+
+        /* Pessoas, subtarefas e local: abrem por dentro, com o resumo na linha */
+        let pessoas = D.normalizarPessoas(v.pessoas);
+        const linhaPessoas = linhaQueLeva('Pessoas', () => subJanela({
+          titulo: 'Pessoas e permissões', subtitulo: v.titulo || 'Compromisso', soLeitura: soLeitura || !ac.gestor,
+          montar: (c) => { const e = editorPessoas({ pessoas }, atual, ac.gestor && !soLeitura); c.append(e.no); return { e }; },
+          aplicar: (c) => { pessoas = c.e.valor(); resumirPessoas(); return undefined; },
+        }));
+        const resumirPessoas = () => {
+          const resp = pessoas.filter((p) => p.responsavel);
+          linhaPessoas.resumo(pessoas.length ? (resp.length ? resp.map((p) => A.nomePessoa(p.id)).join(', ') : pessoas.length + (pessoas.length === 1 ? ' pessoa' : ' pessoas')) : 'Só o gestor');
         };
+        resumirPessoas();
+
+        let subs = (v.subtarefas || []).map((s) => ({ ...s }));
+        const linhaSubs = linhaQueLeva('Subtarefas', () => subJanela({
+          titulo: 'Subtarefas', subtitulo: v.titulo || 'Compromisso', soLeitura,
+          montar: (c) => { const e = editorSubtarefas(subs); c.append(e.no); return { e }; },
+          aplicar: (c) => { subs = c.e.valor(); resumirSubs(); return undefined; },
+        }));
+        const resumirSubs = () => {
+          const feitas = subs.filter((s) => s.concluida).length;
+          linhaSubs.resumo(subs.length ? feitas + ' de ' + subs.length + ' feitas' : 'Nenhuma');
+        };
+        resumirSubs();
+
+        let local = v.local || '';
+        let localizacao = v.localizacao || null;
+        const linhaLocal = linhaQueLeva('Local', () => subJanela({
+          titulo: 'Local', subtitulo: v.titulo || 'Compromisso', soLeitura,
+          montar: (c) => {
+            const endereco = U.entrada('text', local, { maxLength: 200, placeholder: 'Endereço ou nome do lugar' });
+            const lugar = soLeitura ? null : window.CicluzAgendaMapa.seletor({ localizacao, local }, endereco);
+            if (lugar) c.append(P.secao('Lugar no mapa', lugar.no));
+            c.append(P.secao('Endereço', P.quadro(P.linhaDe('Endereço', endereco))));
+            if (!soLeitura) c.append(U.nota('Preenchido ao marcar no mapa; pode escrever ou corrigir.'));
+            return { endereco, lugar };
+          },
+          aplicar: (c) => { local = c.endereco.value; localizacao = c.lugar ? c.lugar.valor() : localizacao; resumirLocal(); return undefined; },
+        }));
+        const resumirLocal = () => linhaLocal.resumo(local || (localizacao && Number.isFinite(localizacao.lat) ? 'No mapa' : 'Nenhum'));
+        resumirLocal();
+
+        /* Tela ligada e ação programada (P-52): a tarefa leva à tela; com ação, conclui sozinha ao chegar na quantidade */
+        let vinculo = v.vinculoTela ? { tela: v.vinculoTela, titulo: v.vinculoTitulo || 'Tela do sistema' } : null;
+        const telaQuadro = el('div', 'agenda-tela-ligada');
+        const acoesDaTela = (tela) => (window.CicluzAgendaRotina && tela ? window.CicluzAgendaRotina.acoesDaTela(tela) : []);
+        const acaoSel = U.seletor([['', 'Nenhuma: concluir com "Feito"'], ...acoesDaTela(vinculo && vinculo.tela).map((a) => [a.id, a.rotulo])], v.acaoTela || '');
+        const quantidade = U.roletaNumero({ rotulo: 'Quantidade', titulo: 'Quantidade', min: 1, max: 365, valor: String(v.acaoQuantidade || 1) });
+        const linhaQtd = P.linhaDe('Quantidade', quantidade.input);
+        linhaQtd.append(quantidade.painel);
+        P.abreAoTocarNaLinha(linhaQtd, quantidade.input, quantidade.painel);
+        const desenharTela = () => {
+          const linhas = [];
+          if (!vinculo) {
+            telaQuadro.replaceChildren(P.quadro(linhaLeitura('Tela', 'Nenhuma')), U.nota('Para ligar, abra a tela e use o ícone roxo de agendar na barra de baixo.'));
+            return;
+          }
+          const abrir = el('button', 'transferencia-circulo agenda-abrir-tela');
+          abrir.type = 'button';
+          abrir.title = 'Abrir a tela';
+          abrir.setAttribute('aria-label', 'Abrir a tela ' + vinculo.titulo);
+          abrir.innerHTML = svg(ICONES.tela);
+          abrir.onclick = () => window.CicluzAgendaRotina.abrirTela(vinculo.tela);
+          const linhaTela = P.linha('Tela', el('span', 'transferencia-linha-valor', vinculo.titulo));
+          if (atual && atual.vinculoTela === vinculo.tela) linhaTela.append(abrir);
+          linhas.push(linhaTela);
+          // Tarefa criada pela própria tela (pedido agendado, lançar produção…): a tela conclui; não há ação a escolher.
+          if (!(atual && atual.vinculoRef) && acoesDaTela(vinculo.tela).length) {
+            linhas.push(P.linhaDe('Ação que conta', acaoSel));
+            if (acaoSel.value) linhas.push(linhaQtd);
+          }
+          if (!soLeitura && !(atual && atual.vinculoRef)) {
+            const desligar = el('button', 'transferencia-linha transferencia-linha-acao agenda-linha-perigo');
+            desligar.type = 'button';
+            desligar.append(el('span', 'transferencia-linha-rotulo', 'Desligar a tela'));
+            desligar.onclick = () => { vinculo = null; acaoSel.value = ''; desenharTela(); };
+            linhas.push(desligar);
+          }
+          const nota = atual && atual.vinculoRef ? 'Criada pela própria tela: conclui sozinha quando o que ela pede é feito.'
+            : acaoSel.value ? 'Conclui sozinha quando a ação é feita na tela essa quantidade de vezes (em cada repetição). Também dá para tocar em "Feito" no aviso da tela.'
+            : 'Ao abrir a tela no dia, aparece o aviso com "Feito".';
+          telaQuadro.replaceChildren(P.quadro(...linhas), U.nota(nota));
+        };
+        acaoSel.addEventListener('change', desenharTela);
         desenharTela();
-        const pessoas = editorPessoas(v, atual, ac.gestor && !soLeitura);
+
+        /* Avaliação */
         const tipoAvaliacao = U.seletor(D.TIPOS_AVALIACAO, (v.avaliacao && v.avaliacao.tipo) || '');
         const travadaAvaliacao = !ac.gestor || Boolean(atual && atual.avaliacao && atual.avaliacao.notas && atual.avaliacao.notas.length);
         tipoAvaliacao.disabled = travadaAvaliacao;
+        const avaliacao = P.secao('Avaliação', P.quadro(P.linhaDe('Tipo de avaliação', tipoAvaliacao)),
+          U.nota(travadaAvaliacao && ac.gestor ? 'Já há avaliação registrada: o tipo não muda.' : 'Depois de concluído, o gestor avalia a execução de cada responsável e cada um se autoavalia.'));
+        avaliacao.classList.add('agenda-avaliacao');
+        if (atual && atual.concluida && atual.avaliacao && atual.avaliacao.tipo) avaliacao.append(painelAvaliacao(atual));
 
-        const secao = (nome, ...filhos) => { const s = el('fieldset', 'agenda-form-secao'); s.append(el('legend', null, nome), ...filhos); return s; };
-        const grade = (...filhos) => { const g = el('div', 'agenda-form-grade'); g.append(...filhos); return g; };
-        const prioCampo = el('div', 'compras-campo agenda-largo');
-        prioCampo.append(el('span', 'compras-rotulo', 'Prioridade'), prio);
-        const avaliacaoSecao = secao('Avaliação', U.campo('Tipo de avaliação', tipoAvaliacao, travadaAvaliacao && ac.gestor ? 'Já há avaliação registrada: o tipo não muda.' : 'Depois de concluído, o gestor avalia a execução de cada responsável e cada um se autoavalia.'));
-        avaliacaoSecao.classList.add('agenda-avaliacao');
-        if (atual && atual.concluida && atual.avaliacao && atual.avaliacao.tipo) avaliacaoSecao.append(painelAvaliacao(atual));
-
-        form.append(
-          U.campo('Título', titulo),
-          secao('Quando', grade(U.campo('Data', data), U.campo('Início', hora, 'Sem hora = dia todo.'), U.campo('Término', horaFim), U.campo('Alerta', alerta)), repeticao.no),
-          secao('Organização', grade(U.campo('Lista', listaSel), U.campo('Coluna do Kanban', colunaSel), U.campo('Etiquetas', etiquetas, 'Separe por vírgula.'), prioCampo), sinal),
-          pessoas.no,
-          secao('Local', ...(lugar ? [lugar.no] : []), U.campo('Endereço', local, soLeitura ? undefined : 'Preenchido ao marcar no mapa; pode escrever ou corrigir.')),
-          secao('Detalhes', U.campo('Endereço na internet (URL)', url), U.campo('Notas', notas)),
-          subtarefas.no,
-          telaSecao,
-          avaliacaoSecao,
+        const linhaData = P.abreAoTocarNaLinha(P.linha('Data', data.caixa, data.painel), data.input, data.painel);
+        const linhaHora = P.abreAoTocarNaLinha(P.linha('Início', hora.caixa, hora.painel), hora.input, hora.painel);
+        const linhaFim = P.abreAoTocarNaLinha(P.linha('Término', horaFim.caixa, horaFim.painel), horaFim.input, horaFim.painel);
+        corpo.append(
+          P.secao('', P.quadro(P.linhaDe('Título *', titulo), P.linhaDe('Notas', notas), P.linhaDe('Endereço na internet', url))),
+          P.secao('Quando', P.quadro(linhaData, linhaHora, linhaFim, P.linhaDe('Alerta', alerta), ...repeticao.linhas), repeticao.resumo),
+          P.secao('Organização', P.quadro(P.linhaDe('Lista', listaSel), P.linhaDe('Coluna do Kanban', colunaSel), P.linhaDe('Prioridade', prioSel), P.linhaDe('Etiquetas', etiquetas), P.linha('Sinalizar', sinal))),
+          P.secao('Detalhes', P.quadro(linhaPessoas.no, linhaSubs.no, linhaLocal.no)),
+          P.secao('Tela ligada', telaQuadro),
         );
-        if (atual) form.append(window.CicluzAgendaConversa.secao(atual));
         if (atual) {
-          const rodape = el('div', 'agenda-form-rodape');
-          const criado = 'Criado em ' + D.dataCurta(atual.criadoEm.slice(0, 10)) + (atual.criadoPor ? ' por ' + A.nomePessoa(atual.criadoPor) : '') + (atual.concluida ? ' · concluído em ' + D.dataCurta(atual.concluidaEm.slice(0, 10)) : '');
-          rodape.append(U.nota(criado));
-          if (ac.excluir) rodape.append(botao('Excluir compromisso', () => excluir(atual), 'btn secondary perigo-texto'));
-          form.append(rodape);
+          const conversa = window.CicluzAgendaConversa;
+          const n = conversa.naoLidas()[atual.id] || 0;
+          const linhaChat = linhaQueLeva('Mensagens', () => conversa.abrirChat(atual));
+          linhaChat.resumo(n ? n + (n > 1 ? ' novas' : ' nova') : 'Abrir o chat');
+          const linhaArquivos = linhaQueLeva('Arquivos e evidências', () => subJanela({
+            titulo: 'Arquivos e evidências', subtitulo: atual.titulo, soLeitura: true,
+            montar: (c) => { c.append(conversa.secao(atual)); },
+          }));
+          linhaArquivos.resumo('Ver');
+          corpo.append(P.secao('Conversa', P.quadro(linhaChat.no, linhaArquivos.no)));
         }
-        // Só leitura: tudo travado, menos a avaliação (o responsável se autoavalia).
-        if (soLeitura) form.querySelectorAll('input, select, textarea, button').forEach((x) => { if (!x.closest('.agenda-avaliacao-painel, .agenda-conversa, .agenda-form-rodape, .compras-dialog-acoes')) x.disabled = true; });
-        return { titulo, notas, url, local, lugar, data, hora, horaFim, alerta, repeticao, listaSel, colunaSel, pessoas, tipoAvaliacao, sinal, etiquetas, subtarefas, prio: () => prioridade, vinculo: () => vinculo };
+        corpo.append(avaliacao);
+        if (atual) {
+          const criado = 'Criado em ' + D.dataCurta(atual.criadoEm.slice(0, 10)) + (atual.criadoPor ? ' por ' + A.nomePessoa(atual.criadoPor) : '') + (atual.concluida ? ' · concluído em ' + D.dataCurta(atual.concluidaEm.slice(0, 10)) : '');
+          const fim = P.secao('', ...(ac.excluir ? [P.quadro((() => {
+            const b = el('button', 'transferencia-linha transferencia-linha-acao agenda-linha-perigo');
+            b.type = 'button';
+            b.append(el('span', 'transferencia-linha-rotulo', 'Excluir compromisso'));
+            b.onclick = () => excluir(atual);
+            return b;
+          })())] : []), U.nota(criado));
+          fim.classList.add('agenda-form-rodape');
+          corpo.append(fim);
+        }
+        // Só leitura: tudo travado, menos a avaliação (o responsável se autoavalia), a conversa e as linhas que só mostram.
+        if (soLeitura) corpo.querySelectorAll('input, select, textarea, button').forEach((x) => { if (!x.closest('.agenda-avaliacao-painel, .agenda-linha-leva, .agenda-abrir-tela, .agenda-form-rodape')) x.disabled = true; });
+        return {
+          titulo, notas, url, data, hora, horaFim, alerta, repeticao, listaSel, colunaSel, prioSel, tipoAvaliacao, etiquetas, acaoSel, quantidade,
+          sinal: () => sinalizado, pessoas: () => pessoas, subs: () => subs, local: () => local, localizacao: () => localizacao, vinculo: () => vinculo,
+        };
       },
       salvar: soLeitura ? undefined : async (c) => {
+        if (c.data.input.value && !c.data.valor()) return 'Data inválida. Use DD/MM/AA.';
+        const acao = c.vinculo() ? c.acaoSel.value : '';
         const r = await A.salvarItem(atual ? atual.id : '', {
-          titulo: c.titulo.value, notas: c.notas.value, url: c.url.value, local: c.local.value, localizacao: c.lugar ? c.lugar.valor() : (atual && atual.localizacao),
-          data: c.data.value, hora: c.hora.value, horaFim: c.horaFim.value, alerta: c.alerta.value,
+          titulo: c.titulo.value, notas: c.notas.value, url: c.url.value, local: c.local(), localizacao: c.localizacao(),
+          data: c.data.valor(), hora: c.hora.input.value, horaFim: c.horaFim.input.value, alerta: c.alerta.value,
           repeticao: c.repeticao.valor(atual && atual.repeticao), listaId: c.listaSel.value, colunaId: c.colunaSel.value,
-          pessoas: c.pessoas.valor(), avaliacao: { tipo: c.tipoAvaliacao.value }, prioridade: c.prio(), sinalizado: c.sinal.ativo,
-          etiquetas: c.etiquetas.value, subtarefas: c.subtarefas.valor(),
+          pessoas: c.pessoas(), avaliacao: { tipo: c.tipoAvaliacao.value }, prioridade: c.prioSel.value, sinalizado: c.sinal(),
+          etiquetas: c.etiquetas.value, subtarefas: c.subs(),
           vinculoTela: c.vinculo() ? c.vinculo().tela : '', vinculoTitulo: c.vinculo() ? c.vinculo().titulo : '',
+          acaoTela: acao, acaoQuantidade: acao ? c.quantidade.valor() || 1 : null,
         });
         if (r.erro) return r.erro;
         U.avisar(atual ? 'Compromisso salvo.' : 'Compromisso criado.');
@@ -640,18 +775,24 @@
    * um) e outros — e o que cada um pode: ver, editar, concluir, excluir. Quem não está aqui não vê.
    */
   function editorPessoas(v, atual, podeMudar) {
+    const P = pecas();
     const lista = D.normalizarPessoas(v.pessoas);
-    const no = el('fieldset', 'agenda-form-secao agenda-pessoas');
     const gestorId = atual ? atual.criadoPor : A.usuarioAtual();
-    no.append(el('legend', null, 'Pessoas e permissões'), U.nota('Gestor: ' + (gestorId ? A.nomePessoa(gestorId) : 'quem criar o compromisso') + ' (quem criou). Ele escolhe quem participa e o que cada um pode fazer; quem não está aqui não vê o compromisso.'));
-    const linhas = el('div', 'agenda-pessoas-lista');
-    const adicionar = el('div', 'agenda-pessoas-adicionar');
-    no.append(linhas, adicionar);
+    const no = el('div', 'agenda-pessoas');
+    const quadro = P.quadro();
+    const adicionar = P.quadro();
+    no.append(
+      P.secao('Gestor', P.quadro(P.linha('Gestor', el('span', 'transferencia-linha-valor', gestorId ? A.nomePessoa(gestorId) : 'Quem criar o compromisso'))),
+        U.nota('O gestor (quem criou) escolhe quem participa e o que cada um pode fazer; quem não está aqui não vê o compromisso.')),
+      P.secao('Quem participa', quadro),
+    );
+    if (podeMudar) no.append(P.secao('Adicionar', adicionar));
     const OPCOES = [['responsavel', 'Responsável'], ...D.PERMISSOES];
     function desenhar() {
-      linhas.replaceChildren(...(lista.length ? lista.map((p, n) => {
-        const r = el('div', 'agenda-pessoa');
-        r.append(el('b', 'agenda-pessoa-nome', A.nomePessoa(p.id)));
+      // Uma linha por pessoa: nome, as permissões em chips (a linha cresce se elas não couberem) e remover.
+      quadro.replaceChildren(...(lista.length ? lista.map((p, n) => {
+        const r = el('div', 'transferencia-linha agenda-pessoa');
+        r.append(el('span', 'transferencia-linha-rotulo agenda-pessoa-nome', A.nomePessoa(p.id)));
         const chips = el('div', 'compras-chips');
         chips.setAttribute('role', 'group');
         chips.setAttribute('aria-label', 'Permissões de ' + A.nomePessoa(p.id));
@@ -668,16 +809,22 @@
         });
         r.append(chips);
         if (podeMudar) {
-          r.append(U.botaoRemover('Tirar ' + A.nomePessoa(p.id) + ' do compromisso', () => { lista.splice(n, 1); desenhar(); }));
+          const tirar = el('button', 'transferencia-circulo transferencia-circulo-excluir');
+          tirar.type = 'button';
+          tirar.title = 'Tirar ' + A.nomePessoa(p.id) + ' do compromisso';
+          tirar.setAttribute('aria-label', tirar.title);
+          tirar.innerHTML = svg('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>');
+          tirar.onclick = () => { lista.splice(n, 1); desenhar(); };
+          r.append(tirar);
         }
         return r;
-      }) : [U.nota('Ninguém além do gestor. Adicione o responsável abaixo.')]));
-      adicionar.replaceChildren();
+      }) : [P.linha('Ninguém além do gestor', el('span', 'transferencia-linha-valor', podeMudar ? 'Adicione abaixo' : ''))]));
       const livres = A.pessoas().filter((x) => x.id !== gestorId && !lista.some((p) => p.id === x.id));
-      if (podeMudar && livres.length) {
-        const sel = U.seletor(livres.map((x) => [x.id, x.nome]), '', 'Escolha a pessoa');
-        adicionar.append(U.campo('Adicionar pessoa', sel), botao('Adicionar como responsável', () => { if (!sel.value) return; lista.push(D.pessoaResponsavel(sel.value)); desenhar(); }, 'btn secondary'));
-      }
+      if (!podeMudar) return;
+      if (!livres.length) { adicionar.replaceChildren(P.linha('Todas as pessoas já estão aqui', el('span'))); return; }
+      const sel = U.seletor(livres.map((x) => [x.id, x.nome]), '', 'Escolha a pessoa');
+      sel.addEventListener('change', () => { if (!sel.value) return; lista.push(D.pessoaResponsavel(sel.value)); desenhar(); });
+      adicionar.replaceChildren(P.linhaDe('Adicionar como responsável', sel));
     }
     desenhar();
     return { no, valor: () => D.normalizarPessoas(lista) };
@@ -754,84 +901,104 @@
     return box;
   }
 
-  /** Repetir: as opções do Lembretes, a personalizada (a cada N dias/semanas/meses/anos, dias da semana) e o fim. */
+  /**
+   * Repetir: as opções do Lembretes, a personalizada (a cada N dias/semanas/meses/anos, dias da semana) e o fim.
+   * Linhas do quadro "Quando": a de Repetir fica sempre; as outras entram e saem logo abaixo dela conforme a escolha
+   * (a linha tem display:flex, então o atributo hidden não a esconderia).
+   */
   function editorRepeticao(r, dataAtual) {
-    const no = el('div', 'agenda-repeticao');
+    const P = pecas();
     const tipo = U.seletor(D.REPETICOES, (r && r.tipo) || 'nunca');
-    const intervalo = U.entrada('number', String((r && r.intervalo) || 1), { min: 1, max: 99 });
+    const intervalo = U.roletaNumero({ rotulo: 'A cada', titulo: 'A cada', min: 1, max: 99, valor: String((r && r.intervalo) || 1) });
     const unidade = U.seletor([['dia', 'dia(s)'], ['semana', 'semana(s)'], ['mes', 'mês(es)'], ['ano', 'ano(s)']], (r && r.unidade) || 'semana');
     const dias = new Set((r && r.diasSemana) || []);
     const diasBox = el('div', 'compras-chips agenda-dias');
     diasBox.setAttribute('role', 'group');
     diasBox.setAttribute('aria-label', 'Dias da semana');
     const desenharDias = () => diasBox.replaceChildren(...D.DIAS_CURTOS.map((n, i) => {
-      const b = botao(n.slice(0, 3), () => { if (dias.has(i)) dias.delete(i); else dias.add(i); desenharDias(); atualizar(); }, 'compras-chip' + (dias.has(i) ? ' ativo' : ''));
+      const b = botao(n.slice(0, 1), () => { if (dias.has(i)) dias.delete(i); else dias.add(i); desenharDias(); atualizar(); }, 'compras-chip' + (dias.has(i) ? ' ativo' : ''));
       b.setAttribute('aria-pressed', String(dias.has(i)));
       b.setAttribute('aria-label', D.DIAS_LONGOS[i]);
       return b;
     }));
     const fimTipo = U.seletor([['nunca', 'Nunca'], ['data', 'Em uma data'], ['vezes', 'Depois de algumas vezes']], (r && r.fim && r.fim.tipo) || 'nunca');
-    const fimData = U.entrada('date', (r && r.fim && r.fim.data) || '');
-    const fimVezes = U.entrada('number', String((r && r.fim && r.fim.vezes) || 5), { min: 1, max: 999 });
-    const personal = el('div', 'agenda-form-grade');
-    const campoDias = el('div', 'compras-campo agenda-largo');
-    campoDias.append(el('span', 'compras-rotulo', 'Nos dias'), diasBox);
-    personal.append(U.campo('A cada', intervalo), U.campo('Unidade', unidade), campoDias);
-    const campoFimTipo = U.campo('Fim da repetição', fimTipo);
-    const campoFimData = U.campo('Termina em', fimData);
-    const campoFimVezes = U.campo('Quantas vezes', fimVezes);
-    const linhaTipo = el('div', 'agenda-form-grade');
-    linhaTipo.append(U.campo('Repetir', tipo), campoFimTipo, campoFimData, campoFimVezes);
-    const resumo = el('small', 'profiles-note');
-    no.append(linhaTipo, personal, resumo);
+    const fimData = U.campoData({ rotulo: 'Termina em', valor: (r && r.fim && r.fim.data) || '' });
+    const fimVezes = U.roletaNumero({ rotulo: 'Quantas vezes', titulo: 'Quantas vezes', min: 1, max: 365, valor: String((r && r.fim && r.fim.vezes) || 5) });
+    const comRoleta = (rotulo, roleta) => { const l = P.linhaDe(rotulo, roleta.input); l.append(roleta.painel); return P.abreAoTocarNaLinha(l, roleta.input, roleta.painel); };
+    const linhaTipo = P.linhaDe('Repetir', tipo);
+    const linhaIntervalo = comRoleta('A cada', intervalo);
+    const linhaUnidade = P.linhaDe('Unidade', unidade);
+    const linhaDias = P.linha('Nos dias', diasBox);
+    const linhaFimTipo = P.linhaDe('Fim da repetição', fimTipo);
+    const linhaFimData = P.abreAoTocarNaLinha(P.linha('Termina em', fimData.caixa, fimData.painel), fimData.input, fimData.painel);
+    const linhaFimVezes = comRoleta('Quantas vezes', fimVezes);
+    const extras = [linhaIntervalo, linhaUnidade, linhaDias, linhaFimTipo, linhaFimData, linhaFimVezes];
+    const resumo = el('p', 'profiles-note agenda-repeticao-resumo');
+    resumo.setAttribute('role', 'status');
     // A âncora e quantas vezes já foi feita são do servidor (uma regra só, M5); aqui só para o resumo.
     function valor(anterior) {
       if (tipo.value === 'nunca') return null;
       return {
-        tipo: tipo.value, intervalo: +intervalo.value || 1, unidade: unidade.value, diasSemana: [...dias],
-        fim: { tipo: fimTipo.value, data: fimData.value, vezes: +fimVezes.value || 0 },
+        tipo: tipo.value, intervalo: intervalo.valor() || 1, unidade: unidade.value, diasSemana: [...dias],
+        fim: { tipo: fimTipo.value, data: fimData.valor(), vezes: fimVezes.valor() || 0 },
         feitas: anterior && anterior.tipo ? anterior.feitas || 0 : 0,
         ancora: (anterior && anterior.ancora) || dataAtual(),
       };
     }
     function atualizar() {
       const t = tipo.value;
-      personal.hidden = t !== 'personalizada';
-      campoDias.hidden = unidade.value !== 'semana';
-      campoFimTipo.hidden = t === 'nunca';
-      campoFimData.hidden = t === 'nunca' || fimTipo.value !== 'data';
-      campoFimVezes.hidden = t === 'nunca' || fimTipo.value !== 'vezes';
+      const visiveis = [];
+      if (t === 'personalizada') visiveis.push(linhaIntervalo, linhaUnidade, ...(unidade.value === 'semana' ? [linhaDias] : []));
+      if (t !== 'nunca') visiveis.push(linhaFimTipo, ...(fimTipo.value === 'data' ? [linhaFimData] : []), ...(fimTipo.value === 'vezes' ? [linhaFimVezes] : []));
+      extras.forEach((l) => { if (!visiveis.includes(l)) l.remove(); });
+      if (linhaTipo.parentElement) linhaTipo.after(...visiveis);
       resumo.textContent = t === 'nunca' ? '' : 'Repete: ' + D.resumoRepeticao(valor());
+      resumo.hidden = t === 'nunca';
     }
     desenharDias();
-    [tipo, intervalo, unidade, fimTipo, fimVezes].forEach((x) => { x.addEventListener('input', atualizar); x.addEventListener('change', atualizar); });
-    fimData.addEventListener('change', atualizar);
-    atualizar();
-    return { no, valor };
+    [tipo, unidade, fimTipo].forEach((x) => x.addEventListener('change', atualizar));
+    [intervalo.input, fimVezes.input, fimData.input].forEach((x) => { x.addEventListener('input', atualizar); x.addEventListener('change', atualizar); });
+    // As linhas extras só entram depois que a de Repetir está no quadro.
+    queueMicrotask(atualizar);
+    return { linhas: [linhaTipo], resumo, valor };
   }
 
-  /** Lista editável de subtarefas: marcar, renomear, tirar e acrescentar (Enter cria a próxima). */
+  /** Subtarefas (janela própria): uma linha por subtarefa — círculo de concluir, texto e remover; Enter cria a próxima. */
   function editorSubtarefas(inicial) {
+    const P = pecas();
     const subs = inicial.map((s) => ({ ...s }));
-    const no = el('fieldset', 'agenda-form-secao agenda-subtarefas-editor');
-    const lista = el('div', 'agenda-subtarefas-lista');
-    const add = botao('Adicionar subtarefa', () => { subs.push({ titulo: '', concluida: false }); desenhar(subs.length - 1); }, 'btn secondary');
-    no.append(el('legend', null, 'Subtarefas'), lista, add);
+    const quadro = P.quadro();
+    const no = P.secao('Subtarefas', quadro);
     function desenhar(foco) {
-      lista.replaceChildren(...subs.map((s, n) => {
-        const r = el('div', 'agenda-subtarefa-edicao');
+      const linhas = subs.map((s, n) => {
+        const r = el('div', 'transferencia-linha agenda-subtarefa-edicao');
         // O mesmo círculo de concluir das linhas (como no Lembretes), não caixa de marcar.
         const c = botao('', () => { s.concluida = !s.concluida; c.setAttribute('aria-pressed', String(s.concluida)); }, 'agenda-circulo pequeno');
         c.setAttribute('aria-pressed', String(Boolean(s.concluida)));
         c.setAttribute('aria-label', 'Subtarefa ' + (n + 1) + ' concluída');
         const t = U.entrada('text', s.titulo, { maxLength: 200, placeholder: 'Subtarefa' });
+        t.classList.add('transferencia-linha-controle');
         t.setAttribute('aria-label', 'Subtarefa ' + (n + 1));
         t.oninput = () => { s.titulo = t.value; };
         t.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); subs.splice(n + 1, 0, { titulo: '', concluida: false }); desenhar(n + 1); } };
-        r.append(c, t, U.botaoRemover('Tirar subtarefa ' + (n + 1), () => { subs.splice(n, 1); desenhar(); }));
+        const tirar = el('button', 'transferencia-circulo transferencia-circulo-excluir');
+        tirar.type = 'button';
+        tirar.title = 'Tirar subtarefa ' + (n + 1);
+        tirar.setAttribute('aria-label', 'Tirar subtarefa ' + (n + 1));
+        tirar.innerHTML = svg('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>');
+        tirar.onclick = () => { subs.splice(n, 1); desenhar(); };
+        r.append(c, t, tirar);
         return r;
-      }));
-      if (foco !== undefined) { const alvo = lista.querySelectorAll('input[type=text]')[foco]; if (alvo) alvo.focus(); }
+      });
+      const add = el('button', 'transferencia-linha transferencia-linha-acao agenda-linha-adicionar');
+      add.type = 'button';
+      const mais = el('span', 'transferencia-circulo');
+      mais.setAttribute('aria-hidden', 'true');
+      mais.innerHTML = svg(PATH_MAIS_SVG);
+      add.append(el('span', 'transferencia-linha-rotulo', 'Adicionar subtarefa'), mais);
+      add.onclick = () => { subs.push({ titulo: '', concluida: false }); desenhar(subs.length - 1); };
+      quadro.replaceChildren(...linhas, add);
+      if (foco !== undefined) { const alvo = quadro.querySelectorAll('input[type=text]')[foco]; if (alvo) alvo.focus(); }
     }
     desenhar();
     // Linha em branco não vira subtarefa.
@@ -853,15 +1020,21 @@
   function editarLista(lista) {
     let cor = lista ? lista.cor : A.CORES_LISTA[A.dados.listas.length % A.CORES_LISTA.length];
     let icone = lista ? lista.icone : 'lista';
+    const P = pecas();
     U.dialogo({
       titulo: lista ? 'Editar lista' : 'Nova lista',
       cor: COR,
       corTexto: COR_TEXTO,
       classe: 'agenda-dialog',
       rotuloSalvar: 'Salvar lista',
-      montar: (form) => {
-        const nome = U.entrada('text', lista ? lista.nome : '', { maxLength: 40, required: true });
-        const previa = el('span', 'agenda-lista-icone grande');
+      montar: (form, dlg) => {
+        const repetido = dlg.querySelector('.compras-dialog-sub');
+        if (repetido) repetido.remove();
+        form.dataset.textoLivre = '';
+        const corpo = el('div', 'transferencia-tela transferencia-corpo agenda-form');
+        form.append(corpo);
+        const nome = U.entrada('text', lista ? lista.nome : '', { maxLength: 40, required: true, placeholder: 'Ex.: Loja' });
+        const previa = el('span', 'agenda-lista-icone');
         const cores = el('div', 'agenda-cores');
         cores.setAttribute('role', 'radiogroup');
         cores.setAttribute('aria-label', 'Cor da lista');
@@ -889,17 +1062,21 @@
           }));
         };
         desenhar();
-        const topo = el('div', 'agenda-lista-previa');
-        topo.append(previa, U.campo('Nome', nome));
-        const corCampo = el('div', 'compras-campo');
-        corCampo.append(el('span', 'compras-rotulo', 'Cor'), cores);
-        const iconeCampo = el('div', 'compras-campo');
-        iconeCampo.append(el('span', 'compras-rotulo', 'Ícone'), icones);
-        form.append(topo, corCampo, iconeCampo);
+        const linhaNome = P.linhaDe('Nome', nome);
+        // Cor e ícone abrem por dentro (como no Lembretes): as escolhas não cabem numa linha de 52 px.
+        const linhaVisual = linhaQueLeva('Cor e ícone', () => subJanela({
+          titulo: 'Cor e ícone', subtitulo: nome.value || 'Lista',
+          montar: (c) => {
+            const grade = (filho) => { const g = el('div', 'agenda-escolhas-grade'); g.append(filho); return g; };
+            c.append(P.secao('Cor', P.quadro(grade(cores))), P.secao('Ícone', P.quadro(grade(icones))));
+          },
+          aplicar: () => undefined,
+        }));
+        linhaVisual.no.querySelector('.transferencia-linha-valor').replaceWith(previa);
+        corpo.append(P.secao('', P.quadro(linhaNome, linhaVisual.no)));
+
         // Membros do grupo (P-46): quem participa da lista e do chat do grupo. Quem criou entra sempre. A lista pode
         // ser ligada a uma área do Acesso por Tela (P-46 item 3): aí os membros são as contas com acesso a ela.
-        const membrosSecao = el('fieldset', 'agenda-form-secao agenda-membros');
-        membrosSecao.append(el('legend', null, 'Membros do grupo'));
         let area = lista ? lista.area || '' : '';
         const eu = A.usuarioAtual();
         const dono = lista ? lista.donoId : eu;
@@ -908,17 +1085,34 @@
         let membrosProntos = false;
         if (A.situacao === 'servidor') {
           membrosProntos = !lista;
-          const resumo = el('p', 'agenda-membros-resumo');
-          resumo.setAttribute('aria-live', 'polite');
           let nomesAreas = new Map();
-          const pintar = () => {
-            escolher.hidden = Boolean(area);
-            if (area) { resumo.textContent = 'Entram sozinhos todos que têm acesso a ' + (nomesAreas.get(area) || area) + ' no Acesso por Tela, e quem criou a lista. Quem ganha ou perde o acesso entra ou sai do grupo.'; return; }
-            const nomes = [...escolhidos].map((id) => A.nomePessoa(id) + (id === dono ? ' (criou a lista)' : ''));
-            resumo.textContent = (nomes.length === 1 ? '1 membro: ' : nomes.length + ' membros: ') + nomes.join(', ') + '.';
-          };
           const quem = U.seletor([['', 'Escolhidos à mão']], area);
           quem.disabled = true;
+          const linhaQuem = P.linhaDe('Quem entra no grupo', quem);
+          const resumo = el('span', 'transferencia-linha-valor');
+          const escolher = el('button', 'transferencia-linha transferencia-linha-acao agenda-linha-leva');
+          escolher.type = 'button';
+          escolher.setAttribute('aria-label', 'Escolher membros');
+          const seta = el('span', 'transferencia-seta');
+          seta.setAttribute('aria-hidden', 'true');
+          seta.innerHTML = svg(SETA_DIREITA);
+          escolher.append(el('span', 'transferencia-linha-rotulo', 'Membros'), resumo, seta);
+          escolher.onclick = () => U.seletorDeItens({
+            titulo: 'Membros do grupo', rotuloBusca: 'Procurar pessoa', cor: COR, corTexto: COR_TEXTO,
+            itens: A.pessoas().map((p) => ({ id: p.id, rotulo: p.nome, busca: p.nome, travado: p.id === dono, dica: p.id === dono ? 'Criou a lista: entra sempre.' : '' })),
+            marcados: escolhidos,
+            aoConfirmar: (s) => { escolhidos.clear(); s.forEach((id) => escolhidos.add(id)); if (dono) escolhidos.add(dono); pintar(); },
+          });
+          const quadroMembros = P.quadro(linhaQuem, escolher);
+          const nota = el('p', 'profiles-note');
+          const pintar = () => {
+            // Com área, a linha de escolher sai do quadro (a linha tem display:flex: entra e sai, sem hidden).
+            if (area) { escolher.remove(); nota.textContent = 'Entram sozinhos todos que têm acesso a ' + (nomesAreas.get(area) || area) + ' no Acesso por Tela, e quem criou a lista. Quem ganha ou perde o acesso entra ou sai do grupo.'; return; }
+            if (!escolher.isConnected) quadroMembros.append(escolher);
+            const nomes = [...escolhidos].map((id) => A.nomePessoa(id));
+            resumo.textContent = nomes.length === 1 ? nomes[0] : nomes.length + ' membros';
+            nota.textContent = 'Os membros conversam no chat do grupo e podem criar compromissos nesta lista. Cada compromisso continua visível só para quem participa dele.';
+          };
           quem.addEventListener('change', () => { area = quem.value; pintar(); });
           A.areasAcesso().then((r) => {
             if (r.erro) return;
@@ -928,31 +1122,27 @@
             quem.disabled = Boolean(lista && !lista.podeGerir);
             pintar();
           });
-          const escolher = botao('Escolher membros', () => U.seletorDeItens({
-            titulo: 'Membros do grupo', rotuloBusca: 'Procurar pessoa', cor: COR, corTexto: COR_TEXTO,
-            itens: A.pessoas().map((p) => ({ id: p.id, rotulo: p.nome, busca: p.nome, travado: p.id === dono, dica: p.id === dono ? 'Criou a lista: entra sempre.' : '' })),
-            marcados: escolhidos,
-            aoConfirmar: (s) => { escolhidos.clear(); s.forEach((id) => escolhidos.add(id)); if (dono) escolhidos.add(dono); pintar(); },
-          }), 'btn secondary');
           escolher.disabled = !membrosProntos;
           pintar();
-          membrosSecao.append(U.campo('Quem entra no grupo', quem), U.nota('Os membros conversam no chat do grupo e podem criar compromissos nesta lista. Cada compromisso continua visível só para quem participa dele.'), resumo, escolher);
-          if (lista) A.membros(lista.id).then((r) => { if (r.erro) return membrosSecao.append(U.situacao(r.erro, 'negativo')); r.ids.forEach((id) => escolhidos.add(id)); membrosProntos = true; escolher.disabled = false; pintar(); return undefined; });
-          form.append(membrosSecao);
+          corpo.append(P.secao('Membros do grupo', quadroMembros, nota));
+          if (lista) A.membros(lista.id).then((r) => { if (r.erro) return corpo.append(U.situacao(r.erro, 'negativo')); r.ids.forEach((id) => escolhidos.add(id)); membrosProntos = true; escolher.disabled = false; pintar(); return undefined; });
         }
         if (lista) {
           const qtd = A.visiveis().filter((i) => i.listaId === lista.id).length;
-          const rodape = el('div', 'agenda-form-rodape');
-          const botaoExcluir = botao('Excluir lista', () => U.confirmar('Excluir lista', 'Excluir a lista "' + lista.nome + '"? Não dá para desfazer.', 'Excluir', async () => {
+          const excluirLinha = el('button', 'transferencia-linha transferencia-linha-acao agenda-linha-perigo');
+          excluirLinha.type = 'button';
+          excluirLinha.append(el('span', 'transferencia-linha-rotulo', 'Excluir lista'));
+          excluirLinha.onclick = () => U.confirmar('Excluir lista', 'Excluir a lista "' + lista.nome + '"? Não dá para desfazer.', 'Excluir', async () => {
             const r = await A.excluirLista(lista.id);
             if (r.erro) { U.avisar(r.erro); return undefined; }
             if (estado.listaId === lista.id) { estado.listaId = ''; estado.automatica = 'todos'; }
             document.querySelectorAll('dialog.agenda-dialog[open]').forEach((d) => d.close());
             U.avisar('Lista excluída.');
             return undefined;
-          }, { cor: COR, corTexto: COR_TEXTO, classe: 'agenda-dialog' }), 'btn secondary perigo-texto');
-          rodape.append(U.nota(qtd + ' compromisso(s) nesta lista.'), botaoExcluir);
-          form.append(rodape);
+          }, { cor: COR, corTexto: COR_TEXTO, classe: 'agenda-dialog' });
+          const fim = P.secao('', P.quadro(excluirLinha), U.nota(qtd + ' compromisso(s) nesta lista.'));
+          fim.classList.add('agenda-form-rodape');
+          corpo.append(fim);
         }
         // Lista ligada a uma área: os membros vêm da área (o servidor monta); não manda a escolha à mão.
         return { nome, area: () => area, membros: () => (membrosProntos && !area ? [...escolhidos] : []) };
