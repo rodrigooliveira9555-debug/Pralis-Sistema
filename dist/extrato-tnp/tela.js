@@ -1,5 +1,6 @@
 /*
- * Open Finance · Caixa TNP (Resultados › API): o extrato da Caixa PJ da TNP, lido pelo coletor do Meu Pluggy.
+ * Open Finance (Resultados › API): o extrato da Caixa PJ da TNP e o do Bradesco PJ do HORA, cada um num cartão,
+ * lidos pelos coletores do Meu Pluggy (um por empresa). A mesma tela serve aos dois: muda só o banco (?banco=).
  * O S2 não guarda extrato: pergunta à própria API (/api/extrato-tnp), que repassa ao coletor com o token no servidor.
  * De cima para baixo, pouca coisa por vez:
  *   1. Abas das contas (Contas · Conta corrente · Poupança · Cartão) e o Sincronizar.
@@ -26,9 +27,17 @@
   U.ICONES.extratoTnp = '<path d="M3 10 12 4l9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>';
   const ICONE_SINCRONIZAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"/></svg>';
 
+  // Um cartão por banco; cada um com a própria tela (id próprio, para o endereço e o foco), o mesmo desenho.
+  const BANCOS = {
+    tnp: { titulo: 'Open Finance · Caixa TNP', descricao: 'Conta, poupança e cartão da Caixa PJ da TNP, pelo Meu Pluggy', empresa: 'da TNP', idTela: 'extrato-tnp-view', card: 'extrato' },
+    hora: { titulo: 'Open Finance · Bradesco HORA', descricao: 'Conta, poupança e cartão do Bradesco PJ do HORA, pelo Meu Pluggy', empresa: 'do HORA', idTela: 'extrato-hora-view', card: 'hora' },
+  };
+  const telas = {};
   let tela = null;
   let partes = null;
   let limite = POR_VEZ;
+  let pedido = 0;
+  const raiz = () => '#' + BANCOS[estado.banco].idTela;
   const corpo = (...nos) => { const c = el('div', 'compras-corpo'); c.append(...nos.filter(Boolean)); return c; };
 
   function mensagemErro(erro) {
@@ -40,23 +49,29 @@
     return erro.message || 'Algo deu errado.';
   }
 
+  /** Só a resposta do último pedido vale: trocar de banco, conta ou período no meio da leitura descarta a anterior
+   *  (o extrato de um banco nunca aparece na tela do outro). */
   async function consultar() {
-    if (estado.carregando) return;
+    const meu = ++pedido;
+    const alvo = partes;
     estado.carregando = true;
     estado.erro = '';
     pintarSincronia();
-    partes.resultados.setAttribute('aria-busy', 'true');
+    alvo.resultados.setAttribute('aria-busy', 'true');
+    let dados = null;
+    let erro = '';
     try {
-      const p = new URLSearchParams({ desde: estado.desde, ate: estado.ate });
+      const p = new URLSearchParams({ banco: estado.banco, desde: estado.desde, ate: estado.ate });
       if (estado.conta) p.set('conta', estado.conta);
-      estado.dados = await S.api('/extrato-tnp?' + p);
-      estado.atualizadoEm = new Date();
-    } catch (erro) {
-      estado.erro = mensagemErro(erro);
-    } finally {
-      estado.carregando = false;
-      partes.resultados.removeAttribute('aria-busy');
+      dados = await S.api('/extrato-tnp?' + p);
+    } catch (e) {
+      erro = mensagemErro(e);
     }
+    if (meu !== pedido) return;
+    estado.carregando = false;
+    alvo.resultados.removeAttribute('aria-busy');
+    if (erro) estado.erro = erro;
+    else { estado.dados = dados; estado.atualizadoEm = new Date(); }
     limite = POR_VEZ;
     desenhar();
   }
@@ -100,7 +115,7 @@
   function pintarAbas() {
     const tinhaFoco = partes.topo.lugarAbas.contains(document.activeElement);
     partes.topo.lugarAbas.replaceChildren(abas());
-    if (tinhaFoco) focar('#extrato-tnp-view .vendas-pdv-aba.ativa');
+    if (tinhaFoco) focar(raiz() + ' .vendas-pdv-aba.ativa');
   }
   const focar = (seletor) => { const n = document.querySelector(seletor); if (n) n.focus(); };
 
@@ -214,7 +229,7 @@
           const primeiro = mostrados;
           limite += POR_VEZ;
           redesenharResultados();
-          const botoes = document.querySelectorAll('#extrato-tnp-view .extrato-tnp-detalhes');
+          const botoes = document.querySelectorAll(raiz() + ' .extrato-tnp-detalhes');
           if (botoes[primeiro]) botoes[primeiro].focus();
         }, 'btn secondary'));
       s.append(rodape);
@@ -256,7 +271,7 @@
   function filtrarPelaBarra(chave, id) {
     soResultados();
     montarFiltros();
-    const barra = [...document.querySelectorAll('#extrato-tnp-view .vendas-pdv-barra')].find((b) => b.dataset.chave === chave && b.dataset.id === id);
+    const barra = [...document.querySelectorAll(raiz() + ' .vendas-pdv-barra')].find((b) => b.dataset.chave === chave && b.dataset.id === id);
     if (barra) barra.focus();
   }
 
@@ -290,23 +305,34 @@
   /** Período digitado inválido: o resultado fica esmaecido até o período voltar a valer. */
   const marcarDesatualizado = (sim) => partes.resultados.classList.toggle('desatualizado', sim);
 
-  async function abrir() {
-    if (!tela) {
-      tela = U.criarTela({
-        id: 'extrato-tnp-view', titulo: 'Open Finance · Caixa TNP', caminho: 'Resultados · Relatórios / API / Open Finance · Caixa TNP',
+  async function abrir(banco) {
+    const b = BANCOS[banco];
+    D.trocarBanco(banco);
+    pedido += 1; // leitura em andamento do outro banco não desenha mais nada
+    estado.carregando = false;
+    partes = null;
+    if (!telas[banco]) {
+      telas[banco] = U.criarTela({
+        id: b.idTela, titulo: b.titulo, caminho: 'Resultados · Relatórios / API / ' + b.titulo,
         icone: 'extratoTnp', voltar: () => openSection(sections[5][0], 'API', 'tree', COR), cor: COR, corTexto: COR_TEXTO, classe: 'extrato-tnp-view',
       });
     }
+    tela = telas[banco];
     tela.ativar();
     tela.body.replaceChildren(U.vazio('Carregando…'));
     try {
-      if (estado.configurado === null) estado.configurado = (await S.api('/extrato-tnp/situacao')).configurado;
+      if (estado.bancos === null) {
+        const s = await S.api('/extrato-tnp/situacao');
+        // Servidor antigo (sem "bancos") só conhece a TNP.
+        estado.bancos = s.bancos || { tnp: Boolean(s.configurado), hora: false };
+      }
     } catch (erro) {
-      tela.body.replaceChildren(U.vazio('Não foi possível abrir o extrato', mensagemErro(erro)), botao('Tentar de novo', () => abrir(), 'btn secondary'));
+      tela.body.replaceChildren(U.vazio('Não foi possível abrir o extrato', mensagemErro(erro)), botao('Tentar de novo', () => abrir(banco), 'btn secondary'));
       return;
     }
-    if (!estado.configurado) {
-      tela.body.replaceChildren(U.vazio('O extrato ainda não foi ligado', 'O S2 lê o extrato do coletor do Meu Pluggy da TNP. Falta configurar a ligação no servidor.'));
+    if (estado.banco !== banco) return; // outro cartão foi aberto enquanto a situação chegava
+    if (!estado.bancos[banco]) {
+      tela.body.replaceChildren(U.vazio('O extrato ainda não foi ligado', 'O S2 lê o extrato do coletor do Meu Pluggy ' + b.empresa + '. Falta configurar a ligação no servidor.'));
       return;
     }
     // Sem aria-live na faixa: o "Sincronizando…" ao lado do botão já avisa; a faixa inteira não precisa ser relida.
@@ -323,9 +349,12 @@
     await consultar();
   }
 
-  const CARDS = [['Open Finance · Caixa TNP', 'Conta, poupança e cartão da Caixa PJ da TNP, pelo Meu Pluggy', 'extrato-tnp:extrato']];
+  const CARDS = Object.values(BANCOS).map((b) => [b.titulo, b.descricao, 'extrato-tnp:' + b.card]);
   window.CicluzExtratoTnp = {
     cards: () => CARDS.map((c) => [...c]),
-    abrir: (id) => { if (id === 'extrato') abrir(); },
+    abrir: (id) => {
+      const banco = Object.keys(BANCOS).find((k) => BANCOS[k].card === id);
+      if (banco) abrir(banco);
+    },
   };
 })();

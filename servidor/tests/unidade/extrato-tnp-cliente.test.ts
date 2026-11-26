@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { consultaExtratoTnpSchema } from "@cicluz/shared";
 import { env } from "../../api/src/env.ts";
-import { buscarExtrato } from "../../api/src/extrato-tnp/extrato-tnp.cliente.ts";
+import { buscarExtrato, extratoConfigurado } from "../../api/src/extrato-tnp/extrato-tnp.cliente.ts";
 
 // Cliente do coletor do extrato da TNP (Pluggy): sem banco, fetch falso. Confere token no cabeçalho, lista branca,
 // centavos inteiros e como cada falha do coletor vira erro claro para a tela.
@@ -16,6 +16,8 @@ afterEach(() => {
   env.TNP_EXTRATO_URL = "";
   env.TNP_EXTRATO_TOKEN = "";
   env.TNP_EXTRATO_EMPRESA_ID = "";
+  env.HORA_EXTRATO_URL = "";
+  env.HORA_EXTRATO_TOKEN = "";
 });
 
 function configurar() {
@@ -30,6 +32,28 @@ const resposta = (status: number, corpo: unknown) =>
   });
 
 describe("extrato da TNP - cliente do coletor", () => {
+  it("Deve_LerOColetorDoHora_ComOTokenDoHora_E_NuncaOdaTnp", async () => {
+    configurar();
+    const TOKEN_HORA = "hora-extrato-teste-".padEnd(48, "h");
+    const consultaHora = consultaExtratoTnpSchema.parse({ banco: "hora", desde: "2026-11-21", ate: "2026-11-24" });
+    // HORA sem endereço: desligado, mesmo com a TNP ligada.
+    expect(extratoConfigurado("hora")).toBe(false);
+    expect(extratoConfigurado("tnp")).toBe(true);
+    await expect(buscarExtrato(consultaHora)).rejects.toMatchObject({ code: "EXTRATO_NAO_CONFIGURADO" });
+
+    env.HORA_EXTRATO_URL = "https://extrato-hora.exemplo.test";
+    env.HORA_EXTRATO_TOKEN = TOKEN_HORA;
+    const falso = vi.fn(async () => resposta(200, { ok: true }));
+    vi.stubGlobal("fetch", falso);
+    await buscarExtrato(consultaHora);
+    const [url, opcoes] = falso.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(url.toString()).toBe("https://extrato-hora.exemplo.test/api/v1/extrato?desde=2026-11-21&ate=2026-11-24");
+    expect((opcoes.headers as Record<string, string>)["authorization"]).toBe(`Bearer ${TOKEN_HORA}`);
+    // Sem o campo banco, continua TNP.
+    expect(consulta.banco).toBe("tnp");
+    expect(() => consultaExtratoTnpSchema.parse({ banco: "outro", desde: "2026-11-21", ate: "2026-11-24" })).toThrow();
+  });
+
   it("Deve_RecusarSemConfiguracao_SemChamarOColetor", async () => {
     const falso = vi.fn();
     vi.stubGlobal("fetch", falso);

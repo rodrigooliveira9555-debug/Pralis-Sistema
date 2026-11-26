@@ -41,5 +41,8 @@ services:
       TNP_EXTRATO_URL: ${TNP_EXTRATO_URL:-}
       TNP_EXTRATO_TOKEN: ${TNP_EXTRATO_TOKEN:-}
       TNP_EXTRATO_EMPRESA_ID: ${TNP_EXTRATO_EMPRESA_ID:-}
+      # Extrato do Bradesco PJ do HORA (segunda cópia do coletor). Valores só no painel do Coolify.
+      HORA_EXTRATO_URL: ${HORA_EXTRATO_URL:-}
+      HORA_EXTRATO_TOKEN: ${HORA_EXTRATO_TOKEN:-}
       PORT: 4200
       HOST: 0.0.0.0

@@ -30,7 +30,11 @@ const envSchema = z.object({
   // dele (S2_TOKEN lá). A empresa do S2 que pode ver. Vazio = desligado.
   TNP_EXTRATO_URL: z.union([z.literal(""), z.string().url()]).default(""),
   TNP_EXTRATO_TOKEN: z.string().default(""),
-  TNP_EXTRATO_EMPRESA_ID: z.union([z.literal(""), z.string().uuid()]).default("")
+  TNP_EXTRATO_EMPRESA_ID: z.union([z.literal(""), z.string().uuid()]).default(""),
+  // Extrato do Bradesco PJ do HORA: a segunda cópia do mesmo coletor (extrato-hora) e o token dela. A empresa do S2
+  // que pode ver é a mesma do extrato da TNP (TNP_EXTRATO_EMPRESA_ID). Vazio = desligado.
+  HORA_EXTRATO_URL: z.union([z.literal(""), z.string().url()]).default(""),
+  HORA_EXTRATO_TOKEN: z.string().default("")
 });
 
 const lido = envSchema.parse(process.env);
@@ -53,6 +57,9 @@ if (lido.NODE_ENV === "production") {
   }
   if (lido.TNP_EXTRATO_URL && !lido.TNP_EXTRATO_URL.startsWith("https://")) {
     throw new Error("Em produção, TNP_EXTRATO_URL precisa ser https");
+  }
+  if (lido.HORA_EXTRATO_URL && !lido.HORA_EXTRATO_URL.startsWith("https://")) {
+    throw new Error("Em produção, HORA_EXTRATO_URL precisa ser https");
   }
 }
 

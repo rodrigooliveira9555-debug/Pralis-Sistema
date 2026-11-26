@@ -58,10 +58,17 @@
   /* ---------- Estado ---------- */
 
   const filtroVazio = () => ({ busca: '', tipo: '', operacao: '', categoria: '', situacao: '', valorMin: '', valorMax: '' });
+  // banco: de qual coletor ler ('tnp' = Caixa PJ da TNP, 'hora' = Bradesco PJ do HORA). bancos: quais estão ligados
+  // no servidor ({ tnp, hora }), lido uma vez da /situacao.
   const estado = {
-    desde: somarDias(hojeIso(), -6), ate: hojeIso(), conta: '',
-    filtro: filtroVazio(), dados: null, carregando: false, erro: '', configurado: null, atualizadoEm: null,
+    banco: 'tnp', desde: somarDias(hojeIso(), -6), ate: hojeIso(), conta: '',
+    filtro: filtroVazio(), dados: null, carregando: false, erro: '', bancos: null, atualizadoEm: null,
   };
+  /** Troca de banco: o que era do outro banco (contas, conta escolhida, filtros, erro) não fica à vista. */
+  function trocarBanco(banco) {
+    if (estado.banco === banco) return;
+    Object.assign(estado, { banco, conta: '', filtro: filtroVazio(), dados: null, erro: '', atualizadoEm: null });
+  }
   const reiniciarFiltro = () => { estado.filtro = filtroVazio(); };
   const filtrosEmUso = () => ['operacao', 'categoria', 'situacao', 'valorMin', 'valorMax'].filter((k) => estado.filtro[k]).length;
 
@@ -167,7 +174,7 @@
     const blob = new Blob([csv(lista, contas)], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'extrato-caixa-tnp-' + estado.desde + '-a-' + estado.ate + '.csv';
+    a.download = (estado.banco === 'hora' ? 'extrato-bradesco-hora-' : 'extrato-caixa-tnp-') + estado.desde + '-a-' + estado.ate + '.csv';
     document.body.append(a);
     a.click();
     a.remove();
@@ -176,7 +183,7 @@
 
   window.CicluzExtratoTnpDados = {
     FUSO, estado, hojeIso, somarDias, moeda, comSinal, plural, quando, dataComAno, dataCurta, hora, diaLongo,
-    nomeOperacao, nomeCategoria, nomeForma, nomeConta, reiniciarFiltro, filtrosEmUso, lerValor,
+    nomeOperacao, nomeCategoria, nomeForma, nomeConta, reiniciarFiltro, trocarBanco, filtrosEmUso, lerValor,
     todos, filtrados, somar, porDia, agrupar, opcoes, csv, baixarCsv,
   };
 })();

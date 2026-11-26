@@ -6,8 +6,14 @@ import { z } from "zod";
 
 const dia = z.string().regex(/^\d{4}-\d{2}-\d{2}$/u, "Data inválida");
 
+// De qual coletor ler: "tnp" (Caixa PJ da TNP) ou "hora" (Bradesco PJ do HORA). Mesmo código de coletor, uma cópia
+// por empresa, cada uma com o próprio token. Sem o campo, TNP (como era antes de existir o HORA).
+export const BANCOS_EXTRATO = ["tnp", "hora"] as const;
+export type BancoExtrato = (typeof BANCOS_EXTRATO)[number];
+
 export const consultaExtratoTnpSchema = z
   .object({
+    banco: z.enum(BANCOS_EXTRATO).default("tnp"),
     desde: dia,
     ate: dia,
     conta: z.string().trim().min(1).max(80).optional(),

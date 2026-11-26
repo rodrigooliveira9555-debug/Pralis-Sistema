@@ -1,18 +1,24 @@
-import type { ConsultaExtratoTnp, ExtratoTnp } from "@cicluz/shared";
+import type { BancoExtrato, ConsultaExtratoTnp, ExtratoTnp } from "@cicluz/shared";
 import { env } from "../env.ts";
 import { ErroDominio } from "../erros.ts";
 import { extratoDoColetor } from "./extrato-tnp.formato.ts";
 
-// Cliente HTTP do coletor do extrato da TNP (Pluggy). Só GET, token no cabeçalho (nunca na URL, nunca no navegador:
-// o coletor não libera CORS de propósito). A resposta passa pela lista branca (extrato-tnp.formato.ts).
+// Cliente HTTP dos coletores do extrato (Pluggy): um da TNP (Caixa PJ) e uma cópia do HORA (Bradesco PJ), mesmo
+// código. Só GET, token no cabeçalho (nunca na URL, nunca no navegador: o coletor não libera CORS de propósito).
+// A resposta passa pela lista branca (extrato-tnp.formato.ts).
 const TEMPO_LIMITE_MS = 15_000;
 
-export function extratoConfigurado(): boolean {
-  return (
-    Boolean(env.TNP_EXTRATO_URL) &&
-    env.TNP_EXTRATO_TOKEN.length >= 32 &&
-    Boolean(env.TNP_EXTRATO_EMPRESA_ID)
-  );
+/** Endereço e token do coletor de cada banco (lidos na hora: os testes trocam o env). */
+function coletor(banco: BancoExtrato): { url: string; token: string } {
+  return banco === "hora"
+    ? { url: env.HORA_EXTRATO_URL, token: env.HORA_EXTRATO_TOKEN }
+    : { url: env.TNP_EXTRATO_URL, token: env.TNP_EXTRATO_TOKEN };
+}
+
+/** Ligado = coletor com endereço e token, e a empresa do S2 que pode ver definida (vale para os dois bancos). */
+export function extratoConfigurado(banco: BancoExtrato = "tnp"): boolean {
+  const { url, token } = coletor(banco);
+  return Boolean(url) && token.length >= 32 && Boolean(env.TNP_EXTRATO_EMPRESA_ID);
 }
 
 const indisponivel = (motivo: string) =>
@@ -30,14 +36,15 @@ const objeto = (v: unknown): Bruto =>
 export async function buscarExtrato(
   consulta: ConsultaExtratoTnp,
 ): Promise<ExtratoTnp> {
-  if (!extratoConfigurado()) {
+  if (!extratoConfigurado(consulta.banco)) {
     throw new ErroDominio(
       "A leitura do extrato ainda não foi configurada.",
       503,
       "EXTRATO_NAO_CONFIGURADO",
     );
   }
-  const url = new URL("/api/v1/extrato", env.TNP_EXTRATO_URL);
+  const { url: base, token } = coletor(consulta.banco);
+  const url = new URL("/api/v1/extrato", base);
   url.searchParams.set("desde", consulta.desde);
   url.searchParams.set("ate", consulta.ate);
   if (consulta.conta) url.searchParams.set("conta", consulta.conta);
@@ -46,7 +53,7 @@ export async function buscarExtrato(
     resposta = await fetch(url, {
       method: "GET",
       headers: {
-        authorization: `Bearer ${env.TNP_EXTRATO_TOKEN}`,
+        authorization: `Bearer ${token}`,
         accept: "application/json",
       },
       signal: AbortSignal.timeout(TEMPO_LIMITE_MS),
