@@ -989,7 +989,10 @@
     // A barra de baixo (ou a do topo) conta como borda da tela: o painel nunca fica escondido embaixo dela.
     function posicionar() {
       if (painel.hidden) return;
-      const r = ancora.getBoundingClientRect();
+      // Padrão único (Rodrigo, 26/11/2026): quando o campo mora numa linha do quadro (.transferencia-linha), o painel se alinha à LINHA inteira — a borda direita dele é a borda direita do quadro e a face de cima fica sempre 6 px abaixo da linha. Fora de linhas, vale o próprio campo.
+      const linhaDoCampo = ancora.closest('.transferencia-linha'); const r = (linhaDoCampo || ancora).getBoundingClientRect();
+      // A borda direita do painel é a borda de fora do quadro que guarda a linha.
+      const direita = (linhaDoCampo && linhaDoCampo.closest('.transferencia-quadro') ? linhaDoCampo.closest('.transferencia-quadro') : (linhaDoCampo || ancora)).getBoundingClientRect().right;
       let topo = 8; let base = window.innerHeight - 8;
       const casca = ancora.closest('.app-screen-shell'); const barra = casca && casca.querySelector('.people-bottom-header');
       if (barra) { const b = barra.getBoundingClientRect(); if (b.height) { if (b.top > window.innerHeight / 2) base = Math.min(base, b.top - 8); else topo = Math.max(topo, b.bottom + 8); } }
@@ -1004,7 +1007,7 @@
       painel.style.overflowY = altura < natural ? 'auto' : '';
       painel.style.top = Math.max(topo, Math.round(y)) + 'px';
       // Padrão (Rodrigo, 25/11/2026): o painel abre sempre alinhado ao canto direito do campo.
-      painel.style.left = Math.max(8, Math.min(Math.round(r.right - painel.offsetWidth), window.innerWidth - painel.offsetWidth - 8)) + 'px';
+      painel.style.left = Math.max(8, Math.min(Math.round(direita - painel.offsetWidth), window.innerWidth - painel.offsetWidth - 8)) + 'px';
     }
     function abrir(sim) {
       painel.hidden = !sim;

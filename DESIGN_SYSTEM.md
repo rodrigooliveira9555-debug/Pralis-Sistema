@@ -1573,3 +1573,6 @@ Tempo de aceite: Sim/Não; com Sim, "Contar em" **Dias | Horas | Dias e horas**,
 
 ### Dias do tempo de aceite em roleta (26/11/2026, Rodrigo)
 O campo de dias tem as duas formas: **− e +** ao lado, ou **tocar no campo** e abrir a roleta (`U.roletaNumero`, mesmo painel da hora, uma coluna, 1 a 365): rolar para cima e para baixo mostra e escolhe a quantidade de dias; também vale digitar e as setas. Chip selecionado = só sombreado, sem borda na cor.
+
+### Painéis flutuantes: alinhamento único (26/11/2026, Rodrigo)
+Data, hora, dias e anexos abrem sempre com a **borda direita do painel igual à borda de fora do quadro** que guarda a linha, e a **face de cima 6 px abaixo da linha** (ou 6 px acima, se não couber embaixo). O painel se alinha à LINHA inteira, não à caixinha do campo. Regra em `U.flutuante` (`ui.js`); fora das linhas da Nova Transferência vale o próprio campo.
