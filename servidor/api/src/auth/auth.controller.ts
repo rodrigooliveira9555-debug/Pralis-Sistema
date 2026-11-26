@@ -1,37 +1,25 @@
 import { fromNodeHeaders } from "better-auth/node";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { CHAVES_ADOTADAS_DO_APARELHO, CHAVES_SINCRONIZADAS, ok, problema } from "@cicluz/shared";
 import { env } from "../env.ts";
 import { auth, CABECALHO_IP_CLIENTE } from "./config.ts";
 import { exigirAutenticacao } from "./guards.ts";
+import { ContadorTentativas } from "./tentativas.ts";
 
-const JANELA_TENTATIVAS_MS = 15 * 60 * 1000;
-const MAXIMO_TENTATIVAS = 10;
-const tentativas = new Map<string, { quantidade: number; inicio: number }>();
+// Tentativas de senha por conta: por e-mail na entrada e por sessão na troca de senha (uma sessão
+// roubada não testa a senha atual sem fim). Ver tentativas.ts: encher o contador não zera bloqueios.
+const tentativas = new ContadorTentativas({ janelaMs: 15 * 60 * 1000, maximo: 10, capacidade: 10_000 });
 
-// Conta tentativas de senha por conta, na memória do processo (um servidor só nesta fase): por
-// e-mail na entrada e por sessão na troca de senha (uma sessão roubada não testa a senha atual sem fim).
-function tentativasEsgotadas(chave: string | null): boolean {
-  if (!chave) return false;
-  const agora = Date.now();
-  const registro = tentativas.get(chave);
-  if (!registro || agora - registro.inicio > JANELA_TENTATIVAS_MS) {
-    tentativas.set(chave, { quantidade: 1, inicio: agora });
-    if (tentativas.size > 10_000) tentativas.clear();
-    return false;
-  }
-  registro.quantidade += 1;
-  return registro.quantidade > MAXIMO_TENTATIVAS;
-}
-
-function chaveDeTentativa(url: string, corpo: unknown, cookie: string | undefined): string | null {
-  if (url.startsWith("/api/auth/sign-in/")) {
-    const email = (corpo as { email?: unknown } | null)?.email;
+async function chaveDeTentativa(request: FastifyRequest): Promise<string | null> {
+  if (request.url.startsWith("/api/auth/sign-in/")) {
+    const email = (request.body as { email?: unknown } | null)?.email;
     return typeof email === "string" ? `email:${email.trim().toLowerCase()}` : null;
   }
-  if (url.startsWith("/api/auth/change-password")) {
-    const sessao = /session_token=([^;]+)/.exec(cookie ?? "")?.[1];
-    return sessao ? `sessao:${sessao}` : null;
+  if (request.url.startsWith("/api/auth/change-password")) {
+    // A sessão conferida pelo better-auth, e não o texto do cookie (que dava para variar à vontade).
+    // Sem sessão válida a troca já é recusada pela biblioteca; não há o que contar.
+    const sessao = await auth.api.getSession({ headers: fromNodeHeaders(request.headers) });
+    return sessao ? `sessao:${sessao.session.id}` : null;
   }
   return null;
 }
@@ -51,7 +39,7 @@ export async function registrarRotasAuth(app: FastifyInstance) {
     url: "/api/auth/*",
     config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
     async handler(request, reply) {
-      if (tentativasEsgotadas(chaveDeTentativa(request.url, request.body, request.headers.cookie))) {
+      if (tentativas.esgotou(await chaveDeTentativa(request))) {
         return reply.status(429).send(problema(429, "Muitas tentativas nesta conta; aguarde 15 minutos", "RATE_LIMITED"));
       }
       try {
