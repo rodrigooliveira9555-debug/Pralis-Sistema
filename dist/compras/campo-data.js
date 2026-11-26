@@ -71,12 +71,12 @@
       const [a, m] = mes.split('-').map(Number);
       titulo.textContent = MESES[m - 1] + ' de ' + a + (modoMesAno ? ' ▴' : ' ▾');
       titulo.title = modoMesAno ? 'Voltar aos dias' : 'Escolher o mês e o ano';
-      grade.hidden = modoMesAno; vistaMesAno.hidden = !modoMesAno;
+      // Tocar no mês e ano abre os TRÊS quadros juntos (Rodrigo, 26/11/2026): os dias, o mês e o ano.
+      vistaMesAno.hidden = !modoMesAno;
       if (modoMesAno) {
         const celula = (texto, marcado, nome, aoTocar) => { const b = el('button', 'compras-grade-celula', texto); b.type = 'button'; b.setAttribute('aria-pressed', String(marcado)); b.setAttribute('aria-label', nome); b.onclick = aoTocar; return b; };
-        gradeMes.replaceChildren(...MESES.map((n, i) => celula(n.slice(0, 3), m === i + 1, n, () => { mes = a + '-' + doisDigitos(i + 1); modoMesAno = false; pintar(); })));
+        gradeMes.replaceChildren(...MESES.map((n, i) => celula(n.slice(0, 3), m === i + 1, n, () => { mes = a + '-' + doisDigitos(i + 1); pintar(); })));
         gradeAno.replaceChildren(...Array.from({ length: 12 }, (_, i) => celula(String(anoBase + i), a === anoBase + i, 'Ano ' + (anoBase + i), () => { mes = (anoBase + i) + '-' + doisDigitos(m); pintar(); })));
-        return;
       }
       const primeiro = new Date(Date.UTC(a, m - 1, 1)).getUTCDay();
       const dias = new Date(Date.UTC(a, m, 0)).getUTCDate();

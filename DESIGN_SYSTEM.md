@@ -1579,3 +1579,6 @@ Data, hora, dias e anexos abrem sempre com a **borda direita do painel igual à 
 
 ### Altura padrão dos painéis flutuantes — opção B (26/11/2026, Rodrigo)
 Na Nova Transferência, data, hora, dias e anexos começam **sempre na mesma altura da tela**: face de cima **6 px abaixo do quadro laranja do valor** (fixo no topo), borda direita na borda do quadro das linhas; passando da barra de baixo, rolam por dentro. Consequência: o painel pode cobrir linhas logo abaixo do valor (ex.: a própria Data); a linha continua clicável por inteiro. Substitui "6 px abaixo da linha" do ajuste anterior nessa tela.
+
+### Calendário: tocar no mês e ano abre os três quadros (26/11/2026, Rodrigo)
+Tocar no título "mês de ano" mostra **dias, mês e ano ao mesmo tempo**; escolher um mês ou um ano atualiza os dias sem fechar; escolher um dia fecha. Se passar da altura da tela, o painel rola por dentro. (Substitui "só mês e ano".)
