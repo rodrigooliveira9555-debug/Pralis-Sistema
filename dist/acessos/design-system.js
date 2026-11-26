@@ -49,7 +49,7 @@
     const tx = el('div', 'ds-modelo-cab-texto'); const t = el('b', null, 'Título da tela'); const s = el('small', null, 'Origem / Submenu / Nome da tela'); t.append(marca(2)); s.append(marca(3)); tx.append(t, s);
     const i1 = el('span', 'ds-modelo-cab-ponto'); i1.append(ic, marca(1)); cab.append(i1, tx);
     const leg = el('dl', 'profiles-info'); [['1 — Ícone', 'Caixa de 30 px, desenho de 21 px. É o ícone do item que abriu a tela.'], ['2 — Título', '16 px, peso 600, branco.'], ['3 — Subtítulo', '11 px, branco: o caminho até a tela.'], ['A faixa', '58 px de altura, na cor da origem, com a curva "para baixo" nos cantos (duas curvas de 16 px logo abaixo) e 14 px de respiro nas laterais.']].forEach(([k, v]) => leg.append(el('dt', null, k), el('dd', null, v)));
-    caixa.append(cab, leg); return caixa;
+    const fundo = el('div', 'ds-modelo-fundo'); fundo.append(cab, el('div', 'ds-modelo-curva')); caixa.append(fundo, leg); return caixa;
   }
   function modeloBarra() {
     const caixa = el('div', 'ds-modelo compras-largo'); const barra = el('div', 'ds-modelo-barra');
@@ -58,7 +58,7 @@
     barra.append(grupo([0, 1, 2, 3, 4]), grupo([5]), grupo([6, 7, 8, 9, 10]));
     const leg = el('dl', 'profiles-info'); DESENHOS_DA_BARRA.forEach(([, nome], k) => leg.append(el('dt', null, (k + 1) + ' — ' + nome), el('dd', null, k < 5 ? 'Esquerda: navegação.' : k === 5 ? 'Meio: abre o menu rápido.' : 'Direita: ações da tela.')));
     leg.append(el('dt', null, 'A faixa'), el('dd', null, '60 px de altura, vidro (película clara translúcida com desfoque), 14 px de margem; cada botão é um círculo de 32 px transparente com fio cinza, que enche na cor da origem ao passar o mouse; o símbolo do meio tem 32 px, sem círculo.'));
-    caixa.append(barra, leg); return caixa;
+    const vidro = el('div', 'ds-modelo-vidro'); vidro.append(barra); caixa.append(vidro, leg); return caixa;
   }
   const LAPIS = '<path d="m4 20 4-.8L19 8l-3-3L5 16zM14.5 6.5l3 3"/>'; const LIXO = '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>';
   const ORIGENS = [['VND', 'Entradas · Vendas', 'vendas', '#eab308'], ['CNT', 'Transferências · Contas', 'contas', '#f97316'], ['DES', 'Saídas · Despesas', 'despesas', '#ef4444'], ['MER', 'Saídas · Mercadorias', 'mercadorias', '#22c55e'], ['RET', 'Saídas · Retiradas', 'retiradas', '#2563eb']];

@@ -1703,3 +1703,6 @@ O tópico "Tamanho das Letras" agora lista os tamanhos da Nova Transferência (t
 
 ### 22. Amostras da tela Design System também linha por linha (26/11/2026, Rodrigo)
 Todo exemplo de campo da tela Design System (Campos, Máscaras, Quadros e Molduras…) passou a ser a linha do padrão da Transferência: nome à esquerda, valor à direita, sem caixa; o desenho antigo (nome em cima e caixa embaixo, quadro com título na moldura) **não aparece mais**. O tópico "Campos de Preenchimento" descreve só o padrão vigente. A sombra ao passar o mouse nas linhas é o tom da cor da origem (a do cabeçalho). Pendente: o aviso de campo obrigatório vazio ainda marca a borda do campo; deve passar a marcar a linha.
+
+### 23. Modelos do cabeçalho e da barra na tela Design System (26/11/2026, Rodrigo)
+O modelo do cabeçalho mostra o padrão atual: faixa reta no alto (sem cantos arredondados em volta) e a curva "para baixo" nos cantos de baixo, sobre o fundo cinza da tela. O modelo da barra de baixo é de vidro (película translúcida, botões transparentes com fio cinza, logomarca sem círculo) sobre uma faixa colorida para mostrar a transparência. O desenho antigo (cabeçalho com todos os cantos arredondados, barra branca com botões coloridos) não existe mais.
