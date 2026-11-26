@@ -793,6 +793,7 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .transferencia-valor-cab { position: sticky; top: 0; margin-top: 0; z-index: 4; display: grid; gap: 6px; padding: 8px 16px 12px; border-radius: 16px; box-shadow: 0 -14px 0 0 var(--layout-gap, #f5f5f7); background: var(--menu-accent); color: #fff; }
 .transferencia-tela .transferencia-valor-rotulo { font: 600 13px/18px var(--ui-font); color: rgba(255, 255, 255, .9); }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela { width: 100%; min-height: 40px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: #fff; text-align: left; font: 700 34px/1.15 var(--ui-font); cursor: pointer; }
+.transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:not([readonly]) { cursor: text; }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela::placeholder { color: rgba(255, 255, 255, .78); font-weight: 600; font-size: 22px; }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 8px; }
 .transferencia-tela .transferencia-valor-cab .transferencia-calc-resumo, .transferencia-tela .transferencia-valor-cab .transferencia-calc-legenda { color: rgba(255, 255, 255, .92); }
@@ -811,6 +812,8 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .transferencia-linha, .transferencia-tela label.transferencia-linha { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 14px; border-bottom: 1px solid var(--layout-line, #dedee3); min-width: 0; }
 .transferencia-tela .transferencia-quadro > :last-child { border-bottom: 0; }
 .transferencia-tela .transferencia-linha-rotulo { flex: none; max-width: 48%; font: 500 15px/20px var(--ui-font); color: var(--layout-ink, #27272a); }
+/* Tela estreita: na linha de campo de digitar ou escolher o nome ganha até 60% (cabe em duas linhas e a linha fica nos 52 px); linhas com chave, data ou botão seguem em 48%, porque o controle precisa do espaço. */
+@media (max-width: 600px) { .transferencia-tela .transferencia-linha:has(> .transferencia-linha-controle) > .transferencia-linha-rotulo { max-width: 60%; } }
 .transferencia-tela label.transferencia-linha > .transferencia-linha-controle, .transferencia-tela .transferencia-linha .transferencia-linha-controle { flex: 1 1 auto; min-width: 0; width: auto; min-height: 0; height: 100%; padding: 0; border: 0; background: transparent; box-shadow: none; text-align: right; text-align-last: right; font: 500 15px/20px var(--ui-font); color: var(--muted, #71717a); }
 .transferencia-tela .transferencia-linha .transferencia-linha-controle { --layout-line: transparent; }
 .transferencia-tela .transferencia-linha .compras-aniv-campo { flex: 1 1 auto; justify-content: flex-end; margin-left: auto; }
