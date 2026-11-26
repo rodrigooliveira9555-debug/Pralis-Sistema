@@ -245,6 +245,37 @@
    * claro na cor do menu, sem foco nem clique; vira pílula com 2 ou 3 dígitos). Ao lado dela pode entrar uma bolinha
    * (ex.: o "‹ ›" de ocultar/mostrar colunas). descricao: texto para o leitor de tela (ex.: "7 fornecedores ativos").
    */
+  /**
+   * Explicação da lista DENTRO do quadro (Rodrigo, 26/11/2026): o texto que ficava solto acima da lista empurrava o quadro para baixo, e o
+   * quadro tem de ficar paralelo ao cabeçalho (o mesmo espaço em cima e nas laterais). Agora o texto é a PRIMEIRA linha do quadro: círculo
+   * com o ponto de exclamação, o texto e, na ponta direita, o botão redondo de fechar. Fechar tira a linha e põe um botão redondo com a
+   * exclamação na linha do cabeçalho da lista (ao lado da contagem e do ‹ ›); tocar nele traz a linha de volta, em cima.
+   * A escolha fica guardada neste aparelho por tela (chave: o nome que a tela passa), na preferência cicluz-info-oculta; sem
+   * localStorage, a linha simplesmente começa aberta. Devolve a seção.
+   */
+  const INFO_OCULTA = 'cicluz-info-oculta';
+  const EXCLAMACAO = '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/>';
+  function infoDaLista(sec, texto, chave) {
+    if (!sec || !texto) return sec;
+    const lidas = () => { try { const v = JSON.parse(localStorage.getItem(INFO_OCULTA) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
+    const guardar = (oculta) => { try { const v = new Set(lidas()); if (oculta) v.add(chave); else v.delete(chave); localStorage.setItem(INFO_OCULTA, JSON.stringify([...v])); } catch (e) { /* só preferência */ } };
+    const linha = el('div', 'compras-info-linha'); linha.setAttribute('role', 'note');
+    const icone = el('span', 'compras-info-icone'); icone.setAttribute('aria-hidden', 'true'); icone.innerHTML = svg(EXCLAMACAO);
+    const fechar = el('button', 'shortcut-circle compras-redondo compras-info-fechar'); fechar.type = 'button';
+    fechar.title = 'Ocultar explicação'; fechar.setAttribute('aria-label', 'Ocultar explicação'); fechar.innerHTML = svg('<path d="M6 6l12 12M18 6 6 18"/>');
+    linha.append(icone, el('p', 'compras-info-texto', texto), fechar);
+    const abrir = el('button', 'shortcut-circle compras-redondo compras-info-abrir'); abrir.type = 'button';
+    abrir.title = 'Mostrar explicação'; abrir.setAttribute('aria-label', 'Mostrar explicação'); abrir.innerHTML = svg(EXCLAMACAO);
+    const cab = sec.querySelector(':scope > .compras-secao-cab');
+    let ponta = cab && cab.querySelector(':scope > .compras-secao-ponta');
+    if (cab && !ponta) { ponta = el('span', 'compras-secao-ponta'); cab.append(ponta); }
+    // Só um dos dois existe na tela: a linha aberta ou o botão no cabeçalho (o outro sai da página).
+    const pintar = (oculta) => { if (oculta && ponta) { linha.remove(); ponta.prepend(abrir); } else { abrir.remove(); sec.prepend(linha); } };
+    fechar.onclick = () => { pintar(true); guardar(true); abrir.focus(); };
+    abrir.onclick = () => { pintar(false); guardar(false); fechar.focus(); };
+    pintar(lidas().includes(chave));
+    return sec;
+  }
   function pontaDaLista(quantidade, descricao) {
     const g = el('span', 'compras-secao-ponta');
     const c = el('span', 'compras-contagem', String(quantidade));
@@ -1337,6 +1368,6 @@
     seletorArvore, campoArvore, campoLocal, arvoreGruposMercadoria, botaoRemover,
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, roletaNumero, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, infoDaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, roletaNumero, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();

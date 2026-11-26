@@ -1116,3 +1116,11 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 @container lista-grade (max-width:519px){.compras-linha.grade-horario-funcionamento{--w-nome:120px;--w-faixas:200px}}
 /* Botão redondo sozinho na linha (Ícone do identificador, Remover faixa): fica na ponta direita, como o relógio das horas. */
 .compras-fieldset > .compras-campo > :is(.compras-icone-escolhido, .compras-remover) { margin-left: auto; margin-right: 0; }
+/* LINHA DE INFORMAÇÃO DA LISTA (Rodrigo, 26/11/2026): a explicação mora dentro do quadro, na primeira linha (ícone de exclamação, texto, fechar).
+   Fechada, vira o botão redondo com a exclamação no cabeçalho da lista. O quadro fica a 14 px do cabeçalho da tela, como nas laterais. */
+.compras-info-linha { display: flex; align-items: center; gap: 12px; min-height: var(--linha-altura, 52px); padding: 8px 14px; box-sizing: border-box; border-bottom: 1px solid var(--layout-line, #dedee3); }
+.compras-info-icone { flex: none; display: inline-flex; align-items: center; justify-content: center; width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); border-radius: 999px; background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); color: var(--menu-accent); }
+.compras-info-icone svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.compras-info-texto { flex: 1 1 auto; min-width: 0; margin: 0; font: 500 13px/18px var(--ui-font, inherit); color: var(--muted, #71717a); }
+.compras-secao > .compras-info-linha .compras-info-fechar { flex: none; --busca-fundo: var(--layout-line, #e4e4e7); --busca-texto: var(--muted, #71717a); background: var(--busca-fundo); color: var(--busca-texto); border-color: transparent; }
+.compras-secao > .compras-info-linha .compras-info-fechar:is(:hover, :active, :focus-visible) { --busca-fundo: var(--menu-accent); --busca-texto: #fff; }

@@ -67,7 +67,7 @@
     tab.querySelectorAll('tr.destaque td.col-aumento').forEach((td) => td.classList.add('destaque'));
     sec.append(tab);
     sec.append(rodapeCotacoes());
-    tela.body.replaceChildren(U.nota('Cada produto em cotação e quantos fornecedores estão em cada situação. Clique no produto para decidir.'), topo, sec);
+    tela.body.replaceChildren(topo, U.infoDaLista(sec, 'Cada produto em cotação e quantos fornecedores estão em cada situação. Clique no produto para decidir.', 'cotacao'));
   }
 
   function rodapeCotacoes() {

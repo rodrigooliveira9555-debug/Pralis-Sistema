@@ -536,7 +536,7 @@
       linhas.append(cab); ponta.append(cab.botaoGeral);
       lista.forEach((c) => linhas.append(linhaCliente(c, linhas)));
     }
-    tela.body.replaceChildren(caixa, U.nota(todos.length + ' cliente(s). Um toque na linha mostra os dados; dois toques abrem o cadastro para editar. Cliente não é excluído: use a seta da linha para desativar.'), sec);
+    tela.body.replaceChildren(caixa, U.infoDaLista(sec, todos.length + ' cliente(s). Um toque na linha mostra os dados; dois toques abrem o cadastro para editar. Cliente não é excluído: use a seta da linha para desativar.', 'clientes'));
   }
   function linhaCliente(c, linhas) {
     const nomeC = D.nomeCliente(c) || '(sem nome)'; const inativo = c.situacao === 'inativo';

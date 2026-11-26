@@ -151,7 +151,7 @@
       linhas.append(cab); ponta.append(cab.botaoGeral);
       lista.forEach((h) => linhas.append(linha(h, linhas)));
     }
-    tela.body.replaceChildren(caixa, U.nota(todos.length + ' horário(s). Cada horário tem um nome, um identificador e uma ou mais faixas de dias com a hora de abrir e de fechar. Um toque abre o cadastro para editar. Horário não é excluído: use a seta da linha para desativar.'), sec);
+    tela.body.replaceChildren(caixa, U.infoDaLista(sec, todos.length + ' horário(s). Cada horário tem um nome, um identificador e uma ou mais faixas de dias com a hora de abrir e de fechar. Um toque abre o cadastro para editar. Horário não é excluído: use a seta da linha para desativar.', 'horario-funcionamento'));
   }
   function linha(h, linhas) {
     const inativo = !h.ativo;

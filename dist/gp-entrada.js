@@ -30,7 +30,9 @@
         ponta.append(cab.botaoGeral);
         lista.forEach((i) => linhas.append(linha(i, linhas)));
       }
-      no.replaceChildren(...(nota ? [U.nota(nota)] : []), sec);
+      // A explicação é a primeira linha do quadro (U.infoDaLista), não um texto solto acima dele.
+      U.infoDaLista(sec, nota, preferencia || grade);
+      no.replaceChildren(sec);
     }
     function linha(i, linhas) {
       const row = U.linhaLista({

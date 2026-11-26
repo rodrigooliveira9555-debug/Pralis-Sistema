@@ -554,7 +554,7 @@ if (x.responsaveisDaMatriz) { if (!daMatrizCopia.length) blocos.push(['Dados dos
       linhas.append(row);
     });
     sec.append(linhas);
-    tela.body.replaceChildren(U.nota('A primeira empresa é a Matriz. As outras entram com o tipo de vínculo e têm os próprios responsáveis legais, ou usam os da Matriz.'), sec);
+    tela.body.replaceChildren(U.infoDaLista(sec, 'A primeira empresa é a Matriz. As outras entram com o tipo de vínculo e têm os próprios responsáveis legais, ou usam os da Matriz.', 'empresas'));
   }
   function abrir() {
     if (!tela) tela = A.criarTela({ id: 'acessos-empresa', titulo: 'Dados da Empresa', tela: 'empresa' });

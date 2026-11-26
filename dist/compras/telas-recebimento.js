@@ -47,7 +47,7 @@
       l.append(U.linhaLista({ icone: 'caminhao', titulo: (S.fornecedor(p.fornecedorId)?.nome || 'Pedido histórico') + ' · nº ' + p.numero, detalhe: p.itens.length + ' item(ns) · ' + (ORIGEM[p.origem] || 'Compra') + ' · comprado em ' + dataHora(p.criadoEm), direita: U.situacao(txt, tom), aoClicar: () => detalhe(p.id) }));
     });
     sec.append(l);
-    telaP.body.replaceChildren(U.nota('O que já foi comprado e vai chegar, e o que já chegou. O recebimento é feito aqui.'), topo, sec);
+    telaP.body.replaceChildren(topo, U.infoDaLista(sec, 'O que já foi comprado e vai chegar, e o que já chegou. O recebimento é feito aqui.', 'recebimento'));
   }
 
   function detalhe(id) {

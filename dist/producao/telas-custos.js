@@ -46,7 +46,7 @@
       'Valor sugerido = custo por unidade × (1 + margem) + R$ 0,01; margem do produto ou, se vazia, a do grupo.',
     ].forEach((t) => ul.append(el('li', null, t)));
     formulas.append(ul);
-    tela.body.replaceChildren(U.nota('Fórmulas aprovadas em 05/11/2026. Sem um parâmetro, a ficha mostra o custo parcial e o que falta.'), sec, formulas);
+    tela.body.replaceChildren(U.infoDaLista(sec, 'Fórmulas aprovadas em 05/11/2026. Sem um parâmetro, a ficha mostra o custo parcial e o que falta.', 'producao-custos'), formulas);
   }
 
   function editar() {

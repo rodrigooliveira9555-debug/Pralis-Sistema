@@ -62,7 +62,7 @@
       linhas.append(linha);
     });
     sec.append(linhas);
-    tela.body.replaceChildren(U.nota('Tabela em uso: ' + tab.nome + ' · ' + tab.linhas.length + ' alimentos · valores por 100 g. Tocar na linha edita o ingrediente; a seta mostra Editar e Excluir.'), sec);
+    tela.body.replaceChildren(U.infoDaLista(sec, 'Tabela em uso: ' + tab.nome + ' · ' + tab.linhas.length + ' alimentos · valores por 100 g. Tocar na linha edita o ingrediente; a seta mostra Editar e Excluir.', 'producao-ingredientes'));
   }
 
   function excluir(x) {
