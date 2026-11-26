@@ -391,13 +391,13 @@
         lacreNumero.addEventListener('input', () => { estado.lacre.numero = lacreNumero.value; });
         const linhaNumero = linhaDe('Nº do lacre *', lacreNumero);
         const lacreNormal = el('div', 'transferencia-opcao');
-        lacreNormal.append(linha('Lacre', chave('Lacre', false, ['Com lacre', 'Sem lacre'], (v) => { estado.lacre.com = v; if (v) { lacreNormal.append(linhaNumero); lacreNumero.focus(); } else linhaNumero.remove(); })));
+        lacreNormal.append(linha('Lacre', chave('Lacre', false, ['C/lacre', 'S/lacre'], (v) => { estado.lacre.com = v; if (v) { lacreNormal.append(linhaNumero); lacreNumero.focus(); } else linhaNumero.remove(); })));
 
         /* Transferência de retorno: um bloco à parte; o "+" acrescenta (até 4) e cada uma é Com lacre ou Sem lacre. */
         const retornosBox = el('div', 'transferencia-retornos');
         // A própria linha de adicionar já diz se os retornos novos são Com lacre ou Sem lacre (cada um ainda pode ser mudado depois).
         const maisRetorno = el('button', 'transferencia-circulo'); maisRetorno.type = 'button'; maisRetorno.innerHTML = U.svg(ICONE.mais);
-        const linhaAdd = linha('Adicionar transferência de retorno', chave('Retornos novos', false, ['Com lacre', 'Sem lacre'], (v) => { estado.padraoLacre = v; }), maisRetorno);
+        const linhaAdd = linha('Adicionar transferência de retorno', chave('Retornos novos', false, ['C/lacre', 'S/lacre'], (v) => { estado.padraoLacre = v; }), maisRetorno);
         linhaAdd.classList.add('transferencia-linha-add');
         function desenharRetornos(focar) {
           const n = estado.retornos.length;
@@ -407,7 +407,7 @@
           retornosBox.replaceChildren(...estado.retornos.map((r, i) => {
             const rotulo = 'Retorno ' + (i + 1);
             const item = el('div', 'transferencia-opcao');
-            const cab = linha(rotulo, chave(rotulo, r.com, ['Com lacre', 'Sem lacre'], (v) => { r.com = v; desenharRetornos(v ? i : undefined); }), botaoExcluir('Remover ' + rotulo.toLowerCase(), () => { estado.retornos.splice(i, 1); desenharRetornos(); }));
+            const cab = linha(rotulo, chave(rotulo, r.com, ['C/lacre', 'S/lacre'], (v) => { r.com = v; desenharRetornos(v ? i : undefined); }), botaoExcluir('Remover ' + rotulo.toLowerCase(), () => { estado.retornos.splice(i, 1); desenharRetornos(); }));
             cab.classList.add('transferencia-retorno-cab'); item.append(cab);
             if (r.com) {
               const campoLacre = entrada('text', r.numero, { placeholder: 'Ex.: 001', maxLength: 100 });
