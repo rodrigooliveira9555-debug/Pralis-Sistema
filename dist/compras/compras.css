@@ -50,7 +50,7 @@ body.dark-theme :is(.compras-view, .compras-dialog) .btn.secondary { color: #a7e
   font: 500 12px/16px var(--ui-font); padding: 6px 12px; border-radius: 999px; cursor: pointer;
   border: 1px solid var(--layout-line, #dedee3); background: var(--theme-card, #fff); color: var(--layout-ink, #606066);
 }
-.compras-chip.ativo { border-color: var(--menu-accent); background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); color: var(--panel-text, #12672e); font-weight: 600; }
+.compras-chip.ativo { border-color: var(--layout-line, #dedee3); background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); color: var(--panel-text, #12672e); font-weight: 600; }
 body.dark-theme .compras-chip.ativo { color: #f2f1f6; }
 .compras-interruptor { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font: 400 var(--ui-text)/var(--ui-text-line) var(--ui-font); cursor: pointer; }
 .compras-interruptor > small { flex-basis: 100%; margin: 0; }
