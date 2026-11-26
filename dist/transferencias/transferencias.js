@@ -251,14 +251,57 @@
     return { no: b, resumo, abrir: (sim) => { b.setAttribute('aria-expanded', String(sim)); b.classList.toggle('aberto', sim); } };
   }
 
-  /** Opção Sim/Não; com Sim, a linha da hora (campo de hora com o relógio) abre logo embaixo. */
-  function opcaoComHora(titulo, rotuloHora) {
-    const hora = U.campoHora({ rotulo: rotuloHora, valor: '' });
-    const linhaHora = linha(rotuloHora, hora.caixa, hora.painel);
+  /**
+   * Tempo de aceite (Sim/Não). Com Sim, abre "Contar em": Dias, Horas ou Dias e horas.
+   *  - Dias: um número inteiro (1, 2, 3…) com − e + ao lado; o texto acompanha ("1 dia", "2 dias").
+   *  - Horas: o campo de hora hh:mm (com o relógio).
+   *  - Dias e horas: os dois juntos ("1 dia e 04:30").
+   * Uma linha de resumo diz como ficou. Só diz QUANTO tempo; a regra de quando o aceite vale está em PROJECT_BRAIN/11 (P-51).
+   */
+  function opcaoAceite(titulo) {
+    const MAX_DIAS = 365;
+    const estadoAc = { sim: false, modo: 'dias', dias: '1' };
+    const hora = U.campoHora({ rotulo: 'Horas (hh:mm)', valor: '' });
+    const linhaHora = linha('Horas (hh:mm)', hora.caixa, hora.painel);
+    const diasInput = entrada('text', '1', { inputMode: 'numeric', maxLength: 3, autocomplete: 'off' });
+    const linhaDias = linhaDe('Dias', diasInput);
+    const passo = (rotulo, icone, delta) => { const b = el('button', 'transferencia-circulo'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = U.svg(icone); b.onclick = () => { const n = Math.min(MAX_DIAS, Math.max(1, (parseInt(diasInput.value, 10) || 0) + delta)); diasInput.value = String(n); estadoAc.dias = diasInput.value; resumir(); }; return b; };
+    linhaDias.append(passo('Menos um dia', '<path d="M5 12h14"/>', -1), passo('Mais um dia', ICONE.mais, 1));
+    diasInput.addEventListener('input', () => { diasInput.value = diasInput.value.replace(/D/g, '').slice(0, 3); estadoAc.dias = diasInput.value; resumir(); });
+    hora.input.addEventListener('input', () => resumir()); hora.input.addEventListener('change', () => resumir());
+    const resumo = el('p', 'transferencia-aceite-resumo'); resumo.setAttribute('role', 'status');
+    const linhaResumo = el('div', 'transferencia-linha transferencia-linha-resumo'); linhaResumo.append(resumo);
+    const modos = U.chips([['dias', 'Dias'], ['horas', 'Horas'], ['ambos', 'Dias e horas']], 'dias', (v) => { estadoAc.modo = v; desenhar(); });
+    const linhaModo = linha('Contar em', modos);
     const caixa = el('div', 'transferencia-opcao');
-    let sim = false;
-    caixa.append(linha(titulo, chave(titulo, false, ['Sim', 'Não'], (v) => { sim = v; if (v) { caixa.append(linhaHora); hora.input.focus(); } else linhaHora.remove(); })));
-    return { no: caixa, valor: () => ({ sim, hora: hora.input.value }), campo: hora.input };
+    const nDias = () => parseInt(estadoAc.dias, 10) || 0;
+    const textoDias = () => nDias() + (nDias() === 1 ? ' dia' : ' dias');
+    function resumir() {
+      const h = hora24(hora.input.value) ? hora.input.value : '';
+      const m = estadoAc.modo;
+      const partes = [];
+      if (m !== 'horas') partes.push(nDias() ? textoDias() : 'informe os dias');
+      if (m !== 'dias') partes.push(h || 'informe as horas');
+      resumo.textContent = 'Aceite em ' + partes.join(' e ') + '.';
+    }
+    function desenhar() {
+      const m = estadoAc.modo;
+      caixa.replaceChildren(caixa.firstChild, ...(estadoAc.sim ? [linhaModo, ...(m !== 'horas' ? [linhaDias] : []), ...(m !== 'dias' ? [linhaHora] : []), linhaResumo] : []));
+      modos.atualizar(m); resumir();
+    }
+    caixa.append(linha(titulo, chave(titulo, false, ['Sim', 'Não'], (v) => { estadoAc.sim = v; desenhar(); if (v) (estadoAc.modo === 'horas' ? hora.input : diasInput).focus(); })));
+    return {
+      no: caixa,
+      valor: () => ({ sim: estadoAc.sim, modo: estadoAc.modo, dias: nDias(), hora: hora.input.value }),
+      // Devolve o texto do erro (e leva o foco ao campo) ou '' quando está certo.
+      conferir() {
+        if (!estadoAc.sim) return '';
+        const m = estadoAc.modo;
+        if (m !== 'horas' && (nDias() < 1 || nDias() > MAX_DIAS)) { diasInput.focus(); return 'Informe os dias do tempo de aceite (de 1 a ' + MAX_DIAS + ').'; }
+        if (m !== 'dias' && !hora24(hora.input.value)) { hora.input.focus(); return 'Informe as horas do tempo de aceite (hh:mm).'; }
+        return '';
+      },
+    };
   }
 
   /**
@@ -455,7 +498,7 @@
 
         /* Opções: Múltiplo destino e Tempo de aceite */
         const linhaMultiplo = linha('Múltiplo destino (+) / CNT', chave('Múltiplo destino', false, ['Sim', 'Não'], (v) => { estado.multiplo = v; mostrar(); }));
-        const aceite = opcaoComHora('Tempo de aceite', 'Aceite em (hh:mm)');
+        const aceite = opcaoAceite('Tempo de aceite');
         function mostrar() {
           campoDestino.style.display = estado.multiplo ? 'none' : ''; campoContas.style.display = estado.multiplo ? '' : 'none';
           if (!estado.multiplo) abrirMulti(false);
@@ -490,8 +533,8 @@
         const v = c.calc.finalizar();
         if (v.erro) return v.erro;
         if (!(v.total > 0)) return 'Informe o valor da transferência.';
-        const ace = c.aceite.valor();
-        if (ace.sim && !hora24(ace.hora)) { c.aceite.campo.focus(); return 'Informe o tempo de aceite (hh:mm).'; }
+        const erroAceite = c.aceite.conferir();
+        if (erroAceite) return erroAceite;
         if (c.anexos.audio && c.anexos.audio.gravando()) return 'Pare a gravação do áudio antes de salvar.';
         if (e.lacre.com && !e.lacre.numero.trim()) { c.lacreNumero.focus(); return 'Informe o número do lacre da transferência.'; }
         if (e.retornos.some((r) => r.com && !r.numero.trim())) return 'Informe o número do lacre de cada transferência de retorno com lacre.';

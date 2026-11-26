@@ -1567,3 +1567,6 @@ Película clara uniforme (degradê suave de branco translúcido; no escuro, de c
 ### Vidro no escuro e hover do valor (26/11/2026, Rodrigo)
 - A barra de baixo no tema escuro é vidro de verdade (película translúcida; o laranja dos botões aparece por trás). A regra antiga do tema escuro que pintava a barra de cinza sólido saiu de `theme-surfaces.css`.
 - Hover no quadro laranja do valor (caixa do valor, Notas, Moedas): **um padrão só, nos dois temas** — miolo branco translúcido com texto branco; borda não muda. Sai o hover pêssego do tema claro.
+
+### Tempo de aceite em dias e/ou horas; caixa do valor sem moldura em todo estado (26/11/2026, Rodrigo)
+Tempo de aceite: Sim/Não; com Sim, "Contar em" **Dias | Horas | Dias e horas**, campo de dias com − e + (1 a 365), campo de hora hh:mm e uma linha de resumo ("Aceite em 1 dia e 04:30."). A caixa do valor não tem borda nem anel de foco em nenhum estado, claro ou escuro (o sinal é o sombreado).
