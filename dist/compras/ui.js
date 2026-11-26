@@ -249,7 +249,8 @@
    * Explicação da lista DENTRO do quadro (Rodrigo, 26/11/2026): o texto que ficava solto acima da lista empurrava o quadro para baixo, e o
    * quadro tem de ficar paralelo ao cabeçalho (o mesmo espaço em cima e nas laterais). Agora o texto é a PRIMEIRA linha do quadro: círculo
    * com o ponto de exclamação, o texto e, na ponta direita, o botão redondo de fechar. Fechar tira a linha e põe um botão redondo com a
-   * exclamação na linha do cabeçalho da lista (ao lado da contagem e do ‹ ›); tocar nele traz a linha de volta, em cima.
+   * exclamação na linha do cabeçalho da lista, como o PRIMEIRO ícone do lado esquerdo, antes do botão Novo (Rodrigo, 26/11/2026);
+   * tocar nele traz a linha de volta, em cima.
    * A escolha fica guardada neste aparelho por tela (chave: o nome que a tela passa), na preferência cicluz-info-oculta; sem
    * localStorage, a linha simplesmente começa aberta. Devolve a seção.
    */
@@ -267,10 +268,10 @@
     const abrir = el('button', 'shortcut-circle compras-redondo compras-info-abrir'); abrir.type = 'button';
     abrir.title = 'Mostrar explicação'; abrir.setAttribute('aria-label', 'Mostrar explicação'); abrir.innerHTML = svg(EXCLAMACAO);
     const cab = sec.querySelector(':scope > .compras-secao-cab');
-    let ponta = cab && cab.querySelector(':scope > .compras-secao-ponta');
-    if (cab && !ponta) { ponta = el('span', 'compras-secao-ponta'); cab.append(ponta); }
+    // Lugar do botão: o início do lado esquerdo do cabeçalho (o h3, que agrupa o botão Novo), ou o próprio cabeçalho quando não há h3.
+    const inicio = cab && (cab.querySelector(':scope > h3') || cab);
     // Só um dos dois existe na tela: a linha aberta ou o botão no cabeçalho (o outro sai da página).
-    const pintar = (oculta) => { if (oculta && ponta) { linha.remove(); ponta.prepend(abrir); } else { abrir.remove(); sec.prepend(linha); } };
+    const pintar = (oculta) => { if (oculta && inicio) { linha.remove(); inicio.prepend(abrir); } else { abrir.remove(); sec.prepend(linha); } };
     fechar.onclick = () => { pintar(true); guardar(true); abrir.focus(); };
     abrir.onclick = () => { pintar(false); guardar(false); fechar.focus(); };
     pintar(lidas().includes(chave));
