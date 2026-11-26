@@ -6,8 +6,14 @@ import { z } from "zod";
 
 const dia = z.string().regex(/^\d{4}-\d{2}-\d{2}$/u, "Data inválida");
 
+// De qual coletor: TNP (Caixa PJ), HORA (Bradesco PJ) ou Padaria Lisboa. Mesmo contrato; sem o parâmetro, TNP
+// (como sempre foi).
+export const fonteExtratoSchema = z.enum(["tnp", "hora", "lisboa"]);
+export type FonteExtrato = z.infer<typeof fonteExtratoSchema>;
+
 export const consultaExtratoTnpSchema = z
   .object({
+    fonte: fonteExtratoSchema.default("tnp"),
     desde: dia,
     ate: dia,
     conta: z.string().trim().min(1).max(80).optional(),

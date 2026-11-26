@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { consultaExtratoTnpSchema } from "@cicluz/shared";
 import { env } from "../../api/src/env.ts";
-import { buscarExtrato } from "../../api/src/extrato-tnp/extrato-tnp.cliente.ts";
+import {
+  buscarExtrato,
+  extratoConfigurado,
+} from "../../api/src/extrato-tnp/extrato-tnp.cliente.ts";
 
 // Cliente do coletor do extrato da TNP (Pluggy): sem banco, fetch falso. Confere token no cabeçalho, lista branca,
 // centavos inteiros e como cada falha do coletor vira erro claro para a tela.
@@ -16,6 +19,9 @@ afterEach(() => {
   env.TNP_EXTRATO_URL = "";
   env.TNP_EXTRATO_TOKEN = "";
   env.TNP_EXTRATO_EMPRESA_ID = "";
+  env.HORA_EXTRATO_URL = "";
+  env.HORA_EXTRATO_TOKEN = "";
+  env.HORA_EXTRATO_EMPRESA_ID = "";
 });
 
 function configurar() {
@@ -271,5 +277,26 @@ describe("extrato da TNP - cliente do coletor", () => {
         ate: "2026-11-24",
       }),
     ).toThrow();
+  });
+
+  it("Deve_LerOHora_ComEnderecoETokenProprios_SemTocarNaTnp", async () => {
+    configurar();
+    expect(extratoConfigurado("hora")).toBe(false);
+    env.HORA_EXTRATO_URL = "https://extrato-hora.exemplo.test";
+    env.HORA_EXTRATO_TOKEN = "hora-extrato-teste-".padEnd(48, "h");
+    env.HORA_EXTRATO_EMPRESA_ID = "44444444-4444-4444-8444-444444444444";
+    expect(extratoConfigurado("hora")).toBe(true);
+    expect(extratoConfigurado("lisboa")).toBe(false);
+    const falso = vi.fn(async () =>
+      resposta(200, { ok: true, geradoEm: "2026-11-26T10:00:00.000Z", dias: [] }),
+    );
+    vi.stubGlobal("fetch", falso);
+    await buscarExtrato(consultaExtratoTnpSchema.parse({ fonte: "hora", desde: "2026-11-20", ate: "2026-11-26" }));
+    const [url, opcoes] = falso.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(String(url)).toBe("https://extrato-hora.exemplo.test/api/v1/extrato?desde=2026-11-20&ate=2026-11-26");
+    expect((opcoes.headers as Record<string, string>)["authorization"]).toBe(`Bearer ${env.HORA_EXTRATO_TOKEN}`);
+    // Sem fonte continua sendo a TNP; fonte desconhecida é recusada.
+    expect(consultaExtratoTnpSchema.parse({ desde: "2026-11-20", ate: "2026-11-26" }).fonte).toBe("tnp");
+    expect(() => consultaExtratoTnpSchema.parse({ fonte: "outra", desde: "2026-11-20", ate: "2026-11-26" })).toThrow();
   });
 });
