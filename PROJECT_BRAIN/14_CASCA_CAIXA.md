@@ -264,6 +264,7 @@ Em toda tela do Caixa (Entradas › Vendas/Faturamento › Lançamentos e Relat�
 - **Por que o nome:** o levantamento do CREARE (26/11/2026) mostrou que o ID do dispositivo muda a cada troca de computador e que o nome da máquina carrega o número do PDV. Os nomes `DESKTOP-…` (clonados, repetidos) não são PDV.
 - **O que é texto genérico continua "PDV"** (ex.: "Vendas do PDV", "PDV ligado"); só o **identificador** da máquina mostra o nome real.
 - **Ainda é casca:** o Caixa guarda o nome (texto) nos dados de demonstração, que somem ao recarregar. Quando existir o vínculo real, ele terá vigência por `ID_DISPOSITIVO` (P-52) e o nome mostrado virá do vínculo vigente; vínculo é por ID, nunca por nome.
+- **Vendas dos PDVs** (Entradas › Relatórios; abas, coluna PDV, barras por PDV e detalhe) também mostra o nome real: antes a aba virava "PDV 1" por regra de texto; agora o rótulo é o próprio nome da máquina vindo da API (26/11/2026, Washington).
 - **Fora desta entrega:** Configurações › Acessos (contas de posto, "PDV1 · Manhã") ainda mostra o número; a conta de posto continua por número de PDV.
 
 ## Maquininha da abertura vem do cadastro das operadoras (26/11/2026, Washington)
