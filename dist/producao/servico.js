@@ -608,14 +608,21 @@
     return { ...r, quantidade: q, unitario, sugerido: D.valorSugerido(unitario, prod.margem, margemGrupo(prod)) };
   }
 
+  // Ações programadas da Agenda (P-53): o ato que deu certo conta para a tarefa ligada à tela que espera por ele.
+  const contar = (acao, fn, quando = () => true) => (...a) => {
+    const r = fn(...a);
+    return window.CicluzAgendaRotina && quando(...a) ? window.CicluzAgendaRotina.contarSe(acao, r) : r;
+  };
+
   window.CicluzProducaoServico = {
-    salvarParametros, custoDaFicha,
+    salvarParametros: contar('producao:parametros', salvarParametros), custoDaFicha,
     salvarBem, conferirBem, excluirBem, alternarBem, baixarBem, usosDoBem,
-    salvarConfig, desligarProducao,
-    salvarFicha, duplicarFicha, definirPadrao, excluirFicha,
-    salvarAgenda, encerrarAgenda, proximasDatas, cancelarData, processarAgendas,
-    enviarPedido, pedidoExtra, cancelarPedido,
-    marcarEtapa, conferenciaDoPedido, abastecer, conferirNaLoja, fecharFolha,
-    estoqueLivre, lancarEstoque, sugestoesReposicao, aprovarReposicao, itensAConferir,
+    salvarConfig: contar('producao:configurar-produto', salvarConfig), desligarProducao,
+    salvarFicha: contar('producao:salvar-ficha', salvarFicha), duplicarFicha, definirPadrao, excluirFicha,
+    salvarAgenda: contar('producao:agendar', salvarAgenda), encerrarAgenda, proximasDatas, cancelarData, processarAgendas,
+    enviarPedido: contar('producao:enviar-pedido', enviarPedido), pedidoExtra: contar('producao:pedido-extra', pedidoExtra), cancelarPedido,
+    marcarEtapa: contar('producao:concluir-etapa', marcarEtapa, (ordemId, numero, acao) => acao === 'concluir'),
+    conferenciaDoPedido, abastecer: contar('producao:abastecer', abastecer), conferirNaLoja: contar('producao:conferir-loja', conferirNaLoja), fecharFolha,
+    estoqueLivre, lancarEstoque, sugestoesReposicao, aprovarReposicao: contar('producao:aprovar-reposicao', aprovarReposicao), itensAConferir,
   };
 })();

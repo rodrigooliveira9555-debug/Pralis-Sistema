@@ -57,8 +57,8 @@ export async function registrarRotasRotina(app: FastifyInstance) {
 
   /* Ações programadas por tela (0012, P-53): a tela avisa a ação feita; o administrador escolhe as telas do ícone */
   app.post("/api/agenda/acoes-de-tela", { config: limiteTarefas }, async (request) => {
-    const { acao, quantidade } = acaoFeitaSchema.parse(request.body);
-    return ok({ tarefas: await acoes.acaoFeita(perfilDaRequisicao(request), acao, quantidade) });
+    const { acao, quantidade, tela } = acaoFeitaSchema.parse(request.body);
+    return ok({ tarefas: await acoes.acaoFeita(perfilDaRequisicao(request), acao, quantidade, new Date(), tela) });
   });
   app.get("/api/agenda/telas-icone", async (request) => ok({ telas: await acoes.telasIcone(perfilDaRequisicao(request)) }));
   app.put("/api/agenda/telas-icone", async (request) => {

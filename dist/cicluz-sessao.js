@@ -36,6 +36,7 @@
   // fila, mantém a base antiga: é a partir dela que esta aba começou a editar.
   function registrarEdicao(chave) {
     edicoes[chave] = (edicoes[chave] || 0) + 1;
+    S.avisarSalvo();
     var pend = S.pendentes() || { usuarioId: aba.perfil.usuarioId, empresaId: aba.perfil.empresa.id, itens: {} };
     if (!pend.itens[chave]) pend.itens[chave] = { versaoBase: versoes[chave] || 0, aba: aba.id };
     try {

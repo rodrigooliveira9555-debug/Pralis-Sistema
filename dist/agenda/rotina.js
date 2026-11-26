@@ -476,21 +476,65 @@
 
 
   /* ================= Ações programadas por tela (P-53, áudio do Rodrigo de 25/11/2026) ================= */
-  // Cada tela que sabe contar declara as suas ações. A tarefa ligada à tela pode esperar uma delas (e a quantidade):
-  // ao chegar na quantidade, conclui sozinha. As outras telas entram aqui uma a uma, conforme forem pedidas.
+  // A tarefa ligada a uma tela pode esperar uma ação (e a quantidade): ao chegar na quantidade, conclui sozinha.
+  // - Compras e Produção contam atos com nome: o serviço de cada uma chama contarSe quando o ato dá certo.
+  // - Toda tela do menu conta a ação geral "Salvar algo nesta tela" (Zé, 26/11/2026), sem mexer no código das telas
+  //   dos outros: conta quando a pessoa mexe na tela e, logo depois, algo é salvo (no aparelho ou no servidor).
   const TELA_PRODUTOS = '#/saidas-mercadorias/cadastros-geral/compras-produtos';
+  const ACAO_GERAL = 'tela:salvar';
+  // Chave: o último pedaço do endereço da tela (o card do menu).
   const ACOES_POR_TELA = {
-    [TELA_PRODUTOS]: [
+    'compras-produtos': [
       { id: 'produtos:excluir', rotulo: 'Excluir (inativar) produto' },
       { id: 'produtos:cadastrar', rotulo: 'Cadastrar produto' },
       { id: 'produtos:alterar', rotulo: 'Alterar produto' },
     ],
+    'compras-agendamento': [{ id: 'compras:agendar', rotulo: 'Salvar agendamento de pedido' }],
+    'compras-solicitacao': [{ id: 'compras:enviar-pedido', rotulo: 'Enviar pedido de compra' }],
+    'compras-cotacao': [
+      { id: 'compras:aceitar-oferta', rotulo: 'Aceitar oferta de fornecedor' },
+      { id: 'compras:pedido-urgente', rotulo: 'Fazer pedido urgente' },
+      { id: 'compras:encerrar-cotacao', rotulo: 'Encerrar cotação' },
+    ],
+    'compras-pedidos': [{ id: 'compras:receber', rotulo: 'Receber pedido (conferir a entrega)' }],
+    'compras-conferencias': [
+      { id: 'compras:concluir-contagem', rotulo: 'Concluir contagem de estoque' },
+      { id: 'compras:aprovar-contagem', rotulo: 'Aprovar contagem de estoque' },
+      { id: 'compras:agendar-contagem', rotulo: 'Salvar agendamento de contagem' },
+    ],
+    'compras-cadastro': [
+      { id: 'compras:preco-base', rotulo: 'Definir preço-base' },
+      { id: 'compras:vincular', rotulo: 'Ligar fornecedor a produto' },
+    ],
+    'producao-agendamento': [{ id: 'producao:agendar', rotulo: 'Salvar agendamento de produção' }],
+    'producao-pedidos': [
+      { id: 'producao:enviar-pedido', rotulo: 'Enviar pedido de produção' },
+      { id: 'producao:pedido-extra', rotulo: 'Fazer pedido extra' },
+      { id: 'producao:aprovar-reposicao', rotulo: 'Aprovar reposição' },
+    ],
+    'producao-mapa': [{ id: 'producao:concluir-etapa', rotulo: 'Concluir etapa da produção' }],
+    'producao-abastecimento': [
+      { id: 'producao:abastecer', rotulo: 'Abastecer a loja' },
+      { id: 'producao:conferir-loja', rotulo: 'Conferir a chegada na loja' },
+    ],
+    'producao-fichas': [{ id: 'producao:salvar-ficha', rotulo: 'Salvar ficha técnica' }],
+    'producao-produtos': [{ id: 'producao:configurar-produto', rotulo: 'Salvar produto da produção' }],
+    'producao-custos': [{ id: 'producao:parametros', rotulo: 'Salvar parâmetros de custo' }],
   };
-  const acoesDaTela = (endereco) => ACOES_POR_TELA[endereco] || [];
-  /** A tela avisa: a ação foi feita n vezes. O servidor soma e conclui a tarefa que chegou na quantidade. */
-  async function acaoFeita(acao, n = 1) {
+  const ehTelaDoMenu = (endereco) => /^#\/(?!agenda\/)[a-z0-9-]+\/./.test(String(endereco || ''));
+  const acoesDaTela = (endereco) => (ehTelaDoMenu(endereco)
+    ? [...(ACOES_POR_TELA[String(endereco).split('/').pop()] || []), { id: ACAO_GERAL, rotulo: 'Salvar algo nesta tela' }]
+    : []);
+  /** Para os serviços das telas: conta a ação quando o ato deu certo ({ ok: true }) e devolve o resultado como veio. */
+  function contarSe(acao, resultado, n = 1) {
+    if (resultado && resultado.ok) acaoFeita(acao, n).catch(() => undefined);
+    return resultado;
+  }
+  /** A tela avisa: a ação foi feita n vezes. O servidor soma e conclui a tarefa que chegou na quantidade.
+      A ação geral leva a tela junto: só conta para a tarefa ligada a ela. */
+  async function acaoFeita(acao, n = 1, tela = '') {
     if (!A.conectado() || A.situacao !== 'servidor') return;
-    const r = await A.acaoFeita(acao, n);
+    const r = await A.acaoFeita(acao, n, tela);
     if (r.erro || !r.dados.tarefas.length) return;
     // O progresso já aparece no aviso, sem esperar a próxima leitura da Agenda.
     r.dados.tarefas.forEach((t) => { const i = A.item(t.id); if (i) i.acaoFeitas = t.feitas; });
@@ -577,7 +621,23 @@
     if (itens.length > 3) quadro.append(el('p', 'agenda-aviso-mais', '+ ' + (itens.length - 3) + ' na Agenda'));
     aviso.replaceChildren(cab, quadro);
   }
-  function aoTrocarDeTela() { aplicarIcone(); pintarAviso(); }
+  function aoTrocarDeTela() { telaAbertaEm = Date.now(); aplicarIcone(); pintarAviso(); }
+
+  /* Ação geral (P-53): a pessoa tocou nesta tela depois de abri-la e, em até 3 s, algo foi salvo (o cicluz-sync avisa
+     com "cicluz-dado-salvo"). O que é salvo junto (em 1,5 s) conta uma vez. Só pergunta ao servidor quando há tarefa
+     aberta esperando essa ação nesta tela. */
+  let gestoEm = 0;
+  let telaAbertaEm = Date.now();
+  let contandoGeral = null;
+  ['pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, () => { gestoEm = Date.now(); }, { passive: true, capture: true }));
+  function algoSalvo() {
+    const t = telaAtual();
+    if (!t || contandoGeral || gestoEm <= telaAbertaEm || Date.now() - gestoEm > 3000) return;
+    const espera = ((A.dados && A.dados.itens) || []).some((i) => i.acaoTela === ACAO_GERAL && i.vinculoTela === t.endereco && !i.concluida);
+    if (!espera) return;
+    contandoGeral = setTimeout(() => { contandoGeral = null; acaoFeita(ACAO_GERAL, 1, t.endereco).catch(() => undefined); }, 1500);
+  }
+  document.addEventListener('cicluz-dado-salvo', algoSalvo);
   window.addEventListener('hashchange', () => setTimeout(aoTrocarDeTela, 0));
   window.addEventListener('popstate', () => setTimeout(aoTrocarDeTela, 0));
   document.addEventListener('cicluz-rota-mudou', aoTrocarDeTela);
@@ -628,7 +688,7 @@
     abrirConfiguracoes, renderDesempenho, agendarDaTela, abrirTela, telaAtual,
     tarefaDoPedidoDeCompra, pedidoDeCompraFeito, tarefaDoPedidoDeProducao, pedidoDeProducaoFeito,
     producaoParaLancar, producaoLancada, producaoCancelada, integracaoDoColaborador, enviarEscalas,
-    acoesDaTela, acaoFeita, telasDoMenu, iconeLigado, carregarTelasIcone, DESLIGADAS_PADRAO, TELA_PRODUTOS,
+    acoesDaTela, acaoFeita, contarSe, ACAO_GERAL, telasDoMenu, iconeLigado, carregarTelasIcone, DESLIGADAS_PADRAO, TELA_PRODUTOS,
     TELA_PEDIDO_COMPRA, TELA_PEDIDO_PRODUCAO, TELA_MAPA_PRODUCAO, TELA_PERIODO_TESTE,
   };
 })();

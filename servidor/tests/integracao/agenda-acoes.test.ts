@@ -76,6 +76,23 @@ describe("agenda: ação programada por tela (P-53)", () => {
   });
 });
 
+describe("agenda: ação geral \"Salvar algo nesta tela\" (P-53, 26/11/2026)", () => {
+  it("conta só para a tarefa ligada à tela em que a pessoa salvou; sem a tela é recusada", async () => {
+    const { gestor: admin, resp } = await cenario();
+    const OUTRA = "#/saidas-despesas/lancamentos/vz-lan-des-despesas";
+    const aqui = await criar(admin, { data: hoje(), acaoTela: "tela:salvar", acaoQuantidade: 2, pessoas: [{ id: resp.usuarioId, responsavel: true, concluir: true }] });
+    const la = await criar(admin, { data: hoje(), vinculoTela: OUTRA, vinculoTitulo: "DES - Despesas", acaoTela: "tela:salvar", acaoQuantidade: 1, pessoas: [{ id: resp.usuarioId, responsavel: true, concluir: true }] });
+    const salvar = (tela?: string) => pedir(resp.cookie, "POST", "/api/agenda/acoes-de-tela", { acao: "tela:salvar", quantidade: 1, ...(tela ? { tela } : {}) });
+    expect((await salvar()).statusCode).toBe(400);
+    expect((await salvar(TELA)).json().data.tarefas).toEqual([{ id: aqui.id, feitas: 1, quantidade: 2, concluiu: false }]);
+    expect((await salvar(TELA)).json().data.tarefas).toEqual([{ id: aqui.id, feitas: 2, quantidade: 2, concluiu: true }]);
+    // A tarefa da outra tela continua esperando.
+    const outra = (await agenda(resp)).compromissos.find((c: { id: string }) => c.id === la.id);
+    expect(outra).toMatchObject({ concluida: false, acaoFeitas: 0 });
+    expect((await salvar(OUTRA)).json().data.tarefas).toEqual([{ id: la.id, feitas: 1, quantidade: 1, concluiu: true }]);
+  });
+});
+
 describe("agenda: telas do ícone de agendar (P-53)", () => {
   it("o administrador liga e desliga; todos leem; quem não é administrador não muda", async () => {
     const { gestor: admin, resp } = await cenario();

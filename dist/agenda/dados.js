@@ -670,7 +670,7 @@
   const ligarColaborador = (usuarioId, colaboradorId) => api('/agenda/expedientes/contas/' + encodeURIComponent(usuarioId), { metodo: 'PUT', corpo: { colaboradorId: colaboradorId || null } });
   const enviarExpedientes = (corpo) => api('/agenda/expedientes', { metodo: 'PUT', corpo });
   /* Ações programadas por tela (0012, P-53). */
-  const acaoFeita = (acao, quantidade) => api('/agenda/acoes-de-tela', { metodo: 'POST', corpo: { acao, quantidade } });
+  const acaoFeita = (acao, quantidade, tela) => api('/agenda/acoes-de-tela', { metodo: 'POST', corpo: { acao, quantidade, ...(tela ? { tela } : {}) } });
   const telasIcone = () => api('/agenda/telas-icone');
   const definirTelaIcone = (tela, mostrar) => api('/agenda/telas-icone', { metodo: 'PUT', corpo: { tela, mostrar } });
 
