@@ -138,7 +138,7 @@ ninguém entra.
 
 O `.vercelignore` tira `servidor/` do deploy estático.
 
-## Banco (migrations `0000` a `0009`)
+## Banco (migrations `0000` a `0012`)
 
 | Tabela | Para quê |
 | ------ | -------- |
@@ -159,6 +159,7 @@ O `.vercelignore` tira `servidor/` do deploy estático.
 | `lancamentos`, `lancamentos_itens`, `lancamentos_recorrencias` | Lançamentos (fonte da verdade): reais numeric(14,2), conta em centavos, itens com rateio, séries |
 | `agenda_mensagens`, `agenda_chat_leituras`, `agenda_arquivos` | chat e arquivos de cada compromisso (0003) |
 | `agenda_config_pessoas`, `agenda_horas_fora`, `agenda_grupo_mensagens`, `agenda_grupo_leituras` | rotina da Agenda (0008): configurações por pessoa, hora fora do expediente (só relatório), chat do grupo |
+| `agenda_acoes_progresso`, `agenda_telas_icone` | 0012 (P-52): progresso da ação programada por tela (conclui sozinha na quantidade) e telas em que o ícone de agendar aparece (só exceções). Também `agenda_compromissos.acao_tela/acao_quantidade` e `agenda_mensagens.arquivo_id` (foto/áudio do chat) |
 | `expedientes_colaboradores`, `sessoes_atividade` | 0009 (P-46): expediente dia a dia dos colaboradores ligados a contas (só trabalha/folga e horário) e última atividade de cada sessão (tempo parado; padrão 15 min; posto do caixa não sai). Também `perfis_usuarios.colaborador_id` e `agenda_grupos.area` |
 | `agenda_estado`, `agenda_grupos`, `agenda_grupo_membros`, `agenda_colunas`, `agenda_compromissos`, `agenda_participantes`, `agenda_avaliacoes`, `agenda_adiamentos`, `agenda_relacoes`, `agenda_transferencias` | Agenda (0007, fonte da verdade): empresa em toda chave; pessoa = conta da mesma empresa; excluir = esconder; avaliação imutável; registro de cada transferência |
 

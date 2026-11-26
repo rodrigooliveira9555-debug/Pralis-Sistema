@@ -184,19 +184,19 @@ async function limparAgenda(p) {
   // "+" do rodapé: compromisso completo com repetição, término, alerta, URL e local
   await p.locator('.view.show .people-add-control').click();
   ok(await dialogo(p).filter({ hasText: 'Novo compromisso' }).count() === 1, '"+" abre Novo compromisso');
-  await dialogo(p).getByLabel('Título').fill('reunião semanal da equipe');
-  await dialogo(p).getByLabel('Início').fill('09:30');
-  await dialogo(p).getByLabel('Término').fill('09:00');
+  await dialogo(p).getByLabel('Título', { exact: true }).fill('reunião semanal da equipe');
+  await dialogo(p).getByLabel('Início', { exact: true }).fill('09:30');
+  await dialogo(p).getByLabel('Término', { exact: true }).fill('09:00');
   await confirmar(p);
   ok((await dialogo(p).locator('.profiles-error').textContent()).includes('depois do início'), 'Término antes do início é recusado');
-  await dialogo(p).getByLabel('Término').fill('10:30');
+  await dialogo(p).getByLabel('Término', { exact: true }).fill('10:30');
   await dialogo(p).getByLabel('Repetir').selectOption('personalizada');
-  ok(await dialogo(p).getByLabel('A cada').isVisible(), 'Personalizada mostra "a cada" e os dias');
-  await dialogo(p).getByLabel('A cada').fill('2');
+  ok(await dialogo(p).getByLabel('A cada', { exact: true }).isVisible(), 'Personalizada mostra "a cada" e os dias');
+  await dialogo(p).getByLabel('A cada', { exact: true }).fill('2');
   await dialogo(p).getByRole('button', { name: 'segunda-feira' }).click();
   await dialogo(p).getByRole('button', { name: 'quinta-feira' }).click();
   await dialogo(p).getByLabel('Fim da repetição').selectOption('vezes');
-  await dialogo(p).getByLabel('Quantas vezes').fill('3');
+  await dialogo(p).getByLabel('Quantas vezes', { exact: true }).fill('3');
   ok((await dialogo(p).locator('.agenda-repeticao-resumo').textContent()).includes('A cada 2 semanas: seg, qui, 3 vez(es)'), 'Resumo da repetição');
   await dialogo(p).getByLabel('Alerta').selectOption('15');
   await dialogo(p).getByLabel('Endereço na internet').fill('cicluz');
@@ -268,7 +268,10 @@ async function limparAgenda(p) {
   // Listas: criar com cor e ícone; excluir só vazia
   await p.locator('.agenda-lista-nova').click();
   await dialogo(p).getByLabel('Nome').fill('Loja Centro');
+  // Cor e ícone abrem por dentro (padrão linha por linha, P-52).
+  await abrirLinha(p, 'Cor e ícone');
   await dialogo(p).getByRole('radio', { name: 'Ícone pao' }).click();
+  await confirmar(p);
   await confirmar(p);
   d = await dados(p);
   const loja = d.listas.find((l) => l.nome === 'Loja Centro');
@@ -306,7 +309,7 @@ async function limparAgenda(p) {
   // Local no mapa: tocar marca e preenche o endereço; Ao entrar com raio; procurar; Atual; aviso ao cruzar o raio
   await p.getByRole('button', { name: 'Listas', exact: true }).click();
   await p.locator('.view.show .people-add-control').click();
-  await dialogo(p).getByLabel('Título').fill('Buscar encomenda');
+  await dialogo(p).getByLabel('Título', { exact: true }).fill('Buscar encomenda');
   await abrirLinha(p, 'Local');
   await p.waitForFunction(() => document.querySelector('dialog.agenda-dialog[open] .agenda-mapa .leaflet-tile-pane'));
   ok((await dialogo(p).locator('.agenda-mapa-botao small').allTextContents()).join('|') === 'Atual|Ao entrar|Ao sair|Personalizada', 'Botões do protótipo: Atual, Ao entrar, Ao sair, Personalizada');
@@ -357,8 +360,8 @@ async function limparAgenda(p) {
   const caixa = await coluna.boundingBox();
   await p.mouse.click(caixa.x + 30, caixa.y + 48 * 3 + 5);
   ok(await dialogo(p).filter({ hasText: 'Novo compromisso' }).count() === 1, 'Tocar num horário vazio cria ali');
-  ok(await dialogo(p).getByLabel('Início').inputValue() === '03:00' && await dialogo(p).getByLabel('Término').inputValue() === '04:00', 'Já vem com a hora tocada e 1 h de duração');
-  await dialogo(p).getByLabel('Título').fill('Inventário da madrugada');
+  ok(await dialogo(p).getByLabel('Início', { exact: true }).inputValue() === '03:00' && await dialogo(p).getByLabel('Término', { exact: true }).inputValue() === '04:00', 'Já vem com a hora tocada e 1 h de duração');
+  await dialogo(p).getByLabel('Título', { exact: true }).fill('Inventário da madrugada');
   await confirmar(p);
   const idInv = (await item(p, 'Inventário da madrugada')).id;
   await p.evaluate(() => {
@@ -564,7 +567,8 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   if (!criado.id) throw new Error('Criar no trecho do chat falhou: ' + JSON.stringify(criado));
   const id = criado.id;
   naoLidas = { [id]: 2 };
-  await p.evaluate(() => CicluzAgendaConversa.atualizarNaoLidas(true));
+  // Só dispara: a linha de baixo espera o resultado (segurar a promessa aqui fazia o Playwright falhar às vezes).
+  await p.evaluate(() => { CicluzAgendaConversa.atualizarNaoLidas(true); });
   await p.waitForFunction(() => document.querySelector('.agenda-chat-novas'));
   ok((await p.locator('.agenda-item', { hasText: 'Fechar o caixa' }).locator('.agenda-chat-novas').textContent()).includes('2 mensagens novas'), 'A linha mostra as mensagens novas');
   await p.locator('.agenda-linha-texto', { hasText: 'Fechar o caixa' }).click();
@@ -582,6 +586,8 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   ok(Object.keys(naoLidas).length === 0, 'Abrir o chat marca como lido');
   await chat.locator('.people-close-control, .people-cancel-control').first().click().catch(() => p.keyboard.press('Escape'));
   if (await chat.count()) await p.keyboard.press('Escape');
+  // Arquivos e evidências abrem por dentro (padrão linha por linha, P-52).
+  await abrirLinha(p, 'Arquivos e evidências');
   await dialogo(p).locator('.agenda-conversa input[type=file]').setInputFiles([{ name: 'foto.png', mimeType: 'image/png', buffer: PNG }, { name: 'nota.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') }]);
   await dialogo(p).locator('.agenda-arquivo', { hasText: 'nota.pdf' }).waitFor();
   ok(arquivos.length === 2 && await dialogo(p).locator('.agenda-arquivo-miniatura').count() === 1, 'Envia vários arquivos; imagem com miniatura');
@@ -625,7 +631,7 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   // A gestora cria: Responsável Um só com ver+concluir; Responsável Dois responsável padrão; avaliação em estrelas
   let p = await abrir(GESTORA);
   await p.locator('.view.show .people-add-control').click();
-  await dialogo(p).getByLabel('Título').fill('Fechar o caixa da loja');
+  await dialogo(p).getByLabel('Título', { exact: true }).fill('Fechar o caixa da loja');
   await abrirLinha(p, 'Pessoas');
   ok((await dialogo(p).locator('.agenda-pessoas .transferencia-linha').first().textContent()).includes(GESTORA.nome), 'Gestor é quem cria');
   await dialogo(p).getByLabel('Adicionar como responsável').selectOption({ label: RESP_UM.nome });
@@ -651,7 +657,7 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   p = await abrir(RESP_UM);
   ok(Number(await p.locator('.a-atribuidos b').textContent()) >= 1, 'Atribuídos a mim conta o compromisso do responsável');
   await p.locator('.agenda-linha-texto', { hasText: 'Fechar o caixa da loja' }).click();
-  ok(await dialogo(p).filter({ hasText: 'editar é com o gestor' }).count() === 1 && await dialogo(p).getByLabel('Título').isDisabled(), 'Sem "Editar": abre só para leitura');
+  ok(await dialogo(p).filter({ hasText: 'editar é com o gestor' }).count() === 1 && await dialogo(p).getByLabel('Título', { exact: true }).isDisabled(), 'Sem "Editar": abre só para leitura');
   ok(await dialogo(p).getByRole('button', { name: 'Excluir compromisso' }).count() === 0, 'Sem "Excluir": não aparece o botão');
   await p.keyboard.press('Escape');
   ok(await p.evaluate(async (id) => { try { await CicluzSync.api('/agenda/compromissos/' + id, { metodo: 'PATCH', corpo: { versao: 1, titulo: 'mudado' } }); return 'passou'; } catch (e) { return e.codigo; } }, idCaixa) === 'AGENDA_SEM_ACESSO', 'Editar é barrado também pela API');
@@ -784,20 +790,20 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   await p.getByRole('button', { name: 'Configurações da Agenda', exact: true }).first().click();
   await p.locator('#agenda-config-view .agenda-config-linha', { hasText: RESP_UM.nome }).click();
   for (const dia of ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']) await dialogo(p).getByRole('button', { name: dia, exact: true }).click();
-  await dialogo(p).getByLabel('Início do expediente').fill('00:00');
-  await dialogo(p).getByLabel('Fim do expediente').fill('23:59');
+  await dialogo(p).getByLabel('Início do expediente', { exact: true }).fill('00:00');
+  await dialogo(p).getByLabel('Fim do expediente', { exact: true }).fill('23:59');
   // A hora fora do expediente saiu daqui (0009: sempre calculada, só no Desempenho); vazio = padrão de 15 min.
   ok(await dialogo(p).getByLabel('Hora trabalhada fora do expediente').count() === 0, 'Configurações: sem a escolha de "hora comum/extra" (decisão pendente com o Rodrigo)');
-  ok((await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado').getAttribute('placeholder')).includes('15'), 'Configurações: tempo parado vazio = padrão de 15 min');
-  ok(await dialogo(p).getByLabel('Colaborador do cadastro').count() === 1, 'Configurações: ligar a conta ao colaborador do cadastro');
-  await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado').fill('30');
+  ok((await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado', { exact: true }).getAttribute('placeholder')).includes('15'), 'Configurações: tempo parado vazio = padrão de 15 min');
+  ok(await dialogo(p).getByLabel('Colaborador do cadastro', { exact: true }).count() === 1, 'Configurações: ligar a conta ao colaborador do cadastro');
+  await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado', { exact: true }).fill('30');
   await dialogo(p).locator('.people-save-control').click();
   await p.locator('#agenda-config-view .agenda-config-linha', { hasText: 'sai em 30 min parado' }).waitFor();
   ok((await p.locator('#agenda-config-view .agenda-config-linha', { hasText: RESP_UM.nome }).textContent()).includes('todos os dias, das 00:00 às 23:59'), 'Configurações: o administrador salva expediente e saída por tempo parado');
   // "Nunca sai sozinho" (Zé, 25/11/2026): o campo dos minutos some e a linha diz que não sai.
   await p.locator('#agenda-config-view .agenda-config-linha', { hasText: RESP_UM.nome }).click();
-  await dialogo(p).getByLabel('Sair sozinho por tempo parado').selectOption('nao');
-  ok(await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado').isHidden(), 'Nunca sai sozinho: o campo dos minutos some');
+  await dialogo(p).getByLabel('Sair sozinho por tempo parado', { exact: true }).selectOption('nao');
+  ok(await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado', { exact: true }).isHidden(), 'Nunca sai sozinho: o campo dos minutos some');
   await dialogo(p).locator('.people-save-control').click();
   await p.locator('#agenda-config-view .agenda-config-linha', { hasText: 'nunca sai sozinho' }).waitFor();
   ok(true, 'O administrador escolhe quem nunca sai sozinho');
@@ -846,10 +852,12 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   // O da barra (iPad e computador); o do menu rápido (.people-quick-fixo) só aparece no celular.
   const agendar = p.locator('.view.show .people-footer-left > .people-agendar-control');
   ok(await p.locator('.view.show .people-quick-fixo').evaluate((b) => getComputedStyle(b).display) === 'none', 'Fora do celular, o agendar do menu rápido fica escondido');
-  ok(await agendar.evaluate((b) => getComputedStyle(b).backgroundColor) === 'rgb(124, 58, 237)', 'Ícone de agendar é roxo mesmo numa tela verde');
+  // Barra em vidro (DESIGN_SYSTEM, PADRÃO CONSOLIDADO): botões transparentes que enchem na cor ao passar; a cor do
+  // ícone de agendar é o roxo da Agenda mesmo numa tela verde.
+  ok(await agendar.evaluate((b) => getComputedStyle(b).getPropertyValue('--menu-accent').trim()) === '#7c3aed', 'Ícone de agendar é roxo mesmo numa tela verde');
   await agendar.click();
   ok((await dialogo(p).locator('.agenda-tela-ligada').textContent()).includes('MER - Pedido de Compra'), 'A janela já vem com a tela ligada');
-  await dialogo(p).getByLabel('Título').fill('Conferir o pedido da semana');
+  await dialogo(p).getByLabel('Título', { exact: true }).fill('Conferir o pedido da semana');
   await confirmar(p);
   const ligado = await item(p, 'Conferir o pedido da semana');
   ok(ligado && ligado.vinculoTela === tela && ligado.vinculoTitulo === 'MER - Pedido de Compra', 'Compromisso guarda a tela ligada');
