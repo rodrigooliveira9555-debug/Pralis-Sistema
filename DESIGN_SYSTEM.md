@@ -1547,3 +1547,6 @@ Só nesta tela, para testar antes de valer para as outras (desenho do Rodrigo em
 
 ### Máscara única de passar o mouse (26/11/2026, Rodrigo pediu sugestão; adotada)
 Botões e células (calendário, hora, teclas da calculadora) ao passar o mouse: **sombreado na cor da tela (14%, 24% no escuro) + fio fino da mesma cor**; ao escolher, enchem com a cor cheia. Linhas inteiras de lista: só sombreado (6%), sem fio, para não brigar com as divisórias. Motivo: no escuro o sombreado sozinho fica marrom e fraco; o fio garante o contraste e distingue de "escolhido" (cheio). Variável `--mascara-fundo`.
+
+### Botões de rodapé e chips ao passar o mouse (26/11/2026, Rodrigo aprovou a opção A)
+Salvar (cheio): fecha o laranja e o círculo do ícone acende (cheio, com o sinal na cor do botão). Cancelar/Voltar (contorno): sombreado de 14% (24% no escuro) e círculo cheio; ao tocar, enche de vez. Chips (Limpar, Hoje…): máscara única, sombreado + fio; ao tocar, cheios. Variáveis `--botao-fundo`, `--botao-borda`, `--botao-texto` (sem novo `!important`).

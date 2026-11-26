@@ -875,3 +875,15 @@ dialog .form-fields[data-quadro]::before,.modal .form-fields[data-quadro]::befor
 .ponto-estado-miolo{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .ponto-estado-texto{display:grid;min-width:0}
 .ponto-estado-texto>small{font:400 10px/13px var(--ui-font);color:var(--muted,#73737a);white-space:normal}
+/* BOTÕES DE RODAPÉ AO PASSAR O MOUSE (26/11/2026, Rodrigo aprovou a opção A): o cheio (Salvar) fecha o laranja e o círculo do ícone acende (branco, com o sinal na cor do botão);
+   o de contorno (Cancelar) ganha o sombreado e o círculo enche; ao tocar, o de contorno enche de vez. Chips seguem a máscara única (sombreado + fio). */
+@media (hover:hover){
+ body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button.footer-save-accent:not(:disabled):hover{--botao-fundo:color-mix(in srgb,#000 18%,var(--menu-accent,var(--panel-color,#7c3aed)));--botao-borda:color-mix(in srgb,#000 18%,var(--menu-accent,var(--panel-color,#7c3aed)))}
+ body :is(.view,dialog,.modal) button.footer-save-accent:not(:disabled):hover .footer-action-icon{background:currentColor;stroke:color-mix(in srgb,#000 18%,var(--menu-accent,var(--panel-color,#7c3aed)))}
+ body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button:is(.footer-cancel-accent,.form-back-action):not(:disabled):hover{--botao-fundo:color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) var(--mascara-fundo,14%),var(--theme-card,#fff))}
+ body :is(.view,dialog,.modal) button:is(.footer-cancel-accent,.form-back-action):not(:disabled):hover .footer-action-icon{background:var(--menu-accent,var(--panel-color,#7c3aed));stroke:#fff}
+ .compras-chip:not(.ativo):not(:disabled):hover{background:color-mix(in srgb,var(--menu-accent) var(--mascara-fundo,14%),var(--theme-card,#fff));border-color:var(--menu-accent)}
+}
+body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button.footer-save-accent:not(:disabled):active{--botao-fundo:color-mix(in srgb,#000 30%,var(--menu-accent,var(--panel-color,#7c3aed)))}
+body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button:is(.footer-cancel-accent,.form-back-action):not(:disabled):active{--botao-fundo:var(--menu-accent,var(--panel-color,#7c3aed));--botao-texto:#fff}
+.compras-chip:not(.ativo):not(:disabled):active{background:var(--menu-accent);border-color:var(--menu-accent);color:#fff}

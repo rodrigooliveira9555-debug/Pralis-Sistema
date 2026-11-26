@@ -189,11 +189,11 @@ body:is(.dark-theme,:not(.dark-theme)) #sector-view .operator-fees .fee-brand-ic
  background:#fff!important;box-sizing:border-box;padding:4px;
 }
 body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button.footer-save-accent:not(:disabled) {
- background:var(--menu-accent,var(--panel-color,#7c3aed))!important;color:var(--texto-vazado,#fff)!important;
- border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;
+ background:var(--botao-fundo,var(--menu-accent,var(--panel-color,#7c3aed)))!important;color:var(--texto-vazado,#fff)!important;
+ border:1px solid var(--botao-borda,var(--menu-accent,var(--panel-color,#7c3aed)))!important;
 }
 body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.modal) button:is(.footer-cancel-accent,.form-back-action):not(:disabled) {
- background:transparent!important;color:var(--menu-accent,var(--panel-color,#7c3aed))!important;
+ background:var(--botao-fundo,transparent)!important;color:var(--botao-texto,var(--menu-accent,var(--panel-color,#7c3aed)))!important;
  border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;
 }
 body :is(.view,dialog,.modal) button.form-next-action:not(:disabled){background:var(--menu-accent,var(--panel-color,#7c3aed))!important;border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;color:#fff!important;box-shadow:none!important}
