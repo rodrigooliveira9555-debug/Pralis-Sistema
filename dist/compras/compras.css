@@ -808,7 +808,7 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .transferencia-secao { display: grid; gap: 6px; min-width: 0; }
 .transferencia-tela .transferencia-secao-titulo { margin: 0; padding: 0 4px; font: 600 13px/18px var(--ui-font); color: var(--muted, #71717a); }
 .transferencia-tela .transferencia-quadro { display: grid; min-width: 0; border: 1px solid var(--layout-line, #dedee3); border-radius: 14px; background: var(--theme-card, #fff); overflow: hidden; }
-.transferencia-tela .transferencia-linha, .transferencia-tela label.transferencia-linha { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 14px; border-bottom: 1px solid var(--layout-line, #dedee3); min-width: 0; }
+.transferencia-tela .transferencia-linha, .transferencia-tela label.transferencia-linha { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 14px; border-bottom: 1px solid var(--layout-line, #dedee3); min-width: 0; }
 .transferencia-tela .transferencia-quadro > :last-child { border-bottom: 0; }
 .transferencia-tela .transferencia-linha-rotulo { flex: none; max-width: 48%; font: 500 15px/20px var(--ui-font); color: var(--layout-ink, #27272a); }
 .transferencia-tela label.transferencia-linha > .transferencia-linha-controle, .transferencia-tela .transferencia-linha .transferencia-linha-controle { flex: 1 1 auto; min-width: 0; width: auto; min-height: 0; height: 100%; padding: 0; border: 0; background: transparent; box-shadow: none; text-align: right; text-align-last: right; font: 500 15px/20px var(--ui-font); color: var(--muted, #71717a); }
@@ -1070,3 +1070,13 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell > .panel > .head[da
 /* Interruptores (Habilitar, Liberado…) viram linha: nome à esquerda e a marca à direita, pequena e redonda; sem caixa gigante. */
 :is(.compras-dialog,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-interruptor { justify-content: space-between; }
 :is(.compras-dialog,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-interruptor > input { --caixa-de-marcar: 22px; --campo-altura: 22px; --campo-respiro: 0px; width: 22px; min-width: 22px; height: 22px; min-height: 0; order: 2; margin: 0 14px 0 auto; flex: none; }
+/* UMA ALTURA E UMA MÁSCARA PARA TODA LINHA (Rodrigo, 26/11/2026): toda linha de formulário tem 52 px (--linha-altura), sem exceção por tipo de campo; o respiro vem do alinhamento ao centro, não de padding em cima e embaixo (que somava com o controle e dava 55–59 px). Passar o mouse ou focar sombreia a LINHA inteira, em qualquer tipo de linha. */
+:root { --linha-altura: 52px; }
+:is(.compras-dialog,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo { min-height: var(--linha-altura); padding-top: 0; padding-bottom: 0; }
+:is(.compras-dialog,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-interruptor { min-height: var(--linha-altura); padding-top: 0; padding-bottom: 0; }
+:is(.compras-dialog,#sector-view):not(.transferencia-tela) .compras-fieldset > .account-status:not(.compras-tipo-pessoa) { min-height: var(--linha-altura); padding-top: 0; padding-bottom: 0; }
+.transferencia-tela .transferencia-linha { min-height: var(--linha-altura); }
+.people-complete-pickbox > label { min-height: var(--linha-altura); }
+@media (hover: hover) {
+  .people-complete-pickbox > label:hover, .transferencia-tela .transferencia-quadro > :is(button, label, div):not(.transferencia-valor-cab):hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+}

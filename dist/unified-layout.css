@@ -148,7 +148,7 @@ body #sector-view.financial-groups .financial-subgroups{background:var(--layout-
 body #sector-view.financial-groups .financial-subgroups>.account-list-row::before{background:var(--layout-line)!important}
 body #salary-view .salary-row[hidden],body #salary-view #salary-search[hidden]{display:none!important}
 /* Cross-tab review: plain labels around one framed information field. */
-body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view#sector-view,#job-edit,#job-form,.view,dialog,.modal) .single-field-block.single-field-block.single-field-block{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0!important;padding:0!important}
+body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view#sector-view,#job-edit,#job-form,.view,dialog,.modal) .single-field-block.single-field-block.single-field-block{background:var(--linha-fundo,transparent)!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0!important;padding:0!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view#sector-view,#job-edit,#job-form,.view,dialog,.modal) .single-field-block.single-field-block.single-field-block :is(input,select,textarea):where(:not([aria-invalid=true])){border:1px solid var(--layout-line)!important;border-radius:var(--ui-field-radius)!important;box-shadow:none!important}
 body:is(.dark-theme,:not(.dark-theme)) :is(#sector-view#sector-view,#job-edit,#job-form,.view,dialog,.modal) .single-field-block.single-field-block.single-field-block :is(input,select,textarea):focus-visible{border-color:var(--navigation-ink,#a2a0aa)!important;outline:2px solid #a2a0aa38!important;outline-offset:var(--ui-focus-offset,1px)}
 body .view :is(.job-main,.job-copy,.job-copy>b,.location-name,.account-list-row>b,.salary-job-identity){font-family:var(--ui-font)!important;font-size:var(--ui-text)!important;line-height:var(--ui-text-line)!important;color:var(--layout-ink)!important;text-align:left!important;letter-spacing:normal!important}
@@ -161,7 +161,7 @@ body .view :is(.location-move,.menu-item-move,.drag-handle,.job-drag-handle,.acc
 body :is(.view,dialog,.modal) .local-search-control{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
 body :is(.view,dialog,.modal) .local-search-control>input{flex:1;min-width:120px}
 body :is(.view,dialog,.modal) input[hidden]{display:none!important}
-body :is(.view,dialog,.modal) .local-search-toggle{color:var(--theme-field,#fff)!important;border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;background:var(--menu-accent,var(--panel-color,#7c3aed))!important}
+body :is(.view,dialog,.modal) .local-search-toggle{color:var(--busca-texto,var(--theme-field,#fff))!important;border:1px solid var(--busca-borda,var(--menu-accent,var(--panel-color,#7c3aed)))!important;background:var(--busca-fundo,var(--menu-accent,var(--panel-color,#7c3aed)))!important}
 body :is(.location-dialog-header,.organogram-editor-header) .header-save-circle{color:#fff!important;border-color:#fff!important;background:transparent!important}
 
 /* Área / Setor / Local: preserve the chosen badge color and the menu edit accent. */
