@@ -790,7 +790,7 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
   background: radial-gradient(circle at 100% 100%, transparent 15.5px, var(--menu-accent) 16px) left top / 16px 16px no-repeat, radial-gradient(circle at 0 100%, transparent 15.5px, var(--menu-accent) 16px) right top / 16px 16px no-repeat; }
 /* Telas baixas: as teclas encolhem para o quadro fixo do valor, com o teclado aberto, deixar espaço para rolar o resto. */
 @media (max-height: 700px) { .transferencia-tela .transferencia-teclado { grid-auto-rows: 38px; } }
-.transferencia-tela .transferencia-valor-cab { position: sticky; top: -6px; margin-top: -6px; z-index: 4; display: grid; gap: 6px; padding: 8px 16px 12px; border-radius: 16px; box-shadow: 0 -14px 0 0 var(--layout-gap, #f5f5f7); background: var(--menu-accent); color: #fff; }
+.transferencia-tela .transferencia-valor-cab { position: sticky; top: 0; margin-top: 0; z-index: 4; display: grid; gap: 6px; padding: 8px 16px 12px; border-radius: 16px; box-shadow: 0 -14px 0 0 var(--layout-gap, #f5f5f7); background: var(--menu-accent); color: #fff; }
 .transferencia-tela .transferencia-valor-rotulo { font: 600 13px/18px var(--ui-font); color: rgba(255, 255, 255, .9); }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela { width: 100%; min-height: 40px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: #fff; text-align: left; font: 700 34px/1.15 var(--ui-font); cursor: pointer; }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela::placeholder { color: rgba(255, 255, 255, .78); font-weight: 600; font-size: 22px; }
@@ -1027,3 +1027,7 @@ body :is(#sector-view,.view,dialog,.modal).compras-dialog:not(.transferencia-tel
   .compras-dialog:not(.transferencia-tela) .compras-fieldset > :is(.account-status:not(.compras-tipo-pessoa), .compras-interruptor):hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
 }
 .compras-dialog:not(.transferencia-tela) .compras-fieldset > :is(.account-status:not(.compras-tipo-pessoa), .compras-interruptor):focus-within { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+/* ESPAÇO ÚNICO ENTRE O CABEÇALHO E O PRIMEIRO QUADRO (Rodrigo, 26/11/2026): 14 px — o mesmo da lateral — em todas as abas (o vão de 6 px entre cabeçalho e conteúdo saiu: --panel-gap). A contagem da lista ("4 grupos · 12 itens…") sobe para o cabeçalho, para os quadros brancos começarem logo abaixo. */
+#sector-view .panel > .head > .financial-list-summary { position: absolute; right: 14px; bottom: 8px; z-index: 7; margin: 0; padding: 0; max-width: 55%; text-align: right; color: rgba(255, 255, 255, .88); font: 500 11px/16px var(--ui-font); pointer-events: none; }
+/* O formulário de grupo vazio (escondido, só ocupa a margem de baixo) não pode empurrar a lista: o primeiro quadro fica a 14 px do cabeçalho. */
+#sector-view .panel > .content > form:not(:has(*)) { margin: 0; }
