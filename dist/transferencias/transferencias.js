@@ -224,6 +224,7 @@
     clipe: '<path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/>',
     fechar: '<path d="M6 6l12 12M18 6 6 18"/>',
     baixo: '<path d="m6 9 6 6 6-6"/>',
+    lixeira: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
     mais: '<path d="M12 5v14M5 12h14"/>',
     camera: '<path d="M3 7h12v10H3zM15 11l6-3v8l-6-3"/><circle cx="9" cy="12" r="1.6"/>',
     documento: '<path d="M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6"/>',
@@ -232,6 +233,11 @@
   const tamanho = (b) => (b < 1024 * 1024 ? Math.max(1, Math.round(b / 1024)) + ' KB' : (b / 1024 / 1024).toFixed(1).replace('.', ',') + ' MB');
   const hora24 = (t) => /^([01]\d|2[0-3]):[0-5]\d$/.test(t);
 
+  /** Botão redondo de excluir: cinza em repouso, vermelho ao tocar ou passar (o + em círculo faz o mesmo, na cor do cabeçalho). */
+  function botaoExcluir(rotulo, acao, icone = 'lixeira') {
+    const b = el('button', 'transferencia-circulo transferencia-circulo-excluir'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = U.svg(ICONE[icone]); b.onclick = acao;
+    return b;
+  }
   /** Chave de ligar e desligar com texto ao lado (Sim/Não, Com lacre/Sem lacre). Devolve só a linha da chave, no tamanho da linha do quadro. */
   function chave(titulo, ligada, textos, aoMudar) {
     return U.quadroSituacao(titulo, ligada, { textos, aoMudar }).querySelector('.account-status-row');
@@ -282,8 +288,7 @@
       const miniatura = icone === 'imagem' && item.url ? el('img', 'transferencia-anexo-img') : selo(icone);
       if (icone === 'imagem' && item.url) { miniatura.src = item.url; miniatura.alt = ''; }
       const nome = el('span', 'transferencia-anexo-nome', nomeArquivo); nome.append(el('small', null, detalhe));
-      const remover = el('button', 'transferencia-anexo-remover'); remover.type = 'button'; remover.setAttribute('aria-label', 'Remover ' + nomeArquivo); remover.innerHTML = U.svg(ICONE.fechar);
-      remover.onclick = () => { if (item.url) URL.revokeObjectURL(item.url); if (item.gravacao && audio) audio.limpar(); anexos.splice(anexos.indexOf(item), 1); l.remove(); resumir(); };
+      const remover = botaoExcluir('Remover ' + nomeArquivo, () => { if (item.url) URL.revokeObjectURL(item.url); if (item.gravacao && audio) audio.limpar(); anexos.splice(anexos.indexOf(item), 1); l.remove(); resumir(); }, 'fechar');
       item.linha = l; l.append(miniatura, nome, remover); anexos.push(item); lista.append(l); resumir();
     }
     function escolher(aceita, icone, camera) {
@@ -402,7 +407,7 @@
           retornosBox.replaceChildren(...estado.retornos.map((r, i) => {
             const rotulo = 'Retorno ' + (i + 1);
             const item = el('div', 'transferencia-opcao');
-            const cab = linha(rotulo, chave(rotulo, r.com, ['Com lacre', 'Sem lacre'], (v) => { r.com = v; desenharRetornos(v ? i : undefined); }), U.botaoRemover('Remover ' + rotulo.toLowerCase(), () => { estado.retornos.splice(i, 1); desenharRetornos(); }));
+            const cab = linha(rotulo, chave(rotulo, r.com, ['Com lacre', 'Sem lacre'], (v) => { r.com = v; desenharRetornos(v ? i : undefined); }), botaoExcluir('Remover ' + rotulo.toLowerCase(), () => { estado.retornos.splice(i, 1); desenharRetornos(); }));
             cab.classList.add('transferencia-retorno-cab'); item.append(cab);
             if (r.com) {
               const campoLacre = entrada('text', r.numero, { placeholder: 'Ex.: 001', maxLength: 100 });

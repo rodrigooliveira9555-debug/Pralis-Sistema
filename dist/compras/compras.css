@@ -857,8 +857,6 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .transferencia-anexo-img { flex: none; width: 36px; height: 36px; border-radius: 8px; object-fit: cover; }
 .transferencia-tela .transferencia-anexo-nome { flex: 1 1 auto; min-width: 0; display: grid; font: 500 14px/18px var(--ui-font); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .transferencia-tela .transferencia-anexo-nome small { color: var(--muted, #8e8e93); font-weight: 400; }
-.transferencia-tela .transferencia-anexo-remover { flex: none; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); color: var(--muted, #8e8e93); cursor: pointer; }
-.transferencia-tela .transferencia-anexo-remover svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .transferencia-tela .transferencia-linha-audio { display: grid; align-items: start; gap: 8px; }
 .transferencia-tela .transferencia-linha-topo { display: flex; align-items: center; gap: 12px; }
 .transferencia-tela .transferencia-audio .people-banner-tools { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -901,3 +899,7 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .transferencia-linha-acao:is(:hover, :focus-visible) .transferencia-circulo { background: var(--menu-accent); color: #fff; }
 /* Sem o cabeçalho (Ocultar cabeçalho superior) o quadro do valor fica a 14 px do topo, a mesma margem das laterais e do fim da tela. */
 .transferencia-tela.people-top-hidden .transferencia-valor-cab { top: 0; margin-top: 0; }
+/* Botões redondos: cinza em repouso; excluir fica vermelho e o + fica na cor do cabeçalho ao tocar ou passar. Linhas ficam alaranjadas ao passar (a máscara padrão). */
+.transferencia-tela .transferencia-circulo:not(.transferencia-circulo-excluir):is(:hover, :active, :focus-visible):not(:disabled) { background: var(--menu-accent); color: #fff; }
+.transferencia-tela .transferencia-circulo-excluir:is(:hover, :active, :focus-visible) { background: var(--cicluz-danger, #e34343); color: #fff; }
+.transferencia-tela .transferencia-quadro .transferencia-linha:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }

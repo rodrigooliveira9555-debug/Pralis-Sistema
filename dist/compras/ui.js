@@ -927,7 +927,8 @@
       const r = ancora.getBoundingClientRect();
       const embaixo = r.bottom + 6 + painel.offsetHeight <= window.innerHeight - 8;
       painel.style.top = Math.max(8, Math.round(embaixo ? r.bottom + 6 : r.top - 6 - painel.offsetHeight)) + 'px';
-      painel.style.left = Math.max(8, Math.min(Math.round(r.left), window.innerWidth - painel.offsetWidth - 8)) + 'px';
+      // Padrão (Rodrigo, 25/11/2026): o painel abre sempre alinhado ao canto direito do campo, para baixo (ou para cima, se não couber).
+      painel.style.left = Math.max(8, Math.min(Math.round(r.right - painel.offsetWidth), window.innerWidth - painel.offsetWidth - 8)) + 'px';
       if (foco) foco.focus();
     }
     painel.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); abrir(false); ancora.focus(); } });
