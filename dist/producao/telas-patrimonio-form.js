@@ -1,5 +1,5 @@
 /*
- * RET - Patrimônios: cadastro em seis etapas (17/11/2026). EXPERIMENTO de 26/11/2026 (Washington): a trilha de círculos (CicluzStepper) deu lugar ao quadro de etapa do padrão da Transferência:
+ * RET - Patrimônios: cadastro em seis etapas (17/11/2026), no padrão numerado do cadastro de fornecedores (CicluzStepper):
  * 1 Cadastro e identificação · 2 Imagens e documentação · 3 Localização e responsabilidade · 4 Composição, peças e características
  * técnicas · 5 Aquisição, financeiro e depreciação · 6 Manutenção, controle e revisão. Avançar confere a etapa; Voltar e as
  * etapas numeradas permitem corrigir sem perder nada. Imagens e documentos ficam no IndexedDB de Documentações (nunca no
@@ -679,29 +679,8 @@
         /* navegação */
         const quadros = [e1, e2, e3, e4, e5, e6]; let atual = 0;
         const erroEtapa = el('p', 'profiles-error'); erroEtapa.setAttribute('role', 'alert');
-        /* Quadro da etapa (padrão da Nova Transferência): o quadro azul fixo no topo diz "Etapa N de 6", o nome da etapa e uma barra de seis
-           segmentos; abaixo, a linha "Ir para a etapa" abre a lista das seis. As peças vêm da Transferência (CicluzTransferencias.pecas); o
-           contêiner transferencia-contexto dá o escopo transferencia-tela a estas duas peças e as prende juntas ao topo (quadro azul + Ir para a etapa). */
-        const { quadro: quadroT, secao: secaoT, linhaQueAbre } = window.CicluzTransferencias.pecas;
-        const repetido = dlg.querySelector('.compras-dialog-sub'); if (repetido) repetido.remove(); // o caminho já está no cabeçalho
-        const nomes = PD.etapas();
-        const rotEtapa = el('span', 'transferencia-valor-rotulo'); const titEtapa = el('span', 'patrimonio-etapa-titulo');
-        const segmentos = el('ol', 'patrimonio-etapa-barra'); segmentos.setAttribute('aria-hidden', 'true'); nomes.forEach(() => segmentos.append(el('li')));
-        const cabEtapa = el('div', 'transferencia-valor-cab'); cabEtapa.append(rotEtapa, titEtapa, segmentos);
-        const irAbre = linhaQueAbre('Ir para a etapa', () => abrirIr(painelIr.hidden));
-        const painelIr = el('div', 'transferencia-multi-painel'); painelIr.hidden = true;
-        const opcaoIr = el('div', 'transferencia-opcao'); opcaoIr.append(irAbre.no, painelIr);
-        function abrirIr(sim) {
-          if (sim) painelIr.replaceChildren(quadroT(...nomes.map((nome, i) => {
-            const b = el('button', 'transferencia-linha transferencia-linha-acao'); b.type = 'button'; b.disabled = novo && i > atual; if (i === atual) b.setAttribute('aria-current', 'step');
-            b.append(el('span', 'transferencia-linha-rotulo', (i + 1) + ' · ' + nome), el('span', 'transferencia-linha-valor', i < atual ? 'Feita' : i === atual ? 'Atual' : ''));
-            b.onclick = () => { abrirIr(false); ir(i); };
-            return b;
-          })));
-          painelIr.hidden = !sim; irAbre.abrir(sim);
-        }
-        dlg.addEventListener('click', (e) => { if (!painelIr.hidden && !opcaoIr.contains(e.target)) abrirIr(false); });
-        const ctxEtapa = el('div', 'transferencia-tela transferencia-contexto'); ctxEtapa.append(cabEtapa, secaoT('', quadroT(opcaoIr)));
+        const nomesEtapas = () => PD.etapas().map((label) => ({ label }));
+        const barra = window.CicluzStepper.create({ steps: nomesEtapas(), current: 0, label: 'Etapas do cadastro do patrimônio', podeIr: (i) => !novo || i <= atual, onSelect: (i) => ir(i) });
         const cancelar = botao('Cancelar', () => dlg.close(), 'btn secondary footer-cancel-accent');
         const voltar = botao('Voltar', () => ir(atual - 1), 'btn secondary footer-cancel-accent form-back-action'); voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
         const avancar = botao('Avançar', () => { const falta = conferir()[atual]; if (falta) { erroEtapa.textContent = falta; U.sinalizarObrigatorios(quadros[atual]); return; } ir(atual + 1); }, 'btn form-next-action');
@@ -711,15 +690,13 @@
           atual = Math.max(0, Math.min(quadros.length - 1, i));
           quadros.forEach((q, k) => mostrar(q, k === atual));
           if (atual === 5) pintarRevisao();
-          rotEtapa.textContent = 'Etapa ' + (atual + 1) + ' de ' + quadros.length; titEtapa.textContent = nomes[atual];
-          [...segmentos.children].forEach((s, k) => s.classList.toggle('feito', k <= atual));
-          irAbre.resumo.textContent = (atual + 1) + ' de ' + quadros.length; abrirIr(false); erroEtapa.textContent = '';
+          barra.update(nomesEtapas(), atual); erroEtapa.textContent = '';
           const ultima = atual === quadros.length - 1;
           nav.replaceChildren(...[atual > 0 && voltar, cancelar, ultima && salvarFim, !ultima && avancar].filter(Boolean));
           // Troca de etapa recomeça do alto (regra de 17/11/2026).
-          if (form.isConnected && cabEtapa.isConnected) cabEtapa.scrollIntoView({ block: 'start' });
+          if (form.isConnected && barra.el.isConnected) barra.el.scrollIntoView({ block: 'start' });
         }
-        form.append(ctxEtapa, ...quadros, erroEtapa, nav);
+        form.append(barra.el, ...quadros, erroEtapa, nav);
         desenharImagens(); desenharDocs(); desenharMovs(); desenharPecas(); desenharMan(); desenharVinc(); pintarComposto(); pintarTecnicas(); pintarEnergia(); pintarEspec(); pintarResp(); desenharUt(); desenharFicha(); pintarProducao(); pintarGarSeg(); pintarMan(); pintarInsp(); pintarSelectsDoc();
         gDoc.value = docAtual.garantia && documentos.some((d) => d.id === docAtual.garantia) ? docAtual.garantia : ''; iDoc.value = docAtual.inspecao && documentos.some((d) => d.id === docAtual.inspecao) ? docAtual.inspecao : '';
         ir(0);

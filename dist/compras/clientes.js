@@ -337,7 +337,7 @@
         const tipoBox = el('div', 'account-status compras-situacao-quadro compras-tipo-pessoa'); tipoBox.append(el('span', null, 'Tipo de cliente'), cartoesTopo);
         pintarTopo();
         tipoBox.classList.add('compras-largo');
-        const barraBox = el('div', 'compras-largo');
+        const barraBox = el('div', 'compras-largo stepper-caixa');
         const corpo = el('div', 'compras-largo');
         const erroEtapa = el('p', 'profiles-error compras-largo'); erroEtapa.setAttribute('role', 'alert');
         const nav = el('div', 'compras-form-rodape compras-etapas-nav compras-largo');
@@ -437,7 +437,7 @@
           corpo.replaceChildren(...passos);
           const nomes = D.etapasCliente(tipo, cadastro, { semContrato: !comContrato(), contratoPF: contratoPF() });
           if (nomes.length) {
-            barra = window.CicluzStepper.create({ steps: nomes.map((label) => ({ label })), current: 0, label: 'Etapas do cadastro do cliente', onSelect: (i) => { if (c || i <= passo) ir(i); } });
+            barra = window.CicluzStepper.create({ steps: nomes.map((label) => ({ label })), current: 0, label: 'Etapas do cadastro do cliente', podeIr: (i) => Boolean(c) || i <= passo, onSelect: (i) => ir(i) });
             barraBox.replaceChildren(barra.el); mostrar(barraBox, true);
           } else { barra = null; barraBox.replaceChildren(); mostrar(barraBox, false); } // sem barra, a caixa vazia não ocupa espaço entre os quadros
           ir(0);
@@ -455,7 +455,7 @@
             if (contratoPF()) Object.assign(etapaDoBloco, { 'Endereço': 0, 'Contrato': 1 });
             revisao.replaceChildren(el('p', 'profiles-note', 'Confira os dados antes de salvar. Para corrigir, toque em Editar no bloco.'), dlDe(secoesCliente(registro()), (t) => (t in etapaDoBloco ? () => ir(etapaDoBloco[t]) : null)));
           }
-          U.subirAoTopo(barraBox, form);
+          U.subirAoTopo(barra ? barra.el : barraBox, form);
           nav.replaceChildren(...(etapas ? [passo > 0 && voltar, cancelar, (c || ultima) && salvarFim, !ultima && avancar] : [cancelar, salvarFim]).filter(Boolean));
         }
         const nomes0 = () => D.etapasCliente(tipo, cadastro, { semContrato: !comContrato(), contratoPF: contratoPF() }).map((label) => ({ label }));
