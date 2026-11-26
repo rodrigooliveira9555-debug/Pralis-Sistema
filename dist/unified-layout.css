@@ -161,7 +161,7 @@ body .view :is(.location-move,.menu-item-move,.drag-handle,.job-drag-handle,.acc
 body :is(.view,dialog,.modal) .local-search-control{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
 body :is(.view,dialog,.modal) .local-search-control>input{flex:1;min-width:120px}
 body :is(.view,dialog,.modal) input[hidden]{display:none!important}
-body :is(.view,dialog,.modal) .local-search-toggle{color:var(--busca-texto,var(--theme-field,#fff))!important;border:1px solid var(--busca-borda,var(--menu-accent,var(--panel-color,#7c3aed)))!important;background:var(--busca-fundo,var(--menu-accent,var(--panel-color,#7c3aed)))!important}
+body :is(.view,dialog,.modal) .local-search-toggle{color:var(--busca-texto,var(--muted,#6e6e73))!important;border:1px solid var(--busca-borda,transparent)!important;background:var(--busca-fundo,color-mix(in srgb,var(--muted,#6e6e73) 18%,transparent))!important}
 body :is(.location-dialog-header,.organogram-editor-header) .header-save-circle{color:#fff!important;border-color:#fff!important;background:transparent!important}
 
 /* Área / Setor / Local: preserve the chosen badge color and the menu edit accent. */

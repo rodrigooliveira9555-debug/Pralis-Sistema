@@ -106,10 +106,10 @@ body :is(.view,dialog,.modal) input[type=search]::-webkit-search-cancel-button{-
 
 /* Canonical library roles: all source, online and removed grids share these rules. */
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field){--library-accent:var(--menu-accent,var(--dialog-accent,var(--panel-color,#7c3aed)));font:var(--ui-label-weight) var(--ui-label)/var(--ui-label-line,18px) var(--ui-font);color:var(--ui-label-color)}
-body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot){box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 32px!important;width:32px!important;height:32px!important;min-height:32px!important;padding:6px!important;border:1px solid var(--library-accent)!important;border-radius:var(--icon-radius,50%)!important;background:var(--library-accent)!important;color:var(--theme-field,#fff)!important;box-shadow:none!important;cursor:pointer}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot){box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 32px!important;width:32px!important;height:32px!important;min-height:32px!important;padding:6px!important;border:1px solid transparent!important;border-radius:var(--icon-radius,50%)!important;background:color-mix(in srgb,var(--muted,#6e6e73) 18%,transparent)!important;color:var(--icone-escolha,var(--muted,#6e6e73))!important;box-shadow:none!important;cursor:pointer}
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot)[hidden]{display:none!important}
-body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot):is([aria-pressed=true],.selected){border-color:var(--library-accent)!important;background:var(--library-accent)!important;box-shadow:inset 0 0 0 1px var(--library-accent)!important}
-body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot):hover{border-color:var(--library-accent)!important;background:var(--theme-field,#fff)!important}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot):is([aria-pressed=true],.selected){--icone-escolha:#fff;border-color:var(--library-accent)!important;background:var(--library-accent)!important;box-shadow:inset 0 0 0 1px var(--library-accent)!important}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot):not([aria-pressed=true]):not(.selected):hover{border-color:transparent!important;background:color-mix(in srgb,var(--library-accent) 30%,var(--theme-card,#fff))!important}
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot):focus-visible{outline:2px solid var(--library-accent)!important;outline-offset:3px}
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot) svg{width:18px!important;height:18px!important;flex-shrink:0}
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot) :is(svg,span){color:var(--theme-field,#fff)!important}
@@ -241,9 +241,8 @@ body .uniforms-table tr.is-cancelled td.uniforms-lines:not(.uniforms-num){text-d
 .uniforms-row-actions{white-space:nowrap;text-align:right!important}
 .uniforms-icon-action{display:inline-grid;place-items:center;width:32px;height:32px;margin-left:4px;padding:0;border:1px solid var(--layout-line,#d4d4d8);border-radius:50%;background:var(--theme-card,#fff);color:var(--navigation-ink,#a2a0aa);cursor:pointer;vertical-align:middle}
 .uniforms-icon-action svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.uniforms-icon-action:hover{border-color:currentColor}
+.uniforms-icon-action.is-danger:not(:disabled):is(:hover,:focus-visible){background:#ef4444;border-color:#ef4444;color:#fff}
 .uniforms-icon-action.is-accent{color:var(--menu-accent,#7c3aed)}
-.uniforms-icon-action.is-danger{background:#ef4444;border-color:#ef4444;color:#fff}
 .uniforms-confirm-text{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
 .uniforms-dialog{width:min(720px,calc(100vw - 32px))}
 body.dark-theme .uniforms-form label.is-inactive input,body.dark-theme .uniforms-balance.is-empty{color:#f87171!important}
@@ -683,7 +682,6 @@ button.stepper-node:focus-visible{outline:2px solid var(--stepper-accent);outlin
 /* Acompanhamento do Cadastro Simples: Editar, Agendar e Visualizar (redondos, tamanho único; só nesta lista) */
 .people-simple-list .uniforms-icon-action.people-act{width:36px;height:36px;border-radius:50%;margin-left:6px}
 .people-simple-list .uniforms-icon-action.people-act svg{width:18px;height:18px}
-.people-simple-list .uniforms-icon-action.people-act.is-red{background:#ef4444;border-color:#ef4444;color:#fff}
 .people-simple-list .uniforms-icon-action.people-act.is-purple{background:var(--menu-accent,#7c3aed);border-color:var(--menu-accent,#7c3aed);color:#fff}
 .people-simple-list .uniforms-icon-action.people-act:hover{filter:brightness(1.08);border-color:transparent}
 .people-simple-list .uniforms-icon-action.people-act:focus-visible{outline:2px solid currentColor;outline-offset:2px;box-shadow:0 0 0 4px color-mix(in srgb,var(--menu-accent,#7c3aed) 35%,transparent)}
@@ -707,9 +705,9 @@ button.stepper-node:focus-visible{outline:2px solid var(--stepper-accent);outlin
 
 /* Botão redondo reutilizável (compartilhamento): círculo na cor de destaque, ícone branco, dica no hover, foco e toque longo */
 .share-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:4px}
-.round-action{position:relative;display:inline-grid;place-items:center;width:40px;height:40px;padding:0;border:0;border-radius:50%;background:var(--menu-accent,#7c3aed);color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.18);transition:filter .15s,transform .15s;flex:none;-webkit-touch-callout:none;user-select:none;touch-action:manipulation}
+.round-action{position:relative;display:inline-grid;place-items:center;width:40px;height:40px;padding:0;border:0;border-radius:50%;background:color-mix(in srgb,var(--muted,#6e6e73) 18%,transparent);color:var(--muted,#6e6e73);cursor:pointer;transition:transform .15s;flex:none;-webkit-touch-callout:none;user-select:none;touch-action:manipulation}
 .round-action svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
-.round-action:hover{filter:brightness(1.1)}.round-action:active{transform:scale(.96)}
+.round-action:not(:disabled):is(:hover,:focus-visible){background:var(--menu-accent,#7c3aed);color:#fff}.round-action:active{transform:scale(.96)}
 .round-action:focus-visible{outline:2px solid var(--menu-accent,#7c3aed);outline-offset:3px}
 .round-action:disabled{opacity:.45;cursor:not-allowed}
 .round-tip{position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);z-index:5;padding:5px 9px;border-radius:8px;background:#27272a;color:#fff;font:500 12px/16px var(--ui-font);white-space:nowrap;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .12s}
@@ -757,7 +755,10 @@ button.stepper-node:focus-visible{outline:2px solid var(--stepper-accent);outlin
  .tree-table .tree-cat td{padding-left:12px}
 }
 /* Ações de linha: círculo preenchido na cor da seção (herdada de --menu-accent), ícone branco (2026-11) */
-.uniforms-icon-action,.uniforms-icon-action.is-accent,.people-simple-list .uniforms-icon-action.people-act{width:36px;height:36px;border-radius:50%;background:var(--menu-accent,#ef4444);border-color:var(--menu-accent,#ef4444);color:#fff}
+/* Botão redondo de ação da linha (Rodrigo, 26/11/2026): parado, círculo cinza clarinho com ícone cinza; ao passar, cheio na cor do cabeçalho (excluir: vermelho). */
+.uniforms-icon-action,.uniforms-icon-action.is-accent,.people-simple-list .uniforms-icon-action.people-act{width:36px;height:36px;border-radius:50%;background:color-mix(in srgb,var(--muted,#6e6e73) 18%,transparent);border-color:transparent;color:var(--muted,#6e6e73)}
+.uniforms-icon-action:not(:disabled):is(:hover,:focus-visible),.people-simple-list .uniforms-icon-action.people-act:not(:disabled):is(:hover,:focus-visible){background:var(--menu-accent,#7c3aed);border-color:var(--menu-accent,#7c3aed);color:#fff}
+.people-simple-list .uniforms-icon-action.people-act.is-red:not(:disabled):is(:hover,:focus-visible),.uniforms-icon-action.is-danger:not(:disabled):is(:hover,:focus-visible){background:#ef4444;border-color:#ef4444;color:#fff}
 .uniforms-icon-action:hover{filter:brightness(1.1);border-color:transparent}
 .uniforms-icon-action:disabled{opacity:.45;cursor:not-allowed;filter:none}
 .actions .round-action{margin-left:0}
@@ -934,8 +935,6 @@ body .people-complete-pickbox > label.uniforms-enum > .local-search-control:has(
 body :is(.view,dialog,.modal,#sector-view) .people-complete-pickbox { border: 1px solid var(--layout-line, #dedee3); border-radius: 14px; background: var(--theme-card, #fff); margin: 0 0 14px; }
 body :is(.view,dialog,.modal,#sector-view) .people-complete-pickbox > label.uniforms-enum.people-complete-pick { border: 0; border-radius: 14px; background: transparent; }
 body :is(.view,dialog,.modal,#sector-view) .people-complete-pickbox > label.uniforms-enum.people-complete-pick:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
-body :is(.view,dialog,.modal,#sector-view) .people-complete-pickbox .local-search-toggle { --busca-fundo: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); --busca-borda: transparent; --busca-texto: var(--muted, #71717a); }
-body :is(.view,dialog,.modal,#sector-view) .people-complete-pickbox .local-search-toggle:is(:hover, :focus-visible) { --busca-fundo: var(--menu-accent); --busca-borda: transparent; --busca-texto: #fff; }
 /* Máscara da linha também nas linhas que usam .single-field-block (que fixava fundo transparente): a linha inteira recebe o sombreado ao passar o mouse ou focar. */
 body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset, .transferencia-quadro) > .single-field-block:is(:hover, :focus-within) { --linha-fundo: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
 /* MÁSCARA DE PASSAR O MOUSE EM TODO BOTÃO E CARTÃO CLICÁVEL (Rodrigo, 26/11/2026; referência: Cancelar/Avançar do rodapé): botão cheio fecha a cor (18% mais escura), botão de contorno e cartão ganham o sombreado da máscara única no miolo e a borda NÃO muda; ícones não trocam de cor. Cobre botões cheios de título e de avançar, etapas do cadastro, cartões de escolha (PF/PJ…), chaves Sim/Não e o recolher do cabeçalho. */
@@ -981,10 +980,10 @@ body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.un
 body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.uniforms-enum > select { grid-column: 2; grid-row: 1; margin: 0; --layout-line: transparent; --ui-border-base: transparent; --ui-control-bg: transparent; --theme-field: transparent; --ui-control-accent: transparent; --campo-altura: 34px; --campo-respiro: 0px; height: auto; min-height: 0; padding: 0; border: 0; box-shadow: none; background-color: transparent; text-align: right; text-align-last: right; font: 500 15px/20px var(--ui-font, inherit); color: var(--muted, #71717a); }
 body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.uniforms-enum > .local-search-control:not(:has(input:not([hidden]))) { grid-column: 3; grid-row: 1; margin: 0; }
 body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.uniforms-enum > .local-search-control:has(input:not([hidden])) { grid-column: 1 / -1; grid-row: 2; padding-bottom: 8px; }
-body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.uniforms-enum .local-search-toggle { --busca-fundo: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); --busca-borda: transparent; --busca-texto: var(--muted, #71717a); }
-body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.uniforms-enum .local-search-toggle:is(:hover, :focus-visible) { --busca-fundo: var(--menu-accent); --busca-texto: #fff; }
 /* TELA ESTREITA (até 600 px): o nome do campo ganha até 60% da linha para caber em duas linhas de 20 px e a linha continuar com 52 px; o valor fica com o resto. */
 @media (max-width: 600px) {
   body :is(dialog,.modal,#sector-view,.view) :is(.form-fields[data-quadro], .grupo-quadro) > label:not(.uniforms-enum), body .doc-capture-type { grid-template-columns: minmax(0, 60%) minmax(0, 1fr); gap: 0 8px; }
   body :is(dialog,.modal,#sector-view,.view) :is(.form-fields[data-quadro], .grupo-quadro) > label.uniforms-enum, body .people-complete-pickbox > label.uniforms-enum.people-complete-pick { grid-template-columns: minmax(0, 52%) minmax(0, 1fr) auto; }
 }
+/* Lupa redonda em qualquer tela: ao passar, cheia na cor do cabeçalho (parada, o cinza vem do padrão em unified-layout.css). */
+body :is(.view,dialog,.modal,#sector-view) .local-search-toggle:not(:disabled):is(:hover,:focus-visible){--busca-fundo:var(--menu-accent);--busca-borda:transparent;--busca-texto:#fff}
