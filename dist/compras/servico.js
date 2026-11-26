@@ -705,15 +705,26 @@
     return S.transacao((d) => S.definirReferencia(d, produtoId, valor, 'manual')) ? { ok: true } : erro('Não foi possível salvar.');
   }
 
+  // Ações programadas da Agenda (P-53): o ato que deu certo conta para a tarefa ligada à tela que espera por ele.
+  const contar = (acao, fn, quando = () => true) => (...a) => {
+    const r = fn(...a);
+    return window.CicluzAgendaRotina && quando(...a) ? window.CicluzAgendaRotina.contarSe(acao, r) : r;
+  };
+
   window.CicluzComprasServico = {
-    salvarAgenda, encerrarAgenda, cancelarData, moverData, proximasDatas, processarAgendas,
-    fornecedoresConvidaveis, enviarSolicitacao, pedidoUrgente,
+    salvarAgenda: contar('compras:agendar', salvarAgenda), encerrarAgenda, cancelarData, moverData, proximasDatas, processarAgendas,
+    fornecedoresConvidaveis, enviarSolicitacao: contar('compras:enviar-pedido', enviarSolicitacao), pedidoUrgente: contar('compras:pedido-urgente', pedidoUrgente),
     conviteDoToken, responderConvite, aceitarContraproposta,
     pedidosDoConvite, registrarSeparacao, produtosParaFornecedor, marcarProdutosQueVende,
-    aceitarOferta, contrapropor, encerrarRodada, fecharVencidas, encerrarSolicitacao, estadoOferta,
-    receberPedido, cancelarPedido,
-    produtosDoRecorte, mesmoLocal, salvarAgendaConferencia, encerrarAgendaConferencia, processarConferencias, proximasConferencias, salvarContagem,
-    resumoConferencia, aprovarConferencia, recusarConferencia, custoUnitario,
-    vincular, decidirVinculo, definirPrecoBase,
+    aceitarOferta: contar('compras:aceitar-oferta', aceitarOferta), contrapropor,
+    // Só o encerramento feito pela pessoa (o automático, por prazo, não conta).
+    encerrarRodada: contar('compras:encerrar-cotacao', encerrarRodada, (id, motivo = 'manual') => motivo === 'manual'),
+    fecharVencidas, encerrarSolicitacao, estadoOferta,
+    receberPedido: contar('compras:receber', receberPedido), cancelarPedido,
+    produtosDoRecorte, mesmoLocal, salvarAgendaConferencia: contar('compras:agendar-contagem', salvarAgendaConferencia),
+    encerrarAgendaConferencia, processarConferencias, proximasConferencias,
+    salvarContagem: contar('compras:concluir-contagem', salvarContagem, (id, valores, concluir) => Boolean(concluir)),
+    resumoConferencia, aprovarConferencia: contar('compras:aprovar-contagem', aprovarConferencia), recusarConferencia, custoUnitario,
+    vincular: contar('compras:vincular', vincular), decidirVinculo, definirPrecoBase: contar('compras:preco-base', definirPrecoBase),
   };
 })();

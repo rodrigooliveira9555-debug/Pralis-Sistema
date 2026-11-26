@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { agendaTelasIcone } from "@cicluz/db/schema";
-import type { PerfilSessao } from "@cicluz/shared";
+import { ACAO_GERAL, type PerfilSessao } from "@cicluz/shared";
 import { banco } from "../banco/conexao.ts";
 import { proibido } from "../erros.ts";
 import * as repo from "./compromissos.repository.ts";
@@ -13,11 +13,13 @@ import { horaLocal } from "./rotina.regras.ts";
 // - A tela avisa cada ação feita; o servidor soma na repetição pendente (a data do compromisso) e, ao chegar na
 //   quantidade, conclui a tarefa (a repetição avança, como no "concluir" normal).
 // - Conta para quem pode concluir a tarefa (responsável ou gestor); ação feita antes do dia da tarefa não conta.
+// - A ação geral "Salvar algo nesta tela" (tela:salvar, Zé 26/11/2026) existe em toda tela: só conta para a tarefa
+//   ligada à tela em que aconteceu.
 // - Em quais telas o ícone roxo aparece: o administrador decide (só as exceções ficam gravadas).
 
 export type ResultadoAcao = { id: string; feitas: number; quantidade: number; concluiu: boolean };
 
-export async function acaoFeita(perfil: PerfilSessao, acao: string, n: number, momento = new Date()): Promise<ResultadoAcao[]> {
+export async function acaoFeita(perfil: PerfilSessao, acao: string, n: number, momento = new Date(), tela?: string): Promise<ResultadoAcao[]> {
   const empresaId = perfil.empresa.id;
   if (!(await repo.estado(banco, empresaId))) return [];
   const hoje = horaLocal(momento).data;
@@ -25,6 +27,7 @@ export async function acaoFeita(perfil: PerfilSessao, acao: string, n: number, m
   for (const c of await repo.abertosComAcao(banco, empresaId, acao)) {
     // Ainda não chegou o dia desta repetição (ou da tarefa): não conta.
     if (c.data && c.data > hoje) continue;
+    if (acao === ACAO_GERAL && c.vinculoTela !== tela) continue;
     const r = await respostaDe(banco, perfil, c);
     if (!r.acesso.ver || !r.acesso.concluir) continue;
     const ocorrencia = c.data ?? c.criadoEm.toISOString().slice(0, 10);

@@ -277,8 +277,17 @@ export const tarefaDeTelaSchema = z.object({
   if (permissaoDaRegra(t.vinculoRef) !== t.paraQuemTem) ctx.addIssue({ code: "custom", message: "Esta tela não cria tarefa para esse grupo de pessoas.", path: ["paraQuemTem"] });
 });
 export const concluirPorVinculoSchema = z.object({ vinculoRef: z.string().regex(VINCULO_REF, "Referência inválida") });
-/** A tela avisa: a ação foi feita n vezes (P-53). */
-export const acaoFeitaSchema = z.object({ acao: z.string().regex(ACAO_TELA, "Ação de tela inválida"), quantidade: z.number().int().min(1).max(500).default(1) }).strict();
+/** Ação geral de toda tela do menu: "Salvar algo nesta tela" (Zé, 26/11/2026). Só conta para a tarefa ligada à tela. */
+export const ACAO_GERAL = "tela:salvar";
+/** A tela avisa: a ação foi feita n vezes (P-53). A ação geral vem com a tela em que aconteceu. */
+export const acaoFeitaSchema = z
+  .object({
+    acao: z.string().regex(ACAO_TELA, "Ação de tela inválida"),
+    quantidade: z.number().int().min(1).max(500).default(1),
+    tela: z.string().regex(VINCULO_TELA, "Endereço de tela inválido").optional()
+  })
+  .strict()
+  .refine((a) => a.acao !== ACAO_GERAL || Boolean(a.tela), { message: "A ação geral precisa da tela.", path: ["tela"] });
 /** O administrador liga ou desliga o ícone de agendar numa tela (P-53). */
 export const telaIconeSchema = z.object({ tela: z.string().regex(VINCULO_TELA, "Endereço de tela inválido"), mostrar: z.boolean() }).strict();
 export type TarefaDeTela = z.infer<typeof tarefaDeTelaSchema>;
