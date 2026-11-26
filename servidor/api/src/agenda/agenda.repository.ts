@@ -8,17 +8,21 @@ export async function listarMensagens(empresaId: string, compromissoId: string, 
   if (depois) filtros.push(sql`date_trunc('milliseconds', ${agendaMensagens.criadoEm}) > ${new Date(depois).toISOString()}::timestamptz`);
   // As 500 mais recentes, em ordem de envio.
   const linhas = await banco
-    .select({ id: agendaMensagens.id, autorId: agendaMensagens.autorId, autorNome: usuarioAutenticacao.name, texto: agendaMensagens.texto, criadoEm: agendaMensagens.criadoEm })
+    .select({
+      id: agendaMensagens.id, autorId: agendaMensagens.autorId, autorNome: usuarioAutenticacao.name, texto: agendaMensagens.texto, criadoEm: agendaMensagens.criadoEm,
+      arquivoId: agendaArquivos.id, arquivoNome: agendaArquivos.nome, arquivoTipo: agendaArquivos.tipo
+    })
     .from(agendaMensagens)
     .innerJoin(usuarioAutenticacao, eq(usuarioAutenticacao.id, agendaMensagens.autorId))
+    .leftJoin(agendaArquivos, and(eq(agendaArquivos.id, agendaMensagens.arquivoId), eq(agendaArquivos.empresaId, agendaMensagens.empresaId)))
     .where(and(...filtros))
     .orderBy(desc(agendaMensagens.criadoEm), desc(agendaMensagens.id))
     .limit(500);
   return linhas.reverse();
 }
 
-export async function inserirMensagem(empresaId: string, compromissoId: string, autorId: string, texto: string) {
-  const [l] = await banco.insert(agendaMensagens).values({ empresaId, compromissoId, autorId, texto }).returning();
+export async function inserirMensagem(empresaId: string, compromissoId: string, autorId: string, texto: string, arquivoId: string | null = null) {
+  const [l] = await banco.insert(agendaMensagens).values({ empresaId, compromissoId, autorId, texto, arquivoId }).returning();
   return l!;
 }
 

@@ -83,7 +83,7 @@ export function paraRegra(c: LinhaCompromisso, pessoas: Pessoa[], notas: R.Nota[
 export const acessoDe = (c: LinhaCompromisso, pessoas: Pessoa[], usuarioId: string) =>
   R.acesso({ criadoPor: c.gestorId, pessoas }, usuarioId);
 
-function resposta(c: LinhaCompromisso, participantes: LinhaParticipante[], notas: LinhaAvaliacao[], adiadoAte: Date | null, usuarioId: string): CompromissoResposta {
+function resposta(c: LinhaCompromisso, participantes: LinhaParticipante[], notas: LinhaAvaliacao[], adiadoAte: Date | null, usuarioId: string, acaoFeitas = 0): CompromissoResposta {
   const pessoas = pessoasDe(participantes);
   const acesso = acessoDe(c, pessoas, usuarioId);
   // Gestor vê todas as notas; responsável, só a própria autoavaliação (comparativo da tela); quem só vê, nenhuma.
@@ -101,6 +101,7 @@ function resposta(c: LinhaCompromisso, participantes: LinhaParticipante[], notas
     concluida: c.concluida, concluidaEm: c.concluidaEm ? c.concluidaEm.toISOString() : "",
     origemId: c.origemId ?? "", ocorrencia: c.ocorrencia ?? "",
     vinculoTela: c.vinculoTela ?? "", vinculoTitulo: c.vinculoTitulo ?? "", vinculoRef: c.vinculoRef ?? "",
+    acaoTela: c.acaoTela ?? "", acaoQuantidade: c.acaoQuantidade ?? null, acaoFeitas,
     criadoEm: c.criadoEm.toISOString(), atualizadoEm: c.atualizadoEm.toISOString(),
     versao: c.versao, acesso
   };
@@ -113,7 +114,8 @@ export async function respostaDe(ex: typeof banco | TransacaoBanco, perfil: Perf
   const ps = await repo.participantesDe(ex, empresaId, [c.id]);
   const ns = await repo.avaliacoesDe(ex, empresaId, [c.id]);
   const ad = await repo.adiamentosDe(ex, empresaId, perfil.usuarioId, [c.id]);
-  return resposta(c, ps, ns, ad[0]?.ate ?? null, perfil.usuarioId);
+  const pr = c.acaoTela && c.data ? await repo.progressoDe(ex, empresaId, [c.id]) : [];
+  return resposta(c, ps, ns, ad[0]?.ate ?? null, perfil.usuarioId, pr.find((p) => p.ocorrencia === c.data)?.feitas ?? 0);
 }
 
 /* ---------- Leitura ---------- */
@@ -139,7 +141,10 @@ export async function agenda(perfil: PerfilSessao): Promise<AgendaResposta> {
   const psPor = porItem(ps);
   const nsPor = porItem(ns);
   const adPor = new Map(ads.map((a) => [a.compromissoId, a.ate]));
-  const compromissos = itens.map((c) => resposta(c, psPor.get(c.id) ?? [], nsPor.get(c.id) ?? [], adPor.get(c.id) ?? null, u));
+  const comAcao = itens.filter((c) => c.acaoTela && c.data);
+  const progresso = comAcao.length ? await repo.progressoDe(banco, empresaId, comAcao.map((c) => c.id)) : [];
+  const feitasDe = (c: LinhaCompromisso) => progresso.find((p) => p.compromissoId === c.id && p.ocorrencia === c.data)?.feitas ?? 0;
+  const compromissos = itens.map((c) => resposta(c, psPor.get(c.id) ?? [], nsPor.get(c.id) ?? [], adPor.get(c.id) ?? null, u, feitasDe(c)));
 
   // Grupo visível: membro, dono, administrador, ou onde há compromisso que a pessoa vê.
   const admin = perfil.papel === "administrador";
@@ -222,7 +227,8 @@ function formularioDe(c: LinhaCompromisso, pessoas: Pessoa[]): Formulario {
     alerta: c.alertaMinutos, prioridade: c.prioridade as Formulario["prioridade"], sinalizado: c.sinalizado, etiquetas: c.etiquetas,
     subtarefas: subtarefasDe(c).map((s) => ({ id: s.id, titulo: s.titulo, concluida: s.concluida })),
     pessoas, avaliacaoTipo: c.avaliacaoTipo as Formulario["avaliacaoTipo"], colunaId: c.colunaId ?? "",
-    vinculoTela: c.vinculoTela ?? "", vinculoTitulo: c.vinculoTitulo ?? ""
+    vinculoTela: c.vinculoTela ?? "", vinculoTitulo: c.vinculoTitulo ?? "",
+    acaoTela: c.acaoTela ?? "", acaoQuantidade: c.acaoQuantidade ?? null
   };
 }
 
@@ -273,7 +279,10 @@ export function montar(f: Formulario, atual: { c: LinhaCompromisso; pessoas: Pes
     alertaMinutos: f.alerta, prioridade: f.prioridade, sinalizado: f.sinalizado,
     etiquetas: R.normalizarEtiquetas(f.etiquetas), subtarefas, avaliacaoTipo, colunaId: nuloSeVazio(f.colunaId),
     // Tela ligada: o nome só vale com o endereço; sem nome, mostra "Abrir a tela".
-    vinculoTela: nuloSeVazio(f.vinculoTela), vinculoTitulo: f.vinculoTela ? nuloSeVazio(f.vinculoTitulo.trim()) : null
+    vinculoTela: nuloSeVazio(f.vinculoTela), vinculoTitulo: f.vinculoTela ? nuloSeVazio(f.vinculoTitulo.trim()) : null,
+    // Ação programada só com tela ligada (P-53); sem quantidade, uma vez.
+    acaoTela: f.vinculoTela && f.acaoTela ? f.acaoTela : null,
+    acaoQuantidade: f.vinculoTela && f.acaoTela ? f.acaoQuantidade ?? 1 : null
   } satisfies Partial<NovoCompromisso>;
 
   const erro = R.validar({
@@ -406,9 +415,10 @@ function horaFimCom(hora: string | null | undefined, dur: number) {
  * ocorrência) e ele passa para a próxima data, subtarefas desmarcadas. Na última vez, ele mesmo é concluído.
  * Pedido repetido ou cartão velho (ocorrência que já passou) não muda nada.
  */
-export async function concluir(perfil: PerfilSessao, id: string, pedido: Conclusao) {
+/** semExpediente: a conclusão veio de uma ação feita numa tela (P-53), não de usar a Agenda. */
+export async function concluir(perfil: PerfilSessao, id: string, pedido: Conclusao, opcoes: { semExpediente?: boolean } = {}) {
   const empresaId = perfil.empresa.id;
-  return gravar(perfil, async (tx) => {
+  return gravar(perfil, { semExpediente: Boolean(opcoes.semExpediente) }, async (tx) => {
     const { c, pessoas } = await carregar(tx, perfil, id, "concluir");
     const sem = async () => ({ resultado: "sem-mudanca" as const, compromisso: await respostaDe(tx, perfil, c), copia: null });
     const agora = new Date();

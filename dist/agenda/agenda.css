@@ -496,3 +496,54 @@ body.dark-theme .agenda-avatar { background: color-mix(in srgb, var(--menu-accen
 .agenda-desempenho-apoio > div { display: grid; min-width: 0; }
 .agenda-desempenho-apoio dt { font: 400 var(--ui-note)/var(--ui-subtitle-line) var(--ui-font); color: var(--muted, #73737a); }
 .agenda-desempenho-apoio dd { margin: 0; font: 600 var(--ui-text)/var(--ui-text-line) var(--ui-font); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+/* ===== Áudio do Rodrigo de 25/11/2026 (P-53): Agenda no padrão "linha por linha" da Nova Transferência ===== */
+/* A janela usa as peças e o CSS da referência (.transferencia-tela, .transferencia-secao/-quadro/-linha), sem regra
+   paralela; aqui só o que é da Agenda. */
+.agenda-form .agenda-linha-perigo .transferencia-linha-rotulo { color: var(--cicluz-danger, #dc2626); }
+.agenda-form .agenda-linha-leva .transferencia-linha-valor { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agenda-form .agenda-subtarefa-edicao { gap: 12px; }
+.agenda-form .agenda-subtarefa-edicao > input { flex: 1 1 auto; min-width: 0; text-align: left; }
+.agenda-form .agenda-linha-adicionar .transferencia-circulo { margin-left: auto; }
+.agenda-form .agenda-repeticao-resumo:empty { display: none; }
+.agenda-form .agenda-dias { gap: 6px; flex-wrap: nowrap; }
+.agenda-form .agenda-dias .compras-chip { min-width: 30px; padding: 0 8px; }
+
+/* Aviso na tela (P-53): tarefas de hoje da tela aberta, com "Feito". Cartão flutuante no canto, acima da barra de baixo,
+   no modelo dos painéis (cartão cinza do fundo, quadro branco de linhas). */
+.agenda-aviso-tela {
+  position: fixed; right: var(--margem-lateral, 14px); bottom: calc(var(--margem-lateral, 14px) * 2 + 60px); z-index: 40;
+  width: min(340px, calc(100vw - 2 * var(--margem-lateral, 14px))); padding: 12px;
+  background: var(--layout-gap, #f2f2f4); border: 1px solid var(--layout-line, #e4e4e7); border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, .18); --menu-accent: #7c3aed;
+}
+.agenda-aviso-tela[hidden] { display: none; }
+.agenda-aviso-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.agenda-aviso-cab b { font: 600 var(--ui-label, 13px)/18px var(--ui-font); color: var(--muted, #71717a); }
+.agenda-aviso-fechar { width: 28px; height: 28px; border-radius: 50%; border: 0; background: transparent; color: var(--muted, #71717a); display: grid; place-items: center; cursor: pointer; }
+.agenda-aviso-fechar svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+.agenda-aviso-quadro { background: var(--theme-card, #fff); border: 1px solid var(--layout-line, #e4e4e7); border-radius: 12px; overflow: hidden; }
+.agenda-aviso-linha { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 14px; }
+.agenda-aviso-linha + .agenda-aviso-linha { border-top: 1px solid var(--layout-line, #e4e4e7); }
+.agenda-aviso-texto { display: grid; flex: 1 1 auto; min-width: 0; }
+.agenda-aviso-texto b { font: 500 15px/20px var(--ui-font); color: var(--layout-ink, #18181b); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agenda-aviso-texto small { font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #71717a); }
+.agenda-aviso-feito { flex: 0 0 auto; }
+.agenda-aviso-mais { margin: 0; padding: 8px 14px; border-top: 1px solid var(--layout-line, #e4e4e7); font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--muted, #71717a); }
+
+/* Chat: foto e áudio dentro do balão (P-53) */
+.agenda-chat-anexo-foto { display: block; max-width: min(240px, 100%); max-height: 240px; border-radius: 10px; margin-bottom: 4px; }
+.agenda-chat-anexo-audio { display: block; width: min(240px, 100%); height: 36px; margin-bottom: 4px; }
+.agenda-chat-mais { width: 36px; height: 36px; flex: 0 0 36px; border-radius: 50%; border: 1px solid var(--layout-line, #e4e4e7); background: transparent; color: var(--muted, #71717a); display: grid; place-items: center; cursor: pointer; }
+.agenda-chat-mais svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.agenda-chat-mais.gravando { background: var(--cicluz-danger, #dc2626); border-color: var(--cicluz-danger, #dc2626); color: #fff; }
+/* Janela da lista: cor e ícone numa janela própria, em grade dentro do quadro (não são linhas de campo). */
+.agenda-form .agenda-escolhas-grade { padding: 14px; }
+.agenda-form .agenda-escolhas-grade > .agenda-cores { flex-wrap: wrap; }
+.agenda-form .transferencia-linha > .agenda-lista-icone { flex: 0 0 auto; margin-left: auto; }
+/* O fim da janela (excluir e "criado em") é um grupo como os outros: quadro na largura toda. */
+.agenda-form .agenda-form-rodape { display: block; }
+.agenda-form .transferencia-linha > .agenda-dias { margin-left: auto; justify-content: flex-end; }
+/* Pessoas do compromisso: nome, chips das permissões (quebram para a linha de baixo se não couberem) e remover. */
+.agenda-form .agenda-pessoa { flex-wrap: wrap; row-gap: 8px; padding-top: 10px; padding-bottom: 10px; }
+.agenda-form .agenda-pessoa > .compras-chips { margin-left: auto; justify-content: flex-end; }

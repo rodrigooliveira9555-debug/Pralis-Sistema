@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import {
   compromissoIdSchema,
+  acaoFeitaSchema,
   colaboradorDaContaSchema,
   concluirPorVinculoSchema,
   configPessoaSchema,
@@ -10,9 +11,11 @@ import {
   listarMensagensSchema,
   mensagemSchema,
   ok,
-  tarefaDeTelaSchema
+  tarefaDeTelaSchema,
+  telaIconeSchema
 } from "@cicluz/shared";
 import { perfilDaRequisicao } from "../auth/guards.ts";
+import * as acoes from "./acoes-tela.service.ts";
 import * as rotina from "./rotina.service.ts";
 
 // Rotas da rotina da Agenda (0008, P-46): configurações por pessoa, desempenho, tarefa vinda de tela, chat do grupo.
@@ -50,6 +53,17 @@ export async function registrarRotasRotina(app: FastifyInstance) {
   app.post("/api/agenda/tarefas-de-tela/cancelar", async (request) => {
     const { vinculoRef } = concluirPorVinculoSchema.parse(request.body);
     return ok(await rotina.cancelarPorVinculo(perfilDaRequisicao(request), vinculoRef));
+  });
+
+  /* Ações programadas por tela (0012, P-53): a tela avisa a ação feita; o administrador escolhe as telas do ícone */
+  app.post("/api/agenda/acoes-de-tela", { config: limiteTarefas }, async (request) => {
+    const { acao, quantidade } = acaoFeitaSchema.parse(request.body);
+    return ok({ tarefas: await acoes.acaoFeita(perfilDaRequisicao(request), acao, quantidade) });
+  });
+  app.get("/api/agenda/telas-icone", async (request) => ok({ telas: await acoes.telasIcone(perfilDaRequisicao(request)) }));
+  app.put("/api/agenda/telas-icone", async (request) => {
+    const { tela, mostrar } = telaIconeSchema.parse(request.body);
+    return ok(await acoes.definirTelaIcone(perfilDaRequisicao(request), tela, mostrar));
   });
 
   /* Conta ligada ao colaborador e expediente dos Horários/Escalas (0009, P-46 item 5) */

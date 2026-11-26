@@ -85,6 +85,8 @@ async function abrirPagina(largura, altura = 844, c = ADMIN) {
   return pagina;
 }
 const dialogo = (p) => p.locator('dialog.agenda-dialog[open]').last();
+/** Janela do compromisso no padrão linha por linha (P-53): Pessoas, Subtarefas, Local, Mensagens e Arquivos abrem por dentro. */
+const abrirLinha = (p, nome) => dialogo(p).locator('.agenda-linha-leva', { hasText: nome }).first().click();
 /** Espera o servidor responder tudo o que a tela pediu. */
 const quieto = (p) => p.waitForFunction(() => CicluzAgendaDados.emAndamento === 0, null, { timeout: 15000 });
 const dados = async (p) => { await quieto(p); return p.evaluate(() => JSON.parse(JSON.stringify(CicluzAgendaDados.dados))); };
@@ -182,36 +184,46 @@ async function limparAgenda(p) {
   // "+" do rodapé: compromisso completo com repetição, término, alerta, URL e local
   await p.locator('.view.show .people-add-control').click();
   ok(await dialogo(p).filter({ hasText: 'Novo compromisso' }).count() === 1, '"+" abre Novo compromisso');
-  await dialogo(p).getByLabel('Título').fill('reunião semanal da equipe');
-  await dialogo(p).getByLabel('Início').fill('09:30');
-  await dialogo(p).getByLabel('Término').fill('09:00');
+  await dialogo(p).getByLabel('Título', { exact: true }).fill('reunião semanal da equipe');
+  await dialogo(p).getByLabel('Início', { exact: true }).fill('09:30');
+  await dialogo(p).getByLabel('Término', { exact: true }).fill('09:00');
   await confirmar(p);
   ok((await dialogo(p).locator('.profiles-error').textContent()).includes('depois do início'), 'Término antes do início é recusado');
-  await dialogo(p).getByLabel('Término').fill('10:30');
+  await dialogo(p).getByLabel('Término', { exact: true }).fill('10:30');
   await dialogo(p).getByLabel('Repetir').selectOption('personalizada');
-  ok(await dialogo(p).getByLabel('A cada').isVisible(), 'Personalizada mostra "a cada" e os dias');
-  await dialogo(p).getByLabel('A cada').fill('2');
+  ok(await dialogo(p).getByLabel('A cada', { exact: true }).isVisible(), 'Personalizada mostra "a cada" e os dias');
+  await dialogo(p).getByLabel('A cada', { exact: true }).fill('2');
   await dialogo(p).getByRole('button', { name: 'segunda-feira' }).click();
   await dialogo(p).getByRole('button', { name: 'quinta-feira' }).click();
   await dialogo(p).getByLabel('Fim da repetição').selectOption('vezes');
-  await dialogo(p).getByLabel('Quantas vezes').fill('3');
-  ok((await dialogo(p).locator('.agenda-repeticao .profiles-note').textContent()).includes('A cada 2 semanas: seg, qui, 3 vez(es)'), 'Resumo da repetição');
+  await dialogo(p).getByLabel('Quantas vezes', { exact: true }).fill('3');
+  ok((await dialogo(p).locator('.agenda-repeticao-resumo').textContent()).includes('A cada 2 semanas: seg, qui, 3 vez(es)'), 'Resumo da repetição');
   await dialogo(p).getByLabel('Alerta').selectOption('15');
-  await dialogo(p).getByLabel('Endereço na internet (URL)').fill('cicluz');
+  await dialogo(p).getByLabel('Endereço na internet').fill('cicluz');
+  // Local abre por dentro (padrão linha por linha): o endereço pode ser escrito sem marcar no mapa.
+  await abrirLinha(p, 'Local');
   await dialogo(p).getByLabel('Endereço', { exact: true }).fill('Loja Centro');
   ok(await dialogo(p).getByLabel('Endereço', { exact: true }).inputValue() === 'Loja Centro', 'Endereço pode ser escrito sem marcar no mapa');
   await confirmar(p);
+  ok((await dialogo(p).locator('.agenda-linha-leva', { hasText: 'Local' }).textContent()).includes('Loja Centro'), 'A linha Local mostra o endereço');
+  await confirmar(p);
   ok((await dialogo(p).locator('.profiles-error').textContent()).includes('http'), 'URL sem http é recusada');
-  await dialogo(p).getByLabel('Endereço na internet (URL)').fill('https://cicluz.com.br');
-  ok(await dialogo(p).locator('input[data-date-native][aria-label="Data"]').inputValue() === hoje, 'Em "Para hoje", o + já vem com a data de hoje');
-  await dialogo(p).locator('.compras-chip', { hasText: /^Alta$/ }).click();
-  await dialogo(p).getByLabel('Adicionar pessoa').selectOption({ label: RESP_UM.nome });
-  await dialogo(p).getByRole('button', { name: 'Adicionar como responsável' }).click();
+  await dialogo(p).getByLabel('Endereço na internet').fill('https://cicluz.com.br');
+  const hojeCurto = hoje.slice(8, 10) + '/' + hoje.slice(5, 7) + '/' + hoje.slice(2, 4);
+  ok(await dialogo(p).getByLabel('Data', { exact: true }).inputValue() === hojeCurto, 'Em "Para hoje", o + já vem com a data de hoje');
+  await dialogo(p).getByLabel('Prioridade').selectOption('alta');
+  await abrirLinha(p, 'Pessoas');
+  await dialogo(p).getByLabel('Adicionar como responsável').selectOption({ label: RESP_UM.nome });
+  await confirmar(p);
+  ok((await dialogo(p).locator('.agenda-linha-leva', { hasText: 'Pessoas' }).textContent()).includes(RESP_UM.nome), 'A linha Pessoas mostra o responsável');
   await dialogo(p).getByLabel('Notas').fill('levar a planilha de horários');
+  await abrirLinha(p, 'Subtarefas');
   await dialogo(p).getByRole('button', { name: 'Adicionar subtarefa' }).click();
   await dialogo(p).getByLabel('Subtarefa 1', { exact: true }).fill('imprimir escala');
   await dialogo(p).getByLabel('Subtarefa 1', { exact: true }).press('Enter');
   await dialogo(p).getByLabel('Subtarefa 2', { exact: true }).fill('avisar a equipe');
+  await confirmar(p);
+  ok((await dialogo(p).locator('.agenda-linha-leva', { hasText: 'Subtarefas' }).textContent()).includes('0 de 2 feitas'), 'A linha Subtarefas mostra a contagem');
   await confirmar(p);
   ok(await p.locator('dialog.agenda-dialog[open]').count() === 0, 'O ✓ salva e fecha');
   i = await item(p, 'reunião semanal da equipe');
@@ -256,7 +268,10 @@ async function limparAgenda(p) {
   // Listas: criar com cor e ícone; excluir só vazia
   await p.locator('.agenda-lista-nova').click();
   await dialogo(p).getByLabel('Nome').fill('Loja Centro');
+  // Cor e ícone abrem por dentro (padrão linha por linha, P-53).
+  await abrirLinha(p, 'Cor e ícone');
   await dialogo(p).getByRole('radio', { name: 'Ícone pao' }).click();
+  await confirmar(p);
   await confirmar(p);
   d = await dados(p);
   const loja = d.listas.find((l) => l.nome === 'Loja Centro');
@@ -294,7 +309,8 @@ async function limparAgenda(p) {
   // Local no mapa: tocar marca e preenche o endereço; Ao entrar com raio; procurar; Atual; aviso ao cruzar o raio
   await p.getByRole('button', { name: 'Listas', exact: true }).click();
   await p.locator('.view.show .people-add-control').click();
-  await dialogo(p).getByLabel('Título').fill('Buscar encomenda');
+  await dialogo(p).getByLabel('Título', { exact: true }).fill('Buscar encomenda');
+  await abrirLinha(p, 'Local');
   await p.waitForFunction(() => document.querySelector('dialog.agenda-dialog[open] .agenda-mapa .leaflet-tile-pane'));
   ok((await dialogo(p).locator('.agenda-mapa-botao small').allTextContents()).join('|') === 'Atual|Ao entrar|Ao sair|Personalizada', 'Botões do protótipo: Atual, Ao entrar, Ao sair, Personalizada');
   const mapaCaixa = dialogo(p).locator('.agenda-mapa');
@@ -308,10 +324,12 @@ async function limparAgenda(p) {
   ok(await dialogo(p).locator('path.leaflet-interactive').count() === 1 && await dialogo(p).getByLabel('Raio do aviso').isVisible(), 'Ao entrar desenha o raio e mostra o tamanho');
   await dialogo(p).getByLabel('Raio do aviso').selectOption('500');
   await confirmar(p);
+  await confirmar(p);
   i = await item(p, 'Buscar encomenda');
   ok(Number.isFinite(i.localizacao.lat) && i.localizacao.aviso === 'entrar' && i.localizacao.raio === 500 && i.local.startsWith('Rua de Teste'), 'Ponto, aviso, raio e endereço salvos');
   ok((await p.locator('.agenda-item', { hasText: 'Buscar encomenda' }).locator('.agenda-detalhes').textContent()).includes('ao entrar'), 'A linha mostra o aviso por lugar');
   await p.locator('.agenda-linha-texto', { hasText: 'Buscar encomenda' }).click();
+  await abrirLinha(p, 'Local');
   await p.waitForFunction(() => document.querySelector('dialog.agenda-dialog[open] .agenda-mapa .leaflet-tile-pane'));
   await dialogo(p).locator('.agenda-mapa-botao[data-modo="personalizada"]').click();
   await dialogo(p).getByLabel('Procurar endereço ou lugar').fill('padaria teste');
@@ -320,6 +338,7 @@ async function limparAgenda(p) {
   ok((await dialogo(p).getByLabel('Endereço', { exact: true }).inputValue()).startsWith('Padaria de Teste - Avenida de Teste, 50'), 'Escolher um resultado preenche o endereço');
   await dialogo(p).locator('.agenda-mapa-botao[data-modo="atual"]').click();
   await p.waitForFunction(() => document.querySelector('dialog.agenda-dialog[open] input[aria-label="Endereço"]').value.includes('Rua de Teste'));
+  await confirmar(p);
   await confirmar(p);
   i = await item(p, 'Buscar encomenda');
   ok(Math.abs(i.localizacao.lat - PRACA.latitude) < 1e-6 && Math.abs(i.localizacao.lng - PRACA.longitude) < 1e-6, '"Atual" marca a posição do aparelho');
@@ -341,8 +360,8 @@ async function limparAgenda(p) {
   const caixa = await coluna.boundingBox();
   await p.mouse.click(caixa.x + 30, caixa.y + 48 * 3 + 5);
   ok(await dialogo(p).filter({ hasText: 'Novo compromisso' }).count() === 1, 'Tocar num horário vazio cria ali');
-  ok(await dialogo(p).getByLabel('Início').inputValue() === '03:00' && await dialogo(p).getByLabel('Término').inputValue() === '04:00', 'Já vem com a hora tocada e 1 h de duração');
-  await dialogo(p).getByLabel('Título').fill('Inventário da madrugada');
+  ok(await dialogo(p).getByLabel('Início', { exact: true }).inputValue() === '03:00' && await dialogo(p).getByLabel('Término', { exact: true }).inputValue() === '04:00', 'Já vem com a hora tocada e 1 h de duração');
+  await dialogo(p).getByLabel('Título', { exact: true }).fill('Inventário da madrugada');
   await confirmar(p);
   const idInv = (await item(p, 'Inventário da madrugada')).id;
   await p.evaluate(() => {
@@ -548,11 +567,13 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   if (!criado.id) throw new Error('Criar no trecho do chat falhou: ' + JSON.stringify(criado));
   const id = criado.id;
   naoLidas = { [id]: 2 };
-  await p.evaluate(() => CicluzAgendaConversa.atualizarNaoLidas(true));
+  // Só dispara: a linha de baixo espera o resultado (segurar a promessa aqui fazia o Playwright falhar às vezes).
+  await p.evaluate(() => { CicluzAgendaConversa.atualizarNaoLidas(true); });
   await p.waitForFunction(() => document.querySelector('.agenda-chat-novas'));
   ok((await p.locator('.agenda-item', { hasText: 'Fechar o caixa' }).locator('.agenda-chat-novas').textContent()).includes('2 mensagens novas'), 'A linha mostra as mensagens novas');
   await p.locator('.agenda-linha-texto', { hasText: 'Fechar o caixa' }).click();
-  await dialogo(p).getByRole('button', { name: 'Abrir chat (2 novas)' }).click();
+  ok((await dialogo(p).locator('.agenda-linha-leva', { hasText: 'Mensagens' }).textContent()).includes('2 novas'), 'A linha Mensagens mostra as novas');
+  await abrirLinha(p, 'Mensagens');
   const chat = p.locator('dialog.agenda-chat-dialog[open]');
   await chat.locator('.compras-vazio').waitFor();
   await chat.getByLabel('Mensagem (Enter envia)', { exact: true }).fill('pode fechar às 18h?');
@@ -565,6 +586,8 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   ok(Object.keys(naoLidas).length === 0, 'Abrir o chat marca como lido');
   await chat.locator('.people-close-control, .people-cancel-control').first().click().catch(() => p.keyboard.press('Escape'));
   if (await chat.count()) await p.keyboard.press('Escape');
+  // Arquivos e evidências abrem por dentro (padrão linha por linha, P-53).
+  await abrirLinha(p, 'Arquivos e evidências');
   await dialogo(p).locator('.agenda-conversa input[type=file]').setInputFiles([{ name: 'foto.png', mimeType: 'image/png', buffer: PNG }, { name: 'nota.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') }]);
   await dialogo(p).locator('.agenda-arquivo', { hasText: 'nota.pdf' }).waitFor();
   ok(arquivos.length === 2 && await dialogo(p).locator('.agenda-arquivo-miniatura').count() === 1, 'Envia vários arquivos; imagem com miniatura');
@@ -588,6 +611,7 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
     return r.fulfill({ status: 404, json: { type: 'about:blank', title: 'Não encontrado', status: 404, code: 'NOT_FOUND' } });
   });
   await p.evaluate(async () => { const r = await CicluzAgendaDados.salvarItem('', { titulo: 'API antiga', listaId: 'lista-gestao-pessoas' }); document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.abrir(''); CicluzAgenda.editar(r.id); });
+  await abrirLinha(p, 'Arquivos e evidências');
   await p.waitForFunction(() => (document.querySelector('dialog.agenda-dialog[open] .agenda-conversa [role=status]') || {}).textContent);
   ok((await dialogo(p).locator('.agenda-conversa [role=status]').textContent()).includes('a API precisa ser atualizada'), 'API antiga: arquivos explicam que o servidor precisa ser atualizado');
   ok(!(await dialogo(p).getByRole('button', { name: 'Adicionar arquivos' }).isVisible()), 'API antiga: não oferece enviar arquivo');
@@ -607,13 +631,13 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   // A gestora cria: Responsável Um só com ver+concluir; Responsável Dois responsável padrão; avaliação em estrelas
   let p = await abrir(GESTORA);
   await p.locator('.view.show .people-add-control').click();
-  await dialogo(p).getByLabel('Título').fill('Fechar o caixa da loja');
-  ok((await dialogo(p).locator('.agenda-pessoas .profiles-note').first().textContent()).includes('Gestor: ' + GESTORA.nome), 'Gestor é quem cria');
-  await dialogo(p).getByLabel('Adicionar pessoa').selectOption({ label: RESP_UM.nome });
-  await dialogo(p).getByRole('button', { name: 'Adicionar como responsável' }).click();
-  await dialogo(p).getByLabel('Adicionar pessoa').selectOption({ label: RESP_DOIS.nome });
-  await dialogo(p).getByRole('button', { name: 'Adicionar como responsável' }).click();
+  await dialogo(p).getByLabel('Título', { exact: true }).fill('Fechar o caixa da loja');
+  await abrirLinha(p, 'Pessoas');
+  ok((await dialogo(p).locator('.agenda-pessoas .transferencia-linha').first().textContent()).includes(GESTORA.nome), 'Gestor é quem cria');
+  await dialogo(p).getByLabel('Adicionar como responsável').selectOption({ label: RESP_UM.nome });
+  await dialogo(p).getByLabel('Adicionar como responsável').selectOption({ label: RESP_DOIS.nome });
   await dialogo(p).getByRole('group', { name: 'Permissões de ' + RESP_UM.nome }).getByRole('button', { name: 'Editar' }).click();
+  await confirmar(p);
   await dialogo(p).getByLabel('Tipo de avaliação').selectOption('estrelas');
   await confirmar(p);
   let t = await item(p, 'Fechar o caixa da loja');
@@ -633,7 +657,7 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   p = await abrir(RESP_UM);
   ok(Number(await p.locator('.a-atribuidos b').textContent()) >= 1, 'Atribuídos a mim conta o compromisso do responsável');
   await p.locator('.agenda-linha-texto', { hasText: 'Fechar o caixa da loja' }).click();
-  ok(await dialogo(p).filter({ hasText: 'editar é com o gestor' }).count() === 1 && await dialogo(p).getByLabel('Título').isDisabled(), 'Sem "Editar": abre só para leitura');
+  ok(await dialogo(p).filter({ hasText: 'editar é com o gestor' }).count() === 1 && await dialogo(p).getByLabel('Título', { exact: true }).isDisabled(), 'Sem "Editar": abre só para leitura');
   ok(await dialogo(p).getByRole('button', { name: 'Excluir compromisso' }).count() === 0, 'Sem "Excluir": não aparece o botão');
   await p.keyboard.press('Escape');
   ok(await p.evaluate(async (id) => { try { await CicluzSync.api('/agenda/compromissos/' + id, { metodo: 'PATCH', corpo: { versao: 1, titulo: 'mudado' } }); return 'passou'; } catch (e) { return e.codigo; } }, idCaixa) === 'AGENDA_SEM_ACESSO', 'Editar é barrado também pela API');
@@ -766,20 +790,20 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   await p.getByRole('button', { name: 'Configurações da Agenda', exact: true }).first().click();
   await p.locator('#agenda-config-view .agenda-config-linha', { hasText: RESP_UM.nome }).click();
   for (const dia of ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']) await dialogo(p).getByRole('button', { name: dia, exact: true }).click();
-  await dialogo(p).getByLabel('Início do expediente').fill('00:00');
-  await dialogo(p).getByLabel('Fim do expediente').fill('23:59');
+  await dialogo(p).getByLabel('Início do expediente', { exact: true }).fill('00:00');
+  await dialogo(p).getByLabel('Fim do expediente', { exact: true }).fill('23:59');
   // A hora fora do expediente saiu daqui (0009: sempre calculada, só no Desempenho); vazio = padrão de 15 min.
   ok(await dialogo(p).getByLabel('Hora trabalhada fora do expediente').count() === 0, 'Configurações: sem a escolha de "hora comum/extra" (decisão pendente com o Rodrigo)');
-  ok((await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado').getAttribute('placeholder')).includes('15'), 'Configurações: tempo parado vazio = padrão de 15 min');
-  ok(await dialogo(p).getByLabel('Colaborador do cadastro').count() === 1, 'Configurações: ligar a conta ao colaborador do cadastro');
-  await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado').fill('30');
+  ok((await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado', { exact: true }).getAttribute('placeholder')).includes('15'), 'Configurações: tempo parado vazio = padrão de 15 min');
+  ok(await dialogo(p).getByLabel('Colaborador do cadastro', { exact: true }).count() === 1, 'Configurações: ligar a conta ao colaborador do cadastro');
+  await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado', { exact: true }).fill('30');
   await dialogo(p).locator('.people-save-control').click();
   await p.locator('#agenda-config-view .agenda-config-linha', { hasText: 'sai em 30 min parado' }).waitFor();
   ok((await p.locator('#agenda-config-view .agenda-config-linha', { hasText: RESP_UM.nome }).textContent()).includes('todos os dias, das 00:00 às 23:59'), 'Configurações: o administrador salva expediente e saída por tempo parado');
   // "Nunca sai sozinho" (Zé, 25/11/2026): o campo dos minutos some e a linha diz que não sai.
   await p.locator('#agenda-config-view .agenda-config-linha', { hasText: RESP_UM.nome }).click();
-  await dialogo(p).getByLabel('Sair sozinho por tempo parado').selectOption('nao');
-  ok(await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado').isHidden(), 'Nunca sai sozinho: o campo dos minutos some');
+  await dialogo(p).getByLabel('Sair sozinho por tempo parado', { exact: true }).selectOption('nao');
+  ok(await dialogo(p).getByLabel('Sair do sistema depois de quantos minutos parado', { exact: true }).isHidden(), 'Nunca sai sozinho: o campo dos minutos some');
   await dialogo(p).locator('.people-save-control').click();
   await p.locator('#agenda-config-view .agenda-config-linha', { hasText: 'nunca sai sozinho' }).waitFor();
   ok(true, 'O administrador escolhe quem nunca sai sozinho');
@@ -828,10 +852,12 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   // O da barra (iPad e computador); o do menu rápido (.people-quick-fixo) só aparece no celular.
   const agendar = p.locator('.view.show .people-footer-left > .people-agendar-control');
   ok(await p.locator('.view.show .people-quick-fixo').evaluate((b) => getComputedStyle(b).display) === 'none', 'Fora do celular, o agendar do menu rápido fica escondido');
-  ok(await agendar.evaluate((b) => getComputedStyle(b).backgroundColor) === 'rgb(124, 58, 237)', 'Ícone de agendar é roxo mesmo numa tela verde');
+  // Barra em vidro (DESIGN_SYSTEM, PADRÃO CONSOLIDADO): botões transparentes que enchem na cor ao passar; a cor do
+  // ícone de agendar é o roxo da Agenda mesmo numa tela verde.
+  ok(await agendar.evaluate((b) => getComputedStyle(b).getPropertyValue('--menu-accent').trim()) === '#7c3aed', 'Ícone de agendar é roxo mesmo numa tela verde');
   await agendar.click();
   ok((await dialogo(p).locator('.agenda-tela-ligada').textContent()).includes('MER - Pedido de Compra'), 'A janela já vem com a tela ligada');
-  await dialogo(p).getByLabel('Título').fill('Conferir o pedido da semana');
+  await dialogo(p).getByLabel('Título', { exact: true }).fill('Conferir o pedido da semana');
   await confirmar(p);
   const ligado = await item(p, 'Conferir o pedido da semana');
   ok(ligado && ligado.vinculoTela === tela && ligado.vinculoTitulo === 'MER - Pedido de Compra', 'Compromisso guarda a tela ligada');
@@ -852,9 +878,11 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   ok(true, 'Enviar o pedido conclui a tarefa');
   // Desempenho: o responsável vê o próprio cartão.
   await q.evaluate(() => { document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.estado.visao = 'desempenho'; CicluzAgenda.abrir(''); });
-  // A aba se redesenha quando a Agenda atualiza: espera o cartão da pessoa (não só "algum cartão").
-  await q.locator('.agenda-desempenho-nome h3', { hasText: RESP_UM.nome }).waitFor();
-  const cartoes = await q.locator('.agenda-desempenho-nome h3').allTextContents();
+  // Lê a lista numa só passada, quando ela já tem o cartão da pessoa (o redesenho podia esvaziá-la entre esperar e ler).
+  const cartoes = await (await q.waitForFunction((nome) => {
+    const l = [...document.querySelectorAll('.agenda-desempenho-nome h3')].map((h) => h.textContent);
+    return l.includes(nome) && l;
+  }, RESP_UM.nome)).jsonValue();
   ok(cartoes.length === 1 && cartoes[0] === RESP_UM.nome, 'Desempenho: cada pessoa vê o seu (veio: ' + JSON.stringify(cartoes) + ')');
   ok(await q.locator('.agenda-desempenho-cartao .agenda-desempenho-indicador').count() === 4, 'Desempenho: os quatro indicadores no cartão');
   await q.close();

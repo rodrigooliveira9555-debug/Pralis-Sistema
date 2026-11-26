@@ -14,7 +14,9 @@ export type PapelArquivo = (typeof PAPEIS_ARQUIVO)[number];
 export const compromissoIdSchema = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/, "Compromisso inválido");
 
 export const mensagemSchema = z.object({
-  texto: z.string().trim().min(1, "Escreva a mensagem").max(2000, "A mensagem passa de 2000 letras")
+  texto: z.string().trim().min(1, "Escreva a mensagem").max(2000, "A mensagem passa de 2000 letras"),
+  // Foto ou áudio do chat (0012, P-53): o arquivo já enviado ao compromisso (POST .../arquivos).
+  arquivoId: z.string().uuid().optional()
 });
 export const listarMensagensSchema = z.object({
   depois: z.string().datetime({ offset: true }).optional()
@@ -27,5 +29,9 @@ export const arquivoSchema = z.object({
 export type Mensagem = z.infer<typeof mensagemSchema>;
 export type ArquivoEnvio = z.infer<typeof arquivoSchema>;
 
-export type MensagemResposta = { id: string; autorId: string; autorNome: string; texto: string; criadoEm: string };
+export type MensagemResposta = {
+  id: string; autorId: string; autorNome: string; texto: string; criadoEm: string;
+  /** Foto ou áudio mandado no chat (só nas mensagens de compromisso). */
+  arquivo?: { id: string; nome: string; tipo: string } | null;
+};
 export type ArquivoResposta = { id: string; nome: string; tipo: string; tamanho: number; papel: PapelArquivo; enviadoPor: string; enviadoPorNome: string; criadoEm: string; podeExcluir: boolean };

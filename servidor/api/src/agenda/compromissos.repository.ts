@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray, isNull, lt, ne, or, sql, desc } from "drizzle-orm";
 import {
+  agendaAcoesProgresso,
   agendaAdiamentos,
   agendaAvaliacoes,
   agendaColunas,
@@ -60,6 +61,38 @@ export async function compromisso(ex: Executor, empresaId: string, id: string, t
   const q = ex.select().from(agendaCompromissos).where(and(eq(agendaCompromissos.empresaId, empresaId), eq(agendaCompromissos.id, id))).limit(1);
   const [linha] = travar ? await q.for("update") : await q;
   return linha ?? null;
+}
+
+/* ---------- Ação programada (0012, P-53) ---------- */
+
+/** Progresso das ações programadas dos compromissos (todas as ocorrências guardadas). */
+export async function progressoDe(ex: Executor, empresaId: string, ids: string[]) {
+  if (!ids.length) return [];
+  return ex
+    .select({ compromissoId: agendaAcoesProgresso.compromissoId, ocorrencia: agendaAcoesProgresso.ocorrencia, feitas: agendaAcoesProgresso.feitas })
+    .from(agendaAcoesProgresso)
+    .where(and(eq(agendaAcoesProgresso.empresaId, empresaId), inArray(agendaAcoesProgresso.compromissoId, ids)));
+}
+
+/** Compromissos abertos que esperam esta ação (as cópias concluídas de repetições ficam de fora). */
+export async function abertosComAcao(ex: Executor, empresaId: string, acao: string) {
+  return ex
+    .select()
+    .from(agendaCompromissos)
+    .where(and(eq(agendaCompromissos.empresaId, empresaId), eq(agendaCompromissos.acaoTela, acao), eq(agendaCompromissos.concluida, false), isNull(agendaCompromissos.excluidoEm), isNull(agendaCompromissos.origemId)));
+}
+
+/** Soma n ao progresso da ocorrência e devolve o total (uma linha por compromisso e ocorrência). */
+export async function somarProgresso(tx: TransacaoBanco, empresaId: string, compromissoId: string, ocorrencia: string, n: number) {
+  const [l] = await tx
+    .insert(agendaAcoesProgresso)
+    .values({ empresaId, compromissoId, ocorrencia, feitas: n })
+    .onConflictDoUpdate({
+      target: [agendaAcoesProgresso.empresaId, agendaAcoesProgresso.compromissoId, agendaAcoesProgresso.ocorrencia],
+      set: { feitas: sql`${agendaAcoesProgresso.feitas} + ${n}`, atualizadoEm: new Date() }
+    })
+    .returning({ feitas: agendaAcoesProgresso.feitas });
+  return l?.feitas ?? n;
 }
 
 export async function inserirCompromisso(tx: TransacaoBanco, linha: NovoCompromisso) {
