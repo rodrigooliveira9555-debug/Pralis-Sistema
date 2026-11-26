@@ -903,14 +903,10 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .transferencia-circulo:not(.transferencia-circulo-excluir):is(:hover, :active, :focus-visible):not(:disabled) { background: var(--menu-accent); color: #fff; }
 .transferencia-tela .transferencia-circulo-excluir:is(:hover, :active, :focus-visible) { background: var(--cicluz-danger, #e34343); color: #fff; }
 .transferencia-tela .transferencia-quadro .transferencia-linha:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
-/* Tema escuro da Nova Transferência: as regras do tema escuro pintam campos e chaves com variáveis próprias (--theme-field, --layout-line, --theme-surface, --navigation-ink); aqui só se muda o valor delas dentro das linhas. */
+/* Tema escuro da Nova Transferência: as regras do tema escuro pintam campos com variáveis próprias (--theme-field, --layout-line, --theme-surface, --navigation-ink); aqui só se muda o valor delas dentro das linhas. */
 .transferencia-tela .transferencia-linha :is(input, select, textarea), .transferencia-tela .transferencia-valor-cab input { --theme-field: transparent; --layout-line: transparent; }
-.transferencia-tela .account-status-switch { --theme-surface: #94a3b8; }
-.transferencia-tela .account-status-switch[aria-checked="true"] { --theme-surface: var(--menu-accent); }
-/* Tema escuro: a regra do tema pinta o campo com "background: var(--theme-field)", que apaga a seta do select; por isso a seta entra dentro da própria variável. A chave desligada fica num cinza mais escuro. */
+/* Tema escuro: a regra do tema pinta o campo com "background: var(--theme-field)", que apaga a seta do select; por isso a seta entra dentro da própria variável. */
 body.dark-theme .transferencia-tela .transferencia-linha select { --theme-field: transparent var(--ui-select-down) no-repeat right 12px center / 18px 18px; }
-body.dark-theme .transferencia-tela .account-status-switch { --theme-surface: #5f6573; }
-body.dark-theme .transferencia-tela .account-status-switch[aria-checked="true"] { --theme-surface: var(--menu-accent); }
 /* Origem e destino: o campo de escolha do cadastro dentro da linha, liso como os outros campos da linha. */
 .transferencia-tela .transferencia-linha .compras-arvore-campo { border-color: transparent; background: transparent; box-shadow: none; }
 .transferencia-tela .transferencia-linha .compras-arvore-campo:hover { border-color: transparent; }

@@ -29,9 +29,10 @@ body .side .sidebar-footer::before{left:calc(var(--menu-side-left) + 10px);right
 
 /* The account badge shares the solid neutral controls and surface-colored cutout. */
 body .side .sidebar-user .avatar{background:var(--navigation-ink)!important;color:var(--theme-surface)!important;border:1px solid var(--navigation-ink)!important;box-shadow:none!important}
-body.dark-theme .account-status-switch{background:var(--theme-surface)!important;border-color:var(--navigation-ink)!important}
+/* Chave desligada (Rodrigo, 26/11/2026): na cor do texto da célula; no escuro a bolinha é escura, na cor do fundo da linha. */
+body.dark-theme .account-status-switch{background:var(--layout-ink,#f2f1f6)!important;border-color:transparent!important}
 body.dark-theme .account-status-switch[aria-checked=true]{background:var(--menu-accent,var(--panel-color))!important;border-color:var(--menu-accent,var(--panel-color))!important}
-body.dark-theme .account-status-switch>span{background:var(--navigation-ink)!important}
+body.dark-theme .account-status-switch:not([aria-checked=true])>span{background:var(--theme-card,#222128)!important}
 
 /* Step navigation keeps the dark canvas visible through the back control. */
 body.dark-theme #cadastro-completo #prev-step:not(:disabled){background:transparent!important;border:1px solid var(--menu-accent,var(--panel-color,#7c3aed))!important;color:var(--menu-accent,var(--panel-color,#7c3aed))!important;box-shadow:none!important}
