@@ -912,6 +912,39 @@
     marcar();
     return { caixa, painel, input };
   }
+
+  /**
+   * SELEÇÃO EM PAINEL (Rodrigo, 26/11/2026): nos formulários, tocar num campo de seleção (<select>) abre o MESMO painel das outras escolhas (borda direita do quadro,
+   * mesma altura de partida), com as opções em linhas, e não a lista nativa do navegador, que abre desalinhada. Instalado uma vez, por delegação de eventos.
+   * Fora de formulário (busca, filtros da barra) e com data-nativo no select, continua a lista do navegador.
+   */
+  function instalarSelecaoEmPainel() {
+    if (window.__selecaoEmPainel) return; window.__selecaoEmPainel = true;
+    const ESCOPO = '.compras-dialog, .transferencia-tela, .ds-corpo, .form-fields[data-quadro]';
+    const pode = (sel) => sel && sel.matches && sel.matches('select') && !sel.disabled && !sel.multiple && !(sel.size > 1) && !sel.hasAttribute('data-nativo') && sel.closest(ESCOPO);
+    function abrirPara(sel) {
+      let painel = sel._painelSelecao;
+      if (!painel) {
+        painel = el('div', 'transferencia-tela compras-escolha-painel compras-aniv-painel compras-data-painel transferencia-selecao-painel');
+        painel.setAttribute('role', 'listbox'); sel._painelSelecao = painel; sel._abrirSelecao = flutuante(sel, painel);
+      }
+      const casa = sel.closest('dialog, .app-screen-shell') || document.body;
+      if (painel.parentElement !== casa) casa.append(painel);
+      const quadroOpcoes = el('div', 'transferencia-quadro');
+      [...sel.options].filter((o) => !o.hidden).forEach((o) => {
+        const b = el('button', 'transferencia-linha transferencia-linha-acao'); b.type = 'button'; b.setAttribute('role', 'option'); b.setAttribute('aria-selected', String(o.value === sel.value)); b.disabled = o.disabled;
+        const marca = el('span', 'transferencia-seta'); marca.setAttribute('aria-hidden', 'true'); marca.innerHTML = o.value === sel.value ? svg('<path d="m5 12 5 5 9-10"/>') : '';
+        b.append(el('span', 'transferencia-linha-rotulo', o.text || '—'), marca);
+        b.onclick = () => { sel.value = o.value; sel._abrirSelecao(false); sel.dispatchEvent(new Event('input', { bubbles: true })); sel.dispatchEvent(new Event('change', { bubbles: true })); sel.focus(); };
+        quadroOpcoes.append(b);
+      });
+      painel.replaceChildren(quadroOpcoes);
+      sel._abrirSelecao(true);
+    }
+    document.addEventListener('mousedown', (e) => { const sel = e.target.closest && e.target.closest('select'); if (e.button === 0 && pode(sel)) { e.preventDefault(); abrirPara(sel); } }, true);
+    document.addEventListener('keydown', (e) => { const sel = e.target; if (pode(sel) && (e.key === 'Enter' || e.key === ' ' || (e.key === 'ArrowDown' && e.altKey))) { e.preventDefault(); abrirPara(sel); } }, true);
+  }
+  instalarSelecaoEmPainel();
   /**
    * Roleta de UM número inteiro (26/11/2026, Rodrigo: dias do tempo de aceite): o mesmo painel do campo de hora, com uma coluna só.
    * Tocar no campo abre a lista; ela rola e encaixa, o número do MEIO (na faixa cheia) é o escolhido; também vale digitar, as setas e tocar num número.
@@ -990,9 +1023,9 @@
     function posicionar() {
       if (painel.hidden) return;
       // Padrão único (Rodrigo, 26/11/2026): quando o campo mora numa linha do quadro (.transferencia-linha), o painel se alinha à LINHA inteira — a borda direita dele é a borda direita do quadro e a face de cima fica sempre 6 px abaixo da linha. Fora de linhas, vale o próprio campo.
-      const linhaDoCampo = ancora.closest('.transferencia-linha'); const r = (linhaDoCampo || ancora).getBoundingClientRect();
+      const linhaDoCampo = ancora.closest('.transferencia-linha, .compras-fieldset > .compras-campo, .form-fields[data-quadro] > label'); const r = (linhaDoCampo || ancora).getBoundingClientRect();
       // A borda direita do painel é a borda de fora do quadro que guarda a linha.
-      const direita = (linhaDoCampo && linhaDoCampo.closest('.transferencia-quadro') ? linhaDoCampo.closest('.transferencia-quadro') : (linhaDoCampo || ancora)).getBoundingClientRect().right;
+      const quadroDaLinha = linhaDoCampo && linhaDoCampo.closest('.transferencia-quadro, .compras-fieldset, .form-fields[data-quadro]'); const direita = (quadroDaLinha || linhaDoCampo || ancora).getBoundingClientRect().right;
       let topo = 8; let base = window.innerHeight - 8;
       const casca = ancora.closest('.app-screen-shell'); const barra = casca && casca.querySelector('.people-bottom-header');
       if (barra) { const b = barra.getBoundingClientRect(); if (b.height) { if (b.top > window.innerHeight / 2) base = Math.min(base, b.top - 8); else topo = Math.max(topo, b.bottom + 8); } }

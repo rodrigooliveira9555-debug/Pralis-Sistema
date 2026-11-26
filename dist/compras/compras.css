@@ -1045,3 +1045,11 @@ body :is(#sector-view,.view,dialog,.modal).compras-dialog:not(.transferencia-tel
 .ds-corpo .ds-item-valor { flex: 1 1 auto; min-width: 0; text-align: right; font: 500 15px/20px var(--ui-font); color: var(--muted, #71717a); }
 .ds-corpo .ds-amostra-linha { padding: 12px 14px; border-top: 1px solid var(--layout-line, #dedee3); display: grid; gap: 10px; min-width: 0; }
 .ds-corpo .ds-amostra-linha > .ds-amostra { margin: 0; }
+/* MEDIDAS EXATAS DA REFERÊNCIA (Nova Transferência): título do grupo 13/18 peso 600 a 6 px do quadro; 12 px entre um grupo e o próximo; linhas centralizadas. */
+.compras-dialog:not(.transferencia-tela) .compras-fieldset { margin: 36px 0 12px; }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > legend { top: -24px; font: 600 13px/18px var(--ui-font); }
+.transferencia-tela.ds-corpo { gap: 12px; }
+.ds-corpo .ds-item { align-items: center; }
+.ds-corpo .ds-quadro > .ds-texto { padding: 14px; }
+.transferencia-selecao-painel .transferencia-quadro { max-height: min(46vh, 320px); overflow-y: auto; }
+.transferencia-selecao-painel .transferencia-linha { width: 100%; }

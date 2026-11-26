@@ -916,3 +916,5 @@ body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > :last-chi
 body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label :is(input, select, textarea):hover, body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label :is(input, select, textarea):focus { --ui-control-bg: transparent; --theme-field: transparent; --ui-border-base: transparent; --ui-control-accent: transparent; --ui-focus-shadow: none; }
 /* Formulários antigos: a linha inteira também (já vale para label; vale para os blocos de situação/chave). */
 body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > .account-status:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] { margin-top: 36px; margin-bottom: 12px; }
+body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro]::before { top: -24px; font: 600 13px/18px var(--ui-font, inherit); }
