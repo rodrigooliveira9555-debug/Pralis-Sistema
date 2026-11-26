@@ -1,25 +1,33 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import {
   consultaExtratoTnpSchema,
+  fonteExtratoSchema,
   ok,
+  type FonteExtrato,
   type PerfilSessao,
 } from "@cicluz/shared";
-import { env } from "../env.ts";
 import { perfilDaRequisicao } from "../auth/guards.ts";
 import { exigirPermissao } from "../auth/permissoes.ts";
 import { proibido } from "../erros.ts";
-import { buscarExtrato, extratoConfigurado } from "./extrato-tnp.cliente.ts";
+import {
+  buscarExtrato,
+  extratoConfigurado,
+  ligacaoDa,
+} from "./extrato-tnp.cliente.ts";
 
-// Extrato da Caixa PJ da TNP (Open Finance). Permissão própria E empresa: o token do coletor é da TNP; outra empresa
-// do S2 nunca vê esse extrato. Limite por usuário (no preHandler, depois da sessão).
+// Extrato bancário (Open Finance) da TNP ou do HORA. Permissão própria E empresa: cada coletor tem a sua empresa do
+// S2; outra empresa nunca vê esse extrato. Limite por usuário (no preHandler, depois da sessão).
 const SEM_ACESSO = "Você não tem acesso ao extrato bancário.";
-function exigirAcesso(perfil: PerfilSessao) {
+function exigirAcesso(perfil: PerfilSessao, fonte: FonteExtrato) {
   exigirPermissao(perfil, "extrato_bancario_visualizar", SEM_ACESSO);
   // Sem empresa configurada a leitura está desligada (situação diz "não ligado" e a busca nem sai daqui):
   // não é falta de acesso da pessoa.
-  if (env.TNP_EXTRATO_EMPRESA_ID && perfil.empresa.id !== env.TNP_EXTRATO_EMPRESA_ID)
+  const { empresaId } = ligacaoDa(fonte);
+  if (empresaId && perfil.empresa.id !== empresaId)
     throw proibido(SEM_ACESSO, "INSUFFICIENT_PERMISSION");
 }
+const fonteDa = (query: unknown) =>
+  fonteExtratoSchema.parse((query as { fonte?: unknown } | null)?.fonte ?? "tnp");
 const chaveDoUsuario = (request: FastifyRequest) =>
   request.perfilUsuario
     ? `usuario:${request.perfilUsuario.usuarioId}`
@@ -35,14 +43,14 @@ const limite = {
 
 export async function registrarRotasExtratoTnp(app: FastifyInstance) {
   app.get("/api/extrato-tnp/situacao", async (request) => {
-    exigirAcesso(perfilDaRequisicao(request));
-    return ok({ configurado: extratoConfigurado() });
+    const fonte = fonteDa(request.query);
+    exigirAcesso(perfilDaRequisicao(request), fonte);
+    return ok({ configurado: extratoConfigurado(fonte) });
   });
 
   app.get("/api/extrato-tnp", { config: limite }, async (request) => {
-    exigirAcesso(perfilDaRequisicao(request));
-    return ok(
-      await buscarExtrato(consultaExtratoTnpSchema.parse(request.query)),
-    );
+    const consulta = consultaExtratoTnpSchema.parse(request.query);
+    exigirAcesso(perfilDaRequisicao(request), consulta.fonte);
+    return ok(await buscarExtrato(consulta));
   });
 }
