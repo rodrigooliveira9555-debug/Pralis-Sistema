@@ -1,19 +1,14 @@
-import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { copiasSchema, gravarLoteSchema, importacaoSchema, LIMITE_CORPO_LOTE, ok } from "@cicluz/shared";
 import { perfilDaRequisicao } from "../auth/guards.ts";
+import { limitePorUsuario } from "../auth/limites.ts";
 import { gravarLote, guardarCopias, importar, listar, versoes } from "./documentos.service.ts";
 
-// Teto de escrita por sessão (e não por IP: vários iPads podem sair pelo mesmo IP da loja). A tela
+// Teto de escrita por pessoa (e não por IP: vários iPads podem sair pelo mesmo IP da loja). A tela
 // junta as edições num lote a cada ~1 s; 120 lotes por minuto sobra para o uso normal e segura um
 // abuso de encher o histórico.
-function chaveDaSessao(request: FastifyRequest) {
-  const cookie = request.headers.cookie ?? "";
-  const sessao = /session_token=([^;]+)/.exec(cookie)?.[1];
-  return sessao ? `sessao:${sessao}` : `ip:${request.ip}`;
-}
-
-const limiteEscrita = { rateLimit: { max: 120, timeWindow: "1 minute", keyGenerator: chaveDaSessao } };
-const limiteCopias = { rateLimit: { max: 10, timeWindow: "1 minute", keyGenerator: chaveDaSessao } };
+const limiteEscrita = limitePorUsuario(120);
+const limiteCopias = limitePorUsuario(10);
 
 export async function registrarRotasDocumentos(app: FastifyInstance) {
   app.get("/api/documentos", async (request) => {

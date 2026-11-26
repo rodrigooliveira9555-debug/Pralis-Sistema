@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import {
   adiamentoSchema,
@@ -18,6 +18,7 @@ import {
   transferenciaAgendaSchema
 } from "@cicluz/shared";
 import { perfilDaRequisicao } from "../auth/guards.ts";
+import { limitePorUsuario } from "../auth/limites.ts";
 import * as grupos from "./grupos.service.ts";
 import * as interacoes from "./interacoes.service.ts";
 import * as transferencia from "./transferencia.service.ts";
@@ -103,12 +104,8 @@ export async function registrarRotasGrupos(app: FastifyInstance) {
 
 /* Transferência do documento antigo (plano, seção 4) */
 export async function registrarRotasTransferencia(app: FastifyInstance) {
-  // Por sessão (vários aparelhos saem pelo mesmo IP da loja), como a importação de produtos.
-  const porSessao = (request: FastifyRequest) => {
-    const sessao = /session_token=([^;]+)/.exec(request.headers.cookie ?? "")?.[1];
-    return sessao ? `sessao:${sessao}` : `ip:${request.ip}`;
-  };
-  const limite = { rateLimit: { max: 10, timeWindow: "1 minute", keyGenerator: porSessao } };
+  // Por pessoa (vários aparelhos saem pelo mesmo IP da loja), como a importação de produtos.
+  const limite = limitePorUsuario(10);
   app.get("/api/agenda/transferencia", async (request) => ok(await transferencia.previa(perfilDaRequisicao(request))));
   app.post("/api/agenda/transferencia", { config: limite }, async (request) =>
     ok(await transferencia.executar(perfilDaRequisicao(request), transferenciaAgendaSchema.parse(request.body))));

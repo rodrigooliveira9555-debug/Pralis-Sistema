@@ -1,17 +1,14 @@
-import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { importacaoProdutosSchema, LIMITE_CORPO_LOTE, listarProdutosSchema, ok, produtoCriacaoSchema, produtoEdicaoSchema, transferenciaProdutosSchema } from "@cicluz/shared";
 import { perfilDaRequisicao } from "../auth/guards.ts";
+import { limitePorUsuario } from "../auth/limites.ts";
 import { criar, editar, importar, listar, obter, resumo, revincular, transferir } from "./produtos.service.ts";
 
 const idParams = z.object({ id: z.string().trim().min(1).max(80) });
 
-// Por sessão (vários aparelhos saem pelo mesmo IP da loja). A importação de ~7.200 produtos vai em ~15 lotes.
-function chaveDaSessao(request: FastifyRequest) {
-  const sessao = /session_token=([^;]+)/.exec(request.headers.cookie ?? "")?.[1];
-  return sessao ? `sessao:${sessao}` : `ip:${request.ip}`;
-}
-const limiteImportacao = { rateLimit: { max: 60, timeWindow: "1 minute", keyGenerator: chaveDaSessao } };
+// Por pessoa (vários aparelhos saem pelo mesmo IP da loja). A importação de ~7.200 produtos vai em ~15 lotes.
+const limiteImportacao = limitePorUsuario(60);
 
 export async function registrarRotasProdutos(app: FastifyInstance) {
   app.get("/api/produtos", async (request) => ok(await listar(perfilDaRequisicao(request), listarProdutosSchema.parse(request.query))));
