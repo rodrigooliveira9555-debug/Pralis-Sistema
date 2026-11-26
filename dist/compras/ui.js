@@ -938,7 +938,8 @@
     let ignoraAte = 0;
     const passo = () => (celulas[1].offsetTop - celulas[0].offsetTop) || 42;
     const sincronizar = () => { itens.style.transform = 'translateY(' + (-lista.scrollTop) + 'px)'; };
-    const levarAoMeio = (i, suave) => { ignoraAte = Date.now() + (suave ? 450 : 150); lista.scrollTo({ top: i * passo(), behavior: suave ? 'smooth' : 'auto' }); if (!suave) sincronizar(); };
+    // Com o painel fechado não há o que rolar (a lista está escondida); distâncias longas vão direto, sem animação, para a rolagem não "escolher" números pelo caminho.
+    const levarAoMeio = (i, suave) => { if (painel.hidden) return; const longe = Math.abs(i * passo() - lista.scrollTop) > passo() * 12; const anima = suave && !longe; ignoraAte = Date.now() + (anima ? 450 : 150); lista.scrollTo({ top: i * passo(), behavior: anima ? 'smooth' : 'auto' }); if (!anima) sincronizar(); };
     const posicionar = () => levarAoMeio(atual === null ? 0 : atual - min, false);
     const avisar = () => { input.dispatchEvent(new Event('input')); input.dispatchEvent(new Event('change', { bubbles: true })); };
     function definir(n, { escreve = true, rolar = true } = {}) {
@@ -953,7 +954,7 @@
     let quadro = 0;
     lista.addEventListener('scroll', () => {
       sincronizar();
-      if (Date.now() < ignoraAte) return;
+      if (painel.hidden || Date.now() < ignoraAte) return;
       cancelAnimationFrame(quadro);
       quadro = requestAnimationFrame(() => {
         const i = Math.max(0, Math.min(total - 1, Math.round(lista.scrollTop / passo())));
