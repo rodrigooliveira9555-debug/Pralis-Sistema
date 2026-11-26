@@ -1709,3 +1709,11 @@ O modelo do cabeçalho mostra o padrão atual: faixa reta no alto (sem cantos ar
 
 ### 24. Cantos do cabeçalho sem tarja e modelo com o quadro abaixo (26/11/2026, Rodrigo)
 O fio de 1 px do cabeçalho padrão (cor clara) aparecia como uma tarja branca nos dois cantos da curva em todas as telas; agora ele vale a cor do cabeçalho (`--layout-line: var(--menu-accent)` no `.head[data-header-standard]`). O modelo do cabeçalho na tela Design System mostra, abaixo da curva, a tela cinza com o primeiro quadro branco a 14 px dos lados, para a curva acompanhar o contorno do quadro como no app.
+
+### 25. Aplicação em todas as abas — varredura de 26/11/2026
+- **Varredura automática** de todas as telas de 1º nível (40: Entradas, Transferências, Saídas ×3, Resultados, Configurações) e das telas abertas pelos cartões das três primeiras origens e de Lançamentos Colaboradores: **barra de vidro flutuante, curva do cabeçalho e folga no fim em todas; nenhum scroll horizontal; nenhum erro de script**.
+- **Foto** (produto e peças): vira a linha "Foto" no padrão Anexos (resumo, seta à direita, painel Tirar foto / Escolher da galeria; miniatura e excluir embaixo). Sem botões soltos.
+- **Interruptores** (Habilitar, Liberado…) em linha: nome à esquerda, marca de 22 px à direita.
+- **Campo obrigatório vazio** marca a LINHA (sombreado + faixa na cor do cabeçalho), pois o campo não tem borda.
+- As regras de formulário linha por linha agora valem também nas **telas de setor** (\`#sector-view\`), não só nas janelas.
+- **Pendente (famílias com estrutura própria):** formulários da Gestão de Pessoas e Colaboradores (títulos internos, rótulos empilhados), Produção, Caixa e telas de API (dependem do servidor).

@@ -87,10 +87,10 @@
     const T = { vazio: 'Adicione uma foto do produto', pendente: 'A foto nova é gravada ao salvar o produto.', coisa: 'produto', ...textos };
     let valor = atual || null;
     let pendente = false;
-    const box = el('div', 'compras-foto');
-    const area = el('div', 'compras-foto-area');
+    // Foto no padrão ANEXOS (Rodrigo, 26/11/2026): uma linha "Foto" com o resumo e a seta; tocar abre o painel Anexar (Tirar foto, Escolher da galeria); a foto
+    // escolhida aparece embaixo da linha, com a miniatura e o excluir (círculo cinza, vermelho ao passar). Nada de botões soltos no meio do formulário.
+    const box = el('div', 'compras-foto transferencia-tela');
     const erro = el('p', 'profiles-error');
-    const acoes = el('div', 'compras-foto-acoes');
     const camera = entrada('file'); camera.accept = 'image/*'; camera.setAttribute('capture', 'environment'); camera.hidden = true;
     const galeria = entrada('file'); galeria.accept = TIPOS_FOTO.join(','); galeria.hidden = true;
     const receber = async (arquivo) => {
@@ -102,24 +102,39 @@
     };
     camera.onchange = () => receber(camera.files[0]);
     galeria.onchange = () => receber(galeria.files[0]);
-    area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('arrastando'); });
-    area.addEventListener('dragleave', () => area.classList.remove('arrastando'));
-    area.addEventListener('drop', (e) => { e.preventDefault(); area.classList.remove('arrastando'); receber(e.dataTransfer.files[0]); });
+    box.addEventListener('dragover', (e) => { e.preventDefault(); box.classList.add('arrastando'); });
+    box.addEventListener('dragleave', () => box.classList.remove('arrastando'));
+    box.addEventListener('drop', (e) => { e.preventDefault(); box.classList.remove('arrastando'); receber(e.dataTransfer.files[0]); });
+    const quadro = el('div', 'transferencia-quadro');
+    const abre = el('button', 'transferencia-linha transferencia-linha-acao'); abre.type = 'button';
+    const resumo = el('span', 'transferencia-linha-valor');
+    const seta = el('span', 'transferencia-seta'); seta.setAttribute('aria-hidden', 'true'); seta.innerHTML = U.svg('<path d="m9 6 6 6-6 6"/>');
+    abre.append(el('span', 'transferencia-linha-rotulo', textos.rotulo || 'Foto'), resumo, seta);
+    const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-data-painel transferencia-anexos-painel');
+    const abrirPainel = U.flutuante(abre, painel);
+    const OPCOES = [['Tirar foto', '<path d="M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/>', () => camera.click()], ['Escolher da galeria', '<path d="M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M9 9.5h.01"/>', () => galeria.click()]];
+    painel.append(el('p', 'transferencia-folha-titulo', 'Anexar foto'));
+    const opcoes = el('div', 'transferencia-quadro');
+    OPCOES.forEach(([nome, icone, acao]) => { const l = el('button', 'transferencia-linha transferencia-linha-acao'); l.type = 'button'; const c = el('span', 'transferencia-circulo'); c.setAttribute('aria-hidden', 'true'); c.innerHTML = U.svg(icone); l.append(el('span', 'transferencia-linha-rotulo', nome), c); l.onclick = () => { abrirPainel(false); acao(); }; opcoes.append(l); });
+    painel.append(opcoes);
+    abre.onclick = () => abrirPainel(painel.hidden);
+    const previa = el('div', 'compras-foto-previa');
     function desenha() {
-      area.replaceChildren();
-      acoes.replaceChildren(botao('Tirar foto', () => camera.click()), botao('Galeria', () => galeria.click()));
+      resumo.textContent = valor ? '1 foto' : 'Nenhuma';
+      previa.replaceChildren();
       if (valor) {
-        const img = el('img'); img.src = valor; img.alt = 'Foto de ' + (nomeProduto() || T.coisa);
-        img.onclick = () => fotoAmpliada(valor, nomeProduto());
-        area.append(img);
-        if (pendente) area.append(el('small', 'profiles-note', T.pendente));
-        acoes.append(botao('Remover', () => { valor = null; pendente = true; desenha(); }, 'btn secondary perigo-texto'));
-      } else {
-        area.append(el('b', null, T.vazio), el('small', 'profiles-note', 'JPEG, PNG ou WebP · até 8 MB'));
+        const l = el('div', 'transferencia-linha');
+        const img = el('img', 'compras-foto-miniatura'); img.src = valor; img.alt = 'Foto de ' + (nomeProduto() || T.coisa); img.onclick = () => fotoAmpliada(valor, nomeProduto());
+        const nome = el('span', 'transferencia-linha-rotulo', 'Foto de ' + (nomeProduto() || T.coisa)); nome.style.flex = '1 1 auto'; nome.style.maxWidth = 'none';
+        const del = el('button', 'transferencia-circulo transferencia-circulo-excluir'); del.type = 'button'; del.title = 'Remover foto'; del.setAttribute('aria-label', 'Remover foto'); del.innerHTML = U.svg('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'); del.onclick = () => { valor = null; pendente = true; desenha(); };
+        l.append(img, nome, del);
+        if (pendente) l.append(Object.assign(el('small', 'profiles-note'), { textContent: T.pendente }));
+        previa.append(l);
       }
     }
     desenha();
-    box.append(area, acoes, erro, camera, galeria);
+    quadro.append(abre, previa, painel);
+    box.append(quadro, erro, camera, galeria);
     return { no: box, valor: () => valor };
   }
   function fotoAmpliada(src, titulo) {
