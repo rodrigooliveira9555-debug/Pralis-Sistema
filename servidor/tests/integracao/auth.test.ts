@@ -151,6 +151,23 @@ describe("login", () => {
     expect(login.status).toBe(429);
   });
 
+  // B5 (26/11/2026): a troca de senha também conta tentativas, pela sessão (não pelo IP).
+  it("troca de senha: depois de 10 senhas atuais erradas na mesma sessão, a 11ª é barrada", async () => {
+    const conta = await criarConta("usuario");
+    const { cookie } = await entrar(app, conta.email, conta.senha);
+    const trocar = (senhaAtual: string, i: number) =>
+      app.inject({
+        method: "POST",
+        url: "/api/auth/change-password",
+        headers: { ...comSessao(cookie), "content-type": "application/json" },
+        // IP diferente a cada pedido: trocar de IP não pode zerar a contagem.
+        remoteAddress: `10.1.${i}.${i}`,
+        payload: { currentPassword: senhaAtual, newPassword: "senha-nova-forte-123" }
+      });
+    for (let i = 0; i < 10; i += 1) expect((await trocar("senha-errada-123", i)).statusCode).not.toBe(429);
+    expect((await trocar(conta.senha, 99)).statusCode).toBe(429);
+  });
+
   it("o cookie de sessão é httpOnly e SameSite=Lax", async () => {
     const conta = await criarConta("usuario");
     const resposta = await app.inject({
