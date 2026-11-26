@@ -7,7 +7,7 @@
 .compras-content > * { min-width: 0; flex-shrink: 0; }
 
 /* Ação principal na cor do menu de origem (o .btn legado é roxo fixo). */
-:is(.compras-view, .compras-dialog) .btn:not(.secondary):not(.footer-cancel-accent) { background: var(--menu-accent); border-color: var(--menu-accent); color: #fff; }
+:is(.compras-view, .compras-dialog) .btn:not(.secondary):not(.footer-cancel-accent) { background: var(--menu-accent); border-color: var(--menu-accent); color: var(--texto-vazado, #fff); }
 :is(.compras-view, .compras-dialog) .btn.secondary { color: var(--panel-text, #12672e); border-color: color-mix(in srgb, var(--menu-accent) 45%, white); background: transparent; }
 body.dark-theme :is(.compras-view, .compras-dialog) .btn.secondary { color: #a7e8bd; }
 .compras-corpo-filtros { padding: 10px 14px 0; }
@@ -355,7 +355,7 @@ span.compras-chip { cursor: default; }
 .compras-texto-auto { margin: 0; font-size: 12px; color: var(--panel-text, #12672e); font-weight: 600; }
 body.dark-theme .compras-texto-auto { color: #a7e8bd; }
 .compras-dialog-acoes { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; position: sticky; bottom: -24px; background: var(--theme-surface, #fff); padding: 10px 0 0; }
-.compras-dialog .btn.perigo, .compras-content .btn.perigo { background: #ef4444; border-color: #ef4444; color: #fff; }
+.compras-dialog .btn.perigo, .compras-content .btn.perigo { background: #ef4444; border-color: #ef4444; color: var(--texto-vazado, #fff); }
 .compras-form-rodape { display: flex; justify-content: flex-start; }
 .compras-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted, #73737a); margin: 0; }
 .compras-meta b { color: var(--layout-ink, #3f3f46); font-weight: 600; }
@@ -916,7 +916,6 @@ body.dark-theme .transferencia-tela .account-status-switch[aria-checked="true"] 
 .transferencia-tela .transferencia-linha .compras-arvore-campo { border-color: transparent; background: transparent; box-shadow: none; }
 .transferencia-tela .transferencia-linha .compras-arvore-campo:hover { border-color: transparent; }
 /* Escuro: o texto dos botões cheios é vazado — mostra a cor do fundo da tela (preto no escuro, branco no claro). */
-body.dark-theme .transferencia-tela { --texto-vazado: var(--theme-surface, #222128); }
 /* Calculadora: teclas dos números na cor do cartão (branco no claro, escuro no escuro); operadores em cinza para dar contraste sobre o laranja; o = em laranja mais fechado. */
 .transferencia-tela .transferencia-tecla.operador { background: color-mix(in srgb, var(--layout-ink, #606066) 22%, var(--theme-card, #fff)); border-color: transparent; color: var(--layout-ink, #606066); }
 .transferencia-tela .transferencia-tecla.igual { background: color-mix(in srgb, #000 20%, var(--menu-accent)); border-color: transparent; color: #fff; }
@@ -929,7 +928,7 @@ body.dark-theme .transferencia-tela { --texto-vazado: var(--theme-surface, #2221
 :root { --mascara-fundo: 14%; }
 body.dark-theme { --mascara-fundo: 24%; }
 @media (hover: hover) {
-  .compras-aniv-painel .compras-grade-celula:not([aria-pressed="true"]):hover,
+  .compras-grade-escolha .compras-grade-celula:not([aria-pressed="true"]):hover,
   .transferencia-tela .transferencia-tecla:not(.igual):hover { background: color-mix(in srgb, var(--menu-accent) var(--mascara-fundo), var(--theme-card, #fff)); }
   .compras-hier-linha:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
 }
