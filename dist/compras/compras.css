@@ -1087,3 +1087,9 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 /* LINHAS DE LISTA EM COLUNAS NA ALTURA PADRÃO (Rodrigo, 26/11/2026): a lista em grade não estica as linhas para encher a caixa (davam 100 e 120 px); cada linha tem 52 px (--linha-altura) e o cabeçalho das colunas, a altura própria dele. */
 .compras-lista-grade { align-content: start; grid-auto-rows: max-content; }
 .compras-lista-grade > .compras-linha:not(.compras-linha-cabecalho) { min-height: var(--linha-altura, 52px); align-items: center; }
+@media (max-width: 600px) {
+  :is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > .compras-rotulo { flex: 0 1 60%; max-width: 60%; }
+  :is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > :not(.compras-rotulo):not(small) { flex: 1 1 0; min-width: 0; }
+}
+/* Linha de lista com 52 px também no celular: nome e subtítulo em UMA linha cada, com reticências (o nome completo abre ao tocar na linha). */
+.compras-lista > .compras-linha.com-acoes .compras-linha-texto :is(b, small) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }

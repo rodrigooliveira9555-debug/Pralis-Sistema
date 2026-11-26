@@ -980,3 +980,8 @@ body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.un
 body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.uniforms-enum > .local-search-control:has(input:not([hidden])) { grid-column: 1 / -1; grid-row: 2; padding-bottom: 8px; }
 body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.uniforms-enum .local-search-toggle { --busca-fundo: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); --busca-borda: transparent; --busca-texto: var(--muted, #71717a); }
 body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.uniforms-enum .local-search-toggle:is(:hover, :focus-visible) { --busca-fundo: var(--menu-accent); --busca-texto: #fff; }
+/* TELA ESTREITA (até 600 px): o nome do campo ganha até 60% da linha para caber em duas linhas de 20 px e a linha continuar com 52 px; o valor fica com o resto. */
+@media (max-width: 600px) {
+  body :is(dialog,.modal,#sector-view,.view) :is(.form-fields[data-quadro], .grupo-quadro) > label:not(.uniforms-enum), body .doc-capture-type { grid-template-columns: minmax(0, 60%) minmax(0, 1fr); gap: 0 8px; }
+  body :is(dialog,.modal,#sector-view,.view) :is(.form-fields[data-quadro], .grupo-quadro) > label.uniforms-enum, body .people-complete-pickbox > label.uniforms-enum.people-complete-pick { grid-template-columns: minmax(0, 52%) minmax(0, 1fr) auto; }
+}
