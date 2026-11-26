@@ -348,7 +348,7 @@
   const TOM_SITUACAO = { aguardando_tesouraria: 'atencao', fechado_sem_pendencias: 'info', com_quebra: 'negativo', conferido_tesouraria: 'positivo', divergencia_confirmada_tesouraria: 'atencao' };
 
   window.CicluzCaixa = {
-    COR, COR_TEXTO, PERFIS, PDVS: D.PDVS, estado, pode,
+    COR, COR_TEXTO, PERFIS, pdvs: D.pdvs, nomePdv: D.nomePdv, maquininhas: D.maquininhas, estado, pode,
     moeda, centavos, hora, somarMin, totalItens,
     conta, saldoConta, contaDoPosto, transferencia, malotes, malotePorLacre, lacreExiste, lacre, bolsasLivres, pendentesSemLacre, sangriasDoCaixa,
     criarMalote, criarSemLacre, abrirCaixa, registrarSangria, resolverRecebimento, confirmarTransferencia, quemOpera, criarTransferencia, conferirTransferencia, recusarConferencia, ajustarSaldo, resumo, iniciarFechamento, fecharCaixa, diferencaDe, caixas, caixasAbertos,

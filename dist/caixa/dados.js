@@ -1,18 +1,46 @@
 /*
- * Caixa — dados FICTÍCIOS da casca (sementes). Só dados: o estado vivo mora em modulo.js (CicluzCaixa.estado).
+ * Caixa — dados FICTÍCIOS da casca (sementes) e a LEITURA dos cadastros reais que ela usa (computadores e máquinas das operadoras, só leitura).
+ * O estado vivo mora em modulo.js (CicluzCaixa.estado).
  * Dinheiro sempre em CENTAVOS. Cada função devolve uma cópia nova, para "Recomeçar a demonstração" zerar tudo.
  */
 (function () {
   'use strict';
 
-  /** Os 4 PDVs pelo NOME REAL da máquina no CREARE (dispositivo.DESCRICAO, levantamento de 26/11/2026). É a única lista: toda tela do Caixa lê daqui (CicluzCaixa.PDVS). */
-  const PDVS = ['TNP-PC-CXPDV-1', 'TNP-PC-CXPDV-2', 'TNP-PC-CXPDV-3', 'TNP-PC-CXPDV-4'];
+  /* ---------- Cadastros reais (só leitura; o cadastro é feito nas telas de Cadastros Geral) ---------- */
+
+  function hierarquia() {
+    try { if (typeof financialGroups !== 'undefined' && financialGroups) return financialGroups; } catch (e) { /* fora do escopo */ }
+    try { return JSON.parse(localStorage.getItem('cicluz-financial-hierarchy-v1') || 'null') || {}; } catch (e) { return {}; }
+  }
+  /**
+   * Os PDVs pelo NOME REAL da máquina no CREARE (dispositivo.DESCRICAO): os computadores ATIVOS de "VND - Computadores" (Entradas › Cadastros Geral)
+   * cujo nome termina em CXPDV-n, em ordem do número (a mesma regra das abas de Vendas dos PDVs). Fonte única: não há lista própria do Caixa.
+   */
+  function pdvs() {
+    const nomes = [];
+    (hierarquia().computadores || []).forEach((g) => (g.children || []).forEach((c) => { if (c.active !== false && /CXPDV-?\d+$/i.test(String(c.name).trim())) nomes.push(String(c.name).trim()); }));
+    return nomes.sort((a, b) => parseInt(/(\d+)$/.exec(a)[1], 10) - parseInt(/(\d+)$/.exec(b)[1], 10));
+  }
+  /** Nome do PDV de número n para os dados FICTÍCIOS de demonstração (o cadastro nasce com TNP-PC-CXPDV-1 a 4; o padrão só vale se alguém os apagar). */
+  const nomePdv = (n) => pdvs()[n - 1] || 'TNP-PC-CXPDV-' + n;
+  /**
+   * As máquinas de cartão cadastradas nas operadoras ("VND - Tipos de Operadoras Cartões" › etapa Cadastro das máquinas): só as ativas, de operadora ativa.
+   * O id junta a operadora e a máquina (vínculo por id, nunca por nome); o rótulo é o que aparece na tela.
+   */
+  function maquininhas() {
+    const lista = [];
+    (hierarquia().operadoras || []).filter((o) => o.active !== false).forEach((o) => (o.maquinas || []).filter((m) => m.ativa !== false).forEach((m) => {
+      const partes = [o.name, m.apelido, m.modelo && m.modelo !== m.apelido ? m.modelo : '', m.serie ? 'série ' + m.serie : ''].filter(Boolean);
+      lista.push({ id: o.id + '/' + m.id, operadora: o.name, rotulo: partes.join(' · ') });
+    }));
+    return lista;
+  }
 
   /** Contas/locais. As 8 contas de posto são PDV 1–4 × Manhã/Tarde (Caixa 1M … 4T). */
   const contas = () => [
     { id: 'cofre', nome: 'Cofre Principal', tipo: 'cofre', inicial: 10000000 },
     { id: 'troco', nome: 'Cofre Troco', tipo: 'cofre', inicial: 500000 },
-    ...[1, 2, 3, 4].flatMap((n) => [['M', 'Manhã'], ['T', 'Tarde']].map(([s, turno]) => ({ id: 'cx-' + n + s.toLowerCase(), nome: 'Caixa ' + n + s, tipo: 'caixa', pdv: PDVS[n - 1], turno, inicial: 0 }))),
+    ...[1, 2, 3, 4].flatMap((n) => [['M', 'Manhã'], ['T', 'Tarde']].map(([s, turno]) => ({ id: 'cx-' + n + s.toLowerCase(), nome: 'Caixa ' + n + s, tipo: 'caixa', pdv: nomePdv(n), turno, inicial: 0 }))),
   ];
 
   /** O malote 001 (TNP-PC-CXPDV-1 · Manhã) já está pronto desde o início da demonstração. */
@@ -45,20 +73,20 @@
 
   /** Caixas de "ontem" já fechados (Conferência/Histórico). `retornoId` aponta para a transferência do retorno final. */
   const fechamentos = () => [
-    { id: 'cx-90', data: '04/11/2026', pdv: PDVS[1], turno: 'Tarde', contaId: 'cx-2t', operador: 'Bruna Costa', supervisor: 'Patrícia Souza', abertura: '14:00', fechamento: '21:58', fechadoPor: 'Bruna Costa',
+    { id: 'cx-90', data: '04/11/2026', pdv: nomePdv(2), turno: 'Tarde', contaId: 'cx-2t', operador: 'Bruna Costa', supervisor: 'Patrícia Souza', abertura: '14:00', fechamento: '21:58', fechadoPor: 'Bruna Costa',
       entradas: 612350, transfEntrada: 35000, transfSaida: 0, esperado: 41200, contado: 41200, diferenca: 0, lacreFechamento: 'FCH-090', lacreReservado: 'FCH-090', observacao: '',
       retornoId: 'tr-090', conferencias: [], anexos: { folha: 1, creare: 1, comprovantes: 1 },
       contagem: { especie: 41000, moedas: 200, total: 41200, correcoes: [] }, pdvForma: { 'Crédito': 210000, 'Débito': 135050, Dinheiro: 180100, Pix: 65000, Voucher: 22200 },
       folha: { campos: { trocoInicial: '350,00', saldoInicial: '0,00', clientes: '412', credito: '2.100,00', debito: '1.350,50', dinheiro: '1.801,00', pix: '650,00', voucher: '222,00', total: '6.123,50', despesas: '0,00', sangria: '0,00', saldoFinal: '412,00' }, correcao: '' },
       maquininha: { credito: '2.100,00', debito: '1.350,50', pix: '650,00', voucher: '222,00' }, paradas: [], canceladas: 0, },
-    { id: 'cx-91', data: '04/11/2026', pdv: PDVS[2], turno: 'Manhã', contaId: 'cx-3m', operador: 'Carlos Henrique', supervisor: 'Marcos Lima', abertura: '06:00', fechamento: '13:55', fechadoPor: 'Carlos Henrique',
+    { id: 'cx-91', data: '04/11/2026', pdv: nomePdv(3), turno: 'Manhã', contaId: 'cx-3m', operador: 'Carlos Henrique', supervisor: 'Marcos Lima', abertura: '06:00', fechamento: '13:55', fechadoPor: 'Carlos Henrique',
       entradas: 488900, transfEntrada: 35000, transfSaida: 0, esperado: 38900, contado: 38400, diferenca: -500, lacreFechamento: 'FCH-091', lacreReservado: 'FCH-091', observacao: 'Faltou uma nota de R$ 5,00 no troco do início da manhã.',
       retornoId: 'tr-091', conferencias: [], anexos: { folha: 1, creare: 1, comprovantes: 1 },
       contagem: { especie: 38000, moedas: 400, total: 38400, correcoes: [] }, pdvForma: { 'Crédito': 150000, 'Débito': 120000, Dinheiro: 130900, Pix: 60000, Voucher: 28000 },
       folha: { campos: { trocoInicial: '350,00', saldoInicial: '0,00', clientes: '377', credito: '1.500,00', debito: '1.200,00', dinheiro: '1.304,00', pix: '600,00', voucher: '280,00', total: '4.884,00', despesas: '0,00', sangria: '0,00', saldoFinal: '389,00' }, correcao: '' },
       maquininha: { credito: '1.500,00', debito: '1.200,00', pix: '600,00', voucher: '280,00' }, canceladas: 1,
       paradas: [{ desde: '09:10', ate: '09:42', motivos: ['Falta de energia na loja'], outro: '' }], },
-    { id: 'cx-92', data: '03/11/2026', pdv: PDVS[0], turno: 'Tarde', contaId: 'cx-1t', operador: 'Ana Paula', supervisor: 'Marcos Lima', abertura: '14:02', fechamento: '22:01', fechadoPor: 'Ana Paula',
+    { id: 'cx-92', data: '03/11/2026', pdv: nomePdv(1), turno: 'Tarde', contaId: 'cx-1t', operador: 'Ana Paula', supervisor: 'Marcos Lima', abertura: '14:02', fechamento: '22:01', fechadoPor: 'Ana Paula',
       entradas: 530120, transfEntrada: 35000, transfSaida: 20000, esperado: 35000, contado: 35300, diferenca: 300, lacreFechamento: 'FCH-088', lacreReservado: 'FCH-088', observacao: 'Sobra de R$ 3,00: cliente deixou o troco.',
       retornoId: 'tr-092', conferencias: [{ resultado: 'conferido', observacao: '', por: 'Carla (Tesoureiro)', em: '04/11 08:10' }], anexos: { folha: 1, creare: 1, comprovantes: 1 },
       contagem: { especie: 35000, moedas: 300, total: 35300, correcoes: [] }, pdvForma: { 'Crédito': 160000, 'Débito': 100000, Dinheiro: 150120, Pix: 90000, Voucher: 30000 },
@@ -68,8 +96,8 @@
 
   /** Caixas abertos de OUTROS PDVs (só para o monitor da Gerência ter o que mostrar). */
   const caixasFicticios = () => [
-    { id: 'ab-2', pdv: PDVS[1], turno: 'Manhã', contaId: 'cx-2m', operador: 'Bruna Costa', abertura: '06:02', entradas: 214300, transfEntrada: 35000, transfSaida: 0, saldo: 93000, situacao: 'aberto', ficticio: true },
-    { id: 'ab-3', pdv: PDVS[2], turno: 'Manhã', contaId: 'cx-3m', operador: 'Carlos Henrique', abertura: '06:00', entradas: 188700, transfEntrada: 35000, transfSaida: 20000, saldo: 73000, situacao: 'aberto', ficticio: true },
+    { id: 'ab-2', pdv: nomePdv(2), turno: 'Manhã', contaId: 'cx-2m', operador: 'Bruna Costa', abertura: '06:02', entradas: 214300, transfEntrada: 35000, transfSaida: 0, saldo: 93000, situacao: 'aberto', ficticio: true },
+    { id: 'ab-3', pdv: nomePdv(3), turno: 'Manhã', contaId: 'cx-3m', operador: 'Carlos Henrique', abertura: '06:00', entradas: 188700, transfEntrada: 35000, transfSaida: 20000, saldo: 73000, situacao: 'aberto', ficticio: true },
   ];
 
   // [minuto depois da abertura, forma (ou formas [[forma, centavos]]), itens [[produto, qtd, unitário]]]
@@ -99,5 +127,5 @@
     { min: 88, id: 'CRE-000236', forma: 'Pix', autorizadoPor: 'Patrícia Souza', motivo: 'Produto lançado errado', justificativa: 'Lançado pão de forma em vez de pão integral.', itens: [['Pão de forma', 1, 1190]] },
   ];
 
-  window.CicluzCaixaDados = { PDVS, contas, transferencias, lacres, lancamentos, fechamentos, caixasFicticios, vendas, vendasSemCaixa, canceladas };
+  window.CicluzCaixaDados = { pdvs, nomePdv, maquininhas, contas, transferencias, lacres, lancamentos, fechamentos, caixasFicticios, vendas, vendasSemCaixa, canceladas };
 })();

@@ -10,8 +10,8 @@
   const C = window.CicluzCaixa;
   const { el, botao, entrada, seletor } = U;
 
-  // Login de posto: cada conta de operador é um PDV + turno (uma das 4 máquinas, C.PDVS, × Manhã/Tarde).
-  const POSTO = { pdv: C.PDVS[0], turno: 'Manhã', usuario: 'pdv1.manha' };
+  // Login de posto: cada conta de operador é um PDV + turno (uma das máquinas de VND - Computadores, C.pdvs(), × Manhã/Tarde).
+  const POSTO = { get pdv() { return C.nomePdv(1); }, turno: 'Manhã', usuario: 'pdv1.manha' };
   // Malote que a Tesouraria declarou para o lacre digitado (vem de C.estado.malotes; o 001 já existe de início).
   const MALOTE = { lacre: '', dinheiro: 0, moedas: 0, lacresSangria: [], lacreFechamento: '', rota: 'Malote Cofre → Conta do PDV' };
   /** Consulta o lacre como o servidor: inexistente, já rompido ou de outro PDV recusam com a mensagem do principal. */
@@ -25,7 +25,6 @@
   }
   const RESPONSAVEIS = ['Ana Paula', 'Bruna Costa', 'Carlos Henrique'];
   const SUPERVISORES = ['Marcos Lima', 'Patrícia Souza'];
-  const MAQUININHAS = [['pagbank-1', 'PagBank Moderninha · série 8C12-4471'], ['pagbank-2', 'PagBank Smart · série 9A03-1180']];
   const CAMINHO = 'Entradas · Vendas / Faturamento / Lançamentos / VND - Vendas / Abertura de Caixa';
 
   const { moeda, centavos, hora } = C;
@@ -67,7 +66,8 @@
     }
     if (!estado.responsavel) lista.push('Escolha o responsável pelo caixa.');
     if (!estado.supervisor) lista.push('Escolha o supervisor responsável.');
-    if (!estado.maquininha) lista.push('Escolha a maquininha de cartão.');
+    if (!C.maquininhas().length) lista.push('Cadastre uma máquina de cartão em VND - Tipos de Operadoras Cartões.');
+    else if (!estado.maquininha) lista.push('Escolha a maquininha de cartão.');
     return lista;
   }
 
@@ -83,13 +83,14 @@
 
     const g2 = secao('Conferir malote de abertura', ...blocoMalote());
 
+    const maqs = C.maquininhas();
     const g3 = secao('Responsáveis e terminal',
       quadro(
         escolha('Responsável pelo caixa', RESPONSAVEIS, 'responsavel'),
         escolha('Supervisor responsável', SUPERVISORES, 'supervisor'),
-        escolha('Maquininha de cartão', MAQUININHAS, 'maquininha'),
+        maqs.length ? escolha('Maquininha de cartão', maqs.map((m) => [m.id, m.rotulo]), 'maquininha') : linha('Maquininha de cartão *', valorDa('Nenhuma cadastrada')),
         linhaDe('Usuário logado', entrada('text', POSTO.usuario, { readOnly: true }))),
-      U.nota('Quem responde pelo caixa e qual maquininha vai usar. A maquininha é obrigatória para o relatório final deste turno.'));
+      U.nota('Quem responde pelo caixa e qual maquininha vai usar. A maquininha é obrigatória para o relatório final deste turno.' + (maqs.length ? '' : ' Cadastre as máquinas em Entradas › Cadastros Geral › VND - Tipos de Operadoras Cartões (etapa Cadastro das máquinas).')));
 
     const pend = el('div', 'caixa-pendencias');
     pend.setAttribute('role', 'alert');
@@ -177,7 +178,9 @@
   function tentarAbrir() {
     estado.tentou = true;
     if (bloqueios().length) { render(); tela.body.querySelector('.caixa-pendencias').scrollIntoView({ block: 'center' }); return; }
-    const maq = MAQUININHAS.find((m) => m[0] === estado.maquininha)[1];
+    const maquina = C.maquininhas().find((m) => m.id === estado.maquininha);
+    if (!maquina) { estado.maquininha = ''; render(); return U.avisar('Essa máquina de cartão não está mais ativa. Escolha outra.'); }
+    const maq = maquina.rotulo;
     const contado = (centavos(estado.dinheiro) || 0) + (centavos(estado.moedas) || 0);
     C.dialogo({
       titulo: 'Confirmar abertura do caixa',
@@ -196,7 +199,7 @@
         // O turno nasce no estado único: o saldo inicial é o declarado (confere) ou o contado (divergência).
         C.abrirCaixa({
           pdv: POSTO.pdv, turno: POSTO.turno, usuario: POSTO.usuario, abertoEm,
-          lacre: estado.lacre.trim(), maquininha: maq,
+          lacre: estado.lacre.trim(), maquininha: maq, maquininhaId: maquina.id,
           responsavel: estado.responsavel, supervisor: estado.supervisor,
           valorInicial: estado.conferido ? MALOTE.dinheiro + MALOTE.moedas : contado,
           divergencia: estado.conferido ? 0 : contado - (MALOTE.dinheiro + MALOTE.moedas),

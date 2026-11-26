@@ -47,7 +47,7 @@
     const sel = (chave, rotulo, opcoes, vazio) => { const x = seletor(opcoes, f[chave], vazio); x.onchange = () => { f[chave] = x.value; ctx.selecionado = null; ctx.atualizar(); }; return campo(rotulo, x); };
     const dt = (chave, rotulo) => { const x = entrada('date', f[chave]); x.onchange = () => { f[chave] = x.value; ctx.selecionado = null; ctx.atualizar(); }; return campo(rotulo, x); };
     const situacoes = veTudo() ? [['aberto', 'Aberto'], ['em_fechamento', 'Em fechamento'], ['fechado', 'Fechado']] : Object.entries(C.ROTULO_SITUACAO);
-    g.append(dt('de', 'Data inicial'), dt('ate', 'Data final'), sel('pdv', 'PDV', C.PDVS, 'Todos'),
+    g.append(dt('de', 'Data inicial'), dt('ate', 'Data final'), sel('pdv', 'PDV', C.pdvs(), 'Todos'),
       sel('operador', 'Operador', [...new Set(todas.map((l) => l.operador))], 'Todos'), sel('turno', 'Turno', ['Manhã', 'Tarde'], 'Todos'), sel('situacao', 'Situação', situacoes, 'Todas'));
     const msg = f.de && f.ate && f.de > f.ate ? [el('p', 'caixa-pendencias', 'Data inicial não pode ser maior que a final.')] : [];
     return [g, ...msg, botao('Limpar filtros', () => { ctx.filtro = { ...VAZIO }; ctx.selecionado = null; ctx.atualizar(); }, 'btn secondary')];
