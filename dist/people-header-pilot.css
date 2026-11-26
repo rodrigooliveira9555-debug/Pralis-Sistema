@@ -261,7 +261,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-tool
  body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-home-logo:hover{background:color-mix(in srgb,var(--menu-accent,#7c3aed) 22%,transparent)!important}
 }
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-home-logo .people-footer-symbol{width:100%;height:100%}
-body.dark-theme{--vidro-fundo:linear-gradient(135deg,rgba(70,68,84,.55),rgba(30,28,40,.42));--vidro-borda:rgba(255,255,255,.16);--vidro-borda-botao:rgba(255,255,255,.24);--vidro-sombra:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(255,255,255,.05)}
+body.dark-theme{--vidro-realce:rgba(255,255,255,.2);--vidro-fundo:linear-gradient(135deg,rgba(90,88,106,.34),rgba(34,32,46,.22));--vidro-borda:rgba(255,255,255,.16);--vidro-borda-botao:rgba(255,255,255,.24);--vidro-sombra:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(255,255,255,.05)}
 /* Menu rápido (Configurar menu rápido) no mesmo padrão dos painéis flutuantes (data, hora, anexos): cartão cinza do fundo das telas, borda fina, cantos de 14 px, sombra de painel e respiro de 12 px. */
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options{background:var(--layout-gap,#f5f5f7);border:1px solid var(--layout-line,#dedee3);border-radius:14px;box-shadow:0 8px 24px rgb(0 0 0 / .14);padding:12px;gap:8px}
 body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header .people-toolbar-options .people-options-heading{background:transparent;padding:2px 4px 10px}

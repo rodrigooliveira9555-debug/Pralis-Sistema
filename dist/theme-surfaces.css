@@ -8,7 +8,7 @@ body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.
 body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content :is(input:not([type=color]):not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea){background:var(--theme-field)!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important;color-scheme:dark}
 body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content :is(table,thead,tbody,tr,td,th){background-color:var(--theme-card)!important;color:var(--layout-ink)!important;border-color:var(--layout-line)!important}
 body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell>.panel>.content :is(.record b,.record small,.card-arrow,.job-copy b,.job-copy small,.account-list-state,.location-name,.profiles-note){color:var(--layout-ink)!important}
-body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header,
+/* A barra de baixo (vidro) não entra aqui: ela tem película própria em people-header-pilot.css (--vidro-fundo). */
 body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-toolbar-options,
 body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-options-compact :is(.people-options-heading,.people-options-inner,.people-toolbar-row),
 body.dark-theme :is(#sector-view,.view,dialog,.dialog).app-screen-shell .people-bottom-header>.fixed-header-tools{background:var(--theme-surface)!important;border-color:var(--layout-line)!important}

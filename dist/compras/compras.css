@@ -945,16 +945,14 @@ body.dark-theme { --mascara-fundo: 24%; }
 .transferencia-tela input.compras-selecao-bolinha:checked { border-color: var(--menu-accent); }
 .transferencia-tela input.compras-selecao-bolinha:not(:checked) { background-color: transparent; }
 /* Notas e Moedas no quadro laranja: a mesma máscara dos outros botões (miolo no sombreado da cor da tela, borda como está); o texto passa à cor escura da tela para continuar legível. */
-@media (hover: hover) { .transferencia-tela .transferencia-valor-cab .compras-chip:not(.ativo):hover { background: color-mix(in srgb, var(--menu-accent) var(--mascara-fundo, 14%), var(--theme-card, #fff)); color: var(--panel-text, #9a3412); } }
+@media (hover: hover) { .transferencia-tela .transferencia-valor-cab .compras-chip:not(.ativo):hover { background: rgba(255, 255, 255, .34); color: #fff; } }
 .transferencia-tela .transferencia-valor-cab .compras-chip:not(.ativo):not(:disabled):active { background: #fff; border-color: #fff; color: var(--panel-text, #9a3412); }
 /* A caixa do valor também reage ao mouse (a máscara única): miolo sombreado, texto escuro; a borda continua a mesma. */
 @media (hover: hover) {
-  .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:hover { --ui-control-bg: color-mix(in srgb, var(--menu-accent) var(--mascara-fundo, 14%), var(--theme-card, #fff)); --ui-input-color: var(--panel-text, #9a3412); }
-  .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:hover { --ui-placeholder: color-mix(in srgb, var(--panel-text, #9a3412) 65%, transparent); }
+  .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:hover { --ui-control-bg: rgba(255, 255, 255, .22); --ui-input-color: #fff; }
+  .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:hover { --ui-placeholder: rgba(255, 255, 255, .95); }
 }
 /* Número e nome do valor bem legíveis nos dois temas (o cinza do tema escuro apagava o "R$ 0,00") e Notas/Moedas no escuro com sombra clara em vez do marrom. */
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela { --ui-placeholder: rgba(255, 255, 255, .95); }
 @media (hover: hover) {
-  body.dark-theme .transferencia-tela .transferencia-valor-cab .compras-chip:not(.ativo):hover { background: rgba(255, 255, 255, .34); color: #fff; }
-  body.dark-theme .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:hover { --ui-control-bg: rgba(255, 255, 255, .22); --ui-input-color: #fff; --ui-placeholder: rgba(255, 255, 255, .95); }
 }

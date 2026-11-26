@@ -1563,3 +1563,7 @@ Ao passar o mouse, **só o miolo** é sombreado (14%, 24% no escuro); a **borda 
 
 ### Barra de baixo no vidro da Apple (26/11/2026, Rodrigo)
 Película clara uniforme (degradê suave de branco translúcido; no escuro, de cinza-azulado), desfoque forte (34 px, saturação 1,8), fio de luz no topo e na base e sombra macia. Variáveis `--vidro-fundo`, `--vidro-borda`, `--vidro-sombra`. Botões mantêm o padrão (transparentes com fio fino; cheios na cor do cabeçalho ao passar).
+
+### Vidro no escuro e hover do valor (26/11/2026, Rodrigo)
+- A barra de baixo no tema escuro é vidro de verdade (película translúcida; o laranja dos botões aparece por trás). A regra antiga do tema escuro que pintava a barra de cinza sólido saiu de `theme-surfaces.css`.
+- Hover no quadro laranja do valor (caixa do valor, Notas, Moedas): **um padrão só, nos dois temas** — miolo branco translúcido com texto branco; borda não muda. Sai o hover pêssego do tema claro.
