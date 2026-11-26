@@ -28,8 +28,6 @@ body.dark-theme .caixa-dialog .btn.secondary { color: #f6d38f; }
 .caixa-declarado { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 16px; margin: 12px 0; }
 .caixa-declarado dt { font-size: 11px; color: var(--muted, #71717a); }
 .caixa-declarado dd { margin: 2px 0 0; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.caixa-conferencia { display: grid; gap: 10px; margin: 0; padding: 12px; border: 1px solid var(--line, #e4e4e7); border-radius: 10px; }
-.caixa-conferencia legend { padding: 0 6px; font-size: 13px; font-weight: 600; }
 .caixa-diferenca { margin: 0; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .caixa-diferenca.falta { background: #fde3e3; color: #a11c1c; }
 .caixa-diferenca.sobra { background: #fdf0d5; color: #8a5300; }
