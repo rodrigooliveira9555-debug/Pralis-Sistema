@@ -904,3 +904,15 @@ body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > :not(labe
 /* O padding das labels antigas é zerado por regra com !important (.single-field-block): o respiro lateral vai no recuo do texto e na margem do campo. */
 body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label { text-indent: 16px; }
 body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label > :is(input, select, textarea, div, button) { text-indent: 0; margin-right: 16px; box-sizing: border-box; }
+/* Formulários antigos: as mesmas medidas da Nova Transferência (referência). */
+body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] { border-radius: 14px; overflow: hidden; }
+body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label + label::before, body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label + :not(label)::before { left: 0; }
+body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label { text-indent: 14px; font: 500 15px/20px var(--ui-font, inherit); color: var(--layout-ink, #27272a); }
+body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label > :is(input, select, textarea, div, button) { margin-right: 14px; }
+body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label > :is(input, select, textarea) { height: auto; min-height: 0; padding: 0; border: 0; box-shadow: none; text-align: right; text-align-last: right; font: 500 15px/20px var(--ui-font, inherit); color: var(--muted, #71717a); }
+body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] { overflow: visible; }
+body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > :first-child { border-top-left-radius: 13px; border-top-right-radius: 13px; }
+body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > :last-child { border-bottom-left-radius: 13px; border-bottom-right-radius: 13px; }
+body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label :is(input, select, textarea):hover, body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label :is(input, select, textarea):focus { --ui-control-bg: transparent; --theme-field: transparent; --ui-border-base: transparent; --ui-control-accent: transparent; --ui-focus-shadow: none; }
+/* Formulários antigos: a linha inteira também (já vale para label; vale para os blocos de situação/chave). */
+body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > .account-status:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }

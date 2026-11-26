@@ -993,3 +993,37 @@ body :is(#sector-view,.view,dialog,.modal).transferencia-tela .transferencia-val
 .compras-dialog:not(.transferencia-tela) .compras-fieldset > p.compras-fieldset-sub { margin: 0; padding: 12px 16px 4px; border: 0; color: var(--muted, #73737a); font: 400 12px/16px var(--ui-font); }
 .compras-dialog:not(.transferencia-tela) .compras-fieldset > p.compras-fieldset-sub + * { }
 .compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-largo:not(.compras-campo):not(.compras-interruptor):not(.account-status) { padding: 12px 16px; box-sizing: border-box; }
+/* CABEÇALHO COM A CURVA "PARA BAIXO" EM TODAS AS ABAS (Rodrigo, 26/11/2026): o desenho da Nova Transferência vale para todas as telas e janelas — fio de baixo do cabeçalho na cor dele e duas curvas laranja (cor da origem) de 16 px nos cantos, logo abaixo do cabeçalho. */
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell > .panel { position: relative; }
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell > .panel > .head { --shell-radius: 0; border-bottom-color: var(--menu-accent); }
+body :is(#sector-view,.view,dialog,.dialog).app-screen-shell:not(.people-top-hidden) > .panel::before { content: ''; position: absolute; top: var(--shell-head-min, 58px); left: 0; right: 0; height: 16px; z-index: 6; pointer-events: none;
+  background: radial-gradient(circle at 100% 100%, transparent 15.5px, var(--menu-accent) 16px) left top / 16px 16px no-repeat, radial-gradient(circle at 0 100%, transparent 15.5px, var(--menu-accent) 16px) right top / 16px 16px no-repeat; }
+/* FORMULÁRIOS LINHA POR LINHA: as MESMAS medidas da Nova Transferência (referência) — quadro de cantos 14 px com divisores de ponta a ponta, linha de 52 px com 14 px de respiro, nome em 500 15 px, valor à direita em 15 px cinza, data com o ícone cinza simples. */
+.compras-dialog:not(.transferencia-tela) .compras-fieldset { border-radius: 14px; overflow: hidden; }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > :not(legend) ~ :not(legend)::before { left: 0; }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-campo { --campo-altura: 34px; --campo-respiro: 0; padding-top: 6px; padding-bottom: 6px; }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-campo > .compras-rotulo { padding-left: 14px; font: 500 15px/20px var(--ui-font); color: var(--layout-ink, #27272a); }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-campo > :not(.compras-rotulo):not(small) { margin-right: 14px; }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-campo > :is(input, select, textarea) { height: auto; min-height: 0; padding: 0; border: 0; box-shadow: none; text-align: right; text-align-last: right; font: 500 15px/20px var(--ui-font); color: var(--muted, #71717a); }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-campo > .compras-aniv-campo, .compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-aniv-campo { justify-content: flex-end; margin-left: auto; }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-campo :is(.compras-aniv-campo input, .compras-hora-campo input) { height: auto; min-height: 0; padding: 0; border: 0; background: transparent; box-shadow: none; text-align: right; font: 500 15px/20px var(--ui-font); color: var(--muted, #71717a); }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-campo .compras-aniv-campo button { background: transparent; border: 0; box-shadow: none; color: var(--muted, #8e8e93); }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-campo .compras-aniv-campo button svg { stroke: currentColor; }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-campo > small { padding: 0 14px 8px; }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > .account-status, .compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-situacao-quadro { padding: 12px 14px; }
+/* Cartões de Situação (Ativo/Inativo, Sim/Não) viram linha: título à esquerda como o nome do campo e a chave à direita, igual à Nova Transferência; a explicação fica embaixo. */
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > .account-status:not(.compras-tipo-pessoa) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0 12px; min-height: 52px; padding: 8px 14px; box-sizing: border-box; }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > .account-status:not(.compras-tipo-pessoa) > span:first-child { font: 500 15px/20px var(--ui-font); color: var(--layout-ink, #27272a); }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > .account-status:not(.compras-tipo-pessoa) > .account-status-row { justify-self: end; }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > .account-status:not(.compras-tipo-pessoa) > :is(small, p) { grid-column: 1 / -1; padding-top: 2px; }
+/* O título do grupo fica fora do quadro (acima da borda): sem overflow:hidden; os cantos da primeira e da última linha acompanham o quadro. */
+.compras-dialog:not(.transferencia-tela) .compras-fieldset { overflow: visible; }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > legend + * { border-top-left-radius: 13px; border-top-right-radius: 13px; }
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > :last-child { border-bottom-left-radius: 13px; border-bottom-right-radius: 13px; }
+/* Nas linhas, quem reage ao mouse é a linha inteira; o campo não ganha um sombreado só dele. */
+body :is(#sector-view,.view,dialog,.modal).compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-campo :is(input, select, textarea):hover, body :is(#sector-view,.view,dialog,.modal).compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-campo :is(input, select, textarea):focus { --ui-control-bg: transparent; --theme-field: transparent; --ui-border-base: transparent; --ui-control-accent: transparent; --ui-focus-shadow: none; }
+/* MÁSCARA NA LINHA INTEIRA (Rodrigo, 26/11/2026): em formulário, passar o mouse ou focar sombreia a LINHA toda (nome, valor, chave, ícone), nunca só o campo. Vale também para as linhas de situação (chave) e os interruptores. */
+@media (hover: hover) {
+  .compras-dialog:not(.transferencia-tela) .compras-fieldset > :is(.account-status:not(.compras-tipo-pessoa), .compras-interruptor):hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+}
+.compras-dialog:not(.transferencia-tela) .compras-fieldset > :is(.account-status:not(.compras-tipo-pessoa), .compras-interruptor):focus-within { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
