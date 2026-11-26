@@ -1,5 +1,7 @@
 # CICLUZ — referência de interface
 
+> **Layout novo (vidro, máscara de passar o mouse, painéis, data/hora/dias/anexo, barra de baixo):** a regra vigente está na seção **"PADRÃO CONSOLIDADO — layout novo Vidro (26/11/2026)"** no **fim** deste arquivo. Em conflito com as rodadas anteriores de 25–26/11/2026, vale ela.
+
 ## Listas de cadastro: moldura, linha padrão, cabeçalho e primeira coluna congelados, marcação redonda (24/11/2026, REGRA PARA TODAS AS LISTAS)
 Pedido do Rodrigo, para não repetir o ajuste tela a tela. Vale para toda lista em `.compras-lista-grade` (Clientes, Fornecedores, Produtos, Cargos, Colaboradores, Tipos…) e, no que couber, para as telas de lançamento e de configuração (Acesso por Tela):
 - **Moldura única** (`.compras-secao`, cantos de 12 px) com a barra do alto (botões de ação, total e "‹ ›") **fixa** e a tabela **rolando por dentro**, para os lados e para baixo. A lista tem altura máxima (`--lista-alta`, a tela menos 280 px) e rola sozinha; o título da tela e a barra não saem do lugar.
@@ -1582,3 +1584,92 @@ Na Nova Transferência, data, hora, dias e anexos começam **sempre na mesma alt
 
 ### Calendário: tocar no mês e ano abre os três quadros (26/11/2026, Rodrigo)
 Tocar no título "mês de ano" mostra **dias, mês e ano ao mesmo tempo**; escolher um mês ou um ano atualiza os dias sem fechar; escolher um dia fecha. Se passar da altura da tela, o painel rola por dentro. (Substitui "só mês e ano".)
+
+
+---
+
+## PADRÃO CONSOLIDADO — layout novo "Vidro" (26/11/2026, Rodrigo) — REFERÊNCIA ÚNICA PARA TODAS AS TELAS
+
+> Esta seção junta, em um só lugar, **tudo** o que foi decidido e implementado na Nova Transferência (25 e 26/11/2026). As rodadas incrementais acima (de "Nova Transferência: cabeçalho padrão…" até "Calendário: tocar no mês e ano…") ficam como **histórico**; **em qualquer conflito vale esta seção**. Ela é o modelo para aplicar em todas as abas, campos e formulários.
+> Status de aplicação: **feito só na Nova Transferência** (`dist/transferencias/`) e nos componentes compartilhados (`ui.js`, `campo-data.js`, `people-header-pilot.*`, `ui-foundation.css`, `unified-layout.css`, `theme-surfaces.css`, `compras.css`). O que falta aplicar nas demais telas está no fim ("Lista de aplicação").
+
+### 1. Espaçamento e estrutura da tela
+- **Margem lateral única: 14 px** (`--margem-lateral`, `ui-foundation.css`) — laterais, topo do conteúdo (sob o cabeçalho, ou do alto quando o cabeçalho está oculto), fim da tela e respiro da barra de baixo. Nada de 20/22/24 px soltos.
+- **Cabeçalho padrão** de todas as telas (cor da origem, título, caminho) + curva "para baixo" nos cantos da área branca. O quadro laranja do valor é o primeiro item e **fica fixo** (sticky) no topo.
+- **Listas agrupadas (estilo Apple)**: título pequeno da seção (cinza) → quadro branco de cantos 12 px com borda cinza → linhas de **52 px** separadas por fio cinza; o **nome do campo fica dentro da linha, à esquerda**, e o valor/controle à direita. Campo dentro da linha **sem moldura própria** (a linha é o campo); clicar em **qualquer ponto da linha** age sobre o campo.
+- **Botões de rodapé da janela** (Cancelar · Salvar e criar nova · Salvar) ficam no fim do conteúdo, **sempre visíveis acima da barra de baixo** (folga `--folga-fim` = 60 px + 2 × margem).
+
+### 2. Cores, tema claro e escuro
+- A cor de destaque é a **cor da origem** da tela (`--menu-accent`): laranja em Transferências, amarelo em Entradas, vermelho em Despesas… Nada de cor fixa.
+- **Tema escuro**: fundo `--theme-surface`/`--layout-gap`, cartões `--theme-card`, campos transparentes dentro das linhas, setas dos seletores preservadas; chave desligada cinza `#5f6573`, ligada na cor da origem.
+- **Texto "vazado"** dos botões cheios: no escuro, o texto do botão cheio usa a cor do fundo da tela (`--texto-vazado`, hoje só na Nova Transferência; ver pendências).
+- **Contraste**: sobre azul e roxo o texto escuro cai a ~3:1 — decidir antes de generalizar o "vazado".
+
+### 3. MÁSCARA ÚNICA DE PASSAR O MOUSE (regra para tudo que reage ao mouse)
+- **Só o miolo muda**: ao passar o mouse, o **miolo** ganha um sombreado da cor da tela (**14 %** no claro, **24 %** no escuro: `--mascara-fundo`); a **borda fica exatamente a mesma** de quando o mouse não está em cima. **Nunca** borda laranja só por causa do mouse.
+- **Escolhido/selecionado = cheio** na cor da tela, texto claro (aí sim a borda acompanha).
+- **Linhas inteiras de lista**: sombreado mais leve, **6 %**, sem borda.
+- Vale para: dias do calendário, células de hora e dia, teclas da calculadora, chips, bolinhas e caixas de marcar (não marcadas), campos de texto/seleção/área de texto, botões redondos, linhas.
+- **Quadro laranja do valor** (caixa do valor, Notas, Moedas): **mesmo padrão nos dois temas** — miolo branco translúcido (`rgba(255,255,255,.22)`; chips `.34`), texto branco, **sem moldura em nenhum estado** (parada, mouse, foco, calculadora aberta). O foco é mostrado só pelo sombreado (sem anel).
+- **Chips**: selecionado = só sombreado, **borda neutra** (`--layout-line`), nunca borda colorida.
+- **Botões de rodapé** (mesma ideia, "um pouco mais evidente"): o **cheio** (Salvar) fecha o laranja em 18 %; o de **contorno** (Cancelar/Voltar) ganha sombreado; os **ícones não mudam de cor**; ao tocar, o de contorno enche de vez.
+- **Botões redondos de 32 px** (`--row-action-size`): cinza (`--muted` 18 %) em repouso; o "+" e os ícones ficam na cor da origem ao passar; o de **excluir** fica **vermelho** (`--cicluz-danger`) ao passar. O vermelho é só para remover.
+- Implementação: por **variáveis** (`--ui-control-bg`, `--theme-field`, `--ui-border-base`, `--ui-control-accent`, `--ui-focus-shadow`, `--ui-placeholder`, `--botao-fundo/-borda/-texto/-icone`), nunca com `!important` novo. As regras gerais de campo têm `#sector-view` dentro de `:is()`; para vencê-las, repita o prefixo `body :is(#sector-view,.view,dialog,.modal)…`.
+
+### 4. Marcações e chaves
+- **Bolinha redonda de 22 px com check branco** (`input.compras-selecao-bolinha`, igual ao cadastro de produto): contorno cinza, cheia na cor ao marcar. Nas janelas (`.location-dialog input`) a regra geral deforma o input; use as variáveis `--caixa-de-marcar`, `--campo-altura`, `--campo-respiro` para voltar aos 22 × 22.
+- **Chave (interruptor)**: textos curtos ao lado (`C/lacre` · `S/lacre`, `Sim` · `Não`), ligada na cor da origem.
+
+### 5. PAINÉIS FLUTUANTES (data, hora, dias, anexo, qualquer seleção em painel) — `U.flutuante` (`compras/ui.js`)
+- **Modelo único**: cartão cinza do fundo, borda fina, cantos 14 px, sombra de painel, respiro de 12 px, título pequeno em cima, conteúdo em quadro branco, rodapé com chips (Limpar/Hoje, Limpar/Agora, Fechar). Largura 292 px (hora 232 px; dias 150 px).
+- **Alinhamento lateral**: a **borda direita do painel é a borda de fora do quadro** que guarda a linha (não a da caixinha do campo).
+- **Altura padrão (opção B)**: na Nova Transferência, **todos** começam na **mesma altura da tela: 6 px abaixo do quadro laranja do valor**. Se passar do espaço acima da barra de baixo, **rola por dentro** (`max-height` + `overflow-y:auto`). Em telas sem quadro de valor o painel abre **6 px abaixo da linha** (ou 6 px acima, se não couber embaixo) — **pendente decidir a altura padrão** dessas telas (ver dúvidas).
+- A **barra de baixo conta como borda da tela** (o painel nunca fica escondido embaixo dela); se o conteúdo do painel muda de altura aberto (calendário em mês/ano), ele **reposiciona sozinho** (`ResizeObserver`).
+- **Abrir/fechar**: tocar em qualquer ponto da linha abre (`abreAoTocarNaLinha`); tocar de novo fecha; tocar fora ou Esc fecha; escolher o item final fecha.
+
+### 6. Modelo de DATA — `U.campoData` (`compras/campo-data.js`)
+- Campo `DD/MM/AA` (máscara; digitar vale) + ícone de calendário; painel com **‹ mês ano ›**, dias da semana (D S T Q Q S S), grade de dias em células de 8 px de canto.
+- **Tocar no título "mês de ano" abre os TRÊS quadros juntos: dias, mês e ano.** Escolher mês ou ano **atualiza os dias sem fechar**; escolher um dia **fecha**.
+- Dia **hoje** com contorno na cor; dia **escolhido** cheio na cor; rodapé **Limpar** (esquerda) e **Hoje** (direita).
+
+### 7. Modelo de HORA — `U.campoHora`
+- Campo `HH:MM` + relógio; painel com **duas roletas** (Hora 00–23 e Minuto 00–59) que rolam e encaixam; a **faixa cheia do meio** é a escolhida (a lista anda, a cor não); também vale digitar, setas e tocar. Rodapé **Limpar** e **Agora**.
+
+### 8. Modelo de DIAS (e qualquer número inteiro) — `U.roletaNumero`
+- Campo numérico (só dígitos) com **− e +** ao lado **e**, tocando no campo, **roleta de uma coluna** (1 a 365) no mesmo painel da hora: rolar para cima/baixo mostra e escolhe; tocar num número escolhe e fecha; setas e digitar valem; rodapé **Fechar**. A lista só rola com o painel aberto.
+
+### 9. Modelo de ANEXO
+- Linha **"Anexos"** com resumo ("Nenhum" / "N anexos") e **seta para a direita** (indica que abre outro menu; o "+" só onde o toque **cria** algo).
+- Painel com título **Anexar** e quadro de opções: Gravar áudio, Gravar vídeo, Anexar áudio, Anexar vídeo, Anexar imagem, Anexar documento — **nome à esquerda, ícone em círculo cinza de 32 px à direita** (laranja ao passar). **Gravar áudio** abre o gravador dentro do painel (‹ Anexar para voltar; "Anexar gravação").
+- Anexos escolhidos aparecem listados embaixo da linha, com ícone/miniatura, nome, tamanho e **excluir** (círculo cinza, vermelho ao passar).
+
+### 10. Escolha de contas (Origem / Destino) e Múltiplo destino
+- **Linha que se abre para baixo** (resumo + seta): lista com **marca redonda**, **ícone CNT**, nome e "Conta ativa"; tocar escolhe e recolhe (fora/Esc também). O **Destino não oferece a conta da Origem**. Múltiplo destino: a mesma lista com várias marcas e contagem.
+
+### 11. Calculadora do valor (quadro laranja)
+- Abre **ao tocar no valor** e também ao tocar em **Notas** ou **Moedas** (que sempre estão ativos; com um número digitado, somam como notas/moedas). **Fecha** com `=`, Esc, tocando no valor de novo ou **tocando fora**.
+- Teclas: números e `⌫` (ícone próprio) na cor do cartão (claro/escuro); **operadores ÷ × − + em cinza**; **`=` em laranja mais fechado**. Máscara do item 3 em todas.
+- Valor só conta **fechado com `=`**; "R$ 0,00" e o rótulo sempre legíveis (branco) nos dois temas.
+
+### 12. Tempo de aceite
+- Chave **Sim/Não**; com Sim: **Contar em** `Dias | Horas | Dias e horas`; dias (1–365, item 8), horas (item 7) ou os dois juntos; linha de **resumo** ("Aceite em 1 dia e 04:30."). Confere ao salvar. Regra de negócio em aberto: `PROJECT_BRAIN/11` (P-51).
+
+### 13. BARRA DE BAIXO — "Vidro" (estilo Apple / Liquid Glass)
+- Nas janelas (`shell-dialog`), a barra **flutua sobre o conteúdo**, que passa por trás dela com desfoque; card com **cantos 12 px**, **margem de 14 px** dos lados e de baixo.
+- **Película**: degradê suave de branco translúcido (`--vidro-fundo`: 66 % → 42 %; **no escuro**, cinza-azulado 34 % → 22 %, **sem fundo sólido**), **desfoque 34 px**, saturação 1,8, brilho 1,04; **fio de luz** no topo e na base (`--vidro-sombra`) e **sombra macia**. O desfoque fica na camada `::before` (um filtro na própria barra quebraria os painéis `position:fixed` de dentro dela). A regra do tema escuro que pintava a barra de cinza sólido **saiu** de `theme-surfaces.css`.
+- **Botões da barra**: transparentes, **fio fino cinza** (`--vidro-borda-botao`), ícone cinza (`--navigation-ink`), 32 px; ao passar, **cheios na cor da origem** com ícone claro.
+- **Logomarca do meio**: sozinha, **sem círculo nem contorno**, ocupando os **32 px** do diâmetro dos botões; ao passar, tom leve da cor.
+- **Menu rápido**: cartão cinza do fundo, borda fina, cantos 14 px, sombra de painel, abre alinhado à direita do botão "…". Cabeçalho só com o título em negrito (sem círculo laranja). Miolo = **quadro branco de linhas brancas** com fio cinza. Ícones das funções em **círculo cinza** que viram cor da origem ao passar; botões da direita (ligar e logomarca) como os ícones do painel Anexar (círculo cinza cheio, cor ao passar; ligado = cheio na cor). **Compacto** (só ícones): sem quadro nem borda, só o ícone.
+
+### 14. Componentes e arquivos (fonte única)
+- `compras/ui.js`: `flutuante` (posição/altura/alinhamento), `campoHora`, `roletaNumero`, `quadroSituacao`, `chips`, `botaoTitulo`, `seletorArvore`/`campoArvore`.
+- `compras/campo-data.js`: `U.campoData`. `transferencias/transferencias.js`: calculadora, linhas, anexos, contas, aceite, `abreAoTocarNaLinha`.
+- CSS: `ui-foundation.css` (tokens, máscara, rodapé, chips, bolinha), `unified-layout.css` (botões de rodapé por variáveis), `theme-surfaces.css`, `people-header-pilot.css` (barra, vidro, menu rápido), `compras/compras.css` (`.transferencia-*`, painéis, roleta).
+
+### 15. LISTA DE APLICAÇÃO nas demais telas (o que falta, na ordem sugerida)
+1. **Barra de baixo em vidro** (item 13) em todas as janelas e nas telas de setor (`#sector-view`), com a folga no fim do conteúdo.
+2. **Máscara única** (item 3) em campos, chips, bolinhas, teclas e linhas de **todas** as telas e formulários; chip selecionado sem borda colorida; botões de rodapé conforme item 3.
+3. **Painéis** (itens 5–8): todo campo de **data** e **hora** do sistema usa os mesmos painéis e o alinhamento/altura padrão.
+4. **Margem única de 14 px**, listas agrupadas e cabeçalho padrão nos formulários que ainda têm outros espaçamentos.
+5. **Texto vazado no escuro** nos botões cheios (depois de decidir o contraste).
+6. Conferir cada tela em **320/390/1024, claro e escuro**, sem rolagem horizontal.
