@@ -968,4 +968,4 @@ body :is(.view,dialog,.modal,#sector-view) .people-complete-pickbox > label.unif
 body :is(.view,dialog,.modal,#sector-view) .people-complete-pickbox .local-search-toggle { --busca-fundo: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); --busca-borda: transparent; --busca-texto: var(--muted, #71717a); }
 body :is(.view,dialog,.modal,#sector-view) .people-complete-pickbox .local-search-toggle:is(:hover, :focus-visible) { --busca-fundo: var(--menu-accent); --busca-borda: transparent; --busca-texto: #fff; }
 /* Máscara da linha também nas linhas que usam .single-field-block (que fixava fundo transparente): a linha inteira recebe o sombreado ao passar o mouse ou focar. */
-body :is(.form-fields[data-quadro], .grupo-quadro) > .single-field-block:is(:hover, :focus-within) { --linha-fundo: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset, .transferencia-quadro) > .single-field-block:is(:hover, :focus-within) { --linha-fundo: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
