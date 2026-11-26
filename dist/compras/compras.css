@@ -920,3 +920,14 @@ body.dark-theme .transferencia-tela { --texto-vazado: var(--theme-surface, #2221
 /* Calculadora: teclas dos números na cor do cartão (branco no claro, escuro no escuro); operadores em cinza para dar contraste sobre o laranja; o = em laranja mais fechado. */
 .transferencia-tela .transferencia-tecla.operador { background: color-mix(in srgb, var(--layout-ink, #606066) 22%, var(--theme-card, #fff)); border-color: transparent; color: var(--layout-ink, #606066); }
 .transferencia-tela .transferencia-tecla.igual { background: color-mix(in srgb, #000 20%, var(--menu-accent)); border-color: transparent; color: #fff; }
+/* Painel das contas (Origem e Destino): a lista do cadastro, em janela flutuante menor. */
+.transferencia-tela .transferencia-contas-painel { width: min(380px, calc(100vw - 24px)); gap: 8px; }
+.transferencia-tela .transferencia-contas-painel .compras-hier { max-height: min(46vh, 320px); overflow-y: auto; }
+.transferencia-tela .transferencia-conta-escolha { cursor: pointer; }
+/* Máscara única ao passar o mouse: o botão fica na cor da tela (tom suave) e, ao escolher, enche com a cor cheia — vale para as teclas da calculadora e as células de data e hora. */
+@media (hover: hover) {
+  .compras-aniv-painel .compras-grade-celula:not([aria-pressed="true"]):hover { background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); border-color: var(--menu-accent); }
+  .compras-hier-linha:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+  .transferencia-tela .transferencia-tecla:not(.igual):hover { background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); border-color: var(--menu-accent); }
+}
+.transferencia-tela .transferencia-tecla:not(.igual):active { background: color-mix(in srgb, #000 20%, var(--menu-accent)); border-color: transparent; color: #fff; }

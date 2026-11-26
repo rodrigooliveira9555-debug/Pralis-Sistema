@@ -1540,3 +1540,7 @@ Só nesta tela, para testar antes de valer para as outras (desenho do Rodrigo em
 - Linha que abre outro menu de escolha (Anexos) termina em seta para a **direita**; o + só onde o toque cria algo.
 - Origem e Destino da Nova Transferência: campo no padrão do cadastro que abre, para baixo, o painel flutuante compacto (como data e hora) com a lista de contas; o Destino não oferece a conta da Origem.
 - Tema escuro: texto dos botões cheios é "vazado" (cor do fundo da tela) via `--texto-vazado`; por ora só na Nova Transferência. Atenção: sobre azul e roxo o contraste cai (~3:1) — decidir se vale para todo o sistema.
+
+### Máscara única de passar o mouse e contas no padrão do cadastro (26/11/2026, Rodrigo)
+- Ao passar o mouse, teclas da calculadora e células de data/hora ficam num tom suave da cor da tela; ao escolher/tocar, enchem com a cor cheia. Linhas de lista ganham tom de 6%.
+- Origem e Destino: painel flutuante para baixo com as mesmas linhas da lista em árvore do cadastro (caixa, ícone CNT, nome, situação) e busca, em janela menor que a do cadastro.
