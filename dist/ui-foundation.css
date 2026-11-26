@@ -25,7 +25,7 @@ body.dark-theme{--ui-situacao-ok:#4ade80;--ui-situacao-atencao:#fbbf24;--ui-situ
 body.dark-theme{--ui-label-color:#d4d4d8;--ui-input-color:#f4f4f5;--ui-placeholder:#a1a1aa;--ui-control-bg:#24232b;--ui-border-base:#62626b;--ui-focus-ring:24%}
 body :is(.view,dialog,.modal){--ui-control-accent:var(--navigation-ink,#a2a0aa)}
 body :is(.fee-expense-field,.fee-account-field){--ui-control-accent:var(--navigation-ink,#a2a0aa)}
-body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) label{font:var(--ui-label-weight) var(--ui-label)/18px var(--ui-font)!important;color:var(--ui-label-color)!important;letter-spacing:normal!important}
+body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) label{font:var(--ui-label-weight) var(--ui-label)/var(--ui-label-line,18px) var(--ui-font)!important;color:var(--ui-label-color)!important;letter-spacing:normal!important}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input:where(:not([type=checkbox])):where(:not([type=radio])):where(:not([type=color])):where(:not([type=range])):where(:not([type=hidden])):where(:not([type=button])):where(:not([type=submit])),select,textarea){--ui-control-accent:var(--navigation-ink,#a2a0aa);box-sizing:border-box!important;min-width:0;font:400 var(--ui-input-size)/20px var(--ui-font)!important;letter-spacing:normal!important;color:var(--ui-input-color)!important;background:var(--ui-control-bg)!important;border:1px solid var(--ui-border-base)!important;border-radius:var(--ui-field-radius)!important;padding:10px var(--ui-field-padding-right,12px) 10px 12px!important;box-shadow:none!important;outline:none!important;transition:border-color .15s,box-shadow .15s}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) :is(input:where(:not([type=checkbox])):where(:not([type=radio])):where(:not([type=color])):where(:not([type=range])):where(:not([type=hidden])):where(:not([type=button])):where(:not([type=submit])),select){height:var(--ui-field-height)!important;min-height:var(--ui-field-height)!important}
 body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) textarea{min-height:84px!important;resize:vertical}
@@ -73,7 +73,7 @@ body :is(#sector-view,#job-edit,#jobs-view,#salary-view,.view,dialog,.modal) sel
 .job-icon-quick-delete .danger{background:#ef4444;border-color:#ef4444;color:#fff}
 
 /* Icon-library headings share the same role as field labels. */
-body :is(.view,dialog) .identity-advanced>summary{font:var(--ui-label-weight) var(--ui-label)/18px var(--ui-font)!important;color:var(--ui-label-color)!important;letter-spacing:normal!important}
+body :is(.view,dialog) .identity-advanced>summary{font:var(--ui-label-weight) var(--ui-label)/var(--ui-label-line,18px) var(--ui-font)!important;color:var(--ui-label-color)!important;letter-spacing:normal!important}
 /* Row actions are solid round buttons; the glyph is a cut-out in the surface colour behind them. */
 #jobs-view .job-actions{align-self:center;align-items:center;justify-content:center;gap:var(--row-action-gap);padding:0!important;transition:width .2s;width:0}
 #jobs-view .job-item.actions-open .job-actions{width:76px;padding:0!important}
@@ -105,7 +105,7 @@ body #sector-view .account-row-actions svg{width:18px;height:18px;fill:none;stro
 body :is(.view,dialog,.modal) input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:block;width:14px;height:14px;flex:none;margin-left:8px;cursor:pointer;background-color:var(--menu-accent,var(--panel-color,#7c3aed));-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='m6 6 12 12M18 6 6 18'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='m6 6 12 12M18 6 6 18'/%3E%3C/svg%3E") center/contain no-repeat}
 
 /* Canonical library roles: all source, online and removed grids share these rules. */
-body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field){--library-accent:var(--menu-accent,var(--dialog-accent,var(--panel-color,#7c3aed)));font:var(--ui-label-weight) var(--ui-label)/18px var(--ui-font);color:var(--ui-label-color)}
+body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field){--library-accent:var(--menu-accent,var(--dialog-accent,var(--panel-color,#7c3aed)));font:var(--ui-label-weight) var(--ui-label)/var(--ui-label-line,18px) var(--ui-font);color:var(--ui-label-color)}
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot){box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 32px!important;width:32px!important;height:32px!important;min-height:32px!important;padding:6px!important;border:1px solid var(--library-accent)!important;border-radius:var(--icon-radius,50%)!important;background:var(--library-accent)!important;color:var(--theme-field,#fff)!important;box-shadow:none!important;cursor:pointer}
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot)[hidden]{display:none!important}
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot):is([aria-pressed=true],.selected){border-color:var(--library-accent)!important;background:var(--library-accent)!important;box-shadow:inset 0 0 0 1px var(--library-accent)!important}
@@ -114,7 +114,7 @@ body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :i
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot) svg{width:18px!important;height:18px!important;flex-shrink:0}
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-choice,.account-icon-dot) :is(svg,span){color:var(--theme-field,#fff)!important}
 body :is(#sector-view,.view,dialog) :is(.identity-pick,.location-sigla-field) :is(.icon-library,.account-icon-options,.extra-library){display:flex;flex-wrap:wrap;gap:var(--layout-item-gap,4px)}
-body :is(.view,dialog) :is(.identity-advanced>summary,.most-used-icons>small,.identity-pick>small,.location-sigla-field>small){font:var(--ui-label-weight) var(--ui-label)/18px var(--ui-font)!important;color:var(--ui-label-color)!important;letter-spacing:normal!important}
+body :is(.view,dialog) :is(.identity-advanced>summary,.most-used-icons>small,.identity-pick>small,.location-sigla-field>small){font:var(--ui-label-weight) var(--ui-label)/var(--ui-label-line,18px) var(--ui-font)!important;color:var(--ui-label-color)!important;letter-spacing:normal!important}
 body :is(#sector-view,.view,dialog) .identity-advanced[data-library-manager] :is(.job-more-options,.library-action,.job-inline-search .shortcut-circle){background:var(--library-accent)!important;border:1px solid var(--library-accent)!important;color:var(--theme-field,#fff)!important;box-shadow:none!important}
 body :is(#sector-view,.view,dialog) .identity-advanced[data-library-manager] :is(.job-more-options,.library-action,.library-empty){box-sizing:border-box;width:100%;min-height:40px;margin-top:10px;padding:0 var(--acao-respiro) 0 16px;border-radius:var(--ui-field-radius);font:600 12px/18px var(--ui-font)!important}
 body :is(#sector-view,.view,dialog) .identity-advanced[data-library-manager] .library-empty,body .icon-empty-confirm .danger{background:var(--cicluz-danger,#e34343)!important;border:1px solid var(--cicluz-danger,#e34343)!important;color:#fff!important}
@@ -624,20 +624,6 @@ body :is(.location-tree.unidades-arvore .location-row,.uniforms-options .uniform
 a.btn.link-externo{width:fit-content;text-decoration:none}
 .people-doc-scan{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin:0 0 12px}
 .people-doc-scan .profiles-note{flex:1 1 100%;margin:0}
-.doc-capture{display:grid;gap:12px;border:1px dashed color-mix(in srgb,var(--menu-accent,var(--panel-color,#7c3aed)) 35%,white);border-radius:14px;padding:16px;margin:12px 0}
-.dep-card .doc-capture{margin-top:12px}
-.doc-capture-head{display:flex;align-items:center;gap:12px;min-width:0}
-.doc-capture-head>div{min-width:0}
-.doc-capture-head strong{display:block;font-size:14px}
-.doc-capture-head p{margin:2px 0 0;font-size:12px;line-height:1.4}
-.doc-capture-tile{display:inline-grid;place-items:center;flex:none;width:44px;height:44px;border-radius:var(--row-icon-radius,26%);background:var(--menu-accent,var(--panel-color,#7c3aed));color:#fff}
-.doc-capture-tile svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.doc-capture-type{display:grid;gap:4px;max-width:220px;font-size:12px}
-.doc-capture-actions{display:flex;flex-wrap:wrap;gap:10px}
-.doc-capture-actions .btn{height:40px;min-height:40px}
-.doc-capture-status{margin:0;font-size:12px;line-height:1.4}
-.doc-capture-status:empty{display:none}
-.doc-capture [data-doc-pick]:disabled{opacity:.5;cursor:not-allowed}
 .stepper-wrap{margin:20px 0}
 .stepper-summary{margin:0 0 12px;font:500 var(--ui-note,12px)/1.4 var(--ui-font);color:var(--muted,#73737a)}
 .stepper-summary b{color:var(--menu-accent,var(--panel-color,#7c3aed));font-weight:600}
@@ -929,27 +915,7 @@ body :is(dialog,.modal,#sector-view,.view) .form-fields.uniforms-form > .grupo-q
 body :is(dialog,.modal,#sector-view,.view) .form-fields.uniforms-form > .grupo-quadro > label > :is(input, select, textarea) { --layout-line: transparent; --ui-border-base: transparent; --ui-control-bg: transparent; --theme-field: transparent; --ui-control-accent: transparent; --campo-altura: 34px; --campo-respiro: 0px; height: auto; min-height: 0; padding: 0; border: 0; box-shadow: none; background-color: transparent; text-align: right; text-align-last: right; font: 500 15px/20px var(--ui-font, inherit); color: var(--muted, #71717a); }
 body :is(dialog,.modal,#sector-view,.view) .form-fields.uniforms-form > .grupo-quadro > label:is(:hover, :focus-within) { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
 body :is(dialog,.modal,#sector-view,.view) .form-fields.uniforms-form > .grupo-quadro > label :is(input, select, textarea):is(:hover, :focus) { --ui-control-bg: transparent; --theme-field: transparent; --ui-focus-shadow: none; }
-/* DOCUMENTO / FOTO / ARQUIVO NO PADRÃO DE LINHAS E ANEXOS (Rodrigo, 26/11/2026): o bloco (doc-capture) deixa de ser um cartão tracejado com botões soltos. Vira um grupo: título pequeno acima, "Tipo do documento" como linha de seleção, e "Usar câmera" / "Selecionar arquivo" como linhas de ação (nome à esquerda, ícone em círculo cinza à direita, que fica na cor da origem ao passar), como o painel Anexar da Transferência. Mesmo HTML (mantém os data-doc-pick e a linha de estado). */
-body .doc-capture { display: block; margin: 30px 0 12px; padding: 0; border: 0; border-radius: 0; background: transparent; }
-body .doc-capture-head { display: grid; gap: 2px; margin: 0 0 6px; padding: 0 4px; }
-body .doc-capture-tile { display: none; }
-body .doc-capture-head strong { font: 600 13px/18px var(--ui-font, inherit); color: var(--muted, #71717a); }
-body .doc-capture-head p { margin: 0; font: 400 11px/16px var(--ui-font, inherit); color: var(--muted, #71717a); }
-body .doc-capture-type, body .doc-capture-actions { border-left: 1px solid var(--layout-line, #dedee3); border-right: 1px solid var(--layout-line, #dedee3); background: var(--theme-card, #fff); }
-body .doc-capture > :nth-child(2) { border-top: 1px solid var(--layout-line, #dedee3); border-radius: 14px 14px 0 0; }
-body .doc-capture > :last-of-type, body .doc-capture-actions { border-bottom: 1px solid var(--layout-line, #dedee3); }
-body .doc-capture-type { display: grid; grid-template-columns: 38% minmax(0, 1fr); align-items: center; gap: 0 12px; max-width: none; min-height: 52px; padding: 4px 0; box-sizing: border-box; text-indent: 14px; font: 500 15px/20px var(--ui-font, inherit); color: var(--layout-ink, #27272a); }
-body .doc-capture-type > select { --layout-line: transparent; --ui-border-base: transparent; --ui-control-bg: transparent; --theme-field: transparent; --campo-altura: 34px; --campo-respiro: 0px; text-indent: 0; margin-right: 14px; height: auto; min-height: 0; padding: 0; border: 0; box-shadow: none; background-color: transparent; text-align: right; text-align-last: right; font: 500 15px/20px var(--ui-font, inherit); color: var(--muted, #71717a); }
-body .doc-capture-actions { display: grid; gap: 0; padding: 0; border-radius: 0 0 14px 14px; overflow: hidden; }
-body .doc-capture-actions .btn { display: flex; align-items: center; justify-content: space-between; width: 100%; height: auto; min-height: 52px; margin: 0; padding: 6px 14px; border: 0; border-top: 1px solid var(--layout-line, #dedee3); border-radius: 0; background: transparent; box-shadow: none; color: var(--layout-ink, #27272a); font: 500 15px/20px var(--ui-font, inherit); text-align: left; }
-body .doc-capture-actions .btn:first-child { border-top: 0; }
-body .doc-capture-actions .btn .footer-action-icon { width: 32px; height: 32px; padding: 7px; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); color: var(--muted, #8e8e93); stroke: currentColor; }
-@media (hover: hover) { body .doc-capture-actions .btn:hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); } body .doc-capture-actions .btn:hover .footer-action-icon { background: var(--menu-accent); color: var(--theme-surface, #fff); } }
-body .doc-capture-status { margin: 6px 4px 0; font: 400 11px/16px var(--ui-font, inherit); color: var(--muted, #71717a); }
 /* As ações do documento não são botões cheios: a regra geral de .btn (cor da origem) precisa ceder; mesmo prefixo para valer por cima. */
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .doc-capture-actions .btn:not(.standard-form-action):not(.footer-save-accent):not(.footer-cancel-accent):not(.perigo):not(.perigo-texto):not(.x1):not(.x2) { background: transparent; border-color: transparent; border-top: 1px solid var(--layout-line, #dedee3); color: var(--layout-ink, #27272a); }
-body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .doc-capture-actions .btn:first-child:not(.standard-form-action) { border-top: 0; }
-@media (hover: hover) { body :is(#sector-view,.view,dialog,.dialog).app-screen-shell .doc-capture-actions .btn:not(.standard-form-action):hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); } }
 /* Data nos formulários antigos (span.date-field-control com o campo e o calendário): à direita, sem moldura, ícone cinza simples. */
 body :is(dialog,.modal,#sector-view,.view) :is(.form-fields[data-quadro], .form-fields.uniforms-form > .grupo-quadro) > label > .date-field-control { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-right: 14px; text-indent: 0; min-width: 0; }
 body :is(dialog,.modal,#sector-view,.view) :is(.form-fields[data-quadro], .form-fields.uniforms-form > .grupo-quadro) > label > .date-field-control input { --layout-line: transparent; --ui-border-base: transparent; --ui-control-bg: transparent; --theme-field: transparent; --campo-altura: 34px; --campo-respiro: 0px; flex: 1 1 auto; min-width: 0; height: auto; min-height: 0; padding: 0; border: 0; box-shadow: none; background-color: transparent; text-align: right; font: 500 15px/20px var(--ui-font, inherit); color: var(--muted, #71717a); }
@@ -982,3 +948,35 @@ body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset, .transfere
 }
 @media (max-width: 600px) { body .people-complete-pickbox > label.uniforms-enum.people-complete-pick { grid-template-columns: 50% minmax(0, 1fr) auto; column-gap: 8px; font-size: 13px; line-height: 16px; } body .people-complete-pickbox > label.uniforms-enum > select { font-size: 13px; } }
 @media (max-width: 400px) { body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label { font-size: 14px; line-height: 16px; } body .people-complete-pickbox > label.uniforms-enum.people-complete-pick { font-size: 12px; line-height: 15px; } }
+/* NOME DO CAMPO EM LINHA = 15 px / 20 px / peso 500 (o da Nova Transferência): a regra global de rótulo (12 px, !important) lê estas variáveis, então a linha só as redefine. */
+body :is(dialog,.modal,#sector-view,.view) :is(.form-fields[data-quadro] > label, .grupo-quadro > label, .people-complete-pickbox > label, .doc-capture-type) { --ui-label: 15px; --ui-label-weight: 500; --ui-label-line: 20px; --ui-label-color: var(--layout-ink, #606066); }
+/* BLOCO DE DOCUMENTO = GRUPO (Rodrigo, 26/11/2026): título pequeno ACIMA do quadro; dentro, a linha "Tipo do documento" (seleção à direita) e UMA linha "Anexos" que abre o painel (Usar câmera / Selecionar arquivo), como na Nova Transferência. Ajuda e estado em letra pequena abaixo do quadro. Sem caixa tracejada, sem fundo branco largo, sem fio nas laterais. */
+body .doc-capture { display: block; margin: 12px 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
+body .doc-capture-titulo { display: block; margin: 0 0 6px; padding: 0 4px; font: 600 13px/18px var(--ui-font, inherit); color: var(--muted, #71717a); }
+body .doc-capture-quadro { border: 1px solid var(--layout-line, #dedee3); border-radius: 14px; background: var(--theme-card, #fff); overflow: hidden; }
+body .doc-capture-type { display: grid; grid-template-columns: 38% minmax(0, 1fr); align-items: center; gap: 0 12px; max-width: none; min-height: var(--linha-altura, 52px); margin: 0; padding: 0; box-sizing: border-box; text-indent: 14px; }
+body .doc-capture-type > select { text-indent: 0; margin-right: 14px; --layout-line: transparent; --ui-border-base: transparent; --ui-control-bg: transparent; --theme-field: transparent; --ui-control-accent: transparent; --campo-altura: 34px; --campo-respiro: 0px; height: auto; min-height: 0; padding: 0; border: 0; box-shadow: none; background-color: transparent; text-align: right; text-align-last: right; font: 500 15px/20px var(--ui-font, inherit); color: var(--muted, #71717a); }
+body .doc-capture-type:is(:hover, :focus-within) { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
+body .doc-capture-type + .doc-capture-anexos { border-top: 1px solid var(--layout-line, #dedee3); }
+body .doc-capture-anexos .doc-capture-abre { width: 100%; border: 0; margin: 0; background: transparent; text-align: left; font: inherit; color: inherit; }
+body .doc-capture-ajuda, body .doc-capture-status { margin: 6px 4px 0; font: 400 11px/16px var(--ui-font, inherit); color: var(--muted, #71717a); }
+body .doc-capture-status:empty { display: none; }
+.doc-capture [data-doc-pick]:disabled, .doc-capture-abre:disabled { opacity: .5; cursor: not-allowed; }
+/* Nota vazia entre duas linhas do quadro não ocupa espaço (era o vão entre CNPJ e Razão Social); com texto vira uma nota pequena do quadro. */
+:is(.compras-dialog,#sector-view):not(.transferencia-tela) .compras-fieldset > p.profiles-note:empty { display: none; }
+:is(.compras-dialog,#sector-view):not(.transferencia-tela) .compras-fieldset > p.profiles-note:not(:empty) { margin: 0; padding: 6px 14px; font: 400 11px/16px var(--ui-font, inherit); color: var(--muted, #71717a); }
+/* Colaborador do Cadastro Simples: o quadro de 52 px é só a linha (a moldura vem de um pseudo-elemento); a explicação fica FORA, abaixo, em letra pequena. */
+body :is(.view,dialog,.modal,#sector-view) .people-complete-pickbox { position: relative; border: 0; background: transparent; border-radius: 0; }
+body :is(.view,dialog,.modal,#sector-view) .people-complete-pickbox::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: var(--linha-altura, 52px); border: 1px solid var(--layout-line, #dedee3); border-radius: 14px; background: var(--theme-card, #fff); pointer-events: none; }
+body :is(.view,dialog,.modal,#sector-view) .people-complete-pickbox > label.uniforms-enum.people-complete-pick { position: relative; z-index: 1; }
+body :is(.view,dialog,.modal,#sector-view) .people-complete-pickbox > .profiles-note { margin: 6px 4px 0; font: 400 11px/16px var(--ui-font, inherit); color: var(--muted, #71717a); }
+body .people-complete-pickbox > label > .uniforms-enum-label { font: 500 15px/20px var(--ui-font, inherit); color: var(--layout-ink, #606066); }
+body .doc-capture-painel .doc-capture-skip[hidden] { display: none; }
+/* Seleção com busca (lupa) como LINHA em qualquer quadro: nome à esquerda, seleção à direita, lupa no fim — 52 px; a busca aberta usa a linha de baixo. */
+body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.uniforms-enum { grid-template-columns: 38% minmax(0, 1fr) auto; column-gap: 12px; row-gap: 0; align-items: center; min-height: var(--linha-altura, 52px); padding: 0 14px; text-indent: 0; box-sizing: border-box; }
+body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.uniforms-enum > .uniforms-enum-label { grid-column: 1; grid-row: 1; font: 500 15px/20px var(--ui-font, inherit); color: var(--layout-ink, #606066); }
+body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.uniforms-enum > select { grid-column: 2; grid-row: 1; margin: 0; --layout-line: transparent; --ui-border-base: transparent; --ui-control-bg: transparent; --theme-field: transparent; --ui-control-accent: transparent; --campo-altura: 34px; --campo-respiro: 0px; height: auto; min-height: 0; padding: 0; border: 0; box-shadow: none; background-color: transparent; text-align: right; text-align-last: right; font: 500 15px/20px var(--ui-font, inherit); color: var(--muted, #71717a); }
+body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.uniforms-enum > .local-search-control:not(:has(input:not([hidden]))) { grid-column: 3; grid-row: 1; margin: 0; }
+body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.uniforms-enum > .local-search-control:has(input:not([hidden])) { grid-column: 1 / -1; grid-row: 2; padding-bottom: 8px; }
+body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.uniforms-enum .local-search-toggle { --busca-fundo: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); --busca-borda: transparent; --busca-texto: var(--muted, #71717a); }
+body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.uniforms-enum .local-search-toggle:is(:hover, :focus-visible) { --busca-fundo: var(--menu-accent); --busca-texto: #fff; }
