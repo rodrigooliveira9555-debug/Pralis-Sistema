@@ -1,5 +1,5 @@
 {
-  "id": "9b1bbfc6-d19c-4469-8c50-6aa44f521b2f",
+  "id": "ab31ba84-638f-4f99-85da-1f62abae0388",
   "prevId": "6893bc0d-7484-4280-9f00-0fe4bf0388a0",
   "version": "7",
   "dialect": "postgresql",
@@ -3284,7 +3284,7 @@
       "checkConstraints": {
         "agenda_telas_icone_tela_check": {
           "name": "agenda_telas_icone_tela_check",
-          "value": "\"agenda_telas_icone\".\"tela\" ~ '^#/[A-Za-z0-9%/_.-]{1,300}$'"
+          "value": "\"agenda_telas_icone\".\"tela\" ~ '^#/[A-Za-z0-9%/_.-]+$' and char_length(\"agenda_telas_icone\".\"tela\") <= 302"
         }
       },
       "isRLSEnabled": false

@@ -1,5 +1,5 @@
-// Agenda — tipo de arquivo pelo conteúdo (não pelo que o navegador diz): só formatos de documento e
-// imagem. HTML, SVG, scripts e executáveis são recusados (um arquivo aberto no site não pode virar
+// Agenda — tipo de arquivo pelo conteúdo (não pelo que o navegador diz): só formatos de documento,
+// imagem e áudio (0012). HTML, SVG, scripts e executáveis são recusados (um arquivo aberto no site não pode virar
 // página que roda código).
 
 type Detectado = { tipo: string; extensoes: string[] };
@@ -33,6 +33,11 @@ function detectar(b: Buffer, ext: string): Detectado | null {
   if (ascii(b, 0, 4) === "RIFF" && ascii(b, 8, 12) === "WEBP") return { tipo: "image/webp", extensoes: ["webp"] };
   if (ascii(b, 4, 8) === "ftyp" && /^(heic|heix|mif1|msf1|hevc)$/.test(ascii(b, 8, 12))) return { tipo: "image/heic", extensoes: ["heic", "heif"] };
   if (ascii(b, 0, 5) === "%PDF-") return { tipo: "application/pdf", extensoes: ["pdf"] };
+  // Áudio do chat (0012, P-52): gravação do navegador (WebM/Ogg; no iPhone, MP4/M4A) e MP3. Só toca, nunca vira página.
+  if (comeca(b, [0x1a, 0x45, 0xdf, 0xa3]) && ["webm", "weba"].includes(ext)) return { tipo: "audio/webm", extensoes: ["webm", "weba"] };
+  if (ascii(b, 0, 4) === "OggS") return { tipo: "audio/ogg", extensoes: ["ogg", "oga", "opus"] };
+  if (ascii(b, 4, 8) === "ftyp" && /^(M4A |isom|mp42|mp41|iso5|iso6|dash)$/.test(ascii(b, 8, 12)) && ["m4a", "mp4"].includes(ext)) return { tipo: "audio/mp4", extensoes: ["m4a", "mp4"] };
+  if ((ascii(b, 0, 3) === "ID3" || (b[0] === 0xff && ((b[1] ?? 0) & 0xe0) === 0xe0)) && ext === "mp3") return { tipo: "audio/mpeg", extensoes: ["mp3"] };
   if (comeca(b, [0x50, 0x4b, 0x03, 0x04]) && OFFICE_ZIP[ext]) return { tipo: OFFICE_ZIP[ext]!, extensoes: [ext] };
   if (comeca(b, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]) && OFFICE_ANTIGO[ext]) return { tipo: OFFICE_ANTIGO[ext]!, extensoes: [ext] };
   if (TEXTO[ext] && textoSimples(b)) return { tipo: TEXTO[ext]!, extensoes: [ext] };

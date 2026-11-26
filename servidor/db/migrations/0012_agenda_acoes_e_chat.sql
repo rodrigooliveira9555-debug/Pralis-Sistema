@@ -15,7 +15,7 @@ CREATE TABLE "agenda_telas_icone" (
 	"atualizado_em" timestamp with time zone DEFAULT now() NOT NULL,
 	"atualizado_por" text NOT NULL,
 	CONSTRAINT "agenda_telas_icone_pk" PRIMARY KEY("empresa_id","tela"),
-	CONSTRAINT "agenda_telas_icone_tela_check" CHECK ("agenda_telas_icone"."tela" ~ '^#/[A-Za-z0-9%/_.-]{1,300}$')
+	CONSTRAINT "agenda_telas_icone_tela_check" CHECK ("agenda_telas_icone"."tela" ~ '^#/[A-Za-z0-9%/_.-]+$' and char_length("agenda_telas_icone"."tela") <= 302)
 );
 --> statement-breakpoint
 ALTER TABLE "agenda_compromissos" ADD COLUMN "acao_tela" text;--> statement-breakpoint

@@ -32,18 +32,25 @@ async function exigirAcesso(perfil: PerfilSessao, compromissoId: string) {
   return { item, acesso };
 }
 
-const mensagem = (m: { id: string; autorId: string; autorNome: string; texto: string; criadoEm: Date }): MensagemResposta => ({ ...m, criadoEm: m.criadoEm.toISOString() });
+type LinhaMensagem = { id: string; autorId: string; autorNome: string; texto: string; criadoEm: Date; arquivoId?: string | null; arquivoNome?: string | null; arquivoTipo?: string | null };
+const mensagem = (m: LinhaMensagem): MensagemResposta => ({
+  id: m.id, autorId: m.autorId, autorNome: m.autorNome, texto: m.texto, criadoEm: m.criadoEm.toISOString(),
+  arquivo: m.arquivoId ? { id: m.arquivoId, nome: m.arquivoNome ?? "", tipo: m.arquivoTipo ?? "" } : null
+});
 
 export async function listarMensagens(perfil: PerfilSessao, compromissoId: string, depois?: string) {
   await exigirAcesso(perfil, compromissoId);
   return (await repo.listarMensagens(perfil.empresa.id, compromissoId, depois)).map(mensagem);
 }
 
-export async function enviarMensagem(perfil: PerfilSessao, compromissoId: string, texto: string) {
+export async function enviarMensagem(perfil: PerfilSessao, compromissoId: string, texto: string, arquivoId?: string) {
   await exigirAcesso(perfil, compromissoId);
-  const m = await repo.inserirMensagem(perfil.empresa.id, compromissoId, perfil.usuarioId, texto);
+  // Foto ou áudio: o arquivo precisa ser deste compromisso (e da empresa); quem não vê o compromisso já parou acima.
+  const anexo = arquivoId ? await repo.obterArquivo(perfil.empresa.id, arquivoId, false) : null;
+  if (arquivoId && (!anexo || anexo.compromissoId !== compromissoId)) throw new ErroDominio("Arquivo não encontrado.", 404, "ARQUIVO_NAO_ENCONTRADO");
+  const m = await repo.inserirMensagem(perfil.empresa.id, compromissoId, perfil.usuarioId, texto, anexo ? anexo.id : null);
   await repo.marcarLido(perfil.empresa.id, compromissoId, perfil.usuarioId);
-  return mensagem({ ...m, autorNome: perfil.nome });
+  return mensagem({ ...m, autorNome: perfil.nome, arquivoId: anexo?.id ?? null, arquivoNome: anexo?.nome ?? null, arquivoTipo: anexo?.tipo ?? null });
 }
 
 export async function marcarLido(perfil: PerfilSessao, compromissoId: string) {
@@ -86,7 +93,7 @@ export async function enviarArquivo(perfil: PerfilSessao, compromissoId: string,
   if (!conteudo.length) throw new ErroDominio("Arquivo vazio.", 400, "ARQUIVO_INVALIDO");
   if (conteudo.length > TAMANHO_MAXIMO_ARQUIVO) throw new ErroDominio("O arquivo passa de 10 MB.", 413, "ARQUIVO_GRANDE");
   const tipo = tipoDoArquivo(conteudo, entrada.nome);
-  if (!tipo) throw new ErroDominio("Formato não aceito. Envie imagem (JPG, PNG, WEBP, GIF, HEIC), PDF, Word, Excel, PowerPoint, TXT ou CSV.", 415, "ARQUIVO_FORMATO");
+  if (!tipo) throw new ErroDominio("Formato não aceito. Envie imagem (JPG, PNG, WEBP, GIF, HEIC), áudio (WebM, Ogg, M4A, MP3), PDF, Word, Excel, PowerPoint, TXT ou CSV.", 415, "ARQUIVO_FORMATO");
   const id = await repo.inserirArquivo({
     empresaId: perfil.empresa.id, compromissoId, enviadoPor: perfil.usuarioId, papel, nome: entrada.nome, tipo,
     tamanho: conteudo.length, sha256: createHash("sha256").update(conteudo).digest("hex"), conteudo

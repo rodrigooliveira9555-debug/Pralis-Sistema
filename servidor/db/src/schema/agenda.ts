@@ -575,6 +575,6 @@ export const agendaTelasIcone = pgTable(
   },
   (t) => [
     primaryKey({ name: "agenda_telas_icone_pk", columns: [t.empresaId, t.tela] }),
-    check("agenda_telas_icone_tela_check", sql`${t.tela} ~ '^#/[A-Za-z0-9%/_.-]{1,300}$'`)
+    check("agenda_telas_icone_tela_check", sql`${t.tela} ~ '^#/[A-Za-z0-9%/_.-]+$' and char_length(${t.tela}) <= 302`)
   ]
 );
