@@ -918,17 +918,40 @@
     ancora.setAttribute('aria-haspopup', 'dialog');
     ancora.setAttribute('aria-expanded', 'false');
     const fora = (e) => { if (!painel.isConnected || !(painel.contains(e.target) || ancora.contains(e.target))) abrir(false); };
+    let medidor = null;
+    // Posição do painel: para baixo se couber; senão para cima; se não couber em nenhum lado (ex.: o calendário aberto no mês e ano), usa o lado com mais espaço e rola por dentro.
+    // A barra de baixo (ou a do topo) conta como borda da tela: o painel nunca fica escondido embaixo dela.
+    function posicionar() {
+      if (painel.hidden) return;
+      const r = ancora.getBoundingClientRect();
+      let topo = 8; let base = window.innerHeight - 8;
+      const casca = ancora.closest('.app-screen-shell'); const barra = casca && casca.querySelector('.people-bottom-header');
+      if (barra) { const b = barra.getBoundingClientRect(); if (b.height) { if (b.top > window.innerHeight / 2) base = Math.min(base, b.top - 8); else topo = Math.max(topo, b.bottom + 8); } }
+      const natural = painel.scrollHeight + (painel.offsetHeight - painel.clientHeight);
+      const abaixo = base - (r.bottom + 6); const acima = r.top - 6 - topo;
+      let y; let altura = natural;
+      if (natural <= abaixo) y = r.bottom + 6;
+      else if (natural <= acima) y = r.top - 6 - natural;
+      else if (abaixo >= acima) { altura = Math.max(120, abaixo); y = r.bottom + 6; }
+      else { altura = Math.max(120, acima); y = r.top - 6 - altura; }
+      painel.style.maxHeight = altura < natural ? Math.round(altura) + 'px' : '';
+      painel.style.overflowY = altura < natural ? 'auto' : '';
+      painel.style.top = Math.max(topo, Math.round(y)) + 'px';
+      // Padrão (Rodrigo, 25/11/2026): o painel abre sempre alinhado ao canto direito do campo.
+      painel.style.left = Math.max(8, Math.min(Math.round(r.right - painel.offsetWidth), window.innerWidth - painel.offsetWidth - 8)) + 'px';
+    }
     function abrir(sim) {
       painel.hidden = !sim;
       ancora.setAttribute('aria-expanded', String(sim));
       document.removeEventListener('pointerdown', fora);
+      window.removeEventListener('resize', posicionar);
+      if (medidor) { medidor.disconnect(); medidor = null; }
       if (!sim) return;
       document.addEventListener('pointerdown', fora);
-      const r = ancora.getBoundingClientRect();
-      const embaixo = r.bottom + 6 + painel.offsetHeight <= window.innerHeight - 8;
-      painel.style.top = Math.max(8, Math.round(embaixo ? r.bottom + 6 : r.top - 6 - painel.offsetHeight)) + 'px';
-      // Padrão (Rodrigo, 25/11/2026): o painel abre sempre alinhado ao canto direito do campo, para baixo (ou para cima, se não couber).
-      painel.style.left = Math.max(8, Math.min(Math.round(r.right - painel.offsetWidth), window.innerWidth - painel.offsetWidth - 8)) + 'px';
+      window.addEventListener('resize', posicionar);
+      posicionar();
+      // Se o conteúdo muda de altura com o painel aberto (calendário → mês e ano), reposiciona.
+      if (typeof ResizeObserver === 'function') { let ultimaAltura = painel.scrollHeight; medidor = new ResizeObserver(() => { if (painel.scrollHeight !== ultimaAltura) { ultimaAltura = painel.scrollHeight; posicionar(); } }); medidor.observe(painel); [...painel.children].forEach((c) => medidor.observe(c)); }
       if (foco) foco.focus();
     }
     painel.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); abrir(false); ancora.focus(); } });

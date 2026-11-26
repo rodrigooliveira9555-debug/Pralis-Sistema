@@ -931,3 +931,10 @@ body.dark-theme .transferencia-tela { --texto-vazado: var(--theme-surface, #2221
   .transferencia-tela .transferencia-tecla:not(.igual):hover { background: color-mix(in srgb, var(--menu-accent) 14%, var(--theme-card, #fff)); border-color: var(--menu-accent); }
 }
 .transferencia-tela .transferencia-tecla:not(.igual):active { background: color-mix(in srgb, #000 20%, var(--menu-accent)); border-color: transparent; color: #fff; }
+/* Apagar com ícone próprio; o = também tem a máscara (mais fechado ao passar e ao tocar); a marca das contas é redonda, como no cadastro de produto. */
+.transferencia-tela .transferencia-tecla svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+@media (hover: hover) { .transferencia-tela .transferencia-tecla.igual:hover { background: color-mix(in srgb, #000 32%, var(--menu-accent)); } }
+.transferencia-tela .transferencia-tecla.igual:active { background: color-mix(in srgb, #000 42%, var(--menu-accent)); }
+.transferencia-tela .transferencia-conta-escolha .compras-hier-caixa { border-radius: 50%; }
+/* No modo mês e ano, os dias somem de verdade (o display da grade vencia o atributo hidden e as duas vistas apareciam juntas). */
+.compras-data-painel .compras-data-grade[hidden] { display: none; }
