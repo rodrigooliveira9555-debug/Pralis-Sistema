@@ -1570,3 +1570,6 @@ Película clara uniforme (degradê suave de branco translúcido; no escuro, de c
 
 ### Tempo de aceite em dias e/ou horas; caixa do valor sem moldura em todo estado (26/11/2026, Rodrigo)
 Tempo de aceite: Sim/Não; com Sim, "Contar em" **Dias | Horas | Dias e horas**, campo de dias com − e + (1 a 365), campo de hora hh:mm e uma linha de resumo ("Aceite em 1 dia e 04:30."). A caixa do valor não tem borda nem anel de foco em nenhum estado, claro ou escuro (o sinal é o sombreado).
+
+### Dias do tempo de aceite em roleta (26/11/2026, Rodrigo)
+O campo de dias tem as duas formas: **− e +** ao lado, ou **tocar no campo** e abrir a roleta (`U.roletaNumero`, mesmo painel da hora, uma coluna, 1 a 365): rolar para cima e para baixo mostra e escolhe a quantidade de dias; também vale digitar e as setas. Chip selecionado = só sombreado, sem borda na cor.

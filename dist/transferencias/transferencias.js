@@ -263,11 +263,13 @@
     const estadoAc = { sim: false, modo: 'dias', dias: '1' };
     const hora = U.campoHora({ rotulo: 'Horas (hh:mm)', valor: '' });
     const linhaHora = linha('Horas (hh:mm)', hora.caixa, hora.painel);
-    const diasInput = entrada('text', '1', { inputMode: 'numeric', maxLength: 3, autocomplete: 'off' });
-    const linhaDias = linhaDe('Dias', diasInput);
-    const passo = (rotulo, icone, delta) => { const b = el('button', 'transferencia-circulo'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = U.svg(icone); b.onclick = () => { const n = Math.min(MAX_DIAS, Math.max(1, (parseInt(diasInput.value, 10) || 0) + delta)); diasInput.value = String(n); estadoAc.dias = diasInput.value; resumir(); }; return b; };
+    // Dias: − e + ou, tocando no campo, a roleta (o mesmo painel da hora) que rola e mostra a quantidade de dias.
+    const roleta = U.roletaNumero({ rotulo: 'Dias', titulo: 'Dias', min: 1, max: MAX_DIAS, valor: '1' });
+    const diasInput = roleta.input;
+    const linhaDias = linhaDe('Dias', diasInput); linhaDias.append(roleta.painel);
+    const passo = (rotulo, icone, delta) => { const b = el('button', 'transferencia-circulo'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = U.svg(icone); b.onclick = () => { roleta.definir((roleta.valor() || 0) + delta); }; return b; };
     linhaDias.append(passo('Menos um dia', '<path d="M5 12h14"/>', -1), passo('Mais um dia', ICONE.mais, 1));
-    diasInput.addEventListener('input', () => { diasInput.value = diasInput.value.replace(/D/g, '').slice(0, 3); estadoAc.dias = diasInput.value; resumir(); });
+    diasInput.addEventListener('input', () => { estadoAc.dias = diasInput.value; resumir(); });
     hora.input.addEventListener('input', () => resumir()); hora.input.addEventListener('change', () => resumir());
     const resumo = el('p', 'transferencia-aceite-resumo'); resumo.setAttribute('role', 'status');
     const linhaResumo = el('div', 'transferencia-linha transferencia-linha-resumo'); linhaResumo.append(resumo);

@@ -912,6 +912,71 @@
     marcar();
     return { caixa, painel, input };
   }
+  /**
+   * Roleta de UM número inteiro (26/11/2026, Rodrigo: dias do tempo de aceite): o mesmo painel do campo de hora, com uma coluna só.
+   * Tocar no campo abre a lista; ela rola e encaixa, o número do MEIO (na faixa cheia) é o escolhido; também vale digitar, as setas e tocar num número.
+   * Devolve { input, painel, valor(), definir(n) }: o input dispara "input" e "change" quando o número muda; o chamador põe o painel na tela.
+   */
+  function roletaNumero({ rotulo = 'Número', titulo = rotulo, min = 1, max = 365, valor = '' } = {}) {
+    const total = max - min + 1;
+    let atual = Number(valor) >= min && Number(valor) <= max ? Number(valor) : null;
+    const input = entrada('text', atual === null ? '' : String(atual), { inputMode: 'numeric', maxLength: String(max).length, autocomplete: 'off' });
+    input.setAttribute('aria-label', rotulo);
+    const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-hora-painel compras-roleta-uma');
+    painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', rotulo + ': escolher');
+    const lista = el('div', 'compras-grade-escolha compras-hora-lista'); lista.tabIndex = 0;
+    lista.setAttribute('role', 'group'); lista.setAttribute('aria-label', titulo + ' (use as setas para cima e para baixo)');
+    const celulas = Array.from({ length: total }, (_, i) => { const b = el('button', 'compras-grade-celula', String(min + i)); b.type = 'button'; b.tabIndex = -1; b.setAttribute('aria-label', rotulo + ' ' + (min + i)); return b; });
+    lista.append(...celulas);
+    const itens = el('div', 'compras-hora-faixa-itens'); itens.append(...Array.from({ length: total }, (_, i) => el('span', null, String(min + i))));
+    const janela = el('div', 'compras-hora-janela'); janela.append(itens);
+    const faixa = el('div', 'compras-hora-faixa'); faixa.setAttribute('aria-hidden', 'true'); faixa.append(janela);
+    const rodas = el('div', 'compras-hora-rodas'); rodas.append(lista, faixa);
+    const cabecalho = el('div', 'compras-hora-cabecalho'); cabecalho.append(el('span', 'compras-rotulo', titulo));
+    painel.append(cabecalho, rodas);
+    const abrirPainel = flutuante(input, painel);
+    let ignoraAte = 0;
+    const passo = () => (celulas[1].offsetTop - celulas[0].offsetTop) || 42;
+    const sincronizar = () => { itens.style.transform = 'translateY(' + (-lista.scrollTop) + 'px)'; };
+    const levarAoMeio = (i, suave) => { ignoraAte = Date.now() + (suave ? 450 : 150); lista.scrollTo({ top: i * passo(), behavior: suave ? 'smooth' : 'auto' }); if (!suave) sincronizar(); };
+    const posicionar = () => levarAoMeio(atual === null ? 0 : atual - min, false);
+    const avisar = () => { input.dispatchEvent(new Event('input')); input.dispatchEvent(new Event('change', { bubbles: true })); };
+    function definir(n, { escreve = true, rolar = true } = {}) {
+      const v = Math.min(max, Math.max(min, Math.round(Number(n))));
+      if (!Number.isFinite(v)) return;
+      atual = v; if (escreve) input.value = String(v);
+      if (rolar) levarAoMeio(v - min, true);
+    }
+    const abrir = (sim) => { abrirPainel(sim); if (sim) { if (atual === null) definir(min, { rolar: false }); posicionar(); } };
+    function fechar() { abrir(false); input.focus(); }
+    const pe = el('div', 'compras-data-pe'); const ok = el('button', 'compras-chip', 'Fechar'); ok.type = 'button'; ok.onclick = fechar; pe.append(ok); painel.append(pe);
+    let quadro = 0;
+    lista.addEventListener('scroll', () => {
+      sincronizar();
+      if (Date.now() < ignoraAte) return;
+      cancelAnimationFrame(quadro);
+      quadro = requestAnimationFrame(() => {
+        const i = Math.max(0, Math.min(total - 1, Math.round(lista.scrollTop / passo())));
+        if (min + i !== atual) { atual = min + i; input.value = String(atual); avisar(); }
+      });
+    });
+    celulas.forEach((b, i) => { b.onclick = () => { definir(min + i, { rolar: false }); avisar(); fechar(); }; });
+    lista.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); fechar(); return; }
+      const d = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
+      if (!d) return;
+      e.preventDefault(); definir((atual === null ? min - d : atual) + d); avisar();
+    });
+    input.addEventListener('input', (e) => {
+      if (!e.isTrusted) return;
+      input.value = input.value.replace(/\D/g, '').slice(0, String(max).length);
+      atual = input.value && Number(input.value) >= min && Number(input.value) <= max ? Number(input.value) : null;
+      if (!painel.hidden && atual !== null) posicionar();
+    });
+    input.addEventListener('click', () => abrir(true));
+    input.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown' && painel.hidden) { e.preventDefault(); abrir(true); } });
+    return { input, painel, valor: () => atual, definir: (n) => { definir(n); avisar(); } };
+  }
 
   function flutuante(ancora, painel, { foco } = {}) {
     painel.hidden = true;
@@ -1229,6 +1294,6 @@
     seletorArvore, campoArvore, campoLocal, arvoreGruposMercadoria, botaoRemover,
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, roletaNumero, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();

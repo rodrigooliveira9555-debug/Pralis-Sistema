@@ -971,3 +971,6 @@ body :is(#sector-view,.view,dialog,.modal).transferencia-tela .transferencia-val
 body :is(#sector-view,.view,dialog,.modal).transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:focus,
 body :is(#sector-view,.view,dialog,.modal).transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:focus-visible,
 body :is(#sector-view,.view,dialog,.modal).transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela[aria-expanded="true"] { --ui-border-base: transparent; --ui-control-accent: transparent; --ui-focus-shadow: none; }
+/* Roleta de um número (dias): o painel da hora com uma coluna só. */
+.compras-roleta-uma { width: min(150px, calc(100vw - 24px)); }
+.compras-roleta-uma .compras-hora-cabecalho, .compras-roleta-uma .compras-hora-rodas, .compras-roleta-uma .compras-hora-faixa { grid-template-columns: minmax(0, 1fr); }
