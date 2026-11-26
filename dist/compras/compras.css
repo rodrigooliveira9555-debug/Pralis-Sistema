@@ -1036,3 +1036,12 @@ body :is(#sector-view,.view,dialog,.modal).compras-dialog:not(.transferencia-tel
 /* ALTURA ÚNICA DAS LINHAS (Rodrigo, 26/11/2026): o campo dentro da linha não tem altura nem respiro próprios; quem manda é a linha (52 px). As regras gerais de campo (com #sector-view dentro de :is()) só cedem pelas variáveis, repetindo o mesmo prefixo. */
 body :is(#sector-view,.view,dialog,.modal).compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-campo :is(input, select, textarea) { --campo-altura: 34px; --campo-respiro: 0px; }
 .compras-dialog:not(.transferencia-tela) .compras-fieldset > .compras-campo > small:empty { display: none; }
+/* Tela Design System no padrão da Transferência: textos e amostras dentro do quadro com o respiro de 14 px; itens como linhas (nome à esquerda, valor à direita). */
+.transferencia-tela.ds-corpo { display: grid; gap: 0; }
+.ds-corpo .ds-quadro > .ds-texto { margin: 0; padding: 12px 14px; border-bottom: 1px solid var(--layout-line, #dedee3); font: 400 14px/20px var(--ui-font); color: var(--layout-ink, #27272a); }
+.ds-corpo .ds-quadro > .ds-texto:last-child { border-bottom: 0; }
+.ds-corpo .ds-item { align-items: flex-start; }
+.ds-corpo .ds-item .transferencia-linha-rotulo { max-width: 42%; }
+.ds-corpo .ds-item-valor { flex: 1 1 auto; min-width: 0; text-align: right; font: 500 15px/20px var(--ui-font); color: var(--muted, #71717a); }
+.ds-corpo .ds-amostra-linha { padding: 12px 14px; border-top: 1px solid var(--layout-line, #dedee3); display: grid; gap: 10px; min-width: 0; }
+.ds-corpo .ds-amostra-linha > .ds-amostra { margin: 0; }

@@ -62,11 +62,11 @@
         'Tudo em maiúsculas fica só no título das colunas das listas e nas siglas de três letras (VND, CNT, DES, MER, RET).', 'Os textos falam direto com quem usa, em português simples, sem termo de programação.'] },
     ] },
     { id: 'tamanhos', titulo: 'Tamanho das Letras', resumo: 'O tamanho de cada tipo de texto, do título à nota', quadros: [
-      { titulo: 'Tabela de tamanhos', texto: ['Cada tipo de texto tem um tamanho só, em todas as telas. O primeiro número é o tamanho da letra; o segundo, a altura da linha.'],
-        itens: [['Título da tela e da janela', '16 px, linha de 20 px, peso 600'], ['Subtítulo (caminho embaixo do título)', '11 px, linha de 14 px'], ['Título de quadro e de seção', '14 px, linha de 20 px, peso 600'], ['Título na moldura do quadro', '13 px, linha de 18 px, peso 600'],
-          ['Texto e nome principal da linha', '14 px, linha de 18 px'], ['Texto digitado no campo', '14 px'], ['Rótulo do campo (o nome em cima)', '12 px, peso 400'], ['Texto dos botões', '12 px, peso 600'], ['Colunas da lista, notas e avisos', '11 px, linha de 16 px'],
-          ['Título das colunas da lista', '11 px, peso 600, em maiúsculas'], ['Sigla dentro do ícone', '11 px, peso 700']],
-        amostra: () => amostra(letra('Título da tela — 16 px', 16, 600, 20), letra('Título de quadro — 14 px', 14, 600, 20), letra('Texto — 14 px', 14, 400, 18), letra('Rótulo do campo e botão — 12 px', 12, 400, 18), letra('Nota e coluna da lista — 11 px', 11, 400, 16)) },
+      { titulo: 'Tabela de tamanhos (os da Nova Transferência)', texto: ['A Nova Transferência é a referência: cada tipo de texto tem um tamanho só, em todas as telas e formulários. O primeiro número é o tamanho da letra; o segundo, a altura da linha.'],
+        itens: [['Título da tela e da janela (cabeçalho)', '16 px, linha de 20 px, peso 600, branco'], ['Subtítulo do cabeçalho (o caminho)', '11 px, linha de 14 px, branco'], ['Título do grupo (acima do quadro)', '12 px, linha de 16 px, peso 600, cinza'], ['Nome do campo (esquerda da linha)', '15 px, linha de 20 px, peso 500'],
+          ['Valor do campo (direita da linha)', '15 px, linha de 20 px, peso 500, cinza'], ['Resumo ao lado da seta e texto da chave (Sim/Não)', '12 px'], ['Explicação embaixo da linha e notas', '11 px, linha de 16 px'], ['Valor no quadro laranja', '34 px, peso 700, branco'], ['Rótulo do quadro laranja', '12 px, peso 600, branco'],
+          ['Teclas da calculadora', '18 px, peso 600; operadores 22 px'], ['Chips (Notas, Moedas, Dias…)', '12 px, linha de 16 px, peso 500'], ['Texto dos botões', '12 px, peso 600'], ['Sigla dentro do ícone', '11 px, peso 700']],
+        amostra: () => amostra(letra('Título da tela — 16 px · 600', 16, 600, 20), letra('Título do grupo — 12 px · 600', 12, 600, 16), letra('Nome do campo — 15 px · 500', 15, 500, 20), letra('Valor do campo — 15 px · 500 cinza', 15, 500, 20), letra('Chip e botão — 12 px', 12, 500, 16), letra('Nota e explicação — 11 px', 11, 400, 16)) },
     ] },
     { id: 'cores', titulo: 'Cores', resumo: 'A cor de cada origem do menu e as cores fixas', quadros: [
       { titulo: 'Cor por origem', texto: ['Cada parte do menu tem a sua cor, e tudo o que abre dali usa essa cor: cabeçalho, botões, ícones e o destaque dos campos. A cor vem do cadastro de grupos, então trocar lá troca em todas as telas.'],
@@ -257,13 +257,15 @@
   function abrirTopico(t) {
     const tela = telas[t.id] || (telas[t.id] = A.criarTela({ id: 'acessos-ds-' + t.id, titulo: t.titulo, tela: 'ds-' + t.id }));
     tela.ativar();
-    const corpo = el('div', 'compras-etapa');
+    // Padrão da Nova Transferência: cada quadro é um GRUPO — título pequeno acima, quadro branco com linhas (nome à esquerda, valor à direita). Nada de título na moldura.
+    const corpo = el('div', 'transferencia-tela ds-corpo');
     t.quadros.forEach((q) => {
-      const fs = el('fieldset', 'compras-fieldset ds-quadro'); fs.append(el('legend', null, q.titulo));
-      (q.texto || []).forEach((p) => fs.append(el('p', 'ds-texto compras-largo', p)));
-      if (q.itens) { const dl = el('dl', 'profiles-info compras-largo'); q.itens.forEach(([k, v]) => dl.append(el('dt', null, k), el('dd', null, v))); fs.append(dl); }
-      if (q.amostra) fs.append(q.amostra());
-      corpo.append(fs);
+      const sec = el('section', 'transferencia-secao'); sec.append(el('h4', 'transferencia-secao-titulo', q.titulo));
+      const caixa = el('div', 'transferencia-quadro ds-quadro');
+      (q.texto || []).forEach((p) => caixa.append(el('p', 'ds-texto', p)));
+      (q.itens || []).forEach(([k, v]) => { const l = el('div', 'transferencia-linha ds-item'); l.append(el('span', 'transferencia-linha-rotulo', k), el('span', 'ds-item-valor', v)); caixa.append(l); });
+      if (q.amostra) { const am = el('div', 'ds-amostra-linha'); am.append(q.amostra()); caixa.append(am); }
+      sec.append(caixa); corpo.append(sec);
     });
     tela.body.replaceChildren(U.nota(t.resumo + '. Só leitura: nada é gravado aqui.'), corpo);
   }
