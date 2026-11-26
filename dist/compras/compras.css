@@ -949,6 +949,6 @@ body.dark-theme { --mascara-fundo: 24%; }
 .transferencia-tela .transferencia-valor-cab .compras-chip:not(.ativo):not(:disabled):active { background: #fff; border-color: #fff; color: var(--panel-text, #9a3412); }
 /* A caixa do valor também reage ao mouse (a máscara única): miolo sombreado, texto escuro; a borda continua a mesma. */
 @media (hover: hover) {
-  .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:hover { background: color-mix(in srgb, var(--menu-accent) var(--mascara-fundo, 14%), var(--theme-card, #fff)); color: var(--panel-text, #9a3412); }
+  .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:hover { --ui-control-bg: color-mix(in srgb, var(--menu-accent) var(--mascara-fundo, 14%), var(--theme-card, #fff)); --ui-input-color: var(--panel-text, #9a3412); }
   .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:hover::placeholder { color: color-mix(in srgb, var(--panel-text, #9a3412) 65%, transparent); }
 }
