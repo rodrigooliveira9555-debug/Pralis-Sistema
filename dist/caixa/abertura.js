@@ -1,10 +1,11 @@
 /*
  * Caixa — Abertura (casca), em formulário linha por linha (padrão da Nova Transferência: grupo, quadro, linhas).
  * Refeita em 27/11/2026 (pedido do Washington, com o roteiro da abertura): em vez de um posto fixo, o operador ESCOLHE o grupo de vendas e o
- * subgrupo (1M, 1T, 2M…, de VND - Grupos de Vendas) e o resto vem dos cadastros, só para leitura: estabelecimento, operador (o usuário que entrou),
- * hardware e horário de referência do subgrupo e a data. O horário EFETIVO da abertura é o da confirmação e fica separado do de referência.
- * Os blocos "Responsável pelo caixa", "Supervisor responsável" e "Usuário logado" saíram: quem opera e quem supervisiona virão do nível
- * hierárquico e das permissões (o operador é o usuário que entrou). A maquininha subiu para o grupo de identificação.
+ * subgrupo (1M, 1T, 2M…, de VND - Grupos de Vendas). Escolhido o subgrupo aparece só o HARDWARE dele, no formato TNP-PC-CXPDV-1-06:00as13:51-M:
+ * o computador do subgrupo, o horário cadastrado em Horários Empresa para o DIA DA SEMANA de hoje e a letra do turno do subgrupo (M ou T).
+ * Depois de escolher a maquininha aparece o lacre do malote. Não há mais Estabelecimento, Operador, Horário de referência nem Responsável,
+ * Supervisor e Usuário logado na tela (quem opera e quem supervisiona virão do nível hierárquico e das permissões; o operador é o usuário que entrou
+ * e é gravado no registro). A data e o horário EFETIVO da abertura são os da confirmação e aparecem no resumo dela.
  * O valor inicial continua vindo da TRANSFERÊNCIA (o malote do Cofre, conferido pelo lacre); ao confirmar nasce o registro do caixa com o
  * identificador único CX-AAAAMMDD-<subgrupo>-NNN (abertura-regras.js, testado). Dados FICTÍCIOS, em centavos; nada é gravado e tudo some ao recarregar.
  * Na casca só os subgrupos de PDV (nome "1M", "2T"…) têm conta de posto e malote; os outros (NFE › EMPRESAS, DELIVERY › IFOOD) são bloqueados com aviso.
@@ -35,7 +36,18 @@
     const s = subgrupoAtual();
     const p = s && R.postoDoSubgrupo(s.nome);
     const conta = p && C.estado.contas.find((c) => c.id === p.contaId && c.tipo === 'caixa');
-    return conta ? { pdv: conta.pdv, turno: conta.turno, contaId: conta.id } : null;
+    return conta ? { pdv: conta.pdv, turno: conta.turno, letra: p.letra, contaId: conta.id } : null;
+  }
+  const nomeDoDia = (d) => (window.CicluzHorariosEmpresaDominio ? window.CicluzHorariosEmpresaDominio.nomeDoDia(String(d.getDay())) : '') || 'hoje';
+  /**
+   * O hardware do posto como a tela mostra: <computador>-<abre>as<fecha>-<turno> (ex.: TNP-PC-CXPDV-1-06:00as13:51-M). O computador é o do subgrupo
+   * (VND - Grupos de Vendas); sem ele no cadastro vale o PDV da conta de posto. O horário é o de Horários Empresa para o dia da semana de hoje e o turno do subgrupo.
+   */
+  function hardwareDoPosto(sub, p) {
+    const doCadastro = C.nomeDoComputador(sub.computerId);
+    const nome = doCadastro || p.pdv;
+    const faixa = R.faixaDoDia(C.horariosEmpresa(), new Date(), p.letra);
+    return { nome, doCadastro: Boolean(doCadastro), faixa, rotulo: R.rotuloDoHardware({ hardware: nome, faixa, letra: p.letra }) };
   }
   const limparMalote = () => Object.assign(estado, { lacre: '', encontrado: false, conferido: null, dinheiro: '', moedas: '', motivo: '', erroLacre: '' });
   const operador = () => C.usuarioLogado() || 'Usuário não identificado';
@@ -76,7 +88,9 @@
     if (!estado.grupoId) lista.push('Escolha o grupo de vendas.');
     else if (!estado.subgrupoId) lista.push('Escolha o subgrupo de vendas.');
     else if (!posto()) lista.push('Este subgrupo não é um posto de PDV: a demonstração só abre os postos 1M a 4T.');
-    if (posto()) {
+    if (!C.maquininhas().length) lista.push('Cadastre uma máquina de cartão em VND - Tipos de Operadoras Cartões.');
+    else if (!estado.maquininha) lista.push('Escolha a maquininha de cartão.');
+    if (posto() && estado.maquininha) {
       if (!estado.encontrado) lista.push('Informe o lacre do malote de abertura.');
       else if (estado.conferido === null) lista.push('Responda se o malote confere.');
       else if (estado.conferido === false) {
@@ -85,8 +99,6 @@
         else if (d + m !== MALOTE.dinheiro + MALOTE.moedas && !estado.motivo.trim()) lista.push('Explique o motivo da divergência.');
       }
     }
-    if (!C.maquininhas().length) lista.push('Cadastre uma máquina de cartão em VND - Tipos de Operadoras Cartões.');
-    else if (!estado.maquininha) lista.push('Escolha a maquininha de cartão.');
     return lista;
   }
 
@@ -97,9 +109,7 @@
     const intro = U.nota('Escolha o grupo e o subgrupo de vendas; o restante vem dos cadastros. A abertura só é confirmada depois da conferência do malote.');
 
     const g1 = blocoIdentificacao();
-    const sub = subgrupoAtual();
-    const g1b = sub ? blocoAutomatico(sub) : null;
-    const g2 = posto() ? secao('Conferir malote de abertura', ...blocoMalote()) : null;
+    const g2 = posto() && estado.maquininha ? secao('Conferir malote de abertura', ...blocoMalote()) : null;
 
     const pend = el('div', 'caixa-pendencias');
     pend.setAttribute('role', 'alert');
@@ -113,7 +123,7 @@
 
     const acoes = el('div', 'caixa-acoes');
     acoes.append(el('small', null, 'Abra somente quando estiver no PDV.'), botao('Conferir e abrir caixa', tentarAbrir, 'btn'));
-    tela.body.replaceChildren(formulario(aviso, intro, g1, ...(g1b ? [g1b] : []), ...(g2 ? [g2, ...blocoComposicao()] : []), pend, acoes));
+    tela.body.replaceChildren(formulario(aviso, intro, g1, ...(g2 ? [g2, ...blocoComposicao()] : []), pend, acoes));
   }
 
   /** Identificação da operação: grupo de vendas, subgrupo (do grupo escolhido) e maquininha. */
@@ -123,10 +133,13 @@
     const maqs = C.maquininhas();
     const trocouGrupo = () => { estado.subgrupoId = ''; limparMalote(); render(); };
     const trocouSubgrupo = () => { limparMalote(); render(); };
+    const p = posto();
+    const hw = p ? hardwareDoPosto(subgrupoAtual(), p) : null;
     const linhas = [
       escolha('Grupo de vendas', grupos.map((x) => [x.id, x.nome]), 'grupoId', trocouGrupo),
       escolha('Subgrupo de vendas', g ? g.subgrupos.map((x) => [x.id, x.nome]) : [], 'subgrupoId', trocouSubgrupo, !g),
-      maqs.length ? escolha('Maquininha de cartão', maqs.map((m) => [m.id, m.rotulo]), 'maquininha') : linha('Maquininha de cartão *', valorDa('Nenhuma cadastrada')),
+      ...(hw ? [linhaLeitura('Hardware', hw.rotulo)] : []),
+      maqs.length ? escolha('Maquininha de cartão', maqs.map((m) => [m.id, m.rotulo]), 'maquininha', render) : linha('Maquininha de cartão *', valorDa('Nenhuma cadastrada')),
     ];
     const notas = [];
     if (!grupos.length) notas.push(U.nota('Nenhum grupo de vendas cadastrado. Cadastre em Entradas › Cadastros Geral › VND - Grupos de Vendas.'));
@@ -136,23 +149,10 @@
       n.classList.add('caixa-aviso');
       notas.push(n);
     }
-    notas.push(U.nota('Quem opera e quem supervisiona virão do nível hierárquico e das permissões. A maquininha é obrigatória para o relatório final deste turno.' + (maqs.length ? '' : ' Cadastre as máquinas em Entradas › Cadastros Geral › VND - Tipos de Operadoras Cartões (etapa Cadastro das máquinas).')));
+    if (hw && !hw.doCadastro) notas.push(U.nota('O subgrupo ainda não tem computador cadastrado: vale o PDV da conta (' + p.pdv + '). Cadastre em Entradas › Cadastros Geral › VND - Grupos de Vendas › subgrupo.'));
+    if (hw && !hw.faixa) notas.push(U.nota('Sem horário da ' + p.turno + ' para ' + nomeDoDia(new Date()).toLocaleLowerCase('pt-BR') + ' em Configurações › Empresa › Horários Empresa: o hardware sai sem a hora.'));
+    notas.push(U.nota('A maquininha é obrigatória para o relatório final deste turno; escolhida ela, aparece o lacre do malote.' + (maqs.length ? '' : ' Cadastre as máquinas em Entradas › Cadastros Geral › VND - Tipos de Operadoras Cartões (etapa Cadastro das máquinas).')));
     return secao('Identificação da operação', quadro(...linhas), ...notas);
-  }
-
-  /** O que o sistema recupera sozinho depois do subgrupo (só leitura): estabelecimento, operador, hardware, horário de referência, data e o horário efetivo. */
-  function blocoAutomatico(sub) {
-    const hardware = C.nomeDoComputador(sub.computerId);
-    const referencia = R.horarioDeReferencia(sub.inicio, sub.fim);
-    const notas = [U.nota('Vem dos cadastros e da sessão. O horário efetivo de abertura é o da confirmação e fica separado do horário de referência do subgrupo (abrir às 05:55 num caixa de referência 06:00 é normal).')];
-    if (!hardware || !referencia) notas.push(U.nota('Falta no cadastro do subgrupo:' + (hardware ? '' : ' o computador') + (!hardware && !referencia ? ' e' : '') + (referencia ? '' : ' o horário inicial e final') + '. Complete em Entradas › Cadastros Geral › VND - Grupos de Vendas › subgrupo.'));
-    return secao('Dados da operação (automático)', quadro(
-      linhaLeitura('Estabelecimento', C.estabelecimento() || 'Não cadastrado'),
-      linhaLeitura('Operador', operador()),
-      linhaLeitura('Hardware', hardware || 'Não vinculado ao subgrupo'),
-      linhaLeitura('Horário de referência', referencia || 'Não cadastrado'),
-      linhaLeitura('Data da operação', hoje()),
-      linhaLeitura('Horário efetivo de abertura', 'Registrado ao confirmar')), ...notas);
   }
 
   /** Grupo do lacre: a linha do lacre, a rota do malote e o resultado da consulta. Devolve os filhos do grupo. */
@@ -234,8 +234,8 @@
     if (!maquina) { estado.maquininha = ''; render(); return U.avisar('Essa máquina de cartão não está mais ativa. Escolha outra.'); }
     const maq = maquina.rotulo;
     const p = posto(); const g = grupoAtual(); const sub = subgrupoAtual();
-    const hardware = C.nomeDoComputador(sub.computerId);
-    const referencia = R.horarioDeReferencia(sub.inicio, sub.fim);
+    const hw = hardwareDoPosto(sub, p);
+    const referencia = hw.faixa ? R.horarioDeReferencia(hw.faixa.abre, hw.faixa.fecha) : '';
     const contado = (centavos(estado.dinheiro) || 0) + (centavos(estado.moedas) || 0);
     C.dialogo({
       titulo: 'Confirmar abertura do caixa',
@@ -244,9 +244,8 @@
       montar: (form) => {
         form.append(el('p', 'caixa-alerta', 'A primeira venda já começa a contar neste turno.'));
         form.append(formulario(secao('Resumo da abertura', quadro(
-          ...[['Identificador do caixa', codigoNovo(sub)], ['Grupo de vendas', g.nome], ['Subgrupo de vendas', sub.nome], ['Operador', operador()], ['Hardware', hardware || 'Não vinculado ao subgrupo'],
-            ['Horário de referência', referencia || 'Não cadastrado'], ['Data da operação', hoje()], ['Horário efetivo de abertura', 'Ao confirmar'], ['Maquininha', maq],
-            ['Lacre do malote', estado.lacre.trim()], ['Origem do valor inicial', 'Transferência (malote)']].map(([t, v]) => linhaLeitura(t, v))))));
+          ...[['Identificador do caixa', codigoNovo(sub)], ['Grupo de vendas', g.nome], ['Subgrupo de vendas', sub.nome], ['Hardware', hw.rotulo], ['Data da operação', hoje()], ['Horário efetivo de abertura', 'Ao confirmar'],
+            ['Maquininha', maq], ['Lacre do malote', estado.lacre.trim()], ['Origem do valor inicial', 'Transferência (malote)']].map(([t, v]) => linhaLeitura(t, v))))));
         form.append(estado.conferido
           ? el('p', 'caixa-diferenca bateu', '✓ Composição confirmada: dinheiro ' + moeda(MALOTE.dinheiro) + ' · moedas ' + moeda(MALOTE.moedas) + '.')
           : el('p', 'caixa-diferenca falta', 'Contagem informada: ' + moeda(contado) + ' para ' + moeda(MALOTE.dinheiro + MALOTE.moedas) + ' declarado.' + (estado.motivo.trim() ? ' Motivo: ' + estado.motivo.trim() : '')));
@@ -257,7 +256,7 @@
         // O turno nasce no estado único: o saldo inicial é o declarado (confere) ou o contado (divergência).
         // "responsavel" guarda o operador (o usuário que entrou): é o campo que Turno, Fechamento e dossiê já leem; supervisor não existe mais na abertura.
         C.abrirCaixa({
-          codigo, grupoId: g.id, grupoNome: g.nome, subgrupoId: sub.id, subgrupoNome: sub.nome, estabelecimento: C.estabelecimento(), hardware, horarioReferencia: referencia, dataOperacao: hoje(),
+          codigo, grupoId: g.id, grupoNome: g.nome, subgrupoId: sub.id, subgrupoNome: sub.nome, hardware: hw.nome, hardwareRotulo: hw.rotulo, horarioReferencia: referencia, dataOperacao: hoje(),
           pdv: p.pdv, turno: p.turno, usuario: operador(), abertoEm,
           lacre: estado.lacre.trim(), maquininha: maq, maquininhaId: maquina.id,
           responsavel: operador(), supervisor: '',
