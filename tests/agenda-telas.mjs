@@ -1007,6 +1007,60 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   await p.close();
 }
 
+/* ---------- 5e) Atividades: executor, supervisor, prazo e prova (P-58, respostas de 27/11/2026) ---------- */
+{
+  const p = await abrirPagina(390);
+  await limparAgenda(p);
+  const criado = await p.evaluate(async (r) => CicluzAgendaDados.salvarItem('', {
+    titulo: 'Reforma da sala', listaId: 'lista-diretor-operacoes', pessoas: [{ id: r, ver: true }], subtarefas: [{ titulo: 'Mudar o roteador' }],
+  }), RESP_UM.id);
+  ok(!criado.erro, 'Compromisso com uma atividade criado' + (criado.erro ? ': ' + criado.erro : ''));
+  let c = await item(p, 'Reforma da sala');
+  ok(c.subtarefas[0].executorId === c.criadoPor, 'Sem executor escolhido, o executor é o gestor');
+
+  // O gestor escolhe o executor e o prazo na janela da atividade.
+  await p.evaluate((id) => CicluzAgenda.editar(id), c.id);
+  await abrirLinha(p, 'Atividades');
+  await dialogo(p).getByRole('button', { name: 'Executor, supervisores e prazo da atividade 1' }).click();
+  await dialogo(p).getByLabel('Executor', { exact: true }).selectOption({ label: RESP_UM.nome });
+  await dialogo(p).getByLabel('Dias depois da data', { exact: true }).fill('2');
+  await dialogo(p).getByLabel('Hora do prazo', { exact: true }).fill('17:00');
+  await confirmar(p);
+  ok((await dialogo(p).locator('.agenda-atividade-resumo').first().textContent()).includes(RESP_UM.nome), 'O editor mostra o executor escolhido');
+  await confirmar(p);
+  // Tirar das Pessoas quem é executor é bloqueado, com o aviso.
+  await abrirLinha(p, 'Pessoas');
+  await dialogo(p).getByRole('button', { name: 'Tirar ' + RESP_UM.nome + ' do compromisso' }).click();
+  await dialogo(p).locator('.people-save-control').click();
+  ok((await dialogo(p).locator('.profiles-error').textContent()).includes('troque o executor antes'), 'Tirar das Pessoas quem é executor é bloqueado, com aviso');
+  await p.keyboard.press('Escape');
+  await p.waitForFunction(() => document.querySelectorAll('dialog.agenda-dialog[open]').length === 1);
+  await confirmar(p);
+  c = await item(p, 'Reforma da sala');
+  ok(c.subtarefas[0].executorId === RESP_UM.id && c.subtarefas[0].prazoDias === 2 && c.subtarefas[0].prazoHora === '17:00' && c.pessoas.some((x) => x.id === RESP_UM.id), 'Executor e prazo salvos; a pessoa continua no compromisso');
+
+  // O executor (sem "concluir" no compromisso) conclui com a foto de prova; era a única atividade: o compromisso conclui.
+  const q = await abrirPagina(390, 844, RESP_UM);
+  await q.waitForFunction((t) => CicluzAgendaDados.dados.itens.some((i) => i.titulo === t), 'Reforma da sala', { timeout: 15000 }).catch(() => q.evaluate(() => CicluzAgendaDados.atualizar(true)));
+  await q.waitForFunction((t) => CicluzAgendaDados.dados.itens.some((i) => i.titulo === t), 'Reforma da sala', { timeout: 15000 });
+  await q.evaluate(() => { document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.estado.visao = 'listas'; CicluzAgenda.abrir(''); });
+  await q.getByRole('button', { name: 'Mostrar atividades: Reforma da sala' }).click();
+  ok((await q.locator('.agenda-subtarefa-texto small').first().textContent()).includes('Executor: ' + RESP_UM.nome), 'A lista mostra o executor da atividade');
+  await q.getByRole('button', { name: 'Concluir Mudar o roteador' }).click();
+  const prova = q.locator('dialog.agenda-dialog[open]').last();
+  await prova.locator('.people-save-control').click();
+  ok((await prova.locator('.profiles-error').textContent()).includes('foto'), 'Sem tela, concluir pede a foto ou o arquivo de prova');
+  const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+  await prova.locator('.agenda-prova-arquivo').setInputFiles({ name: 'feito.png', mimeType: 'image/png', buffer: PNG });
+  await prova.locator('.people-save-control').click();
+  await q.waitForFunction((t) => { const i = CicluzAgendaDados.dados.itens.find((x) => x.titulo === t); return i && i.concluida; }, 'Reforma da sala', { timeout: 20000 });
+  c = await item(q, 'Reforma da sala');
+  ok(c.subtarefas[0].concluida && c.subtarefas[0].concluidaPor === RESP_UM.id && c.subtarefas[0].provaArquivoId && c.concluida, 'O executor concluiu com a prova e o compromisso concluiu sozinho');
+  await q.close();
+  await limparAgenda(p);
+  await p.close();
+}
+
 /* ---------- 6) Matriz de layout ---------- */
 {
   // Dados de exemplo pela API (títulos e nomes compridos para forçar o layout).

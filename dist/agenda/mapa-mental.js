@@ -493,8 +493,8 @@
         if (r.erro) U.avisar(r.erro);
         else if (r.resultado === 'repetiu') U.avisar('Feito. O próximo fica para ' + D.quando(A.item(n.item.id), new Date()) + '.');
       } else if (n.tipo === 'sub') {
-        const r = await A.marcarSubtarefa(n.item.id, n.sub.id, !n.sub.concluida);
-        if (r.erro) U.avisar(r.erro);
+        // O mesmo caminho da lista: só o executor (ou quem conclui o compromisso); sem tela, pede a prova (P-58).
+        await window.CicluzAgenda.concluirAtividade(n.item, n.sub, null);
       }
     }
 

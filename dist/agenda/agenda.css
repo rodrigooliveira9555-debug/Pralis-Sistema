@@ -136,8 +136,11 @@ body.dark-theme .agenda-detalhe-titulo { color: color-mix(in srgb, var(--lista-c
 /* Subtarefas abertas na linha */
 .agenda-subtarefas { display: grid; gap: 2px; padding: 0 14px 10px 50px; }
 .agenda-subtarefa { display: flex; align-items: center; gap: 12px; min-height: 36px; }
-.agenda-subtarefa > span { overflow-wrap: anywhere; min-width: 0; }
-.agenda-subtarefa.concluida > span { text-decoration: line-through; color: var(--muted, #73737a); }
+/* Atividade na lista (P-58): título e, embaixo, executor · prazo · supervisores. */
+.agenda-subtarefa-texto { display: grid; min-width: 0; padding: 4px 0; }
+.agenda-subtarefa-texto > span { overflow-wrap: anywhere; }
+.agenda-subtarefa-texto > small { color: var(--muted, #73737a); font-size: var(--ui-small-size, 12px); overflow-wrap: anywhere; }
+.agenda-subtarefa.concluida .agenda-subtarefa-texto > span { text-decoration: line-through; color: var(--muted, #73737a); }
 
 /* Linha "Novo compromisso": 52 px como as outras linhas (campo de 42 px + 5 px em cima e embaixo); a dica só ocupa lugar quando tem texto. */
 .agenda-nova { align-items: flex-start; flex-wrap: nowrap; padding-top: 5px; padding-bottom: 5px; }
@@ -504,6 +507,13 @@ body.dark-theme .agenda-avatar { background: color-mix(in srgb, var(--menu-accen
 .agenda-form .agenda-linha-leva .transferencia-linha-valor { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .agenda-form .agenda-subtarefa-edicao { gap: 12px; }
 .agenda-form .agenda-subtarefa-edicao > input { flex: 1 1 auto; min-width: 0; text-align: left; }
+/* Editor das atividades (P-58): o texto com o executor embaixo; a seta abre executor, supervisores e prazo. */
+.agenda-form .agenda-subtarefa-edicao { grid-template-columns: minmax(0, 1fr) auto auto; padding-top: 6px; padding-bottom: 6px; }
+.agenda-form .agenda-atividade-caixa { display: grid; min-width: 0; }
+.agenda-form .agenda-atividade-caixa > input { min-width: 0; text-align: left; }
+.agenda-form .agenda-atividade-resumo { color: var(--muted, #73737a); font-size: var(--ui-small-size, 12px); overflow-wrap: anywhere; }
+.agenda-form .agenda-supervisores { margin-left: auto; justify-content: flex-end; }
+.agenda-form .agenda-prova-arquivo { min-width: 0; max-width: 100%; font-size: 16px; }
 .agenda-form .agenda-linha-adicionar .transferencia-circulo { margin-left: auto; }
 .agenda-form .agenda-repeticao-resumo:empty { display: none; }
 .agenda-form .agenda-dias { gap: 6px; flex-wrap: nowrap; }

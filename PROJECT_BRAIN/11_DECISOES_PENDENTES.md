@@ -239,6 +239,7 @@ Transcrição e resumo no cofre do Obsidian (`C:\projetos\PRALIS\48 - Áudio Rod
 - A **ação feita na tela conta para o responsável pela atividade** (o executor).
 - **Tirar das Pessoas do compromisso quem é executor** de uma atividade: o sistema **bloqueia com aviso** ("<pessoa> é executor de <atividade>; troque o executor antes").
 - **Atividade sem tela:** a **prova (foto ou arquivo) é obrigatória** para concluir.
+**Feito — Entrega 2 (27/11/2026, branch `feat/agenda-atividades`, sem migration, ainda não publicado):** executor (sem escolha = o gestor), supervisores, prazo (dias depois da data + hora), conclusão pelo executor com prova quando não há tela, compromisso que conclui sozinho, bloqueio de tirar o executor das Pessoas. **Regras adotadas sem pergunta (confirmar com o Rodrigo):** quem pode concluir o compromisso também conclui as atividades (como antes); o supervisor que sai das Pessoas deixa de ser supervisor; a atividade levada para outro compromisso (mapa mental) fica com o gestor de lá como executor. **Falta:** várias ações por atividade (Entrega 3), subatividades, chat por atividade e avaliação pelo supervisor (Entrega 4).
 | Zé/Rodrigo | (a), (b), (c), (e) respondidas em 27/11/2026; (d) aberta; Entrega 1 publicada; regras das atividades respondidas em 27/11/2026; perguntas da (2) e (3) com o Rodrigo |
 
 ## P-59 — ConPlus (DP/Questor): integração sem a API paga (27/11/2026, Marco)
