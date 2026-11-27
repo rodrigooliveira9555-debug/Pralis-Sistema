@@ -349,15 +349,8 @@ body.dark-theme .view.show>.panel>.head[data-header-standard=yes],body.dark-them
 /* Section dividers share the same rounded grey stroke, including Gestão. */
 .nav-tree>.sidebar-section-toggle::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;border-radius:999px;background:#eeedf1}
 .dark-theme .nav-tree>.sidebar-section-toggle::before{background:#3b3942}/* O título de seção do menu (GESTÃO, AGENDA, CONFIGURAÇÕES) não é um item: não ganha fundo ao passar o dedo ou o mouse, no claro nem no escuro (19/11/2026: aparecia uma faixa branca no tema escuro). */body .nav .nav-tree>.sidebar-section-toggle:hover{background:transparent}
-/* Cadastro do grupo (DES, MER, RET): botão "Subgrupos +" que aplica a Referência de Custo aos subgrupos; desabilitado quando não há o que inserir. */
-#sector-view .account-editor .financial-ref-subs{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;grid-column:1/-1}
-#sector-view .account-editor .financial-ref-subs .compras-titulo-botao{flex:none;width:240px;max-width:100%;justify-content:space-between}
-#sector-view .account-editor .financial-ref-subs .compras-titulo-botao:disabled{opacity:.45;cursor:not-allowed}
-#sector-view .account-editor .financial-ref-subs small{flex:1 1 200px;min-width:0;margin:0}
-/* Subgrupo de Grupos de Vendas: Computador, Horário inicial e Horário final na mesma linha (no celular o computador ocupa a linha e os dois horários dividem a de baixo). */
-#sector-view .account-editor .financial-pc-linha{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:12px 16px;align-items:start;grid-column:1/-1}
-#sector-view .account-editor .financial-pc-linha>label{min-width:0}
-@media (max-width:600px){#sector-view .account-editor .financial-pc-linha{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#sector-view .account-editor .financial-pc-linha>label:first-child{grid-column:1/-1}}
+/* Botão "Subgrupos +" da linha do cadastro de grupo (aplica a Referência de Custo aos subgrupos): sem o que inserir, fica apagado. */
+#sector-view .account-editor .transferencia-linha .compras-titulo-botao:disabled{opacity:.45;cursor:not-allowed}
 /* Botão redondo do relógio do campo de hora: nesta tela a regra geral do botão redondo pintava o desenho na cor do fundo. */
 #sector-view .compras-hora-campo .compras-redondo{color:var(--theme-surface,#fff)}
 /* Cadastro de operadora em três etapas (financeiro/operadoras-etapas.js): barra, etapas e rodapé ocupam a largura toda; a etapa 1 repete a grade de duas colunas do formulário. */
