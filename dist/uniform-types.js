@@ -31,13 +31,12 @@ body.append(el('p','profiles-note','Peças de uniforme usadas em Uniformes Entre
 const aviso=el('p','profiles-error');aviso.setAttribute('role','alert');
 
 /* Cadastro em janela */
-const lbl=(name,node,cls)=>{const l=el('label',cls,name);node.setAttribute('aria-label',name.replace(/\s*\*$/,''));l.append(node);return l};
-const form=el('form','form-fields uniforms-form');form.noValidate=true;U.soJanela(form,'Dados do tipo de uniforme');
-const nome=el('input'),grupo=el('input'),categoria=el('select'),ativo=el('select'),grupos=el('datalist');
+const form=el('form','uniforms-form transferencia-tela transferencia-corpo');form.noValidate=true;form.hidden=true;
+const nome=el('input'),grupo=el('input'),categoria=el('select'),grupos=el('datalist');let ativa=true;
 nome.maxLength=80;nome.placeholder='Ex.: LOJA/ATENDIMENTO - CAMISA M';grupo.maxLength=60;grupo.placeholder='Ex.: LOJA/ATENDIMENTO';grupos.id='uniform-types-grupos';grupo.setAttribute('list',grupos.id);
-categoria.add(new Option('Selecione',''));for(const c of [...D.categories,'Outro'])categoria.add(new Option(c,c));ativo.add(new Option('Ativo','1'));ativo.add(new Option('Inativo','0'));
+categoria.add(new Option('Selecione',''));for(const c of [...D.categories,'Outro'])categoria.add(new Option(c,c));
 const erro=el('p','uniforms-wide profiles-error');erro.setAttribute('role','alert');
-/* Identidade no padrão único do sistema (U.blocoIcone / U.quadroIdentidade / U.previaIcone, o desenho do cadastro de grupo): "Automático"
+/* Identidade no padrão único do sistema (U.blocoIcone / U.previaIcone, o desenho do cadastro de grupo): "Automático"
    segue o nome; depois as seis peças e os ícones importados na biblioteca do sistema. O cartão de prévia mostra o ícone que vai valer. */
 const opcoesDeIcone=()=>[{id:'',label:'Automático (pelo nome)',desenho:iconeDaPeca({name:nome.value||''})},...NOMES_PECA.map(([id,n])=>({id,label:n,desenho:ICONES_PECA[id]})),...(window.CicluzIconLibrary?.custom||[]).filter(x=>x.path).map(x=>({id:x.id,label:x.label||x.name||'Ícone da biblioteca',desenho:x.path}))];
 const previa=U.previaIcone(),icone=U.blocoIcone({rotulo:'Ícone do tipo de uniforme',opcoes:opcoesDeIcone(),escolhido:'',aoMudar:()=>pintarPrevia()});
@@ -73,24 +72,31 @@ function abrirQuadro(){const cu=window.CicluzComprasUI,st=window.CicluzUniformSt
      for(const u of D.uniforms){const v=valores.get(u.id+'|'+j.key);if(v&&v!=='0')novos.push({uniformId:u.id,quantity:Number(v)})}
      const itens=[...antigos,...novos];if(itens.length)refs[j.key]={...(refs[j.key]||{jobName:j.full||j.name}),items:itens};else delete refs[j.key]}});
    if(!ok)return 'Não foi possível salvar neste navegador.';render();cu.avisar('Vínculo de uniformes por cargo salvo.');return undefined}})}
-const sit=U.campoSituacao(ativo,'Situação do tipo de uniforme',''); /* sem texto de ajuda dentro do quadro, como no cadastro de grupo */
 const acoes=el('div','uniforms-wide actions'),salvar=el('button','btn','Salvar');salvar.type='submit';acoes.append(button('Cancelar',()=>reset(),'btn ghost'),salvar);
-sit.classList.remove('uniforms-wide');
-form.append(U.quadroIdentidade(lbl('Nome do uniforme (peça e tamanho) *',nome),icone),lbl('Grupo *',grupo),sit,lbl('Categoria *',categoria),grupos,previa.box,erro,acoes);
+/* Formulário linha por linha (padrão da Nova Transferência, 27/11/2026, Washington): grupos com o título acima e quadro de linhas de 52 px. Dados do tipo de uniforme
+   (nome, grupo, categoria e a situação com a chave) e Identificador (a escolha do ícone e, fechando o grupo, a prévia). As peças vêm de CicluzTransferencias.pecas,
+   que carrega depois deste arquivo: as linhas só são montadas na primeira vez que a janela abre. Antes: quadro de identidade com rótulos em cima e cartão de situação. */
+let linhaSit=null,montado=false;
+function montar(){if(montado)return true;const P=window.CicluzTransferencias?.pecas;if(!P)return false;const {linha,linhaDe,quadro,secao}=P;
+ linhaSit=linha('Situação do tipo de uniforme');const bIcone=el('div','transferencia-bloco'),bPrevia=el('div','transferencia-bloco');bIcone.append(icone.box);bPrevia.append(previa.box);
+ form.append(secao('Dados do tipo de uniforme',quadro(linhaDe('Nome do uniforme (peça e tamanho) *',nome),linhaDe('Grupo *',grupo),linhaDe('Categoria *',categoria),linhaSit)),secao('Identificador',quadro(bIcone,bPrevia)),grupos,erro,acoes);
+ montado=true;return true}
+/* A chave nasce a cada abertura, com a situação do tipo aberto, e troca a anterior dentro da mesma linha. */
+function pintarSituacao(){linhaSit.querySelector('.account-status-row')?.remove();linhaSit.append(window.CicluzTransferencias.pecas.chave('Situação do tipo de uniforme',ativa,['Ativo','Inativo'],v=>{ativa=v}))}
 const wrap=el('div');body.append(aviso,form,wrap);
 let editando=null;
-function reset(){U.closeEditor(form);editando=null;nome.value='';grupo.value='';categoria.value='';ativo.value='1';icone.definir('');erro.textContent=''}
-function abrir(titulo){grupos.replaceChildren(...[...new Set(D.uniforms.map(u=>u.family))].map(f=>new Option(f)));sit.pintar();repintarIcones();pintarPrevia();erro.textContent='';U.openEditor(form,titulo,reset)}
+function reset(){U.closeEditor(form);form.hidden=true;editando=null;nome.value='';grupo.value='';categoria.value='';ativa=true;icone.definir('');erro.textContent=''}
+function abrir(titulo){if(!montar()){aviso.textContent='A tela não carregou por completo. Recarregue a página.';return}grupos.replaceChildren(...[...new Set(D.uniforms.map(u=>u.family))].map(f=>new Option(f)));pintarSituacao();repintarIcones();pintarPrevia();erro.textContent='';U.openEditor(form,titulo,reset)}
 function novo(){reset();abrir('Novo tipo de uniforme')}
-function editar(u){reset();editando=u.id;nome.value=u.name;grupo.value=u.family;categoria.value=u.category;ativo.value=u.active===false?'0':'1';icone.definir(u.icon&&desenhoDe(u.icon)?u.icon:'');abrir('Editar tipo de uniforme: '+u.name)}
+function editar(u){reset();editando=u.id;nome.value=u.name;grupo.value=u.family;categoria.value=u.category;ativa=u.active!==false;icone.definir(u.icon&&desenhoDe(u.icon)?u.icon:'');abrir('Editar tipo de uniforme: '+u.name)}
 function gravar(mudar){if(D.falhou()){erro.textContent='Não foi possível ler os tipos de uniforme salvos. Nada foi gravado para não sobrescrever os dados.';return false}
  const tipos=D.uniforms.map(u=>({id:u.id,name:u.name,category:u.category,family:u.family,active:u.active!==false,...(u.icon?{icon:u.icon}:{})}));mudar(tipos);try{D.gravarTipos(tipos);return true}catch{erro.textContent='Não foi possível salvar neste navegador.';return false}}
 form.onsubmit=e=>{e.preventDefault();erro.textContent='';const n=nome.value.trim().toLocaleUpperCase('pt-BR'),g=grupo.value.trim().toLocaleUpperCase('pt-BR'),c=categoria.value,errs=[];
  if(!n)errs.push('Informe o nome do uniforme.');if(!g)errs.push('Informe o grupo.');if(!c)errs.push('Selecione a categoria.');
  if(n&&D.uniforms.some(u=>u.id!==editando&&fold(u.name)===fold(n)))errs.push('Já existe um tipo de uniforme com este nome.');
- if(errs.length){erro.textContent=errs[0];window.CicluzComprasUI?.sinalizarObrigatorios(form);return}
- const era=editando,escolhido=icone.valor,ok=gravar(tipos=>{if(era){const t=tipos.find(u=>u.id===era);Object.assign(t,{name:n,family:g,category:c,active:ativo.value==='1'});if(escolhido)t.icon=escolhido;else delete t.icon}
-  else{const maior=tipos.reduce((m,u)=>{const x=/^uni-(\d+)$/.exec(u.id);return x?Math.max(m,+x[1]):m},0);tipos.push({id:'uni-'+String(maior+1).padStart(2,'0'),name:n,family:g,category:c,active:ativo.value==='1',...(escolhido?{icon:escolhido}:{})})}});
+ if(errs.length){erro.textContent=errs[0];return}
+ const era=editando,escolhido=icone.valor,ok=gravar(tipos=>{if(era){const t=tipos.find(u=>u.id===era);Object.assign(t,{name:n,family:g,category:c,active:ativa});if(escolhido)t.icon=escolhido;else delete t.icon}
+  else{const maior=tipos.reduce((m,u)=>{const x=/^uni-(\d+)$/.exec(u.id);return x?Math.max(m,+x[1]):m},0);tipos.push({id:'uni-'+String(maior+1).padStart(2,'0'),name:n,family:g,category:c,active:ativa,...(escolhido?{icon:escolhido}:{})})}});
  if(!ok)return;reset();render();window.CicluzComprasUI?.avisar((era?'Tipo de uniforme atualizado: ':'Tipo de uniforme cadastrado: ')+n+'.')};
 function alternar(u){const rodar=()=>{if(gravar(tipos=>{const x=tipos.find(y=>y.id===u.id);x.active=u.active===false}))render();return null};
  if(u.active!==false)confirmDialog('Desativar tipo de uniforme?','"'+u.name+'" deixa de aparecer em novos lançamentos, compras e referências. O estoque e o histórico continuam como estão.','Desativar',rodar,()=>{});else rodar()}

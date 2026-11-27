@@ -13,7 +13,7 @@
   const U = window.CicluzComprasUI;
   const CD = window.CicluzComprasDominio;
   const M = window.CicluzProducao;
-  const { el, botao, campo, entrada, seletor } = U;
+  const { el, botao, entrada, seletor } = U;
 
   let tela = null;
   let filtroProduto = '';
@@ -84,6 +84,10 @@
   const numOuNulo = (v) => (String(v).trim() === '' ? null : Number(String(v).replace(',', '.')));
 
   function editor(existente, produtoId) {
+    // As peças do formulário linha por linha moram na tela de Transferências (carrega antes desta, mas só aqui são lidas, ao abrir).
+    const P = window.CicluzTransferencias && window.CicluzTransferencias.pecas;
+    if (!P) return U.avisar('A tela não carregou por completo. Recarregue a página.');
+    const { linha, linhaDe, quadro, secao, chave, botaoExcluir, ICONE } = P;
     const produzidos = S.produzidos();
     const f = existente ? structuredClone(existente) : { produtoId: produtoId || '', nome: '', padrao: false, quantidadeBase: null, producaoDe: null, producaoAte: null, rendimentoBruto: null, rendimentoLiquido: null, etapas: [novaEtapa()] };
     f.etapas.forEach((e) => { if (!Array.isArray(e.ingredientes)) e.ingredientes = []; if (!Array.isArray(e.recursos)) e.recursos = []; });
@@ -92,13 +96,19 @@
     const bensOp = S.patrimonio.dados.bens.filter((b) => b.ativo !== false).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map((b) => [b.id, D.nomeDe(D.CATEGORIAS, b.categoria) + ' · ' + b.nome + (b.capacidade ? ' (' + CD.numero(b.capacidade.valor) + ' ' + b.capacidade.unidade.toLowerCase() + ')' : '')]);
     const locaisOp = S.locais().map((l) => [l.id, l.caminho]);
     const unidadesOp = S.unidades();
-    let resumoGeral;
+
+    // Peças locais: texto de leitura na ponta da linha, botão redondo (mover, mais) e a linha de campo com o aria-label numerado, para o leitor de tela distinguir as repetições.
+    const valorDa = (texto) => el('span', 'transferencia-linha-valor', texto);
+    const botaoRedondo = (rotulo, desenho, acao) => { const b = el('button', 'transferencia-circulo'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = U.svg(desenho); b.onclick = acao; return b; };
+    const linhaCampo = (rotulo, no, aria) => { const l = linhaDe(rotulo, no); if (aria) no.setAttribute('aria-label', aria); return l; };
+    const contagem = (n, um, varios) => (n ? n + ' ' + (n === 1 ? um : varios) : 'Nenhum');
+    const CIMA = '<path d="m6 15 6-6 6 6"/>';
 
     U.dialogo({
-      titulo: existente ? 'Editar ficha técnica' : 'Cadastro ficha técnica', largo: true, classe: 'producao-ficha-dialog',
+      titulo: existente ? 'Editar ficha técnica' : 'Cadastro ficha técnica', largo: true, classe: 'compras-form-padrao transferencia-tela',
       montar: (form) => {
-        const sec = (t) => { const s = el('fieldset', 'compras-fieldset'); s.append(el('legend', null, t)); form.append(s); return s; };
-        const s1 = sec('Cabeçalho');
+        const corpo = el('div', 'transferencia-corpo');
+        form.append(corpo);
         const produto = seletor(produzidos.map(({ p }) => [p.id, p.descricao]), f.produtoId, 'Selecione');
         produto.disabled = Boolean(existente);
         const nome = entrada('text', f.nome, { placeholder: 'Ex.: Do zero, Com kit' });
@@ -108,10 +118,7 @@
         const bruto = entrada('number', f.rendimentoBruto ?? '', { min: 0, step: 'any', inputMode: 'decimal' });
         const liquido = entrada('number', f.rendimentoLiquido ?? '', { min: 0, step: 'any', inputMode: 'decimal' });
         const perdaTxt = el('small', 'profiles-note');
-        const padraoL = el('label', 'compras-interruptor compras-largo');
-        const padraoI = entrada('checkbox');
-        padraoI.checked = Boolean(f.padrao);
-        padraoL.append(padraoI, el('span', null, 'Ficha padrão deste produto (usada nos pedidos)'));
+        const padrao = chave('Ficha padrão deste produto', Boolean(f.padrao), ['Sim', 'Não'], (sim) => { f.padrao = sim; });
         const atualizaPerda = () => { const pr = D.perda(Number(bruto.value), Number(liquido.value)); perdaTxt.textContent = pr ? 'Perda: ' + CD.numero(pr.kg) + ' kg (' + CD.numero(pr.pct * 100, 1) + '%)' : ''; };
         bruto.oninput = liquido.oninput = atualizaPerda;
         produto.onchange = () => { f.produtoId = produto.value; const c = S.config(produto.value); if (c && c.formato && !base.value) { base.value = D.fornada(c.formato); f.quantidadeBase = Number(base.value); } desenhaResumo(); };
@@ -119,22 +126,19 @@
         base.oninput = () => { f.quantidadeBase = numOuNulo(base.value); desenhaResumo(); };
         de.oninput = () => { f.producaoDe = numOuNulo(de.value); };
         ate.oninput = () => { f.producaoAte = numOuNulo(ate.value); };
-        padraoI.onchange = () => { f.padrao = padraoI.checked; };
-        const liq = campo('Rendimento líquido (kg, frio)', liquido);
-        liq.append(perdaTxt);
-        s1.append(campo('Produto *', produto), campo('Nome da ficha *', nome), campo('Ingredientes para quantas unidades? *', base, 'A ficha escala os ingredientes pela quantidade pedida.'),
-          campo('Produção de', de), campo('Produção até', ate), campo('Rendimento bruto (kg, cru)', bruto), liq, padraoL);
+        corpo.append(
+          secao('Dados da ficha', quadro(linhaCampo('Produto *', produto), linhaCampo('Nome da ficha *', nome), linhaCampo('Ingredientes para quantas unidades? *', base), linha('Ficha padrão deste produto', padrao)),
+            U.nota('A ficha escala os ingredientes pela quantidade pedida. A ficha padrão é a usada nos pedidos.')),
+          secao('Produção e rendimento', quadro(linhaCampo('Produção de', de), linhaCampo('Produção até', ate), linhaCampo('Rendimento bruto (kg, cru)', bruto), linhaCampo('Rendimento líquido (kg, frio)', liquido)), perdaTxt));
         atualizaPerda();
 
-        const s2 = sec('Etapas');
-        s2.classList.add('compras-fieldset-lista');
-        const etapasBox = el('div', 'producao-etapas compras-largo');
-        const addEtapa = botao('+ Etapa', () => { f.etapas.push(novaEtapa()); desenhaEtapas(); });
-        s2.append(etapasBox, addEtapa);
+        // As etapas (e a linha "Adicionar etapa") são redesenhadas juntas; cada etapa, cada ingrediente e cada equipamento é um grupo de linhas.
+        const etapasBox = el('div', 'transferencia-corpo');
+        corpo.append(etapasBox);
 
-        resumoGeral = el('p', 'compras-texto-auto');
+        const resumoGeral = el('p', 'compras-texto-auto');
         resumoGeral.setAttribute('aria-live', 'polite');
-        form.append(resumoGeral);
+        corpo.append(secao('Resumo', resumoGeral));
 
         function desenhaResumo() {
           const q = f.quantidadeBase;
@@ -151,45 +155,31 @@
           });
         }
 
-        // Campo pequeno com rótulo visível; o aria-label numerado distingue as linhas para o leitor de tela.
-        const mini = (rotulo, no) => { const aria = no.getAttribute('aria-label'); const l = campo(rotulo, no); if (aria) no.setAttribute('aria-label', aria); return l; };
-        function linhaIngrediente(e, x, k) {
-          const r = el('div', 'producao-linha');
-          const prod = seletor(produtosOp, x.produtoId, 'Ingrediente');
-          prod.setAttribute('aria-label', 'Ingrediente ' + (k + 1));
-          const qtd = entrada('number', x.quantidade ?? '', { min: 0, step: 'any', inputMode: 'decimal', placeholder: 'Qtd.' });
-          qtd.setAttribute('aria-label', 'Quantidade do ingrediente ' + (k + 1));
+        function grupoIngrediente(e, i, x, k) {
+          const prod = seletor(produtosOp, x.produtoId, 'Selecione');
+          const qtd = entrada('number', x.quantidade ?? '', { min: 0, step: 'any', inputMode: 'decimal' });
           const und = seletor(unidadesOp, x.unidade || 'KG');
-          und.setAttribute('aria-label', 'Unidade do ingrediente ' + (k + 1));
           prod.onchange = () => { x.produtoId = prod.value; const p = S.produto(prod.value); if (p && !x.unidade) { x.unidade = p.unidadeIndividual && unidadesOp.includes(p.unidadeIndividual) ? p.unidadeIndividual : 'KG'; und.value = x.unidade; } desenhaResumo(); };
           qtd.oninput = () => { x.quantidade = numOuNulo(qtd.value); desenhaResumo(); };
           und.onchange = () => { x.unidade = und.value; desenhaResumo(); };
           if (!x.unidade) x.unidade = und.value;
-          const rm = botao('Remover', () => { e.ingredientes.splice(k, 1); desenhaEtapas(); }, 'btn secondary perigo-texto');
-          rm.setAttribute('aria-label', 'Remover ingrediente ' + (k + 1));
-          r.append(mini('Ingrediente', prod), mini('Quantidade', qtd), mini('Unidade', und), rm);
-          return r;
+          const rm = botaoExcluir('Remover ingrediente ' + (k + 1), () => { e.ingredientes.splice(k, 1); desenhaEtapas(); });
+          return secao((i + 1) + 'ª etapa · ingrediente ' + (k + 1), quadro(
+            linhaCampo('Ingrediente', prod, 'Ingrediente ' + (k + 1)), linhaCampo('Quantidade', qtd, 'Quantidade do ingrediente ' + (k + 1)), linhaCampo('Unidade', und, 'Unidade do ingrediente ' + (k + 1)),
+            linha('Remover ingrediente', valorDa(''), rm)));
         }
-        function linhaRecurso(e, x, k) {
-          const r = el('div', 'producao-linha producao-linha-recurso');
+        function grupoRecurso(e, i, x, k) {
           const bem = seletor(bensOp, x.patrimonioId, 'Sem equipamento (só mão de obra)');
-          bem.setAttribute('aria-label', 'Equipamento ou utensílio ' + (k + 1));
-          const tempo = entrada('number', x.tempoMin ?? '', { min: 0, step: 'any', inputMode: 'decimal', placeholder: 'Min' });
-          tempo.setAttribute('aria-label', 'Tempo em minutos ' + (k + 1));
+          const tempo = entrada('number', x.tempoMin ?? '', { min: 0, step: 'any', inputMode: 'decimal' });
           const acomp = seletor(D.ACOMPANHAMENTOS.map((v) => [String(v), v === 0 ? 'Sem acompanhamento' : D.pct(v) + ' acompanhado']), String(x.acompanhamento ?? 1));
-          acomp.setAttribute('aria-label', 'Acompanhamento ' + (k + 1));
           const cargoAtual = x.cargoKey || x.cargoNome ? S.cargo(x.cargoKey, x.cargoNome) : null;
           const cargosOp = S.cargos().map((c) => [c.key, c.nome]);
           if ((x.cargoKey || x.cargoNome) && !cargoAtual) cargosOp.unshift([x.cargoKey || '?', S.nomeCargo(x.cargoKey, x.cargoNome)]);
           const cargo = seletor(cargosOp, cargoAtual ? cargoAtual.key : x.cargoKey || '', 'Selecione');
-          cargo.setAttribute('aria-label', 'Cargo ' + (k + 1));
           cargo.onchange = () => { const c = S.cargos().find((y) => y.key === cargo.value); x.cargoKey = c ? c.key : ''; x.cargoNome = c ? c.nome : ''; };
           const nivel = seletor(D.NIVEIS, x.nivel || '', 'Selecione');
-          nivel.setAttribute('aria-label', 'Nível profissional ' + (k + 1));
-          const fde = entrada('number', x.faixaDe ?? '', { min: 0, inputMode: 'decimal', placeholder: 'De' });
-          fde.setAttribute('aria-label', 'Vale de (quantidade) ' + (k + 1));
-          const fate = entrada('number', x.faixaAte ?? '', { min: 0, inputMode: 'decimal', placeholder: 'Até' });
-          fate.setAttribute('aria-label', 'Vale até (quantidade) ' + (k + 1));
+          const fde = entrada('number', x.faixaDe ?? '', { min: 0, inputMode: 'decimal' });
+          const fate = entrada('number', x.faixaAte ?? '', { min: 0, inputMode: 'decimal' });
           bem.onchange = () => { x.patrimonioId = bem.value; desenhaResumo(); };
           tempo.oninput = () => { x.tempoMin = numOuNulo(tempo.value); desenhaResumo(); };
           acomp.onchange = () => { x.acompanhamento = Number(acomp.value); desenhaResumo(); };
@@ -198,27 +188,23 @@
           fde.oninput = () => { x.faixaDe = numOuNulo(fde.value); desenhaResumo(); };
           fate.oninput = () => { x.faixaAte = numOuNulo(fate.value); desenhaResumo(); };
           if (x.acompanhamento == null) x.acompanhamento = 1;
-          const rm = botao('Remover', () => { e.recursos.splice(k, 1); desenhaEtapas(); }, 'btn secondary perigo-texto');
-          rm.setAttribute('aria-label', 'Remover equipamento ' + (k + 1));
-          r.append(mini('Equipamento / utensílio', bem), mini('Tempo (min)', tempo), mini('Acompanhamento', acomp), mini('Cargo', cargo), mini('Nível profissional', nivel), mini('Vale de (qtd.)', fde), mini('Até (qtd.)', fate), rm);
-          return r;
+          const rm = botaoExcluir('Remover equipamento ' + (k + 1), () => { e.recursos.splice(k, 1); desenhaEtapas(); });
+          return secao((i + 1) + 'ª etapa · equipamento ' + (k + 1), quadro(
+            linhaCampo('Equipamento / utensílio', bem, 'Equipamento ou utensílio ' + (k + 1)), linhaCampo('Tempo (min)', tempo, 'Tempo em minutos ' + (k + 1)),
+            linhaCampo('Acompanhamento', acomp, 'Acompanhamento ' + (k + 1)), linhaCampo('Cargo', cargo, 'Cargo ' + (k + 1)), linhaCampo('Nível profissional', nivel, 'Nível profissional ' + (k + 1)),
+            linhaCampo('Vale de (qtd.)', fde, 'Vale de (quantidade) ' + (k + 1)), linhaCampo('Até (qtd.)', fate, 'Vale até (quantidade) ' + (k + 1)),
+            linha('Remover equipamento', valorDa(''), rm)));
+        }
+        // Linha "Adicionar …": o texto de contagem e o + redondo na ponta (como o "Adicionar item" dos lançamentos).
+        function linhaAdicionar(rotulo, resumo, acao, ...notas) {
+          const l = linha(rotulo, valorDa(resumo), botaoRedondo(rotulo, ICONE.mais, acao));
+          l.classList.add('transferencia-linha-add');
+          return secao('', quadro(l), ...notas);
         }
 
         function desenhaEtapas() {
           etapasBox.replaceChildren(...f.etapas.map((e, i) => {
-            const box = el('section', 'producao-etapa');
-            const cab = el('div', 'producao-etapa-cab');
-            cab.append(el('h4', null, (i + 1) + 'ª etapa'));
-            const acoes = el('div', 'producao-etapa-acoes');
-            const sobe = botao('Subir', () => { [f.etapas[i - 1], f.etapas[i]] = [f.etapas[i], f.etapas[i - 1]]; desenhaEtapas(); });
-            sobe.disabled = i === 0;
-            const desce = botao('Descer', () => { [f.etapas[i + 1], f.etapas[i]] = [f.etapas[i], f.etapas[i + 1]]; desenhaEtapas(); });
-            desce.disabled = i === f.etapas.length - 1;
-            const rm = botao('Remover etapa', () => { f.etapas.splice(i, 1); desenhaEtapas(); }, 'btn secondary perigo-texto');
-            rm.disabled = f.etapas.length === 1;
-            acoes.append(sobe, desce, rm);
-            cab.append(acoes);
-            const grade = el('div', 'producao-etapa-grade');
+            const box = el('div', 'transferencia-corpo'); box.dataset.etapa = String(i + 1); // marca a etapa (os testes de tela a procuram por aqui)
             const proc = seletor(D.PROCESSOS, e.processo, 'Selecione');
             const parte = seletor(D.PARTES, e.parte, 'Não se aplica');
             const fde = entrada('number', e.faixaDe ?? '', { min: 0, inputMode: 'decimal' });
@@ -232,29 +218,32 @@
             fate.oninput = () => { e.faixaAte = numOuNulo(fate.value); desenhaResumo(); };
             local.onchange = () => { e.localId = local.value; };
             instr.oninput = () => { e.instrucao = instr.value; };
-            grade.append(campo('Processo *', proc), campo('Parte do produto', parte), campo('Vale a partir de (qtd.)', fde), campo('Vale até (qtd.)', fate), campo('Onde é feita', local), campo('Instrução para quem executa', instr, 'Guardada para o guia por áudio, que vem depois.'));
-            const ing = el('div', 'producao-bloco');
-            ing.append(el('span', 'compras-rotulo', 'Ingredientes'));
-            e.ingredientes.forEach((x, k) => ing.append(linhaIngrediente(e, x, k)));
-            ing.append(botao('+ Ingrediente', () => { e.ingredientes.push({ produtoId: '', quantidade: null, unidade: '' }); desenhaEtapas(); }));
-            const rec = el('div', 'producao-bloco');
-            rec.append(el('span', 'compras-rotulo', 'Equipamentos, utensílios e mobiliário · tempo · acompanhamento · quem faz (cargo e nível)'));
-            e.recursos.forEach((x, k) => rec.append(linhaRecurso(e, x, k)));
-            rec.append(botao('+ Equipamento / tempo', () => { e.recursos.push({ patrimonioId: '', tempoMin: null, acompanhamento: 1, cargoKey: '', cargoNome: '', nivel: '', faixaDe: null, faixaAte: null }); desenhaEtapas(); }));
-            rec.append(U.nota('Tempo por partes: uma linha por parte (ex.: masseira 5 min na velocidade 1 e outra linha com 10 min na velocidade 2). Sem acompanhamento = a máquina trabalha sozinha. "De/até" limita a linha a uma faixa de quantidade.'));
+            const sobe = botaoRedondo('Subir etapa', CIMA, () => { [f.etapas[i - 1], f.etapas[i]] = [f.etapas[i], f.etapas[i - 1]]; desenhaEtapas(); });
+            sobe.disabled = i === 0;
+            const desce = botaoRedondo('Descer etapa', ICONE.baixo, () => { [f.etapas[i + 1], f.etapas[i]] = [f.etapas[i], f.etapas[i + 1]]; desenhaEtapas(); });
+            desce.disabled = i === f.etapas.length - 1;
+            const rm = botaoExcluir('Remover etapa', () => { f.etapas.splice(i, 1); desenhaEtapas(); });
+            rm.disabled = f.etapas.length === 1;
+            box.append(secao((i + 1) + 'ª etapa', quadro(
+              linhaCampo('Processo *', proc), linhaCampo('Parte do produto', parte), linhaCampo('Vale a partir de (qtd.)', fde), linhaCampo('Vale até (qtd.)', fate), linhaCampo('Onde é feita', local), linhaCampo('Instrução para quem executa', instr),
+              linha('Mover etapa', valorDa(''), sobe, desce), linha('Remover etapa', valorDa(''), rm)),
+            U.nota('A instrução é guardada para o guia por áudio, que vem depois.')));
+            e.ingredientes.forEach((x, k) => box.append(grupoIngrediente(e, i, x, k)));
+            box.append(linhaAdicionar('Adicionar ingrediente', contagem(e.ingredientes.length, 'ingrediente', 'ingredientes'), () => { e.ingredientes.push({ produtoId: '', quantidade: null, unidade: '' }); desenhaEtapas(); }));
+            e.recursos.forEach((x, k) => box.append(grupoRecurso(e, i, x, k)));
+            box.append(linhaAdicionar('Adicionar equipamento / tempo', contagem(e.recursos.length, 'equipamento', 'equipamentos'), () => { e.recursos.push({ patrimonioId: '', tempoMin: null, acompanhamento: 1, cargoKey: '', cargoNome: '', nivel: '', faixaDe: null, faixaAte: null }); desenhaEtapas(); }),
+              U.nota('Tempo por partes: uma linha por parte (ex.: masseira 5 min na velocidade 1 e outra linha com 10 min na velocidade 2). Sem acompanhamento = a máquina trabalha sozinha. "De/até" limita a linha a uma faixa de quantidade.'));
             const res = el('small', 'producao-etapa-resumo');
             res.dataset.etapaResumo = String(i);
-            box.append(cab, grade, ing, rec, res);
+            box.append(res);
             return box;
-          }));
+          }), linhaAdicionar('Adicionar etapa', contagem(f.etapas.length, 'etapa', 'etapas'), () => { f.etapas.push(novaEtapa()); desenhaEtapas(); }));
           desenhaResumo();
         }
         desenhaEtapas();
 
         if (existente) {
-          const rod = el('div', 'compras-form-rodape');
-          rod.append(botao('Excluir ficha', () => { form.closest('dialog').close(); U.confirmar('Excluir ficha', 'Excluir a ficha "' + existente.nome + '"? Pedidos já enviados guardam uma cópia e não mudam.', 'Excluir', () => { const r = SV.excluirFicha(existente.id); if (r.erro) return r.erro; U.avisar('Ficha excluída.'); }); }, 'btn secondary perigo-texto'));
-          form.append(rod);
+          corpo.append(secao('', quadro(linha('Excluir ficha', valorDa('Apaga esta ficha'), botaoExcluir('Excluir ficha', () => { form.closest('dialog').close(); U.confirmar('Excluir ficha', 'Excluir a ficha "' + existente.nome + '"? Pedidos já enviados guardam uma cópia e não mudam.', 'Excluir', () => { const r = SV.excluirFicha(existente.id); if (r.erro) return r.erro; U.avisar('Ficha excluída.'); }); })))));
         }
         return {};
       },

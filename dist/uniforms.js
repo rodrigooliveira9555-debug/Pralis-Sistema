@@ -75,14 +75,13 @@ function closeEditor(form){if(form.dataset.soJanela)form.hidden=true;const e=for
    abaixo, "Ícone do …" com seis quadradinhos e o resto em "Mais ícones"; o escolhido não muda de cor — quem mostra a escolha é o cartão
    de prévia (ícone + nome) no fim da janela. Todo cadastro novo que tiver ícone usa estas três peças, e não um desenho próprio.
    blocoIcone({rotulo, opcoes:[{id,label,desenho}], escolhido, aoMudar}) → {box, valor, definir(id), pintar(opcoes)}
-   quadroIdentidade(campoDoNome, bloco) → o quadro com o nome e o ícone;  previaIcone() → {box, pintar(desenho, nome)} */
+   previaIcone() → {box, pintar(desenho, nome)} */
 const svgIcone=d=>/^\s*<svg/.test(d)?d:'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+d+'</svg>';
 function blocoIcone({rotulo,opcoes,escolhido,aoMudar,visiveis=6}){const pick=el('div','identity-pick'),grupo=el('div','account-field-group',rotulo),linha=el('div','account-icon-options'),mais=el('details','identity-advanced'),extra=el('div','account-icon-options');
  mais.dataset.libraryManager='yes';mais.append(el('summary',null,'Mais ícones'),extra);grupo.append(linha);pick.append(grupo);let atual=escolhido==null?'':escolhido;const botoes=[];
  function marcar(){for(const b of botoes){const s=b.dataset.id===String(atual);b.classList.toggle('selected',s);b.setAttribute('aria-pressed',String(s))}}
  function pintar(lista){linha.replaceChildren();extra.replaceChildren();botoes.length=0;lista.forEach((o,i)=>{const b=button('',()=>{atual=o.id;marcar();if(aoMudar)aoMudar(atual)},'account-icon-dot'),s=el('span','icone-do-quadradinho');b.title=o.label;b.setAttribute('aria-label',o.label);b.dataset.id=String(o.id);s.innerHTML=svgIcone(o.desenho);b.append(s);botoes.push(b);(i<visiveis?linha:extra).append(b)});if(lista.length>visiveis)linha.append(mais);marcar()}
  pintar(opcoes);return {box:pick,get valor(){return atual},definir(v){atual=v==null?'':v;marcar()},pintar}}
-function quadroIdentidade(campoDoNome,bloco){const q=el('div','uniforms-wide job-identity account-identity');q.append(campoDoNome,bloco.box);return q}
 function previaIcone(){const p=el('div','uniforms-wide icon-live-preview'),marca=el('span','icon-live-badge'),nome=el('b');marca.style.setProperty('--icon-accent',ACCENT);p.append(marca,nome);return {box:p,pintar(desenho,texto){marca.innerHTML=svgIcone(desenho);nome.textContent=texto}}}
 /* Lista no padrão do sistema: na seta da linha, o botão de excluir vira Desativar ou Reativar (cadastro que não é apagado). */
 function botaoSituacao(row,ativo,nome){const drawer=row.querySelector('.account-row-actions'),off=drawer&&[...drawer.children].find(b=>/^Excluir/.test(b.getAttribute('aria-label')||''));if(!off)return;const r=(ativo?'Desativar ':'Reativar ')+nome;off.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(ativo?'M5.6 5.6l12.8 12.8M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z':'m5 12 4 4L19 6')+'"/></svg>';off.title=r;off.setAttribute('aria-label',r)}
@@ -272,6 +271,6 @@ window.showUniforms=showUniforms;
 /* Shared with Compras de Uniformes: one store, one set of components. */
 window.CicluzUniformStore={load,transact,get:()=>data,failed:()=>loadError,jobs:()=>jobsWithStored()}
 window.CicluzUniformReceipt={types:RECEIPT_TYPES,lines:m=>receiptLines(m),open:id=>{load();const m=data.movements.find(x=>x.id===id);if(m)receiptDialog(m)}};;
-window.CicluzUniformUI={openExternal,el,button,iconButton,svg,ICON,fold,newId,money,moneyInput,cents,dateBR,today,enumField,dialog,confirmDialog,openEditor,closeEditor,blocoIcone,quadroIdentidade,previaIcone,botaoSituacao,soJanela,quadroHistorico,unitPicker,padronizarCampos,campoSituacao,iconize,iconizeActions,uniformName,STATUS};
+window.CicluzUniformUI={openExternal,el,button,iconButton,svg,ICON,fold,newId,money,moneyInput,cents,dateBR,today,enumField,dialog,confirmDialog,openEditor,closeEditor,blocoIcone,previaIcone,botaoSituacao,soJanela,quadroHistorico,unitPicker,padronizarCampos,campoSituacao,iconize,iconizeActions,uniformName,STATUS};
 window.addEventListener('storage',e=>{if(e.key===KEY){load();if(view.classList.contains('show'))renderTab()}});
 })();
