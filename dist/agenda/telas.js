@@ -549,11 +549,6 @@
     b.onclick = aoToque;
     return { no: b, resumo: (t) => { resumo.textContent = t; } };
   }
-  /** Linha com um texto só de leitura à direita. */
-  function linhaLeitura(rotulo, valor) {
-    const P = pecas();
-    return P.linha(rotulo, el('span', 'transferencia-linha-valor', valor));
-  }
   /** Janela sobre a janela do compromisso (subtarefas, pessoas, local, arquivos): "Salvar" devolve o que mudou. */
   function subJanela({ titulo, subtitulo, montar, aplicar, soLeitura }) {
     U.dialogo({
