@@ -111,6 +111,7 @@
     if (t === '') return c.obrig ? 'campo obrigatório vazio' : '';
     if (/^-\s*\d/.test(t)) return 'valor negativo'; // a API recusa negativo em qualquer coluna
     if (c.fixo === 'valor' && t !== String(c.valor)) return c.valor === '' ? 'deve ficar vazia' : 'deve ser ' + c.valor;
+    if (c.tamanho && t.length > c.tamanho) return 'mais de ' + c.tamanho + ' caracteres (o Questor aceita até ' + c.tamanho + ')';
     switch (c.tipo) {
       case 'data': if (!dataValida(t)) return 'data inválida: use dd/mm/aaaa'; break;
       case 'decimal': if (!/^\d+(,\d+)?$/.test(t)) return /^\d+\.\d+$/.test(t) || /\d\.\d{3}/.test(t) ? 'use vírgula como separador decimal e nenhum ponto (ex.: 2500,00)' : 'número inválido (ex.: 5,00)'; break;
@@ -120,8 +121,8 @@
       case 'email': if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t)) return 'e-mail inválido'; break;
       default: break;
     }
-    if (c.opcoes && !c.opcoes.some(([k]) => k === t)) return 'código não aceito (use ' + c.opcoes.map(([k]) => k).join(', ') + ')';
     if (c.registro === 'B' && c.n === 74 && t === '0') return '0 (Não se aplica) não é válido para o eSocial';
+    if (c.opcoes && !c.opcoes.some(([k]) => k === t)) return 'código não aceito (' + (c.opcoes.length <= 10 ? 'use ' + c.opcoes.map(([k]) => k).join(', ') : 'veja a lista do campo') + ')';
     return '';
   }
 
@@ -168,6 +169,13 @@
     const temE = regs.includes('E'); const temAdm = regs.some((r) => r !== 'E');
     if (temE && temAdm) add(erros, null, { msg: 'o arquivo mistura eventos (E) com admissão (A a D): são grupos de layouts diferentes, um arquivo para cada' });
     const grupo = temAdm ? 'Admissao' : temE ? 'EventoVariavel' : '';
+    // Obrigatório pela documentação do Questor (regras do S1): aviso, não erro. O modelo aceito pela ConPlus deixa alguns vazios
+    // (CODIGOSIND, PISFUNC) e a pré-admissão grava; o DP completa. Uma linha por registro, com a lista dos campos.
+    linhas.filter((l) => ['A', 'B', 'C', 'D'].includes(l.registro) && l.colunas.length).forEach((l) => {
+      const cols = L.colunas(l.registro);
+      const vazios = l.colunas.filter((x, k) => cols[k] && cols[k].obrigDoc && String(x.valor).trim() === '').map((x, k) => cols[l.colunas.indexOf(x)].campo + ' (coluna ' + x.n + ')');
+      if (vazios.length) add(avisos, l, { msg: 'obrigatório na documentação do Questor e vazio: ' + vazios.join(', ') + '. O DP vai precisar completar' });
+    });
     if (temAdm) {
       const qA = regs.filter((r) => r === 'A').length; const qB = regs.filter((r) => r === 'B').length;
       if (!qA) add(erros, null, { msg: 'falta a linha A: A e B são o mínimo da admissão' });

@@ -43,6 +43,7 @@ body.dark-theme .conplus-faixa b { color: #fca5a5; }
 .conplus-campo-n { flex: none; min-width: 22px; padding: 0 4px; border-radius: 6px; background: color-mix(in srgb, var(--menu-accent, #ef4444) 12%, transparent); color: var(--panel-text, #9c1c1c); text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
 body.dark-theme .conplus-campo-n { color: #fca5a5; }
 .conplus-campo.a-confirmar .conplus-campo-rotulo > span:last-child { font-style: italic; }
+.conplus-obrig-doc { margin-left: auto; padding: 0 6px; border: 1px solid currentColor; border-radius: 999px; font: 600 10px/16px var(--ui-font); color: var(--conplus-aviso); text-transform: uppercase; letter-spacing: .04em; }
 .conplus-campo input, .conplus-campo select { width: 100%; min-width: 0; }
 .conplus-campo input[readonly] { background: color-mix(in srgb, var(--layout-line, #dedee3) 35%, transparent); color: var(--ui-label-color, #52525b); }
 .conplus-campo-dica { font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--ui-label-color, #52525b); overflow-wrap: anywhere; }
