@@ -80,7 +80,7 @@
     const pr = D.progresso(i);
     const pct = i.concluida ? 100 : pr.total ? Math.round(pr.feitas / pr.total * 100) : 0;
     const prog = el('span', 'agenda-cartao-progresso');
-    prog.append(el('small', null, 'Progresso'), el('small', null, i.concluida ? 'Feito' : pr.total ? pct + '%' : 'Sem subtarefas'));
+    prog.append(el('small', null, 'Progresso'), el('small', null, i.concluida ? 'Feito' : pr.total ? pct + '%' : 'Sem atividades'));
     const trilho = el('span', 'agenda-progresso');
     trilho.setAttribute('role', 'progressbar');
     trilho.setAttribute('aria-valuenow', String(pct));

@@ -217,19 +217,19 @@ async function limparAgenda(p) {
   await confirmar(p);
   ok((await dialogo(p).locator('.agenda-linha-leva', { hasText: 'Pessoas' }).textContent()).includes(RESP_UM.nome), 'A linha Pessoas mostra o responsável');
   await dialogo(p).getByLabel('Notas').fill('levar a planilha de horários');
-  await abrirLinha(p, 'Subtarefas');
-  await dialogo(p).getByRole('button', { name: 'Adicionar subtarefa' }).click();
-  await dialogo(p).getByLabel('Subtarefa 1', { exact: true }).fill('imprimir escala');
-  await dialogo(p).getByLabel('Subtarefa 1', { exact: true }).press('Enter');
-  await dialogo(p).getByLabel('Subtarefa 2', { exact: true }).fill('avisar a equipe');
+  await abrirLinha(p, 'Atividades');
+  await dialogo(p).getByRole('button', { name: 'Adicionar atividade' }).click();
+  await dialogo(p).getByLabel('Atividade 1', { exact: true }).fill('imprimir escala');
+  await dialogo(p).getByLabel('Atividade 1', { exact: true }).press('Enter');
+  await dialogo(p).getByLabel('Atividade 2', { exact: true }).fill('avisar a equipe');
   await confirmar(p);
-  ok((await dialogo(p).locator('.agenda-linha-leva', { hasText: 'Subtarefas' }).textContent()).includes('0 de 2 feitas'), 'A linha Subtarefas mostra a contagem');
+  ok((await dialogo(p).locator('.agenda-linha-leva', { hasText: 'Atividades' }).textContent()).includes('0 de 2 feitas'), 'A linha Atividades mostra a contagem');
   await confirmar(p);
   ok(await p.locator('dialog.agenda-dialog[open]').count() === 0, 'O ✓ salva e fecha');
   i = await item(p, 'reunião semanal da equipe');
   ok(i.repeticao.tipo === 'personalizada' && i.repeticao.intervalo === 2 && i.repeticao.diasSemana.join() === '1,4' && i.repeticao.fim.vezes === 3 && i.repeticao.ancora === hoje, 'Repetição salva, com a âncora no dia');
   ok(i.horaFim === '10:30' && i.alerta === 15 && i.url === 'https://cicluz.com.br' && i.local === 'Loja Centro' && i.notas === 'levar a planilha de horários', 'Término, alerta, URL, local e notas salvos como digitados');
-  ok(i.subtarefas.map((s) => s.titulo).join('|') === 'imprimir escala|avisar a equipe', 'Subtarefas na ordem');
+  ok(i.subtarefas.map((s) => s.titulo).join('|') === 'imprimir escala|avisar a equipe', 'Atividades na ordem');
   ok(i.pessoas.length === 1 && i.pessoas[0].id === RESP_UM.id && i.pessoas[0].responsavel, 'Responsável é uma conta da empresa');
 
   // Concluir o que repete: fica uma cópia concluída e ele vai para a próxima data
@@ -946,6 +946,62 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   await p.waitForFunction(() => CicluzAgendaDados.dados.itens.filter((i) => ['Atualizar os parâmetros', 'Salvar algo nos custos'].includes(i.titulo) && i.concluida).length === 2, null, { timeout: 20000 });
   ok(await pendentes() === 'Salvar algo nas fichas', 'Salvar os parâmetros conclui o ato nomeado e a ação geral desta tela; a da outra tela continua');
   await limparAgenda(p);
+  await p.close();
+}
+
+/* ---------- 5d) Tela e área primeiro no compromisso (P-58, Rodrigo 27/11/2026) ---------- */
+// A tela se escolhe na árvore do menu (menu › seção › tela) e a área no DES - Área / Setor / Local, gravada pelo id.
+{
+  const p = await abrirPagina(390);
+  await limparAgenda(p);
+  // Áreas fictícias deste aparelho (o campo lê o cadastro local).
+  await p.evaluate(() => localStorage.setItem('cicluz-location-tree-v1', JSON.stringify({ tree: [{ id: 'area-teste-loja', name: 'Operação de Teste', children: [{ id: 'setor-teste-padaria', name: 'Padaria de Teste', children: [] }] }], history: [] })));
+  const CUSTOS = await p.evaluate(() => CicluzAgendaRotina.telasDoMenu().find((t) => t.endereco.endsWith('/producao-custos')));
+  const arvore = await p.evaluate(() => CicluzAgendaRotina.arvoreDoMenu().map((m) => ({ menu: m.nome, sigla: m.sigla, secoes: m.filhos.length, folhas: m.filhos.every((s) => s.filhos.every((t) => t.folha && t.id.startsWith('#/'))) })));
+  ok(arvore.length >= 6 && arvore.every((m) => m.sigla && m.secoes && m.folhas), 'Árvore do menu: menu › seção › tela, cada menu com a sua sigla (' + arvore.map((m) => m.sigla).join(', ') + ')');
+
+  await p.evaluate(() => CicluzAgenda.novo({}));
+  await dialogo(p).locator('.agenda-tela-ligada').waitFor();
+  ok(await dialogo(p).evaluate((d) => { const t = d.querySelector('.agenda-tela-ligada'); const ti = d.querySelector('input[aria-label="Título"]'); return Boolean(t && ti && (t.compareDocumentPosition(ti) & Node.DOCUMENT_POSITION_FOLLOWING)); }), 'Tela e área vêm antes do título');
+  ok((await dialogo(p).getByRole('button', { name: 'Tela', exact: true }).textContent()).includes('Nenhuma'), 'Compromisso novo começa sem tela');
+
+  // Tela pela árvore: a busca abre o ramo; só a tela é marcável.
+  await dialogo(p).getByRole('button', { name: 'Tela', exact: true }).click();
+  const arv = p.locator('dialog.compras-hier-dialogo[open]');
+  await arv.getByPlaceholder('Buscar tela').fill(CUSTOS.titulo);
+  await arv.getByLabel('Selecionar ' + CUSTOS.titulo, { exact: true }).first().check();
+  await arv.locator('.people-save-control').click();
+  await arv.waitFor({ state: 'detached' }).catch(() => {});
+  ok((await dialogo(p).getByRole('button', { name: 'Tela', exact: true }).textContent()).includes(CUSTOS.titulo), 'A linha Tela mostra a tela escolhida');
+  const acoes = await dialogo(p).getByLabel('Ação que conta').evaluate((s) => [...s.options].map((o) => o.value));
+  ok(acoes.includes('producao:parametros') && acoes.includes('tela:salvar'), 'Com a tela escolhida, as ações são as dela');
+
+  // Área: qualquer nível, mostrada pelo caminho.
+  await dialogo(p).getByRole('button', { name: 'Área', exact: true }).click();
+  const loc = p.locator('dialog[open]').last();
+  await loc.getByLabel('Expandir ou recolher Operação de Teste').click();
+  await loc.getByLabel('Marcar Padaria de Teste').check();
+  await loc.locator('.people-save-control').click();
+  await p.waitForFunction(() => document.querySelectorAll('dialog[open]').length === 1);
+  ok((await dialogo(p).getByRole('button', { name: 'Área', exact: true }).textContent()).includes('Operação de Teste › Padaria de Teste'), 'A linha Área mostra o caminho');
+
+  await dialogo(p).getByLabel('Título', { exact: true }).fill('Conferir os custos da semana');
+  await confirmar(p);
+  let c = await item(p, 'Conferir os custos da semana');
+  ok(c && c.vinculoTela === CUSTOS.endereco && c.vinculoTitulo === CUSTOS.titulo && c.areaId === 'setor-teste-padaria', 'Tela (pela árvore) e área (pelo id) salvas no servidor');
+
+  // Tirar a tela na árvore desliga a tela e a ação; a área fica.
+  await p.evaluate((id) => CicluzAgenda.editar(id), c.id);
+  await dialogo(p).getByRole('button', { name: 'Tela', exact: true }).click();
+  await arv.getByPlaceholder('Buscar tela').fill(CUSTOS.titulo);
+  await arv.getByLabel('Selecionar ' + CUSTOS.titulo, { exact: true }).first().uncheck();
+  await arv.locator('.people-save-control').click();
+  await arv.waitFor({ state: 'detached' }).catch(() => {});
+  await confirmar(p);
+  c = await item(p, 'Conferir os custos da semana');
+  ok(c.vinculoTela === '' && c.acaoTela === '' && c.areaId === 'setor-teste-padaria', 'Desmarcar a tela tira a tela; a área continua');
+  await limparAgenda(p);
+  await p.evaluate(() => localStorage.removeItem('cicluz-location-tree-v1'));
   await p.close();
 }
 

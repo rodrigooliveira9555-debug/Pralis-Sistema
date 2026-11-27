@@ -572,9 +572,27 @@
     sections.forEach(([nome, subs], i) => subs.forEach((s) => {
       let cartoes = [];
       try { cartoes = menuCardsOf(i, s, 'tree'); } catch { cartoes = []; }
-      cartoes.forEach((c) => { if (Array.isArray(c) && c[2]) saida.push({ endereco: R.montarEndereco([R.slugMenu(nome), R.slug(s), R.slug(c[2])]), titulo: c[0], origem: nome.split(' · ')[0], secao: s }); });
+      cartoes.forEach((c) => { if (Array.isArray(c) && c[2]) saida.push({ endereco: R.montarEndereco([R.slugMenu(nome), R.slug(s), R.slug(c[2])]), titulo: c[0], origem: nome.split(' · ')[0], secao: s, menu: nome, indice: i }); });
     }));
     return saida;
+  }
+
+  /**
+   * As telas do menu em árvore (P-58, Rodrigo 27/11/2026: "apareceria o caminho como se fosse lá no menu"): menu › seção › tela,
+   * para o campo "Tela" do compromisso (U.campoArvore). Só a tela é marcável; o id dela é o endereço (#/…).
+   * A sigla de cada menu é a da origem (VND, CNT, DES, MER, RET); Resultados e Configurações levam RES e CFG.
+   */
+  const SIGLAS_MENU = ['VND', 'CNT', 'DES', 'MER', 'RET', 'RES', 'CFG'];
+  function arvoreDoMenu() {
+    const menus = new Map();
+    telasDoMenu().forEach((t) => {
+      if (!menus.has(t.indice)) menus.set(t.indice, { id: 'menu:' + t.indice, nome: t.menu, sigla: SIGLAS_MENU[t.indice] || '', selecionavel: false, filhos: [] });
+      const m = menus.get(t.indice);
+      let s = m.filhos.find((x) => x.secao === t.secao);
+      if (!s) { s = { id: 'secao:' + t.indice + '|' + t.secao, nome: t.secao, secao: t.secao, sigla: m.sigla, selecionavel: false, filhos: [] }; m.filhos.push(s); }
+      s.filhos.push({ id: t.endereco, nome: t.titulo, folha: true, conta: 'Tela' });
+    });
+    return [...menus.values()].map((m) => ({ ...m, conta: m.filhos.length + (m.filhos.length === 1 ? ' seção' : ' seções'), filhos: m.filhos.map((s) => ({ ...s, conta: s.filhos.length + (s.filhos.length === 1 ? ' tela' : ' telas') })) }));
   }
 
   /* Aviso na tela (P-53): tarefas de hoje ligadas à tela aberta, com "Feito" (e o progresso, quando há ação que conta). */
@@ -688,7 +706,7 @@
     abrirConfiguracoes, renderDesempenho, agendarDaTela, abrirTela, telaAtual,
     tarefaDoPedidoDeCompra, pedidoDeCompraFeito, tarefaDoPedidoDeProducao, pedidoDeProducaoFeito,
     producaoParaLancar, producaoLancada, producaoCancelada, integracaoDoColaborador, enviarEscalas,
-    acoesDaTela, acaoFeita, contarSe, ACAO_GERAL, telasDoMenu, iconeLigado, carregarTelasIcone, DESLIGADAS_PADRAO, TELA_PRODUTOS,
+    acoesDaTela, acaoFeita, contarSe, ACAO_GERAL, telasDoMenu, arvoreDoMenu, iconeLigado, carregarTelasIcone, DESLIGADAS_PADRAO, TELA_PRODUTOS,
     TELA_PEDIDO_COMPRA, TELA_PEDIDO_PRODUCAO, TELA_MAPA_PRODUCAO, TELA_PERIODO_TESTE,
   };
 })();

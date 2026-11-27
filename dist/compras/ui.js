@@ -1194,7 +1194,7 @@
    * Janela de escolha em árvore, no mesmo desenho da lista de origem (19/11/2026, Rodrigo): cada linha tem a seta de abrir, a caixa de
    * marcar (quadrada, de cantos arredondados), o ícone com a sigla da origem (DES, MER, RET), o nome, a contagem e a situação. Serve a
    * qualquer cadastro em níveis — grupo › subgrupo › item. Morava em contratos.js; desde 23/11/2026 é a peça única do sistema.
-   * nos: () => [{ id, nome, ativo, conta, folha, selecionavel (padrão: sim), filhos: [...] }]. marcados: Set de ids. bloqueados: Map id → motivo.
+   * nos: () => [{ id, nome, ativo, conta, folha, selecionavel (padrão: sim), sigla (opcional: a do ramo, no lugar da geral), filhos: [...] }]. marcados: Set de ids. bloqueados: Map id → motivo.
    * Padrão (vários): marcar um nível marca tudo abaixo; ao confirmar grava só o nível mais alto marcado.
    * unico: escolha de UM nó (o grupo, o subgrupo ou o item), sem cascata; a árvore abre já mostrando o escolhido.
    */
@@ -1241,8 +1241,8 @@
             desenhar();
           };
           if (no.selecionavel === false) { c.disabled = true; c.style.visibility = 'hidden'; }
-          const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); if (no.folha && iconeFolha) ic.innerHTML = svg(iconeFolha); else ic.append(el('span', 'sigla-text', sigla)); // grupo e subgrupo levam a sigla da origem; o item final leva o ícone dele
-          const tx = el('span', 'compras-hier-texto'); tx.append(el('b', null, no.folha ? no.nome : sigla + ' ' + formatar(no.nome)));
+          const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); if (no.folha && iconeFolha) ic.innerHTML = svg(iconeFolha); else ic.append(el('span', 'sigla-text', no.sigla || sigla)); // grupo e subgrupo levam a sigla da origem; o item final leva o ícone dele
+          const tx = el('span', 'compras-hier-texto'); tx.append(el('b', null, no.folha ? no.nome : (no.sigla || sigla) + ' ' + formatar(no.nome)));
           const conta = no.conta != null ? no.conta : (no.filhos ? plural(no.filhos.length) : ''); if (conta) tx.append(el('small', null, conta));
           if (travado) tx.append(el('small', null, bloqueados.get(no.id)));
           l.append(seta, c, ic, tx, el('span', 'compras-hier-estado', ativo ? 'Ativo' : 'Inativo'));

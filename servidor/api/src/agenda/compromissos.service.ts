@@ -471,7 +471,7 @@ export async function marcarSubtarefa(perfil: PerfilSessao, id: string, subId: s
     const { c } = await carregar(tx, perfil, id, "concluir");
     const subs = subtarefasDe(c);
     const s = subs.find((x) => x.id === subId);
-    if (!s) throw new ErroDominio("Subtarefa não encontrada.", 404, "AGENDA_SUBTAREFA_NAO_ENCONTRADA");
+    if (!s) throw new ErroDominio("Atividade não encontrada.", 404, "AGENDA_SUBTAREFA_NAO_ENCONTRADA");
     if (s.concluida === concluida) return respostaDe(tx, perfil, c);
     const novas = subs.map((x) => (x.id === subId ? { ...x, concluida, concluidaEm: concluida ? new Date().toISOString() : "" } : x));
     return respostaDe(tx, perfil, await repo.atualizarCompromisso(tx, empresaId, id, { subtarefas: novas, atualizadoPor: perfil.usuarioId }));

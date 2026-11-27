@@ -255,7 +255,7 @@
 
     // Ferramentas: busca, ordenar (lista do usuário), editar lista
     const ferramentas = el('div', 'agenda-ferramentas');
-    const busca = U.busca('Buscar por título, nota, local, etiqueta ou subtarefa', (v) => { estado.busca = v; atualizar(); });
+    const busca = U.busca('Buscar por título, nota, local, etiqueta ou atividade', (v) => { estado.busca = v; atualizar(); });
     busca.value = estado.busca;
     ferramentas.append(busca);
     if (l) {
@@ -375,7 +375,7 @@
     if (item.local || avisoLugar) { const s = el('span', 'agenda-com-icone'); s.innerHTML = svg(ICONES.local); s.append(document.createTextNode([item.local || 'Lugar marcado', avisoLugar].filter(Boolean).join(' · '))); partes.push(s); }
     (item.etiquetas || []).forEach((t) => partes.push(el('span', 'agenda-etiqueta', '#' + t)));
     const pr = D.progresso(item);
-    if (pr.total) partes.push(el('span', null, pr.feitas + '/' + pr.total + ' subtarefas'));
+    if (pr.total) partes.push(el('span', null, pr.feitas + '/' + pr.total + (pr.total === 1 ? ' atividade' : ' atividades')));
     const novas = window.CicluzAgendaConversa ? window.CicluzAgendaConversa.naoLidas()[item.id] : 0;
     if (novas) { const s = el('span', 'agenda-com-icone agenda-chat-novas'); s.innerHTML = svg(window.CicluzAgendaConversa.ICONE_CHAT); s.append(document.createTextNode(novas + (novas > 1 ? ' mensagens novas' : ' mensagem nova'))); partes.push(s); }
     if (item.notas && !compacta) partes.push(el('span', 'agenda-nota', item.notas.split('\n')[0]));
@@ -412,7 +412,7 @@
       const aberto = estado.abertos.has(item.id);
       const abrirSubs = botao('', () => { if (aberto) estado.abertos.delete(item.id); else estado.abertos.add(item.id); render(); }, 'agenda-icone-botao agenda-expandir' + (aberto ? ' aberto' : ''));
       abrirSubs.innerHTML = svg(ICONES.seta);
-      abrirSubs.title = aberto ? 'Esconder subtarefas' : 'Mostrar subtarefas';
+      abrirSubs.title = aberto ? 'Esconder atividades' : 'Mostrar atividades';
       abrirSubs.setAttribute('aria-label', abrirSubs.title + ': ' + item.titulo);
       abrirSubs.setAttribute('aria-expanded', String(aberto));
       direita.append(abrirSubs);
@@ -628,8 +628,8 @@
         resumirPessoas();
 
         let subs = (v.subtarefas || []).map((s) => ({ ...s }));
-        const linhaSubs = linhaQueLeva('Subtarefas', () => subJanela({
-          titulo: 'Subtarefas', subtitulo: v.titulo || 'Compromisso', soLeitura,
+        const linhaSubs = linhaQueLeva('Atividades', () => subJanela({
+          titulo: 'Atividades', subtitulo: v.titulo || 'Compromisso', soLeitura,
           montar: (c) => { const e = editorSubtarefas(subs); c.append(e.no); return { e }; },
           aplicar: (c) => { subs = c.e.valor(); resumirSubs(); return undefined; },
         }));
@@ -656,19 +656,41 @@
         const resumirLocal = () => linhaLocal.resumo(local || (localizacao && Number.isFinite(localizacao.lat) ? 'No mapa' : 'Nenhum'));
         resumirLocal();
 
-        /* Tela ligada e ação programada (P-53): a tarefa leva à tela; com ação, conclui sozinha ao chegar na quantidade */
+        /*
+         * Tela e área primeiro (P-58, Rodrigo 27/11/2026: "a primeira coisa é a tela, depois a área"). A tela se escolhe na árvore do
+         * menu (menu › seção › tela) ou já vem do ícone roxo de agendar; a tarefa leva a ela e, com ação, conclui sozinha (P-53).
+         * Tarefa criada pela própria tela (pedido agendado…) não troca de tela.
+         */
+        const ROT = window.CicluzAgendaRotina;
         let vinculo = v.vinculoTela ? { tela: v.vinculoTela, titulo: v.vinculoTitulo || 'Tela do sistema' } : null;
+        const telaPresa = Boolean(atual && atual.vinculoRef);
+        const tituloDaTela = (endereco) => ((ROT ? ROT.telasDoMenu() : []).find((t) => t.endereco === endereco) || {}).titulo || '';
+        const campoTela = U.campoArvore({
+          rotulo: 'Tela', titulo: 'Tela do compromisso', cores: { cor: COR, corTexto: COR_TEXTO }, iconeFolha: ICONES.tela,
+          rotuloBusca: 'Buscar tela', vazio: 'Nenhuma tela no menu.', textoVazio: 'Nenhuma', valor: vinculo ? vinculo.tela : '',
+          nos: () => (ROT ? ROT.arvoreDoMenu() : []),
+          texto: (e) => tituloDaTela(e) || (vinculo && vinculo.tela === e ? vinculo.titulo : ''),
+        });
+        campoTela.disabled = telaPresa;
+        const area = U.campoLocal({ rotulo: 'Área', titulo: 'Área / Setor / Local', valor: v.areaId || '', textoVazio: 'Nenhuma' });
         const telaQuadro = el('div', 'agenda-tela-ligada');
-        const acoesDaTela = (tela) => (window.CicluzAgendaRotina && tela ? window.CicluzAgendaRotina.acoesDaTela(tela) : []);
-        const acaoSel = U.seletor([['', 'Nenhuma: concluir com "Feito"'], ...acoesDaTela(vinculo && vinculo.tela).map((a) => [a.id, a.rotulo])], v.acaoTela || '');
+        const acoesDaTela = (tela) => (ROT && tela ? ROT.acoesDaTela(tela) : []);
+        const acaoSel = U.seletor([], '');
+        const opcoesDaAcao = (atualAcao) => {
+          acaoSel.replaceChildren(...[['', 'Nenhuma: concluir com "Feito"'], ...acoesDaTela(vinculo && vinculo.tela).map((a) => [a.id, a.rotulo])].map(([id, rotulo]) => new Option(rotulo, id)));
+          acaoSel.value = [...acaoSel.options].some((o) => o.value === atualAcao) ? atualAcao : '';
+        };
+        opcoesDaAcao(v.acaoTela || '');
         const quantidade = U.roletaNumero({ rotulo: 'Quantidade', titulo: 'Quantidade', min: 1, max: 365, valor: String(v.acaoQuantidade || 1) });
         const linhaQtd = P.linhaDe('Quantidade', quantidade.input);
         linhaQtd.append(quantidade.painel);
         P.abreAoTocarNaLinha(linhaQtd, quantidade.input, quantidade.painel);
+        const linhaTela = P.linhaDe('Tela', campoTela);
+        const linhaArea = P.linhaDe('Área', area);
         const desenharTela = () => {
-          const linhas = [];
+          const linhas = [linhaTela];
           if (!vinculo) {
-            telaQuadro.replaceChildren(P.quadro(linhaLeitura('Tela', 'Nenhuma')), U.nota('Para ligar, abra a tela e use o ícone roxo de agendar na barra de baixo.'));
+            telaQuadro.replaceChildren(P.quadro(linhaTela, linhaArea), U.nota('Escolha a tela em que a tarefa é feita (ou use o ícone roxo de agendar na própria tela). A área liga o compromisso ao DES - Área / Setor / Local.'));
             return;
           }
           const abrir = el('button', 'transferencia-circulo agenda-abrir-tela');
@@ -677,27 +699,26 @@
           abrir.setAttribute('aria-label', 'Abrir a tela ' + vinculo.titulo);
           abrir.innerHTML = svg(ICONES.tela);
           abrir.onclick = () => window.CicluzAgendaRotina.abrirTela(vinculo.tela);
-          const linhaTela = P.linha('Tela', el('span', 'transferencia-linha-valor', vinculo.titulo));
+          linhaTela.querySelectorAll('.agenda-abrir-tela').forEach((b) => b.remove());
           if (atual && atual.vinculoTela === vinculo.tela) linhaTela.append(abrir);
-          linhas.push(linhaTela);
           // Tarefa criada pela própria tela (pedido agendado, lançar produção…): a tela conclui; não há ação a escolher.
           if (!(atual && atual.vinculoRef) && acoesDaTela(vinculo.tela).length) {
             linhas.push(P.linhaDe('Ação que conta', acaoSel));
             if (acaoSel.value) linhas.push(linhaQtd);
           }
-          if (!soLeitura && !(atual && atual.vinculoRef)) {
-            const desligar = el('button', 'transferencia-linha transferencia-linha-acao agenda-linha-perigo');
-            desligar.type = 'button';
-            desligar.append(el('span', 'transferencia-linha-rotulo', 'Desligar a tela'));
-            desligar.onclick = () => { vinculo = null; acaoSel.value = ''; desenharTela(); };
-            linhas.push(desligar);
-          }
+          linhas.push(linhaArea);
           const nota = atual && atual.vinculoRef ? 'Criada pela própria tela: conclui sozinha quando o que ela pede é feito.'
             : acaoSel.value ? 'Conclui sozinha quando a ação é feita na tela essa quantidade de vezes (em cada repetição). Também dá para tocar em "Feito" no aviso da tela.'
             : 'Ao abrir a tela no dia, aparece o aviso com "Feito".';
           telaQuadro.replaceChildren(P.quadro(...linhas), U.nota(nota));
         };
         acaoSel.addEventListener('change', desenharTela);
+        // Trocar a tela na árvore (desmarcar tira a tela): as ações passam a ser as da tela nova.
+        campoTela.addEventListener('change', () => {
+          vinculo = campoTela.value ? { tela: campoTela.value, titulo: (tituloDaTela(campoTela.value) || 'Tela do sistema').slice(0, 120) } : null;
+          opcoesDaAcao(acaoSel.value);
+          desenharTela();
+        });
         desenharTela();
 
         /* Avaliação */
@@ -713,11 +734,11 @@
         const linhaHora = P.abreAoTocarNaLinha(P.linha('Início', hora.caixa, hora.painel), hora.input, hora.painel);
         const linhaFim = P.abreAoTocarNaLinha(P.linha('Término', horaFim.caixa, horaFim.painel), horaFim.input, horaFim.painel);
         corpo.append(
+          P.secao('Tela e área', telaQuadro),
           P.secao('', P.quadro(P.linhaDe('Título *', titulo), P.linhaDe('Notas', notas), P.linhaDe('Endereço na internet', url))),
           P.secao('Quando', P.quadro(linhaData, linhaHora, linhaFim, P.linhaDe('Alerta', alerta), ...repeticao.linhas), repeticao.resumo),
           P.secao('Organização', P.quadro(P.linhaDe('Lista', listaSel), P.linhaDe('Coluna do Kanban', colunaSel), P.linhaDe('Prioridade', prioSel), P.linhaDe('Etiquetas', etiquetas), P.linha('Sinalizar', sinal))),
           P.secao('Detalhes', P.quadro(linhaPessoas.no, linhaSubs.no, linhaLocal.no)),
-          P.secao('Tela ligada', telaQuadro),
         );
         if (atual) {
           const conversa = window.CicluzAgendaConversa;
@@ -747,7 +768,7 @@
         // Só leitura: tudo travado, menos a avaliação (o responsável se autoavalia), a conversa e as linhas que só mostram.
         if (soLeitura) corpo.querySelectorAll('input, select, textarea, button').forEach((x) => { if (!x.closest('.agenda-avaliacao-painel, .agenda-linha-leva, .agenda-abrir-tela, .agenda-form-rodape')) x.disabled = true; });
         return {
-          titulo, notas, url, data, hora, horaFim, alerta, repeticao, listaSel, colunaSel, prioSel, tipoAvaliacao, etiquetas, acaoSel, quantidade,
+          titulo, notas, url, data, hora, horaFim, alerta, repeticao, listaSel, colunaSel, prioSel, tipoAvaliacao, etiquetas, acaoSel, quantidade, area,
           sinal: () => sinalizado, pessoas: () => pessoas, subs: () => subs, local: () => local, localizacao: () => localizacao, vinculo: () => vinculo,
         };
       },
@@ -761,7 +782,7 @@
           pessoas: c.pessoas(), avaliacao: { tipo: c.tipoAvaliacao.value }, prioridade: c.prioSel.value, sinalizado: c.sinal(),
           etiquetas: c.etiquetas.value, subtarefas: c.subs(),
           vinculoTela: c.vinculo() ? c.vinculo().tela : '', vinculoTitulo: c.vinculo() ? c.vinculo().titulo : '',
-          acaoTela: acao, acaoQuantidade: acao ? c.quantidade.valor() || 1 : null,
+          acaoTela: acao, acaoQuantidade: acao ? c.quantidade.valor() || 1 : null, areaId: c.area.value,
         });
         if (r.erro) return r.erro;
         U.avisar(atual ? 'Compromisso salvo.' : 'Compromisso criado.');
@@ -968,23 +989,23 @@
     const P = pecas();
     const subs = inicial.map((s) => ({ ...s }));
     const quadro = P.quadro();
-    const no = P.secao('Subtarefas', quadro);
+    const no = P.secao('Atividades', quadro);
     function desenhar(foco) {
       const linhas = subs.map((s, n) => {
         const r = el('div', 'transferencia-linha agenda-subtarefa-edicao');
         // O mesmo círculo de concluir das linhas (como no Lembretes), não caixa de marcar.
         const c = botao('', () => { s.concluida = !s.concluida; c.setAttribute('aria-pressed', String(s.concluida)); }, 'agenda-circulo pequeno');
         c.setAttribute('aria-pressed', String(Boolean(s.concluida)));
-        c.setAttribute('aria-label', 'Subtarefa ' + (n + 1) + ' concluída');
-        const t = U.entrada('text', s.titulo, { maxLength: 200, placeholder: 'Subtarefa' });
+        c.setAttribute('aria-label', 'Atividade ' + (n + 1) + ' concluída');
+        const t = U.entrada('text', s.titulo, { maxLength: 200, placeholder: 'Atividade' });
         t.classList.add('transferencia-linha-controle');
-        t.setAttribute('aria-label', 'Subtarefa ' + (n + 1));
+        t.setAttribute('aria-label', 'Atividade ' + (n + 1));
         t.oninput = () => { s.titulo = t.value; };
         t.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); subs.splice(n + 1, 0, { titulo: '', concluida: false }); desenhar(n + 1); } };
         const tirar = el('button', 'transferencia-circulo transferencia-circulo-excluir');
         tirar.type = 'button';
-        tirar.title = 'Tirar subtarefa ' + (n + 1);
-        tirar.setAttribute('aria-label', 'Tirar subtarefa ' + (n + 1));
+        tirar.title = 'Tirar atividade ' + (n + 1);
+        tirar.setAttribute('aria-label', 'Tirar atividade ' + (n + 1));
         tirar.innerHTML = svg('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>');
         tirar.onclick = () => { subs.splice(n, 1); desenhar(); };
         r.append(c, t, tirar);
@@ -995,7 +1016,7 @@
       const mais = el('span', 'transferencia-circulo');
       mais.setAttribute('aria-hidden', 'true');
       mais.innerHTML = svg(PATH_MAIS_SVG);
-      add.append(el('span', 'transferencia-linha-rotulo', 'Adicionar subtarefa'), mais);
+      add.append(el('span', 'transferencia-linha-rotulo', 'Adicionar atividade'), mais);
       add.onclick = () => { subs.push({ titulo: '', concluida: false }); desenhar(subs.length - 1); };
       quadro.replaceChildren(...linhas, add);
       if (foco !== undefined) { const alvo = quadro.querySelectorAll('input[type=text]')[foco]; if (alvo) alvo.focus(); }
