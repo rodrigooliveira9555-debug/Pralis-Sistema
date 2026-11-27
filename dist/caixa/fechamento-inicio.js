@@ -3,14 +3,16 @@
  * (Caixa-Brain/04 §8 e /05). A regra está em inicio-vendas.js; aqui só a tela: o resumo do período, o aviso de horário da folha
  * (tolerância de 2 min; quando cabe na janela de 60 min, o botão já leva a hora da folha e o motivo preenchido) e o diálogo.
  * Quem ajusta: quem opera o caixa (Operador ou Gerente). Dados FICTÍCIOS, em centavos, só em memória.
+ * Formulário linha por linha (padrão da Nova Transferência, 27/11/2026): o resumo do período é um grupo de linhas de leitura e a janela
+ * "Ajustar início" tem a hora (campo de hora do sistema, que abre ao tocar na linha) e o motivo em linhas; as explicações ficam depois do quadro.
  */
 (function () {
   'use strict';
   const U = window.CicluzComprasUI;
   const C = window.CicluzCaixa;
-  const { el, botao, campo, entrada } = U;
+  const { el, botao, entrada } = U;
   const Comum = window.CicluzCaixaFechamentoComum;
-  const { ctx: K, dl } = Comum;
+  const { ctx: K } = Comum;
 
   const plural = (n, um, varios) => n + ' ' + (n === 1 ? um : varios);
   const podeAjustar = () => C.ajustavelInicio() && C.pode('operar');
@@ -22,15 +24,18 @@
       titulo: 'Ajustar início das vendas',
       subtitulo: 'As vendas do PDV desse intervalo que estão sem caixa passam a ser deste caixa. A abertura oficial (' + a.abertoEm + ') não muda.',
       rotuloSalvar: 'Ajustar início',
+      padrao: true,
       montar: (form) => {
-        form.append(U.nota('Pode recuar de ' + j.de + ' até ' + j.ate + ': no máximo ' + C.RECUO_MAXIMO_MIN + ' minutos antes da abertura oficial, no mesmo dia e nunca no mesmo minuto nem antes do fechamento do caixa anterior deste PDV.'));
-        const h = entrada('time', hora || a.inicioVendas, { step: 60, required: true });
-        const m = el('textarea');
-        m.rows = 3;
-        m.maxLength = 500;
-        m.value = motivo;
-        form.append(campo('Novo início das vendas', h), campo('Motivo do ajuste', m, 'Obrigatório, de 3 a 500 letras. Fica registrado com a hora de antes e a de depois.'));
-        return { h, m };
+        const { linha, abreAoTocarNaLinha } = C.pecas();
+        // Hora: o campo de hora do sistema (HH:MM, com o relógio); tocar em qualquer ponto da linha abre o painel.
+        const campoHora = U.campoHora({ rotulo: 'Novo início das vendas', valor: hora || a.inicioVendas });
+        campoHora.input.required = true;
+        const linhaHora = abreAoTocarNaLinha(linha('Novo início das vendas *', campoHora.caixa, campoHora.painel), campoHora.input, campoHora.painel);
+        const m = entrada('text', motivo, { maxLength: 500, autocomplete: 'off' });
+        form.append(C.formulario(C.grupo('Novo início', [linhaHora, C.linhaCampo('Motivo do ajuste', m, true)],
+          U.nota('Pode recuar de ' + j.de + ' até ' + j.ate + ': no máximo ' + C.RECUO_MAXIMO_MIN + ' minutos antes da abertura oficial, no mesmo dia e nunca no mesmo minuto nem antes do fechamento do caixa anterior deste PDV.'),
+          U.nota('O motivo é obrigatório, de 3 a 500 letras. Fica registrado com a hora de antes e a de depois.'))));
+        return { h: campoHora.input, m };
       },
       salvar: ({ h, m }) => {
         const r = C.ajustarInicioVendas(h.value, m.value);
@@ -48,13 +53,14 @@
   function bloco() {
     const a = C.estado.abertura;
     const t = C.estado.turno;
-    const itens = [dl([
+    const leituras = [
       ['Abertura oficial', a.abertoEm],
       ['Início das vendas', a.inicioVendas + (a.edicoes.length ? ' (ajustado)' : '')],
       ['Vendas deste caixa', String(t.vendas.length)],
       ['Vendas do PDV sem caixa', t.semCaixa.length ? String(t.semCaixa.length) : 'Nenhuma'],
-    ])];
-    if (t.semCaixa.length) itens.push(U.nota(plural(t.semCaixa.length, 'venda do PDV foi feita', 'vendas do PDV foram feitas') + ' antes do início deste caixa e ' + (t.semCaixa.length === 1 ? 'está sem caixa' : 'estão sem caixa') + '. Se são deste turno, ajuste o início das vendas.'));
+    ];
+    const notas = t.semCaixa.length ? [U.nota(plural(t.semCaixa.length, 'venda do PDV foi feita', 'vendas do PDV foram feitas') + ' antes do início deste caixa e ' + (t.semCaixa.length === 1 ? 'está sem caixa' : 'estão sem caixa') + '. Se são deste turno, ajuste o início das vendas.')] : [];
+    const itens = [C.grupo('Início das vendas', leituras.map(([t2, v]) => C.linhaLeitura(t2, v)), ...notas)];
     if (podeAjustar()) {
       const ac = el('div', 'caixa-acoes caixa-acoes-esq');
       ac.append(botao('Ajustar início', () => dialogoAjuste(), 'btn secondary'));

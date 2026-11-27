@@ -59,7 +59,60 @@
       },
     };
   }
+  /* ---------- Formulário linha por linha (padrão da Nova Transferência, 27/11/2026) ----------
+   * Peças únicas para TODAS as telas e janelas do Caixa que pedem dados: grupo com título, quadro com linhas de 52 px (nome à esquerda,
+   * valor à direita) e, quando a tela tem um valor principal em dinheiro, o quadro grande desse valor no topo (quadroValor).
+   * As peças vêm de CicluzTransferencias.pecas (a Transferência carrega depois deste arquivo: só se lê na hora de desenhar).
+   * Linha que aparece e some entra e sai do quadro (replaceChildren): a linha é display:flex e o atributo hidden não a esconde. */
+  const P = () => window.CicluzTransferencias.pecas;
+  const valorDa = (texto) => U.el('span', 'transferencia-linha-valor', texto);
+  /** Contêiner do formulário: leva a classe da referência (transferencia-tela) para valer as mesmas medidas, sem CSS paralelo. */
+  const formulario = (...filhos) => { const f = U.el('div', 'transferencia-tela transferencia-corpo caixa-formulario'); f.append(...filhos); return f; };
+  /** Grupo: título pequeno acima e o quadro com as linhas. Notas e avisos entram depois das linhas, fora do quadro. */
+  const grupo = (titulo, linhas, ...depois) => P().secao(titulo, P().quadro(...linhas), ...depois);
+  /** Linha de leitura (nome à esquerda, valor à direita, sem caixa). */
+  const linhaLeitura = (rotulo, texto) => P().linha(rotulo, valorDa(texto));
+  /** Linha com um campo de digitar ou escolher (o nome fica dentro da linha; obrigatorio põe o asterisco). */
+  const linhaCampo = (rotulo, controle, obrigatorio) => P().linhaDe(rotulo + (obrigatorio ? ' *' : ''), controle);
+  /** Linha de dinheiro: campo decimal em reais; devolve { no, input }. */
+  const linhaDinheiro = (rotulo, valor, aoDigitar, obrigatorio) => {
+    const input = U.entrada('text', valor || '', { inputMode: 'decimal', placeholder: '0,00', autocomplete: 'off' });
+    if (aoDigitar) input.addEventListener('input', () => aoDigitar(input.value));
+    return { no: linhaCampo(rotulo, input, obrigatorio), input };
+  };
+  /** Linha de escolha em lista (a seleção abre em painel). aoMudar recebe o valor escolhido. */
+  const linhaEscolha = (rotulo, opcoes, valor, aoMudar, obrigatorio = true) => {
+    const s = U.seletor(opcoes, valor, 'Escolha…');
+    if (obrigatorio) s.required = true;
+    s.addEventListener('change', () => { if (aoMudar) aoMudar(s.value); });
+    return { no: linhaCampo(rotulo, s, obrigatorio), controle: s };
+  };
+  /**
+   * Quadro grande do valor principal (o laranja da Transferência, na cor da origem), fixo no topo: rótulo, o valor digitável e uma linha
+   * de resumo embaixo (para a soma, a diferença ou o total). Devolve { no, input, resumo }. Vai como PRIMEIRO item do formulário.
+   */
+  const quadroValor = (rotulo, input, aoDigitar) => {
+    input.classList.add('transferencia-calc-tela'); input.setAttribute('aria-label', rotulo.replace(/ *$/, ''));
+    if (!input.placeholder) input.placeholder = 'R$ 0,00';
+    if (aoDigitar) input.addEventListener('input', () => aoDigitar(input.value));
+    const resumo = U.el('p', 'transferencia-calc-resumo'); resumo.setAttribute('role', 'status');
+    const no = U.el('div', 'transferencia-valor-cab'); no.append(U.el('span', 'transferencia-valor-rotulo', rotulo), input, resumo);
+    return { no, input, resumo };
+  };
+  /**
+   * Quadro grande com um TOTAL só de leitura (a soma de linhas que se digitam embaixo): mesmo quadro do valor, mas o número é um <output>, não um campo
+   * (nas telas de setor as regras dos campos pintam o texto de escuro). Devolve { no, definir(texto) }.
+   */
+  const quadroTotal = (rotulo, texto) => {
+    const saida = U.el('output', 'transferencia-valor-total', texto || ''); saida.setAttribute('aria-label', rotulo);
+    const no = U.el('div', 'transferencia-valor-cab'); no.append(U.el('span', 'transferencia-valor-rotulo', rotulo), saida);
+    return { no, definir: (v) => { saida.textContent = v; } };
+  };
+  Object.assign(C, { pecas: P, valorDa, formulario, grupo, linhaLeitura, linhaCampo, linhaDinheiro, linhaEscolha, quadroValor, quadroTotal });
+
   function dialogo(opcoes) {
+    // padrao: true = janela no padrão linha por linha (classe transferencia-tela, cabeçalho sem o caminho repetido no corpo).
+    if (opcoes && opcoes.padrao) { opcoes = { ...opcoes, classe: ((opcoes.classe || '') + ' compras-form-padrao transferencia-tela').trim() }; }
     const d = U.dialogo(opcoes);
     d.style.setProperty('--menu-accent', C.COR);
     d.style.setProperty('--dialog-accent', C.COR);

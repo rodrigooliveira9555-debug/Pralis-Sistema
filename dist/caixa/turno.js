@@ -8,12 +8,16 @@
  * Aqui o botão "Nova sangria" abre esse formulário dentro do próprio módulo.
  * Contagem cega (R-232): o operador não vê o saldo; a sangria acima do disponível só diz "acima do
  * disponível no caixa", sem número.
+ *
+ * Formulário linha por linha (padrão da Nova Transferência, 27/11/2026): o "Caixa aberto" é um grupo de linhas de leitura e a janela
+ * "PDV desligado" lista os motivos como linhas com chave Sim/Não (o "Outro" abre a linha de descrição dentro do quadro). Os cartões de
+ * resumo, as listas e os botões de ação ficam como estão (não são formulário).
  */
 (function () {
   'use strict';
   const U = window.CicluzComprasUI;
   const C = window.CicluzCaixa;
-  const { el, botao, campo, entrada, seletor } = U;
+  const { el, botao, entrada, seletor } = U;
   const { moeda, centavos } = C;
 
   const Dlg = window.CicluzCaixaTurnoDialogos;
@@ -46,11 +50,6 @@
   }
 
   const gerencia = () => C.estado.perfil === 'gerente';
-  const dl = (pares) => {
-    const caixa = el('dl', 'caixa-declarado');
-    pares.forEach(([t, v]) => { const d = el('div'); d.append(el('dt', null, t), el('dd', null, v)); caixa.append(d); });
-    return caixa;
-  };
   const plural = (n, um, varios) => n + ' ' + (n === 1 ? um : varios);
   /** Corpo da seção com o respiro de 14 px (as listas ficam sem ele, de borda a borda). */
   const corpo = (...nos) => { const c = el('div', 'compras-corpo'); c.append(...nos); return c; };
@@ -156,24 +155,21 @@
       titulo: 'PDV desligado',
       subtitulo: 'O PDV está ligado. Ao registrar os motivos abaixo, ele ficará marcado como desligado.',
       rotuloSalvar: 'Registrar parada',
+      padrao: true,
       montar: (form) => {
-        form.append(U.nota('Solicitação iniciada às ' + C.hora() + '. A hora oficial será confirmada ao registrar a parada.'));
+        const { linha, quadro, secao, chave } = C.pecas();
         const marcados = new Set();
-        const outro = el('textarea');
-        outro.rows = 2;
-        const campoOutro = campo('Descreva o outro motivo', outro);
-        campoOutro.hidden = true;
-        MOTIVOS.forEach((m) => {
-          const l = el('label', 'compras-interruptor');
-          const i = entrada('checkbox', null);
-          i.onchange = () => {
-            if (i.checked) marcados.add(m); else marcados.delete(m);
-            if (m === 'Outro') campoOutro.hidden = !i.checked;
-          };
-          l.append(i, el('span', null, m));
-          form.append(l);
-        });
-        form.append(campoOutro);
+        const outro = entrada('text', '', { autocomplete: 'off' });
+        const linhaOutro = C.linhaCampo('Descreva o outro motivo', outro, true);
+        // Uma linha por motivo, com a chave Sim/Não. A linha do "Outro" entra e sai do quadro (a linha é display:flex: hidden não a esconde).
+        const motivos = MOTIVOS.map((m) => linha(m, chave(m, false, ['Sim', 'Não'], (sim) => {
+          if (sim) marcados.add(m); else marcados.delete(m);
+          if (m === 'Outro') pintar();
+        })));
+        const q = quadro();
+        function pintar() { q.replaceChildren(...motivos, ...(marcados.has('Outro') ? [linhaOutro] : [])); }
+        pintar();
+        form.append(C.formulario(secao('Motivos (marque pelo menos um)', q, U.nota('Solicitação iniciada às ' + C.hora() + '. A hora oficial será confirmada ao registrar a parada.'))));
         return { marcados, outro };
       },
       salvar: ({ marcados, outro }) => {
@@ -212,13 +208,14 @@
     const t = C.estado.turno;
     const s = U.secao('Caixa aberto');
     s.querySelector('.compras-secao-cab').append(U.situacao('Operação em andamento', 'positivo'));
-    s.append(corpo(dl([
+    const leituras = [
       ['PDV', a.pdv], ['Turno', a.turno], ['Aberto em', a.abertoEm],
       ['Responsável', a.responsavel], ['Supervisor', a.supervisor], ['Maquininha', a.maquininha],
       ['Lacre do malote de abertura', a.lacre],
       ['Lacres para sangria', C.bolsasLivres().length ? C.bolsasLivres().join(' · ') : 'Nenhum disponível'],
       ['Lacre reservado para fechar este caixa', a.lacreFechamento],
-    ])));
+    ];
+    s.append(corpo(C.formulario(C.grupo(null, leituras.map(([t, v]) => C.linhaLeitura(t, v))))));
     return s;
   }
 

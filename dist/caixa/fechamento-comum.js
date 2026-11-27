@@ -1,6 +1,8 @@
 /*
  * Caixa — Fechamento: peças comuns (casca). Constantes, ajudantes de tela e o valor "do PDV" que a folha e a maquininha
  * comparam. `ctx` guarda só o que é da TELA (mensagens de erro, texto digitado, botões a recalcular no lugar).
+ * O fechamento inteiro é formulário linha por linha (padrão da Nova Transferência): grupo com título, quadro de linhas de 52 px
+ * (nome à esquerda, valor à direita) e notas/avisos DEPOIS do quadro. `dl` devolve o quadro de linhas de leitura (par nome/valor).
  */
 (function () {
   'use strict';
@@ -8,6 +10,7 @@
   const C = window.CicluzCaixa;
   const { el } = U;
   const { moeda } = C;
+  const { linha, quadro } = C.pecas();
 
   const CAMPOS_FOLHA = [
     ['trocoInicial', 'Troco Inicial', true], ['saldoInicial', 'Saldo Inicial', false], ['clientes', 'CLIENTES (VND/TRANS)', false],
@@ -23,12 +26,10 @@
   const ctx = { atualizar: () => {}, erroGerar: '', erroMaq: '', justContagem: '', corrigindoContagem: false, gerarRefresh: null, fecharRefresh: null };
   const gerencia = () => C.estado.perfil === 'gerente';
 
-  const corpoSecao = (...nos) => { const c = el('div', 'compras-corpo'); c.append(...nos); return c; };
-  const dl = (pares) => {
-    const caixa = el('dl', 'caixa-declarado');
-    pares.forEach(([t, v]) => { const d = el('div'); d.append(el('dt', null, t), el('dd', null, v)); caixa.append(d); });
-    return caixa;
-  };
+  /** Quadro de linhas de leitura (nome à esquerda, valor à direita) para pares [nome, valor]; vai dentro de um grupo (secao). */
+  const dl = (pares) => quadro(...pares.map(([t, v]) => C.linhaLeitura(t, v)));
+  /** Linha com a etiqueta de situação à direita (sinal + palavra, nunca só cor). */
+  const linhaSituacao = (rotulo, texto, tom) => { const v = el('span', 'transferencia-linha-valor'); v.append(U.situacao(texto, tom)); return linha(rotulo, v); };
   const cadeado = (texto) => {
     const s = el('span', 'caixa-lacrado');
     s.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICONE_CADEADO + '</svg>';
@@ -52,5 +53,5 @@
     return { ...p, credito: p.credito + s('Crédito'), debito: p.debito + s('Débito'), dinheiro: p.dinheiro + s('Dinheiro'), pix: p.pix + s('Pix'), voucher: p.voucher + s('Voucher'), total: p.total + s() };
   }
 
-  window.CicluzCaixaFechamentoComum = { ctx, corpoSecao, dl, cadeado, fmt, CAMPOS_FOLHA, FORMAS_CARTAO, NOME_FORMA, ICONE_CADEADO, pralis, lidoNoPdv, gerencia };
+  window.CicluzCaixaFechamentoComum = { ctx, dl, linhaSituacao, cadeado, fmt, CAMPOS_FOLHA, FORMAS_CARTAO, NOME_FORMA, ICONE_CADEADO, pralis, lidoNoPdv, gerencia };
 })();

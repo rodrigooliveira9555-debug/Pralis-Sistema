@@ -6,13 +6,15 @@
  *  - quem enviou NÃO confirma: a transferência nasce PENDENTE e aparece no Turno do operador ("Confirmar recebimento" /
  *    "Não recebi"); só depois de confirmada entra no saldo do caixa; recusada, volta à origem.
  * Tudo grava no estado único (CicluzCaixa.criarSemLacre). Dados FICTÍCIOS, em centavos, só em memória.
+ * Apresentação em formulário linha por linha (padrão da Nova Transferência): grupos Origem e destino, Valor enviado (dinheiro composto:
+ * linhas de dinheiro e moedas mais a linha de total, sem quadro grande) e Observação; a tabela dos envios não mudou.
  */
 (function () {
   'use strict';
   const U = window.CicluzComprasUI;
   const C = window.CicluzCaixa;
-  const { el, botao, campo, entrada, seletor } = U;
-  const { moeda, centavos } = C;
+  const { el, botao, entrada } = U;
+  const { moeda, centavos, formulario, grupo, linhaEscolha, linhaCampo, linhaDinheiro, valorDa } = C;
 
   const form = { origem: 'cofre', destino: 'cx-1m', especie: '', moedas: '', obs: '' };
   let erro = '';
@@ -20,29 +22,32 @@
 
   const corpoSecao = (...nos) => { const c = el('div', 'compras-corpo'); c.append(...nos); return c; };
   const ROTULO = { pendente: ['Pendente: aguarda o operador', 'atencao'], recebida: ['Confirmado pelo operador', 'positivo'], cancelada: ['Não recebi (voltou à origem)', 'negativo'] };
+  const soma = () => moeda((centavos(form.especie) || 0) + (centavos(form.moedas) || 0));
 
   function bloco(atualizar) {
     const s = U.secao('Enviar recebimento ao caixa');
     if (!C.pode('envioSemLacre')) { s.append(corpoSecao(U.nota('Só o Gerente envia dinheiro sem lacre para um caixa aberto.'))); return s; }
     const contas = C.estado.contas;
-    const origem = seletor(contas.filter((c) => c.tipo === 'cofre').map((c) => [c.id, c.nome]), form.origem);
-    origem.onchange = () => { form.origem = origem.value; };
-    const destino = seletor(contas.filter((c) => c.tipo === 'caixa').map((c) => [c.id, c.nome + ' (' + c.pdv + ' · ' + c.turno + ')']), form.destino);
-    destino.onchange = () => { form.destino = destino.value; };
-    const din = (chave, rotulo) => { const i = entrada('text', form[chave], { inputMode: 'decimal', placeholder: '0,00' }); i.oninput = () => { form[chave] = i.value; }; return campo(rotulo, i); };
-    const obs = el('textarea');
-    obs.rows = 2;
-    obs.value = form.obs;
+    const origem = linhaEscolha('Origem', contas.filter((c) => c.tipo === 'cofre').map((c) => [c.id, c.nome]), form.origem, (v) => { if (v) form.origem = v; });
+    const destino = linhaEscolha('Destino (caixa aberto)', contas.filter((c) => c.tipo === 'caixa').map((c) => [c.id, c.nome + ' (' + c.pdv + ' · ' + c.turno + ')']), form.destino, (v) => { if (v) form.destino = v; });
+    const total = valorDa(soma());
+    const digitou = (chave) => (v) => { form[chave] = v; total.textContent = soma(); };
+    const obs = entrada('text', form.obs, { autocomplete: 'off' });
     obs.oninput = () => { form.obs = obs.value; };
-    const g = el('div', 'caixa-grade');
-    g.append(campo('Origem', origem), campo('Destino (caixa aberto)', destino), din('especie', 'Dinheiro físico (R$)'), din('moedas', 'Moedas (R$)'), campo('Observação (opcional)', obs));
-    g.lastChild.classList.add('caixa-largo');
     const msg = el('div', 'caixa-pendencias');
     msg.setAttribute('role', 'alert');
     if (erro) msg.append(el('b', null, erro));
     const acoes = el('div', 'caixa-acoes');
     acoes.append(el('small', null, 'Quem enviou não confirma: o operador confirma em "Recebimentos pendentes" no Turno.'), botao('Enviar ao caixa', () => enviar(atualizar), 'btn'));
-    s.append(corpoSecao(g, msg, acoes));
+    s.append(corpoSecao(formulario(
+      grupo('Origem e destino', [origem.no, destino.no]),
+      grupo('Valor enviado', [
+        linhaDinheiro('Dinheiro físico (R$)', form.especie, digitou('especie'), true).no,
+        linhaDinheiro('Moedas (R$)', form.moedas, digitou('moedas'), true).no,
+        C.pecas().linha('Total enviado', total),
+      ], U.nota('Dinheiro físico mais moedas. Use 0,00 quando não houver.')),
+      grupo('Observação', [linhaCampo('Observação (opcional)', obs)]),
+      msg, acoes)));
     const enviados = C.estado.transferencias.filter((t) => t.tipo === 'sem_lacre');
     if (enviados.length) {
       s.append(U.tabela(

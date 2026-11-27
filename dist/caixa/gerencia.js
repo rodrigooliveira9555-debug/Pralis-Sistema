@@ -5,13 +5,14 @@
  * fechamento). Recebimento e mensagens estão em gerencia-recebimento.js e gerencia-mensagens.js. O histórico de caixas e o
  * detalhe (sem contagem cega) saíram daqui para "VND - Fechamentos de Caixa" (fechamentos*.js, Entradas › Relatórios).
  * Adaptação da casca: caixas abertos de outros PDVs são fictícios. Dados FICTÍCIOS, em centavos, só em memória.
+ * O painel do caixa escolhido é um grupo de linhas de leitura (padrão da Nova Transferência: nome à esquerda, valor à direita).
  */
 (function () {
   'use strict';
   const U = window.CicluzComprasUI;
   const C = window.CicluzCaixa;
   const { el, botao } = U;
-  const { moeda } = C;
+  const { moeda, formulario, grupo, linhaLeitura } = C;
 
   const CAMINHO = 'Entradas · Vendas / Faturamento / Lançamentos / VND - Gerência de Caixas';
   const G = window.CicluzCaixaGerencia;
@@ -22,11 +23,8 @@
   let atualizadoEm = C.hora();
 
   const corpoSecao = (...nos) => { const c = el('div', 'compras-corpo'); c.append(...nos); return c; };
-  const dl = (pares) => {
-    const caixa = el('dl', 'caixa-declarado');
-    pares.forEach(([t, v]) => { const d = el('div'); d.append(el('dt', null, t), el('dd', null, v)); caixa.append(d); });
-    return caixa;
-  };
+  /** Pares nome/valor viram as linhas de leitura de um grupo. */
+  const leituras = (pares) => pares.map(([t, v]) => linhaLeitura(t, v));
 
   function abrir() {
     if (!tela) tela = C.criarTela({ id: 'caixa-gerencia', titulo: 'VND - Gerência de Caixas', caminho: CAMINHO });
@@ -80,15 +78,15 @@
       const r = C.resumo();
       const t = C.estado.turno;
       const pend = r.pendentes.reduce((x, p) => x + p.valor, 0);
-      s.append(corpoSecao(dl([
+      s.append(corpoSecao(formulario(grupo('Resumo do caixa', leituras([
         ['Saldo do caixa', moeda(r.saldo)], ['Entradas (vendas do turno)', moeda(r.entradas)],
         ['Recebimentos pendentes', r.pendentes.length ? r.pendentes.length + ' · ' + moeda(pend) : 'Nenhum'],
         ['Sangrias', C.sangriasDoCaixa().length + ' · ' + moeda(r.sangrias)], ['Vendas canceladas', String(t.canceladas.length)],
         ['PDV', t.pdvLigado ? 'Ligado' : 'Desligado desde ' + t.parada.desde],
-      ])));
+      ])))));
     } else {
-      s.append(corpoSecao(dl([['Saldo do caixa', moeda(a.saldo)], ['Entradas (vendas)', moeda(a.entradas)], ['Transferências recebidas', moeda(a.transfEntrada)], ['Sangrias', moeda(a.transfSaida)]]),
-        U.nota('Caixa fictício, só para o monitor ter o que mostrar.')));
+      s.append(corpoSecao(formulario(grupo('Resumo do caixa', leituras([['Saldo do caixa', moeda(a.saldo)], ['Entradas (vendas)', moeda(a.entradas)], ['Transferências recebidas', moeda(a.transfEntrada)], ['Sangrias', moeda(a.transfSaida)]]),
+        U.nota('Caixa fictício, só para o monitor ter o que mostrar.')))));
     }
     return s;
   }

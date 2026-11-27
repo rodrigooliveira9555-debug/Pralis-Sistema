@@ -3,18 +3,21 @@
  * Base no principal: conferência do relatório de fechamento. Só o Tesoureiro decide (`conferir`); o Financeiro consulta e
  * a Gerência nem chega aqui. "Fechou certo" exige o retorno final já recebido em CNT - Tesouraria (um caminho só para receber).
  * Cada decisão entra no histórico e nada é apagado; a mesma decisão repetida não grava de novo. Dados FICTÍCIOS.
+ * As janelas de motivo (quebra e alteração de status) são formulários linha por linha (padrão da Nova Transferência): grupo com título,
+ * quadro de linhas e as dicas e avisos depois do quadro.
  */
 (function () {
   'use strict';
   const U = window.CicluzComprasUI;
   const C = window.CicluzCaixa;
   const F = window.CicluzCaixaFechamentos;
-  const { el, botao, campo } = U;
+  const { el, botao, entrada } = U;
+  const { formulario, grupo, linhaCampo } = C;
   const { corpoSecao } = F;
 
   const agora = () => new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + C.hora();
   const retornoPendente = (h) => Boolean(h.retornoId) && C.transferencia(h.retornoId).situacao === 'pendente';
-  const textoMotivo = () => { const t = el('textarea'); t.rows = 3; t.maxLength = 1000; return t; };
+  const textoMotivo = () => entrada('text', '', { maxLength: 1000, autocomplete: 'off' });
 
   /** A seção "Decisão" do dossiê: botões para o Tesoureiro, aviso de consulta para os demais. */
   function decisao(h) {
@@ -65,10 +68,11 @@
       titulo: 'Teve quebra',
       subtitulo: 'Este registro avisa a quebra, não altera os valores financeiros e fica no histórico.',
       rotuloSalvar: 'Registrar quebra',
+      padrao: true,
       montar: (form) => {
-        if (h.diferenca < 0) form.append(el('p', 'caixa-alerta', 'O caixa fechou com diferença registrada. Descreva o motivo para registrar a quebra.'));
         const t = textoMotivo();
-        form.append(campo('Motivo da quebra', t, 'Obrigatório, até 1000 caracteres.'));
+        const depois = h.diferenca < 0 ? [el('p', 'caixa-alerta', 'O caixa fechou com diferença registrada. Descreva o motivo para registrar a quebra.')] : [];
+        form.append(formulario(grupo('Motivo', [linhaCampo('Motivo da quebra', t, true)], U.nota('Obrigatório, até 1000 caracteres.'), ...depois)));
         return { t };
       },
       salvar: ({ t }) => {
@@ -86,11 +90,14 @@
       titulo: 'Alterar status da conferência',
       subtitulo: 'Atual: ' + (ultima.resultado === 'conferido' ? 'Conferido' : 'Divergência registrada') + '. A decisão anterior permanece no histórico.',
       rotuloSalvar: 'Registrar alteração',
+      padrao: true,
       montar: (form) => {
         const ctx = { novo: ultima.resultado === 'conferido' ? 'divergente' : 'conferido' };
-        form.append(U.chips([['conferido', 'Conferido'], ['divergente', 'Divergência']], ctx.novo, (v) => { ctx.novo = v; }));
         ctx.t = textoMotivo();
-        form.append(campo('Motivo da alteração', ctx.t, 'Obrigatório.'));
+        form.append(formulario(grupo('Alteração', [
+          C.pecas().linha('Novo status', U.chips([['conferido', 'Conferido'], ['divergente', 'Divergência']], ctx.novo, (v) => { ctx.novo = v; })),
+          linhaCampo('Motivo da alteração', ctx.t, true),
+        ])));
         return ctx;
       },
       salvar: (ctx) => {

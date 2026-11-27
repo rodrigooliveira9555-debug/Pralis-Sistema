@@ -6,13 +6,15 @@
  * dos filtros aplicados e "Limpar tudo". Mais recente primeiro, 10 por página. Situação sempre com ícone + palavra (nunca só cor).
  * O número do lacre ainda lacrado só aparece a quem confere transferências (aqui todos os perfis com acesso conferem).
  * Adaptação da casca: "Agendada" não existe aqui (sem agendamento). Dados FICTÍCIOS, em centavos, só em memória.
+ * Filtros, detalhe e lista de lacres em formulário linha por linha (padrão da Nova Transferência): grupo com título, quadro de linhas de 52 px;
+ * a tabela da lista não mudou.
  */
 (function () {
   'use strict';
   const U = window.CicluzComprasUI;
   const C = window.CicluzCaixa;
-  const { el, botao, campo, entrada, seletor } = U;
-  const { moeda } = C;
+  const { el, botao, entrada, seletor } = U;
+  const { moeda, formulario, grupo, linhaCampo, linhaLeitura } = C;
   const T = (window.CicluzCaixaTesouraria = window.CicluzCaixaTesouraria || {});
 
   const POR_PAGINA = 10;
@@ -25,11 +27,6 @@
   const hoje = () => new Date().toLocaleDateString('pt-BR');
   const iso = (br) => br.split('/').reverse().join('-');
   const corpoSecao = (...nos) => { const c = el('div', 'compras-corpo'); c.append(...nos); return c; };
-  const dl = (pares) => {
-    const caixa = el('dl', 'caixa-declarado');
-    pares.forEach(([t, v]) => { const d = el('div'); d.append(el('dt', null, t), el('dd', null, v)); caixa.append(d); });
-    return caixa;
-  };
 
   const ROTULO_TIPO = { malote: 'Malote', sangria: 'Sangria', retorno_final: 'Retorno final', sem_lacre: 'Recebimento sem lacre', comum: 'Transferência' };
   const ROTULO_LACRE = { disponivel: 'Disponível', reservado: 'Reservado', usado: 'Usado', usada_aguardando_conferencia: 'Usada, aguardando conferência', conferida: 'Conferida' };
@@ -57,23 +54,30 @@
 
   /* ---------- filtros ---------- */
 
+  /** Filtros como formulário linha por linha: um grupo com seleção, datas e texto; "Mais filtros" abre um segundo grupo. A lógica de filtrar não mudou. */
   function blocoFiltros(atualizar) {
     const mudou = () => { pagina = 1; selecionado = null; atualizar(); };
-    const sel = (chave, rotulo, opcoes, vazio) => { const x = seletor(opcoes, filtro[chave], vazio); x.onchange = () => { filtro[chave] = x.value; mudou(); }; return campo(rotulo, x); };
-    const dt = (chave, rotulo) => { const x = entrada('date', filtro[chave]); x.onchange = () => { filtro[chave] = x.value; mudou(); }; return campo(rotulo, x); };
-    const txt = (chave, rotulo) => { const x = entrada('text', filtro[chave], { autocomplete: 'off' }); x.onchange = () => { filtro[chave] = x.value; mudou(); }; return campo(rotulo, x); };
-    const g = el('div', 'caixa-grade caixa-filtros');
-    g.append(
+    const P = C.pecas();
+    const sel = (chave, rotulo, opcoes, vazio) => { const x = seletor(opcoes, filtro[chave], vazio); x.onchange = () => { filtro[chave] = x.value; mudou(); }; return linhaCampo(rotulo, x); };
+    // Data: o campo com calendário do sistema; o valor do filtro continua ISO (AAAA-MM-DD).
+    const dt = (chave, rotulo) => {
+      const d = U.campoData({ rotulo, valor: filtro[chave] });
+      const gravar = (v) => { if (filtro[chave] !== v) { filtro[chave] = v; mudou(); } };
+      d.input.addEventListener('change', () => gravar(d.valor()));
+      d.input.addEventListener('input', () => { if (!d.input.value) gravar(''); });
+      return P.abreAoTocarNaLinha(P.linha(rotulo, d.caixa, d.painel), d.input, d.painel);
+    };
+    const txt = (chave, rotulo) => { const x = entrada('text', filtro[chave], { autocomplete: 'off' }); x.onchange = () => { filtro[chave] = x.value; mudou(); }; return linhaCampo(rotulo, x); };
+    const itens = [grupo('Filtros', [
       sel('status', 'Status', [['pendente', 'Pendente'], ['recebida', 'Recebido'], ['cancelada', 'Cancelada'], ['divergente', 'Divergente']], 'Todos os status'),
       dt('de', 'Data inicial'), dt('ate', 'Data final'),
-      sel('pdv', 'PDV', C.pdvs(), 'Todos os PDVs')
-    );
-    const itens = [g, botao(mais ? 'Menos filtros' : 'Mais filtros', () => { mais = !mais; atualizar(); }, 'btn secondary')];
+      sel('pdv', 'PDV', C.pdvs(), 'Todos os PDVs'),
+    ])];
+    const acoesMais = el('div', 'caixa-acoes'); acoesMais.append(botao(mais ? 'Menos filtros' : 'Mais filtros', () => { mais = !mais; atualizar(); }, 'btn secondary'));
+    itens.push(acoesMais);
     if (mais) {
-      const g2 = el('div', 'caixa-grade caixa-filtros');
       const contas = C.estado.contas.map((c) => [c.id, c.nome]);
-      g2.append(txt('por', 'Lançado por'), sel('origem', 'Conta de origem', contas, 'Todas as contas'), sel('destino', 'Conta de destino', contas, 'Todas as contas'), txt('lacre', 'Lacre'));
-      itens.push(g2);
+      itens.push(grupo('Mais filtros', [txt('por', 'Lançado por'), sel('origem', 'Conta de origem', contas, 'Todas as contas'), sel('destino', 'Conta de destino', contas, 'Todas as contas'), txt('lacre', 'Lacre')]));
     }
     const rot = { status: 'Status', de: 'De', ate: 'Até', pdv: 'PDV', por: 'Lançado por', lacre: 'Lacre' };
     const chips = Object.entries(filtro).filter(([, v]) => v).map(([k, v]) => {
@@ -84,7 +88,7 @@
     });
     if (chips.length) { const box = el('div', 'compras-chips'); box.append(...chips, botao('Limpar tudo', () => { Object.keys(filtro).forEach((k) => { filtro[k] = ''; }); mudou(); }, 'btn secondary')); itens.push(box); }
     if (filtro.de && filtro.ate && filtro.de > filtro.ate) itens.push(el('p', 'caixa-pendencias', 'Data inicial não pode ser maior que a final.'));
-    return corpoSecao(...itens);
+    return formulario(...itens);
   }
 
   /* ---------- lista ---------- */
@@ -96,7 +100,7 @@
     const pedaco = todas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
     const s = U.secao('Transferências', todas.length);
     const resumo = 'Acompanhe o dinheiro em trânsito entre cofre, caixas e banco. ' + todas.length + (todas.length === 1 ? ' registro encontrado.' : ' registros encontrados.');
-    s.append(corpoSecao(U.nota(resumo)), blocoFiltros(atualizar));
+    s.append(corpoSecao(U.nota(resumo), blocoFiltros(atualizar)));
     s.append(U.tabela(
       [
         ['Lançamento', (t) => { const w = el('span', 'caixa-celula'); w.append(el('b', null, (t.data || hoje()) + ' ' + t.criadoEm), el('small', null, 'por ' + t.criadoPor)); return w; }],
@@ -135,23 +139,23 @@
 
   function detalhe(t) {
     const s = U.secao('Detalhe · ' + ROTULO_TIPO[t.tipo] + ' · ' + nomeConta(t.origem) + ' → ' + nomeConta(t.destino));
+    const P = C.pecas();
     const quem = t.tipo === 'malote'
       ? (t.situacao === 'pendente' ? 'Ninguém abriu caixa com este malote ainda.' : t.situacao === 'cancelada' ? 'Cancelado: não foi usado.' : t.caixaRotulo ? null : 'Sem caixa vinculado.')
       : null;
     const caixa = t.tipo === 'malote' ? (t.caixaRotulo || '') : (C.conta(t.origem).tipo === 'caixa' ? C.conta(t.origem).pdv + ' · ' + C.conta(t.origem).turno : (C.conta(t.destino).tipo === 'caixa' ? C.conta(t.destino).pdv + ' · ' + C.conta(t.destino).turno : ''));
-    const col1 = [el('h4', 'caixa-subtitulo-solto', t.tipo === 'malote' ? 'Quem usou o malote' : 'Caixa de origem')];
-    col1.push(quem ? U.nota(quem) : dl([['PDV · Turno', caixa || '—'], ['Caixa', t.caixaId || '—']]));
-    const col2 = [el('h4', 'caixa-subtitulo-solto', 'Lacres')];
+    const tituloQuem = t.tipo === 'malote' ? 'Quem usou o malote' : 'Caixa de origem';
+    const gQuem = quem ? P.secao(tituloQuem, U.nota(quem)) : grupo(tituloQuem, [linhaLeitura('PDV · Turno', caixa || '—'), linhaLeitura('Caixa', t.caixaId || '—')]);
     const ls = lacresDe(t);
-    if (ls.length) col2.push(dl(ls.map((l) => [TIPO_LACRE[l.tipo] + ' ' + l.numero, ROTULO_LACRE[l.situacao]])));
-    else col2.push(U.nota(t.lacre ? 'Lacre ' + t.lacre + ' (' + (ROTULO_LACRE[(C.lacre(t.lacre) || {}).situacao] || 'em uso') + ')' : 'Sem lacre registrado.'));
-    const col3 = [el('h4', 'caixa-subtitulo-solto', 'Conferência e observação')];
-    col3.push(dl([['Criada em', (t.data || hoje()) + ' ' + t.criadoEm], ['Contado × declarado', t.valorRecebido == null ? 'Contado —  · Declarado ' + moeda(t.valor) : 'Contado ' + moeda(t.valorRecebido) + ' · Declarado ' + moeda(t.valor)]]));
-    (t.recusas || []).forEach((r) => col3.push(U.nota('Conferência recusada por ' + r.por + ' às ' + r.em + ': contado ' + moeda(r.contado) + ' · ' + r.motivo + (r.encerrou ? ' (divergência encerrada)' : ' (continua pendente)'))));
-    col3.push(U.nota(t.observacao || 'Sem observação.'));
-    const g = el('div', 'caixa-grade caixa-tres');
-    [col1, col2, col3].forEach((c) => { const d = el('div'); d.append(...c); g.append(d); });
-    s.append(corpoSecao(g));
+    const gLacres = ls.length
+      ? grupo('Lacres', ls.map((l) => linhaLeitura(TIPO_LACRE[l.tipo] + ' ' + l.numero, ROTULO_LACRE[l.situacao])))
+      : P.secao('Lacres', U.nota(t.lacre ? 'Lacre ' + t.lacre + ' (' + (ROTULO_LACRE[(C.lacre(t.lacre) || {}).situacao] || 'em uso') + ')' : 'Sem lacre registrado.'));
+    const recusas = (t.recusas || []).map((r) => U.nota('Conferência recusada por ' + r.por + ' às ' + r.em + ': contado ' + moeda(r.contado) + ' · ' + r.motivo + (r.encerrou ? ' (divergência encerrada)' : ' (continua pendente)')));
+    const gConf = grupo('Conferência e observação', [
+      linhaLeitura('Criada em', (t.data || hoje()) + ' ' + t.criadoEm),
+      linhaLeitura('Contado × declarado', t.valorRecebido == null ? 'Contado —  · Declarado ' + moeda(t.valor) : 'Contado ' + moeda(t.valorRecebido) + ' · Declarado ' + moeda(t.valor)),
+    ], ...recusas, U.nota(t.observacao || 'Sem observação.'));
+    s.append(corpoSecao(formulario(gQuem, gLacres, gConf)));
     return s;
   }
 
@@ -161,24 +165,22 @@
     C.dialogo({
       titulo: 'Lacres da transferência',
       subtitulo: ROTULO_TIPO[t.tipo] + ' · ' + nomeConta(t.origem) + ' → ' + nomeConta(t.destino),
+      padrao: true,
       montar: (form) => {
         const ls = lacresDe(t);
-        const grupos = [['abertura', 'Abertura', 'Não informado'], ['fechamento', 'Fechamento', 'Não informado'], ['sangria', 'Sangria', 'Sem bolsas']];
+        const grupos = [];
         if (t.tipo === 'malote') {
-          grupos.forEach(([tipo, nome, vazio]) => {
+          [['abertura', 'Abertura', 'Não informado'], ['fechamento', 'Fechamento', 'Não informado'], ['sangria', 'Sangria', 'Sem bolsas']].forEach(([tipo, nome, vazio]) => {
             const itens = ls.filter((l) => l.tipo === tipo);
-            const bloco = el('div');
-            bloco.append(el('h4', 'caixa-subtitulo-solto', nome));
-            if (!itens.length) bloco.append(U.nota(vazio));
-            else itens.forEach((l) => bloco.append(el('p', 'caixa-linha-lacre', '🔒 ' + l.numero + ' — ' + ROTULO_LACRE[l.situacao])));
-            form.append(bloco);
+            grupos.push(itens.length ? grupo(nome, itens.map((l) => linhaLeitura(l.numero, ROTULO_LACRE[l.situacao]))) : C.pecas().secao(nome, U.nota(vazio)));
           });
           const b = ls.filter((l) => l.tipo === 'sangria');
-          if (b.length) form.append(U.nota(b.length + (b.length === 1 ? ' bolsa' : ' bolsas') + ' · ' + b.filter((l) => l.situacao === 'conferida').length + ' conferida · ' + b.filter((l) => l.situacao === 'usada_aguardando_conferencia').length + ' aguardando · ' + b.filter((l) => l.situacao === 'disponivel').length + ' disponível'));
+          if (b.length) grupos.push(U.nota(b.length + (b.length === 1 ? ' bolsa' : ' bolsas') + ' · ' + b.filter((l) => l.situacao === 'conferida').length + ' conferida · ' + b.filter((l) => l.situacao === 'usada_aguardando_conferencia').length + ' aguardando · ' + b.filter((l) => l.situacao === 'disponivel').length + ' disponível'));
         } else {
           const l = C.lacre(t.lacre);
-          form.append(el('p', 'caixa-linha-lacre', '🔒 ' + t.lacre + (l ? ' — ' + ROTULO_LACRE[l.situacao] : '')), U.nota(t.tipo === 'sangria' ? 'Bolsa de sangria consumida por este movimento.' : 'Lacre de fechamento: sai do caixa fechado com este número.'));
+          grupos.push(grupo('Lacre', [linhaLeitura(t.lacre || '—', l ? ROTULO_LACRE[l.situacao] : '')], U.nota(t.tipo === 'sangria' ? 'Bolsa de sangria consumida por este movimento.' : 'Lacre de fechamento: sai do caixa fechado com este número.')));
         }
+        form.append(formulario(...grupos));
       },
     });
   }

@@ -794,6 +794,7 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .transferencia-valor-rotulo { font: 600 13px/18px var(--ui-font); color: rgba(255, 255, 255, .9); }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela { width: 100%; min-height: 40px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: #fff; text-align: left; font: 700 34px/1.15 var(--ui-font); cursor: pointer; }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:not([readonly]) { cursor: text; }
+.transferencia-tela .transferencia-valor-cab .transferencia-valor-total { display: block; min-height: 40px; font: 700 34px/1.15 var(--ui-font); color: #fff; }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela::placeholder { color: rgba(255, 255, 255, .78); font-weight: 600; font-size: 22px; }
 .transferencia-tela .transferencia-valor-cab input.transferencia-calc-tela:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 8px; }
 .transferencia-tela .transferencia-valor-cab .transferencia-calc-resumo, .transferencia-tela .transferencia-valor-cab .transferencia-calc-legenda { color: rgba(255, 255, 255, .92); }
