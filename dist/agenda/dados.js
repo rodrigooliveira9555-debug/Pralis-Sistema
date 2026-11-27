@@ -61,6 +61,8 @@
       // Tela ligada (ícone roxo de agendar / tarefa criada por uma tela): a tarefa abre essa tela.
       vinculoTela: c.vinculoTela || '', vinculoTitulo: c.vinculoTitulo || '', vinculoRef: c.vinculoRef || '',
       acaoTela: c.acaoTela || '', acaoQuantidade: c.acaoQuantidade || null, acaoFeitas: c.acaoFeitas || 0,
+      // Área (P-58): nó do DES - Área / Setor / Local, pelo id ('' = nenhuma).
+      areaId: c.areaId || '',
       // O gestor é quem criou: o nome da tela continua `criadoPor`.
       criadoEm: c.criadoEm, criadoPor: c.gestorId, atualizadoEm: c.atualizadoEm, versao: c.versao, acesso: c.acesso || NADA,
     };
@@ -92,6 +94,8 @@
       vinculoTela: c.vinculoTela || '', vinculoTitulo: c.vinculoTela ? String(c.vinculoTitulo || '').trim().slice(0, 120) : '',
       // Ação programada (P-53): só com tela ligada.
       acaoTela: c.vinculoTela && c.acaoTela ? c.acaoTela : '', acaoQuantidade: c.vinculoTela && c.acaoTela ? Math.min(365, Math.max(1, Number(c.acaoQuantidade) || 1)) : null,
+      // Área (P-58): só vai quando a tela conhece o campo; sem ele, o servidor mantém a que estava.
+      ...(c.areaId !== undefined ? { areaId: c.areaId || '' } : {}),
     };
   }
 
@@ -479,7 +483,7 @@
   /* ---------- Subtarefas (mapa mental) ---------- */
   async function adicionarSubtarefa(id, titulo, antesDe) {
     const t = String(titulo || '').trim();
-    if (!t) return erro('Escreva a subtarefa.');
+    if (!t) return erro('Escreva a atividade.');
     const novo = novoId('sub');
     const r = await alterar(id, (c) => {
       const pos = antesDe ? c.subtarefas.findIndex((x) => x.id === antesDe) : -1;
@@ -487,8 +491,8 @@
     });
     return r.ok ? { ok: true, id: novo } : r;
   }
-  const renomearSubtarefa = (id, subId, titulo) => alterar(id, (c) => { const x = c.subtarefas.find((y) => y.id === subId); if (!x) return 'Subtarefa não encontrada.'; x.titulo = String(titulo || '').trim(); return undefined; });
-  const excluirSubtarefa = (id, subId) => alterar(id, (c) => { const n = c.subtarefas.length; c.subtarefas = c.subtarefas.filter((y) => y.id !== subId); return c.subtarefas.length === n ? 'Subtarefa não encontrada.' : undefined; });
+  const renomearSubtarefa = (id, subId, titulo) => alterar(id, (c) => { const x = c.subtarefas.find((y) => y.id === subId); if (!x) return 'Atividade não encontrada.'; x.titulo = String(titulo || '').trim(); return undefined; });
+  const excluirSubtarefa = (id, subId) => alterar(id, (c) => { const n = c.subtarefas.length; c.subtarefas = c.subtarefas.filter((y) => y.id !== subId); return c.subtarefas.length === n ? 'Atividade não encontrada.' : undefined; });
   /** Leva uma subtarefa para outro compromisso: primeiro entra no destino, depois sai da origem (nada se perde). */
   async function moverSubtarefa(deId, subId, paraId) {
     if (deId === paraId) return { ok: true };
@@ -497,11 +501,11 @@
     if (!de || !para) return erro('Compromisso não encontrado.');
     if (!acesso(de).editar || !acesso(para).editar) return erro(SEM.editar);
     const sub = de.subtarefas.find((x) => x.id === subId);
-    if (!sub) return erro('Subtarefa não encontrada.');
+    if (!sub) return erro('Atividade não encontrada.');
     const r1 = await alterar(paraId, (c) => { c.subtarefas.push({ ...structuredClone(sub), id: novoId('sub') }); });
     if (r1.erro) return r1;
     const r2 = await excluirSubtarefa(deId, subId);
-    return r2.erro ? erro('A subtarefa foi copiada para "' + para.titulo + '", mas não saiu de "' + de.titulo + '": ' + r2.erro) : { ok: true };
+    return r2.erro ? erro('A atividade foi copiada para "' + para.titulo + '", mas não saiu de "' + de.titulo + '": ' + r2.erro) : { ok: true };
   }
 
   /* ---------- Ligações do mapa mental ---------- */

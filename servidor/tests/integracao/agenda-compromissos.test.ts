@@ -249,3 +249,26 @@ describe("agenda: ordem, excluir e limpar", () => {
     expect((await pedir(resp.cookie, "GET", `/api/agenda/compromissos/${dele.id}`)).json().data.concluida).toBe(true);
   });
 });
+
+describe("agenda: área do compromisso (0013, P-58)", () => {
+  it("grava pelo id; a tela antiga (sem o campo) e a mudança parcial não apagam; '' limpa; formato errado é recusado", async () => {
+    const { gestor } = await cenario();
+    const AREA = "3f1c2b8e-1a2b-4c3d-9e8f-0a1b2c3d4e5f";
+    const c = await criar(gestor, { areaId: AREA });
+    expect(c.areaId).toBe(AREA);
+    // Tela antiga: manda o formulário inteiro sem saber da área.
+    const velha = await pedir(gestor.cookie, "PUT", `/api/agenda/compromissos/${c.id}`, { versao: 1, ...base({ titulo: "Fechar o caixa às 18h" }) });
+    expect(velha.statusCode, velha.body).toBe(200);
+    expect(velha.json().data).toMatchObject({ titulo: "Fechar o caixa às 18h", areaId: AREA, versao: 2 });
+    // Mudança parcial (mapa mental, Kanban): continua.
+    const parcial = await pedir(gestor.cookie, "PATCH", `/api/agenda/compromissos/${c.id}`, { versao: 2, titulo: "Fechar o caixa" });
+    expect(parcial.json().data).toMatchObject({ areaId: AREA, versao: 3 });
+    // Formato errado: recusado, nada muda.
+    const ruim = await pedir(gestor.cookie, "PUT", `/api/agenda/compromissos/${c.id}`, { versao: 3, ...base({ areaId: "Operação de Loja" }) });
+    expect(ruim.statusCode).toBe(400);
+    // '' tira a área.
+    const sem = await pedir(gestor.cookie, "PUT", `/api/agenda/compromissos/${c.id}`, { versao: 3, ...base({ areaId: "" }) });
+    expect(sem.json().data).toMatchObject({ areaId: "", versao: 4 });
+    expect((await agenda(gestor)).compromissos.find((x: { id: string }) => x.id === c.id).areaId).toBe("");
+  });
+});

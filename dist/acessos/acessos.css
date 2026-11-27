@@ -414,3 +414,29 @@ body.dark-theme .acessos-telas-opcao:focus-visible, body.dark-theme .acessos-tl-
 .ds-modelo-fundo { background: var(--layout-gap, #f5f5f7); border-radius: 0; overflow: hidden; }
 .ds-modelo-curva { height: 16px; background: radial-gradient(circle at 100% 100%, transparent 15.5px, var(--menu-accent) 16px) left top / 16px 16px no-repeat, radial-gradient(circle at 0 100%, transparent 15.5px, var(--menu-accent) 16px) right top / 16px 16px no-repeat; }
 .ds-modelo-vidro { padding: 14px; border-radius: 12px; background: linear-gradient(90deg, var(--layout-gap, #f5f5f7) 0 30%, var(--menu-accent) 30% 62%, var(--layout-gap, #f5f5f7) 62%); }
+/* Horários Empresa (27/11/2026, Washington): os dias do esboço (S T Q Q S S D F) como círculos, no quadro fixo do alto da janela; o pontinho no canto marca o dia que já tem horário. */
+/* Os círculos têm no máximo 40 px e se distribuem por toda a largura do quadro (espaço igual entre eles); em 320 px dividem o espaço (28 px). */
+.transferencia-tela .transferencia-valor-cab .hr-dias { display: grid; grid-template-columns: repeat(8, minmax(0, 40px)); justify-content: space-between; gap: 4px; }
+.compras-chip.hr-dia { position: relative; display: grid; place-items: center; box-sizing: border-box; width: 100%; min-width: 24px; aspect-ratio: 1; padding: 0; border-radius: 50%; font: 600 14px/1 var(--ui-font); }
+.compras-chip.hr-dia.tem::after { content: ""; position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px var(--menu-accent); }
+.compras-chip.hr-dia.tem.ativo::after { background: var(--panel-text, #5520ad); box-shadow: 0 0 0 2px #fff; }
+.transferencia-tela .transferencia-valor-cab .hr-dia-nome { display: block; margin-top: 8px; color: #fff; font: 600 15px/20px var(--ui-font); }
+.transferencia-tela .transferencia-multi-painel .hr-dias-copia { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px 4px; }
+.transferencia-tela .transferencia-multi-painel .hr-dias-copia .hr-dia { width: 36px; min-width: 36px; }
+.transferencia-tela .transferencia-multi-painel .hr-copiar { margin: 6px 14px 12px; }
+/* Design System Referência: o quadro que mostra a página do catálogo; ocupa o resto da tela e rola por dentro. */
+.ds-referencia-quadro { display: block; width: 100%; height: calc(100dvh - 230px); min-height: 480px; border: 1px solid var(--layout-line, #dedee3); border-radius: 14px; background: var(--theme-card, #fff); }
+/* Horários Empresa: a lista da tela é uma grade de colunas (Dia fixo à esquerda; Manhã e Tarde recolhíveis; Funcionamento sempre à vista), no mesmo desenho de Patrimônios e Fornecedores. */
+.compras-linha.grade-horarios-empresa{grid-template-columns:64px var(--w-nome,minmax(150px,1fr)) var(--w-manha,190px) var(--w-tarde,190px) var(--w-func,210px);width:max-content;min-width:100%;background:var(--theme-card,#fff)}
+.compras-linha.grade-horarios-empresa>*{grid-row:1}
+.compras-linha.grade-horarios-empresa>.compras-linha-icones{grid-column:1;position:sticky;left:0;z-index:2;align-self:stretch;align-items:center;background:inherit;padding-left:12px;margin-left:-12px}
+.compras-linha.grade-horarios-empresa>.c-nome{grid-column:2;position:sticky;left:76px;z-index:1;align-self:stretch;display:flex;align-items:center;background:inherit;box-shadow:1px 0 0 var(--layout-line,#dedee3);padding-right:8px}
+.compras-linha.grade-horarios-empresa>.c-manha{grid-column:3}
+.compras-linha.grade-horarios-empresa>.c-tarde{grid-column:4}
+.compras-linha.grade-horarios-empresa>.c-func{grid-column:5}
+.oculta-manha{--w-manha:24px}
+.oculta-manha .grade-horarios-empresa:not(.compras-linha-cabecalho)>.c-manha,.oculta-manha .compras-linha-cabecalho.grade-horarios-empresa>.c-manha>.compras-coluna-titulo{display:none}
+.oculta-tarde{--w-tarde:24px}
+.oculta-tarde .grade-horarios-empresa:not(.compras-linha-cabecalho)>.c-tarde,.oculta-tarde .compras-linha-cabecalho.grade-horarios-empresa>.c-tarde>.compras-coluna-titulo{display:none}
+/* Abre e Fecha com a hora alinhada na mesma coluna (o nome de cada linha tem a mesma largura). */
+.transferencia-tela .transferencia-linha.hr-linha > .transferencia-linha-rotulo { flex: 0 0 72px; }

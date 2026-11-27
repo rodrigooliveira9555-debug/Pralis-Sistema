@@ -16,7 +16,7 @@
   U.ICONES.acessos = ICONE;
 
   const CARDS = {
-    'Empresa': [['empresa', 'Dados da Empresa', 'CNPJ, razão social, regime tributário, endereço e responsáveis'], ['empresa-estrutura', 'Estrutura de Dados da Empresa', 'Em definição']],
+    'Empresa': [['empresa', 'Dados da Empresa', 'CNPJ, razão social, regime tributário, endereço e responsáveis'], ['horarios', 'Horários Empresa', 'Manhã, tarde e funcionamento, de segunda a domingo e feriado'], ['empresa-estrutura', 'Estrutura de Dados da Empresa', 'Em definição']],
     // Diversos (19/11/2026, pedido do Rodrigo): cadastros gerais que não são da empresa nem de acesso. O Salário Mínimo Vigente saiu de Empresa e veio para cá.
     'Diversos': [['salario-minimo', 'Salário Mínimo Vigente', 'Valor e início da vigência; base dos contratos']],
     'Usuários': [['usuarios', 'Pessoas com Acesso', 'Criar contas, postos do caixa e cargos'], ['dados', 'Dados no Servidor', 'Situação de cada assunto gravado']],
@@ -39,6 +39,8 @@
       ['ds-janelas', 'Janelas e Painéis', 'A janela de cadastro, a de confirmação e o painel flutuante'],
       ['ds-mensagens', 'Mensagens e Avisos', 'Como o sistema avisa, confirma e mostra erro'],
       ['ds-conferencia', 'Conferência Final', 'O que conferir antes de dizer que uma tela está pronta']],
+    // Design System Referência (27/11/2026, Washington): setor próprio, logo abaixo do Design System (não dentro dele), com o catálogo visual de todos os elementos HTML (acessos/ds-referencia.js).
+    'Design System Referência': [['ds-referencia', 'Catálogo de Elementos HTML', 'Todos os elementos HTML, com estados, em claro e escuro']],
   };
   const SETOR_DA_TELA = {};
   Object.entries(CARDS).forEach(([setor, cards]) => cards.forEach(([id]) => { SETOR_DA_TELA[id] = setor; }));

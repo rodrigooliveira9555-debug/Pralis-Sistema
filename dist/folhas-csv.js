@@ -96,7 +96,11 @@ function build(tipo,headers,rows,map,opts){const F=Object.fromEntries(FIELDS[tip
 /* ---------- Armazenamento SÓ em memória ---------- */
 const store={folha05:new Map(),folha20:new Map(),rescisao:new Map(),ferias:new Map()};let seq=0;
 const has=t=>store[t]?.size>0;
-function link(d){const P=window.CicluzPeople;if(!P||!d.cpf)return {ok:false};const cpf=String(d.cpf).replace(/\D/g,'');if(cpf.length!==11)return {ok:false};try{P.load?.();const hits=P.get().people.filter(p=>String(p.cpf||'').replace(/\D/g,'')===cpf);if(hits.length===1)return {ok:true,por:'CPF',nome:hits[0].name}}catch{}return {ok:false}}
+/* Sem CPF na linha (os relatórios da ConPlus não trazem): o código do funcionário é procurado no vínculo CPF ↔ contrato da área ConPlus
+   (conplus/aba-retorno.js). Que esse código é o CODIGOFUNCCONTR ainda é a confirmar com o CSV real da ConPlus. */
+function link(d){const P=window.CicluzPeople;if(!P)return {ok:false};let cpf=String(d.cpf||'').replace(/\D/g,''),por='CPF';
+ if(!cpf&&d.codigo&&window.CicluzConplus?.cpfDoContrato){cpf=String(window.CicluzConplus.cpfDoContrato(d.codigo,d.cnpj)||'').replace(/\D/g,'');por='contrato (área ConPlus)'}
+ if(cpf.length!==11)return {ok:false};try{P.load?.();const hits=P.get().people.filter(p=>String(p.cpf||'').replace(/\D/g,'')===cpf);if(hits.length===1)return {ok:true,por,nome:hits[0].name}}catch{}return {ok:false}}
 function commit(tipo,records,arquivo){let novos=0,subst=0;const T=window.CicluzFolhas.TIPOS[tipo];void T;
  for(const d of records){const key=KEYS[tipo]({...d,competencia:d.competencia||''}).map(x=>String(x??'')).join('|');const old=store[tipo].get(key);if(old)subst++;else novos++;
   const rec={...d,id:old?.id||'csv-'+tipo+'-'+(++seq),origem:'csv',arquivo,vinculo:link(d)};delete rec.cpf;store[tipo].set(key,rec)}return {novos,subst}}
