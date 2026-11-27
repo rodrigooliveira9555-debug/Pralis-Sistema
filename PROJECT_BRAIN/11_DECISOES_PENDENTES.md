@@ -237,6 +237,8 @@ Transcrição e resumo no cofre do Obsidian (`C:\projetos\PRALIS\48 - Áudio Rod
 - **Prazo** da atividade em compromisso que repete: fica na **mesma distância da data** do compromisso (ex.: "2 dias depois, às 17h").
 - O **compromisso conclui sozinho** quando todas as atividades terminam.
 - A **ação feita na tela conta para o responsável pela atividade** (o executor).
+- **Tirar das Pessoas do compromisso quem é executor** de uma atividade: o sistema **bloqueia com aviso** ("<pessoa> é executor de <atividade>; troque o executor antes").
+- **Atividade sem tela:** a **prova (foto ou arquivo) é obrigatória** para concluir.
 | Zé/Rodrigo | (a), (b), (c), (e) respondidas em 27/11/2026; (d) aberta; Entrega 1 publicada; regras das atividades respondidas em 27/11/2026; perguntas da (2) e (3) com o Rodrigo |
 
 ## P-59 — ConPlus (DP/Questor): integração sem a API paga (27/11/2026, Marco)
