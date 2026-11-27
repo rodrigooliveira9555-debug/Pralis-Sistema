@@ -38,9 +38,9 @@
       ['ds-menu', 'Menu e Cartões', 'O menu principal, o submenu e os cartões de cada setor'],
       ['ds-janelas', 'Janelas e Painéis', 'A janela de cadastro, a de confirmação e o painel flutuante'],
       ['ds-mensagens', 'Mensagens e Avisos', 'Como o sistema avisa, confirma e mostra erro'],
-      ['ds-conferencia', 'Conferência Final', 'O que conferir antes de dizer que uma tela está pronta'],
-      // Design System Referência (27/11/2026, Washington): o catálogo visual de todos os elementos HTML, em página própria (acessos/ds-referencia.js).
-      ['ds-referencia', 'Design System Referência', 'Catálogo visual de todos os elementos HTML, com estados, claro e escuro']],
+      ['ds-conferencia', 'Conferência Final', 'O que conferir antes de dizer que uma tela está pronta']],
+    // Design System Referência (27/11/2026, Washington): setor próprio, logo abaixo do Design System (não dentro dele), com o catálogo visual de todos os elementos HTML (acessos/ds-referencia.js).
+    'Design System Referência': [['ds-referencia', 'Catálogo de Elementos HTML', 'Todos os elementos HTML, com estados, em claro e escuro']],
   };
   const SETOR_DA_TELA = {};
   Object.entries(CARDS).forEach(([setor, cards]) => cards.forEach(([id]) => { SETOR_DA_TELA[id] = setor; }));

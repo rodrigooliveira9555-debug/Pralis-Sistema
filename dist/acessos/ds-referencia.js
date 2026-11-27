@@ -1,5 +1,6 @@
 /*
- * Configurações → Design System → Design System Referência (27/11/2026, pedido do Washington).
+ * Configurações → Design System Referência → Catálogo de Elementos HTML (27/11/2026, pedido do Washington: o item é um setor próprio, logo abaixo
+ * do Design System no menu, e não um cartão dentro dele).
  * O catálogo visual de TODOS os elementos HTML (texto, botões, campos, seleção, tabelas, navegação, feedback, janelas, mídia, layout,
  * movimento, acessibilidade e páginas completas), em claro e escuro, com os estados lado a lado. É uma página própria
  * (acessos/design-system-referencia.html) mostrada aqui dentro de um quadro. Só leitura: nada é gravado.
@@ -27,7 +28,7 @@
 
   async function abrir() {
     if (!tela) {
-      tela = A.criarTela({ id: 'acessos-ds-referencia', titulo: 'Design System Referência', tela: 'ds-referencia' });
+      tela = A.criarTela({ id: 'acessos-ds-referencia', titulo: 'Catálogo de Elementos HTML', tela: 'ds-referencia' });
       quadro = el('iframe', 'ds-referencia-quadro');
       quadro.title = 'Design System Referência: catálogo visual dos elementos HTML';
       quadro.setAttribute('allow', 'clipboard-write; fullscreen');
