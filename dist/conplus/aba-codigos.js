@@ -10,6 +10,19 @@
   if (!U || !L || !D || !S || !K) return;
   const { el, botao } = U;
   let tabela = 'cargo';
+  let empresaEventos = '';
+
+  /** Os eventos que a ConPlus configurou no Zen para cada empresa (eventos-conplus.js): só consulta. */
+  function tabelaEventosConplus(aoMudar) {
+    const EV = window.CicluzConplusEventos; if (!EV) return null;
+    if (!empresaEventos) empresaEventos = EV.EMPRESAS[0];
+    const itens = EV.EVENTOS.filter((x) => x.empresa === empresaEventos);
+    const sec = U.secao('Eventos de cada empresa na ConPlus', itens.length);
+    sec.append(K.corpo(U.nota('Como a ConPlus mandou (' + EV.FONTE + '). O lançamento precisa bater no código e na unidade: H = horas, R = referência (dias), V = valor. Só consulta: quem muda é a ConPlus.'),
+      U.chips(EV.EMPRESAS.map((x) => [x, x]), empresaEventos, (v) => { empresaEventos = v; aoMudar(); })),
+    K.tabela([['Evento', (x) => x.codigo, 'conplus-num'], ['Descrição', (x) => x.descricao], ['Unidade', (x) => x.unidade + ' (' + x.tipo + ')'], ['Natureza', (x) => x.natureza], ['Seq.', (x) => x.sequencia, 'conplus-num'], ['Filial', (x) => x.filial, 'conplus-num']], itens));
+    return sec;
+  }
 
   function editar(item, aoSalvar) {
     const T = D.TABELAS[tabela];
@@ -87,7 +100,7 @@
       colunas.push(['', (x) => { const b = el('span', 'conplus-linha-acoes'); b.append(botao('Editar', () => editar(x, desenhar), 'btn ghost'), botao('Remover', () => remover(x, desenhar), 'btn ghost conplus-remover')); return b; }]);
       sec.append(K.corpo(U.nota('De-para para ' + T.para + ' (consulta ' + T.consulta + ' do Questor).' + (T.porEmpresa ? ' O código é de cada empresa.' : ' Vale para todas as empresas.')), acoes),
         K.tabela(colunas, itens, { vazioTexto: 'Nenhum código de ' + T.titulo.toLowerCase() + ' ainda. A ConPlus vai mandar a tabela; enquanto isso, cadastre à mão ou importe um CSV.' }));
-      conteudo.replaceChildren(sec);
+      conteudo.replaceChildren(sec, ...(tabela === 'evento' ? [tabelaEventosConplus(desenhar)].filter(Boolean) : []));
     }
     corpo.append(U.nota('A API do Questor não converte texto em código: o S2 guarda a correspondência. Os códigos daqui aparecem como sugestão nos campos de cargo, escala, filial, município, banco e evento.'), chipsBox, conteudo);
     desenhar();

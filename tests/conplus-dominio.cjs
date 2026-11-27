@@ -34,6 +34,11 @@ t('aceite: a linha E sai idêntica ao exemplo da doc', () => {
   assert.deepEqual(r.erros, []); assert.equal(r.grupo, 'EventoVariavel');
 });
 
+t('aceite: os exemplos reais do WorkDrive da ConPlus (27/11/2026) saem iguais', () => {
+  // Eventos 8999 - teste ficticio.txt, como veio do drive (com CR+LF no fim).
+  assert.equal(D.juntar(D.montarEventos([{ periodo: '3', seq: '99', contrato: '1', evento: '318', referencia: '1,00', valor: '0,00' }])), 'E;84.859.909/0001-90;3;99;1;318;1,00;0,00;;;;;0;' + '\r\n');
+});
+
 t('colunas fixas e derivadas não dependem do formulário', () => {
   const x = admissaoDoModelo();
   x.c[3] = 'QUALQUER'; x.d[0][3] = '111.111.111-11'; x.d[0][4] = '02/02/2002'; x.a[1] = 'Z'; x.b[2] = 'outro';
@@ -78,7 +83,7 @@ t('número de colunas: aponta a linha e conta como a API', () => {
 t('formatos: data, decimal, CPF, CNPJ, negativo, obrigatório — com linha e coluna', () => {
   const troca = (linha, col, valor) => { const p = linha.split(';'); p[col - 1] = valor; return p.join(';'); };
   const casos = [
-    [troca(M.A, 8, '1995-01-01'), 1, 8, /data inválida: use dd\/mm\/aaaa em Data de nascimento \(coluna 8\)/],
+    [troca(M.A, 8, '1995-01-01'), 1, 8, /data inválida: use dd\/mm\/aaaa em DATANASC \(coluna 8\)/],
     [troca(M.A, 9, '31/02/2026'), 1, 9, /data inválida/],
     [troca(M.A, 20, '2500.00'), 1, 20, /vírgula .* em VALORSAL \(coluna 20\)/],
     [troca(M.A, 20, '2.500,00'), 1, 20, /vírgula/],
@@ -86,7 +91,7 @@ t('formatos: data, decimal, CPF, CNPJ, negativo, obrigatório — com linha e co
     [troca(M.A, 6, '90010023747'), 1, 6, /pontuação/],
     [troca(M.A, 6, '900.100.237-48'), 1, 6, /dígitos verificadores/],
     [troca(M.A, 4, '84.859.909/0001-91'), 1, 4, /CNPJ inválido/],
-    [troca(M.A, 7, ''), 1, 7, /campo obrigatório vazio em Nome \(coluna 7\)/],
+    [troca(M.A, 7, ''), 1, 7, /campo obrigatório vazio em NOMEFUNC \(coluna 7\)/],
     [troca(M.A, 18, ''), 1, 18, /obrigatório vazio em CODIGOCARGO \(coluna 18\)/],
     [troca(M.A, 13, '-5'), 1, 13, /valor negativo/],
   ];
@@ -134,13 +139,18 @@ t('valor com ";" ou fora do Windows-1252 é recusado na coluna', () => {
   assert.equal(D.problemaDoValor(c, 'MARIA DA CONCEIÇÃO'), '');
 });
 
-t('leitura: cada coluna com o rótulo e a marca do que a doc não nomeia', () => {
+t('leitura: cada coluna com o rótulo e o campo dos .nli da ConPlus', () => {
   const [a] = D.ler(M.A);
   assert.equal(a.colunas.length, 21);
   assert.deepEqual(a.colunas[19], { n: 20, nome: 'Salário', campo: 'VALORSAL', aConfirmar: false, valor: '2500,00', problema: '' });
-  assert.equal(a.colunas[1].nome, 'Coluna 2'); assert.equal(a.colunas[1].aConfirmar, true);
+  assert.deepEqual([a.colunas[1].nome, a.colunas[1].campo, a.colunas[2].campo], ['Termo de consentimento', 'TERMOCONSENTIMENTO', 'GERARPRELIMINAR']);
   const [b] = D.ler(M.B);
-  assert.equal(b.colunas[6].nome, 'Endereço, município e naturalidade (coluna 7)');
+  assert.deepEqual([b.colunas[6].campo, b.colunas[11].campo, b.colunas[81].campo, b.colunas[84].campo], ['ENDERFUNC', 'CODIGOMUNIC', 'MAE', 'UTILIZAQCOLABORE']);
+  // Depois dos .nli, nenhuma coluna fica "a confirmar"; o campo de cada uma bate com o .nli (o C3 é o contrato, o D30 é FUMANTE).
+  for (const r of 'ABCDE') assert.deepEqual(L.colunas(r).filter((c) => c.aConfirmar).map((c) => c.n), [], r);
+  assert.equal(L.colunas('C')[2].campo, 'CODIGOFUNCCONTR'); assert.equal(L.colunas('D')[29].campo, 'FUMANTE');
+  // Obrigatórios do dependente que a doc lista e o .nli agora localiza.
+  assert.deepEqual(L.colunas('D').filter((c) => c.obrig).map((c) => c.campo), ['', 'CODIGOEMPRESA', 'CPFFUNC', 'DATAADM', 'CODIGODEPEND', 'NOMEDEPEND', 'DATANASC', 'PARENTESCO', 'SEXO', 'ESTADOCIVIL', 'GRAUINSTR', 'FORMACONTROLEIR', 'NACIONALIDADE', 'FUMANTE', 'CONSOMEALCOOL']);
   // Tipo inferido pelo modelo: C26 (data) e B59 (decimal, com nome).
   assert.equal(L.colunas('C')[25].tipo, 'data'); assert.equal(L.colunas('B')[58].tipo, 'decimal');
 });
@@ -173,6 +183,22 @@ t('lançamento é conferido antes de ganhar SEQ', () => {
   assert.match(D.problemaDoLancamento({ ...base, valor: '-1,00' }), /negativo/);
   assert.match(D.problemaDoLancamento({ ...base, referencia: '', valor: '' }), /referência ou o valor/);
   assert.match(D.problemaDoLancamento({ ...base, referencia: '5.00' }), /vírgula/);
+});
+
+t('tabela de eventos da ConPlus por empresa: código e unidade', () => {
+  const E = require('../dist/conplus/eventos-conplus.js');
+  const porEmpresa = Object.fromEntries(E.EMPRESAS.map((x) => [x, E.EVENTOS.filter((y) => y.empresa === x).length]));
+  assert.deepEqual(porEmpresa, { 'COMERCIAL TUDONUPAO LTDA': 14, 'COMERCIAL LISBOA ALIMENTOS LTDA': 15, 'BURPIZ LTDA': 9 });
+  assert.ok(E.EVENTOS.every((x) => ['H', 'R', 'V'].includes(x.tipo) && /^\d+$/.test(x.codigo)));
+  const tnp = 'COMERCIAL TUDONUPAO LTDA';
+  const av = (d) => D.avisosDoLancamento(d, E.EVENTOS, tnp);
+  assert.deepEqual(av({ evento: '35', referencia: '2,50', valor: '0,00' }), []);
+  assert.match(av({ evento: '35', referencia: '', valor: '30,00' }).join('|'), /horas \(H\): informe a quantidade.*\|.*valor costuma ficar zerado/);
+  assert.deepEqual(av({ evento: '800', referencia: '0,00', valor: '45,90' }), []);
+  assert.match(av({ evento: '800', referencia: '1,00', valor: '' }).join('|'), /em valor \(V\): informe o valor/);
+  assert.match(av({ evento: '1073', referencia: '', valor: '' })[0], /dias \(R\)/);
+  assert.match(av({ evento: '105', referencia: '1,00' })[0], /não está na tabela da ConPlus de COMERCIAL TUDONUPAO/); // 105 só existe na Lisboa
+  assert.deepEqual(D.avisosDoLancamento({ evento: '999' }, E.EVENTOS, ''), []); // sem empresa escolhida, não confere
 });
 
 t('de-para: conferência, busca e importação de CSV', () => {
@@ -212,6 +238,38 @@ t('vínculo CPF ↔ contrato', () => {
   assert.match(D.vinculosDoCsv([['A', 'B'], ['1', '2']]).erros[0], /CPF e CONTRATO/);
   // O mesmo número em duas empresas, sem dizer a empresa: não adivinha.
   assert.equal(D.cpfDoContrato([v, { ...v, id: '3', cnpj: '11.222.333/0001-81', cpf: '529.982.247-25' }], '9'), '');
+});
+
+t('colaboradores da ConPlus: leitura do CSV, junção sem apagar, vínculos e situação no cadastro (dados fictícios)', () => {
+  const C = require('../dist/conplus/colaboradores.js');
+  const cab = ['CNPJ', 'CODIGOEMPRESA', 'CODIGOESTAB', 'CODIGOFUNCCONTR', 'NOMEFUNC', 'CPFFUNC', 'PISFUNC', 'DATAADM', 'DATADEM', 'CODIGOTIPOCONTR', 'DESCRTIPOCONTR'];
+  const cnpj = L.CNPJ_HOMOLOGACAO;
+  const csv = [cab,
+    [cnpj, '8999', '1', '9', 'PESSOA TESTE UM', '900.100.237-47', '123.45678.90.1', '01/12/2026', '', '1', 'Empregado'],
+    [cnpj, '8999', '1', '10', 'PESSOA TESTE DOIS', '52998224725', '', '15/01/2025', '', '2', 'Diretor'],
+    [cnpj, '8999', '1', '10', 'REPETIDA', '52998224725', '', '15/01/2025', '', '2', 'Diretor'],
+    [cnpj, '8999', '1', 'X1', 'SEM CONTRATO', '52998224725', '', '', '', '', ''],
+    [cnpj, '8999', '1', '11', 'CPF RUIM', '111.111.111-11', '', '', '', '', ''],
+    [cnpj, '8999', '1', '12', 'DATA RUIM', '900.100.237-47', '', '2026-12-01', '', '', '']];
+  const r = C.colaboradoresDoCsv(csv);
+  assert.equal(r.itens.length, 2);
+  assert.equal(r.itens[1].cpf, '529.982.247-25'); // CPF sem pontuação é formatado
+  assert.deepEqual(r.erros.map((e) => e.slice(0, 8)), ['Linha 4:', 'Linha 5:', 'Linha 6:', 'Linha 7:']);
+  assert.match(C.colaboradoresDoCsv([['A', 'B'], ['1', '2']]).erros[0], /CODIGOFUNCCONTR, NOMEFUNC, CPFFUNC/);
+  // Junção: entra o novo, atualiza o que mudou, não apaga o que não veio.
+  const antes = [{ id: 'a', ...r.itens[0], nome: 'NOME ANTIGO' }, { id: 'z', cnpj, empresa: '8999', contrato: '77', nome: 'FORA DO ARQUIVO', cpf: '529.982.247-25' }];
+  const j = C.juntar(antes, r.itens, { agora: 'T', novoId: () => 'novo' });
+  assert.deepEqual([j.novos, j.atualizados, j.iguais], [1, 1, 0]);
+  assert.equal(j.lista.length, 3); assert.equal(j.lista[0].nome, 'PESSOA TESTE UM'); assert.equal(j.lista[0].id, 'a');
+  assert.equal(antes[0].nome, 'NOME ANTIGO'); // a original não muda
+  assert.deepEqual([C.juntar(j.lista, r.itens).iguais, C.juntar(j.lista, r.itens).novos], [2, 0]); // reimportar o mesmo não duplica
+  // Vínculos que faltam e situação no cadastro (só leitura).
+  const falta = C.vinculosQueFaltam(j.lista, [{ cnpj, contrato: '9', cpf: '900.100.237-47' }]);
+  assert.deepEqual(falta.map((x) => x.contrato), ['77', '10']);
+  assert.equal(C.situacaoNoCadastro(r.itens[0], [{ cpf: '90010023747' }]), 'no-cadastro');
+  assert.equal(C.situacaoNoCadastro(r.itens[0], []), 'fora');
+  assert.equal(C.situacaoNoCadastro(r.itens[0], [{ cpf: '900.100.237-47' }, { cpf: '90010023747' }]), 'duplicado');
+  assert.equal(C.mascararCpf('900.100.237-47'), '***.100.237-**');
 });
 
 console.log('conplus-dominio: ' + n + ' grupos de teste ok');
