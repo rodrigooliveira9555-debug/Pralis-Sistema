@@ -90,6 +90,9 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   await p.locator('#producao-patrimonio .compras-secao-cab button[aria-label="Cadastrar patrimônio"]').click();
   let d = dialogo(p);
   ok((await d.locator('h2').textContent()) === 'Novo patrimônio', 'A bolinha + do cabeçalho da lista abre o cadastro de um bem novo');
+  // Cadastro Simples (27/11/2026): abre sem a trilha de etapas, com Salvar; a chave "Abrir o cadastro completo?" traz as seis etapas
+  ok(await d.locator('.stepper-wrap--etapa').isHidden() && (await d.locator('.compras-etapas-nav button').allTextContents()).some((x) => x.includes('Salvar')), 'O bem novo abre no Cadastro Simples: sem trilha de etapas e com Salvar');
+  await d.locator('.account-status:has-text("Abrir o cadastro completo?") .account-status-switch').click();
   await abreEtapas(d).click();
   ok((await d.locator('.stepper-wrap--etapa .transferencia-multi-painel button').allTextContents()).length === 6, 'O cadastro do bem tem seis etapas numeradas');
   await abreEtapas(d).click();

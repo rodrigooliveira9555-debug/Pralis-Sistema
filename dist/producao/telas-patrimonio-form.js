@@ -1,5 +1,5 @@
 /*
- * RET - Patrimônios: cadastro em seis etapas (17/11/2026), no padrão numerado do cadastro de fornecedores (CicluzStepper):
+ * RET - Patrimônios: cadastro em seis etapas (17/11/2026). Desde 27/11/2026 (Washington) a 1ª etapa abre como CADASTRO SIMPLES (Nome, Tipo, Grupo, Marca, Modelo, Nº de série, Nº do patrimônio; o Tipo vem de RET - Tipos de Patrimônio) e a chave "Cadastro completo" abre o restante da etapa 1 e as etapas 2 a 6; o Simples salva direto e só o Nome é obrigatório (a Categoria passa a ser pedida no Completo). Trilha de etapas, no padrão numerado do cadastro de fornecedores (CicluzStepper):
  * 1 Cadastro e identificação · 2 Imagens e documentação · 3 Localização e responsabilidade · 4 Composição, peças e características
  * técnicas · 5 Aquisição, financeiro e depreciação · 6 Manutenção, controle e revisão. Avançar confere a etapa; Voltar e as
  * etapas numeradas permitem corrigir sem perder nada. Imagens e documentos ficam no IndexedDB de Documentações (nunca no
@@ -160,6 +160,9 @@
         const nomeTec = texto(v.nomeTecnico, { maxLength: 200, placeholder: 'Ex.: Notebook Dell Latitude 5440' });
         const marca = texto(v.marca); const modelo = texto(v.modelo); const serie = livre(texto(v.numeroSerie, { maxLength: 80 }));
         const numero = livre(texto(v.numeroPatrimonio, { maxLength: 40 }));
+        // Tipo do bem (Notebook, Computador, Celular…): só os tipos do cadastro RET - Tipos de Patrimônio (SV.tiposDoBem); o bem guarda só o id. Sem tipo cadastrado, a lista avisa onde cadastrar.
+        const opcTipo = SV.tiposDoBem(v.tipoId).map((x) => [x.id, x.nome + (x.ativo === false ? ' (inativo)' : '')]);
+        const tipoItem = seletor(opcTipo, v.tipoId || '', opcTipo.length ? 'Selecione' : 'Cadastre em RET - Tipos de Patrimônio');
         const gerar = bolinha('Gerar o próximo número de patrimônio', '<path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/>', () => { numero.value = PD.proximoNumero(S.patrimonio.dados.bens.filter((x) => !b || x.id !== b.id)); });
         const valor = dinheiroInput(v.valor);
         const descricao = area(v.descricao, 3);
@@ -216,11 +219,17 @@
         const espec = U.quadroSituacao('Informar especificação técnica?', v.informarEspecificacao != null ? Boolean(v.informarEspecificacao) : temDadosEspec, { textos: ['Sim', 'Não'], aoMudar: () => pintarEspec() });
         const secEspec1 = secao('Especificação técnica', espec);
         const e1 = el('div', 'compras-etapa');
-        e1.append(secao('Identificação', campo('Categoria *', categoria), campo('Grupo de patrimônio', grupoRet), campo('Nome simplificado *', nome), campo('Nome técnico', nomeTec), campo('Marca', marca), campo('Modelo', modelo), campo('Número de série', serie),
-          (() => { const l = el('label', 'compras-campo'); const ln = el('div', 'patrimonio-linha-campo'); numero.setAttribute('aria-label', 'Número de patrimônio'); ln.append(numero, gerar); l.append(el('span', 'compras-rotulo', 'Número de patrimônio'), ln, el('small', 'profiles-note', 'Único entre os bens; deixe em branco ou gere o próximo.')); return l; })(), campo('Valor do Patrimônio (R$)', valor.no), campo('Descrição detalhada', descricao), audio.no),
+        // Cadastro Simples (27/11/2026): só estes campos; a chave abaixo abre o restante da etapa 1 e as etapas 2 a 6. Aberto já ligado para o bem que tem dados do completo.
+        const completoInicial = Boolean(b && (v.categoria || v.nomeTecnico || v.descricao || v.valor != null || v.localId || (v.imagens || []).length || (v.documentos || []).length || (v.pecas || []).length));
+        const completoTodo = el('div', 'patrimonio-completo');
+        const campoNumero = (() => { const l = el('label', 'compras-campo'); const ln = el('div', 'patrimonio-linha-campo'); numero.setAttribute('aria-label', 'Número do patrimônio'); ln.append(numero, gerar); l.append(el('span', 'compras-rotulo', 'Número do patrimônio'), ln, el('small', 'profiles-note', 'Único entre os bens; deixe em branco ou gere o próximo.')); return l; })();
+        const chaveCompleto = U.quadroSituacao('Abrir o cadastro completo?', completoInicial, { textos: ['Ligado', 'Desligado'], dica: 'Desligado: só os campos acima, e o Salvar já vale. Ligado: abre o resto do cadastro, em seis etapas.', aoMudar: () => { ir(atual); } });
+        completoTodo.append(secao('Identificação complementar', campo('Categoria *', categoria), campo('Nome técnico', nomeTec),
+          campo('Valor do Patrimônio (R$)', valor.no), campo('Descrição detalhada', descricao), audio.no),
         secao('Classificação', campo('Tipo de bem', tipoBem), campo('Natureza', natureza), rotSit, sitNota, rotCons, campo('Data de cadastro', dataCad)),
         secao('Quantidade', campo('Unidade de medida', unidade), campo('Quantidade de unidades', quantidade), conjunto),
         secEspec1, secProducao);
+        e1.append(secao('Cadastro simples', campo('Nome simplificado *', nome), campo('Tipo', tipoItem), campo('Grupo de patrimônio', grupoRet), campo('Marca', marca), campo('Modelo', modelo), campo('Número de série', serie), campoNumero), secao('Cadastro completo', chaveCompleto), completoTodo);
         // Tipo de bem sugerido pela categoria, enquanto a pessoa não escolher.
         let tipoTocado = Boolean(v.tipoBem);
         tipoBem.addEventListener('change', () => { tipoTocado = true; });
@@ -628,7 +637,7 @@
           const tecnicas = {}; PD.TECNICAS.forEach(([k]) => { const x = camposTec[k].entrada.value.trim(); if (x) tecnicas[k] = x; });
           const garDoc = gDoc.value; const inspDoc = iDoc.value;
           const dados = {
-            id: b ? b.id : undefined, nome: nome.value, categoria: categoria.value, grupoRetId: grupoRet.value.split('|')[0] || '', subgrupoRetId: grupoRet.value.split('|')[1] || '', marca: marca.value.trim(), modelo: modelo.value.trim(), numeroSerie: serie.value.trim(), numeroPatrimonio: numero.value.trim(), valor: valor.valor(), localId: local.value,
+            id: b ? b.id : undefined, nome: nome.value, categoria: categoria.value, tipoId: tipoItem.value, grupoRetId: grupoRet.value.split('|')[0] || '', subgrupoRetId: grupoRet.value.split('|')[1] || '', marca: marca.value.trim(), modelo: modelo.value.trim(), numeroSerie: serie.value.trim(), numeroPatrimonio: numero.value.trim(), valor: valor.valor(), localId: local.value,
             nomeTecnico: nomeTec.value, descricao: descricao.value, tipoBem: tipoBem.value, natureza: natureza.value, situacaoPatrimonial: situacaoP, conservacao: conserv, dataCadastro: dataCad.value, codigoInterno: v.codigoInterno || '', // o campo saiu da tela (19/11/2026); o valor que já existia fica guardado
             unidade: unidade.value, quantidade: inteiro(quantidade), conjunto: conjunto.ativo, observacoes: v.observacoes || '', // as observações antigas ficam guardadas; a descrição detalhada e o áudio as substituem
             usadoNaProducao: prodCat ? usoProd.ativo : Boolean(v.usadoNaProducao), utensiliosIds: prodCat ? (usoProd.ativo && usaUt.ativo ? utensilios : []) : (v.utensiliosIds || []),
@@ -655,13 +664,13 @@
           if (v.baixa && situacaoP !== 'baixado') dados.baixasAnteriores = [...(v.baixasAnteriores || []), v.baixa];
           return dados;
         }
-        const conferir = () => { const regras = R(); return PD.validar(PD.normalizar(ler()), { bens: S.patrimonio.dados.bens, cnpjValid: regras ? regras.cnpjValid : undefined, hoje }); };
+        const conferir = () => { const regras = R(); return PD.validar(PD.normalizar(ler()), { bens: S.patrimonio.dados.bens, cnpjValid: regras ? regras.cnpjValid : undefined, hoje, categoriaObrigatoria: chaveCompleto.ativo }); };
         function pintarRevisao() {
           const d = PD.normalizar(ler()); revisao.replaceChildren();
           const nomeFornecedor = (id) => (id ? S.nomeFornecedor(id) : '');
           const t = PD.totaisComponentes(d.pecas); const principal = d.imagens.find((i) => i.principal);
           const grupos = [
-            [1, 'Cadastro', [['Identificação', d.nome], ['Nome técnico', d.nomeTecnico], ['Categoria', nomeDe(D.CATEGORIAS, d.categoria)], ['Grupo de patrimônio', (opcRet.find(([k]) => k === (d.grupoRetId ? d.grupoRetId + '|' + (d.subgrupoRetId || '') : '')) || [])[1] || ''], ['Marca', d.marca], ['Modelo', d.modelo], ['Número de série', d.numeroSerie], ['Número de patrimônio', d.numeroPatrimonio], ['Valor', d.valor != null ? dinheiro(d.valor) : '']]],
+            [1, 'Cadastro', [['Identificação', d.nome], ['Nome técnico', d.nomeTecnico], ['Categoria', nomeDe(D.CATEGORIAS, d.categoria)], ['Tipo', d.tipoId ? SV.nomeDoTipo(d.tipoId) : ''], ['Grupo de patrimônio', (opcRet.find(([k]) => k === (d.grupoRetId ? d.grupoRetId + '|' + (d.subgrupoRetId || '') : '')) || [])[1] || ''], ['Marca', d.marca], ['Modelo', d.modelo], ['Número de série', d.numeroSerie], ['Número de patrimônio', d.numeroPatrimonio], ['Valor', d.valor != null ? dinheiro(d.valor) : '']]],
             [2, 'Imagens e documentos', [['Imagem principal', principal ? principal.name : ''], ['Imagens', d.imagens.length ? String(d.imagens.length) : ''], ['Documentos anexados', d.documentos.length ? String(d.documentos.length) : '']]],
             [3, 'Localização', [['Empresa', d.localizacao.empresa], ['Unidade', d.localizacao.unidade], ['Setor / local', d.localId ? S.nomeLocal(d.localId) : d.localizacao.departamento], ['Responsável', d.responsavel.nome]]],
             [4, 'Composição', [['Especificação técnica', d.informarEspecificacao ? 'Informada' : ''], ['Utilizado na produção', d.usadoNaProducao ? 'Sim' + (d.capacidade ? ' — capacidade ' + CD.numero(d.capacidade.valor) + ' ' + d.capacidade.unidade : '') : ''], ['Utensílios utilizados', d.utensiliosIds.length ? String(d.utensiliosIds.length) : ''], ['Materiais', d.materiais.join(', ')], ['Ficha técnica', d.fichaTecnica ? d.fichaTecnica.name : ''], ['Peças (tipos)', t.tipos ? String(t.tipos) : ''], ['Unidades de peças', t.unidades && t.tipos ? String(t.unidades) : ''], ['Patrimônios vinculados', d.vinculados.length ? String(d.vinculados.length) : '']]],
@@ -679,7 +688,8 @@
         /* navegação */
         const quadros = [e1, e2, e3, e4, e5, e6]; let atual = 0;
         const erroEtapa = el('p', 'profiles-error'); erroEtapa.setAttribute('role', 'alert');
-        const nomesEtapas = () => PD.etapas().map((label) => ({ label }));
+        // Simples: a trilha mostra só "Etapa 1 de 1 · Cadastro simples"; ligando o Completo, aparecem as seis etapas.
+        const nomesEtapas = () => (chaveCompleto.ativo ? PD.etapas() : ['Cadastro simples']).map((label) => ({ label }));
         const barra = window.CicluzStepper.create({ steps: nomesEtapas(), current: 0, label: 'Etapas do cadastro do patrimônio', podeIr: (i) => !novo || i <= atual, onSelect: (i) => ir(i) });
         const cancelar = botao('Cancelar', () => dlg.close(), 'btn secondary footer-cancel-accent');
         const voltar = botao('Voltar', () => ir(atual - 1), 'btn secondary footer-cancel-accent form-back-action'); voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
@@ -687,20 +697,23 @@
         const salvarFim = el('button', 'btn', 'Salvar'); salvarFim.type = 'submit';
         const nav = el('div', 'compras-form-rodape compras-etapas-nav');
         function ir(i) {
-          atual = Math.max(0, Math.min(quadros.length - 1, i));
+          const completo = chaveCompleto.ativo;
+          atual = completo ? Math.max(0, Math.min(quadros.length - 1, i)) : 0;
           quadros.forEach((q, k) => mostrar(q, k === atual));
+          mostrar(completoTodo, completo);
           if (atual === 5) pintarRevisao();
           barra.update(nomesEtapas(), atual); erroEtapa.textContent = '';
           const ultima = atual === quadros.length - 1;
-          nav.replaceChildren(...[atual > 0 && voltar, cancelar, ultima && salvarFim, !ultima && avancar].filter(Boolean));
+          // Simples: Cancelar e Salvar. Completo: Voltar, Cancelar, Avançar e, na última etapa, Salvar.
+          nav.replaceChildren(...(completo ? [atual > 0 && voltar, cancelar, ultima && salvarFim, !ultima && avancar] : [cancelar, salvarFim]).filter(Boolean));
           // Troca de etapa recomeça do alto (regra de 17/11/2026).
-          if (form.isConnected && barra.el.isConnected) barra.el.scrollIntoView({ block: 'start' });
+          if (completo && form.isConnected && barra.el.isConnected) barra.el.scrollIntoView({ block: 'start' });
         }
         form.append(barra.el, ...quadros, erroEtapa, nav);
         desenharImagens(); desenharDocs(); desenharMovs(); desenharPecas(); desenharMan(); desenharVinc(); pintarComposto(); pintarTecnicas(); pintarEnergia(); pintarEspec(); pintarResp(); desenharUt(); desenharFicha(); pintarProducao(); pintarGarSeg(); pintarMan(); pintarInsp(); pintarSelectsDoc();
         gDoc.value = docAtual.garantia && documentos.some((d) => d.id === docAtual.garantia) ? docAtual.garantia : ''; iDoc.value = docAtual.inspecao && documentos.some((d) => d.id === docAtual.inspecao) ? docAtual.inspecao : '';
         ir(0);
-        return { ler, conferir, ir, datas, audio, b };
+        return { ler, conferir, ir, datas, audio, b, completo: () => chaveCompleto.ativo };
       },
       salvar: async (c) => {
         if (opcoes.previa) return 'Isto é só uma prévia do formulário: nada é salvo.';
@@ -710,10 +723,11 @@
         if (opcoes.externo) { dados.statusCadastro = 'recebido'; dados.origem = 'link-teste'; dados.situacaoPatrimonial = 'inativo'; }
         const faltas = c.conferir(); const k = faltas.findIndex(Boolean);
         if (k >= 0) { c.ir(k); return faltas[k]; }
-        const falta = SV.conferirBem(dados); if (falta) return falta;
+        const opcoesBem = { categoriaObrigatoria: c.completo() };
+        const falta = SV.conferirBem(dados, opcoesBem); if (falta) return falta;
         const som = await c.audio.guardar(); if (som.error) return som.error;
         dados.audio = som.meta;
-        const r = SV.salvarBem(dados); if (r.erro) return r.erro;
+        const r = SV.salvarBem(dados, opcoesBem); if (r.erro) return r.erro;
         if (opcoes.externo) { enviado = true; window.CicluzConviteLink.confirmarRecebimento(cores); return null; }
         U.avisar(opcoes.categoria ? 'Utensílio salvo.' : 'Patrimônio salvo.');
         if (opcoes.aoSalvar) opcoes.aoSalvar(r.id);

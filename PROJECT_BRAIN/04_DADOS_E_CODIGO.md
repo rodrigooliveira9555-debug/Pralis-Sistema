@@ -134,7 +134,7 @@
   catálogo, histórico, cotações ou pedidos) recebe `categorias: ['produto']`; quem já tinha categoria ou não tem vínculo não
   é tocado; roda uma vez, em memória, e é gravada na próxima alteração. **Dado pessoal:** CPF e data de nascimento de fornecedor pessoa física e e-mails de contato passam a
   ir para o servidor junto com o documento do Compras (ver P-28).
-- `patrimonio-v1` (05/11/2026) — bens (RET - Patrimônios). As duas chaves são sincronizadas e adotadas do aparelho
+- `patrimonio-v1` (05/11/2026) — bens (RET - Patrimônios); desde 27/11/2026 também `tipos` (cadastro RET - Tipos de Patrimônio, usado no campo Tipo do bem, `[{ id, nome, ativo }]`, com o marcador `tiposIniciais`) e, em cada bem, o `tipoId` opcional (P-54). As duas chaves são sincronizadas e adotadas do aparelho
   (`servidor/shared/src/documentos.ts`); começam vazias, sem dado de exemplo.
   Em 15/11/2026 o bem ganhou três campos **opcionais** (mesma chave e mesma versão; bem antigo sem eles continua válido,
   sem migração): `pecas: [{ id, nome, marca, modelo, fornecedorId, grupoDespesaId, subgrupoDespesaId, valor, foto, ultimaTroca,

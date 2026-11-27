@@ -36,7 +36,7 @@ function createWizard({steps,current=-1,onSelect,podeIr,label='Etapas'}){
  function paint(){
   rotulo.textContent='Etapa '+(now+1)+' de '+all.length;titulo.textContent=(all[now]&&all[now].label)||'';
   barra.replaceChildren(...all.map((s,i)=>el('li',i<=now?'feito':'')));
-  resumo.textContent=(now+1)+' de '+all.length;lista(false)}
+  resumo.textContent=(now+1)+' de '+all.length;secao.style.display=all.length<2?'none':'';lista(false)}
  paint();
  return {el:wrap,set(i){now=i;paint()},update(next,i){all=next;if(i!==undefined)now=i;paint()}}}
 function createTimeline({steps,current=-1,layout='timeline',label='Etapas'}){
