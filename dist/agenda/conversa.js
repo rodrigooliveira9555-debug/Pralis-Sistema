@@ -217,8 +217,7 @@
           if (f.size > TAMANHO_MAXIMO) { estado.textContent = 'O arquivo passa de 10 MB.'; return; }
           estado.textContent = 'Enviando ' + rotulo.toLowerCase() + '…';
           try {
-            const base64 = await new Promise((ok, falha) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => falha(new Error('leitura')); r.readAsDataURL(f); });
-            const arq = await api(base + '/arquivos', { metodo: 'POST', corpo: { nome: f.name, conteudoBase64: base64 } });
+            const arq = await enviarArquivo({ id: decodeURIComponent(base.split('/').pop()) }, f);
             const m = await api(base + '/mensagens', { metodo: 'POST', corpo: { texto: rotulo, arquivoId: arq.id } });
             desenhar([m]);
             estado.textContent = '';
@@ -300,8 +299,7 @@
         if (f.size > TAMANHO_MAXIMO) { estado.textContent = '"' + f.name + '" passa de 10 MB.'; continue; }
         estado.textContent = 'Enviando "' + f.name + '"…';
         try {
-          const base64 = await new Promise((ok, falha) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => falha(new Error('leitura')); r.readAsDataURL(f); });
-          await api('/agenda/compromissos/' + encodeURIComponent(item.id) + '/arquivos', { metodo: 'POST', corpo: { nome: f.name, conteudoBase64: base64 } });
+          await enviarArquivo(item, f);
           estado.textContent = '"' + f.name + '" enviado.';
         } catch (e) { estado.textContent = '"' + f.name + '": ' + mensagemErro(e); }
       }
@@ -312,5 +310,17 @@
     return s;
   }
 
-  window.CicluzAgendaConversa = { secao, abrirChat, abrirChatGrupo, atualizarNaoLidas, naoLidas: () => naoLidas, naoLidasGrupos: () => naoLidasGrupos, ICONE_CHAT };
+  /**
+   * Um arquivo para os arquivos do compromisso — caminho ÚNICO (chat, "Arquivos e evidências" e a prova da atividade, P-58).
+   * Devolve o arquivo gravado ({ id, nome, … }); erro de envio vira exceção com a mensagem do servidor.
+   */
+  async function enviarArquivo(item, f) {
+    if (f.size > TAMANHO_MAXIMO) throw new Error('O arquivo passa de 10 MB.');
+    const base64 = await new Promise((ok, falha) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => falha(new Error('leitura')); r.readAsDataURL(f); });
+    try {
+      return await api('/agenda/compromissos/' + encodeURIComponent(item.id) + '/arquivos', { metodo: 'POST', corpo: { nome: f.name, conteudoBase64: base64 } });
+    } catch (e) { throw new Error(mensagemErro(e)); }
+  }
+
+  window.CicluzAgendaConversa = { secao, abrirChat, enviarArquivo, abrirChatGrupo, atualizarNaoLidas, naoLidas: () => naoLidas, naoLidasGrupos: () => naoLidasGrupos, ICONE_CHAT };
 })();

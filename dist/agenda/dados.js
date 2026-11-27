@@ -69,6 +69,20 @@
   }
   const listaDeApi = (g) => ({ id: g.id, nome: g.nome, cor: corSegura(g.cor), icone: g.icone || 'lista', ordenacao: g.ordenacao || 'manual', ordem: g.ordem, donoId: g.donoId, membro: g.membro, podeGerir: g.podeGerir, versao: g.versao, area: g.area || '' });
 
+  /**
+   * Uma atividade (P-58) no corpo da API — função ÚNICA para o formulário e para a mudança parcial (mapa mental), para nenhum
+   * caminho apagar executor, supervisores ou prazo. Campo que a atividade não tem não vai (o servidor mantém o que estava).
+   */
+  function atividadeParaApi(s) {
+    return {
+      ...(s.id ? { id: s.id } : {}), titulo: String(s.titulo || '').trim(), concluida: Boolean(s.concluida),
+      ...(s.executorId !== undefined ? { executorId: s.executorId || '' } : {}),
+      ...(Array.isArray(s.supervisorIds) ? { supervisorIds: s.supervisorIds } : {}),
+      ...(s.prazoDias !== undefined ? { prazoDias: s.prazoDias === null || s.prazoDias === '' ? null : Number(s.prazoDias) } : {}),
+      ...(s.prazoHora !== undefined ? { prazoHora: s.prazoHora || '' } : {}),
+    };
+  }
+
   /** Campos do formulário da tela → corpo da API. A tela não escolhe gestor, âncora nem `feitas` (são do servidor). */
   function paraFormulario(c) {
     const rep = c.repeticao && c.repeticao.tipo && c.repeticao.tipo !== 'nunca' ? c.repeticao : null;
@@ -89,7 +103,7 @@
       } : null,
       alerta: c.alerta === '' || c.alerta === null || c.alerta === undefined ? null : Number(c.alerta),
       prioridade: c.prioridade || 'normal', sinalizado: Boolean(c.sinalizado), etiquetas: R.normalizarEtiquetas(c.etiquetas),
-      subtarefas: (c.subtarefas || []).map((s) => ({ ...(s.id ? { id: s.id } : {}), titulo: String(s.titulo || '').trim(), concluida: Boolean(s.concluida) })),
+      subtarefas: (c.subtarefas || []).map(atividadeParaApi),
       pessoas: R.normalizarPessoas(c.pessoas), avaliacaoTipo: (c.avaliacao && c.avaliacao.tipo) || '', colunaId: c.colunaId || '',
       vinculoTela: c.vinculoTela || '', vinculoTitulo: c.vinculoTela ? String(c.vinculoTitulo || '').trim().slice(0, 120) : '',
       // Ação programada (P-53): só com tela ligada.
@@ -343,15 +357,26 @@
     return { resultado: r.dados.resultado };
   }
 
-  /** Subtarefa pelo estado desejado. */
-  async function marcarSubtarefa(id, subId, desejado) {
+  /** Quem pode concluir a atividade (P-58): o executor dela ou quem conclui o compromisso. */
+  const podeConcluirAtividade = (i, s) => Boolean(i && s && (acesso(i).concluir || (s.executorId || i.criadoPor) === usuarioAtual()));
+  /** Sem tela ligada, concluir a atividade pede a prova (foto ou arquivo). */
+  const precisaProva = (i) => Boolean(i && !i.vinculoTela);
+
+  /**
+   * Atividade pelo estado desejado. provaArquivoId: o arquivo (já enviado a este compromisso) que prova que foi feita.
+   * A última atividade feita conclui o compromisso no servidor; se ele repete, nasce a cópia — busca a Agenda de novo.
+   */
+  async function marcarSubtarefa(id, subId, desejado, provaArquivoId) {
     const i = item(id);
     if (!i) return erro('Compromisso não encontrado.');
-    if (!acesso(i).concluir) return erro(SEM.concluir);
-    const r = await enviar(caminhoItem(id) + '/subtarefas/' + encodeURIComponent(subId), 'PUT', { concluida: Boolean(desejado) });
+    const s = (i.subtarefas || []).find((x) => x.id === subId);
+    if (!podeConcluirAtividade(i, s)) return erro('Só o executor desta atividade ou quem pode concluir o compromisso marca a atividade.');
+    const r = await enviar(caminhoItem(id) + '/subtarefas/' + encodeURIComponent(subId), 'PUT', { concluida: Boolean(desejado), ...(provaArquivoId ? { provaArquivoId } : {}) });
     if (r.erro) return r;
+    const fechou = r.dados.concluida !== i.concluida || r.dados.data !== i.data;
     guardarItem(r.dados);
     gravou();
+    if (fechou) atualizar(true);
     return { ok: true };
   }
 
@@ -393,7 +418,7 @@
     if (!tirouData && c.hora !== i.hora) patch.hora = c.hora || '';
     if (!tirouData && c.horaFim !== i.horaFim) patch.horaFim = c.horaFim || '';
     if (c.colunaId !== i.colunaId) patch.colunaId = c.colunaId || '';
-    if (JSON.stringify(c.subtarefas) !== JSON.stringify(i.subtarefas)) patch.subtarefas = c.subtarefas.map((s) => ({ id: s.id, titulo: String(s.titulo || '').trim(), concluida: Boolean(s.concluida) }));
+    if (JSON.stringify(c.subtarefas) !== JSON.stringify(i.subtarefas)) patch.subtarefas = c.subtarefas.map(atividadeParaApi);
     if (c.antesDe !== undefined) patch.antesDe = c.antesDe;
     if (Object.keys(patch).length === 1) return { ok: true };
     const r = await enviar(caminhoItem(id), 'PATCH', patch);
@@ -502,7 +527,9 @@
     if (!acesso(de).editar || !acesso(para).editar) return erro(SEM.editar);
     const sub = de.subtarefas.find((x) => x.id === subId);
     if (!sub) return erro('Atividade não encontrada.');
-    const r1 = await alterar(paraId, (c) => { c.subtarefas.push({ ...structuredClone(sub), id: novoId('sub') }); });
+    // Executor e supervisores são do compromisso de origem: no destino, o executor passa a ser o gestor de lá.
+    const { executorId, supervisorIds, ...copia } = structuredClone(sub);
+    const r1 = await alterar(paraId, (c) => { c.subtarefas.push({ ...copia, id: novoId('sub'), executorId: '', supervisorIds: [] }); });
     if (r1.erro) return r1;
     const r2 = await excluirSubtarefa(deId, subId);
     return r2.erro ? erro('A atividade foi copiada para "' + para.titulo + '", mas não saiu de "' + de.titulo + '": ' + r2.erro) : { ok: true };
@@ -690,7 +717,7 @@
     atualizar, novoId, pessoas, nomePessoa, usuarioAtual, acesso, visiveis, lista, item, coluna, colunaDe, avaliar,
     alterar, renomear, definir, adicionarSubtarefa, renomearSubtarefa, excluirSubtarefa, moverSubtarefa,
     criarRelacao, rotularRelacao, excluirRelacao, relacoesVisiveis,
-    salvarItem, criarRapido, concluir, marcarSubtarefa, alternarSinalizado, excluirItem, moverPara, adiar,
+    salvarItem, criarRapido, concluir, marcarSubtarefa, podeConcluirAtividade, precisaProva, alternarSinalizado, excluirItem, moverPara, adiar,
     moverColuna, reordenar, limparConcluidos,
     salvarLista, definirOrdenacao, excluirLista, salvarColuna, excluirColuna,
     previaTransferencia, transferir,

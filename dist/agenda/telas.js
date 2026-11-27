@@ -424,12 +424,14 @@
       const subs = el('div', 'agenda-subtarefas');
       item.subtarefas.forEach((s) => {
         const sl = el('div', 'agenda-subtarefa' + (s.concluida ? ' concluida' : ''));
-        const c = botao('', () => comBotao(c, A.marcarSubtarefa(item.id, s.id, !s.concluida)).then(seErro), 'agenda-circulo pequeno');
-        c.disabled = !ac.concluir || A.somenteLeitura;
+        const c = botao('', () => concluirAtividade(item, s, c), 'agenda-circulo pequeno');
+        c.disabled = !A.podeConcluirAtividade(item, s) || A.somenteLeitura;
         if (lst) c.style.setProperty('--lista-cor', lst.cor);
         c.setAttribute('aria-label', (s.concluida ? 'Reabrir ' : 'Concluir ') + s.titulo);
         c.setAttribute('aria-pressed', String(s.concluida));
-        sl.append(c, el('span', null, s.titulo));
+        const texto = el('span', 'agenda-subtarefa-texto');
+        texto.append(el('span', null, s.titulo), el('small', null, resumoAtividade(item, s)));
+        sl.append(c, texto);
         subs.append(sl);
       });
       caixa.append(subs);
@@ -537,6 +539,53 @@
    */
   const pecas = () => window.CicluzTransferencias.pecas;
   const SETA_DIREITA = '<path d="m9 6 6 6-6 6"/>';
+  /* ---------- Atividades (P-58): executor, supervisores, prazo e prova ---------- */
+  /** Data do prazo da atividade: a data do compromisso mais os dias (a mesma distância em cada repetição). */
+  const prazoDaAtividade = (item, s) => (item.data && s.prazoDias !== null && s.prazoDias !== undefined && s.prazoDias !== '' ? D.somarDias(item.data, Number(s.prazoDias)) : '');
+  /** "Executor: Ana · até 03/12 17:00 · 1 supervisor" */
+  function resumoAtividade(item, s) {
+    const partes = ['Executor: ' + A.nomePessoa(s.executorId || item.criadoPor)];
+    const p = prazoDaAtividade(item, s);
+    if (p) partes.push('até ' + D.dataCurta(p) + (s.prazoHora ? ' ' + s.prazoHora : ''));
+    const n = (s.supervisorIds || []).length;
+    if (n) partes.push(n + (n === 1 ? ' supervisor' : ' supervisores'));
+    return partes.join(' · ');
+  }
+  /**
+   * Concluir ou reabrir uma atividade. Sem tela ligada, concluir pede a prova (Rodrigo, 27/11/2026: "manda a foto ou algo que
+   * prove"): a foto ou o arquivo vai para os arquivos do compromisso e a atividade conclui com ele. Usado pela lista e pelo mapa.
+   */
+  function concluirAtividade(item, s, b) {
+    if (s.concluida || !A.precisaProva(item)) return comBotao(b, A.marcarSubtarefa(item.id, s.id, !s.concluida)).then(seErro);
+    const P = pecas();
+    U.dialogo({
+      titulo: 'Prova da atividade', subtitulo: s.titulo, cor: COR, corTexto: COR_TEXTO, classe: 'agenda-dialog agenda-sub-janela', rotuloSalvar: 'Concluir',
+      montar: (form) => {
+        const corpo = el('div', 'transferencia-tela transferencia-corpo agenda-form');
+        form.append(corpo);
+        const foto = el('input');
+        foto.type = 'file';
+        foto.accept = 'image/*,.pdf';
+        foto.className = 'agenda-prova-arquivo';
+        foto.setAttribute('aria-label', 'Foto ou arquivo da prova');
+        corpo.append(P.secao('Prova', P.quadro(P.linhaDe('Foto ou arquivo', foto))), U.nota('Sem tela ligada, a atividade conclui com uma foto ou um arquivo que prove que foi feita. Ele fica nos arquivos do compromisso.'));
+        return { foto };
+      },
+      salvar: async (c) => {
+        const f = c.foto.files && c.foto.files[0];
+        if (!f) return 'Escolha a foto ou o arquivo que prova que a atividade foi feita.';
+        try {
+          const arq = await window.CicluzAgendaConversa.enviarArquivo(item, f);
+          const r = await A.marcarSubtarefa(item.id, s.id, true, arq.id);
+          if (r.erro) return r.erro;
+          U.avisar('Atividade concluída.');
+          return undefined;
+        } catch (e) { return (e && e.message) || 'Não deu para enviar a prova.'; }
+      },
+    });
+    return Promise.resolve();
+  }
+
   /** Linha que abre outra janela: nome, resumo à direita e a seta (padrão "Anexos"). */
   function linhaQueLeva(rotulo, aoToque) {
     const b = el('button', 'transferencia-linha transferencia-linha-acao agenda-linha-leva');
@@ -611,10 +660,19 @@
 
         /* Pessoas, subtarefas e local: abrem por dentro, com o resumo na linha */
         let pessoas = D.normalizarPessoas(v.pessoas);
+        const gestorId = atual ? atual.criadoPor : A.usuarioAtual();
         const linhaPessoas = linhaQueLeva('Pessoas', () => subJanela({
           titulo: 'Pessoas e permissões', subtitulo: v.titulo || 'Compromisso', soLeitura: soLeitura || !ac.gestor,
           montar: (c) => { const e = editorPessoas({ pessoas }, atual, ac.gestor && !soLeitura); c.append(e.no); return { e }; },
-          aplicar: (c) => { pessoas = c.e.valor(); resumirPessoas(); return undefined; },
+          aplicar: (c) => {
+            const novas = c.e.valor();
+            // Tirar das Pessoas quem é executor de uma atividade é bloqueado (Rodrigo, 27/11/2026); supervisor que sai deixa de ser.
+            const ficam = new Set([gestorId, ...novas.map((p) => p.id)]);
+            const preso = subs.find((s) => s.executorId && !ficam.has(s.executorId));
+            if (preso) return A.nomePessoa(preso.executorId) + ' é executor de "' + preso.titulo + '"; troque o executor antes.';
+            subs.forEach((s) => { if (s.supervisorIds) s.supervisorIds = s.supervisorIds.filter((id) => ficam.has(id)); });
+            pessoas = novas; resumirPessoas(); return undefined;
+          },
         }));
         const resumirPessoas = () => {
           const resp = pessoas.filter((p) => p.responsavel);
@@ -625,7 +683,7 @@
         let subs = (v.subtarefas || []).map((s) => ({ ...s }));
         const linhaSubs = linhaQueLeva('Atividades', () => subJanela({
           titulo: 'Atividades', subtitulo: v.titulo || 'Compromisso', soLeitura,
-          montar: (c) => { const e = editorSubtarefas(subs); c.append(e.no); return { e }; },
+          montar: (c) => { const e = editorSubtarefas(subs, { gestorId, membros: () => [gestorId, ...pessoas.map((p) => p.id)], dataDoCompromisso: () => data.valor() }); c.append(e.no); return { e }; },
           aplicar: (c) => { subs = c.e.valor(); resumirSubs(); return undefined; },
         }));
         const resumirSubs = () => {
@@ -979,19 +1037,23 @@
     return { linhas: [linhaTipo], resumo, valor };
   }
 
-  /** Subtarefas (janela própria): uma linha por subtarefa — círculo de concluir, texto e remover; Enter cria a próxima. */
-  function editorSubtarefas(inicial) {
+  /**
+   * Atividades (janela própria, P-58): uma linha por atividade — texto, a seta que abre executor, supervisores e prazo, e
+   * remover; Enter cria a próxima. Concluir não é aqui: é na lista, pelo executor (com a prova quando não há tela).
+   * ctx: { gestorId, membros() (gestor + pessoas do compromisso), dataDoCompromisso() }.
+   */
+  function editorSubtarefas(inicial, ctx) {
     const P = pecas();
     const subs = inicial.map((s) => ({ ...s }));
     const quadro = P.quadro();
-    const no = P.secao('Atividades', quadro);
+    const no = P.secao('Atividades', quadro, U.nota('Toque na seta para escolher o executor (sem escolha, é o gestor), os supervisores e o prazo.'));
     function desenhar(foco) {
       const linhas = subs.map((s, n) => {
         const r = el('div', 'transferencia-linha agenda-subtarefa-edicao');
-        // O mesmo círculo de concluir das linhas (como no Lembretes), não caixa de marcar.
-        const c = botao('', () => { s.concluida = !s.concluida; c.setAttribute('aria-pressed', String(s.concluida)); }, 'agenda-circulo pequeno');
-        c.setAttribute('aria-pressed', String(Boolean(s.concluida)));
-        c.setAttribute('aria-label', 'Atividade ' + (n + 1) + ' concluída');
+        const c = botao('', () => detalhesAtividade(s, ctx, () => desenhar()), 'transferencia-circulo agenda-atividade-detalhes');
+        c.innerHTML = svg(SETA_DIREITA);
+        c.title = 'Executor, supervisores e prazo';
+        c.setAttribute('aria-label', 'Executor, supervisores e prazo da atividade ' + (n + 1));
         const t = U.entrada('text', s.titulo, { maxLength: 200, placeholder: 'Atividade' });
         t.classList.add('transferencia-linha-controle');
         t.setAttribute('aria-label', 'Atividade ' + (n + 1));
@@ -1003,7 +1065,10 @@
         tirar.setAttribute('aria-label', 'Tirar atividade ' + (n + 1));
         tirar.innerHTML = svg('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>');
         tirar.onclick = () => { subs.splice(n, 1); desenhar(); };
-        r.append(c, t, tirar);
+        const resumo = el('small', 'agenda-atividade-resumo', 'Executor: ' + A.nomePessoa(s.executorId || ctx.gestorId) + (s.concluida ? ' · feita' : ''));
+        const caixa = el('div', 'agenda-atividade-caixa');
+        caixa.append(t, resumo);
+        r.append(caixa, c, tirar);
         return r;
       });
       const add = el('button', 'transferencia-linha transferencia-linha-acao agenda-linha-adicionar');
@@ -1017,8 +1082,54 @@
       if (foco !== undefined) { const alvo = quadro.querySelectorAll('input[type=text]')[foco]; if (alvo) alvo.focus(); }
     }
     desenhar();
-    // Linha em branco não vira subtarefa.
+    // Linha em branco não vira atividade.
     return { no, valor: () => subs.filter((s) => String(s.titulo || '').trim()) };
+  }
+
+  /** Executor (um, entre o gestor e as pessoas), supervisores (vários) e prazo (dias depois da data + hora) de uma atividade. */
+  function detalhesAtividade(s, ctx, depois) {
+    const P = pecas();
+    subJanela({
+      titulo: 'Atividade', subtitulo: s.titulo || 'Atividade',
+      montar: (c) => {
+        const membros = [...new Set(ctx.membros())];
+        const executor = U.seletor(membros.map((id) => [id, A.nomePessoa(id) + (id === ctx.gestorId ? ' (gestor)' : '')]), s.executorId || ctx.gestorId);
+        let sup = new Set((s.supervisorIds || []).filter((id) => membros.includes(id)));
+        const chips = el('div', 'compras-chips agenda-supervisores');
+        chips.setAttribute('role', 'group');
+        chips.setAttribute('aria-label', 'Supervisores');
+        const pintarChips = () => chips.replaceChildren(...membros.filter((id) => id !== executor.value).map((id) => {
+          const b = botao(A.nomePessoa(id), () => { if (sup.has(id)) sup.delete(id); else sup.add(id); pintarChips(); }, 'compras-chip' + (sup.has(id) ? ' ativo' : ''));
+          b.setAttribute('aria-pressed', String(sup.has(id)));
+          return b;
+        }));
+        executor.addEventListener('change', () => { sup.delete(executor.value); pintarChips(); });
+        pintarChips();
+        const dias = U.roletaNumero({ rotulo: 'Dias depois da data', titulo: 'Dias depois', min: 0, max: 365, valor: s.prazoDias === null || s.prazoDias === undefined ? '' : String(s.prazoDias) });
+        const hora = U.campoHora({ rotulo: 'Hora do prazo', valor: s.prazoHora || '' });
+        const linhaDias = P.linhaDe('Dias depois da data', dias.input);
+        linhaDias.append(dias.painel);
+        P.abreAoTocarNaLinha(linhaDias, dias.input, dias.painel);
+        const linhaHora = P.abreAoTocarNaLinha(P.linha('Hora', hora.caixa, hora.painel), hora.input, hora.painel);
+        const linhaSup = el('div', 'transferencia-linha agenda-pessoa');
+        linhaSup.append(el('span', 'transferencia-linha-rotulo', 'Supervisores'), chips);
+        c.append(
+          P.secao('Quem faz', P.quadro(P.linhaDe('Executor', executor), linhaSup), U.nota('O executor conclui a atividade; o supervisor acompanha e avalia a execução.')),
+          P.secao('Prazo', P.quadro(linhaDias, linhaHora), U.nota(ctx.dataDoCompromisso() ? 'Conta a partir da data do compromisso; quando ele repete, o prazo vai junto.' : 'O prazo conta a partir da data do compromisso: dê uma data a ele para o prazo valer.')),
+        );
+        return { executor, dias, hora, sup: () => [...sup] };
+      },
+      aplicar: (c) => {
+        if (c.hora.input.value && !/^([01]\d|2[0-3]):[0-5]\d$/.test(c.hora.input.value)) return 'Hora do prazo inválida. Use HH:MM.';
+        s.executorId = c.executor.value;
+        s.supervisorIds = c.sup().filter((id) => id !== s.executorId);
+        const d = c.dias.valor();
+        s.prazoDias = d === null || d === undefined || d === '' ? (c.hora.input.value ? 0 : null) : Number(d);
+        s.prazoHora = c.hora.input.value || '';
+        depois();
+        return undefined;
+      },
+    });
   }
 
   function excluir(item) {
@@ -1182,5 +1293,5 @@
   /** Compromisso novo com os valores da tela aberta mais os extras (ex.: tela ligada pelo ícone roxo). */
   const novo = (extra = {}) => { garantirTela(); return editar(null, padraoNovo(extra)); };
 
-  window.CicluzAgenda = { abrir, editar, novo, estado, COR, COR_TEXTO, ICONES_LISTA };
+  window.CicluzAgenda = { abrir, editar, novo, estado, concluirAtividade, COR, COR_TEXTO, ICONES_LISTA };
 })();

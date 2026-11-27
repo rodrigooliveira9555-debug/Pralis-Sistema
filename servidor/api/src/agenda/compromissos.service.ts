@@ -9,7 +9,8 @@ import {
   type CompromissoResposta,
   type Conclusao,
   type JsonValue,
-  type PerfilSessao
+  type PerfilSessao,
+  type SubtarefaResposta
 } from "@cicluz/shared";
 import { banco, type TransacaoBanco } from "../banco/conexao.ts";
 import { conflito, ErroDominio, proibido } from "../erros.ts";
@@ -66,8 +67,19 @@ function localizacaoDe(c: LinhaCompromisso) {
   };
 }
 
-type Subtarefa = { id: string; titulo: string; concluida: boolean; concluidaEm: string };
+/** Atividade gravada no jsonb `subtarefas` (P-58). Os campos novos podem faltar nas atividades antigas. */
+type Subtarefa = {
+  id: string; titulo: string; concluida: boolean; concluidaEm: string;
+  executorId?: string; supervisorIds?: string[]; prazoDias?: number | null; prazoHora?: string; concluidaPor?: string; provaArquivoId?: string;
+};
 const subtarefasDe = (c: Pick<NovoCompromisso, "subtarefas">) => (Array.isArray(c.subtarefas) ? (c.subtarefas as Subtarefa[]) : []);
+/** As atividades na forma da resposta: sem executor gravado, o executor é o gestor (toda atividade tem executor, P-58). */
+const atividadesDe = (c: Pick<LinhaCompromisso, "subtarefas" | "gestorId">): SubtarefaResposta[] =>
+  subtarefasDe(c).map((s) => ({
+    id: s.id, titulo: s.titulo, concluida: s.concluida, concluidaEm: s.concluidaEm || "",
+    executorId: s.executorId || c.gestorId, supervisorIds: s.supervisorIds ?? [], prazoDias: s.prazoDias ?? null, prazoHora: s.prazoHora ?? "",
+    concluidaPor: s.concluidaPor ?? "", provaArquivoId: s.provaArquivoId ?? ""
+  }));
 
 /** O compromisso na forma que regras.ts entende (criadoPor = gestor). */
 export function paraRegra(c: LinhaCompromisso, pessoas: Pessoa[], notas: R.Nota[]): R.Compromisso {
@@ -95,7 +107,7 @@ function resposta(c: LinhaCompromisso, participantes: LinhaParticipante[], notas
     repeticao: repeticaoDe(c), alerta: c.alertaMinutos,
     adiadoPara: adiadoAte ? adiadoAte.toISOString() : "",
     prioridade: c.prioridade, sinalizado: c.sinalizado, etiquetas: c.etiquetas,
-    subtarefas: subtarefasDe(c), pessoas,
+    subtarefas: atividadesDe(c), pessoas,
     avaliacao: { tipo: c.avaliacaoTipo, notas: visiveis },
     colunaId: c.colunaId ?? "", ordem: Number(c.ordem),
     concluida: c.concluida, concluidaEm: c.concluidaEm ? c.concluidaEm.toISOString() : "",
@@ -225,7 +237,7 @@ function formularioDe(c: LinhaCompromisso, pessoas: Pessoa[]): Formulario {
     data: c.data ?? "", hora: c.hora ?? "", horaFim: c.horaFim ?? "",
     repeticao: r ? { tipo: r.tipo as never, intervalo: r.intervalo, unidade: r.unidade as never, diasSemana: r.diasSemana, fim: { tipo: r.fim.tipo as never, data: r.fim.data, vezes: r.fim.vezes } } : null,
     alerta: c.alertaMinutos, prioridade: c.prioridade as Formulario["prioridade"], sinalizado: c.sinalizado, etiquetas: c.etiquetas,
-    subtarefas: subtarefasDe(c).map((s) => ({ id: s.id, titulo: s.titulo, concluida: s.concluida })),
+    subtarefas: atividadesDe(c).map((s) => ({ id: s.id, titulo: s.titulo, concluida: s.concluida, executorId: s.executorId, supervisorIds: s.supervisorIds, prazoDias: s.prazoDias, prazoHora: s.prazoHora })),
     pessoas, avaliacaoTipo: c.avaliacaoTipo as Formulario["avaliacaoTipo"], colunaId: c.colunaId ?? "",
     vinculoTela: c.vinculoTela ?? "", vinculoTitulo: c.vinculoTitulo ?? "",
     acaoTela: c.acaoTela ?? "", acaoQuantidade: c.acaoQuantidade ?? null, areaId: c.areaId ?? ""
@@ -239,7 +251,7 @@ function formularioDe(c: LinhaCompromisso, pessoas: Pessoa[]): Formulario {
  *   `feitas` é do servidor (a tela não escolhe);
  * - mudou data, hora ou alerta: a soneca de todos deixa de valer.
  */
-export function montar(f: Formulario, atual: { c: LinhaCompromisso; pessoas: Pessoa[]; acesso: R.Acesso; notas: number } | null) {
+export function montar(f: Formulario, atual: { c: LinhaCompromisso; pessoas: Pessoa[]; acesso: R.Acesso; notas: number } | null, gestorId: string) {
   const c = atual?.c;
   const gestor = !atual || atual.acesso.gestor;
   const pessoas = gestor ? R.normalizarPessoas(f.pessoas) : atual.pessoas;
@@ -252,15 +264,29 @@ export function montar(f: Formulario, atual: { c: LinhaCompromisso; pessoas: Pes
     const antiga = c?.repeticaoTipo ? c.repeticaoAncora : null;
     ancora = antiga && !(c && c.data !== data && antiga === c.data) ? antiga : data;
   }
+  /*
+   * Atividades (P-58). Campo que não veio (tela antiga, mapa mental) fica como estava. Sem executor escolhido, o executor é
+   * o gestor. Executor e supervisores são o gestor ou pessoas do compromisso: tirar das Pessoas quem é executor é recusado
+   * ("troque o executor antes"); supervisor que saiu das Pessoas deixa de ser supervisor. Concluir não é pelo formulário
+   * (é pelo PUT da atividade, com a prova quando não há tela): aqui a situação de cada atividade fica como estava.
+   */
   const anteriores = new Map(c ? subtarefasDe(c).map((s) => [s.id, s]) : []);
-  const agora = new Date().toISOString();
+  const membros = new Set([gestorId, ...pessoas.map((p) => p.id)]);
   const subtarefas: Subtarefa[] = f.subtarefas.map((s) => {
     const antes = s.id ? anteriores.get(s.id) : undefined;
+    const executorId = (s.executorId !== undefined ? s.executorId : antes?.executorId) || gestorId;
+    const supervisorIds = [...new Set(s.supervisorIds ?? antes?.supervisorIds ?? [])].filter((id) => id !== executorId && membros.has(id));
+    const prazoHora = (s.prazoHora !== undefined ? s.prazoHora : antes?.prazoHora) ?? "";
+    let prazoDias = s.prazoDias !== undefined ? s.prazoDias : antes?.prazoDias ?? null;
+    if (prazoHora && prazoDias === null) prazoDias = 0;
+    const concluida = antes?.concluida ?? false;
     return {
-      id: s.id || "sub-" + randomUUID(), titulo: s.titulo.trim(), concluida: s.concluida,
-      concluidaEm: s.concluida ? (antes?.concluida && antes.concluidaEm ? antes.concluidaEm : agora) : ""
+      id: s.id || "sub-" + randomUUID(), titulo: s.titulo.trim(), concluida, concluidaEm: concluida ? antes?.concluidaEm ?? "" : "",
+      executorId, supervisorIds, prazoDias, prazoHora, concluidaPor: concluida ? antes?.concluidaPor ?? "" : "", provaArquivoId: antes?.provaArquivoId ?? ""
     };
   });
+  const foraDasPessoas = subtarefas.find((s) => !membros.has(s.executorId!));
+  if (foraDasPessoas) throw invalido(`Quem é executor de "${foraDasPessoas.titulo}" não está nas Pessoas do compromisso; troque o executor antes.`);
   const loc = f.localizacao && (Number.isFinite(f.localizacao.lat) || f.localizacao.aviso) ? f.localizacao : null;
 
   const linha = {
@@ -328,7 +354,7 @@ export async function criar(perfil: PerfilSessao, entrada: CompromissoCriacao) {
       throw conflito("Este identificador já foi usado. Recarregue a Agenda e tente de novo.", "AGENDA_ID_EM_USO");
     }
     const { id, ...form } = entrada;
-    const m = montar(form, null);
+    const m = montar(form, null, perfil.usuarioId);
     await conferirGrupo(tx, perfil, m.linha.grupoId, true);
     await conferirReferencias(tx, perfil, m.linha.colunaId, m.pessoas);
     const ordem = (await repo.maiorOrdem(tx, empresaId, m.linha.grupoId)) + 1;
@@ -369,7 +395,7 @@ async function aplicar(
     const atual = await carregar(tx, perfil, id, "editar");
     await conferirVersao(tx, perfil, atual.c, versao);
     const notas = (await repo.avaliacoesDe(tx, empresaId, [id])).length;
-    const m = montar(formulario(atual.c, atual.pessoas), { ...atual, notas });
+    const m = montar(formulario(atual.c, atual.pessoas), { ...atual, notas }, atual.c.gestorId);
     if (m.linha.grupoId !== atual.c.grupoId) await conferirGrupo(tx, perfil, m.linha.grupoId, true);
     await conferirReferencias(tx, perfil, m.linha.colunaId, m.pessoasMudaram ? m.pessoas : []);
 
@@ -417,11 +443,14 @@ function horaFimCom(hora: string | null | undefined, dur: number) {
  * ocorrência) e ele passa para a próxima data, subtarefas desmarcadas. Na última vez, ele mesmo é concluído.
  * Pedido repetido ou cartão velho (ocorrência que já passou) não muda nada.
  */
-/** semExpediente: a conclusão veio de uma ação feita numa tela (P-53), não de usar a Agenda. */
-export async function concluir(perfil: PerfilSessao, id: string, pedido: Conclusao, opcoes: { semExpediente?: boolean } = {}) {
+/**
+ * semExpediente: a conclusão veio de uma ação feita numa tela (P-53), não de usar a Agenda.
+ * porAtividades: todas as atividades foram feitas (P-58) — conclui mesmo que quem fez a última só seja o executor dela.
+ */
+export async function concluir(perfil: PerfilSessao, id: string, pedido: Conclusao, opcoes: { semExpediente?: boolean; porAtividades?: boolean } = {}) {
   const empresaId = perfil.empresa.id;
   return gravar(perfil, { semExpediente: Boolean(opcoes.semExpediente) }, async (tx) => {
-    const { c, pessoas } = await carregar(tx, perfil, id, "concluir");
+    const { c, pessoas } = await carregar(tx, perfil, id, opcoes.porAtividades ? "ver" : "concluir");
     const sem = async () => ({ resultado: "sem-mudanca" as const, compromisso: await respostaDe(tx, perfil, c), copia: null });
     const agora = new Date();
 
@@ -449,7 +478,7 @@ export async function concluir(perfil: PerfilSessao, id: string, pedido: Conclus
         await repo.trocarParticipantes(tx, empresaId, copiaId, perfil.usuarioId, pessoas);
         const linha = await repo.atualizarCompromisso(tx, empresaId, id, {
           repeticaoFeitas: n, data: p.data, hora: p.hora || null, horaFim: horaFimCom(p.hora || null, duracao(c.hora, c.horaFim)),
-          subtarefas: subtarefasDe(c).map((s) => ({ ...s, concluida: false, concluidaEm: "" })), atualizadoPor: perfil.usuarioId
+          subtarefas: subtarefasDe(c).map((s) => ({ ...s, concluida: false, concluidaEm: "", concluidaPor: "", provaArquivoId: "" })), atualizadoPor: perfil.usuarioId
         });
         await repo.limparAdiamentos(tx, empresaId, id);
         await registrarHoraFora(tx, perfil, copiaId, agora);
@@ -464,18 +493,36 @@ export async function concluir(perfil: PerfilSessao, id: string, pedido: Conclus
   });
 }
 
-/** Subtarefa marcada/desmarcada pelo estado desejado. */
-export async function marcarSubtarefa(perfil: PerfilSessao, id: string, subId: string, concluida: boolean) {
+/**
+ * Atividade concluída/reaberta pelo estado desejado (P-58). Conclui o executor dela (por ser o executor) ou quem pode
+ * concluir o compromisso. Sem tela ligada, concluir pede a prova: um arquivo (foto…) enviado a este compromisso.
+ * A última atividade feita conclui o compromisso, pelo mesmo caminho do "concluir" (a repetição avança e zera as atividades).
+ */
+export async function marcarSubtarefa(perfil: PerfilSessao, id: string, subId: string, concluida: boolean, provaArquivoId?: string) {
   const empresaId = perfil.empresa.id;
-  return gravar(perfil, async (tx) => {
-    const { c } = await carregar(tx, perfil, id, "concluir");
+  const r = await gravar(perfil, async (tx) => {
+    const { c, acesso } = await carregar(tx, perfil, id, "ver");
     const subs = subtarefasDe(c);
     const s = subs.find((x) => x.id === subId);
     if (!s) throw new ErroDominio("Atividade não encontrada.", 404, "AGENDA_SUBTAREFA_NAO_ENCONTRADA");
-    if (s.concluida === concluida) return respostaDe(tx, perfil, c);
-    const novas = subs.map((x) => (x.id === subId ? { ...x, concluida, concluidaEm: concluida ? new Date().toISOString() : "" } : x));
-    return respostaDe(tx, perfil, await repo.atualizarCompromisso(tx, empresaId, id, { subtarefas: novas, atualizadoPor: perfil.usuarioId }));
+    if ((s.executorId || c.gestorId) !== perfil.usuarioId && !acesso.concluir) throw semAcesso("concluir");
+    if (s.concluida === concluida) return { c, fechar: false };
+    let prova = s.provaArquivoId ?? "";
+    if (concluida && provaArquivoId) {
+      if (!(await repo.arquivoDoCompromisso(tx, empresaId, id, provaArquivoId))) throw invalido("A prova precisa ser um arquivo enviado a este compromisso.");
+      prova = provaArquivoId;
+    }
+    if (concluida && !c.vinculoTela && !prova) throw invalido("Mande uma foto ou um arquivo que prove que a atividade foi feita.");
+    const agora = new Date().toISOString();
+    const novas = subs.map((x) => (x.id === subId ? { ...x, concluida, concluidaEm: concluida ? agora : "", concluidaPor: concluida ? perfil.usuarioId : "", provaArquivoId: prova } : x));
+    const linha = await repo.atualizarCompromisso(tx, empresaId, id, { subtarefas: novas, atualizadoPor: perfil.usuarioId });
+    return { c: linha, fechar: concluida && !linha.concluida && novas.every((x) => x.concluida) };
   });
+  if (r.fechar) {
+    const fim = await concluir(perfil, id, r.c.repeticaoTipo && r.c.data ? { concluida: true, ocorrencia: r.c.data } : { concluida: true }, { porAtividades: true });
+    return fim.compromisso;
+  }
+  return respostaDe(banco, perfil, r.c);
 }
 
 /* ---------- Excluir (esconder) ---------- */

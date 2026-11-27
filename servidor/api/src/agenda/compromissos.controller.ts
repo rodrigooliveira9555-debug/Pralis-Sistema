@@ -66,8 +66,8 @@ export async function registrarRotasCompromissos(app: FastifyInstance) {
 
   app.put("/api/agenda/compromissos/:id/subtarefas/:subId", async (request) => {
     const { id, subId } = subParams.parse(request.params);
-    const { concluida } = subtarefaEstadoSchema.parse(request.body);
-    return ok(await servico.marcarSubtarefa(perfilDaRequisicao(request), id, subId, concluida));
+    const { concluida, provaArquivoId } = subtarefaEstadoSchema.parse(request.body);
+    return ok(await servico.marcarSubtarefa(perfilDaRequisicao(request), id, subId, concluida, provaArquivoId));
   });
 
   app.delete("/api/agenda/compromissos/:id", async (request) => {
