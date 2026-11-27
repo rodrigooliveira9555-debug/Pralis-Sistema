@@ -187,7 +187,7 @@ Transcrição e resumo no cofre do Obsidian (`C:\projetos\PRALIS\46 - Áudio Rod
 O **VND - Horário de Funcionamento** (Entradas › Vendas › Cadastros Geral, 25/11/2026) guarda horários **com nome**, cada um com os dias em que vale e a hora de abrir e de fechar (`cicluz-horarios-funcionamento-v1`). O novo **Horários Empresa** guarda o horário **por dia e por turno**. Os dois dizem "a que horas a empresa abre e fecha": é o mesmo ato em dois caminhos (regra 1 do CLAUDE.md). **Nada foi removido nem migrado**, porque mexer em dados salvos e escolher qual dos dois fica é decisão do Washington e do Rodrigo; hoje nenhuma outra tela lê nenhum dos dois. Opções: (a) ficar só com Horários Empresa e migrar os horários com nome (migração, pede aprovação); (b) manter os dois, cada um com um papel dito por escrito (ex.: o nomeado vale para vendas e o quadro, para a empresa); (c) tirar o novo. Recomendação: (a), depois de responder o P-55.
 
 ## P-57 — Área ConPlus: laboratório da troca por arquivo com o DP (27/11/2026, Marco)
-**Contexto:** Marco decidiu em 27/11/2026 não pagar a API da ConPlus; a troca com o DP (Questor) passa a ser por arquivo no layout `.nli` (registrado no PR #102 deste repositório, que ainda não está na `main` e usa o número **P-55, que já existe aqui** para Horários Empresa: precisa ser renumerado antes do merge).
+**Contexto:** Marco decidiu em 27/11/2026 não pagar a API da ConPlus; a troca com o DP (Questor) passa a ser por arquivo no layout `.nli` (registrado como **P-59**, abaixo).
 **Feito (laboratório isolado):** Saídas · Despesas › API › **DES - ConPlus Arquivo (Laboratório)** (`dist/conplus/`). Gera o .txt de admissão (A 21, B 85, C 67, D 31 colunas; uma pessoa por arquivo; C e D só com dado) e o de eventos (E 13 colunas), em Windows-1252, `;`, sem cabeçalho, CR+LF; confere como a API (contagem de colunas, data dd/mm/aaaa, decimal com vírgula, CPF com pontuação, obrigatórios, nenhum negativo, TIPOJORNADA ≠ 0, banco/agência no pagamento em conta, linha C/D vazia, D com o CPF e a admissão do A), com o erro na linha e na coluna; lê um .txt coluna a coluna; guarda o de-para e o vínculo CPF ↔ contrato. **Aceite:** o arquivo gerado a partir do modelo da doc sai idêntico, byte a byte, ao modelo testado pela ConPlus em 24/11/2026 (teste em `tests/conplus-dominio.cjs` e conferido no navegador).
 **Decidido aqui (técnico, reversível):**
 - Coluna que a doc não nomeia fica "Coluna N" (marcada "a confirmar no .nli"), com o valor do modelo como dica; o tipo dela vem do formato do valor no modelo (data, decimal, CPF) ou é texto livre. Nada foi inventado.
@@ -205,7 +205,8 @@ O **VND - Horário de Funcionamento** (Entradas › Vendas › Cadastros Geral, 
 4b. **Alerta LGPD para a ConPlus (27/11/2026):** no Zen, qualquer usuário logado consegue ler pelas lupas do formulário as filiais (893), organogramas (1.638), locais contábeis (5.363), contratos (3.793 de 607 empresas) e pessoas (5.000+, com nome, CPF e PIS) de **todos os clientes da ConPlus**. Nada disso foi guardado (só a empresa 257). Levar à ConPlus.
 5. As tabelas de códigos por CNPJ (cargo, escala, filial, eventos, municípios, bancos) e a lista CPF → contrato dos ativos, que a ConPlus vai mandar (entram pela importação de CSV da área).
 
-## P-57 — VND - Hardware: tentado e desfeito (27/11/2026, Washington)
+## P-60 — VND - Hardware: tentado e desfeito (27/11/2026, Washington)
+> Renumerado de P-57 em 27/11/2026: o número já era da Área ConPlus (mergeada antes). Nenhuma outra referência citava este item.
 O Washington pediu para renomear **VND - Computadores** para **VND - Hardware**, com grupos por tipo de equipamento (Computadores, Celulares, Tablets…). A mudança entrou na main (PR 109) e **foi desfeita no mesmo dia, a pedido dele**: a tela volta a ser **VND - Computadores**, como estava (grupo › computador). Os dados nunca mudaram (chave `computadores`), então nada foi migrado nem perdido. **Não refazer sem novo pedido.** Se a ideia voltar, as dúvidas que ficaram abertas eram: o campo "Computador" de Grupos de Vendas › subgrupo listar celular e tablet; tablet poder ser PDV (o Caixa só lê nomes terminados em CXPDV-n); e o nome do equipamento em maiúsculas para celular e tablet. A branch `feat/vnd-hardware-20261127` foi mantida.
 
 ## P-58 — Agenda: áudio do Rodrigo de 27/11/2026 (compromisso, atividades, área e ações padronizadas)
@@ -230,3 +231,33 @@ Transcrição e resumo no cofre do Obsidian (`C:\projetos\PRALIS\48 - Áudio Rod
 **Decidido (Zé, 27/11/2026):** a área pode ser **qualquer nível** do DES - Área / Setor / Local; a árvore de telas mostra **todas as telas do menu**. SQL da 0013 (só a coluna `area_id`) aprovado.
 **Feito — Entrega 1 (27/11/2026, branch `feat/agenda-tela-area`, migration 0013, ainda não publicado):** itens 4 (tela e área no topo; tela pela árvore do menu; área pelo id) e o nome "Atividades" no lugar de "Subtarefas" na tela (item 1, só o texto). **Ordem das próximas entregas** (plano do orquestrador e pré-mortem de 27/11/2026): (2) atividade com prazo, Executor e Supervisores — recomendação: tabela própria `agenda_atividades` (o jsonb `subtarefas` é regravado em seis lugares com só id, título e feito, e apagaria os campos novos); (3) várias ações por atividade, com a ação do compromisso migrada para uma atividade (um caminho só); (4) subatividades, chat por atividade, regra de interação, rotina por área, pessoa de fora. **Perguntas para o Rodrigo antes da (2) e da (3):** o Executor conclui sem ter "concluir" no compromisso? O que o Supervisor pode? O gestor pode ser executor? Pode haver atividade sem executor? Se a pessoa sai do compromisso sendo executor: bloqueia ou limpa? Prazo da atividade em compromisso que repete fica na mesma distância da data? O compromisso conclui sozinho quando todas as atividades terminam? A ação conta só para o executor?
 | Zé/Rodrigo | (a), (b), (c), (e) respondidas em 27/11/2026; (d) aberta; Entrega 1 feita (não publicada); perguntas da (2) e (3) com o Rodrigo |
+
+## P-59 — ConPlus (DP/Questor): integração sem a API paga (27/11/2026, Marco)
+> Era P-55 no PR #102; renumerado no merge porque P-55 já era Horários Empresa. A área que põe isto em prática é a P-57.
+**Decidido (Marco, 27/11/2026):** **não contratar a API da ConPlus**, a menos que eles liberem sem custo. A proposta dela (e-mail de 26/11/2026) era: a) R$ 3.261 de implantação + R$ 334/mês; b) R$ 469/mês com fidelidade de 24 meses; c) R$ 605/mês com fidelidade de 12 meses. As três incluíam 3.000 requisições/mês. A troca de dados do DP passa a ser **por arquivo**, manual ou por script:
+- **S2 → ConPlus:** o S2 gera um `.txt` no layout de importação do Questor (os `.nli` aprovados pela ConPlus), em Windows-1252, separado por `;`, sem cabeçalho.
+  - **Admissão:** registros A e B obrigatórios, C e D opcionais; um arquivo por pessoa; o registro C tem 67 colunas.
+  - **Eventos variáveis do mês:** registro E, com o CNPJ na coluna 2, o código do contrato (`CODIGOFUNCCONTR`) e um SEQ gerado e guardado pelo S2.
+  - O arquivo vai por e-mail ou pelo Zen, e o DP importa no Questor.
+- **ConPlus → S2:**
+  - CSV dos relatórios (folha, adiantamento, férias e rescisões), lido pela importação que já existe (`dist/folhas-csv.js`);
+  - PDFs de holerite, recibo de férias e TRCT, por e-mail ou pelo Zen.
+- **Não muda:** desligamento, férias (programação e cancelamento), afastamento, alteração de cargo ou salário e alteração cadastral seguem com o DP da ConPlus, como hoje. A própria API não fazia isso.
+
+**Pendente antes de codar:**
+1. **A ConPlus confirmar** que o DP importa manualmente o arquivo nesse layout (e-mail com as perguntas redigido em 27/11/2026). Também precisam mandar:
+   - os `.nli` e os manuais (a pasta do WorkDrive pede login no Zoho);
+   - as tabelas de códigos por CNPJ: cargos, escalas, filiais, eventos, municípios, bancos e sindicatos;
+   - a lista CPF → código do contrato dos colaboradores ativos.
+2. **P-11:** o Cadastro completo hoje fica só no aparelho, então o arquivo só pode ser gerado nele, ou a P-11 precisa ser decidida antes.
+3. **Campos que o S2 ainda não coleta:**
+   - data de admissão gravada;
+   - salário por pessoa (hoje é por cargo);
+   - CTPS e dados bancários;
+   - código do município;
+   - empresa/filial da pessoa;
+   - código do contrato do Questor;
+   - de-para dos códigos do Questor (cargo, escala, evento).
+   - Os relatórios da ConPlus não trazem CPF, então o S2 precisa guardar o vínculo CPF ↔ contrato.
+
+Referência: documentação pública da API (https://nweb.evolvisolucoes.com.br/readme), lida inteira em 27/11/2026, que descreve os mesmos layouts.
