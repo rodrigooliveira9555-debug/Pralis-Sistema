@@ -37,3 +37,4 @@ backend: **08 + 12**.
 - `14_CASCA_CAIXA.md` — casca do Caixa no site (Entradas → Caixas, padrão Compras), sem backend; Abertura pronta, continua com o Washington.
 - `15_ACESSOS.md` — Configurações: usuários, postos do caixa, cargos de acesso e permissões (06/11/2026), com o que já bloqueia e o que falta.
 - `16_MAPA_LANCAMENTOS_PRINCIPAL.md` — mapa do "+ NOVO → Saídas" do principal (Despesa, Mercadoria, Retirada: campos, regras, validações) e quadro de diferenças com o Lançamentos do CICLUZ (24/11/2026).
+- `17_RAIO_X_DO_SISTEMA.md` — **raio-x completo do sistema lido do código em 27/11/2026**: menus e rotas, todos os cadastros e lançamentos campo a campo, onde cada dado mora (localStorage, servidor), ligações por ID entre cadastros, o que é real × demonstração e os problemas encontrados. É o documento a anexar como memória do Claude conversa. Mais novo que os docs 01–16 em caso de conflito (o código continua vencendo).
