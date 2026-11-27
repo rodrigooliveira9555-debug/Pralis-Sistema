@@ -147,7 +147,11 @@
   // por cima (antes o fim do carregamento puxava de volta para a tela do F5).
   raiz.addEventListener('load', () => setTimeout(() => {
     const caminho = lerEndereco(location.hash);
-    if (caminho && caminho.join('/') !== rota.join('/')) reabrir(caminho);
+    if (!caminho || caminho.join('/') === rota.join('/')) return;
+    // Clique antes do rotas.js carregar (rotas-cedo.js): a tela aberta é a do clique, não a do endereço.
+    // Tira o endereço velho para o F5 não levar de volta a ela.
+    if (raiz.cicluzCliqueCedo && !rota.length) { history.replaceState(null, '', location.pathname + location.search); return; }
+    reabrir(caminho);
   }, 0));
 
   function abrirPorCodigo(destino) {
