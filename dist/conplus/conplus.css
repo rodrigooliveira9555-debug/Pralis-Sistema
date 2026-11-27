@@ -77,6 +77,12 @@ body.dark-theme .conplus-situacao.tom-modelo { color: #fca5a5; }
 .conplus-registro tr:focus { outline: 2px solid var(--conplus-erro); outline-offset: -2px; }
 
 .conplus-colar { width: 100%; min-height: 88px; resize: vertical; font: 400 12px/18px ui-monospace, SFMono-Regular, Consolas, monospace; }
+.conplus-prontidao { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.conplus-prontidao-bloco { min-width: 0; }
+.conplus-pessoas { display: grid; gap: 4px; max-height: 50vh; overflow-y: auto; }
+.conplus-pessoa { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; font: 400 var(--ui-text, 14px)/20px var(--ui-font); }
+.conplus-pessoa:hover { background: color-mix(in srgb, var(--menu-accent, #ef4444) 8%, transparent); }
+.conplus-pessoa > span:first-of-type { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .conplus-linha-acoes { display: inline-flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .conplus-filtro { max-width: 280px; margin-bottom: 8px; }
 .conplus-filtro-largo { max-width: 460px; }

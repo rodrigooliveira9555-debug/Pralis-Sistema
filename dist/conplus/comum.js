@@ -50,7 +50,7 @@
     no.id = 'conplus-' + c.registro + '-' + c.n + '-' + Math.random().toString(36).slice(2, 6);
     no.setAttribute('aria-label', 'Registro ' + c.registro + ', coluna ' + c.n);
     l.append(no);
-    const dica = [c.campo, c.fixo === 'cnpj' ? 'empresa do laboratório' : c.fixo ? 'fixa' : c.deriva ? 'igual à coluna ' + c.deriva[1] + ' do ' + c.deriva[0] : '',
+    const dica = [c.campo, c.fixo === 'cnpj' ? 'empresa do arquivo' : c.fixo ? 'fixa' : c.deriva ? 'igual à coluna ' + c.deriva[1] + ' do ' + c.deriva[0] : '',
       c.aConfirmar ? 'nome a confirmar no .nli' : '', c.obrigDoc ? 'obrigatório na doc do Questor' : '', c.tamanho && !somenteLeitura && !c.opcoes ? 'até ' + c.tamanho + ' caracteres' : '', c.modelo && !somenteLeitura ? 'modelo: ' + c.modelo : '', c.consulta ? 'consulta ' + c.consulta : ''].filter(Boolean).join(' · ');
     const pe = el('small', 'conplus-campo-dica', dica + (c.dica ? (dica ? '. ' : '') + c.dica : ''));
     l.append(pe);
