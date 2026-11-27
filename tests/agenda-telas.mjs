@@ -879,12 +879,12 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   // Desempenho: o responsável vê o próprio cartão.
   await q.evaluate(() => { document.dispatchEvent(new Event('cicluz-close-menu')); CicluzAgenda.estado.visao = 'desempenho'; CicluzAgenda.abrir(''); });
   // Lê a lista numa só passada, quando ela já tem o cartão da pessoa (o redesenho podia esvaziá-la entre esperar e ler).
-  const cartoes = await (await q.waitForFunction((nome) => {
+  const { cartoes, indicadores } = await (await q.waitForFunction((nome) => {
     const l = [...document.querySelectorAll('.agenda-desempenho-nome h3')].map((h) => h.textContent);
-    return l.includes(nome) && l;
+    return l.includes(nome) && { cartoes: l, indicadores: document.querySelectorAll('.agenda-desempenho-cartao .agenda-desempenho-indicador').length };
   }, RESP_UM.nome)).jsonValue();
   ok(cartoes.length === 1 && cartoes[0] === RESP_UM.nome, 'Desempenho: cada pessoa vê o seu (veio: ' + JSON.stringify(cartoes) + ')');
-  ok(await q.locator('.agenda-desempenho-cartao .agenda-desempenho-indicador').count() === 4, 'Desempenho: os quatro indicadores no cartão');
+  ok(indicadores === 4, 'Desempenho: os quatro indicadores no cartão (veio: ' + indicadores + ')');
   await q.close();
   await p.evaluate(() => { CicluzAgenda.estado.visao = 'listas'; });
   await p.close();
@@ -956,6 +956,8 @@ const ROTA_CHAT = /^\/api\/agenda\/(compromissos\/[^/]+\/(mensagens|arquivos|lei
   await limparAgenda(p);
   // Áreas fictícias deste aparelho (o campo lê o cadastro local).
   await p.evaluate(() => localStorage.setItem('cicluz-location-tree-v1', JSON.stringify({ tree: [{ id: 'area-teste-loja', name: 'Operação de Teste', children: [{ id: 'setor-teste-padaria', name: 'Padaria de Teste', children: [] }] }], history: [] })));
+  // O menu (rotas.js) carrega por último: espera as telas existirem.
+  await p.waitForFunction(() => window.CicluzRotas && CicluzAgendaRotina.telasDoMenu().length > 20, null, { timeout: 20000 });
   const CUSTOS = await p.evaluate(() => CicluzAgendaRotina.telasDoMenu().find((t) => t.endereco.endsWith('/producao-custos')));
   const arvore = await p.evaluate(() => CicluzAgendaRotina.arvoreDoMenu().map((m) => ({ menu: m.nome, sigla: m.sigla, secoes: m.filhos.length, folhas: m.filhos.every((s) => s.filhos.every((t) => t.folha && t.id.startsWith('#/'))) })));
   ok(arvore.length >= 6 && arvore.every((m) => m.sigla && m.secoes && m.folhas), 'Árvore do menu: menu › seção › tela, cada menu com a sua sigla (' + arvore.map((m) => m.sigla).join(', ') + ')');

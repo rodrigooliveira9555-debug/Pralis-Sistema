@@ -109,7 +109,7 @@ subtarefa, **Enter cria o próximo** (como no Lembretes). **Confirmado pelo Zé 
 roxo da Agenda (#7c3aed), qualquer que seja a cor da tela (regra `.people-agendar-control` em `people-header-pilot.css`, só a
 variável de cor, sem `!important`). **É exceção à cor por origem**, por pedido do Rodrigo (23/11/2026). Abre "Novo compromisso"
 com a **tela ligada**; na Agenda a tarefa mostra o ícone **"Abrir a tela"** (monitor com ✓) na linha e a seção **"Tela e área"** (antes "Tela ligada", no fim; desde 27/11/2026 é a primeira)
-na janela (um só botão cheio, "Abrir a tela"; "Desligar a tela" é link). No **celular (até 600 px)** os botões
+na janela (um só botão cheio, "Abrir a tela"; ~~"Desligar a tela" é link~~ **SUPERADA em 27/11/2026**: desmarcar a tela na árvore tira a tela). No **celular (até 600 px)** os botões
 da barra e o logotipo não cabem lado a lado: o de agendar **sai da barra e vira a primeira opção do menu rápido** (toque no
 logotipo), com o mesmo ícone roxo (24/11/2026; substitui a regra de "só até 340 px").
 **Chat no jeito do WhatsApp** (compromisso e grupo, peça única `abrirConversa` em `agenda/conversa.js`): separador do dia (Hoje,

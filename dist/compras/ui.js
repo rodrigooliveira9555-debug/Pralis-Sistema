@@ -1194,10 +1194,13 @@
    * Janela de escolha em árvore, no mesmo desenho da lista de origem (19/11/2026, Rodrigo): cada linha tem a seta de abrir, a caixa de
    * marcar (quadrada, de cantos arredondados), o ícone com a sigla da origem (DES, MER, RET), o nome, a contagem e a situação. Serve a
    * qualquer cadastro em níveis — grupo › subgrupo › item. Morava em contratos.js; desde 23/11/2026 é a peça única do sistema.
-   * nos: () => [{ id, nome, ativo, conta, folha, selecionavel (padrão: sim), sigla (opcional: a do ramo, no lugar da geral), filhos: [...] }]. marcados: Set de ids. bloqueados: Map id → motivo.
+   * nos: () => [{ id, nome, ativo, conta, folha, selecionavel (padrão: sim), sigla e cor (opcionais: as do ramo, no lugar das gerais),
+ *   semEstado (não mostra "Ativo"/"Inativo"), filhos: [...] }]. A sigla do ramo também vale na busca. marcados: Set de ids. bloqueados: Map id → motivo.
    * Padrão (vários): marcar um nível marca tudo abaixo; ao confirmar grava só o nível mais alto marcado.
    * unico: escolha de UM nó (o grupo, o subgrupo ou o item), sem cascata; a árvore abre já mostrando o escolhido.
    */
+  /** Cor de fundo clara (#rrggbb): o texto por cima vai escuro (contraste AA). */
+  const corClara = (hex) => { const m = /^#([0-9a-f]{6})$/i.exec(String(hex || '')); if (!m) return false; const n = parseInt(m[1], 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) > 150; };
   function seletorArvore({ titulo, cores, sigla, iconeFolha, rotuloBusca = 'Buscar', vazio = 'Nada cadastrado.', nos, marcados, bloqueados = new Map(), aoConfirmar, unico = false }) {
     const escolha = new Set(marcados); const abertos = new Set();
     const pais = new Map(); const porId = new Map();
@@ -1225,7 +1228,7 @@
         alternarTudo.onclick = () => { tudoAberto = !tudoAberto; abertos.clear(); if (tudoAberto) porId.forEach((n, id) => { if ((n.filhos || []).length) abertos.add(id); }); pintarAlternar(); desenhar(); };
         pintarAlternar();
         barra.append(resumo, alternarTudo);
-        const casa = (no, caminho, termo) => !termo || dobrar(caminho + ' ' + no.nome).includes(termo) || (no.filhos || []).some((f) => casa(f, caminho + ' ' + no.nome, termo));
+        const casa = (no, caminho, termo) => !termo || dobrar(caminho + ' ' + (no.sigla || '') + ' ' + no.nome).includes(termo) || (no.filhos || []).some((f) => casa(f, caminho + ' ' + no.nome, termo));
         const linha = (no, nivel, caminho, termo) => {
           const filhos = (no.filhos || []).filter((f) => casa(f, caminho + ' ' + no.nome, termo)); const aberto = Boolean(termo) || abertos.has(no.id);
           const l = el('div', 'compras-hier-linha'); l.setAttribute('role', 'treeitem'); l.style.setProperty('--nivel', String(nivel));
@@ -1241,11 +1244,11 @@
             desenhar();
           };
           if (no.selecionavel === false) { c.disabled = true; c.style.visibility = 'hidden'; }
-          const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); if (no.folha && iconeFolha) ic.innerHTML = svg(iconeFolha); else ic.append(el('span', 'sigla-text', no.sigla || sigla)); // grupo e subgrupo levam a sigla da origem; o item final leva o ícone dele
+          const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); if (no.cor) { ic.style.setProperty('--menu-accent', no.cor); ic.style.color = corClara(no.cor) ? '#18181b' : '#fff'; } // selo na cor da origem; no amarelo, tinta escura (AA) if (no.folha && iconeFolha) ic.innerHTML = svg(iconeFolha); else ic.append(el('span', 'sigla-text', no.sigla || sigla)); // grupo e subgrupo levam a sigla da origem; o item final leva o ícone dele
           const tx = el('span', 'compras-hier-texto'); tx.append(el('b', null, no.folha ? no.nome : (no.sigla || sigla) + ' ' + formatar(no.nome)));
           const conta = no.conta != null ? no.conta : (no.filhos ? plural(no.filhos.length) : ''); if (conta) tx.append(el('small', null, conta));
           if (travado) tx.append(el('small', null, bloqueados.get(no.id)));
-          l.append(seta, c, ic, tx, el('span', 'compras-hier-estado', ativo ? 'Ativo' : 'Inativo'));
+          l.append(seta, c, ic, tx, el('span', 'compras-hier-estado', no.semEstado ? '' : ativo ? 'Ativo' : 'Inativo'));
           return [l, ...(aberto ? filhos.flatMap((f) => linha(f, nivel + 1, caminho + ' ' + no.nome, termo)) : [])];
         };
         const desenhar = () => {

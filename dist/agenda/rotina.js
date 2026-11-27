@@ -580,17 +580,19 @@
   /**
    * As telas do menu em árvore (P-58, Rodrigo 27/11/2026: "apareceria o caminho como se fosse lá no menu"): menu › seção › tela,
    * para o campo "Tela" do compromisso (U.campoArvore). Só a tela é marcável; o id dela é o endereço (#/…).
-   * A sigla de cada menu é a da origem (VND, CNT, DES, MER, RET); Resultados e Configurações levam RES e CFG.
+   * A sigla e a cor de cada menu são as da origem (VND, CNT, DES, MER, RET; cor de `menuColor` do index.html); Resultados e
+   * Configurações levam RES e CFG. Sem "Ativo/Inativo": tela do menu não tem situação.
    */
   const SIGLAS_MENU = ['VND', 'CNT', 'DES', 'MER', 'RET', 'RES', 'CFG'];
   function arvoreDoMenu() {
     const menus = new Map();
     telasDoMenu().forEach((t) => {
-      if (!menus.has(t.indice)) menus.set(t.indice, { id: 'menu:' + t.indice, nome: t.menu, sigla: SIGLAS_MENU[t.indice] || '', selecionavel: false, filhos: [] });
+      const cor = typeof menuColor !== 'undefined' ? menuColor[t.indice] : undefined;
+      if (!menus.has(t.indice)) menus.set(t.indice, { id: 'menu:' + t.indice, nome: t.menu, sigla: SIGLAS_MENU[t.indice] || '', cor, semEstado: true, selecionavel: false, filhos: [] });
       const m = menus.get(t.indice);
       let s = m.filhos.find((x) => x.secao === t.secao);
-      if (!s) { s = { id: 'secao:' + t.indice + '|' + t.secao, nome: t.secao, secao: t.secao, sigla: m.sigla, selecionavel: false, filhos: [] }; m.filhos.push(s); }
-      s.filhos.push({ id: t.endereco, nome: t.titulo, folha: true, conta: 'Tela' });
+      if (!s) { s = { id: 'secao:' + t.indice + '|' + t.secao, nome: t.secao, secao: t.secao, sigla: m.sigla, cor: m.cor, semEstado: true, selecionavel: false, filhos: [] }; m.filhos.push(s); }
+      s.filhos.push({ id: t.endereco, nome: t.titulo, folha: true, semEstado: true, cor: m.cor });
     });
     return [...menus.values()].map((m) => ({ ...m, conta: m.filhos.length + (m.filhos.length === 1 ? ' seção' : ' seções'), filhos: m.filhos.map((s) => ({ ...s, conta: s.filhos.length + (s.filhos.length === 1 ? ' tela' : ' telas') })) }));
   }
