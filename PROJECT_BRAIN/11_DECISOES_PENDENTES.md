@@ -174,3 +174,32 @@ Transcrição e resumo no cofre do Obsidian (`C:\projetos\PRALIS\46 - Áudio Rod
 - **Tipo do bem** (Notebook, Computador, Celular…): campo **novo**, que **só escolhe** entre os tipos cadastrados na tela nova **RET - Tipos de Patrimônio** (Saídas · Retiradas → Cadastros Geral; Washington, 27/11/2026, que **superou o `+ Cadastrar novo tipo` dentro do campo**). Na tela: Novo Tipo, editar (nome e situação Ativo/Inativo) e excluir; **tipo em uso por algum patrimônio não se apaga, só se inativa** (some das escolhas novas e continua no bem que já o tinha, marcado "(inativo)"); nome obrigatório, até 60 letras, sem repetir (maiúscula e acento não contam). O bem guarda só o **id** do tipo (`tipoId`, opcional); a lista mora na coleção nova `tipos` de `cicluz-patrimonio-v1` (`[{ id, nome, ativo }]`), que nasce com Notebook, Computador e Celular na primeira abertura (marcador `tiposIniciais`). Documento antigo abre igual (coleção vazia, sem migração). **Pendente:** reordenar os tipos (hoje saem em ordem alfabética); o Tipo ainda não aparece na lista de bens.
 - **Chave ligada ao reabrir:** não há campo novo para isso; abre ligada quando o bem já tem dado do Completo (categoria, nome técnico, descrição, valor, local, imagem, documento ou peça); o nº de patrimônio é do Simples e não liga a chave.
 - **Antes:** a Categoria era obrigatória no primeiro campo e um bem novo só salvava na última etapa (decisão do Rodrigo de 17/11/2026, superada neste ponto).
+
+## P-55 — ConPlus (DP/Questor): integração sem a API paga (27/11/2026, Marco)
+**Decidido (Marco, 27/11/2026):** **não contratar a API da ConPlus**, a menos que eles liberem sem custo. A proposta dela (e-mail de 26/11/2026) era: a) R$ 3.261 de implantação + R$ 334/mês; b) R$ 469/mês com fidelidade de 24 meses; c) R$ 605/mês com fidelidade de 12 meses. As três incluíam 3.000 requisições/mês. A troca de dados do DP passa a ser **por arquivo**, manual ou por script:
+- **S2 → ConPlus:** o S2 gera um `.txt` no layout de importação do Questor (os `.nli` aprovados pela ConPlus), em Windows-1252, separado por `;`, sem cabeçalho.
+  - **Admissão:** registros A e B obrigatórios, C e D opcionais; um arquivo por pessoa; o registro C tem 67 colunas.
+  - **Eventos variáveis do mês:** registro E, com o CNPJ na coluna 2, o código do contrato (`CODIGOFUNCCONTR`) e um SEQ gerado e guardado pelo S2.
+  - O arquivo vai por e-mail ou pelo Zen, e o DP importa no Questor.
+- **ConPlus → S2:**
+  - CSV dos relatórios (folha, adiantamento, férias e rescisões), lido pela importação que já existe (`dist/folhas-csv.js`);
+  - PDFs de holerite, recibo de férias e TRCT, por e-mail ou pelo Zen.
+- **Não muda:** desligamento, férias (programação e cancelamento), afastamento, alteração de cargo ou salário e alteração cadastral seguem com o DP da ConPlus, como hoje. A própria API não fazia isso.
+
+**Pendente antes de codar:**
+1. **A ConPlus confirmar** que o DP importa manualmente o arquivo nesse layout (e-mail com as perguntas redigido em 27/11/2026). Também precisam mandar:
+   - os `.nli` e os manuais (a pasta do WorkDrive pede login no Zoho);
+   - as tabelas de códigos por CNPJ: cargos, escalas, filiais, eventos, municípios, bancos e sindicatos;
+   - a lista CPF → código do contrato dos colaboradores ativos.
+2. **P-11:** o Cadastro completo hoje fica só no aparelho, então o arquivo só pode ser gerado nele, ou a P-11 precisa ser decidida antes.
+3. **Campos que o S2 ainda não coleta:**
+   - data de admissão gravada;
+   - salário por pessoa (hoje é por cargo);
+   - CTPS e dados bancários;
+   - código do município;
+   - empresa/filial da pessoa;
+   - código do contrato do Questor;
+   - de-para dos códigos do Questor (cargo, escala, evento).
+   - Os relatórios da ConPlus não trazem CPF, então o S2 precisa guardar o vínculo CPF ↔ contrato.
+
+Referência: documentação pública da API (https://nweb.evolvisolucoes.com.br/readme), lida inteira em 27/11/2026, que descreve os mesmos layouts.
