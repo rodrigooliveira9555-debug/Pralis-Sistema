@@ -2390,6 +2390,21 @@ dialog.full{width:100vw;max-width:100vw;height:100vh;max-height:100vh;margin:0;b
 'use strict';
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 
+/* ---------- Links de âncora e formulários sem navegar ----------
+   Dentro do sistema esta página roda num quadro srcdoc. Num srcdoc, href="#algo" é resolvido contra o endereço da página que embute o quadro
+   (não contra a própria página); então o clique levaria o quadro para outro endereço, e o servidor recusa (X-Frame-Options). Por isso
+   todo link de âncora rola até o alvo dentro desta página, sem navegar. Formulário sem tratamento também não pode enviar (action vazia
+   = o mesmo endereço). Aberta sozinha, a página se comporta igual. */
+document.addEventListener('click',e=>{
+  const a=e.target.closest&&e.target.closest('a[href^="#"],area[href^="#"]'); if(!a||e.defaultPrevented) return;
+  e.preventDefault();
+  const id=decodeURIComponent((a.getAttribute('href')||'').slice(1)); const alvo=id?document.getElementById(id):document.body; if(!alvo) return;
+  alvo.scrollIntoView({block:'start'});
+  if(id&&!alvo.hasAttribute('tabindex')){alvo.setAttribute('tabindex','-1');}
+  if(id){try{alvo.focus({preventScroll:true})}catch(_){}}
+});
+document.addEventListener('submit',e=>{ if(e.target&&e.target.method!=='dialog') e.preventDefault(); });
+
 /* ---------- Tema ---------- */
 const root=document.documentElement;
 function setTema(v){ if(v==='auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme',v); try{localStorage.setItem('ds-tema',v)}catch(e){} }
