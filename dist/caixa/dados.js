@@ -13,7 +13,7 @@
     try { return JSON.parse(localStorage.getItem('cicluz-financial-hierarchy-v1') || 'null') || {}; } catch (e) { return {}; }
   }
   /**
-   * Os PDVs pelo NOME REAL da máquina no CREARE (dispositivo.DESCRICAO): os computadores ATIVOS de "VND - Hardware" (Entradas › Cadastros Geral)
+   * Os PDVs pelo NOME REAL da máquina no CREARE (dispositivo.DESCRICAO): os computadores ATIVOS de "VND - Computadores" (Entradas › Cadastros Geral)
    * cujo nome termina em CXPDV-n, em ordem do número (a mesma regra das abas de Vendas dos PDVs). Fonte única: não há lista própria do Caixa.
    */
   function pdvs() {
