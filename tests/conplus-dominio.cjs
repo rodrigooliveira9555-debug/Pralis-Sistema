@@ -185,6 +185,22 @@ t('lançamento é conferido antes de ganhar SEQ', () => {
   assert.match(D.problemaDoLancamento({ ...base, referencia: '5.00' }), /vírgula/);
 });
 
+t('tabela de eventos da ConPlus por empresa: código e unidade', () => {
+  const E = require('../dist/conplus/eventos-conplus.js');
+  const porEmpresa = Object.fromEntries(E.EMPRESAS.map((x) => [x, E.EVENTOS.filter((y) => y.empresa === x).length]));
+  assert.deepEqual(porEmpresa, { 'COMERCIAL TUDONUPAO LTDA': 14, 'COMERCIAL LISBOA ALIMENTOS LTDA': 15, 'BURPIZ LTDA': 9 });
+  assert.ok(E.EVENTOS.every((x) => ['H', 'R', 'V'].includes(x.tipo) && /^\d+$/.test(x.codigo)));
+  const tnp = 'COMERCIAL TUDONUPAO LTDA';
+  const av = (d) => D.avisosDoLancamento(d, E.EVENTOS, tnp);
+  assert.deepEqual(av({ evento: '35', referencia: '2,50', valor: '0,00' }), []);
+  assert.match(av({ evento: '35', referencia: '', valor: '30,00' }).join('|'), /horas \(H\): informe a quantidade.*\|.*valor costuma ficar zerado/);
+  assert.deepEqual(av({ evento: '800', referencia: '0,00', valor: '45,90' }), []);
+  assert.match(av({ evento: '800', referencia: '1,00', valor: '' }).join('|'), /em valor \(V\): informe o valor/);
+  assert.match(av({ evento: '1073', referencia: '', valor: '' })[0], /dias \(R\)/);
+  assert.match(av({ evento: '105', referencia: '1,00' })[0], /não está na tabela da ConPlus de COMERCIAL TUDONUPAO/); // 105 só existe na Lisboa
+  assert.deepEqual(D.avisosDoLancamento({ evento: '999' }, E.EVENTOS, ''), []); // sem empresa escolhida, não confere
+});
+
 t('de-para: conferência, busca e importação de CSV', () => {
   const lista = [{ id: '1', de: 'Padeiro', para: '10786', descricao: 'PADEIRO', cnpj: L.CNPJ_HOMOLOGACAO }];
   assert.match(D.problemaDoDepara('cargo', { de: 'padeiro', para: '1', cnpj: '84859909000190' }, lista), /Já existe/);

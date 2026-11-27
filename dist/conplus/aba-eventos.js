@@ -9,7 +9,9 @@
   if (!U || !L || !D || !S || !K) return;
   const { el, botao } = U;
   const cnpj = L.CNPJ_HOMOLOGACAO;
+  const EV = window.CicluzConplusEventos || { EVENTOS: [], EMPRESAS: [] };
   let periodoVisto = '';
+  let empresaTabela = EV.EMPRESAS[0] || ''; // tabela de eventos da ConPlus usada para sugerir e conferir (eventos-conplus.js)
 
   function montar(corpo) {
     const cols = L.colunas('E');
@@ -20,7 +22,7 @@
     COLS.forEach(([n, chave]) => {
       const c = cols[n - 1];
       const fixo = n === 2 ? cnpj : n === 4 ? 'gerado ao guardar' : null;
-      const x = K.campoColuna(chave ? c : { ...c, fixo: 'valor' }, form[chave], { valorFixo: fixo, aoMudar: (v) => { form[chave] = v; erro.textContent = ''; } });
+      const x = K.campoColuna(chave ? c : { ...c, fixo: 'valor' }, form[chave], { valorFixo: fixo, aoMudar: (v) => { form[chave] = v; erro.textContent = ''; pintarAvisos(); } });
       if (n === 5) {
         const vs = S.ler().vinculos;
         if (vs.length) { const dl = el('datalist'); dl.id = 'conplus-dl-contratos'; vs.forEach((v) => { const o = el('option'); o.value = v.contrato; o.label = (v.nome || '') + ' · ' + v.cpf; dl.append(o); }); x.no.append(dl); x.input.setAttribute('list', dl.id); }
@@ -29,7 +31,22 @@
       grade.append(x.no);
     });
     const erro = el('p', 'profiles-error'); erro.setAttribute('role', 'alert');
-    const pinta = () => Object.entries(ctl).forEach(([k, x]) => { x.input.value = form[k]; });
+    /* Tabela de eventos da ConPlus: escolhe a empresa, os eventos dela viram sugestão no campo Evento e a unidade é conferida. */
+    const selEmpresa = U.seletor(EV.EMPRESAS.map((x) => [x, x]), empresaTabela, 'Não conferir');
+    const listaEv = el('datalist'); listaEv.id = 'conplus-dl-eventos-empresa';
+    ctl.evento.no.append(listaEv); ctl.evento.input.setAttribute('list', listaEv.id);
+    const avisos = el('ul', 'conplus-erros tom-aviso'); avisos.setAttribute('aria-live', 'polite');
+    function pintarListaEventos() {
+      listaEv.replaceChildren(...EV.EVENTOS.filter((x) => x.empresa === empresaTabela).map((x) => { const o = el('option'); o.value = x.codigo; o.label = x.descricao + ' · ' + x.unidade + ' (' + x.tipo + ') · ' + x.natureza; return o; }));
+    }
+    function pintarAvisos() {
+      const a = form.evento ? D.avisosDoLancamento(form, EV.EVENTOS, empresaTabela) : [];
+      avisos.replaceChildren(...a.map((t) => el('li', null, t)));
+      return a;
+    }
+    selEmpresa.addEventListener('change', () => { empresaTabela = selEmpresa.value; pintarListaEventos(); pintarAvisos(); });
+    pintarListaEventos();
+    const pinta = () => { Object.entries(ctl).forEach(([k, x]) => { x.input.value = form[k]; }); pintarAvisos(); };
     const acoes = el('div', 'conplus-acoes');
     acoes.append(
       botao('Preencher com o modelo da ConPlus', () => { Object.assign(form, { periodo: '2505', contrato: '1', evento: '318', referencia: '5,00', valor: '0,00' }); pinta(); erro.textContent = ''; }, 'btn secondary'),
@@ -40,11 +57,13 @@
         const ok = S.mudar((d) => { const r = D.novoLancamento(d.eventos, dados, { id: S.novoId('ev'), agora: S.agoraIso() }); d.eventos = r.estado; feito = r.lancamento; });
         if (!ok) { erro.textContent = 'Não foi possível guardar. Tente de novo.'; return; }
         periodoVisto = feito.periodo;
-        U.avisar('Lançamento guardado com SEQ ' + feito.seq + '.');
+        const tinhaAviso = pintarAvisos().length > 0;
+        U.avisar('Lançamento guardado com SEQ ' + feito.seq + (tinhaAviso ? ', com aviso de unidade: confira.' : '.'));
         Object.assign(form, { evento: '', referencia: '', valor: '' }); pinta(); desenharLista();
       }, 'btn'));
     const novo = U.secao('Novo lançamento');
-    novo.append(K.corpo(U.nota('A linha E identifica o empregado pelo código do contrato no Questor (CODIGOFUNCCONTR), não pelo CPF: os contratos ligados na aba Retorno aparecem como sugestão. O SEQ é gerado uma vez, ao guardar, e nunca se repete.'), grade, erro, acoes));
+    const filtroEmpresa = el('div', 'conplus-filtro conplus-filtro-largo'); filtroEmpresa.append(U.campo('Tabela de eventos da ConPlus', selEmpresa, 'Os eventos da empresa viram sugestão no campo Evento, e a unidade (H, R ou V) é conferida. O arquivo do laboratório continua com o CNPJ de homologação.'));
+    novo.append(K.corpo(U.nota('A linha E identifica o empregado pelo código do contrato no Questor (CODIGOFUNCCONTR), não pelo CPF: os contratos ligados na aba Retorno aparecem como sugestão. O SEQ é gerado uma vez, ao guardar, e nunca se repete.'), filtroEmpresa, grade, avisos, erro, acoes));
 
     const lista = U.secao('Lançamentos guardados');
     const arquivo = U.secao('Arquivo do período');

@@ -2,7 +2,7 @@
  * Área ConPlus (laboratório, 27/11/2026) — Saídas · Despesas › API › DES - ConPlus Arquivo (Laboratório).
  * Uma área isolada para testar a troca de dados com o DP da ConPlus (Questor) "como se fosse a API, mas por arquivo"
  * (decisão do Marco de 27/11/2026: sem a API paga). Não mexe no cadastro de pessoas nem nas telas de DP que já existem;
- * onde ela mora no menu definitivo e como se liga ao cadastro ficam para depois (PROJECT_BRAIN/11, P-57).
+ * o lugar definitivo é este, Saídas › API (Marco, 27/11/2026); a ligação com o cadastro fica para depois (PROJECT_BRAIN/11, P-57).
  * Abas: Admissão (A–D), Eventos (E), Ler arquivo, Códigos (de-para) e Retorno (CSV dos relatórios + vínculo CPF ↔ contrato).
  * Só a empresa de homologação da ConPlus (84.859.909/0001-90) e só dados fictícios.
  */

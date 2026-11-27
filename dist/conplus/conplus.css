@@ -78,6 +78,8 @@ body.dark-theme .conplus-situacao.tom-modelo { color: #fca5a5; }
 .conplus-colar { width: 100%; min-height: 88px; resize: vertical; font: 400 12px/18px ui-monospace, SFMono-Regular, Consolas, monospace; }
 .conplus-linha-acoes { display: inline-flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .conplus-filtro { max-width: 280px; margin-bottom: 8px; }
+.conplus-filtro-largo { max-width: 460px; }
+#conplus-painel .compras-corpo + .compras-tabela-box { border-top: 1px solid var(--layout-line, #dedee3); }
 .conplus-grade-eventos { padding: 0; }
 .conplus-view .compras-tabela-box { overflow-x: auto; max-width: 100%; }
 

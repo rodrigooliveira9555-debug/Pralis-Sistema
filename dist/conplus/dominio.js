@@ -233,6 +233,30 @@
     return r.erros.length ? r.erros[0].texto.replace(/^Linha 1: /, '') : '';
   }
 
+  /**
+   * Avisos (não bloqueiam) de um lançamento conferido com a tabela de eventos da empresa (eventos-conplus.js). A ConPlus pede que o
+   * evento bata no código e na unidade do Zen. Leitura do S2 (a confirmar com a ConPlus): H (horas) e R (dias) vão na referência,
+   * coluna 7; V (valor), no valor, coluna 8.
+   */
+  function avisosDoLancamento(d, eventos, empresa) {
+    if (!empresa) return [];
+    const ev = (eventos || []).find((x) => x.empresa === empresa && x.codigo === String(d.evento || '').trim());
+    if (!ev) return ['O evento ' + String(d.evento || '').trim() + ' não está na tabela da ConPlus de ' + empresa + '.'];
+    const positivo = (v) => /^\d+(,\d+)?$/.test(String(v || '').trim()) && Number(String(v).replace(',', '.')) > 0;
+    const nome = ev.codigo + ' (' + ev.descricao + ')';
+    if (ev.tipo === 'V') {
+      const a = [];
+      if (!positivo(d.valor)) a.push('O evento ' + nome + ' é em valor (V): informe o valor, coluna 8.');
+      if (positivo(d.referencia)) a.push('O evento ' + nome + ' é em valor (V): a referência costuma ficar zerada.');
+      return a;
+    }
+    const unidade = ev.tipo === 'H' ? 'horas (H)' : 'dias (R)';
+    const a = [];
+    if (!positivo(d.referencia)) a.push('O evento ' + nome + ' é em ' + unidade + ': informe a quantidade na referência, coluna 7.');
+    if (positivo(d.valor)) a.push('O evento ' + nome + ' é em ' + unidade + ': o valor costuma ficar zerado.');
+    return a;
+  }
+
   /* ============================== De-para dos códigos do Questor ============================== */
   const TABELAS = {
     cargo: { titulo: 'Cargo', de: 'Cargo no S2', para: 'CODIGOCARGO', consulta: 'nFpaDCCargoEmpresa', porEmpresa: true },
@@ -327,7 +351,7 @@
     foraDo1252, paraWindows1252, lerBytes,
     montarLinha, montarAdmissao, montarEventos, juntar, valoresDaLinha, temDado,
     problemaDoValor, ler, validar, igualAoModelo,
-    chaveSeq, novoLancamento, problemaDoLancamento,
+    chaveSeq, novoLancamento, problemaDoLancamento, avisosDoLancamento,
     problemaDoDepara, codigoQuestor, deparaDoCsv,
     problemaDoVinculo, cpfDoContrato,
   };
