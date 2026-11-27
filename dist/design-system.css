@@ -79,7 +79,7 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 
 .location-row .location-move.menu-item-move{display:inline-flex;align-items:center;justify-content:center;flex:none;width:18px;min-height:24px;margin-right:8px;padding:0;color:#9b9490;font-size:20px;line-height:1;font-weight:400;border:0;background:none;cursor:grab;touch-action:none;user-select:none}
 
-.location-palette{display:grid;grid-template-columns:repeat(8,24px);gap:6px}.location-dialog .location-swatch{width:24px;height:24px;border:1px solid #0002;border-radius:50%;padding:0;cursor:pointer;font-size:13px;color:white;text-shadow:0 1px 3px #000}.location-dialog .location-swatch[aria-pressed=true]{outline:2px solid #7c3aed;outline-offset:2px}.location-custom-color{display:flex;align-items:center;gap:12px;margin-top:8px;font-size:11px}.location-dialog input[type=color]{width:34px;height:30px;padding:2px;cursor:pointer}
+.location-palette{display:grid;grid-template-columns:repeat(8,24px);gap:6px}.location-dialog .location-swatch{width:24px;height:24px;border:1px solid #0002;border-radius:50%;padding:0;cursor:pointer;font-size:13px;color:white;text-shadow:0 1px 3px #000}.location-dialog .location-swatch[aria-pressed=true]{outline:2px solid #7c3aed;outline-offset:2px}.location-dialog input[type=color]{width:34px;height:30px;padding:2px;cursor:pointer}
 
 .location-add-row{padding:8px 0}.location-toolbar{margin-top:12px;margin-bottom:0}
 
@@ -90,7 +90,7 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 
 .location-dialog-tools{display:flex;align-items:center;gap:8px}.location-dialog-tools .shortcut-circle{width:32px;height:32px;padding:7px;border:1px solid #d8c7f7;border-radius:50%;display:flex;align-items:center;justify-content:center;background:transparent}.location-dialog-tools svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 
-.location-color-picker{border:1px solid #e5ddf0;border-radius:8px;background:#fff;padding:10px 12px}.location-color-picker summary{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px}.location-color-chip{width:22px;height:22px;border:1px solid #0002;border-radius:50%}.location-color-picker[open] .location-palette{margin-top:14px}.location-preview-card{min-height:62px;padding:12px 14px;border:1px solid color-mix(in srgb,var(--node-color) 25%,white);border-radius:10px;background:#fff;box-sizing:border-box;gap:10px;color:#111}.location-preview-handle{color:#9b9490;font-size:20px;line-height:1;width:18px}.location-preview-name{font-size:12px;flex:1}.location-preview-arrow{font-size:22px;color:var(--navigation-ink,#a2a0aa)}
+.location-preview-card{min-height:62px;padding:12px 14px;border:1px solid color-mix(in srgb,var(--node-color) 25%,white);border-radius:10px;background:#fff;box-sizing:border-box;gap:10px;color:#111}.location-preview-handle{color:#9b9490;font-size:20px;line-height:1;width:18px}.location-preview-name{font-size:12px;flex:1}.location-preview-arrow{font-size:22px;color:var(--navigation-ink,#a2a0aa)}
 
 /* Shared compact tree rhythm, matching the sales group reference. */
 .location-row{min-height:64px;margin:0 0 10px;padding:12px 14px;flex-wrap:nowrap;gap:10px}
@@ -172,7 +172,6 @@ body.dark-theme #sector-view.financial-groups .panel>.head{background:color-mix(
 .location-dialog .location-sigla-field input{text-transform:uppercase;max-width:150px;letter-spacing:2px}
 .location-dialog .location-saved-colors{margin:8px 0 0;grid-template-columns:repeat(auto-fill,24px)}
 .location-dialog .location-saved-colors small{grid-column:1/-1;font-size:11px;color:#777}
-.location-dialog .location-color-picker>.location-saved-colors+span,.location-dialog .location-color-picker>span{display:block;margin-top:14px;font-size:12px}
 
 /* Location frames use the module header; actions use each item's own color. */
 #sector-view .location-tree>.location-area-frame{border-color:color-mix(in srgb,var(--menu-accent,#7c3aed) 25%,white)}
