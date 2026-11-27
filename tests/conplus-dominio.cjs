@@ -24,7 +24,11 @@ t('aceite: a admissão gerada sai idêntica ao modelo testado pela ConPlus', () 
   assert.ok(D.igualAoModelo(linhas));
   assert.equal(D.juntar(linhas), M.A + '\r\n' + M.B + '\r\n' + M.C + '\r\n' + M.D + '\r\n');
   const r = D.validar(D.juntar(linhas));
-  assert.deepEqual(r.erros, []); assert.deepEqual(r.avisos, []); assert.equal(r.grupo, 'Admissao');
+  assert.deepEqual(r.erros, []); assert.equal(r.grupo, 'Admissao');
+  // Regras oficiais do S1: o modelo aceito pela ConPlus deixa 2 campos "obrigatórios na documentação" vazios — só aviso.
+  assert.deepEqual(r.avisos.map((a) => a.texto.replace(/\. O DP.*/, '')), [
+    'Linha 1: obrigatório na documentação do Questor e vazio: CODIGOSIND (coluna 12)',
+    'Linha 2: obrigatório na documentação do Questor e vazio: PISFUNC (coluna 3)']);
 });
 
 t('aceite: a linha E sai idêntica ao exemplo da doc', () => {
