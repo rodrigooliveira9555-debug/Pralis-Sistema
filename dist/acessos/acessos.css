@@ -94,7 +94,7 @@ body.dark-theme .acessos-ver-senha { color: #d8c8fb; }
 }
 
 /* Senhas */
-.acessos-senha { display: grid; gap: 14px; max-width: 460px; }
+.acessos-senha { display: grid; gap: 12px; }
 .acessos-ok { margin: 0; color: #15803d; font: 500 13px/18px var(--ui-font); }
 .acessos-ok:empty, .acessos-senha .profiles-error:empty { display: none; }
 body.dark-theme .acessos-ok { color: #a7e8bd; }

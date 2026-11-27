@@ -6,13 +6,15 @@
  * abertura e lacre de fechamento reservado (distintos entre si e únicos na empresa: "Lacre já utilizado em outro movimento"), bolsas de
  * sangria opcionais (≤ 50). O dinheiro sai da origem na criação e só entra no destino quando é recebido (malote: na abertura do caixa).
  * Passa por um diálogo de confirmação antes de gravar. Dados FICTÍCIOS, em centavos, só em memória.
+ * Apresentação em formulário linha por linha (padrão da Nova Transferência): grupos Contas, Valor, Lacres (só malote) e Observação, cada
+ * um com título acima e quadro de linhas de 52 px; o valor é composto (dinheiro + moedas), então não há quadro grande, só a linha de total.
  */
 (function () {
   'use strict';
   const U = window.CicluzComprasUI;
   const C = window.CicluzCaixa;
-  const { el, botao, campo, entrada, seletor } = U;
-  const { moeda, centavos } = C;
+  const { el, botao, entrada } = U;
+  const { moeda, centavos, formulario, grupo, linhaEscolha, linhaCampo, linhaDinheiro, linhaLeitura } = C;
   const T = (window.CicluzCaixaTesouraria = window.CicluzCaixaTesouraria || {});
 
   const novo = () => ({ origem: 'cofre', destino: 'cx-1m', especie: '', moedas: '', obs: '', lacre: '', lacreFechamento: '', bolsas: '' });
@@ -20,45 +22,49 @@
   let erro = '';
   C.aoReiniciar(() => { Object.assign(form, novo()); erro = ''; });
 
-  const corpoSecao = (...nos) => { const c = el('div', 'compras-corpo'); c.append(...nos); return c; };
   const bolsasDe = () => form.bolsas.split(/[,\n;]+/).map((s) => s.trim()).filter(Boolean);
   const ehMalote = () => C.conta(form.origem).tipo === 'cofre' && C.conta(form.destino).tipo === 'caixa';
+  const soma = () => moeda((centavos(form.especie) || 0) + (centavos(form.moedas) || 0));
 
   function bloco(atualizar) {
-    const s = U.secao('Nova transferência');
     if (form.destino === form.origem) form.destino = C.estado.contas.find((c) => c.id !== form.origem).id;
     const contas = C.estado.contas.map((c) => [c.id, c.nome]);
-    const origem = seletor(contas, form.origem); origem.onchange = () => { form.origem = origem.value; atualizar(); };
-    const destino = seletor(contas.filter(([id]) => id !== form.origem), form.destino); destino.onchange = () => { form.destino = destino.value; atualizar(); };
-    const total = el('strong', 'caixa-dinheiro', moeda((centavos(form.especie) || 0) + (centavos(form.moedas) || 0)));
-    const din = (chave, rotulo) => {
-      const i = entrada('text', form[chave], { inputMode: 'decimal', placeholder: '0,00' });
-      i.oninput = () => { form[chave] = i.value; total.textContent = moeda((centavos(form.especie) || 0) + (centavos(form.moedas) || 0)); };
-      return campo(rotulo, i);
-    };
-    const obs = el('textarea'); obs.rows = 2; obs.value = form.obs; obs.oninput = () => { form.obs = obs.value; };
-    const g = el('div', 'caixa-grade');
-    g.append(campo('Origem / Saída', origem, 'Disponível em ' + C.conta(form.origem).nome + ': ' + moeda(C.saldoConta(form.origem))), campo('Destino / Entrada', destino),
-      din('especie', 'Dinheiro físico (R$)'), din('moedas', 'Moedas (R$)'));
-    const itens = [g];
-    if (ehMalote()) {
+    const origem = linhaEscolha('Origem / Saída', contas, form.origem, (v) => { if (v) form.origem = v; atualizar(); });
+    const destino = linhaEscolha('Destino / Entrada', contas.filter(([id]) => id !== form.origem), form.destino, (v) => { if (v) form.destino = v; atualizar(); });
+    const malote = ehMalote();
+    const gContas = grupo('Contas', [origem.no, destino.no],
+      U.nota('Disponível em ' + C.conta(form.origem).nome + ': ' + moeda(C.saldoConta(form.origem)) + '.'),
+      U.nota(malote ? 'Cofre → conta de posto é MALOTE: exige lacres. O destino abre o caixa com o lacre de abertura.' : 'Entre contas e locais comuns não há lacre: o destino confirma o recebimento (a Tesouraria também pode).'));
+
+    // O total (dinheiro físico + moedas) é o quadro grande no topo, só de leitura: o que se digita são as duas linhas do grupo.
+    const hero = C.quadroTotal('Total da transferência', soma());
+    const digitou = (chave) => (v) => { form[chave] = v; hero.definir(soma()); };
+    const gValor = grupo('Valor da transferência', [
+      linhaDinheiro('Dinheiro físico (R$)', form.especie, digitou('especie'), true).no,
+      linhaDinheiro('Moedas (R$)', form.moedas, digitou('moedas'), true).no,
+    ], U.nota('Dinheiro físico mais moedas. Use 0,00 quando não houver.'));
+
+    const grupos = [gContas, gValor];
+    if (malote) {
       const lacre = entrada('text', form.lacre, { placeholder: 'Ex.: 002', autocomplete: 'off' }); lacre.oninput = () => { form.lacre = lacre.value; };
       const lacreF = entrada('text', form.lacreFechamento, { placeholder: 'Ex.: FCH-002', autocomplete: 'off' }); lacreF.oninput = () => { form.lacreFechamento = lacreF.value; };
-      const bolsas = el('textarea'); bolsas.rows = 2; bolsas.placeholder = 'SNG-021, SNG-022'; bolsas.value = form.bolsas; bolsas.oninput = () => { form.bolsas = bolsas.value; };
-      const g2 = el('div', 'caixa-grade');
-      g2.append(campo('Lacre do malote de abertura', lacre, 'Selo físico; único na empresa. O operador digita este número para abrir o caixa.'),
-        campo('Lacre do malote de fechamento', lacreF, 'Vai aberto dentro do malote: o operador só fecha o caixa com este lacre.'));
-      const cb = campo('Lacres de retorno / sangria (opcional)', bolsas, 'Bolsas separadas por vírgula; o operador escolhe uma em cada sangria.');
-      cb.classList.add('caixa-largo'); g2.append(cb);
-      itens.push(U.nota('Cofre → conta de posto é MALOTE: exige lacres. O destino abre o caixa com o lacre de abertura.'), g2);
-    } else itens.push(U.nota('Entre contas e locais comuns não há lacre: o destino confirma o recebimento (a Tesouraria também pode).'));
-    const ob = campo('Observação (opcional)', obs); ob.classList.add('caixa-largo'); const g3 = el('div', 'caixa-grade'); g3.append(ob); itens.push(g3);
-    const linha = el('p', 'caixa-total'); linha.append(document.createTextNode('Total da transferência: '), total);
+      const bolsas = entrada('text', form.bolsas, { placeholder: 'SNG-021, SNG-022', autocomplete: 'off' }); bolsas.oninput = () => { form.bolsas = bolsas.value; };
+      grupos.push(grupo('Lacres do malote', [
+        linhaCampo('Lacre do malote de abertura', lacre, true),
+        linhaCampo('Lacre do malote de fechamento', lacreF, true),
+        linhaCampo('Lacres de retorno / sangria (opcional)', bolsas),
+      ],
+      U.nota('Lacre de abertura: selo físico, único na empresa. O operador digita este número para abrir o caixa.'),
+      U.nota('Lacre de fechamento: vai aberto dentro do malote; o operador só fecha o caixa com este lacre.'),
+      U.nota('Lacres de retorno: bolsas separadas por vírgula; o operador escolhe uma em cada sangria.')));
+    }
+    const obs = entrada('text', form.obs, { autocomplete: 'off' }); obs.oninput = () => { form.obs = obs.value; };
+    grupos.push(grupo('Observação', [linhaCampo('Observação (opcional)', obs)]));
+
     const msg = el('div', 'caixa-pendencias'); msg.setAttribute('role', 'alert'); if (erro) msg.append(el('b', null, erro));
     const acoes = el('div', 'caixa-acoes');
     acoes.append(el('small', null, 'Recebimento: aguardando confirmação do destinatário. O dinheiro já sai da origem ao salvar.'), botao('Salvar', () => confirmar(atualizar), 'btn'));
-    s.append(corpoSecao(...itens, linha, msg, acoes));
-    return s;
+    return formulario(hero.no, ...grupos, msg, acoes);
   }
 
   function validar() {
@@ -87,13 +93,12 @@
       titulo: 'Confirmar transferência',
       subtitulo: 'Confira antes de registrar a saída.',
       rotuloSalvar: 'Confirmar transferência',
+      padrao: true,
       montar: (f) => {
         const pares = [['Valor total enviado', moeda(especie + moedas)], ['Origem → destino', C.conta(form.origem).nome + ' · ' + C.conta(form.destino).nome], ['Dinheiro físico', moeda(especie)], ['Moedas', moeda(moedas)]];
         if (malote) pares.push(['Lacre do malote', form.lacre.trim()], ['Lacre reservado para fechamento', form.lacreFechamento.trim()], ['Lacres de retorno / sangria', bolsas.length ? bolsas.length + ' lacre(s): ' + bolsas.join(' · ') : 'Nenhum']);
         else pares.push(['Lacre', 'Sem lacre: quem recebe confirma o recebimento.']);
-        const dl = el('dl', 'caixa-declarado');
-        pares.forEach(([t, v]) => { const d = el('div'); d.append(el('dt', null, t), el('dd', null, v)); dl.append(d); });
-        f.append(dl);
+        f.append(formulario(grupo('Resumo da transferência', pares.map(([t, v]) => linhaLeitura(t, v)))));
       },
       salvar: () => {
         if (malote) C.criarMalote({ destino: form.destino, especie, moedas, lacre: form.lacre.trim(), lacreFechamento: form.lacreFechamento.trim(), bolsas, criadoPor: C.quemOpera() });

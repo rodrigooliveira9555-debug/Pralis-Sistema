@@ -278,3 +278,6 @@ Na Abertura de Caixa, a escolha da maquininha deixou de ser uma lista fictícia 
 
 `npm run dev` em `servidor` serve o site em http://localhost:4200. Em `npm run dev:web` (:3100), o
 `nuxt.config.ts` repassa `/entrar.html` e `/api` para a :4200 (antes o login entrava em loop até 431).
+
+## Formulários do Caixa em linha por linha (27/11/2026)
+Todas as telas e janelas do Caixa que pedem dados seguem o padrão da Nova Transferência (DESIGN_SYSTEM.md, item 34, lote 3). Só mudou a apresentação: regras, validações, textos e o que vai para o estado fictício são os mesmos. A contagem cega (R-232) continua cega: o "Total contado" da conferência só soma o que o conferente digitou.

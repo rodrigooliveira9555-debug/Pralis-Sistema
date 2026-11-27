@@ -6,39 +6,47 @@
  *    qualquer diferença NÃO confirma: "Conferência divergente: registre a recusa com o motivo";
  *  - recusa exige motivo; sem "encerrar" a transferência continua pendente e a tentativa fica registrada; com "encerrar" vira
  *    divergente (estado final): o CONTADO entra no destino e a falta vira quebra; contado acima do declarado exige confirmar a sobra;
- *  - a contagem é cega: o valor declarado não é mostrado ao conferente. Transferência comum: a Tesouraria confirma direto (R-189).
+ *  - a contagem é cega: o valor declarado não é mostrado ao conferente (por isso a janela só soma o contado, sem mostrar diferença).
+ *    Transferência comum: a Tesouraria confirma direto (R-189).
  * Tudo grava no estado único (conferirTransferencia / recusarConferencia). Dados FICTÍCIOS, em centavos, só em memória.
+ * Apresentação em formulário linha por linha (padrão da Nova Transferência): grupos de linhas (contagem, motivo, decisões Sim/Não).
  */
 (function () {
   'use strict';
   const U = window.CicluzComprasUI;
   const C = window.CicluzCaixa;
-  const { el, botao, campo, entrada } = U;
-  const { moeda, centavos } = C;
+  const { el, botao, entrada } = U;
+  const { moeda, centavos, formulario, grupo, linhaCampo, linhaDinheiro, linhaLeitura } = C;
   const T = (window.CicluzCaixaTesouraria = window.CicluzCaixaTesouraria || {});
 
   const NOME = { sangria: 'sangria', retorno_final: 'retorno final do caixa', comum: 'transferência' };
-  const dinheiro = (v = '') => entrada('text', v, { inputMode: 'decimal', placeholder: '0,00' });
   const valorDe = (i) => { const c = centavos(i.value); return c === null && !String(i.value).trim() ? 0 : c; }; // vazio = 0; inválido = null
+  const reais = (c) => (c ? (c / 100).toFixed(2).replace('.', ',') : '');
 
   function conferir(t, atualizar) {
     if (t.tipo === 'comum') return confirmarSimples(t, atualizar);
     C.dialogo({
       titulo: 'Conferir recebimento',
-      subtitulo: 'Conte o que veio no lacre: ' + NOME[t.tipo] + ' de ' + C.conta(t.origem).nome + ' para ' + C.conta(t.destino).nome + '. O valor declarado não é mostrado.',
       rotuloSalvar: 'Confirmar recebimento',
+      padrao: true,
       montar: (form, d) => {
-        const especie = dinheiro(); const moedas = dinheiro(); const lacre = entrada('text', '', { placeholder: 'Número do lacre', autocomplete: 'off' });
-        const total = el('strong', 'caixa-dinheiro', moeda(0));
-        const atualizarTotal = () => { total.textContent = moeda((valorDe(especie) || 0) + (valorDe(moedas) || 0)); };
-        especie.oninput = moedas.oninput = atualizarTotal;
-        const g = el('div', 'caixa-grade');
-        g.append(campo('Dinheiro físico contado (R$)', especie), campo('Moedas contadas (R$)', moedas), campo('Lacre conferido', lacre, 'Digite o número que está no envelope.'));
-        const linha = el('p', 'caixa-total');
-        linha.append(document.createTextNode('Total contado: '), total);
-        const recusa = botao('Registrar recusa…', () => { d.close(); recusar(t, { especie: valorDe(especie) || 0, moedas: valorDe(moedas) || 0, lacre: lacre.value }, atualizar); }, 'btn secondary caixa-perigo');
-        form.append(g, linha, U.nota('Se o que você contou não bate com o declarado, a confirmação é recusada e o caminho é registrar a recusa com o motivo.'), recusa);
-        return { especie, moedas, lacre };
+        // O total contado é o quadro grande no topo, só de leitura (contagem cega: o declarado nunca aparece). O caminho repetido sai e a explicação vira nota.
+        const sub = d.querySelector('.compras-dialog-sub'); if (sub) sub.remove();
+        const hero = C.quadroTotal('Total contado', moeda(0));
+        const atualizarTotal = () => { hero.definir(moeda((valorDe(especie.input) || 0) + (valorDe(moedas.input) || 0))); };
+        const especie = linhaDinheiro('Dinheiro físico contado (R$)', '', atualizarTotal);
+        const moedas = linhaDinheiro('Moedas contadas (R$)', '', atualizarTotal);
+        const lacre = entrada('text', '', { placeholder: 'Número do lacre', autocomplete: 'off' });
+        const recusa = botao('Registrar recusa…', () => { d.close(); recusar(t, { especie: valorDe(especie.input) || 0, moedas: valorDe(moedas.input) || 0, lacre: lacre.value }, atualizar); }, 'btn secondary caixa-perigo');
+        const acoes = el('div', 'caixa-acoes'); acoes.append(recusa);
+        form.append(formulario(
+          hero.no,
+          U.nota('Conte o que veio no lacre: ' + NOME[t.tipo] + ' de ' + C.conta(t.origem).nome + ' para ' + C.conta(t.destino).nome + '. O valor declarado não é mostrado.'),
+          grupo('Contagem', [especie.no, moedas.no]),
+          grupo('Lacre', [linhaCampo('Lacre conferido', lacre, true)], U.nota('Digite o número que está no envelope.')),
+          U.nota('Se o que você contou não bate com o declarado, a confirmação é recusada e o caminho é registrar a recusa com o motivo.'),
+          acoes));
+        return { especie: especie.input, moedas: moedas.input, lacre };
       },
       salvar: (ctx) => {
         const e = valorDe(ctx.especie); const m = valorDe(ctx.moedas);
@@ -56,7 +64,12 @@
     C.dialogo({
       titulo: 'Confirmar transferência',
       rotuloSalvar: 'Confirmar recebimento',
-      montar: (form) => { form.append(el('p', null, moeda(t.valor) + ' de ' + C.conta(t.origem).nome + ' para ' + C.conta(t.destino).nome + '. A Tesouraria pode confirmar a transferência comum (R-189).')); },
+      padrao: true,
+      montar: (form) => {
+        form.append(formulario(
+          grupo('Transferência', [linhaLeitura('Valor', moeda(t.valor)), linhaLeitura('Origem', C.conta(t.origem).nome), linhaLeitura('Destino', C.conta(t.destino).nome)],
+            U.nota('A Tesouraria pode confirmar a transferência comum (R-189).'))));
+      },
       salvar: () => {
         const r = C.conferirTransferencia(t.id, { especie: t.especie, moedas: t.moedas, lacre: '' });
         if (r.erro) return r.erro;
@@ -71,18 +84,25 @@
       titulo: 'Registrar recusa da conferência',
       subtitulo: 'Divergência na ' + NOME[t.tipo] + ' de ' + C.conta(t.origem).nome + '. A decisão fica no histórico da transferência.',
       rotuloSalvar: 'Registrar recusa',
+      padrao: true,
       montar: (form) => {
-        const especie = dinheiro(previa.especie ? (previa.especie / 100).toFixed(2).replace('.', ',') : '');
-        const moedas = dinheiro(previa.moedas ? (previa.moedas / 100).toFixed(2).replace('.', ',') : '');
+        const especie = linhaDinheiro('Dinheiro físico contado (R$)', reais(previa.especie));
+        const moedas = linhaDinheiro('Moedas contadas (R$)', reais(previa.moedas));
         const lacre = entrada('text', previa.lacre || '', { autocomplete: 'off' });
-        const motivo = el('textarea'); motivo.rows = 3; motivo.maxLength = 500;
-        const encerrar = entrada('checkbox', null); const sobra = entrada('checkbox', null);
-        const rotEnc = el('label', 'compras-interruptor'); rotEnc.append(encerrar, el('span', null, 'Encerrar a divergência: o que foi contado entra no destino e a falta vira quebra (não volta ao caixa).'));
-        const rotSobra = el('label', 'compras-interruptor'); rotSobra.append(sobra, el('span', null, 'Confirmo a sobra: contei mais que o declarado.'));
-        const g = el('div', 'caixa-grade');
-        g.append(campo('Dinheiro físico contado (R$)', especie), campo('Moedas contadas (R$)', moedas), campo('Lacre informado', lacre));
-        form.append(g, campo('Motivo da recusa', motivo, 'Obrigatório, até 500 caracteres.'), rotEnc, rotSobra);
-        return { especie, moedas, lacre, motivo, encerrar, sobra };
+        const motivo = entrada('text', '', { maxLength: 500, autocomplete: 'off' });
+        // As duas decisões são chaves Sim/Não; o contexto guarda o estado no mesmo formato de antes (.checked).
+        const encerrar = { checked: false }; const sobra = { checked: false };
+        const P = C.pecas();
+        form.append(formulario(
+          grupo('Contagem', [especie.no, moedas.no, linhaCampo('Lacre informado', lacre)]),
+          grupo('Motivo', [linhaCampo('Motivo da recusa', motivo, true)], U.nota('Obrigatório, até 500 caracteres.')),
+          grupo('Decisão', [
+            P.linha('Encerrar a divergência', P.chave('Encerrar a divergência', false, ['Sim', 'Não'], (sim) => { encerrar.checked = sim; })),
+            P.linha('Confirmo a sobra', P.chave('Confirmo a sobra', false, ['Sim', 'Não'], (sim) => { sobra.checked = sim; })),
+          ],
+          U.nota('Encerrar a divergência: o que foi contado entra no destino e a falta vira quebra (não volta ao caixa).'),
+          U.nota('Confirmo a sobra: contei mais que o declarado.'))));
+        return { especie: especie.input, moedas: moedas.input, lacre, motivo, encerrar, sobra };
       },
       salvar: (ctx) => {
         const e = valorDe(ctx.especie); const m = valorDe(ctx.moedas);

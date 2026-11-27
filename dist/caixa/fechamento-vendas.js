@@ -1,5 +1,6 @@
 /*
  * Caixa — Fechamento: etapa 1, Vendas (casca). Contagem cega (cédulas e moedas), folha do CREARE (leitura simulada) e "Gerar relatório de vendas".
+ * Formulário linha por linha (padrão da Nova Transferência): cada assunto é um grupo com título, quadro de linhas e notas depois do quadro.
  * Parte do fechamento em 4 etapas (fechamento.js monta a tela). Estado único em CicluzCaixa.estado; o que é só da tela
  * (erros, textos digitados) vive em ctx (fechamento-comum.js). Dados FICTÍCIOS, em centavos, só em memória.
  */
@@ -7,56 +8,54 @@
   'use strict';
   const U = window.CicluzComprasUI;
   const C = window.CicluzCaixa;
-  const { el, botao, campo, entrada, seletor } = U;
+  const { el, botao, entrada } = U;
   const { moeda, centavos } = C;
-  const { ctx: K, corpoSecao, dl, cadeado, fmt, CAMPOS_FOLHA, FORMAS_CARTAO, ICONE_CADEADO, pralis, lidoNoPdv, gerencia } = window.CicluzCaixaFechamentoComum;
+  const { ctx: K, linhaSituacao, cadeado, fmt, CAMPOS_FOLHA, lidoNoPdv, gerencia } = window.CicluzCaixaFechamentoComum;
+  const { linha, quadro, secao } = C.pecas();
+  const { valorDa, linhaCampo, linhaDinheiro, linhaLeitura } = C;
   const P = (window.CicluzCaixaFechamentoPartes = window.CicluzCaixaFechamentoPartes || {});
 
   /* ---------- Etapa 1: Vendas (contagem cega + folha CREARE + relatório) ---------- */
+  // Formulário linha por linha: cada assunto é um grupo (título pequeno acima, quadro de linhas, notas e avisos depois do quadro).
 
+  /** A etapa devolve a lista de grupos (nós) que a tela coloca no formulário. */
   function etapa1(f) {
-    const caixa = el('div', 'caixa-corpo');
-    caixa.append(blocoContagem(f), blocoFolha(f), blocoGerar(f));
-    return caixa;
+    return [...blocoContagem(f), ...blocoFolha(f), ...blocoGerar(f)];
   }
 
   function blocoContagem(f) {
     const c = f.contagem;
-    const s = U.secao('1 · Contagem do dinheiro (cega)');
     const trancada = Boolean(c.registrada) && !K.corrigindoContagem;
-    const g = el('div', 'caixa-grade');
-    const campoDin = (chave, rotulo) => {
-      const i = entrada('text', c[chave], { inputMode: 'decimal', placeholder: '0,00', readOnly: trancada });
-      i.oninput = () => { c[chave] = i.value; total.textContent = moeda((centavos(c.especie) || 0) + (centavos(c.moedas) || 0)); if (K.gerarRefresh) K.gerarRefresh(); };
-      return campo(rotulo, i);
+    const soma = () => (centavos(c.especie) || 0) + (centavos(c.moedas) || 0);
+    const total = valorDa(moeda(soma()));
+    const linhaDin = (chave, rotulo) => {
+      const r = linhaDinheiro(rotulo, c[chave], (v) => { c[chave] = v; total.textContent = moeda(soma()); if (K.gerarRefresh) K.gerarRefresh(); }, true);
+      r.input.readOnly = trancada;
+      return r.no;
     };
-    const total = el('strong', 'caixa-dinheiro', moeda((centavos(c.especie) || 0) + (centavos(c.moedas) || 0)));
-    g.append(campoDin('especie', 'Cédulas (R$)'), campoDin('moedas', 'Moedas (R$)'));
-    const linha = el('p', 'caixa-total');
-    linha.append(document.createTextNode('Total contado: '), total);
-    const corpoS = [U.nota('Aqui nada vem do sistema. Conte as cédulas e as moedas do caixa e informe os dois totais; o esperado só aparece na etapa 4.'), g, linha];
+    // Contagem cega: sem valor em destaque (são dois totais contados) e nada do sistema à vista; só a soma do que foi digitado.
+    const depois = [U.nota('Aqui nada vem do sistema. Conte as cédulas e as moedas do caixa e informe os dois totais; o esperado só aparece na etapa 4.')];
+    const extra = [];
     if (c.registrada) {
-      corpoS.push(cadeado('Contagem registrada às ' + c.registrada.em + ': ' + moeda(c.registrada.total) + (gerencia() ? ' · esperado ' + moeda(c.registrada.esperado) : '')));
-      if (!K.corrigindoContagem) corpoS.push(botao('Corrigir contagem', () => { K.corrigindoContagem = true; K.atualizar(); }, 'btn secondary'));
-      else {
-        const t = el('textarea');
-        t.rows = 2;
-        t.value = K.justContagem;
+      depois.push(cadeado('Contagem registrada às ' + c.registrada.em + ': ' + moeda(c.registrada.total) + (gerencia() ? ' · esperado ' + moeda(c.registrada.esperado) : '')));
+      if (!K.corrigindoContagem) {
+        const ac = el('div', 'caixa-acoes caixa-acoes-esq');
+        ac.append(botao('Corrigir contagem', () => { K.corrigindoContagem = true; K.atualizar(); }, 'btn secondary'));
+        depois.push(ac);
+      } else {
+        const t = entrada('text', K.justContagem, { autocomplete: 'off' });
         t.oninput = () => { K.justContagem = t.value; if (K.gerarRefresh) K.gerarRefresh(); };
-        corpoS.push(campo('Por que a contagem mudou? (obrigatório)', t, 'Mínimo 5 letras. A primeira contagem fica no histórico.'));
+        extra.push(secao('Correção da contagem', quadro(linhaCampo('Por que a contagem mudou?', t, true)), U.nota('Obrigatório, mínimo 5 letras. A primeira contagem fica no histórico.')));
       }
-      if (c.registrada.correcoes.length) corpoS.push(U.nota('Correções: ' + c.registrada.correcoes.map((x) => moeda(x.de) + ' → ' + moeda(x.para) + ' (' + x.justificativa + ')').join(' · ')));
+      if (c.registrada.correcoes.length) depois.push(U.nota('Correções: ' + c.registrada.correcoes.map((x) => moeda(x.de) + ' → ' + moeda(x.para) + ' (' + x.justificativa + ')').join(' · ')));
     }
-    s.append(corpoSecao(...corpoS));
-    return s;
+    return [secao('1 · Contagem do dinheiro (cega)', quadro(linhaDin('especie', 'Cédulas (R$)'), linhaDin('moedas', 'Moedas (R$)'), linha('Total contado', total)), ...depois), ...extra];
   }
 
 
   function blocoFolha(f) {
     const fo = f.folha;
-    const s = U.secao('2 · Folha do CREARE');
     const a = C.estado.abertura;
-    const itens = [U.nota('Fotografe ou anexe a folha impressa do PDV. No principal, uma IA lê os valores e eles ficam travados; aqui a leitura é simulada.')];
     const acoes = el('div', 'caixa-acoes caixa-acoes-esq');
     acoes.append(botao(fo.anexo ? 'Trocar folha (simulado)' : 'Anexar folha (simulado)', () => {
       fo.anexo = 'folha-creare-' + a.pdv.toLowerCase() + '.jpg';
@@ -64,15 +63,14 @@
       f.relatorioGerado = false; // anexar nova folha invalida o relatório já gerado
       K.atualizar();
     }, 'btn secondary'));
-    if (fo.anexo) {
-      acoes.append(U.situacao(fo.anexo, 'info'));
-      if (!fo.campos) acoes.append(botao('Ler folha (simulado)', () => { fo.campos = lerFolhaSimulada(); fo.periodoDe = C.primeiraVendaPdv(); fo.travados = true; K.atualizar(); }, 'btn'));
-    }
-    itens.push(acoes);
-    itens.push(...K_INICIO().bloco());
-    if (fo.campos) itens.push(tabelaFolha(fo), ...K_INICIO().avisoFolha(fo));
-    s.append(corpoSecao(...itens));
-    return s;
+    if (fo.anexo && !fo.campos) acoes.append(botao('Ler folha (simulado)', () => { fo.campos = lerFolhaSimulada(); fo.periodoDe = C.primeiraVendaPdv(); fo.travados = true; K.atualizar(); }, 'btn'));
+    const nos = [
+      secao('2 · Folha do CREARE', quadro(linhaLeitura('Folha anexada', fo.anexo || 'Nenhuma')),
+        U.nota('Fotografe ou anexe a folha impressa do PDV. No principal, uma IA lê os valores e eles ficam travados; aqui a leitura é simulada.'), acoes),
+      ...K_INICIO().bloco(), // o grupo 'Início das vendas' (e o botão Ajustar início) vem montado de fechamento-inicio.js
+    ];
+    if (fo.campos) nos.push(...gruposFolha(fo), ...K_INICIO().avisoFolha(fo));
+    return nos;
   }
 
   const K_INICIO = () => window.CicluzCaixaFechamentoComum.inicio; // "Início das vendas" e o aviso de horário da folha (fechamento-inicio.js, R-224)
@@ -90,34 +88,27 @@
     return texto;
   }
 
-  function tabelaFolha(fo) {
-    const linhas = CAMPOS_FOLHA.map(([k, rotulo, compara]) => ({ k, rotulo, compara }));
-    const t = U.tabela(
-      [
-        ['Campo da folha', (l) => l.rotulo + (l.compara ? '' : ' (só exibido)')],
-        ['Valor lido (R$)', (l) => {
-          const i = entrada('text', fo.campos[l.k], { inputMode: 'decimal', readOnly: fo.travados });
-          i.setAttribute('aria-label', l.rotulo);
-          i.oninput = () => { fo.campos[l.k] = i.value; };
-          return i;
-        }, 'caixa-num'],
-      ],
-      linhas
-    );
-    const caixa = el('div', 'caixa-corpo');
-    caixa.append(t);
+  /** Valores lidos da folha em linhas (nome à esquerda, valor à direita); destravados, pedem o motivo da mudança. */
+  function gruposFolha(fo) {
+    const linhas = CAMPOS_FOLHA.map(([k, rotulo, compara]) => {
+      const i = entrada('text', fo.campos[k], { inputMode: 'decimal', readOnly: fo.travados, autocomplete: 'off' });
+      i.oninput = () => { fo.campos[k] = i.value; };
+      return linhaCampo(rotulo + (compara ? '' : ' (só exibido)'), i);
+    });
+    const depois = [];
     if (fo.travados) {
       const ac = el('div', 'caixa-acoes caixa-acoes-esq');
       ac.append(cadeado('Valores lidos pela folha ficam travados.'), botao('Corrigir manualmente', () => { fo.travados = false; K.atualizar(); }, 'btn secondary'));
-      caixa.append(ac);
-    } else {
-      const j = el('textarea');
-      j.rows = 2;
-      j.value = fo.correcao;
-      j.oninput = () => { fo.correcao = j.value; if (K.gerarRefresh) K.gerarRefresh(); };
-      caixa.append(campo('Explique por que o valor mudou (mínimo 5 letras)', j, 'Fica registrado em "Correções manuais" no relatório final e no dossiê da Tesouraria.'));
+      depois.push(ac);
     }
-    return caixa;
+    const nos = [secao('Valores lidos da folha (R$)', quadro(...linhas), ...depois)];
+    if (!fo.travados) {
+      const j = entrada('text', fo.correcao, { autocomplete: 'off' });
+      j.oninput = () => { fo.correcao = j.value; if (K.gerarRefresh) K.gerarRefresh(); };
+      nos.push(secao('Correção manual da folha', quadro(linhaCampo('Por que o valor mudou?', j, true)),
+        U.nota('Explique em pelo menos 5 letras. Fica registrado em "Correções manuais" no relatório final e no dossiê da Tesouraria.')));
+    }
+    return nos;
   }
 
   /** Pendências para gerar o relatório (recalculadas sem redesenhar a tela: o botão não pode trocar de lugar entre o foco e o clique). */
@@ -135,8 +126,13 @@
 
   function blocoGerar(f) {
     const c = f.contagem;
-    const s = U.secao('3 · Gerar relatório de vendas');
-    const itens = [];
+    const filhos = [];
+    if (f.relatorioGerado) {
+      const r = C.resumo();
+      filhos.push(quadro(linhaSituacao('Situação', 'Relatório gerado', 'positivo'), linhaLeitura('Vendas', String(C.estado.turno.vendas.length)), linhaLeitura('Total vendido', moeda(r.entradas)),
+        linhaLeitura('Vendas canceladas', String(C.estado.turno.canceladas.length)), linhaLeitura('Contagem registrada', moeda(c.registrada.total))),
+      U.nota('As vendas canceladas não entram nos totais.'));
+    }
     const lista = el('ul', 'caixa-lista-pend');
     const b = botao(f.relatorioGerado ? 'Gerar de novo' : 'Gerar relatório de vendas', gerarRelatorio, 'btn');
     K.gerarRefresh = () => {
@@ -146,22 +142,15 @@
       b.disabled = p.length > 0;
     };
     K.gerarRefresh();
-    itens.push(lista);
+    filhos.push(lista);
     const msg = el('div', 'caixa-pendencias');
     msg.setAttribute('role', 'alert');
     if (K.erroGerar) msg.append(el('b', null, K.erroGerar));
-    itens.push(msg);
+    filhos.push(msg);
     const acoes = el('div', 'caixa-acoes');
     acoes.append(b);
-    itens.push(acoes);
-    if (f.relatorioGerado) {
-      const r = C.resumo();
-      itens.push(U.situacao('Relatório gerado', 'positivo'),
-        dl([['Vendas', String(C.estado.turno.vendas.length)], ['Total vendido', moeda(r.entradas)], ['Canceladas (não entram nos totais)', String(C.estado.turno.canceladas.length)],
-          ['Contagem registrada', moeda(c.registrada.total)]]));
-    }
-    s.append(corpoSecao(...itens));
-    return s;
+    filhos.push(acoes);
+    return [secao('3 · Gerar relatório de vendas', ...filhos)];
   }
 
   function gerarRelatorio() {

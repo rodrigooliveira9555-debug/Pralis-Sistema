@@ -177,9 +177,6 @@ body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.dialog).app-screen-shel
 body:is(.dark-theme,:not(.dark-theme)) :is(.view,dialog,.dialog).app-screen-shell :is(.head .sector-icon,.head .config-inherit-icon,.operator-fees h3 .fee-heading-icon,.operator-fees .fee-classification-icon) svg{flex:1 1 0!important;min-width:0!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important}
 
 /* Form links use the same neutral outline as editable field cells. */
-body .view form.account-editor>.editor-field-action{box-sizing:border-box;width:100%;height:var(--ui-field-height);min-height:var(--ui-field-height);border:1px solid var(--ui-border-base)!important;border-radius:var(--ui-field-radius)!important;background:var(--ui-control-bg)!important;box-shadow:none!important}
-body .view form.account-editor>.editor-field-action:hover{border-color:color-mix(in srgb,var(--ui-control-accent) 50%,var(--ui-border-base))!important}
-body .view form.account-editor>.editor-field-action:focus-visible{border-color:var(--ui-control-accent)!important;outline:2px solid color-mix(in srgb,var(--ui-control-accent) 22%,transparent)!important;outline-offset:var(--ui-focus-offset,1px)}
 
 /* Shared visible date control; the named backing field keeps the full year. */
 body :is(.view,dialog,.modal) .date-native-value{display:none!important}
@@ -428,7 +425,7 @@ body .btn.acao-com-circulo[hidden]{display:none}
 
 /* Estrutura organizacional (06/11/2026): inactive nodes stay visible, dimmed, with their history. */
 .location-node.is-inactive>.location-row{opacity:.6}.location-inactive-pill{margin-left:6px;background:var(--layout-line,#e5e5ea);color:var(--muted,#73737a)}
-/* Regra disciplinar em sequência (19/11/2026): três passos numerados, um embaixo do outro, com uma seta entre eles dizendo o que leva de um ao outro. */.regra-sequencia{gap:0}legend:has(>.regra-numero){display:flex;align-items:center;gap:8px}.regra-numero{display:inline-grid;place-items:center;flex:none;width:22px;height:22px;border-radius:50%;background:var(--menu-accent);color:#fff;font:700 12px/1 var(--ui-font)}.regra-seta{display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 0;color:var(--menu-accent);font:600 12px/16px var(--ui-font)}.regra-seta svg{flex:none;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.regra-resumo{margin:0;font:600 14px/20px var(--ui-font)}
+/* Número do passo na legenda do bloco (contratos.js). */legend:has(>.regra-numero){display:flex;align-items:center;gap:8px}.regra-numero{display:inline-grid;place-items:center;flex:none;width:22px;height:22px;border-radius:50%;background:var(--menu-accent);color:#fff;font:700 12px/1 var(--ui-font)}
 /* LISTA DE ESCOLHA COMPACTA (19/11/2026, Rodrigo). Toda lista em que se marca um item (árvore do contrato, árvore de áreas/setores,
    peças de uniforme) repete o desenho da lista de origem, só que proporcionalmente menor (cerca de 85%): linha de 44 px no lugar de 52,
    subnível de 36 no lugar de 40, ícone de 26 no lugar de 30, caixa de marcar de 20, nome em 13 px e detalhe em 10 px. As medidas moram
@@ -576,11 +573,8 @@ body :is(.location-tree.unidades-arvore .location-row,.uniforms-options .uniform
 .jornada-dia-campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;min-width:0}
 /* Mensagem de erro ou de aviso vazia não ocupa lugar no quadro (deixava um vão antes dos botões). */.form-fields>:is(.profiles-error,.profiles-note):empty{display:none}
 /* Janela de Área / Setor / Local no padrão dos quadros (18/11/2026, Rodrigo): cada bloco ocupa a largura inteira do quadro. */.location-quadro>*{grid-column:1/-1}
-.location-dialog-titles{min-width:0;flex:1;margin-left:4px}.location-dialog-header>.location-header-mark{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;min-width:30px;flex:0 0 30px;color:#fff}.location-header-mark svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.location-dialog-titles p{margin:0;font-size:11px;line-height:1.4;color:inherit}
 
 /* Ficha de Cargo e Matriz de Exigências (06/11/2026). */
-.profiles-units{display:grid;gap:4px;margin:0;padding:10px 12px;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;min-width:0;max-height:320px;overflow:auto}
-.profiles-units legend{padding:0 4px;font:600 var(--ui-label,12px)/18px var(--ui-font)}
 .profiles-chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .profiles-global-table .profiles-area-head{text-align:center;background:color-mix(in srgb,var(--menu-accent,#7c3aed) 10%,transparent)}
 .people-org{display:grid;gap:6px;margin:0;padding:10px 12px;border:1px solid var(--layout-line,#d4d4d8);border-radius:10px;min-width:0;grid-column:1/-1}.people-org legend{padding:0 4px;font:600 var(--ui-label,12px)/18px var(--ui-font)}.people-org-list{display:grid;gap:2px;min-width:0}
@@ -619,9 +613,6 @@ body :is(.location-tree.unidades-arvore .location-row,.uniforms-options .uniform
 .avaliacoes-head-title small{color:var(--muted,#73737a);font:400 var(--ui-note,12px)/16px var(--ui-font)}
 .people-complete-pickbox{display:grid;gap:6px;margin:0 0 14px}
 .people-complete-pickbox .profiles-note{margin:0}
-.job-cbo-link{display:grid;gap:6px;align-content:end}
-.job-cbo-link small{font-size:11px;line-height:1.4}
-a.btn.link-externo{width:fit-content;text-decoration:none}
 .people-doc-scan{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin:0 0 12px}
 .people-doc-scan .profiles-note{flex:1 1 100%;margin:0}
 .stepper-wrap{margin:20px 0}

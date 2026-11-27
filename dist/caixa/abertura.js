@@ -42,12 +42,8 @@
   }
 
   // Peças do formulário linha por linha (a Nova Transferência é a referência): grupo com título, quadro e linhas.
-  const { linha, linhaDe, quadro, secao } = window.CicluzTransferencias.pecas;
-  const valorDa = (texto) => el('span', 'transferencia-linha-valor', texto);
-  /** Tela do formulário: o contêiner leva a classe da referência (transferencia-tela) para valer as mesmas medidas, sem CSS paralelo. */
-  const formulario = (...filhos) => { const f = el('div', 'transferencia-tela transferencia-corpo caixa-formulario'); f.append(...filhos); return f; };
-  /** Linha de leitura (nome à esquerda, valor à direita, sem caixa). */
-  const linhaLeitura = (rotulo, texto) => linha(rotulo, valorDa(texto));
+  const { linha, linhaDe, quadro, secao } = C.pecas();
+  const { valorDa, formulario, linhaLeitura } = C;
   const escolha = (rotulo, opcoes, chave) => {
     const s = seletor(opcoes, estado[chave], 'Escolha…');
     s.required = true;
