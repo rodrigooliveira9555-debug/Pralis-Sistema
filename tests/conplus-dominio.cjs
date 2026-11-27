@@ -306,6 +306,10 @@ t('cadastro do S2 → admissão do Questor: de-para do S1 e o que falta (pessoa 
   const linhas = D.montarAdmissao({ cnpj: '08.351.168/0001-53', a: r.a, b: r.b, c: r.c, d: r.d });
   const erros = D.validar(D.juntar(linhas)).erros.filter((e) => !/obrigatório vazio/.test(e.msg));
   assert.deepEqual(erros.map((e) => e.texto), []);
+  // Todo obrigatório vazio aparece em "O que falta" (a DATAADM do dependente vem da coluna 9 do A, que já é pendência).
+  const listadas = new Set(r.pendencias.map((x) => x.registro.charAt(0) + '|' + x.coluna));
+  const semPendencia = D.validar(D.juntar(linhas)).erros.filter((e) => /obrigatório vazio/.test(e.msg) && !listadas.has(e.registro + '|' + e.coluna) && !(e.registro === 'D' && e.coluna === 4));
+  assert.deepEqual(semPendencia.map((e) => e.texto), []);
 });
 
 console.log('conplus-dominio: ' + n + ' grupos de teste ok');

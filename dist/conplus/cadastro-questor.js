@@ -116,7 +116,7 @@
     if (escala) b[72] = escala; else falta('B', 72, 'CODIGOESCALA', 'escala de trabalho', 'DP');
     const filiais = (cod.filial || []).filter((x) => !ctx.cnpj || digitos(x.cnpj) === digitos(ctx.cnpj));
     if (filiais.length === 1) b[40] = filiais[0].para; else falta('B', 40, 'CODIGOESTAB', filiais.length ? 'mais de uma filial: escolha a da pessoa' : 'empresa sem filial na tabela de códigos', 'DP');
-    [[41, 'CLASSIFORGAN'], [48, 'CODIGOLOCALCTB'], [57, 'RECEBEADTO'], [59, 'PERCADTO'], [60, 'MODOPGTO'], [74, 'TIPOJORNADA']].forEach(([n, campo]) => falta('B', n, campo, 'dado do contrato', 'DP'));
+    [[41, 'CLASSIFORGAN'], [48, 'CODIGOLOCALCTB'], [49, 'SINDICALIZADO'], [50, 'DESCMENSSIND'], [51, 'DESCCUSTCONFED'], [52, 'DESCTAXAASSIST'], [53, 'DESCONTAREVSAL'], [54, 'DESCCONTRIBSIND'], [56, 'CLAUSULAASSEGRESC'], [57, 'RECEBEADTO'], [59, 'PERCADTO'], [60, 'MODOPGTO'], [74, 'TIPOJORNADA']].forEach(([n, campo]) => falta('B', n, campo, 'dado do contrato', 'DP'));
 
     // C — contato e nome social
     if (f('Nome social')) c[4] = f('Nome social').toUpperCase();
