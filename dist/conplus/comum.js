@@ -39,7 +39,9 @@
       no.dataset.textoLivre = '1';
       if (somenteLeitura) { no.readOnly = true; no.tabIndex = -1; }
       if (['data', 'decimal', 'inteiro', 'codigo', 'cpf', 'cnpj'].includes(c.tipo)) no.inputMode = c.tipo === 'data' || c.tipo === 'cpf' || c.tipo === 'cnpj' ? 'numeric' : 'decimal';
-      if (c.tipo === 'data') no.placeholder = 'dd/mm/aaaa';
+      // Exemplo próprio em todo campo: sem ele, o layout-review.js poria "R$ 0,00" num rótulo com "salário" e o field-validation.js
+      // passaria a máscara de moeda (o arquivo quer 2500,00, sem R$ e sem ponto).
+      if (!somenteLeitura) no.placeholder = c.tipo === 'data' ? 'dd/mm/aaaa' : c.modelo ? 'Ex: ' + c.modelo + '...' : c.tipo === 'decimal' ? 'Ex: 0,00...' : ' ';
       const dl = !somenteLeitura && sugestoes(c.depara);
       if (dl) { l.append(dl); no.setAttribute('list', dl.id); }
     }
@@ -47,7 +49,7 @@
     no.setAttribute('aria-label', 'Registro ' + c.registro + ', coluna ' + c.n);
     l.append(no);
     const dica = [c.campo, c.fixo === 'cnpj' ? 'empresa do laboratório' : c.fixo ? 'fixa' : c.deriva ? 'igual à coluna ' + c.deriva[1] + ' do ' + c.deriva[0] : '',
-      c.aConfirmar ? 'nome a confirmar no .nli' : '', c.modelo && !c.fixo ? 'modelo: ' + c.modelo : '', c.consulta ? 'consulta ' + c.consulta : ''].filter(Boolean).join(' · ');
+      c.aConfirmar ? 'nome a confirmar no .nli' : '', c.modelo && !somenteLeitura ? 'modelo: ' + c.modelo : '', c.consulta ? 'consulta ' + c.consulta : ''].filter(Boolean).join(' · ');
     const pe = el('small', 'conplus-campo-dica', dica + (c.dica ? (dica ? '. ' : '') + c.dica : ''));
     l.append(pe);
     const aviso = el('small', 'conplus-campo-erro'); aviso.hidden = true; aviso.setAttribute('role', 'status'); l.append(aviso);
@@ -127,5 +129,16 @@
     return T.parseCSV(texto, T.detectDelim(texto));
   }
 
-  window.CicluzConplusComum = { COR, COR_TEXTO, campoColuna, conferencia, previa, baixar, carimbo, escolherArquivo, linhasDoCsv, sugestoes };
+  /** Miolo de uma seção (o espaçamento interno das seções do S2). */
+  const corpo = (...nos) => { const c = el('div', 'compras-corpo'); c.append(...nos.filter(Boolean)); return c; };
+
+  /** A tabela do S2 (U.tabela) que, até 600 px, vira uma ficha por linha com o nome de cada coluna (nunca rolagem lateral). */
+  function tabela(colunas, linhas, opcoes) {
+    const box = U.tabela(colunas, linhas, opcoes);
+    box.classList.add('conplus-tabela-empilha');
+    box.querySelectorAll('tbody tr').forEach((tr) => [...tr.children].forEach((td, i) => { td.dataset.rotulo = (colunas[i] && colunas[i][0]) || ''; }));
+    return box;
+  }
+
+  window.CicluzConplusComum = { tabela, corpo, COR, COR_TEXTO, campoColuna, conferencia, previa, baixar, carimbo, escolherArquivo, linhasDoCsv, sugestoes };
 })();

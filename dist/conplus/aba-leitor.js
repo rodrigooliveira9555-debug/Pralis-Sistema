@@ -42,7 +42,7 @@
           el('span', 'conplus-registro-meta', l.contagem + ' de ' + (l.esperado || '?') + ' colunas' + (l.sobraFinal ? ' (com ";" a mais no fim)' : '')),
           el('span', 'conplus-registro-conta' + (l.erros.length ? ' tom-erro' : ''), l.erros.length ? l.erros.length + (l.erros.length === 1 ? ' problema' : ' problemas') : 'ok'));
         d.append(sm);
-        d.append(U.tabela([
+        d.append(K.tabela([
           ['Nº', (c) => String(c.n), 'conplus-num'],
           ['Campo', (c) => { const s = el('span', c.aConfirmar ? 'conplus-a-confirmar' : null, c.nome + (c.campo ? ' · ' + c.campo : '')); if (c.aConfirmar) s.title = 'Nome a confirmar no .nli'; return s; }],
           ['Valor', (c) => { const v = el('code', 'conplus-valor', c.valor === '' ? '(vazio)' : c.valor); if (c.valor === '') v.classList.add('vazio'); return v; }],

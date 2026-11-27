@@ -44,7 +44,7 @@
         Object.assign(form, { evento: '', referencia: '', valor: '' }); pinta(); desenharLista();
       }, 'btn'));
     const novo = U.secao('Novo lançamento');
-    novo.append(U.nota('A linha E identifica o empregado pelo código do contrato no Questor (CODIGOFUNCCONTR), não pelo CPF: os contratos ligados na aba Retorno aparecem como sugestão. O SEQ é gerado uma vez, ao guardar, e nunca se repete.'), grade, erro, acoes);
+    novo.append(K.corpo(U.nota('A linha E identifica o empregado pelo código do contrato no Questor (CODIGOFUNCCONTR), não pelo CPF: os contratos ligados na aba Retorno aparecem como sugestão. O SEQ é gerado uma vez, ao guardar, e nunca se repete.'), grade, erro, acoes));
 
     const lista = U.secao('Lançamentos guardados');
     const arquivo = U.secao('Arquivo do período');
@@ -54,13 +54,13 @@
       if (!periodos.includes(periodoVisto)) periodoVisto = periodos[0] || '';
       lista.querySelectorAll(':scope > :not(.compras-secao-cab)').forEach((n) => n.remove());
       arquivo.querySelectorAll(':scope > :not(.compras-secao-cab)').forEach((n) => n.remove());
-      if (!todos.length) { lista.append(U.vazio('Nenhum lançamento guardado.', 'Guarde um lançamento acima para montar o arquivo de eventos.')); arquivo.append(U.nota('O arquivo aparece aqui quando houver lançamento.')); return; }
+      if (!todos.length) { lista.append(K.corpo(U.vazio('Nenhum lançamento guardado.', 'Guarde um lançamento acima para montar o arquivo de eventos.'))); arquivo.append(K.corpo(U.nota('O arquivo aparece aqui quando houver lançamento.'))); return; }
       const sel = U.seletor(periodos.map((p) => [p, 'Período ' + p]), periodoVisto);
       sel.addEventListener('change', () => { periodoVisto = sel.value; desenharLista(); });
       const doPeriodo = todos.filter((x) => x.periodo === periodoVisto).sort((a, b) => Number(a.contrato) - Number(b.contrato) || Number(a.seq) - Number(b.seq));
-      lista.append(el('div', 'conplus-filtro'));
-      lista.lastChild.append(U.campo('Período de cálculo', sel));
-      lista.append(U.tabela([
+      const filtro = el('div', 'conplus-filtro'); filtro.append(U.campo('Período de cálculo', sel));
+      lista.append(K.corpo(filtro));
+      lista.append(K.tabela([
         ['Contrato', (x) => x.contrato], ['SEQ', (x) => x.seq, 'conplus-num'], ['Evento', (x) => x.evento], ['Referência', (x) => x.referencia || '—', 'conplus-num'], ['Valor', (x) => x.valor || '—', 'conplus-num'],
         ['', (x) => botao('Remover', () => remover(x), 'btn ghost conplus-remover')],
       ], doPeriodo, { vazioTexto: 'Nenhum lançamento neste período.' }));
@@ -73,7 +73,7 @@
       }, 'btn');
       baixar.disabled = r.erros.length > 0;
       const ac = el('div', 'conplus-acoes'); ac.append(baixar);
-      arquivo.append(K.conferencia(r), K.previa(linhas), ac);
+      arquivo.append(K.corpo(K.conferencia(r), K.previa(linhas), ac));
     }
     function remover(x) {
       U.confirmar('Remover o lançamento', 'Remover o lançamento SEQ ' + x.seq + ' do contrato ' + x.contrato + ' (período ' + x.periodo + ')? O número SEQ não volta a ser usado. Se o arquivo já foi para a ConPlus, o lançamento continua no Questor: a correção é com a ConPlus.', 'Remover', () => {

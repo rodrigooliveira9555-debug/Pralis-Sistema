@@ -85,8 +85,8 @@
       const colunas = [[T.de, (x) => x.de], [T.para, (x) => x.para, 'conplus-num'], ['Descrição no Questor', (x) => x.descricao || '—']];
       if (T.porEmpresa) colunas.push(['CNPJ', (x) => x.cnpj]);
       colunas.push(['', (x) => { const b = el('span', 'conplus-linha-acoes'); b.append(botao('Editar', () => editar(x, desenhar), 'btn ghost'), botao('Remover', () => remover(x, desenhar), 'btn ghost conplus-remover')); return b; }]);
-      sec.append(U.nota('De-para para ' + T.para + ' (consulta ' + T.consulta + ' do Questor).' + (T.porEmpresa ? ' O código é de cada empresa.' : ' Vale para todas as empresas.')), acoes,
-        U.tabela(colunas, itens, { vazioTexto: 'Nenhum código de ' + T.titulo.toLowerCase() + ' ainda. A ConPlus vai mandar a tabela; enquanto isso, cadastre à mão ou importe um CSV.' }));
+      sec.append(K.corpo(U.nota('De-para para ' + T.para + ' (consulta ' + T.consulta + ' do Questor).' + (T.porEmpresa ? ' O código é de cada empresa.' : ' Vale para todas as empresas.')), acoes),
+        K.tabela(colunas, itens, { vazioTexto: 'Nenhum código de ' + T.titulo.toLowerCase() + ' ainda. A ConPlus vai mandar a tabela; enquanto isso, cadastre à mão ou importe um CSV.' }));
       conteudo.replaceChildren(sec);
     }
     corpo.append(U.nota('A API do Questor não converte texto em código: o S2 guarda a correspondência. Os códigos daqui aparecem como sugestão nos campos de cargo, escala, filial, município, banco e evento.'), chipsBox, conteudo);

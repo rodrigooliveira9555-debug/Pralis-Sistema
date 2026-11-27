@@ -9,7 +9,8 @@ body.dark-theme .conplus-view { --conplus-ok: #4ade80; --conplus-aviso: #fbbf24;
 body.dark-theme .conplus-faixa b { color: #fca5a5; }
 
 /* Abas: no vermelho, branco daria 3,8:1; o texto da aba ativa fica escuro (5,4:1). */
-.conplus-abas { margin-bottom: 14px; }
+.conplus-abas { margin-bottom: 14px; flex-wrap: wrap; overflow-x: visible; }
+.conplus-abas .vendas-pdv-aba { white-space: nowrap; }
 .conplus-view .vendas-pdv-aba.ativa { color: #1f0505; }
 .conplus-painel { display: grid; gap: 14px; min-width: 0; }
 .conplus-acoes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -81,6 +82,14 @@ body.dark-theme .conplus-situacao.tom-modelo { color: #fca5a5; }
 .conplus-view .compras-tabela-box { overflow-x: auto; max-width: 100%; }
 
 @media (max-width: 600px) {
+  .conplus-tabela-empilha .compras-tabela thead { display: none; }
+  .conplus-tabela-empilha .compras-tabela, .conplus-tabela-empilha .compras-tabela tbody { display: block; }
+  .conplus-tabela-empilha .compras-tabela tbody tr { display: grid; gap: 2px; padding: 8px 12px; border-top: 1px solid var(--layout-line, #dedee3); }
+  .conplus-tabela-empilha .compras-tabela tbody tr:first-child { border-top: 0; }
+  .conplus-tabela-empilha .compras-tabela td { display: grid; grid-template-columns: minmax(84px, 38%) minmax(0, 1fr); gap: 8px; padding: 2px 0; border: 0; text-align: left; overflow-wrap: anywhere; }
+  .conplus-tabela-empilha .compras-tabela td::before { content: attr(data-rotulo); font: 400 var(--ui-note, 11px)/18px var(--ui-font); color: var(--ui-label-color, #52525b); }
+  .conplus-tabela-empilha .compras-tabela td[data-rotulo=""] { grid-template-columns: minmax(0, 1fr); }
+  .conplus-tabela-empilha .compras-tabela td[data-rotulo=""]::before { display: none; }
   .conplus-grade { grid-template-columns: minmax(0, 1fr); }
   .conplus-previa-linha { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .conplus-acoes > .btn { flex: 1 1 auto; }

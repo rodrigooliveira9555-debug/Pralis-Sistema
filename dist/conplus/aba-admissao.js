@@ -32,7 +32,7 @@
     const valoresDe = (reg, dep) => (reg === 'A' ? estado.a : reg === 'B' ? estado.b : reg === 'C' ? estado.c : estado.d[dep]);
     const titular = () => ({ 6: String(estado.a[6] || '').trim(), 9: String(estado.a[9] || '').trim() });
 
-    const saida = el('div', 'conplus-saida');
+    const saida = el('div', 'conplus-saida compras-corpo');
     let ultimo = null;
     function conferir() {
       const linhas = D.montarAdmissao({ cnpj, ...estado });

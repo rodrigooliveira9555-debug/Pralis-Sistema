@@ -69,15 +69,15 @@
   async function resumoRelatorios() {
     const sec = U.secao('CSV dos relatórios');
     const F = window.CicluzFolhas; const C = window.CicluzFolhasCsv;
-    sec.append(U.nota('A importação do CSV é a das telas de documentos de pagamento (Saídas · Despesas › Cadastros Geral Colaboradores): mesma leitura, mesmo lugar. Os dados importados ficam só na memória da página. Quando a linha do relatório não traz CPF, o código do funcionário é procurado nos vínculos abaixo (a confirmar com o CSV real da ConPlus que ele é o CODIGOFUNCCONTR).'));
-    if (!F || !C) { sec.append(U.vazio('As telas de documentos de pagamento não carregaram.')); return sec; }
+    sec.append(K.corpo(U.nota('A importação do CSV é a das telas de documentos de pagamento (Saídas · Despesas › Cadastros Geral Colaboradores): mesma leitura, mesmo lugar. Os dados importados ficam só na memória da página. Quando a linha do relatório não traz CPF, o código do funcionário é procurado nos vínculos abaixo (a confirmar com o CSV real da ConPlus que ele é o CODIGOFUNCCONTR).')));
+    if (!F || !C) { sec.append(K.corpo(U.vazio('As telas de documentos de pagamento não carregaram.'))); return sec; }
     const linhas = [];
     for (const [tipo, t] of Object.entries(F.TIPOS)) {
       const regs = C.has(tipo) ? await C.listar(tipo) : [];
       const ligados = regs.filter((x) => x.vinculo && x.vinculo.ok).length;
       linhas.push({ tipo, titulo: t.titulo, regs: regs.length, ligados });
     }
-    sec.append(U.tabela([
+    sec.append(K.tabela([
       ['Tela', (x) => x.titulo], ['Importados nesta sessão', (x) => String(x.regs), 'conplus-num'], ['Ligados ao cadastro', (x) => (x.regs ? String(x.ligados) : '—'), 'conplus-num'],
       ['', (x) => botao('Abrir a tela', () => { if (typeof window.showFolhaConplus === 'function') window.showFolhaConplus(x.tipo); }, 'btn secondary')],
     ], linhas));
@@ -92,8 +92,8 @@
       const sec = U.secao('Vínculo CPF ↔ contrato', itens.length);
       const acoes = el('div', 'conplus-acoes');
       acoes.append(botao('Novo vínculo', () => editar(null, desenharVinculos), 'btn'), botao('Importar CSV', () => importar(desenharVinculos), 'btn secondary'));
-      sec.append(U.nota('Os relatórios da ConPlus identificam o empregado pelo contrato, não pelo CPF. Guarde aqui o contrato que volta na linha A de cada admissão (ou a lista que a ConPlus mandar). O mesmo CPF pode ter mais de um contrato (readmissão).'), acoes,
-        U.tabela([
+      sec.append(K.corpo(U.nota('Os relatórios da ConPlus identificam o empregado pelo contrato, não pelo CPF. Guarde aqui o contrato que volta na linha A de cada admissão (ou a lista que a ConPlus mandar). O mesmo CPF pode ter mais de um contrato (readmissão).'), acoes),
+        K.tabela([
           ['Contrato', (x) => x.contrato, 'conplus-num'], ['CPF', (x) => x.cpf], ['Nome', (x) => x.nome || '—'], ['CNPJ', (x) => x.cnpj], ['Origem', (x) => (x.origem === 'csv' ? 'CSV' : 'Manual')],
           ['', (x) => { const b = el('span', 'conplus-linha-acoes'); b.append(botao('Editar', () => editar(x, desenharVinculos), 'btn ghost'), botao('Remover', () => remover(x, desenharVinculos), 'btn ghost conplus-remover')); return b; }],
         ], itens, { vazioTexto: 'Nenhum vínculo ainda.' }));
