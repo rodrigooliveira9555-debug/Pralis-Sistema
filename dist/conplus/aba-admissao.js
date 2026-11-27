@@ -1,19 +1,23 @@
 /*
  * Área ConPlus (laboratório) — aba Admissão: formulário de teste campo a campo (A 21, B 85, C 67, D 31 por dependente),
  * conferência ao vivo e download do .txt (Windows-1252, ";", sem cabeçalho, CR+LF). Uma pessoa por arquivo; C e D só com dado.
- * O formulário fica só na memória desta página (nada é gravado). Só dados fictícios.
+ * O formulário fica só na memória desta página (nada é gravado). Empresa de homologação: só dados fictícios (modelo ou digitados).
+ * Empresa real (da tabela de filiais): pode vir do Cadastro do S2 ("Preencher a partir do cadastro"), com o quadro do que falta.
  */
 (function () {
   'use strict';
   const U = window.CicluzComprasUI; const L = window.CicluzConplusLayout; const D = window.CicluzConplusDominio; const K = window.CicluzConplusComum;
-  if (!U || !L || !D || !K) return;
+  const Q = window.CicluzConplusCadastroQuestor; const AC = window.CicluzConplusAdmissaoCadastro; const S = window.CicluzConplusDados;
+  if (!U || !L || !D || !K || !Q || !AC || !S) return;
   const { el, botao } = U;
 
   const vazio = () => ({ a: {}, b: {}, c: {}, d: [] });
   let estado = vazio();
-  const cnpj = L.CNPJ_HOMOLOGACAO;
+  let cnpj = L.CNPJ_HOMOLOGACAO;
+  let pronto = null; // { pessoa, pendencias } quando o formulário veio do cadastro
 
   function preencherComModelo() {
+    cnpj = L.CNPJ_HOMOLOGACAO; pronto = null; // o modelo é fictício: sempre na homologação
     estado = { a: D.valoresDaLinha(L.MODELO.A), b: D.valoresDaLinha(L.MODELO.B), c: D.valoresDaLinha(L.MODELO.C), d: [D.valoresDaLinha(L.MODELO.D)] };
   }
   /** Traz para o formulário um arquivo lido (aba Ler arquivo): uma pessoa, A e B. */
@@ -23,7 +27,7 @@
       const v = {}; l.colunas.forEach((c) => { v[c.n] = c.valor; });
       if (l.registro === 'A') novo.a = v; else if (l.registro === 'B') novo.b = v; else if (l.registro === 'C') novo.c = v; else if (l.registro === 'D') novo.d.push(v);
     });
-    estado = novo;
+    estado = novo; pronto = null;
   }
 
   function montar(corpo) {
@@ -93,13 +97,29 @@
     const baixarBtn = botao('Baixar .txt', () => {
       conferir();
       if (ultimo.r.erros.length) { U.avisar('Corrija os problemas antes de baixar.'); return; }
-      const msg = K.baixar('Admissao ' + K.carimbo() + ' - laboratorio.txt', ultimo.texto);
+      const msg = K.baixar('Admissao ' + (AC.ehHomologacao(cnpj) ? 'homologacao' : cnpj.replace(/\D/g, '')) + ' ' + K.carimbo() + '.txt', ultimo.texto);
       U.avisar(msg || 'Arquivo baixado em Windows-1252. Mande para a ConPlus só depois de conferir.');
     }, 'btn');
+    const selEmpresa = U.seletor(AC.empresas(), cnpj);
+    selEmpresa.addEventListener('change', () => {
+      if (pronto && AC.ehHomologacao(selEmpresa.value)) { selEmpresa.value = cnpj; U.avisar('Dados reais não vão para a homologação. Limpe o formulário antes.'); return; }
+      cnpj = selEmpresa.value; desenhar();
+    });
+    const doCadastro = () => {
+      if (AC.ehHomologacao(cnpj)) { U.avisar('Escolha a empresa real em "Empresa do arquivo": dados reais não vão para a homologação da ConPlus.'); selEmpresa.focus(); return; }
+      AC.escolherPessoa((p) => {
+        const r = Q.montarDaPessoa(p, { codigos: S.ler().depara, cnpj });
+        estado = { a: r.a, b: r.b, c: r.c, d: r.d }; pronto = { pessoa: p, pendencias: r.pendencias };
+        desenhar(); U.avisar(r.pendencias.length + ' pendência(s): veja "O que falta".');
+      });
+    };
     acoes.append(
-      botao('Preencher com o modelo da ConPlus', () => { preencherComModelo(); desenhar(); }, 'btn secondary'),
-      botao('Limpar', () => { estado = vazio(); desenhar(); }, 'btn ghost'),
+      botao('Preencher a partir do cadastro', doCadastro, 'btn'),
+      botao('Preencher com o modelo da ConPlus', () => { preencherComModelo(); selEmpresa.value = cnpj; desenhar(); }, 'btn secondary'),
+      botao('Limpar', () => { estado = vazio(); pronto = null; desenhar(); }, 'btn ghost'),
       baixarBtn);
+    const filtroEmpresa = el('div', 'conplus-filtro conplus-filtro-largo'); filtroEmpresa.append(U.campo('Empresa do arquivo', selEmpresa, 'Empresas reais vêm da tabela de filiais (aba Códigos).'));
+    const quadroPronto = el('div');
 
     const formulario = el('div', 'conplus-formulario');
     function desenhar() {
@@ -112,13 +132,14 @@
       });
       const novoDep = botao('+ Adicionar dependente', () => { estado.d.push({}); desenhar(); const ult = formulario.querySelector('.conplus-dependentes > details:last-of-type'); if (ult) { ult.open = true; const i = ult.querySelector('input:not([readonly])'); if (i) i.focus(); } }, 'btn secondary');
       formulario.replaceChildren(blocoRegistro('A'), blocoRegistro('B'), blocoRegistro('C'), deps, novoDep);
+      quadroPronto.replaceChildren(...(pronto ? [AC.quadroProntidao(pronto.pessoa, pronto.pendencias, irPara)] : []));
       conferir();
     }
 
     const sec = U.secao('Conferência e arquivo'); sec.append(saida);
     corpo.append(
-      U.nota('Uma pessoa por arquivo. A e B são obrigatórios; C só vai se tiver algum dado e cada dependente vira uma linha D. As colunas sem nome ainda não foram nomeadas pela ConPlus: o valor do modelo testado aparece embaixo de cada campo. O formulário não é guardado.'),
-      acoes, formulario, sec);
+      U.nota('Uma pessoa por arquivo. A e B são obrigatórios; C só vai se tiver algum dado e cada dependente vira uma linha D. Na homologação, só dados fictícios; numa empresa real, a pessoa pode vir do Cadastro do S2. O formulário não é guardado.'),
+      filtroEmpresa, acoes, quadroPronto, formulario, sec);
     desenhar();
   }
 

@@ -272,4 +272,36 @@ t('colaboradores da ConPlus: leitura do CSV, junção sem apagar, vínculos e si
   assert.equal(C.mascararCpf('900.100.237-47'), '***.100.237-**');
 });
 
+t('cadastro do S2 → admissão do Questor: de-para do S1 e o que falta (pessoa fictícia)', () => {
+  const Q = require('../dist/conplus/cadastro-questor.js');
+  assert.deepEqual(Q.converter('ESTADOCIVIL', 'Solteiro(a)'), { ok: true, codigo: '1' });
+  assert.equal(Q.converter('GRAUINSTR', 'Ensino médio completo').codigo, '7');
+  assert.equal(Q.converter('GRAUINSTR', 'Até o 5º ano incompleto').codigo, '2');
+  assert.match(Q.converter('ESTADOCIVIL', 'União estável').motivo, /Concubinato/);
+  assert.match(Q.converter('RACACOR', 'Não declarado').motivo, /confirmar/);
+  assert.match(Q.converter('SEXO', 'X').motivo, /não tem código/);
+  const pessoa = { name: 'Pessoa Teste', cpf: '90010023747', birthDate: '1995-01-01', jobName: 'Padeiro', whatsapp: '(32) 99999-8888',
+    complete: { summary: [['Nome completo', 'Pessoa Teste'], ['CPF', '900.100.237-47'], ['Sexo', 'Feminino'], ['Estado civil', 'União estável'], ['Raça/cor', 'Parda'],
+      ['Nacionalidade', 'Brasileira'], ['Naturalidade', 'Juiz de Fora'], ['UF onde nasceu', 'MG'], ['Escolaridade', 'Ensino médio completo'],
+      ['Primeiro emprego com carteira assinada?', 'Não'], ['Nome da mãe', 'Mae Teste'], ['CEP', '36025000'], ['Logradouro', 'Rua das Flores'], ['Número', '100'],
+      ['Bairro', 'Centro'], ['Município', 'Juiz de Fora'], ['UF', 'MG'], ['E-mail', 'teste@exemplo.com']],
+      deps: [[['Nome completo', 'Filho Teste'], ['Data de nascimento', '01/01/2020'], ['Parentesco', 'Filho(a)'], ['Sexo', 'Masculino'], ['Nacionalidade', 'Brasileira']]] } };
+  const codigos = { municipio: [{ de: '3136702', para: '420', descricao: 'Juiz de Fora' }], cargo: [{ de: 'Padeiro (CBO 848305) #933', para: '933', descricao: 'Padeiro', cnpj: '08.351.168/0001-53' }],
+    filial: [{ de: 'Matriz', para: '1', cnpj: '08.351.168/0001-53' }] };
+  const r = Q.montarDaPessoa(pessoa, { codigos, cnpj: '08.351.168/0001-53' });
+  assert.deepEqual([r.a[6], r.a[7], r.a[8], r.a[18]], ['900.100.237-47', 'PESSOA TESTE', '01/01/1995', '933']);
+  assert.deepEqual([r.b[5], r.b[6], r.b[7], r.b[12], r.b[14], r.b[15], r.b[16], r.b[26], r.b[27], r.b[40], r.b[42], r.b[43], r.b[84]], ['36025-000', '33', 'RUA DAS FLORES', '420', '420', '2', '8', '7', '10', '1', '2', '20', '0']);
+  assert.equal(r.b[25], undefined); // União estável: pendência com a ConPlus, nunca um código parecido
+  assert.deepEqual([r.c[10], r.c[11], r.c[12]], ['32', '999998888', 'teste@exemplo.com']);
+  assert.deepEqual(r.d, [{ 5: '1', 6: 'FILHO TESTE', 7: '01/01/2020', 8: '01', 10: '1', 23: '10' }]);
+  const com = Q.resumo(r.pendencias);
+  assert.ok(com.DP >= 15 && com.ficha >= 4 && com.ConPlus === 1, JSON.stringify(com));
+  assert.ok(r.pendencias.some((x) => x.campo === 'ESTADOCIVIL' && x.com === 'ConPlus'));
+  assert.ok(r.pendencias.some((x) => x.registro === 'D1' && x.campo === 'FUMANTE' && x.com === 'ficha'));
+  // A admissão montada passa na conferência das colunas já preenchidas (sem erro de formato).
+  const linhas = D.montarAdmissao({ cnpj: '08.351.168/0001-53', a: r.a, b: r.b, c: r.c, d: r.d });
+  const erros = D.validar(D.juntar(linhas)).erros.filter((e) => !/obrigatório vazio/.test(e.msg));
+  assert.deepEqual(erros.map((e) => e.texto), []);
+});
+
 console.log('conplus-dominio: ' + n + ' grupos de teste ok');

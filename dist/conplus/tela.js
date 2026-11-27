@@ -2,10 +2,10 @@
  * Área ConPlus (laboratório, 27/11/2026) — Saídas · Despesas › API › DES - ConPlus Arquivo (Laboratório).
  * Uma área isolada para testar a troca de dados com o DP da ConPlus (Questor) "como se fosse a API, mas por arquivo"
  * (decisão do Marco de 27/11/2026: sem a API paga). Não mexe no cadastro de pessoas nem nas telas de DP que já existem;
- * o lugar definitivo é este, Saídas › API (Marco, 27/11/2026); a ligação com o cadastro fica para depois (PROJECT_BRAIN/11, P-57).
+ * o lugar definitivo é este, Saídas › API (Marco, 27/11/2026). A admissão pode vir do Cadastro do S2 (só leitura; PROJECT_BRAIN/11, P-57).
  * Abas: Admissão (A–D), Eventos (E), Ler arquivo, Códigos (de-para), Colaboradores (ativos vindos da ConPlus, para tratar depois)
  * e Retorno (CSV dos relatórios + vínculo CPF ↔ contrato).
- * Só a empresa de homologação da ConPlus (84.859.909/0001-90) e só dados fictícios.
+ * Empresa de homologação da ConPlus (84.859.909/0001-90): só dados fictícios. Dado real de pessoa só vai para empresa real.
  */
 (function () {
   'use strict';
@@ -45,7 +45,7 @@
   function faixa() {
     const f = el('div', 'conplus-faixa');
     f.setAttribute('role', 'note');
-    f.append(el('b', null, 'Laboratório'), el('span', null, 'Empresa de homologação da ConPlus, ' + L.CNPJ_HOMOLOGACAO + '. Use só dados fictícios: os registros importados nela são gravados de verdade no Questor. Nada é enviado daqui: o arquivo é baixado e vai para a ConPlus por e-mail ou pelo Zen.'));
+    f.append(el('b', null, 'ConPlus por arquivo'), el('span', null, 'Na empresa de homologação (' + L.CNPJ_HOMOLOGACAO + '), só dados fictícios: o que é importado nela é gravado de verdade no Questor. Dados reais (cadastro, colaboradores) ficam só neste aparelho. Nada é enviado daqui: o arquivo é baixado e vai para a ConPlus por e-mail ou pelo Zen.'));
     return f;
   }
 
