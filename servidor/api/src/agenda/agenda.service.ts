@@ -81,12 +81,13 @@ export async function listarArquivos(perfil: PerfilSessao, compromissoId: string
 }
 
 /**
- * Envio: o responsável manda evidência (o que fez); o gestor e quem pode editar mandam material.
- * Quem só vê não envia.
+ * Envio: o responsável e o executor de uma atividade (a prova do que fez, P-58) mandam evidência; o gestor e quem pode
+ * editar mandam material. Quem só vê não envia.
  */
 export async function enviarArquivo(perfil: PerfilSessao, compromissoId: string, entrada: ArquivoEnvio) {
-  const { acesso } = await exigirAcesso(perfil, compromissoId);
-  const papel: PapelArquivo | null = acesso.responsavel && !acesso.gestor ? "evidencia" : acesso.gestor || acesso.editar ? "material" : null;
+  const { item, acesso } = await exigirAcesso(perfil, compromissoId);
+  const executor = (Array.isArray(item.subtarefas) ? (item.subtarefas as Array<{ executorId?: string }>) : []).some((s) => s.executorId === perfil.usuarioId);
+  const papel: PapelArquivo | null = (acesso.responsavel || executor) && !acesso.gestor ? "evidencia" : acesso.gestor || acesso.editar ? "material" : null;
   if (!papel) throw proibido("Você pode ver este compromisso, mas não enviar arquivos.", "AGENDA_SEM_ACESSO");
   if (!/^[A-Za-z0-9+/]+={0,2}$/.test(entrada.conteudoBase64)) throw new ErroDominio("Arquivo corrompido no envio.", 400, "ARQUIVO_INVALIDO");
   const conteudo = Buffer.from(entrada.conteudoBase64, "base64");

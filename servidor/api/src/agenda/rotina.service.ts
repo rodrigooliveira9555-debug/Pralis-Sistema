@@ -221,7 +221,7 @@ export async function criarTarefaDeTela(perfil: PerfilSessao, e: TarefaDeTela) {
       data: e.data, hora: e.hora, horaFim: "", repeticao: null, alerta: e.data && e.hora ? 0 : null, prioridade: "normal", sinalizado: false,
       etiquetas: [], subtarefas: e.subtarefas.map((titulo) => ({ titulo, concluida: false })), pessoas, avaliacaoTipo: "", colunaId: "",
       vinculoTela: e.vinculoTela, vinculoTitulo: e.vinculoTitulo, acaoTela: "", acaoQuantidade: null
-    }, null);
+    }, null, lista.donoId);
     const ordem = (await repo.maiorOrdem(tx, empresaId, LISTA_TAREFAS_TELAS)) + 1;
     const criou = await repo.inserirCompromisso(tx, {
       ...m.linha, empresaId, id: e.id, vinculoRef: e.vinculoRef, gestorId: lista.donoId, ordem: String(ordem), criadoPor: perfil.usuarioId, atualizadoPor: perfil.usuarioId

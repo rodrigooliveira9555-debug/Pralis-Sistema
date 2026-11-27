@@ -1,6 +1,7 @@
 import { and, asc, eq, inArray, isNull, lt, ne, or, sql, desc } from "drizzle-orm";
 import {
   agendaAcoesProgresso,
+  agendaArquivos,
   agendaAdiamentos,
   agendaAvaliacoes,
   agendaColunas,
@@ -61,6 +62,16 @@ export async function compromisso(ex: Executor, empresaId: string, id: string, t
   const q = ex.select().from(agendaCompromissos).where(and(eq(agendaCompromissos.empresaId, empresaId), eq(agendaCompromissos.id, id))).limit(1);
   const [linha] = travar ? await q.for("update") : await q;
   return linha ?? null;
+}
+
+/** O arquivo é deste compromisso? (prova de atividade concluída, P-58) */
+export async function arquivoDoCompromisso(ex: Executor, empresaId: string, compromissoId: string, arquivoId: string) {
+  const [a] = await ex
+    .select({ id: agendaArquivos.id })
+    .from(agendaArquivos)
+    .where(and(eq(agendaArquivos.empresaId, empresaId), eq(agendaArquivos.compromissoId, compromissoId), eq(agendaArquivos.id, arquivoId)))
+    .limit(1);
+  return Boolean(a);
 }
 
 /* ---------- Ação programada (0012, P-53) ---------- */

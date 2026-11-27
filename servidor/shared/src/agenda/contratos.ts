@@ -29,10 +29,20 @@ export const pessoaAgendaSchema = z.object({
   excluir: z.boolean().default(false)
 });
 
+/**
+ * Atividade do compromisso (P-58; na tela antiga, "subtarefa"). Os campos novos são opcionais: sem o campo (tela antiga,
+ * mapa mental) fica o que estava. Sem executor escolhido, o executor é o gestor. `concluida` só muda pelo PUT da
+ * atividade (com a prova, quando não há tela) — o formulário não conclui atividade.
+ */
 export const subtarefaSchema = z.object({
   id: compromissoIdSchema.optional(),
   titulo: texto(200),
-  concluida: z.boolean().default(false)
+  concluida: z.boolean().default(false),
+  executorId: z.union([z.literal(""), z.string().trim().min(1).max(200)]).optional(),
+  supervisorIds: z.array(z.string().trim().min(1).max(200)).max(50).optional(),
+  /** Prazo: dias depois da data do compromisso (0 = no dia), a mesma distância em cada repetição. */
+  prazoDias: z.number().int().min(0, "Prazo de 0 a 365 dias").max(365, "Prazo de 0 a 365 dias").nullable().optional(),
+  prazoHora: horaOuVazio.optional()
 });
 
 export const repeticaoSchema = z.object({
@@ -118,7 +128,8 @@ export const conclusaoSchema = z.discriminatedUnion("concluida", [
   z.object({ concluida: z.literal(true), ocorrencia: z.string().regex(DATA, "Data inválida").optional() }),
   z.object({ concluida: z.literal(false) })
 ]);
-export const subtarefaEstadoSchema = z.object({ concluida: z.boolean() });
+/** Concluir/reabrir uma atividade. Sem tela ligada, concluir pede a prova: um arquivo já enviado a este compromisso. */
+export const subtarefaEstadoSchema = z.object({ concluida: z.boolean(), provaArquivoId: z.string().uuid("Prova inválida").optional() });
 export const exclusaoCompromissoSchema = z.object({ versao: z.coerce.number().int().min(1) });
 export const limparConcluidosSchema = z.object({ grupoId: compromissoIdSchema.optional() });
 
@@ -133,7 +144,11 @@ export type RepeticaoResposta = {
   tipo: string; intervalo: number; unidade: string; diasSemana: number[];
   fim: { tipo: string; data: string; vezes: number }; feitas: number; ancora: string;
 };
-export type SubtarefaResposta = { id: string; titulo: string; concluida: boolean; concluidaEm: string };
+export type SubtarefaResposta = {
+  id: string; titulo: string; concluida: boolean; concluidaEm: string;
+  /** Atividade (P-58): executor (sempre há um; sem escolha, o gestor), supervisores, prazo e a prova de quem concluiu. */
+  executorId: string; supervisorIds: string[]; prazoDias: number | null; prazoHora: string; concluidaPor: string; provaArquivoId: string;
+};
 export type CompromissoResposta = {
   id: string;
   grupoId: string;

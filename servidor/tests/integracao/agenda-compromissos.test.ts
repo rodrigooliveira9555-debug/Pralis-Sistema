@@ -2,6 +2,9 @@ import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { comSessao, criarApp } from "./ajuda.ts";
 import { ajudaAgenda, novoId, type Conta, type Pool } from "./ajuda-agenda.ts";
+import { horaLocal } from "../../api/src/agenda/rotina.regras.ts";
+
+const hoje = () => horaLocal(new Date()).data;
 
 // Compromissos da Agenda nas tabelas (plano docs/AGENDA_NO_SERVIDOR_PLANO.md, seções 3 e 7). Dados fictícios.
 
@@ -183,9 +186,9 @@ describe("agenda: concluir pelo estado desejado", () => {
     expect((await pedir(gestor.cookie, "POST", `/api/agenda/compromissos/${c.id}/conclusao`, { concluida: false })).json().data.resultado).toBe("reabriu");
   });
 
-  it("subtarefa pelo estado desejado (repetir não desfaz)", async () => {
+  it("atividade pelo estado desejado (repetir não desfaz; com tela ligada, sem prova)", async () => {
     const { gestor } = await cenario();
-    const c = await criar(gestor, { subtarefas: [{ titulo: "Levar planilha" }] });
+    const c = await criar(gestor, { vinculoTela: "#/saidas-mercadorias/cadastros-geral/produtos", vinculoTitulo: "Produtos", subtarefas: [{ titulo: "Levar planilha" }] });
     const subId = (c["subtarefas"] as Array<{ id: string }>)[0]!.id;
     for (let i = 0; i < 2; i++) {
       const r = await pedir(gestor.cookie, "PUT", `/api/agenda/compromissos/${c.id}/subtarefas/${subId}`, { concluida: true });
@@ -270,5 +273,90 @@ describe("agenda: área do compromisso (0013, P-58)", () => {
     const sem = await pedir(gestor.cookie, "PUT", `/api/agenda/compromissos/${c.id}`, { versao: 3, ...base({ areaId: "" }) });
     expect(sem.json().data).toMatchObject({ areaId: "", versao: 4 });
     expect((await agenda(gestor)).compromissos.find((x: { id: string }) => x.id === c.id).areaId).toBe("");
+  });
+});
+
+describe("agenda: atividades com executor, supervisor, prazo e prova (P-58)", () => {
+  const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+  type Atividade = { id: string; titulo: string; concluida: boolean; executorId: string; supervisorIds: string[]; prazoDias: number | null; prazoHora: string; concluidaPor: string; provaArquivoId: string };
+  const ativ = (c: { subtarefas?: unknown }) => c.subtarefas as Atividade[];
+
+  it("grava executor, supervisores e prazo; tela antiga e mapa mental não apagam; sem executor é o gestor", async () => {
+    const { gestor, resp, leitor } = await cenario();
+    const pessoas = [{ id: resp.usuarioId, ver: true }, { id: leitor.usuarioId, ver: true }];
+    const c = await criar(gestor, {
+      pessoas, data: "2026-12-01",
+      subtarefas: [{ titulo: "Mudar o roteador", executorId: resp.usuarioId, supervisorIds: [leitor.usuarioId], prazoDias: 2, prazoHora: "17:00" }, { titulo: "Comprar tinta" }]
+    });
+    const [a, b] = ativ(c);
+    expect(a).toMatchObject({ titulo: "Mudar o roteador", executorId: resp.usuarioId, supervisorIds: [leitor.usuarioId], prazoDias: 2, prazoHora: "17:00", concluida: false });
+    expect(b).toMatchObject({ executorId: gestor.usuarioId, supervisorIds: [], prazoDias: null, prazoHora: "" });
+    // Tela antiga: manda só id, título e feito.
+    const velha = await pedir(gestor.cookie, "PUT", `/api/agenda/compromissos/${c.id}`, { versao: 1, ...base({ pessoas, data: "2026-12-01", subtarefas: [{ id: a.id, titulo: "Mudar o roteador de lugar", concluida: true }, { id: b.id, titulo: "Comprar tinta", concluida: false }] }) });
+    expect(velha.statusCode, velha.body).toBe(200);
+    expect(ativ(velha.json().data)[0]).toMatchObject({ titulo: "Mudar o roteador de lugar", executorId: resp.usuarioId, supervisorIds: [leitor.usuarioId], prazoDias: 2, concluida: false });
+    // Mapa mental: mudança parcial das atividades.
+    const parcial = await pedir(gestor.cookie, "PATCH", `/api/agenda/compromissos/${c.id}`, { versao: 2, subtarefas: [{ id: a.id, titulo: "Mudar o roteador", concluida: false }, { id: b.id, titulo: "Comprar tinta", concluida: false }, { titulo: "Pintar", concluida: false }] });
+    expect(parcial.statusCode, parcial.body).toBe(200);
+    const ps = ativ(parcial.json().data);
+    expect(ps[0]).toMatchObject({ executorId: resp.usuarioId, prazoHora: "17:00" });
+    expect(ps[2]).toMatchObject({ titulo: "Pintar", executorId: gestor.usuarioId });
+  });
+
+  it("tirar das Pessoas quem é executor é recusado; executor de fora também; supervisor que saiu deixa de ser", async () => {
+    const { gestor, resp, leitor, fora } = await cenario();
+    const c = await criar(gestor, { pessoas: [{ id: resp.usuarioId, ver: true }, { id: leitor.usuarioId, ver: true }], subtarefas: [{ titulo: "Desocupar a sala", executorId: resp.usuarioId, supervisorIds: [leitor.usuarioId] }] });
+    const sem = await pedir(gestor.cookie, "PUT", `/api/agenda/compromissos/${c.id}`, { versao: 1, ...base({ pessoas: [{ id: leitor.usuarioId, ver: true }], subtarefas: ativ(c) }) });
+    expect(sem.statusCode).toBe(400);
+    expect(sem.json().title).toContain("troque o executor antes");
+    const deFora = await pedir(gestor.cookie, "POST", "/api/agenda/compromissos", { id: novoId(), ...base({ subtarefas: [{ titulo: "X", executorId: fora.usuarioId }] }) });
+    expect(deFora.statusCode).toBe(400);
+    const semSup = await pedir(gestor.cookie, "PUT", `/api/agenda/compromissos/${c.id}`, { versao: 1, ...base({ pessoas: [{ id: resp.usuarioId, ver: true }], subtarefas: ativ(c) }) });
+    expect(semSup.statusCode, semSup.body).toBe(200);
+    expect(ativ(semSup.json().data)[0]).toMatchObject({ executorId: resp.usuarioId, supervisorIds: [] });
+  });
+
+  it("o executor conclui (mesmo sem concluir no compromisso) com prova; supervisor não conclui; o formulário não conclui", async () => {
+    const { gestor, resp, leitor } = await cenario();
+    const c = await criar(gestor, { pessoas: [{ id: resp.usuarioId, ver: true }, { id: leitor.usuarioId, ver: true }], subtarefas: [{ titulo: "Ligar para a empresa", executorId: resp.usuarioId, supervisorIds: [leitor.usuarioId] }, { titulo: "Comprar tinta" }] });
+    const [a] = ativ(c);
+    const marcar = (conta: Conta, corpo: object) => pedir(conta.cookie, "PUT", `/api/agenda/compromissos/${c.id}/subtarefas/${a.id}`, corpo);
+    expect((await marcar(leitor, { concluida: true })).statusCode).toBe(403);
+    const semProva = await marcar(resp, { concluida: true });
+    expect(semProva.statusCode).toBe(400);
+    expect(semProva.json().title).toContain("prove");
+    const arq = await pedir(resp.cookie, "POST", `/api/agenda/compromissos/${c.id}/arquivos`, { nome: "feito.png", conteudoBase64: PNG });
+    expect(arq.statusCode, arq.body).toBe(201);
+    expect(arq.json().data.papel).toBe("evidencia");
+    const outro = await criar(gestor);
+    const arqOutro = await pedir(gestor.cookie, "POST", `/api/agenda/compromissos/${outro.id}/arquivos`, { nome: "x.png", conteudoBase64: PNG });
+    expect((await marcar(resp, { concluida: true, provaArquivoId: arqOutro.json().data.id })).statusCode).toBe(400);
+    const ok1 = await marcar(resp, { concluida: true, provaArquivoId: arq.json().data.id });
+    expect(ok1.statusCode, ok1.body).toBe(200);
+    expect(ativ(ok1.json().data)[0]).toMatchObject({ concluida: true, concluidaPor: resp.usuarioId, provaArquivoId: arq.json().data.id });
+    expect(ok1.json().data.concluida).toBe(false);
+    // O formulário não conclui atividade: mandar concluida=true na segunda não muda nada.
+    const form = await pedir(gestor.cookie, "PUT", `/api/agenda/compromissos/${c.id}`, { versao: ok1.json().data.versao, ...base({ pessoas: [{ id: resp.usuarioId, ver: true }, { id: leitor.usuarioId, ver: true }], subtarefas: ativ(ok1.json().data).map((s) => ({ ...s, concluida: true })) }) });
+    expect(form.statusCode, form.body).toBe(200);
+    expect(ativ(form.json().data).map((s) => s.concluida)).toEqual([true, false]);
+  });
+
+  it("a última atividade feita conclui o compromisso; na repetição, as atividades voltam a zero e a cópia guarda o feito", async () => {
+    const { gestor, resp } = await cenario();
+    const TELA = "#/saidas-mercadorias/cadastros-geral/produtos";
+    const c = await criar(gestor, { pessoas: [{ id: resp.usuarioId, ver: true }], data: hoje(), repeticao: { tipo: "semana" }, vinculoTela: TELA, vinculoTitulo: "Produtos", subtarefas: [{ titulo: "Cadastrar", executorId: resp.usuarioId }, { titulo: "Conferir" }] });
+    const [a, b] = ativ(c);
+    // Com tela ligada, a atividade conclui sem prova.
+    const r1 = await pedir(resp.cookie, "PUT", `/api/agenda/compromissos/${c.id}/subtarefas/${a.id}`, { concluida: true });
+    expect(r1.statusCode, r1.body).toBe(200);
+    const r2 = await pedir(gestor.cookie, "PUT", `/api/agenda/compromissos/${c.id}/subtarefas/${b.id}`, { concluida: true });
+    expect(r2.statusCode, r2.body).toBe(200);
+    const depois = r2.json().data;
+    expect(depois.data > hoje()).toBe(true);
+    expect(ativ(depois).every((s) => !s.concluida && !s.provaArquivoId)).toBe(true);
+    expect(ativ(depois)[0].executorId).toBe(resp.usuarioId);
+    const copia = (await agenda(gestor)).compromissos.find((x: { origemId: string }) => x.origemId === c.id);
+    expect(copia).toMatchObject({ concluida: true, ocorrencia: hoje() });
+    expect(ativ(copia).every((s) => s.concluida)).toBe(true);
   });
 });
