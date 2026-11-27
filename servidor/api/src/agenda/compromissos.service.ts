@@ -101,7 +101,7 @@ function resposta(c: LinhaCompromisso, participantes: LinhaParticipante[], notas
     concluida: c.concluida, concluidaEm: c.concluidaEm ? c.concluidaEm.toISOString() : "",
     origemId: c.origemId ?? "", ocorrencia: c.ocorrencia ?? "",
     vinculoTela: c.vinculoTela ?? "", vinculoTitulo: c.vinculoTitulo ?? "", vinculoRef: c.vinculoRef ?? "",
-    acaoTela: c.acaoTela ?? "", acaoQuantidade: c.acaoQuantidade ?? null, acaoFeitas,
+    acaoTela: c.acaoTela ?? "", acaoQuantidade: c.acaoQuantidade ?? null, acaoFeitas, areaId: c.areaId ?? "",
     criadoEm: c.criadoEm.toISOString(), atualizadoEm: c.atualizadoEm.toISOString(),
     versao: c.versao, acesso
   };
@@ -228,7 +228,7 @@ function formularioDe(c: LinhaCompromisso, pessoas: Pessoa[]): Formulario {
     subtarefas: subtarefasDe(c).map((s) => ({ id: s.id, titulo: s.titulo, concluida: s.concluida })),
     pessoas, avaliacaoTipo: c.avaliacaoTipo as Formulario["avaliacaoTipo"], colunaId: c.colunaId ?? "",
     vinculoTela: c.vinculoTela ?? "", vinculoTitulo: c.vinculoTitulo ?? "",
-    acaoTela: c.acaoTela ?? "", acaoQuantidade: c.acaoQuantidade ?? null
+    acaoTela: c.acaoTela ?? "", acaoQuantidade: c.acaoQuantidade ?? null, areaId: c.areaId ?? ""
   };
 }
 
@@ -282,7 +282,9 @@ export function montar(f: Formulario, atual: { c: LinhaCompromisso; pessoas: Pes
     vinculoTela: nuloSeVazio(f.vinculoTela), vinculoTitulo: f.vinculoTela ? nuloSeVazio(f.vinculoTitulo.trim()) : null,
     // Ação programada só com tela ligada (P-53); sem quantidade, uma vez.
     acaoTela: f.vinculoTela && f.acaoTela ? f.acaoTela : null,
-    acaoQuantidade: f.vinculoTela && f.acaoTela ? f.acaoQuantidade ?? 1 : null
+    acaoQuantidade: f.vinculoTela && f.acaoTela ? f.acaoQuantidade ?? 1 : null,
+    // Área (P-58): só muda quando a tela manda o campo; a tela antiga, que não conhece a área, não a apaga.
+    areaId: f.areaId === undefined ? c?.areaId ?? null : nuloSeVazio(f.areaId)
   } satisfies Partial<NovoCompromisso>;
 
   const erro = R.validar({
@@ -469,7 +471,7 @@ export async function marcarSubtarefa(perfil: PerfilSessao, id: string, subId: s
     const { c } = await carregar(tx, perfil, id, "concluir");
     const subs = subtarefasDe(c);
     const s = subs.find((x) => x.id === subId);
-    if (!s) throw new ErroDominio("Subtarefa não encontrada.", 404, "AGENDA_SUBTAREFA_NAO_ENCONTRADA");
+    if (!s) throw new ErroDominio("Atividade não encontrada.", 404, "AGENDA_SUBTAREFA_NAO_ENCONTRADA");
     if (s.concluida === concluida) return respostaDe(tx, perfil, c);
     const novas = subs.map((x) => (x.id === subId ? { ...x, concluida, concluidaEm: concluida ? new Date().toISOString() : "" } : x));
     return respostaDe(tx, perfil, await repo.atualizarCompromisso(tx, empresaId, id, { subtarefas: novas, atualizadoPor: perfil.usuarioId }));

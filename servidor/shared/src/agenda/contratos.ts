@@ -13,6 +13,8 @@ export const VINCULO_TELA = /^#\/[A-Za-z0-9%/_.-]{1,300}$/;
 /** Ação que uma tela sabe contar (P-53): "<tela>:<ação>", ex.: produtos:excluir. */
 export const ACAO_TELA = /^[a-z]{1,30}:[a-z-]{1,30}$/;
 const VINCULO_REF = /^[A-Za-z0-9:_.-]{1,200}$/;
+/** Id de um nó do cadastro DES - Área / Setor / Local (cicluz-location-tree-v1). */
+export const AREA_ID = /^[A-Za-z0-9_.:-]{1,100}$/;
 /** '' ou 'AAAA-MM-DD' (a data inválida de calendário é recusada por regras.validar, com a mensagem da tela). */
 const dataOuVazio = z.union([z.literal(""), z.string().regex(DATA, "Data inválida")]);
 const horaOuVazio = z.union([z.literal(""), z.string().regex(HORA, "Hora inválida")]);
@@ -82,7 +84,9 @@ const camposCompromisso = {
   vinculoTitulo: texto(120).default(""),
   // Ação programada (0012, P-53): a ação da tela que conta e quantas vezes, para concluir sozinha. '' = sem ação.
   acaoTela: z.union([z.literal(""), z.string().regex(ACAO_TELA, "Ação de tela inválida")]).default(""),
-  acaoQuantidade: z.number().int().min(1, "Quantidade de 1 a 365").max(365, "Quantidade de 1 a 365").nullable().default(null)
+  acaoQuantidade: z.number().int().min(1, "Quantidade de 1 a 365").max(365, "Quantidade de 1 a 365").nullable().default(null),
+  // Área (0013, P-58): nó do DES - Área / Setor / Local, pelo id. '' = sem área. Sem o campo (tela antiga): fica a que estava.
+  areaId: z.union([z.literal(""), z.string().regex(AREA_ID, "Área inválida")]).optional()
 };
 
 /** Criar: o id vem do aparelho (ag-<uuid>), para repetir o pedido sem duplicar. */
@@ -154,6 +158,8 @@ export type CompromissoResposta = {
   vinculoTela: string; vinculoTitulo: string; vinculoRef: string;
   /** Ação programada ('' = nenhuma), quantas vezes e quantas já foram feitas na repetição pendente. */
   acaoTela: string; acaoQuantidade: number | null; acaoFeitas: number;
+  /** Área do DES - Área / Setor / Local ('' = nenhuma), pelo id (P-58). */
+  areaId: string;
   criadoEm: string; atualizadoEm: string;
   versao: number;
   /** Calculado no servidor: a tela não calcula permissão. */

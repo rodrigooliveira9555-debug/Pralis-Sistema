@@ -34,7 +34,7 @@
     const intro = U.secao('Levar a Agenda para o servidor');
     intro.append(U.nota('A partir daqui, cada compromisso fica guardado no servidor e cada pessoa só recebe o que participa. A Agenda antiga não é apagada.'));
     const numeros = [
-      ['Listas', c.listas], ['Compromissos', c.itens], ['Concluídos', c.concluidos], ['Avaliações', c.notas], ['Ligações do mapa', c.relacoes], ['Subtarefas', c.subtarefas],
+      ['Listas', c.listas], ['Compromissos', c.itens], ['Concluídos', c.concluidos], ['Avaliações', c.notas], ['Ligações do mapa', c.relacoes], ['Atividades', c.subtarefas],
     ];
     const grade = el('div', 'agenda-transferencia-numeros');
     numeros.forEach(([rotulo, n]) => { const b = el('div', 'agenda-transferencia-numero'); b.append(el('b', null, String(n || 0)), el('small', null, rotulo)); grade.append(b); });

@@ -255,6 +255,10 @@ export const agendaCompromissos = pgTable(
     // repetição, para a tarefa concluir sozinha. Nulo: conclui com "Feito" (ou pela própria tela).
     acaoTela: text("acao_tela"),
     acaoQuantidade: smallint("acao_quantidade"),
+    // Área (0013, P-58, áudio do Rodrigo de 27/11/2026): nó do cadastro DES - Área / Setor / Local
+    // (cicluz-location-tree-v1), pelo id. Sem chave estrangeira: `locais` é regravada inteira a cada envio e pode
+    // chegar atrasada; a tela mostra "Área não encontrada" quando o nó some. Nulo = sem área.
+    areaId: text("area_id"),
     excluidoEm: timestamp("excluido_em", { withTimezone: true }),
     excluidoPor: text("excluido_por").references(() => usuarioAutenticacao.id),
     versao: integer("versao").notNull().default(1),
@@ -303,6 +307,7 @@ export const agendaCompromissos = pgTable(
       "agenda_compromissos_acao_check",
       sql`(${t.acaoTela} is null) = (${t.acaoQuantidade} is null) and (${t.acaoTela} is null or (${t.acaoTela} ~ '^[a-z]{1,30}:[a-z-]{1,30}$' and ${t.acaoQuantidade} between 1 and 365 and ${t.vinculoTela} is not null))`
     ),
+    check("agenda_compromissos_area_check", sql`${t.areaId} is null or ${t.areaId} ~ '^[A-Za-z0-9_.:-]{1,100}$'`),
     // Uma tarefa por referência de tela (a cópia concluída de uma repetição herda a referência e fica de fora).
     uniqueIndex("agenda_compromissos_vinculo_uq")
       .on(t.empresaId, t.vinculoRef)

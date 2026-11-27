@@ -261,7 +261,7 @@ export function validar(item: Compromisso): string {
   if (item.horaFim && !item.hora) return "Para marcar o término, informe a hora de início.";
   if (item.horaFim && item.hora && item.horaFim <= item.hora) return "O término precisa ser depois do início.";
   if (item.prioridade && !(item.prioridade in PESO_PRIORIDADE)) return "Prioridade inválida.";
-  if ((item.subtarefas || []).some((s) => !String(s.titulo || "").trim())) return "Há subtarefa sem nome.";
+  if ((item.subtarefas || []).some((s) => !String(s.titulo || "").trim())) return "Há atividade sem nome.";
   if (item.url && !/^https?:\/\/[^\s]+\.[^\s]+/i.test(item.url)) return "Informe o endereço completo, começando com http:// ou https://.";
   const r = item.repeticao;
   if (r && r.tipo && r.tipo !== "nunca") {

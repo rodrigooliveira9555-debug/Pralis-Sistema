@@ -405,7 +405,7 @@
       if (n.tipo === 'raiz') return 'Mapa: ' + n.titulo;
       if (n.tipo === 'grupo') return 'Grupo ' + n.titulo + ', ' + n.filhos.length + ' compromisso(s)';
       if (n.tipo === 'item') return 'Compromisso ' + n.titulo + (n.item.concluida ? ', concluído' : '') + (n.meta ? ', ' + n.meta : '');
-      return 'Subtarefa ' + n.titulo + (n.sub.concluida ? ', concluída' : '');
+      return 'Atividade ' + n.titulo + (n.sub.concluida ? ', concluída' : '');
     }
 
     /* ----- Câmera ----- */
@@ -502,7 +502,7 @@
       if (n.tipo === 'sub') {
         const pai = paiDe(arvore, n.id).id;
         const r = await A.excluirSubtarefa(n.item.id, n.sub.id);
-        if (r.erro) U.avisar(r.erro); else { est.selecionado = pai; U.avisar('Subtarefa excluída.'); }
+        if (r.erro) U.avisar(r.erro); else { est.selecionado = pai; U.avisar('Atividade excluída.'); }
         return;
       }
       U.confirmar('Excluir compromisso', 'Excluir "' + n.item.titulo + '"? Não dá para desfazer.', 'Excluir', async () => {
@@ -699,12 +699,12 @@
           const pedido = g.n.tipo === 'item' ? A.definir(g.n.item.id, alvo.grupo.soltar) : A.moverSubtarefa(g.n.item.id, g.n.sub.id, alvo.item.id);
           pedido.then((r) => {
             if (r.erro) { U.avisar(r.erro); if (g.g.isConnected) g.g.setAttribute('transform', g.base); }
-            else U.avisar(g.n.tipo === 'item' ? 'Levado para ' + alvo.titulo + '.' : 'Subtarefa levada para ' + alvo.titulo + '.');
+            else U.avisar(g.n.tipo === 'item' ? 'Levado para ' + alvo.titulo + '.' : 'Atividade levada para ' + alvo.titulo + '.');
           });
           return;
         }
         g.g.setAttribute('transform', g.base);
-        if (alvo && !destinoValido(g.n, alvo)) U.avisar(g.n.tipo === 'item' ? (alvo.tipo === 'grupo' && !alvo.grupo.soltar ? 'Arrastar não muda ' + (prefs.agrupar === 'responsavel' ? 'o responsável' : prefs.agrupar === 'etiqueta' ? 'a etiqueta' : 'esta data') + '; use o compromisso.' : 'Solte o compromisso em um grupo.') : 'Solte a subtarefa em outro compromisso.');
+        if (alvo && !destinoValido(g.n, alvo)) U.avisar(g.n.tipo === 'item' ? (alvo.tipo === 'grupo' && !alvo.grupo.soltar ? 'Arrastar não muda ' + (prefs.agrupar === 'responsavel' ? 'o responsável' : prefs.agrupar === 'etiqueta' ? 'a etiqueta' : 'esta data') + '; use o compromisso.' : 'Solte o compromisso em um grupo.') : 'Solte a atividade em outro compromisso.');
         return;
       }
       if (g.tipo === 'relacao') { est.relacaoSel = g.rel; est.selecionado = ''; desenhar(); return; }
