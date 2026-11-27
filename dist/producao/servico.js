@@ -25,9 +25,10 @@
 
   /* =================== Patrimônio =================== */
 
-  function validarBem(b) {
+  /** opcoes.categoriaObrigatoria === false: Cadastro Simples (a categoria é opcional; se vier preenchida, tem de ser válida). */
+  function validarBem(b, opcoes = {}) {
     if (!texto(b.nome)) return 'Informe o nome do bem.';
-    if (!D.CATEGORIAS.some((c) => c[0] === b.categoria)) return 'Escolha a categoria.';
+    if (b.categoria ? !D.CATEGORIAS.some((c) => c[0] === b.categoria) : opcoes.categoriaObrigatoria !== false) return 'Escolha a categoria.';
     if (b.valor != null && !(b.valor >= 0)) return 'O valor não pode ser negativo.';
     if (b.capacidade && !(b.capacidade.valor > 0)) return 'A capacidade deve ser maior que zero (ou deixe em branco).';
     if (b.capacidade && !b.capacidade.unidade) return 'Escolha a unidade da capacidade.';
@@ -49,7 +50,7 @@
     }
     // Campos do cadastro em seis etapas (patrimonio-dominio.js): uma mensagem por etapa; mostra a primeira.
     const regras = window.CicluzFieldRules;
-    return PD().validar(b, { bens: B.dados.bens, cnpjValid: regras ? regras.cnpjValid : undefined, hoje: S.hojeIso() }).find(Boolean) || '';
+    return PD().validar(b, { bens: B.dados.bens, cnpjValid: regras ? regras.cnpjValid : undefined, hoje: S.hojeIso(), categoriaObrigatoria: opcoes.categoriaObrigatoria !== false }).find(Boolean) || '';
   }
   const dataValida = (iso) => /^\d{4}-\d{2}-\d{2}$/.test(iso) && !Number.isNaN(Date.parse(iso + 'T12:00:00'));
   const intervaloValido = (n) => n == null || (Number.isInteger(n) && n >= 1);
@@ -94,10 +95,10 @@
     return n;
   }
   /** Mensagem do que impede salvar, ou '' (a tela confere antes de guardar o áudio no aparelho). */
-  const conferirBem = (entrada) => validarBem(prepararBem(entrada));
-  function salvarBem(entrada) {
+  const conferirBem = (entrada, opcoes) => validarBem(prepararBem(entrada), opcoes);
+  function salvarBem(entrada, opcoes) {
     const b = prepararBem(entrada);
-    const msg = validarBem(b);
+    const msg = validarBem(b, opcoes);
     if (msg) return erro(msg);
     let id = b.id;
     const ok = B.transacao((d) => {
@@ -110,6 +111,30 @@
       }
       else { id = S.novoId('bem'); d.bens.push({ ativo: true, ...b, id, criadoEm: S.agoraIso() }); }
     });
+    return ok ? { ok: true, id } : erro(NAO_SALVOU);
+  }
+  /* ---------- Tipo do bem: lista editável (27/11/2026) ----------
+   * Notebook, Computador, Celular… Cada tipo é { id, nome, ativo }; o bem guarda só o id (vínculo por id). Na primeira vez a lista nasce com
+   * PD.TIPOS_INICIAIS (uma vez só: o marcador tiposIniciais fica no documento); depois quem manda é o cadastro. */
+  function garantirTiposIniciais() {
+    if (B.dados.tiposIniciais || B.dados.tipos.length) return;
+    B.transacao((d) => {
+      if (d.tiposIniciais || d.tipos.length) return;
+      d.tipos = PD().TIPOS_INICIAIS.map((nome) => ({ id: S.novoId('tipo'), nome, ativo: true }));
+      d.tiposIniciais = true;
+    });
+  }
+  const tiposDoBem = () => { garantirTiposIniciais(); return B.dados.tipos.filter((x) => x.ativo !== false).sort((a, c) => a.nome.localeCompare(c.nome, 'pt-BR')); };
+  const nomeDoTipo = (id) => { const x = B.dados.tipos.find((y) => y.id === id); return x ? x.nome : ''; };
+  function adicionarTipoDoBem(nome) {
+    const n = texto(nome);
+    if (!n) return erro('Informe o nome do tipo.');
+    if (n.length > 60) return erro('O nome do tipo tem no máximo 60 letras.');
+    garantirTiposIniciais();
+    const igual = B.dados.tipos.find((x) => x.nome.toLocaleLowerCase('pt-BR') === n.toLocaleLowerCase('pt-BR'));
+    if (igual) return igual.ativo === false ? erro('O tipo "' + igual.nome + '" existe, mas está inativo.') : { ok: true, id: igual.id, jaExistia: true };
+    let id = '';
+    const ok = B.transacao((d) => { id = S.novoId('tipo'); d.tipos.push({ id, nome: n, ativo: true }); d.tiposIniciais = true; });
     return ok ? { ok: true, id } : erro(NAO_SALVOU);
   }
   /** Onde o bem é usado (formatos e fichas), para não apagar algo referenciado. */
@@ -616,7 +641,7 @@
 
   window.CicluzProducaoServico = {
     salvarParametros: contar('producao:parametros', salvarParametros), custoDaFicha,
-    salvarBem, conferirBem, excluirBem, alternarBem, baixarBem, usosDoBem,
+    salvarBem, conferirBem, excluirBem, alternarBem, baixarBem, usosDoBem, tiposDoBem, nomeDoTipo, adicionarTipoDoBem,
     salvarConfig: contar('producao:configurar-produto', salvarConfig), desligarProducao,
     salvarFicha: contar('producao:salvar-ficha', salvarFicha), duplicarFicha, definirPadrao, excluirFicha,
     salvarAgenda: contar('producao:agendar', salvarAgenda), encerrarAgenda, proximasDatas, cancelarData, processarAgendas,

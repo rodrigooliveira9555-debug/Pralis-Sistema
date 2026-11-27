@@ -188,4 +188,13 @@ ok(() => { // ajustes de 19/11/2026: voltagem, peso, responsáveis
   assert.match(v(base({ responsaveis: [{ colaboradorId: 'p1', nome: '' }] }))[2], /sem nome/);
   assert.deepEqual(P.normalizar({ nome: 'X' }).responsaveis, []); // cadastro antigo abre igual
 });
+ok(() => { // Cadastro Simples (27/11/2026): sem categoria só vale no Simples; o Tipo do bem é um id opcional
+  const semCat = P.normalizar({ id: 'b2', nome: 'Notebook do caixa', marca: 'Dell' });
+  assert.match(v(semCat)[0], /categoria/i); // Completo: a categoria é obrigatória como sempre
+  assert.deepEqual(v(semCat, { categoriaObrigatoria: false }), D0); // Simples: só o nome é obrigatório
+  assert.match(v(P.normalizar({ id: 'b3', nome: '', categoria: 'MAC' }), { categoriaObrigatoria: false })[0], /nome/i);
+  assert.equal(P.normalizar({ nome: 'X' }).tipoId, ''); // cadastro antigo abre igual
+  assert.equal(P.normalizar({ nome: 'X', tipoId: ' tipo-1 ' }).tipoId, 'tipo-1');
+  assert.deepEqual(P.TIPOS_INICIAIS, ['Notebook', 'Computador', 'Celular']);
+});
 console.log('patrimonio-dominio: ' + n + ' grupos de verificação ok');
