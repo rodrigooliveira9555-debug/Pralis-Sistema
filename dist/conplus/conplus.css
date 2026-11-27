@@ -1,0 +1,88 @@
+/* Área ConPlus (laboratório) — Saídas · Despesas › API. Cor da origem: DES (vermelho, via --menu-accent / --panel-text).
+   Tipografia e medidas vêm dos tokens de ui-foundation.css; aqui só o arranjo da área. Sem !important. */
+.conplus-view { --conplus-ok: #166534; --conplus-erro: var(--ui-situacao-erro, #b91c1c); --conplus-aviso: #92400e; }
+body.dark-theme .conplus-view { --conplus-ok: #4ade80; --conplus-aviso: #fbbf24; }
+
+/* Faixa do laboratório: o que é esta área, antes de tudo. */
+.conplus-faixa { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin: 0 0 12px; padding: 10px 12px; border: 1px dashed color-mix(in srgb, var(--menu-accent, #ef4444) 55%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--menu-accent, #ef4444) 6%, transparent); font: 400 var(--ui-label, 12px)/18px var(--ui-font); }
+.conplus-faixa b { color: var(--panel-text, #9c1c1c); text-transform: uppercase; letter-spacing: .06em; font-size: var(--ui-note, 11px); }
+body.dark-theme .conplus-faixa b { color: #fca5a5; }
+
+/* Abas: no vermelho, branco daria 3,8:1; o texto da aba ativa fica escuro (5,4:1). */
+.conplus-abas { margin-bottom: 14px; }
+.conplus-view .vendas-pdv-aba.ativa { color: #1f0505; }
+.conplus-painel { display: grid; gap: 14px; min-width: 0; }
+.conplus-acoes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.conplus-sub { margin: 10px 0 6px; font: 600 var(--ui-label, 12px)/18px var(--ui-font); color: var(--ui-label-color, #52525b); }
+.conplus-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Registro do layout: um bloco recolhível por linha do arquivo. */
+.conplus-formulario, .conplus-linhas, .conplus-dependentes { display: grid; gap: 10px; min-width: 0; }
+.conplus-registro { border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); min-width: 0; }
+.conplus-registro > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 12px; cursor: pointer; list-style: none; border-radius: 12px; }
+.conplus-registro > summary::-webkit-details-marker { display: none; }
+.conplus-registro > summary::after { content: '›'; margin-left: auto; transition: transform .18s ease; color: var(--ui-label-color, #52525b); }
+.conplus-registro[open] > summary::after { transform: rotate(90deg); }
+.conplus-registro > summary:focus-visible { outline: 2px solid var(--panel-text, #9c1c1c); outline-offset: 1px; }
+.conplus-registro-sigla { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--menu-accent, #ef4444); color: #1f0505; font: 700 var(--ui-text, 14px)/1 var(--ui-font); }
+.conplus-registro-nome { font: 600 var(--ui-text, 14px)/20px var(--ui-font); }
+.conplus-registro-meta { font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--ui-label-color, #52525b); }
+.conplus-registro-conta { font: 600 var(--ui-note, 11px)/16px var(--ui-font); color: var(--conplus-ok); }
+.conplus-registro-conta.tom-erro { color: var(--conplus-erro); }
+.conplus-registro-dica { margin: 0 12px 8px; }
+.conplus-registro .compras-tabela-box { margin: 0 12px 12px; overflow-x: auto; }
+.conplus-remover { margin: 0 12px 12px; }
+.conplus-remover, .conplus-linha-acoes .conplus-remover { color: var(--conplus-erro); margin: 0; }
+.conplus-registro > .conplus-remover { margin: 0 12px 12px; }
+
+/* Campos de uma coluna: número, nome, valor, e embaixo o nome no Questor e o valor do modelo. */
+.conplus-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 12px; padding: 0 12px 12px; min-width: 0; }
+.conplus-campo { display: grid; gap: 4px; align-content: start; min-width: 0; }
+.conplus-campo-rotulo { display: flex; gap: 6px; align-items: baseline; font: var(--ui-label-weight, 400) var(--ui-label, 12px)/var(--ui-label-line, 18px) var(--ui-font); color: var(--ui-label-color, #52525b); }
+.conplus-campo-n { flex: none; min-width: 22px; padding: 0 4px; border-radius: 6px; background: color-mix(in srgb, var(--menu-accent, #ef4444) 12%, transparent); color: var(--panel-text, #9c1c1c); text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+body.dark-theme .conplus-campo-n { color: #fca5a5; }
+.conplus-campo.a-confirmar .conplus-campo-rotulo > span:last-child { font-style: italic; }
+.conplus-campo input, .conplus-campo select { width: 100%; min-width: 0; }
+.conplus-campo input[readonly] { background: color-mix(in srgb, var(--layout-line, #dedee3) 35%, transparent); color: var(--ui-label-color, #52525b); }
+.conplus-campo-dica { font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--ui-label-color, #52525b); overflow-wrap: anywhere; }
+.conplus-campo-erro { font: 600 var(--ui-note, 11px)/16px var(--ui-font); color: var(--conplus-erro); }
+.conplus-campo.com-erro input, .conplus-campo.com-erro select { border-color: var(--conplus-erro); box-shadow: 0 0 0 1px var(--conplus-erro); }
+
+/* Conferência: a situação numa linha, depois os erros (cada um leva à linha e coluna). */
+.conplus-conferencia { display: grid; gap: 6px; }
+.conplus-situacao { margin: 0; padding: 8px 10px; border-radius: 8px; font: 600 var(--ui-label, 12px)/18px var(--ui-font); border-left: 4px solid currentColor; }
+.conplus-situacao.tom-ok { color: var(--conplus-ok); background: color-mix(in srgb, var(--conplus-ok) 8%, transparent); }
+.conplus-situacao.tom-erro { color: var(--conplus-erro); background: color-mix(in srgb, var(--conplus-erro) 8%, transparent); }
+.conplus-situacao.tom-aviso { color: var(--conplus-aviso); background: color-mix(in srgb, var(--conplus-aviso) 10%, transparent); }
+.conplus-situacao.tom-modelo { color: var(--panel-text, #9c1c1c); background: color-mix(in srgb, var(--menu-accent, #ef4444) 8%, transparent); }
+body.dark-theme .conplus-situacao.tom-modelo { color: #fca5a5; }
+.conplus-erros { margin: 0; padding-left: 18px; display: grid; gap: 2px; font: 400 var(--ui-label, 12px)/18px var(--ui-font); }
+.conplus-erros.tom-erro { color: var(--conplus-erro); }
+.conplus-erros.tom-aviso { color: var(--conplus-aviso); }
+.conplus-erro-link { padding: 2px 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.conplus-erro-link:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+/* Prévia do arquivo: a linha como vai no .txt, quebrando onde precisar (nunca rolagem lateral da tela). */
+.conplus-previa { display: grid; gap: 4px; padding: 10px; border: 1px solid var(--layout-line, #dedee3); border-radius: 10px; background: color-mix(in srgb, var(--layout-line, #dedee3) 18%, transparent); min-width: 0; }
+.conplus-previa-linha { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: start; }
+.conplus-previa-cab { font: 600 var(--ui-note, 11px)/18px var(--ui-font); color: var(--ui-label-color, #52525b); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.conplus-previa-linha.com-erro .conplus-previa-cab { color: var(--conplus-erro); }
+.conplus-previa code, .conplus-valor { font: 400 12px/18px ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; word-break: break-all; }
+.conplus-valor.vazio { color: var(--ui-label-color, #52525b); font-style: italic; }
+.conplus-a-confirmar { font-style: italic; color: var(--ui-label-color, #52525b); }
+.conplus-problema { color: var(--conplus-erro); font-weight: 600; }
+.conplus-registro tr.com-erro td { background: color-mix(in srgb, var(--conplus-erro) 7%, transparent); }
+.conplus-registro tr:focus { outline: 2px solid var(--conplus-erro); outline-offset: -2px; }
+
+.conplus-colar { width: 100%; min-height: 88px; resize: vertical; font: 400 12px/18px ui-monospace, SFMono-Regular, Consolas, monospace; }
+.conplus-linha-acoes { display: inline-flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.conplus-filtro { max-width: 280px; margin-bottom: 8px; }
+.conplus-grade-eventos { padding: 0; }
+.conplus-view .compras-tabela-box { overflow-x: auto; max-width: 100%; }
+
+@media (max-width: 600px) {
+  .conplus-grade { grid-template-columns: minmax(0, 1fr); }
+  .conplus-previa-linha { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .conplus-acoes > .btn { flex: 1 1 auto; }
+}
+@media (prefers-reduced-motion: reduce) { .conplus-registro > summary::after { transition: none; } }

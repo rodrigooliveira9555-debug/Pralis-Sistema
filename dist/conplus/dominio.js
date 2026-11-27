@@ -303,8 +303,27 @@
     return achados.length === 1 ? achados[0].cpf : '';
   }
 
+  /** Linhas de um CSV → vínculos. Cabeçalho: CPF (ou CPFFUNC), CONTRATO (ou CODIGOFUNCCONTR), NOME (opcional) e CNPJ (opcional). */
+  function vinculosDoCsv(linhas, cnpjPadrao, existentes) {
+    const itens = []; const erros = [];
+    if (!linhas || linhas.length < 2) return { itens, erros: ['O arquivo precisa de uma linha de cabeçalho e ao menos uma linha de dados.'] };
+    const cab = linhas[0].map((h) => dobrar(h).replace(/[^a-z0-9]/g, ''));
+    const iCpf = cab.findIndex((h) => h === 'cpf' || h === 'cpffunc');
+    const iCon = cab.findIndex((h) => h === 'contrato' || h === 'codigofunccontr');
+    const iNome = cab.findIndex((h) => h.startsWith('nome'));
+    const iCnpj = cab.findIndex((h) => h === 'cnpj');
+    if (iCpf < 0 || iCon < 0) return { itens, erros: ['Não achei as colunas CPF e CONTRATO (ou CODIGOFUNCCONTR).'] };
+    const acumulado = [...(existentes || [])];
+    linhas.slice(1).forEach((l, k) => {
+      const v = { id: 'csv' + k, cnpj: String((iCnpj >= 0 && l[iCnpj]) || cnpjPadrao || '').trim(), contrato: String(l[iCon] || '').trim(), cpf: String(l[iCpf] || '').trim(), nome: iNome >= 0 ? String(l[iNome] || '').trim() : '' };
+      const p = problemaDoVinculo(v, acumulado);
+      if (p) erros.push('Linha ' + (k + 2) + ': ' + p); else { acumulado.push(v); const { id, ...resto } = v; void id; itens.push(resto); }
+    });
+    return { itens, erros };
+  }
+
   return {
-    FIM_DE_LINHA, LIMITE_BYTES, TABELAS,
+    FIM_DE_LINHA, LIMITE_BYTES, TABELAS, vinculosDoCsv,
     foraDo1252, paraWindows1252, lerBytes,
     montarLinha, montarAdmissao, montarEventos, juntar, valoresDaLinha, temDado,
     problemaDoValor, ler, validar, igualAoModelo,

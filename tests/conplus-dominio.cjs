@@ -206,6 +206,10 @@ t('vínculo CPF ↔ contrato', () => {
   assert.equal(D.cpfDoContrato([v], '9', L.CNPJ_HOMOLOGACAO), '900.100.237-47');
   assert.equal(D.cpfDoContrato([v], 9), '900.100.237-47');
   assert.equal(D.cpfDoContrato([v], '10'), '');
+  const csv = D.vinculosDoCsv([['CPFFUNC', 'CODIGOFUNCCONTR', 'NOME'], ['529.982.247-25', '11', 'PESSOA TESTE'], ['529.982.247-25', '9', 'CONTRATO JA LIGADO'], ['111', '12', 'X']], L.CNPJ_HOMOLOGACAO, [v]);
+  assert.deepEqual(csv.itens, [{ cnpj: L.CNPJ_HOMOLOGACAO, contrato: '11', cpf: '529.982.247-25', nome: 'PESSOA TESTE' }]);
+  assert.equal(csv.erros.length, 2); assert.match(csv.erros[0], /^Linha 3: Este contrato já está ligado/);
+  assert.match(D.vinculosDoCsv([['A', 'B'], ['1', '2']]).erros[0], /CPF e CONTRATO/);
   // O mesmo número em duas empresas, sem dizer a empresa: não adivinha.
   assert.equal(D.cpfDoContrato([v, { ...v, id: '3', cnpj: '11.222.333/0001-81', cpf: '529.982.247-25' }], '9'), '');
 });
