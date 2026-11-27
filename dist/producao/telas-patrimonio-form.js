@@ -688,7 +688,8 @@
         /* navegação */
         const quadros = [e1, e2, e3, e4, e5, e6]; let atual = 0;
         const erroEtapa = el('p', 'profiles-error'); erroEtapa.setAttribute('role', 'alert');
-        const nomesEtapas = () => PD.etapas().map((label) => ({ label }));
+        // Simples: a trilha mostra só "Etapa 1 de 1 · Cadastro simples"; ligando o Completo, aparecem as seis etapas.
+        const nomesEtapas = () => (chaveCompleto.ativo ? PD.etapas() : ['Cadastro simples']).map((label) => ({ label }));
         const barra = window.CicluzStepper.create({ steps: nomesEtapas(), current: 0, label: 'Etapas do cadastro do patrimônio', podeIr: (i) => !novo || i <= atual, onSelect: (i) => ir(i) });
         const cancelar = botao('Cancelar', () => dlg.close(), 'btn secondary footer-cancel-accent');
         const voltar = botao('Voltar', () => ir(atual - 1), 'btn secondary footer-cancel-accent form-back-action'); voltar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>');
@@ -699,7 +700,7 @@
           const completo = chaveCompleto.ativo;
           atual = completo ? Math.max(0, Math.min(quadros.length - 1, i)) : 0;
           quadros.forEach((q, k) => mostrar(q, k === atual));
-          mostrar(completoTodo, completo); mostrar(barra.el, completo);
+          mostrar(completoTodo, completo);
           if (atual === 5) pintarRevisao();
           barra.update(nomesEtapas(), atual); erroEtapa.textContent = '';
           const ultima = atual === quadros.length - 1;
