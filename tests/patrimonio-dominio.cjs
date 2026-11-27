@@ -197,4 +197,13 @@ ok(() => { // Cadastro Simples (27/11/2026): sem categoria só vale no Simples; 
   assert.equal(P.normalizar({ nome: 'X', tipoId: ' tipo-1 ' }).tipoId, 'tipo-1');
   assert.deepEqual(P.TIPOS_INICIAIS, ['Notebook', 'Computador', 'Celular']);
 });
+ok(() => { // RET - Tipos de Patrimônio (27/11/2026): nome obrigatório, até 60 letras, sem repetir (maiúscula e acento não contam)
+  const lista = [{ id: 't1', nome: 'Notebook' }, { id: 't2', nome: 'Câmera' }];
+  assert.match(P.validarTipo({ nome: '   ' }, lista), /nome do tipo/i);
+  assert.match(P.validarTipo({ nome: 'x'.repeat(61) }, lista), /60/);
+  assert.match(P.validarTipo({ nome: ' notebook ' }, lista), /Já existe/);
+  assert.match(P.validarTipo({ nome: 'CAMERA' }, lista), /Já existe/);
+  assert.equal(P.validarTipo({ id: 't1', nome: 'NOTEBOOK' }, lista), ''); // editar o próprio tipo (só trocar a letra) vale
+  assert.equal(P.validarTipo({ nome: 'Tablet' }, lista), '');
+});
 console.log('patrimonio-dominio: ' + n + ' grupos de verificação ok');

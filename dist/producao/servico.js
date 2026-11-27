@@ -124,18 +124,31 @@
       d.tiposIniciais = true;
     });
   }
-  const tiposDoBem = () => { garantirTiposIniciais(); return B.dados.tipos.filter((x) => x.ativo !== false).sort((a, c) => a.nome.localeCompare(c.nome, 'pt-BR')); };
+  const todosOsTipos = () => { garantirTiposIniciais(); return B.dados.tipos.slice().sort((a, c) => a.nome.localeCompare(c.nome, 'pt-BR')); };
+  /** Tipos para escolher no cadastro do bem: só os ativos, mais o tipo que o bem já tem (mesmo inativo), para não sumir ao editar. */
+  const tiposDoBem = (atual) => todosOsTipos().filter((x) => x.ativo !== false || x.id === atual);
   const nomeDoTipo = (id) => { const x = B.dados.tipos.find((y) => y.id === id); return x ? x.nome : ''; };
-  function adicionarTipoDoBem(nome) {
-    const n = texto(nome);
-    if (!n) return erro('Informe o nome do tipo.');
-    if (n.length > 60) return erro('O nome do tipo tem no máximo 60 letras.');
+  const usosDoTipo = (id) => B.dados.bens.filter((b) => b.tipoId === id).length;
+  /** Cadastra ou edita um tipo ({ id?, nome, ativo }). O vínculo do bem é pelo id, então renomear não mexe nos bens. */
+  function salvarTipoDoBem(entrada) {
     garantirTiposIniciais();
-    const igual = B.dados.tipos.find((x) => x.nome.toLocaleLowerCase('pt-BR') === n.toLocaleLowerCase('pt-BR'));
-    if (igual) return igual.ativo === false ? erro('O tipo "' + igual.nome + '" existe, mas está inativo.') : { ok: true, id: igual.id, jaExistia: true };
-    let id = '';
-    const ok = B.transacao((d) => { id = S.novoId('tipo'); d.tipos.push({ id, nome: n, ativo: true }); d.tiposIniciais = true; });
+    const nome = texto(entrada.nome);
+    const msg = PD().validarTipo({ id: entrada.id, nome }, B.dados.tipos);
+    if (msg) return erro(msg);
+    if (entrada.id && !B.dados.tipos.some((x) => x.id === entrada.id)) return erro('Este tipo não existe mais.');
+    let id = entrada.id || '';
+    const ok = B.transacao((d) => {
+      if (id) Object.assign(d.tipos.find((x) => x.id === id), { nome, ativo: entrada.ativo !== false });
+      else { id = S.novoId('tipo'); d.tipos.push({ id, nome, ativo: entrada.ativo !== false }); }
+      d.tiposIniciais = true;
+    });
     return ok ? { ok: true, id } : erro(NAO_SALVOU);
+  }
+  /** Tipo em uso por algum patrimônio não se apaga: o caminho é inativar (some das escolhas novas e continua nos bens). */
+  function excluirTipoDoBem(id) {
+    const q = usosDoTipo(id);
+    if (q) return erro('Este tipo está em ' + q + (q === 1 ? ' patrimônio' : ' patrimônios') + '. Inative-o em vez de excluir.');
+    return B.transacao((d) => { d.tipos = d.tipos.filter((x) => x.id !== id); d.tiposIniciais = true; }) ? { ok: true } : erro(NAO_SALVOU);
   }
   /** Onde o bem é usado (formatos e fichas), para não apagar algo referenciado. */
   function usosDoBem(id) {
@@ -641,7 +654,7 @@
 
   window.CicluzProducaoServico = {
     salvarParametros: contar('producao:parametros', salvarParametros), custoDaFicha,
-    salvarBem, conferirBem, excluirBem, alternarBem, baixarBem, usosDoBem, tiposDoBem, nomeDoTipo, adicionarTipoDoBem,
+    salvarBem, conferirBem, excluirBem, alternarBem, baixarBem, usosDoBem, tiposDoBem, todosOsTipos, nomeDoTipo, usosDoTipo, salvarTipoDoBem, excluirTipoDoBem,
     salvarConfig: contar('producao:configurar-produto', salvarConfig), desligarProducao,
     salvarFicha: contar('producao:salvar-ficha', salvarFicha), duplicarFicha, definirPadrao, excluirFicha,
     salvarAgenda: contar('producao:agendar', salvarAgenda), encerrarAgenda, proximasDatas, cancelarData, processarAgendas,

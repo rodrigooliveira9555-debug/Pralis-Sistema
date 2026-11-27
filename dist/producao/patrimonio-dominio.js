@@ -368,10 +368,19 @@
 
   /** Tipos que a lista editável de Tipo do bem já traz na primeira vez (27/11/2026, Washington). Depois disso a lista é do cadastro. */
   const TIPOS_INICIAIS = ['Notebook', 'Computador', 'Celular'];
+  /** RET - Tipos de Patrimônio (27/11/2026): nome obrigatório, até 60 letras e sem repetir outro tipo (maiúscula e acento não contam). Devolve a mensagem ou ''. */
+  function validarTipo(t, tipos = []) {
+    const n = String((t && t.nome) || '').replace(/\s+/g, ' ').trim();
+    if (!n) return 'Informe o nome do tipo.';
+    if (n.length > 60) return 'O nome do tipo tem no máximo 60 letras.';
+    const chave = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
+    if (tipos.some((x) => x.id !== (t && t.id) && chave(x.nome) === chave(n))) return 'Já existe um tipo de patrimônio com este nome.';
+    return '';
+  }
   const etapas = () => ['Cadastro e identificação', 'Imagens e documentação', 'Localização e responsabilidade', 'Composição e componentes', 'Aquisição, financeiro e depreciação', 'Manutenção, controle e revisão'];
 
   return {
-    TIPOS_INICIAIS, CATEGORIAS_PATRIMONIO, CATEGORIAS_PRODUCAO, CATEGORIAS_UTENSILIO, UNIDADES_MEDIDA, UNIDADES_DIMENSAO, UNIDADES_PESO, VOLTAGENS, TIPOS_ENERGIA, UNIDADES_GAS, MATERIAIS, TECNICAS_OCULTAS,
+    TIPOS_INICIAIS, validarTipo, CATEGORIAS_PATRIMONIO, CATEGORIAS_PRODUCAO, CATEGORIAS_UTENSILIO, UNIDADES_MEDIDA, UNIDADES_DIMENSAO, UNIDADES_PESO, VOLTAGENS, TIPOS_ENERGIA, UNIDADES_GAS, MATERIAIS, TECNICAS_OCULTAS,
     CATEGORIAS_NOVAS, TIPOS_BEM, NATUREZAS, SITUACOES, CONSERVACAO, TIPOS_IMAGEM, TIPOS_DOCUMENTO, TIPOS_RESPONSABILIDADE, TIPOS_MOVIMENTACAO, TIPOS_AQUISICAO, METODOS_DEPRECIACAO,
     TIPOS_MANUTENCAO, SITUACOES_MANUTENCAO, SITUACOES_PECA, MOTIVOS_BAIXA, RESULTADOS_INSPECAO, TIPOS_ARQUIVO_IMAGEM, TIPOS_ARQUIVO_DOCUMENTO, LIMITES, TECNICAS,
     camposTecnicos, totalPeca, totaisComponentes, valorTotalAquisicao, prazoRestante, proximoNumero, criaCiclo, valorDoConjunto, normalizar, validar, mudancas, etapas, dataValida, r2,
