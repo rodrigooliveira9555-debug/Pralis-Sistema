@@ -261,3 +261,14 @@ Transcrição e resumo no cofre do Obsidian (`C:\projetos\PRALIS\48 - Áudio Rod
    - Os relatórios da ConPlus não trazem CPF, então o S2 precisa guardar o vínculo CPF ↔ contrato.
 
 Referência: documentação pública da API (https://nweb.evolvisolucoes.com.br/readme), lida inteira em 27/11/2026, que descreve os mesmos layouts.
+
+## P-61 — Abertura de Caixa: o que o roteiro ainda não decide (27/11/2026, Washington)
+**Feito:** a Abertura foi refeita (DESIGN_SYSTEM.md, item 39; `PROJECT_BRAIN/14`, "Abertura refeita a partir do roteiro"). O roteiro diz que a origem do valor inicial "não foi completamente definida nos áudios"; o Washington indicou, na imagem, que o valor **vem da Transferência**, e é o que a tela faz. Em aberto (perguntar ao Rodrigo):
+1. **Origem do valor inicial:** só a Transferência (malote), ou também **saldo anterior** (o fechamento anterior) e **lançamento manual**? O roteiro propõe "identificar a origem do saldo inicial, para não criar valor sem movimentação"; hoje há uma origem só.
+2. **Identificador do caixa:** o formato `CX-AAAAMMDD-<subgrupo>-NNN` é uma **proposta** do texto. Confirmar, e dizer se vale também para Delivery, NFE e Vendas Externas.
+3. **Outros subgrupos (NFE › EMPRESAS, DELIVERY › IFOOD…):** abrem caixa? Com malote, ou de outro jeito? Hoje a abertura os bloqueia.
+4. **Elo subgrupo → conta de posto:** na casca é pelo nome do subgrupo (`1M` → conta `cx-1m`). Com backend, deve ser por **id** (um campo no subgrupo ou na conta).
+5. **Horário de referência:** vem do **horário inicial e final do subgrupo**. O roteiro diz "Cadastro de horários": é esse, o **VND - Horário de Funcionamento** ou o **Horários Empresa**? (P-55 e P-56.)
+6. **Hardware do subgrupo × PDV da conta:** se o computador cadastrado no subgrupo for outro que o do PDV da conta, qual vale? Hoje só é mostrado.
+7. **Quem opera e quem supervisiona** (os blocos que saíram): virão do nível hierárquico e das permissões; falta o desenho (inclusive o supervisor que o Fechamento ainda pede como "gerente responsável").
+8. **Troca de operador e de hardware com o caixa aberto:** sem desenho (P-52 item 2).

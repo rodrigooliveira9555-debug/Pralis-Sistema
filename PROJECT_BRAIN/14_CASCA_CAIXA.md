@@ -281,3 +281,13 @@ Na Abertura de Caixa, a escolha da maquininha deixou de ser uma lista fictícia 
 
 ## Formulários do Caixa em linha por linha (27/11/2026)
 Todas as telas e janelas do Caixa que pedem dados seguem o padrão da Nova Transferência (DESIGN_SYSTEM.md, item 34, lote 3). Só mudou a apresentação: regras, validações, textos e o que vai para o estado fictício são os mesmos. A contagem cega (R-232) continua cega: o "Total contado" da conferência só soma o que o conferente digitou.
+
+## Abertura refeita a partir do roteiro (27/11/2026, Washington)
+O Washington trouxe o roteiro da abertura (quatro passos: identificar a operação, recuperar as informações, conferir o valor inicial, confirmar) e uma imagem de referência, e pediu para refatorar só a **Abertura**. O que foi feito, o que segue como era e o que ficou de fora:
+- **Passo 1 (identificação):** grupo e subgrupo de vendas escolhidos pelo operador, vindos de **VND - Grupos de Vendas** (CAIXA PDV › 1M…4T, NFE › EMPRESAS, DELIVERY › IFOOD). ✅
+- **Passo 2 (recuperação automática):** estabelecimento (Matriz em Dados da Empresa; sem ela, a empresa da sessão), operador (usuário da sessão), hardware (campo Computador do subgrupo), horário de referência (horário inicial e final do subgrupo), data da operação e horário efetivo (da confirmação, separado do de referência). ✅ Hardware e horário só aparecem se o subgrupo tiver o cadastro completo (hoje o seed não tem: o Washington precisa preencher).
+- **Passo 3 (valor inicial):** continua vindo da **Transferência** (malote do Cofre, conferido pelo lacre; "Sim, confere" / "Não confere" com contagem e motivo), como na anotação da imagem. A linha "Origem do valor inicial" diz isso. ✅ Saldo anterior e lançamento manual **não** foram implementados (P-61).
+- **Passo 4 (confirmação):** nasce o registro com o identificador `CX-AAAAMMDD-<subgrupo>-NNN` (formato **proposto** no texto; confirmar). ✅ Em memória, como todo o Caixa.
+- **Saíram** (decisão do Washington, na imagem): Responsável pelo caixa, Supervisor responsável e Usuário logado; a maquininha subiu para a identificação.
+- **Fora da Abertura (não mexi):** Turno, Fechamento, vendas reais associadas ao caixa, destinação financeira, e "liberar a operação sem manter a tela aberta" (não há gravação nem backend).
+- **Limite da casca:** só subgrupos de PDV com nome `NM`/`NT` ligam à conta de posto (Caixa 1M…4T). O elo é pelo nome do subgrupo, só até haver backend (a regra do CLAUDE.md é vínculo por id): ver P-61.
