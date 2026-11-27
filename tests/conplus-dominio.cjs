@@ -240,4 +240,36 @@ t('vínculo CPF ↔ contrato', () => {
   assert.equal(D.cpfDoContrato([v, { ...v, id: '3', cnpj: '11.222.333/0001-81', cpf: '529.982.247-25' }], '9'), '');
 });
 
+t('colaboradores da ConPlus: leitura do CSV, junção sem apagar, vínculos e situação no cadastro (dados fictícios)', () => {
+  const C = require('../dist/conplus/colaboradores.js');
+  const cab = ['CNPJ', 'CODIGOEMPRESA', 'CODIGOESTAB', 'CODIGOFUNCCONTR', 'NOMEFUNC', 'CPFFUNC', 'PISFUNC', 'DATAADM', 'DATADEM', 'CODIGOTIPOCONTR', 'DESCRTIPOCONTR'];
+  const cnpj = L.CNPJ_HOMOLOGACAO;
+  const csv = [cab,
+    [cnpj, '8999', '1', '9', 'PESSOA TESTE UM', '900.100.237-47', '123.45678.90.1', '01/12/2026', '', '1', 'Empregado'],
+    [cnpj, '8999', '1', '10', 'PESSOA TESTE DOIS', '52998224725', '', '15/01/2025', '', '2', 'Diretor'],
+    [cnpj, '8999', '1', '10', 'REPETIDA', '52998224725', '', '15/01/2025', '', '2', 'Diretor'],
+    [cnpj, '8999', '1', 'X1', 'SEM CONTRATO', '52998224725', '', '', '', '', ''],
+    [cnpj, '8999', '1', '11', 'CPF RUIM', '111.111.111-11', '', '', '', '', ''],
+    [cnpj, '8999', '1', '12', 'DATA RUIM', '900.100.237-47', '', '2026-12-01', '', '', '']];
+  const r = C.colaboradoresDoCsv(csv);
+  assert.equal(r.itens.length, 2);
+  assert.equal(r.itens[1].cpf, '529.982.247-25'); // CPF sem pontuação é formatado
+  assert.deepEqual(r.erros.map((e) => e.slice(0, 8)), ['Linha 4:', 'Linha 5:', 'Linha 6:', 'Linha 7:']);
+  assert.match(C.colaboradoresDoCsv([['A', 'B'], ['1', '2']]).erros[0], /CODIGOFUNCCONTR, NOMEFUNC, CPFFUNC/);
+  // Junção: entra o novo, atualiza o que mudou, não apaga o que não veio.
+  const antes = [{ id: 'a', ...r.itens[0], nome: 'NOME ANTIGO' }, { id: 'z', cnpj, empresa: '8999', contrato: '77', nome: 'FORA DO ARQUIVO', cpf: '529.982.247-25' }];
+  const j = C.juntar(antes, r.itens, { agora: 'T', novoId: () => 'novo' });
+  assert.deepEqual([j.novos, j.atualizados, j.iguais], [1, 1, 0]);
+  assert.equal(j.lista.length, 3); assert.equal(j.lista[0].nome, 'PESSOA TESTE UM'); assert.equal(j.lista[0].id, 'a');
+  assert.equal(antes[0].nome, 'NOME ANTIGO'); // a original não muda
+  assert.deepEqual([C.juntar(j.lista, r.itens).iguais, C.juntar(j.lista, r.itens).novos], [2, 0]); // reimportar o mesmo não duplica
+  // Vínculos que faltam e situação no cadastro (só leitura).
+  const falta = C.vinculosQueFaltam(j.lista, [{ cnpj, contrato: '9', cpf: '900.100.237-47' }]);
+  assert.deepEqual(falta.map((x) => x.contrato), ['77', '10']);
+  assert.equal(C.situacaoNoCadastro(r.itens[0], [{ cpf: '90010023747' }]), 'no-cadastro');
+  assert.equal(C.situacaoNoCadastro(r.itens[0], []), 'fora');
+  assert.equal(C.situacaoNoCadastro(r.itens[0], [{ cpf: '900.100.237-47' }, { cpf: '90010023747' }]), 'duplicado');
+  assert.equal(C.mascararCpf('900.100.237-47'), '***.100.237-**');
+});
+
 console.log('conplus-dominio: ' + n + ' grupos de teste ok');
