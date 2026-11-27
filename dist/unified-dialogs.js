@@ -7,5 +7,8 @@
    if(dialog.style.getPropertyValue('--dialog-accent')!==color)dialog.style.setProperty('--dialog-accent',color);
   });
  }
- new MutationObserver(sync).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','class']});sync();
+ // Enquanto a página carrega não há diálogo aberto: uma rodada só no fim, em vez de recalcular o estilo a cada script.
+ let esperando=false;
+ const aoMudar=()=>{if(document.readyState!=='loading')return sync();if(!esperando){esperando=true;document.addEventListener('DOMContentLoaded',sync,{once:true})}};
+ new MutationObserver(aoMudar).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','class']});sync();
 })();
