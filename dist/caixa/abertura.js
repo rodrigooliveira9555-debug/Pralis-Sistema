@@ -10,7 +10,7 @@
   const C = window.CicluzCaixa;
   const { el, botao, entrada, seletor } = U;
 
-  // Login de posto: cada conta de operador é um PDV + turno (uma das máquinas de VND - Computadores, C.pdvs(), × Manhã/Tarde).
+  // Login de posto: cada conta de operador é um PDV + turno (uma das máquinas de VND - Hardware, C.pdvs(), × Manhã/Tarde).
   const POSTO = { get pdv() { return C.nomePdv(1); }, turno: 'Manhã', usuario: 'pdv1.manha' };
   // Malote que a Tesouraria declarou para o lacre digitado (vem de C.estado.malotes; o 001 já existe de início).
   const MALOTE = { lacre: '', dinheiro: 0, moedas: 0, lacresSangria: [], lacreFechamento: '', rota: 'Malote Cofre → Conta do PDV' };

@@ -202,6 +202,10 @@ O **VND - Horário de Funcionamento** (Entradas › Vendas › Cadastros Geral, 
 4. **Onde a área mora no menu definitivo** e **como se liga ao Cadastro de pessoas** (P-11: o cadastro completo fica só no aparelho; faltam admissão gravada, salário por pessoa, CTPS, banco, código do município, empresa/filial e código do contrato).
 5. As tabelas de códigos por CNPJ (cargo, escala, filial, eventos, municípios, bancos) e a lista CPF → contrato dos ativos, que a ConPlus vai mandar (entram pela importação de CSV da área).
 
+## P-57 — VND - Hardware: o que os outros tipos de equipamento fazem (27/11/2026, Washington)
+**Feito:** **VND - Computadores** virou **VND - Hardware** (pedido do Washington). Cada **grupo** é um tipo de equipamento (Computadores, Celulares, Tablets…; o botão **Novo grupo** cria os outros) e os **equipamentos** ficam dentro do grupo (a palavra da tela mudou de "computador" para "equipamento"). Só nome e textos mudaram: os dados continuam em `cicluz-financial-hierarchy-v1.computadores`, sem migração, e o grupo "Computadores" com os 4 TNP-PC-CXPDV segue igual.
+**Pendente (perguntar ao Rodrigo):** (1) **Grupos de Vendas › subgrupo › campo "Computador"** lista os equipamentos ativos de **todos** os grupos do Hardware, então um celular ou tablet cadastrado aparece ali; manter assim, mostrar só o grupo Computadores ou renomear o campo? (2) O **Caixa** continua lendo só os equipamentos cujo nome termina em CXPDV-n (conferido: celular não vira PDV); se um tablet puder ser PDV, a regra do nome muda. (3) O **nome do equipamento** é sempre em maiúsculas, como era para computadores; vale para celular e tablet?
+
 ## P-58 — Agenda: áudio do Rodrigo de 27/11/2026 (compromisso, atividades, área e ações padronizadas)
 Transcrição e resumo no cofre do Obsidian (`C:\projetos\PRALIS\48 - Áudio Rodrigo 27-11 - Agenda (compromisso, atividades, área e ações).md`), fora do repositório. **Nada decidido ainda; nada implementado.** Pedidos do áudio:
 1. **Nomes:** **Compromisso** (o principal) → **Atividades** (hoje "subtarefas") → **Subatividades**; cada nível com nome, prazo e configuração próprios.
