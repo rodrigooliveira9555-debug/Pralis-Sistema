@@ -29,15 +29,17 @@
     l.dataset.registro = c.registro; l.dataset.coluna = String(c.n);
     const topo = el('span', 'conplus-campo-rotulo');
     topo.append(el('b', 'conplus-campo-n', String(c.n)), el('span', null, c.nome + (c.obrig && !c.fixo && !c.deriva ? ' *' : '')));
+    if (c.obrigDoc) { const m = el('span', 'conplus-obrig-doc', 'doc'); m.title = 'Obrigatório na documentação do Questor: vazio, só gera aviso'; topo.append(m); }
     l.append(topo);
     let no;
     const somenteLeitura = Boolean(c.fixo || c.deriva);
     if (c.opcoes && !somenteLeitura) {
-      no = U.seletor(c.opcoes.map(([k, t]) => [k, k + ' · ' + t]), valor || '', '—');
+      no = U.seletor(c.opcoes.map(([k, t]) => [k, t ? k + ' · ' + t : k]), valor || '', '—');
     } else {
       no = U.entrada('text', somenteLeitura ? (valorFixo == null ? '' : valorFixo) : (valor || ''), { autocomplete: 'off', spellcheck: false });
       no.dataset.textoLivre = '1';
       if (somenteLeitura) { no.readOnly = true; no.tabIndex = -1; }
+      else if (c.tamanho) no.maxLength = c.tamanho;
       if (['data', 'decimal', 'inteiro', 'codigo', 'cpf', 'cnpj'].includes(c.tipo)) no.inputMode = c.tipo === 'data' || c.tipo === 'cpf' || c.tipo === 'cnpj' ? 'numeric' : 'decimal';
       // Exemplo próprio em todo campo: sem ele, o layout-review.js poria "R$ 0,00" num rótulo com "salário" e o field-validation.js
       // passaria a máscara de moeda (o arquivo quer 2500,00, sem R$ e sem ponto).
@@ -49,7 +51,7 @@
     no.setAttribute('aria-label', 'Registro ' + c.registro + ', coluna ' + c.n);
     l.append(no);
     const dica = [c.campo, c.fixo === 'cnpj' ? 'empresa do laboratório' : c.fixo ? 'fixa' : c.deriva ? 'igual à coluna ' + c.deriva[1] + ' do ' + c.deriva[0] : '',
-      c.aConfirmar ? 'nome a confirmar no .nli' : '', c.modelo && !somenteLeitura ? 'modelo: ' + c.modelo : '', c.consulta ? 'consulta ' + c.consulta : ''].filter(Boolean).join(' · ');
+      c.aConfirmar ? 'nome a confirmar no .nli' : '', c.obrigDoc ? 'obrigatório na doc do Questor' : '', c.tamanho && !somenteLeitura && !c.opcoes ? 'até ' + c.tamanho + ' caracteres' : '', c.modelo && !somenteLeitura ? 'modelo: ' + c.modelo : '', c.consulta ? 'consulta ' + c.consulta : ''].filter(Boolean).join(' · ');
     const pe = el('small', 'conplus-campo-dica', dica + (c.dica ? (dica ? '. ' : '') + c.dica : ''));
     l.append(pe);
     const aviso = el('small', 'conplus-campo-erro'); aviso.hidden = true; aviso.setAttribute('role', 'status'); l.append(aviso);

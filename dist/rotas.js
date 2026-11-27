@@ -143,9 +143,15 @@
     if (caminho) { if (caminho.join('/') !== rota.join('/')) reabrir(caminho); return; }
     if (!location.hash) { rota = []; titulo(); document.dispatchEvent(new Event('cicluz-open-menu')); }
   });
+  // Se a pessoa já clicou em outra tela enquanto a página carregava, o endereço já é o dela: não reabre
+  // por cima (antes o fim do carregamento puxava de volta para a tela do F5).
   raiz.addEventListener('load', () => setTimeout(() => {
     const caminho = lerEndereco(location.hash);
-    if (caminho) reabrir(caminho);
+    if (!caminho || caminho.join('/') === rota.join('/')) return;
+    // Clique antes do rotas.js carregar (rotas-cedo.js): a tela aberta é a do clique, não a do endereço.
+    // Tira o endereço velho para o F5 não levar de volta a ela.
+    if (raiz.cicluzCliqueCedo && !rota.length) { history.replaceState(null, '', location.pathname + location.search); return; }
+    reabrir(caminho);
   }, 0));
 
   function abrirPorCodigo(destino) {

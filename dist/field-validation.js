@@ -22,5 +22,9 @@ document.addEventListener('focusout',e=>{if(e.target instanceof HTMLInputElement
 function invalidIn(scope){const fields=[...scope.querySelectorAll('input,select,textarea')].filter(el=>!el.disabled&&!el.readOnly&&el.getClientRects().length);for(const el of fields){if(el instanceof HTMLInputElement)validate(el);if(!el.checkValidity()){el.reportValidity();return true}}return false}
 document.addEventListener('submit',e=>{if(invalidIn(e.target)){e.preventDefault();e.stopImmediatePropagation()}},true);
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!/^salvar\b|^concluir\b/i.test(b.textContent.trim()))return;const scope=b.closest('form,dialog,.view,.modal');if(scope&&invalidIn(scope)){e.preventDefault();e.stopImmediatePropagation()}},true);
-new MutationObserver(records=>{if(records.some(r=>r.type==='childList'||r.target.tagName!=='SELECT'))scan()}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});scan();
+// Uma varredura por rodada: o observador dispara a cada script e a cada tela montada, e varrer a página
+// inteira em cada disparo travava a abertura do site por vários segundos (o F5 caía fora da tela).
+let scanAgendado=false;
+function agendarScan(){if(scanAgendado)return;scanAgendado=true;const rodar=()=>{scanAgendado=false;scan()};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',rodar,{once:true});else setTimeout(rodar,0)}
+new MutationObserver(records=>{if(records.some(r=>r.type==='childList'||r.target.tagName!=='SELECT'))agendarScan()}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});scan();
 })(typeof window!=='undefined'?window:globalThis);

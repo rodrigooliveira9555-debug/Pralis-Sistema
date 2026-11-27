@@ -8,10 +8,12 @@
  */
 (function (root, factory) {
   const isNode = typeof module === 'object' && module.exports;
-  const api = factory(isNode ? require('./campos-nli.js') : root.CicluzConplusCamposNli);
+  const api = factory(isNode ? require('./campos-nli.js') : root.CicluzConplusCamposNli,
+    isNode ? require('./regras-questor.js') : root.CicluzConplusRegrasQuestor,
+    isNode ? require('./rotulos-questor.js') : root.CicluzConplusRotulosQuestor);
   if (isNode) module.exports = api;
   else root.CicluzConplusLayout = api;
-}(typeof self !== 'undefined' ? self : this, function (NLI) {
+}(typeof self !== 'undefined' ? self : this, function (NLI, REGRAS, ROTULOS) {
   'use strict';
 
   const CNPJ_HOMOLOGACAO = '84.859.909/0001-90';
@@ -152,15 +154,19 @@
     for (let n = 1; n <= R.colunas; n++) {
       const k = R.conhecidas[n] || {};
       const q = (NLI && NLI.porColuna[reg] && NLI.porColuna[reg][n]) || null; // nome e campo do .nli
+      const rq = (q && REGRAS && REGRAS.regra(reg, q.campo)) || null; // regra oficial da documentação do Questor (via S1)
+      const tipoRegra = rq && rq.tipo !== 'texto' ? (rq.tipo === 'logico' ? 'codigo' : rq.tipo) : '';
+      const opcoesRegra = rq && rq.dominio ? rq.dominio.filter((x) => x !== '').map((x) => [x, (ROTULOS && ROTULOS.rotulo(q.campo, x, rq.tipo === 'logico')) || '']) : null;
       const g = (R.grupos || []).find(([de, ate]) => n >= de && n <= ate);
       const valorModelo = modelo[n - 1] || '';
       const c = {
         n, registro: reg,
         nome: n === 1 ? 'Identificador do registro' : k.nome || (q && q.nome) || (g ? g[2] + ' (coluna ' + n + ')' : 'Coluna ' + n),
-        campo: (q && q.campo) || k.campo || '', tipo: n === 1 ? 'texto' : k.tipo || (q && q.tipo) || tipoPeloModelo(valorModelo),
+        campo: (q && q.campo) || k.campo || '', tipo: n === 1 ? 'texto' : k.tipo || (q && q.tipo) || tipoRegra || tipoPeloModelo(valorModelo),
         obrig: n === 1 || Boolean(k.obrig), aConfirmar: n !== 1 && !k.nome && !q,
+        obrigDoc: Boolean(rq && rq.obrigDoc) && !k.obrig && !k.fixo && !k.deriva, tamanho: (rq && rq.tamanho) || 0, dominio: (rq && rq.dominio) || null,
         fixo: n === 1 ? 'valor' : k.fixo || '', valor: n === 1 ? reg : k.valor,
-        deriva: k.deriva || null, opcoes: k.opcoes || null, depara: k.depara || '', consulta: k.consulta || '',
+        deriva: k.deriva || null, opcoes: k.opcoes || opcoesRegra || null, depara: k.depara || '', consulta: k.consulta || '',
         dica: [k.dica, g && g[3] && n === g[0] ? g[3] : ''].filter(Boolean).join(' '), modelo: valorModelo,
       };
       lista.push(c);
