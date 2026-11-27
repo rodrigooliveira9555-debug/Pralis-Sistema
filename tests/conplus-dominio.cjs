@@ -34,6 +34,11 @@ t('aceite: a linha E sai idêntica ao exemplo da doc', () => {
   assert.deepEqual(r.erros, []); assert.equal(r.grupo, 'EventoVariavel');
 });
 
+t('aceite: os exemplos reais do WorkDrive da ConPlus (27/11/2026) saem iguais', () => {
+  // Eventos 8999 - teste ficticio.txt, como veio do drive (com CR+LF no fim).
+  assert.equal(D.juntar(D.montarEventos([{ periodo: '3', seq: '99', contrato: '1', evento: '318', referencia: '1,00', valor: '0,00' }])), 'E;84.859.909/0001-90;3;99;1;318;1,00;0,00;;;;;0;' + '\r\n');
+});
+
 t('colunas fixas e derivadas não dependem do formulário', () => {
   const x = admissaoDoModelo();
   x.c[3] = 'QUALQUER'; x.d[0][3] = '111.111.111-11'; x.d[0][4] = '02/02/2002'; x.a[1] = 'Z'; x.b[2] = 'outro';
@@ -78,7 +83,7 @@ t('número de colunas: aponta a linha e conta como a API', () => {
 t('formatos: data, decimal, CPF, CNPJ, negativo, obrigatório — com linha e coluna', () => {
   const troca = (linha, col, valor) => { const p = linha.split(';'); p[col - 1] = valor; return p.join(';'); };
   const casos = [
-    [troca(M.A, 8, '1995-01-01'), 1, 8, /data inválida: use dd\/mm\/aaaa em Data de nascimento \(coluna 8\)/],
+    [troca(M.A, 8, '1995-01-01'), 1, 8, /data inválida: use dd\/mm\/aaaa em DATANASC \(coluna 8\)/],
     [troca(M.A, 9, '31/02/2026'), 1, 9, /data inválida/],
     [troca(M.A, 20, '2500.00'), 1, 20, /vírgula .* em VALORSAL \(coluna 20\)/],
     [troca(M.A, 20, '2.500,00'), 1, 20, /vírgula/],
@@ -86,7 +91,7 @@ t('formatos: data, decimal, CPF, CNPJ, negativo, obrigatório — com linha e co
     [troca(M.A, 6, '90010023747'), 1, 6, /pontuação/],
     [troca(M.A, 6, '900.100.237-48'), 1, 6, /dígitos verificadores/],
     [troca(M.A, 4, '84.859.909/0001-91'), 1, 4, /CNPJ inválido/],
-    [troca(M.A, 7, ''), 1, 7, /campo obrigatório vazio em Nome \(coluna 7\)/],
+    [troca(M.A, 7, ''), 1, 7, /campo obrigatório vazio em NOMEFUNC \(coluna 7\)/],
     [troca(M.A, 18, ''), 1, 18, /obrigatório vazio em CODIGOCARGO \(coluna 18\)/],
     [troca(M.A, 13, '-5'), 1, 13, /valor negativo/],
   ];
@@ -134,13 +139,18 @@ t('valor com ";" ou fora do Windows-1252 é recusado na coluna', () => {
   assert.equal(D.problemaDoValor(c, 'MARIA DA CONCEIÇÃO'), '');
 });
 
-t('leitura: cada coluna com o rótulo e a marca do que a doc não nomeia', () => {
+t('leitura: cada coluna com o rótulo e o campo dos .nli da ConPlus', () => {
   const [a] = D.ler(M.A);
   assert.equal(a.colunas.length, 21);
   assert.deepEqual(a.colunas[19], { n: 20, nome: 'Salário', campo: 'VALORSAL', aConfirmar: false, valor: '2500,00', problema: '' });
-  assert.equal(a.colunas[1].nome, 'Coluna 2'); assert.equal(a.colunas[1].aConfirmar, true);
+  assert.deepEqual([a.colunas[1].nome, a.colunas[1].campo, a.colunas[2].campo], ['Termo de consentimento', 'TERMOCONSENTIMENTO', 'GERARPRELIMINAR']);
   const [b] = D.ler(M.B);
-  assert.equal(b.colunas[6].nome, 'Endereço, município e naturalidade (coluna 7)');
+  assert.deepEqual([b.colunas[6].campo, b.colunas[11].campo, b.colunas[81].campo, b.colunas[84].campo], ['ENDERFUNC', 'CODIGOMUNIC', 'MAE', 'UTILIZAQCOLABORE']);
+  // Depois dos .nli, nenhuma coluna fica "a confirmar"; o campo de cada uma bate com o .nli (o C3 é o contrato, o D30 é FUMANTE).
+  for (const r of 'ABCDE') assert.deepEqual(L.colunas(r).filter((c) => c.aConfirmar).map((c) => c.n), [], r);
+  assert.equal(L.colunas('C')[2].campo, 'CODIGOFUNCCONTR'); assert.equal(L.colunas('D')[29].campo, 'FUMANTE');
+  // Obrigatórios do dependente que a doc lista e o .nli agora localiza.
+  assert.deepEqual(L.colunas('D').filter((c) => c.obrig).map((c) => c.campo), ['', 'CODIGOEMPRESA', 'CPFFUNC', 'DATAADM', 'CODIGODEPEND', 'NOMEDEPEND', 'DATANASC', 'PARENTESCO', 'SEXO', 'ESTADOCIVIL', 'GRAUINSTR', 'FORMACONTROLEIR', 'NACIONALIDADE', 'FUMANTE', 'CONSOMEALCOOL']);
   // Tipo inferido pelo modelo: C26 (data) e B59 (decimal, com nome).
   assert.equal(L.colunas('C')[25].tipo, 'data'); assert.equal(L.colunas('B')[58].tipo, 'decimal');
 });

@@ -1,18 +1,17 @@
 /*
  * Área ConPlus (laboratório, 27/11/2026) — o layout de importação do Questor, registro a registro.
- * Fonte única das colunas: a documentação da ConPlus (nweb.evolvisolucoes.com.br/readme, lida inteira em 27/11/2026),
- * seções 05 (formatos) e 09 (importações). O layout oficial é o .nli aprovado; a doc NÃO nomeia todas as colunas.
- * Regra deste arquivo: coluna que a doc nomeia leva o nome dela (e o nome do campo no Questor, quando a doc diz);
- * coluna que a doc não nomeia fica "Coluna N" com a marca aConfirmar, e o valor do modelo testado aparece como dica.
- * Nada aqui é inventado: quando a ConPlus mandar os .nli (ou o GET /importacoes/Admissao/campos), os nomes que faltam
- * entram aqui e as telas acompanham sozinhas.
+ * Fontes: o nome e o campo de cada coluna vêm dos .nli aprovados pela ConPlus (campos-nli.js, lidos em 27/11/2026); as regras
+ * (obrigatórios, códigos aceitos, consultas, dicas) vêm da documentação da ConPlus (nweb.evolvisolucoes.com.br/readme, seções 05
+ * e 09). Os .nli não dizem o que é obrigatório: obrigatório aqui é só o que a doc diz. Coluna que nenhuma das duas fontes nomeia
+ * ficaria "Coluna N" (aConfirmar); depois dos .nli, nenhuma ficou assim.
  * Sem DOM. Testado em tests/conplus-dominio.cjs.
  */
 (function (root, factory) {
-  const api = factory();
-  if (typeof module === 'object' && module.exports) module.exports = api;
+  const isNode = typeof module === 'object' && module.exports;
+  const api = factory(isNode ? require('./campos-nli.js') : root.CicluzConplusCamposNli);
+  if (isNode) module.exports = api;
   else root.CicluzConplusLayout = api;
-}(typeof self !== 'undefined' ? self : this, function () {
+}(typeof self !== 'undefined' ? self : this, function (NLI) {
   'use strict';
 
   const CNPJ_HOMOLOGACAO = '84.859.909/0001-90';
@@ -99,7 +98,7 @@
     },
     D: {
       nome: 'Dependente (rascunho)', layout: 'D_DependenteRascunho.nli', colunas: 31, grupo: 'Admissao', opcional: true, varios: true,
-      dica: 'Uma linha por dependente. Também obrigatórios, em colunas que a doc não nomeia: sexo, estado civil, grau de instrução, forma de controle do IR, nacionalidade, fumante e consome álcool.',
+      dica: 'Uma linha por dependente. Obrigatórios (doc da ConPlus): código, nome, nascimento, parentesco, sexo, estado civil, grau de instrução, forma de controle do IR, nacionalidade, fumante e consome álcool.',
       conhecidas: {
         2: { nome: 'CNPJ da empresa', tipo: 'cnpj', obrig: true, fixo: 'cnpj' },
         3: { nome: 'CPF do titular', tipo: 'cpf', obrig: true, deriva: ['A', 6] },
@@ -111,7 +110,9 @@
         9: { nome: 'CPF do dependente', tipo: 'cpf', dica: 'Não obrigatório no layout.' },
         13: { nome: 'Auxílio-creche: idade mínima (meses)', campo: 'IDADEMINCRECHE', tipo: 'inteiro' },
         14: { nome: 'Auxílio-creche: idade máxima (meses)', campo: 'IDADELIMCRECHE', tipo: 'inteiro' },
+        10: { tipo: 'codigo', obrig: true }, 11: { tipo: 'codigo', obrig: true }, 12: { tipo: 'codigo', obrig: true },
         17: { nome: 'Incapaz para o trabalho', campo: 'INCAPAZTRABALHAR', tipo: 'codigo' },
+        18: { tipo: 'codigo', obrig: true }, 23: { tipo: 'codigo', obrig: true }, 30: { tipo: 'codigo', obrig: true }, 31: { tipo: 'codigo', obrig: true },
       },
     },
     E: {
@@ -150,13 +151,14 @@
     const lista = [];
     for (let n = 1; n <= R.colunas; n++) {
       const k = R.conhecidas[n] || {};
+      const q = (NLI && NLI.porColuna[reg] && NLI.porColuna[reg][n]) || null; // nome e campo do .nli
       const g = (R.grupos || []).find(([de, ate]) => n >= de && n <= ate);
       const valorModelo = modelo[n - 1] || '';
       const c = {
         n, registro: reg,
-        nome: n === 1 ? 'Identificador do registro' : k.nome || (g ? g[2] + ' (coluna ' + n + ')' : 'Coluna ' + n),
-        campo: k.campo || '', tipo: n === 1 ? 'texto' : k.tipo || tipoPeloModelo(valorModelo),
-        obrig: n === 1 || Boolean(k.obrig), aConfirmar: n !== 1 && !k.nome,
+        nome: n === 1 ? 'Identificador do registro' : k.nome || (q && q.nome) || (g ? g[2] + ' (coluna ' + n + ')' : 'Coluna ' + n),
+        campo: (q && q.campo) || k.campo || '', tipo: n === 1 ? 'texto' : k.tipo || (q && q.tipo) || tipoPeloModelo(valorModelo),
+        obrig: n === 1 || Boolean(k.obrig), aConfirmar: n !== 1 && !k.nome && !q,
         fixo: n === 1 ? 'valor' : k.fixo || '', valor: n === 1 ? reg : k.valor,
         deriva: k.deriva || null, opcoes: k.opcoes || null, depara: k.depara || '', consulta: k.consulta || '',
         dica: [k.dica, g && g[3] && n === g[0] ? g[3] : ''].filter(Boolean).join(' '), modelo: valorModelo,
