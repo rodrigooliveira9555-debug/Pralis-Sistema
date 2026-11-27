@@ -186,7 +186,23 @@ Transcrição e resumo no cofre do Obsidian (`C:\projetos\PRALIS\46 - Áudio Rod
 ## P-56 — Dois cadastros de horário da empresa: Horários Empresa e VND - Horário de Funcionamento (27/11/2026)
 O **VND - Horário de Funcionamento** (Entradas › Vendas › Cadastros Geral, 25/11/2026) guarda horários **com nome**, cada um com os dias em que vale e a hora de abrir e de fechar (`cicluz-horarios-funcionamento-v1`). O novo **Horários Empresa** guarda o horário **por dia e por turno**. Os dois dizem "a que horas a empresa abre e fecha": é o mesmo ato em dois caminhos (regra 1 do CLAUDE.md). **Nada foi removido nem migrado**, porque mexer em dados salvos e escolher qual dos dois fica é decisão do Washington e do Rodrigo; hoje nenhuma outra tela lê nenhum dos dois. Opções: (a) ficar só com Horários Empresa e migrar os horários com nome (migração, pede aprovação); (b) manter os dois, cada um com um papel dito por escrito (ex.: o nomeado vale para vendas e o quadro, para a empresa); (c) tirar o novo. Recomendação: (a), depois de responder o P-55.
 
-## P-57 — Agenda: áudio do Rodrigo de 27/11/2026 (compromisso, atividades, área e ações padronizadas)
+## P-57 — Área ConPlus: laboratório da troca por arquivo com o DP (27/11/2026, Marco)
+**Contexto:** Marco decidiu em 27/11/2026 não pagar a API da ConPlus; a troca com o DP (Questor) passa a ser por arquivo no layout `.nli` (registrado no PR #102 deste repositório, que ainda não está na `main` e usa o número **P-55, que já existe aqui** para Horários Empresa: precisa ser renumerado antes do merge).
+**Feito (laboratório isolado):** Saídas · Despesas › API › **DES - ConPlus Arquivo (Laboratório)** (`dist/conplus/`). Gera o .txt de admissão (A 21, B 85, C 67, D 31 colunas; uma pessoa por arquivo; C e D só com dado) e o de eventos (E 13 colunas), em Windows-1252, `;`, sem cabeçalho, CR+LF; confere como a API (contagem de colunas, data dd/mm/aaaa, decimal com vírgula, CPF com pontuação, obrigatórios, nenhum negativo, TIPOJORNADA ≠ 0, banco/agência no pagamento em conta, linha C/D vazia, D com o CPF e a admissão do A), com o erro na linha e na coluna; lê um .txt coluna a coluna; guarda o de-para e o vínculo CPF ↔ contrato. **Aceite:** o arquivo gerado a partir do modelo da doc sai idêntico, byte a byte, ao modelo testado pela ConPlus em 24/11/2026 (teste em `tests/conplus-dominio.cjs` e conferido no navegador).
+**Decidido aqui (técnico, reversível):**
+- Coluna que a doc não nomeia fica "Coluna N" (marcada "a confirmar no .nli"), com o valor do modelo como dica; o tipo dela vem do formato do valor no modelo (data, decimal, CPF) ou é texto livre. Nada foi inventado.
+- A linha E sai com o `;` a mais no fim, igual ao exemplo da doc (a API aceita). As linhas A–D saem como o modelo.
+- O SEQ é um contador por (CNPJ, período, contrato) que só cresce: apagar um lançamento não devolve o número (ele pode já ter ido para a ConPlus).
+- O retorno **não** ganhou um segundo importador: o CSV dos relatórios segue nas telas DES - Folha de Pagamento… (`folhas-csv.js`); a área mostra o resumo e o atalho. A ligação ao cadastro passou a usar o vínculo pelo contrato quando a linha não traz CPF.
+- Os códigos de-para guardam o valor do S2 como **texto** (o laboratório não está ligado ao cadastro). Ao ligar, trocar por **ID** (regra 4 do CLAUDE.md).
+**Pendente:**
+1. A ConPlus confirmar que o DP importa o arquivo manualmente e mandar os `.nli`, o "Manual – Importação de Admissão no Questor" e o resultado de `GET /importacoes/Admissao/campos`: com eles, os nomes e obrigatórios que faltam entram em `dist/conplus/layout.js` (hoje: A tem 12 colunas sem nome; B, C e D, a maior parte; D tem obrigatórios — sexo, estado civil, instrução, IR, nacionalidade, fumante, álcool — em colunas que a doc não diz).
+2. Confirmar se o arquivo oficial termina com CR+LF também na última linha (o S2 termina) e se a importação manual no Questor aceita o `;` a mais da linha E.
+3. Confirmar, com um CSV real da ConPlus, que o "Func" do relatório é o CODIGOFUNCCONTR (a ligação pelo contrato parte disso).
+4. **Onde a área mora no menu definitivo** e **como se liga ao Cadastro de pessoas** (P-11: o cadastro completo fica só no aparelho; faltam admissão gravada, salário por pessoa, CTPS, banco, código do município, empresa/filial e código do contrato).
+5. As tabelas de códigos por CNPJ (cargo, escala, filial, eventos, municípios, bancos) e a lista CPF → contrato dos ativos, que a ConPlus vai mandar (entram pela importação de CSV da área).
+
+## P-58 — Agenda: áudio do Rodrigo de 27/11/2026 (compromisso, atividades, área e ações padronizadas)
 Transcrição e resumo no cofre do Obsidian (`C:\projetos\PRALIS\48 - Áudio Rodrigo 27-11 - Agenda (compromisso, atividades, área e ações).md`), fora do repositório. **Nada decidido ainda; nada implementado.** Pedidos do áudio:
 1. **Nomes:** **Compromisso** (o principal) → **Atividades** (hoje "subtarefas") → **Subatividades**; cada nível com nome, prazo e configuração próprios.
 2. **Pessoas da atividade:** só entre as do compromisso; papéis **Executor** (um só) e **Supervisor**.
@@ -199,5 +215,10 @@ Transcrição e resumo no cofre do Obsidian (`C:\projetos\PRALIS\48 - Áudio Rod
 9. **Pessoa de fora** (prestador de serviço, fornecedor) ligada a uma atividade, vendo só a Agenda e a própria atividade, avaliada ao concluir pelo tipo de avaliação escolhido.
 10. **Lista contínua (Design System):** listas abrem para baixo, sem quebrar por página — "isso é um padrão".
 11. **Cadastro** não se exclui, se inativa; excluir só sem movimentação (com movimentação: inativar ou editar o nome). Menu: "Lançamentos" → "Lançar" (ficou "Lançar/criar").
-**Perguntas abertas:** (a) "área" é a do Acesso por Tela (Compras, Produção…) ou o setor/cargo do cadastro de colaboradores (que mora só no aparelho, P-11)? (b) pessoa de fora entra na Agenda? Com que login? (segurança/LGPD); (c) pagamento da interação fora do expediente (Rodrigo); (d) lista contínua vale para o sistema todo? (e) a troca "Lançamentos" → "Lançar" no menu é do S2 inteiro (não só das nossas telas)?
-| Zé/Rodrigo | pedidos registrados; nada decidido |
+**Respondido (Zé, 27/11/2026):**
+- **(a) Área** = o cadastro **DES - Área / Setor / Local** (`cicluz-location-tree-v1`, que o servidor já recebe na tabela `locais`), ligado **pelo ID** do nó. A pessoa chega à área pelo cargo (área tem `cargoIds`, colaborador tem `jobKey`; doc 04, "Hierarquia Área › Cargo › Pessoa").
+- **(b) Pessoa de fora:** por enquanto só o funcionamento — um **fornecedor** (Compras) ou um **prestador de serviço** (DES - Prestadores de Serviços, `cicluz-prestadores-v1`) pode ser **vinculado pelo ID** a uma atividade em que faça sentido. Login de quem é de fora não entra agora.
+- **(c) Hora fora do expediente:** vira **configuração da Agenda** (remunerada ou não; hora comum, extra 50% ou extra 100%; com herança compromisso → atividade → subatividade). A Agenda guarda e mostra a escolha; **nada vai para a folha** (P-46, item 6, continua).
+- **(e) Menu** ("Lançamentos" → "Lançar"): é do Rodrigo, **fora do escopo** da Agenda.
+**Continua aberta:** (d) a lista contínua (sem páginas) vale para o sistema todo?
+| Zé/Rodrigo | (a), (b), (c), (e) respondidas em 27/11/2026; (d) aberta; nada implementado |
