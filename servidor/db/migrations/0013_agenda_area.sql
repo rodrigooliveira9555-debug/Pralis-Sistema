@@ -1,0 +1,2 @@
+ALTER TABLE "agenda_compromissos" ADD COLUMN "area_id" text;--> statement-breakpoint
+ALTER TABLE "agenda_compromissos" ADD CONSTRAINT "agenda_compromissos_area_check" CHECK ("agenda_compromissos"."area_id" is null or "agenda_compromissos"."area_id" ~ '^[A-Za-z0-9_.:-]{1,100}$');

@@ -55,6 +55,10 @@
   (`tela:salvar`, 26/11/2026): `cicluz-sync.js` dispara `cicluz-dado-salvo` (escrita no servidor ou dado de negócio editado
   no aparelho, via `cicluz-sessao.js`); a API só conta essa ação para a tarefa ligada à tela enviada. `rotas.js` avisa a
   troca de tela com o evento `cicluz-rota-mudou`.
+  **Áudio de 27/11 (0013, P-58, 27/11/2026):** `agenda_compromissos.area_id` (nó do DES - Área / Setor / Local,
+  `cicluz-location-tree-v1`, pelo id; qualquer nível; **sem chave estrangeira**, porque `locais` é regravada inteira a cada
+  envio; o servidor só confere o formato; a tela antiga, que não manda o campo, não apaga a área). Na tela, "Atividade" é o
+  item de `subtarefas` (o nome do campo salvo não mudou). Árvore das telas do menu: `CicluzAgendaRotina.arvoreDoMenu()`.
   **Respostas da P-46 (0009, 24/11/2026):** `agenda_grupos.area` (lista ligada a uma área do Acesso por Tela; membros com
   origem `area`, refeitos pela API quando as permissões mudam); `perfis_usuarios.colaborador_id` (conta ligada ao colaborador
   do cadastro, por id; um por conta); `expedientes_colaboradores` (dia a dia: trabalha/folga e horário, só dos colaboradores

@@ -547,3 +547,7 @@ body.dark-theme .agenda-avatar { background: color-mix(in srgb, var(--menu-accen
 /* Pessoas do compromisso: nome, chips das permissões (quebram para a linha de baixo se não couberem) e remover. */
 .agenda-form .agenda-pessoa { flex-wrap: wrap; row-gap: 8px; padding-top: 10px; padding-bottom: 10px; }
 .agenda-form .agenda-pessoa > .compras-chips { margin-left: auto; justify-content: flex-end; }
+/* Tela e Área (P-58): o valor do campo de árvore fica à direita, como nas outras linhas; travado (tarefa criada pela tela), sem seta nem mão. */
+.agenda-form .transferencia-linha .compras-arvore-texto { flex: 1 1 auto; text-align: right; }
+.agenda-form .transferencia-linha .compras-arvore-campo:disabled { cursor: default; }
+.agenda-form .transferencia-linha .compras-arvore-campo:disabled svg { display: none; }
