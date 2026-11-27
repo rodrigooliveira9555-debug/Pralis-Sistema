@@ -21,6 +21,30 @@
     (hierarquia().computadores || []).forEach((g) => (g.children || []).forEach((c) => { if (c.active !== false && /CXPDV-?\d+$/i.test(String(c.name).trim())) nomes.push(String(c.name).trim()); }));
     return nomes.sort((a, b) => parseInt(/(\d+)$/.exec(a)[1], 10) - parseInt(/(\d+)$/.exec(b)[1], 10));
   }
+  /**
+   * Os grupos de vendas ATIVOS e os subgrupos ATIVOS de cada um ("VND - Grupos de Vendas", Entradas › Cadastros Geral): só leitura.
+   * O subgrupo guarda o computador (vínculo por id, de VND - Computadores).
+   */
+  function gruposDeVendas() {
+    return (hierarquia().vendas || []).filter((g) => g && g.active !== false).map((g) => ({
+      id: g.id, nome: String(g.name || '').trim(),
+      subgrupos: (g.children || []).filter((s) => s && s.active !== false).map((s) => ({ id: s.id, nome: String(s.name || '').trim(), computerId: s.computerId || '' })),
+    }));
+  }
+  /** O nome do computador cadastrado em VND - Computadores pelo id (vínculo por id); vazio se não achar. */
+  function nomeDoComputador(id) {
+    if (!id) return '';
+    for (const g of hierarquia().computadores || []) { const c = (g.children || []).find((x) => x.id === id); if (c) return String(c.name || '').trim(); }
+    return '';
+  }
+  /** O usuário que entrou no sistema (o mesmo que o Ponto usa); vazio se a sessão não está à mão. */
+  function usuarioLogado() {
+    try { return String(((JSON.parse(sessionStorage.getItem('cicluz-sync-aba') || 'null') || {}).perfil || {}).nome || '').trim(); } catch (e) { return ''; }
+  }
+  /** O quadro de Configurações › Empresa › Horários Empresa (dias × turnos), como está guardado; null se ainda não há. */
+  function horariosEmpresa() {
+    try { const d = (window.CicluzComprasDados && window.CicluzComprasDados.dados) || {}; return d.horariosEmpresa || null; } catch (e) { return null; }
+  }
   /** Nome do PDV de número n para os dados FICTÍCIOS de demonstração (o cadastro nasce com TNP-PC-CXPDV-1 a 4; o padrão só vale se alguém os apagar). */
   const nomePdv = (n) => pdvs()[n - 1] || 'TNP-PC-CXPDV-' + n;
   /**
@@ -127,5 +151,5 @@
     { min: 88, id: 'CRE-000236', forma: 'Pix', autorizadoPor: 'Patrícia Souza', motivo: 'Produto lançado errado', justificativa: 'Lançado pão de forma em vez de pão integral.', itens: [['Pão de forma', 1, 1190]] },
   ];
 
-  window.CicluzCaixaDados = { pdvs, nomePdv, maquininhas, contas, transferencias, lacres, lancamentos, fechamentos, caixasFicticios, vendas, vendasSemCaixa, canceladas };
+  window.CicluzCaixaDados = { pdvs, nomePdv, maquininhas, gruposDeVendas, nomeDoComputador, usuarioLogado, horariosEmpresa, contas, transferencias, lacres, lancamentos, fechamentos, caixasFicticios, vendas, vendasSemCaixa, canceladas };
 })();

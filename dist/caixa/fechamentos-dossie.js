@@ -33,7 +33,7 @@
     const depois = [];
     if (h.lacreFechamento !== h.lacreReservado) depois.push(el('p', 'caixa-alerta', 'O lacre de fechamento não bate com o reservado pela Tesouraria. Resolva antes de confirmar.'));
     if (h.observacao) depois.push(U.nota('Observação do operador: ' + h.observacao));
-    s.append(corpoSecao(formulario(grupo('Fechamento', leituras([['Fechamento executado por', h.fechadoPor], ['Gerente', h.supervisor], ['Abertura → fechamento', h.abertura + ' → ' + h.fechamento],
+    s.append(corpoSecao(formulario(grupo('Fechamento', leituras([...(h.codigo ? [['Identificador do caixa', h.codigo], ['Grupo › subgrupo', (h.grupo || '—') + ' › ' + (h.subgrupo || '—')]] : []), ['Fechamento executado por', h.fechadoPor], ['Gerente', h.supervisor], ['Abertura → fechamento', h.abertura + ' → ' + h.fechamento],
       ['Lacre de fechamento usado', h.lacreFechamento], ['Lacre reservado pela Tesouraria', h.lacreReservado]]), ...depois))));
     return s;
   }
@@ -133,7 +133,7 @@
     const s = U.secao('Detalhe · ' + l.pdv + ' · ' + l.turno + ' · ' + l.data);
     const linhas = l.status === 'fechado'
       ? leituras([['Fechamento executado por', l.fechadoPor], ['Lacre de fechamento', l.lacreFechamento], ['Supervisor responsável', l.supervisor]])
-      : leituras([['Responsável', l.sessao ? a.responsavel : l.operador], ['Lacre de abertura', l.sessao ? a.lacre : 'Não registrado'], ['Lacre de fechamento', 'Sem lacre (ainda aberto)']]);
+      : leituras([...(l.codigo ? [['Identificador do caixa', l.codigo]] : []), ['Responsável', l.sessao ? a.responsavel : l.operador], ['Lacre de abertura', l.sessao ? a.lacre : 'Não registrado'], ['Lacre de fechamento', 'Sem lacre (ainda aberto)']]);
     const itens = [];
     itens.push(U.nota(l.sessao && a.divergencia ? 'Conferência de abertura (malote): divergente, ' + moeda(a.divergencia) + ' em relação ao declarado. Motivo: ' + a.motivoDivergencia : 'Conferência de abertura do malote: convergente.'));
     if (l.status === 'fechado') itens.push(U.nota('Provas do fechamento: Folha de fechamento ' + l.anexos.folha + ' · Folha CREARE ' + l.anexos.creare + ' · Comprovante de cartão ' + l.anexos.comprovantes + '.'));

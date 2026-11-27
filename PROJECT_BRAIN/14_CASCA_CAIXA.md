@@ -281,3 +281,13 @@ Na Abertura de Caixa, a escolha da maquininha deixou de ser uma lista fictícia 
 
 ## Formulários do Caixa em linha por linha (27/11/2026)
 Todas as telas e janelas do Caixa que pedem dados seguem o padrão da Nova Transferência (DESIGN_SYSTEM.md, item 34, lote 3). Só mudou a apresentação: regras, validações, textos e o que vai para o estado fictício são os mesmos. A contagem cega (R-232) continua cega: o "Total contado" da conferência só soma o que o conferente digitou.
+
+## Abertura refeita a partir do roteiro (27/11/2026, Washington)
+O Washington trouxe o roteiro da abertura (quatro passos: identificar a operação, recuperar as informações, conferir o valor inicial, confirmar) e imagens de referência com anotações, e pediu para refatorar só a **Abertura**. Estado final (depois da segunda rodada de anotações, no mesmo dia):
+- **Passo 1 (identificação):** grupo e subgrupo de vendas escolhidos pelo operador, vindos de **VND - Grupos de Vendas** (CAIXA PDV › 1M…4T, NFE › EMPRESAS, DELIVERY › IFOOD), e a maquininha. ✅
+- **Passo 2 (recuperação):** só o **hardware**, no formato `TNP-PC-CXPDV-1-06:00as13:51-M` = computador do subgrupo + horário cadastrado em **Horários Empresa** para o dia da semana de hoje + letra do turno (M ou T) do subgrupo. Estabelecimento, operador e horário de referência foram **retirados da tela** ("não precisa"); o operador continua sendo gravado no registro. ✅ Data e horário **efetivo** aparecem no resumo da confirmação (o efetivo é o da confirmação, separado do cadastrado). Sem feriado: o horário é sempre o do dia da semana (não há calendário de feriados).
+- **Passo 3 (valor inicial):** continua vindo da **Transferência** (malote do Cofre, conferido pelo lacre), como na anotação da imagem; o **lacre só aparece depois da maquininha**. Saldo anterior e lançamento manual **não** foram implementados (P-61). ✅
+- **Passo 4 (confirmação):** nasce o registro com o identificador `CX-AAAAMMDD-<subgrupo>-NNN` (formato **proposto** no texto; confirmar). ✅ Em memória, como todo o Caixa.
+- **Saíram** (decisão do Washington): Responsável pelo caixa, Supervisor responsável e Usuário logado.
+- **Fora da Abertura (não mexi):** Turno, Fechamento (só leem o operador e o identificador), vendas reais associadas ao caixa, destinação financeira, e "liberar a operação sem manter a tela aberta" (não há gravação nem backend).
+- **Limites da casca:** só subgrupos de PDV com nome `NM`/`NT` ligam à conta de posto (Caixa 1M…4T), pelo nome do subgrupo, só até haver backend (a regra do CLAUDE.md é vínculo por id): ver P-61. O computador do subgrupo, se faltar, é substituído pelo PDV da conta de posto.

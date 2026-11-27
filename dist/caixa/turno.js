@@ -209,8 +209,9 @@
     const s = U.secao('Caixa aberto');
     s.querySelector('.compras-secao-cab').append(U.situacao('Operação em andamento', 'positivo'));
     const leituras = [
+      ...(a.codigo ? [['Identificador do caixa', a.codigo], ['Grupo › subgrupo', a.grupoNome + ' › ' + a.subgrupoNome]] : []),
       ['PDV', a.pdv], ['Turno', a.turno], ['Aberto em', a.abertoEm],
-      ['Responsável', a.responsavel], ['Supervisor', a.supervisor], ['Maquininha', a.maquininha],
+      ['Operador', a.responsavel], ...(a.supervisor ? [['Supervisor', a.supervisor]] : []), ['Maquininha', a.maquininha],
       ['Lacre do malote de abertura', a.lacre],
       ['Lacres para sangria', C.bolsasLivres().length ? C.bolsasLivres().join(' · ') : 'Nenhum disponível'],
       ['Lacre reservado para fechar este caixa', a.lacreFechamento],
