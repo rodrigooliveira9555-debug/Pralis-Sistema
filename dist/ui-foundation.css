@@ -86,7 +86,7 @@ body .job-icon-trash{background:var(--cicluz-danger,#e34343)!important;color:#ff
 #jobs-view .job-item{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
 #jobs-view .job-main{flex:1 1 0;min-width:0}
 :is(.view,.location-dialog) .job-more-options,:is(.view,.location-dialog) .job-inline-tools>.btn:not(.acao-com-circulo){display:block;width:100%;max-width:none;box-sizing:border-box}
-:is(.view,.location-dialog) .job-inline-tools .job-icon-style{width:100%;margin-top:8px}
+:is(.view,.location-dialog) .job-inline-tools .job-icon-style{flex:1 1 0;min-width:0}
 
 /* Row actions as solid round buttons, shared by financial lists and location trees. */
 body #sector-view .account-list-row,body .location-row{position:relative;box-sizing:border-box;width:100%;max-width:100%;min-width:0}

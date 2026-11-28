@@ -1122,6 +1122,12 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 /* ESCOLHA DE ÍCONE (Rodrigo, 28/11/2026): o bloco fica branco (não sombreia ao passar); todo ícone parado é o redondo cinza, inclusive a marca
    do banco, que fica em tons de cinza; ao passar o mouse ou escolhido, a cor aparece (marca colorida; ícone branco no fundo da cor do cabeçalho). */
 .identity-pick .account-icon-dot:not(.selected):not(:hover) .bank-mark img { filter: grayscale(1); opacity: .75; }
+/* Estilo dos ícones da biblioteca (icon-library-manager.js): uma linha do padrão em qualquer tela — fio em cima e embaixo de ponta a ponta,
+   ícone na cor do cabeçalho, nome e a escolha sem caixa, na coluna do valor. */
+.job-inline-tools > .job-icon-style-linha { display: flex; align-items: center; gap: 12px; min-height: var(--linha-altura, 52px); margin: 8px 0 0; padding: 0 14px; border-top: 1px solid var(--layout-line, #dedee3); border-bottom: 1px solid var(--layout-line, #dedee3); --campo-altura: 34px; --campo-respiro: 0; --ui-control-bg: transparent; --ui-border-base: transparent; --ui-field-padding-left: 0; }
+.job-inline-tools > .job-icon-style-linha > .compras-campo-icone { flex: none; display: grid; place-items: center; width: 20px; height: 20px; color: var(--menu-accent, #ef4444); }
+.job-inline-tools > .job-icon-style-linha > .transferencia-linha-rotulo { flex: 0 0 max(calc(38% - 35px), 120px); font: 500 15px/20px var(--ui-font); color: var(--layout-ink, #27272a); }
+.job-inline-tools > .job-icon-style-linha > select { border: 0; background-color: transparent; box-shadow: none; font: 500 15px/20px var(--ui-font); color: var(--muted, #71717a); }
 /* LINHAS DE LISTA EM COLUNAS NA ALTURA PADRÃO (Rodrigo, 26/11/2026): a lista em grade não estica as linhas para encher a caixa (davam 100 e 120 px); cada linha tem 52 px (--linha-altura) e o cabeçalho das colunas, a altura própria dele. */
 .compras-lista-grade { align-content: start; grid-auto-rows: max-content; }
 .compras-lista-grade > .compras-linha:not(.compras-linha-cabecalho) { min-height: var(--linha-altura, 52px); align-items: center; }
