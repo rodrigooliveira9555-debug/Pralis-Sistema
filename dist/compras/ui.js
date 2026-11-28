@@ -139,13 +139,11 @@
     cronometro: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/>',
     entrar: '<path d="m10 17 5-5-5-5M15 12H3M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"/>',
     sair: '<path d="m14 17 5-5-5-5M19 12H7M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5"/>',
-    xicara: '<path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 11h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3"/>',
     talher: '<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 21V3c-2 2-3 4-3 8h3"/>',
     troca: '<path d="M7 7h13l-3-3M17 17H4l3 3"/>',
     sol: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"/>',
     bandeira: '<path d="M5 21V4h11l-2 4 2 4H5"/>',
     voltar: '<path d="M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3"/>',
-    linhas: '<path d="M4 6h16M4 12h10M4 18h6"/>',
     texto: '<path d="M4 6h16M4 10h16M4 14h10M4 18h7"/>',
     documento: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.5-1.5 1.7-2 3-2s2.5.5 3 2M14 10h4M14 13h3"/>',
     email: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
@@ -177,8 +175,8 @@
   /** [expressão sobre o nome do campo SEM acento e em minúsculas, desenho]. A ordem importa: as mais específicas primeiro. */
   const ICONES_CAMPO = [
     [/^nome\b/, IC.etiqueta], [/^data\b/, IC.calendario], [/^tirar/, IC.voltar],
-    [/carga informada/, IC.linhas], [/^carga|carga horaria/, IC.cronometro],
-    [/duracao do intervalo/, IC.xicara], [/intervalo|almoco/, IC.talher],
+    // Carga (informada, por semana, por dia) é um ícone só; intervalo (duração, início, fim) também (Rodrigo, 28/11/2026).
+    [/^carga|carga horaria/, IC.cronometro], [/intervalo|almoco/, IC.talher],
     [/entrada/, IC.entrar], [/saida/, IC.sair], [/horas de trabalho|hora|horario|turno|jornada|duracao/, IC.relogio],
     [/domingo compensado|que compensa|compensa/, IC.troca], [/domingo/, IC.sol], [/feriado/, IC.bandeira],
     [/folga/, CAL_X], [/^dias|dia da semana|dias de trabalho/, CAL_V], [/escala/, IC.calendario],
