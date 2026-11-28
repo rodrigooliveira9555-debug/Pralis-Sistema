@@ -1121,7 +1121,6 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferencia-linha, .compras-fieldset, .form-fields[data-quadro], .grupo-quadro, .compras-secao-cab) :is(.compras-redondo.perigo, .transferencia-circulo-excluir):not(.x1):not(:disabled):is(:hover, :active, :focus-visible) { --busca-fundo: var(--cicluz-danger, #e34343); background: var(--busca-fundo); }
 /* ESCOLHA DE ÍCONE (Rodrigo, 28/11/2026): o bloco fica branco (não sombreia ao passar); todo ícone parado é o redondo cinza, inclusive a marca
    do banco, que fica em tons de cinza; ao passar o mouse ou escolhido, a cor aparece (marca colorida; ícone branco no fundo da cor do cabeçalho). */
-.identity-pick .account-icon-dot:not(.selected):not(:hover) .bank-mark img { filter: grayscale(1); opacity: .75; }
 /* Estilo dos ícones da biblioteca (icon-library-manager.js): uma linha do padrão em qualquer tela — fio em cima e embaixo de ponta a ponta,
    ícone na cor do cabeçalho, nome e a escolha sem caixa, na coluna do valor. */
 .job-inline-tools > .job-icon-style-linha { display: flex; align-items: center; gap: 12px; min-height: var(--linha-altura, 52px); margin: 8px 0 0; padding: 0 14px; border-top: 1px solid var(--layout-line, #dedee3); border-bottom: 1px solid var(--layout-line, #dedee3); --campo-altura: 34px; --campo-respiro: 0; --ui-control-bg: transparent; --ui-border-base: transparent; --ui-field-padding-left: 0; }
@@ -1131,11 +1130,22 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 /* Botões ovais no lugar do select (U.chipsDoSelect): ocupam a coluna do valor. */
 .compras-chips.chips-do-select { flex: 1 1 0; min-width: 0; justify-content: flex-start; }
 @media (max-width: 600px) { .transferencia-tela .transferencia-linha > .compras-chips.chips-do-select { flex-basis: calc(100% - 42px); margin-left: 42px; } }
-/* Marca do banco escolhida ou com o mouse em cima: o fundo do botão fica na cor do cabeçalho e a marca, colorida, num disco branco por cima — senão
-   a marca laranja (Itaú, Inter…) some no laranja. */
-.identity-pick .account-icon-dot:is(.selected, [aria-pressed=true], :hover) > .bank-mark { box-sizing: border-box; padding: 2px; border-radius: 50%; background: #fff; }
+/* Marca do banco (Rodrigo, 28/11/2026): sempre no modelo próprio — contorno na cor do cabeçalho, miolo branco e a marca colorida (index.html). Escolhida,
+   o contorno engrossa; com o mouse em cima, o contorno fica mais forte. */
+#sector-view.account-orange .identity-pick .account-icon-dot:has(.bank-mark):is(.selected, [aria-pressed=true]) { outline-width: 3px; outline-offset: -3px; }
+#sector-view.account-orange .identity-pick .account-icon-dot:has(.bank-mark):not(.selected):hover { outline-width: 2.5px; outline-offset: -2.5px; }
 /* Prévia da conta como LINHA do quadro: o selo da conta no lugar do ícone da linha (28 px, centrado na coluna dos ícones) e o nome no lugar do nome. */
-.transferencia-tela .transferencia-linha > .compras-campo-icone.account-previa-icone { width: 28px; height: 28px; margin: 0 6px 0 -4px; }
+.transferencia-tela .transferencia-linha > .compras-campo-icone.account-previa-icone { --circle-size: 28px; --icon-radius: var(--row-icon-radius, 26%); margin: 0 6px 0 -4px; }
+/* Selo de banco na prévia: o mesmo modelo da escolha — miolo branco (o fundo do selo vem de --icon-accent), contorno na cor do cabeçalho, marca colorida. */
+.transferencia-tela .transferencia-linha > .account-previa-icone.bank-mark { --icon-accent: #fff; outline: 1.5px solid var(--menu-accent, #f97316); outline-offset: -1.5px; }
+/* "Buscar mais opções" fora do quadro branco (account-biblioteca-fora) e o que ele abre num quadro próprio, no desenho dos quadros. */
+.account-biblioteca-fora { display: grid; gap: 10px; min-width: 0; }
+.account-biblioteca-fora > .job-more-options { margin-top: 0; }
+.job-inline-tools.job-inline-tools-quadro { display: grid; gap: 10px; padding: 12px 0; border: 1px solid var(--layout-line, #dedee3); border-radius: 14px; background: var(--theme-card, #fff); }
+.job-inline-tools.job-inline-tools-quadro[hidden] { display: none; }
+.job-inline-tools.job-inline-tools-quadro > :not(.job-icon-style-linha) { margin-left: 14px; margin-right: 14px; }
+.job-inline-tools.job-inline-tools-quadro > .job-icon-style-linha { margin: 0; }
+.job-inline-tools.job-inline-tools-quadro > :is(.job-inline-status, .job-online-icons):empty { display: none; }
 .transferencia-tela .transferencia-linha.account-previa > .transferencia-linha-rotulo { flex: 1 1 auto; max-width: none; }
 /* LINHAS DE LISTA EM COLUNAS NA ALTURA PADRÃO (Rodrigo, 26/11/2026): a lista em grade não estica as linhas para encher a caixa (davam 100 e 120 px); cada linha tem 52 px (--linha-altura) e o cabeçalho das colunas, a altura própria dele. */
 .compras-lista-grade { align-content: start; grid-auto-rows: max-content; }
