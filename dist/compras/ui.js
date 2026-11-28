@@ -172,7 +172,6 @@
     loja: '<path d="M3 21V9l9-5 9 5v12M9 21v-6h6v6"/>',
     repetir: '<path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/>',
     contrato: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>',
-    mais: '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',
     lapis: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
   };
   const CAL_X = IC.calendario + '<path d="m10 13 4 4M14 13l-4 4"/>';
@@ -208,7 +207,7 @@
     [/produto|item|insumo|mercadoria|materia|ingrediente/, IC.caixa],
     [/categoria|grupo|subgrupo|tipo|classe|familia|origem|natureza/, IC.pasta],
     [/\bcor\b|cores/, IC.paleta],
-    [/icone|foto|imagem|anexo|anexar|arquivo/, IC.clipe], [/^adicionar/, IC.mais],
+    [/icone|foto|imagem|anexo|anexar|arquivo/, IC.clipe],
     [/situacao|status|ativo|ativa/, IC.chave],
     [/frequencia|repet|recorr|periodicidade/, IC.repetir],
     [/observa|descri|comentario|nota|motivo|detalhe|texto|mensagem|historico|justific/, IC.texto],
@@ -233,7 +232,7 @@
     raiz.querySelectorAll('.compras-fieldset > .account-status > span:first-child').forEach((r) => { if (!r.querySelector('.compras-campo-icone')) r.prepend(novoIconeDoCampo(r.textContent)); });
     raiz.querySelectorAll('.transferencia-linha:not(.transferencia-folha-op)').forEach((l) => {
       const r = l.querySelector(':scope > .transferencia-linha-rotulo'); if (!r || l.querySelector(':scope > .compras-campo-icone')) return;
-      l.insertBefore(novoIconeDoCampo(r.textContent), r);
+      l.insertBefore(novoIconeDoCampo(l.dataset.iconeDe || r.textContent), r);
     });
     // Telas antigas (quadro .form-fields[data-quadro]): o nome, texto solto na linha, vira .compras-rotulo (o mesmo que padronizarCampos faz nas janelas
     // antigas) para ter o recuo do ícone. O ícone entra no FIM da linha e o CSS o põe à esquerda: o código antigo que troca o nome pelo primeiro nó da

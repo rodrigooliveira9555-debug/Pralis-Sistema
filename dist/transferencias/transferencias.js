@@ -25,7 +25,6 @@
 
   const CAMINHO = 'Transferências · Contas / Locais / Lançamentos / CNT - Transferências';
   const COR_TEXTO = '#9a3412';
-  const MAX_LACRES = 4;
   const MAX_DIGITOS = 11;
   const MAX_FATOR = 6; // o número depois de × ou ÷ é uma quantidade inteira
   const LIMITE = 99999999999; // centavos (R$ 999 milhões): trava o × que estouraria
@@ -480,11 +479,24 @@
         // A própria linha de adicionar já diz se os retornos novos são Com lacre ou Sem lacre (cada um ainda pode ser mudado depois).
         const maisRetorno = el('button', 'transferencia-circulo'); maisRetorno.type = 'button'; maisRetorno.innerHTML = U.svg(ICONE.mais);
         const linhaAdd = linha('Adicionar', chave('Retornos novos', false, ['C/lacre', 'S/lacre'], (v) => { estado.padraoLacre = v; }), maisRetorno);
-        linhaAdd.classList.add('transferencia-linha-add');
+        linhaAdd.classList.add('transferencia-linha-add'); linhaAdd.dataset.iconeDe = 'Transferência de retorno'; // o ícone é o do retorno (setas trocando), não o do nome curto
+        // Os retornos lançados se recolhem ao tocar fora do quadro; a setinha da linha Adicionar abre (para baixo) e recolhe (para cima), com o resumo ao lado.
+        let retornosAbertos = true;
+        const resumoRet = el('span', 'transferencia-linha-valor transferencia-retornos-resumo');
+        const setaRet = el('button', 'transferencia-seta transferencia-seta-retornos'); setaRet.type = 'button'; setaRet.innerHTML = U.svg(ICONE.baixo);
+        linhaAdd.insertBefore(resumoRet, linhaAdd.querySelector(':scope > .transferencia-linha-rotulo').nextSibling); linhaAdd.append(setaRet);
+        function pintarRetornos() {
+          const n = estado.retornos.length; const aberto = retornosAbertos && n > 0;
+          retornosBox.hidden = !aberto; setaRet.hidden = n === 0;
+          setaRet.setAttribute('aria-expanded', String(aberto)); const r = aberto ? 'Recolher as transferências de retorno' : 'Mostrar as transferências de retorno'; setaRet.title = r; setaRet.setAttribute('aria-label', r);
+          resumoRet.textContent = n && !aberto ? n + (n === 1 ? ' retorno' : ' retornos') : '';
+        }
+        const abrirRetornos = (sim) => { retornosAbertos = sim; pintarRetornos(); };
+        setaRet.addEventListener('click', () => abrirRetornos(!retornosAbertos));
         function desenharRetornos(focar) {
           const n = estado.retornos.length;
-          maisRetorno.disabled = n >= MAX_LACRES;
-          maisRetorno.title = maisRetorno.disabled ? 'No máximo ' + MAX_LACRES + ' transferências de retorno' : 'Acrescentar transferência de retorno';
+          // Sem limite de retornos (Rodrigo, 28/11/2026): acrescenta quantos precisar.
+          maisRetorno.title = 'Acrescentar transferência de retorno (' + (n + 1) + 'ª)';
           maisRetorno.setAttribute('aria-label', maisRetorno.title);
           retornosBox.replaceChildren(...estado.retornos.map((r, i) => {
             const rotulo = 'Retorno ' + (i + 1);
@@ -498,9 +510,10 @@
             }
             return item;
           }));
+          pintarRetornos();
           if (focar !== undefined && retornosBox.children[focar] && retornosBox.children[focar].entrada) retornosBox.children[focar].entrada.focus();
         }
-        maisRetorno.addEventListener('click', () => { if (estado.retornos.length >= MAX_LACRES) return; estado.retornos.push({ com: estado.padraoLacre, numero: '' }); desenharRetornos(estado.padraoLacre ? estado.retornos.length - 1 : undefined); });
+        maisRetorno.addEventListener('click', () => { retornosAbertos = true; estado.retornos.push({ com: estado.padraoLacre, numero: '' }); desenharRetornos(estado.padraoLacre ? estado.retornos.length - 1 : undefined); });
 
         /* Opções: Múltiplo destino e Tempo de aceite */
         const linhaMultiplo = linha('Múltiplo destino (+) / CNT', chave('Múltiplo destino', false, ['Sim', 'Não'], (v) => { estado.multiplo = v; mostrar(); }));
@@ -513,11 +526,15 @@
         const anexos = blocoAnexos();
         const obs = entrada('text', '', { placeholder: 'Ex.: Suprimento CX1 — reforço de troco', maxLength: 500 });
         const linhaData = abreAoTocarNaLinha(linha('Data *', dataTransf.caixa, dataTransf.painel), dataTransf.input, dataTransf.painel);
+        const quadroRetornos = quadro(retornosBox, linhaAdd);
+        dlg.addEventListener('click', (e) => { if (retornosAbertos && estado.retornos.length && !e.composedPath().includes(quadroRetornos)) abrirRetornos(false); });
+        // Ao salvar, os retornos se abrem (se faltar o número de um lacre, ele fica à vista).
+        form.addEventListener('submit', () => abrirRetornos(true), true);
         const corpo = el('div', 'transferencia-corpo');
         // Valor em cima (quadro laranja fixo); depois, um assunto por vez: a transferência, a transferência de retorno, as opções e a observação.
         corpo.append(calc.no,
           secao('Transferência', quadro(linhaData, campoOrigem, campoDestino, campoContas, lacreNormal)),
-          secao('Transferência de retorno', quadro(retornosBox, linhaAdd)),
+          secao('Transferência de retorno', quadroRetornos),
           secao('Opções', quadro(linhaMultiplo, aceite.no)),
           secao('Observação', quadro(linhaDe('Observação', obs), anexos.no)));
         if (!contas.length) corpo.append(el('p', 'profiles-error', 'Nenhuma conta ativa cadastrada. Cadastre as contas em Transferências › Cadastros Geral.'));
