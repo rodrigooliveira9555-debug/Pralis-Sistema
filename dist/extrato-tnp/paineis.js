@@ -1,5 +1,5 @@
 /*
- * Open Finance - Caixa Econômica TNP — os quadros de números.
+ * CNT - API Open Finance TNP / Banco Caixa Econômica — os quadros de números.
  *   Resumo: na conta, saldo, entradas e saídas do período filtrado e o cheque especial; no cartão, fatura em aberto,
  *   limite disponível (com a barra de uso), vencimento e mínimo, e as compras do período.
  *   Análise: para onde foi o dinheiro (saídas por categoria) e por operação (Pix, boleto, TED…), em barras; tocar

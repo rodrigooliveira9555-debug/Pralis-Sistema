@@ -1,5 +1,5 @@
 /*
- * Área ConPlus (laboratório, 27/11/2026) — Saídas · Despesas › API › DES - ConPlus Arquivo (Laboratório).
+ * Área ConPlus (laboratório, 27/11/2026) — Saídas · Despesas › API › DES - API Contabilidade TNP / Conplus (laboratório).
  * Uma área isolada para testar a troca de dados com o DP da ConPlus (Questor) "como se fosse a API, mas por arquivo"
  * (decisão do Marco de 27/11/2026: sem a API paga). Não mexe no cadastro de pessoas nem nas telas de DP que já existem;
  * o lugar definitivo é este, Saídas › API (Marco, 27/11/2026). A admissão pode vir do Cadastro do S2 (só leitura; PROJECT_BRAIN/11, P-57).
@@ -14,7 +14,7 @@
   const { el } = U;
   U.ICONES.conplus = '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/><path d="M3 9h4M3 13h4M3 17h4"/>';
   const ORDEM = ['admissao', 'eventos', 'leitor', 'codigos', 'colaboradores', 'retorno'];
-  const TITULO = 'DES - ConPlus Arquivo (Laboratório)';
+  const TITULO = 'DES - API Contabilidade TNP / Conplus';
   let tela = null;
   let aba = 'admissao';
   let painel = null;

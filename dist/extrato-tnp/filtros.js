@@ -1,5 +1,5 @@
 /*
- * Open Finance - Caixa Econômica TNP — Período e Filtros.
+ * CNT - API Open Finance TNP / Banco Caixa Econômica — Período e Filtros.
  *   Período: atalhos (Hoje, Ontem, 7 dias, Este mês, Mês passado, 31 dias) e as duas datas no calendário. Mudar o
  *   período busca de novo no coletor (máximo de 31 dias).
  *   Filtros: a busca e Entradas/Saídas à vista; operação, categoria, situação e faixa de valor em "Mais filtros" (o

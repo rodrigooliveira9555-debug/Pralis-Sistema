@@ -31,9 +31,9 @@
 
   // Cada empresa tem o seu cartão e a sua tela (id próprio); o código e o desenho são os mesmos.
   const FONTES = {
-    tnp: { cartao: 'extrato', titulo: 'Open Finance - Caixa Econômica TNP', descricao: 'Conta, poupança e cartão da Caixa PJ da TNP, pelo Meu Pluggy', idTela: 'extrato-tnp-view' },
-    hora: { cartao: 'hora', titulo: 'Open Finance - Bradesco HORA', descricao: 'Conta, poupança e cartão do Bradesco PJ do restaurante HORA, pelo Meu Pluggy', idTela: 'extrato-hora-view' },
-    lisboa: { cartao: 'lisboa', titulo: 'Open Finance - Caixa Econômica LI', descricao: 'Contas e cartão da Padaria Lisboa, pelo Meu Pluggy', idTela: 'extrato-lisboa-view' },
+    tnp: { cartao: 'extrato', titulo: 'CNT - API Open Finance TNP / Banco Caixa Econômica', descricao: 'Conta, poupança e cartão da Caixa PJ da TNP, pelo Meu Pluggy', idTela: 'extrato-tnp-view' },
+    hora: { cartao: 'hora', titulo: 'CNT - API Open Finance HORA / Banco Bradesco', descricao: 'Conta, poupança e cartão do Bradesco PJ do restaurante HORA, pelo Meu Pluggy', idTela: 'extrato-hora-view' },
+    lisboa: { cartao: 'lisboa', titulo: 'CNT - API Open Finance LI / Banco Caixa Econômica', descricao: 'Contas e cartão da Padaria Lisboa, pelo Meu Pluggy', idTela: 'extrato-lisboa-view' },
   };
   const telas = {};
   let tela = null;

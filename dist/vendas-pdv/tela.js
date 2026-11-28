@@ -274,7 +274,7 @@
   async function abrirRelatorio() {
     if (!tela) {
       tela = U.criarTela({
-        id: 'vendas-pdv-view', titulo: 'VND - Vendas dos PDVs', caminho: 'Entradas · Vendas / Faturamento / API / VND - Vendas dos PDVs',
+        id: 'vendas-pdv-view', titulo: 'VND - API Vendas Geral TNP / Sistema Criare', caminho: 'Entradas · Vendas / Faturamento / API / VND - API Vendas Geral TNP / Sistema Criare',
         icone: 'vendasPdv', voltar: () => openSection(sections[0][0], 'API', 'tree', COR), cor: COR, corTexto: COR_TEXTO, classe: 'vendas-pdv-view',
       });
     }
@@ -294,7 +294,7 @@
     montar();
   }
 
-  const CARDS = [['VND - Vendas dos PDVs', 'Vendas do CREARE ao vivo, por PDV, horário e tipo de pagamento', 'vendas-pdv:relatorio']];
+  const CARDS = [['VND - API Vendas Geral TNP / Sistema Criare', 'Vendas do CREARE ao vivo, por PDV, horário e tipo de pagamento', 'vendas-pdv:relatorio']];
   window.CicluzVendasPdv = {
     cards: () => CARDS.map((c) => [...c]),
     abrir: (id) => { if (id === 'relatorio') abrirRelatorio(); },

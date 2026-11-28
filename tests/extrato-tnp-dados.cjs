@@ -1,4 +1,4 @@
-// Open Finance - Caixa Econômica TNP — as contas da tela (dist/extrato-tnp/dados.js): filtros, totais (conta x cartão),
+// CNT - API Open Finance TNP / Banco Caixa Econômica — as contas da tela (dist/extrato-tnp/dados.js): filtros, totais (conta x cartão),
 // agrupamento por categoria e o CSV. Sem navegador: só o arquivo, com o "dobrar" das telas.
 const assert = require('node:assert/strict');
 const path = require('node:path');
