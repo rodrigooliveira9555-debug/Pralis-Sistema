@@ -655,6 +655,41 @@
     return r;
   }
 
+  const CAL = '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>';
+  const TALHER = '<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 21V3c-2 2-3 4-3 8h3"/>';
+  const SOL = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"/>';
+  const TROCA = '<path d="M7 7h13l-3-3M17 17H4l3 3"/>';
+  const BANDEIRA = '<path d="M5 21V4h11l-2 4 2 4H5"/>';
+  const CRONOMETRO = '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/>';
+  /** [começo do nome do campo, desenho]: a primeira que casa vale. */
+  const ICONES_LINHA = [
+    ['Nome', '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="7.5" r="1.5"/>'],
+    ['Escala', CAL + '<path d="M7 14h2M11 14h2M15 14h2M7 17h2M11 17h2"/>'],
+    ['Dias de folga', CAL + '<path d="m10 13 4 4M14 13l-4 4"/>'],
+    ['Dias', CAL + '<path d="m9 15 2 2 4-4"/>'],
+    ['Carga informada', '<path d="M4 6h16M4 12h10M4 18h6"/>'],
+    ['Carga', CRONOMETRO],
+    ['Duração do intervalo', '<path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 11h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3"/>'],
+    ['Entrada', '<path d="m10 17 5-5-5-5M15 12H3M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"/>'],
+    ['Início do intervalo', TALHER], ['Fim do intervalo', TALHER],
+    ['Horas de trabalho', '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'],
+    ['Saída', '<path d="m14 17 5-5-5-5M19 12H7M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5"/>'],
+    ['Domingo compensado', TROCA], ['Dia que compensa', TROCA],
+    ['Domingos de folga', SOL], ['Qual domingo', SOL],
+    ['Trabalha nos feriados', BANDEIRA], ['Feriado', BANDEIRA],
+    ['Tirar', '<path d="M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3"/>'],
+  ];
+  /** Põe o ícone de cada linha (uma vez só; o nome do campo pode mudar depois, o ícone fica fora dele). */
+  function iconarLinhas(raiz) {
+    raiz.querySelectorAll('.compras-campo').forEach((l) => {
+      const r = l.querySelector(':scope > .compras-rotulo'); if (!r || l.querySelector(':scope > .org-campo-icone')) return;
+      const achado = ICONES_LINHA.find(([inicio]) => r.textContent.trim().startsWith(inicio)); if (!achado) return;
+      const i = el('span', 'org-campo-icone'); i.setAttribute('aria-hidden', 'true'); i.innerHTML = U.svg(achado[1]); l.insertBefore(i, r);
+    });
+  }
+  /** A nota de uma linha fica DENTRO da linha, embaixo (o nome e o valor continuam alinhados no meio da linha de cima). */
+  function notaNaLinha(linhaEl, ...notas) { linhaEl.classList.add('org-linha-com-nota'); notas.forEach((n) => { n.classList.add('org-nota-linha'); linhaEl.append(n); }); return linhaEl; }
+
   function editarHorario(h, aoCriar) {
     U.dialogo({
       titulo: h ? 'Editar horário / escala' : 'Novo horário / escala',
@@ -697,9 +732,11 @@
         cargaModo.setAttribute('aria-label', 'Carga informada por semana ou por dia');
         const linhaSemana = linhaChips('Carga horária por semana *', carga.caixa, carga.painel);
         const linhaDia = linhaChips('Carga horária por dia *', cargaDia.caixa, cargaDia.painel);
-        const calculada = el('small', 'profiles-note org-carga-calculada'); calculada.setAttribute('role', 'status');
-        q.append(linhaChips('Nome (montado)', nome), notaNome, linhaChips('Escala *', escala), ...(fora ? [fora] : []), linhaDias, linhaFolga, nota12,
-          linhaChips('Carga informada', cargaModo), linhaSemana, linhaDia, calculada);
+        const calculada = el('small', 'profiles-note org-carga-calculada org-nota-linha'); calculada.setAttribute('role', 'status');
+        const linhaEscala = linhaChips('Escala *', escala); if (fora) notaNaLinha(linhaEscala, fora);
+        notaNaLinha(linhaSemana); notaNaLinha(linhaDia);
+        q.append(notaNaLinha(linhaChips('Nome (montado)', nome), notaNome), linhaEscala, linhaDias, linhaFolga, nota12,
+          linhaChips('Carga informada', cargaModo), linhaSemana, linhaDia);
         // 5) Horário: duração do intervalo, entrada e início do intervalo; o resto é conta.
         const qh = el('fieldset', 'compras-fieldset'); qh.append(el('legend', null, 'Horário'));
         /** Um quadro de jornada. Com horasProprias (dia diferente), as horas do dia se escolhem; no horário geral, vêm da carga. */
@@ -710,14 +747,14 @@
           duracao.setAttribute('aria-label', 'Duração do intervalo' + rotulo);
           const ent = U.campoHora({ rotulo: 'Entrada' + rotulo, valor: x ? x.entrada : '' });
           const ii = U.campoHora({ rotulo: 'Início do intervalo' + rotulo, valor: x ? x.intervaloInicio || '' : '' });
-          const linhaII = linha('Início do intervalo *', ii.caixa, ii.painel);
+          const linhaII = linhaChips('Início do intervalo *', ii.caixa, ii.painel);
           const janela = el('small', 'profiles-note org-carga-calculada');
           const definirHora = (c, hora) => { c.input.value = hora.replace(':', ''); c.input.dispatchEvent(new Event('input', { bubbles: true })); };
           const minIni = x && HORA.test(x.entrada) && HORA.test(x.saida) ? liquido(x) : 0;
           const horas = horasProprias ? U.campoHora({ rotulo: 'Horas de trabalho no dia' + rotulo, valor: minIni > 0 ? hhmm(minIni) : '', horas: 24, maximo: '23:59' }) : null;
           const diaTxt = el('span', 'compras-valor'); const fim = el('span', 'compras-valor'); const sai = el('span', 'compras-valor');
           const linhaFim = linha('Fim do intervalo', fim);
-          const nos = [linhaChips('Duração do intervalo', duracao), linha('Entrada *', ent.caixa, ent.painel), linhaII, janela,
+          const nos = [linhaChips('Duração do intervalo', duracao), linhaChips('Entrada *', ent.caixa, ent.painel), notaNaLinha(linhaII, janela),
             horas ? linha('Horas de trabalho no dia *', horas.caixa, horas.painel) : linha('Horas de trabalho no dia', diaTxt), linhaFim, linha('Saída', sai)];
           const j = {
             nos, ii,
@@ -770,6 +807,7 @@
           const tirar = U.botaoRemover('Tirar este horário diferente', () => { excecoes.splice(excecoes.indexOf(e), 1); f.remove(); pintar(); });
           const lt = el('div', 'compras-campo'); lt.append(el('span', 'compras-rotulo', 'Tirar (o dia volta ao horário de todos os dias)'), tirar);
           f.append(linhaChips('Dias *', chipsDias), ...jornada.nos, lt);
+          iconarLinhas(f);
           const e = { dias, f, leg, chipsDias, jornada };
           excecoes.push(e); excBox.append(f);
           return e;
@@ -813,7 +851,7 @@
         const notaDom = el('small', 'profiles-note org-carga-calculada'); const avisoDom = el('small', 'profiles-note org-carga-calculada org-aviso');
         const linhaFer = linhaChips('Trabalha nos feriados? *', ferChips); const linhaFerComp = linhaChips('Feriado compensado? *', ferCompChips);
         const notaFer = el('small', 'profiles-note org-carga-calculada org-aviso');
-        qd.append(linhaComp, linhaDiaComp, linhaQtd, linhaQual, notaDom, avisoDom, linhaFer, linhaFerComp, notaFer);
+        qd.append(linhaComp, linhaDiaComp, linhaQtd, notaNaLinha(linhaQual, notaDom, avisoDom), linhaFer, notaNaLinha(linhaFerComp, notaFer));
         const chip = (texto, ativo, acao, travado, dica) => { const b = botao(texto, acao, 'compras-chip' + (ativo ? ' ativo' : '')); b.setAttribute('aria-pressed', String(ativo)); b.disabled = Boolean(travado); if (dica) b.title = dica; return b; };
         const ORDINAL = ['1º', '2º', '3º', '4º'];
         const simNao = (valor, por) => [chip('Sim', valor === true, () => { por(true); pintar(); }), chip('Não', valor === false, () => { por(false); pintar(); })];
@@ -877,6 +915,7 @@
             b.disabled = cheio; b.title = cheio ? 'Na escala ' + st.escala + ' são ' + n + ' dias: desmarque um dia para trocar' : longo; b.setAttribute('aria-label', longo); b.setAttribute('aria-pressed', String(st.dias.has(chave))); return b;
           }));
           ver(linhaSemana, st.cargaModo === 'semana'); ver(linhaDia, st.cargaModo === 'dia');
+          (st.cargaModo === 'dia' ? linhaDia : linhaSemana).append(calculada);
           ver(linhaDias, !doze); ver(linhaFolga, !doze); ver(nota12, doze); ver(qp, !doze); ver(rodapeExc, !doze);
           // Cada quadro de dia diferente: só os dias de trabalho da escala; um dia não fica em dois quadros.
           excecoes.forEach((e, i) => {
@@ -929,6 +968,7 @@
           avisos.replaceChildren(...avisosCLT(vf).map((x) => el('small', 'profiles-note org-aviso', x)));
         }
         form.addEventListener('input', recalcular); form.addEventListener('change', recalcular); form.addEventListener('click', () => setTimeout(recalcular, 0));
+        iconarLinhas(form);
         pintar();
         setTimeout(() => (st.cargaModo === 'dia' ? cargaDia : carga).input.focus(), 0);
         return { nome, atual, padrao, excecoes, st, cargaMin: () => Math.round(semanaMin()), minutosPadrao, diasComExcecao };
