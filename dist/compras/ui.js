@@ -239,42 +239,43 @@
   /** A nota de uma linha fica DENTRO da linha, embaixo (o nome e o valor continuam alinhados no meio da linha de cima). */
   function notaNaLinha(linhaEl, ...notas) { linhaEl.classList.add('compras-linha-com-nota'); notas.forEach((n) => { n.classList.add('compras-nota-linha'); linhaEl.append(n); }); return linhaEl; }
   /*
-   * IDENTIFICAÇÃO (Rodrigo, 28/11/2026 — modelo "Informações da Lista" do app Lembretes): em cima, a PRÉVIA — o quadrado de cantos arredondados com a
-   * sigla (ou o ícone) na cor escolhida e o nome embaixo, na mesma cor; embaixo, a PALETA em bolinhas (12 cores) e a última bolinha, de arco-íris, é a cor
-   * PERSONALIZADA (abre o seletor de cor). A escolhida ganha o anel. Telas com ícone acrescentam a grade de ícones no mesmo quadro (padrão a seguir).
-   * Devolve o nó; no.value é a cor (#rrggbb) e no.atualizar({ sigla, nome }) refaz a prévia.
+   * CAMPO DE COR (Rodrigo, 28/11/2026): na linha, só o botão REDONDO com a cor escolhida; tocar abre o painel (o mesmo painel flutuante dos outros
+   * campos) com a GRADE no jeito do Excel — "Cores do tema": 10 cores com 5 tons de cada (2 mais claros... mais escuros), "Cores padrão" (10) — e
+   * "Personalizar…", que abre o seletor de cor. Tocar numa cor escolhe e fecha. Devolve { caixa, painel, botao }; botao.value é a cor (#rrggbb).
    */
-  const CORES_IDENTIDADE = [['Vermelho', '#ef4444'], ['Laranja', '#f97316'], ['Amarelo', '#eab308'], ['Verde', '#16a34a'], ['Azul-claro', '#38bdf8'], ['Azul', '#2563eb'],
-    ['Anil', '#4f46e5'], ['Rosa', '#e11d48'], ['Roxo', '#7c3aed'], ['Marrom', '#92764e'], ['Cinza', '#52525b'], ['Bege', '#c8a097']];
-  function identidade({ sigla = '', nome = '', cor = '#7c3aed', cores = CORES_IDENTIDADE, rotulo = 'Cor' } = {}) {
-    const no = el('div', 'compras-largo compras-identidade');
-    const previa = el('div', 'compras-identidade-previa'); previa.setAttribute('aria-hidden', 'true');
-    const quadrado = el('span', 'compras-identidade-icone'); const nomeTx = el('span', 'compras-identidade-nome');
-    previa.append(quadrado, nomeTx);
-    const paleta = el('div', 'compras-identidade-cores'); paleta.setAttribute('role', 'group'); paleta.setAttribute('aria-label', rotulo);
-    const botoes = cores.map(([nomeCor, valor]) => {
-      const b = el('button', 'compras-identidade-cor'); b.type = 'button'; b.title = nomeCor; b.setAttribute('aria-label', nomeCor); b.style.setProperty('--c', valor); b.dataset.cor = valor;
-      b.onclick = () => escolher(valor); return b;
-    });
-    // span (não label): as regras antigas de label apagam o fundo.
-    const outra = el('span', 'compras-identidade-cor personalizada'); outra.title = 'Cor personalizada';
-    const seletor = entrada('color', cor); seletor.setAttribute('aria-label', 'Cor personalizada'); outra.append(seletor);
-    seletor.addEventListener('input', () => escolher(seletor.value));
-    paleta.append(...botoes, outra);
-    no.append(previa, paleta);
-    let atual = String(cor || '#7c3aed').toLowerCase(); let dados = { sigla, nome };
+  const COR_TEMA = [['Branco', '#ffffff'], ['Preto', '#000000'], ['Cinza-azulado', '#44546a'], ['Areia', '#e7e6e6'], ['Azul', '#4472c4'], ['Laranja', '#ed7d31'], ['Cinza', '#a5a5a5'], ['Dourado', '#ffc000'], ['Azul-claro', '#5b9bd5'], ['Verde', '#70ad47']];
+  const COR_PADRAO = [['Vermelho-escuro', '#c00000'], ['Vermelho', '#ff0000'], ['Laranja', '#ffc000'], ['Amarelo', '#ffff00'], ['Verde-claro', '#92d050'], ['Verde', '#00b050'], ['Azul-claro', '#00b0f0'], ['Azul', '#0070c0'], ['Azul-marinho', '#002060'], ['Roxo', '#7030a0']];
+  /** Mistura a cor com branco (p > 0) ou preto (p < 0): os tons da grade. */
+  const tomDe = (hex, p) => {
+    const n = parseInt(hex.slice(1), 16); const alvo = p > 0 ? 255 : 0; const k = Math.abs(p);
+    return '#' + [n >> 16, (n >> 8) & 255, n & 255].map((c) => Math.round(c + (alvo - c) * k).toString(16).padStart(2, '0')).join('');
+  };
+  function campoCor({ valor = '#7c3aed', rotulo = 'Cor' } = {}) {
+    let atual = String(valor || '#7c3aed').toLowerCase();
+    const botao = el('button', 'compras-cor-botao'); botao.type = 'button';
+    const caixa = el('div', 'compras-cor-campo'); caixa.append(botao);
+    const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-cor-painel'); painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', rotulo + ': escolher a cor');
+    const abrir = flutuante(botao, painel);
+    const celula = (nome, cor) => { const b = el('button', 'compras-cor-celula'); b.type = 'button'; b.title = nome; b.setAttribute('aria-label', nome); b.style.setProperty('--c', cor); b.dataset.cor = cor; b.onclick = () => escolher(cor, true); return b; };
+    const grade = (cols) => { const g = el('div', 'compras-cor-grade'); g.append(...cols); return g; };
+    // Cores do tema: a linha da cor e, embaixo, os tons (80%, 60%, 40% mais claros; 25%, 50% mais escuros), coluna por coluna como no Excel.
+    const TONS = [[0, ''], [0.8, ' 80% mais clara'], [0.6, ' 60% mais clara'], [0.4, ' 40% mais clara'], [-0.25, ' 25% mais escura'], [-0.5, ' 50% mais escura']];
+    const tema = grade(TONS.flatMap(([p, sufixo]) => COR_TEMA.map(([nome, cor]) => celula(nome + sufixo, p ? tomDe(cor, p) : cor))));
+    const padrao = grade(COR_PADRAO.map(([nome, cor]) => celula(nome, cor)));
+    const outra = el('span', 'compras-chip compras-cor-personalizar'); outra.append('Personalizar…');
+    const seletor = entrada('color', atual); seletor.setAttribute('aria-label', 'Cor personalizada'); outra.append(seletor);
+    seletor.addEventListener('input', () => escolher(seletor.value, false)); seletor.addEventListener('change', () => abrir(false));
+    painel.append(el('span', 'compras-rotulo', 'Cores do tema'), tema, el('span', 'compras-rotulo', 'Cores padrão'), padrao, outra);
     function pintar() {
-      no.style.setProperty('--id-cor', atual);
-      quadrado.textContent = dados.sigla || '?'; nomeTx.textContent = dados.nome || '';
-      let achou = false;
-      botoes.forEach((b) => { const sim = b.dataset.cor.toLowerCase() === atual; if (sim) achou = true; b.setAttribute('aria-pressed', String(sim)); });
-      outra.classList.toggle('ativa', !achou); seletor.value = atual;
+      botao.style.setProperty('--c', atual); botao.title = rotulo + ': ' + atual; botao.setAttribute('aria-label', rotulo + ': ' + atual + ' (tocar para trocar)');
+      painel.querySelectorAll('.compras-cor-celula').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.cor.toLowerCase() === atual)));
+      seletor.value = atual;
     }
-    function escolher(v) { atual = String(v).toLowerCase(); pintar(); no.dispatchEvent(new Event('change', { bubbles: true })); }
-    Object.defineProperty(no, 'value', { get: () => atual, set: (v) => { atual = String(v).toLowerCase(); pintar(); } });
-    no.atualizar = (d) => { dados = { ...dados, ...d }; pintar(); };
+    function escolher(v, fechar) { atual = String(v).toLowerCase(); pintar(); botao.dispatchEvent(new Event('change', { bubbles: true })); if (fechar) { abrir(false); botao.focus(); } }
+    botao.addEventListener('click', () => abrir(painel.hidden));
+    Object.defineProperty(botao, 'value', { get: () => atual, set: (v) => { atual = String(v).toLowerCase(); pintar(); } });
     pintar();
-    return no;
+    return { caixa, painel, botao };
   }
   function campo(rotulo, no, dica) {
     const l = el('label', 'compras-campo');
@@ -1532,6 +1533,6 @@
     seletorArvore, campoArvore, campoLocal, arvoreGruposMercadoria, botaoRemover,
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, infoDaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, roletaNumero, iconarLinhas, notaNaLinha, iconeDoCampo, identidade, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, infoDaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, roletaNumero, iconarLinhas, notaNaLinha, iconeDoCampo, campoCor, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();

@@ -1244,15 +1244,14 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .compras-arvore-detalhe > b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .compras-arvore-detalhe > small { font-size: 11px; color: var(--muted, #73737a); }
 @media (max-width: 600px) { :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > .compras-nota-linha { margin-top: 0; } } /* na tela estreita o valor desce para baixo do nome: a nota não sobe por cima dele */
-/* Identificação (U.identidade): prévia (quadrado com a sigla na cor + nome) e paleta em bolinhas, com a personalizada por último. */
-.compras-identidade { display: grid; gap: 16px; justify-items: center; padding: 18px 14px 14px; --id-cor: var(--menu-accent); }
-.compras-identidade-previa { display: grid; justify-items: center; gap: 10px; max-width: 100%; }
-.compras-identidade-icone { display: grid; place-items: center; width: 72px; height: 72px; border-radius: var(--row-icon-radius, 26%); background: var(--id-cor); color: #fff; font: 700 22px/1 var(--ui-font); letter-spacing: .5px; box-shadow: 0 8px 20px color-mix(in srgb, var(--id-cor) 35%, transparent); }
-.compras-identidade-nome { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 15px/20px var(--ui-font); color: var(--id-cor); }
-.compras-identidade-cores { display: grid; grid-template-columns: repeat(7, 36px); gap: 12px; justify-content: center; }
-@media (max-width: 400px) { .compras-identidade-cores { grid-template-columns: repeat(5, 36px); } }
-.compras-dialog .compras-identidade-cor, .compras-identidade-cor { position: relative; display: block; width: 36px; height: 36px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .08); cursor: pointer; }
-.compras-identidade-cor:is([aria-pressed=true], .ativa) { box-shadow: 0 0 0 3px var(--theme-card, #fff), 0 0 0 5px var(--border-strong, #b9b9c0); }
-.compras-identidade-cor:focus-visible { outline: 2px solid var(--id-cor); outline-offset: 4px; }
-.compras-identidade-cor.personalizada { background: conic-gradient(#ef4444, #eab308, #16a34a, #38bdf8, #4f46e5, #e11d48, #ef4444); overflow: hidden; }
-.compras-identidade-cor.personalizada > input { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+/* Campo de cor (U.campoCor): botão redondo com a cor; o painel tem a grade do jeito do Excel (tema com tons + padrão) e "Personalizar…". */
+.compras-cor-campo { display: flex; justify-content: flex-end; }
+:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo .compras-cor-botao { --cor-borda: color-mix(in srgb, var(--c) 70%, #000); width: 30px; height: 30px; min-width: 0; min-height: 0; padding: 0; border: 2px solid var(--theme-card, #fff); border-radius: 50%; background: var(--c); box-shadow: 0 0 0 1px var(--cor-borda); }
+.compras-cor-painel { padding: 12px; display: grid; gap: 6px; }
+.compras-cor-grade { display: grid; grid-template-columns: repeat(10, 22px); gap: 3px; }
+.compras-cor-painel > .compras-cor-grade + .compras-rotulo { margin-top: 6px; }
+.compras-cor-celula { width: 22px; height: 22px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 1px solid rgb(0 0 0 / .12); border-radius: 3px; background: var(--c); cursor: pointer; }
+.compras-cor-celula[aria-pressed=true] { outline: 2px solid var(--layout-ink, #27272a); outline-offset: 1px; }
+.compras-cor-celula:hover { outline: 2px solid var(--menu-accent); outline-offset: 1px; }
+.compras-cor-personalizar { position: relative; justify-self: start; margin-top: 6px; cursor: pointer; }
+.compras-cor-personalizar > input { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
