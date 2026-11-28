@@ -447,6 +447,8 @@
     const opcoes = [...select.options].map((o) => [o.value, o.textContent]);
     const box = chips(opcoes, select.value, (v) => { select.value = v; select.dispatchEvent(new Event('change', { bubbles: true })); });
     box.classList.add('chips-do-select');
+    // Quem muda o valor por código (ao abrir outro cadastro) chama select.cicluzChips.atualizar(select.value).
+    select.cicluzChips = box;
     select.hidden = true; select.after(box);
     return box;
   }

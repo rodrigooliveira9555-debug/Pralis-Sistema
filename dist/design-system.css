@@ -354,7 +354,7 @@ body.dark-theme .view.show>.panel>.head[data-header-standard=yes],body.dark-them
 #sector-view .compras-hora-campo .compras-redondo{color:var(--theme-surface,#fff)}
 /* Cadastro de operadora em três etapas (financeiro/operadoras-etapas.js): barra, etapas e rodapé ocupam a largura toda; a etapa 1 repete a grade de duas colunas do formulário. */
 .account-editor>.stepper-wrap,.account-editor>.operadora-etapa,.account-editor>.profiles-error,.account-editor>.actions{grid-column:1/-1;min-width:0}
-.operadora-etapa-dados{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+/* Etapa 1 da operadora em UMA coluna, como a Transferência e o Cadastro da conta (Rodrigo, 28/11/2026). */.operadora-etapa-dados{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .operadora-etapa-dados[hidden],.operadora-etapa[hidden]{display:none}
 .operator-machine{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;margin-bottom:12px}
 .operator-machine.inativo{opacity:.7}

@@ -877,7 +877,7 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .transferencia-linha-icone svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .transferencia-tela .transferencia-linha-acao { width: 100%; margin: 0; border-left: 0; border-right: 0; border-top: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; font: inherit; }
 /* Linha só com interruptor (sem valor): o nome usa a largura toda. */
-.transferencia-tela .transferencia-linha:not(:has(.transferencia-linha-valor, .transferencia-linha-controle, .compras-aniv-campo, .compras-chips, .transferencia-dias-input)) .transferencia-linha-rotulo { flex: 1 1 0; max-width: none; }
+.transferencia-tela .transferencia-linha:not(:has(.transferencia-linha-valor, .transferencia-linha-controle, .compras-aniv-campo, .compras-chips, .transferencia-dias-input, .compras-cor-campo)) .transferencia-linha-rotulo { flex: 1 1 0; max-width: none; }
 /* O interruptor e a palavra dele (Não, S/lacre) não quebram: quem cede espaço é o nome. */
 .transferencia-tela .transferencia-linha .account-status-row { flex: none; white-space: nowrap; }
 /* Até 600 px não cabe nome e valor lado a lado: como nas linhas de cadastro, o nome fica em cima e o valor embaixo, começando na mesma coluna do nome
@@ -1132,12 +1132,12 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 @media (max-width: 600px) { .transferencia-tela .transferencia-linha > .compras-chips.chips-do-select { flex-basis: calc(100% - 42px); margin-left: 42px; } }
 /* Marca do banco (Rodrigo, 28/11/2026): sempre no modelo próprio — contorno na cor do cabeçalho, miolo branco e a marca colorida (index.html). Escolhida,
    o contorno engrossa; com o mouse em cima, o contorno fica mais forte. */
-#sector-view.account-orange .identity-pick .account-icon-dot:has(.bank-mark):is(.selected, [aria-pressed=true]) { outline-width: 3px; outline-offset: -3px; }
-#sector-view.account-orange .identity-pick .account-icon-dot:has(.bank-mark):not(.selected):hover { outline-width: 2.5px; outline-offset: -2.5px; }
+#sector-view .identity-pick .account-icon-dot.account-icon-dot:has(.bank-mark, .payment-logo):is(.selected, [aria-pressed=true]) { outline-width: 3px; outline-offset: -3px; }
+#sector-view .identity-pick .account-icon-dot.account-icon-dot:has(.bank-mark, .payment-logo):not(.selected):hover { outline-width: 2.5px; outline-offset: -2.5px; }
 /* Prévia da conta como LINHA do quadro: o selo da conta no lugar do ícone da linha (28 px, centrado na coluna dos ícones) e o nome no lugar do nome. */
 .transferencia-tela .transferencia-linha > .compras-campo-icone.account-previa-icone { --circle-size: 28px; --icon-radius: var(--row-icon-radius, 26%); margin: 0 6px 0 -4px; }
 /* Selo de banco na prévia: o mesmo modelo da escolha — miolo branco (o fundo do selo vem de --icon-accent), contorno na cor do cabeçalho, marca colorida. */
-.transferencia-tela .transferencia-linha > .account-previa-icone.bank-mark { --icon-accent: #fff; outline: 1.5px solid var(--menu-accent, #f97316); outline-offset: -1.5px; }
+.transferencia-tela .transferencia-linha > .account-previa-icone:is(.bank-mark, .has-payment-logo) { --icon-accent: #fff; outline: 1.5px solid var(--menu-accent, #f97316); outline-offset: -1.5px; }
 /* "Buscar mais opções" fora do quadro branco (account-biblioteca-fora) e o que ele abre num quadro próprio, no desenho dos quadros. */
 .account-biblioteca-fora { display: grid; gap: 10px; min-width: 0; }
 /* Botões retangulares de ação fora do quadro: no tamanho dos outros botões de ação (largura do texto, mínimo 128 px), encostados à esquerda. */
@@ -1304,6 +1304,9 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 @media (min-width: 601px) { :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo.compras-linha-com-nota > .compras-rotulo { display: flex; align-items: center; min-height: var(--linha-altura, 52px); } } /* na tela estreita o valor desce para baixo do nome: a linha não precisa da altura cheia */
 :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > .compras-nota-linha { flex: 1 1 100%; order: 9; margin: -8px 0 0; padding: 0 14px 6px 44px; box-sizing: border-box; font-size: 11px; line-height: 15px; text-align: left; }
 .compras-nota-linha.org-aviso { color: #b45309; font-weight: 600; }
+/* Nota dentro da linha também na Transferência e nas telas no padrão dela (ex.: "Aplicar aos subgrupos"): embaixo, em 11 px, alinhada com o nome. */
+.transferencia-tela .transferencia-linha.compras-linha-com-nota { flex-wrap: wrap; padding-top: 6px; padding-bottom: 6px; }
+.transferencia-tela .transferencia-linha > .compras-nota-linha { flex: 1 1 100%; order: 9; margin: -6px 0 0 42px; font-size: 11px; line-height: 14px; color: var(--muted, #71717a); }
 :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-interruptor > .compras-campo-icone { flex: none; display: grid; place-items: center; width: 20px; height: 20px; margin-right: -2px; color: var(--menu-accent, #ef4444); }
 :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .account-status > span:first-child > .compras-campo-icone { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 10px; vertical-align: -4px; color: var(--menu-accent, #ef4444); }
 /* A nota dessas linhas começa embaixo do nome do campo (depois do ícone). */
@@ -1317,7 +1320,9 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 @media (max-width: 600px) { :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > .compras-nota-linha { margin-top: 0; } } /* na tela estreita o valor desce para baixo do nome: a nota não sobe por cima dele */
 /* Campo de cor (U.campoCor): botão redondo com a cor; o painel tem a grade do jeito do Excel (tema com tons + padrão) e "Personalizar…". */
 .compras-cor-campo { display: flex; justify-content: flex-start; }
-:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo .compras-cor-botao { --cor-borda: color-mix(in srgb, var(--c) 70%, #000); width: 30px; height: 30px; min-width: 0; min-height: 0; padding: 0; border: 2px solid var(--theme-card, #fff); border-radius: 50%; background: var(--c); box-shadow: 0 0 0 1px var(--cor-borda); }
+/* Na linha da Transferência (e das telas no padrão dela) a bolinha da cor fica na coluna do valor. */
+.transferencia-tela .transferencia-linha > .compras-cor-campo { flex: 1 1 0; min-width: 0; }
+:is(:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo, .transferencia-tela .transferencia-linha) .compras-cor-botao { --cor-borda: color-mix(in srgb, var(--c) 70%, #000); width: 30px; height: 30px; min-width: 0; min-height: 0; padding: 0; border: 2px solid var(--theme-card, #fff); border-radius: 50%; background: var(--c); box-shadow: 0 0 0 1px var(--cor-borda); }
 /* O painel no desenho dos painéis de data e hora: moldura de fora cinza (a do painel) e, dentro, um bloco branco de borda cinza com as partes separadas por linha. */
 .compras-cor-quadro { background: var(--theme-card, #fff); border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; overflow: hidden; }
 .compras-cor-parte { display: grid; gap: 8px; padding: 12px 14px; }

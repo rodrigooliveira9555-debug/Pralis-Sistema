@@ -112,9 +112,9 @@ function editor(node,pool,level,parent){const U=window.CicluzComprasUI,P=window.
    const qDados=quadro(linhaDe('Nome '+(fem?'da ':'do ')+nomeNivel+' *',name),linhaSit,nota('Inativo não aparece para novos vínculos; o histórico é mantido.'));
    const temp=document.createElement('div');identifier=CicluzIdentity.controls(temp,{identityMode:node?.identityMode||'text',sigla:node?(node.sigla||initials(node)):''},()=>refresh(),{suggest:()=>name.value});
    identifier.code.addEventListener('input',()=>identifier.code.setCustomValidity(''));
-   const linhaModo=linhaDe('Identificador',identifier.mode),linhaCodigo=linhaDe('Até 3 caracteres *',identifier.code);
-   color=document.createElement('input');color.type='color';color.value=node?.color||colors[0];color.setAttribute('aria-label','Cor personalizada');color.oninput=()=>refresh();
-   const valorCor=document.createElement('span');valorCor.className='transferencia-linha-valor';valorCor.append(color);const linhaCor=linha('Cor',valorCor);
+   const linhaModo=linhaDe('Tipo',identifier.mode),linhaCodigo=linhaDe('Caracteres *',identifier.code);linhaModo.dataset.iconeDe=linhaCodigo.dataset.iconeDe='Identificador';identifier.code.placeholder='Até 3';U.chipsDoSelect&&U.chipsDoSelect(identifier.mode);
+   const corCampo=U.campoCor({valor:node?.color||colors[0],rotulo:'Cor'});color=corCampo.botao;color.addEventListener('change',()=>refresh());
+   const linhaCor=linha('Cor',corCampo.caixa);
    const palette=document.createElement('div');palette.className='location-palette';
    for(const hex of swatches){const swatch=button('',()=>{color.value=hex;refresh()},'location-swatch');swatch.style.background=hex;swatch.title=hex;swatch.setAttribute('aria-label','Cor '+hex);swatch.dataset.color=hex;palette.append(swatch)}
    const recentTitle=document.createElement('span');recentTitle.className='transferencia-secao-titulo';recentTitle.textContent='Minhas cores';const recent=document.createElement('div');recent.className='location-palette location-saved-colors';
@@ -123,20 +123,20 @@ function editor(node,pool,level,parent){const U=window.CicluzComprasUI,P=window.
    const paleta=linhaQueAbre('Paleta de cores',()=>{const abrir=blocoPaleta.hidden;blocoPaleta.hidden=blocoMinhas.hidden=!abrir;paleta.abrir(abrir)});
    const choices=document.createElement('div');choices.className='account-icon-options';const iconLabel=document.createElement('div');iconLabel.className='account-field-group';iconLabel.textContent='Ícone '+(fem?'da ':'do ')+nomeNivel;iconLabel.append(choices);
    const pick=document.createElement('div');pick.className='identity-pick';pick.append(iconLabel);const blocoIcone=document.createElement('div');blocoIcone.className='transferencia-bloco';blocoIcone.append(pick);
-   const more=document.createElement('details');more.className='identity-advanced';more.cicluzImport=item=>{selected=item.id;refresh()};const summary=document.createElement('summary');summary.textContent='Mais ícones';const extra=document.createElement('div');extra.className='account-icon-options';
+   const bibliotecaFora=document.createElement('div');bibliotecaFora.className='account-biblioteca-fora';const more=document.createElement('details');more.className='identity-advanced';more.cicluzForaDoQuadro=bibliotecaFora;more.cicluzImport=item=>{selected=item.id;refresh()};const summary=document.createElement('summary');summary.textContent='Mais ícones';const extra=document.createElement('div');extra.className='account-icon-options';
    [...paths.map((path,id)=>({path,id})),...CicluzIconLibrary.custom.map(x=>({path:x.path,id:x.id,label:x.label}))].forEach(({path,id:i,label:customLabel})=>{const b=button('',()=>{selected=i;refresh()},'account-icon-dot');b.innerHTML='<svg viewBox="0 0 24 24">'+path+'</svg>';b.title=customLabel||window.CicluzBakeryIcons.find(x=>x.path===path)?.label||'Ícone '+(i+1);b.dataset.index=i;b.setAttribute('aria-label',b.title);(i<6?choices:extra).append(b)});more.append(summary,extra);choices.append(more);
-   const preview=document.createElement('div');preview.className='location-preview location-preview-card';const blocoPrevia=document.createElement('div');blocoPrevia.className='transferencia-bloco';blocoPrevia.append(preview);
-   const qIdent=quadro(linhaModo,linhaCor,paleta.no,blocoPaleta,blocoMinhas,blocoIcone,blocoPrevia);
+   const preview=document.createElement('div');preview.className='transferencia-linha account-previa';
+   const qIdent=quadro(linhaModo,linhaCor,blocoIcone,preview);
    function refresh(){const texto=identifier.mode.value==='text';
-    if(texto)linhaModo.after(linhaCodigo);else linhaCodigo.remove();
+    if(texto){linhaModo.after(linhaCodigo);U.iconarLinhas&&U.iconarLinhas(linhaModo.parentElement)}else linhaCodigo.remove();
     identifier.code.required=texto;blocoIcone.hidden=texto;paleta.resumo.textContent=color.value.toUpperCase();
     palette.querySelectorAll('button').forEach(b=>{const active=b.dataset.color===color.value;b.setAttribute('aria-pressed',String(active));b.textContent=active?'✓':''});
     {const cod=texto?abbreviation(identifier.code.value):'';tituloJanela.textContent=(cod?cod+' - ':'')+tituloBase}
     preview.style.setProperty('--node-color',color.value);preview.style.setProperty('--node-ink',ink(color.value));preview.replaceChildren();
     const previewHandle=document.createElement('span');previewHandle.className='location-preview-handle';previewHandle.textContent='⠿';
-    const badge=document.createElement('span');badge.className='location-icon location-initials';if(!texto)badge.innerHTML='<svg viewBox="0 0 24 24">'+iconPath(selected)+'</svg>';else badge.textContent=abbreviation(identifier.code.value)||'—';badge.style.color=ink(color.value);preview.append(previewHandle,badge);
-    const previewText=document.createElement('span');previewText.className='location-preview-name';previewText.textContent=name.value||'Nome '+(fem?'da ':'do ')+nomeNivel;
-    const previewArrow=document.createElement('span');previewArrow.className='location-preview-arrow';previewArrow.textContent='›';preview.append(previewText,previewArrow);
+    const badge=document.createElement('span');badge.className='location-icon location-initials compras-campo-icone account-previa-icone';if(!texto)badge.innerHTML='<svg viewBox="0 0 24 24">'+iconPath(selected)+'</svg>';else badge.textContent=abbreviation(identifier.code.value)||'—';badge.style.color=ink(color.value);preview.append(badge);
+    const previewText=document.createElement('span');previewText.className='transferencia-linha-rotulo';previewText.textContent=name.value||'Nome '+(fem?'da ':'do ')+nomeNivel;
+    const previewArrow=document.createElement('span');previewArrow.className='location-preview-arrow';previewArrow.textContent='›';preview.append(previewText);
     choices.querySelectorAll('.account-icon-dot').forEach(b=>b.setAttribute('aria-pressed',String(String(b.dataset.index)===String(selected))))}
    name.oninput=()=>{name.setCustomValidity('');identifier.suggest();refresh()};
    const cargosTitulo='Cargos '+['desta área','deste setor','deste local','deste sublocal'][level-1];
@@ -144,7 +144,7 @@ function editor(node,pool,level,parent){const U=window.CicluzComprasUI,P=window.
     U.seletorArvore({titulo:'Cargos desta área',cores:{cor:node?.color||colors[0],corTexto:ink(color.value)},sigla:'DES',rotuloBusca:'Buscar cargo',vazio:'Nenhum cargo cadastrado em DES - Cargos C/Salários.',nos:()=>H.cargos().map(c=>({id:c.id,nome:c.nome,ativo:true,conta:c.categoria||''})),marcados:new Set(cargoSel),bloqueados:new Map(),aoConfirmar:escolhidos=>{cargoSel.clear();escolhidos.forEach(id=>cargoSel.add(id));pintaCargos()}})});
    const cargosAviso=nota('Os cargos que existem aqui. O colaborador é ligado ao cargo no cadastro dele.');cargosAviso.dataset.padrao=cargosAviso.textContent;
    const pintaCargos=()=>{const H=window.CicluzHierarquia;const nomes=H?H.cargos().filter(c=>cargoSel.has(c.id)).map(c=>c.nome):[];cargosAbrir.resumo.textContent=!nomes.length?'Nenhum cargo':nomes.length+(nomes.length===1?' cargo':' cargos');cargosNomes.remove();if(nomes.length){cargosNomes.textContent=nomes.slice(0,3).join(', ')+(nomes.length>3?'…':'');cargosAbrir.no.after(cargosNomes)}};
-   const body=document.createElement('div');body.className='transferencia-corpo';body.append(secao('Dados '+(fem?'da ':'do ')+nomeNivel,qDados),secao('Identificador',qIdent),secao(cargosTitulo,quadro(cargosAbrir.no,cargosAviso)));form.append(body);
+   const body=document.createElement('div');body.className='transferencia-corpo';body.append(secao('Dados '+(fem?'da ':'do ')+nomeNivel,qDados),secao('Identificador',qIdent),bibliotecaFora,secao(cargosTitulo,quadro(cargosAbrir.no,cargosAviso)));form.append(body);
    pintaCargos();refresh()},
   salvar:()=>{const value=name.value.trim();if(!value)return 'Informe o nome.';
    if(pool.some(n=>n!==node&&n.name.toLocaleLowerCase('pt-BR')===value.toLocaleLowerCase('pt-BR'))){const mensagem='Este nome já existe neste nível.';name.setCustomValidity(mensagem);name.reportValidity();return mensagem}
