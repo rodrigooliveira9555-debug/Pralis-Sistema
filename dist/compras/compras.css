@@ -1140,13 +1140,19 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .transferencia-tela .transferencia-linha > .account-previa-icone.bank-mark { --icon-accent: #fff; outline: 1.5px solid var(--menu-accent, #f97316); outline-offset: -1.5px; }
 /* "Buscar mais opções" fora do quadro branco (account-biblioteca-fora) e o que ele abre num quadro próprio, no desenho dos quadros. */
 .account-biblioteca-fora { display: grid; gap: 10px; min-width: 0; }
-.account-biblioteca-fora > .job-more-options { margin-top: 0; }
+/* Botões retangulares de ação fora do quadro: no tamanho dos outros botões de ação (largura do texto, mínimo 128 px), encostados à esquerda. */
+.account-biblioteca-fora :is(.job-more-options, .library-action, .library-empty) { justify-self: start; width: auto; min-width: 128px; margin: 0; }
+.account-biblioteca-fora > .job-inline-extra { display: grid; gap: 10px; min-width: 0; }
+.account-biblioteca-fora > .job-inline-extra[hidden] { display: none; }
+.account-biblioteca-fora .job-removed-quadro:not([hidden]) { padding: 12px 14px; border: 1px solid var(--layout-line, #dedee3); border-radius: 14px; background: var(--theme-card, #fff); }
 .job-inline-tools.job-inline-tools-quadro { display: grid; gap: 10px; padding: 12px 0; border: 1px solid var(--layout-line, #dedee3); border-radius: 14px; background: var(--theme-card, #fff); }
 .job-inline-tools.job-inline-tools-quadro[hidden] { display: none; }
 .job-inline-tools.job-inline-tools-quadro > :not(.job-icon-style-linha) { margin-left: 14px; margin-right: 14px; }
 .job-inline-tools.job-inline-tools-quadro > .job-icon-style-linha { margin: 0; }
 .job-inline-tools.job-inline-tools-quadro > :is(.job-inline-status, .job-online-icons):empty { display: none; }
 .transferencia-tela .transferencia-linha.account-previa > .transferencia-linha-rotulo { flex: 1 1 auto; max-width: none; }
+/* A prévia é uma linha: fio em cima, separando da grade de ícones, como entre as outras linhas do quadro. */
+.transferencia-tela .transferencia-quadro > .transferencia-bloco + .transferencia-linha.account-previa { border-top: 1px solid var(--layout-line, #dedee3); }
 /* LINHAS DE LISTA EM COLUNAS NA ALTURA PADRÃO (Rodrigo, 26/11/2026): a lista em grade não estica as linhas para encher a caixa (davam 100 e 120 px); cada linha tem 52 px (--linha-altura) e o cabeçalho das colunas, a altura própria dele. */
 .compras-lista-grade { align-content: start; grid-auto-rows: max-content; }
 .compras-lista-grade > .compras-linha:not(.compras-linha-cabecalho) { min-height: var(--linha-altura, 52px); align-items: center; }

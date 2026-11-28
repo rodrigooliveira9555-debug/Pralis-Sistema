@@ -44,7 +44,11 @@ function jobInline(details){
  /* Estilo dos ícones numa LINHA do padrão (Rodrigo, 28/11/2026): ícone à esquerda, nome e a escolha na coluna do valor, fio em cima e embaixo, largura toda. */
  const linhaEstilo=make('div','transferencia-linha job-icon-style-linha');linhaEstilo.setAttribute('role','group');linhaEstilo.setAttribute('aria-label','Estilo dos ícones');linhaEstilo.dataset.iconeDe='Cor';linhaEstilo.append(make('span','transferencia-linha-rotulo','Estilo'),styles);window.CicluzComprasUI?.chipsDoSelect&&CicluzComprasUI.chipsDoSelect(styles);window.CicluzComprasUI&&CicluzComprasUI.iconarLinhas(linhaEstilo.parentElement||(()=>{const x=make('div');x.append(linhaEstilo);return x})());
  tools.append(row,linhaEstilo,status,results,restoreToggle,removed,empty);/* Tela que pede (details.cicluzForaDoQuadro): "Buscar mais opções" fica FORA do quadro branco, como todo botão de ação do quadro, e o que ele abre vem num quadro próprio embaixo. */
- const fora=details.cicluzForaDoQuadro;if(fora){tools.classList.add('job-inline-tools-quadro');fora.append(toggle,tools)}else details.append(toggle,tools);
+ const fora=details.cicluzForaDoQuadro;if(fora){
+  /* Botão retangular de ação nunca fica dentro do quadro branco (Rodrigo, 28/11/2026): "Ver removidos" e "Esvaziar removidos" saem do quadro da busca;
+     a lista de removidos vem num quadro próprio entre os dois. Tudo aparece e some junto com "Buscar mais opções". */
+  tools.classList.add('job-inline-tools-quadro');removed.classList.add('job-removed-quadro');const extra=make('div','job-inline-extra');extra.hidden=true;extra.append(restoreToggle,removed,empty);
+  toggle.addEventListener('click',()=>{extra.hidden=tools.hidden});fora.append(toggle,tools,extra)}else details.append(toggle,tools);
  let sequence=0,popup=null,timer=0,start=null,blockUntil=0;
  window.addEventListener('cicluz-library-changed',()=>{if(details.isConnected)renderRemoved()});
  const idFor=b=>fingerprint(b),select=isJob?document.getElementById('job-icon'):null;
