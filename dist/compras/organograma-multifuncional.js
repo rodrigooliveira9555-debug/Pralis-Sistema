@@ -60,11 +60,11 @@
   /* ---------- Dados do teste (só neste aparelho, chave própria) ---------- */
   function exemplo() {
     const d = { version: 1, criadoEm: new Date().toISOString(), nos: [], cargos: [], horarios: [] };
-    const horario = (nome, ent, sai, ii) => { const x = { id: novoId('hr'), nome, sigla: siglaDoNome(nome), nomeModo: 'personalizado', escala: '5x2', dias: ['1', '2', '3', '4', '5'], cargaSemanal: 44, entrada: ent, saida: sai, intervaloInicio: ii, intervaloMin: 60, porDia: {} }; d.horarios.push(x); return x.id; };
+    const horario = (nome, ent, sai, ii) => { const x = { id: novoId('hr'), nome, sigla: siglaDoNome(nome), nomeModo: 'personalizado', escala: '5x2', dias: ['1', '2', '3', '4', '5'], cargaSemanal: 42, entrada: ent, saida: sai, intervaloInicio: ii, intervaloMin: 60, porDia: {} }; d.horarios.push(x); return x.id; };
     // Horas de EXEMPLO, só para o teste ter o que mostrar.
-    const M = horario('Manhã', '06:00', '15:48', '10:00');
-    const I = horario('Intermediário', '10:00', '19:48', '14:00');
-    const T = horario('Tarde', '12:00', '21:48', '16:00');
+    const M = horario('Manhã', '06:00', '15:24', '10:00');
+    const I = horario('Intermediário', '10:00', '19:24', '14:00');
+    const T = horario('Tarde', '12:00', '21:24', '16:00');
     const no = (tipo, nome, paiId) => { const x = { id: novoId('no'), tipo, nome, sigla: siglaDoNome(nome), paiId: paiId || null }; d.nos.push(x); return x.id; };
     const reais = cargosReais();
     const cargo = (noId, nome, horarioIds) => {
@@ -565,7 +565,7 @@
   /* ---------- Horário / Escala (lista única do teste) — estrutura do Rodrigo, 27/11/2026 ----------
    * Ordem da janela: 1) nome MONTADO pelo sistema (escala · entrada às saída · carga) ou PERSONALIZADO; 2) escala (5x2, 4x3 ou 12x36 — a 6x1 saiu: está fora da
    * nova lei trabalhista, Rodrigo 27/11/2026); 3) os dias de trabalho, na quantidade que a escala pede (no 12x36 é um dia sim, um dia não, sem dias da semana);
-   * 4) a carga horária por semana, na roleta de horas (arrastar ou digitar), no máximo 44:00; 5) duração do intervalo (sem, 30 min, 1h, 1h30, 2h), entrada e início
+   * 4) a carga horária por semana, na roleta de horas (arrastar ou digitar), no máximo 42:00 (Rodrigo, 27/11/2026); 5) duração do intervalo (sem, 30 min, 1h, 1h30, 2h), entrada e início
    * do intervalo — as horas do dia, o fim do intervalo e a SAÍDA são calculados: horas do dia = carga ÷ dias de trabalho (no 12x36, ÷ 3,5 plantões por semana);
    * saída = entrada + horas do dia + intervalo; 6) dias com horário diferente, só entre os dias de trabalho da escala, cada um com as próprias horas no dia —
    * o que sobra da carga se divide pelos outros dias.
@@ -573,7 +573,8 @@
   const ESCALAS = [['5x2', '5x2', 5], ['4x3', '4x3', 4], ['12x36', '12x36', null]];
   const ESCALA_FORA = { '6x1': 'A escala 6x1 não vale mais (nova lei trabalhista): escolha outra escala.' };
   const DURACOES = [['0', 'Sem intervalo'], ['30', '30 min'], ['60', '1 hora'], ['90', '1h30'], ['120', '2 horas']];
-  const CARGA_MAX = 44;
+  /** Carga máxima por semana no cadastro (Rodrigo, 27/11/2026): 42 horas. O aviso de 44h da CLT continua nos avisos. */
+  const CARGA_MAX = 42;
   const SEIS_HORAS = 360;
   const minDe = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
   const vao = (a, b) => (minDe(b) - minDe(a) + 1440) % 1440;
@@ -643,7 +644,7 @@
         const fim = minDe(a.entrada) + vao(a.entrada, a.saida); const descanso = 1440 + minDe(b.entrada) - fim;
         if (descanso < 11 * 60) r.push('Entre ' + nome(d) + ' e ' + nome(prox) + ' o descanso é de ' + duracaoTexto(descanso) + ': a CLT pede no mínimo 11h (art. 66).');
       });
-      const semana = cargaCalculada(v); if (semana > CARGA_MAX * 60 + 5) r.push('São ' + duracaoTexto(semana) + ' por semana: passa do limite de 44h da CLT.');
+      const semana = cargaCalculada(v); if (semana > 44 * 60 + 5) r.push('São ' + duracaoTexto(semana) + ' por semana: passa do limite de 44h da CLT.');
     }
     return r;
   }
@@ -674,12 +675,12 @@
         const linhaDias = linha('Dias de trabalho *', grupo);
         const folga = el('span', 'compras-valor'); const linhaFolga = linha('Dias de folga', folga);
         const nota12 = U.nota('12x36: trabalha 12 horas e folga 36, ou seja, um dia sim e um dia não. Os dias da semana mudam de uma semana para outra, por isso não se marcam aqui.');
-        // A carga é uma duração (até 44:00), na mesma roleta do campo de hora: arrasta para cima e para baixo ou digita.
+        // A carga é uma duração (até 42:00), na mesma roleta do campo de hora: arrasta para cima e para baixo ou digita.
         const cargaInicial = h ? Math.min(CARGA_MAX * 60, Math.round(Number(h.cargaSemanal || 0) * 60)) : CARGA_MAX * 60;
         const carga = U.campoHora({ rotulo: 'Carga horária por semana', valor: cargaInicial ? hhmm(cargaInicial) : '', horas: CARGA_MAX + 1, maximo: hhmm(CARGA_MAX * 60) });
         const calculada = el('small', 'profiles-note org-carga-calculada'); calculada.setAttribute('role', 'status');
         q.append(linha('Nome', modo), campo('Nome *', nome), notaNome, linha('Escala *', escala), ...(fora ? [fora] : []), linhaDias, linhaFolga, nota12,
-          linha('Carga horária por semana * (até 44:00)', carga.caixa, carga.painel), calculada);
+          linha('Carga horária por semana * (até ' + hhmm(CARGA_MAX * 60) + ')', carga.caixa, carga.painel), calculada);
         // 5) Horário: duração do intervalo, entrada e início do intervalo; o resto é conta.
         const qh = el('fieldset', 'compras-fieldset'); qh.append(el('legend', null, 'Horário'));
         /** Um quadro de jornada. Com horasProprias (dia diferente), as horas do dia se escolhem; no horário geral, vêm da carga. */
@@ -813,8 +814,8 @@
         const n = ESCALAS.find((e) => e[0] === v.escala)[2];
         if (n && v.dias.length !== n) return 'Na escala ' + v.escala + ' a pessoa trabalha ' + n + ' dias: marque ' + n + ' dias (marcados: ' + v.dias.length + ').';
         const total = c.cargaMin();
-        if (!(total > 0)) return 'Informe a carga horária por semana (até 44:00).';
-        if (total > CARGA_MAX * 60) return 'A carga horária por semana vai até 44 horas.';
+        if (!(total > 0)) return 'Informe a carga horária por semana (até ' + hhmm(CARGA_MAX * 60) + ').';
+        if (total > CARGA_MAX * 60) return 'A carga horária por semana vai até ' + CARGA_MAX + ' horas.';
         const vazio = c.excecoes.find((e) => !e.dias.size); if (vazio) { vazio.f.scrollIntoView({ block: 'nearest' }); return 'Um horário diferente está sem dia marcado: marque o dia ou tire o quadro.'; }
         if (v.escala !== '12x36') {
           const exc = c.diasComExcecao();
