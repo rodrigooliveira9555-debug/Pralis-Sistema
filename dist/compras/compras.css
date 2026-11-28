@@ -1135,16 +1135,17 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .org-mapa-area { overflow-x: auto; overflow-y: hidden; min-height: 240px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: color-mix(in srgb, var(--muted, #6e6e73) 6%, var(--theme-card, #fff)); outline: none; }
 .org-mapa-area:focus-visible { border-color: var(--menu-accent); }
 .org-mapa-svg { display: block; margin: 0 auto; font-family: Montserrat, Arial, sans-serif; }
-.org-mapa-ligacao { fill: none; stroke: color-mix(in srgb, var(--menu-accent) 55%, transparent); stroke-width: 2; }
+.org-mapa-ligacao { fill: none; stroke: color-mix(in srgb, var(--no-cor, var(--menu-accent)) 55%, transparent); stroke-width: 2; }
 .org-mapa-ligacao.falta { stroke-dasharray: 4 4; }
 .org-mapa-no { cursor: pointer; }
 .org-mapa-caixa { fill: var(--theme-card, #fff); stroke: var(--layout-line, #dedee3); stroke-width: 1; }
 .org-mapa-no:hover .org-mapa-caixa { stroke: var(--menu-accent); }
 .org-mapa-no.selecionado .org-mapa-caixa { stroke: var(--menu-accent); stroke-width: 2.5; }
 .org-mapa-no.tipo-loja .org-mapa-caixa { fill: color-mix(in srgb, var(--menu-accent) 12%, var(--theme-card, #fff)); }
-.org-mapa-id { fill: var(--menu-accent); }
-.org-mapa-no.tipo-setor .org-mapa-id { fill: color-mix(in srgb, var(--menu-accent) 78%, var(--theme-card, #fff)); }
-.org-mapa-no.tipo-local .org-mapa-id { fill: color-mix(in srgb, var(--menu-accent) 58%, var(--theme-card, #fff)); }
+/* Cada módulo na sua cor (--no-cor, escolhida no cadastro do módulo; sem cor própria, a de cima). */
+.org-mapa-id { fill: var(--no-cor, var(--menu-accent)); }
+.org-mapa-qtd { fill: var(--layout-ink, #27272a); stroke: var(--theme-card, #fff); stroke-width: 1.5; }
+.org-mapa-qtd-num { fill: var(--theme-card, #fff); font-size: 9.5px; font-weight: 700; }
 .org-mapa-no:is(.tipo-cargo, .tipo-horario, .tipo-falta) .org-mapa-id { fill: color-mix(in srgb, var(--muted, #6e6e73) 18%, transparent); }
 .org-mapa-icone { fill: none; stroke: #fff; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .org-mapa-no:is(.tipo-cargo, .tipo-horario) .org-mapa-icone { stroke: var(--muted, #6e6e73); }
@@ -1189,5 +1190,16 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .org-barras-area { display: flex; align-items: center; gap: 8px; padding: 10px 6px 4px; border-top: 1px solid var(--layout-line, #dedee3); }
 .org-barras-area:first-of-type { border-top: 0; }
 .org-barras-area b { font-size: 14px; font-weight: 700; color: var(--layout-ink, #27272a); }
-.org-barras-id { width: 26px; height: 26px; border-radius: var(--row-icon-radius, 26%); display: grid; place-items: center; background: var(--menu-accent); color: #fff; font-size: 10px; font-weight: 700; }
+.org-barras-id { width: 26px; height: 26px; border-radius: var(--row-icon-radius, 26%); display: grid; place-items: center; background: var(--no-cor, var(--menu-accent)); color: #fff; font-size: 10px; font-weight: 700; }
 @media (max-width: 480px) { .org-barras { --rotulo: 118px; } }
+/* Cor do módulo: tocar escolhe, então é REDONDA (botão), com a cor por dentro. Mesmo prefixo da regra geral dos campos do quadro (que deixa o campo em linha), para valer sobre ela. */
+:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > input.org-cor { flex: none; width: 34px; height: 34px; min-height: 0; margin-left: auto; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
+:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > input.org-cor::-webkit-color-swatch-wrapper { padding: 0; }
+:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > input.org-cor::-webkit-color-swatch { border: 0; border-radius: 50%; }
+:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > input.org-cor::-moz-color-swatch { border: 0; border-radius: 50%; }
+.org-horarios { display: grid; gap: 8px; justify-items: start; min-width: 0; }
+/* Tela estreita: a lista de horários do cargo desce para baixo do nome do campo (não passa da borda). */
+@media (max-width: 600px) {
+  :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo.org-linha-horarios { flex-wrap: wrap; }
+  :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo.org-linha-horarios > .org-horarios { flex: 1 1 100%; margin-right: 0; }
+}

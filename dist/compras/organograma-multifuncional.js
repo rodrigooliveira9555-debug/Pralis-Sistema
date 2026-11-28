@@ -209,11 +209,12 @@
     const pai = t.pai;
     switch (t.tipo) {
       case 'loja': return { lado: ['Área', () => inserir(null)], editar: null };
-      case 'area': case 'setor': return { lado: [t.tipo === 'area' ? 'Setor' : 'Local ou Cargo', () => inserir(t.ref)], abaixo: [TIPOS[t.tipo].nome, () => inserir(t.ref.paiId ? dados.nos.find((x) => x.id === t.ref.paiId) : null)], editar: () => editarNo(t.ref) };
-      case 'local': return { lado: ['Cargo', () => inserir(t.ref)], abaixo: ['Local', () => inserir(dados.nos.find((x) => x.id === t.ref.paiId))], editar: () => editarNo(t.ref) };
-      case 'cargo': return { lado: ['Horário / Escala', () => editarCargo(t.ref, pai)], abaixo: ['Cargo', () => inserir(pai, 'cargo')], editar: () => editarCargo(t.ref, pai) };
-      case 'horario': return { abaixo: ['Horário / Escala', () => editarCargo(t.cargo, pai)], editar: () => editarHorario(t.ref) };
-      default: return { lado: ['Horário / Escala', () => editarCargo(t.cargo, pai)], editar: () => editarCargo(t.cargo, pai) };
+      case 'area': return { lado: ['Setor', () => inserir(t.ref)], abaixo: ['Área', () => inserir(null)], editar: () => editarNo(t.ref) };
+      case 'setor': return { lado: ['Local', () => inserir(t.ref)], abaixo: ['Setor', () => inserir(dados.nos.find((x) => x.id === t.ref.paiId))], editar: () => editarNo(t.ref) };
+      case 'local': return { lado: ['Cargo', () => editarNo(t.ref, { novoCargo: true })], abaixo: ['Local', () => inserir(dados.nos.find((x) => x.id === t.ref.paiId))], editar: () => editarNo(t.ref) };
+      case 'cargo': return { lado: ['Horário / Escala', () => editarNo(pai, { foco: t.ref.id })], abaixo: ['Cargo', () => editarNo(pai, { novoCargo: true })], editar: () => editarNo(pai, { foco: t.ref.id }) };
+      case 'horario': return { abaixo: ['Horário / Escala', () => editarNo(pai, { foco: t.cargo.id })], editar: () => editarHorario(t.ref) };
+      default: return { lado: ['Horário / Escala', () => editarNo(pai, { foco: t.cargo.id })], editar: () => editarNo(pai, { foco: t.cargo.id }) };
     }
   }
   function alternarRecolher(t) { if (!t.filhos.length) return; if (recolhidos.has(t.id)) recolhidos.delete(t.id); else recolhidos.add(t.id); render(); }
@@ -242,11 +243,16 @@
     pos.ligacoes.forEach((l) => {
       let d;
       if (l.tipo === 'cotovelo-v') { const my = (l.y1 + l.y2) / 2; d = `M${l.x1} ${l.y1}V${my}H${l.x2}V${l.y2}`; } else { const mx = (l.x1 + l.x2) / 2; d = `M${l.x1} ${l.y1}C${mx} ${l.y1} ${mx} ${l.y2} ${l.x2} ${l.y2}`; }
-      svg.append(s('path', { d, class: 'org-mapa-ligacao' + (todos.get(l.para) && todos.get(l.para).tipo === 'falta' ? ' falta' : '') }));
+      // A linha do galho vai na cor do módulo a que ele pertence.
+      const filho = todos.get(l.para); const dono = filho && (['area', 'setor', 'local'].includes(filho.tipo) ? filho.ref : filho.pai);
+      const linha = s('path', { d, class: 'org-mapa-ligacao' + (filho && filho.tipo === 'falta' ? ' falta' : '') });
+      if (dono) linha.style.setProperty('--no-cor', corDe(dono));
+      svg.append(linha);
     });
     pos.nos.forEach((p) => {
       const t = p.no;
       const g = s('g', { class: 'org-mapa-no tipo-' + t.tipo + (t.id === selecionado ? ' selecionado' : ''), transform: `translate(${p.x} ${p.y})`, role: 'treeitem', 'aria-label': t.nome + ', ' + t.meta, 'data-id': t.id });
+      if (['area', 'setor', 'local'].includes(t.tipo)) g.style.setProperty('--no-cor', corDe(t.ref));
       const dicaMouse = s('title'); dicaMouse.textContent = t.nome + ' — ' + t.meta; g.append(dicaMouse);
       const compacto = prefs.detalhe === 'compacto';
       g.append(s('rect', { class: 'org-mapa-caixa', width: p.w, height: p.h, rx: compacto ? 9 : 10 }));
@@ -259,6 +265,11 @@
       const x0 = ix + 28 + 9; const alturaTexto = t.linhas.length * 16 + 14; let y = (p.h - alturaTexto) / 2 + 12;
       t.linhas.forEach((ln) => { const tx = s('text', { class: 'org-mapa-nome', x: x0, y }); tx.textContent = ln; g.append(tx); y += 16; });
       if (!compacto) { const meta = s('text', { class: 'org-mapa-meta', x: x0, y: y + 1 }); meta.textContent = L().quebrar(t.meta, 186, medir('500 11px ' + FONTE), 1)[0] || ''; g.append(meta); }
+      const nCargos = COM_CARGO(t.tipo) ? cargosDe(t.id).length : 0;
+      if (compacto && nCargos) {
+        g.append(s('circle', { class: 'org-mapa-qtd', cx: p.w - 2, cy: 2, r: 8 }));
+        const q = s('text', { class: 'org-mapa-qtd-num', x: p.w - 2, y: 5.5, 'text-anchor': 'middle' }); q.textContent = String(nCargos); g.append(q);
+      }
       if (t.filhos.length && recolhidos.has(t.id)) {
         const bx = p.lado < 0 ? -9 : prefs.estrutura === 'organograma' ? p.w / 2 - 9 : p.w - 9; const by = prefs.estrutura === 'organograma' ? p.h - 9 : p.h / 2 - 9;
         g.append(s('rect', { class: 'org-mapa-contagem', x: bx, y: by, width: 18, height: 18, rx: 9 }));
@@ -320,7 +331,7 @@
     caixa.style.setProperty('--passo', (passo / total * 100) + '%');
     if (!linhas.length) caixa.append(U.vazio('Nada para mostrar.', 'Insira uma área e, nela, um cargo com horário / escala.'));
     linhas.forEach((l) => {
-      if (l.tipo === 'area') { const cab = el('div', 'org-barras-area'); cab.setAttribute('role', 'row'); const id = el('span', 'org-barras-id', l.n.sigla || '?'); id.setAttribute('aria-hidden', 'true'); cab.append(id, el('b', null, l.n.nome)); caixa.append(cab); return; }
+      if (l.tipo === 'area') { const cab = el('div', 'org-barras-area'); cab.setAttribute('role', 'row'); const id = el('span', 'org-barras-id', l.n.sigla || '?'); id.setAttribute('aria-hidden', 'true'); id.style.setProperty('--no-cor', corDe(l.n)); cab.append(id, el('b', null, l.n.nome)); caixa.append(cab); return; }
       const linha = el('div', 'org-barras-linha'); linha.setAttribute('role', 'row'); linha.tabIndex = 0;
       const rot = el('div', 'org-barras-rotulo'); rot.append(el('b', null, l.c.cargoNome), el('small', null, l.caminho)); rot.title = l.c.cargoNome + ' — ' + l.caminho;
       const trilho = el('div', 'org-barras-trilho'); trilho.style.setProperty('--faixas', String(Math.max(1, l.hs.length)));
@@ -334,8 +345,8 @@
         });
       });
       linha.append(rot, trilho);
-      linha.onclick = () => editarCargo(l.c, l.n);
-      linha.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); editarCargo(l.c, l.n); } };
+      linha.onclick = () => editarNo(l.n, { foco: l.c.id });
+      linha.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); editarNo(l.n, { foco: l.c.id }); } };
       caixa.append(linha);
     });
     const rolar = el('div', 'org-barras-area-rolagem'); rolar.append(caixa);
@@ -350,167 +361,153 @@
     if (selecionado !== t.id) { selecionado = t.id; render(); const area = tela.body.querySelector('.org-mapa-area'); if (area) area.focus({ preventScroll: true }); }
   }
 
-  /* ---------- Inserir: o nível de baixo ou um cargo ---------- */
-  /** pai = bloco onde se insere; null = a Loja (só aceita Área). preferido = "cargo" para já abrir na escolha do cargo. */
-  function inserir(pai, preferido) {
-    const tipoFilho = pai ? TIPOS[pai.tipo].filho : 'area';
-    // Cargo só entra em Setor ou Local (Rodrigo, 27/11/2026); na Área entra só Setor. O horário / escala fica dentro do cargo.
-    const opcoes = []; if (tipoFilho) opcoes.push([tipoFilho, TIPOS[tipoFilho].nome]); if (pai && (pai.tipo === 'setor' || pai.tipo === 'local')) opcoes.push(['cargo', 'Cargo']);
-    let escolhido = preferido && opcoes.some((o) => o[0] === preferido) ? preferido : opcoes[0][0];
+  /* ---------- Módulo: Área, Setor ou Local (Rodrigo, 27/11/2026) ----------
+   * Uma janela só para criar e editar o módulo: o TIPO (a ordem é fixa: na Loja entra Área, na Área entra Setor, no Setor entra Local),
+   * o NOME, o IDENTIFICADOR, a COR (o Setor e o Local nascem na cor de quem está acima e podem trocar) e, no Setor e no Local, os CARGOS.
+   * Cada cargo inserido tem um ou mais Horários / Escalas: sem isso não salva. Vários cargos no mesmo módulo, cada um com os seus horários.
+   * O cargo não entra na Área (decisão do Rodrigo, 27/11/2026). */
+  const COM_CARGO = (tipo) => tipo === 'setor' || tipo === 'local';
+  /** A cor do módulo: a dele; sem cor própria, a de quem está acima; no topo, a cor da tela. */
+  function corDe(n) { let x = n; while (x) { if (x.cor) return x.cor; x = x.paiId ? dados.nos.find((y) => y.id === x.paiId) : null; } return cor(); }
+
+  /** pai = onde se insere (null = Loja). */
+  function inserir(pai) { modulo(null, pai ? TIPOS[pai.tipo].filho : 'area', pai, {}); }
+  /** opts.novoCargo: já abre com um cargo novo para preencher; opts.foco: id do cargo a mostrar. */
+  function editarNo(n, opts = {}) { modulo(n, n.tipo, n.paiId ? dados.nos.find((x) => x.id === n.paiId) : null, opts); }
+
+  function modulo(n, tipo, pai, opts) {
+    const nomeTipo = TIPOS[tipo].nome;
     U.dialogo({
-      titulo: pai ? 'Inserir em ' + pai.nome : 'Inserir área na loja',
+      titulo: n ? nomeTipo + ': ' + n.nome : 'Novo módulo' + (pai ? ' em ' + pai.nome : ' na Loja'),
       cor: cor(), corTexto: COR_TEXTO,
       montar: (form) => {
-        const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, 'O que inserir'));
-        const corpo = el('div', 'compras-etapa');
-        const ctx = {};
-        const pintar = () => {
-          corpo.replaceChildren();
-          if (escolhido === 'cargo') Object.assign(ctx, montarCargo(corpo, null));
-          else Object.assign(ctx, montarNo(corpo, null, escolhido));
-        };
-        if (opcoes.length > 1) {
-          const tipo = U.chips(opcoes, escolhido, (v) => { escolhido = v; pintar(); });
-          tipo.setAttribute('aria-label', 'Tipo');
-          const l = el('div', 'compras-campo'); l.append(el('span', 'compras-rotulo', 'Tipo *'), tipo); q.append(l);
-        } else q.append(U.nota(!pai ? 'Na Loja entra área. A ordem é fixa: Área › Setor › Local.' : pai.tipo === 'area' ? 'Na área entra setor. O cargo entra no setor ou no local.' : 'O local é o último nível: nele entra cargo.'));
-        form.append(q, corpo);
-        pintar();
+        // Quadro do módulo: tipo, nome, identificador e cor.
+        const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, 'Módulo'));
+        const tipos = U.chips([['area', 'Área'], ['setor', 'Setor'], ['local', 'Local']], tipo, () => {});
+        tipos.setAttribute('aria-label', 'Tipo do módulo');
+        tipos.querySelectorAll('button').forEach((b) => { if (b.getAttribute('aria-pressed') !== 'true') { b.disabled = true; b.title = 'A ordem é fixa: Área › Setor › Local.'; } });
+        const linhaTipo = el('div', 'compras-campo'); linhaTipo.append(el('span', 'compras-rotulo', 'Tipo *'), tipos);
+        const nome = entrada('text', n ? n.nome : '', { autocomplete: 'off', maxLength: 120, placeholder: tipo === 'area' ? 'Ex.: Operação de Loja' : tipo === 'setor' ? 'Ex.: Caixa' : 'Ex.: Caixa Principal' });
+        nome.required = true;
+        const sigla = entrada('text', n ? n.sigla : '', { autocomplete: 'off', placeholder: 'Ex.: CXP' });
+        let manual = Boolean(n) && n.sigla !== siglaDoNome(n.nome);
+        nome.addEventListener('input', () => { if (!manual) sigla.value = siglaDoNome(nome.value); });
+        sigla.oninput = () => { sigla.value = compactar(sigla.value); manual = sigla.value !== ''; if (!manual) sigla.value = siglaDoNome(nome.value); };
+        const corEntrada = entrada('color', n ? corDe(n) : (pai ? corDe(pai) : cor())); corEntrada.className = 'org-cor'; corEntrada.title = 'Escolher a cor';
+        q.append(linhaTipo, campo('Nome *', nome), campo('Identificador (até 3 caracteres) *', sigla),
+          campo('Cor', corEntrada, tipo === 'area' ? 'Os setores e locais desta área nascem nesta cor.' : 'Nasce na cor de ' + (pai ? pai.nome : 'cima') + '; pode trocar.'));
+        form.append(q);
+        const ctx = { nome, sigla, corEntrada, cargos: [] };
+        if (COM_CARGO(tipo)) Object.assign(ctx, quadroCargos(form, n, opts));
+        else form.append(U.nota('Na área entra setor; o cargo entra no setor ou no local.'));
+        if (n) {
+          const tudo = abaixoDe(n.id); const extra = tudo.nos.length - 1 + tudo.cargos.length;
+          const qx = el('fieldset', 'compras-fieldset'); qx.append(el('legend', null, 'Excluir do teste'));
+          const l = el('div', 'compras-campo'); l.append(el('span', 'compras-rotulo', 'Excluir ' + nomeTipo.toLowerCase() + (extra ? ' e o que está dentro (' + extra + ')' : '')), U.botaoRemover('Excluir ' + n.nome, () => excluirNo(n, form.closest('dialog'))));
+          qx.append(l); form.append(qx);
+        }
+        if (!opts.novoCargo && !opts.foco) setTimeout(() => nome.focus(), 0);
         return ctx;
       },
-      salvar: (ctx) => {
-        if (escolhido === 'cargo') return salvarCargo(ctx, null, pai);
-        return salvarNo(ctx, null, escolhido, pai);
-      },
+      salvar: (ctx) => salvarModulo(ctx, n, tipo, pai),
     });
   }
 
-  function montarNo(corpo, n, tipo) {
-    const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, TIPOS[tipo].nome));
-    const nome = entrada('text', n ? n.nome : '', { autocomplete: 'off', maxLength: 120, placeholder: tipo === 'area' ? 'Ex.: Operação de Loja' : tipo === 'setor' ? 'Ex.: Caixa' : 'Ex.: Caixa Principal' });
-    nome.required = true;
-    const sigla = entrada('text', n ? n.sigla : '', { autocomplete: 'off', placeholder: 'Ex.: CXP' });
-    let manual = Boolean(n) && n.sigla !== siglaDoNome(n.nome);
-    nome.addEventListener('input', () => { if (!manual) sigla.value = siglaDoNome(nome.value); });
-    sigla.oninput = () => { sigla.value = compactar(sigla.value); manual = sigla.value !== ''; if (!manual) sigla.value = siglaDoNome(nome.value); };
-    q.append(campo('Nome *', nome), campo('Identificador (até 3 caracteres) *', sigla));
-    corpo.append(q);
-    setTimeout(() => nome.focus(), 0);
-    return { nome, sigla };
+  /** Os cargos do módulo: um quadro por cargo, com a escolha do cargo e os horários / escalas dele. */
+  function quadroCargos(form, n, opts) {
+    const reais = cargosReais();
+    const lista = el('div', 'compras-etapa');
+    const titulo = el('legend');
+    const cab = el('fieldset', 'compras-fieldset org-cargos-cab'); cab.append(titulo, U.nota('Cada cargo tem um ou mais horários / escalas. Para ver quantos cargos o módulo tem, toque nele no mapa: o resumo mostra o total.'));
+    const blocos = [];
+    const contar = () => { titulo.textContent = 'Cargos (' + blocos.length + ')'; blocos.forEach((b, i) => b.numerar(i + 1)); };
+    const repintarHorarios = () => blocos.forEach((b) => b.pintarHorarios());
+    const novoBloco = (c) => {
+      const marcados = new Set(c ? c.horarioIds : []);
+      const q = el('fieldset', 'compras-fieldset org-cargo-bloco'); const legenda = el('legend'); q.append(legenda);
+      const opcoes = reais.map((r) => [String(r.id), r.nome]);
+      if (c && !c.cargoId) opcoes.unshift(['fora:' + c.id, c.cargoNome + ' (fora do cadastro de cargos)']);
+      const seletor = U.seletor(opcoes, c ? (c.cargoId ? String(c.cargoId) : 'fora:' + c.id) : '', reais.length ? 'Selecione um cargo' : 'Nenhum cargo cadastrado');
+      const horarios = el('div', 'compras-vinculos-lista'); horarios.setAttribute('role', 'group');
+      const pintarHorarios = () => {
+        horarios.replaceChildren(...dados.horarios.map((h) => {
+          const l = U.interruptor(h.nome, marcados.has(h.id), textoDoHorario(h));
+          l.input.onchange = () => { if (l.input.checked) marcados.add(h.id); else marcados.delete(h.id); };
+          return l;
+        }));
+        if (!dados.horarios.length) horarios.append(U.nota('Nenhum horário / escala no teste. Use "Novo Horário / Escala".'));
+      };
+      pintarHorarios();
+      const novoHorario = U.botaoTitulo('Novo Horário / Escala', 'Criar horário / escala para este cargo', () => editarHorario(null, (h) => { marcados.add(h.id); repintarHorarios(); }));
+      const remover = U.botaoRemover('Tirar este cargo', () => { blocos.splice(blocos.indexOf(bloco), 1); q.remove(); contar(); });
+      const listaH = el('div', 'org-horarios'); listaH.append(horarios, novoHorario);
+      const linhaH = el('div', 'compras-campo compras-largo org-linha-horarios'); linhaH.append(el('span', 'compras-rotulo', 'Horário / Escala *'), listaH);
+      const linhaRem = el('div', 'compras-campo'); linhaRem.append(el('span', 'compras-rotulo', 'Tirar este cargo do módulo'), remover);
+      q.append(campo('Cargo *', seletor, 'A lista vem de DES - Cargos C/Salários (só leitura).'), linhaH, linhaRem);
+      const bloco = {
+        id: c ? c.id : null, seletor, marcados, no: q, pintarHorarios,
+        numerar: (i) => { legenda.textContent = 'Cargo ' + i; horarios.setAttribute('aria-label', 'Horários / escalas do cargo ' + i); },
+        cargoOriginal: c,
+      };
+      blocos.push(bloco); lista.append(q); contar();
+      return bloco;
+    };
+    (n ? cargosDe(n.id) : []).forEach(novoBloco);
+    const adicionar = U.botaoTitulo('Adicionar cargo', 'Adicionar cargo a este módulo', () => { const b = novoBloco(null); b.no.scrollIntoView({ block: 'nearest' }); b.seletor.focus(); });
+    const rodape = el('div', 'compras-form-rodape'); rodape.append(adicionar);
+    form.append(cab, lista, rodape);
+    contar();
+    if (opts.novoCargo) setTimeout(() => { const b = novoBloco(null); b.no.scrollIntoView({ block: 'center' }); b.seletor.focus(); }, 0);
+    else if (opts.foco) setTimeout(() => { const b = blocos.find((x) => x.id === opts.foco); if (b) { b.no.scrollIntoView({ block: 'center' }); b.seletor.focus(); } }, 0);
+    return { cargos: blocos, reais };
   }
-  function salvarNo(ctx, n, tipo, pai) {
+
+  function salvarModulo(ctx, n, tipo, pai) {
     const nome = limpar(ctx.nome.value);
     if (nome.length < 2) { ctx.nome.focus(); return 'Informe o nome ' + (tipo === 'area' ? 'da área.' : tipo === 'setor' ? 'do setor.' : 'do local.'); }
     const paiId = n ? n.paiId : (pai ? pai.id : null);
     if (dados.nos.some((x) => x.paiId === paiId && x.id !== (n && n.id) && mesmoNome(x.nome, nome))) { ctx.nome.focus(); return 'Já existe "' + nome + '" neste nível. Escolha outro nome.'; }
     const sigla = compactar(ctx.sigla.value) || siglaDoNome(nome);
+    const corEscolhida = ctx.corEntrada.value;
+    // Só guarda a cor quando ela é diferente da de cima: assim o módulo acompanha a área enquanto não tiver cor própria.
+    const corDeCima = pai ? corDe(pai) : cor();
+    const corPropria = tipo === 'area' || corEscolhida.toLowerCase() !== String(corDeCima).toLowerCase() ? corEscolhida : '';
+    // Cargos: cada um escolhido, sem repetir no mesmo módulo, com um ou mais horários.
+    const cargos = [];
+    for (let i = 0; i < ctx.cargos.length; i++) {
+      const b = ctx.cargos[i]; const v = b.seletor.value; const qual = 'Cargo ' + (i + 1) + ': ';
+      if (!v) { b.seletor.focus(); return qual + 'escolha o cargo.'; }
+      const fora = v.startsWith('fora:'); const real = fora ? null : ctx.reais.find((r) => String(r.id) === v);
+      if (!fora && !real) { b.seletor.focus(); return qual + 'escolha o cargo.'; }
+      const cargoNome = fora ? b.cargoOriginal.cargoNome : real.nome;
+      if (cargos.some((x) => (fora ? x.cargoNome === cargoNome && !x.cargoId : x.cargoId === real.id))) { b.seletor.focus(); return cargoNome + ' aparece duas vezes neste módulo. Deixe um só e marque nele todos os horários.'; }
+      const horarioIds = dados.horarios.filter((h) => b.marcados.has(h.id)).map((h) => h.id);
+      if (!horarioIds.length) { b.no.scrollIntoView({ block: 'nearest' }); return qual + cargoNome + ' precisa de pelo menos um horário / escala.'; }
+      cargos.push({ id: b.id || novoId('cg'), cargoId: fora ? null : real.id, cargoNome, horarioIds });
+    }
+    let novoIdModulo = null;
     const ok = gravar((d) => {
-      if (n) Object.assign(d.nos.find((x) => x.id === n.id), { nome, sigla });
-      else { const id = novoId('no'); d.nos.push({ id, tipo, nome, sigla, paiId }); selecionado = id; }
+      let alvo;
+      if (n) { alvo = d.nos.find((x) => x.id === n.id); Object.assign(alvo, { nome, sigla }); }
+      else { novoIdModulo = novoId('no'); alvo = { id: novoIdModulo, tipo, nome, sigla, paiId }; d.nos.push(alvo); }
+      if (corPropria) alvo.cor = corPropria; else delete alvo.cor;
+      if (COM_CARGO(tipo)) { d.cargos = d.cargos.filter((c) => c.noId !== alvo.id).concat(cargos.map((c) => ({ ...c, noId: alvo.id }))); }
     });
     if (!ok) return 'Não foi possível salvar neste aparelho. Nada foi alterado.';
-    recolhidos.delete(pai ? pai.id : 'raiz');
-    U.avisar((n ? 'Alterado: ' : 'Inserido: ') + TIPOS[tipo].nome + ' ' + nome + '.');
+    if (novoIdModulo) selecionado = novoIdModulo;
+    recolhidos.delete(pai ? pai.id : 'raiz'); if (n) recolhidos.delete(n.id);
+    U.avisar((n ? 'Alterado: ' : 'Inserido: ') + TIPOS[tipo].nome + ' ' + nome + (cargos.length ? ' com ' + cargos.length + (cargos.length === 1 ? ' cargo.' : ' cargos.') : '.'));
     render();
   }
 
-  function editarNo(n) {
-    U.dialogo({
-      titulo: 'Editar ' + TIPOS[n.tipo].nome.toLowerCase() + ': ' + n.nome,
-      cor: cor(), corTexto: COR_TEXTO,
-      montar: (form) => {
-        const corpo = el('div', 'compras-etapa');
-        const ctx = montarNo(corpo, n, n.tipo);
-        const tudo = abaixoDe(n.id);
-        const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, 'Excluir do teste'));
-        const extra = tudo.nos.length - 1 + tudo.cargos.length;
-        const l = el('div', 'compras-campo'); l.append(el('span', 'compras-rotulo', 'Excluir ' + TIPOS[n.tipo].nome.toLowerCase() + (extra ? ' e o que está dentro (' + extra + ')' : '')),
-          U.botaoRemover('Excluir ' + n.nome, () => excluirNo(n, form.closest('dialog'))));
-        q.append(l);
-        form.append(corpo, q);
-        return ctx;
-      },
-      salvar: (ctx) => salvarNo(ctx, n, n.tipo, null),
-    });
-  }
   function excluirNo(n, janela) {
     const tudo = abaixoDe(n.id);
-    U.confirmar('Excluir ' + n.nome + '?', 'Sai do teste ' + (tudo.nos.length > 1 || tudo.cargos.length ? 'com tudo o que está dentro: ' + (tudo.nos.length - 1) + ' bloco(s) e ' + tudo.cargos.length + ' cargo(s).' : 'este bloco.') + ' Só o teste muda; os cadastros de verdade não.', 'Excluir', () => {
+    U.confirmar('Excluir ' + n.nome + '?', 'Sai do teste ' + (tudo.nos.length > 1 || tudo.cargos.length ? 'com tudo o que está dentro: ' + (tudo.nos.length - 1) + ' módulo(s) e ' + tudo.cargos.length + ' cargo(s).' : 'este módulo.') + ' Só o teste muda; os cadastros de verdade não.', 'Excluir', () => {
       if (!gravar((d) => { d.nos = d.nos.filter((x) => !tudo.nos.includes(x.id)); d.cargos = d.cargos.filter((c) => !tudo.nos.includes(c.noId)); })) return 'Não foi possível salvar neste aparelho. Nada foi alterado.';
       if (janela) janela.close();
       U.avisar(n.nome + ' excluído do teste.');
       render();
     }, { cor: cor(), corTexto: COR_TEXTO });
-  }
-
-  /* ---------- Cargo no bloco e os horários dele ---------- */
-  /** c = cargo do bloco (editar) ou null (inserir). */
-  function montarCargo(corpo, c) {
-    const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, 'Cargo'));
-    const reais = cargosReais();
-    let seletor = null;
-    if (c) q.append(campo('Cargo', el('span', 'compras-valor', c.cargoNome)));
-    else {
-      seletor = U.seletor(reais.map((r) => [r.id, r.nome]), '', reais.length ? 'Selecione um cargo' : 'Nenhum cargo cadastrado');
-      q.append(campo('Cargo *', seletor, 'A lista vem de DES - Cargos C/Salários (só leitura).'));
-    }
-    const marcados = new Set(c ? c.horarioIds : []);
-    const qh = el('fieldset', 'compras-fieldset'); qh.append(el('legend', null, 'Horário / Escala *'), U.nota('Todo cargo tem um ou mais horários / escalas: marque quantos precisar.'));
-    const lista = el('div', 'compras-vinculos-lista');
-    const pintar = () => {
-      lista.replaceChildren(...dados.horarios.map((h) => {
-        const l = U.interruptor(h.nome, marcados.has(h.id), textoDoHorario(h));
-        l.input.onchange = () => { if (l.input.checked) marcados.add(h.id); else marcados.delete(h.id); };
-        return l;
-      }));
-      if (!dados.horarios.length) lista.append(U.nota('Nenhum horário / escala no teste. Use "Novo Horário / Escala".'));
-    };
-    pintar();
-    const novo = U.botaoTitulo('Novo Horário / Escala', 'Criar horário / escala', () => editarHorario(null, (h) => { marcados.add(h.id); pintar(); }));
-    const rodape = el('div', 'compras-form-rodape'); rodape.append(novo);
-    qh.append(lista, rodape);
-    corpo.append(q, qh);
-    return { seletor, marcados, reais };
-  }
-  function salvarCargo(ctx, c, pai) {
-    const horarioIds = dados.horarios.filter((h) => ctx.marcados.has(h.id)).map((h) => h.id);
-    if (!horarioIds.length) return 'Marque pelo menos um horário / escala para o cargo (ou crie um em "Novo Horário / Escala").';
-    if (c) {
-      if (!gravar((d) => { d.cargos.find((x) => x.id === c.id).horarioIds = horarioIds; })) return 'Não foi possível salvar neste aparelho. Nada foi alterado.';
-      U.avisar('Horário / escala de ' + c.cargoNome + ' atualizado.');
-    } else {
-      const real = ctx.reais.find((r) => String(r.id) === ctx.seletor.value);
-      if (!real) { ctx.seletor.focus(); return 'Escolha o cargo.'; }
-      if (cargosDe(pai.id).some((x) => x.cargoId === real.id)) return real.nome + ' já está em ' + pai.nome + '. Use o "+" do cargo para mudar o horário.';
-      const id = novoId('cg');
-      if (!gravar((d) => { d.cargos.push({ id, noId: pai.id, cargoId: real.id, cargoNome: real.nome, horarioIds }); })) return 'Não foi possível salvar neste aparelho. Nada foi alterado.';
-      recolhidos.delete(pai.id); selecionado = 'c:' + id;
-      U.avisar(real.nome + ' inserido em ' + pai.nome + '.');
-    }
-    render();
-  }
-  function editarCargo(c, n) {
-    U.dialogo({
-      titulo: c.cargoNome + ' em ' + n.nome,
-      cor: cor(), corTexto: COR_TEXTO,
-      montar: (form) => {
-        const corpo = el('div', 'compras-etapa');
-        const ctx = montarCargo(corpo, c);
-        const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, 'Tirar do bloco'));
-        const l = el('div', 'compras-campo'); l.append(el('span', 'compras-rotulo', 'Tirar ' + c.cargoNome + ' de ' + n.nome), U.botaoRemover('Tirar ' + c.cargoNome + ' de ' + n.nome, () => {
-          const janela = form.closest('dialog');
-          U.confirmar('Tirar ' + c.cargoNome + '?', c.cargoNome + ' sai de ' + n.nome + ' no teste. O cargo continua no cadastro de cargos.', 'Tirar', () => {
-            if (!gravar((d) => { d.cargos = d.cargos.filter((x) => x.id !== c.id); })) return 'Não foi possível salvar neste aparelho. Nada foi alterado.';
-            if (janela) janela.close();
-            U.avisar(c.cargoNome + ' saiu de ' + n.nome + '.'); render();
-          }, { cor: cor(), corTexto: COR_TEXTO });
-        }));
-        q.append(l);
-        form.append(corpo, q);
-        return ctx;
-      },
-      salvar: (ctx) => salvarCargo(ctx, c, n),
-    });
   }
 
   /* ---------- Horário / Escala (lista única do teste) ---------- */
