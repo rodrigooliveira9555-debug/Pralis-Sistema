@@ -55,7 +55,9 @@
   }
   const textoDoHorario = (h) => (h.escala || '') + ' · ' + (h.escala === '12x36' ? 'um dia sim, um dia não' : textoDosDias(h.dias)) + ' · ' + h.entrada + '–' + h.saida +
     (h.intervaloInicio ? ' · intervalo ' + h.intervaloInicio + ' (' + duracaoTexto(Number(h.intervaloMin || 0)) + ')' : '') +
-    (h.porDia && Object.keys(h.porDia).length ? ' · horário próprio: ' + textoDosDias(Object.keys(h.porDia)) : '') + (h.cargaSemanal ? ' · ' + String(h.cargaSemanal).replace('.', ',') + 'h/semana' : '');
+    (h.porDia && Object.keys(h.porDia).length ? ' · horário próprio: ' + textoDosDias(Object.keys(h.porDia)) : '') + (h.cargaSemanal ? ' · ' + String(h.cargaSemanal).replace('.', ',') + 'h/semana' : '') +
+    (h.domingo ? ' · domingo ' + (h.domingo.compensado ? 'compensado na ' + ((DIAS.find((x) => x[0] === h.domingo.diaCompensa) || [])[1] || '?') : 'sem compensação') + ', folga ' + (h.domingo.folgaDomingos || []).map((k) => k + 'º').join(' e ') + ' domingo do mês' : '') +
+    (h.feriado && h.feriado.trabalha !== null && h.feriado.trabalha !== undefined ? ' · feriado: ' + (h.feriado.trabalha ? 'trabalha' + (h.feriado.compensado ? ', compensado' : ', sem compensação') : 'folga') : '');
 
   /* ---------- Dados do teste (só neste aparelho, chave própria) ---------- */
   function exemplo() {
@@ -794,12 +796,79 @@
         const addExc = U.botaoTitulo('Dia com horário diferente', 'Adicionar um dia com horário diferente', () => { const l = livres(); const e = novaExcecao(l.length ? [l[l.length - 1]] : []); pintar(); e.f.scrollIntoView({ block: 'nearest' }); });
         const rodapeExc = el('div', 'compras-form-rodape'); rodapeExc.append(addExc);
         qp.append(excBox);
+        // Domingo e feriado (Rodrigo, 28/11/2026). DOMINGO (só quando o domingo é dia de trabalho, fora do 12x36): é compensado? em que dia da semana
+        // (um dos dias de folga)? quantos domingos de folga no mês (1 ou 2) e quais (1º, 2º, 3º, 4º)? No domingo de folga ele trabalha o dia que
+        // compensaria: nessa semana não há compensação. FERIADO: trabalha? se trabalha, é compensado com folga em outro dia?
+        const dom0 = h && h.domingo ? h.domingo : {};
+        st.dom = { compensado: typeof dom0.compensado === 'boolean' ? dom0.compensado : null, diaCompensa: dom0.diaCompensa || '', folgaQtd: dom0.folgaQtd || 1, folgaDomingos: new Set(dom0.folgaDomingos || []) };
+        const fer0 = h && h.feriado ? h.feriado : {};
+        st.fer = { trabalha: typeof fer0.trabalha === 'boolean' ? fer0.trabalha : null, compensado: typeof fer0.compensado === 'boolean' ? fer0.compensado : null };
+        const qd = el('fieldset', 'compras-fieldset'); qd.append(el('legend', null, 'Domingo e feriado'));
+        const grupoChips = (rotulo) => { const g = el('div', 'compras-chips'); g.setAttribute('role', 'group'); g.setAttribute('aria-label', rotulo); return g; };
+        const compChips = grupoChips('Domingo compensado'); const diaCompChips = grupoChips('Dia que compensa o domingo');
+        const qtdChips = grupoChips('Domingos de folga no mês'); const qualChips = grupoChips('Qual domingo do mês folga');
+        const ferChips = grupoChips('Trabalha nos feriados'); const ferCompChips = grupoChips('Feriado compensado');
+        const linhaComp = linhaChips('Domingo compensado? *', compChips); const linhaDiaComp = linhaChips('Dia que compensa *', diaCompChips);
+        const linhaQtd = linhaChips('Domingos de folga no mês *', qtdChips); const linhaQual = linhaChips('Qual domingo folga *', qualChips);
+        const notaDom = el('small', 'profiles-note org-carga-calculada'); const avisoDom = el('small', 'profiles-note org-carga-calculada org-aviso');
+        const linhaFer = linhaChips('Trabalha nos feriados? *', ferChips); const linhaFerComp = linhaChips('Feriado compensado? *', ferCompChips);
+        const notaFer = el('small', 'profiles-note org-carga-calculada org-aviso');
+        qd.append(linhaComp, linhaDiaComp, linhaQtd, linhaQual, notaDom, avisoDom, linhaFer, linhaFerComp, notaFer);
+        const chip = (texto, ativo, acao, travado, dica) => { const b = botao(texto, acao, 'compras-chip' + (ativo ? ' ativo' : '')); b.setAttribute('aria-pressed', String(ativo)); b.disabled = Boolean(travado); if (dica) b.title = dica; return b; };
+        const ORDINAL = ['1º', '2º', '3º', '4º'];
+        const simNao = (valor, por) => [chip('Sim', valor === true, () => { por(true); pintar(); }), chip('Não', valor === false, () => { por(false); pintar(); })];
+        function pintarDomingoFeriado() {
+          const temDom = st.dias.has('0') && st.escala !== '12x36';
+          [linhaComp, linhaQtd, linhaQual, notaDom, avisoDom].forEach((x) => ver(x, temDom));
+          ver(linhaDiaComp, temDom && st.dom.compensado === true);
+          if (temDom) {
+            // O dia que compensa é um dos dias de folga da semana (é o dia que ele passa a trabalhar na semana do domingo de folga).
+            const folgas = ORDEM.filter((d) => d !== '0' && !st.dias.has(d));
+            if (st.dom.diaCompensa && !folgas.includes(st.dom.diaCompensa)) st.dom.diaCompensa = '';
+            compChips.replaceChildren(...simNao(st.dom.compensado, (v) => { st.dom.compensado = v; }));
+            diaCompChips.replaceChildren(...(folgas.length ? folgas.map((d) => { const [, curto, longo] = DIAS.find((x) => x[0] === d); const b = chip(curto, st.dom.diaCompensa === d, () => { st.dom.diaCompensa = d; pintar(); }); b.setAttribute('aria-label', longo); b.title = longo; return b; }) : [el('span', 'compras-valor', 'Nenhum dia de folga na semana')]));
+            qtdChips.replaceChildren(...[1, 2].map((q) => chip(q + ' por mês', st.dom.folgaQtd === q, () => { st.dom.folgaQtd = q; while (st.dom.folgaDomingos.size > q) st.dom.folgaDomingos.delete(Math.max(...st.dom.folgaDomingos)); pintar(); })));
+            qualChips.replaceChildren(...[1, 2, 3, 4].map((k) => {
+              const on = st.dom.folgaDomingos.has(k); const cheio = !on && st.dom.folgaDomingos.size >= st.dom.folgaQtd;
+              return chip(ORDINAL[k - 1], on, () => { if (on) st.dom.folgaDomingos.delete(k); else if (!cheio) st.dom.folgaDomingos.add(k); pintar(); }, cheio, cheio ? 'Já estão marcados ' + st.dom.folgaQtd + ': desmarque um para trocar' : ORDINAL[k - 1] + ' domingo do mês');
+            }));
+            linhaQual.querySelector('.compras-rotulo').textContent = 'Qual domingo folga * (' + st.dom.folgaDomingos.size + ' de ' + st.dom.folgaQtd + ')';
+            const ks = [...st.dom.folgaDomingos].sort(); const fd = ks.map((k) => ORDINAL[k - 1]).join(' e ');
+            const nomeDia = st.dom.diaCompensa ? DIAS.find((x) => x[0] === st.dom.diaCompensa)[2].toLowerCase() : '';
+            let txt = '';
+            if (st.dom.compensado === true) txt = nomeDia ? 'Na semana em que trabalha o domingo, folga na ' + nomeDia + '.' + (fd ? ' No ' + fd + ' domingo do mês folga o domingo e trabalha a ' + nomeDia + ': nessa semana não há compensação.' : '') : 'Escolha o dia de folga da semana que compensa o domingo.';
+            else if (st.dom.compensado === false) txt = 'Domingo sem compensação.' + (fd ? ' Folga o ' + fd + ' domingo do mês.' : '');
+            notaDom.textContent = txt; ver(notaDom, Boolean(txt));
+            // Comércio: pelo menos 1 domingo de folga a cada 3 semanas (Lei 10.101/2000, art. 6º, parágrafo único). O pior caso é o mês com 5 domingos.
+            const avisosDom = [];
+            if (ks.length) {
+              const saltos = ks.slice(1).map((k, i) => k - ks[i]); saltos.push(5 - ks[ks.length - 1] + ks[0]);
+              const maior = Math.max(...saltos);
+              if (maior > 3) avisosDom.push('No comércio, a lei pede pelo menos 1 domingo de folga a cada 3 semanas (Lei 10.101/2000, art. 6º): assim ele pode ficar até ' + maior + ' semanas sem folgar no domingo. Confira a convenção coletiva.');
+            }
+            if (st.dom.compensado === false) avisosDom.push('Domingo trabalhado sem outra folga na semana no lugar dele é pago em dobro (Súmula 146 do TST).');
+            avisoDom.textContent = avisosDom.join(' '); ver(avisoDom, Boolean(avisoDom.textContent));
+          }
+          ferChips.replaceChildren(...simNao(st.fer.trabalha, (v) => { st.fer.trabalha = v; }));
+          ver(linhaFerComp, st.fer.trabalha === true);
+          ferCompChips.replaceChildren(...simNao(st.fer.compensado, (v) => { st.fer.compensado = v; }));
+          const af = [];
+          if (st.fer.trabalha === true) af.push('No comércio, trabalhar em feriado precisa de autorização na convenção coletiva e respeitar a lei do município (Lei 10.101/2000, art. 6º-A).');
+          if (st.fer.trabalha === true && st.fer.compensado === false) af.push('Feriado trabalhado sem folga em outro dia é pago em dobro (Lei 605/49, art. 9º).');
+          notaFer.textContent = af.join(' '); ver(notaFer, Boolean(notaFer.textContent));
+        }
+        /** O que vai gravado de domingo e feriado. */
+        const domingoFeriado = () => ({
+          domingo: st.dias.has('0') && st.escala !== '12x36' ? { compensado: st.dom.compensado, diaCompensa: st.dom.compensado ? st.dom.diaCompensa : '', folgaQtd: st.dom.folgaQtd, folgaDomingos: [...st.dom.folgaDomingos].sort() } : null,
+          feriado: { trabalha: st.fer.trabalha, compensado: st.fer.trabalha ? st.fer.compensado : null },
+        });
         const avisos = el('div', 'org-contas'); avisos.setAttribute('role', 'status');
-        form.append(q, qh, qp, rodapeExc, avisos);
+        form.append(q, qd, qh, qp, rodapeExc, avisos);
         const usos = h ? dados.cargos.filter((c) => c.horarioIds.includes(h.id)).length : 0;
         form.append(U.nota(h && usos > 1 ? 'Este horário / escala é usado em ' + usos + ' cargos: a mudança vale para todos eles.' : 'Este horário / escala entra na lista única do teste e pode ser escolhido em qualquer cargo e local.'));
         function pintar() {
           const esc = ESCALAS.find((e) => e[0] === st.escala); const n = esc ? esc[2] : 0; const doze = st.escala === '12x36';
+          pintarDomingoFeriado();
           grupo.replaceChildren(...DIAS.map(([chave, curto, longo]) => {
             const cheio = Boolean(n) && !st.dias.has(chave) && st.dias.size >= n;
             const b = botao(curto, () => { if (st.dias.has(chave)) st.dias.delete(chave); else if (!cheio) st.dias.add(chave); pintar(); }, 'compras-chip' + (st.dias.has(chave) ? ' ativo' : ''));
@@ -829,7 +898,7 @@
           const mp = Math.round(minutosPadrao());
           const base = padrao.valor(mp); const porDia = {};
           if (st.escala !== '12x36') excecoes.forEach((e) => { const v = e.jornada.valor(e.jornada.minutosDia()); if (JSON.stringify(v) !== JSON.stringify(base)) e.dias.forEach((d) => { if (st.dias.has(d)) porDia[d] = v; }); });
-          const v = { escala: st.escala, dias: st.escala === '12x36' ? [] : ORDEM.filter((d) => st.dias.has(d)), ...base, porDia, cargaModo: st.cargaModo, cargaSemanal: Math.round(semanaMin() / 60 * 100) / 100 };
+          const v = { escala: st.escala, dias: st.escala === '12x36' ? [] : ORDEM.filter((d) => st.dias.has(d)), ...base, porDia, ...domingoFeriado(), cargaModo: st.cargaModo, cargaSemanal: Math.round(semanaMin() / 60 * 100) / 100 };
           return v;
         }
         function recalcular() {
@@ -867,6 +936,13 @@
         if (!v.escala) return 'Escolha a escala (5x2, 4x3 ou 12x36).';
         const n = ESCALAS.find((e) => e[0] === v.escala)[2];
         if (n && v.dias.length !== n) return 'Na escala ' + v.escala + ' a pessoa trabalha ' + n + ' dias: marque ' + n + ' dias (marcados: ' + v.dias.length + ').';
+        if (v.domingo) {
+          if (v.domingo.compensado === null) return 'Trabalha no domingo: diga se o domingo é compensado.';
+          if (v.domingo.compensado && !v.domingo.diaCompensa) return 'Escolha o dia de folga da semana que compensa o domingo.';
+          if (v.domingo.folgaDomingos.length !== v.domingo.folgaQtd) return 'Marque qual domingo do mês ele folga (' + v.domingo.folgaQtd + (v.domingo.folgaQtd === 1 ? ' domingo' : ' domingos') + ').';
+        }
+        if (v.feriado.trabalha === null) return 'Diga se trabalha nos feriados.';
+        if (v.feriado.trabalha && v.feriado.compensado === null) return 'Diga se o feriado trabalhado é compensado com folga em outro dia.';
         const total = c.cargaMin(); const porDia = c.st.cargaModo === 'dia';
         if (porDia && !(c.minutosPadrao() > 0)) return 'Informe a carga horária por dia.';
         if (!(total > 0)) return 'Informe a carga horária por semana (até ' + hhmm(CARGA_MAX * 60) + ').';
