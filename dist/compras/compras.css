@@ -1297,7 +1297,8 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 /* Conta escolhida na linha da transferência: o ícone quadrado CNT antes do nome. */
 .transferencia-tela .transferencia-linha-valor:has(> .compras-hier-icone) { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .transferencia-tela .transferencia-linha-valor > .compras-hier-icone { flex: none; }
-/* SETINHA DE ABRIR / RECOLHER — uma só no sistema (Rodrigo, 28/11/2026): 18 px, traço 2, no cinza apagado do texto, sem transparência; para baixo
+/* SETINHA DE ABRIR / RECOLHER — uma só no sistema (Rodrigo, 28/11/2026): o desenho, o traço e o cinza da setinha da barra de baixo (20 px, traço 2,2,
+   desenho de 14 × 7: "m5 9 7 7 7-7" para baixo, "m9 5 7 7-7 7" para o lado), sem transparência; para baixo
    quando fechada, para cima quando aberta (gira 180°), para o lado (›) quando a linha leva a outra área. Encostada à direita da linha, na mesma margem
    dos outros valores. Vale para a linha que abre da Transferência, a escolha na linha (U.escolhaNaLinha) e o campo de árvore (U.campoArvore). */
-:is(.transferencia-tela .transferencia-seta, .compras-escolha-abre, .compras-arvore-campo) > svg { flex: none; width: 18px; height: 18px; fill: none; stroke: var(--muted, #8e8e93); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: 1; }
+:is(.transferencia-tela .transferencia-seta, .compras-escolha-abre, .compras-arvore-campo) > svg { flex: none; width: 20px; height: 20px; fill: none; stroke: var(--navigation-ink, #a2a0aa); stroke-width: var(--shell-icon-stroke, 2.2); stroke-linecap: round; stroke-linejoin: round; opacity: 1; }

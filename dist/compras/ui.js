@@ -383,7 +383,7 @@
     let atual = valor || '';
     const linha = el('div', 'compras-campo compras-escolha-linha');
     const abre = el('button', 'compras-escolha-abre'); abre.type = 'button'; abre.setAttribute('aria-expanded', 'false'); abre.setAttribute('aria-label', rotulo.replace(/ *\*$/, ''));
-    const resumo = el('span', 'compras-escolha-resumo'); abre.append(resumo); abre.insertAdjacentHTML('beforeend', svg('<path d="m6 9 6 6 6-6"/>'));
+    const resumo = el('span', 'compras-escolha-resumo'); abre.append(resumo); abre.insertAdjacentHTML('beforeend', svg('<path d="m5 9 7 7 7-7"/>'));
     const lista = el('div', 'compras-hier transferencia-contas compras-escolha-lista'); lista.hidden = true; lista.setAttribute('role', 'radiogroup'); lista.setAttribute('aria-label', rotulo.replace(/ *\*$/, ''));
     let termo = '';
     const caixaItens = el('div', 'compras-escolha-itens');
@@ -1599,7 +1599,7 @@
    */
   function campoArvore({ rotulo, titulo, sigla, cores, iconeFolha, rotuloBusca, vazio, nos, valor = '', textoVazio = 'Selecione', obrigatorio = false, janela, texto: textoDe }) {
     const b = el('button', 'compras-arvore-campo'); b.type = 'button'; b.setAttribute('aria-haspopup', 'dialog'); b.setAttribute('aria-label', rotulo);
-    const texto = el('span', 'compras-arvore-texto'); b.append(texto); b.insertAdjacentHTML('beforeend', svg('<path d="m6 9 6 6 6-6"/>'));
+    const texto = el('span', 'compras-arvore-texto'); b.append(texto); b.insertAdjacentHTML('beforeend', svg('<path d="m5 9 7 7 7-7"/>'));
     let atual = valor || '';
     const achar = (lista, id) => { for (const n of lista) { if (n.id === id) return n; const f = achar(n.filhos || [], id); if (f) return f; } return null; };
     const formatar = (n) => (typeof formatSystemName === 'function' ? formatSystemName(String(n || '')) : String(n || ''));

@@ -1823,7 +1823,7 @@ Tudo o que foi decidido na rodada do Organograma Multifuncional e da Nova Transf
 **Botões**
 - **Cancelar / Salvar** são sempre os retangulares das janelas (Cancelar só com a borda e o X; Salvar cheio com o "certo"; mais fortes ao passar o mouse) — também dentro de painéis; o nome é **Salvar**, não "OK".
 - **Botão de função redondo** (+, conta-gotas, expandir): contorno cinza fino ou o cinza claro dos redondos parados; ao passar o mouse, cheio na cor do cabeçalho com o ícone branco.
-- **Setinha de abrir / recolher — uma só:** 18 px, traço 2, no cinza apagado, sem transparência; para baixo fechada, para cima aberta, para o lado (›) quando leva a outra área; encostada à direita, na margem dos outros valores.
+- **Setinha de abrir / recolher — uma só, igual à "^" da barra de baixo:** 20 px, traço 2,2, desenho 14 × 7 (para baixo `m5 9 7 7 7-7`, para o lado `m9 5 7 7-7 7`), no cinza dos ícones da barra, sem transparência; para baixo fechada, para cima aberta, para o lado (›) quando leva a outra área; encostada à direita, na margem dos outros valores.
 - **"Novo …" / "Adicionar …"** de um quadro fica embaixo do quadro (fora dele), nunca colado dentro da linha.
 
 **Nomes da Nova Transferência** (Rodrigo, 28/11/2026): **Data Lançamento**, **(−) Conta Origem**, **(+) Conta Destino** e, com várias contas, **Múltiplas (+) Contas Destino** / **(+) Contas Destino** — o sinal vem antes, como na conta (− sai, + entra).

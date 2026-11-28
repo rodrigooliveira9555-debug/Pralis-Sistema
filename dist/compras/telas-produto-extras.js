@@ -108,7 +108,7 @@
     const quadro = el('div', 'transferencia-quadro');
     const abre = el('button', 'transferencia-linha transferencia-linha-acao'); abre.type = 'button';
     const resumo = el('span', 'transferencia-linha-valor');
-    const seta = el('span', 'transferencia-seta'); seta.setAttribute('aria-hidden', 'true'); seta.innerHTML = U.svg('<path d="m9 6 6 6-6 6"/>');
+    const seta = el('span', 'transferencia-seta'); seta.setAttribute('aria-hidden', 'true'); seta.innerHTML = U.svg('<path d="m9 5 7 7-7 7"/>');
     abre.append(el('span', 'transferencia-linha-rotulo', textos.rotulo || 'Foto'), resumo, seta);
     const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-data-painel transferencia-anexos-painel');
     const abrirPainel = U.flutuante(abre, painel);

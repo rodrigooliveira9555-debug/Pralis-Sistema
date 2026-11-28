@@ -234,7 +234,7 @@
     imagem: '<path d="M4 5h16v14H4zM4 16l4-4 4 4 3-3 5 5M9 9h.01"/>',
     clipe: '<path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/>',
     fechar: '<path d="M6 6l12 12M18 6 6 18"/>',
-    baixo: '<path d="m6 9 6 6 6-6"/>',
+    baixo: '<path d="m5 9 7 7 7-7"/>',
     lixeira: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
     mais: '<path d="M12 5v14M5 12h14"/>',
     camera: '<path d="M3 7h12v10H3zM15 11l6-3v8l-6-3"/><circle cx="9" cy="12" r="1.6"/>',
@@ -329,7 +329,7 @@
     const lista = el('div', 'transferencia-anexos');
     const resumo = el('span', 'transferencia-linha-valor');
     // A seta diz que a linha abre outra área (um submenu); lá dentro estão os botões que ativam cada função.
-    const seta = el('span', 'transferencia-seta'); seta.setAttribute('aria-hidden', 'true'); seta.innerHTML = U.svg('<path d="m9 6 6 6-6 6"/>');
+    const seta = el('span', 'transferencia-seta'); seta.setAttribute('aria-hidden', 'true'); seta.innerHTML = U.svg('<path d="m9 5 7 7-7 7"/>');
     const abre = el('button', 'transferencia-linha transferencia-linha-acao'); abre.type = 'button';
     abre.append(el('span', 'transferencia-linha-rotulo', 'Anexar'), resumo, seta);
     const audio = window.CicluzAudioNota ? window.CicluzAudioNota.criar({ rotulo: '', classe: 'transferencia-audio', aoSalvar: 'a transferência' }) : null;
