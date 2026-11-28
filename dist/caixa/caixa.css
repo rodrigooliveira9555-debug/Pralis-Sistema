@@ -1,6 +1,6 @@
-/* Caixa (casca) — telas internas do S2 na cor de Vendas. Reaproveita compras.css (secao, campo,
-   chips, situação) e só acrescenta o que é do Caixa: blocos numerados, malote declarado e diferença
-   sempre com sinal + palavra (nunca só cor). */
+/* Caixa (casca) — telas internas do S2 na cor de Vendas. Os formulários são linha por linha (padrão da Nova Transferência: peças em
+   caixa-ui.js, regras em compras.css); aqui fica só o que é do Caixa: cartões de resumo, trilha das etapas, diferença sempre com
+   sinal + palavra (nunca só cor) e avisos. */
 .caixa-content { display: flex; flex-direction: column; gap: 14px; }
 /* Os blocos não encolhem dentro do conteúdo rolável (compras-secao tem overflow escondido). */
 .caixa-content > * { flex: none; }
@@ -13,23 +13,8 @@
 body.dark-theme .caixa-dialog .btn.secondary { color: #f6d38f; }
 .compras-secao > .caixa-subtitulo { margin: 0; padding: 14px 14px 6px; }
 .caixa-aviso { padding: 8px 12px; border: 1px dashed color-mix(in srgb, var(--menu-accent) 60%, transparent); border-radius: 10px; }
-.caixa-bloco { padding: 14px; border: 1px solid var(--line, #e4e4e7); border-radius: 12px; }
-.caixa-bloco-cab { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
-.caixa-bloco-cab h3 { margin: 0; font-size: 15px; }
-.caixa-bloco-cab p { margin: 2px 0 0; font-size: 12px; color: var(--muted, #71717a); }
-.caixa-bloco-num { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--line, #d4d4d8); font: 600 13px/1 var(--ui-font); color: var(--muted, #71717a); }
-.caixa-bloco-num.ativo { border-color: var(--menu-accent); color: var(--panel-text, #785600); }
-.caixa-bloco-num.feito { border-color: var(--menu-accent); background: var(--menu-accent); color: #fff; }
-.caixa-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.caixa-largo { grid-column: 1 / -1; }
-.caixa-grade input[readonly] { background: color-mix(in srgb, var(--line, #e4e4e7) 35%, transparent); }
 .caixa-status { display: block; min-height: 16px; margin-top: 6px; font-size: 12px; color: var(--muted, #71717a); }
 .caixa-status.erro { color: #a11c1c; font-weight: 600; }
-.caixa-declarado { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 16px; margin: 12px 0; }
-.caixa-declarado dt { font-size: 11px; color: var(--muted, #71717a); }
-.caixa-declarado dd { margin: 2px 0 0; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.caixa-conferencia { display: grid; gap: 10px; margin: 0; padding: 12px; border: 1px solid var(--line, #e4e4e7); border-radius: 10px; }
-.caixa-conferencia legend { padding: 0 6px; font-size: 13px; font-weight: 600; }
 .caixa-diferenca { margin: 0; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .caixa-diferenca.falta { background: #fde3e3; color: #a11c1c; }
 .caixa-diferenca.sobra { background: #fdf0d5; color: #8a5300; }
@@ -80,8 +65,6 @@ button.caixa-cartao:hover { background: color-mix(in srgb, var(--menu-accent) 6%
 .caixa-etapa-btn { min-height: 32px; padding: 4px 2px; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
 .caixa-etapas li.atual .caixa-etapa-btn { font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
 .caixa-acoes-esq { justify-content: flex-start; }
-.caixa-total { margin: 0; font-size: 14px; }
-.caixa-total strong { font-size: 18px; font-variant-numeric: tabular-nums; }
 .caixa-lista-pend { margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted, #71717a); }
 .caixa-situacao-linha { display: grid; gap: 4px; justify-items: start; }
 .caixa-situacao-linha small { font-size: 12px; color: var(--muted, #71717a); }
@@ -89,17 +72,12 @@ button.caixa-cartao:hover { background: color-mix(in srgb, var(--menu-accent) 6%
 .caixa-diferenca-linha.falta { color: #a11c1c; }
 .caixa-diferenca-linha.sobra { color: #8a5300; }
 .caixa-diferenca-linha.bateu { color: #12672e; }
-.caixa-subtitulo-solto { margin: 8px 0 0; font-size: 13px; font-weight: 600; }
 .compras-tabela tr.selecionada { background: color-mix(in srgb, var(--menu-accent) 12%, transparent); }
-.caixa-alvos { display: grid; gap: 6px; }
-.caixa-filtros { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .caixa-acoes-esq small { margin-right: 0; }
-.caixa-tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .caixa-celula { display: grid; gap: 2px; min-width: 0; }
 .caixa-celula small { font-size: 12px; color: var(--muted, #71717a); overflow-wrap: anywhere; }
-.caixa-linha-lacre { margin: 4px 0; font-variant-numeric: tabular-nums; }
 /* Conteúdo largo (tabela com campos) encolhe e rola dentro do próprio quadro, sem estourar a seção no celular. */
-.compras-secao, .compras-corpo, .caixa-corpo, .caixa-bloco, .caixa-bloco-cab > div { min-width: 0; max-width: 100%; }
+.compras-secao, .compras-corpo, .caixa-corpo { min-width: 0; max-width: 100%; }
 .compras-corpo > *, .caixa-corpo > * { min-width: 0; max-width: 100%; }
 .caixa-content .compras-tabela input { width: 100%; min-width: 96px; }
 .caixa-content .compras-situacao { white-space: normal; }
@@ -114,6 +92,6 @@ body.dark-theme .caixa-diferenca.sobra, body.dark-theme .caixa-alerta { backgrou
 body.dark-theme .caixa-diferenca.bateu { background: #183a25; color: #a7e8bd; }
 
 @media (max-width: 600px) {
-  .caixa-grade, .caixa-cartoes, .caixa-filtros, .caixa-tres { grid-template-columns: minmax(0, 1fr); }
+  .caixa-cartoes { grid-template-columns: minmax(0, 1fr); }
   .caixa-acoes .btn { flex: 1 1 100%; }
 }

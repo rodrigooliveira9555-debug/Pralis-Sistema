@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
-  bigint, boolean, check, customType, date, foreignKey, index, integer, jsonb, numeric, pgTable, primaryKey, smallint, text, timestamp,
+  type AnyPgColumn, bigint, boolean, check, customType, date, foreignKey, index, integer, jsonb, numeric, pgTable, primaryKey, smallint, text, timestamp,
   uniqueIndex, uuid
 } from "drizzle-orm/pg-core";
 import { usuarioAutenticacao } from "./autenticacao.ts";
@@ -24,6 +24,8 @@ export const agendaMensagens = pgTable(
       .notNull()
       .references(() => usuarioAutenticacao.id),
     texto: text("texto").notNull(),
+    // Foto ou áudio mandado no chat (0012, P-53): o arquivo fica em agenda_arquivos, do mesmo compromisso.
+    arquivoId: uuid("arquivo_id").references((): AnyPgColumn => agendaArquivos.id, { onDelete: "set null" }),
     criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow()
   },
   (t) => [
@@ -249,6 +251,14 @@ export const agendaCompromissos = pgTable(
     vinculoTela: text("vinculo_tela"),
     vinculoTitulo: text("vinculo_titulo"),
     vinculoRef: text("vinculo_ref"),
+    // Ação programada (0012, P-53): a ação da tela que conta (ex.: produtos:excluir) e quantas vezes, em cada
+    // repetição, para a tarefa concluir sozinha. Nulo: conclui com "Feito" (ou pela própria tela).
+    acaoTela: text("acao_tela"),
+    acaoQuantidade: smallint("acao_quantidade"),
+    // Área (0013, P-58, áudio do Rodrigo de 27/11/2026): nó do cadastro DES - Área / Setor / Local
+    // (cicluz-location-tree-v1), pelo id. Sem chave estrangeira: `locais` é regravada inteira a cada envio e pode
+    // chegar atrasada; a tela mostra "Área não encontrada" quando o nó some. Nulo = sem área.
+    areaId: text("area_id"),
     excluidoEm: timestamp("excluido_em", { withTimezone: true }),
     excluidoPor: text("excluido_por").references(() => usuarioAutenticacao.id),
     versao: integer("versao").notNull().default(1),
@@ -293,6 +303,11 @@ export const agendaCompromissos = pgTable(
       "agenda_compromissos_vinculo_check",
       sql`(${t.vinculoTela} is null or (${t.vinculoTela} ~ ${VINCULO_TELA} and char_length(${t.vinculoTela}) <= 302)) and (${t.vinculoTitulo} is null or char_length(${t.vinculoTitulo}) between 1 and 120) and (${t.vinculoRef} is null or ${t.vinculoRef} ~ ${VINCULO_REF}) and (${t.vinculoTitulo} is null or ${t.vinculoTela} is not null)`
     ),
+    check(
+      "agenda_compromissos_acao_check",
+      sql`(${t.acaoTela} is null) = (${t.acaoQuantidade} is null) and (${t.acaoTela} is null or (${t.acaoTela} ~ '^[a-z]{1,30}:[a-z-]{1,30}$' and ${t.acaoQuantidade} between 1 and 365 and ${t.vinculoTela} is not null))`
+    ),
+    check("agenda_compromissos_area_check", sql`${t.areaId} is null or ${t.areaId} ~ '^[A-Za-z0-9_.:-]{1,100}$'`),
     // Uma tarefa por referência de tela (a cópia concluída de uma repetição herda a referência e fica de fora).
     uniqueIndex("agenda_compromissos_vinculo_uq")
       .on(t.empresaId, t.vinculoRef)
@@ -527,5 +542,44 @@ export const agendaHorasFora = pgTable(
     check("agenda_horas_fora_minutos_check", sql`${t.minutos} is null or ${t.minutos} between 0 and 1440`),
     uniqueIndex("agenda_horas_fora_uq").on(t.empresaId, t.compromissoId, t.usuarioId),
     index("agenda_horas_fora_pessoa_idx").on(t.empresaId, t.usuarioId, t.dia)
+  ]
+);
+
+// Progresso da ação programada (0012, P-53): quantas vezes a ação da tela foi feita na repetição pendente
+// (ocorrencia = a data da repetição). Ao chegar na quantidade, a tarefa conclui sozinha.
+export const agendaAcoesProgresso = pgTable(
+  "agenda_acoes_progresso",
+  {
+    empresaId: uuid("empresa_id").notNull(),
+    compromissoId: text("compromisso_id").notNull(),
+    ocorrencia: date("ocorrencia", { mode: "string" }).notNull(),
+    feitas: integer("feitas").notNull().default(0),
+    atualizadoEm: timestamp("atualizado_em", { withTimezone: true }).notNull().defaultNow()
+  },
+  (t) => [
+    primaryKey({ name: "agenda_acoes_progresso_pk", columns: [t.empresaId, t.compromissoId, t.ocorrencia] }),
+    foreignKey({ name: "agenda_acoes_progresso_compromisso_fk", columns: [t.empresaId, t.compromissoId], foreignColumns: [agendaCompromissos.empresaId, agendaCompromissos.id] }),
+    check("agenda_acoes_progresso_feitas_check", sql`${t.feitas} >= 0`)
+  ]
+);
+
+// Em quais telas o ícone roxo de agendar aparece (0012, P-53): o administrador decide. Só as exceções ficam
+// aqui; sem linha, vale o padrão (ligado em todas, menos nos formulários de lançamento).
+export const agendaTelasIcone = pgTable(
+  "agenda_telas_icone",
+  {
+    empresaId: uuid("empresa_id")
+      .notNull()
+      .references(() => empresas.id),
+    tela: text("tela").notNull(),
+    mostrar: boolean("mostrar").notNull(),
+    atualizadoEm: timestamp("atualizado_em", { withTimezone: true }).notNull().defaultNow(),
+    atualizadoPor: text("atualizado_por")
+      .notNull()
+      .references(() => usuarioAutenticacao.id)
+  },
+  (t) => [
+    primaryKey({ name: "agenda_telas_icone_pk", columns: [t.empresaId, t.tela] }),
+    check("agenda_telas_icone_tela_check", sql`${t.tela} ~ '^#/[A-Za-z0-9%/_.-]+$' and char_length(${t.tela}) <= 302`)
   ]
 );

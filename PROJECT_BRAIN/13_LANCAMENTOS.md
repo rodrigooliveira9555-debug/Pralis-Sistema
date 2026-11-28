@@ -41,3 +41,6 @@
 - Fonte das Entradas: robô do CREARE ou a API em avaliação (endereço ainda não existe no DNS).
 
 > **Mapa completo do formulário do principal e quadro de diferenças (24/11/2026):** `16_MAPA_LANCAMENTOS_PRINCIPAL.md`; decisões em aberto no P-47 (doc 11).
+
+## Tela no padrão linha por linha (26/11/2026)
+As três janelas (Nova Despesa, Nova Mercadoria, Nova Retirada) seguem o desenho da Nova Transferência: quadro do valor na cor da origem no topo e um grupo por assunto abaixo (detalhe em DESIGN_SYSTEM.md, item 32). Só a apresentação mudou: campos, cálculo do total, validações e o corpo enviado à API são os mesmos. Credor, fotos e leitura por IA continuam só de tela (P-47).

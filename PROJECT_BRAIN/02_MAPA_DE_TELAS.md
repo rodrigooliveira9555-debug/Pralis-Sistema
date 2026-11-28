@@ -38,6 +38,12 @@ Texto fixo "reunirá os principais números".
 - 🟨 Financeiro · Lançamentos financeiros (`#launch`)
 - 🟨 Financeiro · Grupo de despesas (`#groups`)
 - ⬜ Gerência, DP, Fiscal, Financeiro, Diretor Geral (5)
+- 🧪 **API › DES - ConPlus Arquivo (Laboratório)** (`dist/conplus/`, 27/11/2026, Marco) — área **isolada** para testar a troca com o DP da
+  ConPlus (Questor) por arquivo, "como se fosse a API". Abas: **Admissão** (registros A/B/C/D campo a campo, conferência ao vivo e
+  .txt em Windows-1252), **Eventos** (registro E, SEQ guardado), **Ler arquivo** (coluna a coluna), **Códigos** (de-para de cargo,
+  escala, filial, município, evento e banco) e **Retorno** (resumo do CSV das folhas, que continua sendo importado nas telas
+  DES - Folha de Pagamento…, e o vínculo CPF ↔ contrato). Só a empresa de homologação e dados fictícios. Não mexe no cadastro de
+  pessoas nem nas telas de DP. **Lugar definitivo: Saídas › API** (Marco, 27/11/2026). A aba Admissão preenche a partir do Cadastro completo (só leitura) e mostra "O que falta"; ligação com o cadastro: P-57 (doc 11).
 
 ## Saídas · Mercadorias/CMV (MER, verde)
 Organização do Rodrigo (vídeo de 06/11/2026); detalhes no `DESIGN_SYSTEM.md`, regra "Compras encaixado no menu de Mercadorias".

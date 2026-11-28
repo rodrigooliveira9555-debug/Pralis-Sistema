@@ -46,6 +46,19 @@
   `lista-tarefas-das-telas` ("Tarefas das telas", criada na primeira tarefa), `agenda_grupo_mensagens` e `agenda_grupo_leituras`
   (chat do grupo), `agenda_config_pessoas` (expediente, bloqueio fora dele, minutos parado até sair; a coluna `hora_fora` não é mais usada desde a 0009) e
   `agenda_horas_fora` (uma linha por compromisso concluído fora do expediente; só registro). Fuso da loja: America/Sao_Paulo.
+  **Áudio de 25/11 (0012, P-53, 26/11/2026):** `agenda_compromissos.acao_tela`/`acao_quantidade` (ação da tela que conta, ex.:
+  `produtos:excluir`, e quantas vezes por repetição); `agenda_acoes_progresso` (quantas feitas por compromisso e data da
+  repetição; ao chegar, conclui); `agenda_telas_icone` (só as exceções de tela do ícone de agendar); `agenda_mensagens.arquivo_id`
+  (foto ou áudio do chat, guardado em `agenda_arquivos`; áudio WebM/Ogg/M4A/MP3 aceito pelo conteúdo). Catálogo das ações por tela:
+  `ACOES_POR_TELA` em `dist/agenda/rotina.js` (chave: último pedaço do endereço da tela); a camada de produtos
+  (`compras/produtos-api.js`) e os serviços de Compras e Produção (`contarSe`) avisam a Agenda. Ação geral de toda tela
+  (`tela:salvar`, 26/11/2026): `cicluz-sync.js` dispara `cicluz-dado-salvo` (escrita no servidor ou dado de negócio editado
+  no aparelho, via `cicluz-sessao.js`); a API só conta essa ação para a tarefa ligada à tela enviada. `rotas.js` avisa a
+  troca de tela com o evento `cicluz-rota-mudou`.
+  **Áudio de 27/11 (0013, P-58, 27/11/2026):** `agenda_compromissos.area_id` (nó do DES - Área / Setor / Local,
+  `cicluz-location-tree-v1`, pelo id; qualquer nível; **sem chave estrangeira**, porque `locais` é regravada inteira a cada
+  envio; o servidor só confere o formato; a tela antiga, que não manda o campo, não apaga a área). Na tela, "Atividade" é o
+  item de `subtarefas` (o nome do campo salvo não mudou). Árvore das telas do menu: `CicluzAgendaRotina.arvoreDoMenu()`.
   **Respostas da P-46 (0009, 24/11/2026):** `agenda_grupos.area` (lista ligada a uma área do Acesso por Tela; membros com
   origem `area`, refeitos pela API quando as permissões mudam); `perfis_usuarios.colaborador_id` (conta ligada ao colaborador
   do cadastro, por id; um por conta); `expedientes_colaboradores` (dia a dia: trabalha/folga e horário, só dos colaboradores
@@ -125,7 +138,7 @@
   catálogo, histórico, cotações ou pedidos) recebe `categorias: ['produto']`; quem já tinha categoria ou não tem vínculo não
   é tocado; roda uma vez, em memória, e é gravada na próxima alteração. **Dado pessoal:** CPF e data de nascimento de fornecedor pessoa física e e-mails de contato passam a
   ir para o servidor junto com o documento do Compras (ver P-28).
-- `patrimonio-v1` (05/11/2026) — bens (RET - Patrimônios). As duas chaves são sincronizadas e adotadas do aparelho
+- `patrimonio-v1` (05/11/2026) — bens (RET - Patrimônios); desde 27/11/2026 também `tipos` (cadastro RET - Tipos de Patrimônio, usado no campo Tipo do bem, `[{ id, nome, ativo }]`, com o marcador `tiposIniciais`) e, em cada bem, o `tipoId` opcional (P-54). As duas chaves são sincronizadas e adotadas do aparelho
   (`servidor/shared/src/documentos.ts`); começam vazias, sem dado de exemplo.
   Em 15/11/2026 o bem ganhou três campos **opcionais** (mesma chave e mesma versão; bem antigo sem eles continua válido,
   sem migração): `pecas: [{ id, nome, marca, modelo, fornecedorId, grupoDespesaId, subgrupoDespesaId, valor, foto, ultimaTroca,
@@ -207,3 +220,7 @@ A área (Área / Setor / Local) tem cargos; o cargo tem pessoas. **Vínculo semp
 - **Chave nova** `cicluz-acessos-telas-v1` = `{ version:1, configs: { "area:ID" | "cargo:ÁREA|CARGO" | "pessoa:ID": { telas:{chave:[permissões]}, acoes:[], conhecidas:[] } } }`. Opcional e aditiva (sem ela ninguém tem permissão configurada); fica **neste aparelho** (ainda não vai para o servidor). API: `CicluzHierarquia.configs / salvarConfig / removerConfig`. Abrir uma coluna cria a configuração (tudo ligado, ou cópia da de cima para cargo e colaborador); remover a coluna (com confirmação) apaga a configuração.
 - **Trava**: o colaborador só é ativado (`CicluzPeople.activate`) se tiver cargo e permissão que valha para ele (dele, do cargo ou da área; regras em `hierarquia-dominio.js`, `podeUsar`). Sem isso a ativação devolve o motivo. Quem já estava ativo não é desativado: a tela Acesso por Tela avisa quantos ativos estão sem permissão.
 - **Limite**: a trava vale no cadastro (ativação). Barrar o login e as telas de verdade depende de ligar o usuário que entra ao colaborador e de o servidor usar esta configuração (P-37).
+
+- **Horários Empresa (27/11/2026)** — `cicluz-compras-v1.horariosEmpresa = { version: 1, dias: { '1'…'6','0','feriado': { m, t, f } }, atualizadoEm }`, em que `m`, `t` e `f` (Manhã, Tarde e Funcionamento) são `{ abre, fecha }` em `HH:MM` (vazios = sem horário). Coleção nova e opcional (documento antigo abre sem ela, sem migração). Regras em `dist/acessos/horarios-empresa-dominio.js` (testadas em `tests/horarios-empresa-dominio.cjs`). Decisões em aberto: P-55 e P-56 (doc 11).
+
+- **Área ConPlus — laboratório (27/11/2026)** — chave nova e própria `cicluz-conplus-v1 = { version: 1, depara: { cargo, escala, filial, municipio, evento, banco: [{ id, de, para, descricao, cnpj }] }, vinculos: [{ id, cnpj, contrato, cpf, nome, origem, criadoEm }], eventos: { lancamentos: [{ id, cnpj, periodo, contrato, seq, evento, referencia, valor, criadoEm }], ultimoSeq: { 'cnpj|periodo|contrato': n } }, colaboradores: [{ id, cnpj, empresa, filial, contrato, nome, cpf, pis, admissao, demissao, tipoContrato, descrTipo, importadoEm, atualizadoEm }] }` (coleção `colaboradores` nova e opcional em 27/11/2026: documento antigo abre igual, sem migração; tem dado pessoal real, por isso fica só no aparelho). Fica **só neste aparelho** (não está na lista de documentos do servidor), como o Cadastro completo (P-11). O formulário de admissão não é guardado. Nenhuma chave existente mudou. Código em `dist/conplus/` (`campos-nli.js` = nome e campo de cada coluna, dos .nli da ConPlus; `regras-questor.js` = obrigatório/tipo/tamanho/valores aceitos de cada campo, gerado do S1; `rotulos-questor.js` = texto dos códigos; `eventos-conplus.js` = eventos de TNP, Lisboa e Burpiz no Zen; `layout.js` = colunas A–E; `dominio.js` = montagem, Windows-1252, conferência, leitura, SEQ, de-para e vínculo, testado em `tests/conplus-dominio.cjs`; `cadastro-questor.js` = pessoa do Cadastro do S2 → linhas A–D com o de-para do S1 e as pendências, **só lê** `cicluz-pessoas-v1`). `folhas-csv.js` passou a ligar o relatório ao cadastro pelo contrato (vínculo da área) quando a linha não traz CPF. Decisões em aberto: P-57 (doc 11).

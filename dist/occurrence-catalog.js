@@ -84,59 +84,70 @@ function setRules(on){rulesToggle.setAttribute('aria-expanded',String(on));rules
 rulesToggle.onclick=()=>setRules(rulesToggle.getAttribute('aria-expanded')!=='true');setRules(false);
 rulesInner.append(el('p','profiles-note','Valores configuráveis pela empresa: servem para o sistema avisar o DP de que vale analisar uma medida mais séria. A suspensão ou a justa causa nunca são aplicadas automaticamente: a decisão é humana, conforme as normas aplicáveis.'),discFlash,discBox);rulesBody.append(rulesInner);rulesPanel.append(rulesToggle,rulesBody);body.append(rulesPanel);
 
-/* Parte inferior: formulário */
-const form=el('form','form-fields uniforms-form');form.noValidate=true;form.hidden=true;form.dataset.quadro='Dados do tipo de ocorrência';const formTitle=el('h3','uniforms-wide uniforms-heading','Novo cadastro');formTitle.hidden=true; /* o título vai no cabeçalho da janela; o quadro leva o nome fixo na moldura */
-const fType=el('select'),fCat=el('select'),fCatNew=el('input'),fSub=el('select'),fSubNew=el('input'),fDoc=el('select'),fActive=el('select');
-fCatNew.maxLength=80;fSubNew.maxLength=80;fActive.add(new Option('Ativo','1'));fActive.add(new Option('Inativo','0'));
-const catNewLbl=lbl('Nome da nova categoria *',fCatNew),subNewLbl=lbl('Nome da nova subcategoria *',fSubNew);catNewLbl.hidden=subNewLbl.hidden=true;
+/* Parte inferior: formulário linha por linha (padrão da Nova Transferência, 27/11/2026, Washington): grupos com o título acima e quadro de linhas de 52 px
+   (nome à esquerda, valor à direita). As peças vêm de CicluzTransferencias.pecas, que carrega depois deste arquivo: as linhas só são montadas ao abrir (montar).
+   A janela é a de U.openEditor; o contêiner leva transferencia-tela para valer as regras da referência. Antes: quadro com título na borda, rótulos em cima,
+   cartão de situação e "Configurações adicionais" recolhida. */
+const form=el('form','uniforms-form transferencia-tela transferencia-corpo');form.noValidate=true;form.hidden=true;
+const fType=el('select'),fCat=el('select'),fCatNew=el('input'),fSub=el('select'),fSubNew=el('input'),fDoc=el('select');
+fCatNew.maxLength=80;fSubNew.maxLength=80;
+let ativo=true,needsDP=false,needsLegal=false,guideOrig='';
 /* Configurações adicionais (matriz disciplinar dentro do cadastro) */
-const more=el('details','uniforms-wide occurrence-more');more.append(el('summary',null,'Configurações adicionais'));
-const mSev=el('select'),mLook=el('input'),mRec=el('input'),mDP=el('input'),mLegal=el('input'),mGuide=el('textarea'),mWarn=el('select'),mWarnDays=el('input');
-mSev.add(new Option('Não definido',''));for(const s of SEVERITY)mSev.add(new Option(s,s));for(const i of [mLook,mRec,mWarnDays]){i.type='number';i.min='1';i.step='1';i.inputMode='numeric';i.placeholder='Definido pela empresa'}mDP.type=mLegal.type='checkbox';mGuide.rows=2;mGuide.maxLength=300;mGuide.addEventListener('focusout',e=>e.stopPropagation());
-const chk=(text,box)=>{box.setAttribute('aria-label',text);const l=el('label','jornada-check');l.append(box,el('span',null,text));return l};
-const warnBox=el('div','uniforms-wide');warnBox.append(el('h4',null,'Conferência de advertências anteriores (suspensão)'),el('p','profiles-note','Ao lançar esta suspensão, a tela procura advertências do colaborador na categoria escolhida dentro do período e mostra um alerta para conferência do DP. Não impede o lançamento nem aplica a suspensão. O período deve vir da orientação da empresa/jurídico.'),lbl('Advertência anterior a conferir',mWarn),lbl('Período de referência (dias)',mWarnDays));
-const moreBody=el('div','form-fields');moreBody.append(lbl('Nível de gravidade',mSev),lbl('Período de consulta do histórico (dias)',mLook),lbl('Quantidade de reincidências para alerta',mRec),chk('Exige revisão pelo DP',mDP),chk('Exige revisão jurídica',mLegal),lbl('Orientação recomendada',mGuide,'uniforms-wide'),warnBox,el('p','uniforms-wide profiles-note','Classificação administrativa: leve, moderado e grave não autorizam penalidade automática e nada aqui define prazo jurídico.'));more.append(moreBody);
-const fe=el('p','uniforms-wide profiles-error'),fs=el('p','uniforms-wide profiles-note');fe.setAttribute('role','alert');fs.setAttribute('role','status');
+const mSev=el('select'),mLook=el('input'),mRec=el('input'),mGuide=el('input'),mWarn=el('select'),mWarnDays=el('input');
+mSev.add(new Option('Não definido',''));for(const s of SEVERITY)mSev.add(new Option(s,s));for(const i of [mLook,mRec,mWarnDays]){i.type='number';i.min='1';i.step='1';i.inputMode='numeric';i.placeholder='Definido pela empresa'}mGuide.maxLength=300;mGuide.addEventListener('focusout',e=>e.stopPropagation()); /* texto livre: a regra global de nomes não mexe nas letras */
+const umaLinha=t=>String(t||'').replace(/\s*[\r\n]+\s*/g,' ').trim(); /* a orientação é um campo de uma linha: cadastro antigo com quebras aparece em uma linha e, se ninguém mexer no texto, grava como estava */
+const fe=el('p','uniforms-wide profiles-error');fe.setAttribute('role','alert');
 const act=el('div','uniforms-wide actions'),save=el('button','btn','Salvar');save.type='submit';let editing=null;act.append(button('Cancelar',()=>closeForm(),'btn ghost'),save); /* padrão: Cancelar · Salvar por extenso, à direita, fora do quadro */
-/* Situação no interruptor padrão (no lugar do seletor Ativo/Inativo). O seletor fActive continua guardando o valor; o interruptor só o mostra e altera. */
-const statusSlot=el('div','uniforms-wide');let sitBox=null;
-/* Campo obrigatório vazio (18/11/2026, Rodrigo): o mesmo aviso do cadastro de cliente — a borda do campo na cor do cabeçalho e a mensagem embaixo (CicluzComprasUI.sinalizarObrigatorios). Para isso os rótulos ganham o formato dos cadastros novos (.compras-campo > .compras-rotulo), uma vez só. */
-const padronizarCampos=()=>U.padronizarCampos(form); /* peça comum (uniforms.js) */
-function pintarSituacao(){const cu=window.CicluzComprasUI;if(!cu){statusSlot.replaceChildren(lbl('Status *',fActive));return}sitBox=cu.quadroSituacao('Situação do cadastro',fActive.value==='1',{dica:'Cadastro inativo continua guardado.',aoMudar:()=>{fActive.value=sitBox.ativo?'1':'0'}});statusSlot.replaceChildren(sitBox)}
-form.append(formTitle,lbl('Tipo de ocorrência *',fType),lbl('Nome da categoria *',fCat),catNewLbl,lbl('Subcategoria *',fSub),subNewLbl,lbl('Tipo de documento *',fDoc),statusSlot,more,fe,fs,act);
-body.append(form);window.CicluzComprasUI&&CicluzComprasUI.iconarLinhas(form);
+let lCat,lCatNew,lSub,lSubNew,lSit,lDP,lLegal,secConfig,secWarn,montado=false;
+/* Linha que aparece e some ENTRA E SAI do quadro (a linha tem display:flex: o atributo hidden não a esconde). */
+const mostra=(no,depoisDe,sim)=>{if(sim){if(!no.isConnected)depoisDe.after(no)}else no.remove()};
+/* As chaves (situação e Sim/Não) nascem a cada abertura, com o valor do cadastro aberto, e trocam a anterior dentro da mesma linha. */
+const trocaChave=(l,no)=>{l.querySelector('.account-status-row')?.remove();l.append(no)};
+function pintarChaves(){const {chave}=window.CicluzTransferencias.pecas;
+ trocaChave(lSit,chave('Situação do cadastro',ativo,['Ativo','Inativo'],v=>{ativo=v}));
+ trocaChave(lDP,chave('Exige revisão pelo DP',needsDP,['Sim','Não'],v=>{needsDP=v}));
+ trocaChave(lLegal,chave('Exige revisão jurídica',needsLegal,['Sim','Não'],v=>{needsLegal=v}))}
+function montar(){if(montado)return true;const P=window.CicluzTransferencias?.pecas;if(!P)return false;const {linha,linhaDe,quadro,secao}=P;
+ lCat=linhaDe('Nome da categoria *',fCat);lCatNew=linhaDe('Nome da nova categoria *',fCatNew);lSub=linhaDe('Subcategoria *',fSub);lSubNew=linhaDe('Nome da nova subcategoria *',fSubNew);
+ lSit=linha('Situação do cadastro');lDP=linha('Exige revisão pelo DP');lLegal=linha('Exige revisão jurídica');
+ secConfig=secao('Configurações adicionais',quadro(linhaDe('Nível de gravidade',mSev),linhaDe('Período de consulta do histórico (dias)',mLook),linhaDe('Quantidade de reincidências para alerta',mRec),lDP,lLegal,linhaDe('Orientação recomendada',mGuide)),el('p','profiles-note','Classificação administrativa: leve, moderado e grave não autorizam penalidade automática e nada aqui define prazo jurídico.'));
+ secWarn=secao('Conferência de advertências anteriores (suspensão)',quadro(linhaDe('Advertência anterior a conferir',mWarn),linhaDe('Período de referência (dias)',mWarnDays)),el('p','profiles-note','Ao lançar esta suspensão, a tela procura advertências do colaborador na categoria escolhida dentro do período e mostra um alerta para conferência do DP. Não impede o lançamento nem aplica a suspensão. O período deve vir da orientação da empresa/jurídico.'));
+ form.append(secao('Dados do tipo de ocorrência',quadro(linhaDe('Tipo de ocorrência *',fType),lCat,lSub,linhaDe('Tipo de documento *',fDoc),lSit),el('p','profiles-note','Cadastro inativo continua guardado.')),secConfig,fe,act);
+ window.CicluzComprasUI&&CicluzComprasUI.iconarLinhas(form);montado=true;return true}
+body.append(form);
 const dayBox=el('details','uniforms-wide occurrence-more'),dayIn=el('input'),dm=el('p','profiles-note');dm.setAttribute('role','status');dayIn.placeholder='Ex.: 1, 2, 3 (em branco = sem restrição)';
 dayBox.append(el('summary',null,'Dias de suspensão permitidos'),lbl('Quantidades permitidas',dayIn,'uniforms-wide'),el('p','profiles-note','Opcional. Quando preenchido, o lançamento mostra atalhos com essas quantidades; o valor continua editável.'),button('Salvar dias permitidos',saveDays,'btn'),dm);body.append(dayBox);
 
 /* listas dependentes */
 const NEW='__new__';
 function fillTypeSel(cur){fType.replaceChildren(new Option('Selecione o tipo',''));for(const t of types())fType.add(new Option(t,t));fType.value=cur||''}
-function fillCatSel(cur){const list=MX()?.activeCats()||[],own=cur&&!list.some(c=>c.id===cur)&&MX()?.catById(cur);fCat.replaceChildren(new Option('Selecione a categoria',''));for(const c of [...list,...(own?[own]:[])])fCat.add(new Option(c.name+(c.active?'':' (inativa)'),c.id));fCat.add(new Option('+ Cadastrar nova categoria',NEW));fCat.value=[...fCat.options].some(o=>o.value===cur)?cur:'';catNewLbl.hidden=fCat.value!==NEW;fillSubSel('')}
+function fillCatSel(cur){const list=MX()?.activeCats()||[],own=cur&&!list.some(c=>c.id===cur)&&MX()?.catById(cur);fCat.replaceChildren(new Option('Selecione a categoria',''));for(const c of [...list,...(own?[own]:[])])fCat.add(new Option(c.name+(c.active?'':' (inativa)'),c.id));fCat.add(new Option('+ Cadastrar nova categoria',NEW));fCat.value=[...fCat.options].some(o=>o.value===cur)?cur:'';mostra(lCatNew,lCat,fCat.value===NEW);fillSubSel('')}
 function fillSubSel(cur){const c=MX()?.catById(fCat.value);fSub.replaceChildren(new Option(c?'Selecione a subcategoria':fCat.value===NEW?'Cadastre a subcategoria abaixo':'Escolha a categoria primeiro',''));
  if(c){const own=cur&&!c.subs.some(s=>s.id===cur&&s.active)&&c.subs.find(s=>s.id===cur);for(const s of [...c.subs.filter(x=>x.active),...(own?[own]:[])])fSub.add(new Option(s.name+(s.active?'':' (inativa)'),s.id))}
- if(c||fCat.value===NEW)fSub.add(new Option('+ Cadastrar nova subcategoria',NEW));fSub.value=[...fSub.options].some(o=>o.value===cur)?cur:(fCat.value===NEW?NEW:'');subNewLbl.hidden=fSub.value!==NEW}
+ if(c||fCat.value===NEW)fSub.add(new Option('+ Cadastrar nova subcategoria',NEW));fSub.value=[...fSub.options].some(o=>o.value===cur)?cur:(fCat.value===NEW?NEW:'');mostra(lSubNew,lSub,fSub.value===NEW)}
 function fillDocSel(cur,legacy){fDoc.replaceChildren(new Option('Selecione o documento',''));for(const d of docs())fDoc.add(new Option(d.name,d.id));if(legacy)fDoc.add(new Option('Modelo enviado antes: '+legacy.name,'legacy'));fDoc.add(new Option('Sem documento associado (anexar o assinado)','none'));fDoc.value=[...fDoc.options].some(o=>o.value===cur)?cur:''}
 function fillWarnSel(cur){mWarn.replaceChildren(new Option('Não conferir',''));for(const c of catsOf('ADVERTÊNCIA',true).filter(x=>x.id!==editing))mWarn.add(new Option(catText(c)+(c.active?'':' (inativo)'),c.id));mWarn.value=[...mWarn.options].some(o=>o.value===cur)?cur:''}
-const paintMore=()=>{warnBox.hidden=fType.value!=='SUSPENSÃO'};
-fCat.addEventListener('change',()=>{catNewLbl.hidden=fCat.value!==NEW;fillSubSel('')});fSub.addEventListener('change',()=>{subNewLbl.hidden=fSub.value!==NEW});fType.addEventListener('change',()=>{paintMore();fillWarnSel('')});
+const paintMore=()=>mostra(secWarn,secConfig,fType.value==='SUSPENSÃO'); /* o bloco de advertências anteriores só existe na suspensão: entra e sai do formulário */
+fCat.addEventListener('change',()=>{mostra(lCatNew,lCat,fCat.value===NEW);fillSubSel('')});fSub.addEventListener('change',()=>{mostra(lSubNew,lSub,fSub.value===NEW)});fType.addEventListener('change',()=>{paintMore();fillWarnSel('')});
 
-function openForm(c){editing=c?c.id:null;load();fillTypeSel(c?.type);fillCatSel(c?.catId);fillSubSel(c?.subId);fillDocSel(c?(c.docCatId||(c.model?'legacy':'')):'',c?.model);padronizarCampos();fActive.value=c?(c.active?'1':'0'):'1';pintarSituacao();fCatNew.value=fSubNew.value='';
- const cf=c?.config||{};mSev.value=cf.severity||'';mLook.value=cf.lookbackDays||'';mRec.value=cf.alertRecurrences||'';mDP.checked=!!cf.needsDP;mLegal.checked=!!cf.needsLegal;mGuide.value=cf.guidance||'';
- const r=c?ruleOf(c.id):null;fillWarnSel(r?.warningCategoryId||'');mWarnDays.value=r?.periodDays||'';paintMore();more.open=!!(c&&(cf.severity||cf.lookbackDays||cf.alertRecurrences||cf.needsDP||cf.needsLegal||r));
- formTitle.textContent=c?'Editar cadastro: '+catText(c):'Novo cadastro';save.textContent='Salvar';fe.textContent=fs.textContent='';form.hidden=false;{const want=more.open;U.openEditor(form,formTitle.textContent,closeForm);more.open=want}}
-function closeForm(){U.closeEditor(form);editing=null;form.hidden=true;fe.textContent=fs.textContent=''}
+function openForm(c){if(!montar()){flash.textContent='A tela não carregou por completo. Recarregue a página.';return}
+ editing=c?c.id:null;load();fillTypeSel(c?.type);fillCatSel(c?.catId);fillSubSel(c?.subId);fillDocSel(c?(c.docCatId||(c.model?'legacy':'')):'',c?.model);ativo=c?!!c.active:true;fCatNew.value=fSubNew.value='';
+ const cf=c?.config||{};mSev.value=cf.severity||'';mLook.value=cf.lookbackDays||'';mRec.value=cf.alertRecurrences||'';needsDP=!!cf.needsDP;needsLegal=!!cf.needsLegal;guideOrig=cf.guidance||'';mGuide.value=umaLinha(guideOrig);pintarChaves();
+ const r=c?ruleOf(c.id):null;fillWarnSel(r?.warningCategoryId||'');mWarnDays.value=r?.periodDays||'';paintMore();
+ fe.textContent='';form.hidden=false;U.openEditor(form,c?'Editar cadastro: '+catText(c):'Novo cadastro',closeForm)}
+function closeForm(){U.closeEditor(form);editing=null;form.hidden=true;fe.textContent=''}
 
-form.onsubmit=e=>{e.preventDefault();fe.textContent=fs.textContent='';load();const M=MX(),errs=[],type=fType.value;
+form.onsubmit=e=>{e.preventDefault();fe.textContent='';load();const M=MX(),errs=[],type=fType.value;
  if(!type)errs.push('Selecione o tipo de ocorrência.');if(!fCat.value)errs.push('Selecione ou cadastre a categoria.');if(fCat.value===NEW&&!fCatNew.value.trim())errs.push('Informe o nome da nova categoria.');
  if(!fSub.value)errs.push('Selecione ou cadastre a subcategoria.');if(fSub.value===NEW&&!fSubNew.value.trim())errs.push('Informe o nome da nova subcategoria.');if(!fDoc.value)errs.push('Selecione o tipo de documento (ou "Sem documento associado").');
  const look=mLook.value===''?null:Number(mLook.value),recur=mRec.value===''?null:Number(mRec.value),wd=mWarnDays.value===''?null:Number(mWarnDays.value);
  if([look,recur,wd].some(x=>x!==null&&!(Number.isInteger(x)&&x>=1)))errs.push('Nas configurações adicionais, use números inteiros a partir de 1.');if(type==='SUSPENSÃO'&&!!mWarn.value!==(wd!==null))errs.push('Para conferir advertências anteriores, informe a categoria e o período juntos.');
- if(errs.length){fe.textContent=errs[0];window.CicluzComprasUI?.sinalizarObrigatorios(form);return}
+ if(errs.length){fe.textContent=errs[0];return}
  const catId=fCat.value===NEW?M.addCategory(fCatNew.value):fCat.value;if(!catId){fe.textContent='Não foi possível cadastrar a categoria.';return}
  const subId=fSub.value===NEW?M.addSub(catId,fSubNew.value):fSub.value;if(!subId){fe.textContent='Não foi possível cadastrar a subcategoria.';return}
  const cat=M.catById(catId),sub=M.subById(catId,subId);load();
  if(data.categories.some(c=>c.id!==editing&&c.type===type&&c.catId===catId&&c.subId===subId)){fe.textContent='Já existe um cadastro de '+type+' para esta categoria e subcategoria. Edite o existente.';return}
- const rec={type,name:cat.name,subcategory:sub.name,catId,subId,docCatId:fDoc.value==='legacy'?'':fDoc.value,active:fActive.value==='1',config:{severity:mSev.value,lookbackDays:look,alertRecurrences:recur,needsDP:mDP.checked,needsLegal:mLegal.checked,guidance:mGuide.value.trim()}};
+ const rec={type,name:cat.name,subcategory:sub.name,catId,subId,docCatId:fDoc.value==='legacy'?'':fDoc.value,active:ativo,config:{severity:mSev.value,lookbackDays:look,alertRecurrences:recur,needsDP:needsDP,needsLegal:needsLegal,guidance:mGuide.value.trim()===umaLinha(guideOrig)?guideOrig.trim():mGuide.value.trim()}};
  let savedId=editing;
  const ok=transact(d=>{let row;if(editing){row=d.categories.find(x=>x.id===editing);(row.history=row.history||[]).push({at:now(),before:{type:row.type,name:row.name,subcategory:row.subcategory,docCatId:row.docCatId||'',active:row.active,config:row.config||null}});Object.assign(row,rec,{updatedAt:now()})}else{row={id:newId(),...rec,model:null,createdAt:now(),history:[]};d.categories.push(row);savedId=row.id}
   const old=d.rules.find(r=>r.active&&r.suspensionCategoryId===row.id);
@@ -191,41 +202,39 @@ function renderDisc(){discBox.replaceChildren();if(!data.disc.length){discBox.ap
 function viewDisc(r){const sc=scopeText(r);dialog('Regra disciplinar — '+sc,(f,form)=>{const dl=el('dl','profiles-info');for(const [k,v] of [['Categoria',sc],['1 — Advertência',r.warnCount?'Para '+r.warnCount+(r.warnCount===1?' advertência':' advertências')+', aplicar suspensão.':'Não definido'],['2 — Suspensão',r.suspCount?'Para '+r.suspCount+(r.suspCount===1?' suspensão':' suspensões')+', aplicar justa causa.':'Não definido'],...(r.lookbackDays?[['Período de apuração (regra anterior)',r.lookbackDays+' dia(s)']]:[]),['Status',r.active?'Ativa':'Inativa'],...(r.notes?[['Observações',r.notes]]:[]),['Alterações',String((r.history||[]).length)]]){dl.append(el('dt',null,k),el('dd',null,v))}form.append(dl,el('p','profiles-note','Ao atingir o limite, o sistema só sinaliza: "avaliar suspensão" ou "avaliar justa causa". Nada é aplicado automaticamente: a decisão é do Departamento Pessoal e dos responsáveis autorizados.'))})}
 function toggleDisc(r){const sc=scopeText(r),run=()=>{transact(d=>{const x=d.disc.find(y=>y.id===r.id);(x.history=x.history||[]).push({at:now(),before:{active:x.active}});x.active=!x.active;x.updatedAt=now()});renderDisc();renderTable();discFlash.textContent=(r.active?'Regra desativada: ':'Regra ativada: ')+sc+'.';return null};
  if(r.active)confirmDialog('Desativar regra?','A regra de '+sc+' deixa de gerar alertas em novos lançamentos. Ocorrências já registradas e o histórico continuam como estão.','Desativar',run,()=>{});else run()}
-/* Regra disciplinar no padrão do sistema (19/11/2026, Rodrigo): janela dos cadastros novos (CicluzComprasUI.dialogo), com a regra
-   desenhada como uma sequência — a categoria e, embaixo, 1 Advertência → 2 Suspensão → 3 Justa causa, com uma seta entre os passos
-   dizendo o que leva de um ao outro. O 3º passo é só o fim da sequência: não tem campo. O que é gravado não mudou
-   (catId, warnCount, suspCount, active); a situação, que antes só mudava pela lista, passa a aparecer também aqui. */
+/* Regra disciplinar no padrão linha por linha (27/11/2026, Washington — varredura do padrão da Nova Transferência): janela dos cadastros novos
+   (CicluzComprasUI.dialogo, classe transferencia-tela) com a regra em grupos de linhas: Categoria (com a situação), 1 · Advertência, 2 · Suspensão,
+   3 · Justa causa (só a nota: é o fim da sequência, não tem campo) e Resumo da regra. As setas entre os passos saíram: a nota de cada passo já diz o que
+   leva a quê. O que é gravado não mudou (catId, warnCount, suspCount, active). As peças vêm de CicluzTransferencias.pecas (lidas só ao abrir). */
 function editDisc(r){load();const cu=window.CicluzComprasUI;
- cu.dialogo({titulo:r?'Editar regra disciplinar':'Nova regra disciplinar',cor:ACCENT,corTexto:'var(--section-text,#9c1c1c)',largo:true,classe:'compras-form-padrao',rotuloSalvar:'Salvar',
+ cu.dialogo({titulo:r?'Editar regra disciplinar':'Nova regra disciplinar',cor:ACCENT,corTexto:'var(--section-text,#9c1c1c)',largo:true,classe:'compras-form-padrao transferencia-tela',rotuloSalvar:'Salvar',
   montar:(form,dlg)=>{
+   const {linha,linhaDe,quadro,secao,chave}=window.CicluzTransferencias.pecas;
    const catSel2=el('select'),warnSel=el('select'),suspSel=el('select');
    catSel2.add(new Option('Selecione a categoria',''));const seen=new Set();for(const x of [...data.categories].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))){if(!x.catId||seen.has(x.catId))continue;seen.add(x.catId);catSel2.add(new Option(x.name,x.catId))}
    const nums=(sel,cur)=>{sel.add(new Option('Selecione a quantidade',''));for(let i=1;i<=Math.max(10,cur||0);i++)sel.add(new Option(String(i),String(i)))};nums(warnSel,r?.warnCount);nums(suspSel,r?.suspCount);
    if(r){catSel2.value=r.catId;warnSel.value=r.warnCount?String(r.warnCount):'';suspSel.value=r.suspCount?String(r.suspCount):''}
-   const passo=(n,titulo,...nos)=>{const q=el('fieldset','compras-fieldset regra-passo');const lg=el('legend');lg.append(el('span','regra-numero',String(n)),document.createTextNode(' '+titulo));q.append(lg,...nos);return q};
-   const seta=()=>{const d=el('div','regra-seta');d.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15m0 0-6-6m6 6 6-6"/></svg>';const t=el('span');d.append(t);d.texto=t;return d};
-   const warnTxt=el('p','profiles-note compras-largo'),suspTxt=el('p','profiles-note compras-largo'),resumo=el('p','regra-resumo compras-largo'),setaW=seta(),setaS=seta();resumo.setAttribute('role','status');
-   const sit=cu.quadroSituacao('Situação da regra',r?r.active:true,{feminino:true,dica:'Regra inativa não gera alerta em novos lançamentos.'});sit.classList.add('compras-largo');
-   const qCat=el('fieldset','compras-fieldset');qCat.append(el('legend',null,'Categoria'),cu.campo('Categoria *',catSel2),el('p','profiles-note compras-largo','A regra vale para as ocorrências desta categoria. Categorias diferentes nunca se somam.'),sit);
-   const seq=el('div','regra-sequencia compras-etapa');
-   seq.append(passo(1,'Advertência',cu.campo('Quantidade de advertências *',warnSel),warnTxt),setaW,
-    passo(2,'Suspensão',cu.campo('Quantidade de suspensões *',suspSel),suspTxt),setaS,
-    passo(3,'Justa causa',el('p','profiles-note compras-largo','Fim da sequência: aqui não há nada para preencher. Ao atingir o limite de suspensões, o sistema sinaliza "avaliar justa causa".')));
-   const qRes=el('fieldset','compras-fieldset');qRes.append(el('legend',null,'Resumo da regra'),resumo,el('p','profiles-note compras-largo','O sistema apenas sinaliza ("avaliar suspensão" ou "avaliar justa causa"). Nada é aplicado automaticamente: a decisão é do Departamento Pessoal.'));
+   const warnTxt=el('p','profiles-note'),suspTxt=el('p','profiles-note'),resumo=el('p','transferencia-aceite-resumo');resumo.setAttribute('role','status');
+   const sit={ativo:r?r.active:true};
+   const linhaSit=linha('Situação da regra',chave('Situação da regra',sit.ativo,['Ativa','Inativa'],v=>{sit.ativo=v}));
+   const linhaResumo=el('div','transferencia-linha transferencia-linha-resumo');linhaResumo.append(resumo);
    const plural=(n,um,varios)=>n+' '+(n==='1'?um:varios);
    const paint=()=>{const w=warnSel.value,s2=suspSel.value,cat=catSel2.value?catSel2.selectedOptions[0].text:'';
     warnTxt.textContent=w?'Com '+plural(w,'advertência','advertências')+' nesta categoria, o sistema avisa para avaliar a suspensão.':'Escolha quantas advertências levam à suspensão.';
     suspTxt.textContent=s2?'Com '+plural(s2,'suspensão','suspensões')+' nesta categoria, o sistema avisa para avaliar a justa causa.':'Escolha quantas suspensões levam à justa causa.';
-    setaW.texto.textContent=(w?plural(w,'advertência','advertências'):'tantas advertências')+' levam à suspensão';
-    setaS.texto.textContent=(s2?plural(s2,'suspensão','suspensões'):'tantas suspensões')+' levam à justa causa';
     resumo.textContent=cat&&w&&s2?cat+': '+plural(w,'advertência','advertências')+' → suspensão → '+plural(s2,'suspensão','suspensões')+' → justa causa.':'Preencha a categoria e as duas quantidades para ver a regra completa.'};
    catSel2.onchange=warnSel.onchange=suspSel.onchange=paint;paint();
-   const nav=el('div','compras-form-rodape compras-etapas-nav compras-largo'),salvar=el('button','btn','Salvar');salvar.type='submit';nav.append(cu.botao('Cancelar',()=>dlg.close(),'btn secondary footer-cancel-accent'),salvar);
-   const corpo=el('div','compras-etapa compras-largo');corpo.append(qCat,seq,qRes);form.append(corpo,nav); /* a mensagem de erro é a da própria janela (CicluzComprasUI.dialogo) */
-   return {catSel2,warnSel,suspSel,sit,form}},
+   const corpo=el('div','transferencia-corpo');
+   corpo.append(secao('Categoria',quadro(linhaDe('Categoria *',catSel2),linhaSit),el('p','profiles-note','A regra vale para as ocorrências desta categoria. Categorias diferentes nunca se somam.'),el('p','profiles-note','Regra inativa não gera alerta em novos lançamentos.')),
+    secao('1 · Advertência',quadro(linhaDe('Quantidade de advertências *',warnSel)),warnTxt),
+    secao('2 · Suspensão',quadro(linhaDe('Quantidade de suspensões *',suspSel)),suspTxt),
+    secao('3 · Justa causa — fim da sequência',el('p','profiles-note','Aqui não há nada para preencher. Ao atingir o limite de suspensões, o sistema sinaliza "avaliar justa causa".')),
+    secao('Resumo da regra',quadro(linhaResumo),el('p','profiles-note','O sistema apenas sinaliza ("avaliar suspensão" ou "avaliar justa causa"). Nada é aplicado automaticamente: a decisão é do Departamento Pessoal.')));
+   form.append(corpo); /* a mensagem de erro e o Cancelar · Salvar são os da própria janela (CicluzComprasUI.dialogo) */
+   return {catSel2,warnSel,suspSel,sit}},
   salvar:x=>{const catId=x.catSel2.value,warn=Number(x.warnSel.value),susp=Number(x.suspSel.value);
    const falta=!catId?'Selecione a categoria.':!x.warnSel.value?'Selecione a quantidade de advertências.':!x.suspSel.value?'Selecione a quantidade de suspensões.':'';
-   if(falta){cu.sinalizarObrigatorios(x.form);return falta}
+   if(falta)return falta;
    if(!(Number.isInteger(warn)&&warn>=1&&Number.isInteger(susp)&&susp>=1))return 'As quantidades devem ser números inteiros a partir de 1.';
    const active=x.sit.ativo,catName=data.categories.find(y=>y.catId===catId)?.name||'';
    if(active&&data.disc.some(y=>y.id!==r?.id&&y.active&&y.catId===catId))return 'Já existe uma regra ativa para esta categoria. Edite a existente.';

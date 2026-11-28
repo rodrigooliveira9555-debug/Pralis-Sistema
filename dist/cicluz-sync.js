@@ -50,7 +50,16 @@
       throw new ErroApi(resposta.status, (json && (json.code || json.codigo)) || 'HTTP_' + resposta.status,
         (json && (json.title || json.message)) || 'O servidor não respondeu como esperado.', json && json.details);
     }
+    if ((opcoes.metodo || 'GET') !== 'GET' && !opcoes.automatico && !PROPRIOS.test(caminho)) avisarSalvo();
     return json && 'data' in json ? json.data : json;
+  }
+
+  // "Algo foi salvo": escrita da tela no servidor (fora as do próprio sistema: Agenda, sessão, login, envio dos
+  // documentos) ou edição de dado de negócio no aparelho (cicluz-sessao). A Agenda conta a ação geral "Salvar algo
+  // nesta tela" com isto (P-53).
+  var PROPRIOS = /^\/(agenda|sessao|auth|documentos)(\/|\?|$)/;
+  function avisarSalvo() {
+    try { document.dispatchEvent(new CustomEvent('cicluz-dado-salvo')); } catch (e) { /* sem tela */ }
   }
 
   function ler(armazenamento, chave) {
@@ -111,6 +120,7 @@
     META: META,
     ErroApi: ErroApi,
     api: api,
+    avisarSalvo: avisarSalvo,
     ler: ler,
     gravar: gravar,
     remover: remover,

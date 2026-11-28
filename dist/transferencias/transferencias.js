@@ -573,5 +573,5 @@
     });
   }
 
-  window.CicluzTransferencias = { abrir, pecas: { linha, linhaDe, quadro, secao, chave, linhaQueAbre, abreAoTocarNaLinha, blocoAnexos, opcaoAceite, campoDeData, ICONE } };
+  window.CicluzTransferencias = { abrir, pecas: { linha, linhaDe, quadro, secao, chave, linhaQueAbre, abreAoTocarNaLinha, blocoAnexos, opcaoAceite, campoDeData, botaoExcluir, ICONE } };
 })();

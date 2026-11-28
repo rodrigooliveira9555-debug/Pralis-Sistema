@@ -56,7 +56,7 @@
   const producao = criarArmazem('cicluz-producao-v1', ['produtos', 'fichas', 'agendas', 'ocorrencias', 'pedidos', 'ordens', 'ingredientes'], 'cicluz-producao-mudou');
   // Tabela TACO importada pelo usuário (vazia = vale a oficial que vem no sistema, em producao/taco-dados.js).
   const taco = criarArmazem('cicluz-taco-v1', ['linhas', 'colunas'], 'cicluz-taco-mudou');
-  const patrimonio = criarArmazem('cicluz-patrimonio-v1', ['bens'], 'cicluz-patrimonio-mudou');
+  const patrimonio = criarArmazem('cicluz-patrimonio-v1', ['bens', 'tipos'], 'cicluz-patrimonio-mudou'); // "tipos" (27/11/2026): lista editável de Tipo do bem; coleção nova e opcional, sem migração
 
   /* ---------- Integrações (só leitura) ---------- */
   const C = () => window.CicluzComprasDados;

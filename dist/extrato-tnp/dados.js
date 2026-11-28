@@ -1,5 +1,5 @@
 /*
- * Open Finance · Caixa TNP — estado, nomes em português e as contas da tela (filtros, totais, grupos, CSV).
+ * Open Finance (Caixa Econômica TNP, Bradesco HORA, Caixa Econômica LI) — estado, nomes em português e as contas da tela (filtros, totais, grupos, CSV).
  * O coletor manda o período (até 31 dias) de uma vez; os filtros de busca, tipo, operação, categoria, situação e valor
  * são aplicados aqui, sem nova ida ao servidor. Dinheiro em CENTAVOS inteiros: entrada positiva, saída negativa;
  * pendente não entra nos totais (só na contagem).
@@ -53,16 +53,21 @@
   const nomeCategoria = (v) => (v ? CATEGORIAS[v] || v : 'Sem categoria');
   const nomeForma = (v) => (v ? FORMAS[v] || v : '');
   // Curto, para caber nas abas do celular; o nome do banco e o número ficam na dica da aba.
-  const nomeConta = (c) => (c.tipo === 'CREDIT' ? 'Cartão ' + (c.detalhes.bandeira || c.nome).toString().replace(/^CAIXA\s+/i, '') : c.subtipo === 'SAVINGS_ACCOUNT' ? 'Poupança' : 'Corrente');
+  const nomeConta = (c) => (c.tipo === 'CREDIT' ? 'Cartão ' + (c.detalhes.bandeira || c.nome).toString().replace(/^(CAIXA|BRADESCO)\s+/i, '') : c.subtipo === 'SAVINGS_ACCOUNT' ? 'Poupança' : 'Corrente');
 
   /* ---------- Estado ---------- */
 
   const filtroVazio = () => ({ busca: '', tipo: '', operacao: '', categoria: '', situacao: '', valorMin: '', valorMax: '' });
   const estado = {
-    desde: somarDias(hojeIso(), -6), ate: hojeIso(), conta: '',
-    filtro: filtroVazio(), dados: null, carregando: false, erro: '', configurado: null, atualizadoEm: null,
+    fonte: 'tnp', desde: somarDias(hojeIso(), -6), ate: hojeIso(), conta: '',
+    filtro: filtroVazio(), dados: null, carregando: false, erro: '', configurado: {}, atualizadoEm: null,
   };
   const reiniciarFiltro = () => { estado.filtro = filtroVazio(); };
+  // Outra empresa: conta, filtros e dados são dela; o período escolhido continua.
+  function trocarFonte(fonte) {
+    Object.assign(estado, { fonte, conta: '', dados: null, carregando: false, erro: '', atualizadoEm: null });
+    reiniciarFiltro();
+  }
   const filtrosEmUso = () => ['operacao', 'categoria', 'situacao', 'valorMin', 'valorMax'].filter((k) => estado.filtro[k]).length;
 
   /** "12,50" ou "12.50" ou "1.234,56" -> centavos; vazio ou inválido -> null. */
@@ -167,7 +172,7 @@
     const blob = new Blob([csv(lista, contas)], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'extrato-caixa-tnp-' + estado.desde + '-a-' + estado.ate + '.csv';
+    a.download = 'extrato-' + estado.fonte + '-' + estado.desde + '-a-' + estado.ate + '.csv';
     document.body.append(a);
     a.click();
     a.remove();
@@ -176,7 +181,7 @@
 
   window.CicluzExtratoTnpDados = {
     FUSO, estado, hojeIso, somarDias, moeda, comSinal, plural, quando, dataComAno, dataCurta, hora, diaLongo,
-    nomeOperacao, nomeCategoria, nomeForma, nomeConta, reiniciarFiltro, filtrosEmUso, lerValor,
+    nomeOperacao, nomeCategoria, nomeForma, nomeConta, reiniciarFiltro, trocarFonte, filtrosEmUso, lerValor,
     todos, filtrados, somar, porDia, agrupar, opcoes, csv, baixarCsv,
   };
 })();

@@ -259,7 +259,35 @@ Separado por quem destrava. Detalhes das perguntas no fim de cada item.
 - Leitor de tela (foco e teclado só conferidos por comportamento).
 - O sistema principal **não foi executado**: tudo vem de leitura de código, de 04/11/2026.
 
+## Nome real do PDV (26/11/2026, Washington)
+Em toda tela do Caixa (Entradas › Vendas/Faturamento › Lançamentos e Relatórios, Gerência, Tesouraria), o PDV deixou de ser "PDV 1 a 4" e passou a mostrar o **nome da máquina no CREARE** (`dispositivo.DESCRICAO`): **TNP-PC-CXPDV-1, -2, -3 e -4**. A lista **não é do Caixa**: vem do cadastro **VND - Computadores** (Entradas › Cadastros Geral): os computadores ativos cujo nome termina em `CXPDV-n`, em ordem (a mesma regra das abas de Vendas dos PDVs). `dados.js` só lê (`CicluzCaixa.pdvs()`); as telas e os filtros leem dele.
+- **Por que o nome:** o levantamento do CREARE (26/11/2026) mostrou que o ID do dispositivo muda a cada troca de computador e que o nome da máquina carrega o número do PDV. Os nomes `DESKTOP-…` (clonados, repetidos) não são PDV.
+- **O que é texto genérico continua "PDV"** (ex.: "Vendas do PDV", "PDV ligado"); só o **identificador** da máquina mostra o nome real.
+- **Ainda é casca:** o Caixa guarda o nome (texto) nos dados de demonstração, que somem ao recarregar. Quando existir o vínculo real, ele terá vigência por `ID_DISPOSITIVO` (P-52) e o nome mostrado virá do vínculo vigente; vínculo é por ID, nunca por nome.
+- **Vendas dos PDVs** (Entradas › Relatórios; abas, coluna PDV, barras por PDV e detalhe) também mostra o nome real: antes a aba virava "PDV 1" por regra de texto; agora o rótulo é o próprio nome da máquina vindo da API (26/11/2026, Washington).
+- **Fora desta entrega:** Configurações › Acessos (contas de posto, "PDV1 · Manhã") ainda mostra o número; a conta de posto continua por número de PDV.
+
+## Maquininha da abertura vem do cadastro das operadoras (26/11/2026, Washington)
+Na Abertura de Caixa, a escolha da maquininha deixou de ser uma lista fictícia no código e lê o cadastro que já existia: **VND - Tipos de Operadoras Cartões › etapa Cadastro das máquinas** (operadora → máquinas com apelido, modelo, número de série e ativa; `operadoras-etapas.js`, 25/11/2026). Mostra só máquinas ativas de operadoras ativas, como "Operadora · apelido · modelo · série …". O vínculo guarda o id da operadora + da máquina (`maquininhaId`).
+- **Quem escolhe:** o operador, na abertura (decisão do Washington). A máquina não é fixa do PDV.
+- **Sem máquina cadastrada:** a linha mostra "Nenhuma cadastrada" e a abertura é barrada com a mensagem de onde cadastrar.
+- **Manhã e tarde:** a mesma máquina serve aos dois turnos do PDV; o fechamento da tarde usará "acumulado − manhã" (R-227/228/229). **Isso é fórmula de dinheiro e não foi alterado** nesta entrega: falta confirmar o desenho antes (P-52).
+- Não foi criado um cadastro novo: seria um segundo caminho para o mesmo dado.
+
 ## Desenvolvimento
 
 `npm run dev` em `servidor` serve o site em http://localhost:4200. Em `npm run dev:web` (:3100), o
 `nuxt.config.ts` repassa `/entrar.html` e `/api` para a :4200 (antes o login entrava em loop até 431).
+
+## Formulários do Caixa em linha por linha (27/11/2026)
+Todas as telas e janelas do Caixa que pedem dados seguem o padrão da Nova Transferência (DESIGN_SYSTEM.md, item 34, lote 3). Só mudou a apresentação: regras, validações, textos e o que vai para o estado fictício são os mesmos. A contagem cega (R-232) continua cega: o "Total contado" da conferência só soma o que o conferente digitou.
+
+## Abertura refeita a partir do roteiro (27/11/2026, Washington)
+O Washington trouxe o roteiro da abertura (quatro passos: identificar a operação, recuperar as informações, conferir o valor inicial, confirmar) e imagens de referência com anotações, e pediu para refatorar só a **Abertura**. Estado final (depois da segunda rodada de anotações, no mesmo dia):
+- **Passo 1 (identificação):** grupo e subgrupo de vendas escolhidos pelo operador, vindos de **VND - Grupos de Vendas** (CAIXA PDV › 1M…4T, NFE › EMPRESAS, DELIVERY › IFOOD), e a maquininha. ✅
+- **Passo 2 (recuperação):** só o **hardware**, no formato `TNP-PC-CXPDV-1-06:00as13:51-M` = computador do subgrupo + horário cadastrado em **Horários Empresa** para o dia da semana de hoje + letra do turno (M ou T) do subgrupo. Estabelecimento, operador e horário de referência foram **retirados da tela** ("não precisa"); o operador continua sendo gravado no registro. ✅ Data e horário **efetivo** aparecem no resumo da confirmação (o efetivo é o da confirmação, separado do cadastrado). Sem feriado: o horário é sempre o do dia da semana (não há calendário de feriados).
+- **Passo 3 (valor inicial):** continua vindo da **Transferência** (malote do Cofre, conferido pelo lacre), como na anotação da imagem; o **lacre só aparece depois da maquininha**. Saldo anterior e lançamento manual **não** foram implementados (P-61). ✅
+- **Passo 4 (confirmação):** nasce o registro com o identificador `CX-AAAAMMDD-<subgrupo>-NNN` (formato **proposto** no texto; confirmar). ✅ Em memória, como todo o Caixa.
+- **Saíram** (decisão do Washington): Responsável pelo caixa, Supervisor responsável e Usuário logado.
+- **Fora da Abertura (não mexi):** Turno, Fechamento (só leem o operador e o identificador), vendas reais associadas ao caixa, destinação financeira, e "liberar a operação sem manter a tela aberta" (não há gravação nem backend).
+- **Limites da casca:** só subgrupos de PDV com nome `NM`/`NT` ligam à conta de posto (Caixa 1M…4T), pelo nome do subgrupo, só até haver backend (a regra do CLAUDE.md é vínculo por id): ver P-61. O computador do subgrupo, se faltar, é substituído pelo PDV da conta de posto.

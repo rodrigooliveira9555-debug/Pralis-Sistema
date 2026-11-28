@@ -5,12 +5,15 @@
  * situação: entregue → visualizada → fechada sem confirmar | confirmada ("Entendi" vence "Fechar"); sem edição nem
  * exclusão, só "Encerrar"; quem abrir o caixa dentro da validade (empresa ou PDV alvo) também recebe, e a mensagem
  * nunca bloqueia a abertura. O operador vê e responde no Turno. Dados FICTÍCIOS, só em memória.
+ * A janela "Nova mensagem" é um formulário linha por linha (padrão da Nova Transferência): o alvo em chips é uma linha, cada PDV ou
+ * operador é uma linha com a chave Sim/Não, e a validade são duas linhas (data e hora).
  */
 (function () {
   'use strict';
   const U = window.CicluzComprasUI;
   const C = window.CicluzCaixa;
-  const { el, botao, campo, entrada } = U;
+  const { el, botao, entrada } = U;
+  const { formulario, grupo, linhaCampo } = C;
 
   const ALVOS = [['abertos', 'Todos os caixas abertos agora'], ['empresa', 'Toda a empresa'], ['pdvs', 'PDVs específicos'], ['operadores', 'Operadores específicos']];
   const ROTULO_ENTREGA = { entregue: 'Entregue', visualizada: 'Visualizada', fechada_sem_confirmar: 'Fechada sem confirmar', confirmada: 'Confirmada' };
@@ -32,13 +35,11 @@
     return s;
   }
 
+  /** Uma linha com a chave Sim/Não para um PDV ou operador; o conjunto guarda quem está ligado (e a linha nasce com o estado dele). */
   function marcar(rotulo, conjunto, valor) {
     const v = valor || rotulo;
-    const l = el('label', 'compras-interruptor');
-    const i = entrada('checkbox', null);
-    i.onchange = () => { if (i.checked) conjunto.add(v); else conjunto.delete(v); };
-    l.append(i, el('span', null, rotulo));
-    return l;
+    const P = C.pecas();
+    return P.linha(rotulo, P.chave(rotulo, conjunto.has(v), ['Sim', 'Não'], (sim) => { if (sim) conjunto.add(v); else conjunto.delete(v); }));
   }
 
   function dialogo(atualizar) {
@@ -48,21 +49,32 @@
       subtitulo: 'Aviso para os caixas. Não há edição nem exclusão: só encerrar.',
       rotuloSalvar: 'Enviar mensagem',
       largo: true,
+      padrao: true,
       montar: (form) => {
-        const titulo = entrada('text', '', { maxLength: 120, placeholder: 'Ex.: Troca de maquininha às 15h' });
-        const texto = el('textarea');
-        texto.rows = 3;
-        texto.maxLength = 2000;
-        const validade = entrada('datetime-local', '');
+        const P = C.pecas();
+        const titulo = entrada('text', '', { maxLength: 120, placeholder: 'Ex.: Troca de maquininha às 15h', autocomplete: 'off' });
+        const texto = entrada('text', '', { maxLength: 2000, autocomplete: 'off' });
+        // Validade: data e hora são dois campos do sistema; juntos formam o mesmo valor AAAA-MM-DDTHH:MM de antes (vazio se faltar uma das partes).
+        const data = U.campoData({ rotulo: 'Validade (data)', valor: '' });
+        const hora = U.campoHora({ rotulo: 'Validade (hora)', valor: '' });
+        const validade = { get value() { return data.valor() && /^([01]\d|2[0-3]):[0-5]\d$/.test(hora.input.value) ? data.valor() + 'T' + hora.input.value : ''; } };
         const ctx = { alvo: 'abertos', pdvs: new Set(), ops: new Set(), titulo, texto, validade };
-        const opcoes = el('div', 'caixa-alvos');
+        // O alvo em chips é uma linha; escolhendo PDVs ou operadores, as linhas com a chave entram no mesmo quadro (e saem ao trocar o alvo).
+        const quadroAlvo = P.quadro();
         const renderAlvo = () => {
-          opcoes.replaceChildren();
-          if (ctx.alvo === 'pdvs') ['PDV 1', 'PDV 2', 'PDV 3', 'PDV 4'].forEach((p) => opcoes.append(marcar(p, ctx.pdvs)));
-          if (ctx.alvo === 'operadores') abertos().forEach((a) => opcoes.append(marcar(a.operador + ' (' + a.pdv + ')', ctx.ops, a.operador)));
+          const itens = [];
+          if (ctx.alvo === 'pdvs') C.pdvs().forEach((p) => itens.push(marcar(p, ctx.pdvs)));
+          if (ctx.alvo === 'operadores') abertos().forEach((a) => itens.push(marcar(a.operador + ' (' + a.pdv + ')', ctx.ops, a.operador)));
+          quadroAlvo.replaceChildren(linhaAlvo, ...itens);
         };
-        const alvo = U.chips(ALVOS, ctx.alvo, (v) => { ctx.alvo = v; renderAlvo(); });
-        form.append(campo('Título', titulo), campo('Mensagem', texto), campo('Validade (opcional)', validade, 'Depois deste horário a mensagem para de alcançar quem abrir caixa.'), el('span', 'compras-rotulo', 'Quem recebe'), alvo, opcoes);
+        const linhaAlvo = P.linha('Quem recebe', U.chips(ALVOS, ctx.alvo, (v) => { ctx.alvo = v; renderAlvo(); }));
+        renderAlvo();
+        const linhaDeData = (d) => P.abreAoTocarNaLinha(P.linha(d.rotulo, d.campo.caixa, d.campo.painel), d.campo.input, d.campo.painel);
+        form.append(formulario(
+          grupo('Mensagem', [linhaCampo('Título', titulo, true), linhaCampo('Mensagem', texto, true)]),
+          P.secao('Quem recebe', quadroAlvo),
+          grupo('Validade (opcional)', [linhaDeData({ rotulo: 'Validade (data)', campo: data }), linhaDeData({ rotulo: 'Validade (hora)', campo: hora })],
+            U.nota('Informe a data e a hora. Depois deste horário a mensagem para de alcançar quem abrir caixa.'))));
         return ctx;
       },
       salvar: (ctx) => {

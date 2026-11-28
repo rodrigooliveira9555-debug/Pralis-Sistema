@@ -5,13 +5,15 @@
  * a tela em fechamentos.js.
  * Visões: Tesoureiro decide; Financeiro só consulta (mesma tela, sem os botões); Gerente vê o histórico e o detalhe SEM
  * contagem, diferença nem decisão (a contagem é cega para a Gerência); Operador não entra. Dados FICTÍCIOS, em centavos.
+ * Os filtros são um grupo "Filtros" em linhas (padrão da Nova Transferência) e o total do histórico da Gerência é um grupo de leitura;
+ * a tabela da lista não mudou.
  */
 (function () {
   'use strict';
   const U = window.CicluzComprasUI;
   const C = window.CicluzCaixa;
-  const { el, botao, campo, entrada, seletor } = U;
-  const { moeda } = C;
+  const { el, botao, seletor } = U;
+  const { moeda, formulario, grupo, linhaCampo, linhaLeitura } = C;
 
   const PARA_CONFERIR = ['aguardando_tesouraria', 'fechado_sem_pendencias', 'com_quebra'];
   const VAZIO = { de: '', ate: '', pdv: '', operador: '', turno: '', situacao: '' };
@@ -19,11 +21,6 @@
   const ctx = { atualizar: () => {}, aba: 'conferir', filtro: { ...VAZIO }, selecionado: null };
 
   const corpoSecao = (...nos) => { const c = el('div', 'compras-corpo'); c.append(...nos); return c; };
-  const dl = (pares) => {
-    const caixa = el('dl', 'caixa-declarado');
-    pares.forEach(([t, v]) => { const d = el('div'); d.append(el('dt', null, t), el('dd', null, v)); caixa.append(d); });
-    return caixa;
-  };
   const sinal = (d) => (d < 0 ? '▼ Falta ' + moeda(-d) : d > 0 ? '▲ Sobra ' + moeda(d) : '✓ Bateu');
   const classeDif = (d) => (d < 0 ? 'falta' : d > 0 ? 'sobra' : 'bateu');
   const iso = (br) => br.split('/').reverse().join('-');
@@ -41,16 +38,28 @@
       && (!f.de || iso(l.data) >= f.de) && (!f.ate || iso(l.data) <= f.ate));
   }
 
+  /** Filtros em linhas: um grupo com datas (calendário do sistema, valor ISO) e seleções; o botão de limpar fica depois do quadro. */
   function filtros(todas) {
     const f = ctx.filtro;
-    const g = el('div', 'caixa-grade caixa-filtros');
-    const sel = (chave, rotulo, opcoes, vazio) => { const x = seletor(opcoes, f[chave], vazio); x.onchange = () => { f[chave] = x.value; ctx.selecionado = null; ctx.atualizar(); }; return campo(rotulo, x); };
-    const dt = (chave, rotulo) => { const x = entrada('date', f[chave]); x.onchange = () => { f[chave] = x.value; ctx.selecionado = null; ctx.atualizar(); }; return campo(rotulo, x); };
+    const P = C.pecas();
+    const sel = (chave, rotulo, opcoes, vazio) => { const x = seletor(opcoes, f[chave], vazio); x.onchange = () => { f[chave] = x.value; ctx.selecionado = null; ctx.atualizar(); }; return linhaCampo(rotulo, x); };
+    const dt = (chave, rotulo) => {
+      const d = U.campoData({ rotulo, valor: f[chave] });
+      const gravar = (v) => { if (f[chave] !== v) { f[chave] = v; ctx.selecionado = null; ctx.atualizar(); } };
+      d.input.addEventListener('change', () => gravar(d.valor()));
+      d.input.addEventListener('input', () => { if (!d.input.value) gravar(''); });
+      return P.abreAoTocarNaLinha(P.linha(rotulo, d.caixa, d.painel), d.input, d.painel);
+    };
     const situacoes = veTudo() ? [['aberto', 'Aberto'], ['em_fechamento', 'Em fechamento'], ['fechado', 'Fechado']] : Object.entries(C.ROTULO_SITUACAO);
-    g.append(dt('de', 'Data inicial'), dt('ate', 'Data final'), sel('pdv', 'PDV', ['PDV 1', 'PDV 2', 'PDV 3', 'PDV 4'], 'Todos'),
-      sel('operador', 'Operador', [...new Set(todas.map((l) => l.operador))], 'Todos'), sel('turno', 'Turno', ['Manhã', 'Tarde'], 'Todos'), sel('situacao', 'Situação', situacoes, 'Todas'));
     const msg = f.de && f.ate && f.de > f.ate ? [el('p', 'caixa-pendencias', 'Data inicial não pode ser maior que a final.')] : [];
-    return [g, ...msg, botao('Limpar filtros', () => { ctx.filtro = { ...VAZIO }; ctx.selecionado = null; ctx.atualizar(); }, 'btn secondary')];
+    const acoes = el('div', 'caixa-acoes');
+    acoes.append(botao('Limpar filtros', () => { ctx.filtro = { ...VAZIO }; ctx.selecionado = null; ctx.atualizar(); }, 'btn secondary'));
+    return [formulario(
+      grupo('Filtros', [
+        dt('de', 'Data inicial'), dt('ate', 'Data final'), sel('pdv', 'PDV', C.pdvs(), 'Todos'),
+        sel('operador', 'Operador', [...new Set(todas.map((l) => l.operador))], 'Todos'), sel('turno', 'Turno', ['Manhã', 'Tarde'], 'Todos'), sel('situacao', 'Situação', situacoes, 'Todas'),
+      ]),
+      ...msg, acoes)];
   }
 
   const ROTULO_STATUS = { aberto: ['Aberto', 'info'], em_fechamento: ['Em fechamento', 'atencao'], fechado: ['Fechado', 'positivo'] };
@@ -94,11 +103,12 @@
     }));
     if (veTudo()) {
       const soma = (k) => f.reduce((t, l) => t + l[k], 0);
-      s.append(corpoSecao(dl([['Total do filtro · Entradas', moeda(soma('entradas'))], ['Transf. entrada', moeda(soma('transfEntrada'))], ['Transf. saída', moeda(soma('transfSaida'))], ['Saldo', moeda(soma('saldo'))]]),
-        U.nota('Caixa fechado mostra o saldo gravado no fechamento (R$ 0,00, pois o contado volta ao Cofre); caixa aberto mostra o saldo ao vivo.')));
+      s.append(corpoSecao(formulario(grupo('Total do filtro',
+        [['Entradas', moeda(soma('entradas'))], ['Transf. entrada', moeda(soma('transfEntrada'))], ['Transf. saída', moeda(soma('transfSaida'))], ['Saldo', moeda(soma('saldo'))]].map(([n, v]) => linhaLeitura(n, v)),
+        U.nota('Caixa fechado mostra o saldo gravado no fechamento (R$ 0,00, pois o contado volta ao Cofre); caixa aberto mostra o saldo ao vivo.')))));
     }
     return { secao: s, vazia: f.length === 0 };
   }
 
-  window.CicluzCaixaFechamentos = { ctx, corpoSecao, dl, sinal, classeDif, veTudo, linhas, fechados, situacaoChip, reiniciarTela, lista, PARA_CONFERIR };
+  window.CicluzCaixaFechamentos = { ctx, corpoSecao, sinal, classeDif, veTudo, linhas, fechados, situacaoChip, reiniciarTela, lista, PARA_CONFERIR };
 })();

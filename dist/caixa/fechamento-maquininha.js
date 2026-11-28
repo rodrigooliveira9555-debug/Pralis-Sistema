@@ -1,5 +1,6 @@
 /*
  * Caixa — Fechamento: etapas 2 e 3, Maquininha e Relatório final (casca). Comprovante da maquininha e a conferência Folha × PDV × Maquininha (só informa).
+ * Formulário linha por linha (padrão da Nova Transferência): grupos com título, quadro de linhas e notas depois do quadro (a conferência Folha × PDV × Maquininha segue em tabela).
  * Parte do fechamento em 4 etapas (fechamento.js monta a tela). Estado único em CicluzCaixa.estado; o que é só da tela
  * (erros, textos digitados) vive em ctx (fechamento-comum.js). Dados FICTÍCIOS, em centavos, só em memória.
  */
@@ -7,54 +8,48 @@
   'use strict';
   const U = window.CicluzComprasUI;
   const C = window.CicluzCaixa;
-  const { el, botao, campo, entrada, seletor } = U;
+  const { el, botao, entrada } = U;
   const { moeda, centavos } = C;
-  const { ctx: K, corpoSecao, dl, cadeado, fmt, CAMPOS_FOLHA, FORMAS_CARTAO, ICONE_CADEADO, pralis, lidoNoPdv, gerencia } = window.CicluzCaixaFechamentoComum;
+  const { ctx: K, dl, linhaSituacao, cadeado, fmt, CAMPOS_FOLHA, FORMAS_CARTAO, pralis, lidoNoPdv } = window.CicluzCaixaFechamentoComum;
+  const { quadro, secao } = C.pecas();
+  const { linhaCampo, linhaLeitura } = C;
   const P = (window.CicluzCaixaFechamentoPartes = window.CicluzCaixaFechamentoPartes || {});
 
   /* ---------- Etapa 2: Maquininha ---------- */
 
+  /** Cada etapa devolve a lista de grupos (nós) que a tela coloca no formulário. */
   function etapa2(f) {
     const m = f.maq;
     const a = C.estado.abertura;
-    const s = U.secao('Maquininha');
-    s.querySelector('.compras-secao-cab').append(U.situacao(m.salvo ? 'Revisado' : 'Pendente', m.salvo ? 'positivo' : 'atencao'));
-    const itens = [U.nota('Maquininha deste caixa: ' + a.maquininha + '. É a escolhida na abertura e não pode ser trocada aqui. A leitura é o acumulado do dia (na tarde, desconta a manhã; não simulado na casca).')];
     const ac = el('div', 'caixa-acoes caixa-acoes-esq');
     ac.append(botao(m.comprovante ? 'Trocar comprovante (simulado)' : 'Anexar comprovante (simulado)', () => {
       m.comprovante = 'comprovante-maquininha.jpg'; m.valores = null; m.travados = false; m.salvo = false; K.atualizar(); // novo comprovante invalida o relatório salvo
     }, 'btn secondary'));
-    if (m.comprovante) {
-      ac.append(U.situacao(m.comprovante, 'info'));
-      if (!m.valores) ac.append(botao('Ler comprovante (simulado)', () => {
-        const p = lidoNoPdv();
-        m.valores = { credito: fmt(p.credito), debito: fmt(p.debito), pix: fmt(p.pix), voucher: fmt(p.voucher) };
-        m.travados = true;
-        K.atualizar();
-      }, 'btn'));
-    }
-    itens.push(ac);
+    if (m.comprovante && !m.valores) ac.append(botao('Ler comprovante (simulado)', () => {
+      const p = lidoNoPdv();
+      m.valores = { credito: fmt(p.credito), debito: fmt(p.debito), pix: fmt(p.pix), voucher: fmt(p.voucher) };
+      m.travados = true;
+      K.atualizar();
+    }, 'btn'));
+    const nos = [secao('Maquininha', quadro(linhaSituacao('Situação', m.salvo ? 'Revisado' : 'Pendente', m.salvo ? 'positivo' : 'atencao'), linhaLeitura('Maquininha deste caixa', a.maquininha), linhaLeitura('Comprovante anexado', m.comprovante || 'Nenhum')),
+      U.nota('É a maquininha escolhida na abertura e não pode ser trocada aqui. A leitura é o acumulado do dia (na tarde, desconta a manhã; não simulado na casca).'), ac)];
     if (m.comprovante) {
       m.valores = m.valores || { credito: '', debito: '', pix: '', voucher: '' };
-      const g = el('div', 'caixa-grade');
-      FORMAS_CARTAO.forEach(([k, rotulo]) => {
-        const i = entrada('text', m.valores[k], { inputMode: 'decimal', placeholder: '0,00', readOnly: m.travados && m.valores[k] !== '' });
+      const linhas = FORMAS_CARTAO.map(([k, rotulo]) => {
+        const i = entrada('text', m.valores[k], { inputMode: 'decimal', placeholder: '0,00', readOnly: m.travados && m.valores[k] !== '', autocomplete: 'off' });
         i.oninput = () => { m.valores[k] = i.value; m.salvo = false; };
-        g.append(campo(rotulo + ' (acumulado, R$)', i));
+        return linhaCampo(rotulo, i, true);
       });
-      itens.push(g);
-      if (m.travados) itens.push(cadeado('Valores lidos do comprovante ficam travados: na maquininha não há correção manual (decisão do Marco, 29/10).'));
-      else itens.push(U.nota('Sem leitura automática: preencha os valores do comprovante.'));
+      nos.push(secao('Acumulado do dia na maquininha (R$)', quadro(...linhas),
+        m.travados ? cadeado('Valores lidos do comprovante ficam travados: na maquininha não há correção manual (decisão do Marco, 29/10).') : U.nota('Sem leitura automática: preencha os valores do comprovante.')));
     }
     const msg = el('div', 'caixa-pendencias');
     msg.setAttribute('role', 'alert');
     if (K.erroMaq) msg.append(el('b', null, K.erroMaq));
-    itens.push(msg);
     const acoes = el('div', 'caixa-acoes');
     acoes.append(botao('Salvar conferência da maquininha', salvarMaq, 'btn'));
-    itens.push(acoes);
-    s.append(corpoSecao(...itens));
-    return s;
+    nos.push(msg, acoes);
+    return nos;
   }
 
   function salvarMaq() {
@@ -71,13 +66,7 @@
   /* ---------- Etapa 3: Relatório final (Folha × PDV × Maquininha) ---------- */
 
   function etapa3(f) {
-    const caixa = el('div', 'caixa-corpo');
-    if (!f.relatorioGerado || !f.folha.campos) {
-      const s = U.secao('Relatório final');
-      s.append(corpoSecao(U.nota('Gere o relatório de vendas na etapa 1 (com a folha lida) para comparar Folha × PDV × Maquininha.')));
-      caixa.append(s);
-      return caixa;
-    }
+    if (!f.relatorioGerado || !f.folha.campos) return [secao('Relatório final', U.nota('Gere o relatório de vendas na etapa 1 (com a folha lida) para comparar Folha × PDV × Maquininha.'))];
     const p = pralis();
     const maqVal = f.maq.salvo ? f.maq.valores : null;
     const linhas = CAMPOS_FOLHA.filter(([, , comp]) => comp).map(([k, rotulo]) => {
@@ -96,6 +85,7 @@
       return { k, rotulo, folha, pdv, maq, problemas, maior };
     });
     const paraConferir = linhas.filter((l) => l.problemas.length).length;
+    // A comparação lado a lado (Folha, PDV, Maquininha, Situação) é uma tabela, não um formulário: segue como está.
     const s = U.secao('Folha × PDV × Maquininha');
     s.querySelector('.compras-secao-cab').append(U.situacao(paraConferir ? plural(paraConferir) + ' para conferir' : 'Tudo confere', paraConferir ? 'atencao' : 'positivo'));
     const tabela = U.tabela(
@@ -113,25 +103,20 @@
       ],
       linhas
     );
-    s.append(tabela, corpoSecao(U.nota('Esta etapa só informa: divergência de folha ou de maquininha não bloqueia o fechamento nem vira quebra. Só a diferença da contagem física gera quebra.')));
-    caixa.append(s);
+    s.append(tabela, U.nota('Esta etapa só informa: divergência de folha ou de maquininha não bloqueia o fechamento nem vira quebra. Só a diferença da contagem física gera quebra.'));
 
-    const o = U.secao('Outros dados da folha');
     const campos = f.folha.campos;
     const soma = ['clientes', 'credito', 'debito', 'dinheiro', 'pix', 'voucher'].reduce((t, k) => t + (centavos(campos[k]) || 0), 0);
-    o.append(corpoSecao(dl([['Saldo Inicial', moeda(centavos(campos.saldoInicial) || 0)], ['CLIENTES (VND/TRANS)', moeda(centavos(campos.clientes) || 0)], ['Saldo Final Dinheiro', moeda(centavos(campos.saldoFinal) || 0)]]),
+    const o = secao('Outros dados da folha', dl([['Saldo Inicial', moeda(centavos(campos.saldoInicial) || 0)], ['CLIENTES (VND/TRANS)', moeda(centavos(campos.clientes) || 0)], ['Saldo Final Dinheiro', moeda(centavos(campos.saldoFinal) || 0)]]),
       ...(soma !== (centavos(campos.total) || 0) ? [el('p', 'caixa-alerta', 'A soma das formas de pagamento da folha não dá o Total impresso.')] : []),
-      ...(f.folha.correcao.trim() ? [el('p', 'caixa-alerta', 'Correção manual da folha: ' + f.folha.correcao.trim())] : [])));
-    caixa.append(o);
+      ...(f.folha.correcao.trim() ? [el('p', 'caixa-alerta', 'Correção manual da folha: ' + f.folha.correcao.trim())] : []));
 
     const r = C.resumo();
     const t = C.estado.turno;
-    const mv = U.secao('Movimentações do turno');
-    mv.append(corpoSecao(dl([['Entradas no PDV', moeda(r.entradas)], ['Transferências recebidas', moeda(C.estado.abertura.valorInicial + r.recebido)], ['Sangrias', moeda(r.sangrias)],
+    const mv = secao('Movimentações do turno', dl([['Entradas no PDV', moeda(r.entradas)], ['Transferências recebidas', moeda(C.estado.abertura.valorInicial + r.recebido)], ['Sangrias', moeda(r.sangrias)],
       ['Despesas / Mercadorias / Retiradas', moeda(0)], ['Vendas canceladas', String(t.canceladas.length)],
-      ['Sangrias com lacre', C.sangriasDoCaixa().length ? C.sangriasDoCaixa().map((x) => x.lacre + ' (' + moeda(x.valor) + ')').join(' · ') : 'Nenhuma']])));
-    caixa.append(mv);
-    return caixa;
+      ['Sangrias com lacre', C.sangriasDoCaixa().length ? C.sangriasDoCaixa().map((x) => x.lacre + ' (' + moeda(x.valor) + ')').join(' · ') : 'Nenhuma']]));
+    return [s, o, mv];
   }
   const plural = (n) => n + (n === 1 ? ' linha' : ' linhas');
 

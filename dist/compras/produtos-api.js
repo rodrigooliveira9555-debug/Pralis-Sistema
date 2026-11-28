@@ -93,14 +93,20 @@
   const obter = async (id) => deApi(await api('/produtos/item/' + encodeURIComponent(id)));
 
   /* ---------- Gravação ---------- */
+  /** Agenda (P-53): conta a ação feita na tela de Produtos para a tarefa programada que espera por ela. */
+  const contarNaAgenda = (acao, n = 1) => { if (window.CicluzAgendaRotina) window.CicluzAgendaRotina.acaoFeita(acao, n); };
   async function criar(p) {
     const r = deApi(await api('/produtos', { metodo: 'POST', corpo: paraApi(p) }));
     await atualizar().catch(() => undefined);
+    contarNaAgenda('produtos:cadastrar');
     return r;
   }
   async function editar(p) {
+    const estavaAtivo = ativos().some((x) => x.id === p.id);
     const r = deApi(await api('/produtos/item/' + encodeURIComponent(p.id), { metodo: 'PUT', corpo: { ...paraApi(p), versao: p.versao } }));
     await atualizar().catch(() => undefined);
+    // Excluir um produto no S2 é inativá-lo (o histórico fica): ativo que passou a inativo conta como "excluir".
+    contarNaAgenda(estavaAtivo && r.status === 'inativo' ? 'produtos:excluir' : 'produtos:alterar');
     return r;
   }
   /** Importação do app: produtos montados por produto-importacao.js (ativos e inativos), em lotes de 500. */

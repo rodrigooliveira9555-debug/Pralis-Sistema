@@ -25,9 +25,10 @@
 
   /* =================== Patrimônio =================== */
 
-  function validarBem(b) {
+  /** opcoes.categoriaObrigatoria === false: Cadastro Simples (a categoria é opcional; se vier preenchida, tem de ser válida). */
+  function validarBem(b, opcoes = {}) {
     if (!texto(b.nome)) return 'Informe o nome do bem.';
-    if (!D.CATEGORIAS.some((c) => c[0] === b.categoria)) return 'Escolha a categoria.';
+    if (b.categoria ? !D.CATEGORIAS.some((c) => c[0] === b.categoria) : opcoes.categoriaObrigatoria !== false) return 'Escolha a categoria.';
     if (b.valor != null && !(b.valor >= 0)) return 'O valor não pode ser negativo.';
     if (b.capacidade && !(b.capacidade.valor > 0)) return 'A capacidade deve ser maior que zero (ou deixe em branco).';
     if (b.capacidade && !b.capacidade.unidade) return 'Escolha a unidade da capacidade.';
@@ -49,7 +50,7 @@
     }
     // Campos do cadastro em seis etapas (patrimonio-dominio.js): uma mensagem por etapa; mostra a primeira.
     const regras = window.CicluzFieldRules;
-    return PD().validar(b, { bens: B.dados.bens, cnpjValid: regras ? regras.cnpjValid : undefined, hoje: S.hojeIso() }).find(Boolean) || '';
+    return PD().validar(b, { bens: B.dados.bens, cnpjValid: regras ? regras.cnpjValid : undefined, hoje: S.hojeIso(), categoriaObrigatoria: opcoes.categoriaObrigatoria !== false }).find(Boolean) || '';
   }
   const dataValida = (iso) => /^\d{4}-\d{2}-\d{2}$/.test(iso) && !Number.isNaN(Date.parse(iso + 'T12:00:00'));
   const intervaloValido = (n) => n == null || (Number.isInteger(n) && n >= 1);
@@ -94,10 +95,10 @@
     return n;
   }
   /** Mensagem do que impede salvar, ou '' (a tela confere antes de guardar o áudio no aparelho). */
-  const conferirBem = (entrada) => validarBem(prepararBem(entrada));
-  function salvarBem(entrada) {
+  const conferirBem = (entrada, opcoes) => validarBem(prepararBem(entrada), opcoes);
+  function salvarBem(entrada, opcoes) {
     const b = prepararBem(entrada);
-    const msg = validarBem(b);
+    const msg = validarBem(b, opcoes);
     if (msg) return erro(msg);
     let id = b.id;
     const ok = B.transacao((d) => {
@@ -111,6 +112,43 @@
       else { id = S.novoId('bem'); d.bens.push({ ativo: true, ...b, id, criadoEm: S.agoraIso() }); }
     });
     return ok ? { ok: true, id } : erro(NAO_SALVOU);
+  }
+  /* ---------- Tipo do bem: lista editável (27/11/2026) ----------
+   * Notebook, Computador, Celular… Cada tipo é { id, nome, ativo }; o bem guarda só o id (vínculo por id). Na primeira vez a lista nasce com
+   * PD.TIPOS_INICIAIS (uma vez só: o marcador tiposIniciais fica no documento); depois quem manda é o cadastro. */
+  function garantirTiposIniciais() {
+    if (B.dados.tiposIniciais || B.dados.tipos.length) return;
+    B.transacao((d) => {
+      if (d.tiposIniciais || d.tipos.length) return;
+      d.tipos = PD().TIPOS_INICIAIS.map((nome) => ({ id: S.novoId('tipo'), nome, ativo: true }));
+      d.tiposIniciais = true;
+    });
+  }
+  const todosOsTipos = () => { garantirTiposIniciais(); return B.dados.tipos.slice().sort((a, c) => a.nome.localeCompare(c.nome, 'pt-BR')); };
+  /** Tipos para escolher no cadastro do bem: só os ativos, mais o tipo que o bem já tem (mesmo inativo), para não sumir ao editar. */
+  const tiposDoBem = (atual) => todosOsTipos().filter((x) => x.ativo !== false || x.id === atual);
+  const nomeDoTipo = (id) => { const x = B.dados.tipos.find((y) => y.id === id); return x ? x.nome : ''; };
+  const usosDoTipo = (id) => B.dados.bens.filter((b) => b.tipoId === id).length;
+  /** Cadastra ou edita um tipo ({ id?, nome, ativo }). O vínculo do bem é pelo id, então renomear não mexe nos bens. */
+  function salvarTipoDoBem(entrada) {
+    garantirTiposIniciais();
+    const nome = texto(entrada.nome);
+    const msg = PD().validarTipo({ id: entrada.id, nome }, B.dados.tipos);
+    if (msg) return erro(msg);
+    if (entrada.id && !B.dados.tipos.some((x) => x.id === entrada.id)) return erro('Este tipo não existe mais.');
+    let id = entrada.id || '';
+    const ok = B.transacao((d) => {
+      if (id) Object.assign(d.tipos.find((x) => x.id === id), { nome, ativo: entrada.ativo !== false });
+      else { id = S.novoId('tipo'); d.tipos.push({ id, nome, ativo: entrada.ativo !== false }); }
+      d.tiposIniciais = true;
+    });
+    return ok ? { ok: true, id } : erro(NAO_SALVOU);
+  }
+  /** Tipo em uso por algum patrimônio não se apaga: o caminho é inativar (some das escolhas novas e continua nos bens). */
+  function excluirTipoDoBem(id) {
+    const q = usosDoTipo(id);
+    if (q) return erro('Este tipo está em ' + q + (q === 1 ? ' patrimônio' : ' patrimônios') + '. Inative-o em vez de excluir.');
+    return B.transacao((d) => { d.tipos = d.tipos.filter((x) => x.id !== id); d.tiposIniciais = true; }) ? { ok: true } : erro(NAO_SALVOU);
   }
   /** Onde o bem é usado (formatos e fichas), para não apagar algo referenciado. */
   function usosDoBem(id) {
@@ -608,14 +646,21 @@
     return { ...r, quantidade: q, unitario, sugerido: D.valorSugerido(unitario, prod.margem, margemGrupo(prod)) };
   }
 
+  // Ações programadas da Agenda (P-53): o ato que deu certo conta para a tarefa ligada à tela que espera por ele.
+  const contar = (acao, fn, quando = () => true) => (...a) => {
+    const r = fn(...a);
+    return window.CicluzAgendaRotina && quando(...a) ? window.CicluzAgendaRotina.contarSe(acao, r) : r;
+  };
+
   window.CicluzProducaoServico = {
-    salvarParametros, custoDaFicha,
-    salvarBem, conferirBem, excluirBem, alternarBem, baixarBem, usosDoBem,
-    salvarConfig, desligarProducao,
-    salvarFicha, duplicarFicha, definirPadrao, excluirFicha,
-    salvarAgenda, encerrarAgenda, proximasDatas, cancelarData, processarAgendas,
-    enviarPedido, pedidoExtra, cancelarPedido,
-    marcarEtapa, conferenciaDoPedido, abastecer, conferirNaLoja, fecharFolha,
-    estoqueLivre, lancarEstoque, sugestoesReposicao, aprovarReposicao, itensAConferir,
+    salvarParametros: contar('producao:parametros', salvarParametros), custoDaFicha,
+    salvarBem, conferirBem, excluirBem, alternarBem, baixarBem, usosDoBem, tiposDoBem, todosOsTipos, nomeDoTipo, usosDoTipo, salvarTipoDoBem, excluirTipoDoBem,
+    salvarConfig: contar('producao:configurar-produto', salvarConfig), desligarProducao,
+    salvarFicha: contar('producao:salvar-ficha', salvarFicha), duplicarFicha, definirPadrao, excluirFicha,
+    salvarAgenda: contar('producao:agendar', salvarAgenda), encerrarAgenda, proximasDatas, cancelarData, processarAgendas,
+    enviarPedido: contar('producao:enviar-pedido', enviarPedido), pedidoExtra: contar('producao:pedido-extra', pedidoExtra), cancelarPedido,
+    marcarEtapa: contar('producao:concluir-etapa', marcarEtapa, (ordemId, numero, acao) => acao === 'concluir'),
+    conferenciaDoPedido, abastecer: contar('producao:abastecer', abastecer), conferirNaLoja: contar('producao:conferir-loja', conferirNaLoja), fecharFolha,
+    estoqueLivre, lancarEstoque, sugestoesReposicao, aprovarReposicao: contar('producao:aprovar-reposicao', aprovarReposicao), itensAConferir,
   };
 })();

@@ -1011,7 +1011,7 @@
         const cancelar = botao('Cancelar', () => dlg.close(), 'btn secondary footer-cancel-accent');
         const nav = el('div', 'compras-form-rodape compras-etapas-nav');
         // No cadastro novo só se volta pela barra (para a frente, pelo Avançar, que confere a etapa); na edição, qualquer etapa.
-        barra = window.CicluzStepper.create({ steps: etapas(), current: 0, label: 'Etapas do cadastro do fornecedor', onSelect: (i) => { if (f || i <= atual) ir(i); } });
+        barra = window.CicluzStepper.create({ steps: etapas(), current: 0, label: 'Etapas do cadastro do fornecedor', podeIr: (i) => Boolean(f) || i <= atual, onSelect: (i) => ir(i) });
         function ir(i) {
           const ordem = seq();
           atual = Math.max(0, Math.min(ordem.length - 1, i));

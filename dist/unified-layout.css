@@ -284,9 +284,10 @@ body:is(.dark-theme,:not(.dark-theme)) #salary-view .salary-row{
 body #salary-view .salary-job-identity{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
 body #salary-view .job-copy{display:flex;flex-direction:column;gap:4px;min-width:0;overflow-wrap:anywhere}
 body #salary-view .job-copy small{color:var(--navigation-ink,#a2a0aa);font-size:11px;line-height:1.5}
-body #salary-view :is(.salary-row,.salary-heading) input{width:100%!important;min-width:0!important;min-inline-size:0!important;max-width:var(--salary-value-width);box-sizing:border-box;height:var(--ui-field-height)!important;margin:0!important;padding:10px var(--ui-field-padding-right,10px) 10px 10px!important;border:1px solid var(--layout-line)!important;border-radius:var(--ui-field-radius)!important;text-align:right}
-body #salary-view .salary-heading{display:grid!important;grid-template-columns:minmax(0,1fr) var(--salary-value-width)!important;align-items:end;gap:var(--salary-column-gap)!important;padding:0 calc(var(--salary-row-inset) + 1px);box-sizing:border-box}
-body #salary-view .salary-heading label,body #salary-view .salary-heading input{width:100%!important;min-width:0;box-sizing:border-box}
+body #salary-view .salary-row input{width:100%!important;min-width:0!important;min-inline-size:0!important;max-width:var(--salary-value-width);box-sizing:border-box;height:var(--ui-field-height)!important;margin:0!important;padding:10px var(--ui-field-padding-right,10px) 10px 10px!important;border:0!important;border-radius:var(--ui-field-radius)!important;background:transparent;text-align:right}
+/* A lista dos cargos é um quadro (padrão da Transferência): moldura de 14 px; a margem de -1 px esconde o fio da última linha. */
+body #salary-view #salary-list{border:1px solid var(--layout-line);border-radius:14px;overflow:hidden}
+body #salary-view #salary-list>.salary-row:last-child{margin-bottom:-1px}
 body #salary-view .form-actions{margin-top:20px}
 @media(max-width:600px){
  body #salary-view{--salary-value-width:clamp(140px,40vw,160px);--salary-row-inset:10px;--salary-column-gap:10px}

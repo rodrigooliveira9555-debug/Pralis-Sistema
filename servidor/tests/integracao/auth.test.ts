@@ -1,3 +1,5 @@
+import { request as http } from "node:http";
+import type { AddressInfo } from "node:net";
 import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -14,6 +16,22 @@ afterAll(async () => {
   const { pool } = await import("../../api/src/banco/conexao.ts");
   await pool.end();
 });
+
+// POST com o caminho exatamente como escrito (fetch e app.inject normalizariam "./" e "%2e").
+function postCru(porta: number, caminho: string, corpo: unknown): Promise<{ status: number; cookie: string }> {
+  return new Promise((resolve, reject) => {
+    const dados = JSON.stringify(corpo);
+    const pedido = http(
+      { host: "127.0.0.1", port: porta, method: "POST", path: caminho, headers: { origin: ORIGEM, "content-type": "application/json", "content-length": Buffer.byteLength(dados) } },
+      (resposta) => {
+        resposta.resume();
+        resposta.on("end", () => resolve({ status: resposta.statusCode ?? 0, cookie: String(resposta.headers["set-cookie"] ?? "") }));
+      }
+    );
+    pedido.on("error", reject);
+    pedido.end(dados);
+  });
+}
 
 describe("login", () => {
   it("entra com e-mail e senha e devolve o perfil com a empresa", async () => {
@@ -149,6 +167,45 @@ describe("login", () => {
     for (let i = 0; i < 10; i += 1) await entrar(app, conta.email, "senha-errada-123");
     const login = await entrar(app, conta.email, conta.senha);
     expect(login.status).toBe(429);
+  });
+
+  // B5 (26/11/2026): "/api/auth/./sign-in/email" ou "%2e" não podem pular a contagem. A decisão
+  // olhava o texto cru da URL, mas o better-auth recebe o caminho já normalizado e entrava igual.
+  // Precisa de HTTP de verdade: o app.inject normaliza a URL antes e esconderia o desvio.
+  for (const desvio of ["/api/auth/./sign-in/email", "/api/auth/%2e/sign-in/email", "/api/auth/x/../sign-in/email"]) {
+    it(`caminho desviado (${desvio}) também conta tentativas por e-mail`, async () => {
+      const conta = await criarConta("usuario");
+      const servidor = await criarApp();
+      await servidor.listen({ port: 0, host: "127.0.0.1" });
+      try {
+        const porta = (servidor.server.address() as AddressInfo).port;
+        const tentar = (senha: string) => postCru(porta, desvio, { email: conta.email, password: senha });
+        for (let i = 0; i < 10; i += 1) expect((await tentar("senha-errada-123")).status).not.toBe(429);
+        const resposta = await tentar(conta.senha);
+        expect(resposta.status).toBe(429);
+        expect(resposta.cookie).not.toContain("session_token");
+      } finally {
+        await servidor.close();
+      }
+    });
+  }
+
+  // B5 (26/11/2026): a troca de senha também conta tentativas, pela sessão (não pelo IP).
+  it("troca de senha: depois de 10 senhas atuais erradas na mesma sessão, a 11ª é barrada", async () => {
+    const conta = await criarConta("usuario");
+    const { cookie } = await entrar(app, conta.email, conta.senha);
+    const trocar = (senhaAtual: string, i: number) =>
+      app.inject({
+        method: "POST",
+        url: "/api/auth/change-password",
+        // IP e cookie inventado diferentes a cada pedido: nenhum dos dois pode zerar a contagem
+        // (antes a chave saía do texto do cookie e "x_session_token=..." na frente a trocava).
+        headers: { ...comSessao(`x_session_token=lixo-${i}; ${cookie}`), "content-type": "application/json" },
+        remoteAddress: `10.1.${i}.${i}`,
+        payload: { currentPassword: senhaAtual, newPassword: "senha-nova-forte-123" }
+      });
+    for (let i = 0; i < 10; i += 1) expect((await trocar("senha-errada-123", i)).statusCode).not.toBe(429);
+    expect((await trocar(conta.senha, 99)).statusCode).toBe(429);
   });
 
   it("o cookie de sessão é httpOnly e SameSite=Lax", async () => {

@@ -298,7 +298,7 @@
       lacre: lacreInformado, situacao: 'pendente', caixaId: id, criadoPor: a.responsavel, criadoEm: hora(), observacao: '' });
     lacre(lacreInformado).situacao = 'usado';
     const registro = {
-      id, data: new Date().toLocaleDateString('pt-BR'), pdv: a.pdv, turno: a.turno, contaId: a.contaId, operador: a.responsavel, supervisor: f.gerente || a.supervisor, abertura: a.abertoEm, fechamento: hora(), fechadoPor: a.responsavel,
+      id, codigo: a.codigo || '', grupo: a.grupoNome || '', subgrupo: a.subgrupoNome || '', data: new Date().toLocaleDateString('pt-BR'), pdv: a.pdv, turno: a.turno, contaId: a.contaId, operador: a.responsavel, supervisor: f.gerente || a.supervisor, abertura: a.abertoEm, fechamento: hora(), fechadoPor: a.responsavel,
       entradas: r.entradas, transfEntrada: a.valorInicial + r.recebido, transfSaida: r.sangrias, esperado, contado, diferenca, lacreFechamento: lacreInformado, lacreReservado: a.lacreFechamento,
       observacao: String(observacao || '').trim(), retornoId, conferencias: [], anexos: { folha: 1, creare: 1, comprovantes: 1 }, desta_sessao: true,
       // Retrato do que o dossiê mostra (a tela de Fechamentos não lê o turno vivo, que some ao recomeçar).
@@ -322,7 +322,7 @@
     const l = estado.fechamentos.map((h) => ({ ...h, situacao: 'fechado', saldo: 0 }));
     if (vivo() && estado.abertura) {
       const r = resumo(); const a = estado.abertura;
-      l.unshift({ id: a.caixaId, data: new Date().toLocaleDateString('pt-BR'), pdv: a.pdv, turno: a.turno, contaId: a.contaId, operador: a.responsavel, abertura: a.abertoEm, fechamento: '',
+      l.unshift({ id: a.caixaId, codigo: a.codigo || '', data: new Date().toLocaleDateString('pt-BR'), pdv: a.pdv, turno: a.turno, contaId: a.contaId, operador: a.responsavel, abertura: a.abertoEm, fechamento: '',
         entradas: r.entradas, transfEntrada: a.valorInicial + r.recebido, transfSaida: r.sangrias, saldo: r.saldo, situacao: estado.status, sessao: true });
     }
     estado.caixasFicticios.forEach((c) => l.unshift({ ...c, data: new Date().toLocaleDateString('pt-BR'), fechamento: '' }));
@@ -348,7 +348,7 @@
   const TOM_SITUACAO = { aguardando_tesouraria: 'atencao', fechado_sem_pendencias: 'info', com_quebra: 'negativo', conferido_tesouraria: 'positivo', divergencia_confirmada_tesouraria: 'atencao' };
 
   window.CicluzCaixa = {
-    COR, COR_TEXTO, PERFIS, estado, pode,
+    COR, COR_TEXTO, PERFIS, pdvs: D.pdvs, nomePdv: D.nomePdv, maquininhas: D.maquininhas, gruposDeVendas: D.gruposDeVendas, nomeDoComputador: D.nomeDoComputador, usuarioLogado: D.usuarioLogado, horariosEmpresa: D.horariosEmpresa, estado, pode,
     moeda, centavos, hora, somarMin, totalItens,
     conta, saldoConta, contaDoPosto, transferencia, malotes, malotePorLacre, lacreExiste, lacre, bolsasLivres, pendentesSemLacre, sangriasDoCaixa,
     criarMalote, criarSemLacre, abrirCaixa, registrarSangria, resolverRecebimento, confirmarTransferencia, quemOpera, criarTransferencia, conferirTransferencia, recusarConferencia, ajustarSaldo, resumo, iniciarFechamento, fecharCaixa, diferencaDe, caixas, caixasAbertos,

@@ -6,12 +6,14 @@
  * valor anterior continua valendo até lá. O valor é digitado aqui: o sistema não busca o número em lugar nenhum. Vigente = o de início mais recente que
  * não seja depois de hoje. É a base do contrato com "Referência do salário mínimo" (percentual ↔ valor). As regras ficam em
  * compras/dominio.js (testadas). Mudar o valor aqui não altera contrato já gravado.
+ * A janela segue o padrão linha por linha da Nova Transferência (27/11/2026): o Valor (R$) é o quadro grande na cor da origem, fixo no topo;
+ * ano e vigência são linhas de um grupo.
  */
 (function () {
   'use strict';
   const A = window.CicluzAcessos; const U = window.CicluzComprasUI; const D = window.CicluzComprasDominio; const S = window.CicluzComprasDados;
   if (!A || !U || !D || !S) return;
-  const { el, campo, entrada } = U;
+  const { el, entrada } = U;
   const lista = () => (Array.isArray(S.dados.salariosMinimos) ? S.dados.salariosMinimos : []);
   const hoje = () => D.isoData(new Date());
   const vigente = () => D.salarioMinimoVigente(lista(), hoje());
@@ -21,30 +23,35 @@
 
   /** aoSalvar(): chamado depois de gravar (o contrato usa para recalcular o valor na hora). */
   function editar(item, aoSalvar) {
+    const { linha, linhaDe, quadro, secao, abreAoTocarNaLinha } = window.CicluzTransferencias.pecas;
     U.dialogo({
-      titulo: item ? 'Editar salário mínimo' : 'Novo valor do salário mínimo', ...cores, rotuloSalvar: 'Salvar',
-      montar: (form) => {
+      titulo: item ? 'Editar salário mínimo' : 'Novo valor do salário mínimo', ...cores, classe: 'compras-form-padrao transferencia-tela', rotuloSalvar: 'Salvar',
+      montar: (form, dlg) => {
+        const repetido = dlg.querySelector('.compras-dialog-sub'); if (repetido) repetido.remove(); // o caminho já está no cabeçalho
         const R = window.CicluzFieldRules;
-        const valor = entrada('text', item ? R.moneyMask(String(item.valorCentavos)) : '', { inputMode: 'numeric', placeholder: 'R$ 0,00', maxLength: 24 });
+        const valor = entrada('text', item ? R.moneyMask(String(item.valorCentavos)) : '', { inputMode: 'numeric', placeholder: 'R$ 0,00', maxLength: 24, autocomplete: 'off' });
+        valor.classList.add('transferencia-calc-tela');
         valor.addEventListener('input', () => { valor.value = R.moneyMask(valor.value); });
         // O rótulo com "salário" faria o field-validation.js tratar o campo de outro jeito: o nome para leitor de tela é o do valor.
         valor.setAttribute('aria-label', 'Valor do mínimo (R$)');
-        const inicio = entrada('date', item ? item.inicio : '');
-        const fim = entrada('date', item ? item.fim || '' : '');
+        const blocoValor = el('div', 'transferencia-valor-cab'); blocoValor.append(el('span', 'transferencia-valor-rotulo', 'Valor do salário mínimo (R$) *'), valor);
+        const data = (rotulo, v) => U.campoData({ rotulo, valor: v || '' });
+        const inicio = data('Início da vigência *', item && item.inicio); const fim = data('Fim da vigência (previsto)', item && item.fim);
         const ano = entrada('text', item && item.ano ? String(item.ano) : '', { inputMode: 'numeric', placeholder: 'Ex.: ' + new Date().getFullYear(), maxLength: 4 });
         ano.addEventListener('input', () => { ano.value = ano.value.replace(/\D/g, '').slice(0, 4); });
-        const quadro = el('fieldset', 'compras-fieldset');
-        quadro.append(el('legend', null, 'Dados do salário mínimo'), campo('Ano de referência *', ano), campo('Valor (R$) *', valor),
-          campo('Início da vigência *', inicio, 'A partir desta data, este é o valor usado nos contratos.'),
-          campo('Fim da vigência (previsto)', fim, 'Data aproximada. Quando ela passar sem um valor novo cadastrado, o sistema avisa; o valor continua valendo até o novo entrar.'));
-        form.append(quadro);
+        const linhaData = (rotulo, d) => abreAoTocarNaLinha(linha(rotulo, d.caixa, d.painel), d.input, d.painel);
+        const corpo = el('div', 'transferencia-corpo');
+        corpo.append(blocoValor, secao('Vigência', quadro(linhaDe('Ano de referência *', ano), linhaData('Início da vigência *', inicio), linhaData('Fim da vigência (previsto)', fim))),
+          U.nota('Início: a partir desta data, este é o valor usado nos contratos. Fim: data aproximada; quando ela passar sem um valor novo cadastrado, o sistema avisa e o valor continua valendo até o novo entrar.'));
+        form.append(corpo);
         return { valor, inicio, fim, ano };
       },
       salvar: (c) => {
-        if (!c.inicio.checkValidity() || !c.fim.checkValidity()) return 'Confira as datas: use DD/MM/AA.';
+        if ((c.inicio.input.value && !c.inicio.valor()) || (c.fim.input.value && !c.fim.valor())) return 'Confira as datas: use DD/MM/AA.';
+        if (!c.inicio.valor()) return 'Informe o início da vigência.';
         if (!/^\d{4}$/.test(c.ano.value)) return 'Informe o ano de referência com quatro números.';
         const n = D.digitos(c.valor.value).replace(/^0+(?=\d)/, '');
-        const novo = { id: item ? item.id : S.novoId('sm'), valorCentavos: n ? parseInt(n, 10) : 0, inicio: c.inicio.value, fim: c.fim.value || '', ano: parseInt(c.ano.value, 10) };
+        const novo = { id: item ? item.id : S.novoId('sm'), valorCentavos: n ? parseInt(n, 10) : 0, inicio: c.inicio.valor(), fim: c.fim.valor() || '', ano: parseInt(c.ano.value, 10) };
         const falta = D.validarSalarioMinimo(novo, lista()); if (falta) return falta;
         const ok = S.transacao((d) => {
           if (!Array.isArray(d.salariosMinimos)) d.salariosMinimos = [];

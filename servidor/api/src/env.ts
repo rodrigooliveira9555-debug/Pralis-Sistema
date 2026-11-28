@@ -30,7 +30,15 @@ const envSchema = z.object({
   // dele (S2_TOKEN lá). A empresa do S2 que pode ver. Vazio = desligado.
   TNP_EXTRATO_URL: z.union([z.literal(""), z.string().url()]).default(""),
   TNP_EXTRATO_TOKEN: z.string().default(""),
-  TNP_EXTRATO_EMPRESA_ID: z.union([z.literal(""), z.string().uuid()]).default("")
+  TNP_EXTRATO_EMPRESA_ID: z.union([z.literal(""), z.string().uuid()]).default(""),
+  // Extrato do restaurante HORA (Bradesco PJ + cartão), outro coletor do Meu Pluggy: mesmo contrato, token próprio.
+  HORA_EXTRATO_URL: z.union([z.literal(""), z.string().url()]).default(""),
+  HORA_EXTRATO_TOKEN: z.string().default(""),
+  HORA_EXTRATO_EMPRESA_ID: z.union([z.literal(""), z.string().uuid()]).default(""),
+  // Extrato da Padaria Lisboa, terceiro coletor do Meu Pluggy: mesmo contrato, token próprio.
+  LISBOA_EXTRATO_URL: z.union([z.literal(""), z.string().url()]).default(""),
+  LISBOA_EXTRATO_TOKEN: z.string().default(""),
+  LISBOA_EXTRATO_EMPRESA_ID: z.union([z.literal(""), z.string().uuid()]).default("")
 });
 
 const lido = envSchema.parse(process.env);
@@ -53,6 +61,12 @@ if (lido.NODE_ENV === "production") {
   }
   if (lido.TNP_EXTRATO_URL && !lido.TNP_EXTRATO_URL.startsWith("https://")) {
     throw new Error("Em produção, TNP_EXTRATO_URL precisa ser https");
+  }
+  if (lido.HORA_EXTRATO_URL && !lido.HORA_EXTRATO_URL.startsWith("https://")) {
+    throw new Error("Em produção, HORA_EXTRATO_URL precisa ser https");
+  }
+  if (lido.LISBOA_EXTRATO_URL && !lido.LISBOA_EXTRATO_URL.startsWith("https://")) {
+    throw new Error("Em produção, LISBOA_EXTRATO_URL precisa ser https");
   }
 }
 

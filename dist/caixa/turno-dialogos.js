@@ -6,19 +6,20 @@
  * Adaptação da casca: no principal o formulário de sangria nasce em Transferências, fora do Caixa; aqui "Nova sangria" abre
  * esse formulário dentro do módulo. A sangria vira TRANSFERÊNCIA PENDENTE (sai do caixa na hora; só entra no Cofre quando a
  * Tesouraria conferir). Contagem cega (R-232): acima do disponível o operador só vê "acima do disponível no caixa", sem número.
+ *
+ * Formulário linha por linha (padrão da Nova Transferência, 27/11/2026): a Nova sangria tem o valor total no quadro grande do topo
+ * (com a soma de dinheiro e moedas embaixo, em sinal + palavra) e grupos de linhas; os filtros das vendas e os pares de leitura
+ * também são linhas. As peças vêm de CicluzCaixa (formulario, grupo, linhaLeitura, linhaCampo, linhaDinheiro, linhaEscolha, quadroValor).
  */
 (function () {
   'use strict';
   const U = window.CicluzComprasUI;
   const C = window.CicluzCaixa;
-  const { el, botao, campo, entrada, seletor } = U;
+  const { el, botao, entrada, seletor } = U;
   const { moeda, centavos } = C;
   let atualizar = () => {}; // a tela do Turno se redesenha depois de cada ação
-  const dl = (pares) => {
-    const caixa = el('dl', 'caixa-declarado');
-    pares.forEach(([t, v]) => { const x = el('div'); x.append(el('dt', null, t), el('dd', null, v)); caixa.append(x); });
-    return caixa;
-  };
+  /** Pares nome/valor de leitura: um grupo de linhas (sem título quando a janela já diz do que se trata). */
+  const leituras = (titulo, pares) => C.formulario(C.grupo(titulo, pares.map(([t, v]) => C.linhaLeitura(t, v))));
   const plural = (n, um, varios) => n + ' ' + (n === 1 ? um : varios);
 
   function naoRecebi(r) {
@@ -75,46 +76,52 @@
   function novaSangria() {
     const e = C.estado;
     const bolsas = C.bolsasLivres();
+    const AJUDA = 'Envie dinheiro físico do caixa aberto para o cofre.';
     C.dialogo({
       titulo: 'Nova sangria',
-      subtitulo: 'Envie dinheiro físico do caixa aberto para o cofre.',
+      subtitulo: AJUDA,
       rotuloSalvar: 'Salvar sangria',
-      montar: (form) => {
-        const dinheiro = () => entrada('text', '', { inputMode: 'decimal', placeholder: '0,00' });
-        const total = dinheiro();
-        const fisico = dinheiro();
-        const moedas = dinheiro();
-        const soma = el('p', 'caixa-diferenca caixa-largo');
-        soma.setAttribute('role', 'status');
-        soma.hidden = true;
-        // A conta é a da regra: dinheiro + moedas precisam fechar o valor total.
+      padrao: true,
+      montar: (form, dlg) => {
+        // O quadro do valor é o primeiro item e fica fixo no topo: a linha repetida do cabeçalho sai e o texto vira nota no formulário.
+        const sub = dlg.querySelector('.compras-dialog-sub');
+        if (sub) sub.remove();
+
+        // Valor total: o quadro grande, na cor da origem. Embaixo dele, a soma de dinheiro físico + moedas contra o valor total.
+        const total = entrada('text', '', { inputMode: 'decimal', placeholder: 'R$ 0,00', autocomplete: 'off' });
+        const valor = C.quadroValor('Valor total *', total, () => conferir());
+        total.setAttribute('aria-label', 'Valor total');
+        const lFisico = C.linhaDinheiro('Dinheiro físico (R$)', '', () => conferir());
+        const lMoedas = C.linhaDinheiro('Moedas (R$)', '', () => conferir());
+        const fisico = lFisico.input;
+        const moedas = lMoedas.input;
+        // A conta é a da regra: dinheiro + moedas precisam fechar o valor total. Sinal + palavra, nunca só cor.
         const conferir = () => {
           const v = centavos(total.value);
           const d = centavos(fisico.value) || 0;
           const m = centavos(moedas.value) || 0;
-          soma.hidden = v === null || (!fisico.value.trim() && !moedas.value.trim());
-          if (soma.hidden) return;
+          if (v === null || (!fisico.value.trim() && !moedas.value.trim())) { valor.resumo.textContent = ''; return; }
           const dif = d + m - v;
-          soma.className = 'caixa-diferenca caixa-largo ' + (dif === 0 ? 'bateu' : dif < 0 ? 'falta' : 'sobra');
-          soma.textContent = dif === 0 ? '✓ Dinheiro e moedas somam o valor total.'
+          valor.resumo.textContent = dif === 0 ? '✓ Dinheiro e moedas somam o valor total.'
             : dif < 0 ? '▼ Faltam ' + moeda(-dif) + ' para somar o valor total.' : '▲ Passam ' + moeda(dif) + ' do valor total.';
         };
-        [total, fisico, moedas].forEach((i) => { i.oninput = conferir; });
-        form.append(campo('Valor total (R$)', total), campo('Dinheiro físico (R$)', fisico), campo('Moedas (R$)', moedas), soma);
+        const gComposicao = C.grupo('Composição', [lFisico.no, lMoedas.no], U.nota(AJUDA), U.nota('Dinheiro físico e moedas precisam somar o valor total.'));
 
         let lacre = null;
+        let gLacre;
         if (bolsas.length) {
-          lacre = seletor(bolsas, '', 'Escolha…');
-          form.append(campo('Lacre disponível (obrigatório)', lacre, 'Confira fisicamente o número antes de fechar a bolsa.'));
+          const l = C.linhaEscolha('Lacre disponível', bolsas, '', null, true);
+          lacre = l.controle;
+          gLacre = C.grupo('Lacre', [l.no], U.nota('Confira fisicamente o número antes de fechar a bolsa.'));
         } else {
-          form.append(U.nota('Nenhum lacre disponível. Solicite à Tesouraria.'));
+          gLacre = C.pecas().secao('Lacre', U.nota('Nenhum lacre disponível. Solicite à Tesouraria.'));
         }
-        form.append(campo('Responsável pela sangria', entrada('text', e.abertura.responsavel, { readOnly: true }), 'Preenchido com quem abriu o caixa.'));
-        const obs = el('textarea');
-        obs.rows = 2;
-        form.append(campo('Observação (opcional)', obs));
+        const gResponsavel = C.grupo('Responsável', [C.linhaLeitura('Responsável pela sangria', e.abertura.responsavel)], U.nota('Preenchido com quem abriu o caixa.'));
+        const obs = entrada('text', '', { autocomplete: 'off' });
+        const gObs = C.grupo('Observação', [C.linhaCampo('Observação (opcional)', obs)]);
         // Só a Gerência vê o teto; o operador recebe a recusa sem o número.
-        if (C.estado.perfil === 'gerente') form.append(U.nota('Disponível para retorno: ' + moeda(C.resumo().saldoLivre) + '.'));
+        const notas = C.estado.perfil === 'gerente' ? [U.nota('Disponível para retorno: ' + moeda(C.resumo().saldoLivre) + '.')] : [];
+        form.append(C.formulario(valor.no, gComposicao, gLacre, gResponsavel, gObs, ...notas));
         return { total, fisico, moedas, lacre, obs };
       },
       salvar: (c) => {
@@ -169,7 +176,11 @@
           const achadas = todas.filter((v) => (!termo || v.itens.some((i) => U.dobrar(i[0]).includes(termo))) && (!forma.value || v.formas.some((f) => f[0] === forma.value)));
           const total = achadas.reduce((s, v) => s + v.valor, 0);
           const usadas = [...new Set(achadas.flatMap((v) => v.formas.map((f) => f[0])))];
-          sumario.replaceChildren(dl([['Vendas encontradas', String(achadas.length)], ['Total recebido', achadas.length ? moeda(total) : '—'], ['Formas usadas', usadas.length ? usadas.join(' · ') : '—']]));
+          sumario.replaceChildren(C.grupo('Resumo', [
+            C.linhaLeitura('Vendas encontradas', String(achadas.length)),
+            C.linhaLeitura('Total recebido', achadas.length ? moeda(total) : '—'),
+            C.linhaLeitura('Formas usadas', usadas.length ? usadas.join(' · ') : '—'),
+          ]));
           lista.replaceChildren(...(achadas.length ? achadas.map((v) => {
             const c = cartaoVenda(v);
             c.append(itensDaVenda(v.itens));
@@ -179,10 +190,11 @@
         produto.oninput = aplicar;
         produto.onkeydown = (ev) => { if (ev.key === 'Enter') ev.preventDefault(); };
         forma.onchange = aplicar;
-        const g = el('div', 'caixa-grade');
-        g.append(campo('Produto', produto), campo('Forma de pagamento', forma));
+        const filtros = C.grupo('Filtros', [C.linhaCampo('Produto', produto), C.linhaCampo('Forma de pagamento', forma)]);
         const limpar = botao('Limpar filtros', () => { produto.value = ''; forma.value = ''; aplicar(); }, 'btn secondary');
-        form.append(g, limpar, sumario, lista);
+        const acoes = el('div', 'caixa-acoes caixa-acoes-esq');
+        acoes.append(limpar);
+        form.append(C.formulario(filtros, acoes, sumario), lista);
         aplicar();
       },
     });
@@ -200,7 +212,7 @@
           const d = cartaoVenda(c, c.id);
           d.append(
             el('p', 'caixa-alerta', 'Cancelamento no CREARE'),
-            dl([['Autorizado por', c.autorizadoPor || 'Não informado'], ['Motivo', c.motivo || 'Não informado'], ['Justificativa', c.justificativa || 'Não informada']]),
+            leituras(null, [['Autorizado por', c.autorizadoPor || 'Não informado'], ['Motivo', c.motivo || 'Não informado'], ['Justificativa', c.justificativa || 'Não informada']]),
             el('h4', 'caixa-subtitulo', 'Forma de pagamento'),
             U.situacao(c.forma + ': ' + moeda(c.valor), 'neutro'),
             el('h4', 'caixa-subtitulo', 'Produtos da venda'),

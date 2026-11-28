@@ -96,12 +96,16 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await p.locator('#compras-fornecedores .compras-secao-cab button[aria-label="Cadastrar fornecedor"]').click();
   const df = p.locator('dialog.compras-dialog[open]').last();
   const erroF = async () => (await df.locator('.profiles-error').allTextContents()).join(' ');
-  const etapaF = (d) => d.locator('.stepper-summary').textContent();
+  // Barra de etapas (quadro de etapa do stepper.js): o texto do quadro e a lista "Ir para a etapa", que se abre, lê e fecha.
+  const abreEtapas = (d) => d.locator('.stepper-wrap--etapa .transferencia-linha-acao').first();
+  const textosDeEtapas = async (d) => { const abre = abreEtapas(d); await abre.click(); const t = await d.locator('.stepper-wrap--etapa .transferencia-multi-painel button').allTextContents(); await abre.click(); return t; };
+  const irParaEtapa = async (d, n) => { await abreEtapas(d).click(); await d.locator('.stepper-wrap--etapa .transferencia-multi-painel button').nth(n - 1).click(); };
+  const etapaF = async (d) => (await d.locator('.stepper-wrap--etapa .transferencia-valor-rotulo').textContent()) + ' · ' + (await d.locator('.stepper-wrap--etapa .stepper-etapa-titulo').textContent());
   const cartaoF = (d, nome) => d.locator('.compras-cartao-escolha', { hasText: nome });
   const quadroCat = df.locator('.compras-situacao-quadro', { hasText: 'Categoria do fornecedor *' });
   const avancar = (d) => d.locator('.compras-etapas-nav button', { hasText: 'Avançar' }).click();
   // Cadastro em 4 etapas, com a barra de etapas do sistema
-  ok((await etapaF(df)).includes('Etapa 1 de 6') && await df.locator('.stepper-item').count() === 6, 'Cadastro de fornecedor abre na etapa 1 de 6');
+  ok((await etapaF(df)).includes('Etapa 1 de 6') && (await textosDeEtapas(df)).length === 6, 'Cadastro de fornecedor abre na etapa 1 de 6');
   // As consultas de CNPJ e CEP não saem para a rede no teste: a resposta é simulada aqui, com dados fictícios.
   await p.route('https://brasilapi.com.br/**', (r) => {
     const u = r.request().url();
@@ -120,9 +124,9 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   ok(await df.locator('.compras-situacao-quadro', { hasText: 'Categoria do fornecedor *' }).locator('.compras-cartao-escolha').count() === 2, 'Categoria do fornecedor no quadro branco, com os dois cartões dentro');
   ok(await quadroCat.locator('.compras-cartao-escolha').count() === 2 && await cartaoF(df, 'Produto').getAttribute('aria-checked') === 'false' && await quadroCat.locator('[role=radiogroup] [role=radio]').count() === 2 && await df.locator('input[type=checkbox][aria-label=Produto]').count() === 0, 'Categoria em dois cartões, sem as caixinhas antigas');
   await cartaoF(df, 'Serviço').click();
-  ok(await cartaoF(df, 'Serviço').getAttribute('aria-checked') === 'true' && (await df.locator('.stepper-item').nth(1).textContent()).includes('Dados do prestador de serviço'), 'Serviço marcado: a 2ª etapa vira Dados do prestador');
+  ok(await cartaoF(df, 'Serviço').getAttribute('aria-checked') === 'true' && (await textosDeEtapas(df))[1].includes('Dados do prestador de serviço'), 'Serviço marcado: a 2ª etapa vira Dados do prestador');
   await cartaoF(df, 'Produto').click();
-  ok(await cartaoF(df, 'Produto').getAttribute('aria-checked') === 'true' && await cartaoF(df, 'Serviço').getAttribute('aria-checked') === 'false' && (await df.locator('.stepper-item').nth(1).textContent()).includes('Dados do vendedor'), 'Marcar Produto desmarca Serviço (escolha única) e a 2ª etapa volta a Dados do vendedor');
+  ok(await cartaoF(df, 'Produto').getAttribute('aria-checked') === 'true' && await cartaoF(df, 'Serviço').getAttribute('aria-checked') === 'false' && (await textosDeEtapas(df))[1].includes('Dados do vendedor'), 'Marcar Produto desmarca Serviço (escolha única) e a 2ª etapa volta a Dados do vendedor');
   ok(await df.getByLabel('CNPJ *', { exact: true }).isVisible() && await df.getByLabel('Razão social', { exact: true }).isVisible() && await df.getByLabel('Regime tributário', { exact: true }).isVisible() && await df.locator('fieldset').first().getByLabel('Regime tributário', { exact: true }).count() === 1, 'Pessoa jurídica: razão social, nome fantasia, CNPJ e regime tributário');
   await df.getByLabel('Razão social', { exact: true }).fill('Fornecedor CNPJ Teste Comércio Ltda');
   await df.getByLabel('Nome fantasia', { exact: true }).fill('Fornecedor CNPJ Teste');
@@ -160,13 +164,13 @@ const dialogo = (pagina) => pagina.locator('dialog.compras-dialog[open]').last()
   await avancar(df);
   // Etapa 4, responsável legal (18/11/2026, Rodrigo): "Terá contrato?" é a primeira pergunta. Com Não, são 6 etapas e não há a etapa Contrato.
   const chaveC = df.getByRole('switch', { name: 'Terá contrato?' });
-  ok((await etapaF(df)).includes('Etapa 4 de 6') && await chaveC.getAttribute('aria-checked') === 'false' && !(await df.locator('.stepper-item').allTextContents()).some((t) => t.includes('Contrato')), 'Etapa 4: responsável legal, sem contrato não há a etapa Contrato');
+  ok((await etapaF(df)).includes('Etapa 4 de 6') && await chaveC.getAttribute('aria-checked') === 'false' && !(await textosDeEtapas(df)).some((t) => t.includes('Contrato')), 'Etapa 4: responsável legal, sem contrato não há a etapa Contrato');
   await df.getByRole('switch', { name: 'O mesmo da etapa anterior (representante)' }).click();
   ok(await df.getByLabel('Nome do representante', { exact: true }).inputValue() === 'Financeiro Teste' && await df.getByLabel('Nome do representante', { exact: true }).getAttribute('readonly') !== null && await df.getByRole('group', { name: 'Dados do responsável legal' }).getByLabel('Cargo na empresa', { exact: true }).isEditable(), '"O mesmo da etapa anterior" preenche nome, WhatsApp e e-mail, e o cargo continua para escolher');
   await df.getByRole('group', { name: 'Dados do responsável legal' }).getByLabel('Cargo na empresa', { exact: true }).selectOption('gerente-comercial');
   // Com Sim: o responsável legal completo aparece e o cadastro ganha a etapa Contrato (7 etapas).
   await chaveC.click();
-  ok((await etapaF(df)).includes('Etapa 4 de 7') && (await df.locator('.stepper-item').nth(5).textContent()).includes('Contrato') && await df.getByLabel('CPF do responsável', { exact: true }).isVisible(), 'Terá contrato? Sim: o responsável legal completo aparece e entra a etapa Contrato');
+  ok((await etapaF(df)).includes('Etapa 4 de 7') && (await textosDeEtapas(df))[5].includes('Contrato') && await df.getByLabel('CPF do responsável', { exact: true }).isVisible(), 'Terá contrato? Sim: o responsável legal completo aparece e entra a etapa Contrato');
   // Etapa 5, Vínculos (Produto): marcar um produto cria o vínculo no mesmo catálogo do Compras.
   await avancar(df);
   ok((await etapaF(df)).includes('Vínculos') && await df.getByRole('button', { name: 'Escolher os produtos que este fornecedor fornece' }).isVisible() && await df.locator('.compras-chip', { hasText: 'inativo' }).count() === 0, 'Etapa 5: Vínculos, com os produtos para a categoria Produto');

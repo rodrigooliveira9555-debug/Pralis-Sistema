@@ -85,6 +85,20 @@
       "when": 1795640439736,
       "tag": "0011_agenda_nunca_sair",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1795711223737,
+      "tag": "0012_agenda_acoes_e_chat",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795805449013,
+      "tag": "0013_agenda_area",
+      "breakpoints": true
     }
   ]
 }

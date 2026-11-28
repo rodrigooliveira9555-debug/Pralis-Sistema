@@ -2,6 +2,8 @@
  * Configurações → Senhas. "Minha Senha" pede a senha atual (rota do better-auth) e tira os outros
  * aparelhos da conta. "Senha de Outra Pessoa" é só do administrador e tira a pessoa de todos os
  * aparelhos. Substitui as duas partes de senha da antiga usuarios.html.
+ * Formulário linha por linha (padrão da Nova Transferência, 27/11/2026): um grupo com as linhas (nome à esquerda, senha à direita, "Mostrar" na ponta);
+ * a dica de cada campo vira nota embaixo do quadro. As peças vêm de CicluzTransferencias.pecas (lidas só ao abrir a tela: o arquivo carrega depois).
  */
 (function () {
   'use strict';
@@ -9,13 +11,26 @@
   const A = window.CicluzAcessos;
   const telas = {};
 
-  const campoSenha = A.campoSenha;
+  // Linha de senha: o campo e o "Mostrar" (conferir o que foi digitado antes de entregar a senha a alguém) dentro da linha do quadro.
+  function linhaSenha(rotulo, autocomplete) {
+    const { linhaDe } = window.CicluzTransferencias.pecas;
+    const input = U.entrada('password', '', { autocomplete, maxLength: 128 });
+    const ver = U.botao('Mostrar', () => {
+      const mostrar = input.type === 'password';
+      input.type = mostrar ? 'text' : 'password';
+      ver.textContent = mostrar ? 'Ocultar' : 'Mostrar';
+      ver.setAttribute('aria-pressed', String(mostrar));
+    }, 'acessos-ver-senha');
+    ver.setAttribute('aria-pressed', 'false'); ver.setAttribute('aria-label', 'Mostrar ' + rotulo.toLocaleLowerCase('pt-BR'));
+    const no = linhaDe(rotulo, input); no.append(ver);
+    return { no, input };
+  }
   // Senha mínima do servidor (vem do catálogo); até ele responder, vale a de fora de produção.
   let minimo = 8;
   A.api('/acessos/catalogo').then((c) => { minimo = A.senhaMinima({ catalogo: c }); }, () => {});
 
   function formulario(tela, montar, enviar) {
-    const form = U.el('form', 'acessos-senha');
+    const form = U.el('form', 'acessos-senha transferencia-tela transferencia-corpo');
     form.noValidate = true;
     const erro = U.el('p', 'profiles-error');
     erro.setAttribute('role', 'alert');
@@ -44,10 +59,11 @@
     const tela = telas.minha || (telas.minha = A.criarTela({ id: 'acessos-senha-view', titulo: 'Minha Senha', tela: 'senhas' }));
     tela.ativar();
     formulario(tela, (form) => {
-      const atual = campoSenha('Senha atual', 'current-password');
-      const nova = campoSenha('Nova senha', 'new-password', 'Pelo menos ' + minimo + ' caracteres. Ao trocar, os outros aparelhos saem da conta.');
-      const repetir = campoSenha('Repita a nova senha', 'new-password');
-      form.append(atual.no, nova.no, repetir.no);
+      const { quadro, secao } = window.CicluzTransferencias.pecas;
+      const atual = linhaSenha('Senha atual', 'current-password');
+      const nova = linhaSenha('Nova senha', 'new-password');
+      const repetir = linhaSenha('Repita a nova senha', 'new-password');
+      form.append(secao('Trocar a senha', quadro(atual.no, nova.no, repetir.no)), U.nota('Pelo menos ' + minimo + ' caracteres. Ao trocar, os outros aparelhos saem da conta.'));
       return {
         rotulo: 'Trocar senha', atual: atual.input, nova: nova.input, repetir: repetir.input,
         traduzir: (falha) => (falha.status === 400 || falha.status === 401 ? 'Senha atual incorreta ou senha nova fraca demais.' : A.mensagemErro(falha)),
@@ -81,9 +97,10 @@
       return A.aviso(tela.body, 'Não deu para carregar', A.mensagemErro(erro), U.botao('Tentar de novo', abrirOutra));
     }
     formulario(tela, (form) => {
+      const { linhaDe, quadro, secao } = window.CicluzTransferencias.pecas;
       const pessoa = U.seletor(usuarios.map((u) => [u.id, u.nome + ' · ' + u.email + (u.ativo ? '' : ' (sem acesso)')]), '', 'Escolha a pessoa');
-      const nova = campoSenha('Nova senha', 'new-password', 'A pessoa sai de todos os aparelhos e entra com esta senha. Depois ela troca em Minha Senha.');
-      form.append(U.nota('Use quando alguém esqueceu a senha. A sua própria senha se troca em Minha Senha, que pede a senha atual.'), U.campo('Pessoa', pessoa), nova.no);
+      const nova = linhaSenha('Nova senha', 'new-password');
+      form.append(U.nota('Use quando alguém esqueceu a senha. A sua própria senha se troca em Minha Senha, que pede a senha atual.'), secao('Nova senha de outra pessoa', quadro(linhaDe('Pessoa', pessoa), nova.no)), U.nota('A pessoa sai de todos os aparelhos e entra com esta senha. Depois ela troca em Minha Senha.'));
       return { rotulo: 'Definir senha', pessoa, nova: nova.input };
     }, (ctx) => {
       const u = usuarios.find((x) => x.id === ctx.pessoa.value);

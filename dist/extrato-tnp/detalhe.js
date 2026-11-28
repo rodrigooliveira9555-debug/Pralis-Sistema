@@ -1,5 +1,5 @@
 /*
- * Open Finance · Caixa TNP — Detalhes do lançamento: o popup só de leitura de Vendas dos PDVs (vendas-pdv/popup.js),
+ * CNT - API Open Finance TNP / Banco Caixa Econômica — Detalhes do lançamento: o popup só de leitura de Vendas dos PDVs (vendas-pdv/popup.js),
  * com tudo o que a Pluggy trouxe: valor e situação, quem pagou ou recebeu (com CPF mascarado ou CNPJ), a operação e a
  * forma, a categoria, o estabelecimento e, no cartão, final, parcela, data da compra e fatura.
  * Só mostra o que veio: campo sem valor não aparece (nada de "—" em fila).

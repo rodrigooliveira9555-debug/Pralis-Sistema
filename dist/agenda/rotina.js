@@ -59,6 +59,22 @@
     renderConfiguracoes();
   }
 
+  /* Configurações no padrão "linha por linha" da Nova Transferência (P-53): grupos com título pequeno e quadro de linhas. */
+  const pecas = () => window.CicluzTransferencias.pecas;
+  const SETA = '<path d="m9 6 6 6-6 6"/>';
+  function linhaQueLeva(rotulo, resumo, aoToque, classe = '') {
+    const b = el('button', 'transferencia-linha transferencia-linha-acao agenda-linha-leva' + (classe ? ' ' + classe : ''));
+    b.type = 'button';
+    const valor = el('span', 'transferencia-linha-valor', resumo);
+    const seta = el('span', 'transferencia-seta');
+    seta.setAttribute('aria-hidden', 'true');
+    seta.innerHTML = svg(SETA);
+    b.append(el('span', 'transferencia-linha-rotulo', rotulo), valor, seta);
+    b.onclick = aoToque;
+    return b;
+  }
+  const leitura = (rotulo, valor) => pecas().linha(rotulo, el('span', 'transferencia-linha-valor', valor));
+
   async function renderConfiguracoes() {
     const body = tela.body;
     body.replaceChildren(U.nota('Carregando…'));
@@ -66,42 +82,73 @@
     const minha = await A.minhaConfig();
     body.replaceChildren();
     if (minha.erro) { body.append(U.situacao(minha.erro, 'negativo')); return; }
+    const P = pecas();
+    const corpo = el('div', 'transferencia-tela transferencia-corpo agenda-form agenda-config');
+    body.append(corpo);
     const m = minha.dados;
-    const sua = U.secao('A sua Agenda');
-    const lista = el('dl', 'agenda-config-resumo');
-    const item = (t, v) => lista.append(el('dt', null, t), el('dd', null, v));
-    item('Expediente', m.descricaoExpediente);
-    item('Fora do expediente', m.foraExpediente === 'bloquear' ? 'A Agenda fecha fora do expediente' : 'A Agenda abre a qualquer hora');
-    item('Sair sozinho', m.inatividadeEfetivaMinutos ? 'Depois de ' + minutosTexto(m.inatividadeEfetivaMinutos) + ' sem mexer' : 'Nunca sai sozinho');
-    sua.append(lista);
+    const sua = P.secao('A sua Agenda', P.quadro(
+      leitura('Expediente', m.descricaoExpediente),
+      leitura('Fora do expediente', m.foraExpediente === 'bloquear' ? 'Fecha fora do expediente' : 'Abre a qualquer hora'),
+      leitura('Sair sozinho', m.inatividadeEfetivaMinutos ? 'Depois de ' + minutosTexto(m.inatividadeEfetivaMinutos) + ' sem mexer' : 'Nunca sai sozinho'),
+    ));
     if (m.bloqueadaAgora) sua.append(U.situacao('Agora você está fora do expediente: a Agenda abre de novo no horário.', 'atencao'));
     sua.append(U.nota(ehAdmin() ? 'Você é administrador: mude a sua regra na lista abaixo.' : 'Quem muda estas regras é o administrador.'));
-    body.append(sua);
+    corpo.append(sua);
     if (!ehAdmin()) return;
 
     const [r, c] = await Promise.all([A.configs(), A.contasEColaboradores()]);
-    const secao = U.secao('Pessoas');
-    secao.append(U.nota('Ligue cada pessoa ao colaborador do cadastro: o expediente passa a vir dos Horários/Escalas dele. Sem colaborador ligado, vale o expediente escrito aqui. A hora fora do expediente aparece no Desempenho e não vai para a folha de pagamento.'));
-    if (r.erro || c.erro) { secao.append(U.situacao(r.erro || c.erro, 'negativo')); body.append(secao); return; }
+    if (r.erro || c.erro) { corpo.append(U.situacao(r.erro || c.erro, 'negativo')); return; }
     const colaboradorDe = new Map(c.dados.contas.map((x) => [x.usuarioId, x.colaboradorId]));
-    const linhas = el('div', 'compras-lista agenda-config-pessoas');
-    r.dados.pessoas.filter((p) => p.ativo).forEach((p) => {
+    const linhas = r.dados.pessoas.filter((p) => p.ativo).map((p) => {
       const pessoa = { ...p, colaboradorId: colaboradorDe.get(p.usuarioId) || '' };
-      const l = botao('', () => editarConfig(pessoa), 'compras-linha agenda-config-linha');
-      l.setAttribute('aria-label', 'Configurar a Agenda de ' + p.nome);
-      const texto = el('span', 'compras-linha-texto');
       const nomeColab = pessoa.colaboradorId && colaboradoresDoAparelho().find((x) => x.id === pessoa.colaboradorId);
       const det = [pessoa.colaboradorId ? 'Escala de ' + (nomeColab ? nomeColab.name : 'colaborador ligado') : resumoExpediente(p)];
       if (p.foraExpediente === 'bloquear') det.push('bloqueia fora do expediente');
       det.push(p.saiPorTempoParado === false ? 'nunca sai sozinho' : 'sai em ' + minutosTexto(p.inatividadeMinutos || PADRAO_PARADO) + ' parado');
-      texto.append(el('b', null, p.nome), el('small', null, det.join(' · ')));
-      const seta = el('span', 'agenda-linha-seta');
-      seta.innerHTML = svg('<path d="m9 6 6 6-6 6"/>');
-      l.append(texto, seta);
-      linhas.append(l);
+      const l = linhaQueLeva(p.nome, det.join(' · '), () => editarConfig(pessoa), 'agenda-config-linha');
+      l.setAttribute('aria-label', 'Configurar a Agenda de ' + p.nome);
+      return l;
     });
-    secao.append(linhas);
-    body.append(secao);
+    corpo.append(P.secao('Pessoas', P.quadro(...linhas), U.nota('Ligue cada pessoa ao colaborador do cadastro: o expediente passa a vir dos Horários/Escalas dele. Sem colaborador ligado, vale o expediente escrito aqui. A hora fora do expediente aparece no Desempenho e não vai para a folha de pagamento.')));
+
+    // Telas em que o ícone roxo de agendar aparece (P-53): o administrador decide.
+    await carregarTelasIcone();
+    const todas = telasDoMenu();
+    const ligadas = todas.filter((t) => iconeLigado(t.endereco)).length;
+    corpo.append(P.secao('Ícone de agendar', P.quadro(linhaQueLeva('Telas com o ícone', ligadas + ' de ' + todas.length, () => escolherTelas())),
+      U.nota('O ícone roxo da barra de baixo cria uma tarefa ligada à tela aberta (com repetição e, onde a tela conta, a ação que conclui sozinha). Começa ligado em todas, menos nos formulários de lançamento.')));
+  }
+
+  /** Lista de todas as telas do menu, por origem, com Sim/Não do ícone de agendar. Grava cada mudança na hora. */
+  function escolherTelas() {
+    const P = pecas();
+    U.dialogo({
+      titulo: 'Telas com o ícone de agendar', cor: COR, corTexto: COR_TEXTO, classe: 'agenda-dialog agenda-sub-janela',
+      aoFechar: () => renderConfiguracoes(),
+      montar: (form, dlg) => {
+        const repetido = dlg.querySelector('.compras-dialog-sub');
+        if (repetido) repetido.remove();
+        const corpo = el('div', 'transferencia-tela transferencia-corpo agenda-form');
+        form.append(corpo);
+        const porOrigem = new Map();
+        telasDoMenu().forEach((t) => { const k = t.origem + ' · ' + t.secao; porOrigem.set(k, [...(porOrigem.get(k) || []), t]); });
+        porOrigem.forEach((telas, origem) => {
+          corpo.append(P.secao(origem, P.quadro(...telas.map((t) => {
+            const chave = P.chave(t.titulo, iconeLigado(t.endereco), ['Sim', 'Não'], async (sim) => {
+              const r = await A.definirTelaIcone(t.endereco, sim);
+              if (r.erro) { U.avisar(r.erro); return; }
+              excecoesIcone[t.endereco] = sim;
+              aplicarIcone();
+            });
+            const l = P.linha(t.titulo, chave);
+            l.title = t.secao;
+            return l;
+          }))));
+        });
+        corpo.append(U.nota('Cada mudança vale na hora, para todas as pessoas.'));
+        return {};
+      },
+    });
   }
 
   /** Colaboradores do cadastro deste aparelho (o cadastro não vai para o servidor: P-11). */
@@ -111,14 +158,18 @@
 
   function editarConfig(p) {
     let dias = new Set(p.expedienteDias);
+    const P = pecas();
     U.dialogo({
       titulo: 'Agenda de ' + p.nome,
-      subtitulo: 'Colaborador, expediente, fora do expediente e saída por tempo parado.',
       cor: COR,
       corTexto: COR_TEXTO,
       classe: 'agenda-dialog',
       rotuloSalvar: 'Salvar configuração',
-      montar: (form) => {
+      montar: (form, dlg) => {
+        const repetido = dlg.querySelector('.compras-dialog-sub');
+        if (repetido) repetido.remove();
+        const corpo = el('div', 'transferencia-tela transferencia-corpo agenda-form');
+        form.append(corpo);
         const grupoDias = el('div', 'compras-chips agenda-dias');
         grupoDias.setAttribute('role', 'group');
         grupoDias.setAttribute('aria-label', 'Dias do expediente');
@@ -128,16 +179,21 @@
           return b;
         }));
         desenharDias();
-        const inicio = U.entrada('time', p.expedienteInicio || '');
-        const fim = U.entrada('time', p.expedienteFim || '');
+        const inicio = U.campoHora({ rotulo: 'Início do expediente', valor: p.expedienteInicio || '' });
+        const fim = U.campoHora({ rotulo: 'Fim do expediente', valor: p.expedienteFim || '' });
         const fora = U.seletor(FORA, p.foraExpediente);
-        const parado = U.entrada('number', p.inatividadeMinutos || '', { min: 1, max: 480, step: 1, inputMode: 'numeric', placeholder: 'Padrão: ' + PADRAO_PARADO + ' min' });
+        const parado = U.roletaNumero({ rotulo: 'Sair do sistema depois de quantos minutos parado', titulo: 'Minutos parado', min: 1, max: 480, valor: p.inatividadeMinutos ? String(p.inatividadeMinutos) : '' });
+        parado.input.placeholder = 'Padrão: ' + PADRAO_PARADO + ' min';
         // Quem o administrador escolhe que nunca sai sozinho (Zé, 25/11/2026): o tempo fica guardado, sem efeito.
         const sai = U.seletor(SAI_PARADO, p.saiPorTempoParado === false ? 'nao' : 'sim');
-        const campoParado = U.campo('Sair do sistema depois de quantos minutos parado', parado, 'Vazio = o padrão de ' + PADRAO_PARADO + ' minutos. De 1 a 480.');
-        const mostrarParado = () => { campoParado.hidden = sai.value === 'nao'; };
+        const linhaParado = P.linhaDe('Minutos parado', parado.input);
+        parado.input.setAttribute('aria-label', 'Sair do sistema depois de quantos minutos parado');
+        linhaParado.append(parado.painel);
+        P.abreAoTocarNaLinha(linhaParado, parado.input, parado.painel);
+        const linhaSai = P.linhaDe('Sair sozinho por tempo parado', sai);
+        // A linha dos minutos só existe com "Sim" (a linha tem display:flex: entra e sai do quadro, sem hidden).
+        const mostrarParado = () => { if (sai.value === 'nao') linhaParado.remove(); else if (!linhaParado.isConnected && linhaSai.parentElement) linhaSai.after(linhaParado); };
         sai.addEventListener('change', mostrarParado);
-        mostrarParado();
         const eu = perfil() && perfil().usuarioId === p.usuarioId;
         if (eu) { fora.value = 'permitir'; fora.disabled = true; }
         // Colaborador ligado (pelo id): só dá para escolher num aparelho que tem o cadastro de colaboradores.
@@ -145,20 +201,20 @@
         const opcoes = cadastro.map((x) => [x.id, x.name + (x.jobName ? ' · ' + x.jobName : '') + (x.active ? '' : ' (inativo)')]);
         if (p.colaboradorId && !cadastro.some((x) => x.id === p.colaboradorId)) opcoes.unshift([p.colaboradorId, 'Colaborador ligado (o cadastro não está neste aparelho)']);
         const colab = U.seletor(opcoes, p.colaboradorId, 'Nenhum: usa o expediente abaixo');
-        const diasCampo = el('div', 'compras-campo');
-        diasCampo.append(el('span', 'compras-rotulo', 'Dias do expediente'), grupoDias);
-        const grade = el('div', 'agenda-form-grade');
-        grade.append(U.campo('Início do expediente', inicio), U.campo('Fim do expediente', fim));
-        form.append(
-          U.campo('Colaborador do cadastro', colab, cadastro.length
+        corpo.append(
+          P.secao('Colaborador', P.quadro(P.linhaDe('Colaborador do cadastro', colab)), U.nota(cadastro.length
             ? 'Com colaborador, o expediente de cada dia vem dos Horários/Escalas dele. O de baixo vale só nos dias sem escala.'
-            : 'O cadastro de colaboradores não está neste aparelho: ligue pelo aparelho que tem o cadastro (o iPad).'),
-          diasCampo, grade,
-          U.campo('Fora do expediente', fora, eu ? 'Você não pode bloquear a sua própria Agenda.' : 'Bloqueado: fora do horário a Agenda e o chat não abrem.'),
-          U.campo('Sair sozinho por tempo parado', sai, 'Posto do caixa nunca sai sozinho.'),
-          campoParado,
+            : 'O cadastro de colaboradores não está neste aparelho: ligue pelo aparelho que tem o cadastro (o iPad).')),
+          P.secao('Expediente', P.quadro(
+            P.linha('Dias', grupoDias),
+            P.abreAoTocarNaLinha(P.linha('Início', inicio.caixa, inicio.painel), inicio.input, inicio.painel),
+            P.abreAoTocarNaLinha(P.linha('Fim', fim.caixa, fim.painel), fim.input, fim.painel),
+          )),
+          P.secao('Regras', P.quadro(P.linhaDe('Fora do expediente', fora), linhaSai, linhaParado),
+            U.nota((eu ? 'Você não pode bloquear a sua própria Agenda. ' : 'Bloqueado: fora do horário a Agenda e o chat não abrem. ') + 'Minutos vazios = o padrão de ' + PADRAO_PARADO + '. Posto do caixa nunca sai sozinho.')),
         );
-        return { inicio, fim, fora, parado, colab, sai };
+        mostrarParado();
+        return { inicio: inicio.input, fim: fim.input, fora, parado: parado.input, colab, sai };
       },
       salvar: async (c) => {
         const corpo = {
@@ -418,12 +474,201 @@
     return enviandoEscala;
   }
 
+
+  /* ================= Ações programadas por tela (P-53, áudio do Rodrigo de 25/11/2026) ================= */
+  // A tarefa ligada a uma tela pode esperar uma ação (e a quantidade): ao chegar na quantidade, conclui sozinha.
+  // - Compras e Produção contam atos com nome: o serviço de cada uma chama contarSe quando o ato dá certo.
+  // - Toda tela do menu conta a ação geral "Salvar algo nesta tela" (Zé, 26/11/2026), sem mexer no código das telas
+  //   dos outros: conta quando a pessoa mexe na tela e, logo depois, algo é salvo (no aparelho ou no servidor).
+  const TELA_PRODUTOS = '#/saidas-mercadorias/cadastros-geral/compras-produtos';
+  const ACAO_GERAL = 'tela:salvar';
+  // Chave: o último pedaço do endereço da tela (o card do menu).
+  const ACOES_POR_TELA = {
+    'compras-produtos': [
+      { id: 'produtos:excluir', rotulo: 'Excluir (inativar) produto' },
+      { id: 'produtos:cadastrar', rotulo: 'Cadastrar produto' },
+      { id: 'produtos:alterar', rotulo: 'Alterar produto' },
+    ],
+    'compras-agendamento': [{ id: 'compras:agendar', rotulo: 'Salvar agendamento de pedido' }],
+    'compras-solicitacao': [{ id: 'compras:enviar-pedido', rotulo: 'Enviar pedido de compra' }],
+    'compras-cotacao': [
+      { id: 'compras:aceitar-oferta', rotulo: 'Aceitar oferta de fornecedor' },
+      { id: 'compras:pedido-urgente', rotulo: 'Fazer pedido urgente' },
+      { id: 'compras:encerrar-cotacao', rotulo: 'Encerrar cotação' },
+    ],
+    'compras-pedidos': [{ id: 'compras:receber', rotulo: 'Receber pedido (conferir a entrega)' }],
+    'compras-conferencias': [
+      { id: 'compras:concluir-contagem', rotulo: 'Concluir contagem de estoque' },
+      { id: 'compras:aprovar-contagem', rotulo: 'Aprovar contagem de estoque' },
+      { id: 'compras:agendar-contagem', rotulo: 'Salvar agendamento de contagem' },
+    ],
+    'compras-cadastro': [
+      { id: 'compras:preco-base', rotulo: 'Definir preço-base' },
+      { id: 'compras:vincular', rotulo: 'Ligar fornecedor a produto' },
+    ],
+    'producao-agendamento': [{ id: 'producao:agendar', rotulo: 'Salvar agendamento de produção' }],
+    'producao-pedidos': [
+      { id: 'producao:enviar-pedido', rotulo: 'Enviar pedido de produção' },
+      { id: 'producao:pedido-extra', rotulo: 'Fazer pedido extra' },
+      { id: 'producao:aprovar-reposicao', rotulo: 'Aprovar reposição' },
+    ],
+    'producao-mapa': [{ id: 'producao:concluir-etapa', rotulo: 'Concluir etapa da produção' }],
+    'producao-abastecimento': [
+      { id: 'producao:abastecer', rotulo: 'Abastecer a loja' },
+      { id: 'producao:conferir-loja', rotulo: 'Conferir a chegada na loja' },
+    ],
+    'producao-fichas': [{ id: 'producao:salvar-ficha', rotulo: 'Salvar ficha técnica' }],
+    'producao-produtos': [{ id: 'producao:configurar-produto', rotulo: 'Salvar produto da produção' }],
+    'producao-custos': [{ id: 'producao:parametros', rotulo: 'Salvar parâmetros de custo' }],
+  };
+  const ehTelaDoMenu = (endereco) => /^#\/(?!agenda\/)[a-z0-9-]+\/./.test(String(endereco || ''));
+  const acoesDaTela = (endereco) => (ehTelaDoMenu(endereco)
+    ? [...(ACOES_POR_TELA[String(endereco).split('/').pop()] || []), { id: ACAO_GERAL, rotulo: 'Salvar algo nesta tela' }]
+    : []);
+  /** Para os serviços das telas: conta a ação quando o ato deu certo ({ ok: true }) e devolve o resultado como veio. */
+  function contarSe(acao, resultado, n = 1) {
+    if (resultado && resultado.ok) acaoFeita(acao, n).catch(() => undefined);
+    return resultado;
+  }
+  /** A tela avisa: a ação foi feita n vezes. O servidor soma e conclui a tarefa que chegou na quantidade.
+      A ação geral leva a tela junto: só conta para a tarefa ligada a ela. */
+  async function acaoFeita(acao, n = 1, tela = '') {
+    if (!A.conectado() || A.situacao !== 'servidor') return;
+    const r = await A.acaoFeita(acao, n, tela);
+    if (r.erro || !r.dados.tarefas.length) return;
+    // O progresso já aparece no aviso, sem esperar a próxima leitura da Agenda.
+    r.dados.tarefas.forEach((t) => { const i = A.item(t.id); if (i) i.acaoFeitas = t.feitas; });
+    pintarAviso();
+    const concluidas = r.dados.tarefas.filter((t) => t.concluiu);
+    if (concluidas.length) U.avisar(concluidas.length === 1 ? 'Tarefa da Agenda concluída: ' + ((A.item(concluidas[0].id) || {}).titulo || 'feita') + '.' : concluidas.length + ' tarefas da Agenda concluídas.');
+    await A.atualizar(true);
+    pintarAviso();
+  }
+
+  /* Telas em que o ícone de agendar aparece: o administrador decide (Configurações da Agenda). Padrão: todas,
+     menos os formulários de lançamento. Só as exceções ficam no servidor. */
+  const DESLIGADAS_PADRAO = new Set([
+    '#/entradas-vendas/lancamentos/vz-lan-vnd-vendas', '#/transferencias-contas/lancamentos/vz-lan-cnt-transfere-ncias',
+    '#/saidas-despesas/lancamentos/vz-lan-des-despesas', '#/saidas-mercadorias/lancamentos/vz-lan-mer-mercadorias',
+    '#/saidas-retiradas/lancamentos/vz-lan-ret-retiradas',
+  ]);
+  let excecoesIcone = {};
+  const iconeLigado = (endereco) => (endereco in excecoesIcone ? excecoesIcone[endereco] : !DESLIGADAS_PADRAO.has(endereco));
+  async function carregarTelasIcone() {
+    if (!A.conectado()) return;
+    const r = await A.telasIcone();
+    if (!r.erro) excecoesIcone = r.dados.telas || {};
+    aplicarIcone();
+  }
+  function aplicarIcone() {
+    const t = telaAtual();
+    document.body.classList.toggle('agendar-desligado', Boolean(t && !iconeLigado(t.endereco)));
+  }
+  /** Todas as telas do menu (origem, seção e cartão), com o endereço que o rotas.js grava. */
+  function telasDoMenu() {
+    const R = window.CicluzRotas;
+    if (!R || typeof sections === 'undefined' || typeof menuCardsOf !== 'function') return [];
+    const saida = [];
+    sections.forEach(([nome, subs], i) => subs.forEach((s) => {
+      let cartoes = [];
+      try { cartoes = menuCardsOf(i, s, 'tree'); } catch { cartoes = []; }
+      cartoes.forEach((c) => { if (Array.isArray(c) && c[2]) saida.push({ endereco: R.montarEndereco([R.slugMenu(nome), R.slug(s), R.slug(c[2])]), titulo: c[0], origem: nome.split(' · ')[0], secao: s, menu: nome, indice: i }); });
+    }));
+    return saida;
+  }
+
+  /**
+   * As telas do menu em árvore (P-58, Rodrigo 27/11/2026: "apareceria o caminho como se fosse lá no menu"): menu › seção › tela,
+   * para o campo "Tela" do compromisso (U.campoArvore). Só a tela é marcável; o id dela é o endereço (#/…).
+   * A sigla e a cor de cada menu são as da origem (VND, CNT, DES, MER, RET; cor de `menuColor` do index.html); Resultados e
+   * Configurações levam RES e CFG. Sem "Ativo/Inativo": tela do menu não tem situação.
+   */
+  const SIGLAS_MENU = ['VND', 'CNT', 'DES', 'MER', 'RET', 'RES', 'CFG'];
+  function arvoreDoMenu() {
+    const menus = new Map();
+    telasDoMenu().forEach((t) => {
+      const cor = typeof menuColor !== 'undefined' ? menuColor[t.indice] : undefined;
+      if (!menus.has(t.indice)) menus.set(t.indice, { id: 'menu:' + t.indice, nome: t.menu, sigla: SIGLAS_MENU[t.indice] || '', cor, semEstado: true, selecionavel: false, filhos: [] });
+      const m = menus.get(t.indice);
+      let s = m.filhos.find((x) => x.secao === t.secao);
+      if (!s) { s = { id: 'secao:' + t.indice + '|' + t.secao, nome: t.secao, secao: t.secao, sigla: m.sigla, cor: m.cor, semEstado: true, selecionavel: false, filhos: [] }; m.filhos.push(s); }
+      s.filhos.push({ id: t.endereco, nome: t.titulo, folha: true, semEstado: true, cor: m.cor });
+    });
+    return [...menus.values()].map((m) => ({ ...m, conta: m.filhos.length + (m.filhos.length === 1 ? ' seção' : ' seções'), filhos: m.filhos.map((s) => ({ ...s, conta: s.filhos.length + (s.filhos.length === 1 ? ' tela' : ' telas') })) }));
+  }
+
+  /* Aviso na tela (P-53): tarefas de hoje ligadas à tela aberta, com "Feito" (e o progresso, quando há ação que conta). */
+  const avisoFechado = new Set();
+  let aviso = null;
+  function tarefasDaTela(endereco) {
+    if (A.situacao !== 'servidor') return [];
+    const hoje = D.isoData(new Date());
+    return A.visiveis().filter((i) => !i.concluida && i.vinculoTela === endereco && (!i.data || i.data <= hoje) && A.acesso(i).concluir && !avisoFechado.has(i.id + '|' + (i.data || '')));
+  }
+  function pintarAviso() {
+    const t = telaAtual();
+    const itens = t ? tarefasDaTela(t.endereco) : [];
+    if (!itens.length) { if (aviso) aviso.hidden = true; return; }
+    if (!aviso) {
+      aviso = el('aside', 'agenda-aviso-tela');
+      aviso.setAttribute('role', 'status');
+      aviso.setAttribute('aria-label', 'Tarefas da Agenda nesta tela');
+      document.body.append(aviso);
+    }
+    aviso.hidden = false;
+    const cab = el('div', 'agenda-aviso-cab');
+    const fechar = botao('', () => { itens.forEach((i) => avisoFechado.add(i.id + '|' + (i.data || ''))); aviso.hidden = true; }, 'agenda-aviso-fechar');
+    fechar.innerHTML = svg('<path d="M6 6l12 12M18 6 6 18"/>');
+    fechar.setAttribute('aria-label', 'Fechar o aviso');
+    cab.append(el('b', null, 'Hoje nesta tela'), fechar);
+    const quadro = el('div', 'agenda-aviso-quadro');
+    itens.slice(0, 3).forEach((i) => {
+      const linha = el('div', 'agenda-aviso-linha');
+      const texto = el('span', 'agenda-aviso-texto');
+      texto.append(el('b', null, i.titulo));
+      if (i.acaoTela && i.acaoQuantidade) texto.append(el('small', null, i.acaoFeitas + ' de ' + i.acaoQuantidade + ' · conclui sozinha ao chegar'));
+      else if (i.data && i.data < D.isoData(new Date())) texto.append(el('small', null, 'Atrasada desde ' + D.dataCurta(i.data)));
+      const feito = botao('Feito', async () => {
+        feito.disabled = true;
+        const r = await A.concluir(i.id, true, i.data);
+        if (r.erro) { feito.disabled = false; U.avisar(r.erro); return; }
+        U.avisar('Tarefa concluída na Agenda.');
+        pintarAviso();
+      }, 'btn agenda-aviso-feito');
+      linha.append(texto, feito);
+      quadro.append(linha);
+    });
+    if (itens.length > 3) quadro.append(el('p', 'agenda-aviso-mais', '+ ' + (itens.length - 3) + ' na Agenda'));
+    aviso.replaceChildren(cab, quadro);
+  }
+  function aoTrocarDeTela() { telaAbertaEm = Date.now(); aplicarIcone(); pintarAviso(); }
+
+  /* Ação geral (P-53): a pessoa tocou nesta tela depois de abri-la e, em até 3 s, algo foi salvo (o cicluz-sync avisa
+     com "cicluz-dado-salvo"). O que é salvo junto (em 1,5 s) conta uma vez. Só pergunta ao servidor quando há tarefa
+     aberta esperando essa ação nesta tela. */
+  let gestoEm = 0;
+  let telaAbertaEm = Date.now();
+  let contandoGeral = null;
+  ['pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, () => { gestoEm = Date.now(); }, { passive: true, capture: true }));
+  function algoSalvo() {
+    const t = telaAtual();
+    if (!t || contandoGeral || gestoEm <= telaAbertaEm || Date.now() - gestoEm > 3000) return;
+    const espera = ((A.dados && A.dados.itens) || []).some((i) => i.acaoTela === ACAO_GERAL && i.vinculoTela === t.endereco && !i.concluida);
+    if (!espera) return;
+    contandoGeral = setTimeout(() => { contandoGeral = null; acaoFeita(ACAO_GERAL, 1, t.endereco).catch(() => undefined); }, 1500);
+  }
+  document.addEventListener('cicluz-dado-salvo', algoSalvo);
+  window.addEventListener('hashchange', () => setTimeout(aoTrocarDeTela, 0));
+  window.addEventListener('popstate', () => setTimeout(aoTrocarDeTela, 0));
+  document.addEventListener('cicluz-rota-mudou', aoTrocarDeTela);
+  document.addEventListener('cicluz-agenda-mudou', () => pintarAviso());
+
   /* ================= Sair do sistema depois do tempo parado ================= */
   // Padrão de 15 minutos no sistema todo (P-46 item 4); posto do caixa não sai. A tela sai sozinha e, enquanto a
   // pessoa mexe, avisa o servidor a cada minuto (as atualizações automáticas não contam como uso lá).
   let limiteMs = 0;
   let timer = null;
-  let aviso = null;
+  let avisoSaida = null;
   let ultimo = 0;
   let ultimoSinal = Date.now();
   function sair() {
@@ -440,8 +685,8 @@
     }
     if (!limiteMs) return;
     clearTimeout(timer);
-    clearTimeout(aviso);
-    if (limiteMs > 60000) aviso = setTimeout(() => U.avisar('Você vai sair do sistema em 1 minuto por falta de uso.'), limiteMs - 60000);
+    clearTimeout(avisoSaida);
+    if (limiteMs > 60000) avisoSaida = setTimeout(() => U.avisar('Você vai sair do sistema em 1 minuto por falta de uso.'), limiteMs - 60000);
     timer = setTimeout(sair, limiteMs);
   }
   async function iniciarInatividade() {
@@ -452,6 +697,9 @@
     mexeu();
     // Horários/Escalas: confere ao abrir e a cada 10 minutos (só manda o que mudou).
     enviarEscalas(false);
+    // Ações programadas (P-53): telas do ícone de agendar e o aviso da tela aberta.
+    carregarTelasIcone();
+    pintarAviso();
     setInterval(() => { if (document.visibilityState === 'visible') enviarEscalas(false); }, 10 * 60000);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciarInatividade); else setTimeout(iniciarInatividade, 0);
@@ -460,6 +708,7 @@
     abrirConfiguracoes, renderDesempenho, agendarDaTela, abrirTela, telaAtual,
     tarefaDoPedidoDeCompra, pedidoDeCompraFeito, tarefaDoPedidoDeProducao, pedidoDeProducaoFeito,
     producaoParaLancar, producaoLancada, producaoCancelada, integracaoDoColaborador, enviarEscalas,
+    acoesDaTela, acaoFeita, contarSe, ACAO_GERAL, telasDoMenu, arvoreDoMenu, iconeLigado, carregarTelasIcone, DESLIGADAS_PADRAO, TELA_PRODUTOS,
     TELA_PEDIDO_COMPRA, TELA_PEDIDO_PRODUCAO, TELA_MAPA_PRODUCAO, TELA_PERIODO_TESTE,
   };
 })();

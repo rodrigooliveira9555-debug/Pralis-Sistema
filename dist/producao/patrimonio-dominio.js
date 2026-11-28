@@ -188,6 +188,7 @@
     const o = { ...b };
     const inteiro = (v) => (txt(v) === '' ? null : Number(v));
     const din = (v) => (v == null || txt(v) === '' ? null : r2(Number(v)));
+    o.tipoId = txt(o.tipoId); // Tipo do bem (Notebook, Computador, Celular…): id de um item da lista editável do cadastro, opcional
     o.nomeTecnico = txt(o.nomeTecnico); o.descricao = txt(o.descricao); o.codigoInterno = txt(o.codigoInterno); o.observacoes = txt(o.observacoes);
     o.unidade = txt(o.unidade); o.quantidade = inteiro(o.quantidade);
     // Dados do cadastro de 18/11/2026 (todos opcionais; cadastro antigo abre e salva igual).
@@ -215,11 +216,12 @@
    * Uma mensagem por etapa ('' = em ordem). Obrigatórios: nome simplificado e categoria; o resto depende do que for
    * preenchido (um imóvel não precisa de marca nem série). ctx = { bens, cnpjValid, hoje }.
    */
-  function validar(b, { bens = [], cnpjValid = () => true, hoje = new Date().toISOString().slice(0, 10) } = {}) {
+  /** categoriaObrigatoria: false no Cadastro Simples (27/11/2026): a categoria só é pedida quando o Cadastro completo está ligado. */
+  function validar(b, { bens = [], cnpjValid = () => true, hoje = new Date().toISOString().slice(0, 10), categoriaObrigatoria = true } = {}) {
     const o = b;
     const etapa1 = () => {
       if (!txt(o.nome)) return 'Informe o nome simplificado.';
-      if (!o.categoria) return 'Escolha a categoria.';
+      if (!o.categoria && categoriaObrigatoria) return 'Escolha a categoria.';
       if (o.capacidade && o.capacidade.valor != null && !(o.capacidade.valor > 0)) return 'A capacidade de produção deve ser maior que zero.';
       for (const u of lista(o.utensiliosIds)) {
         if (u === o.id) return 'Um patrimônio não pode usar a si mesmo como utensílio.';
@@ -364,10 +366,21 @@
     return [...chaves].filter((k) => !IGNORAR.has(k) && JSON.stringify((antes || {})[k] ?? null) !== JSON.stringify((depois || {})[k] ?? null)).sort();
   }
 
+  /** Tipos que a lista editável de Tipo do bem já traz na primeira vez (27/11/2026, Washington). Depois disso a lista é do cadastro. */
+  const TIPOS_INICIAIS = ['Notebook', 'Computador', 'Celular'];
+  /** RET - Tipos de Patrimônio (27/11/2026): nome obrigatório, até 60 letras e sem repetir outro tipo (maiúscula e acento não contam). Devolve a mensagem ou ''. */
+  function validarTipo(t, tipos = []) {
+    const n = String((t && t.nome) || '').replace(/\s+/g, ' ').trim();
+    if (!n) return 'Informe o nome do tipo.';
+    if (n.length > 60) return 'O nome do tipo tem no máximo 60 letras.';
+    const chave = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
+    if (tipos.some((x) => x.id !== (t && t.id) && chave(x.nome) === chave(n))) return 'Já existe um tipo de patrimônio com este nome.';
+    return '';
+  }
   const etapas = () => ['Cadastro e identificação', 'Imagens e documentação', 'Localização e responsabilidade', 'Composição e componentes', 'Aquisição, financeiro e depreciação', 'Manutenção, controle e revisão'];
 
   return {
-    CATEGORIAS_PATRIMONIO, CATEGORIAS_PRODUCAO, CATEGORIAS_UTENSILIO, UNIDADES_MEDIDA, UNIDADES_DIMENSAO, UNIDADES_PESO, VOLTAGENS, TIPOS_ENERGIA, UNIDADES_GAS, MATERIAIS, TECNICAS_OCULTAS,
+    TIPOS_INICIAIS, validarTipo, CATEGORIAS_PATRIMONIO, CATEGORIAS_PRODUCAO, CATEGORIAS_UTENSILIO, UNIDADES_MEDIDA, UNIDADES_DIMENSAO, UNIDADES_PESO, VOLTAGENS, TIPOS_ENERGIA, UNIDADES_GAS, MATERIAIS, TECNICAS_OCULTAS,
     CATEGORIAS_NOVAS, TIPOS_BEM, NATUREZAS, SITUACOES, CONSERVACAO, TIPOS_IMAGEM, TIPOS_DOCUMENTO, TIPOS_RESPONSABILIDADE, TIPOS_MOVIMENTACAO, TIPOS_AQUISICAO, METODOS_DEPRECIACAO,
     TIPOS_MANUTENCAO, SITUACOES_MANUTENCAO, SITUACOES_PECA, MOTIVOS_BAIXA, RESULTADOS_INSPECAO, TIPOS_ARQUIVO_IMAGEM, TIPOS_ARQUIVO_DOCUMENTO, LIMITES, TECNICAS,
     camposTecnicos, totalPeca, totaisComponentes, valorTotalAquisicao, prazoRestante, proximoNumero, criaCiclo, valorDoConjunto, normalizar, validar, mudancas, etapas, dataValida, r2,

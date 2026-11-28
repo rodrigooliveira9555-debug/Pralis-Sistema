@@ -188,4 +188,22 @@ ok(() => { // ajustes de 19/11/2026: voltagem, peso, responsáveis
   assert.match(v(base({ responsaveis: [{ colaboradorId: 'p1', nome: '' }] }))[2], /sem nome/);
   assert.deepEqual(P.normalizar({ nome: 'X' }).responsaveis, []); // cadastro antigo abre igual
 });
+ok(() => { // Cadastro Simples (27/11/2026): sem categoria só vale no Simples; o Tipo do bem é um id opcional
+  const semCat = P.normalizar({ id: 'b2', nome: 'Notebook do caixa', marca: 'Dell' });
+  assert.match(v(semCat)[0], /categoria/i); // Completo: a categoria é obrigatória como sempre
+  assert.deepEqual(v(semCat, { categoriaObrigatoria: false }), D0); // Simples: só o nome é obrigatório
+  assert.match(v(P.normalizar({ id: 'b3', nome: '', categoria: 'MAC' }), { categoriaObrigatoria: false })[0], /nome/i);
+  assert.equal(P.normalizar({ nome: 'X' }).tipoId, ''); // cadastro antigo abre igual
+  assert.equal(P.normalizar({ nome: 'X', tipoId: ' tipo-1 ' }).tipoId, 'tipo-1');
+  assert.deepEqual(P.TIPOS_INICIAIS, ['Notebook', 'Computador', 'Celular']);
+});
+ok(() => { // RET - Tipos de Patrimônio (27/11/2026): nome obrigatório, até 60 letras, sem repetir (maiúscula e acento não contam)
+  const lista = [{ id: 't1', nome: 'Notebook' }, { id: 't2', nome: 'Câmera' }];
+  assert.match(P.validarTipo({ nome: '   ' }, lista), /nome do tipo/i);
+  assert.match(P.validarTipo({ nome: 'x'.repeat(61) }, lista), /60/);
+  assert.match(P.validarTipo({ nome: ' notebook ' }, lista), /Já existe/);
+  assert.match(P.validarTipo({ nome: 'CAMERA' }, lista), /Já existe/);
+  assert.equal(P.validarTipo({ id: 't1', nome: 'NOTEBOOK' }, lista), ''); // editar o próprio tipo (só trocar a letra) vale
+  assert.equal(P.validarTipo({ nome: 'Tablet' }, lista), '');
+});
 console.log('patrimonio-dominio: ' + n + ' grupos de verificação ok');

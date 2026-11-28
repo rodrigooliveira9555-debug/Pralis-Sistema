@@ -4,6 +4,8 @@
  * diferença, a folha digital contra o PDV e a maquininha, as paradas do computador, as transferências com seus lacres,
  * as provas e o histórico da conferência. A Gerência vê o detalhe SEM contagem, diferença, folha comparada nem decisão.
  * Tudo vem do retrato gravado no fechamento (modulo.js › fecharCaixa), não do turno vivo. Dados FICTÍCIOS, em centavos.
+ * Os blocos de pares nome/valor são grupos de linhas de leitura (padrão da Nova Transferência: nome à esquerda, valor à direita, notas e
+ * avisos depois do quadro); tabelas e listas não mudaram.
  */
 (function () {
   'use strict';
@@ -11,13 +13,15 @@
   const C = window.CicluzCaixa;
   const F = window.CicluzCaixaFechamentos;
   const { el } = U;
-  const { moeda } = C;
-  const { corpoSecao, dl, sinal, classeDif } = F;
+  const { moeda, formulario, grupo, linhaLeitura } = C;
+  const { corpoSecao, sinal, classeDif } = F;
 
   const TIPO = { malote: 'Malote', sem_lacre: 'Sem lacre', sangria: 'Sangria', retorno_final: 'Retorno final', comum: 'Comum' };
   const SITUACAO_TR = { pendente: ['Pendente de conferência', 'atencao'], recebida: ['Recebida', 'positivo'], divergente: ['Divergente', 'negativo'], cancelada: ['Cancelada', 'info'] };
   const FORMAS = [['Crédito', 'credito', true], ['Débito', 'debito', true], ['Dinheiro', 'dinheiro', false], ['Pix', 'pix', true], ['Voucher', 'voucher', true]];
 
+  /** Pares nome/valor viram as linhas de leitura de um grupo. */
+  const leituras = (pares) => pares.map(([n, v]) => linhaLeitura(n, v));
   const secaoComSituacao = (titulo, h) => {
     const s = U.secao(titulo);
     s.querySelector('.compras-secao-cab').append(F.situacaoChip(h));
@@ -26,21 +30,20 @@
 
   function blocoQuem(h) {
     const s = secaoComSituacao('Dossiê · ' + h.pdv + ' · ' + h.turno + ' · ' + h.data, h);
-    const itens = [dl([['Fechamento executado por', h.fechadoPor], ['Gerente', h.supervisor], ['Abertura → fechamento', h.abertura + ' → ' + h.fechamento],
-      ['Lacre de fechamento usado', h.lacreFechamento], ['Lacre reservado pela Tesouraria', h.lacreReservado]])];
-    if (h.lacreFechamento !== h.lacreReservado) itens.push(el('p', 'caixa-alerta', 'O lacre de fechamento não bate com o reservado pela Tesouraria. Resolva antes de confirmar.'));
-    if (h.observacao) itens.push(U.nota('Observação do operador: ' + h.observacao));
-    s.append(corpoSecao(...itens));
+    const depois = [];
+    if (h.lacreFechamento !== h.lacreReservado) depois.push(el('p', 'caixa-alerta', 'O lacre de fechamento não bate com o reservado pela Tesouraria. Resolva antes de confirmar.'));
+    if (h.observacao) depois.push(U.nota('Observação do operador: ' + h.observacao));
+    s.append(corpoSecao(formulario(grupo('Fechamento', leituras([...(h.codigo ? [['Identificador do caixa', h.codigo], ['Grupo › subgrupo', (h.grupo || '—') + ' › ' + (h.subgrupo || '—')]] : []), ['Fechamento executado por', h.fechadoPor], ['Gerente', h.supervisor], ['Abertura → fechamento', h.abertura + ' → ' + h.fechamento],
+      ['Lacre de fechamento usado', h.lacreFechamento], ['Lacre reservado pela Tesouraria', h.lacreReservado]]), ...depois))));
     return s;
   }
 
   function blocoContagem(h) {
     const s = U.secao('Contagem e diferença');
     const c = h.contagem;
-    const itens = [dl([['Cédulas', moeda(c.especie)], ['Moedas', moeda(c.moedas)], ['Contado', moeda(h.contado)], ['Esperado (sistema)', moeda(h.esperado)], ['Diferença', sinal(h.diferenca)]]),
-      el('p', 'caixa-diferenca ' + classeDif(h.diferenca), h.diferenca < 0 ? '▼ Falta de ' + moeda(-h.diferenca) + ': quebra registrada no fechamento.' : h.diferenca > 0 ? '▲ Sobra de ' + moeda(h.diferenca) + ': sem quebra, Tesouraria avisada.' : '✓ Bateu: sem diferença.')];
-    if (c.correcoes.length) itens.push(U.nota('Correções da contagem (a primeira fica no histórico): ' + c.correcoes.map((x) => moeda(x.de) + ' → ' + moeda(x.para) + ' (' + x.justificativa + ')').join(' · ')));
-    s.append(corpoSecao(...itens));
+    const depois = [el('p', 'caixa-diferenca ' + classeDif(h.diferenca), h.diferenca < 0 ? '▼ Falta de ' + moeda(-h.diferenca) + ': quebra registrada no fechamento.' : h.diferenca > 0 ? '▲ Sobra de ' + moeda(h.diferenca) + ': sem quebra, Tesouraria avisada.' : '✓ Bateu: sem diferença.')];
+    if (c.correcoes.length) depois.push(U.nota('Correções da contagem (a primeira fica no histórico): ' + c.correcoes.map((x) => moeda(x.de) + ' → ' + moeda(x.para) + ' (' + x.justificativa + ')').join(' · ')));
+    s.append(corpoSecao(formulario(grupo('Contagem', leituras([['Cédulas', moeda(c.especie)], ['Moedas', moeda(c.moedas)], ['Contado', moeda(h.contado)], ['Esperado (sistema)', moeda(h.esperado)], ['Diferença', sinal(h.diferenca)]]), ...depois))));
     return s;
   }
 
@@ -61,10 +64,9 @@
       ['Maquininha', (l) => (l.maq === undefined ? '—' : l.maq === null ? 'sem leitura' : moeda(l.maq)), 'caixa-num'],
       ['Situação', (l) => (l.dif ? U.situacao('▲▼ Diferença ' + moeda(l.dif), 'negativo') : l.semFolha || l.semMaq ? U.situacao('Sem leitura', 'negativo') : U.situacao('✓ Confere', 'positivo'))],
     ], linhas));
-    const itens = [dl([['Troco inicial', campos.trocoInicial], ['CLIENTES (VND/TRANS)', campos.clientes], ['Total impresso', campos.total], ['Saldo final dinheiro', campos.saldoFinal]]),
-      U.nota('Folha e maquininha só informam: divergência delas não vira quebra. Só a diferença da contagem física gera quebra.')];
-    if (h.folha.correcao) itens.push(el('p', 'caixa-alerta', 'Correção manual da folha: ' + h.folha.correcao));
-    s.append(corpoSecao(...itens));
+    const depois = [U.nota('Folha e maquininha só informam: divergência delas não vira quebra. Só a diferença da contagem física gera quebra.')];
+    if (h.folha.correcao) depois.push(el('p', 'caixa-alerta', 'Correção manual da folha: ' + h.folha.correcao));
+    s.append(corpoSecao(formulario(grupo('Totais da folha', leituras([['Troco inicial', campos.trocoInicial], ['CLIENTES (VND/TRANS)', campos.clientes], ['Total impresso', campos.total], ['Saldo final dinheiro', campos.saldoFinal]]), ...depois))));
     return s;
   }
 
@@ -73,12 +75,11 @@
   function blocoInicio(h) {
     const eds = h.edicoes || [];
     const s = U.secao('Início das vendas', eds.length);
-    const itens = [dl([['Abertura oficial', h.abertura], ['Início das vendas', h.inicioVendas || h.abertura], ['Folha do CREARE começa às', h.periodoFolha || '—']])];
-    if (!eds.length) { itens.push(U.nota('Sem ajuste: o início das vendas é a abertura oficial.')); s.append(corpoSecao(...itens)); return s; }
+    const horarios = leituras([['Abertura oficial', h.abertura], ['Início das vendas', h.inicioVendas || h.abertura], ['Folha do CREARE começa às', h.periodoFolha || '—']]);
+    if (!eds.length) { s.append(corpoSecao(formulario(grupo('Horários', horarios, U.nota('Sem ajuste: o início das vendas é a abertura oficial.'))))); return s; }
     const l = el('div', 'compras-lista');
     eds.forEach((e) => l.append(U.linhaLista({ titulo: e.de + ' → ' + e.para, detalhe: e.por + ' · ' + e.em + ' · ' + e.motivo + ' · ' + e.trazidas + ' venda(s) passaram a ser deste caixa' + (e.devolvidas ? ', ' + e.devolvidas + ' saíram' : '') })));
-    itens.push(l);
-    s.append(corpoSecao(...itens));
+    s.append(corpoSecao(formulario(grupo('Horários', horarios)), l));
     return s;
   }
 
@@ -130,15 +131,16 @@
   function detalheGerencia(l) {
     const a = C.estado.abertura;
     const s = U.secao('Detalhe · ' + l.pdv + ' · ' + l.turno + ' · ' + l.data);
+    const linhas = l.status === 'fechado'
+      ? leituras([['Fechamento executado por', l.fechadoPor], ['Lacre de fechamento', l.lacreFechamento], ['Supervisor responsável', l.supervisor]])
+      : leituras([...(l.codigo ? [['Identificador do caixa', l.codigo]] : []), ['Responsável', l.sessao ? a.responsavel : l.operador], ['Lacre de abertura', l.sessao ? a.lacre : 'Não registrado'], ['Lacre de fechamento', 'Sem lacre (ainda aberto)']]);
     const itens = [];
-    if (l.status === 'fechado') itens.push(dl([['Fechamento executado por', l.fechadoPor], ['Lacre de fechamento', l.lacreFechamento], ['Supervisor responsável', l.supervisor]]));
-    else itens.push(dl([['Responsável', l.sessao ? a.responsavel : l.operador], ['Lacre de abertura', l.sessao ? a.lacre : 'Não registrado'], ['Lacre de fechamento', 'Sem lacre (ainda aberto)']]));
     itens.push(U.nota(l.sessao && a.divergencia ? 'Conferência de abertura (malote): divergente, ' + moeda(a.divergencia) + ' em relação ao declarado. Motivo: ' + a.motivoDivergencia : 'Conferência de abertura do malote: convergente.'));
     if (l.status === 'fechado') itens.push(U.nota('Provas do fechamento: Folha de fechamento ' + l.anexos.folha + ' · Folha CREARE ' + l.anexos.creare + ' · Comprovante de cartão ' + l.anexos.comprovantes + '.'));
     if (l.edicoes && l.edicoes.length) itens.push(U.nota('Início das vendas ajustado pelo operador: ' + l.edicoes.map((e) => e.de + ' → ' + e.para + ' (' + e.motivo + ')').join(' · ') + '.'));
     itens.push(U.nota('Alterado após o fechamento: não. Vendas canceladas são auditoria e não entram nos totais.'));
     itens.push(U.nota('A contagem cega, as correções e a conferência da Tesouraria não aparecem para a Gerência.'));
-    s.append(corpoSecao(...itens));
+    s.append(corpoSecao(formulario(grupo('Responsáveis e lacres', linhas, ...itens))));
     const partes = [s];
     if (l.status === 'fechado') partes.push(blocoParadas(l));
     return partes;

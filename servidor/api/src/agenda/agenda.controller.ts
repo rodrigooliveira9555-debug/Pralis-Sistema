@@ -28,8 +28,8 @@ export async function registrarRotasAgenda(app: FastifyInstance) {
 
   app.post("/api/agenda/compromissos/:id/mensagens", { config: limiteChat }, async (request, reply) => {
     const { id } = compromissoParams.parse(request.params);
-    const { texto } = mensagemSchema.parse(request.body);
-    return reply.status(201).send(ok(await servico.enviarMensagem(perfilDaRequisicao(request), id, texto)));
+    const { texto, arquivoId } = mensagemSchema.parse(request.body);
+    return reply.status(201).send(ok(await servico.enviarMensagem(perfilDaRequisicao(request), id, texto, arquivoId)));
   });
 
   app.post("/api/agenda/compromissos/:id/leitura", { config: limiteChat }, async (request) => {

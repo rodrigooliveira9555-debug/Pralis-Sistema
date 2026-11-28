@@ -32,6 +32,9 @@ async function abrirPagina(largura) {
   return pagina;
 }
 const dialogo = (p) => p.locator('dialog.compras-dialog[open]').last();
+// Barra de etapas (quadro de etapa do stepper.js): a lista "Ir para a etapa" se abre, e a etapa N é o N-ésimo botão dela.
+const abreEtapas = (x) => x.locator('.stepper-wrap--etapa .transferencia-linha-acao').first();
+const irParaEtapa = async (x, n) => { await abreEtapas(x).click(); await x.locator('.stepper-wrap--etapa .transferencia-multi-painel button').nth(n - 1).click(); };
 const salvar = (p) => dialogo(p).locator('.people-save-control').click();
 const fechado = (p) => p.waitForFunction(() => !document.querySelector('dialog.compras-dialog[open]'), null, { timeout: 8000 }).catch(async (e) => {
   console.log('ABERTO', await p.evaluate(() => { const d = document.querySelector('dialog.compras-dialog[open]'); return d && (d.querySelector('h2').textContent + ' | ' + d.querySelector('.profiles-error').textContent); }));
@@ -87,7 +90,12 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   await p.locator('#producao-patrimonio .compras-secao-cab button[aria-label="Cadastrar patrimônio"]').click();
   let d = dialogo(p);
   ok((await d.locator('h2').textContent()) === 'Novo patrimônio', 'A bolinha + do cabeçalho da lista abre o cadastro de um bem novo');
-  ok((await d.locator('.stepper-label').allTextContents()).length === 6, 'O cadastro do bem tem seis etapas numeradas');
+  // Cadastro Simples (27/11/2026): abre sem a trilha de etapas, com Salvar; a chave "Abrir o cadastro completo?" traz as seis etapas
+  ok(await d.locator('.stepper-wrap--etapa').isHidden() && (await d.locator('.compras-etapas-nav button').allTextContents()).some((x) => x.includes('Salvar')), 'O bem novo abre no Cadastro Simples: sem trilha de etapas e com Salvar');
+  await d.locator('.account-status:has-text("Abrir o cadastro completo?") .account-status-switch').click();
+  await abreEtapas(d).click();
+  ok((await d.locator('.stepper-wrap--etapa .transferencia-multi-painel button').allTextContents()).length === 6, 'O cadastro do bem tem seis etapas numeradas');
+  await abreEtapas(d).click();
   // Navega pelas etapas pelos botões Avançar/Voltar do próprio formulário
   const avancar = async () => { await d.locator('.compras-etapas-nav button.form-next-action').click(); };
   await d.getByLabel('Nome simplificado *', { exact: true }).fill('Masseira 40 kg');
@@ -127,7 +135,7 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   d = await abrirEdicao('MASSEIRA');
   ok(await d.locator('.compras-etapa').first().locator('.compras-campo').first().locator('.compras-rotulo').textContent() === 'Categoria *', 'Categoria é o primeiro campo do bem');
   ok((await d.locator('.compras-etapa:visible .compras-fieldset legend').allTextContents()).join('|') === 'Identificação|Classificação|Quantidade|Especificação técnica|Identificação técnica|Energia e consumo|Dimensões e características físicas|Outras informações técnicas|Ficha Técnica do Equipamento|Produção', 'Blocos da primeira etapa do bem (especificação técnica na etapa 1, reunião de 17/11/2026)');
-  await d.locator('.stepper-item:nth-child(4) .stepper-node').click();
+  await irParaEtapa(d, 4);
   const abrirPeca = async () => { await d.locator('button', { hasText: 'Adicionar peça' }).click(); return p.locator('dialog[open]:has(h2:has-text("Nova peça"))'); };
   let pc = await abrirPeca();
   await pc.getByLabel('Peça *', { exact: true }).fill('');
@@ -145,13 +153,13 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   await p.locator('button.people-save-control[aria-label="Salvar peça"]').click();
   await p.waitForTimeout(300);
   ok(await d.locator('.patrimonio-tabela-box tbody tr').count() === 1, 'A peça entra na tabela de componentes');
-  await d.locator('.stepper-item:nth-child(6) .stepper-node').click();
+  await irParaEtapa(d, 6);
   await d.locator('.account-status:has-text("Exige manutenção periódica?") .account-status-switch').click();
   await d.locator('input.date-mask-input[aria-label="Próxima manutenção prevista"]').fill('31/02/27');
   await salvar(p);
   ok((await d.locator('input.date-mask-input[aria-label="Próxima manutenção prevista"]').evaluate((i) => i.validationMessage)).includes('DD/MM/AA') && await p.locator('dialog.compras-dialog[open]').count() === 1, 'Data de revisão impossível é recusada (aviso de data da plataforma; o cadastro não fecha)');
   await d.locator('input.date-mask-input[aria-label="Próxima manutenção prevista"]').fill('15/01/20');
-  await d.locator('.stepper-item:nth-child(1) .stepper-node').click();
+  await irParaEtapa(d, 1);
   await d.locator('button', { hasText: 'Gravar áudio' }).click();
   await d.locator('button', { hasText: 'Parar gravação' }).waitFor();
   await salvar(p);
@@ -176,16 +184,16 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   ok(ficha.includes('CORREIA') && ficha.includes('Manutenção periódica') && ficha.includes('15/01/20'), 'Depois de recarregar, a ficha mostra a peça e a manutenção');
   await p.locator('dialog.patrimonio-ficha[open] .patrimonio-ficha-acoes button', { hasText: 'Editar' }).click();
   d = dialogo(p);
-  await d.locator('.stepper-item:nth-child(4) .stepper-node').click();
+  await irParaEtapa(d, 4);
   ok((await d.locator('.patrimonio-tabela-box tbody tr').first().innerText()).includes('CORREIA'), 'Edição traz a peça');
-  await d.locator('.stepper-item:nth-child(6) .stepper-node').click();
+  await irParaEtapa(d, 6);
   ok(await d.locator('input.date-mask-input[aria-label="Próxima manutenção prevista"]').inputValue() === '15/01/20', 'Edição traz a data da manutenção');
-  await d.locator('.stepper-item:nth-child(1) .stepper-node').click();
+  await irParaEtapa(d, 1);
   await d.locator('button', { hasText: 'Ouvir áudio' }).click();
   await d.locator('audio:not([hidden])').waitFor();
-  await d.locator('.stepper-item:nth-child(6) .stepper-node').click();
+  await irParaEtapa(d, 6);
   await d.locator('.account-status:has-text("Exige manutenção periódica?") .account-status-switch').click();
-  await d.locator('.stepper-item:nth-child(1) .stepper-node').click();
+  await irParaEtapa(d, 1);
   await d.locator('button', { hasText: 'Descartar áudio' }).click();
   await salvar(p); await fechado(p);
   masseira = await p.evaluate(() => JSON.parse(localStorage.getItem('cicluz-patrimonio-v1')).bens[0]);
@@ -224,35 +232,35 @@ const criarPao = (p) => p.evaluate(() => CicluzComprasDados.transacao((d) => {
   ok(await p.locator('#producao-fichas.show').count() === 1, '"Fichas" abre as fichas do produto');
   await mais(p);
   d = dialogo(p);
-  ok((await d.getByLabel('Ingredientes para quantas unidades? *', { exact: true }).inputValue()) === '36', 'Quantidade-base começa na fornada');
-  await d.getByLabel('Nome da ficha *', { exact: true }).fill('Do zero');
-  const etapa = (n) => d.locator('.producao-etapa').nth(n);
-  await etapa(0).getByLabel('Processo *', { exact: true }).selectOption('pre-pesar');
-  await etapa(0).getByRole('button', { name: 'Ingrediente', exact: true }).click();
+  ok((await d.getByLabel('Ingredientes para quantas unidades?', { exact: true }).inputValue()) === '36', 'Quantidade-base começa na fornada');
+  await d.getByLabel('Nome da ficha', { exact: true }).fill('Do zero');
+  const etapa = (n) => d.locator('[data-etapa]').nth(n);
+  await etapa(0).getByLabel('Processo', { exact: true }).selectOption('pre-pesar');
+  await etapa(0).getByRole('button', { name: 'Adicionar ingrediente', exact: true }).click();
   await etapa(0).getByLabel('Ingrediente 1', { exact: true }).selectOption('p-farinha');
   await etapa(0).getByLabel('Quantidade do ingrediente 1', { exact: true }).fill('30');
   await etapa(0).getByLabel('Unidade do ingrediente 1', { exact: true }).selectOption('KG');
-  await etapa(0).getByRole('button', { name: 'Equipamento / tempo', exact: true }).click();
+  await etapa(0).getByRole('button', { name: 'Adicionar equipamento / tempo', exact: true }).click();
   await etapa(0).getByLabel('Tempo em minutos 1', { exact: true }).fill('15');
   await etapa(0).getByLabel('Nível profissional 1', { exact: true }).selectOption('ajudante');
   const cargoSel = etapa(0).getByLabel('Cargo 1', { exact: true });
   const padeiro = await cargoSel.evaluate((s) => [...s.options].find((o) => /^padeiro$/i.test(o.textContent.trim()))?.value);
   ok(Boolean(padeiro), 'Lista de cargos vem do cadastro de Cargos (tem Padeiro)');
   await cargoSel.selectOption(padeiro);
-  await d.getByRole('button', { name: 'Etapa', exact: true }).click();
-  await etapa(1).getByLabel('Processo *', { exact: true }).selectOption('misturar');
-  await etapa(1).getByRole('button', { name: 'Ingrediente', exact: true }).click();
+  await d.getByRole('button', { name: 'Adicionar etapa', exact: true }).click();
+  await etapa(1).getByLabel('Processo', { exact: true }).selectOption('misturar');
+  await etapa(1).getByRole('button', { name: 'Adicionar ingrediente', exact: true }).click();
   await etapa(1).getByLabel('Ingrediente 1', { exact: true }).selectOption('p-farinha');
   await etapa(1).getByLabel('Quantidade do ingrediente 1', { exact: true }).fill('30');
   await etapa(1).getByLabel('Unidade do ingrediente 1', { exact: true }).selectOption('KG');
-  await etapa(1).getByRole('button', { name: 'Equipamento / tempo', exact: true }).click();
+  await etapa(1).getByRole('button', { name: 'Adicionar equipamento / tempo', exact: true }).click();
   await etapa(1).getByLabel('Equipamento ou utensílio 1', { exact: true }).selectOption(masseiraId);
   await etapa(1).getByLabel('Tempo em minutos 1', { exact: true }).fill('20');
   await etapa(1).getByLabel('Acompanhamento 1', { exact: true }).selectOption('0');
   ok((await etapa(1).locator('.producao-etapa-resumo').textContent()).includes('Tempo 20 min · equipe 0 min'), 'Masseira sem acompanhamento: tempo de equipe zero');
-  await d.getByRole('button', { name: 'Etapa', exact: true }).click();
-  await etapa(2).getByLabel('Processo *', { exact: true }).selectOption('assar');
-  await etapa(2).getByRole('button', { name: 'Equipamento / tempo', exact: true }).click();
+  await d.getByRole('button', { name: 'Adicionar etapa', exact: true }).click();
+  await etapa(2).getByLabel('Processo', { exact: true }).selectOption('assar');
+  await etapa(2).getByRole('button', { name: 'Adicionar equipamento / tempo', exact: true }).click();
   await etapa(2).getByLabel('Tempo em minutos 1', { exact: true }).fill('25');
   await etapa(2).getByLabel('Acompanhamento 1', { exact: true }).selectOption('0.2');
   ok((await d.locator('.compras-texto-auto').last().textContent()).includes('tempo total 1 h · tempo de equipe 20 min'), 'Resumo da ficha: 60 min no total, 20 min de equipe');
@@ -509,7 +517,7 @@ for (const largura of [320, 390, 1024]) {
     await p.evaluate(() => CicluzProducao.abrir('patrimonio'));
     await p.locator('#producao-patrimonio .compras-linha.com-acoes').first().locator('.c-nome').click();
     await p.locator('dialog.patrimonio-ficha[open] .patrimonio-ficha-acoes button', { hasText: 'Editar' }).click();
-    await dialogo(p).locator('.stepper-item:nth-child(4) .stepper-node').click();
+    await irParaEtapa(dialogo(p), 4);
     await dialogo(p).locator('button', { hasText: 'Adicionar peça' }).click();
     await p.locator('dialog[open]:has(h2:has-text("Nova peça"))').getByLabel('Peça *', { exact: true }).fill('Resistência do forno de lastro');
     await p.waitForTimeout(150);

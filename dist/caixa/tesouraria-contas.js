@@ -5,13 +5,14 @@
  * "Ajustar saldo" (só Tesoureiro, doc 72): saldo atual desejado + justificativa de no mínimo 5 letras; o ajuste é IMUTÁVEL (guarda saldo
  * anterior, desejado, diferença, motivo e autor) e nunca se edita nem se apaga: corrigir é fazer outro ajuste.
  * Adaptação da casca: sem "Zerar saldos" e sem tela de histórico dos ajustes (o principal também não tem). Dados FICTÍCIOS, em centavos.
+ * A janela de ajuste é um formulário linha por linha (padrão da Nova Transferência): o "Saldo atual desejado" é o quadro grande no topo.
  */
 (function () {
   'use strict';
   const U = window.CicluzComprasUI;
   const C = window.CicluzCaixa;
-  const { el, botao, campo, entrada } = U;
-  const { moeda, centavos } = C;
+  const { el, botao, entrada } = U;
+  const { moeda, centavos, formulario, grupo, linhaCampo, linhaLeitura, quadroValor } = C;
   const T = (window.CicluzCaixaTesouraria = window.CicluzCaixaTesouraria || {});
 
   const TIPO = { cofre: 'Cofre', caixa: 'Caixa (posto)', banco: 'Banco' };
@@ -50,12 +51,27 @@
   function ajustar(c, atualizar) {
     C.dialogo({
       titulo: 'Ajustar saldo atual',
-      subtitulo: 'Conta: ' + c.nome + ' · saldo atual: ' + moeda(C.saldoConta(c.id)),
       rotuloSalvar: 'Registrar ajuste',
-      montar: (form) => {
-        const desejado = entrada('text', '', { inputMode: 'decimal', placeholder: '0,00' });
-        const motivo = el('textarea'); motivo.rows = 3; motivo.maxLength = 500;
-        form.append(campo('Saldo atual desejado (R$)', desejado), campo('Justificativa obrigatória', motivo, 'Mínimo 5 letras. Fica registrada com autor e horário e não pode ser editada.'));
+      padrao: true,
+      montar: (form, dlg) => {
+        // O quadro do valor é o primeiro item: a linha repetida do caminho sai (a conta e o saldo atual aparecem no grupo Conta).
+        const repetido = dlg.querySelector('.compras-dialog-sub'); if (repetido) repetido.remove();
+        const atual = C.saldoConta(c.id);
+        const desejado = entrada('text', '', { inputMode: 'decimal', autocomplete: 'off' });
+        const motivo = entrada('text', '', { maxLength: 500, autocomplete: 'off' });
+        const valor = quadroValor('Saldo atual desejado (R$)', desejado, () => pintar());
+        // O resumo diz sempre com sinal e palavra (nunca só cor) quanto o saldo muda.
+        const pintar = () => {
+          const alvo = desejado.value.trim() === '' ? null : centavos(desejado.value);
+          if (alvo === null) { valor.resumo.textContent = 'Saldo atual: ' + moeda(atual); return; }
+          const dif = alvo - atual;
+          valor.resumo.textContent = dif === 0 ? '✓ Sem diferença em relação ao saldo atual de ' + moeda(atual) + '.' : (dif > 0 ? '▲ Aumenta ' : '▼ Reduz ') + moeda(Math.abs(dif)) + ' em relação ao saldo atual de ' + moeda(atual) + '.';
+        };
+        pintar();
+        form.append(formulario(
+          valor.no,
+          grupo('Conta', [linhaLeitura('Conta', c.nome), linhaLeitura('Saldo atual', moeda(atual))]),
+          grupo('Justificativa', [linhaCampo('Justificativa', motivo, true)], U.nota('Mínimo 5 letras. Fica registrada com autor e horário e não pode ser editada.'))));
         return { desejado, motivo };
       },
       salvar: (ctx) => {

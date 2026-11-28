@@ -1,6 +1,6 @@
 /*
  * Vendas dos PDVs (CREARE) — a tela, em Entradas › API. De cima para baixo, pouca coisa por vez:
- *   1. Abas dos PDVs (Todos · PDV 1 · PDV 2 · PDV 3 · PDV 4) e o botão Sincronizar, com a hora da última leitura.
+ *   1. Abas dos PDVs (Todos · TNP-PC-CXPDV-1 a 4) e o botão Sincronizar, com a hora da última leitura.
  *   2. Filtros (filtros.js): período com data no calendário e hora; o resto em "Mais filtros".
  *   3. Resumo: total vendido, ticket médio e canceladas.
  *   4. Por PDV (só em Todos) e Por tipo de pagamento.
@@ -274,7 +274,7 @@
   async function abrirRelatorio() {
     if (!tela) {
       tela = U.criarTela({
-        id: 'vendas-pdv-view', titulo: 'VND - Vendas dos PDVs', caminho: 'Entradas · Vendas / Faturamento / API / VND - Vendas dos PDVs',
+        id: 'vendas-pdv-view', titulo: 'VND - API Vendas Geral TNP / Sistema Criare', caminho: 'Entradas · Vendas / Faturamento / API / VND - API Vendas Geral TNP / Sistema Criare',
         icone: 'vendasPdv', voltar: () => openSection(sections[0][0], 'API', 'tree', COR), cor: COR, corTexto: COR_TEXTO, classe: 'vendas-pdv-view',
       });
     }
@@ -294,7 +294,7 @@
     montar();
   }
 
-  const CARDS = [['VND - Vendas dos PDVs', 'Vendas do CREARE ao vivo, por PDV, horário e tipo de pagamento', 'vendas-pdv:relatorio']];
+  const CARDS = [['VND - API Vendas Geral TNP / Sistema Criare', 'Vendas do CREARE ao vivo, por PDV, horário e tipo de pagamento', 'vendas-pdv:relatorio']];
   window.CicluzVendasPdv = {
     cards: () => CARDS.map((c) => [...c]),
     abrir: (id) => { if (id === 'relatorio') abrirRelatorio(); },
