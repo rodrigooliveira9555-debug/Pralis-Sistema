@@ -31,7 +31,6 @@
   const LIMITE = 99999999999; // centavos (R$ 999 milhões): trava o × que estouraria
   const cor = () => (typeof menuColor !== 'undefined' && menuColor[1]) || '#f97316';
   const reais = (c) => (c < 0 ? '−' : '') + 'R$ ' + (Math.abs(c) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const MARCA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
 
   // Data no padrão do site, com o rótulo e o painel dentro do campo.
   function campoDeData(rotulo, valor = '') {
@@ -419,14 +418,8 @@
           function desenhar() {
             const itens = lista();
             arvore.replaceChildren(...itens.map((nome) => {
-              const b = el('button', 'compras-hier-linha transferencia-conta'); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(nome === atual));
-              const icone = el('span', 'compras-hier-icone'); icone.setAttribute('aria-hidden', 'true'); icone.append(el('span', 'sigla-text', 'CNT'));
-              const marca = el('span', 'transferencia-conta-marca'); marca.innerHTML = MARCA;
-              const seta = el('span', 'compras-hier-seta'); seta.setAttribute('aria-hidden', 'true'); seta.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
-              const texto = el('span', 'compras-hier-texto'); texto.append(el('b', null, nome), el('small', null, 'Conta ativa'));
-              b.append(seta, marca, icone, texto);
-              b.onclick = () => { caixa.value = nome; abrirLista(false); abre.no.focus(); };
-              return b;
+              // A linha da lista é a peça única U.itemDeEscolha (a mesma da escolha na linha dos outros cadastros).
+              return U.itemDeEscolha({ nome, detalhe: 'Conta ativa', sigla: 'CNT', marcado: nome === atual, aoEscolher: () => { caixa.value = nome; abrirLista(false); abre.no.focus(); } });
             }));
             if (!itens.length) arvore.append(el('p', 'profiles-note compras-hier-vazio', 'Nenhuma conta disponível.'));
           }
@@ -460,13 +453,8 @@
           destino.value = lista.includes(atual) ? atual : '';
           [...marcadas].forEach((n) => { if (!lista.includes(n)) marcadas.delete(n); });
           listaContas.replaceChildren(...lista.map((nome) => {
-            const b = el('button', 'compras-hier-linha transferencia-conta'); b.type = 'button'; b.setAttribute('role', 'checkbox');
-            const icone = el('span', 'compras-hier-icone'); icone.setAttribute('aria-hidden', 'true'); icone.append(el('span', 'sigla-text', 'CNT'));
-            const marca = el('span', 'transferencia-conta-marca'); marca.innerHTML = MARCA;
-            // Mesmo desenho da lista em árvore (seta, caixa, ícone, nome e detalhe), com a marca redonda no lugar da caixa de marcar; a seta fica apagada (conta não tem níveis abaixo).
-            const seta = el('span', 'compras-hier-seta'); seta.setAttribute('aria-hidden', 'true'); seta.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
-            const texto = el('span', 'compras-hier-texto'); texto.append(el('b', null, nome), el('small', null, 'Conta ativa'));
-            b.append(seta, marca, icone, texto);
+            // Mesmo desenho da lista em árvore (U.itemDeEscolha), com a marca redonda; vários: papel checkbox.
+            const b = U.itemDeEscolha({ nome, detalhe: 'Conta ativa', sigla: 'CNT', papel: 'checkbox' });
             const pintar = () => b.setAttribute('aria-checked', String(marcadas.has(nome)));
             b.onclick = () => { if (marcadas.has(nome)) marcadas.delete(nome); else marcadas.add(nome); pintar(); contarContas(); };
             pintar();

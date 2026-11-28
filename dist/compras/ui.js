@@ -332,6 +332,57 @@
     mostrar('grade'); pintar();
     return { caixa, painel, botao };
   }
+  /*
+   * ESCOLHA NA LINHA (Rodrigo, 28/11/2026 — o padrão da Origem / Destino da Nova Transferência para qualquer escolha: grupo, colaborador, cargo...).
+   * itemDeEscolha: a linha da lista — seta (apagada quando o item não tem nível abaixo), marcação redonda com o "certo", ícone (desenho ou sigla), nome e,
+   *   embaixo, pequeno, o detalhe. papel 'radio' (escolha de um) ou 'checkbox' (vários).
+   * escolhaNaLinha: a linha do quadro (nome do campo e, à direita, o escolhido) que se ABRE PARA BAIXO, dentro do próprio quadro, com a lista; tocar num
+   *   item escolhe e recolhe; tocar fora (ou Esc) também recolhe. itens: () => [{ id, nome, detalhe, html | sigla }]. linha.value = id escolhido.
+   */
+  const MARCA_ESCOLHA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+  function itemDeEscolha({ nome, detalhe = '', html = '', sigla = '', marcado = false, papel = 'radio', aoEscolher }) {
+    const b = el('button', 'compras-hier-linha transferencia-conta'); b.type = 'button'; b.setAttribute('role', papel); b.setAttribute('aria-checked', String(Boolean(marcado)));
+    const seta = el('span', 'compras-hier-seta'); seta.setAttribute('aria-hidden', 'true'); seta.innerHTML = svg('<path d="m9 6 6 6-6 6"/>');
+    const marca = el('span', 'transferencia-conta-marca'); marca.innerHTML = MARCA_ESCOLHA;
+    const icone = el('span', 'compras-hier-icone'); icone.setAttribute('aria-hidden', 'true'); if (html) icone.innerHTML = html; else icone.append(el('span', 'sigla-text', sigla));
+    const texto = el('span', 'compras-hier-texto'); texto.append(el('b', null, nome)); if (detalhe) texto.append(el('small', null, detalhe));
+    b.append(seta, marca, icone, texto);
+    if (aoEscolher) b.onclick = aoEscolher;
+    return b;
+  }
+  function escolhaNaLinha({ rotulo, itens, valor = '', textoVazio = 'Selecione', vazio = 'Nada cadastrado.' }) {
+    let atual = valor || '';
+    const linha = el('div', 'compras-campo compras-escolha-linha');
+    const abre = el('button', 'compras-escolha-abre'); abre.type = 'button'; abre.setAttribute('aria-expanded', 'false'); abre.setAttribute('aria-label', rotulo.replace(/ *\*$/, ''));
+    const resumo = el('span', 'compras-escolha-resumo'); abre.append(resumo); abre.insertAdjacentHTML('beforeend', svg('<path d="m6 9 6 6 6-6"/>'));
+    const lista = el('div', 'compras-hier transferencia-contas compras-escolha-lista'); lista.hidden = true; lista.setAttribute('role', 'radiogroup'); lista.setAttribute('aria-label', rotulo.replace(/ *\*$/, ''));
+    linha.append(el('span', 'compras-rotulo', rotulo), abre, lista);
+    const pintar = () => {
+      const it = itens().find((i) => i.id === atual);
+      if (!it) { resumo.replaceChildren(atual ? 'Escolha não encontrada no cadastro' : textoVazio); resumo.classList.add('vazio'); return; }
+      resumo.classList.remove('vazio');
+      const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); if (it.html) ic.innerHTML = it.html; else ic.append(el('span', 'sigla-text', it.sigla || ''));
+      const tx = el('span', 'compras-hier-texto'); tx.append(el('b', null, it.nome)); if (it.detalhe) tx.append(el('small', null, it.detalhe));
+      resumo.replaceChildren(ic, tx);
+    };
+    const fora = (e) => { if (!linha.contains(e.target)) abrir(false); };
+    function abrir(sim) {
+      if (sim) desenhar();
+      lista.hidden = !sim; if (sim) { const m = lista.querySelector('[aria-checked=true]'); if (m) lista.scrollTop = Math.max(0, m.offsetTop - lista.clientHeight / 2); } abre.setAttribute('aria-expanded', String(sim)); linha.classList.toggle('aberto', sim);
+      document.removeEventListener('pointerdown', fora, true); if (sim) document.addEventListener('pointerdown', fora, true);
+    }
+    function desenhar() {
+      const l = itens();
+      lista.replaceChildren(...l.map((i) => itemDeEscolha({ ...i, marcado: i.id === atual, aoEscolher: () => { linha.value = i.id; abrir(false); abre.focus(); } })));
+      if (!l.length) lista.append(el('p', 'profiles-note compras-hier-vazio', vazio));
+    }
+    abre.onclick = () => abrir(lista.hidden);
+    linha.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !lista.hidden) { e.preventDefault(); e.stopPropagation(); abrir(false); abre.focus(); } });
+    Object.defineProperty(linha, 'value', { get: () => atual, set: (v) => { const novo = v || ''; if (novo === atual) return; atual = novo; pintar(); linha.dispatchEvent(new Event('change', { bubbles: true })); } });
+    linha.focus = () => abre.focus();
+    pintar();
+    return linha;
+  }
   function campo(rotulo, no, dica) {
     const l = el('label', 'compras-campo');
     l.append(novoIconeDoCampo(rotulo), el('span', 'compras-rotulo', rotulo));
@@ -1486,7 +1537,7 @@
             desenhar();
           };
           if (no.selecionavel === false) { c.disabled = true; c.style.visibility = 'hidden'; }
-          const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); if (no.folha && no.html) ic.innerHTML = no.html; else if (no.folha && iconeFolha) ic.innerHTML = svg(iconeFolha); else ic.append(el('span', 'sigla-text', sigla)); // grupo e subgrupo levam a sigla da origem; o item final leva o ícone dele
+          const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); if (no.folha && iconeFolha) ic.innerHTML = svg(iconeFolha); else ic.append(el('span', 'sigla-text', sigla)); // grupo e subgrupo levam a sigla da origem; o item final leva o ícone dele
           const tx = el('span', 'compras-hier-texto'); tx.append(el('b', null, no.folha ? no.nome : sigla + ' ' + formatar(no.nome)));
           const conta = no.conta != null ? no.conta : (no.filhos ? plural(no.filhos.length) : ''); if (conta) tx.append(el('small', null, conta));
           if (travado) tx.append(el('small', null, bloqueados.get(no.id)));
@@ -1513,7 +1564,7 @@
    * janela(atual, escolher) e texto(valor): para árvores com janela própria (áreas, setores e locais: CicluzLocationTree.janelaUnica);
    * texto devolve o que o campo mostra, ou '' quando o valor não existe mais.
    */
-  function campoArvore({ rotulo, titulo, sigla, cores, iconeFolha, rotuloBusca, vazio, nos, valor = '', textoVazio = 'Selecione', obrigatorio = false, janela, texto: textoDe, detalhe = false }) {
+  function campoArvore({ rotulo, titulo, sigla, cores, iconeFolha, rotuloBusca, vazio, nos, valor = '', textoVazio = 'Selecione', obrigatorio = false, janela, texto: textoDe }) {
     const b = el('button', 'compras-arvore-campo'); b.type = 'button'; b.setAttribute('aria-haspopup', 'dialog'); b.setAttribute('aria-label', rotulo);
     const texto = el('span', 'compras-arvore-texto'); b.append(texto); b.insertAdjacentHTML('beforeend', svg('<path d="m6 9 6 6 6-6"/>'));
     let atual = valor || '';
@@ -1521,11 +1572,6 @@
     const formatar = (n) => (typeof formatSystemName === 'function' ? formatSystemName(String(n || '')) : String(n || ''));
     const pintar = () => {
       const n = atual && !textoDe ? achar(nos(), atual) : null;
-      if (detalhe && n) {
-        const ic = el('span', 'compras-linha-icone compras-arvore-icone'); ic.setAttribute('aria-hidden', 'true'); ic.innerHTML = n.html || svg(iconeFolha || '');
-        const tx = el('span', 'compras-arvore-detalhe'); tx.append(el('b', null, n.folha ? n.nome : formatar(n.nome))); if (n.conta) tx.append(el('small', null, n.conta));
-        texto.replaceChildren(ic, tx); b.classList.remove('vazio'); b.title = n.nome + (n.conta ? ' — ' + n.conta : ''); return;
-      }
       const t = textoDe ? (atual ? textoDe(atual) : '') : n ? (n.folha ? n.nome : formatar(n.nome)) : '';
       texto.textContent = t || (atual ? 'Escolha não encontrada no cadastro' : textoVazio);
       b.classList.toggle('vazio', !t); b.title = texto.textContent;
@@ -1588,6 +1634,6 @@
     seletorArvore, campoArvore, campoLocal, arvoreGruposMercadoria, botaoRemover,
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, infoDaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, roletaNumero, iconarLinhas, notaNaLinha, iconeDoCampo, campoCor, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, infoDaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, roletaNumero, iconarLinhas, notaNaLinha, iconeDoCampo, campoCor, itemDeEscolha, escolhaNaLinha, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();

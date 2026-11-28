@@ -482,13 +482,14 @@
       const q = el('fieldset', 'compras-fieldset org-cargo-bloco'); const legenda = el('legend'); q.append(legenda);
       // Cargo: a janela de escolha do sistema (U.campoArvore → seletorArvore), agrupada pela categoria do cargo, com o ícone do cargo e a
       // marcação redonda de escolha única. .value continua sendo o id do cargo (ou 'fora:' + id do cargo que só existe no teste).
-      // Só a relação de cargos (sem categoria), cada um com o ícone e o salário como estão em DES - Cargos C/Salários (só leitura).
+      // Só a relação de cargos (sem categoria), cada um com o ícone, o salário, o CBO e o ano como estão em DES - Cargos C/Salários (só leitura).
       const nosCargos = () => {
-        const arvore = reais.map((r) => { const j = dadosDoCargo(r.id); return { id: String(r.id), nome: r.nome, ativo: true, folha: true, html: iconeDoCargo(j), conta: detalheDoCargo(j) }; });
-        if (c && !c.cargoId) arvore.unshift({ id: 'fora:' + c.id, nome: c.cargoNome + ' (fora do cadastro de cargos)', ativo: true, folha: true, conta: 'Só no teste' });
+        const arvore = reais.map((r) => { const j = dadosDoCargo(r.id); return { id: String(r.id), nome: r.nome, html: iconeDoCargo(j), detalhe: detalheDoCargo(j) }; });
+        if (c && !c.cargoId) arvore.unshift({ id: 'fora:' + c.id, nome: c.cargoNome + ' (fora do cadastro de cargos)', html: U.svg(ICONE_CARGO), detalhe: 'Só no teste' });
         return arvore;
       };
-      const seletor = U.campoArvore({ rotulo: 'Cargo', titulo: 'Cargo', sigla: 'DES', cores: { cor: cor(), corTexto: COR_TEXTO }, iconeFolha: ICONE_CARGO, rotuloBusca: 'Buscar cargo', vazio: 'Nenhum cargo cadastrado em DES - Cargos C/Salários.', nos: nosCargos, valor: c ? (c.cargoId ? String(c.cargoId) : 'fora:' + c.id) : '', textoVazio: reais.length ? 'Selecione um cargo' : 'Nenhum cargo cadastrado', obrigatorio: true, detalhe: true });
+      // Cargo: escolhido NA PRÓPRIA LINHA, que se abre para baixo com a lista (o padrão da Origem da Nova Transferência).
+      const seletor = U.escolhaNaLinha({ rotulo: 'Cargo *', itens: nosCargos, valor: c ? (c.cargoId ? String(c.cargoId) : 'fora:' + c.id) : '', textoVazio: reais.length ? 'Selecione um cargo' : 'Nenhum cargo cadastrado', vazio: 'Nenhum cargo cadastrado em DES - Cargos C/Salários.' });
       const horarios = el('div', 'compras-vinculos-lista'); horarios.setAttribute('role', 'group');
       const pintarHorarios = () => {
         horarios.replaceChildren(...dados.horarios.map((h) => {
@@ -523,14 +524,14 @@
       const linhaH = el('div', 'compras-campo compras-largo org-linha-horarios'); linhaH.append(el('span', 'compras-rotulo', 'Horário / Escala *'), listaH);
       const linhaRem = el('div', 'compras-campo'); linhaRem.append(el('span', 'compras-rotulo', 'Tirar este cargo do módulo'), remover);
       const linhaContas = el('div', 'compras-campo compras-largo org-linha-horarios'); linhaContas.append(el('span', 'compras-rotulo', 'Horas'), contas);
-      const linhaCargo = campo('Cargo *', seletor, 'A lista vem de DES - Cargos C/Salários (só leitura).'); linhaCargo.classList.add('org-linha-horarios'); // no celular o cargo desce para baixo do nome
+      const linhaCargo = U.notaNaLinha(seletor, el('small', 'profiles-note', 'A lista vem de DES - Cargos C/Salários (só leitura).'));
       q.append(linhaCargo, linhaH, linhaContr, linhaPag, linhaContas, linhaRem);
       Object.assign(bloco, {
         id: c ? c.id : null, seletor, marcados, no: q, pintarHorarios, atualizarContas, st,
         numerar: (i) => { legenda.textContent = 'Cargo ' + i; horarios.setAttribute('aria-label', 'Horários / escalas do cargo ' + i); },
         cargoOriginal: c,
       });
-      blocos.push(bloco); lista.append(q, rodapeH); contar();
+      blocos.push(bloco); lista.append(q, rodapeH); U.iconarLinhas(q); contar();
       return bloco;
     };
     (n ? cargosDe(n.id) : []).forEach(novoBloco);
