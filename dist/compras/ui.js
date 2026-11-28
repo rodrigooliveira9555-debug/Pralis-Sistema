@@ -241,10 +241,10 @@
   /*
    * CAMPO DE COR (Rodrigo, 28/11/2026 — conteúdo do seletor de cor do Google Planilhas, no NOSSO desenho: quadro branco de borda cinza, partes separadas
    * por linha). Na linha do formulário, só a bolinha com a cor escolhida; tocar abre o painel flutuante com:
-   *   Redefinir (volta à cor de origem, ex.: a herdada de cima) · a GRADE de bolinhas (cinzas, cores vivas e 6 tons de cada) · PADRÃO · CORES
+   *   a GRADE de bolinhas (cinzas, cores vivas e 6 tons de cada) · PADRÃO · CORES
    *   PERSONALIZADAS (as já criadas neste aparelho, o "+" e o conta-gotas, quando o navegador tem).
    * O "+" troca o painel pelo SELETOR PERSONALIZADO: área de saturação × brilho, barra de matiz, prévia, conta-gotas, Hexadecimal, Vermelho, Verde,
-   * Azul, Cancelar e OK. A escolhida leva o "certo". Devolve { caixa, painel, botao }; botao.value é a cor (#rrggbb).
+   * Azul, Cancelar e OK. Tocar numa cor só marca o "certo" nela (o painel fica aberto; fecha tocando fora). O "+" e o conta-gotas têm o tamanho das bolinhas. Devolve { caixa, painel, botao }; botao.value é a cor (#rrggbb).
    */
   const GRADE_CORES = [
     ['#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff'],
@@ -267,13 +267,13 @@
   const hsvDe = ([r, g, b]) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b); const d = mx - Math.min(r, g, b); let h = 0;
     if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [(h * 60 + 360) % 360, mx ? d / mx : 0, mx]; };
   const rgbDeHsv = (h, s, v) => { const f = (n) => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); }; return [f(5) * 255, f(3) * 255, f(1) * 255]; };
-  function campoCor({ valor = '#7c3aed', rotulo = 'Cor', redefinir = '' } = {}) {
+  function campoCor({ valor = '#7c3aed', rotulo = 'Cor' } = {}) {
     let atual = String(valor || '#7c3aed').toLowerCase();
     const botao = el('button', 'compras-cor-botao'); botao.type = 'button';
     const caixa = el('div', 'compras-cor-campo'); caixa.append(botao);
     const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-cor-painel'); painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', rotulo + ': escolher a cor');
     const abrir = flutuante(botao, painel);
-    const bolinha = (cor) => { const b = el('button', 'compras-cor-celula'); b.type = 'button'; b.title = cor; b.setAttribute('aria-label', 'Cor ' + cor); b.style.setProperty('--c', cor); b.dataset.cor = cor; if (corClara(cor)) b.classList.add('clara'); b.onclick = () => escolher(cor, true); return b; };
+    const bolinha = (cor) => { const b = el('button', 'compras-cor-celula'); b.type = 'button'; b.title = cor; b.setAttribute('aria-label', 'Cor ' + cor); b.style.setProperty('--c', cor); b.dataset.cor = cor; if (corClara(cor)) b.classList.add('clara'); b.onclick = () => escolher(cor, false); return b; };
     const grade = (cores) => { const g = el('div', 'compras-cor-grade'); g.append(...cores.map(bolinha)); return g; };
     const parte = (...nos) => { const p = el('div', 'compras-cor-parte'); p.append(...nos); return p; };
     const titulo = (texto) => el('span', 'compras-cor-titulo', texto);
@@ -282,12 +282,8 @@
       b.onclick = async () => { try { const r = await new window.EyeDropper().open(); aoPegar(r.sRGBHex.toLowerCase()); } catch (e) { /* cancelou */ } }; return b; };
     // ---- Vista 1: a grade.
     const quadroGrade = el('div', 'compras-cor-quadro');
-    if (redefinir) {
-      const r = el('button', 'compras-cor-redefinir'); r.type = 'button'; r.innerHTML = svg('<path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/>'); r.append('Redefinir');
-      r.title = 'Voltar à cor de origem (' + redefinir + ')'; r.onclick = () => escolher(redefinir, true); quadroGrade.append(parte(r));
-    }
     const pessoais = el('div', 'compras-cor-grade');
-    const mais = el('button', 'compras-cor-acao'); mais.type = 'button'; mais.title = 'Nova cor personalizada'; mais.setAttribute('aria-label', 'Nova cor personalizada'); mais.innerHTML = svg('<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>');
+    const mais = el('button', 'compras-cor-acao'); mais.type = 'button'; mais.title = 'Nova cor personalizada'; mais.setAttribute('aria-label', 'Nova cor personalizada'); mais.innerHTML = svg('<path d="M12 6v12M6 12h12"/>');
     mais.onclick = () => mostrar('personalizar');
     const gotasGrade = contaGotasBotao((c) => { guardarCorPersonalizada(c); escolher(c, true); });
     quadroGrade.append(parte(grade(GRADE_CORES.flat())), parte(titulo('Padrão'), grade(CORES_PADRAO)), parte(titulo('Cores personalizadas'), pessoais));

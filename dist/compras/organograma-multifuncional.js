@@ -415,8 +415,8 @@
         let manual = Boolean(n) && n.sigla !== siglaDoNome(n.nome);
         nome.addEventListener('input', () => { if (!manual) sigla.value = siglaDoNome(nome.value); });
         sigla.oninput = () => { sigla.value = compactar(sigla.value); manual = sigla.value !== ''; if (!manual) sigla.value = siglaDoNome(nome.value); };
-        // Cor: a bolinha abre o painel de cores (U.campoCor, no modelo do Google Planilhas); "Redefinir" volta à cor de cima (ou à da tela, na área).
-        const corCampo = U.campoCor({ valor: n ? corDe(n) : (pai ? corDe(pai) : cor()), rotulo: 'Cor do módulo', redefinir: pai ? corDe(pai) : cor() }); const corEntrada = corCampo.botao;
+        // Cor: a bolinha abre o painel de cores (U.campoCor, no modelo do Google Planilhas).
+        const corCampo = U.campoCor({ valor: n ? corDe(n) : (pai ? corDe(pai) : cor()), rotulo: 'Cor do módulo' }); const corEntrada = corCampo.botao;
         const linhaCor = el('div', 'compras-campo'); linhaCor.append(el('span', 'compras-rotulo', 'Cor'), corCampo.caixa);
         U.notaNaLinha(linhaCor, el('small', 'profiles-note', tipo === 'area' ? 'Os setores e locais desta área nascem nesta cor.' : 'Nasce na cor de ' + (pai ? pai.nome : 'cima') + '; pode trocar.'));
         q.append(linhaTipo, campo('Nome *', nome), campo('Identificador (até 3 caracteres) *', sigla), linhaCor);

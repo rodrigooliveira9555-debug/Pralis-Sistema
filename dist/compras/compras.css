@@ -1251,16 +1251,14 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .compras-cor-quadro { background: var(--theme-card, #fff); border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; overflow: hidden; }
 .compras-cor-parte { display: grid; gap: 8px; padding: 12px 14px; }
 .compras-cor-parte + .compras-cor-parte { border-top: 1px solid var(--layout-line, #dedee3); }
-.compras-cor-redefinir { display: flex; align-items: center; gap: 10px; justify-self: start; min-height: 0; margin: 0; padding: 0; border: 0; background: none; color: var(--layout-ink, #27272a); font: 500 15px/20px var(--ui-font); cursor: pointer; }
-.compras-cor-redefinir svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .compras-cor-titulo { font: 600 13px/18px var(--ui-font); color: var(--layout-ink, #27272a); }
 .compras-cor-grade { display: grid; grid-template-columns: repeat(10, 22px); gap: 4px; }
 .compras-cor-celula { position: relative; width: 22px; height: 22px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .12); cursor: pointer; }
 .compras-cor-celula[aria-pressed=true]::after { content: ""; position: absolute; left: 7px; top: 5px; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .compras-cor-celula.clara[aria-pressed=true]::after { border-color: #27272a; }
 .compras-cor-celula:hover { box-shadow: inset 0 0 0 1px rgb(0 0 0 / .12), 0 0 0 2px var(--theme-card, #fff), 0 0 0 3px var(--border-strong, #b9b9c0); }
-.compras-cor-acao { position: relative; display: grid; place-items: center; width: 22px; height: 22px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; background: none; color: var(--layout-ink, #27272a); cursor: pointer; }
-.compras-cor-acao svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.compras-cor-acao { position: relative; display: grid; place-items: center; box-sizing: border-box; width: 22px; height: 22px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 1.5px solid var(--border-strong, #b9b9c0); border-radius: 50%; background: var(--theme-card, #fff); color: var(--layout-ink, #27272a); cursor: pointer; }
+.compras-cor-acao svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 /* Seletor personalizado: saturação × brilho, matiz, prévia, Hexadecimal e RGB. */
 .compras-cor-sv { position: relative; width: 256px; height: 150px; max-width: 100%; border-radius: 8px; background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent), var(--matiz, red); cursor: crosshair; touch-action: none; }
 .compras-cor-sv-ponto { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px rgb(0 0 0 / .35); pointer-events: none; }
