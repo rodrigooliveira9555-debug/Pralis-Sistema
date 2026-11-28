@@ -126,12 +126,113 @@
   const situacao = (texto, tom = 'neutro') => el('span', 'compras-situacao tom-' + tom, texto);
   const nota = (texto) => el('p', 'profiles-note', texto);
 
+  /*
+   * ÍCONE DE CADA LINHA DE CAMPO (Rodrigo, 28/11/2026 — vale para todo o sistema): no canto esquerdo da linha, só o ícone que representa o nome do
+   * campo (sem fundo, na cor da tela). O ícone sai do NOME do campo, por palavra-chave (a primeira regra que casa vale; sem regra, o lápis de
+   * "preencher"). campo() já põe o ícone; a janela padrão (dialogo) passa iconarLinhas no que a tela montou por conta própria; quem acrescenta
+   * linhas depois chama U.iconarLinhas(no). A NOTA da linha mora dentro dela, embaixo (notaNaLinha).
+   */
+  const IC = {
+    etiqueta: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
+    calendario: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    relogio: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    cronometro: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/>',
+    entrar: '<path d="m10 17 5-5-5-5M15 12H3M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"/>',
+    sair: '<path d="m14 17 5-5-5-5M19 12H7M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5"/>',
+    xicara: '<path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 11h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3"/>',
+    talher: '<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 21V3c-2 2-3 4-3 8h3"/>',
+    troca: '<path d="M7 7h13l-3-3M17 17H4l3 3"/>',
+    sol: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"/>',
+    bandeira: '<path d="M5 21V4h11l-2 4 2 4H5"/>',
+    voltar: '<path d="M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3"/>',
+    linhas: '<path d="M4 6h16M4 12h10M4 18h6"/>',
+    texto: '<path d="M4 6h16M4 10h16M4 14h10M4 18h7"/>',
+    documento: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.5-1.5 1.7-2 3-2s2.5.5 3 2M14 10h4M14 13h3"/>',
+    email: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+    telefone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>',
+    local: '<path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>',
+    dinheiro: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/>',
+    porcento: '<path d="M19 5 5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>',
+    numero: '<path d="M5 9h14M5 15h14M10 4 8 20M16 4l-2 16"/>',
+    regua: '<path d="M3 17 17 3l4 4L7 21z"/><path d="m7 13 2 2M10 10l2 2M13 7l2 2"/>',
+    codigo: '<path d="M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12"/>',
+    pasta: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    caminhao: '<path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/>',
+    pessoa: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>',
+    maleta: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2M3 12h18"/>',
+    banco: '<path d="M3 10 12 4l9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>',
+    cartao: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
+    caixa: '<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>',
+    paleta: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-1.2-1-1.6-1-2.7 0-1 .9-1.8 2-1.8h2a4 4 0 0 0 4-4C21 6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7" r="1"/>',
+    clipe: '<path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/>',
+    chave: '<rect x="2" y="7" width="20" height="10" rx="5"/><circle cx="16" cy="12" r="3"/>',
+    cadeado: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+    loja: '<path d="M3 21V9l9-5 9 5v12M9 21v-6h6v6"/>',
+    repetir: '<path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/>',
+    contrato: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>',
+    lapis: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
+  };
+  const CAL_X = IC.calendario + '<path d="m10 13 4 4M14 13l-4 4"/>';
+  const CAL_V = IC.calendario + '<path d="m9 15 2 2 4-4"/>';
+  /** [expressão sobre o nome do campo SEM acento e em minúsculas, desenho]. A ordem importa: as mais específicas primeiro. */
+  const ICONES_CAMPO = [
+    [/^tirar/, IC.voltar],
+    [/carga informada/, IC.linhas], [/^carga|carga horaria/, IC.cronometro],
+    [/duracao do intervalo/, IC.xicara], [/intervalo|almoco/, IC.talher],
+    [/^entrada/, IC.entrar], [/^saida/, IC.sair], [/horas de trabalho|hora|horario|turno|jornada|duracao/, IC.relogio],
+    [/domingo compensado|que compensa|compensa/, IC.troca], [/domingo/, IC.sol], [/feriado/, IC.bandeira],
+    [/folga/, CAL_X], [/^dias|dia da semana|dias de trabalho/, CAL_V], [/escala/, IC.calendario],
+    [/e-?mail/, IC.email], [/telefone|celular|whats/, IC.telefone],
+    [/cpf|cnpj|\brg\b|documento|inscricao|\bpis\b|ctps|cbo/, IC.documento],
+    [/senha|acesso|permiss|perfil de acesso/, IC.cadeado],
+    [/data|nascimento|vencimento|validade|vigencia|admissao|demissao|periodo|competencia|prazo|\bmes\b|\bano\b|^dia\b/, IC.calendario],
+    [/endereco|\brua\b|cep|bairro|cidade|municipio|\buf\b|complemento|logradouro|\blocal\b|sublocal/, IC.local],
+    [/%|percent|taxa|margem|comissao|aliquota|juros|desconto/, IC.porcento],
+    [/valor|preco|custo|salario|total|r\$|pagamento|tarifa|troco|saldo|dinheiro|moeda|parcela/, IC.dinheiro],
+    [/cartao|bandeira|operadora|maquininha/, IC.cartao],
+    [/banco|\bcontas?\b|agencia|\bpix\b|cofre/, IC.banco],
+    [/fornecedor|transportadora|frete|entrega/, IC.caminhao],
+    [/cargo|funcao|setor|area|departamento|contratacao/, IC.maleta],
+    [/cliente|colaborador|pessoa|responsavel|funcionario|usuario|contato|dependente|filia|mae|pai\b|conjuge|vendedor|atendente/, IC.pessoa],
+    [/empresa|loja|filial|estabelecimento/, IC.loja],
+    [/contrato|termo|modelo/, IC.contrato],
+    [/quantidade|qtd|estoque|minimo|maximo|numero|\bn[ºo]\b|vezes|limite/, IC.numero],
+    [/unidade|medida|peso|\bkg\b|litro|volume|tamanho|rendimento/, IC.regua],
+    [/codigo|sku|barras|\bean\b|referencia|identificador|sigla|abreviacao/, IC.codigo],
+    [/produto|item|insumo|mercadoria|materia|ingrediente/, IC.caixa],
+    [/categoria|grupo|subgrupo|tipo|classe|familia|origem|natureza/, IC.pasta],
+    [/\bcor\b|cores/, IC.paleta],
+    [/icone|foto|imagem|anexo|arquivo/, IC.clipe],
+    [/situacao|status|ativo|ativa/, IC.chave],
+    [/frequencia|repet|recorr|periodicidade/, IC.repetir],
+    [/observa|descri|comentario|nota|motivo|detalhe|texto|mensagem|historico|justific/, IC.texto],
+    [/nome|apelido|titulo|razao social|fantasia|identificacao/, IC.etiqueta],
+  ];
+  /** O desenho do ícone para o nome de um campo. */
+  const iconeDoCampo = (rotulo) => { const t = dobrar(String(rotulo || '').replace(/\*/g, '').trim()); const achado = ICONES_CAMPO.find(([re]) => re.test(t)); return achado ? achado[1] : IC.lapis; };
+  const novoIconeDoCampo = (rotulo) => { const i = el('span', 'compras-campo-icone'); i.setAttribute('aria-hidden', 'true'); i.innerHTML = svg(iconeDoCampo(rotulo)); return i; };
+  /** Põe o ícone nas linhas de campo de um pedaço da tela que ainda não têm (uma vez só; o nome do campo pode mudar depois, o ícone fica fora dele). */
+  function iconarLinhas(raiz) {
+    if (!raiz || !raiz.querySelectorAll) return;
+    raiz.querySelectorAll('.compras-campo').forEach((l) => {
+      const r = l.querySelector(':scope > .compras-rotulo'); if (!r || l.querySelector(':scope > .compras-campo-icone')) return;
+      l.insertBefore(novoIconeDoCampo(r.textContent), r);
+    });
+    // Linha com chave (interruptor) e linha de situação / escolha do quadro: o mesmo ícone, pelo nome do campo.
+    raiz.querySelectorAll('.compras-fieldset > .compras-interruptor').forEach((l) => {
+      const r = l.querySelector(':scope > span'); if (!r || l.querySelector(':scope > .compras-campo-icone')) return;
+      l.insertBefore(novoIconeDoCampo(r.textContent), r);
+    });
+    raiz.querySelectorAll('.compras-fieldset > .account-status > span:first-child').forEach((r) => { if (!r.querySelector('.compras-campo-icone')) r.prepend(novoIconeDoCampo(r.textContent)); });
+  }
+  /** A nota de uma linha fica DENTRO da linha, embaixo (o nome e o valor continuam alinhados no meio da linha de cima). */
+  function notaNaLinha(linhaEl, ...notas) { linhaEl.classList.add('compras-linha-com-nota'); notas.forEach((n) => { n.classList.add('compras-nota-linha'); linhaEl.append(n); }); return linhaEl; }
   function campo(rotulo, no, dica) {
     const l = el('label', 'compras-campo');
-    l.append(el('span', 'compras-rotulo', rotulo));
+    l.append(novoIconeDoCampo(rotulo), el('span', 'compras-rotulo', rotulo));
     no.setAttribute('aria-label', rotulo);
     l.append(no);
-    if (dica) l.append(el('small', 'profiles-note', dica));
+    if (dica) notaNaLinha(l, el('small', 'profiles-note', dica));
     return l;
   }
   function entrada(tipo = 'text', valor = '', extra = {}) {
@@ -617,6 +718,7 @@
     const erro = el('p', 'profiles-error');
     erro.setAttribute('role', 'alert');
     const ctx = montar(form, d) || {};
+    iconarLinhas(form);
     enquadrarSoltos(form, quadro || nomeDoQuadro(titulo));
     const acoes = el('div', 'actions compras-dialog-acoes');
     // Design System (Rodrigo, 19/11/2026 — supera, para as janelas simples, a decisão de 04/11 de esconder a linha): toda janela mostra
@@ -1374,6 +1476,6 @@
     seletorArvore, campoArvore, campoLocal, arvoreGruposMercadoria, botaoRemover,
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, infoDaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, roletaNumero, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, infoDaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, roletaNumero, iconarLinhas, notaNaLinha, iconeDoCampo, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();
