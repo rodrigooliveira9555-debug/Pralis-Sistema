@@ -1296,3 +1296,6 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .transferencia-tela .transferencia-seta-retornos { min-width: 0; min-height: 0; margin: 0 0 0 6px; padding: 0; border: 0; background: none; cursor: pointer; }
 .transferencia-tela .transferencia-seta-retornos[aria-expanded=true] { transform: rotate(180deg); }
 .transferencia-tela .transferencia-seta-retornos[hidden], .transferencia-retornos[hidden] { display: none; }
+/* Conta escolhida na linha da transferência: o ícone quadrado CNT antes do nome. */
+.transferencia-tela .transferencia-linha-valor:has(> .compras-hier-icone) { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.transferencia-tela .transferencia-linha-valor > .compras-hier-icone { flex: none; }

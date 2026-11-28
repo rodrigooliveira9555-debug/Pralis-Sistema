@@ -414,7 +414,12 @@
           const barra = U.barraDeLista({ rotuloBusca: 'Buscar conta', aoBuscar: (tx) => { termo = tx; desenhar(); }, lista: arvore });
           painel.append(barra, arvore);
           const caixa = el('div', 'transferencia-opcao'); caixa.append(abre.no, painel);
-          const pintar = () => { abre.resumo.textContent = atual || '—'; };
+          // A conta escolhida aparece na linha com o ícone quadrado CNT (como na lista), não só o nome.
+          const pintar = () => {
+            if (!atual) { abre.resumo.textContent = '—'; return; }
+            const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); ic.append(el('span', 'sigla-text', 'CNT'));
+            abre.resumo.replaceChildren(ic, el('span', 'transferencia-conta-nome', atual));
+          };
           function abrirLista(sim) { if (sim) { termo = ''; barra.busca.value = ''; desenhar(); } painel.hidden = !sim; abre.abrir(sim); }
           function desenhar() {
             const itens = lista().filter((nome) => !termo || U.dobrar(nome).includes(termo));

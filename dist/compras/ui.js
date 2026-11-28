@@ -307,9 +307,10 @@
     const canais = ['Vermelho', 'Verde', 'Azul'].map((n) => { const i = entrada('text', '', { inputMode: 'numeric', maxLength: 3, autocomplete: 'off' }); i.setAttribute('aria-label', n); return i; });
     const campoMini = (rot, inp) => { const l = el('span', 'compras-cor-mini'); l.append(el('span', null, rot), inp); return l; };
     const gotasPers = contaGotasBotao((c) => { hsv = hsvDe(rgbDe(c)); pintarSeletor(); });
-    // Cancelar e OK: os mesmos botões retangulares das janelas (Cancelar só com a borda e o X; OK cheio com o "certo"; mais forte ao passar o mouse).
+    // Cancelar e Salvar: os mesmos botões retangulares das janelas (Cancelar só com a borda e o X; Salvar cheio com o "certo"; mais forte ao passar o mouse).
+    // O Salvar daqui é type=button e fica no fim da janela: o atalho do cabeçalho continua achando primeiro o Salvar da própria janela.
     const cancelar = el('button', 'btn ghost standard-form-action footer-cancel-accent acao-com-circulo', 'Cancelar'); cancelar.type = 'button'; cancelar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>'); cancelar.onclick = () => mostrar('grade');
-    const ok = el('button', 'btn standard-form-action footer-save-accent acao-com-circulo', 'OK'); ok.type = 'button'; ok.setAttribute('aria-label', 'OK: usar esta cor'); ok.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>');
+    const ok = el('button', 'btn standard-form-action footer-save-accent acao-com-circulo', 'Salvar'); ok.type = 'button'; ok.setAttribute('aria-label', 'Salvar esta cor'); ok.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>');
     ok.onclick = () => { const c = hexDe(...rgbDeHsv(...hsv)); guardarCorPersonalizada(c); mostrar('grade'); escolher(c, true); };
     const linhaFerr = el('div', 'compras-cor-ferramentas'); linhaFerr.append(previa, ...(window.EyeDropper ? [gotasPers] : []), matiz);
     const linhaNum = el('div', 'compras-cor-numeros'); linhaNum.append(campoMini('Hexadecimal', hex), ...canais.map((c, i) => campoMini(['Verm.', 'Verde', 'Azul'][i], c)));
