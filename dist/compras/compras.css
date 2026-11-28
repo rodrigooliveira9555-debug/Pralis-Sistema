@@ -771,6 +771,9 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
    vêm da classe transferencia-tela (variável --shell-head-top, lida pela regra do cabeçalho em people-header-pilot.css). */
 /* 25/11/2026 (Rodrigo): o cabeçalho da janela volta ao padrão de todos os cabeçalhos; o laranja grande agora é o quadro do valor (.transferencia-valor-cab). */
 .transferencia-corpo { display: grid; gap: 12px; grid-column: 1 / -1; min-width: 0; }
+/* Cadastro da conta (Transferências › Cadastros Geral): o form ainda leva a classe antiga .account-editor, que é de duas colunas; no padrão da
+   Transferência é UMA coluna, um grupo embaixo do outro (Rodrigo, 28/11/2026). */
+.account-editor.transferencia-corpo { grid-template-columns: minmax(0, 1fr); }
 .transferencia-linha .account-status-row { gap: 10px; }
 .transferencia-linha .compras-redondo:disabled { opacity: .4; cursor: default; }
 .transferencia-lacres { display: grid; gap: 0; }
