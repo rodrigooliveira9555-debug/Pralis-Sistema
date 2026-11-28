@@ -591,7 +591,11 @@
   /** Carga da semana em minutos (no 12x36, a média: 3,5 plantões por semana). */
   const cargaCalculada = (h) => (h.escala === '12x36' ? liquido(h) * 3.5 : h.dias.reduce((t, d) => t + liquido(doDia(h, d)), 0));
   /** Nome montado: escala · entrada às saída · carga da semana. */
-  const nomeMontado = (v) => [v.escala || '', HORA.test(v.entrada) && HORA.test(v.saida) ? v.entrada + ' às ' + v.saida : '', v.cargaSemanal ? duracaoTexto(Math.round(v.cargaSemanal * 60)) : ''].filter(Boolean).join(' · ');
+  const nomeMontado = (v) => [v.escala || '', HORA.test(v.entrada) && HORA.test(v.saida) ? v.entrada + ' às ' + v.saida : '',
+    v.intervaloInicio && HORA.test(v.intervaloInicio) ? 'almoço ' + v.intervaloInicio + ' às ' + horaMais(v.intervaloInicio, Number(v.intervaloMin || 0)) : '',
+    v.escala !== '12x36' && v.dias && v.dias.length ? textoDosDias(v.dias) : '',
+    v.porDia && Object.keys(v.porDia).length ? textoDosDias(Object.keys(v.porDia)) + ' diferente' : '',
+    v.cargaSemanal ? duracaoTexto(Math.round(v.cargaSemanal * 60)) : ''].filter(Boolean).join(' · ');
   /** Confere um horário (o de todos os dias ou o de um dia). Devolve a mensagem do problema ou ''. */
   function conferirJornada(x, qual) {
     if (!HORA.test(x.entrada)) return qual + 'informe a hora de entrada (HH:MM).';
@@ -665,7 +669,7 @@
         };
         // 1) Nome (montado ou personalizado)  2) Escala  3) Dias  4) Carga semanal
         const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, 'Escala'));
-        const nome = entrada('text', h ? h.nome : '', { autocomplete: 'off', maxLength: 60, placeholder: 'Ex.: Manhã' }); nome.required = true;
+        const nome = entrada('text', h ? h.nome : '', { autocomplete: 'off', maxLength: 120, placeholder: 'Ex.: Manhã' }); nome.required = true;
         const modo = U.chips([['montado', 'Montado'], ['personalizado', 'Personalizado']], st.nomeModo, (v) => { st.nomeModo = v; nome.readOnly = v === 'montado'; if (v === 'personalizado') nome.focus(); recalcular(); });
         modo.setAttribute('aria-label', 'Nome montado ou personalizado');
         nome.readOnly = st.nomeModo === 'montado';
@@ -708,11 +712,13 @@
           const ent = U.campoHora({ rotulo: 'Entrada' + rotulo, valor: x ? x.entrada : '' });
           const ii = U.campoHora({ rotulo: 'Início do intervalo' + rotulo, valor: x ? x.intervaloInicio || '' : '' });
           const linhaII = linha('Início do intervalo *', ii.caixa, ii.painel);
+          const janela = el('small', 'profiles-note org-carga-calculada');
+          const definirHora = (c, hora) => { c.input.value = hora.replace(':', ''); c.input.dispatchEvent(new Event('input', { bubbles: true })); };
           const minIni = x && HORA.test(x.entrada) && HORA.test(x.saida) ? liquido(x) : 0;
           const horas = horasProprias ? U.campoHora({ rotulo: 'Horas de trabalho no dia' + rotulo, valor: minIni > 0 ? hhmm(minIni) : '', horas: 24, maximo: '23:59' }) : null;
           const diaTxt = el('span', 'compras-valor'); const fim = el('span', 'compras-valor'); const sai = el('span', 'compras-valor');
           const linhaFim = linha('Fim do intervalo', fim);
-          const nos = [linhaChips('Duração do intervalo', duracao), linha('Entrada *', ent.caixa, ent.painel), linhaII,
+          const nos = [linhaChips('Duração do intervalo', duracao), linha('Entrada *', ent.caixa, ent.painel), linhaII, janela,
             horas ? linha('Horas de trabalho no dia *', horas.caixa, horas.painel) : linha('Horas de trabalho no dia', diaTxt), linhaFim, linha('Saída', sai)];
           const j = {
             nos, ii,
@@ -724,8 +730,24 @@
               return { entrada: e, saida: HORA.test(e) && min > 0 && min + d < 1440 ? horaMais(e, Math.round(min) + d) : '', intervaloInicio: i, intervaloMin: i ? d : 0 };
             },
             pintar: (min) => {
-              const d = Number(dur); const v = j.valor(min);
-              ver(linhaII, d > 0); ver(linhaFim, d > 0);
+              // Mais de 6 horas de trabalho no dia: intervalo obrigatório (CLT, art. 71); "Sem intervalo" não pode ser escolhido.
+              const obriga = min > SEIS_HORAS;
+              if (obriga && Number(dur) === 0) { dur = '60'; duracao.atualizar(dur); }
+              const sem = duracao.querySelector('button');
+              if (sem) { sem.disabled = obriga; sem.title = obriga ? 'Acima de 6 horas de trabalho o intervalo é obrigatório' : ''; }
+              const d = Number(dur); const e = ent.input.value;
+              janela.textContent = '';
+              if (d && HORA.test(e) && min > 0) {
+                const ini = Math.max(1, min - SEIS_HORAS); const fimJ = Math.min(SEIS_HORAS, min - 1);
+                if (ini <= fimJ) {
+                  const txt = ii.input.value;
+                  if (!txt) definirHora(ii, horaMais(e, Math.min(fimJ, Math.max(ini, 240))));
+                  else if (HORA.test(txt)) { const antes = vao(e, txt); const alvo = Math.min(fimJ, Math.max(ini, antes)); if (alvo !== antes) definirHora(ii, horaMais(e, alvo)); }
+                  janela.textContent = 'O início do intervalo fica entre ' + horaMais(e, ini) + ' e ' + horaMais(e, fimJ) + ': no máximo 6h da entrada até o intervalo e 6h do fim do intervalo até a saída.';
+                } else janela.textContent = 'Com ' + duracaoTexto(min) + ' de trabalho no dia não cabe: com um intervalo, o máximo é 6h antes e 6h depois dele (12h).';
+              }
+              const v = j.valor(min);
+              ver(linhaII, d > 0); ver(linhaFim, d > 0); ver(janela, Boolean(janela.textContent));
               diaTxt.textContent = min > 0 ? duracaoTexto(min) : '—';
               fim.textContent = v.intervaloInicio && HORA.test(v.intervaloInicio) ? horaMais(v.intervaloInicio, d) : '—';
               sai.textContent = v.saida || '—';
@@ -832,7 +854,7 @@
           else texto = 'Horas de trabalho por dia: ' + duracaoTexto(mp) + ' (' + (exc.length ? duracaoTexto(total) + ' − ' + duracaoTexto(somaExc) + ' dos dias diferentes' : duracaoTexto(total)) + ' ÷ ' + resto + (resto === 1 ? ' dia' : ' dias') + ').';
           calculada.textContent = 'Até ' + hhmm(CARGA_MAX * 60) + ' por semana (horas e minutos). ' + texto; calculada.classList.toggle('org-aviso', aviso);
           if (st.nomeModo === 'montado') nome.value = nomeMontado(v);
-          notaNome.textContent = st.nomeModo === 'montado' ? 'O nome se monta sozinho: escala · entrada às saída · carga da semana.' : 'Nome livre, do jeito que a equipe chama o horário.';
+          notaNome.textContent = st.nomeModo === 'montado' ? 'O nome se monta sozinho: escala · entrada às saída · almoço · dias da semana · carga da semana.' : 'Nome livre, do jeito que a equipe chama o horário.';
           avisos.replaceChildren(...avisosCLT(v).map((x) => el('small', 'profiles-note org-aviso', x)));
         }
         form.addEventListener('input', recalcular); form.addEventListener('change', recalcular); form.addEventListener('click', () => setTimeout(recalcular, 0));
