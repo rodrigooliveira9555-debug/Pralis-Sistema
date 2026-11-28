@@ -154,6 +154,7 @@
     numero: '<path d="M5 9h14M5 15h14M10 4 8 20M16 4l-2 16"/>',
     regua: '<path d="M3 17 17 3l4 4L7 21z"/><path d="m7 13 2 2M10 10l2 2M13 7l2 2"/>',
     codigo: '<path d="M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12"/>',
+    identificador: '<rect x="3" y="3.5" width="18" height="17" rx="3.5"/><path d="M8 12h.01M12 12h.01M16 12h.01" stroke-width="3.2"/>',
     pasta: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     caminhao: '<path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/>',
     pessoa: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>',
@@ -199,7 +200,9 @@
     [/contrato|termo|modelo/, IC.contrato],
     [/quantidade|qtd|estoque|minimo|maximo|numero|\bn[ºo]\b|vezes|limite/, IC.numero],
     [/unidade|medida|peso|\bkg\b|litro|volume|tamanho|rendimento/, IC.regua],
-    [/codigo|sku|barras|\bean\b|referencia|identificador|sigla|abreviacao/, IC.codigo],
+    // Identificador / sigla (Rodrigo, 28/11/2026): o quadradinho da sigla com três pontinhos — os até 3 caracteres que vão dentro dele.
+    [/identificador|sigla|abreviacao/, IC.identificador],
+    [/codigo|sku|barras|\bean\b|referencia/, IC.codigo],
     [/produto|item|insumo|mercadoria|materia|ingrediente/, IC.caixa],
     [/categoria|grupo|subgrupo|tipo|classe|familia|origem|natureza/, IC.pasta],
     [/\bcor\b|cores/, IC.paleta],
