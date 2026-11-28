@@ -85,9 +85,10 @@
     const T = horario('Tarde', '12:00', '21:24', '16:00');
     const no = (tipo, nome, paiId) => { const x = { id: novoId('no'), tipo, nome, sigla: siglaDoNome(nome), paiId: paiId || null }; d.nos.push(x); return x.id; };
     const reais = cargosReais();
+    // Cada cargo tem UM horário (Rodrigo, 28/11/2026): um posto coberto em dois turnos são dois cargos, cada um com o seu horário.
     const cargo = (noId, nome, horarioIds) => {
       const real = reais.find((c) => mesmoNome(c.nome, nome));
-      d.cargos.push({ id: novoId('cg'), noId, cargoId: real ? real.id : null, cargoNome: real ? real.nome : nome, horarioIds });
+      horarioIds.forEach((h) => d.cargos.push({ id: novoId('cg'), noId, cargoId: real ? real.id : null, cargoNome: real ? real.nome : nome, horarioIds: [h] }));
     };
     const area = no('area', 'Operação de Loja');
     const caixa = no('setor', 'Caixa', area); const atend = no('setor', 'Atendimento', area);
@@ -218,7 +219,7 @@
     }
     sec.append(corpo);
     const texto = 'AMBIENTE DE TESTE: o que você monta aqui fica só neste teste e não muda Área / Setor / Local, Cargos nem Horário / Escala de verdade. ' +
-      'Toque num tópico para selecionar: o "+" do lado cria o próximo nível (Área › Setor › Local, Cargo, Horário / Escala) e o "+" de baixo cria outro do mesmo nível. Toque de novo para editar. Todo cargo tem um ou mais horários / escalas. ' +
+      'Toque num tópico para selecionar: o "+" do lado cria o próximo nível (Área › Setor › Local, Cargo, Horário / Escala) e o "+" de baixo cria outro do mesmo nível. Toque de novo para editar. Cada cargo tem um horário / escala; outro turno é o cargo de novo, com o outro horário. ' +
       'No teclado: Tab = ao lado, Enter = abaixo, F2 = editar, Espaço = recolher.';
     tela.body.replaceChildren(U.infoDaLista(sec, texto, 'organograma-multifuncional-teste'));
     const area = tela.body.querySelector('.org-mapa-area'); const alvo = area && area.querySelector('.org-mapa-no.selecionado');
@@ -385,7 +386,7 @@
   /* ---------- Módulo: Área, Setor ou Local (Rodrigo, 27/11/2026) ----------
    * Uma janela só para criar e editar o módulo: o TIPO (a ordem é fixa: na Loja entra Área, na Área entra Setor, no Setor entra Local),
    * o NOME, o IDENTIFICADOR, a COR (o Setor e o Local nascem na cor de quem está acima e podem trocar) e, no Setor e no Local, os CARGOS.
-   * Cada cargo inserido tem um ou mais Horários / Escalas: sem isso não salva. Vários cargos no mesmo módulo, cada um com os seus horários.
+   * Cada cargo inserido tem UM Horário / Escala (Rodrigo, 28/11/2026): sem isso não salva. Vários cargos no mesmo módulo — o mesmo cargo pode entrar de novo com outro horário (outro turno).
    * O cargo não entra na Área (decisão do Rodrigo, 27/11/2026). */
   const COM_CARGO = (tipo) => tipo === 'setor' || tipo === 'local';
   /** A cor do módulo: a dele; sem cor própria, a de quem está acima; no topo, a cor da tela. */
@@ -472,7 +473,7 @@
     const reais = cargosReais();
     const lista = el('div', 'compras-etapa');
     const titulo = el('legend');
-    const cab = el('fieldset', 'compras-fieldset org-cargos-cab'); cab.append(titulo, U.nota('Cada cargo tem um ou mais horários / escalas. Para ver quantos cargos o módulo tem, toque nele no mapa: o resumo mostra o total.'));
+    const cab = el('fieldset', 'compras-fieldset org-cargos-cab'); cab.append(titulo, U.nota('Cada cargo tem um horário / escala. Para outro turno, acrescente o cargo de novo e marque o outro horário.'));
     const blocos = [];
     const contar = () => { titulo.textContent = 'Cargos (' + blocos.length + ')'; blocos.forEach((b, i) => b.numerar(i + 1)); };
     const repintarHorarios = () => blocos.forEach((b) => b.pintarHorarios());
@@ -492,7 +493,7 @@
       const pintarHorarios = () => {
         horarios.replaceChildren(...dados.horarios.map((h) => {
           const l = U.interruptor(h.nome, marcados.has(h.id), textoDoHorario(h)); l.input.classList.add('compras-selecao-bolinha');
-          l.input.onchange = () => { if (l.input.checked) marcados.add(h.id); else marcados.delete(h.id); if (bloco.atualizarContas) bloco.atualizarContas(); };
+          l.input.onchange = () => { marcados.clear(); marcados.add(h.id); pintarHorarios(); }; // escolha única: tocar no marcado não desmarca
           return l;
         }));
         if (!dados.horarios.length) horarios.append(U.nota('Nenhum horário / escala no teste. Use "Novo Horário / Escala".'));
@@ -500,7 +501,7 @@
       };
       const bloco = {};
       pintarHorarios();
-      const novoHorario = U.botaoTitulo('Novo Horário / Escala', 'Criar horário / escala para este cargo', () => editarHorario(null, (h) => { marcados.add(h.id); repintarHorarios(); }));
+      const novoHorario = U.botaoTitulo('Novo Horário / Escala', 'Criar horário / escala para este cargo', () => editarHorario(null, (h) => { marcados.clear(); marcados.add(h.id); repintarHorarios(); }));
       const rodapeH = el('div', 'compras-form-rodape'); rodapeH.append(novoHorario);
       const remover = U.botaoRemover('Tirar este cargo', () => { blocos.splice(blocos.indexOf(bloco), 1); q.remove(); rodapeH.remove(); contar(); });
       // Contratação e forma de pagamento, com as contas de horas logo abaixo.
@@ -552,7 +553,7 @@
     // Só guarda a cor quando ela é diferente da de cima: assim o módulo acompanha a área enquanto não tiver cor própria.
     const corDeCima = pai ? corDe(pai) : cor();
     const corPropria = tipo === 'area' || corEscolhida.toLowerCase() !== String(corDeCima).toLowerCase() ? corEscolhida : '';
-    // Cargos: cada um escolhido, sem repetir no mesmo módulo, com um ou mais horários.
+    // Cargos: cada um escolhido, com UM horário; o mesmo cargo pode repetir no módulo com outro horário (outro turno), nunca com o mesmo.
     const cargos = [];
     for (let i = 0; i < ctx.cargos.length; i++) {
       const b = ctx.cargos[i]; const v = b.seletor.value; const qual = 'Cargo ' + (i + 1) + ': ';
@@ -560,9 +561,10 @@
       const fora = v.startsWith('fora:'); const real = fora ? null : ctx.reais.find((r) => String(r.id) === v);
       if (!fora && !real) { b.seletor.focus(); return qual + 'escolha o cargo.'; }
       const cargoNome = fora ? b.cargoOriginal.cargoNome : real.nome;
-      if (cargos.some((x) => (fora ? x.cargoNome === cargoNome && !x.cargoId : x.cargoId === real.id))) { b.seletor.focus(); return cargoNome + ' aparece duas vezes neste módulo. Deixe um só e marque nele todos os horários.'; }
       const horarioIds = dados.horarios.filter((h) => b.marcados.has(h.id)).map((h) => h.id);
-      if (!horarioIds.length) { b.no.scrollIntoView({ block: 'nearest' }); return qual + cargoNome + ' precisa de pelo menos um horário / escala.'; }
+      if (!horarioIds.length) { b.no.scrollIntoView({ block: 'nearest' }); return qual + cargoNome + ' precisa de um horário / escala.'; }
+      if (horarioIds.length > 1) { b.no.scrollIntoView({ block: 'nearest' }); return qual + cargoNome + ' tem mais de um horário marcado. Cada cargo tem um horário: deixe um e, para o outro turno, acrescente o cargo de novo.'; }
+      if (cargos.some((x) => (fora ? x.cargoNome === cargoNome && !x.cargoId : x.cargoId === real.id) && x.horarioIds[0] === horarioIds[0])) { b.seletor.focus(); return cargoNome + ' com o mesmo horário aparece duas vezes neste módulo. Deixe um só.'; }
       cargos.push({ id: b.id || novoId('cg'), cargoId: fora ? null : real.id, cargoNome, horarioIds, contratacao: b.st.contratacao, pagamento: b.st.pagamento });
     }
     let novoIdModulo = null;
