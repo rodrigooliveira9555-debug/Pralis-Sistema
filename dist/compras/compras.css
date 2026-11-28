@@ -1198,10 +1198,11 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > input.org-cor::-webkit-color-swatch { border: 0; border-radius: 50%; }
 :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > input.org-cor::-moz-color-swatch { border: 0; border-radius: 50%; }
 .org-horarios { display: grid; gap: 8px; justify-items: start; min-width: 0; }
-/* Tela estreita: horários, contratação, forma de pagamento e horas do cargo descem para baixo do nome do campo (não passam da borda nem quebram palavra). */
+/* Tela estreita: horários, contratação, forma de pagamento e horas do cargo — e as linhas do quadro de dia com horário diferente, que fica dentro de outro
+   quadro — descem para baixo do nome do campo (não passam da borda nem quebram palavra). */
 @media (max-width: 600px) {
-  :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo.org-linha-horarios { flex-wrap: wrap; }
-  :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo.org-linha-horarios > :not(.compras-rotulo) { flex: 1 1 100%; margin-right: 0; padding: 0 14px 10px; box-sizing: border-box; }
+  :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) :is(.compras-fieldset > .compras-campo.org-linha-horarios, .compras-fieldset.org-excecao > .compras-campo) { flex-wrap: wrap; }
+  :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) :is(.compras-fieldset > .compras-campo.org-linha-horarios, .compras-fieldset.org-excecao > .compras-campo) > :not(.compras-rotulo) { flex: 1 1 100%; margin-right: 0; padding: 0 14px 10px; box-sizing: border-box; }
 }
 /* Carga calculada do horário / escala: vira aviso quando difere da informada (não impede salvar). */
 .org-carga-calculada { display: block; padding: 0 14px 10px; }
@@ -1210,3 +1211,7 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .org-contas { display: grid; gap: 4px; min-width: 0; }
 .org-contas .org-aviso, .profiles-note.org-aviso { color: #b45309; font-weight: 600; }
 .org-pagamento { min-width: 0; }
+/* Painel de seleção (Rodrigo, 27/11/2026): cada opção tem o redondinho de marcar dos cartões de escolha; a marcada fica cheia, com o "certo". */
+.transferencia-selecao-painel .transferencia-linha > .compras-cartao-marca { flex: none; }
+.transferencia-selecao-painel .transferencia-linha[aria-selected=true] > .compras-cartao-marca { border-color: var(--menu-accent, #27272a); background: var(--menu-accent, #27272a); }
+.transferencia-selecao-painel .transferencia-linha[aria-selected=true] > .compras-cartao-marca svg { visibility: visible; }

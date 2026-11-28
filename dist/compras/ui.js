@@ -854,8 +854,10 @@
    * Qualquer minuto se escolhe na coluna ou se digita no campo. Devolve { caixa, painel, input }: quem usa põe a caixa na tela e o painel ao lado dela.
    * input.value é "HH:MM" (ou vazio); hora incompleta ou fora de 00:00 a 23:59 deixa o campo inválido (setCustomValidity).
    */
-  function campoHora({ valor = '', rotulo = 'Hora' } = {}) {
-    const valida = (t) => /^([01]\d|2[0-3]):[0-5]\d$/.test(t);
+  function campoHora({ valor = '', rotulo = 'Hora', horas = 24, maximo = '' } = {}) {
+    // horas/maximo: o mesmo campo serve para DURAÇÃO (ex.: carga da semana de 00:00 a 44:00, horas = 45, maximo = '44:00'); aí não há "Agora".
+    const duracao = horas !== 24 || Boolean(maximo);
+    const valida = (t) => /^\d\d:[0-5]\d$/.test(t) && Number(t.slice(0, 2)) < horas && (!maximo || t <= maximo);
     const pad = (n) => String(n).padStart(2, '0');
     let hora = ''; let minuto = '';
     if (valida(valor)) { hora = valor.slice(0, 2); minuto = valor.slice(3); }
@@ -881,7 +883,7 @@
       const janela = el('div', 'compras-hora-janela'); janela.append(itens);
       return { titulo, lista, celulas, janela, itens, pegar, por };
     };
-    const colHora = montarColuna('Hora', 24, 'Hora', () => hora, (v) => { hora = v; if (!minuto) minuto = '00'; });
+    const colHora = montarColuna('Hora', horas, 'Hora', () => hora, (v) => { hora = v; if (!minuto) minuto = '00'; });
     const colMin = montarColuna('Minuto', 60, 'Minuto', () => minuto, (v) => { minuto = v; if (!hora) hora = '00'; });
     const colunas = [colHora, colMin];
     // Os títulos, e embaixo as duas listas com UMA faixa contínua por cima das duas (hora e minuto sempre cheios, nunca esmaecidos).
@@ -890,8 +892,10 @@
     const rodas = el('div', 'compras-hora-rodas'); rodas.append(colHora.lista, colMin.lista, faixa);
     painel.append(cabecalho, rodas);
     const abrirPainel = flutuante(caixa, painel);
-    const validar = () => input.setCustomValidity(!input.value || valida(input.value) ? '' : 'Informe a hora no formato HH:MM, de 00:00 a 23:59.');
+    const validar = () => input.setCustomValidity(!input.value || valida(input.value) ? '' : 'Informe no formato HH:MM, de 00:00 a ' + (maximo || pad(horas - 1) + ':59') + '.');
     function marcar(escreve = true) {
+      // Na duração com máximo (ex.: 44:00), a roleta não passa do máximo.
+      if (escreve && maximo && hora && minuto && hora + ':' + minuto > maximo) { hora = maximo.slice(0, 2); minuto = maximo.slice(3); }
       if (escreve) input.value = hora && minuto ? hora + ':' + minuto : '';
       validar();
       colunas.forEach((c) => { c.lista.dataset.valor = c.pegar(); });
@@ -907,7 +911,8 @@
     // Pé do painel, no mesmo padrão do calendário (Limpar e Hoje): Limpar esvazia o campo e Agora põe a hora e o minuto de agora.
     const chip = (texto, acao) => { const c = el('button', 'compras-chip', texto); c.type = 'button'; c.onclick = acao; return c; };
     const pe = el('div', 'compras-data-pe');
-    pe.append(chip('Limpar', () => { hora = ''; minuto = ''; marcar(); posicionar(); fechar(); }), chip('Agora', () => { const n = new Date(); hora = pad(n.getHours()); minuto = pad(n.getMinutes()); marcar(); posicionar(); fechar(); }));
+    pe.append(chip('Limpar', () => { hora = ''; minuto = ''; marcar(); posicionar(); fechar(); }));
+    if (!duracao) pe.append(chip('Agora', () => { const n = new Date(); hora = pad(n.getHours()); minuto = pad(n.getMinutes()); marcar(); posicionar(); fechar(); }));
     painel.append(pe);
     colunas.forEach((c, k) => {
       let quadro = 0;
@@ -965,7 +970,7 @@
       const quadroOpcoes = el('div', 'transferencia-quadro');
       [...sel.options].filter((o) => !o.hidden).forEach((o) => {
         const b = el('button', 'transferencia-linha transferencia-linha-acao'); b.type = 'button'; b.setAttribute('role', 'option'); b.setAttribute('aria-selected', String(o.value === sel.value)); b.disabled = o.disabled;
-        const marca = el('span', 'transferencia-seta'); marca.setAttribute('aria-hidden', 'true'); marca.innerHTML = o.value === sel.value ? svg('<path d="m5 12 5 5 9-10"/>') : '';
+        const marca = el('span', 'compras-cartao-marca'); marca.setAttribute('aria-hidden', 'true'); marca.innerHTML = '<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
         b.append(el('span', 'transferencia-linha-rotulo', o.text || '—'), marca);
         b.onclick = () => { sel.value = o.value; sel._abrirSelecao(false); sel.dispatchEvent(new Event('input', { bubbles: true })); sel.dispatchEvent(new Event('change', { bubbles: true })); sel.focus(); };
         quadroOpcoes.append(b);
