@@ -41,6 +41,14 @@
     try { return (window.CicluzHierarquia ? CicluzHierarquia.cargos() : []).slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')); } catch (e) { return []; }
   }
 
+  /** O cargo como está no cadastro (DES - Cargos C/Salários): ícone e salário, só para mostrar. */
+  function dadosDoCargo(id) { try { const x = (typeof jobsCurrent === 'function' ? jobsCurrent() : []).find((e) => String(e.id) === String(id)); return x ? x.j : null; } catch (e) { return null; } }
+  function iconeDoCargo(j) {
+    const icones = typeof jobIcons !== 'undefined' ? jobIcons : null;
+    if (j && j.identityMode === 'text' && window.CicluzIdentity) return '<span class="sigla-text">' + String(CicluzIdentity.compact(j.sigla || '')).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) + '</span>';
+    return icones ? (j && icones[j.icon]) || icones.inherit : U.svg(ICONE_CARGO);
+  }
+
   /* ---------- Horário / Escala: textos ---------- */
   function textoDosDias(dias) {
     const set = new Set(dias); const semana = ORDEM.filter((d) => set.has(d)); const partes = []; let i = 0;
@@ -463,14 +471,13 @@
       const q = el('fieldset', 'compras-fieldset org-cargo-bloco'); const legenda = el('legend'); q.append(legenda);
       // Cargo: a janela de escolha do sistema (U.campoArvore → seletorArvore), agrupada pela categoria do cargo, com o ícone do cargo e a
       // marcação redonda de escolha única. .value continua sendo o id do cargo (ou 'fora:' + id do cargo que só existe no teste).
+      // Só a relação de cargos (sem categoria), cada um com o ícone e o salário como estão em DES - Cargos C/Salários (só leitura).
       const nosCargos = () => {
-        const folha = (r) => ({ id: String(r.id), nome: r.nome, ativo: true, folha: true, conta: r.nomeReduzido || '' });
-        const grupos = new Map(); reais.forEach((r) => { const k = r.categoria || 'Sem categoria'; if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(folha(r)); });
-        const arvore = grupos.size > 1 ? [...grupos].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR')).map(([k, filhos]) => ({ id: 'cat:' + k, nome: k, ativo: true, selecionavel: false, filhos })) : reais.map(folha);
+        const arvore = reais.map((r) => { const j = dadosDoCargo(r.id); return { id: String(r.id), nome: r.nome, ativo: true, folha: true, html: iconeDoCargo(j), conta: j && j.valor ? 'R$ ' + j.valor : '' }; });
         if (c && !c.cargoId) arvore.unshift({ id: 'fora:' + c.id, nome: c.cargoNome + ' (fora do cadastro de cargos)', ativo: true, folha: true, conta: 'Só no teste' });
         return arvore;
       };
-      const seletor = U.campoArvore({ rotulo: 'Cargo', titulo: 'Cargo', sigla: 'DES', cores: { cor: cor(), corTexto: COR_TEXTO }, iconeFolha: ICONE_CARGO, rotuloBusca: 'Buscar cargo', vazio: 'Nenhum cargo cadastrado em DES - Cargos C/Salários.', nos: nosCargos, valor: c ? (c.cargoId ? String(c.cargoId) : 'fora:' + c.id) : '', textoVazio: reais.length ? 'Selecione um cargo' : 'Nenhum cargo cadastrado', obrigatorio: true });
+      const seletor = U.campoArvore({ rotulo: 'Cargo', titulo: 'Cargo', sigla: 'DES', cores: { cor: cor(), corTexto: COR_TEXTO }, iconeFolha: ICONE_CARGO, rotuloBusca: 'Buscar cargo', vazio: 'Nenhum cargo cadastrado em DES - Cargos C/Salários.', nos: nosCargos, valor: c ? (c.cargoId ? String(c.cargoId) : 'fora:' + c.id) : '', textoVazio: reais.length ? 'Selecione um cargo' : 'Nenhum cargo cadastrado', obrigatorio: true, detalhe: true });
       const horarios = el('div', 'compras-vinculos-lista'); horarios.setAttribute('role', 'group');
       const pintarHorarios = () => {
         horarios.replaceChildren(...dados.horarios.map((h) => {
@@ -505,7 +512,8 @@
       const linhaH = el('div', 'compras-campo compras-largo org-linha-horarios'); linhaH.append(el('span', 'compras-rotulo', 'Horário / Escala *'), listaH);
       const linhaRem = el('div', 'compras-campo'); linhaRem.append(el('span', 'compras-rotulo', 'Tirar este cargo do módulo'), remover);
       const linhaContas = el('div', 'compras-campo compras-largo org-linha-horarios'); linhaContas.append(el('span', 'compras-rotulo', 'Horas'), contas);
-      q.append(campo('Cargo *', seletor, 'A lista vem de DES - Cargos C/Salários (só leitura).'), linhaH, linhaContr, linhaPag, linhaContas, linhaRem);
+      const linhaCargo = campo('Cargo *', seletor, 'A lista vem de DES - Cargos C/Salários (só leitura).'); linhaCargo.classList.add('org-linha-horarios'); // no celular o cargo desce para baixo do nome
+      q.append(linhaCargo, linhaH, linhaContr, linhaPag, linhaContas, linhaRem);
       Object.assign(bloco, {
         id: c ? c.id : null, seletor, marcados, no: q, pintarHorarios, atualizarContas, st,
         numerar: (i) => { legenda.textContent = 'Cargo ' + i; horarios.setAttribute('aria-label', 'Horários / escalas do cargo ' + i); },

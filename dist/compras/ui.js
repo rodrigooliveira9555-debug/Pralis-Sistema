@@ -1384,7 +1384,8 @@
           seta.setAttribute('aria-label', (aberto ? 'Recolher ' : 'Expandir ') + no.nome); seta.setAttribute('aria-expanded', String(aberto));
           seta.onclick = () => { if (abertos.has(no.id)) abertos.delete(no.id); else abertos.add(no.id); desenhar(); };
           const ativo = no.ativo !== false; const travado = bloqueados.has(no.id);
-          const c = entrada('checkbox'); c.className = unico ? 'compras-selecao-bolinha' : 'compras-hier-caixa'; // escolha de um só: a marcação redonda com check; vários: a caixa c.checked = escolha.has(no.id) || travado; c.disabled = travado || (!ativo && !escolha.has(no.id));
+          // Escolha de um só: a marcação redonda com check; vários: a caixa.
+          const c = entrada('checkbox'); c.className = unico ? 'compras-selecao-bolinha' : 'compras-hier-caixa'; c.checked = escolha.has(no.id) || travado; c.disabled = travado || (!ativo && !escolha.has(no.id));
           c.setAttribute('aria-label', 'Selecionar ' + no.nome);
           c.onchange = () => {
             if (unico) { escolha.clear(); if (c.checked) escolha.add(no.id); desenhar(); return; }
@@ -1392,7 +1393,7 @@
             desenhar();
           };
           if (no.selecionavel === false) { c.disabled = true; c.style.visibility = 'hidden'; }
-          const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); if (no.folha && iconeFolha) ic.innerHTML = svg(iconeFolha); else ic.append(el('span', 'sigla-text', sigla)); // grupo e subgrupo levam a sigla da origem; o item final leva o ícone dele
+          const ic = el('span', 'compras-hier-icone'); ic.setAttribute('aria-hidden', 'true'); if (no.folha && no.html) ic.innerHTML = no.html; else if (no.folha && iconeFolha) ic.innerHTML = svg(iconeFolha); else ic.append(el('span', 'sigla-text', sigla)); // grupo e subgrupo levam a sigla da origem; o item final leva o ícone dele
           const tx = el('span', 'compras-hier-texto'); tx.append(el('b', null, no.folha ? no.nome : sigla + ' ' + formatar(no.nome)));
           const conta = no.conta != null ? no.conta : (no.filhos ? plural(no.filhos.length) : ''); if (conta) tx.append(el('small', null, conta));
           if (travado) tx.append(el('small', null, bloqueados.get(no.id)));
@@ -1419,7 +1420,7 @@
    * janela(atual, escolher) e texto(valor): para árvores com janela própria (áreas, setores e locais: CicluzLocationTree.janelaUnica);
    * texto devolve o que o campo mostra, ou '' quando o valor não existe mais.
    */
-  function campoArvore({ rotulo, titulo, sigla, cores, iconeFolha, rotuloBusca, vazio, nos, valor = '', textoVazio = 'Selecione', obrigatorio = false, janela, texto: textoDe }) {
+  function campoArvore({ rotulo, titulo, sigla, cores, iconeFolha, rotuloBusca, vazio, nos, valor = '', textoVazio = 'Selecione', obrigatorio = false, janela, texto: textoDe, detalhe = false }) {
     const b = el('button', 'compras-arvore-campo'); b.type = 'button'; b.setAttribute('aria-haspopup', 'dialog'); b.setAttribute('aria-label', rotulo);
     const texto = el('span', 'compras-arvore-texto'); b.append(texto); b.insertAdjacentHTML('beforeend', svg('<path d="m6 9 6 6 6-6"/>'));
     let atual = valor || '';
@@ -1427,6 +1428,11 @@
     const formatar = (n) => (typeof formatSystemName === 'function' ? formatSystemName(String(n || '')) : String(n || ''));
     const pintar = () => {
       const n = atual && !textoDe ? achar(nos(), atual) : null;
+      if (detalhe && n) {
+        const ic = el('span', 'compras-linha-icone compras-arvore-icone'); ic.setAttribute('aria-hidden', 'true'); ic.innerHTML = n.html || svg(iconeFolha || '');
+        const tx = el('span', 'compras-arvore-detalhe'); tx.append(el('b', null, n.folha ? n.nome : formatar(n.nome))); if (n.conta) tx.append(el('small', null, n.conta));
+        texto.replaceChildren(ic, tx); b.classList.remove('vazio'); b.title = n.nome + (n.conta ? ' — ' + n.conta : ''); return;
+      }
       const t = textoDe ? (atual ? textoDe(atual) : '') : n ? (n.folha ? n.nome : formatar(n.nome)) : '';
       texto.textContent = t || (atual ? 'Escolha não encontrada no cadastro' : textoVazio);
       b.classList.toggle('vazio', !t); b.title = texto.textContent;

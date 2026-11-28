@@ -1241,3 +1241,11 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 }
 /* Janela de escolha em árvore: a busca em cima e a árvore embaixo, ocupando o quadro todo. */
 .compras-hier-corpo { display: grid; gap: 8px; padding: 12px 14px; min-width: 0; }
+/* Campo de árvore com detalhe (ex.: Cargo do organograma): ícone, nome e, embaixo, pequeno, o detalhe (salário). */
+.compras-arvore-texto:has(> .compras-arvore-detalhe) { display: flex; align-items: center; gap: 10px; white-space: normal; text-align: left; }
+.compras-arvore-campo .compras-arvore-icone { flex: none; width: 26px; height: 26px; border-radius: var(--row-icon-radius, 26%); }
+.compras-arvore-campo .compras-arvore-icone svg { width: 15px; height: 15px; opacity: 1; stroke: var(--theme-surface, #fff); }
+.compras-arvore-detalhe { display: grid; min-width: 0; line-height: 1.2; }
+.compras-arvore-detalhe > b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.compras-arvore-detalhe > small { font-size: 11px; color: var(--muted, #73737a); }
+@media (max-width: 600px) { :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > .compras-nota-linha { margin-top: 0; } } /* na tela estreita o valor desce para baixo do nome: a nota não sobe por cima dele */
