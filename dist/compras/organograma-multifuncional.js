@@ -440,7 +440,7 @@
     }
     horarios.forEach((h) => {
       const sem = Number(h.cargaSemanal || 0);
-      if (pagamento === 'horista') linhas.push(h.nome + ': ' + duracaoTexto(liquido(h)) + ' por dia · ' + horasTexto(sem) + ' por semana (recebe as horas trabalhadas + descanso semanal)');
+      if (pagamento === 'horista') linhas.push(h.nome + ': ' + duracaoTexto(liquido(h)) + ' por dia · ' + horasTexto(sem) + ' por semana · recebe as horas trabalhadas + ' + duracaoTexto(Math.round(sem * 60 / 6)) + ' de descanso semanal (DSR) por domingo e feriado: a semana ÷ 6 dias úteis, a mesma conta do × 5 do mensalista (Lei 605/49)');
       else linhas.push(h.nome + ': ' + horasTexto(sem) + ' por semana × 5 = ' + horasTexto(sem * 5) + ' por mês' + (h.escala === '12x36' ? ' (no 12x36 o divisor pode variar conforme a convenção coletiva)' : ''));
       if (pagamento === 'parcial' && sem > 30) avisos.push(h.nome + ': tempo parcial vai até 30h por semana (CLT, art. 58-A); este horário tem ' + horasTexto(sem) + '.');
       if (pagamento !== 'parcial' && sem > 44) avisos.push(h.nome + ': ' + horasTexto(sem) + ' por semana passa do limite de 44h da CLT.');
@@ -677,12 +677,26 @@
         const linhaDias = linhaChips('Dias de trabalho *', grupo);
         const folga = el('span', 'compras-valor'); const linhaFolga = linha('Dias de folga', folga);
         const nota12 = U.nota('12x36: trabalha 12 horas e folga 36, ou seja, um dia sim e um dia não. Os dias da semana mudam de uma semana para outra, por isso não se marcam aqui.');
-        // A carga é uma duração (até 42:00), na mesma roleta do campo de hora: arrasta para cima e para baixo ou digita.
+        // A carga é uma duração na mesma roleta do campo de hora (arrasta ou digita, horas e minutos). Informa-se POR SEMANA (até 42:00) ou POR DIA
+        // (Rodrigo, 27/11/2026): a outra é calculada — por semana = por dia × dias de trabalho (+ as horas dos dias diferentes; no 12x36, × 3,5).
+        st.cargaModo = h && h.cargaModo === 'dia' ? 'dia' : 'semana';
         const cargaInicial = h ? Math.min(CARGA_MAX * 60, Math.round(Number(h.cargaSemanal || 0) * 60)) : CARGA_MAX * 60;
         const carga = U.campoHora({ rotulo: 'Carga horária por semana', valor: cargaInicial ? hhmm(cargaInicial) : '', horas: CARGA_MAX + 1, maximo: hhmm(CARGA_MAX * 60) });
+        const diaInicial = h && HORA.test(h.entrada) && HORA.test(h.saida) ? liquido(h) : 480;
+        const cargaDia = U.campoHora({ rotulo: 'Carga horária por dia', valor: hhmm(diaInicial), horas: 24, maximo: '23:59' });
+        const definirCarga = (c, m) => { c.input.value = hhmm(m).replace(':', ''); c.input.dispatchEvent(new Event('input', { bubbles: true })); };
+        const cargaModo = U.chips([['semana', 'Por semana'], ['dia', 'Por dia']], st.cargaModo, (v) => {
+          if (v === st.cargaModo) return;
+          // Ao trocar, a carga do outro jeito já vem preenchida com a conta de agora.
+          if (v === 'dia') definirCarga(cargaDia, Math.round(minutosPadrao()) || 480); else definirCarga(carga, Math.min(CARGA_MAX * 60, Math.round(semanaMin())));
+          st.cargaModo = v; pintar();
+        });
+        cargaModo.setAttribute('aria-label', 'Carga informada por semana ou por dia');
+        const linhaSemana = linhaChips('Carga horária por semana *', carga.caixa, carga.painel);
+        const linhaDia = linhaChips('Carga horária por dia *', cargaDia.caixa, cargaDia.painel);
         const calculada = el('small', 'profiles-note org-carga-calculada'); calculada.setAttribute('role', 'status');
         q.append(linhaChips('Nome', modo), campo('Nome *', nome), notaNome, linhaChips('Escala *', escala), ...(fora ? [fora] : []), linhaDias, linhaFolga, nota12,
-          linhaChips('Carga horária por semana *', carga.caixa, carga.painel), calculada);
+          linhaChips('Carga informada', cargaModo), linhaSemana, linhaDia, calculada);
         // 5) Horário: duração do intervalo, entrada e início do intervalo; o resto é conta.
         const qh = el('fieldset', 'compras-fieldset'); qh.append(el('legend', null, 'Horário'));
         /** Um quadro de jornada. Com horasProprias (dia diferente), as horas do dia se escolhem; no horário geral, vêm da carga. */
@@ -742,10 +756,18 @@
         const diasComExcecao = () => excecoes.flatMap((e) => [...e.dias].filter((d) => st.dias.has(d)).map((d) => ({ d, min: e.jornada.minutosDia() })));
         /** Minutos de trabalho de cada dia do horário geral: a carga menos as horas dos dias diferentes, dividida pelos outros dias (no 12x36, ÷ 3,5). */
         function minutosPadrao() {
+          if (st.cargaModo === 'dia') return minutosDe(cargaDia.input.value);
           const total = minutosDe(carga.input.value);
           if (st.escala === '12x36') return total / 3.5;
           const exc = diasComExcecao(); const resto = st.dias.size - exc.length;
           return resto > 0 ? (total - exc.reduce((t, x) => t + x.min, 0)) / resto : 0;
+        }
+        /** Carga da semana em minutos: a informada (por semana) ou a conta (por dia × dias do horário geral + horas dos dias diferentes; no 12x36, × 3,5). */
+        function semanaMin() {
+          if (st.cargaModo === 'semana') return minutosDe(carga.input.value);
+          const dia = minutosDe(cargaDia.input.value);
+          if (st.escala === '12x36') return dia * 3.5;
+          const exc = diasComExcecao(); return dia * Math.max(0, st.dias.size - exc.length) + exc.reduce((t, x) => t + x.min, 0);
         }
         // Abre com os dias personalizados já gravados, juntando os dias que têm o mesmo horário.
         Object.values(Object.entries(h ? h.porDia || {} : {}).reduce((g, [d, x]) => { const k = JSON.stringify(x); (g[k] = g[k] || { x, dias: [] }).dias.push(d); return g; }, {})).forEach((g) => novaExcecao(g.dias, g.x));
@@ -763,6 +785,7 @@
             const b = botao(curto, () => { if (st.dias.has(chave)) st.dias.delete(chave); else st.dias.add(chave); pintar(); }, 'compras-chip' + (st.dias.has(chave) ? ' ativo' : ''));
             b.title = longo; b.setAttribute('aria-label', longo); b.setAttribute('aria-pressed', String(st.dias.has(chave))); return b;
           }));
+          ver(linhaSemana, st.cargaModo === 'semana'); ver(linhaDia, st.cargaModo === 'dia');
           ver(linhaDias, !doze); ver(linhaFolga, !doze); ver(nota12, doze); ver(qp, !doze); ver(rodapeExc, !doze);
           // Cada quadro de dia diferente: só os dias de trabalho da escala; um dia não fica em dois quadros.
           excecoes.forEach((e, i) => {
@@ -786,16 +809,22 @@
           const mp = Math.round(minutosPadrao());
           const base = padrao.valor(mp); const porDia = {};
           if (st.escala !== '12x36') excecoes.forEach((e) => { const v = e.jornada.valor(e.jornada.minutosDia()); if (JSON.stringify(v) !== JSON.stringify(base)) e.dias.forEach((d) => { if (st.dias.has(d)) porDia[d] = v; }); });
-          const v = { escala: st.escala, dias: st.escala === '12x36' ? [] : ORDEM.filter((d) => st.dias.has(d)), ...base, porDia, cargaSemanal: Math.round(minutosDe(carga.input.value) / 60 * 100) / 100 };
+          const v = { escala: st.escala, dias: st.escala === '12x36' ? [] : ORDEM.filter((d) => st.dias.has(d)), ...base, porDia, cargaModo: st.cargaModo, cargaSemanal: Math.round(semanaMin() / 60 * 100) / 100 };
           return v;
         }
         function recalcular() {
-          const v = atual(); const mp = Math.round(minutosPadrao()); const total = minutosDe(carga.input.value);
+          const v = atual(); const mp = Math.round(minutosPadrao()); const total = Math.round(semanaMin()); const porDia = st.cargaModo === 'dia';
           padrao.pintar(mp);
           excecoes.forEach((e) => e.jornada.pintar(e.jornada.minutosDia()));
           const exc = diasComExcecao(); const resto = st.dias.size - exc.length; const somaExc = exc.reduce((t, x) => t + x.min, 0);
           let texto = ''; let aviso = false;
-          if (!total) texto = 'Informe a carga por semana: as horas de cada dia e a saída saem dela.';
+          if (porDia) {
+            if (!mp) texto = 'Informe a carga por dia: a da semana e a saída saem dela.';
+            else if (st.escala === '12x36') texto = 'Carga por semana: ' + duracaoTexto(mp) + ' × 3,5 plantões, em média = ' + duracaoTexto(total) + '.';
+            else if (!st.dias.size) texto = 'Marque os dias de trabalho.';
+            else texto = 'Carga por semana: ' + duracaoTexto(mp) + ' × ' + resto + (resto === 1 ? ' dia' : ' dias') + (exc.length ? ' + ' + duracaoTexto(somaExc) + ' dos dias diferentes' : '') + ' = ' + duracaoTexto(total) + '.';
+            if (total > CARGA_MAX * 60) { aviso = true; texto += ' Passa do máximo de ' + CARGA_MAX + 'h por semana.'; }
+          } else if (!total) texto = 'Informe a carga por semana: as horas de cada dia e a saída saem dela.';
           else if (st.escala === '12x36') texto = 'Horas de trabalho no plantão: ' + duracaoTexto(mp) + ' (' + duracaoTexto(total) + ' ÷ 3,5 plantões por semana, em média).';
           else if (!st.dias.size) texto = 'Marque os dias de trabalho.';
           else if (resto <= 0) { aviso = somaExc !== total; texto = 'Todos os dias têm horário diferente: somam ' + duracaoTexto(somaExc) + (aviso ? ', e a carga informada é ' + duracaoTexto(total) + '.' : '.'); }
@@ -808,17 +837,18 @@
         }
         form.addEventListener('input', recalcular); form.addEventListener('change', recalcular); form.addEventListener('click', () => setTimeout(recalcular, 0));
         pintar();
-        setTimeout(() => (st.nomeModo === 'montado' ? carga.input : nome).focus(), 0);
-        return { nome, atual, padrao, excecoes, st, cargaMin: () => minutosDe(carga.input.value), minutosPadrao, diasComExcecao };
+        setTimeout(() => (st.nomeModo === 'montado' ? (st.cargaModo === 'dia' ? cargaDia : carga).input : nome).focus(), 0);
+        return { nome, atual, padrao, excecoes, st, cargaMin: () => Math.round(semanaMin()), minutosPadrao, diasComExcecao };
       },
       salvar: (c) => {
         const v = c.atual();
         if (!v.escala) return 'Escolha a escala (5x2, 4x3 ou 12x36).';
         const n = ESCALAS.find((e) => e[0] === v.escala)[2];
         if (n && v.dias.length !== n) return 'Na escala ' + v.escala + ' a pessoa trabalha ' + n + ' dias: marque ' + n + ' dias (marcados: ' + v.dias.length + ').';
-        const total = c.cargaMin();
+        const total = c.cargaMin(); const porDia = c.st.cargaModo === 'dia';
+        if (porDia && !(c.minutosPadrao() > 0)) return 'Informe a carga horária por dia.';
         if (!(total > 0)) return 'Informe a carga horária por semana (até ' + hhmm(CARGA_MAX * 60) + ').';
-        if (total > CARGA_MAX * 60) return 'A carga horária por semana vai até ' + CARGA_MAX + ' horas.';
+        if (total > CARGA_MAX * 60) return (porDia ? 'Com essa carga por dia, a semana dá ' + duracaoTexto(total) + ': ' : '') + 'a carga horária por semana vai até ' + CARGA_MAX + ' horas.';
         const vazio = c.excecoes.find((e) => !e.dias.size); if (vazio) { vazio.f.scrollIntoView({ block: 'nearest' }); return 'Um horário diferente está sem dia marcado: marque o dia ou tire o quadro.'; }
         if (v.escala !== '12x36') {
           const exc = c.diasComExcecao();
