@@ -49,6 +49,8 @@
     if (!icones || !j || j.identityMode === 'text') return ICONE_CARGO;
     return String(icones[j.icon] || icones.inherit || '').replace(/^\s*<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '') || ICONE_CARGO;
   }
+  /** Embaixo do nome do cargo: salário, CBO e o ano de referência do salário, como estão no cadastro. */
+  const detalheDoCargo = (j) => (j ? [j.valor ? 'R$ ' + j.valor : '', j.cbo ? 'CBO ' + j.cbo : 'CBO a conferir', j.ano ? 'ref. ' + j.ano : ''].filter(Boolean).join(' · ') : '');
   function iconeDoCargo(j) {
     const icones = typeof jobIcons !== 'undefined' ? jobIcons : null;
     if (j && j.identityMode === 'text' && window.CicluzIdentity) return '<span class="sigla-text">' + String(CicluzIdentity.compact(j.sigla || '')).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) + '</span>';
@@ -479,7 +481,7 @@
       // marcação redonda de escolha única. .value continua sendo o id do cargo (ou 'fora:' + id do cargo que só existe no teste).
       // Só a relação de cargos (sem categoria), cada um com o ícone e o salário como estão em DES - Cargos C/Salários (só leitura).
       const nosCargos = () => {
-        const arvore = reais.map((r) => { const j = dadosDoCargo(r.id); return { id: String(r.id), nome: r.nome, ativo: true, folha: true, html: iconeDoCargo(j), conta: j && j.valor ? 'R$ ' + j.valor : '' }; });
+        const arvore = reais.map((r) => { const j = dadosDoCargo(r.id); return { id: String(r.id), nome: r.nome, ativo: true, folha: true, html: iconeDoCargo(j), conta: detalheDoCargo(j) }; });
         if (c && !c.cargoId) arvore.unshift({ id: 'fora:' + c.id, nome: c.cargoNome + ' (fora do cadastro de cargos)', ativo: true, folha: true, conta: 'Só no teste' });
         return arvore;
       };
