@@ -101,7 +101,7 @@ const storageWarning=()=>loadError?el('p','people-alert','Não foi possível ler
  const {error,status}=messages(),actions=el('div','uniforms-wide actions'),save=el('button','btn','Salvar');save.type='submit';let editing=null;const sit=U.campoSituacao(active,'Situação do horário / escala','Cadastro inativo não pode ser escolhido em novos vínculos.');
  actions.append(button('Cancelar',()=>reset(),'btn ghost'),save);
  form.append(lbl('Nome do horário / escala *',name,'uniforms-wide'),lbl('Tipo de escala *',type),lbl('Dias de folga',offOut),daysBox,lbl('Hora de entrada *',start),lbl('Hora de saída *',end),lbl('Início do intervalo',bs),lbl('Fim do intervalo',be),diasBox,lbl('Jornada da semana (sem os intervalos)',weekOut,'uniforms-wide'),sixNote,unidadesSlot,lbl('Observações',notes,'uniforms-wide'),sit,error,status,actions);
- const wrap=el('div');V.body.append(form,wrap);
+ const wrap=el('div');V.body.append(form,wrap);window.CicluzComprasUI&&CicluzComprasUI.iconarLinhas(form);
  const chosen=()=>checks.filter(c=>c.checked).map(c=>+c.value);
  const padrao=()=>({start:start.value,end:end.value,breakStart:bs.value,breakEnd:be.value});
  const valores=r=>({start:r.ins.start.value,end:r.ins.end.value,breakStart:r.ins.breakStart.value,breakEnd:r.ins.breakEnd.value});
@@ -201,7 +201,7 @@ const allLinks=pid=>data.links.filter(l=>l.personId===pid).sort((a,b)=>a.from.lo
     tr.append(el('td',null,dateBR(l.from)),el('td',null,s.name||modelOf(l)?.name||'—'),el('td',null,oque),el('td',null,sit));tb.append(tr)}
    const w=el('div','uniforms-table-wrap');w.append(t);f.append(w)},null)}
  const listNote=el('p','profiles-note'),wrap=el('div','uniforms-table-wrap'),exTitle=el('h3','uniforms-heading','Folgas e exceções anteriores'),exNote=el('p','profiles-note','Registros feitos antes da Escala Individual, mantidos como histórico. Novas folgas e trocas são lançadas por semana em DES - Escala Individual.'),exWrap=el('div','uniforms-table-wrap');
- V.body.append(form,el('h3','uniforms-heading','Colaboradores vinculados'),listNote,wrap,exTitle,exNote,exWrap);
+ window.CicluzComprasUI&&CicluzComprasUI.iconarLinhas(form);V.body.append(form,el('h3','uniforms-heading','Colaboradores vinculados'),listNote,wrap,exTitle,exNote,exWrap);
  V.render=()=>{paintModel();picker.render();if(!from.iso())from.set(today());wrap.replaceChildren();const w=storageWarning();if(w)wrap.append(w);const day=today();
   const rows=P.get().people.filter(p=>allLinks(p.id).length).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));listNote.textContent=rows.length?rows.length+' colaborador(es) com horário / escala vinculado.':'Nenhum colaborador com horário / escala vinculado.';
   if(rows.length){const {t,tb}=table(['Colaborador','Cargo','Horário / Escala','Trabalho','Folga','Intervalo','Desde','Ações']);
@@ -258,7 +258,7 @@ const sessionUser=()=>{try{return JSON.parse(sessionStorage.getItem('cicluz-sync
  const step=n=>{ref=mode==='week'?isoAdd(ref,7*n):mode==='month'?(()=>{const d=new Date(monthStart(ref)+'T12:00:00');d.setMonth(d.getMonth()+n);return d.toISOString().slice(0,10)})():(()=>{const d=new Date(ref+'T12:00:00');d.setFullYear(d.getFullYear()+n);return d.toISOString().slice(0,10)})();render()};
  nav.append(button('Anterior',()=>step(-1)),button('Próximo',()=>step(1)),button('Hoje',()=>{ref=today();render()}));
  const person=()=>P.byId(pSel.value);
- V.body.append(top,modeBar,nav,title,area,setBox,holBox);
+ window.CicluzComprasUI&&CicluzComprasUI.iconarLinhas(top);V.body.append(top,modeBar,nav,title,area,setBox,holBox);
  pSel.addEventListener('change',render);
  const sitText=x=>x.work==null?'Sem escala':x.work?'Trabalha ('+slotName(x.slot)+')':'Folga';
 
@@ -319,7 +319,7 @@ const sessionUser=()=>{try{return JSON.parse(sessionStorage.getItem('cicluz-sync
   const f=el('form','form-fields uniforms-form');f.dataset.quadro='Feriados';f.noValidate=true;const d=DB.field('Data *'),n=el('input');n.maxLength=60;const {error,status}=messages(),act=el('div','uniforms-wide actions'),sv=el('button','btn','Cadastrar feriado');sv.type='submit';act.append(sv);f.append(d.label,lbl('Nome do feriado *',n),error,status,act);
   f.onsubmit=e=>{e.preventDefault();error.textContent=status.textContent='';load();const iso=d.iso(),nm=n.value.trim(),errs=[];if(!iso)errs.push('Informe a data (DD/MM/AAAA).');if(!nm)errs.push('Informe o nome do feriado.');if(iso&&holidayOn(iso))errs.push('Já existe um feriado cadastrado nesta data.');if(errs.length){error.textContent=errs.join(' ');return}
    if(!transact(x=>x.holidays.push({id:newId(),date:iso,name:nm,createdAt:nowIso()}))){error.textContent='Não foi possível salvar neste navegador.';return}render()};
-  holBox.append(f);const list=data.holidays.filter(h=>!h.cancelledAt).sort((a,b)=>a.date.localeCompare(b.date));
+  holBox.append(f);window.CicluzComprasUI&&CicluzComprasUI.iconarLinhas(f);const list=data.holidays.filter(h=>!h.cancelledAt).sort((a,b)=>a.date.localeCompare(b.date));
   if(!list.length){holBox.append(el('p','profiles-note','Nenhum feriado cadastrado.'));return}
   const {t,tb}=table(['Data','Feriado','Ações']);for(const h of list){const tr=el('tr'),a=el('td','uniforms-row-actions');a.append(iconButton('Cancelar feriado '+h.name,ICON.ban,()=>confirmDialog('Cancelar este feriado?',h.name+' em '+dateBR(h.date)+' deixa de valer para a escala. O registro não é apagado.','Cancelar feriado',()=>{transact(x=>{x.holidays.find(y=>y.id===h.id).cancelledAt=nowIso()});render();return null},()=>{})));tr.append(el('td',null,dateBR(h.date)),el('td',null,h.name),a);tb.append(tr)}const w=el('div','uniforms-table-wrap');w.append(t);holBox.append(w)}
 

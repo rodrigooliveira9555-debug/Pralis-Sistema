@@ -104,7 +104,7 @@ const statusSlot=el('div','uniforms-wide');let sitBox=null;
 const padronizarCampos=()=>U.padronizarCampos(form); /* peça comum (uniforms.js) */
 function pintarSituacao(){const cu=window.CicluzComprasUI;if(!cu){statusSlot.replaceChildren(lbl('Status *',fActive));return}sitBox=cu.quadroSituacao('Situação do cadastro',fActive.value==='1',{dica:'Cadastro inativo continua guardado.',aoMudar:()=>{fActive.value=sitBox.ativo?'1':'0'}});statusSlot.replaceChildren(sitBox)}
 form.append(formTitle,lbl('Tipo de ocorrência *',fType),lbl('Nome da categoria *',fCat),catNewLbl,lbl('Subcategoria *',fSub),subNewLbl,lbl('Tipo de documento *',fDoc),statusSlot,more,fe,fs,act);
-body.append(form);
+body.append(form);window.CicluzComprasUI&&CicluzComprasUI.iconarLinhas(form);
 const dayBox=el('details','uniforms-wide occurrence-more'),dayIn=el('input'),dm=el('p','profiles-note');dm.setAttribute('role','status');dayIn.placeholder='Ex.: 1, 2, 3 (em branco = sem restrição)';
 dayBox.append(el('summary',null,'Dias de suspensão permitidos'),lbl('Quantidades permitidas',dayIn,'uniforms-wide'),el('p','profiles-note','Opcional. Quando preenchido, o lançamento mostra atalhos com essas quantidades; o valor continua editável.'),button('Salvar dias permitidos',saveDays,'btn'),dm);body.append(dayBox);
 

@@ -176,10 +176,10 @@
   const CAL_V = IC.calendario + '<path d="m9 15 2 2 4-4"/>';
   /** [expressão sobre o nome do campo SEM acento e em minúsculas, desenho]. A ordem importa: as mais específicas primeiro. */
   const ICONES_CAMPO = [
-    [/^tirar/, IC.voltar],
+    [/^nome\b/, IC.etiqueta], [/^data\b/, IC.calendario], [/^tirar/, IC.voltar],
     [/carga informada/, IC.linhas], [/^carga|carga horaria/, IC.cronometro],
     [/duracao do intervalo/, IC.xicara], [/intervalo|almoco/, IC.talher],
-    [/^entrada/, IC.entrar], [/^saida/, IC.sair], [/horas de trabalho|hora|horario|turno|jornada|duracao/, IC.relogio],
+    [/entrada/, IC.entrar], [/saida/, IC.sair], [/horas de trabalho|hora|horario|turno|jornada|duracao/, IC.relogio],
     [/domingo compensado|que compensa|compensa/, IC.troca], [/domingo/, IC.sol], [/feriado/, IC.bandeira],
     [/folga/, CAL_X], [/^dias|dia da semana|dias de trabalho/, CAL_V], [/escala/, IC.calendario],
     [/e-?mail/, IC.email], [/telefone|celular|whats/, IC.telefone],
@@ -215,6 +215,7 @@
   function iconarLinhas(raiz) {
     if (!raiz || !raiz.querySelectorAll) return;
     raiz.querySelectorAll('.compras-campo').forEach((l) => {
+      if (l.parentElement && l.parentElement.matches('.form-fields[data-quadro]')) return; // linha antiga: tratada abaixo
       const r = l.querySelector(':scope > .compras-rotulo'); if (!r || l.querySelector(':scope > .compras-campo-icone')) return;
       l.insertBefore(novoIconeDoCampo(r.textContent), r);
     });
@@ -224,7 +225,18 @@
       l.insertBefore(novoIconeDoCampo(r.textContent), r);
     });
     raiz.querySelectorAll('.compras-fieldset > .account-status > span:first-child').forEach((r) => { if (!r.querySelector('.compras-campo-icone')) r.prepend(novoIconeDoCampo(r.textContent)); });
+    // Telas antigas (quadro .form-fields[data-quadro]): o nome, texto solto na linha, vira .compras-rotulo (o mesmo que padronizarCampos faz nas janelas
+    // antigas) para ter o recuo do ícone. O ícone entra no FIM da linha e o CSS o põe à esquerda: o código antigo que troca o nome pelo primeiro nó da
+    // linha (firstChild.textContent) continua mexendo só no nome.
+    raiz.querySelectorAll('.form-fields[data-quadro] > label').forEach((l) => {
+      if (l.querySelector(':scope > .compras-campo-icone')) return;
+      let r = l.querySelector(':scope > .compras-rotulo');
+      if (!r) { const tx = [...l.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim()); if (!tx) return; r = el('span', 'compras-rotulo', tx.textContent.trim()); tx.replaceWith(r); l.classList.add('compras-campo'); }
+      l.append(novoIconeDoCampo(r.textContent));
+    });
   }
+  // As telas antigas que já vêm prontas na página (ex.: cadastro do colaborador, cargo) ganham os ícones quando a página termina de carregar.
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => iconarLinhas(document.body)); else iconarLinhas(document.body);
   /** A nota de uma linha fica DENTRO da linha, embaixo (o nome e o valor continuam alinhados no meio da linha de cima). */
   function notaNaLinha(linhaEl, ...notas) { linhaEl.classList.add('compras-linha-com-nota'); notas.forEach((n) => { n.classList.add('compras-nota-linha'); linhaEl.append(n); }); return linhaEl; }
   function campo(rotulo, no, dica) {

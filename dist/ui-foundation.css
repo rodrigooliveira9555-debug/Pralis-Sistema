@@ -987,3 +987,7 @@ body :is(.form-fields[data-quadro], .grupo-quadro, .compras-fieldset) > label.un
 }
 /* Lupa redonda em qualquer tela: ao passar, cheia na cor do cabeçalho (parada, o cinza vem do padrão em unified-layout.css). */
 body :is(.view,dialog,.modal,#sector-view) .local-search-toggle:not(:disabled):is(:hover,:focus-visible){--busca-fundo:var(--menu-accent);--busca-borda:transparent;--busca-texto:#fff}
+/* Ícone do campo nas linhas antigas do quadro (Rodrigo, 28/11/2026): fica no canto esquerdo, fora da grade da linha (o nome continua na 1ª coluna). */
+body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label:has(> .compras-campo-icone) { position: relative; text-indent: 0; }
+body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label:has(> .compras-campo-icone) > .compras-rotulo { padding-left: 44px; text-indent: 0; }
+body :is(dialog,.modal,#sector-view,.view) .form-fields[data-quadro] > label > .compras-campo-icone { display: grid; place-items: center; position: absolute; left: 14px; top: 16px; width: 20px; height: 20px; margin: 0; text-indent: 0; color: var(--menu-accent, #ef4444); }

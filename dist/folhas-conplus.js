@@ -75,7 +75,7 @@ function makeScreen(key){const T=TIPOS[key];
   const f=el('div','form-fields uniforms-form'),cs=el('select');f.dataset.quadro='Competência';cs.setAttribute('aria-label','Competência');cs.add(new Option('Todas as competências',''));
   for(const c of [...new Set(docs.map(T.competencia))].sort((a,b)=>b.slice(3).localeCompare(a.slice(3))||b.localeCompare(a)))cs.add(new Option(c,c));cs.value=comp;
   const l2=el('label',null,'Competência');l2.append(cs);f.append(l2);
-  const out=el('div');body.append(f,out);
+  const out=el('div');body.append(f,out);window.CicluzComprasUI&&CicluzComprasUI.iconarLinhas(f);
   const draw=()=>{out.replaceChildren();const shown=docs.filter(d=>!comp||T.competencia(d)===comp);
    out.append(el('p','profiles-note',shown.length?shown.length+' documento(s) demonstrativo(s).':''));
    if(!shown.length){out.append(el('p','profiles-note folhas-empty',docs.length?'Nenhum documento para este filtro.':'Nenhum documento disponível. Quando a Conplus enviar os documentos, eles aparecem aqui.'));return}
