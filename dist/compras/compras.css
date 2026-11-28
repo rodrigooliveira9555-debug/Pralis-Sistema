@@ -1217,3 +1217,6 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .transferencia-selecao-painel .transferencia-linha[aria-selected=true] > .compras-cartao-marca svg { visibility: visible; }
 /* Nota do quadro "Dias com horário diferente": é a primeira linha do quadro, então tem recuo também em cima. */
 .org-carga-calculada.org-resumo-exc { padding-top: 10px; }
+/* Nome montado do horário / escala: texto que quebra linha, alinhado à direita como os outros valores. */
+.org-nome-montado { white-space: normal; overflow-wrap: anywhere; text-align: right; }
+@media (max-width: 600px) { .org-linha-horarios > .org-nome-montado { text-align: left; } }

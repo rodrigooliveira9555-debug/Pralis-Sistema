@@ -60,7 +60,7 @@
   /* ---------- Dados do teste (só neste aparelho, chave própria) ---------- */
   function exemplo() {
     const d = { version: 1, criadoEm: new Date().toISOString(), nos: [], cargos: [], horarios: [] };
-    const horario = (nome, ent, sai, ii) => { const x = { id: novoId('hr'), nome, sigla: siglaDoNome(nome), nomeModo: 'personalizado', escala: '5x2', dias: ['1', '2', '3', '4', '5'], cargaSemanal: 42, entrada: ent, saida: sai, intervaloInicio: ii, intervaloMin: 60, porDia: {} }; d.horarios.push(x); return x.id; };
+    const horario = (nome, ent, sai, ii) => { const x = { id: novoId('hr'), nome, sigla: '', nomeModo: 'montado', escala: '5x2', dias: ['1', '2', '3', '4', '5'], cargaSemanal: 42, entrada: ent, saida: sai, intervaloInicio: ii, intervaloMin: 60, porDia: {} }; x.nome = nomeMontado(x); x.sigla = siglaDoNome(x.nome); d.horarios.push(x); return x.id; };
     // Horas de EXEMPLO, só para o teste ter o que mostrar.
     const M = horario('Manhã', '06:00', '15:24', '10:00');
     const I = horario('Intermediário', '10:00', '19:24', '14:00');
@@ -591,9 +591,9 @@
   /** Carga da semana em minutos (no 12x36, a média: 3,5 plantões por semana). */
   const cargaCalculada = (h) => (h.escala === '12x36' ? liquido(h) * 3.5 : h.dias.reduce((t, d) => t + liquido(doDia(h, d)), 0));
   /** Nome montado: escala · entrada às saída · carga da semana. */
-  const nomeMontado = (v) => [v.escala || '', HORA.test(v.entrada) && HORA.test(v.saida) ? v.entrada + ' às ' + v.saida : '',
-    v.intervaloInicio && HORA.test(v.intervaloInicio) ? 'almoço ' + v.intervaloInicio + ' às ' + horaMais(v.intervaloInicio, Number(v.intervaloMin || 0)) : '',
-    v.escala !== '12x36' && v.dias && v.dias.length ? textoDosDias(v.dias) : '',
+  const nomeMontado = (v) => [v.escala || '', HORA.test(v.entrada) && HORA.test(v.saida) ? v.entrada + ' às ' + v.saida +
+      (v.intervaloInicio && HORA.test(v.intervaloInicio) ? ' (almoço ' + v.intervaloInicio + ' às ' + horaMais(v.intervaloInicio, Number(v.intervaloMin || 0)) + ')' : '') : '',
+    v.escala !== '12x36' && v.dias && v.dias.length ? ORDEM.filter((d) => v.dias.includes(d)).map((d) => DIAS.find((x) => x[0] === d)[1]).join(', ') : '',
     v.porDia && Object.keys(v.porDia).length ? textoDosDias(Object.keys(v.porDia)) + ' diferente' : '',
     v.cargaSemanal ? duracaoTexto(Math.round(v.cargaSemanal * 60)) : ''].filter(Boolean).join(' · ');
   /** Confere um horário (o de todos os dias ou o de um dia). Devolve a mensagem do problema ou ''. */
@@ -665,14 +665,11 @@
         const st = {
           escala: h ? (ESCALAS.some((e) => e[0] === h.escala) ? h.escala : '') : '5x2',
           dias: new Set(h ? h.dias : ORDEM.slice(0, 5)),
-          nomeModo: h ? h.nomeModo || 'personalizado' : 'montado',
         };
         // 1) Nome (montado ou personalizado)  2) Escala  3) Dias  4) Carga semanal
         const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, 'Escala'));
-        const nome = entrada('text', h ? h.nome : '', { autocomplete: 'off', maxLength: 120, placeholder: 'Ex.: Manhã' }); nome.required = true;
-        const modo = U.chips([['montado', 'Montado'], ['personalizado', 'Personalizado']], st.nomeModo, (v) => { st.nomeModo = v; nome.readOnly = v === 'montado'; if (v === 'personalizado') nome.focus(); recalcular(); });
-        modo.setAttribute('aria-label', 'Nome montado ou personalizado');
-        nome.readOnly = st.nomeModo === 'montado';
+        // O nome não se digita: é o texto montado, que quebra em mais de uma linha (um campo de uma linha só cortava o fim).
+        const nome = el('output', 'compras-valor org-nome-montado'); nome.value = h ? h.nome : '';
         const notaNome = el('small', 'profiles-note org-carga-calculada');
         const escala = U.chips(ESCALAS.map((e) => [e[0], e[1]]), st.escala, (v) => { st.escala = v; const n = ESCALAS.find((e) => e[0] === v)[2]; if (n && st.dias.size !== n) st.dias = new Set(ORDEM.slice(0, n)); if (fora) fora.remove(); pintar(); });
         escala.setAttribute('aria-label', 'Escala');
@@ -699,7 +696,7 @@
         const linhaSemana = linhaChips('Carga horária por semana *', carga.caixa, carga.painel);
         const linhaDia = linhaChips('Carga horária por dia *', cargaDia.caixa, cargaDia.painel);
         const calculada = el('small', 'profiles-note org-carga-calculada'); calculada.setAttribute('role', 'status');
-        q.append(linhaChips('Nome', modo), campo('Nome *', nome), notaNome, linhaChips('Escala *', escala), ...(fora ? [fora] : []), linhaDias, linhaFolga, nota12,
+        q.append(linhaChips('Nome (montado)', nome), notaNome, linhaChips('Escala *', escala), ...(fora ? [fora] : []), linhaDias, linhaFolga, nota12,
           linhaChips('Carga informada', cargaModo), linhaSemana, linhaDia, calculada);
         // 5) Horário: duração do intervalo, entrada e início do intervalo; o resto é conta.
         const qh = el('fieldset', 'compras-fieldset'); qh.append(el('legend', null, 'Horário'));
@@ -804,8 +801,9 @@
         function pintar() {
           const esc = ESCALAS.find((e) => e[0] === st.escala); const n = esc ? esc[2] : 0; const doze = st.escala === '12x36';
           grupo.replaceChildren(...DIAS.map(([chave, curto, longo]) => {
-            const b = botao(curto, () => { if (st.dias.has(chave)) st.dias.delete(chave); else st.dias.add(chave); pintar(); }, 'compras-chip' + (st.dias.has(chave) ? ' ativo' : ''));
-            b.title = longo; b.setAttribute('aria-label', longo); b.setAttribute('aria-pressed', String(st.dias.has(chave))); return b;
+            const cheio = Boolean(n) && !st.dias.has(chave) && st.dias.size >= n;
+            const b = botao(curto, () => { if (st.dias.has(chave)) st.dias.delete(chave); else if (!cheio) st.dias.add(chave); pintar(); }, 'compras-chip' + (st.dias.has(chave) ? ' ativo' : ''));
+            b.disabled = cheio; b.title = cheio ? 'Na escala ' + st.escala + ' são ' + n + ' dias: desmarque um dia para trocar' : longo; b.setAttribute('aria-label', longo); b.setAttribute('aria-pressed', String(st.dias.has(chave))); return b;
           }));
           ver(linhaSemana, st.cargaModo === 'semana'); ver(linhaDia, st.cargaModo === 'dia');
           ver(linhaDias, !doze); ver(linhaFolga, !doze); ver(nota12, doze); ver(qp, !doze); ver(rodapeExc, !doze);
@@ -853,13 +851,15 @@
           else if (mp <= 0) { aviso = true; texto = 'As horas dos dias diferentes (' + duracaoTexto(somaExc) + ') já ocupam a carga da semana (' + duracaoTexto(total) + ').'; }
           else texto = 'Horas de trabalho por dia: ' + duracaoTexto(mp) + ' (' + (exc.length ? duracaoTexto(total) + ' − ' + duracaoTexto(somaExc) + ' dos dias diferentes' : duracaoTexto(total)) + ' ÷ ' + resto + (resto === 1 ? ' dia' : ' dias') + ').';
           calculada.textContent = 'Até ' + hhmm(CARGA_MAX * 60) + ' por semana (horas e minutos). ' + texto; calculada.classList.toggle('org-aviso', aviso);
-          if (st.nomeModo === 'montado') nome.value = nomeMontado(v);
-          notaNome.textContent = st.nomeModo === 'montado' ? 'O nome se monta sozinho: escala · entrada às saída · almoço · dias da semana · carga da semana.' : 'Nome livre, do jeito que a equipe chama o horário.';
-          avisos.replaceChildren(...avisosCLT(v).map((x) => el('small', 'profiles-note org-aviso', x)));
+          // O quadro pode ter acabado de ajustar o início do intervalo: o nome e os avisos usam o horário já ajustado.
+          const vf = atual();
+          nome.value = nomeMontado(vf);
+          notaNome.textContent = 'O nome se monta sozinho: escala · entrada às saída (almoço) · dias de trabalho · carga da semana.';
+          avisos.replaceChildren(...avisosCLT(vf).map((x) => el('small', 'profiles-note org-aviso', x)));
         }
         form.addEventListener('input', recalcular); form.addEventListener('change', recalcular); form.addEventListener('click', () => setTimeout(recalcular, 0));
         pintar();
-        setTimeout(() => (st.nomeModo === 'montado' ? (st.cargaModo === 'dia' ? cargaDia : carga).input : nome).focus(), 0);
+        setTimeout(() => (st.cargaModo === 'dia' ? cargaDia : carga).input.focus(), 0);
         return { nome, atual, padrao, excecoes, st, cargaMin: () => Math.round(semanaMin()), minutosPadrao, diasComExcecao };
       },
       salvar: (c) => {
@@ -884,9 +884,9 @@
         const semInicio = c.excecoes.find((e) => e.jornada.dur() && !e.jornada.ii.input.value); if (semInicio) { semInicio.jornada.ii.input.focus(); return 'Informe o início do intervalo do dia diferente.'; }
         for (const d of Object.keys(v.porDia)) { const e = conferirJornada(v.porDia[d], DIAS.find((x) => x[0] === d)[2] + ': '); if (e) return e; }
         const nome = limpar(c.nome.value);
-        if (nome.length < 2) { c.nome.focus(); return 'Informe o nome do horário / escala.'; }
-        if (dados.horarios.some((x) => x.id !== (h && h.id) && mesmoNome(x.nome, nome))) { c.nome.focus(); return 'Já existe um horário / escala com o nome "' + nome + '". Escolha esse na lista ou use o nome personalizado.'; }
-        const item = { id: h ? h.id : novoId('hr'), nome, nomeModo: c.st.nomeModo, sigla: siglaDoNome(nome), ...v };
+        if (nome.length < 2) return 'Preencha a escala, a carga e a entrada para montar o nome.';
+        if (dados.horarios.some((x) => x.id !== (h && h.id) && mesmoNome(x.nome, nome))) { c.nome.focus(); return 'Já existe um horário / escala igual ("' + nome + '"). Escolha esse na lista.'; }
+        const item = { id: h ? h.id : novoId('hr'), nome, nomeModo: 'montado', sigla: siglaDoNome(nome), ...v };
         if (!gravar((d) => { const i = d.horarios.findIndex((x) => x.id === item.id); if (i >= 0) d.horarios[i] = item; else d.horarios.push(item); })) return 'Não foi possível salvar neste aparelho. Nada foi alterado.';
         U.avisar('Horário / escala ' + (h ? 'atualizado.' : 'criado.'));
         if (aoCriar) aoCriar(item);
