@@ -332,7 +332,7 @@
     // A seta diz que a linha abre outra área (um submenu); lá dentro estão os botões que ativam cada função.
     const seta = el('span', 'transferencia-seta'); seta.setAttribute('aria-hidden', 'true'); seta.innerHTML = U.svg('<path d="m9 6 6 6-6 6"/>');
     const abre = el('button', 'transferencia-linha transferencia-linha-acao'); abre.type = 'button';
-    abre.append(el('span', 'transferencia-linha-rotulo', 'Anexos'), resumo, seta);
+    abre.append(el('span', 'transferencia-linha-rotulo', 'Anexar'), resumo, seta);
     const audio = window.CicluzAudioNota ? window.CicluzAudioNota.criar({ rotulo: '', classe: 'transferencia-audio', aoSalvar: 'a transferência' }) : null;
     const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-data-painel transferencia-anexos-painel');
     const vistaMenu = el('div', 'transferencia-anexos-vista'); const vistaAudio = el('div', 'transferencia-anexos-vista');
@@ -401,7 +401,7 @@
 
         /* Valor (calculadora) e data */
         const calc = calculadora('Valor da transferência *');
-        const dataTransf = campoDeData('Data da transferência *', R.diaNegocio(new Date()));
+        const dataTransf = campoDeData('Data *', R.diaNegocio(new Date()));
 
         /* Origem e destino (um só, ou várias contas com Múltiplo destino) */
         // Escolha de UMA conta: a mesma linha que se abre para baixo do Múltiplo destino (resumo e seta; embaixo, as contas com marca redonda, ícone CNT, nome e situação).
@@ -479,7 +479,7 @@
         const retornosBox = el('div', 'transferencia-retornos');
         // A própria linha de adicionar já diz se os retornos novos são Com lacre ou Sem lacre (cada um ainda pode ser mudado depois).
         const maisRetorno = el('button', 'transferencia-circulo'); maisRetorno.type = 'button'; maisRetorno.innerHTML = U.svg(ICONE.mais);
-        const linhaAdd = linha('Adicionar transferência de retorno', chave('Retornos novos', false, ['C/lacre', 'S/lacre'], (v) => { estado.padraoLacre = v; }), maisRetorno);
+        const linhaAdd = linha('Adicionar', chave('Retornos novos', false, ['C/lacre', 'S/lacre'], (v) => { estado.padraoLacre = v; }), maisRetorno);
         linhaAdd.classList.add('transferencia-linha-add');
         function desenharRetornos(focar) {
           const n = estado.retornos.length;
@@ -512,7 +512,7 @@
 
         const anexos = blocoAnexos();
         const obs = entrada('text', '', { placeholder: 'Ex.: Suprimento CX1 — reforço de troco', maxLength: 500 });
-        const linhaData = abreAoTocarNaLinha(linha('Data da transferência *', dataTransf.caixa, dataTransf.painel), dataTransf.input, dataTransf.painel);
+        const linhaData = abreAoTocarNaLinha(linha('Data *', dataTransf.caixa, dataTransf.painel), dataTransf.input, dataTransf.painel);
         const corpo = el('div', 'transferencia-corpo');
         // Valor em cima (quadro laranja fixo); depois, um assunto por vez: a transferência, a transferência de retorno, as opções e a observação.
         corpo.append(calc.no,

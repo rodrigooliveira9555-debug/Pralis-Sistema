@@ -125,17 +125,17 @@
         const jurosTipo = seletor(TIPOS, (lanc && lanc.jurosTipo) || '', 'Sem juros');
         const jurosValor = entrada('text', lanc && lanc.jurosTipo ? R.apiParaDinheiro(lanc.jurosValorInformado) : '', { inputMode: 'decimal', placeholder: '0,00' });
         const total = entrada('text', '', { readOnly: true });
-        const dataRef = campoDeData('Data do lançamento *', (lanc && lanc.dataReferencia) || hoje);
-        const docData = campoDeData('Data do documento fiscal', (lanc && lanc.dataDocumentoFiscal) || '');
+        const dataRef = campoDeData('Lançamento *', (lanc && lanc.dataReferencia) || hoje);
+        const docData = campoDeData('Documento fiscal', (lanc && lanc.dataDocumentoFiscal) || '');
         const docNumero = entrada('text', (lanc && lanc.numeroDocumentoFiscal) || '', { maxLength: 60 });
         const grupo = seletor(comAtual(cadastros.grupos, lanc && lanc.grupoId), (lanc && lanc.grupoId) || '', 'Sem grupo');
         const conta = seletor(comAtual(cadastros.contas, lanc && lanc.contaNome), (lanc && lanc.contaNome) || '', 'Sem conta');
         const obs = el('textarea'); obs.value = (lanc && lanc.observacao) || ''; obs.rows = 3; obs.maxLength = 500;
         const venc = campoDeData('Vencimento *', (lanc && lanc.dataVencimento) || hoje);
-        const dataPag = campoDeData('Data do pagamento', (lanc && lanc.dataPagamento) || '');
+        const dataPag = campoDeData('Data', (lanc && lanc.dataPagamento) || '');
         const rotJuros = campo('Juros', jurosValor);
         const campoJurosTipo = campo('Tipo do juros', jurosTipo);
-        const campoTotal = campo('Valor Total', total, 'Valor + juros');
+        const campoTotal = campo('Total', total, 'Valor + juros');
         const campoValor = campo('Valor (R$) *', valor);
 
         /* Prévia: a mesma conta do servidor */
@@ -183,20 +183,20 @@
           notaCredor.textContent = lista.length ? '' : estadoCredor.tipo === 'socio' ? 'O cadastro de Sócios e Gestores ainda não existe.' : 'Nenhum cadastro encontrado neste aparelho.';
         };
         const tipoCredor = el('div', 'compras-campo compras-largo');
-        tipoCredor.append(el('span', 'compras-rotulo', 'Tipo de credor'), U.chips(CREDORES[cat], estadoCredor.tipo, (v) => { estadoCredor.tipo = v; pintarCredor(); }));
-        const qCredor = quadro('Credor', tipoCredor, largo(campo('Credor', credor)), largo(notaCredor));
+        tipoCredor.append(el('span', 'compras-rotulo', 'Tipo'), U.chips(CREDORES[cat], estadoCredor.tipo, (v) => { estadoCredor.tipo = v; pintarCredor(); }));
+        const qCredor = quadro('Credor', tipoCredor, largo(campo('Nome', credor)), largo(notaCredor));
         pintarCredor();
         form.append(largo(U.nota(retirada ? AVISO_NAO_GRAVA_RETIRADA : AVISO_NAO_GRAVA)), q1, q2, qCredor, q3);
 
         if (!retirada) {
           const campoPag = dataPag.no;
           const pintarPag = (sim) => { campoPag.style.display = sim ? '' : 'none'; };
-          const sw = U.quadroSituacao('Pagamento realizado', pago0, { textos: ['Sim', 'Não'], aoMudar: (sim) => { dataPag.definir(sim ? (dataPag.valor() || hoje) : ''); pintarPag(sim); } });
+          const sw = U.quadroSituacao('Realizado', pago0, { textos: ['Sim', 'Não'], aoMudar: (sim) => { dataPag.definir(sim ? (dataPag.valor() || hoje) : ''); pintarPag(sim); } });
           sw.classList.add('compras-largo'); pintarPag(pago0);
           if (!pode('lancamentos_pagar')) { sw.querySelector('button').disabled = true; sw.append(el('small', 'profiles-note', 'Você não tem permissão para registrar pagamento.')); }
           form.append(quadro('Pagamento', sw, campoPag, venc.no));
           /* Fotos: só tela (ainda não grava nem envia o arquivo) */
-          fotoA = campoArquivo('Foto (Recibo / Boleto / Nota)'); fotoB = campoArquivo('Foto (Nota / interno)');
+          fotoA = campoArquivo('Recibo / Boleto / Nota'); fotoB = campoArquivo('Nota / interno');
           form.append(quadro('Fotos', fotoA.no, fotoB.no));
 
           /* Discriminação dos itens */
