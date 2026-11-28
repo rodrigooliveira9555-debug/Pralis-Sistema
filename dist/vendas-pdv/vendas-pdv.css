@@ -14,7 +14,7 @@
 .vendas-pdv-aba:focus-visible { outline: 2px solid var(--panel-text, #785600); outline-offset: 1px; }
 .vendas-pdv-aba.ativa { background: var(--menu-accent, #eab308); color: #fff; font-weight: 600; }
 /* Nas telas amarelas (Vendas dos PDVs e Sistema comandas) o texto da aba ativa é escuro: branco daria 1,9:1.
-   No Open Finance (roxo) o branco passa do AA e fica. */
+   No Open Finance (laranja de Transferências) também fica escuro: extrato-tnp.css. */
 .vendas-pdv-view .vendas-pdv-aba.ativa { color: #1c1600; }
 .vendas-pdv-sincronia { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 .vendas-pdv-sincronizar { display: inline-flex; align-items: center; gap: 6px; }

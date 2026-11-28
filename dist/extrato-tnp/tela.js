@@ -1,6 +1,6 @@
 /*
- * Open Finance (Resultados › API): o extrato bancário de cada empresa, lido pelo coletor do Meu Pluggy dela. Três
- * cartões abrem esta mesma tela, cada um com a sua fonte: Caixa TNP, Bradesco HORA e Padaria Lisboa (FONTES).
+ * Open Finance (Transferências › API; até 28/11/2026 morava em Resultados › API): o extrato bancário de cada empresa, lido pelo coletor do Meu Pluggy dela. Três
+ * cartões abrem esta mesma tela, cada um com a sua fonte: Caixa Econômica TNP, Bradesco HORA e Caixa Econômica LI (FONTES).
  * O S2 não guarda extrato: pergunta à própria API (/api/extrato-tnp?fonte=…), que repassa ao coletor com o token
  * no servidor.
  * De cima para baixo, pouca coisa por vez:
@@ -22,17 +22,18 @@
   const P = window.CicluzExtratoTnpPaineis;
   const { el, botao } = U;
   const { estado, moeda } = D;
-  const COR = '#7c3aed';
-  const COR_TEXTO = '#5520ad';
+  // Cor de Transferências (laranja), onde a tela mora.
+  const COR = '#f97316';
+  const COR_TEXTO = '#9a3412';
   const POR_VEZ = 200;
   U.ICONES.extratoTnp = '<path d="M3 10 12 4l9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>';
   const ICONE_SINCRONIZAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"/></svg>';
 
   // Cada empresa tem o seu cartão e a sua tela (id próprio); o código e o desenho são os mesmos.
   const FONTES = {
-    tnp: { cartao: 'extrato', titulo: 'Open Finance · Caixa TNP', descricao: 'Conta, poupança e cartão da Caixa PJ da TNP, pelo Meu Pluggy', idTela: 'extrato-tnp-view' },
-    hora: { cartao: 'hora', titulo: 'Open Finance · Bradesco HORA', descricao: 'Conta, poupança e cartão do Bradesco PJ do restaurante HORA, pelo Meu Pluggy', idTela: 'extrato-hora-view' },
-    lisboa: { cartao: 'lisboa', titulo: 'Open Finance · Padaria Lisboa', descricao: 'Contas e cartão da Padaria Lisboa, pelo Meu Pluggy', idTela: 'extrato-lisboa-view' },
+    tnp: { cartao: 'extrato', titulo: 'Open Finance - Caixa Econômica TNP', descricao: 'Conta, poupança e cartão da Caixa PJ da TNP, pelo Meu Pluggy', idTela: 'extrato-tnp-view' },
+    hora: { cartao: 'hora', titulo: 'Open Finance - Bradesco HORA', descricao: 'Conta, poupança e cartão do Bradesco PJ do restaurante HORA, pelo Meu Pluggy', idTela: 'extrato-hora-view' },
+    lisboa: { cartao: 'lisboa', titulo: 'Open Finance - Caixa Econômica LI', descricao: 'Contas e cartão da Padaria Lisboa, pelo Meu Pluggy', idTela: 'extrato-lisboa-view' },
   };
   const telas = {};
   let tela = null;
@@ -313,8 +314,8 @@
     if (estado.fonte !== fonte) D.trocarFonte(fonte);
     if (!telas[fonte]) {
       telas[fonte] = U.criarTela({
-        id: f.idTela, titulo: f.titulo, caminho: 'Resultados · Relatórios / API / ' + f.titulo,
-        icone: 'extratoTnp', voltar: () => openSection(sections[5][0], 'API', 'tree', COR), cor: COR, corTexto: COR_TEXTO, classe: 'extrato-tnp-view',
+        id: f.idTela, titulo: f.titulo, caminho: 'Transferências · Contas / Locais / API / ' + f.titulo,
+        icone: 'extratoTnp', voltar: () => openSection(sections[1][0], 'API', 'tree', COR), cor: COR, corTexto: COR_TEXTO, classe: 'extrato-tnp-view',
       });
     }
     tela = telas[fonte];

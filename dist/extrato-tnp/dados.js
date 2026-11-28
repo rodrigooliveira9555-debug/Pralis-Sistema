@@ -1,5 +1,5 @@
 /*
- * Open Finance (TNP, HORA, Lisboa) — estado, nomes em português e as contas da tela (filtros, totais, grupos, CSV).
+ * Open Finance (Caixa Econômica TNP, Bradesco HORA, Caixa Econômica LI) — estado, nomes em português e as contas da tela (filtros, totais, grupos, CSV).
  * O coletor manda o período (até 31 dias) de uma vez; os filtros de busca, tipo, operação, categoria, situação e valor
  * são aplicados aqui, sem nova ida ao servidor. Dinheiro em CENTAVOS inteiros: entrada positiva, saída negativa;
  * pendente não entra nos totais (só na contagem).

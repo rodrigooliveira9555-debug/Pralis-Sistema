@@ -1,4 +1,4 @@
-/* Open Finance · Caixa TNP (Resultados › API). Reaproveita abas, números, barras, popup e tabela de Vendas dos PDVs
+/* Open Finance (Transferências › API). Reaproveita abas, números, barras, popup e tabela de Vendas dos PDVs
    (vendas-pdv.css) e do Compras; aqui só o que é desta tela: a faixa de atualização, a linha de filtros, a barra de
    uso do limite e o extrato por dia. Entrada e saída pelos tokens --ui-valor-entrada / --ui-valor-saida
    (ui-foundation.css, AA no claro e no escuro), sempre com o sinal escrito (a cor nunca é a única pista).
@@ -8,16 +8,18 @@
 /* As placas ficam com o fundo da placa (o tom só pinta o número); no escuro, compras.css pintaria o fundo inteiro. */
 .extrato-tnp-view .vendas-pdv-numero.tom-positivo, .extrato-tnp-view .vendas-pdv-numero.tom-negativo,
 body.dark-theme .extrato-tnp-view .vendas-pdv-numero.tom-positivo, body.dark-theme .extrato-tnp-view .vendas-pdv-numero.tom-negativo {
-  background: color-mix(in srgb, var(--menu-accent, #7c3aed) 8%, var(--theme-card, #fff)); color: inherit;
+  background: color-mix(in srgb, var(--menu-accent, #f97316) 8%, var(--theme-card, #fff)); color: inherit;
 }
 .extrato-tnp-view :is(.vendas-pdv-numero small, .vendas-pdv-barra-rodape, .vendas-pdv-vivo-texto, .vendas-pdv-paginacao) { color: var(--layout-ink, #606066); }
-/* Foco visível no escuro: o roxo do menu fica abaixo de 3:1 sobre o fundo escuro. */
+/* Foco visível no escuro: um laranja mais claro que o do menu, para sobrar contraste sobre o fundo escuro. */
 body.dark-theme .extrato-tnp-view :is(.vendas-pdv-aba, .vendas-pdv-barra, .btn):focus-visible,
-body.dark-theme .vendas-pdv-popup-fechar:focus-visible { outline-color: #a78bfa; }
+body.dark-theme .vendas-pdv-popup-fechar:focus-visible { outline-color: #fdba74; }
+/* Aba ativa: branco sobre o laranja de Transferências dá 2,8:1; o texto fica no marrom escuro (AA). */
+.extrato-tnp-view .vendas-pdv-aba.ativa { color: #431407; }
 .extrato-tnp-abas { min-width: 0; max-width: 100%; }
 
 /* Faixa de atualização: quando o banco foi lido e o aviso de 1x por dia. */
-.extrato-tnp-faixa { padding: 12px 14px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: color-mix(in srgb, var(--menu-accent, #7c3aed) 6%, var(--theme-card, #fff)); }
+.extrato-tnp-faixa { padding: 12px 14px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: color-mix(in srgb, var(--menu-accent, #f97316) 6%, var(--theme-card, #fff)); }
 .extrato-tnp-faixa-texto { display: grid; gap: 2px; min-width: 0; font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--layout-ink, #606066); }
 .extrato-tnp-faixa-texto b { font: 600 var(--ui-text)/20px var(--ui-font); color: var(--layout-ink, #3f3f46); font-variant-numeric: tabular-nums; }
 .extrato-tnp-avisos { display: grid; gap: 8px; }
@@ -46,7 +48,7 @@ body.dark-theme .vendas-pdv-popup-fechar:focus-visible { outline-color: #a78bfa;
 /* Extrato: um bloco por dia (título com o dia da semana e os totais), lançamentos em linhas de 52 px. */
 .extrato-tnp-dias { display: grid; }
 .extrato-tnp-dia + .extrato-tnp-dia { border-top: 1px solid var(--layout-line, #dedee3); }
-.extrato-tnp-dia-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 14px; background: color-mix(in srgb, var(--menu-accent, #7c3aed) 6%, var(--theme-card, #fff)); }
+.extrato-tnp-dia-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 14px; background: color-mix(in srgb, var(--menu-accent, #f97316) 6%, var(--theme-card, #fff)); }
 .extrato-tnp-dia-cab h4 { margin: 0; font: 600 12px/16px var(--ui-font); text-transform: uppercase; letter-spacing: .04em; color: var(--panel-text, #5520ad); }
 body.dark-theme .extrato-tnp-dia-cab h4 { color: #c4b5fd; }
 .extrato-tnp-dia-cab span { font: 500 var(--ui-note, 11px)/16px var(--ui-font); color: var(--layout-ink, #606066); font-variant-numeric: tabular-nums; }
@@ -56,7 +58,7 @@ body.dark-theme .extrato-tnp-dia-cab h4 { color: #c4b5fd; }
 .extrato-tnp-lanc-texto { display: grid; gap: 2px; min-width: 0; justify-items: start; }
 .extrato-tnp-lanc-texto b { font: 500 var(--ui-text)/20px var(--ui-font); overflow-wrap: anywhere; }
 .extrato-tnp-lanc-texto small { font: 400 var(--ui-note, 11px)/16px var(--ui-font); color: var(--layout-ink, #606066); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.extrato-tnp-categoria { padding: 0 8px; border-radius: 999px; background: color-mix(in srgb, var(--menu-accent, #7c3aed) 10%, transparent); font: 500 var(--ui-note, 11px)/18px var(--ui-font); color: var(--panel-text, #5520ad); }
+.extrato-tnp-categoria { padding: 0 8px; border-radius: 999px; background: color-mix(in srgb, var(--menu-accent, #f97316) 10%, transparent); font: 500 var(--ui-note, 11px)/18px var(--ui-font); color: var(--panel-text, #5520ad); }
 body.dark-theme .extrato-tnp-categoria { color: #c4b5fd; }
 .extrato-tnp-lanc-valor { display: grid; justify-items: end; gap: 2px; }
 .extrato-tnp-lanc-valor b { font: 600 var(--ui-text)/20px var(--ui-font); font-variant-numeric: tabular-nums; white-space: nowrap; }
