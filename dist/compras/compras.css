@@ -1192,11 +1192,6 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .org-barras-area b { font-size: 14px; font-weight: 700; color: var(--layout-ink, #27272a); }
 .org-barras-id { width: 26px; height: 26px; border-radius: var(--row-icon-radius, 26%); display: grid; place-items: center; background: var(--no-cor, var(--menu-accent)); color: #fff; font-size: 10px; font-weight: 700; }
 @media (max-width: 480px) { .org-barras { --rotulo: 118px; } }
-/* Cor do módulo: tocar escolhe, então é REDONDA (botão), com a cor por dentro. Mesmo prefixo da regra geral dos campos do quadro (que deixa o campo em linha), para valer sobre ela. */
-:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > input.org-cor { flex: none; width: 34px; height: 34px; min-height: 0; margin-left: auto; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
-:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > input.org-cor::-webkit-color-swatch-wrapper { padding: 0; }
-:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > input.org-cor::-webkit-color-swatch { border: 0; border-radius: 50%; }
-:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > input.org-cor::-moz-color-swatch { border: 0; border-radius: 50%; }
 .org-horarios { display: grid; gap: 8px; justify-items: start; min-width: 0; }
 /* Tela estreita: horários, contratação, forma de pagamento e horas do cargo — e as linhas do quadro de dia com horário diferente, que fica dentro de outro
    quadro — descem para baixo do nome do campo (não passam da borda nem quebram palavra). */
@@ -1249,3 +1244,15 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .compras-arvore-detalhe > b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .compras-arvore-detalhe > small { font-size: 11px; color: var(--muted, #73737a); }
 @media (max-width: 600px) { :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > .compras-nota-linha { margin-top: 0; } } /* na tela estreita o valor desce para baixo do nome: a nota não sobe por cima dele */
+/* Identificação (U.identidade): prévia (quadrado com a sigla na cor + nome) e paleta em bolinhas, com a personalizada por último. */
+.compras-identidade { display: grid; gap: 16px; justify-items: center; padding: 18px 14px 14px; --id-cor: var(--menu-accent); }
+.compras-identidade-previa { display: grid; justify-items: center; gap: 10px; max-width: 100%; }
+.compras-identidade-icone { display: grid; place-items: center; width: 72px; height: 72px; border-radius: var(--row-icon-radius, 26%); background: var(--id-cor); color: #fff; font: 700 22px/1 var(--ui-font); letter-spacing: .5px; box-shadow: 0 8px 20px color-mix(in srgb, var(--id-cor) 35%, transparent); }
+.compras-identidade-nome { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 15px/20px var(--ui-font); color: var(--id-cor); }
+.compras-identidade-cores { display: grid; grid-template-columns: repeat(7, 36px); gap: 12px; justify-content: center; }
+@media (max-width: 400px) { .compras-identidade-cores { grid-template-columns: repeat(5, 36px); } }
+.compras-dialog .compras-identidade-cor, .compras-identidade-cor { position: relative; display: block; width: 36px; height: 36px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .08); cursor: pointer; }
+.compras-identidade-cor:is([aria-pressed=true], .ativa) { box-shadow: 0 0 0 3px var(--theme-card, #fff), 0 0 0 5px var(--border-strong, #b9b9c0); }
+.compras-identidade-cor:focus-visible { outline: 2px solid var(--id-cor); outline-offset: 4px; }
+.compras-identidade-cor.personalizada { background: conic-gradient(#ef4444, #eab308, #16a34a, #38bdf8, #4f46e5, #e11d48, #ef4444); overflow: hidden; }
+.compras-identidade-cor.personalizada > input { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }

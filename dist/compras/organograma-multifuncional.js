@@ -414,10 +414,13 @@
         let manual = Boolean(n) && n.sigla !== siglaDoNome(n.nome);
         nome.addEventListener('input', () => { if (!manual) sigla.value = siglaDoNome(nome.value); });
         sigla.oninput = () => { sigla.value = compactar(sigla.value); manual = sigla.value !== ''; if (!manual) sigla.value = siglaDoNome(nome.value); };
-        const corEntrada = entrada('color', n ? corDe(n) : (pai ? corDe(pai) : cor())); corEntrada.className = 'org-cor'; corEntrada.title = 'Escolher a cor';
-        q.append(linhaTipo, campo('Nome *', nome), campo('Identificador (até 3 caracteres) *', sigla),
-          campo('Cor', corEntrada, tipo === 'area' ? 'Os setores e locais desta área nascem nesta cor.' : 'Nasce na cor de ' + (pai ? pai.nome : 'cima') + '; pode trocar.'));
-        form.append(q);
+        q.append(linhaTipo, campo('Nome *', nome), campo('Identificador (até 3 caracteres) *', sigla));
+        // Identificação no padrão do sistema (U.identidade): a prévia do módulo e a paleta de cores com a personalizada. Módulo não tem ícone (só a sigla).
+        const qi = el('fieldset', 'compras-fieldset'); qi.append(el('legend', null, 'Identificação'));
+        const corEntrada = U.identidade({ sigla: sigla.value, nome: nome.value, cor: n ? corDe(n) : (pai ? corDe(pai) : cor()), rotulo: 'Cor do módulo' });
+        const repintarId = () => corEntrada.atualizar({ sigla: sigla.value, nome: nome.value }); nome.addEventListener('input', repintarId); sigla.addEventListener('input', repintarId);
+        qi.append(corEntrada, U.nota(tipo === 'area' ? 'Os setores e locais desta área nascem nesta cor.' : 'Nasce na cor de ' + (pai ? pai.nome : 'cima') + '; pode trocar.'));
+        form.append(q, qi);
         const ctx = { nome, sigla, corEntrada, cargos: [] };
         if (COM_CARGO(tipo)) Object.assign(ctx, quadroCargos(form, n, opts));
         else form.append(U.nota('Na área entra setor; o cargo entra no setor ou no local.'));

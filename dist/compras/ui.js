@@ -238,6 +238,44 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => iconarLinhas(document.body)); else iconarLinhas(document.body);
   /** A nota de uma linha fica DENTRO da linha, embaixo (o nome e o valor continuam alinhados no meio da linha de cima). */
   function notaNaLinha(linhaEl, ...notas) { linhaEl.classList.add('compras-linha-com-nota'); notas.forEach((n) => { n.classList.add('compras-nota-linha'); linhaEl.append(n); }); return linhaEl; }
+  /*
+   * IDENTIFICAÇÃO (Rodrigo, 28/11/2026 — modelo "Informações da Lista" do app Lembretes): em cima, a PRÉVIA — o quadrado de cantos arredondados com a
+   * sigla (ou o ícone) na cor escolhida e o nome embaixo, na mesma cor; embaixo, a PALETA em bolinhas (12 cores) e a última bolinha, de arco-íris, é a cor
+   * PERSONALIZADA (abre o seletor de cor). A escolhida ganha o anel. Telas com ícone acrescentam a grade de ícones no mesmo quadro (padrão a seguir).
+   * Devolve o nó; no.value é a cor (#rrggbb) e no.atualizar({ sigla, nome }) refaz a prévia.
+   */
+  const CORES_IDENTIDADE = [['Vermelho', '#ef4444'], ['Laranja', '#f97316'], ['Amarelo', '#eab308'], ['Verde', '#16a34a'], ['Azul-claro', '#38bdf8'], ['Azul', '#2563eb'],
+    ['Anil', '#4f46e5'], ['Rosa', '#e11d48'], ['Roxo', '#7c3aed'], ['Marrom', '#92764e'], ['Cinza', '#52525b'], ['Bege', '#c8a097']];
+  function identidade({ sigla = '', nome = '', cor = '#7c3aed', cores = CORES_IDENTIDADE, rotulo = 'Cor' } = {}) {
+    const no = el('div', 'compras-largo compras-identidade');
+    const previa = el('div', 'compras-identidade-previa'); previa.setAttribute('aria-hidden', 'true');
+    const quadrado = el('span', 'compras-identidade-icone'); const nomeTx = el('span', 'compras-identidade-nome');
+    previa.append(quadrado, nomeTx);
+    const paleta = el('div', 'compras-identidade-cores'); paleta.setAttribute('role', 'group'); paleta.setAttribute('aria-label', rotulo);
+    const botoes = cores.map(([nomeCor, valor]) => {
+      const b = el('button', 'compras-identidade-cor'); b.type = 'button'; b.title = nomeCor; b.setAttribute('aria-label', nomeCor); b.style.setProperty('--c', valor); b.dataset.cor = valor;
+      b.onclick = () => escolher(valor); return b;
+    });
+    // span (não label): as regras antigas de label apagam o fundo.
+    const outra = el('span', 'compras-identidade-cor personalizada'); outra.title = 'Cor personalizada';
+    const seletor = entrada('color', cor); seletor.setAttribute('aria-label', 'Cor personalizada'); outra.append(seletor);
+    seletor.addEventListener('input', () => escolher(seletor.value));
+    paleta.append(...botoes, outra);
+    no.append(previa, paleta);
+    let atual = String(cor || '#7c3aed').toLowerCase(); let dados = { sigla, nome };
+    function pintar() {
+      no.style.setProperty('--id-cor', atual);
+      quadrado.textContent = dados.sigla || '?'; nomeTx.textContent = dados.nome || '';
+      let achou = false;
+      botoes.forEach((b) => { const sim = b.dataset.cor.toLowerCase() === atual; if (sim) achou = true; b.setAttribute('aria-pressed', String(sim)); });
+      outra.classList.toggle('ativa', !achou); seletor.value = atual;
+    }
+    function escolher(v) { atual = String(v).toLowerCase(); pintar(); no.dispatchEvent(new Event('change', { bubbles: true })); }
+    Object.defineProperty(no, 'value', { get: () => atual, set: (v) => { atual = String(v).toLowerCase(); pintar(); } });
+    no.atualizar = (d) => { dados = { ...dados, ...d }; pintar(); };
+    pintar();
+    return no;
+  }
   function campo(rotulo, no, dica) {
     const l = el('label', 'compras-campo');
     l.append(novoIconeDoCampo(rotulo), el('span', 'compras-rotulo', rotulo));
@@ -1494,6 +1532,6 @@
     seletorArvore, campoArvore, campoLocal, arvoreGruposMercadoria, botaoRemover,
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, infoDaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, roletaNumero, iconarLinhas, notaNaLinha, iconeDoCampo, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, infoDaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, roletaNumero, iconarLinhas, notaNaLinha, iconeDoCampo, identidade, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();
