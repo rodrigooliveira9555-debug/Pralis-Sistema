@@ -46,6 +46,8 @@
     if (nome === 'clientes-vnd') return window.CicluzComprasClientes.abrir();
     // VND - Horário de Funcionamento (Entradas · Vendas · Cadastros Geral).
     if (nome === 'horario-funcionamento') return window.CicluzHorarioFuncionamento.abrir();
+    // DES - Organograma Multifuncional (Saídas · Despesas › Cadastros Geral Colaboradores) — ambiente de teste, 27/11/2026.
+    if (nome === 'organograma-multifuncional') return window.CicluzOrganogramaMultifuncional.abrir();
     if (nome === 'produtos') return window.CicluzComprasProdutos.abrir();
     const t = telas[nome];
     if (t) return t();
