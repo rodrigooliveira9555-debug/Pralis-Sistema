@@ -192,7 +192,8 @@
     [/%|percent|taxa|margem|comissao|aliquota|juros|desconto/, IC.porcento],
     [/valor|preco|custo|salario|total|r\$|pagamento|tarifa|troco|saldo|dinheiro|moeda|parcela/, IC.dinheiro],
     [/cartao|bandeira|operadora|maquininha/, IC.cartao],
-    [/banco|\bcontas?\b|agencia|\bpix\b|cofre/, IC.banco],
+    [/banco|\bcontas?\b|agencia|\bpix\b|cofre|origem|destino/, IC.banco],
+    [/lacre/, IC.cadeado], [/retorno/, IC.troca], [/tempo de aceite|aceite/, IC.relogio],
     [/fornecedor|transportadora|frete|entrega/, IC.caminhao],
     [/cargo/, IC.cargo], [/funcao|setor|area|departamento|contratacao/, IC.maleta],
     [/cliente|colaborador|pessoa|responsavel|funcionario|usuario|contato|dependente|filia|mae|pai\b|conjuge|vendedor|atendente/, IC.pessoa],
@@ -229,6 +230,10 @@
       l.insertBefore(novoIconeDoCampo(r.textContent), r);
     });
     raiz.querySelectorAll('.compras-fieldset > .account-status > span:first-child').forEach((r) => { if (!r.querySelector('.compras-campo-icone')) r.prepend(novoIconeDoCampo(r.textContent)); });
+    raiz.querySelectorAll('.transferencia-linha:not(.transferencia-folha-op)').forEach((l) => {
+      const r = l.querySelector(':scope > .transferencia-linha-rotulo'); if (!r || l.querySelector(':scope > .compras-campo-icone')) return;
+      l.insertBefore(novoIconeDoCampo(r.textContent), r);
+    });
     // Telas antigas (quadro .form-fields[data-quadro]): o nome, texto solto na linha, vira .compras-rotulo (o mesmo que padronizarCampos faz nas janelas
     // antigas) para ter o recuo do ícone. O ícone entra no FIM da linha e o CSS o põe à esquerda: o código antigo que troca o nome pelo primeiro nó da
     // linha (firstChild.textContent) continua mexendo só no nome.
@@ -302,8 +307,9 @@
     const canais = ['Vermelho', 'Verde', 'Azul'].map((n) => { const i = entrada('text', '', { inputMode: 'numeric', maxLength: 3, autocomplete: 'off' }); i.setAttribute('aria-label', n); return i; });
     const campoMini = (rot, inp) => { const l = el('span', 'compras-cor-mini'); l.append(el('span', null, rot), inp); return l; };
     const gotasPers = contaGotasBotao((c) => { hsv = hsvDe(rgbDe(c)); pintarSeletor(); });
-    const cancelar = el('button', 'compras-cor-cancelar'); cancelar.type = 'button'; cancelar.title = 'Cancelar'; cancelar.setAttribute('aria-label', 'Cancelar'); cancelar.innerHTML = svg('<path d="M7 7l10 10M17 7 7 17"/>'); cancelar.onclick = () => mostrar('grade');
-    const ok = el('button', 'compras-cor-ok'); ok.type = 'button'; ok.title = 'OK'; ok.setAttribute('aria-label', 'OK: usar esta cor'); ok.innerHTML = svg('<path d="m5 12.5 4.5 4.5L19 7.5"/>');
+    // Cancelar e OK: os mesmos botões retangulares das janelas (Cancelar só com a borda e o X; OK cheio com o "certo"; mais forte ao passar o mouse).
+    const cancelar = el('button', 'btn ghost standard-form-action footer-cancel-accent acao-com-circulo', 'Cancelar'); cancelar.type = 'button'; cancelar.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>'); cancelar.onclick = () => mostrar('grade');
+    const ok = el('button', 'btn standard-form-action footer-save-accent acao-com-circulo', 'OK'); ok.type = 'button'; ok.setAttribute('aria-label', 'OK: usar esta cor'); ok.insertAdjacentHTML('beforeend', '<svg class="footer-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>');
     ok.onclick = () => { const c = hexDe(...rgbDeHsv(...hsv)); guardarCorPersonalizada(c); mostrar('grade'); escolher(c, true); };
     const linhaFerr = el('div', 'compras-cor-ferramentas'); linhaFerr.append(previa, ...(window.EyeDropper ? [gotasPers] : []), matiz);
     const linhaNum = el('div', 'compras-cor-numeros'); linhaNum.append(campoMini('Hexadecimal', hex), ...canais.map((c, i) => campoMini(['Verm.', 'Verde', 'Azul'][i], c)));
