@@ -75,7 +75,6 @@ function show(key,opts={}){load();P.load();const v=views[TELA_ANTIGA[key]||key];
 const statusPill=active=>el('span','pill '+(active?'p-green':'p-red'),active?'Ativo':'Inativo');
 const messages=()=>{const error=el('p','uniforms-wide profiles-error'),status=el('p','uniforms-wide profiles-note');error.setAttribute('role','alert');status.setAttribute('role','status');return {error,status}};
 const botaoSituacao=U.botaoSituacao;
-const ICONE_RELOGIO='<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',ICONE_ESCALA='<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/>';
 function table(heads){const t=el('table','uniforms-table'),hr=el('tr');for(const h of heads)hr.append(el('th',null,h));const th=el('thead');th.append(hr);const tb=el('tbody');t.append(th,tb);return {t,tb}}
 const storageWarning=()=>loadError?el('p','people-alert','Não foi possível ler os horários e escalas salvos neste navegador. Nada será gravado para não sobrescrever os dados.'):null;
 
@@ -87,14 +86,8 @@ const storageWarning=()=>loadError?el('p','people-alert','Não foi possível ler
    e as mesmas regras (compras/organograma-multifuncional.js). O cadastro continua aqui (cicluz-jornadas-v1), no campo `modelo` de cada horário. */
 {const V=makeView('shifts','DES - Horário / Escala','Cadastros Geral Colaboradores');V.body.append(el('p','profiles-note','O vínculo com o colaborador é feito em Lançamentos Colaboradores → DES - Lançamento de Horário / Escala.'));
  const wrap=el('div');V.body.append(wrap);
- V.render=()=>{load();const cu=window.CicluzComprasUI,O=window.CicluzOrganogramaMultifuncional;wrap.replaceChildren();const w=storageWarning();if(w)wrap.append(w);
-  if(O&&O.listaDeHorarios)wrap.append(O.listaDeHorarios(()=>V.render()));
-  /* Cadastros antigos (horário e escala separados): só leitura. Continuam valendo para quem já estava vinculado a eles. */
-  if(data.shifts.length||data.scales.length){const antigos=cu.secao('Cadastros antigos (horário e escala separados)',undefined,cu.pontaDaLista(data.shifts.length+data.scales.length,'Cadastros antigos')),la=el('div','compras-lista');
-   antigos.append(el('p','profiles-note','Feitos antes de horário e escala virarem um cadastro só. Continuam valendo para quem já está vinculado; para trocar, cadastre um Horário / Escala e vincule o colaborador.'));
-   for(const s of data.shifts)la.append(cu.linhaLista({icone:ICONE_RELOGIO,titulo:s.name,detalhe:'Horário · '+shiftText(s),direita:el('span','account-list-state',s.active?'Ativo':'Inativo')}));
-   for(const s of data.scales)la.append(cu.linhaLista({icone:ICONE_ESCALA,titulo:s.name,detalhe:'Escala · trabalho: '+daysText(s.days)+' · folga: '+offText(s.days),direita:el('span','account-list-state',s.active?'Ativa':'Inativa')}));
-   antigos.append(la);wrap.append(antigos)}};
+ V.render=()=>{load();const O=window.CicluzOrganogramaMultifuncional;wrap.replaceChildren();const w=storageWarning();if(w)wrap.append(w);
+  if(O&&O.listaDeHorarios)wrap.append(O.listaDeHorarios(()=>V.render()))};
  views.shifts.reset=()=>{}}
 
 /* ---------- Lançamentos: vínculo de vários colaboradores a um Horário / Escala ---------- */
