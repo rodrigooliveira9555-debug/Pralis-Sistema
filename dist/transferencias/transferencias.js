@@ -400,7 +400,7 @@
 
         /* Valor (calculadora) e data */
         const calc = calculadora('Valor da transferência *');
-        const dataTransf = campoDeData('Data *', R.diaNegocio(new Date()));
+        const dataTransf = campoDeData('Data Lançamento *', R.diaNegocio(new Date()));
 
         /* Origem e destino (um só, ou várias contas com Múltiplo destino) */
         // Escolha de UMA conta: a mesma linha que se abre para baixo do Múltiplo destino (resumo e seta; embaixo, as contas com marca redonda, ícone CNT, nome e situação).
@@ -435,14 +435,14 @@
           pintar();
           return caixa;
         };
-        const origem = escolhaDeConta('Origem (−) / CNT *', () => contas);
-        const destino = escolhaDeConta('Destino (+) / CNT *', () => candidatas());
+        const origem = escolhaDeConta('(−) Conta Origem *', () => contas);
+        const destino = escolhaDeConta('(+) Conta Destino *', () => candidatas());
         const campoDestino = destino; const campoOrigem = origem;
         const marcadas = new Set();
         const contagem = el('small', 'profiles-note'); contagem.setAttribute('role', 'status');
-        const listaContas = el('div', 'compras-hier transferencia-contas'); listaContas.setAttribute('role', 'group'); listaContas.setAttribute('aria-label', 'Destino (+) / CNT: contas');
+        const listaContas = el('div', 'compras-hier transferencia-contas'); listaContas.setAttribute('role', 'group'); listaContas.setAttribute('aria-label', '(+) Contas Destino');
         // Múltiplo destino: uma linha que se expande para baixo com as contas; tocar fora (ou Esc) fecha.
-        const multiAbre = linhaQueAbre('Destino (+) / CNT *', () => abrirMulti(painelMulti.hidden));
+        const multiAbre = linhaQueAbre('(+) Contas Destino *', () => abrirMulti(painelMulti.hidden));
         let termoMulti = '';
         const barraMulti = U.barraDeLista({ rotuloBusca: 'Buscar conta', aoBuscar: (tx) => { termoMulti = tx; desenharDestinos(); }, lista: listaContas });
         const painelMulti = el('div', 'transferencia-multi-painel'); painelMulti.hidden = true; painelMulti.append(barraMulti, listaContas, contagem);
@@ -521,7 +521,7 @@
         maisRetorno.addEventListener('click', () => { retornosAbertos = true; estado.retornos.push({ com: estado.padraoLacre, numero: '' }); desenharRetornos(estado.padraoLacre ? estado.retornos.length - 1 : undefined); });
 
         /* Opções: Múltiplo destino e Tempo de aceite */
-        const linhaMultiplo = linha('Múltiplo destino (+) / CNT', chave('Múltiplo destino', false, ['Sim', 'Não'], (v) => { estado.multiplo = v; mostrar(); }));
+        const linhaMultiplo = linha('Múltiplas (+) Contas Destino', chave('Múltiplas contas destino', false, ['Sim', 'Não'], (v) => { estado.multiplo = v; mostrar(); }));
         const aceite = opcaoAceite('Tempo de aceite');
         function mostrar() {
           campoDestino.style.display = estado.multiplo ? 'none' : ''; campoContas.style.display = estado.multiplo ? '' : 'none';
@@ -530,7 +530,7 @@
 
         const anexos = blocoAnexos();
         const obs = entrada('text', '', { placeholder: 'Ex.: Suprimento CX1 — reforço de troco', maxLength: 500 });
-        const linhaData = abreAoTocarNaLinha(linha('Data *', dataTransf.caixa, dataTransf.painel), dataTransf.input, dataTransf.painel);
+        const linhaData = abreAoTocarNaLinha(linha('Data Lançamento *', dataTransf.caixa, dataTransf.painel), dataTransf.input, dataTransf.painel);
         const quadroRetornos = quadro(retornosBox, linhaAdd);
         dlg.addEventListener('click', (e) => { if (retornosAbertos && estado.retornos.length && !e.composedPath().includes(quadroRetornos)) abrirRetornos(false); });
         // Ao salvar, os retornos se abrem (se faltar o número de um lacre, ele fica à vista).
