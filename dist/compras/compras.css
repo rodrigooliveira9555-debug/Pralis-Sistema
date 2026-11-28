@@ -1247,10 +1247,11 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .compras-cor-titulo { font: 600 13px/18px var(--ui-font); color: var(--layout-ink, #27272a); }
 .compras-cor-grade { display: grid; grid-template-columns: repeat(10, 22px); gap: 4px; }
 .compras-cor-celula { position: relative; width: 22px; height: 22px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .12); cursor: pointer; }
-.compras-cor-celula[aria-pressed=true]::after { content: ""; position: absolute; left: 7px; top: 5px; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
-.compras-cor-celula.clara[aria-pressed=true]::after { border-color: #27272a; }
+.compras-cor-celula[aria-pressed=true]::after { content: ""; position: absolute; left: 7px; top: 5px; width: 5px; height: 9px; border: solid var(--theme-card, #fff); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.compras-cor-celula.clara[aria-pressed=true]::after { border-color: var(--layout-ink, #27272a); }
 .compras-cor-celula:hover { box-shadow: inset 0 0 0 1px rgb(0 0 0 / .12), 0 0 0 2px var(--theme-card, #fff), 0 0 0 3px var(--border-strong, #b9b9c0); }
-.compras-cor-acao { position: relative; display: grid; place-items: center; box-sizing: border-box; width: 22px; height: 22px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 1.5px solid var(--border-strong, #b9b9c0); border-radius: 50%; background: var(--theme-card, #fff); color: var(--layout-ink, #27272a); cursor: pointer; }
+.compras-cor-acao { position: relative; display: grid; place-items: center; box-sizing: border-box; width: 22px; height: 22px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); color: var(--layout-ink, #27272a); cursor: pointer; }
+.compras-cor-acao:hover { background: color-mix(in srgb, var(--muted, #8e8e93) 28%, transparent); }
 .compras-cor-acao svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 /* Seletor personalizado: saturação × brilho, matiz, prévia, Hexadecimal e RGB. */
 .compras-cor-sv { position: relative; width: 256px; height: 150px; max-width: 100%; border-radius: 8px; background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent), var(--matiz, red); cursor: crosshair; touch-action: none; }
@@ -1275,3 +1276,14 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo.compras-escolha-linha > .compras-escolha-lista { flex: 1 1 100%; order: 10; margin: 0; border: 0; border-top: 1px solid var(--layout-line, #dedee3); border-radius: 0; max-height: min(52vh, 420px); overflow-y: auto; }
 .compras-escolha-lista[hidden] { display: none; }
 @media (prefers-reduced-motion: reduce) { .compras-escolha-abre > svg { transition: none; } }
+/* Título do painel de cor, como o "Anexar": fora do bloco branco, no cinza da moldura. */
+.compras-cor-titulo-painel { margin: 0; padding: 0 4px 2px; font: 600 13px/18px var(--ui-font); color: var(--muted, #71717a); }
+/* Barra fixa da lista que se abre (U.barraDeLista): botão redondo de expandir / recolher tudo e a busca, na mesma linha, presa no alto da lista. */
+.compras-lista-barra { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: var(--theme-card, #fff); border-bottom: 1px solid var(--layout-line, #dedee3); }
+.compras-lista-alternar { flex: none; display: grid; place-items: center; width: 32px; height: 32px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); color: var(--layout-ink, #27272a); cursor: pointer; }
+.compras-lista-alternar:not(:disabled):hover, .compras-lista-alternar:not(:disabled):focus-visible { background: var(--menu-accent); color: var(--theme-surface, #fff); outline: none; }
+.compras-lista-alternar:disabled { opacity: .45; cursor: default; }
+.compras-lista-alternar svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* A busca ganha a lupa do sistema (o envoltório .local-search-control): ele ocupa o resto da linha. */
+.compras-lista-barra > .local-search-control { flex: 1 1 auto; min-width: 0; }
+:is(.compras-dialog, .compras-view, #sector-view, .transferencia-tela) .compras-fieldset .compras-campo .compras-lista-barra input.compras-lista-busca, :is(.compras-dialog, .compras-view, #sector-view, .transferencia-tela) .compras-lista-barra input.compras-lista-busca { --campo-altura: 34px; --campo-respiro: 0 12px; --ui-input-size: 14px; --ui-field-padding-right: 12px; --ui-border-base: color-mix(in srgb, var(--muted, #8e8e93) 35%, transparent); --ui-field-radius: 8px; flex: 1 1 auto; min-width: 0; height: 34px; min-height: 0; margin: 0; padding: 0 12px; border: 1px solid color-mix(in srgb, var(--muted, #8e8e93) 35%, transparent); border-radius: 8px; background: var(--theme-card, #fff); color: var(--layout-ink, #27272a); text-align: left; } /* borda fixa: dentro do quadro a variável da linha fica transparente */

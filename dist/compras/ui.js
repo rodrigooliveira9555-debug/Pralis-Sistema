@@ -157,6 +157,8 @@
     pasta: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     caminhao: '<path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/>',
     pessoa: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>',
+    // O bonequinho da lista de cargos (DES - Cargos C/Salários, ícone padrão do cargo).
+    cargo: '<circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/>',
     // A maleta é o ícone do cadastro de cargos (DES - Cargos C/Salários, no menu): o campo Cargo usa o mesmo desenho.
     maleta: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>',
     banco: '<path d="M3 10 12 4l9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>',
@@ -191,7 +193,7 @@
     [/cartao|bandeira|operadora|maquininha/, IC.cartao],
     [/banco|\bcontas?\b|agencia|\bpix\b|cofre/, IC.banco],
     [/fornecedor|transportadora|frete|entrega/, IC.caminhao],
-    [/cargo|funcao|setor|area|departamento|contratacao/, IC.maleta],
+    [/cargo/, IC.cargo], [/funcao|setor|area|departamento|contratacao/, IC.maleta],
     [/cliente|colaborador|pessoa|responsavel|funcionario|usuario|contato|dependente|filia|mae|pai\b|conjuge|vendedor|atendente/, IC.pessoa],
     [/empresa|loja|filial|estabelecimento/, IC.loja],
     [/contrato|termo|modelo/, IC.contrato],
@@ -282,6 +284,7 @@
       b.onclick = async () => { try { const r = await new window.EyeDropper().open(); aoPegar(r.sRGBHex.toLowerCase()); } catch (e) { /* cancelou */ } }; return b; };
     // ---- Vista 1: a grade.
     const quadroGrade = el('div', 'compras-cor-quadro');
+    const tituloGrade = el('p', 'compras-cor-titulo-painel', 'Cor'); const tituloPers = el('p', 'compras-cor-titulo-painel', 'Cor personalizada');
     const pessoais = el('div', 'compras-cor-grade');
     const mais = el('button', 'compras-cor-acao'); mais.type = 'button'; mais.title = 'Nova cor personalizada'; mais.setAttribute('aria-label', 'Nova cor personalizada'); mais.innerHTML = svg('<path d="M12 6v12M6 12h12"/>');
     mais.onclick = () => mostrar('personalizar');
@@ -318,7 +321,7 @@
     hex.addEventListener('input', () => { const v = hex.value.trim().replace(/^([^#])/, '#$1'); if (/^#[0-9a-f]{6}$/i.test(v)) { hsv = hsvDe(rgbDe(v.toLowerCase())); pintarSeletor('hex'); } });
     canais.forEach((c) => c.addEventListener('input', () => { const v = canais.map((x) => Math.max(0, Math.min(255, Number(x.value) || 0))); hsv = hsvDe(v); pintarSeletor('rgb'); }));
     function mostrar(vista) {
-      if (vista === 'personalizar') { hsv = hsvDe(rgbDe(atual)); painel.replaceChildren(quadroPers); pintarSeletor(); } else painel.replaceChildren(quadroGrade);
+      if (vista === 'personalizar') { hsv = hsvDe(rgbDe(atual)); painel.replaceChildren(tituloPers, quadroPers); pintarSeletor(); } else painel.replaceChildren(tituloGrade, quadroGrade);
     }
     function pintar() {
       botao.style.setProperty('--c', atual); botao.title = rotulo + ': ' + atual; botao.setAttribute('aria-label', rotulo + ': ' + atual + ' (tocar para trocar)');
@@ -339,6 +342,20 @@
    * escolhaNaLinha: a linha do quadro (nome do campo e, à direita, o escolhido) que se ABRE PARA BAIXO, dentro do próprio quadro, com a lista; tocar num
    *   item escolhe e recolhe; tocar fora (ou Esc) também recolhe. itens: () => [{ id, nome, detalhe, html | sigla }]. linha.value = id escolhido.
    */
+  /** Barra fixa no alto da lista que se abriu: o botão redondo de expandir / recolher tudo (cinza; na cor ao passar o mouse) e a busca. Sem níveis na lista,
+   *  o botão fica apagado. aoBuscar(termo sem acento, minúsculo); aoAlternar(aberto). */
+  function barraDeLista({ rotuloBusca = 'Buscar', aoBuscar, aoAlternar, temNiveis = false }) {
+    const barra = el('div', 'compras-lista-barra'); let aberto = false;
+    const alternar = el('button', 'compras-lista-alternar'); alternar.type = 'button'; alternar.innerHTML = svg('<path d="m5 9 7-6 7 6M5 15l7 6 7-6"/>');
+    const pintar = () => { const r = aberto ? 'Recolher tudo' : 'Expandir tudo'; alternar.setAttribute('aria-label', r); alternar.setAttribute('aria-expanded', String(aberto)); alternar.title = temNiveis ? r : 'Esta lista não tem níveis para expandir'; alternar.disabled = !temNiveis; };
+    alternar.onclick = () => { aberto = !aberto; pintar(); if (aoAlternar) aoAlternar(aberto); };
+    // Campo de texto (não 'search'): a caixa fica à vista, sem virar a lupa que se abre.
+    const busca = entrada('text', '', { placeholder: rotuloBusca, autocomplete: 'off', maxLength: 80, enterKeyHint: 'search' }); busca.className = 'compras-lista-busca'; busca.setAttribute('aria-label', rotuloBusca);
+    busca.addEventListener('input', () => aoBuscar(dobrar(busca.value.trim())));
+    busca.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
+    barra.append(alternar, busca); pintar(); barra.busca = busca;
+    return barra;
+  }
   const MARCA_ESCOLHA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
   function itemDeEscolha({ nome, detalhe = '', html = '', sigla = '', marcado = false, papel = 'radio', aoEscolher }) {
     const b = el('button', 'compras-hier-linha transferencia-conta'); b.type = 'button'; b.setAttribute('role', papel); b.setAttribute('aria-checked', String(Boolean(marcado)));
@@ -350,12 +367,16 @@
     if (aoEscolher) b.onclick = aoEscolher;
     return b;
   }
-  function escolhaNaLinha({ rotulo, itens, valor = '', textoVazio = 'Selecione', vazio = 'Nada cadastrado.' }) {
+  function escolhaNaLinha({ rotulo, itens, valor = '', textoVazio = 'Selecione', vazio = 'Nada cadastrado.', rotuloBusca = 'Buscar' }) {
     let atual = valor || '';
     const linha = el('div', 'compras-campo compras-escolha-linha');
     const abre = el('button', 'compras-escolha-abre'); abre.type = 'button'; abre.setAttribute('aria-expanded', 'false'); abre.setAttribute('aria-label', rotulo.replace(/ *\*$/, ''));
     const resumo = el('span', 'compras-escolha-resumo'); abre.append(resumo); abre.insertAdjacentHTML('beforeend', svg('<path d="m6 9 6 6 6-6"/>'));
     const lista = el('div', 'compras-hier transferencia-contas compras-escolha-lista'); lista.hidden = true; lista.setAttribute('role', 'radiogroup'); lista.setAttribute('aria-label', rotulo.replace(/ *\*$/, ''));
+    let termo = '';
+    const caixaItens = el('div', 'compras-escolha-itens');
+    const barra = barraDeLista({ rotuloBusca, aoBuscar: (tx) => { termo = tx; desenhar(); } });
+    lista.append(barra, caixaItens);
     linha.append(el('span', 'compras-rotulo', rotulo), abre, lista);
     const pintar = () => {
       const it = itens().find((i) => i.id === atual);
@@ -367,14 +388,14 @@
     };
     const fora = (e) => { if (!linha.contains(e.target)) abrir(false); };
     function abrir(sim) {
-      if (sim) desenhar();
+      if (sim) { termo = ''; barra.busca.value = ''; desenhar(); }
       lista.hidden = !sim; if (sim) { const m = lista.querySelector('[aria-checked=true]'); if (m) lista.scrollTop = Math.max(0, m.offsetTop - lista.clientHeight / 2); } abre.setAttribute('aria-expanded', String(sim)); linha.classList.toggle('aberto', sim);
       document.removeEventListener('pointerdown', fora, true); if (sim) document.addEventListener('pointerdown', fora, true);
     }
     function desenhar() {
-      const l = itens();
-      lista.replaceChildren(...l.map((i) => itemDeEscolha({ ...i, marcado: i.id === atual, aoEscolher: () => { linha.value = i.id; abrir(false); abre.focus(); } })));
-      if (!l.length) lista.append(el('p', 'profiles-note compras-hier-vazio', vazio));
+      const todos = itens(); const l = termo ? todos.filter((i) => dobrar(i.nome + ' ' + (i.detalhe || '')).includes(termo)) : todos;
+      caixaItens.replaceChildren(...l.map((i) => itemDeEscolha({ ...i, marcado: i.id === atual, aoEscolher: () => { linha.value = i.id; abrir(false); abre.focus(); } })));
+      if (!l.length) caixaItens.append(el('p', 'profiles-note compras-hier-vazio', termo ? 'Nada encontrado.' : vazio));
     }
     abre.onclick = () => abrir(lista.hidden);
     linha.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !lista.hidden) { e.preventDefault(); e.stopPropagation(); abrir(false); abre.focus(); } });
@@ -1634,6 +1655,6 @@
     seletorArvore, campoArvore, campoLocal, arvoreGruposMercadoria, botaoRemover,
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, infoDaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, roletaNumero, iconarLinhas, notaNaLinha, iconeDoCampo, campoCor, itemDeEscolha, escolhaNaLinha, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, infoDaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, roletaNumero, iconarLinhas, notaNaLinha, iconeDoCampo, campoCor, itemDeEscolha, escolhaNaLinha, barraDeLista, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();

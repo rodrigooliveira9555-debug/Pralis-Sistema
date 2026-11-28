@@ -411,17 +411,19 @@
           const abre = linhaQueAbre(rotulo, () => abrirLista(painel.hidden));
           const painel = el('div', 'transferencia-multi-painel'); painel.hidden = true;
           const arvore = el('div', 'compras-hier transferencia-contas'); arvore.setAttribute('role', 'radiogroup'); arvore.setAttribute('aria-label', rotulo.replace(/ *$/, '') + ': contas');
-          painel.append(arvore);
+          let termo = '';
+          const barra = U.barraDeLista({ rotuloBusca: 'Buscar conta', aoBuscar: (tx) => { termo = tx; desenhar(); } });
+          painel.append(barra, arvore);
           const caixa = el('div', 'transferencia-opcao'); caixa.append(abre.no, painel);
           const pintar = () => { abre.resumo.textContent = atual || '—'; };
-          function abrirLista(sim) { if (sim) desenhar(); painel.hidden = !sim; abre.abrir(sim); }
+          function abrirLista(sim) { if (sim) { termo = ''; barra.busca.value = ''; desenhar(); } painel.hidden = !sim; abre.abrir(sim); }
           function desenhar() {
-            const itens = lista();
+            const itens = lista().filter((nome) => !termo || U.dobrar(nome).includes(termo));
             arvore.replaceChildren(...itens.map((nome) => {
               // A linha da lista é a peça única U.itemDeEscolha (a mesma da escolha na linha dos outros cadastros).
               return U.itemDeEscolha({ nome, detalhe: 'Conta ativa', sigla: 'CNT', marcado: nome === atual, aoEscolher: () => { caixa.value = nome; abrirLista(false); abre.no.focus(); } });
             }));
-            if (!itens.length) arvore.append(el('p', 'profiles-note compras-hier-vazio', 'Nenhuma conta disponível.'));
+            if (!itens.length) arvore.append(el('p', 'profiles-note compras-hier-vazio', termo ? 'Nada encontrado.' : 'Nenhuma conta disponível.'));
           }
           dlg.addEventListener('click', (e) => { if (!painel.hidden && !caixa.contains(e.target)) abrirLista(false); });
           caixa.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !painel.hidden) { abrirLista(false); e.stopPropagation(); e.preventDefault(); abre.no.focus(); } });
@@ -437,7 +439,9 @@
         const listaContas = el('div', 'compras-hier transferencia-contas'); listaContas.setAttribute('role', 'group'); listaContas.setAttribute('aria-label', 'Destino (+) / CNT: contas');
         // Múltiplo destino: uma linha que se expande para baixo com as contas; tocar fora (ou Esc) fecha.
         const multiAbre = linhaQueAbre('Destino (+) / CNT *', () => abrirMulti(painelMulti.hidden));
-        const painelMulti = el('div', 'transferencia-multi-painel'); painelMulti.hidden = true; painelMulti.append(listaContas, contagem);
+        let termoMulti = '';
+        const barraMulti = U.barraDeLista({ rotuloBusca: 'Buscar conta', aoBuscar: (tx) => { termoMulti = tx; desenharDestinos(); } });
+        const painelMulti = el('div', 'transferencia-multi-painel'); painelMulti.hidden = true; painelMulti.append(barraMulti, listaContas, contagem);
         const campoContas = el('div', 'transferencia-opcao'); campoContas.append(multiAbre.no, painelMulti);
         function abrirMulti(sim) { painelMulti.hidden = !sim; multiAbre.abrir(sim); }
         dlg.addEventListener('click', (e) => { if (!painelMulti.hidden && !campoContas.contains(e.target)) abrirMulti(false); });
@@ -452,7 +456,7 @@
           const lista = candidatas(); const atual = destino.value;
           destino.value = lista.includes(atual) ? atual : '';
           [...marcadas].forEach((n) => { if (!lista.includes(n)) marcadas.delete(n); });
-          listaContas.replaceChildren(...lista.map((nome) => {
+          listaContas.replaceChildren(...lista.filter((nome) => !termoMulti || U.dobrar(nome).includes(termoMulti)).map((nome) => {
             // Mesmo desenho da lista em árvore (U.itemDeEscolha), com a marca redonda; vários: papel checkbox.
             const b = U.itemDeEscolha({ nome, detalhe: 'Conta ativa', sigla: 'CNT', papel: 'checkbox' });
             const pintar = () => b.setAttribute('aria-checked', String(marcadas.has(nome)));
