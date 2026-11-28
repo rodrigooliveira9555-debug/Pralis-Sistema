@@ -1250,15 +1250,13 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .compras-cor-celula[aria-pressed=true]::after { content: ""; position: absolute; left: 7px; top: 5px; width: 5px; height: 9px; border: solid var(--theme-card, #fff); border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .compras-cor-celula.clara[aria-pressed=true]::after { border-color: var(--layout-ink, #27272a); }
 .compras-cor-celula:hover { box-shadow: inset 0 0 0 1px rgb(0 0 0 / .12), 0 0 0 2px var(--theme-card, #fff), 0 0 0 3px var(--border-strong, #b9b9c0); }
-.compras-cor-acao { position: relative; display: grid; place-items: center; box-sizing: border-box; width: 22px; height: 22px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); color: var(--layout-ink, #27272a); cursor: pointer; }
-.compras-cor-acao:hover { background: color-mix(in srgb, var(--muted, #8e8e93) 28%, transparent); }
-.compras-cor-acao svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 /* Seletor personalizado: saturação × brilho, matiz, prévia, Hexadecimal e RGB. */
 .compras-cor-sv { position: relative; width: 256px; height: 150px; max-width: 100%; border-radius: 8px; background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent), var(--matiz, red); cursor: crosshair; touch-action: none; }
 .compras-cor-sv-ponto { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px rgb(0 0 0 / .35); pointer-events: none; }
 .compras-cor-ferramentas { display: flex; align-items: center; gap: 10px; }
 .compras-cor-previa { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .15); }
-.compras-cor-ferramentas .compras-cor-acao { width: 30px; height: 30px; border: 1px solid var(--layout-line, #dedee3); border-radius: 8px; }
+.compras-cor-ferramentas .compras-cor-acao { width: 32px; height: 32px; }
+.compras-cor-ferramentas .compras-cor-acao svg { width: 16px; height: 16px; }
 .compras-cor-painel .compras-cor-quadro input.compras-cor-matiz { --campo-altura: 12px; --campo-respiro: 0px; flex: 1 1 auto; min-width: 0; height: 12px; margin: 0; padding: 0; border: 0; border-radius: 6px; appearance: none; -webkit-appearance: none; background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); }
 .compras-cor-matiz::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border: 2px solid #fff; border-radius: 50%; background: transparent; box-shadow: 0 0 0 1px rgb(0 0 0 / .35); }
 .compras-cor-matiz::-moz-range-thumb { width: 14px; height: 14px; border: 2px solid #fff; border-radius: 50%; background: transparent; box-shadow: 0 0 0 1px rgb(0 0 0 / .35); }
@@ -1283,11 +1281,11 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 :is(.compras-dialog, .compras-view, #sector-view, .transferencia-tela) .compras-fieldset .compras-campo .escolha-barra input.compras-lista-busca, :is(.compras-dialog, .compras-view, #sector-view, .transferencia-tela) .escolha-barra input.compras-lista-busca { --campo-altura: 34px; --campo-respiro: 0 12px; --ui-input-size: 14px; --ui-field-padding-right: 12px; --ui-border-base: color-mix(in srgb, var(--muted, #8e8e93) 35%, transparent); --ui-field-radius: 8px; flex: 1 1 auto; min-width: 0; height: 34px; min-height: 0; margin: 0; padding: 0 12px; border: 1px solid color-mix(in srgb, var(--muted, #8e8e93) 35%, transparent); border-radius: 8px; background: var(--theme-card, #fff); color: var(--layout-ink, #27272a); text-align: left; } /* borda fixa: dentro do quadro a variável da linha fica transparente */
 /* Lista sem níveis, recolhida: só o nome de cada item (as linhas de detalhe somem). */
 .compras-hier.sem-detalhe .compras-hier-texto > small { display: none; }
-/* Cancelar / OK do seletor de cor: redondos, no padrão dos botões da janela — X sem preencher (borda na cor), "certo" preenchido; na cor ao passar o mouse. */
-.compras-cor-cancelar, .compras-cor-ok { display: grid; place-items: center; width: 40px; height: 40px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 1.5px solid var(--menu-accent); border-radius: 50%; cursor: pointer; transition: background-color .15s, color .15s; }
-.compras-cor-cancelar { background: transparent; color: var(--menu-accent); }
-.compras-cor-ok { background: var(--menu-accent); color: var(--theme-surface, #fff); }
-.compras-cor-cancelar:is(:hover, :focus-visible) { background: var(--menu-accent); color: var(--theme-surface, #fff); outline: none; }
-.compras-cor-ok:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--menu-accent) 82%, #000); outline: none; }
-.compras-cor-cancelar svg, .compras-cor-ok svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-@media (prefers-reduced-motion: reduce) { .compras-cor-cancelar, .compras-cor-ok { transition: none; } }
+/* Botões de função do painel de cor (+, conta-gotas, Cancelar, OK): o padrão dos botões redondos da barra de baixo — contorno cinza fino, fundo
+   transparente, ícone cinza; ao passar o mouse, cheio na cor do cabeçalho com o ícone branco. O + e o conta-gotas têm o tamanho das bolinhas. */
+.compras-cor-acao, .compras-cor-cancelar, .compras-cor-ok { position: relative; display: grid; place-items: center; box-sizing: border-box; width: 32px; height: 32px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 1px solid var(--vidro-borda-botao, rgba(110, 110, 125, .35)); border-radius: 50%; background: transparent; color: var(--navigation-ink, #8a8993); box-shadow: none; cursor: pointer; transition: background-color .15s, color .15s, border-color .15s; }
+.compras-cor-acao { width: 22px; height: 22px; }
+:is(.compras-cor-acao, .compras-cor-cancelar, .compras-cor-ok):is(:hover, :focus-visible) { background: var(--menu-accent); border-color: var(--menu-accent); color: var(--theme-surface, #fff); outline: none; }
+:is(.compras-cor-cancelar, .compras-cor-ok) svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.compras-cor-acao svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+@media (prefers-reduced-motion: reduce) { .compras-cor-acao, .compras-cor-cancelar, .compras-cor-ok { transition: none; } }
