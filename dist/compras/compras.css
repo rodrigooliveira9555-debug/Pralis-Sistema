@@ -834,7 +834,7 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .transferencia-linha + .transferencia-bloco { border-top: 1px solid var(--layout-line, #dedee3); }
 /* COLUNA DO VALOR (Rodrigo, 28/11/2026): o nome ocupa a mesma coluna das linhas de cadastro (38% da linha; 42% até 600 px) e o valor — texto, data,
    conta escolhida — começa logo depois, alinhado à esquerda; o mesmo tipo de informação fica na mesma coluna. Interruptor e setinha ficam na ponta direita. */
-.transferencia-tela .transferencia-linha-rotulo { flex: 0 0 calc(38% - 35px); max-width: calc(38% - 35px); overflow-wrap: normal; font: 500 15px/20px var(--ui-font); color: var(--layout-ink, #27272a); }
+.transferencia-tela .transferencia-linha-rotulo { flex: 0 0 max(calc(38% - 35px), 120px); max-width: max(calc(38% - 35px), 120px); overflow-wrap: normal; font: 500 15px/20px var(--ui-font); color: var(--layout-ink, #27272a); }
 .transferencia-tela label.transferencia-linha > .transferencia-linha-controle, .transferencia-tela .transferencia-linha .transferencia-linha-controle { flex: 1 1 auto; min-width: 0; width: auto; min-height: 0; height: 100%; padding: 0; border: 0; background: transparent; box-shadow: none; text-align: left; text-align-last: left; font: 500 15px/20px var(--ui-font); color: var(--muted, #71717a); }
 .transferencia-tela .transferencia-linha .transferencia-linha-controle { --layout-line: transparent; }
 .transferencia-tela .transferencia-linha .compras-aniv-campo { flex: 1 1 auto; justify-content: flex-start; }
