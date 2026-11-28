@@ -209,7 +209,7 @@
     const pai = t.pai;
     switch (t.tipo) {
       case 'loja': return { lado: ['Área', () => inserir(null)], editar: null };
-      case 'area': case 'setor': return { lado: [TIPOS[TIPOS[t.tipo].filho].nome + ' ou Cargo', () => inserir(t.ref)], abaixo: [TIPOS[t.tipo].nome, () => inserir(t.ref.paiId ? dados.nos.find((x) => x.id === t.ref.paiId) : null)], editar: () => editarNo(t.ref) };
+      case 'area': case 'setor': return { lado: [t.tipo === 'area' ? 'Setor' : 'Local ou Cargo', () => inserir(t.ref)], abaixo: [TIPOS[t.tipo].nome, () => inserir(t.ref.paiId ? dados.nos.find((x) => x.id === t.ref.paiId) : null)], editar: () => editarNo(t.ref) };
       case 'local': return { lado: ['Cargo', () => inserir(t.ref)], abaixo: ['Local', () => inserir(dados.nos.find((x) => x.id === t.ref.paiId))], editar: () => editarNo(t.ref) };
       case 'cargo': return { lado: ['Horário / Escala', () => editarCargo(t.ref, pai)], abaixo: ['Cargo', () => inserir(pai, 'cargo')], editar: () => editarCargo(t.ref, pai) };
       case 'horario': return { abaixo: ['Horário / Escala', () => editarCargo(t.cargo, pai)], editar: () => editarHorario(t.ref) };
@@ -354,7 +354,8 @@
   /** pai = bloco onde se insere; null = a Loja (só aceita Área). preferido = "cargo" para já abrir na escolha do cargo. */
   function inserir(pai, preferido) {
     const tipoFilho = pai ? TIPOS[pai.tipo].filho : 'area';
-    const opcoes = []; if (tipoFilho) opcoes.push([tipoFilho, TIPOS[tipoFilho].nome]); if (pai) opcoes.push(['cargo', 'Cargo']);
+    // Cargo só entra em Setor ou Local (Rodrigo, 27/11/2026); na Área entra só Setor. O horário / escala fica dentro do cargo.
+    const opcoes = []; if (tipoFilho) opcoes.push([tipoFilho, TIPOS[tipoFilho].nome]); if (pai && (pai.tipo === 'setor' || pai.tipo === 'local')) opcoes.push(['cargo', 'Cargo']);
     let escolhido = preferido && opcoes.some((o) => o[0] === preferido) ? preferido : opcoes[0][0];
     U.dialogo({
       titulo: pai ? 'Inserir em ' + pai.nome : 'Inserir área na loja',
@@ -372,7 +373,7 @@
           const tipo = U.chips(opcoes, escolhido, (v) => { escolhido = v; pintar(); });
           tipo.setAttribute('aria-label', 'Tipo');
           const l = el('div', 'compras-campo'); l.append(el('span', 'compras-rotulo', 'Tipo *'), tipo); q.append(l);
-        } else q.append(U.nota(tipoFilho ? 'Na Loja entra área. A ordem é fixa: Área › Setor › Local.' : 'O local é o último nível: nele entra cargo.'));
+        } else q.append(U.nota(!pai ? 'Na Loja entra área. A ordem é fixa: Área › Setor › Local.' : pai.tipo === 'area' ? 'Na área entra setor. O cargo entra no setor ou no local.' : 'O local é o último nível: nele entra cargo.'));
         form.append(q, corpo);
         pintar();
         return ctx;
