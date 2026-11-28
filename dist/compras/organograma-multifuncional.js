@@ -43,6 +43,12 @@
 
   /** O cargo como está no cadastro (DES - Cargos C/Salários): ícone e salário, só para mostrar. */
   function dadosDoCargo(id) { try { const x = (typeof jobsCurrent === 'function' ? jobsCurrent() : []).find((e) => String(e.id) === String(id)); return x ? x.j : null; } catch (e) { return null; } }
+  /** O desenho de dentro do ícone do cargo no cadastro (para pôr num <svg> do mapa). */
+  function desenhoDoCargo(c) {
+    const icones = typeof jobIcons !== 'undefined' ? jobIcons : null; const j = c && c.cargoId ? dadosDoCargo(c.cargoId) : null;
+    if (!icones || !j || j.identityMode === 'text') return ICONE_CARGO;
+    return String(icones[j.icon] || icones.inherit || '').replace(/^\s*<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '') || ICONE_CARGO;
+  }
   function iconeDoCargo(j) {
     const icones = typeof jobIcons !== 'undefined' ? jobIcons : null;
     if (j && j.identityMode === 'text' && window.CicluzIdentity) return '<span class="sigla-text">' + String(CicluzIdentity.compact(j.sigla || '')).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) + '</span>';
@@ -273,7 +279,7 @@
       g.append(s('rect', { class: 'org-mapa-id', x: ix, y: iy, width: lado, height: lado, rx: 7 }));
       if (['area', 'setor', 'local'].includes(t.tipo)) { const tx = s('text', { class: 'org-mapa-sigla', x: ix + lado / 2, y: iy + lado / 2 + 4, 'text-anchor': 'middle' }); tx.textContent = t.sigla || '?'; g.append(tx); } else {
         const ic = s('svg', { x: ix + (lado - 16) / 2, y: iy + (lado - 16) / 2, width: 16, height: 16, viewBox: '0 0 24 24', class: 'org-mapa-icone' });
-        ic.innerHTML = t.tipo === 'loja' ? ICONE_LOJA : t.tipo === 'cargo' ? ICONE_CARGO : t.tipo === 'falta' ? '<path d="M12 7v6M12 17h.01"/><circle cx="12" cy="12" r="9"/>' : ICONE_RELOGIO; g.append(ic);
+        ic.innerHTML = t.tipo === 'loja' ? ICONE_LOJA : t.tipo === 'cargo' ? desenhoDoCargo(t.ref) : t.tipo === 'falta' ? '<path d="M12 7v6M12 17h.01"/><circle cx="12" cy="12" r="9"/>' : ICONE_RELOGIO; g.append(ic);
       }
       const x0 = ix + 28 + 9; const alturaTexto = t.linhas.length * 16 + 14; let y = (p.h - alturaTexto) / 2 + 12;
       t.linhas.forEach((ln) => { const tx = s('text', { class: 'org-mapa-nome', x: x0, y }); tx.textContent = ln; g.append(tx); y += 16; });
