@@ -1203,3 +1203,6 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
   :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo.org-linha-horarios { flex-wrap: wrap; }
   :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo.org-linha-horarios > .org-horarios { flex: 1 1 100%; margin-right: 0; }
 }
+/* Carga calculada do horário / escala: vira aviso quando difere da informada (não impede salvar). */
+.org-carga-calculada { display: block; padding: 0 14px 10px; }
+.org-carga-calculada.org-aviso { color: #b45309; font-weight: 600; }
