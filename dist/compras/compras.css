@@ -571,7 +571,6 @@ body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-sea
 .compras-arvore-campo{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-width:0;min-height:var(--ui-field-height,42px);box-sizing:border-box;padding:0 12px;margin:0;border:1px solid var(--ui-border-base,#d4d4d8);border-radius:var(--ui-field-radius,8px);background:var(--ui-control-bg,#fff);color:var(--ui-input-color,#27272a);font:400 var(--ui-input-size,15px)/20px var(--ui-font,inherit);text-align:left;cursor:pointer;box-shadow:none}
 .compras-arvore-campo:hover{border-color:var(--ui-border-base,#d4d4d8)}
 .compras-arvore-campo:focus-visible{outline:2px solid var(--menu-accent,#7c3aed);outline-offset:2px}
-.compras-arvore-campo svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.7}
 .compras-arvore-texto{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .compras-arvore-campo.vazio .compras-arvore-texto{opacity:.65}
 /* grid-auto-rows:max-content: com a altura máxima da janela, o grid encolhia as linhas e o nome que quebra em 2 ou 3 linhas (320 px)
@@ -592,7 +591,7 @@ body.cadastro-teste :is(.people-footer-left,.people-home-logo,.people-bottom-sea
 .compras-hier-estado{flex:none;font:400 var(--escolha-detalhe,10px)/14px var(--ui-font)}
 .compras-hier-icone .sigla-text{font-size:10px}
 .compras-hier-seta{display:inline-grid;place-items:center;flex:none;width:22px;height:22px;padding:0;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}
-.compras-hier-seta svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+.compras-hier-seta svg{width:14px;height:14px;fill:none;stroke:var(--muted,#8e8e93);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
 .compras-hier-seta.aberto svg{transform:rotate(90deg)}
 .compras-hier-seta:disabled{opacity:.3;cursor:default}
 .compras-hier-vazio{margin:0;padding:14px}
@@ -866,7 +865,6 @@ body.dark-theme .compras-campo>.campo-aviso>span{color:var(--layout-ink,#f2f1f6)
 .transferencia-tela .transferencia-linha .account-status-switch[aria-checked="true"] { background: var(--menu-accent); border-color: var(--menu-accent); }
 .transferencia-tela .transferencia-linha-valor { flex: 1 1 auto; text-align: right; color: var(--muted, #8e8e93); font: 400 15px/20px var(--ui-font); }
 .transferencia-tela .transferencia-seta { flex: none; display: grid; place-items: center; width: 20px; height: 20px; color: var(--muted, #8e8e93); transition: transform .15s; }
-.transferencia-tela .transferencia-seta svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .transferencia-tela .transferencia-linha-acao.aberto .transferencia-seta { transform: rotate(180deg); }
 .transferencia-tela .transferencia-multi-painel, .transferencia-tela .transferencia-anexos-painel { border-top: 1px solid var(--layout-line, #dedee3); }
 .transferencia-tela .transferencia-multi-painel .compras-hier { border: 0; border-radius: 0; }
@@ -1267,8 +1265,8 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 /* Largura para o par Cancelar · OK (os botões padrão têm no mínimo 128 px cada) caber lado a lado. */
 .compras-cor-painel { width: min(340px, calc(100vw - 24px)); }
 /* Escolha na linha (U.escolhaNaLinha): à direita o escolhido (ícone, nome e detalhe) com a seta; aberta, a lista desce DENTRO do quadro, na largura toda. */
-:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo.compras-escolha-linha > .compras-escolha-abre { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0; min-height: 0; margin: 0 14px 0 0; padding: 8px 0; border: 0; background: none; color: inherit; font: inherit; text-align: right; cursor: pointer; }
-.compras-escolha-abre > svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .7; transition: transform .15s; }
+:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo.compras-escolha-linha > .compras-escolha-abre { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0; min-height: 0; margin: 0 15px 0 0; padding: 8px 0; border: 0; background: none; color: inherit; font: inherit; text-align: right; cursor: pointer; }
+.compras-escolha-abre > svg { transition: transform .15s; }
 .compras-escolha-linha.aberto > .compras-escolha-abre > svg { transform: rotate(180deg); }
 .compras-escolha-resumo { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .compras-escolha-resumo.vazio { opacity: .65; }
@@ -1299,3 +1297,7 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 /* Conta escolhida na linha da transferência: o ícone quadrado CNT antes do nome. */
 .transferencia-tela .transferencia-linha-valor:has(> .compras-hier-icone) { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .transferencia-tela .transferencia-linha-valor > .compras-hier-icone { flex: none; }
+/* SETINHA DE ABRIR / RECOLHER — uma só no sistema (Rodrigo, 28/11/2026): 18 px, traço 2, no cinza apagado do texto, sem transparência; para baixo
+   quando fechada, para cima quando aberta (gira 180°), para o lado (›) quando a linha leva a outra área. Encostada à direita da linha, na mesma margem
+   dos outros valores. Vale para a linha que abre da Transferência, a escolha na linha (U.escolhaNaLinha) e o campo de árvore (U.campoArvore). */
+:is(.transferencia-tela .transferencia-seta, .compras-escolha-abre, .compras-arvore-campo) > svg { flex: none; width: 18px; height: 18px; fill: none; stroke: var(--muted, #8e8e93); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: 1; }

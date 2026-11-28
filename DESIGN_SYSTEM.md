@@ -1798,3 +1798,35 @@ Referência: os botões da **Nova Transferência**. Vale para **todo** botão re
 - **Aplicado em todo o sistema**, inclusive nas telas antigas que ainda pintavam os redondos cheios parados: botões de ação das linhas de Gestão de Pessoas (Exames, Uniformes, Ocorrências, Período de Teste… — `uniforms-icon-action`; excluir fica vermelho só ao passar), botões de arquivo/câmera/ver documento das Ocorrências (`round-action`), setas de mês da Folha de Pagamento e do Ponto (`.folha-mes`) e demais redondos de `compras.css` (agora pela regra única "DUAS REAÇÕES DIFERENTES"), a lupa redonda de qualquer tela (`local-search-toggle`: o cinza virou o padrão dela; as duas regras próprias que repetiam isso saíram) e a **escolha de ícone** (Tipos de Uniforme, ícones de contas e locais: cinza parado, sombreado ao passar, cor cheia o escolhido — como os chips).
 - **Ao passar o mouse**: todos ficam cheios na cor do cabeçalho com o ícone branco.
 - **Conferência automática**: a regra agora mede a **cor exata** — "Botão redondo, chip e chave parados no mesmo cinza" compara cada botão redondo, chip não marcado e chave desligada com o cinza de referência. Varredura das 16 telas da conferência (com as janelas de cadastro), no tema claro e no escuro: **sem achados**.
+
+### 35. Rodada de 28/11/2026 (Rodrigo) — padrões novos, todos valem para as próximas telas
+
+Tudo o que foi decidido na rodada do Organograma Multifuncional e da Nova Transferência, num lugar só. Os detalhes de cada item estão nas notas espalhadas acima; aqui fica a regra.
+
+**Linha de campo**
+- **Ícone em toda linha:** no canto esquerdo, só o desenho (sem fundo), na cor do cabeçalho, escolhido pelo NOME do campo numa tabela única (`ICONES_CAMPO`, `compras/ui.js`); sem palavra conhecida, o lápis. Entra sozinho pelo `U.campo()`, pela janela padrão (`U.dialogo` → `U.iconarLinhas`), nas telas antigas (`.form-fields[data-quadro]`) e nas linhas da Transferência. Linha com nome curto demais diz de onde vem o ícone (`data-icone-de`, ex.: "Adicionar" do retorno usa o ícone do retorno).
+- **Ícones fixados:** Cargo = o bonequinho da lista de cargos; Setor / Área / Função = a maleta do cadastro de cargos; Identificador / sigla = o quadradinho com três pontinhos; Duração / início / fim do intervalo = o talher; Carga (informada, por semana, por dia) = o cronômetro; Data = calendário; Origem / Destino = banco; Lacre = cadeado; Retorno = setas trocando; Anexar = clipe.
+- **Nota dentro da linha:** a explicação mora na própria linha, embaixo, em 11 px, alinhada com o nome; o nome e o valor ficam no meio de uma linha de 52 px (`U.notaNaLinha`).
+- **O nome não repete o título do quadro:** "Transferência › Data", "Transferência de retorno › Adicionar", "Observação › Anexar". Mensagens de erro continuam com o nome completo.
+- **Na tela estreita** (até 600 px) as linhas com botões de escolha, horas e cartões descem o valor para baixo do nome (nunca empilham um botão por linha nem espremem o nome).
+
+**Escolher**
+- **Escolha na linha** (padrão da Origem / Destino da Transferência): a linha abre a lista para baixo DENTRO do quadro; cada item com seta, redondinho com check, ícone quadrado, nome e o detalhe pequeno embaixo; tocar escolhe e recolhe; tocar fora ou Esc recolhe. O escolhido aparece à direita da linha com o mesmo ícone quadrado (`U.escolhaNaLinha`, `U.itemDeEscolha`).
+- **Barra fixa da lista aberta:** busca à esquerda e o botão redondo de expandir / recolher tudo à direita (a `.escolha-barra`); em lista sem níveis, recolher esconde os detalhes (`U.barraDeLista`).
+- **Escolha de um só = redondinho com check** (`.compras-selecao-bolinha`); vários = caixa. Tocar no já marcado não desmarca.
+- **Painel de seleção** (`<select>`): cada opção com o redondinho de marcar à direita.
+- **Cargo:** só a relação de cargos (sem categoria), com ícone, salário, CBO e ano de referência embaixo do nome.
+
+**Cor**
+- **Campo de cor** (`U.campoCor`): na linha só a bolinha da cor; o painel tem a moldura cinza por fora e o bloco branco com linhas por dentro (o desenho dos painéis de data e hora), o título no cinza ("Cor"), a grade de bolinhas (modelo Google Planilhas), "Padrão", "Cores personalizadas" com o + e o conta-gotas, e o seletor personalizado (saturação × brilho, matiz, Hexadecimal, Verm./Verde/Azul). Tocar numa cor só marca o "certo" (o painel fica aberto). Sem "Redefinir".
+
+**Botões**
+- **Cancelar / Salvar** são sempre os retangulares das janelas (Cancelar só com a borda e o X; Salvar cheio com o "certo"; mais fortes ao passar o mouse) — também dentro de painéis; o nome é **Salvar**, não "OK".
+- **Botão de função redondo** (+, conta-gotas, expandir): contorno cinza fino ou o cinza claro dos redondos parados; ao passar o mouse, cheio na cor do cabeçalho com o ícone branco.
+- **Setinha de abrir / recolher — uma só:** 18 px, traço 2, no cinza apagado, sem transparência; para baixo fechada, para cima aberta, para o lado (›) quando leva a outra área; encostada à direita, na margem dos outros valores.
+- **"Novo …" / "Adicionar …"** de um quadro fica embaixo do quadro (fora dele), nunca colado dentro da linha.
+
+**Medidas que a base garante**
+- Caixa de marcar sempre 22 px; as regras de campo de texto do quadro (`.compras-fieldset > .compras-campo :is(input…)`, `.account-editor input`) não pegam caixas de marcar nem rádios.
+- Painel que tem campos dentro (ex.: o de cor) mora na raiz da janela, não dentro da linha — as regras da linha pegariam os campos dele.
+- Comentário no código sempre em linha própria (um comentário no fim da linha já apagou código três vezes nesta rodada).
