@@ -1076,8 +1076,8 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell > .panel > .head[da
   .people-complete-pickbox > label:hover, .transferencia-tela .transferencia-quadro > :is(button, label, div):not(.transferencia-valor-cab):hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
 }
 /* DUAS REAÇÕES DIFERENTES (Rodrigo, 26/11/2026; desde a mesma data vale também para os redondos do cabeçalho da lista — "‹ ›", "!" — e da linha de explicação): (1) passar o mouse na LINHA sombreia a linha inteira; (2) passar o mouse no BOTÃO REDONDO da linha pinta só o botão com a cor do cabeçalho. Em repouso todo botão redondo de linha é um círculo cinza com o ícone cinza (o de excluir fica vermelho só ao passar). Vale para toda linha de qualquer tela. */
-body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferencia-linha, .compras-fieldset, .form-fields[data-quadro], .grupo-quadro, .people-complete-pickbox, .doc-capture-actions, .compras-secao-cab, .compras-info-linha, .escolha-barra, .compras-doc-acoes, .compras-recorr-pers, .compras-aniv-campo, .compras-atividade-acoes, .compras-modelo-clausula, .compras-modelo-campo, .folha-mes, .transferencia-opcoes, .org-multi-acoes) :is(.compras-redondo, .shortcut-circle, .transferencia-circulo, .local-search-toggle, .escolha-expandir):not(.x1):not(.x2) { --busca-fundo: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); --busca-borda: transparent; --busca-texto: var(--muted, #71717a); background: var(--busca-fundo); color: var(--busca-texto); border-color: transparent; box-shadow: none; }
-body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferencia-linha, .compras-fieldset, .form-fields[data-quadro], .grupo-quadro, .people-complete-pickbox, .doc-capture-actions, .compras-secao-cab, .compras-info-linha, .escolha-barra, .compras-doc-acoes, .compras-recorr-pers, .compras-aniv-campo, .compras-atividade-acoes, .compras-modelo-clausula, .compras-modelo-campo, .folha-mes, .transferencia-opcoes, .org-multi-acoes) :is(.compras-redondo, .shortcut-circle, .transferencia-circulo, .local-search-toggle, .escolha-expandir):not(.x1):not(.x2):not(:disabled):is(:hover, :active, :focus-visible) { --busca-fundo: var(--menu-accent); --busca-texto: #fff; background: var(--busca-fundo); color: var(--busca-texto); }
+body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferencia-linha, .compras-fieldset, .form-fields[data-quadro], .grupo-quadro, .people-complete-pickbox, .doc-capture-actions, .compras-secao-cab, .compras-info-linha, .escolha-barra, .compras-doc-acoes, .compras-recorr-pers, .compras-aniv-campo, .compras-atividade-acoes, .compras-modelo-clausula, .compras-modelo-campo, .folha-mes, .transferencia-opcoes, .org-mapa-topico-acoes, .org-mapa-zoom) :is(.compras-redondo, .shortcut-circle, .transferencia-circulo, .local-search-toggle, .escolha-expandir):not(.x1):not(.x2) { --busca-fundo: color-mix(in srgb, var(--muted, #8e8e93) 18%, transparent); --busca-borda: transparent; --busca-texto: var(--muted, #71717a); background: var(--busca-fundo); color: var(--busca-texto); border-color: transparent; box-shadow: none; }
+body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferencia-linha, .compras-fieldset, .form-fields[data-quadro], .grupo-quadro, .people-complete-pickbox, .doc-capture-actions, .compras-secao-cab, .compras-info-linha, .escolha-barra, .compras-doc-acoes, .compras-recorr-pers, .compras-aniv-campo, .compras-atividade-acoes, .compras-modelo-clausula, .compras-modelo-campo, .folha-mes, .transferencia-opcoes, .org-mapa-topico-acoes, .org-mapa-zoom) :is(.compras-redondo, .shortcut-circle, .transferencia-circulo, .local-search-toggle, .escolha-expandir):not(.x1):not(.x2):not(:disabled):is(:hover, :active, :focus-visible) { --busca-fundo: var(--menu-accent); --busca-texto: #fff; background: var(--busca-fundo); color: var(--busca-texto); }
 body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferencia-linha, .compras-fieldset, .form-fields[data-quadro], .grupo-quadro, .compras-secao-cab) :is(.compras-redondo.perigo, .transferencia-circulo-excluir):not(.x1):not(:disabled):is(:hover, :active, :focus-visible) { --busca-fundo: var(--cicluz-danger, #e34343); background: var(--busca-fundo); }
 /* LINHAS DE LISTA EM COLUNAS NA ALTURA PADRÃO (Rodrigo, 26/11/2026): a lista em grade não estica as linhas para encher a caixa (davam 100 e 120 px); cada linha tem 52 px (--linha-altura) e o cabeçalho das colunas, a altura própria dele. */
 .compras-lista-grade { align-content: start; grid-auto-rows: max-content; }
@@ -1118,34 +1118,53 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .compras-info-icone svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .compras-info-texto { flex: 1 1 auto; min-width: 0; margin: 0; font: 500 13px/18px var(--ui-font, inherit); color: var(--muted, #71717a); }
 .compras-secao > .compras-info-linha .compras-info-fechar { flex: none; }
-/* DES - Organograma Multifuncional (teste, 27/11/2026): árvore Loja › Área › Setor › Local, com cargos dentro do bloco.
-   Cada bloco é uma linha de 52 px com o identificador QUADRADO (identificação) e os botões REDONDOS (ação); o que está dentro desce
-   recuado, ligado por um traço, como os galhos de uma árvore. */
-.org-multi { display: grid; gap: 6px; padding: 4px 10px 12px; }
-.org-multi-item { display: grid; gap: 6px; }
-.org-multi-no { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 10px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); cursor: pointer; min-width: 0; }
-.org-multi-no:is(:hover, :focus-visible) { border-color: var(--menu-accent); outline: none; }
-.org-multi-item[data-tipo="loja"] > .org-multi-no { cursor: default; }
-.org-multi-id { flex: none; width: 32px; height: 32px; border-radius: var(--row-icon-radius, 26%); display: grid; place-items: center; background: var(--menu-accent); color: #fff; }
-.org-multi-id svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-.org-multi-id .sigla-text { font-size: 11px; }
-.org-multi-item[data-tipo="setor"] > .org-multi-no .org-multi-id { background: color-mix(in srgb, var(--menu-accent) 78%, var(--theme-card, #fff)); }
-.org-multi-item[data-tipo="local"] > .org-multi-no .org-multi-id { background: color-mix(in srgb, var(--menu-accent) 58%, var(--theme-card, #fff)); }
-.org-multi-cargo .org-multi-id { background: color-mix(in srgb, var(--muted, #6e6e73) 18%, transparent); color: var(--muted, #6e6e73); }
-.org-multi-texto { flex: 1 1 auto; min-width: 0; display: grid; gap: 1px; }
-.org-multi-texto b { font-size: 14px; font-weight: 600; color: var(--layout-ink, #27272a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.org-multi-texto small { font-size: 12px; color: var(--muted, #6e6e73); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.org-multi-texto small.org-multi-falta { color: #dc2626; }
-.org-multi-acoes { flex: none; display: flex; align-items: center; gap: 6px; }
-.org-multi-acoes .compras-redondo { width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
-.org-multi-dentro { display: grid; gap: 6px; margin-left: 15px; padding-left: 14px; border-left: 2px solid color-mix(in srgb, var(--menu-accent) 35%, transparent); }
-/* Celular: o lápis sai (tocar na linha já abre a edição), o recuo diminui e o nome pode ocupar duas linhas. */
+/* DES - Organograma Multifuncional (teste, 27/11/2026): MAPA MENTAL em árvore. Os galhos crescem para o lado e os irmãos para baixo;
+   as posições vêm do motor do mapa da Agenda (CicluzAgendaMapaLayout). Cada tópico tem o identificador QUADRADO (identificação) e as ações
+   ficam em botões REDONDOS na barra do tópico selecionado. A área do mapa rola nos dois sentidos dentro do quadro (a página não rola de lado). */
+.org-mapa-corpo { display: grid; gap: 8px; padding: 4px 10px 12px; min-width: 0; }
+.org-mapa-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.org-mapa-topico { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 10px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); min-width: 0; }
+.org-mapa-topico-nome { flex: 1 1 auto; min-width: 0; display: grid; }
+.org-mapa-topico-nome small { font-size: 11px; color: var(--muted, #6e6e73); }
+.org-mapa-topico-nome b { font-size: 14px; font-weight: 600; color: var(--layout-ink, #27272a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.org-mapa-topico-acoes { flex: none; display: flex; gap: 6px; }
+.org-mapa-topico-acoes .compras-redondo, .org-mapa-zoom .compras-redondo { width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
+.org-mapa-zoom { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.org-mapa-zoom-valor { min-width: 40px; text-align: center; font-size: 12px; color: var(--muted, #6e6e73); }
+.org-mapa-inserir { flex: none; display: flex; gap: 6px; }
+.org-mapa-topico-dica { font-size: 11px; color: var(--muted, #6e6e73); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.org-mapa-area { overflow-x: auto; overflow-y: hidden; min-height: 240px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: color-mix(in srgb, var(--muted, #6e6e73) 6%, var(--theme-card, #fff)); outline: none; }
+.org-mapa-area:focus-visible { border-color: var(--menu-accent); }
+.org-mapa-svg { display: block; margin: 0 auto; font-family: Montserrat, Arial, sans-serif; }
+.org-mapa-ligacao { fill: none; stroke: color-mix(in srgb, var(--menu-accent) 55%, transparent); stroke-width: 2; }
+.org-mapa-ligacao.falta { stroke-dasharray: 4 4; }
+.org-mapa-no { cursor: pointer; }
+.org-mapa-caixa { fill: var(--theme-card, #fff); stroke: var(--layout-line, #dedee3); stroke-width: 1; }
+.org-mapa-no:hover .org-mapa-caixa { stroke: var(--menu-accent); }
+.org-mapa-no.selecionado .org-mapa-caixa { stroke: var(--menu-accent); stroke-width: 2.5; }
+.org-mapa-no.tipo-loja .org-mapa-caixa { fill: color-mix(in srgb, var(--menu-accent) 12%, var(--theme-card, #fff)); }
+.org-mapa-id { fill: var(--menu-accent); }
+.org-mapa-no.tipo-setor .org-mapa-id { fill: color-mix(in srgb, var(--menu-accent) 78%, var(--theme-card, #fff)); }
+.org-mapa-no.tipo-local .org-mapa-id { fill: color-mix(in srgb, var(--menu-accent) 58%, var(--theme-card, #fff)); }
+.org-mapa-no:is(.tipo-cargo, .tipo-horario, .tipo-falta) .org-mapa-id { fill: color-mix(in srgb, var(--muted, #6e6e73) 18%, transparent); }
+.org-mapa-icone { fill: none; stroke: #fff; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.org-mapa-no:is(.tipo-cargo, .tipo-horario) .org-mapa-icone { stroke: var(--muted, #6e6e73); }
+.org-mapa-no.tipo-falta .org-mapa-icone { stroke: #dc2626; }
+.org-mapa-sigla { fill: #fff; font-size: 10.5px; font-weight: 700; }
+.org-mapa-nome { fill: var(--layout-ink, #27272a); font-size: 13px; font-weight: 600; }
+.org-mapa-no.tipo-loja .org-mapa-nome { font-size: 15px; font-weight: 700; }
+.org-mapa-meta { fill: var(--muted, #6e6e73); font-size: 11px; font-weight: 500; }
+.org-mapa-no.tipo-falta .org-mapa-meta, .org-mapa-no.tipo-falta .org-mapa-nome { fill: #dc2626; }
+.org-mapa-contagem { fill: var(--menu-accent); }
+.org-mapa-contagem-num { fill: #fff; font-size: 10px; font-weight: 700; }
+/* Tela estreita: o nome do tópico ocupa a linha de cima e os botões descem para a linha de baixo (nada fica por cima do nome). */
+@media (max-width: 600px) {
+  .org-mapa-topico { flex-wrap: wrap; }
+  .org-mapa-topico-nome { flex: 1 1 100%; }
+  .org-mapa-inserir { flex: 1 1 auto; }
+}
 @media (max-width: 480px) {
-  .org-multi { padding: 4px 6px 10px; }
-  .org-multi-no { gap: 8px; padding: 6px 8px; }
-  .org-multi-id { width: 28px; height: 28px; }
-  .org-multi-dentro { margin-left: 4px; padding-left: 6px; }
-  .org-multi-acoes { gap: 4px; }
-  .org-multi-acoes .org-multi-editar { display: none; }
-  .org-multi-texto b { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.2; }
+  .org-mapa-corpo { padding: 4px 6px 10px; }
+  .org-mapa-topico { gap: 8px; padding: 6px 8px; }
+  .org-mapa-topico-acoes { gap: 4px; }
 }

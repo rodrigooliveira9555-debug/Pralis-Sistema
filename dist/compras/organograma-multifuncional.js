@@ -1,7 +1,7 @@
 /*
  * DES - Organograma Multifuncional — AMBIENTE DE TESTE (Rodrigo, 27/11/2026).
- * Uma tela só para montar a estrutura da loja em árvore: Loja › Área › Setor › Local. Em cada bloco o "+" insere o nível de baixo
- * (a ordem é fixa: Área, depois Setor, depois Local) ou um Cargo; dentro do cargo, o "+" escolhe ou cria o Horário / Escala.
+ * Uma tela só para montar a estrutura da loja como MAPA MENTAL em árvore: Loja › Área › Setor › Local › Cargo › Horário / Escala. "Ao lado"
+ * insere o nível seguinte (a ordem é fixa: Área, depois Setor, depois Local; no bloco também entra Cargo) e "Abaixo" insere outro do mesmo nível.
  * O Horário / Escala criado aqui entra numa lista única e é escolhido de novo no próximo local, sem criar outra vez.
  *
  * TESTE: tudo fica numa chave própria deste aparelho (cicluz-teste-organograma-multifuncional-v1). Nada aqui grava em
@@ -29,7 +29,6 @@
   const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
   const ICONE_CARGO = '<circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1a6 6 0 0 1 14 0v1"/>';
   const ICONE_LOJA = '<path d="M3 21V9l9-5 9 5v12M9 21v-6h6v6"/>';
-  const MAIS = '<path d="M12 5v14M5 12h14"/>';
   const LAPIS = '<path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/>';
 
   const novoId = (p) => p + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -105,108 +104,184 @@
     return { nos: ids, cargos: dados.cargos.filter((c) => ids.includes(c.noId)) };
   }
 
-  /* ---------- Tela ---------- */
-  let tela = null; const abertos = new Set(['raiz']); let primeira = true;
+  /* ---------- Tela: MAPA MENTAL em árvore (Rodrigo, 27/11/2026) ----------
+   * A Loja fica no meio; cada galho cresce PARA O LADO (o nível de baixo, o cargo, o horário) e os irmãos se empilham PARA BAIXO.
+   * As posições vêm do mesmo motor do mapa mental da Agenda (CicluzAgendaMapaLayout: Mapa, Lógico ou Organograma); o desenho é SVG.
+   * Tocar num tópico o seleciona; a barra do tópico insere AO LADO (filho) ou ABAIXO (irmão), edita e recolhe. Tocar de novo edita.
+   * Teclado como no XMind: Tab = ao lado, Enter = abaixo, F2 = editar, Espaço = recolher/expandir. */
+  const NS = 'http://www.w3.org/2000/svg';
+  const PREF = 'cicluz-teste-organograma-mapa';
+  const ESTRUTURAS = [['mapa', 'Mapa'], ['logico', 'Lógico'], ['organograma', 'Organograma']];
+  let prefs = { estrutura: 'mapa', zoom: 1 };
+  try { prefs = { ...prefs, ...JSON.parse(localStorage.getItem(PREF) || '{}') }; } catch (e) { /* padrão */ }
+  const guardarPrefs = () => { try { localStorage.setItem(PREF, JSON.stringify(prefs)); } catch (e) { /* só nesta visita */ } };
+  let tela = null; const recolhidos = new Set(); let selecionado = 'raiz'; let ultimoToque = { id: '', t: 0 };
   const caminho = () => (typeof menuCrumb === 'function' ? menuCrumb(2, 'Cadastros Geral Colaboradores', 'DES - Organograma Multifuncional') : 'Saídas · Despesas / Cadastros Geral Colaboradores / DES - Organograma Multifuncional');
+  const ICONE_RELOGIO = '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>';
+  const FONTE = 'Montserrat, Arial, sans-serif';
+  const tela2d = document.createElement('canvas').getContext('2d');
+  const medir = (fonte) => (t) => { tela2d.font = fonte; return tela2d.measureText(t).width; };
+
   function abrir() {
     if (!dados) ler();
     if (!tela) {
       tela = U.criarTela({ id: 'des-organograma-multifuncional', titulo: 'DES - Organograma Multifuncional', caminho: caminho(), icone: 'cadastro', voltar: () => menuBack(2, 'Cadastros Geral Colaboradores')(), cor: cor(), corTexto: COR_TEXTO });
       U.atalho(tela, 'Recomeçar o teste com o exemplo', 'M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5', recomecar);
-      U.atalho(tela, 'Recolher tudo', 'm5 15 7-7 7 7', () => { abertos.clear(); render(); });
-      U.atalho(tela, 'Expandir tudo', 'm5 9 7 7 7-7', () => { abertos.add('raiz'); dados.nos.forEach((n) => abertos.add(n.id)); render(); });
       U.atalho(tela, 'Nova área', 'M12 5v14M5 12h14', () => inserir(null), { criar: true });
     }
-    // Na primeira vez, as áreas já abrem mostrando os setores.
-    if (primeira) { dados.nos.filter((n) => n.tipo === 'area').forEach((n) => abertos.add(n.id)); primeira = false; }
     tela.ativar();
     render();
   }
 
+  /** A árvore do mapa: Loja › Áreas › Setores › Locais, e em cada bloco os cargos (antes dos blocos de baixo) e em cada cargo os horários. */
+  function arvoreDoMapa() {
+    const tamanho = (n) => {
+      const raiz = n.tipo === 'loja';
+      const fonte = (raiz ? '700 15px ' : '600 13px ') + FONTE;
+      n.linhas = L().quebrar(n.nome, 170, medir(fonte), 2);
+      const larguraTexto = Math.max(...n.linhas.map(medir(fonte)), medir('500 11px ' + FONTE)(n.meta), 30);
+      n.w = Math.ceil(10 + 28 + 9 + Math.min(larguraTexto, 190) + 12);
+      n.h = Math.max(raiz ? 50 : 44, 10 + n.linhas.length * 16 + 14 + 8);
+      return n;
+    };
+    const resumoDe = (fs, cs, tipoFilho) => [fs.length && tipoFilho ? fs.length + ' ' + (fs.length === 1 ? TIPOS[tipoFilho].nome.toLowerCase() : TIPOS[tipoFilho].plural) : '', cs.length ? cs.length + (cs.length === 1 ? ' cargo' : ' cargos') : ''].filter(Boolean).join(' · ');
+    const bloco = (n) => {
+      const fs = filhos(n.id); const cs = cargosDe(n.id); const r = resumoDe(fs, cs, TIPOS[n.tipo].filho);
+      return tamanho({
+        id: n.id, tipo: n.tipo, nome: n.nome, sigla: n.sigla, ref: n, meta: TIPOS[n.tipo].nome + (r ? ' · ' + r : ''),
+        filhos: [...cs.map((c) => cargo(c, n)), ...fs.map(bloco)],
+      });
+    };
+    const cargo = (c, n) => {
+      const hs = c.horarioIds.map(horarioPorId).filter(Boolean);
+      return tamanho({
+        id: 'c:' + c.id, tipo: 'cargo', nome: c.cargoNome, ref: c, pai: n, meta: c.cargoId ? 'Cargo' : 'Cargo · fora do cadastro', falta: !hs.length,
+        filhos: hs.length ? hs.map((h) => tamanho({ id: 'h:' + c.id + ':' + h.id, tipo: 'horario', nome: h.nome, ref: h, cargo: c, pai: n, meta: h.entrada + '–' + h.saida + ' · ' + textoDosDias(h.dias), filhos: [] }))
+          : [tamanho({ id: 'f:' + c.id, tipo: 'falta', nome: 'Sem horário / escala', ref: null, cargo: c, pai: n, meta: 'Toque para escolher', filhos: [] })],
+      });
+    };
+    const fs = filhos(null);
+    return tamanho({ id: 'raiz', tipo: 'loja', nome: 'Loja', ref: null, meta: fs.length + (fs.length === 1 ? ' área' : ' áreas'), filhos: fs.map(bloco) });
+  }
+  const L = () => window.CicluzAgendaMapaLayout;
+
   function render() {
     if (!tela) return;
-    const nAreas = filhos(null).length;
-    const ponta = U.pontaDaLista(dados.nos.length, dados.nos.length + (dados.nos.length === 1 ? ' bloco' : ' blocos'));
     const sec = U.secao('Organograma da loja');
     sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Nova Área', 'Inserir área na loja', () => inserir(null)));
-    sec.querySelector('.compras-secao-cab').append(ponta);
-    const arvore = el('div', 'org-multi'); arvore.setAttribute('role', 'tree'); arvore.setAttribute('aria-label', 'Organograma da loja');
-    if (erroLeitura) arvore.append(U.vazio('Não foi possível ler o teste guardado neste aparelho.', 'Use "Recomeçar o teste" no alto da tela.'));
-    else arvore.append(bloco({ id: 'raiz', tipo: 'loja', nome: 'Loja', sigla: '' }, 0));
-    sec.append(arvore);
+    const zoom = (z) => { prefs.zoom = Math.min(2, Math.max(0.4, Math.round(z * 10) / 10)); guardarPrefs(); render(); };
+    const r = (rotulo, desenho, acao) => { const b = el('button', 'shortcut-circle compras-redondo'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = U.svg(desenho); b.onclick = acao; return b; };
+    const corpo = el('div', 'org-mapa-corpo');
+    if (erroLeitura || !L()) {
+      corpo.append(U.vazio(erroLeitura ? 'Não foi possível ler o teste guardado neste aparelho.' : 'O desenho do mapa não carregou.', erroLeitura ? 'Use "Recomeçar o teste" no alto da tela.' : 'Recarregue a página.'));
+    } else {
+      const arvore = arvoreDoMapa();
+      const todos = new Map(); (function ver(n) { todos.set(n.id, n); n.filhos.forEach(ver); })(arvore);
+      if (!todos.has(selecionado)) selecionado = 'raiz';
+      // Barra: a estrutura do mapa e o que fazer com o tópico selecionado.
+      const estrutura = U.chips(ESTRUTURAS, prefs.estrutura, (v) => { prefs.estrutura = v; guardarPrefs(); render(); });
+      estrutura.setAttribute('aria-label', 'Estrutura do mapa');
+      const zoomBox = el('div', 'org-mapa-zoom'); zoomBox.append(r('Diminuir o mapa', '<path d="M5 12h14"/>', () => zoom(prefs.zoom - 0.1)), el('span', 'org-mapa-zoom-valor', Math.round(prefs.zoom * 100) + '%'), r('Aumentar o mapa', '<path d="M12 5v14M5 12h14"/>', () => zoom(prefs.zoom + 0.1)));
+      const barra = el('div', 'org-mapa-barra'); barra.append(estrutura, zoomBox);
+      corpo.append(barra, barraDoTopico(todos.get(selecionado), todos));
+      corpo.append(desenhar(arvore, todos));
+    }
+    sec.append(corpo);
     const texto = 'AMBIENTE DE TESTE: o que você monta aqui fica só neste teste e não muda Área / Setor / Local, Cargos nem Horário / Escala de verdade. ' +
-      'Toque no "+" de um bloco para inserir o nível de baixo (Área › Setor › Local) ou um Cargo; no "+" do cargo, escolha ou crie o Horário / Escala. ' +
-      'O Horário / Escala criado entra na lista única e pode ser escolhido nos outros locais. ' + nAreas + (nAreas === 1 ? ' área.' : ' áreas.');
+      'Toque num tópico para selecionar: "Ao lado" cria o próximo nível (Área › Setor › Local, Cargo, Horário / Escala) e "Abaixo" cria outro do mesmo nível. Toque de novo para editar. ' +
+      'No teclado: Tab = ao lado, Enter = abaixo, F2 = editar, Espaço = recolher.';
     tela.body.replaceChildren(U.infoDaLista(sec, texto, 'organograma-multifuncional-teste'));
+    const area = tela.body.querySelector('.org-mapa-area'); const alvo = area && area.querySelector('.org-mapa-no.selecionado');
+    if (alvo) { const a = area.getBoundingClientRect(); const b = alvo.getBoundingClientRect(); if (b.left < a.left || b.right > a.right) area.scrollLeft += b.left - a.left - (a.width - b.width) / 2; }
   }
 
-  /** Resumo do bloco: "2 setores · 3 cargos". */
-  function resumo(n) {
-    const partes = []; const fs = n.tipo === 'loja' ? filhos(null) : filhos(n.id);
-    const tipoFilho = TIPOS[n.tipo].filho;
-    if (tipoFilho && fs.length) partes.push(fs.length + ' ' + (fs.length === 1 ? TIPOS[tipoFilho].nome.toLowerCase() : TIPOS[tipoFilho].plural));
-    const cs = n.tipo === 'loja' ? [] : cargosDe(n.id);
-    if (cs.length) partes.push(cs.length + (cs.length === 1 ? ' cargo' : ' cargos'));
-    return TIPOS[n.tipo].nome + (partes.length ? ' · ' + partes.join(' · ') : '');
-  }
-  const redondo = (rotulo, desenho, acao, extra = '') => {
-    const b = el('button', 'shortcut-circle compras-redondo' + (extra ? ' ' + extra : '')); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo);
-    b.innerHTML = U.svg(desenho); b.onclick = (e) => { e.stopPropagation(); acao(); }; return b;
-  };
-
-  /** Um bloco da árvore (Loja, Área, Setor ou Local), com os cargos e os blocos de baixo quando aberto. */
-  function bloco(n, nivel) {
-    const item = el('div', 'org-multi-item'); item.dataset.tipo = n.tipo; item.setAttribute('role', 'treeitem');
-    const fs = n.tipo === 'loja' ? filhos(null) : filhos(n.id);
-    const cs = n.tipo === 'loja' ? [] : cargosDe(n.id);
-    const temDentro = fs.length + cs.length > 0;
-    const aberto = abertos.has(n.id);
-    if (temDentro) item.setAttribute('aria-expanded', String(aberto));
-    const linha = el('div', 'org-multi-no');
-    const id = el('span', 'org-multi-id'); id.setAttribute('aria-hidden', 'true');
-    if (n.tipo === 'loja') id.innerHTML = U.svg(ICONE_LOJA); else id.append(el('span', 'sigla-text', n.sigla || '?'));
-    const texto = el('div', 'org-multi-texto'); texto.append(el('b', null, n.nome), el('small', null, resumo(n)));
-    const acoes = el('div', 'org-multi-acoes');
-    if (temDentro) {
-      const seta = redondo((aberto ? 'Recolher ' : 'Expandir ') + n.nome, aberto ? '<path d="m5 15 7-7 7 7"/>' : '<path d="m5 9 7 7 7-7"/>', () => { if (aberto) abertos.delete(n.id); else abertos.add(n.id); render(); }, 'escolha-expandir');
-      seta.setAttribute('aria-expanded', String(aberto)); acoes.append(seta);
+  /** O que cada tópico faz: ao lado (filho), abaixo (irmão), editar. */
+  function acoesDe(t) {
+    const pai = t.pai;
+    switch (t.tipo) {
+      case 'loja': return { lado: ['Área', () => inserir(null)], editar: null };
+      case 'area': case 'setor': return { lado: [TIPOS[TIPOS[t.tipo].filho].nome + ' ou Cargo', () => inserir(t.ref)], abaixo: [TIPOS[t.tipo].nome, () => inserir(t.ref.paiId ? dados.nos.find((x) => x.id === t.ref.paiId) : null)], editar: () => editarNo(t.ref) };
+      case 'local': return { lado: ['Cargo', () => inserir(t.ref)], abaixo: ['Local', () => inserir(dados.nos.find((x) => x.id === t.ref.paiId))], editar: () => editarNo(t.ref) };
+      case 'cargo': return { lado: ['Horário / Escala', () => editarCargo(t.ref, pai)], abaixo: ['Cargo', () => inserir(pai, 'cargo')], editar: () => editarCargo(t.ref, pai) };
+      case 'horario': return { abaixo: ['Horário / Escala', () => editarCargo(t.cargo, pai)], editar: () => editarHorario(t.ref) };
+      default: return { lado: ['Horário / Escala', () => editarCargo(t.cargo, pai)], editar: () => editarCargo(t.cargo, pai) };
     }
-    acoes.append(redondo('Inserir em ' + n.nome, MAIS, () => inserir(n.tipo === 'loja' ? null : n)));
-    if (n.tipo !== 'loja') acoes.append(redondo('Editar ' + n.nome, LAPIS, () => editarNo(n), 'org-multi-editar'));
-    linha.append(id, texto, acoes);
-    if (n.tipo !== 'loja') { linha.tabIndex = 0; linha.onclick = () => editarNo(n); linha.onkeydown = (e) => { if (e.target === linha && e.key === 'Enter') { e.preventDefault(); editarNo(n); } }; }
-    item.append(linha);
-    if (temDentro && aberto) {
-      const dentro = el('div', 'org-multi-dentro'); dentro.setAttribute('role', 'group');
-      cs.forEach((c) => dentro.append(linhaCargo(c, n)));
-      fs.forEach((f) => dentro.append(bloco(f, nivel + 1)));
-      item.append(dentro);
-    }
-    return item;
+  }
+  function alternarRecolher(t) { if (!t.filhos.length) return; if (recolhidos.has(t.id)) recolhidos.delete(t.id); else recolhidos.add(t.id); render(); }
+
+  function barraDoTopico(t) {
+    const a = acoesDe(t);
+    const barra = el('div', 'org-mapa-topico'); barra.setAttribute('role', 'toolbar'); barra.setAttribute('aria-label', 'Tópico selecionado: ' + t.nome);
+    const nome = el('div', 'org-mapa-topico-nome'); nome.append(el('small', null, 'Selecionado'), el('b', null, t.nome));
+    const acoes = el('div', 'org-mapa-topico-acoes');
+    const r = (rotulo, desenho, acao) => { const b = el('button', 'shortcut-circle compras-redondo'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = U.svg(desenho); b.onclick = acao; return b; };
+    const inserirBotoes = el('div', 'org-mapa-inserir');
+    if (a.lado) inserirBotoes.append(U.botaoTitulo('Ao lado', 'Inserir ao lado de ' + t.nome + ': ' + a.lado[0], a.lado[1]));
+    if (a.abaixo) inserirBotoes.append(U.botaoTitulo('Abaixo', 'Inserir abaixo de ' + t.nome + ': ' + a.abaixo[0], a.abaixo[1]));
+    if (a.editar) acoes.append(r('Editar ' + t.nome, LAPIS, a.editar));
+    if (t.filhos.length) acoes.append(r((recolhidos.has(t.id) ? 'Expandir ' : 'Recolher ') + t.nome, recolhidos.has(t.id) ? '<path d="M12 5v14M5 12h14"/>' : '<path d="M5 12h14"/>', () => alternarRecolher(t)));
+    const dica = el('small', 'org-mapa-topico-dica', [a.lado ? 'Ao lado: ' + a.lado[0] : '', a.abaixo ? 'Abaixo: ' + a.abaixo[0] : ''].filter(Boolean).join(' · '));
+    nome.append(dica);
+    barra.append(nome, inserirBotoes, acoes);
+    return barra;
   }
 
-  function linhaCargo(c, n) {
-    const linha = el('div', 'org-multi-no org-multi-cargo'); linha.setAttribute('role', 'treeitem'); linha.tabIndex = 0;
-    const id = el('span', 'org-multi-id'); id.setAttribute('aria-hidden', 'true'); id.innerHTML = U.svg(ICONE_CARGO);
-    const hs = c.horarioIds.map(horarioPorId).filter(Boolean);
-    const texto = el('div', 'org-multi-texto');
-    const sub = hs.length ? hs.map((h) => h.nome + ' ' + h.entrada + '–' + h.saida).join(' · ') : 'Sem horário / escala';
-    const small = el('small', hs.length ? null : 'org-multi-falta', 'Cargo · ' + sub); small.title = hs.map((h) => h.nome + ': ' + textoDoHorario(h)).join('\n');
-    texto.append(el('b', null, c.cargoNome + (c.cargoId ? '' : ' (fora do cadastro de cargos)')), small);
-    const acoes = el('div', 'org-multi-acoes');
-    acoes.append(redondo('Inserir horário / escala em ' + c.cargoNome, MAIS, () => editarCargo(c, n)), redondo('Editar ' + c.cargoNome + ' em ' + n.nome, LAPIS, () => editarCargo(c, n), 'org-multi-editar'));
-    linha.append(id, texto, acoes);
-    linha.onclick = () => editarCargo(c, n);
-    linha.onkeydown = (e) => { if (e.target === linha && e.key === 'Enter') { e.preventDefault(); editarCargo(c, n); } };
-    return linha;
+  function desenhar(arvore, todos) {
+    const pos = L().calcular(arvore, prefs.estrutura, { recolhidos, hgap: 44, vgap: 12 });
+    const M = 16; const cx = pos.caixa;
+    const area = el('div', 'org-mapa-area'); area.tabIndex = 0; area.setAttribute('role', 'tree'); area.setAttribute('aria-label', 'Mapa mental da loja. Tab: inserir ao lado; Enter: inserir abaixo; F2: editar; Espaço: recolher.');
+    const s = (tag, at = {}) => { const e = document.createElementNS(NS, tag); Object.entries(at).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
+    const W = cx.w + M * 2; const H = cx.h + M * 2;
+    const svg = s('svg', { viewBox: (cx.x - M) + ' ' + (cx.y - M) + ' ' + W + ' ' + H, width: Math.round(W * prefs.zoom), height: Math.round(H * prefs.zoom), class: 'org-mapa-svg' });
+    pos.ligacoes.forEach((l) => {
+      let d;
+      if (l.tipo === 'cotovelo-v') { const my = (l.y1 + l.y2) / 2; d = `M${l.x1} ${l.y1}V${my}H${l.x2}V${l.y2}`; } else { const mx = (l.x1 + l.x2) / 2; d = `M${l.x1} ${l.y1}C${mx} ${l.y1} ${mx} ${l.y2} ${l.x2} ${l.y2}`; }
+      svg.append(s('path', { d, class: 'org-mapa-ligacao' + (todos.get(l.para) && todos.get(l.para).tipo === 'falta' ? ' falta' : '') }));
+    });
+    pos.nos.forEach((p) => {
+      const t = p.no;
+      const g = s('g', { class: 'org-mapa-no tipo-' + t.tipo + (t.id === selecionado ? ' selecionado' : ''), transform: `translate(${p.x} ${p.y})`, role: 'treeitem', 'aria-label': t.nome + ', ' + t.meta, 'data-id': t.id });
+      g.append(s('rect', { class: 'org-mapa-caixa', width: p.w, height: p.h, rx: 10 }));
+      const ix = 10; const iy = (p.h - 28) / 2;
+      g.append(s('rect', { class: 'org-mapa-id', x: ix, y: iy, width: 28, height: 28, rx: 7 }));
+      if (['area', 'setor', 'local'].includes(t.tipo)) { const tx = s('text', { class: 'org-mapa-sigla', x: ix + 14, y: iy + 18, 'text-anchor': 'middle' }); tx.textContent = t.sigla || '?'; g.append(tx); } else {
+        const ic = s('svg', { x: ix + 6, y: iy + 6, width: 16, height: 16, viewBox: '0 0 24 24', class: 'org-mapa-icone' });
+        ic.innerHTML = t.tipo === 'loja' ? ICONE_LOJA : t.tipo === 'cargo' ? ICONE_CARGO : t.tipo === 'falta' ? '<path d="M12 7v6M12 17h.01"/><circle cx="12" cy="12" r="9"/>' : ICONE_RELOGIO; g.append(ic);
+      }
+      const x0 = ix + 28 + 9; const alturaTexto = t.linhas.length * 16 + 14; let y = (p.h - alturaTexto) / 2 + 12;
+      t.linhas.forEach((ln) => { const tx = s('text', { class: 'org-mapa-nome', x: x0, y }); tx.textContent = ln; g.append(tx); y += 16; });
+      const meta = s('text', { class: 'org-mapa-meta', x: x0, y: y + 1 }); meta.textContent = L().quebrar(t.meta, 186, medir('500 11px ' + FONTE), 1)[0] || ''; g.append(meta);
+      if (t.filhos.length && recolhidos.has(t.id)) {
+        const bx = p.lado < 0 ? -9 : prefs.estrutura === 'organograma' ? p.w / 2 - 9 : p.w - 9; const by = prefs.estrutura === 'organograma' ? p.h - 9 : p.h / 2 - 9;
+        g.append(s('rect', { class: 'org-mapa-contagem', x: bx, y: by, width: 18, height: 18, rx: 9 }));
+        const n = s('text', { class: 'org-mapa-contagem-num', x: bx + 9, y: by + 13, 'text-anchor': 'middle' }); n.textContent = String(t.filhos.length); g.append(n);
+      }
+      g.addEventListener('click', () => tocar(t));
+      g.addEventListener('dblclick', (e) => { e.preventDefault(); const a = acoesDe(t); if (a.editar) a.editar(); });
+      svg.append(g);
+    });
+    area.append(svg);
+    U.arrastarParaRolar(area);
+    area.addEventListener('keydown', (e) => {
+      const t = todos.get(selecionado); if (!t) return; const a = acoesDe(t);
+      if (e.key === 'Tab' && a.lado) { e.preventDefault(); a.lado[1](); } else if (e.key === 'Enter' && a.abaixo) { e.preventDefault(); a.abaixo[1](); } else if (e.key === 'F2' && a.editar) { e.preventDefault(); a.editar(); } else if (e.key === ' ') { e.preventDefault(); alternarRecolher(t); }
+    });
+    return area;
+  }
+  /** Um toque seleciona; o segundo toque no mesmo tópico (logo depois) abre a edição. */
+  function tocar(t) {
+    const agora = Date.now();
+    if (selecionado === t.id && ultimoToque.id === t.id && agora - ultimoToque.t < 900) { const a = acoesDe(t); if (a.editar) a.editar(); else if (a.lado) a.lado[1](); ultimoToque = { id: '', t: 0 }; return; }
+    ultimoToque = { id: t.id, t: agora };
+    if (selecionado !== t.id) { selecionado = t.id; render(); const area = tela.body.querySelector('.org-mapa-area'); if (area) area.focus({ preventScroll: true }); }
   }
 
   /* ---------- Inserir: o nível de baixo ou um cargo ---------- */
-  /** pai = bloco onde se insere; null = a Loja (só aceita Área). */
-  function inserir(pai) {
+  /** pai = bloco onde se insere; null = a Loja (só aceita Área). preferido = "cargo" para já abrir na escolha do cargo. */
+  function inserir(pai, preferido) {
     const tipoFilho = pai ? TIPOS[pai.tipo].filho : 'area';
     const opcoes = []; if (tipoFilho) opcoes.push([tipoFilho, TIPOS[tipoFilho].nome]); if (pai) opcoes.push(['cargo', 'Cargo']);
-    let escolhido = opcoes[0][0];
+    let escolhido = preferido && opcoes.some((o) => o[0] === preferido) ? preferido : opcoes[0][0];
     U.dialogo({
       titulo: pai ? 'Inserir em ' + pai.nome : 'Inserir área na loja',
       cor: cor(), corTexto: COR_TEXTO,
@@ -256,10 +331,10 @@
     const sigla = compactar(ctx.sigla.value) || siglaDoNome(nome);
     const ok = gravar((d) => {
       if (n) Object.assign(d.nos.find((x) => x.id === n.id), { nome, sigla });
-      else d.nos.push({ id: novoId('no'), tipo, nome, sigla, paiId });
+      else { const id = novoId('no'); d.nos.push({ id, tipo, nome, sigla, paiId }); selecionado = id; }
     });
     if (!ok) return 'Não foi possível salvar neste aparelho. Nada foi alterado.';
-    if (pai) abertos.add(pai.id); else abertos.add('raiz');
+    recolhidos.delete(pai ? pai.id : 'raiz');
     U.avisar((n ? 'Alterado: ' : 'Inserido: ') + TIPOS[tipo].nome + ' ' + nome + '.');
     render();
   }
@@ -331,8 +406,9 @@
       const real = ctx.reais.find((r) => String(r.id) === ctx.seletor.value);
       if (!real) { ctx.seletor.focus(); return 'Escolha o cargo.'; }
       if (cargosDe(pai.id).some((x) => x.cargoId === real.id)) return real.nome + ' já está em ' + pai.nome + '. Use o "+" do cargo para mudar o horário.';
-      if (!gravar((d) => { d.cargos.push({ id: novoId('cg'), noId: pai.id, cargoId: real.id, cargoNome: real.nome, horarioIds }); })) return 'Não foi possível salvar neste aparelho. Nada foi alterado.';
-      abertos.add(pai.id);
+      const id = novoId('cg');
+      if (!gravar((d) => { d.cargos.push({ id, noId: pai.id, cargoId: real.id, cargoNome: real.nome, horarioIds }); })) return 'Não foi possível salvar neste aparelho. Nada foi alterado.';
+      recolhidos.delete(pai.id); selecionado = 'c:' + id;
       U.avisar(real.nome + ' inserido em ' + pai.nome + '.');
     }
     render();
@@ -388,7 +464,8 @@
         q.append(campo('Nome *', nome), linha('Dias de trabalho *', grupo), linha('Dias de folga', folga),
           linha('Entrada *', ent.caixa, ent.painel), linha('Saída *', sai.caixa, sai.painel),
           linha('Início do intervalo', ii.caixa, ii.painel), linha('Fim do intervalo', fi.caixa, fi.painel));
-        form.append(q, U.nota('Este horário / escala entra na lista única do teste e pode ser escolhido em qualquer cargo e local.'));
+        const usos = h ? dados.cargos.filter((c) => c.horarioIds.includes(h.id)).length : 0;
+        form.append(q, U.nota(h && usos > 1 ? 'Este horário / escala é usado em ' + usos + ' cargos: a mudança vale para todos eles.' : 'Este horário / escala entra na lista única do teste e pode ser escolhido em qualquer cargo e local.'));
         setTimeout(() => nome.focus(), 0);
         return { nome, dias, ent, sai, ii, fi };
       },
@@ -416,7 +493,7 @@
     U.confirmar('Recomeçar o teste?', 'O que foi montado no teste é apagado e volta o exemplo da Operação de Loja. Os cadastros de verdade não mudam.', 'Recomeçar', () => {
       const novo = exemplo();
       try { localStorage.setItem(KEY, JSON.stringify(novo)); } catch (e) { return 'Não foi possível salvar neste aparelho. Nada foi alterado.'; }
-      dados = novo; erroLeitura = false; abertos.clear(); abertos.add('raiz'); primeira = true;
+      dados = novo; erroLeitura = false; recolhidos.clear(); selecionado = 'raiz';
       U.avisar('Teste recomeçado com o exemplo.');
       abrir();
     }, { cor: cor(), corTexto: COR_TEXTO });
