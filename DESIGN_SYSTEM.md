@@ -1826,6 +1826,9 @@ Tudo o que foi decidido na rodada do Organograma Multifuncional e da Nova Transf
 - **Setinha de abrir / recolher — uma só:** 18 px, traço 2, no cinza apagado, sem transparência; para baixo fechada, para cima aberta, para o lado (›) quando leva a outra área; encostada à direita, na margem dos outros valores.
 - **"Novo …" / "Adicionar …"** de um quadro fica embaixo do quadro (fora dele), nunca colado dentro da linha.
 
+**Menu**
+- **"Lançamentos" aparece como "Criar / Lançar"** (Rodrigo, 28/11/2026): "Criar / Lançar", "Criar / Lançar Colaboradores", "Criar / Lançar Produção" e o "＋ Criar / Lançar" do menu de Despesas. Só o NOME MOSTRADO muda (`rotuloMenu` no `index.html`, aplicado no menu, no título, no caminho e no caminho das telas/janelas pelo `ui.js`); a chave continua "Lançamentos…" — o endereço da tela (/lancamentos), os ícones, as regras e as permissões de acesso gravadas dependem dela (o botão guarda a chave em `data-secao`). "Lançamentos e Registros" da Gestão de Pessoas é outro item e não mudou.
+
 **Medidas que a base garante**
 - Caixa de marcar sempre 22 px; as regras de campo de texto do quadro (`.compras-fieldset > .compras-campo :is(input…)`, `.account-editor input`) não pegam caixas de marcar nem rádios.
 - Painel que tem campos dentro (ex.: o de cor) mora na raiz da janela, não dentro da linha — as regras da linha pegariam os campos dele.

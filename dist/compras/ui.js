@@ -60,7 +60,8 @@
     badge.innerHTML = svg(ICONES[icone] || ICONES.compras);
     const heading = el('div');
     const h2 = el('h2', null, titulo);
-    const p = el('p', null, caminho);
+    // O caminho mostra o nome do submenu como o menu mostra (ex.: "Criar / Lançar" no lugar de "Lançamentos").
+    const p = el('p', null, typeof rotuloMenu === 'function' ? rotuloMenu(caminho) : caminho);
     heading.append(h2, p);
     head.append(badge, heading);
     const body = el('div', 'content profiles-content compras-content');
@@ -901,7 +902,7 @@
     d.append(h);
     // Padrão das telas de edição: o título sempre vem com o caminho de navegação logo abaixo (como no Cadastro da conta).
     const caminho = subtitulo || (document.getElementById('crumb') || {}).textContent || '';
-    if (caminho) d.append(el('p', 'compras-dialog-sub', caminho));
+    if (caminho) d.append(el('p', 'compras-dialog-sub', typeof rotuloMenu === 'function' ? rotuloMenu(caminho) : caminho));
     const form = el('form', 'account-editor compras-form');
     const erro = el('p', 'profiles-error');
     erro.setAttribute('role', 'alert');

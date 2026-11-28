@@ -33,16 +33,17 @@
   const TITULO = document.title;
   const CARTAO = '.record-grid button[data-target]';
   const visivel = (el) => el.getClientRects().length > 0;
-  const textoBotao = (b) => b.textContent.trim();
+  const textoBotao = (b) => (b.dataset.secao || b.textContent).trim();
   const menus = () => [...nav.querySelectorAll('details[data-menu-name]')];
 
   let rota = [];          // tela aberta agora
   let reabrindo = false;  // repetindo cliques: não grava
   let emClique = false;   // o openSection chamado dentro de um clique já gravado não grava de novo
 
+  const textoDaSecao = (r) => { const b = [...document.querySelectorAll('.children > button')].find((x) => slug(textoBotao(x)) === r[r.length - 1]); return b ? textoBotao(b) : ''; };
   function titulo() {
     const trilha = document.getElementById('crumb')?.textContent.trim() || '';
-    const nome = !rota.length ? '' : rota[0] === 'visao-geral' ? 'Visão Geral' : trilha.split(' / ').pop();
+    const nome = !rota.length ? '' : rota[0] === 'visao-geral' ? 'Visão Geral' : (typeof raiz.rotuloMenu === 'function' && rota.length >= 2 && /^lancamentos/.test(rota[rota.length - 1]) ? raiz.rotuloMenu(textoDaSecao(rota)) : trilha.split(' / ').pop());
     document.title = nome ? nome + ' · ' + TITULO : TITULO;
   }
   // Cada grade de cartões guarda a rota em que apareceu: um cartão clicado nela soma a partir dali,
