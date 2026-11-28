@@ -239,42 +239,101 @@
   /** A nota de uma linha fica DENTRO da linha, embaixo (o nome e o valor continuam alinhados no meio da linha de cima). */
   function notaNaLinha(linhaEl, ...notas) { linhaEl.classList.add('compras-linha-com-nota'); notas.forEach((n) => { n.classList.add('compras-nota-linha'); linhaEl.append(n); }); return linhaEl; }
   /*
-   * CAMPO DE COR (Rodrigo, 28/11/2026): na linha, só o botão REDONDO com a cor escolhida; tocar abre o painel (o mesmo painel flutuante dos outros
-   * campos) com a GRADE no jeito do Excel — "Cores do tema": 10 cores com 5 tons de cada (2 mais claros... mais escuros), "Cores padrão" (10) — e
-   * "Personalizar…", que abre o seletor de cor. Tocar numa cor escolhe e fecha. Devolve { caixa, painel, botao }; botao.value é a cor (#rrggbb).
+   * CAMPO DE COR (Rodrigo, 28/11/2026 — conteúdo do seletor de cor do Google Planilhas, no NOSSO desenho: quadro branco de borda cinza, partes separadas
+   * por linha). Na linha do formulário, só a bolinha com a cor escolhida; tocar abre o painel flutuante com:
+   *   Redefinir (volta à cor de origem, ex.: a herdada de cima) · a GRADE de bolinhas (cinzas, cores vivas e 6 tons de cada) · PADRÃO · CORES
+   *   PERSONALIZADAS (as já criadas neste aparelho, o "+" e o conta-gotas, quando o navegador tem).
+   * O "+" troca o painel pelo SELETOR PERSONALIZADO: área de saturação × brilho, barra de matiz, prévia, conta-gotas, Hexadecimal, Vermelho, Verde,
+   * Azul, Cancelar e OK. A escolhida leva o "certo". Devolve { caixa, painel, botao }; botao.value é a cor (#rrggbb).
    */
-  const COR_TEMA = [['Branco', '#ffffff'], ['Preto', '#000000'], ['Cinza-azulado', '#44546a'], ['Areia', '#e7e6e6'], ['Azul', '#4472c4'], ['Laranja', '#ed7d31'], ['Cinza', '#a5a5a5'], ['Dourado', '#ffc000'], ['Azul-claro', '#5b9bd5'], ['Verde', '#70ad47']];
-  const COR_PADRAO = [['Vermelho-escuro', '#c00000'], ['Vermelho', '#ff0000'], ['Laranja', '#ffc000'], ['Amarelo', '#ffff00'], ['Verde-claro', '#92d050'], ['Verde', '#00b050'], ['Azul-claro', '#00b0f0'], ['Azul', '#0070c0'], ['Azul-marinho', '#002060'], ['Roxo', '#7030a0']];
-  /** Mistura a cor com branco (p > 0) ou preto (p < 0): os tons da grade. */
-  const tomDe = (hex, p) => {
-    const n = parseInt(hex.slice(1), 16); const alvo = p > 0 ? 255 : 0; const k = Math.abs(p);
-    return '#' + [n >> 16, (n >> 8) & 255, n & 255].map((c) => Math.round(c + (alvo - c) * k).toString(16).padStart(2, '0')).join('');
-  };
-  function campoCor({ valor = '#7c3aed', rotulo = 'Cor' } = {}) {
+  const GRADE_CORES = [
+    ['#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff'],
+    ['#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff', '#9900ff', '#ff00ff'],
+    ['#e6b8af', '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#c9daf8', '#cfe2f3', '#d9d2e9', '#ead1dc'],
+    ['#dd7e6b', '#ea9999', '#f9cb9c', '#ffe599', '#b6d7a8', '#a2c4c9', '#a4c2f4', '#9fc5e8', '#b4a7d6', '#d5a6bd'],
+    ['#cc4125', '#e06666', '#f6b26b', '#ffd966', '#93c47d', '#76a5af', '#6d9eeb', '#6fa8dc', '#8e7cc3', '#c27ba0'],
+    ['#a61c00', '#cc0000', '#e69138', '#f1c232', '#6aa84f', '#45818e', '#3c78d8', '#3d85c6', '#674ea7', '#a64d79'],
+    ['#85200c', '#990000', '#b45f06', '#bf9000', '#38761d', '#134f5c', '#1155cc', '#0b5394', '#351c75', '#741b47'],
+    ['#5b0f00', '#660000', '#783f04', '#7f6000', '#274e13', '#0c343d', '#1c4587', '#073763', '#20124d', '#4c1130'],
+  ];
+  const CORES_PADRAO = ['#000000', '#ffffff', '#4285f4', '#ea4335', '#fbbc04', '#34a853', '#ff6d01', '#46bdc6'];
+  /** Cores personalizadas deste aparelho (conveniência; se o armazenamento falhar, a lista só fica vazia). */
+  const CHAVE_CORES_PERSONALIZADAS = 'cicluz-cores-personalizadas';
+  const lerCoresPersonalizadas = () => { try { const v = JSON.parse(localStorage.getItem(CHAVE_CORES_PERSONALIZADAS) || '[]'); return Array.isArray(v) ? v.filter((c) => /^#[0-9a-f]{6}$/i.test(c)).slice(0, 10) : []; } catch (e) { return []; } };
+  const guardarCorPersonalizada = (c) => { try { const l = [c, ...lerCoresPersonalizadas().filter((x) => x.toLowerCase() !== c.toLowerCase())].slice(0, 10); localStorage.setItem(CHAVE_CORES_PERSONALIZADAS, JSON.stringify(l)); } catch (e) { /* sem armazenamento: segue sem guardar */ } };
+  const corClara = (hex) => { const n = parseInt(hex.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) > 186; };
+  const rgbDe = (hex) => { const n = parseInt(hex.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+  const hexDe = (r, g, b) => '#' + [r, g, b].map((x) => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, '0')).join('');
+  const hsvDe = ([r, g, b]) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b); const d = mx - Math.min(r, g, b); let h = 0;
+    if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [(h * 60 + 360) % 360, mx ? d / mx : 0, mx]; };
+  const rgbDeHsv = (h, s, v) => { const f = (n) => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); }; return [f(5) * 255, f(3) * 255, f(1) * 255]; };
+  function campoCor({ valor = '#7c3aed', rotulo = 'Cor', redefinir = '' } = {}) {
     let atual = String(valor || '#7c3aed').toLowerCase();
     const botao = el('button', 'compras-cor-botao'); botao.type = 'button';
     const caixa = el('div', 'compras-cor-campo'); caixa.append(botao);
     const painel = el('div', 'compras-escolha-painel compras-aniv-painel compras-cor-painel'); painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', rotulo + ': escolher a cor');
     const abrir = flutuante(botao, painel);
-    const celula = (nome, cor) => { const b = el('button', 'compras-cor-celula'); b.type = 'button'; b.title = nome; b.setAttribute('aria-label', nome); b.style.setProperty('--c', cor); b.dataset.cor = cor; b.onclick = () => escolher(cor, true); return b; };
-    const grade = (cols) => { const g = el('div', 'compras-cor-grade'); g.append(...cols); return g; };
-    // Cores do tema: a linha da cor e, embaixo, os tons (80%, 60%, 40% mais claros; 25%, 50% mais escuros), coluna por coluna como no Excel.
-    const TONS = [[0, ''], [0.8, ' 80% mais clara'], [0.6, ' 60% mais clara'], [0.4, ' 40% mais clara'], [-0.25, ' 25% mais escura'], [-0.5, ' 50% mais escura']];
-    const tema = grade(TONS.flatMap(([p, sufixo]) => COR_TEMA.map(([nome, cor]) => celula(nome + sufixo, p ? tomDe(cor, p) : cor))));
-    const padrao = grade(COR_PADRAO.map(([nome, cor]) => celula(nome, cor)));
-    const outra = el('span', 'compras-chip compras-cor-personalizar'); outra.append('Personalizar…');
-    const seletor = entrada('color', atual); seletor.setAttribute('aria-label', 'Cor personalizada'); outra.append(seletor);
-    seletor.addEventListener('input', () => escolher(seletor.value, false)); seletor.addEventListener('change', () => abrir(false));
-    painel.append(el('span', 'compras-rotulo', 'Cores do tema'), tema, el('span', 'compras-rotulo', 'Cores padrão'), padrao, outra);
+    const bolinha = (cor) => { const b = el('button', 'compras-cor-celula'); b.type = 'button'; b.title = cor; b.setAttribute('aria-label', 'Cor ' + cor); b.style.setProperty('--c', cor); b.dataset.cor = cor; if (corClara(cor)) b.classList.add('clara'); b.onclick = () => escolher(cor, true); return b; };
+    const grade = (cores) => { const g = el('div', 'compras-cor-grade'); g.append(...cores.map(bolinha)); return g; };
+    const parte = (...nos) => { const p = el('div', 'compras-cor-parte'); p.append(...nos); return p; };
+    const titulo = (texto) => el('span', 'compras-cor-titulo', texto);
+    const contaGotasBotao = (aoPegar) => { const b = el('button', 'compras-cor-acao'); b.type = 'button'; b.title = 'Pegar uma cor da tela'; b.setAttribute('aria-label', 'Pegar uma cor da tela');
+      b.innerHTML = svg('<path d="m14 7 3 3M5 19l9.5-9.5M17 3a2.8 2.8 0 0 1 4 4l-3 3-4-4z"/><path d="M5 19l-2 2"/>');
+      b.onclick = async () => { try { const r = await new window.EyeDropper().open(); aoPegar(r.sRGBHex.toLowerCase()); } catch (e) { /* cancelou */ } }; return b; };
+    // ---- Vista 1: a grade.
+    const quadroGrade = el('div', 'compras-cor-quadro');
+    if (redefinir) {
+      const r = el('button', 'compras-cor-redefinir'); r.type = 'button'; r.innerHTML = svg('<path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/>'); r.append('Redefinir');
+      r.title = 'Voltar à cor de origem (' + redefinir + ')'; r.onclick = () => escolher(redefinir, true); quadroGrade.append(parte(r));
+    }
+    const pessoais = el('div', 'compras-cor-grade');
+    const mais = el('button', 'compras-cor-acao'); mais.type = 'button'; mais.title = 'Nova cor personalizada'; mais.setAttribute('aria-label', 'Nova cor personalizada'); mais.innerHTML = svg('<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>');
+    mais.onclick = () => mostrar('personalizar');
+    const gotasGrade = contaGotasBotao((c) => { guardarCorPersonalizada(c); escolher(c, true); });
+    quadroGrade.append(parte(grade(GRADE_CORES.flat())), parte(titulo('Padrão'), grade(CORES_PADRAO)), parte(titulo('Cores personalizadas'), pessoais));
+    // ---- Vista 2: o seletor personalizado (saturação × brilho, matiz, Hexadecimal e RGB).
+    let hsv = hsvDe(rgbDe(atual));
+    const sv = el('div', 'compras-cor-sv'); const ponto = el('span', 'compras-cor-sv-ponto'); sv.append(ponto);
+    const matiz = entrada('range', '0', { min: '0', max: '360', step: '1' }); matiz.className = 'compras-cor-matiz'; matiz.setAttribute('aria-label', 'Matiz');
+    const previa = el('span', 'compras-cor-previa');
+    const hex = entrada('text', '', { maxLength: 7, autocomplete: 'off', spellcheck: false }); hex.setAttribute('aria-label', 'Hexadecimal');
+    const canais = ['Vermelho', 'Verde', 'Azul'].map((n) => { const i = entrada('text', '', { inputMode: 'numeric', maxLength: 3, autocomplete: 'off' }); i.setAttribute('aria-label', n); return i; });
+    const campoMini = (rot, inp) => { const l = el('span', 'compras-cor-mini'); l.append(el('span', null, rot), inp); return l; };
+    const gotasPers = contaGotasBotao((c) => { hsv = hsvDe(rgbDe(c)); pintarSeletor(); });
+    const cancelar = el('button', 'compras-chip', 'Cancelar'); cancelar.type = 'button'; cancelar.onclick = () => mostrar('grade');
+    const ok = el('button', 'compras-chip ativo', 'OK'); ok.type = 'button';
+    ok.onclick = () => { const c = hexDe(...rgbDeHsv(...hsv)); guardarCorPersonalizada(c); mostrar('grade'); escolher(c, true); };
+    const linhaFerr = el('div', 'compras-cor-ferramentas'); linhaFerr.append(previa, ...(window.EyeDropper ? [gotasPers] : []), matiz);
+    const linhaNum = el('div', 'compras-cor-numeros'); linhaNum.append(campoMini('Hexadecimal', hex), ...canais.map((c, i) => campoMini(['Verm.', 'Verde', 'Azul'][i], c)));
+    const acoes = el('div', 'compras-cor-acoes'); acoes.append(cancelar, ok);
+    const quadroPers = el('div', 'compras-cor-quadro'); quadroPers.append(parte(sv, linhaFerr, linhaNum), parte(acoes));
+    function pintarSeletor(origem) {
+      const [h, s, v] = hsv; const c = hexDe(...rgbDeHsv(h, s, v));
+      sv.style.setProperty('--matiz', 'hsl(' + h + ', 100%, 50%)'); ponto.style.left = (s * 100) + '%'; ponto.style.top = ((1 - v) * 100) + '%';
+      if (origem !== 'matiz') matiz.value = String(Math.round(h));
+      previa.style.setProperty('--c', c);
+      if (origem !== 'hex') hex.value = c;
+      if (origem !== 'rgb') rgbDe(c).forEach((x, i) => { canais[i].value = String(x); });
+    }
+    const pelaPosicao = (e) => { const r = sv.getBoundingClientRect(); const s = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); const v = 1 - Math.max(0, Math.min(1, (e.clientY - r.top) / r.height)); hsv = [hsv[0], s, v]; pintarSeletor(); };
+    sv.addEventListener('pointerdown', (e) => { sv.setPointerCapture(e.pointerId); pelaPosicao(e); });
+    sv.addEventListener('pointermove', (e) => { if (sv.hasPointerCapture(e.pointerId)) pelaPosicao(e); });
+    matiz.addEventListener('input', () => { hsv = [Number(matiz.value), hsv[1], hsv[2]]; pintarSeletor('matiz'); });
+    hex.addEventListener('input', () => { const v = hex.value.trim().replace(/^([^#])/, '#$1'); if (/^#[0-9a-f]{6}$/i.test(v)) { hsv = hsvDe(rgbDe(v.toLowerCase())); pintarSeletor('hex'); } });
+    canais.forEach((c) => c.addEventListener('input', () => { const v = canais.map((x) => Math.max(0, Math.min(255, Number(x.value) || 0))); hsv = hsvDe(v); pintarSeletor('rgb'); }));
+    function mostrar(vista) {
+      if (vista === 'personalizar') { hsv = hsvDe(rgbDe(atual)); painel.replaceChildren(quadroPers); pintarSeletor(); } else painel.replaceChildren(quadroGrade);
+    }
     function pintar() {
       botao.style.setProperty('--c', atual); botao.title = rotulo + ': ' + atual; botao.setAttribute('aria-label', rotulo + ': ' + atual + ' (tocar para trocar)');
+      pessoais.replaceChildren(...lerCoresPersonalizadas().map(bolinha), mais, ...(window.EyeDropper ? [gotasGrade] : []));
       painel.querySelectorAll('.compras-cor-celula').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.cor.toLowerCase() === atual)));
-      seletor.value = atual;
     }
     function escolher(v, fechar) { atual = String(v).toLowerCase(); pintar(); botao.dispatchEvent(new Event('change', { bubbles: true })); if (fechar) { abrir(false); botao.focus(); } }
-    botao.addEventListener('click', () => abrir(painel.hidden));
+    // O painel mora na raiz da janela (não dentro da linha do formulário: as regras dos campos da linha pegariam os campos do painel).
+    botao.addEventListener('click', () => { const casa = botao.closest('dialog, .app-screen-shell') || document.body; if (painel.parentElement !== casa) casa.append(painel); if (painel.hidden) mostrar('grade'); abrir(painel.hidden); });
     Object.defineProperty(botao, 'value', { get: () => atual, set: (v) => { atual = String(v).toLowerCase(); pintar(); } });
-    pintar();
+    mostrar('grade'); pintar();
     return { caixa, painel, botao };
   }
   function campo(rotulo, no, dica) {

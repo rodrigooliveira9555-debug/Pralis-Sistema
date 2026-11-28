@@ -1247,11 +1247,31 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 /* Campo de cor (U.campoCor): botão redondo com a cor; o painel tem a grade do jeito do Excel (tema com tons + padrão) e "Personalizar…". */
 .compras-cor-campo { display: flex; justify-content: flex-end; }
 :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo .compras-cor-botao { --cor-borda: color-mix(in srgb, var(--c) 70%, #000); width: 30px; height: 30px; min-width: 0; min-height: 0; padding: 0; border: 2px solid var(--theme-card, #fff); border-radius: 50%; background: var(--c); box-shadow: 0 0 0 1px var(--cor-borda); }
-.compras-cor-painel { padding: 12px; display: grid; gap: 6px; }
-.compras-cor-grade { display: grid; grid-template-columns: repeat(10, 22px); gap: 3px; }
-.compras-cor-painel > .compras-cor-grade + .compras-rotulo { margin-top: 6px; }
-.compras-cor-celula { width: 22px; height: 22px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 1px solid rgb(0 0 0 / .12); border-radius: 3px; background: var(--c); cursor: pointer; }
-.compras-cor-celula[aria-pressed=true] { outline: 2px solid var(--layout-ink, #27272a); outline-offset: 1px; }
-.compras-cor-celula:hover { outline: 2px solid var(--menu-accent); outline-offset: 1px; }
-.compras-cor-personalizar { position: relative; justify-self: start; margin-top: 6px; cursor: pointer; }
-.compras-cor-personalizar > input { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+/* O painel no nosso desenho: um quadro branco de borda cinza, com as partes separadas por linha. */
+.compras-cor-painel { padding: 0; background: transparent; border: 0; box-shadow: none; }
+.compras-cor-quadro { background: var(--theme-card, #fff); border: 1px solid var(--layout-line, #dedee3); border-radius: 14px; box-shadow: 0 12px 32px rgb(0 0 0 / .14); overflow: hidden; }
+.compras-cor-parte { display: grid; gap: 8px; padding: 12px 14px; }
+.compras-cor-parte + .compras-cor-parte { border-top: 1px solid var(--layout-line, #dedee3); }
+.compras-cor-redefinir { display: flex; align-items: center; gap: 10px; justify-self: start; min-height: 0; margin: 0; padding: 0; border: 0; background: none; color: var(--layout-ink, #27272a); font: 500 14px/20px var(--ui-font); cursor: pointer; }
+.compras-cor-redefinir svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.compras-cor-titulo { font: 700 11px/14px var(--ui-font); letter-spacing: .6px; text-transform: uppercase; color: var(--muted, #73737a); }
+.compras-cor-grade { display: grid; grid-template-columns: repeat(10, 22px); gap: 4px; }
+.compras-cor-celula { position: relative; width: 22px; height: 22px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .12); cursor: pointer; }
+.compras-cor-celula[aria-pressed=true]::after { content: ""; position: absolute; left: 7px; top: 5px; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.compras-cor-celula.clara[aria-pressed=true]::after { border-color: #27272a; }
+.compras-cor-celula:hover { box-shadow: inset 0 0 0 1px rgb(0 0 0 / .12), 0 0 0 2px var(--theme-card, #fff), 0 0 0 3px var(--border-strong, #b9b9c0); }
+.compras-cor-acao { position: relative; display: grid; place-items: center; width: 22px; height: 22px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; background: none; color: var(--layout-ink, #27272a); cursor: pointer; }
+.compras-cor-acao svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+/* Seletor personalizado: saturação × brilho, matiz, prévia, Hexadecimal e RGB. */
+.compras-cor-sv { position: relative; width: 256px; height: 150px; max-width: 100%; border-radius: 8px; background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent), var(--matiz, red); cursor: crosshair; touch-action: none; }
+.compras-cor-sv-ponto { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px rgb(0 0 0 / .35); pointer-events: none; }
+.compras-cor-ferramentas { display: flex; align-items: center; gap: 10px; }
+.compras-cor-previa { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .15); }
+.compras-cor-ferramentas .compras-cor-acao { width: 30px; height: 30px; border: 1px solid var(--layout-line, #dedee3); border-radius: 8px; }
+.compras-cor-painel .compras-cor-quadro input.compras-cor-matiz { --campo-altura: 12px; --campo-respiro: 0px; flex: 1 1 auto; min-width: 0; height: 12px; margin: 0; padding: 0; border: 0; border-radius: 6px; appearance: none; -webkit-appearance: none; background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); }
+.compras-cor-matiz::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border: 2px solid #fff; border-radius: 50%; background: transparent; box-shadow: 0 0 0 1px rgb(0 0 0 / .35); }
+.compras-cor-matiz::-moz-range-thumb { width: 14px; height: 14px; border: 2px solid #fff; border-radius: 50%; background: transparent; box-shadow: 0 0 0 1px rgb(0 0 0 / .35); }
+.compras-cor-numeros { display: grid; grid-template-columns: 1.6fr repeat(3, 1fr); gap: 8px; width: 256px; max-width: 100%; }
+.compras-cor-mini { display: grid; gap: 4px; min-width: 0; white-space: nowrap; font: 500 11px/14px var(--ui-font); color: var(--muted, #73737a); }
+.compras-cor-painel .compras-cor-numeros .compras-cor-mini > input { --campo-altura: 32px; --campo-respiro: 0 4px; --ui-input-size: 13px; --ui-field-padding-right: 4px; width: 100%; min-width: 0; height: 32px; min-height: 0; box-sizing: border-box; padding: 0 6px; border: 1px solid var(--layout-line, #dedee3); border-radius: 6px; background: var(--theme-card, #fff); color: var(--layout-ink, #27272a); font: 500 13px/1 var(--ui-font); text-align: left; }
+.compras-cor-acoes { display: flex; justify-content: flex-end; gap: 8px; }
