@@ -299,8 +299,8 @@
     const canais = ['Vermelho', 'Verde', 'Azul'].map((n) => { const i = entrada('text', '', { inputMode: 'numeric', maxLength: 3, autocomplete: 'off' }); i.setAttribute('aria-label', n); return i; });
     const campoMini = (rot, inp) => { const l = el('span', 'compras-cor-mini'); l.append(el('span', null, rot), inp); return l; };
     const gotasPers = contaGotasBotao((c) => { hsv = hsvDe(rgbDe(c)); pintarSeletor(); });
-    const cancelar = el('button', 'compras-chip', 'Cancelar'); cancelar.type = 'button'; cancelar.onclick = () => mostrar('grade');
-    const ok = el('button', 'compras-chip ativo', 'OK'); ok.type = 'button';
+    const cancelar = el('button', 'compras-cor-cancelar'); cancelar.type = 'button'; cancelar.title = 'Cancelar'; cancelar.setAttribute('aria-label', 'Cancelar'); cancelar.innerHTML = svg('<path d="M7 7l10 10M17 7 7 17"/>'); cancelar.onclick = () => mostrar('grade');
+    const ok = el('button', 'compras-cor-ok'); ok.type = 'button'; ok.title = 'OK'; ok.setAttribute('aria-label', 'OK: usar esta cor'); ok.innerHTML = svg('<path d="m5 12.5 4.5 4.5L19 7.5"/>');
     ok.onclick = () => { const c = hexDe(...rgbDeHsv(...hsv)); guardarCorPersonalizada(c); mostrar('grade'); escolher(c, true); };
     const linhaFerr = el('div', 'compras-cor-ferramentas'); linhaFerr.append(previa, ...(window.EyeDropper ? [gotasPers] : []), matiz);
     const linhaNum = el('div', 'compras-cor-numeros'); linhaNum.append(campoMini('Hexadecimal', hex), ...canais.map((c, i) => campoMini(['Verm.', 'Verde', 'Azul'][i], c)));
@@ -344,16 +344,17 @@
    */
   /** Barra fixa no alto da lista que se abriu: o botão redondo de expandir / recolher tudo (cinza; na cor ao passar o mouse) e a busca. Sem níveis na lista,
    *  o botão fica apagado. aoBuscar(termo sem acento, minúsculo); aoAlternar(aberto). */
-  function barraDeLista({ rotuloBusca = 'Buscar', aoBuscar, aoAlternar, temNiveis = false }) {
-    const barra = el('div', 'compras-lista-barra'); let aberto = false;
-    const alternar = el('button', 'compras-lista-alternar'); alternar.type = 'button'; alternar.innerHTML = svg('<path d="m5 9 7-6 7 6M5 15l7 6 7-6"/>');
-    const pintar = () => { const r = aberto ? 'Recolher tudo' : 'Expandir tudo'; alternar.setAttribute('aria-label', r); alternar.setAttribute('aria-expanded', String(aberto)); alternar.title = temNiveis ? r : 'Esta lista não tem níveis para expandir'; alternar.disabled = !temNiveis; };
-    alternar.onclick = () => { aberto = !aberto; pintar(); if (aoAlternar) aoAlternar(aberto); };
+  function barraDeLista({ rotuloBusca = 'Buscar', aoBuscar, aoAlternar, temNiveis = false, lista }) {
+    // A barra é a mesma da janela em árvore (.escolha-barra): presa no alto, com o botão redondo de expandir / recolher.
+    const barra = el('div', 'escolha-barra'); let aberto = !temNiveis;
+    const alternar = el('button', 'compras-redondo escolha-expandir'); alternar.type = 'button'; alternar.innerHTML = svg('<path d="m5 9 7-6 7 6M5 15l7 6 7-6"/>');
+    const pintar = () => { const r = aberto ? 'Recolher tudo' : 'Expandir tudo'; alternar.setAttribute('aria-label', r); alternar.setAttribute('aria-expanded', String(aberto)); alternar.title = r + (temNiveis ? '' : ' (os detalhes de cada item)'); };
+    alternar.onclick = () => { aberto = !aberto; pintar(); if (!temNiveis && lista) lista.classList.toggle('sem-detalhe', !aberto); if (aoAlternar) aoAlternar(aberto); };
     // Campo de texto (não 'search'): a caixa fica à vista, sem virar a lupa que se abre.
     const busca = entrada('text', '', { placeholder: rotuloBusca, autocomplete: 'off', maxLength: 80, enterKeyHint: 'search' }); busca.className = 'compras-lista-busca'; busca.setAttribute('aria-label', rotuloBusca);
     busca.addEventListener('input', () => aoBuscar(dobrar(busca.value.trim())));
     busca.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
-    barra.append(alternar, busca); pintar(); barra.busca = busca;
+    barra.append(busca, alternar); pintar(); barra.busca = busca;
     return barra;
   }
   const MARCA_ESCOLHA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
@@ -375,7 +376,7 @@
     const lista = el('div', 'compras-hier transferencia-contas compras-escolha-lista'); lista.hidden = true; lista.setAttribute('role', 'radiogroup'); lista.setAttribute('aria-label', rotulo.replace(/ *\*$/, ''));
     let termo = '';
     const caixaItens = el('div', 'compras-escolha-itens');
-    const barra = barraDeLista({ rotuloBusca, aoBuscar: (tx) => { termo = tx; desenhar(); } });
+    const barra = barraDeLista({ rotuloBusca, aoBuscar: (tx) => { termo = tx; desenhar(); }, lista });
     lista.append(barra, caixaItens);
     linha.append(el('span', 'compras-rotulo', rotulo), abre, lista);
     const pintar = () => {

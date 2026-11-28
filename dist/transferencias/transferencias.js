@@ -412,7 +412,7 @@
           const painel = el('div', 'transferencia-multi-painel'); painel.hidden = true;
           const arvore = el('div', 'compras-hier transferencia-contas'); arvore.setAttribute('role', 'radiogroup'); arvore.setAttribute('aria-label', rotulo.replace(/ *$/, '') + ': contas');
           let termo = '';
-          const barra = U.barraDeLista({ rotuloBusca: 'Buscar conta', aoBuscar: (tx) => { termo = tx; desenhar(); } });
+          const barra = U.barraDeLista({ rotuloBusca: 'Buscar conta', aoBuscar: (tx) => { termo = tx; desenhar(); }, lista: arvore });
           painel.append(barra, arvore);
           const caixa = el('div', 'transferencia-opcao'); caixa.append(abre.no, painel);
           const pintar = () => { abre.resumo.textContent = atual || '—'; };
@@ -440,7 +440,7 @@
         // Múltiplo destino: uma linha que se expande para baixo com as contas; tocar fora (ou Esc) fecha.
         const multiAbre = linhaQueAbre('Destino (+) / CNT *', () => abrirMulti(painelMulti.hidden));
         let termoMulti = '';
-        const barraMulti = U.barraDeLista({ rotuloBusca: 'Buscar conta', aoBuscar: (tx) => { termoMulti = tx; desenharDestinos(); } });
+        const barraMulti = U.barraDeLista({ rotuloBusca: 'Buscar conta', aoBuscar: (tx) => { termoMulti = tx; desenharDestinos(); }, lista: listaContas });
         const painelMulti = el('div', 'transferencia-multi-painel'); painelMulti.hidden = true; painelMulti.append(barraMulti, listaContas, contagem);
         const campoContas = el('div', 'transferencia-opcao'); campoContas.append(multiAbre.no, painelMulti);
         function abrirMulti(sim) { painelMulti.hidden = !sim; multiAbre.abrir(sim); }
