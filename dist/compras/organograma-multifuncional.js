@@ -4,9 +4,10 @@
  * insere o nível seguinte (a ordem é fixa: Área, depois Setor, depois Local; no bloco também entra Cargo) e "Abaixo" insere outro do mesmo nível.
  * O Horário / Escala criado aqui entra numa lista única e é escolhido de novo no próximo local, sem criar outra vez.
  *
- * TESTE: tudo fica numa chave própria deste aparelho (cicluz-teste-organograma-multifuncional-v1). Nada aqui grava em
- * Área / Setor / Local, Cargos ou Horário / Escala de verdade; a lista de cargos é só LIDA do cadastro de cargos (pelo ID).
- * Depois de aprovado o teste, a gravação passa para os cadastros reais (cicluz-location-tree-v1 e cicluz-jornadas-v1), sem cópia.
+ * TESTE: blocos e cargos ficam numa chave própria deste aparelho (cicluz-teste-organograma-multifuncional-v1). Nada aqui grava em
+ * Área / Setor / Local ou Cargos de verdade; a lista de cargos é só LIDA do cadastro de cargos (pelo ID).
+ * O Horário / Escala JÁ É REAL (Rodrigo, 28/11/2026): grava em cicluz-jornadas-v1 (schedules.js), e o cartão DES - Horário / Escala é um atalho
+ * para a mesma lista e a mesma janela. Depois de aprovado o teste, blocos e cargos passam para cicluz-location-tree-v1, sem cópia.
  * Os dados de exemplo (Operação de Loja) usam horas de exemplo, não regra da empresa. "Recomeçar o teste" volta ao exemplo.
  */
 (function () {
@@ -69,20 +70,23 @@
     }
     return partes.join(', ') || '—';
   }
-  const textoDoHorario = (h) => (h.escala || '') + ' · ' + (h.escala === '12x36' ? 'um dia sim, um dia não' : textoDosDias(h.dias)) + ' · ' + h.entrada + '–' + h.saida +
+  const textoDoHorario = (h) => (h.escala ? h.escala + ' · ' : '') + (h.escala === '12x36' ? 'um dia sim, um dia não' : textoDosDias(h.dias)) + ' · ' + h.entrada + '–' + h.saida +
     (h.intervaloInicio ? ' · intervalo ' + h.intervaloInicio + ' (' + duracaoTexto(Number(h.intervaloMin || 0)) + ')' : '') +
     (h.porDia && Object.keys(h.porDia).length ? ' · horário próprio: ' + textoDosDias(Object.keys(h.porDia)) : '') + (h.cargaSemanal ? ' · ' + String(h.cargaSemanal).replace('.', ',') + 'h/semana' : '') +
     (h.domingo ? ' · domingo ' + (h.domingo.compensado ? 'compensado na ' + ((DIAS.find((x) => x[0] === h.domingo.diaCompensa) || [])[1] || '?') : 'sem compensação') + ', folga ' + (h.domingo.folgaDomingos || []).map((k) => k + 'º').join(' e ') + ' domingo do mês' : '') +
     (h.feriado && h.feriado.trabalha !== null && h.feriado.trabalha !== undefined ? ' · feriado: ' + (h.feriado.trabalha ? 'trabalha' + (h.feriado.compensado ? ', compensado' : ', sem compensação') : 'folga') : '');
 
   /* ---------- Dados do teste (só neste aparelho, chave própria) ---------- */
+  const HR_EXEMPLO = { M: 'hr-exemplo-manha', I: 'hr-exemplo-intermediario', T: 'hr-exemplo-tarde' };
+  /** Os três horários do exemplo (Manhã, Intermediário e Tarde), no formato do Horário / Escala. */
+  function horariosDeExemplo() {
+    const horario = (id, ent, sai, ii) => { const x = { id, nome: '', sigla: '', nomeModo: 'montado', escala: '5x2', dias: ['1', '2', '3', '4', '5'], cargaSemanal: 42, entrada: ent, saida: sai, intervaloInicio: ii, intervaloMin: 60, porDia: {} }; x.nome = nomeMontado(x); x.sigla = siglaDoNome(x.nome); return x; };
+    return [horario(HR_EXEMPLO.M, '06:00', '15:24', '10:00'), horario(HR_EXEMPLO.I, '10:00', '19:24', '14:00'), horario(HR_EXEMPLO.T, '12:00', '21:24', '16:00')];
+  }
   function exemplo() {
-    const d = { version: 1, criadoEm: new Date().toISOString(), nos: [], cargos: [], horarios: [] };
-    const horario = (nome, ent, sai, ii) => { const x = { id: novoId('hr'), nome, sigla: '', nomeModo: 'montado', escala: '5x2', dias: ['1', '2', '3', '4', '5'], cargaSemanal: 42, entrada: ent, saida: sai, intervaloInicio: ii, intervaloMin: 60, porDia: {} }; x.nome = nomeMontado(x); x.sigla = siglaDoNome(x.nome); d.horarios.push(x); return x.id; };
-    // Horas de EXEMPLO, só para o teste ter o que mostrar.
-    const M = horario('Manhã', '06:00', '15:24', '10:00');
-    const I = horario('Intermediário', '10:00', '19:24', '14:00');
-    const T = horario('Tarde', '12:00', '21:24', '16:00');
+    const d = { version: 1, criadoEm: new Date().toISOString(), nos: [], cargos: [] };
+    // Os três horários do exemplo são horários de verdade (Rodrigo, 28/11/2026): ficam no cadastro real, com estes ids fixos.
+    const { M, I, T } = HR_EXEMPLO;
     const no = (tipo, nome, paiId) => { const x = { id: novoId('no'), tipo, nome, sigla: siglaDoNome(nome), paiId: paiId || null }; d.nos.push(x); return x.id; };
     const reais = cargosReais();
     // Cada cargo tem UM horário (Rodrigo, 28/11/2026): um posto coberto em dois turnos são dois cargos, cada um com o seu horário.
@@ -106,10 +110,10 @@
     try {
       const s = JSON.parse(localStorage.getItem(KEY) || 'null');
       if (!s) { dados = exemplo(); localStorage.setItem(KEY, JSON.stringify(dados)); return; }
-      if (s.version !== 1 || !Array.isArray(s.nos) || !Array.isArray(s.cargos) || !Array.isArray(s.horarios)) throw new Error('formato');
-      s.horarios.forEach(normalizarHorario);
+      // Os horários que o teste guardava (s.horarios) passaram para o cadastro real na conversão; aqui ficam só como estavam.
+      if (s.version !== 1 || !Array.isArray(s.nos) || !Array.isArray(s.cargos)) throw new Error('formato');
       dados = s;
-    } catch (e) { erroLeitura = true; dados = { version: 1, nos: [], cargos: [], horarios: [] }; }
+    } catch (e) { erroLeitura = true; dados = { version: 1, nos: [], cargos: [] }; }
   }
   /** Grava; se não der, volta ao que estava e devolve false. */
   function gravar(mudar) {
@@ -119,7 +123,12 @@
 
   const filhos = (paiId) => dados.nos.filter((n) => n.paiId === paiId);
   const cargosDe = (noId) => dados.cargos.filter((c) => c.noId === noId);
-  const horarioPorId = (id) => dados.horarios.find((h) => h.id === id);
+  /* Horário / Escala é o cadastro VERDADEIRO (Rodrigo, 28/11/2026: "tornar o novo o real"). Mora em cicluz-jornadas-v1 (schedules.js), no campo
+   * `modelo` de cada horário; os campos antigos (padrao e o horário de cada dia da semana) são refeitos a cada gravação para o Ponto, a Escala
+   * Individual, o Lançamento de Horário / Escala, o Contrato e os Cargos continuarem lendo do mesmo cadastro. O teste guarda só blocos e cargos. */
+  const J = () => window.CicluzJornada;
+  const todosHorarios = () => ((J() && J().get().jornadas) || []).filter((j) => j.modelo).map((j) => ({ ...j.modelo, id: j.id, ativo: j.active !== false }));
+  const horarioPorId = (id) => todosHorarios().find((h) => h.id === id);
   /** Tudo abaixo de um bloco (ele incluso): blocos e cargos. */
   function abaixoDe(id) {
     const ids = [id]; for (let i = 0; i < ids.length; i++) filhos(ids[i]).forEach((n) => ids.push(n.id));
@@ -218,7 +227,7 @@
       }
     }
     sec.append(corpo);
-    const texto = 'AMBIENTE DE TESTE: o que você monta aqui fica só neste teste e não muda Área / Setor / Local, Cargos nem Horário / Escala de verdade. ' +
+    const texto = 'AMBIENTE DE TESTE: as áreas, setores, locais e cargos que você monta aqui ficam só neste teste e não mudam os cadastros de verdade. O Horário / Escala é o cadastro real (o mesmo de DES - Horário / Escala): criar ou mudar um horário aqui vale em todo o sistema. ' +
       'Toque num tópico para selecionar: o "+" do lado cria o próximo nível (Área › Setor › Local, Cargo, Horário / Escala) e o "+" de baixo cria outro do mesmo nível. Toque de novo para editar. Cada cargo tem um horário / escala; outro turno é o cargo de novo, com o outro horário. ' +
       'No teclado: Tab = ao lado, Enter = abaixo, F2 = editar, Espaço = recolher.';
     tela.body.replaceChildren(U.infoDaLista(sec, texto, 'organograma-multifuncional-teste'));
@@ -339,7 +348,7 @@
     };
     filhos(null).forEach((a) => { linhas.push({ tipo: 'area', n: a }); visitar(a, []); });
     // Faixa de horas: da menor entrada à maior saída (arredondadas à hora); quem vira a noite usa o dia inteiro.
-    const hs = dados.horarios.filter((h) => linhas.some((l) => l.hs && l.hs.includes(h)));
+    const hs = todosHorarios().filter((h) => linhas.some((l) => l.hs && l.hs.some((x) => x.id === h.id)));
     let ini = 24 * 60; let fim = 0;
     hs.forEach((h) => { const e = min(h.entrada); const x = min(h.saida); if (x <= e) { ini = 0; fim = 1440; } else { ini = Math.min(ini, e); fim = Math.max(fim, x); } });
     if (!hs.length) { ini = 6 * 60; fim = 22 * 60; }
@@ -492,12 +501,14 @@
       const seletor = U.escolhaNaLinha({ rotulo: 'Cargo *', itens: nosCargos, valor: c ? (c.cargoId ? String(c.cargoId) : 'fora:' + c.id) : '', textoVazio: reais.length ? 'Selecione um cargo' : 'Nenhum cargo cadastrado', vazio: 'Nenhum cargo cadastrado em DES - Cargos C/Salários.' });
       const horarios = el('div', 'compras-vinculos-lista'); horarios.setAttribute('role', 'group');
       const pintarHorarios = () => {
-        horarios.replaceChildren(...dados.horarios.map((h) => {
+        // Na escolha entram os ativos e o que já está marcado (mesmo se foi desativado depois).
+        const lista = todosHorarios().filter((h) => h.ativo || marcados.has(h.id));
+        horarios.replaceChildren(...lista.map((h) => {
           const l = U.interruptor(h.nome, marcados.has(h.id), textoDoHorario(h)); l.input.classList.add('compras-selecao-bolinha');
           l.input.onchange = () => { marcados.clear(); marcados.add(h.id); pintarHorarios(); }; // escolha única: tocar no marcado não desmarca
           return l;
         }));
-        if (!dados.horarios.length) horarios.append(U.nota('Nenhum horário / escala no teste. Use "Novo Horário / Escala".'));
+        if (!lista.length) horarios.append(U.nota('Nenhum horário / escala cadastrado. Use "Novo Horário / Escala".'));
         if (bloco.atualizarContas) bloco.atualizarContas();
       };
       const bloco = {};
@@ -510,7 +521,7 @@
       const pagamentoBox = el('div', 'org-pagamento');
       const contas = el('div', 'org-contas'); contas.setAttribute('role', 'status');
       const atualizarContas = () => {
-        const r = contasDoCargo(st.contratacao, st.pagamento, dados.horarios.filter((h) => marcados.has(h.id)));
+        const r = contasDoCargo(st.contratacao, st.pagamento, todosHorarios().filter((h) => marcados.has(h.id)));
         contas.replaceChildren(...r.linhas.map((x) => el('small', 'profiles-note', x)), ...r.avisos.map((x) => el('small', 'profiles-note org-aviso', x)));
         if (!r.linhas.length && !r.avisos.length) contas.append(el('small', 'profiles-note', 'Marque o horário / escala para ver as horas.'));
       };
@@ -562,7 +573,7 @@
       const fora = v.startsWith('fora:'); const real = fora ? null : ctx.reais.find((r) => String(r.id) === v);
       if (!fora && !real) { b.seletor.focus(); return qual + 'escolha o cargo.'; }
       const cargoNome = fora ? b.cargoOriginal.cargoNome : real.nome;
-      const horarioIds = dados.horarios.filter((h) => b.marcados.has(h.id)).map((h) => h.id);
+      const horarioIds = todosHorarios().filter((h) => b.marcados.has(h.id)).map((h) => h.id);
       if (!horarioIds.length) { b.no.scrollIntoView({ block: 'nearest' }); return qual + cargoNome + ' precisa de um horário / escala.'; }
       if (horarioIds.length > 1) { b.no.scrollIntoView({ block: 'nearest' }); return qual + cargoNome + ' tem mais de um horário marcado. Cada cargo tem um horário: deixe um e, para o outro turno, acrescente o cargo de novo.'; }
       if (cargos.some((x) => (fora ? x.cargoNome === cargoNome && !x.cargoId : x.cargoId === real.id) && x.horarioIds[0] === horarioIds[0])) { b.seletor.focus(); return cargoNome + ' com o mesmo horário aparece duas vezes neste módulo. Deixe um só.'; }
@@ -593,7 +604,7 @@
     }, { cor: cor(), corTexto: COR_TEXTO });
   }
 
-  /* ---------- Horário / Escala (lista única do teste) — estrutura do Rodrigo, 27/11/2026 ----------
+  /* ---------- Horário / Escala (o cadastro real — lista única de todo o sistema) — estrutura do Rodrigo, 27/11/2026 ----------
    * Ordem da janela: 1) nome MONTADO pelo sistema (escala · entrada às saída · carga) ou PERSONALIZADO; 2) escala (5x2, 4x3 ou 12x36 — a 6x1 saiu: está fora da
    * nova lei trabalhista, Rodrigo 27/11/2026); 3) os dias de trabalho, na quantidade que a escala pede (no 12x36 é um dia sim, um dia não, sem dias da semana);
    * 4) a carga horária por semana, na roleta de horas (arrastar ou digitar), no máximo 42:00 (Rodrigo, 27/11/2026); 5) duração do intervalo (sem, 30 min, 1h, 1h30, 2h), entrada e início
@@ -689,6 +700,10 @@
       titulo: h ? 'Editar horário / escala' : 'Novo horário / escala',
       cor: cor(), corTexto: COR_TEXTO,
       montar: (form) => {
+        // No topo: o que revisar (horário que veio do cadastro antigo) e quantos colaboradores usam este horário.
+        if (h && h.revisar && h.revisar.length) form.append(U.nota('Revisar (veio do cadastro antigo): ' + h.revisar.join(' ')));
+        const vinculados = h && J() ? J().vinculados(h.id) : 0;
+        if (vinculados) form.append(U.nota('Vinculado a ' + vinculados + (vinculados === 1 ? ' colaborador' : ' colaboradores') + ': o que mudar vale para todos a partir de agora; o histórico guarda o anterior. O intervalo individual de cada um não muda.'));
         const linha = (rotulo, ...nos) => { const l = el('div', 'compras-campo'); l.append(el('span', 'compras-rotulo', rotulo), ...nos); return l; };
         // Linha de botões de escolha: na tela estreita os botões descem para baixo do nome do campo (não empilham um por linha).
         const linhaChips = (rotulo, ...nos) => { const l = linha(rotulo, ...nos); l.classList.add('org-linha-horarios'); return l; };
@@ -898,8 +913,6 @@
         });
         const avisos = el('div', 'org-contas'); avisos.setAttribute('role', 'status');
         form.append(q, qd, qh, qp, rodapeExc, avisos);
-        const usos = h ? dados.cargos.filter((c) => c.horarioIds.includes(h.id)).length : 0;
-        form.append(U.nota(h && usos > 1 ? 'Este horário / escala é usado em ' + usos + ' cargos: a mudança vale para todos eles.' : 'Este horário / escala entra na lista única do teste e pode ser escolhido em qualquer cargo e local.'));
         function pintar() {
           const esc = ESCALAS.find((e) => e[0] === st.escala); const n = esc ? esc[2] : 0; const doze = st.escala === '12x36';
           pintarDomingoFeriado();
@@ -996,9 +1009,9 @@
         for (const d of Object.keys(v.porDia)) { const e = conferirJornada(v.porDia[d], DIAS.find((x) => x[0] === d)[2] + ': '); if (e) return e; }
         const nome = limpar(c.nome.value);
         if (nome.length < 2) return 'Preencha a escala, a carga e a entrada para montar o nome.';
-        if (dados.horarios.some((x) => x.id !== (h && h.id) && mesmoNome(x.nome, nome))) { c.nome.focus(); return 'Já existe um horário / escala igual ("' + nome + '"). Escolha esse na lista.'; }
+        if (todosHorarios().some((x) => x.id !== (h && h.id) && mesmoNome(x.nome, nome))) { c.nome.focus(); return 'Já existe um horário / escala igual ("' + nome + '"). Escolha esse na lista.'; }
         const item = { id: h ? h.id : novoId('hr'), nome, nomeModo: 'montado', sigla: siglaDoNome(nome), ...v };
-        if (!gravar((d) => { const i = d.horarios.findIndex((x) => x.id === item.id); if (i >= 0) d.horarios[i] = item; else d.horarios.push(item); })) return 'Não foi possível salvar neste aparelho. Nada foi alterado.';
+        if (!J() || !J().salvarModelo(item, paraJornada(item))) return 'Não foi possível salvar neste aparelho. Nada foi alterado.';
         U.avisar('Horário / escala ' + (h ? 'atualizado.' : 'criado.'));
         if (aoCriar) aoCriar(item);
         render();
@@ -1016,5 +1029,92 @@
     }, { cor: cor(), corTexto: COR_TEXTO });
   }
 
-  window.CicluzOrganogramaMultifuncional = { abrir, textoDosDias, exemplo, CHAVE: KEY };
+  /* ---------- Horário / Escala real: conversão, lista do cartão e troca de situação ---------- */
+  /** Horário / Escala no formato do organograma → os campos antigos que o Ponto, a Escala Individual, o Contrato e os Cargos leem. */
+  function paraJornada(m) {
+    const h = (x) => { const tem = x.intervaloInicio && Number(x.intervaloMin); return { start: x.entrada, end: x.saida, breakStart: tem ? x.intervaloInicio : '', breakEnd: tem ? horaMais(x.intervaloInicio, Number(x.intervaloMin)) : '' }; };
+    // 12x36 não tem dia fixo da semana: os 7 dias valem como possíveis; quem trabalha em cada dia o DP marca na Escala Individual.
+    const ds = m.escala === '12x36' ? ORDEM : m.dias;
+    const dias = {}; ds.forEach((d) => { dias[d] = h(doDia(m, d)); });
+    return { name: m.nome, type: m.escala === '12x36' ? 'Revezamento' : 'Dias fixos da semana', padrao: h(m), dias };
+  }
+  /** O que não cabe nas regras novas: o horário é convertido e fica marcado para revisar (Rodrigo, 28/11/2026). */
+  function motivosParaRevisar(m, tipoAntigo) {
+    const r = [];
+    if (tipoAntigo && tipoAntigo !== 'Dias fixos da semana') r.push('No cadastro antigo o tipo era "' + tipoAntigo + '": escolha a escala.');
+    else if (ESCALA_FORA[m.escala]) r.push(ESCALA_FORA[m.escala]);
+    else if (!m.escala) r.push('São ' + m.dias.length + ' dias de trabalho: escolha a escala (5x2, 4x3 ou 12x36).');
+    if (m.cargaSemanal > CARGA_MAX) r.push('A carga é de ' + duracaoTexto(Math.round(m.cargaSemanal * 60)) + ' por semana: o máximo é ' + CARGA_MAX + ' horas.');
+    const e = conferirJornada(m, 'Horário de todos os dias: ');
+    if (e) r.push(e);
+    Object.keys(m.porDia || {}).forEach((d) => { const x = conferirJornada(m.porDia[d], DIAS.find((y) => y[0] === d)[2] + ': '); if (x) r.push(x); });
+    return r;
+  }
+  /** Horário / Escala gravado no formato antigo (padrão + horário de cada dia da semana) → formato do organograma. */
+  function deJornada(j) {
+    const base = (x) => { const tem = !!(x && x.breakStart && x.breakEnd); return { entrada: (x && x.start) || '', saida: (x && x.end) || '', intervaloInicio: tem ? x.breakStart : '', intervaloMin: tem ? vao(x.breakStart, x.breakEnd) : 0 }; };
+    const ds = ORDEM.filter((d) => j.dias && j.dias[d]);
+    const fixo = !j.type || j.type === 'Dias fixos da semana';
+    const e = ESCALAS.find((x) => x[2] === ds.length);
+    const m = { escala: fixo ? (e ? e[0] : ds.length === 6 ? '6x1' : '') : '', dias: ds, ...base(j.padrao), porDia: {}, nomeModo: 'montado' };
+    const padrao = JSON.stringify(base(j.padrao));
+    ds.forEach((d) => { const x = base(j.dias[d]); if (JSON.stringify(x) !== padrao) m.porDia[d] = x; });
+    m.cargaSemanal = Math.round(cargaCalculada(m) / 6) / 10;
+    m.nome = nomeMontado(m); m.sigla = siglaDoNome(m.nome); m.nomeAntigo = j.name || '';
+    m.revisar = motivosParaRevisar(m, j.type);
+    return m;
+  }
+  /** Horários que entram no cadastro real na conversão: os que o teste já tinha (mesmos ids, que os cargos do teste usam) ou os três do exemplo. */
+  function horariosParaImportar() {
+    try {
+      const s = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (s && Array.isArray(s.horarios) && s.horarios.length) {
+        return s.horarios.map((h) => {
+          // O nome é sempre o montado (Rodrigo, 27/11/2026); o que estava escrito fica em nomeAntigo.
+          const x = normalizarHorario({ ...h }); const nome = nomeMontado(x);
+          if (nome !== x.nome) x.nomeAntigo = x.nome;
+          Object.assign(x, { nome, nomeModo: 'montado', sigla: siglaDoNome(nome) });
+          x.revisar = motivosParaRevisar(x);
+          return x;
+        });
+      }
+    } catch (e) { /* teste ilegível: entram os do exemplo */ }
+    return horariosDeExemplo();
+  }
+  function alternarSituacao(h, aoMudar) {
+    const n = J().vinculados(h.id);
+    const trocar = () => {
+      if (!J().alternarAtivo(h.id)) return 'Não foi possível salvar neste aparelho. Nada foi alterado.';
+      U.avisar('Horário / escala ' + (h.ativo ? 'desativado.' : 'ativado.'));
+      if (aoMudar) aoMudar();
+      return null;
+    };
+    if (h.ativo) U.confirmar('Desativar horário / escala?', '"' + h.nome + '" não poderá ser escolhido em novos vínculos.' + (n ? ' Os ' + n + ' colaborador(es) já vinculados continuam com ele até receberem outro.' : ''), 'Desativar', trocar, { cor: cor(), corTexto: COR_TEXTO });
+    else trocar();
+  }
+  /** A lista do cartão DES - Horário / Escala: o mesmo cadastro e a mesma janela do organograma. */
+  function listaDeHorarios(aoMudar) {
+    const lista = todosHorarios().sort((a, b) => (b.ativo - a.ativo) || a.nome.localeCompare(b.nome, 'pt-BR'));
+    const sec = U.secao('Horários / Escalas', undefined, U.pontaDaLista(lista.length, lista.length + (lista.length === 1 ? ' horário / escala cadastrado' : ' horários / escalas cadastrados')));
+    sec.querySelector('.compras-secao-cab h3').replaceChildren(U.botaoTitulo('Novo Horário / Escala', 'Criar horário / escala', () => editarHorario(null, aoMudar)));
+    const linhas = el('div', 'compras-lista');
+    if (!lista.length) linhas.append(U.vazio('Nenhum horário / escala cadastrado.', 'Use "Novo Horário / Escala" para criar.'));
+    lista.forEach((h) => {
+      const n = J().vinculados(h.id);
+      const detalhe = [textoDoHorario(h), n + (n === 1 ? ' colaborador' : ' colaboradores')];
+      if (h.revisar && h.revisar.length) detalhe.unshift('Revisar');
+      const row = U.linhaLista({ icone: ICONE_RELOGIO, titulo: h.nome, detalhe: detalhe.join(' · '), direita: el('span', 'account-list-state', h.ativo ? 'Ativo' : 'Inativo'),
+        acoes: { rotulo: h.nome, lista: linhas, aoEditar: () => editarHorario(horarioPorId(h.id), aoMudar), aoExcluir: () => alternarSituacao(h, aoMudar) } });
+      // O botão de tirar da lista é o de situação (Desativar / Reativar), o mesmo dos outros cadastros: horário não se apaga.
+      if (window.CicluzUniformUI) CicluzUniformUI.botaoSituacao(row, h.ativo, h.nome);
+      if (!h.ativo) row.classList.add('inativo');
+      linhas.append(row);
+    });
+    sec.append(linhas);
+    return sec;
+  }
+  // Conversão única dos horários já gravados: cópia de segurança antes; schedules.js guarda a marca de feito.
+  if (J() && J().adotarHorarioNovo) J().adotarHorarioNovo({ deJornada, paraJornada, novos: horariosParaImportar });
+
+  window.CicluzOrganogramaMultifuncional = { abrir, textoDosDias, exemplo, listaDeHorarios, editarHorario, CHAVE: KEY };
 })();
