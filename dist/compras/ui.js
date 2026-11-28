@@ -439,6 +439,17 @@
     return s;
   }
   /** Chips de escolha única (ex.: atalhos de prazo e margem). */
+  /**
+   * Escolha curta (poucas opções) em botões ovais no lugar da lista que abre para cima e para baixo (Rodrigo, 28/11/2026).
+   * O <select> continua no lugar, escondido, guardando o valor: quem já lê select.value e escuta "change" não muda.
+   */
+  function chipsDoSelect(select) {
+    const opcoes = [...select.options].map((o) => [o.value, o.textContent]);
+    const box = chips(opcoes, select.value, (v) => { select.value = v; select.dispatchEvent(new Event('change', { bubbles: true })); });
+    box.classList.add('chips-do-select');
+    select.hidden = true; select.after(box);
+    return box;
+  }
   function chips(opcoes, valor, aoMudar) {
     const box = el('div', 'compras-chips');
     box.setAttribute('role', 'group');
@@ -1670,6 +1681,6 @@
     seletorArvore, campoArvore, campoLocal, arvoreGruposMercadoria, botaoRemover,
     COR, COR_TEXTO, ICONES, svg, el, botao, dobrar, buscaRodape, cabecalhoColunas, arrastarParaRolar, botaoTitulo, pontaDaLista,
     criarTela, atalho, secao, vazio, situacao, nota, campo, entrada, seletor, chips, busca, buscaFixa,
-    tabela, linhaLista, infoDaLista, umOuDoisToques, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, roletaNumero, iconarLinhas, notaNaLinha, iconeDoCampo, campoCor, itemDeEscolha, escolhaNaLinha, barraDeLista, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
+    tabela, linhaLista, infoDaLista, umOuDoisToques, chipsDoSelect, interruptor, seletorDeItens, corOrigem, mascaraPercentual, lerPercentual, bolinhasDe, legendaBolinhas, campoHora, roletaNumero, iconarLinhas, notaNaLinha, iconeDoCampo, campoCor, itemDeEscolha, escolhaNaLinha, barraDeLista, dialogo, confirmar, avisar, sinalizarObrigatorios, subirAoTopo, botaoEditarBloco, linhasDaEtapa, revisaoDasEtapas, quadroSituacao, cartoesEscolha, flutuante, botaoEnviar, prazoResposta, mensagemEnvio, MENSAGEM_ENVIO,
   };
 })();

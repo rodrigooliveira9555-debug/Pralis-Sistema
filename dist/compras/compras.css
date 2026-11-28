@@ -1128,6 +1128,15 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .job-inline-tools > .job-icon-style-linha > .compras-campo-icone { flex: none; display: grid; place-items: center; width: 20px; height: 20px; color: var(--menu-accent, #ef4444); }
 .job-inline-tools > .job-icon-style-linha > .transferencia-linha-rotulo { flex: 0 0 max(calc(38% - 35px), 120px); font: 500 15px/20px var(--ui-font); color: var(--layout-ink, #27272a); }
 .job-inline-tools > .job-icon-style-linha > select { border: 0; background-color: transparent; box-shadow: none; font: 500 15px/20px var(--ui-font); color: var(--muted, #71717a); }
+/* Botões ovais no lugar do select (U.chipsDoSelect): ocupam a coluna do valor. */
+.compras-chips.chips-do-select { flex: 1 1 0; min-width: 0; justify-content: flex-start; }
+@media (max-width: 600px) { .transferencia-tela .transferencia-linha > .compras-chips.chips-do-select { flex-basis: calc(100% - 42px); margin-left: 42px; } }
+/* Marca do banco escolhida ou com o mouse em cima: o fundo do botão fica na cor do cabeçalho e a marca, colorida, num disco branco por cima — senão
+   a marca laranja (Itaú, Inter…) some no laranja. */
+.identity-pick .account-icon-dot:is(.selected, [aria-pressed=true], :hover) > .bank-mark { box-sizing: border-box; padding: 2px; border-radius: 50%; background: #fff; }
+/* Prévia da conta como LINHA do quadro: o selo da conta no lugar do ícone da linha (28 px, centrado na coluna dos ícones) e o nome no lugar do nome. */
+.transferencia-tela .transferencia-linha > .compras-campo-icone.account-previa-icone { width: 28px; height: 28px; margin: 0 6px 0 -4px; }
+.transferencia-tela .transferencia-linha.account-previa > .transferencia-linha-rotulo { flex: 1 1 auto; max-width: none; }
 /* LINHAS DE LISTA EM COLUNAS NA ALTURA PADRÃO (Rodrigo, 26/11/2026): a lista em grade não estica as linhas para encher a caixa (davam 100 e 120 px); cada linha tem 52 px (--linha-altura) e o cabeçalho das colunas, a altura própria dele. */
 .compras-lista-grade { align-content: start; grid-auto-rows: max-content; }
 .compras-lista-grade > .compras-linha:not(.compras-linha-cabecalho) { min-height: var(--linha-altura, 52px); align-items: center; }
