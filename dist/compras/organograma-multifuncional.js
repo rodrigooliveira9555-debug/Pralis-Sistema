@@ -461,13 +461,20 @@
     const novoBloco = (c) => {
       const marcados = new Set(c ? c.horarioIds : []);
       const q = el('fieldset', 'compras-fieldset org-cargo-bloco'); const legenda = el('legend'); q.append(legenda);
-      const opcoes = reais.map((r) => [String(r.id), r.nome]);
-      if (c && !c.cargoId) opcoes.unshift(['fora:' + c.id, c.cargoNome + ' (fora do cadastro de cargos)']);
-      const seletor = U.seletor(opcoes, c ? (c.cargoId ? String(c.cargoId) : 'fora:' + c.id) : '', reais.length ? 'Selecione um cargo' : 'Nenhum cargo cadastrado');
+      // Cargo: a janela de escolha do sistema (U.campoArvore → seletorArvore), agrupada pela categoria do cargo, com o ícone do cargo e a
+      // marcação redonda de escolha única. .value continua sendo o id do cargo (ou 'fora:' + id do cargo que só existe no teste).
+      const nosCargos = () => {
+        const folha = (r) => ({ id: String(r.id), nome: r.nome, ativo: true, folha: true, conta: r.nomeReduzido || '' });
+        const grupos = new Map(); reais.forEach((r) => { const k = r.categoria || 'Sem categoria'; if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(folha(r)); });
+        const arvore = grupos.size > 1 ? [...grupos].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR')).map(([k, filhos]) => ({ id: 'cat:' + k, nome: k, ativo: true, selecionavel: false, filhos })) : reais.map(folha);
+        if (c && !c.cargoId) arvore.unshift({ id: 'fora:' + c.id, nome: c.cargoNome + ' (fora do cadastro de cargos)', ativo: true, folha: true, conta: 'Só no teste' });
+        return arvore;
+      };
+      const seletor = U.campoArvore({ rotulo: 'Cargo', titulo: 'Cargo', sigla: 'DES', cores: { cor: cor(), corTexto: COR_TEXTO }, iconeFolha: ICONE_CARGO, rotuloBusca: 'Buscar cargo', vazio: 'Nenhum cargo cadastrado em DES - Cargos C/Salários.', nos: nosCargos, valor: c ? (c.cargoId ? String(c.cargoId) : 'fora:' + c.id) : '', textoVazio: reais.length ? 'Selecione um cargo' : 'Nenhum cargo cadastrado', obrigatorio: true });
       const horarios = el('div', 'compras-vinculos-lista'); horarios.setAttribute('role', 'group');
       const pintarHorarios = () => {
         horarios.replaceChildren(...dados.horarios.map((h) => {
-          const l = U.interruptor(h.nome, marcados.has(h.id), textoDoHorario(h));
+          const l = U.interruptor(h.nome, marcados.has(h.id), textoDoHorario(h)); l.input.classList.add('compras-selecao-bolinha');
           l.input.onchange = () => { if (l.input.checked) marcados.add(h.id); else marcados.delete(h.id); if (bloco.atualizarContas) bloco.atualizarContas(); };
           return l;
         }));
@@ -477,7 +484,8 @@
       const bloco = {};
       pintarHorarios();
       const novoHorario = U.botaoTitulo('Novo Horário / Escala', 'Criar horário / escala para este cargo', () => editarHorario(null, (h) => { marcados.add(h.id); repintarHorarios(); }));
-      const remover = U.botaoRemover('Tirar este cargo', () => { blocos.splice(blocos.indexOf(bloco), 1); q.remove(); contar(); });
+      const rodapeH = el('div', 'compras-form-rodape'); rodapeH.append(novoHorario);
+      const remover = U.botaoRemover('Tirar este cargo', () => { blocos.splice(blocos.indexOf(bloco), 1); q.remove(); rodapeH.remove(); contar(); });
       // Contratação e forma de pagamento, com as contas de horas logo abaixo.
       const st = { contratacao: c && c.contratacao ? c.contratacao : 'clt', pagamento: c && c.pagamento ? c.pagamento : 'mensalista' };
       const pagamentoBox = el('div', 'org-pagamento');
@@ -493,7 +501,7 @@
       const linhaContr = el('div', 'compras-campo compras-largo org-linha-horarios'); linhaContr.append(el('span', 'compras-rotulo', 'Contratação *'), contratacao);
       const linhaPag = el('div', 'compras-campo compras-largo org-linha-horarios'); linhaPag.append(el('span', 'compras-rotulo', 'Forma de pagamento *'), pagamentoBox);
       pintarPagamento();
-      const listaH = el('div', 'org-horarios'); listaH.append(horarios, novoHorario);
+      const listaH = el('div', 'org-horarios'); listaH.append(horarios);
       const linhaH = el('div', 'compras-campo compras-largo org-linha-horarios'); linhaH.append(el('span', 'compras-rotulo', 'Horário / Escala *'), listaH);
       const linhaRem = el('div', 'compras-campo'); linhaRem.append(el('span', 'compras-rotulo', 'Tirar este cargo do módulo'), remover);
       const linhaContas = el('div', 'compras-campo compras-largo org-linha-horarios'); linhaContas.append(el('span', 'compras-rotulo', 'Horas'), contas);
@@ -503,7 +511,7 @@
         numerar: (i) => { legenda.textContent = 'Cargo ' + i; horarios.setAttribute('aria-label', 'Horários / escalas do cargo ' + i); },
         cargoOriginal: c,
       });
-      blocos.push(bloco); lista.append(q); contar();
+      blocos.push(bloco); lista.append(q, rodapeH); contar();
       return bloco;
     };
     (n ? cargosDe(n.id) : []).forEach(novoBloco);

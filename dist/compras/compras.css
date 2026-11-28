@@ -979,7 +979,7 @@ body :is(#sector-view,.view,dialog,.modal).transferencia-tela .transferencia-val
 :is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > .compras-rotulo { flex: 0 0 38%; max-width: 38%; box-sizing: border-box; margin: 0; padding-left: 16px; color: var(--layout-ink, #606066); font: 400 14px/20px var(--ui-font); }
 :is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > :not(.compras-rotulo, .compras-campo-icone):not(small) { flex: 1 1 0; min-width: 0; margin-right: 16px; }
 :is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > small { flex: 0 0 100%; padding: 0 16px 8px; box-sizing: border-box; }
-:is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo :is(input, select, textarea) { --layout-line: transparent; --ui-border-base: transparent; --ui-control-bg: transparent; --theme-field: transparent; --ui-control-accent: transparent; background-color: transparent; }
+:is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo :is(input:not([type=checkbox], [type=radio]), select, textarea) { --layout-line: transparent; --ui-border-base: transparent; --ui-control-bg: transparent; --theme-field: transparent; --ui-control-accent: transparent; background-color: transparent; }
 :is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo:is(:hover, :focus-within) { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
 @media (max-width: 600px) { :is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > .compras-rotulo { flex-basis: 42%; max-width: 42%; } }
 @media (max-width: 600px) { :is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset { grid-template-columns: minmax(0, 1fr); } }
@@ -1016,7 +1016,7 @@ body :is(#sector-view,.view,dialog,.dialog).app-screen-shell:not(.people-top-hid
 :is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > legend + * { border-top-left-radius: 13px; border-top-right-radius: 13px; }
 :is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > :last-child { border-bottom-left-radius: 13px; border-bottom-right-radius: 13px; }
 /* Nas linhas, quem reage ao mouse é a linha inteira; o campo não ganha um sombreado só dele. */
-body :is(#sector-view,.view,dialog,.modal):is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo :is(input, select, textarea):hover, body :is(#sector-view,.view,dialog,.modal):is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo :is(input, select, textarea):focus { --ui-control-bg: transparent; --theme-field: transparent; --ui-border-base: transparent; --ui-control-accent: transparent; --ui-focus-shadow: none; }
+body :is(#sector-view,.view,dialog,.modal):is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo :is(input:not([type=checkbox], [type=radio]), select, textarea):hover, body :is(#sector-view,.view,dialog,.modal):is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo :is(input:not([type=checkbox], [type=radio]), select, textarea):focus { --ui-control-bg: transparent; --theme-field: transparent; --ui-border-base: transparent; --ui-control-accent: transparent; --ui-focus-shadow: none; }
 /* MÁSCARA NA LINHA INTEIRA (Rodrigo, 26/11/2026): em formulário, passar o mouse ou focar sombreia a LINHA toda (nome, valor, chave, ícone), nunca só o campo. Vale também para as linhas de situação (chave) e os interruptores. */
 @media (hover: hover) {
   :is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > :is(.account-status:not(.compras-tipo-pessoa), .compras-interruptor):hover { background: color-mix(in srgb, var(--menu-accent) 6%, transparent); }
@@ -1029,7 +1029,7 @@ body :is(#sector-view,.view,dialog,.modal):is(.compras-dialog,.compras-view,#sec
 /* Tela Design System: as peças reais da Transferência ocupam a largura toda do quadro. */
 .ds-amostra > .ds-transferencia { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
 /* ALTURA ÚNICA DAS LINHAS (Rodrigo, 26/11/2026): o campo dentro da linha não tem altura nem respiro próprios; quem manda é a linha (52 px). As regras gerais de campo (com #sector-view dentro de :is()) só cedem pelas variáveis, repetindo o mesmo prefixo. */
-body :is(#sector-view,.view,dialog,.modal):is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo :is(input, select, textarea) { --campo-altura: 34px; --campo-respiro: 0px; }
+body :is(#sector-view,.view,dialog,.modal):is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo :is(input:not([type=checkbox], [type=radio]), select, textarea) { --campo-altura: 34px; --campo-respiro: 0px; }
 :is(.compras-dialog,.compras-view,#sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > small:empty { display: none; }
 /* Tela Design System no padrão da Transferência: textos e amostras dentro do quadro com o respiro de 14 px; itens como linhas (nome à esquerda, valor à direita). */
 .transferencia-tela.ds-corpo { display: grid; gap: 0; }
@@ -1227,7 +1227,9 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > .compras-campo-icone { flex: none; display: grid; place-items: center; width: 20px; height: 20px; margin: 0 -4px 0 14px; color: var(--menu-accent, #ef4444); }
 .compras-campo-icone svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo.compras-linha-com-nota { flex-wrap: wrap; }
-:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > .compras-nota-linha { flex: 1 1 100%; order: 9; margin: -4px 0 0; padding: 0 14px 8px 44px; box-sizing: border-box; font-size: 11px; line-height: 15px; text-align: left; }
+/* Linha com nota: a linha de cima tem a altura de uma linha comum e o nome e o valor ficam no MEIO dela; a nota fica no pé da linha. */
+@media (min-width: 601px) { :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo.compras-linha-com-nota > .compras-rotulo { display: flex; align-items: center; min-height: var(--linha-altura, 52px); } } /* na tela estreita o valor desce para baixo do nome: a linha não precisa da altura cheia */
+:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-campo > .compras-nota-linha { flex: 1 1 100%; order: 9; margin: -8px 0 0; padding: 0 14px 6px 44px; box-sizing: border-box; font-size: 11px; line-height: 15px; text-align: left; }
 .compras-nota-linha.org-aviso { color: #b45309; font-weight: 600; }
 :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .compras-interruptor > .compras-campo-icone { flex: none; display: grid; place-items: center; width: 20px; height: 20px; margin-right: -2px; color: var(--menu-accent, #ef4444); }
 :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .account-status > span:first-child > .compras-campo-icone { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 10px; vertical-align: -4px; color: var(--menu-accent, #ef4444); }
@@ -1237,3 +1239,5 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 @media (max-width: 600px) {
   :is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > .account-status:has(> .compras-cartoes) { grid-template-columns: minmax(0, 1fr); row-gap: 8px; padding-top: 10px; padding-bottom: 10px; }
 }
+/* Janela de escolha em árvore: a busca em cima e a árvore embaixo, ocupando o quadro todo. */
+.compras-hier-corpo { display: grid; gap: 8px; padding: 12px 14px; min-width: 0; }

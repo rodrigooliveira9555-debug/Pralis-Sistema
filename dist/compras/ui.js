@@ -1384,7 +1384,7 @@
           seta.setAttribute('aria-label', (aberto ? 'Recolher ' : 'Expandir ') + no.nome); seta.setAttribute('aria-expanded', String(aberto));
           seta.onclick = () => { if (abertos.has(no.id)) abertos.delete(no.id); else abertos.add(no.id); desenhar(); };
           const ativo = no.ativo !== false; const travado = bloqueados.has(no.id);
-          const c = entrada('checkbox'); c.className = 'compras-hier-caixa'; c.checked = escolha.has(no.id) || travado; c.disabled = travado || (!ativo && !escolha.has(no.id));
+          const c = entrada('checkbox'); c.className = unico ? 'compras-selecao-bolinha' : 'compras-hier-caixa'; // escolha de um só: a marcação redonda com check; vários: a caixa c.checked = escolha.has(no.id) || travado; c.disabled = travado || (!ativo && !escolha.has(no.id));
           c.setAttribute('aria-label', 'Selecionar ' + no.nome);
           c.onchange = () => {
             if (unico) { escolha.clear(); if (c.checked) escolha.add(no.id); desenhar(); return; }
@@ -1406,7 +1406,8 @@
           contar();
         };
         busca.addEventListener('input', desenhar);
-        const box = el('div', 'compras-campo compras-largo'); box.append(busca, arvore); form.append(box); desenhar();
+        // A busca e a árvore ficam uma embaixo da outra, no quadro todo (não é uma linha de campo: a linha dividia a largura entre as duas).
+        const box = el('div', 'compras-largo compras-hier-corpo'); box.append(busca, arvore); form.append(box); desenhar();
       },
       salvar: () => aoConfirmar(compacta()),
     });
