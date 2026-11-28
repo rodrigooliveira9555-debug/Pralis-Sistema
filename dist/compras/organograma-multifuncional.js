@@ -838,6 +838,8 @@
             let txt = '';
             if (st.dom.compensado === true) txt = nomeDia ? 'Na semana em que trabalha o domingo, folga na ' + nomeDia + '.' + (fd ? ' No ' + fd + ' domingo do mês folga o domingo e trabalha a ' + nomeDia + ': nessa semana não há compensação.' : '') : 'Escolha o dia de folga da semana que compensa o domingo.';
             else if (st.dom.compensado === false) txt = 'Domingo sem compensação.' + (fd ? ' Folga o ' + fd + ' domingo do mês.' : '');
+            // 5º domingo (meses com 5): trabalha normalmente (Rodrigo, 28/11/2026).
+            if (txt && fd) txt += ' O 5º domingo, nos meses que têm, é trabalhado normalmente' + (st.dom.compensado && nomeDia ? ' (com a folga na ' + nomeDia + ').' : '.');
             notaDom.textContent = txt; ver(notaDom, Boolean(txt));
             // Comércio: pelo menos 1 domingo de folga a cada 3 semanas (Lei 10.101/2000, art. 6º, parágrafo único). O pior caso é o mês com 5 domingos.
             const avisosDom = [];
