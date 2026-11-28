@@ -1131,7 +1131,6 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .org-mapa-topico-acoes .compras-redondo, .org-mapa-zoom .compras-redondo { width: var(--row-action-size, 32px); height: var(--row-action-size, 32px); padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
 .org-mapa-zoom { margin-left: auto; display: flex; align-items: center; gap: 6px; }
 .org-mapa-zoom-valor { min-width: 40px; text-align: center; font-size: 12px; color: var(--muted, #6e6e73); }
-.org-mapa-inserir { flex: none; display: flex; gap: 6px; }
 .org-mapa-topico-dica { font-size: 11px; color: var(--muted, #6e6e73); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .org-mapa-area { overflow-x: auto; overflow-y: hidden; min-height: 240px; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: color-mix(in srgb, var(--muted, #6e6e73) 6%, var(--theme-card, #fff)); outline: none; }
 .org-mapa-area:focus-visible { border-color: var(--menu-accent); }
@@ -1158,13 +1157,37 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .org-mapa-contagem { fill: var(--menu-accent); }
 .org-mapa-contagem-num { fill: #fff; font-size: 10px; font-weight: 700; }
 /* Tela estreita: o nome do tópico ocupa a linha de cima e os botões descem para a linha de baixo (nada fica por cima do nome). */
-@media (max-width: 600px) {
-  .org-mapa-topico { flex-wrap: wrap; }
-  .org-mapa-topico-nome { flex: 1 1 100%; }
-  .org-mapa-inserir { flex: 1 1 auto; }
-}
 @media (max-width: 480px) {
   .org-mapa-corpo { padding: 4px 6px 10px; }
   .org-mapa-topico { gap: 8px; padding: 6px 8px; }
   .org-mapa-topico-acoes { gap: 4px; }
 }
+/* O "+" no próprio tópico selecionado: botão REDONDO (é ação), cheio na cor da tela; ao lado = nível seguinte, embaixo = mesmo nível. */
+.org-mapa-mais { cursor: pointer; outline: none; }
+.org-mapa-mais circle { fill: var(--menu-accent); stroke: var(--theme-card, #fff); stroke-width: 2; }
+.org-mapa-mais path { stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+.org-mapa-mais:is(:hover, :focus-visible) circle { fill: color-mix(in srgb, var(--menu-accent) 80%, #000); }
+/* Visão por barras: horas na horizontal, áreas e cargos na vertical. A tabela rola de lado dentro do quadro em tela estreita. */
+.org-barras-area-rolagem { overflow-x: auto; border: 1px solid var(--layout-line, #dedee3); border-radius: 12px; background: var(--theme-card, #fff); }
+.org-barras { min-width: 560px; display: grid; gap: 2px; padding: 8px 10px 12px; --rotulo: 170px; }
+.org-barras-linha { display: grid; grid-template-columns: var(--rotulo) 1fr; align-items: center; min-height: 40px; padding: 3px 0; gap: 8px; border-radius: 8px; cursor: pointer; }
+.org-barras-linha:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--menu-accent) 8%, transparent); outline: none; }
+.org-barras-escala { min-height: 24px; cursor: default; position: sticky; top: 0; }
+.org-barras-escala:hover { background: none; }
+/* O nome do cargo fica parado à esquerda quando a tabela rola de lado (celular). */
+.org-barras-rotulo { min-width: 0; display: grid; padding-left: 6px; position: sticky; left: 0; z-index: 1; align-self: stretch; align-content: center; background: var(--theme-card, #fff); }
+.org-barras-area { position: sticky; left: 0; width: max-content; }
+.org-barras-rotulo b { font-size: 13px; font-weight: 600; color: var(--layout-ink, #27272a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.org-barras-rotulo small { font-size: 11px; color: var(--muted, #6e6e73); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.org-barras-trilho { position: relative; height: calc(var(--faixas, 1) * 24px + 6px); background-image: repeating-linear-gradient(to right, var(--layout-line, #dedee3) 0 1px, transparent 1px var(--passo)); background-size: 100% 100%; }
+.org-barras-escala .org-barras-trilho { height: 20px; background: none; }
+.org-barras-hora { position: absolute; left: var(--pos); transform: translateX(-50%); font-size: 11px; color: var(--muted, #6e6e73); }
+.org-barras-barra { position: absolute; top: calc(3px + var(--i, 0) * 24px); height: 21px; left: var(--ini); width: var(--tam); min-width: 4px; border-radius: 6px; background: var(--menu-accent); color: #fff; font-size: 11px; font-weight: 600; line-height: 21px; padding: 0 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.org-barras-barra.tom-1 { background: color-mix(in srgb, var(--menu-accent) 72%, var(--layout-ink, #27272a)); }
+.org-barras-barra.tom-2 { background: color-mix(in srgb, var(--menu-accent) 55%, var(--theme-card, #fff)); }
+.org-barras-falta { position: absolute; left: 6px; top: 6px; font-size: 12px; color: #dc2626; }
+.org-barras-area { display: flex; align-items: center; gap: 8px; padding: 10px 6px 4px; border-top: 1px solid var(--layout-line, #dedee3); }
+.org-barras-area:first-of-type { border-top: 0; }
+.org-barras-area b { font-size: 14px; font-weight: 700; color: var(--layout-ink, #27272a); }
+.org-barras-id { width: 26px; height: 26px; border-radius: var(--row-icon-radius, 26%); display: grid; place-items: center; background: var(--menu-accent); color: #fff; font-size: 10px; font-weight: 700; }
+@media (max-width: 480px) { .org-barras { --rotulo: 118px; } }

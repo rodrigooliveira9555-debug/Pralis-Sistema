@@ -107,12 +107,15 @@
   /* ---------- Tela: MAPA MENTAL em árvore (Rodrigo, 27/11/2026) ----------
    * A Loja fica no meio; cada galho cresce PARA O LADO (o nível de baixo, o cargo, o horário) e os irmãos se empilham PARA BAIXO.
    * As posições vêm do mesmo motor do mapa mental da Agenda (CicluzAgendaMapaLayout: Mapa, Lógico ou Organograma); o desenho é SVG.
-   * Tocar num tópico o seleciona; a barra do tópico insere AO LADO (filho) ou ABAIXO (irmão), edita e recolhe. Tocar de novo edita.
+   * Tocar num tópico o seleciona e mostra, NO PRÓPRIO TÓPICO, o "+" do lado (o nível seguinte) e o "+" de baixo (outro do mesmo nível).
+   * Tocar de novo edita. Visão COMPLETA (nome e resumo) ou COMPACTA (só os quadradinhos; o nome aparece ao passar o mouse).
+   * Outra visão, BARRAS: as horas na horizontal e, na vertical, as áreas com os cargos; cada horário / escala do cargo é uma barra.
    * Teclado como no XMind: Tab = ao lado, Enter = abaixo, F2 = editar, Espaço = recolher/expandir. */
   const NS = 'http://www.w3.org/2000/svg';
   const PREF = 'cicluz-teste-organograma-mapa';
-  const ESTRUTURAS = [['mapa', 'Mapa'], ['logico', 'Lógico'], ['organograma', 'Organograma']];
-  let prefs = { estrutura: 'mapa', zoom: 1 };
+  const ESTRUTURAS = [['mapa', 'Mapa'], ['logico', 'Lógico'], ['organograma', 'Organograma'], ['barras', 'Barras']];
+  const DETALHE = [['completo', 'Completo'], ['compacto', 'Compacto']];
+  let prefs = { estrutura: 'mapa', detalhe: 'completo', zoom: 1 };
   try { prefs = { ...prefs, ...JSON.parse(localStorage.getItem(PREF) || '{}') }; } catch (e) { /* padrão */ }
   const guardarPrefs = () => { try { localStorage.setItem(PREF, JSON.stringify(prefs)); } catch (e) { /* só nesta visita */ } };
   let tela = null; const recolhidos = new Set(); let selecionado = 'raiz'; let ultimoToque = { id: '', t: 0 };
@@ -137,6 +140,7 @@
   function arvoreDoMapa() {
     const tamanho = (n) => {
       const raiz = n.tipo === 'loja';
+      if (prefs.detalhe === 'compacto') { n.linhas = []; n.w = n.h = raiz ? 44 : 36; return n; }
       const fonte = (raiz ? '700 15px ' : '600 13px ') + FONTE;
       n.linhas = L().quebrar(n.nome, 170, medir(fonte), 2);
       const larguraTexto = Math.max(...n.linhas.map(medir(fonte)), medir('500 11px ' + FONTE)(n.meta), 30);
@@ -182,13 +186,18 @@
       const estrutura = U.chips(ESTRUTURAS, prefs.estrutura, (v) => { prefs.estrutura = v; guardarPrefs(); render(); });
       estrutura.setAttribute('aria-label', 'Estrutura do mapa');
       const zoomBox = el('div', 'org-mapa-zoom'); zoomBox.append(r('Diminuir o mapa', '<path d="M5 12h14"/>', () => zoom(prefs.zoom - 0.1)), el('span', 'org-mapa-zoom-valor', Math.round(prefs.zoom * 100) + '%'), r('Aumentar o mapa', '<path d="M12 5v14M5 12h14"/>', () => zoom(prefs.zoom + 0.1)));
-      const barra = el('div', 'org-mapa-barra'); barra.append(estrutura, zoomBox);
-      corpo.append(barra, barraDoTopico(todos.get(selecionado), todos));
-      corpo.append(desenhar(arvore, todos));
+      const barra = el('div', 'org-mapa-barra'); barra.append(estrutura);
+      if (prefs.estrutura === 'barras') { corpo.append(barra, barras()); } else {
+        const detalhe = U.chips(DETALHE, prefs.detalhe, (v) => { prefs.detalhe = v; guardarPrefs(); render(); });
+        detalhe.setAttribute('aria-label', 'Detalhe do mapa');
+        barra.append(detalhe, zoomBox);
+        corpo.append(barra, barraDoTopico(todos.get(selecionado), todos));
+        corpo.append(desenhar(arvore, todos));
+      }
     }
     sec.append(corpo);
     const texto = 'AMBIENTE DE TESTE: o que você monta aqui fica só neste teste e não muda Área / Setor / Local, Cargos nem Horário / Escala de verdade. ' +
-      'Toque num tópico para selecionar: "Ao lado" cria o próximo nível (Área › Setor › Local, Cargo, Horário / Escala) e "Abaixo" cria outro do mesmo nível. Toque de novo para editar. ' +
+      'Toque num tópico para selecionar: o "+" do lado cria o próximo nível (Área › Setor › Local, Cargo, Horário / Escala) e o "+" de baixo cria outro do mesmo nível. Toque de novo para editar. Todo cargo tem um ou mais horários / escalas. ' +
       'No teclado: Tab = ao lado, Enter = abaixo, F2 = editar, Espaço = recolher.';
     tela.body.replaceChildren(U.infoDaLista(sec, texto, 'organograma-multifuncional-teste'));
     const area = tela.body.querySelector('.org-mapa-area'); const alvo = area && area.querySelector('.org-mapa-no.selecionado');
@@ -215,14 +224,11 @@
     const nome = el('div', 'org-mapa-topico-nome'); nome.append(el('small', null, 'Selecionado'), el('b', null, t.nome));
     const acoes = el('div', 'org-mapa-topico-acoes');
     const r = (rotulo, desenho, acao) => { const b = el('button', 'shortcut-circle compras-redondo'); b.type = 'button'; b.title = rotulo; b.setAttribute('aria-label', rotulo); b.innerHTML = U.svg(desenho); b.onclick = acao; return b; };
-    const inserirBotoes = el('div', 'org-mapa-inserir');
-    if (a.lado) inserirBotoes.append(U.botaoTitulo('Ao lado', 'Inserir ao lado de ' + t.nome + ': ' + a.lado[0], a.lado[1]));
-    if (a.abaixo) inserirBotoes.append(U.botaoTitulo('Abaixo', 'Inserir abaixo de ' + t.nome + ': ' + a.abaixo[0], a.abaixo[1]));
     if (a.editar) acoes.append(r('Editar ' + t.nome, LAPIS, a.editar));
     if (t.filhos.length) acoes.append(r((recolhidos.has(t.id) ? 'Expandir ' : 'Recolher ') + t.nome, recolhidos.has(t.id) ? '<path d="M12 5v14M5 12h14"/>' : '<path d="M5 12h14"/>', () => alternarRecolher(t)));
-    const dica = el('small', 'org-mapa-topico-dica', [a.lado ? 'Ao lado: ' + a.lado[0] : '', a.abaixo ? 'Abaixo: ' + a.abaixo[0] : ''].filter(Boolean).join(' · '));
+    const dica = el('small', 'org-mapa-topico-dica', [a.lado ? '+ do lado: ' + a.lado[0] : '', a.abaixo ? '+ de baixo: ' + a.abaixo[0] : ''].filter(Boolean).join(' · '));
     nome.append(dica);
-    barra.append(nome, inserirBotoes, acoes);
+    barra.append(nome, acoes);
     return barra;
   }
 
@@ -241,16 +247,18 @@
     pos.nos.forEach((p) => {
       const t = p.no;
       const g = s('g', { class: 'org-mapa-no tipo-' + t.tipo + (t.id === selecionado ? ' selecionado' : ''), transform: `translate(${p.x} ${p.y})`, role: 'treeitem', 'aria-label': t.nome + ', ' + t.meta, 'data-id': t.id });
-      g.append(s('rect', { class: 'org-mapa-caixa', width: p.w, height: p.h, rx: 10 }));
-      const ix = 10; const iy = (p.h - 28) / 2;
-      g.append(s('rect', { class: 'org-mapa-id', x: ix, y: iy, width: 28, height: 28, rx: 7 }));
-      if (['area', 'setor', 'local'].includes(t.tipo)) { const tx = s('text', { class: 'org-mapa-sigla', x: ix + 14, y: iy + 18, 'text-anchor': 'middle' }); tx.textContent = t.sigla || '?'; g.append(tx); } else {
-        const ic = s('svg', { x: ix + 6, y: iy + 6, width: 16, height: 16, viewBox: '0 0 24 24', class: 'org-mapa-icone' });
+      const dicaMouse = s('title'); dicaMouse.textContent = t.nome + ' — ' + t.meta; g.append(dicaMouse);
+      const compacto = prefs.detalhe === 'compacto';
+      g.append(s('rect', { class: 'org-mapa-caixa', width: p.w, height: p.h, rx: compacto ? 9 : 10 }));
+      const lado = compacto ? p.w - 8 : 28; const ix = compacto ? 4 : 10; const iy = (p.h - lado) / 2;
+      g.append(s('rect', { class: 'org-mapa-id', x: ix, y: iy, width: lado, height: lado, rx: 7 }));
+      if (['area', 'setor', 'local'].includes(t.tipo)) { const tx = s('text', { class: 'org-mapa-sigla', x: ix + lado / 2, y: iy + lado / 2 + 4, 'text-anchor': 'middle' }); tx.textContent = t.sigla || '?'; g.append(tx); } else {
+        const ic = s('svg', { x: ix + (lado - 16) / 2, y: iy + (lado - 16) / 2, width: 16, height: 16, viewBox: '0 0 24 24', class: 'org-mapa-icone' });
         ic.innerHTML = t.tipo === 'loja' ? ICONE_LOJA : t.tipo === 'cargo' ? ICONE_CARGO : t.tipo === 'falta' ? '<path d="M12 7v6M12 17h.01"/><circle cx="12" cy="12" r="9"/>' : ICONE_RELOGIO; g.append(ic);
       }
       const x0 = ix + 28 + 9; const alturaTexto = t.linhas.length * 16 + 14; let y = (p.h - alturaTexto) / 2 + 12;
       t.linhas.forEach((ln) => { const tx = s('text', { class: 'org-mapa-nome', x: x0, y }); tx.textContent = ln; g.append(tx); y += 16; });
-      const meta = s('text', { class: 'org-mapa-meta', x: x0, y: y + 1 }); meta.textContent = L().quebrar(t.meta, 186, medir('500 11px ' + FONTE), 1)[0] || ''; g.append(meta);
+      if (!compacto) { const meta = s('text', { class: 'org-mapa-meta', x: x0, y: y + 1 }); meta.textContent = L().quebrar(t.meta, 186, medir('500 11px ' + FONTE), 1)[0] || ''; g.append(meta); }
       if (t.filhos.length && recolhidos.has(t.id)) {
         const bx = p.lado < 0 ? -9 : prefs.estrutura === 'organograma' ? p.w / 2 - 9 : p.w - 9; const by = prefs.estrutura === 'organograma' ? p.h - 9 : p.h / 2 - 9;
         g.append(s('rect', { class: 'org-mapa-contagem', x: bx, y: by, width: 18, height: 18, rx: 9 }));
@@ -259,6 +267,7 @@
       g.addEventListener('click', () => tocar(t));
       g.addEventListener('dblclick', (e) => { e.preventDefault(); const a = acoesDe(t); if (a.editar) a.editar(); });
       svg.append(g);
+      if (t.id === selecionado) maisDoTopico(svg, s, t, p);
     });
     area.append(svg);
     U.arrastarParaRolar(area);
@@ -268,6 +277,71 @@
     });
     return area;
   }
+  /** Os dois "+" do tópico selecionado: o do LADO (onde os galhos crescem) cria o nível seguinte; o de BAIXO cria outro do mesmo nível.
+   * No Organograma (de cima para baixo) os galhos crescem para baixo, então o "+" do nível seguinte fica embaixo e o do mesmo nível, ao lado. */
+  function maisDoTopico(svg, s, t, p) {
+    const a = acoesDe(t); const org = prefs.estrutura === 'organograma'; const R = 11;
+    const botaoMais = (cx, cy, rotulo, acao) => {
+      const g = s('g', { class: 'org-mapa-mais', role: 'button', tabindex: '0', 'aria-label': rotulo, transform: `translate(${cx} ${cy})` });
+      const dica = s('title'); dica.textContent = rotulo; g.append(dica);
+      g.append(s('circle', { r: R }), s('path', { d: 'M-5 0H5M0 -5V5' }));
+      const ir = (e) => { e.stopPropagation(); e.preventDefault(); acao(); };
+      g.addEventListener('click', ir); g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') ir(e); });
+      svg.append(g);
+    };
+    const esquerda = p.lado < 0;
+    if (a.lado) { const [cx, cy] = org ? [p.x + p.w / 2, p.y + p.h + R + 4] : [esquerda ? p.x - R - 4 : p.x + p.w + R + 4, p.y + p.h / 2]; botaoMais(cx, cy, 'Inserir ' + a.lado[0] + ' ligado a ' + t.nome, a.lado[1]); }
+    if (a.abaixo) { const [cx, cy] = org ? [p.x + p.w + R + 4, p.y + p.h / 2] : [p.x + p.w / 2, p.y + p.h + R + 4]; botaoMais(cx, cy, 'Inserir outro: ' + a.abaixo[0] + ' (mesmo nível de ' + t.nome + ')', a.abaixo[1]); }
+  }
+
+  /** Visão por BARRAS: na horizontal, as horas do dia; na vertical, as áreas e, em cada bloco, os cargos. Cada horário / escala é uma barra
+   * numa faixa própria da linha do cargo, para os horários que se cruzam não ficarem um por cima do outro (quem passa da meia-noite vira duas barras). Passar o mouse mostra os dias e o intervalo. Tocar na linha abre o cargo. */
+  function barras() {
+    const min = (x) => Number(x.slice(0, 2)) * 60 + Number(x.slice(3));
+    const linhas = [];
+    const visitar = (n, caminhoNos) => {
+      const cs = cargosDe(n.id);
+      cs.forEach((c) => linhas.push({ tipo: 'cargo', c, n, caminho: caminhoNos.concat(n).map((x) => x.nome).slice(1).join(' › ') || n.nome, hs: c.horarioIds.map(horarioPorId).filter(Boolean) }));
+      filhos(n.id).forEach((f) => visitar(f, caminhoNos.concat(n)));
+    };
+    filhos(null).forEach((a) => { linhas.push({ tipo: 'area', n: a }); visitar(a, []); });
+    // Faixa de horas: da menor entrada à maior saída (arredondadas à hora); quem vira a noite usa o dia inteiro.
+    const hs = dados.horarios.filter((h) => linhas.some((l) => l.hs && l.hs.includes(h)));
+    let ini = 24 * 60; let fim = 0;
+    hs.forEach((h) => { const e = min(h.entrada); const x = min(h.saida); if (x <= e) { ini = 0; fim = 1440; } else { ini = Math.min(ini, e); fim = Math.max(fim, x); } });
+    if (!hs.length) { ini = 6 * 60; fim = 22 * 60; }
+    ini = Math.floor(ini / 60) * 60; fim = Math.ceil(fim / 60) * 60; const total = fim - ini;
+    const caixa = el('div', 'org-barras'); caixa.setAttribute('role', 'table'); caixa.setAttribute('aria-label', 'Horários por área e cargo');
+    const escala = el('div', 'org-barras-linha org-barras-escala'); escala.setAttribute('role', 'row');
+    const trilhoEscala = el('div', 'org-barras-trilho');
+    const passo = total > 12 * 60 ? 120 : 60;
+    for (let m = ini; m <= fim; m += passo) { const tk = el('span', 'org-barras-hora', String(Math.floor(m / 60) % 24).padStart(2, '0') + 'h'); tk.style.setProperty('--pos', ((m - ini) / total * 100) + '%'); trilhoEscala.append(tk); }
+    escala.append(el('div', 'org-barras-rotulo', ''), trilhoEscala); caixa.append(escala);
+    caixa.style.setProperty('--passo', (passo / total * 100) + '%');
+    if (!linhas.length) caixa.append(U.vazio('Nada para mostrar.', 'Insira uma área e, nela, um cargo com horário / escala.'));
+    linhas.forEach((l) => {
+      if (l.tipo === 'area') { const cab = el('div', 'org-barras-area'); cab.setAttribute('role', 'row'); const id = el('span', 'org-barras-id', l.n.sigla || '?'); id.setAttribute('aria-hidden', 'true'); cab.append(id, el('b', null, l.n.nome)); caixa.append(cab); return; }
+      const linha = el('div', 'org-barras-linha'); linha.setAttribute('role', 'row'); linha.tabIndex = 0;
+      const rot = el('div', 'org-barras-rotulo'); rot.append(el('b', null, l.c.cargoNome), el('small', null, l.caminho)); rot.title = l.c.cargoNome + ' — ' + l.caminho;
+      const trilho = el('div', 'org-barras-trilho'); trilho.style.setProperty('--faixas', String(Math.max(1, l.hs.length)));
+      if (!l.hs.length) trilho.append(el('span', 'org-barras-falta', 'Sem horário / escala'));
+      l.hs.forEach((h, i) => {
+        const e = min(h.entrada); let x = min(h.saida); const pedacos = x > e ? [[e, x]] : [[e, 1440], [0, x]];
+        pedacos.forEach(([a, b]) => {
+          const bar = el('span', 'org-barras-barra tom-' + (i % 3), h.nome);
+          bar.style.setProperty('--i', String(i)); bar.style.setProperty('--ini', ((a - ini) / total * 100) + '%'); bar.style.setProperty('--tam', ((b - a) / total * 100) + '%');
+          bar.title = h.nome + ': ' + textoDoHorario(h); trilho.append(bar);
+        });
+      });
+      linha.append(rot, trilho);
+      linha.onclick = () => editarCargo(l.c, l.n);
+      linha.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); editarCargo(l.c, l.n); } };
+      caixa.append(linha);
+    });
+    const rolar = el('div', 'org-barras-area-rolagem'); rolar.append(caixa);
+    return rolar;
+  }
+
   /** Um toque seleciona; o segundo toque no mesmo tópico (logo depois) abre a edição. */
   function tocar(t) {
     const agora = Date.now();
@@ -380,7 +454,7 @@
       q.append(campo('Cargo *', seletor, 'A lista vem de DES - Cargos C/Salários (só leitura).'));
     }
     const marcados = new Set(c ? c.horarioIds : []);
-    const qh = el('fieldset', 'compras-fieldset'); qh.append(el('legend', null, 'Horário / Escala'));
+    const qh = el('fieldset', 'compras-fieldset'); qh.append(el('legend', null, 'Horário / Escala *'), U.nota('Todo cargo tem um ou mais horários / escalas: marque quantos precisar.'));
     const lista = el('div', 'compras-vinculos-lista');
     const pintar = () => {
       lista.replaceChildren(...dados.horarios.map((h) => {
@@ -399,6 +473,7 @@
   }
   function salvarCargo(ctx, c, pai) {
     const horarioIds = dados.horarios.filter((h) => ctx.marcados.has(h.id)).map((h) => h.id);
+    if (!horarioIds.length) return 'Marque pelo menos um horário / escala para o cargo (ou crie um em "Novo Horário / Escala").';
     if (c) {
       if (!gravar((d) => { d.cargos.find((x) => x.id === c.id).horarioIds = horarioIds; })) return 'Não foi possível salvar neste aparelho. Nada foi alterado.';
       U.avisar('Horário / escala de ' + c.cargoNome + ' atualizado.');
