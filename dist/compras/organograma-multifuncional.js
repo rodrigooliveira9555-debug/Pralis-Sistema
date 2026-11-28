@@ -162,7 +162,7 @@
     const cargo = (c, n) => {
       const hs = c.horarioIds.map(horarioPorId).filter(Boolean);
       return tamanho({
-        id: 'c:' + c.id, tipo: 'cargo', nome: c.cargoNome, ref: c, pai: n, meta: c.cargoId ? 'Cargo' : 'Cargo · fora do cadastro', falta: !hs.length,
+        id: 'c:' + c.id, tipo: 'cargo', nome: c.cargoNome, ref: c, pai: n, meta: (c.cargoId ? 'Cargo' : 'Cargo · fora do cadastro') + (nomePagamento(c) ? ' · ' + nomePagamento(c) : ''), falta: !hs.length,
         filhos: hs.length ? hs.map((h) => tamanho({ id: 'h:' + c.id + ':' + h.id, tipo: 'horario', nome: h.nome, ref: h, cargo: c, pai: n, meta: (h.escala ? h.escala + ' · ' : '') + h.entrada + '–' + h.saida + (h.escala === '12x36' ? '' : ' · ' + textoDosDias(h.dias)), filhos: [] }))
           : [tamanho({ id: 'f:' + c.id, tipo: 'falta', nome: 'Sem horário / escala', ref: null, cargo: c, pai: n, meta: 'Toque para escolher', filhos: [] })],
       });
@@ -417,6 +417,37 @@
   }
 
   /** Os cargos do módulo: um quadro por cargo, com a escolha do cargo e os horários / escalas dele. */
+  /* Contratação e forma de pagamento do cargo no módulo (Rodrigo, 27/11/2026). Colaborador (CLT): Mensalista, Horista, Tempo parcial ou
+   * Intermitente. Prestador de serviço (sem CLT): por hora, dia, mês ou serviço. A tela só mostra as CONTAS de horas (nenhum valor em dinheiro):
+   * mensal = horas por semana × 5 (o ×5 já inclui o descanso semanal remunerado: 44h → 220h, 40h → 200h). Avisos (não impedem salvar):
+   * CLT acima de 44h por semana (Constituição, art. 7º); tempo parcial acima de 30h por semana (CLT, art. 58-A); prestador com horário fixo pode
+   * virar vínculo de emprego (CLT, art. 3º). */
+  const CONTRATACOES = [['clt', 'Colaborador (CLT)'], ['prestador', 'Prestador de serviço']];
+  const PAGAMENTOS = { clt: [['mensalista', 'Mensalista'], ['horista', 'Horista'], ['parcial', 'Tempo parcial'], ['intermitente', 'Intermitente']], prestador: [['hora', 'Por hora'], ['dia', 'Por dia'], ['mes', 'Por mês'], ['servico', 'Por serviço']] };
+  const nomePagamento = (c) => { const p = (PAGAMENTOS[c.contratacao || 'clt'] || []).find((x) => x[0] === c.pagamento); return p ? p[1] + (c.contratacao === 'prestador' ? ' (prestador)' : ' (CLT)') : ''; };
+  const horasTexto = (h) => String(Math.round(h * 10) / 10).replace('.', ',') + 'h';
+  /** As contas e os avisos de um cargo, para cada horário / escala marcado. Devolve { linhas: [texto], avisos: [texto] }. */
+  function contasDoCargo(contratacao, pagamento, horarios) {
+    const linhas = []; const avisos = [];
+    if (contratacao === 'prestador') {
+      horarios.forEach((h) => linhas.push(h.nome + ': ' + duracaoTexto(liquido(h)) + ' por dia · ' + horasTexto(h.cargaSemanal) + ' por semana'));
+      avisos.push('Prestador de serviço não segue a CLT. Cuidado: horário fixo, subordinação e trabalho todo dia podem caracterizar vínculo de emprego (CLT, art. 3º).');
+      return { linhas, avisos };
+    }
+    if (pagamento === 'intermitente') {
+      linhas.push('Intermitente: recebe pelas horas de cada convocação (CLT, art. 452-A). O horário / escala serve de referência.');
+      return { linhas, avisos };
+    }
+    horarios.forEach((h) => {
+      const sem = Number(h.cargaSemanal || 0);
+      if (pagamento === 'horista') linhas.push(h.nome + ': ' + duracaoTexto(liquido(h)) + ' por dia · ' + horasTexto(sem) + ' por semana (recebe as horas trabalhadas + descanso semanal)');
+      else linhas.push(h.nome + ': ' + horasTexto(sem) + ' por semana × 5 = ' + horasTexto(sem * 5) + ' por mês' + (h.escala === '12x36' ? ' (no 12x36 o divisor pode variar conforme a convenção coletiva)' : ''));
+      if (pagamento === 'parcial' && sem > 30) avisos.push(h.nome + ': tempo parcial vai até 30h por semana (CLT, art. 58-A); este horário tem ' + horasTexto(sem) + '.');
+      if (pagamento !== 'parcial' && sem > 44) avisos.push(h.nome + ': ' + horasTexto(sem) + ' por semana passa do limite de 44h da CLT.');
+    });
+    return { linhas, avisos };
+  }
+
   function quadroCargos(form, n, opts) {
     const reais = cargosReais();
     const lista = el('div', 'compras-etapa');
@@ -435,23 +466,41 @@
       const pintarHorarios = () => {
         horarios.replaceChildren(...dados.horarios.map((h) => {
           const l = U.interruptor(h.nome, marcados.has(h.id), textoDoHorario(h));
-          l.input.onchange = () => { if (l.input.checked) marcados.add(h.id); else marcados.delete(h.id); };
+          l.input.onchange = () => { if (l.input.checked) marcados.add(h.id); else marcados.delete(h.id); if (bloco.atualizarContas) bloco.atualizarContas(); };
           return l;
         }));
         if (!dados.horarios.length) horarios.append(U.nota('Nenhum horário / escala no teste. Use "Novo Horário / Escala".'));
+        if (bloco.atualizarContas) bloco.atualizarContas();
       };
+      const bloco = {};
       pintarHorarios();
       const novoHorario = U.botaoTitulo('Novo Horário / Escala', 'Criar horário / escala para este cargo', () => editarHorario(null, (h) => { marcados.add(h.id); repintarHorarios(); }));
       const remover = U.botaoRemover('Tirar este cargo', () => { blocos.splice(blocos.indexOf(bloco), 1); q.remove(); contar(); });
+      // Contratação e forma de pagamento, com as contas de horas logo abaixo.
+      const st = { contratacao: c && c.contratacao ? c.contratacao : 'clt', pagamento: c && c.pagamento ? c.pagamento : 'mensalista' };
+      const pagamentoBox = el('div', 'org-pagamento');
+      const contas = el('div', 'org-contas'); contas.setAttribute('role', 'status');
+      const atualizarContas = () => {
+        const r = contasDoCargo(st.contratacao, st.pagamento, dados.horarios.filter((h) => marcados.has(h.id)));
+        contas.replaceChildren(...r.linhas.map((x) => el('small', 'profiles-note', x)), ...r.avisos.map((x) => el('small', 'profiles-note org-aviso', x)));
+        if (!r.linhas.length && !r.avisos.length) contas.append(el('small', 'profiles-note', 'Marque o horário / escala para ver as horas.'));
+      };
+      const pintarPagamento = () => { const ch = U.chips(PAGAMENTOS[st.contratacao], st.pagamento, (v) => { st.pagamento = v; atualizarContas(); }); ch.setAttribute('aria-label', 'Forma de pagamento'); pagamentoBox.replaceChildren(ch); atualizarContas(); };
+      const contratacao = U.chips(CONTRATACOES, st.contratacao, (v) => { st.contratacao = v; st.pagamento = PAGAMENTOS[v][0][0]; pintarPagamento(); });
+      contratacao.setAttribute('aria-label', 'Contratação');
+      const linhaContr = el('div', 'compras-campo compras-largo org-linha-horarios'); linhaContr.append(el('span', 'compras-rotulo', 'Contratação *'), contratacao);
+      const linhaPag = el('div', 'compras-campo compras-largo org-linha-horarios'); linhaPag.append(el('span', 'compras-rotulo', 'Forma de pagamento *'), pagamentoBox);
+      pintarPagamento();
       const listaH = el('div', 'org-horarios'); listaH.append(horarios, novoHorario);
       const linhaH = el('div', 'compras-campo compras-largo org-linha-horarios'); linhaH.append(el('span', 'compras-rotulo', 'Horário / Escala *'), listaH);
       const linhaRem = el('div', 'compras-campo'); linhaRem.append(el('span', 'compras-rotulo', 'Tirar este cargo do módulo'), remover);
-      q.append(campo('Cargo *', seletor, 'A lista vem de DES - Cargos C/Salários (só leitura).'), linhaH, linhaRem);
-      const bloco = {
-        id: c ? c.id : null, seletor, marcados, no: q, pintarHorarios,
+      const linhaContas = el('div', 'compras-campo compras-largo org-linha-horarios'); linhaContas.append(el('span', 'compras-rotulo', 'Horas'), contas);
+      q.append(campo('Cargo *', seletor, 'A lista vem de DES - Cargos C/Salários (só leitura).'), linhaH, linhaContr, linhaPag, linhaContas, linhaRem);
+      Object.assign(bloco, {
+        id: c ? c.id : null, seletor, marcados, no: q, pintarHorarios, atualizarContas, st,
         numerar: (i) => { legenda.textContent = 'Cargo ' + i; horarios.setAttribute('aria-label', 'Horários / escalas do cargo ' + i); },
         cargoOriginal: c,
-      };
+      });
       blocos.push(bloco); lista.append(q); contar();
       return bloco;
     };
@@ -486,7 +535,7 @@
       if (cargos.some((x) => (fora ? x.cargoNome === cargoNome && !x.cargoId : x.cargoId === real.id))) { b.seletor.focus(); return cargoNome + ' aparece duas vezes neste módulo. Deixe um só e marque nele todos os horários.'; }
       const horarioIds = dados.horarios.filter((h) => b.marcados.has(h.id)).map((h) => h.id);
       if (!horarioIds.length) { b.no.scrollIntoView({ block: 'nearest' }); return qual + cargoNome + ' precisa de pelo menos um horário / escala.'; }
-      cargos.push({ id: b.id || novoId('cg'), cargoId: fora ? null : real.id, cargoNome, horarioIds });
+      cargos.push({ id: b.id || novoId('cg'), cargoId: fora ? null : real.id, cargoNome, horarioIds, contratacao: b.st.contratacao, pagamento: b.st.pagamento });
     }
     let novoIdModulo = null;
     const ok = gravar((d) => {
@@ -558,13 +607,37 @@
     return h;
   }
 
+  /** Avisos da CLT para o horário (só aviso; a convenção coletiva da categoria pode prever outra coisa — ex.: o intervalo de 30 minutos). */
+  function avisosCLT(v) {
+    const r = []; const nome = (d) => DIAS.find((x) => x[0] === d)[2];
+    if (!HORA.test(v.entrada) || !HORA.test(v.saida)) return r;
+    const dias = v.escala === '12x36' ? [null] : v.dias;
+    dias.forEach((d) => {
+      const x = d ? doDia(v, d) : v; if (!HORA.test(x.entrada) || !HORA.test(x.saida)) return;
+      const total = vao(x.entrada, x.saida); const qual = d ? nome(d) + ': ' : '';
+      if (v.escala !== '12x36' && liquido(x) > 8 * 60) r.push(qual + duracaoTexto(liquido(x)) + ' de trabalho no dia passa das 8h da CLT (o que passa é hora extra).');
+      if (!x.intervaloInicio && total > 4 * 60 && total <= 6 * 60) r.push(qual + 'jornada de 4h a 6h: a CLT pede 15 minutos de intervalo (art. 71).');
+    });
+    // Descanso entre um dia e outro: no mínimo 11 horas (CLT, art. 66).
+    if (v.escala !== '12x36') {
+      v.dias.forEach((d) => {
+        const prox = ORDEM[(ORDEM.indexOf(d) + 1) % 7]; if (!v.dias.includes(prox)) return;
+        const a = doDia(v, d); const b = doDia(v, prox); if (!HORA.test(a.entrada) || !HORA.test(a.saida) || !HORA.test(b.entrada)) return;
+        const fim = minDe(a.entrada) + vao(a.entrada, a.saida); const descanso = 1440 + minDe(b.entrada) - fim;
+        if (descanso < 11 * 60) r.push('Entre ' + nome(d) + ' e ' + nome(prox) + ' o descanso é de ' + duracaoTexto(descanso) + ': a CLT pede no mínimo 11h (art. 66).');
+      });
+      const semana = cargaCalculada(v); if (semana > 44 * 60) r.push('São ' + duracaoTexto(semana) + ' por semana: passa do limite de 44h da CLT.');
+    }
+    return r;
+  }
+
   function editarHorario(h, aoCriar) {
     U.dialogo({
       titulo: h ? 'Editar horário / escala' : 'Novo horário / escala',
       cor: cor(), corTexto: COR_TEXTO,
       montar: (form) => {
         const linha = (rotulo, ...nos) => { const l = el('div', 'compras-campo'); l.append(el('span', 'compras-rotulo', rotulo), ...nos); return l; };
-        const st = { escala: h ? h.escala : '6x1', dias: new Set(h ? h.dias : ['1', '2', '3', '4', '5', '6']), modo: h && Object.keys(h.porDia || {}).length ? 'dia' : 'todos', porDia: JSON.parse(JSON.stringify(h ? h.porDia || {} : {})) };
+        const st = { escala: h ? h.escala : '6x1', dias: new Set(h ? h.dias : ['1', '2', '3', '4', '5', '6']), porDia: JSON.parse(JSON.stringify(h ? h.porDia || {} : {})) };
         // 1) Nome  2) Escala  3) Dias  4) Carga semanal
         const q = el('fieldset', 'compras-fieldset'); q.append(el('legend', null, 'Escala'));
         const nome = entrada('text', h ? h.nome : '', { autocomplete: 'off', maxLength: 60, placeholder: 'Ex.: Manhã' }); nome.required = true;
@@ -591,13 +664,30 @@
         };
         const padrao = quadroJornada(h, '');
         qh.append(...padrao.nos);
-        // 6) Igual todos os dias ou personalizar por dia
-        const qp = el('fieldset', 'compras-fieldset'); qp.append(el('legend', null, 'Todos os dias ou por dia'));
-        const modo = U.chips([['todos', 'Igual todos os dias'], ['dia', 'Personalizar por dia']], st.modo, (v) => { st.modo = v; pintar(); });
-        modo.setAttribute('aria-label', 'Horário igual todos os dias ou personalizado por dia');
-        qp.append(linha('Horário', modo));
-        const diasBox = el('div', 'compras-etapa'); const quadrosDia = {};
-        form.append(q, qh, qp, diasBox);
+        // 6) Dias com horário diferente: o horário acima vale para todos os dias; só o dia que muda ganha um quadro (um quadro pode valer para
+        //    mais de um dia, ex.: sábado e domingo iguais entre si). Nada de preencher todos os dias um por um.
+        const qp = el('fieldset', 'compras-fieldset'); qp.append(el('legend', null, 'Dias com horário diferente'));
+        const resumoExc = el('small', 'profiles-note'); qp.append(resumoExc);
+        const excBox = el('div', 'compras-etapa'); const excecoes = [];
+        const novaExcecao = (diasIniciais, x) => {
+          const dias = new Set(diasIniciais);
+          const f = el('fieldset', 'compras-fieldset org-excecao'); const leg = el('legend'); f.append(leg);
+          const chipsDias = el('div', 'compras-chips'); chipsDias.setAttribute('role', 'group');
+          const jornada = quadroJornada(x || { ...padrao.valor() }, ' — horário diferente');
+          const tirar = U.botaoRemover('Tirar este horário diferente', () => { excecoes.splice(excecoes.indexOf(e), 1); f.remove(); pintar(); });
+          const lt = el('div', 'compras-campo'); lt.append(el('span', 'compras-rotulo', 'Tirar (o dia volta ao horário de todos os dias)'), tirar);
+          f.append(linha('Dias *', chipsDias), ...jornada.nos, lt);
+          const e = { dias, f, leg, chipsDias, jornada };
+          excecoes.push(e); excBox.append(f);
+          return e;
+        };
+        // Abre com os dias personalizados já gravados, juntando os dias que têm o mesmo horário.
+        Object.values(Object.entries(st.porDia).reduce((g, [d, x]) => { const k = JSON.stringify(x); (g[k] = g[k] || { x, dias: [] }).dias.push(d); return g; }, {})).forEach((g) => novaExcecao(g.dias, g.x));
+        const addExc = U.botaoTitulo('Dia com horário diferente', 'Adicionar um dia com horário diferente', () => { const livres = ORDEM.filter((d) => st.dias.has(d) && !excecoes.some((x) => x.dias.has(d))); const e = novaExcecao(livres.length ? [livres[livres.length - 1]] : []); pintar(); e.f.scrollIntoView({ block: 'nearest' }); });
+        const rodapeExc = el('div', 'compras-form-rodape'); rodapeExc.append(addExc);
+        qp.append(excBox, rodapeExc);
+        const avisos = el('div', 'org-contas'); avisos.setAttribute('role', 'status');
+        form.append(q, qh, qp, avisos);
         const usos = h ? dados.cargos.filter((c) => c.horarioIds.includes(h.id)).length : 0;
         form.append(U.nota(h && usos > 1 ? 'Este horário / escala é usado em ' + usos + ' cargos: a mudança vale para todos eles.' : 'Este horário / escala entra na lista única do teste e pode ser escolhido em qualquer cargo e local.'));
         function pintar() {
@@ -608,40 +698,45 @@
           }));
           const ver = (no, sim) => { no.style.display = sim ? '' : 'none'; };
           ver(linhaDias, n); ver(linhaFolga, n); ver(nota12, !n); ver(qp, n);
+          // Cada quadro de dia diferente: só os dias de trabalho; um dia não fica em dois quadros.
+          excecoes.forEach((e, i) => {
+            [...e.dias].forEach((d) => { if (!st.dias.has(d)) e.dias.delete(d); });
+            e.leg.textContent = 'Horário diferente ' + (i + 1) + (e.dias.size ? ': ' + textoDosDias([...e.dias]) : '');
+            e.chipsDias.setAttribute('aria-label', 'Dias do horário diferente ' + (i + 1));
+            e.chipsDias.replaceChildren(...DIAS.filter(([d]) => st.dias.has(d)).map(([d, curto, longo]) => {
+              const usado = excecoes.some((o) => o !== e && o.dias.has(d));
+              const b = botao(curto, () => { if (e.dias.has(d)) e.dias.delete(d); else e.dias.add(d); pintar(); }, 'compras-chip' + (e.dias.has(d) ? ' ativo' : ''));
+              b.title = usado ? longo + ' já tem outro horário diferente' : longo; b.disabled = usado; b.setAttribute('aria-label', longo); b.setAttribute('aria-pressed', String(e.dias.has(d))); return b;
+            }));
+          });
+          const comExc = excecoes.flatMap((e) => [...e.dias]);
+          resumoExc.textContent = comExc.length ? 'O horário acima vale para ' + (textoDosDias(ORDEM.filter((d) => st.dias.has(d) && !comExc.includes(d))) || 'nenhum dia') + '; os dias abaixo têm horário próprio.' : 'O horário acima vale para todos os dias de trabalho. Se algum dia for diferente (ex.: sábado até as 14:00), use "Dia com horário diferente" só para ele.';
           linhaDias.querySelector('.compras-rotulo').textContent = 'Dias de trabalho * (' + st.dias.size + (n ? ' de ' + n : '') + ')';
           folga.textContent = textoDosDias(ORDEM.filter((d) => !st.dias.has(d)));
-          // Um quadro por dia de trabalho quando personaliza; nasce com o horário de todos os dias.
-          diasBox.replaceChildren();
-          if (n && st.modo === 'dia') {
-            ORDEM.filter((d) => st.dias.has(d)).forEach((d) => {
-              const longo = DIAS.find((x) => x[0] === d)[2];
-              if (!quadrosDia[d]) quadrosDia[d] = quadroJornada(st.porDia[d] || { ...padrao.valor() }, ' — ' + longo);
-              const f = el('fieldset', 'compras-fieldset'); f.append(el('legend', null, longo), ...quadrosDia[d].nos); diasBox.append(f);
-            });
-          }
           recalcular();
         }
         function atual() {
           const base = padrao.valor(); const porDia = {};
-          if (st.modo === 'dia' && st.escala !== '12x36') ORDEM.filter((d) => st.dias.has(d) && quadrosDia[d]).forEach((d) => { const v = quadrosDia[d].valor(); if (JSON.stringify(v) !== JSON.stringify(base)) porDia[d] = v; });
+          if (st.escala !== '12x36') excecoes.forEach((e) => { const v = e.jornada.valor(); if (JSON.stringify(v) !== JSON.stringify(base)) e.dias.forEach((d) => { if (st.dias.has(d)) porDia[d] = v; }); });
           return { escala: st.escala, dias: st.escala === '12x36' ? [] : ORDEM.filter((d) => st.dias.has(d)), ...base, porDia, cargaSemanal: Number(String(carga.value).replace(',', '.')) };
         }
         function recalcular() {
           const v = atual();
           const fimDe = (x) => (x.intervaloInicio && HORA.test(x.intervaloInicio) ? horaMais(x.intervaloInicio, x.intervaloMin) : '—');
           padrao.fim.textContent = fimDe(v);
-          Object.entries(quadrosDia).forEach(([, qd]) => { qd.fim.textContent = fimDe(qd.valor()); });
+          excecoes.forEach((e) => { e.jornada.fim.textContent = fimDe(e.jornada.valor()); });
           const ok = HORA.test(v.entrada) && HORA.test(v.saida) && Object.values(v.porDia).every((x) => HORA.test(x.entrada) && HORA.test(x.saida));
           if (!ok) { calculada.textContent = 'A carga calculada aparece quando entrada e saída estiverem preenchidas.'; calculada.classList.remove('org-aviso'); return; }
           const m = cargaCalculada(v); const informada = v.cargaSemanal * 60;
           const dif = informada && Math.abs(m - informada) >= 1;
           calculada.textContent = 'Carga calculada: ' + duracaoTexto(m) + ' por semana' + (v.escala === '12x36' ? ' (média de 3,5 plantões de ' + duracaoTexto(liquido(v)) + ')' : '') + (dif ? ' — diferente da informada (' + duracaoTexto(informada) + ').' : '.');
           calculada.classList.toggle('org-aviso', Boolean(dif));
+          avisos.replaceChildren(...avisosCLT(v).map((x) => el('small', 'profiles-note org-aviso', x)));
         }
         form.addEventListener('input', recalcular); form.addEventListener('change', recalcular); form.addEventListener('click', () => setTimeout(recalcular, 0));
         pintar();
         setTimeout(() => nome.focus(), 0);
-        return { nome, atual, padrao };
+        return { nome, atual, padrao, excecoes };
       },
       salvar: (c) => {
         const nome = limpar(c.nome.value);
@@ -653,6 +748,7 @@
         if (!(v.cargaSemanal > 0)) return 'Informe a carga horária por semana (em horas, ex.: 44).';
         const erroPadrao = conferirJornada(v, n ? 'Horário de todos os dias: ' : '');
         if (erroPadrao) { c.padrao.foco(); return erroPadrao; }
+        const vazio = c.excecoes && c.excecoes.find((e) => !e.dias.size); if (vazio) { vazio.f.scrollIntoView({ block: 'nearest' }); return 'Um horário diferente está sem dia marcado: marque o dia ou tire o quadro.'; }
         for (const d of Object.keys(v.porDia)) { const e = conferirJornada(v.porDia[d], DIAS.find((x) => x[0] === d)[2] + ': '); if (e) return e; }
         const item = { id: h ? h.id : novoId('hr'), nome, sigla: siglaDoNome(nome), ...v };
         if (!gravar((d) => { const i = d.horarios.findIndex((x) => x.id === item.id); if (i >= 0) d.horarios[i] = item; else d.horarios.push(item); })) return 'Não foi possível salvar neste aparelho. Nada foi alterado.';
