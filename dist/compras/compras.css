@@ -1215,3 +1215,5 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
 .transferencia-selecao-painel .transferencia-linha > .compras-cartao-marca { flex: none; }
 .transferencia-selecao-painel .transferencia-linha[aria-selected=true] > .compras-cartao-marca { border-color: var(--menu-accent, #27272a); background: var(--menu-accent, #27272a); }
 .transferencia-selecao-painel .transferencia-linha[aria-selected=true] > .compras-cartao-marca svg { visibility: visible; }
+/* Nota do quadro "Dias com horário diferente": é a primeira linha do quadro, então tem recuo também em cima. */
+.org-carga-calculada.org-resumo-exc { padding-top: 10px; }
