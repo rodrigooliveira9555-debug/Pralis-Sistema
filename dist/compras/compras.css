@@ -1302,3 +1302,5 @@ body :is(.view,dialog,.modal,#sector-view,.transferencia-tela) :is(.transferenci
    quando fechada, para cima quando aberta (gira 180°), para o lado (›) quando a linha leva a outra área. Encostada à direita da linha, na mesma margem
    dos outros valores. Vale para a linha que abre da Transferência, a escolha na linha (U.escolhaNaLinha) e o campo de árvore (U.campoArvore). */
 :is(.transferencia-tela .transferencia-seta, .compras-escolha-abre, .compras-arvore-campo) > svg { flex: none; width: 20px; height: 20px; fill: none; stroke: var(--navigation-ink, #a2a0aa); stroke-width: var(--shell-icon-stroke, 2.2); stroke-linecap: round; stroke-linejoin: round; opacity: 1; }
+/* Quadro que só tem a explicação (ex.: "Cargos (1)" do organograma): a altura de uma linha comum, para os cantos ficarem abaulados como nos outros quadros (baixo, virava pílula). */
+:is(.compras-dialog, .compras-view, #sector-view):not(.transferencia-tela) .compras-fieldset > legend + .profiles-note:last-child { display: flex; align-items: center; min-height: var(--linha-altura, 52px); box-sizing: border-box; padding: 8px 14px; margin: 0; }

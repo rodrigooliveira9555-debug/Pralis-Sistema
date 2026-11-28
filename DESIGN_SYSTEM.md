@@ -1832,6 +1832,7 @@ Tudo o que foi decidido na rodada do Organograma Multifuncional e da Nova Transf
 - **"Lançamentos" aparece como "Criar / Lançar"** (Rodrigo, 28/11/2026): "Criar / Lançar", "Criar / Lançar Colaboradores", "Criar / Lançar Produção" e o "＋ Criar / Lançar" do menu de Despesas. Só o NOME MOSTRADO muda (`rotuloMenu` no `index.html`, aplicado no menu, no título, no caminho e no caminho das telas/janelas pelo `ui.js`); a chave continua "Lançamentos…" — o endereço da tela (/lancamentos), os ícones, as regras e as permissões de acesso gravadas dependem dela (o botão guarda a chave em `data-secao`). "Lançamentos e Registros" da Gestão de Pessoas é outro item e não mudou.
 
 **Medidas que a base garante**
+- Quadro que só tem a explicação (ex.: "Cargos (1)" do organograma) tem a altura de uma linha comum (52 px): os cantos ficam abaulados como nos outros quadros, nunca em pílula.
 - Caixa de marcar sempre 22 px; as regras de campo de texto do quadro (`.compras-fieldset > .compras-campo :is(input…)`, `.account-editor input`) não pegam caixas de marcar nem rádios.
 - Painel que tem campos dentro (ex.: o de cor) mora na raiz da janela, não dentro da linha — as regras da linha pegariam os campos dele.
 - Comentário no código sempre em linha própria (um comentário no fim da linha já apagou código três vezes nesta rodada).
